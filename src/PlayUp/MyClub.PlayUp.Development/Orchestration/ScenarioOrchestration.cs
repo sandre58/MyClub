@@ -702,7 +702,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Hub Règlement QA seed: poules classantes + finale KO, ET+TAB, remains <see cref="CompetitionStatus.Draft"/>
+    /// Hub Règlement QA seed: groupes classants + finale KO riche, ET+TAB, remains <see cref="CompetitionStatus.Draft"/>
     /// so <c>ReplaceRegulation</c> stays available.
     /// </summary>
     public static async Task BuildRegulationHubDemoAsync(
@@ -719,15 +719,16 @@ internal static class ScenarioOrchestration
             TeamCount = 8,
             GroupCount = 2,
             ParticipantsPerGroup = 4,
-            StageName = "Poules",
+            StageName = "Groupes",
             TeamNames = TeamNameSource.Generated
         };
 
+        var baseline = BootstrapRegulation.Standard();
         var regulation = MatchEnrichment.WithExtraTimeAndPenalties(
             new Regulation(
                 new EntryRules(minimumTeams: 8, maximumTeams: 16),
-                BootstrapRegulation.Standard().MatchRules,
-                BootstrapRegulation.Standard().StandingRules));
+                baseline.MatchRules,
+                baseline.StandingRules));
 
         var competition = await CreateCompetitionAsync(
                 context,
@@ -742,8 +743,29 @@ internal static class ScenarioOrchestration
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceStandingRules(
+            new StandingRules(
+                new PointsPolicy(winPoints: 3, drawPoints: 1, lossPoints: 0),
+                [
+                    RankingCriterion.Points,
+                    RankingCriterion.Wins,
+                    RankingCriterion.GoalDifference,
+                    RankingCriterion.GoalsFor,
+                    RankingCriterion.HeadToHead
+                ]),
+            context.Clock);
+        groups.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(4)),
+            context.Clock);
         AssignGroupsRoundRobin(groups, entries);
         _ = MaterializeGroupsMatches(context, competition, groups);
+
+        var richTie = new TieFormat(
+            TieFormat.TwoLegs,
+            aggregateScoring: true,
+            awayGoalsRule: new AwayGoalsRule(),
+            extraTimeRule: new ExtraTimeRule(),
+            penaltyShootoutRule: new PenaltyShootoutRule());
 
         var final = CreateKnockoutStage(
             context,
@@ -752,6 +774,10 @@ internal static class ScenarioOrchestration
             "Finale",
             "Finale",
             ["F-A", "F-B"]);
+        final.ReplaceDefaultTieFormat(richTie, context.Clock);
+        final.ReplaceRoundTieFormat(final.Rounds[0].Id, richTie, context.Clock);
+        var finalFixture = final.AddFixture(final.Rounds[0].Id, context.Clock);
+        WireFinalPlacementAwards(final, finalFixture, context.Clock);
 
         var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
         if (orderedGroups.Length != 2)
@@ -775,6 +801,67 @@ internal static class ScenarioOrchestration
                     new QualificationDestination(final.Id, "F-B")),
             ]),
             context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Lightweight championship Draft seed for Règlement hub schematic QA.
+    /// </summary>
+    public static async Task BuildRegulationChampionshipDemoAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Démo Championnat",
+            Format = RecipeFormat.Championship,
+            TeamCount = 8,
+            MatchdayCount = 14,
+            MatchGenerationFormat = MatchGenerationFormat.DoubleRoundRobin,
+            StageName = "Championnat",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(context, competition, recipe);
+        _ = MaterializeChampionshipMatches(context, competition, stage);
+        _ = entries;
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Lightweight Swiss Draft seed for Règlement hub schematic QA (structure only, no rounds played).
+    /// </summary>
+    public static async Task BuildRegulationSwissDemoAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Démo Suisse",
+            Format = RecipeFormat.Swiss,
+            TeamCount = 8,
+            SwissRoundCount = 3,
+            StageName = "Suisse",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _ = ConfigurePrimaryStage(context, competition, recipe);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

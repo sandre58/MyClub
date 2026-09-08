@@ -31,6 +31,7 @@
 @import './foundations/focus.css';
 @import './foundations/states.css';
 @import './foundations/status.css';
+@import './foundations/chips.css';
 @import './foundations/icons.css';
 @import './foundations/actions.css';
 @import './foundations/selection-bar.css';

@@ -550,6 +550,10 @@ export interface OrganisationRegulationSummary {
   penaltyInitialKicksPerTeam?: number | null
   /** Ordered standing ranking criteria. */
   rankingCriteria?: RankingCriterion[]
+  /** Administrative forfeit score — winner goals. */
+  forfeitWinnerGoals?: number
+  /** Administrative forfeit score — loser goals. */
+  forfeitLoserGoals?: number
 }
 
 /** Host RankingCriterion — string enum member names. */
@@ -623,6 +627,30 @@ export interface OrganisationStageHubSummary {
   hasTieFormat: boolean
   numberOfLegs?: number | null
   aggregateScoring?: boolean | null
+  /** Away-goals rule on the effective TieFormat. */
+  hasAwayGoalsRule?: boolean
+  /** Extra-time rule on the confrontation TieFormat. */
+  hasTieExtraTime?: boolean
+  /** Penalty-shootout rule on the confrontation TieFormat. */
+  hasTiePenaltyShootout?: boolean
+  /** Stage StandingRules ranking criteria when hasStandingRules. */
+  rankingCriteria?: RankingCriterion[]
+  hasPlacementAwardRules?: boolean
+  placementAwardCount?: number
+  /** Placement paths (rank + outcome), ordered by rank. */
+  placementAwards?: OrganisationPlacementAward[]
+  /** Inferred structure format for schematic / badge context. */
+  formatKind?: StructureFormatKind | null
+  /** Planned Swiss rounds when formatKind is Swiss. */
+  swissRoundCount?: number | null
+}
+
+/** Host ProgressionOutcome — placement / progression selector. */
+export type ProgressionOutcome = 'Winner' | 'Loser'
+
+export interface OrganisationPlacementAward {
+  rank: number
+  outcome: ProgressionOutcome
 }
 
 /** POST /competitions/{id}/entries */

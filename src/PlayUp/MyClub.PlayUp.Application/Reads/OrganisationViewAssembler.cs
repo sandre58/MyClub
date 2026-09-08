@@ -121,8 +121,17 @@ public static class OrganisationViewAssembler
         var draw = regulation.DrawRules;
         var qualificationPaths = regulation.QualificationRules?.Paths.Count ?? 0;
         var progressionPaths = regulation.ProgressionRules?.Paths.Count ?? 0;
-        var hasTie = regulation.TieFormat is not null;
-        var tie = hasTie ? TieFormat.OrDefaultOneLeg(regulation.TieFormat) : null;
+        var placement = regulation.PlacementAwardRules;
+        var storedTie = regulation.TieFormat
+            ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
+        var hasTie = storedTie is not null;
+        var tie = hasTie ? TieFormat.OrDefaultOneLeg(storedTie) : null;
+        IReadOnlyList<OrganisationPlacementAwardDto>? placementAwards = placement is null
+            ? null
+            : placement.Paths
+                .OrderBy(path => path.Rank)
+                .Select(path => new OrganisationPlacementAwardDto(path.Rank, path.Outcome))
+                .ToArray();
 
         return new OrganisationStageHubSummaryDto(
             stage.Id.Value,
@@ -152,7 +161,16 @@ public static class OrganisationViewAssembler
             ProgressionPathCount: progressionPaths,
             HasTieFormat: hasTie,
             NumberOfLegs: tie?.NumberOfLegs,
-            AggregateScoring: tie?.AggregateScoring);
+            AggregateScoring: tie?.AggregateScoring,
+            HasAwayGoalsRule: tie?.AwayGoalsRule is not null,
+            HasTieExtraTime: tie?.ExtraTimeRule is not null,
+            HasTiePenaltyShootout: tie?.PenaltyShootoutRule is not null,
+            RankingCriteria: standing?.RankingCriteria,
+            HasPlacementAwardRules: placement is not null,
+            PlacementAwardCount: placement?.Paths.Count ?? 0,
+            PlacementAwards: placementAwards,
+            FormatKind: InferFormat(stage),
+            SwissRoundCount: stage.SwissSettings?.RoundCount);
     }
 
     /// <summary>
@@ -257,7 +275,9 @@ public static class OrganisationViewAssembler
             ExtraTimeNumberOfPeriods: extra?.NumberOfPeriods,
             HasPenaltyShootout: match.PenaltyShootoutPolicy is not null,
             PenaltyInitialKicksPerTeam: match.PenaltyShootoutPolicy?.InitialKicksPerTeam,
-            RankingCriteria: regulation.StandingRules.RankingCriteria);
+            RankingCriteria: regulation.StandingRules.RankingCriteria,
+            ForfeitWinnerGoals: match.AdministrativeResultPolicy.ForfeitWinnerGoals,
+            ForfeitLoserGoals: match.AdministrativeResultPolicy.ForfeitLoserGoals);
     }
 
     private static OrganisationFormatSummaryDto BuildFormatSummary(Stage? primary) =>

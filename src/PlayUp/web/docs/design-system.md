@@ -66,6 +66,11 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 
 Do not collapse them: pulse activity ≠ tone chip.
 
+## Chip
+
+- Canonical: `components/Chip.tsx` + `foundations/chips.css`.
+- Fact / rule token (neutral, soft, accent, win/draw/loss) — **not** a lifecycle `Status`.
+
 ## PageHead
 
 - Canonical: `components/PageHead.tsx` + `foundations/page-head.css`.

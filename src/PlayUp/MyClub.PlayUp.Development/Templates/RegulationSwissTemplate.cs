@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="RegulationDemoTemplate.cs" company="Stéphane ANDRE">
+// <copyright file="RegulationSwissTemplate.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,33 +11,32 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// QA seed for the Règlement hub: classifying groupes + KO finale, ET+TAB, stays Draft.
+/// Lightweight Swiss Draft seed for Règlement hub schematic QA.
 /// </summary>
-public sealed class RegulationDemoTemplate : ICompetitionTemplate
+public sealed class RegulationSwissTemplate : ICompetitionTemplate
 {
     /// <inheritdoc />
-    public string Id => "regulation-demo";
+    public string Id => "regulation-swiss";
 
     /// <inheritdoc />
-    public string Name => "Démo Règlement";
+    public string Name => "Démo Suisse";
 
     /// <inheritdoc />
     public string Description =>
-        "Groupes 2×4 → Finale · ET+TAB · tie riche · placement · Draft (ReplaceRegulation). :progress ignored.";
+        "Suisse 8×3 · Draft (structure only) — schéma hub Règlement. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()
     {
-        DisplayName = "Démo Règlement",
-        Format = RecipeFormat.Groups,
+        DisplayName = "Démo Suisse",
+        Format = RecipeFormat.Swiss,
         TeamCount = 8,
-        GroupCount = 2,
-        ParticipantsPerGroup = 4,
-        StageName = "Groupes",
+        SwissRoundCount = 3,
+        StageName = "Suisse",
         TeamNames = TeamNameSource.Generated
     };
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildRegulationHubDemoAsync(context, cancellationToken);
+        ScenarioOrchestration.BuildRegulationSwissDemoAsync(context, cancellationToken);
 }

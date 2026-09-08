@@ -129,9 +129,15 @@ export function CompetitionStatusBadge({
   )
 }
 
-export function StageStatusBadge({ status }: { status: StageStatus }) {
+export function StageStatusBadge({
+  status,
+  density = 'context',
+}: {
+  status: StageStatus
+  density?: 'context' | 'compact'
+}) {
   return (
-    <StatusBadge tone={stageStatusTone[status]}>
+    <StatusBadge tone={stageStatusTone[status]} density={density}>
       {stageStatusLabel(status)}
     </StatusBadge>
   )

@@ -42,7 +42,7 @@ function organisationView(
       winPoints: 3,
       drawPoints: 1,
       lossPoints: 0,
-      allowedTypes: [],
+      allowedTypes: ['Yellow', 'Red'],
       halfTimeDuration: 15,
       hasExtraTime: true,
       extraTimeDurationPerPeriod: 15,
@@ -55,6 +55,8 @@ function organisationView(
         'GoalsFor',
         'HeadToHead',
       ],
+      forfeitWinnerGoals: 3,
+      forfeitLoserGoals: 0,
     },
     structure: {
       groupCount: 0,
@@ -79,10 +81,10 @@ function organisationView(
     stages: [
       {
         stageId,
-        name: 'Poules',
+        name: 'Groupes',
         status: 'Draft',
-        teamCount: 4,
-        matchCount: 6,
+        teamCount: 8,
+        matchCount: 12,
         groupCount: 2,
         roundCount: 0,
         numberOfPeriods: 2,
@@ -93,9 +95,10 @@ function organisationView(
         winPoints: 3,
         drawPoints: 1,
         lossPoints: 0,
+        rankingCriteria: ['Points', 'Wins', 'GoalDifference'],
         hasDrawRules: true,
         drawMode: 'Random',
-        numberOfPots: 2,
+        numberOfPots: 4,
         hasQualificationRules: true,
         qualificationPathCount: 2,
         hasProgressionRules: false,
@@ -103,15 +106,16 @@ function organisationView(
         hasTieFormat: false,
         numberOfLegs: null,
         aggregateScoring: null,
+        formatKind: 'Groups',
       },
       {
         stageId: stageFinaleId,
         name: 'Finale',
         status: 'Draft',
-        teamCount: 8,
-        matchCount: 7,
+        teamCount: 2,
+        matchCount: 0,
         groupCount: 0,
-        roundCount: 3,
+        roundCount: 1,
         numberOfPeriods: 2,
         durationPerPeriod: 45,
         hasExtraTime: true,
@@ -126,11 +130,21 @@ function organisationView(
         hasDrawRules: false,
         hasQualificationRules: false,
         qualificationPathCount: 0,
-        hasProgressionRules: true,
-        progressionPathCount: 2,
+        hasProgressionRules: false,
+        progressionPathCount: 0,
         hasTieFormat: true,
-        numberOfLegs: 1,
-        aggregateScoring: null,
+        numberOfLegs: 2,
+        aggregateScoring: true,
+        hasAwayGoalsRule: true,
+        hasTieExtraTime: true,
+        hasTiePenaltyShootout: true,
+        hasPlacementAwardRules: true,
+        placementAwardCount: 2,
+        placementAwards: [
+          { rank: 1, outcome: 'Winner' },
+          { rank: 2, outcome: 'Loser' },
+        ],
+        formatKind: 'Cup',
       },
     ],
     ...overrides,
@@ -168,27 +182,45 @@ describe('RegulationPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Match' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Classement' })).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { name: 'Match' }).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByRole('heading', { name: 'Classement' }).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByRole('heading', { name: 'Disciplinaire' })).toBeInTheDocument()
     expect(screen.getByLabelText('Équipes : 8 à 16')).toBeInTheDocument()
-    expect(
-      screen.getByText(/phases qui produisent un classement/),
-    ).toBeInTheDocument()
+    expect(screen.getByLabelText(/Score administratif en cas de forfait/)).toBeInTheDocument()
+    expect(screen.getByText('Forfait')).toBeInTheDocument()
+    expect(screen.getByText('Carton(s) autorisé(s)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Jaune')).toBeInTheDocument()
+    expect(screen.getByLabelText('Rouge')).toBeInTheDocument()
+    expect(screen.getByText('Barème de points')).toBeInTheDocument()
+    expect(screen.getAllByText('Différence de buts').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('1re MT')).toBeInTheDocument()
     expect(screen.getByText('Pause')).toBeInTheDocument()
     expect(screen.getByText('PR1')).toBeInTheDocument()
     expect(
       screen.getByLabelText(/Durée maximale du match 120 minutes/),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(/Les règles générales s’appliquent/),
-    ).toBeInTheDocument()
-    expect(screen.queryByText('Le cadre de la compétition')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Modifier le règlement' })).toBeEnabled()
-    expect(screen.getByRole('heading', { name: 'Poules' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Groupes' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Finale' })).toBeInTheDocument()
-    expect(screen.getByText('Phase de groupe')).toBeInTheDocument()
-    expect(screen.getByText('Élimination directe')).toBeInTheDocument()
+    expect(screen.getAllByText('Brouillon').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByText('Aller-retour')).toBeInTheDocument()
+    expect(screen.getByText('Cumul des scores')).toBeInTheDocument()
+    expect(screen.getByText('Buts à l’extérieur')).toBeInTheDocument()
+    expect(screen.getByText('Tirage aléatoire')).toBeInTheDocument()
+    expect(screen.getByText('pots')).toBeInTheDocument()
+    expect(screen.getAllByText('4').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByLabelText('Vainqueur → place 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Perdant → place 2')).toBeInTheDocument()
+    expect(
+      screen.getByLabelText('2 chemins de qualification'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('chemins')).toBeInTheDocument()
+    expect(screen.getAllByText('2×45′').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/Prolongations/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('· 2×15′')).toBeInTheDocument()
+    expect(screen.getAllByText(/TAB/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText('· 5 tirs')).toBeInTheDocument()
+    expect(screen.getByText('Tirs au but')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Structure' })).toHaveLength(2)
   })
 
@@ -223,6 +255,7 @@ describe('RegulationPage', () => {
             hasTieFormat: true,
             numberOfLegs: 1,
             aggregateScoring: null,
+            formatKind: 'Cup',
           },
         ],
       }),
@@ -232,6 +265,7 @@ describe('RegulationPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Classement' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Disciplinaire' })).toBeInTheDocument()
   })
 
   it('opens the regulation editor from the page action', async () => {

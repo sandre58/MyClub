@@ -4,36 +4,47 @@ import {
     ArrowRight,
     ArrowUpRight,
     Clock3,
-    Info,
-    Medal,
+    Dices,
+    Goal,
+    Handshake,
+    Layers,
+    MapPin,
+    PlayingCardsFan,
     Shuffle,
+    Sigma,
     Timer,
+    Podium,
     Trophy,
     Volleyball,
+    type LucideIcon as LucideGlyph,
 } from 'lucide-react'
 import {useState, type ReactNode} from 'react'
 import {useTranslation} from 'react-i18next'
 import {useParams} from 'react-router-dom'
 import {fetchOrganisationView} from '../api'
 import {Alert} from '../design-system/components/Alert'
+import {Chip, type ChipTone} from '../design-system/components/Chip'
 import {Meter, type MeterTone} from '../design-system/components/Meter'
 import {PageHead} from '../design-system/components/PageHead'
 import {TextLink} from '../design-system/components/TextLink'
 import {LucideIcon} from '../design-system/icons/Icon'
 import {PencilIcon, PersonIcon} from '../design-system/icons/overviewIcons'
 import {queryKeys} from '../queryKeys'
-import {ErrorState, LoadingState, StatusBadge} from '../ui'
+import {ErrorState, LoadingState, StageStatusBadge} from '../ui'
 import type {
+    DisciplinaryType,
+    OrganisationPlacementAward,
     OrganisationRegulationSummary,
     OrganisationStageHubSummary,
     RankingCriterion,
+    StructureFormatKind,
 } from '../types'
 import {RegulationEditorDialog} from './RegulationEditorDialog'
 import './regulation.css'
 
 type Translate = (key: string, options?: Record<string, unknown>) => string
 
-type RuleToken = {
+type PhaseFlow = {
     key: string
     content: ReactNode
     ariaLabel: string
@@ -43,6 +54,9 @@ type RuleToken = {
  * Règlement — hub lecture + édition cadre.
  * Vocabulaire mockup riche, tokens DS (surface, brand, typo).
  */
+
+// —— Page ——
+
 export function RegulationPage() {
     const {competitionId = ''} = useParams()
     const {t} = useTranslation('regulation')
@@ -81,12 +95,6 @@ export function RegulationPage() {
             <div className="regulation">
                 <PageHead
                     title={t('title')}
-                    note={
-                        <p className="regulation-note" role="note">
-                            <LucideIcon icon={Info} size="sm"/>
-                            <span>{t('frameNote')}</span>
-                        </p>
-                    }
                     actions={
                         <button
                             type="button"
@@ -115,7 +123,10 @@ export function RegulationPage() {
                         .join(' ')}
                     aria-label={t('frameHeading')}
                 >
-                    <EntriesTile regulation={regulation}/>
+                    <div className="regulation-frame__stack">
+                        <EntriesTile regulation={regulation}/>
+                        <DisciplineTile regulation={regulation}/>
+                    </div>
                     <MatchTile regulation={regulation}/>
                     {showStandingTile ? <StandingTile regulation={regulation}/> : null}
                 </section>
@@ -155,6 +166,9 @@ export function RegulationPage() {
     )
 }
 
+
+// —— Cadre: shared card chrome ——
+
 function FrameCard({
                        icon,
                        title,
@@ -177,6 +191,9 @@ function FrameCard({
     )
 }
 
+
+// —— Cadre: Equipes ——
+
 function EntriesTile({
                          regulation,
                      }: {
@@ -191,9 +208,6 @@ function EntriesTile({
             icon={<PersonIcon size="md"/>}
             title={t('families.entries')}
         >
-            <Alert tone="info" role="status">
-                {t('capacity.notice', {min, max})}
-            </Alert>
             <div
                 className="regulation-capacity"
                 aria-label={t('capacity.aria', {min, max})}
@@ -219,9 +233,15 @@ function EntriesTile({
           </span>
                 </div>
             </div>
+            <Alert tone="info" role="status">
+                {t('capacity.notice', {min, max})}
+            </Alert>
         </FrameCard>
     )
 }
+
+
+// —— Cadre: Match ——
 
 function MatchTile({
                        regulation,
@@ -273,34 +293,35 @@ function MatchTile({
                             <ClockRow pieces={regulationPieces}/>
                         </div>
 
-                        {hasExtra ? (
-                            <div className="regulation-match-line">
+                        <div className="regulation-match__extra">
+                            {hasExtra ? (
+                                <div className="regulation-match-line">
                 <span className="regulation-match-line__label">
                   <LucideIcon icon={Timer} size="sm"/>
                   <span>{t('matchTimeline.extraHeading')}</span>
                 </span>
-                                <div className="regulation-match-line__visual regulation-clock--compact">
-                                    <ClockRow pieces={extraPieces}/>
+                                    <div className="regulation-match-line__visual regulation-clock--compact">
+                                        <ClockRow pieces={extraPieces}/>
+                                    </div>
                                 </div>
-                            </div>
-                        ) : null}
+                            ) : null}
 
-                        {regulation.hasPenaltyShootout ? (
-                            <div
-                                className="regulation-match-line"
-                                aria-label={
-                                    kicks != null
-                                        ? t('matchTimeline.tabAria', {count: kicks})
-                                        : t('matchTimeline.tabHeading')
-                                }
-                            >
+                            {regulation.hasPenaltyShootout ? (
+                                <div
+                                    className="regulation-match-line"
+                                    aria-label={
+                                        kicks != null
+                                            ? t('matchTimeline.tabAria', {count: kicks})
+                                            : t('matchTimeline.tabHeading')
+                                    }
+                                >
                 <span className="regulation-match-line__label">
                   <LucideIcon icon={Volleyball} size="sm"/>
                   <span>{t('matchTimeline.tabHeading')}</span>
                 </span>
-                                <div className="regulation-match-line__visual">
-                                    {kicks != null ? (
-                                        <span className="regulation-tab-row__dots" aria-hidden="true">
+                                    <div className="regulation-match-line__visual">
+                                        {kicks != null ? (
+                                            <span className="regulation-tab-row__dots" aria-hidden="true">
                       {Array.from(
                           {length: Math.min(Math.max(kicks, 1), 8)},
                           (_, i) => (
@@ -308,16 +329,61 @@ function MatchTile({
                           ),
                       )}
                     </span>
-                                    ) : null}
+                                        ) : null}
+                                    </div>
                                 </div>
-                            </div>
-                        ) : null}
+                            ) : null}
+                        </div>
                     </div>
                 </div>
             </div>
         </FrameCard>
     )
 }
+
+
+// —— Cadre: Disciplinaire ——
+
+function DisciplineTile({
+                            regulation,
+                        }: {
+    regulation: OrganisationRegulationSummary
+}) {
+    const {t} = useTranslation('regulation')
+    const types = regulation.allowedTypes ?? []
+
+    return (
+        <FrameCard
+            icon={<LucideIcon icon={PlayingCardsFan} size="md"/>}
+            title={t('families.discipline')}
+        >
+            <p className="regulation-discipline__subtitle">{t('discipline.subtitle')}</p>
+            {types.length === 0 ? (
+                <p className="regulation-discipline__empty" role="status">
+                    {t('discipline.empty')}
+                </p>
+            ) : (
+                <ul className="regulation-cards" aria-label={t('discipline.aria')}>
+                    {types.map((type) => (
+                        <li key={type} className="regulation-cards__item">
+                            <span
+                                className={`regulation-card-token regulation-card-token--${type.toLowerCase()}`}
+                                title={disciplineLabel(type, t)}
+                                aria-label={disciplineLabel(type, t)}
+                                role="img"
+                            >
+                <span className="regulation-card-token__face" aria-hidden="true"/>
+              </span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </FrameCard>
+    )
+}
+
+
+// —— Cadre: Match clock helpers ——
 
 function MaxDurationRing({minutes}: { minutes: number }) {
     const {t} = useTranslation('regulation')
@@ -459,6 +525,9 @@ function ClockRow({pieces}: { pieces: MatchClockPiece[] }) {
     )
 }
 
+
+// —— Cadre: Classement ——
+
 function StandingTile({
                           regulation,
                       }: {
@@ -472,15 +541,15 @@ function StandingTile({
         1,
     )
     const criteria = regulation.rankingCriteria ?? []
+    const forfeitWinner = regulation.forfeitWinnerGoals
+    const forfeitLoser = regulation.forfeitLoserGoals
+    const showForfeit = forfeitWinner != null && forfeitLoser != null
 
     return (
         <FrameCard
-            icon={<LucideIcon icon={Trophy} size="md"/>}
+            icon={<LucideIcon icon={Podium} size="md"/>}
             title={t('families.standing')}
         >
-            <Alert tone="info" role="status">
-                {t('standingNote')}
-            </Alert>
             <div className="regulation-standing">
                 <div className="regulation-standing__points">
                     <p className="regulation-standing__heading">{t('points.heading')}</p>
@@ -506,23 +575,47 @@ function StandingTile({
                     </ul>
                 </div>
 
-                {criteria.length > 0 ? (
-                    <div className="regulation-standing__criteria">
-                        <p className="regulation-standing__heading">
-                            {t('criteria.heading')}
-                        </p>
-                        <ol className="regulation-criteria" aria-label={t('criteria.aria')}>
-                            {criteria.map((criterion, index) => (
-                                <li key={criterion} className="regulation-criteria__item">
-                  <span className="regulation-criteria__n" aria-hidden="true">
-                    {index + 1}
-                  </span>
-                                    <span>{criterionLabel(criterion, t)}</span>
-                                </li>
-                            ))}
-                        </ol>
-                    </div>
-                ) : null}
+                <div className="regulation-standing__side">
+                    {criteria.length > 0 ? (
+                        <div className="regulation-standing__criteria">
+                            <p className="regulation-standing__heading">
+                                {t('criteria.heading')}
+                            </p>
+                            <ol className="regulation-criteria" aria-label={t('criteria.aria')}>
+                                {criteria.map((criterion, index) => (
+                                    <li key={criterion} className="regulation-criteria__item">
+                    <span className="regulation-criteria__n" aria-hidden="true">
+                      {index + 1}
+                    </span>
+                                        <span>{criterionLabel(criterion, t)}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+                    ) : null}
+
+                    {showForfeit ? (
+                        <div
+                            className="regulation-forfeit-score"
+                            aria-label={t('forfeit.aria', {
+                                winner: forfeitWinner,
+                                loser: forfeitLoser,
+                            })}
+                        >
+                            <p className="regulation-standing__heading">{t('forfeit.heading')}</p>
+                            <div className="regulation-forfeit-score__board" aria-hidden="true">
+                <span className="regulation-forfeit-score__goals regulation-forfeit-score__goals--win">
+                  {forfeitWinner}
+                </span>
+                                <span className="regulation-forfeit-score__sep">–</span>
+                                <span className="regulation-forfeit-score__goals">
+                  {forfeitLoser}
+                </span>
+                            </div>
+                            <p className="regulation-forfeit-score__hint">{t('forfeit.hint')}</p>
+                        </div>
+                    ) : null}
+                </div>
             </div>
         </FrameCard>
     )
@@ -552,10 +645,13 @@ function PointGauge({
                     <small> {t('points.unit')}</small>
         </span>
             </div>
-            <Meter ratio={ratio} tone={meterTone} size="lg" clip aria-hidden="true" />
+            <Meter ratio={ratio} tone={meterTone} size="lg" clip aria-hidden="true"/>
         </li>
     )
 }
+
+
+// —— Phases: tile ——
 
 function PhaseTile({
                        stage,
@@ -566,100 +662,143 @@ function PhaseTile({
 }) {
     const {t} = useTranslation('regulation')
     const structureHref = `/stages/${stage.stageId}`
-    const structureTokens = buildStructureTokens(stage, t)
-    const regulationTokens = buildRegulationTokens(stage, t)
-    const kind = inferPhaseKind(stage)
+    const flows = buildPhaseFlows(stage, t)
+    const ruleColumns = buildPhaseRuleColumns(stage, t)
 
     return (
         <article className="regulation-phase">
             <header className="regulation-phase__head">
                 <div className="regulation-phase__head-main">
-          <span className="regulation-phase__ordinal" aria-hidden="true">
-            {ordinal}
-          </span>
+                    <span className="regulation-phase__ordinal" aria-hidden="true">
+                        {ordinal}
+                    </span>
                     <h3 className="regulation-card__title">{stage.name}</h3>
                 </div>
                 <span className="regulation-phase__badge-wrap">
-          <StatusBadge tone="info" density="compact" shape="rounded">
-            {t(`phaseKind.${kind}`)}
-          </StatusBadge>
-        </span>
+                    <StageStatusBadge status={stage.status} density="compact"/>
+                </span>
             </header>
 
-            <div className="regulation-phase__content">
+            <div
+                className="regulation-phase__top"
+                aria-label={t('phaseStructureAria')}
+            >
                 <div
-                    className="regulation-phase__structure"
-                    aria-label={t('phaseStructureAria')}
+                    className="regulation-phase__stats"
+                    aria-label={t('topology.aria', {
+                        teams: stage.teamCount,
+                        matches: stage.matchCount,
+                    })}
                 >
-                    <div
-                        className="regulation-phase__stats"
-                        aria-label={t('topology.aria', {
-                            teams: stage.teamCount,
-                            matches: stage.matchCount,
-                        })}
-                    >
-                        <div className="regulation-stat">
+                    <div className="regulation-stat">
             <span className="regulation-stat__icon" aria-hidden="true">
               <PersonIcon size="sm"/>
             </span>
-                            <span className="regulation-stat__copy">
+                        <span className="regulation-stat__copy">
               <span className="regulation-stat__value">{stage.teamCount}</span>
               <span className="regulation-stat__label">{t('topology.teams')}</span>
             </span>
-                        </div>
-                        <div className="regulation-stat">
+                    </div>
+                    <div className="regulation-stat">
             <span className="regulation-stat__icon" aria-hidden="true">
               <LucideIcon icon={Volleyball} size="sm"/>
             </span>
-                            <span className="regulation-stat__copy">
+                        <span className="regulation-stat__copy">
               <span className="regulation-stat__value">{stage.matchCount}</span>
               <span className="regulation-stat__label">{t('topology.matches')}</span>
             </span>
-                        </div>
-                    </div>
-
-                    <div className="regulation-phase__visual">
-                        <PhaseSchematic stage={stage}/>
-                        {structureTokens.length > 0 ? (
-                            <ul className="regulation-phase__flows">
-                                {structureTokens.map((token) => (
-                                    <li
-                                        key={token.key}
-                                        className="regulation-token"
-                                        aria-label={token.ariaLabel}
-                                    >
-                                        {token.content}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : null}
                     </div>
                 </div>
 
-                <hr className="regulation-phase__divider"/>
+                <div className="regulation-phase__schematic">
+                    <PhaseSchematic stage={stage}/>
+                </div>
 
-                {regulationTokens.length > 0 ? (
+                {flows.length > 0 ? (
+                    <ul className="regulation-phase__flows">
+                        {flows.map((flow) => (
+                            <li
+                                key={flow.key}
+                                className="regulation-flow"
+                                aria-label={flow.ariaLabel}
+                            >
+                                {flow.content}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="regulation-phase__flows regulation-phase__flows--empty"/>
+                )}
+            </div>
+
+            {ruleColumns.length > 0 ? (
+                <>
+                    <hr className="regulation-phase__rule"/>
                     <div
-                        className="regulation-phase__regulation"
+                        className="regulation-phase__bottom"
                         aria-label={t('phaseRegulationAria')}
                     >
-                        <ul
-                            className="regulation-phase__rules regulation-phase__rules--row"
-                            aria-label={t('tokens.aria')}
-                        >
-                            {regulationTokens.map((token) => (
-                                <li
-                                    key={token.key}
-                                    className="regulation-token"
-                                    aria-label={token.ariaLabel}
-                                >
-                                    {token.content}
-                                </li>
+                        <div className="regulation-rule-cols" aria-label={t('tokens.aria')}>
+                            {ruleColumns.map((column) => (
+                                <section key={column.key} className="regulation-rule-col">
+                                    <h4 className="regulation-rule-col__title">
+                    <span className="regulation-rule-col__icon" aria-hidden="true">
+                      <LucideIcon icon={column.icon} size="sm"/>
+                    </span>
+                                        {column.title}
+                                    </h4>
+                                    {column.chips && column.chips.length > 0 ? (
+                                        <div className="regulation-rule-col__chips">
+                                            {column.chips.map((chip) => (
+                                                <Chip
+                                                    key={chip.key}
+                                                    tone={chip.tone}
+                                                    title={chip.title}
+                                                >
+                                                    {chip.label}
+                                                </Chip>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                    {column.items.length > 0 ? (
+                                        <ul className="regulation-rule-list">
+                                            {column.items.map((item) => (
+                                                <li
+                                                    key={item.key}
+                                                    className='regulation-rule-list__item'
+                                                    title={item.title}
+                                                >
+                                                    {item.index != null ? (
+                                                        <span
+                                                            className="regulation-criteria__n"
+                                                            aria-hidden="true"
+                                                        >
+                                                            {item.index}
+                                                        </span>
+                                                    ) : item.icon ? (
+                                                        <span
+                                                            className="regulation-rule-list__mark"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <LucideIcon
+                                                                icon={item.icon}
+                                                                size="sm"
+                                                            />
+                                                        </span>
+                                                    ) : null}
+                                                    <span className="regulation-rule-list__label">
+                                                        {item.label}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : null}
+                                </section>
                             ))}
-                        </ul>
+                        </div>
                     </div>
-                ) : null}
-            </div>
+                </>
+            ) : null}
 
             <div className="regulation-phase__footer">
                 <TextLink to={structureHref}>{t('openInStructure')}</TextLink>
@@ -668,253 +807,427 @@ function PhaseTile({
     )
 }
 
+type PhaseRuleChip = {
+    key: string
+    label: ReactNode
+    tone?: ChipTone
+    title?: string
+}
+
+type PhaseRuleItem = {
+    key: string
+    label: ReactNode
+    title?: string
+    /** Numbered ranking-criteria pill when set. */
+    index?: number
+    icon?: LucideGlyph
+}
+
+type PhaseRuleColumn = {
+    key: string
+    title: string
+    icon: LucideGlyph
+    chips?: PhaseRuleChip[]
+    items: PhaseRuleItem[]
+}
+
+
+// —— Phases: schematic ——
+
 function inferPhaseKind(
     stage: OrganisationStageHubSummary,
-): 'groups' | 'cup' | 'championship' {
-    if ((stage.groupCount ?? 0) > 0) {
+): 'groups' | 'cup' | 'championship' | 'swiss' {
+    const kind: StructureFormatKind | null | undefined = stage.formatKind
+    if (kind === 'Swiss') {
+        return 'swiss'
+    }
+    if (kind === 'Groups' || (stage.groupCount ?? 0) > 0) {
         return 'groups'
     }
-    if ((stage.roundCount ?? 0) > 0 || stage.hasTieFormat) {
+    if (kind === 'Cup' || (stage.roundCount ?? 0) > 0 || stage.hasTieFormat) {
         return 'cup'
     }
     return 'championship'
 }
 
-function PhaseSchematic({ stage }: { stage: OrganisationStageHubSummary }) {
-  const { t } = useTranslation('regulation')
-  const groupCount = stage.groupCount ?? 0
-  const roundCount = stage.roundCount ?? 0
+function PhaseSchematic({stage}: { stage: OrganisationStageHubSummary }) {
+    const {t} = useTranslation('regulation')
+    const kind = inferPhaseKind(stage)
+    const groupCount = stage.groupCount ?? 0
+    const roundCount = stage.roundCount ?? 0
 
-  if (groupCount > 0) {
-    const shown = Math.min(groupCount, 4)
-    const perGroup = Math.max(
-      1,
-      Math.round(stage.teamCount / Math.max(groupCount, 1)),
-    )
-    return (
-      <div
-        className="regulation-schematic regulation-schematic--groups"
-        aria-label={t('schematic.groups', { count: groupCount })}
-      >
-        <div className="regulation-schematic__cards">
-          {Array.from({ length: shown }, (_, i) => (
+    if (kind === 'groups' || groupCount > 0) {
+        const shown = Math.min(Math.max(groupCount, 1), 4)
+        const perGroup = Math.max(
+            1,
+            Math.round(stage.teamCount / Math.max(groupCount, 1)),
+        )
+        return (
             <div
-              key={i}
-              className={`regulation-schematic__card regulation-schematic__card--${i % 4}`}
+                className="regulation-schematic regulation-schematic--groups"
+                aria-label={t('schematic.groups', {count: groupCount || shown})}
             >
+                <div className="regulation-schematic__cards">
+                    {Array.from({length: shown}, (_, i) => (
+                        <div
+                            key={i}
+                            className={`regulation-schematic__card regulation-schematic__card--${i % 4}`}
+                        >
               <span className="regulation-schematic__card-label">
                 {String.fromCharCode(65 + i)}
               </span>
-              <div className="regulation-schematic__dots">
-                {Array.from({ length: Math.min(perGroup, 4) }, (_, j) => (
-                  <span key={j} className="regulation-schematic__dot" />
-                ))}
-              </div>
+                            <div className="regulation-schematic__dots">
+                                {Array.from({length: Math.min(perGroup, 4)}, (_, j) => (
+                                    <span key={j} className="regulation-schematic__dot"/>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
+        )
+    }
 
-  if (roundCount > 0 || stage.hasTieFormat) {
-    // Even count for a clean bracket (round up to next power-of-two look, max 8).
-    const leaves = 2 ** Math.ceil(Math.log2(stage.teamCount));
-    return (
-      <div
-        className="regulation-schematic regulation-schematic--bracket"
-        aria-label={t('schematic.bracket')}
-      >
-        <svg
-          className="regulation-schematic__wire"
-          viewBox="0 0 120 64"
-          width="120"
-          height="64"
-          aria-hidden="true"
-        >
-          {Array.from({ length: leaves }, (_, i) => {
-            const y = 6 + (i * (52 / Math.max(leaves - 1, 1)))
-            return (
-              <g key={`leaf-${i}`}>
-                <circle cx="8" cy={y} r="2.5" className="regulation-schematic__wire-node" />
-                <path
-                  d={`M 10.5 ${y} H 36`}
-                  className="regulation-schematic__wire-line"
-                />
-              </g>
-            )
-          })}
-          {Array.from({ length: leaves / 2 }, (_, i) => {
-            const y1 = 6 + (i * 2 * (52 / Math.max(leaves - 1, 1)))
-            const y2 = 6 + ((i * 2 + 1) * (52 / Math.max(leaves - 1, 1)))
-            const mid = (y1 + y2) / 2
-            return (
-              <g key={`q-${i}`}>
-                <path
-                  d={`M 36 ${y1} V ${y2} M 36 ${mid} H 64`}
-                  className="regulation-schematic__wire-line"
-                />
-                <circle
-                  cx="66"
-                  cy={mid}
-                  r="2.25"
-                  className="regulation-schematic__wire-node"
-                />
-              </g>
-            )
-          })}
-          
-        </svg>
-        <span className="regulation-schematic__trophy" aria-hidden="true">
-          <LucideIcon icon={Trophy} size="sm" />
+    if (kind === 'swiss') {
+        const rounds = Math.min(
+            Math.max((stage.swissRoundCount ?? roundCount) || 3, 2),
+            5,
+        )
+        return (
+            <div
+                className="regulation-schematic regulation-schematic--swiss"
+                aria-label={t('schematic.swiss', {rounds})}
+            >
+                <div className="regulation-schematic__swiss-rounds">
+                    {Array.from({length: rounds}, (_, i) => (
+                        <div key={i} className="regulation-schematic__swiss-round">
+                            <span className="regulation-schematic__swiss-pair"/>
+                            <span className="regulation-schematic__swiss-pair"/>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )
+    }
+
+    if (kind === 'cup' || roundCount > 0 || stage.hasTieFormat) {
+        const leaves = Math.min(
+            8,
+            2 ** Math.max(1, Math.ceil(Math.log2(Math.max(stage.teamCount, 2)))),
+        )
+        return (
+            <div
+                className="regulation-schematic regulation-schematic--bracket"
+                aria-label={t('schematic.bracket')}
+            >
+                <svg
+                    className="regulation-schematic__wire"
+                    viewBox="0 0 120 64"
+                    width="120"
+                    height="64"
+                    aria-hidden="true"
+                >
+                    {Array.from({length: leaves}, (_, i) => {
+                        const y = 6 + i * (52 / Math.max(leaves - 1, 1))
+                        return (
+                            <g key={`leaf-${i}`}>
+                                <circle
+                                    cx="8"
+                                    cy={y}
+                                    r="2.5"
+                                    className="regulation-schematic__wire-node"
+                                />
+                                <path
+                                    d={`M 10.5 ${y} H 36`}
+                                    className="regulation-schematic__wire-line"
+                                />
+                            </g>
+                        )
+                    })}
+                    {Array.from({length: leaves / 2}, (_, i) => {
+                        const y1 = 6 + i * 2 * (52 / Math.max(leaves - 1, 1))
+                        const y2 = 6 + (i * 2 + 1) * (52 / Math.max(leaves - 1, 1))
+                        const mid = (y1 + y2) / 2
+                        return (
+                            <g key={`q-${i}`}>
+                                <path
+                                    d={`M 36 ${y1} V ${y2} M 36 ${mid} H 64`}
+                                    className="regulation-schematic__wire-line"
+                                />
+                                <circle
+                                    cx="66"
+                                    cy={mid}
+                                    r="2.25"
+                                    className="regulation-schematic__wire-node"
+                                />
+                            </g>
+                        )
+                    })}
+                </svg>
+                <span className="regulation-schematic__trophy" aria-hidden="true">
+          <LucideIcon icon={Trophy} size="sm"/>
         </span>
-      </div>
-    )
-  }
+            </div>
+        )
+    }
 
-  return (
-    <div
-      className="regulation-schematic regulation-schematic--flat"
-      aria-label={t('topology.aria', {
-        teams: stage.teamCount,
-        matches: stage.matchCount,
-      })}
-    >
-      <div className="regulation-schematic__league">
-        {Array.from(
-          { length: Math.min(Math.max(stage.teamCount, 0), 6) },
-          (_, i) => (
-            <span key={i} className="regulation-schematic__league-row" />
-          ),
-        )}
-      </div>
-    </div>
-  )
+    return (
+        <div
+            className="regulation-schematic regulation-schematic--championship"
+            aria-label={t('schematic.championship', {teams: stage.teamCount})}
+        >
+            <div className="regulation-schematic__league">
+                {Array.from(
+                    {length: Math.min(Math.max(stage.teamCount, 3), 6)},
+                    (_, i) => (
+                        <span key={i} className="regulation-schematic__league-row">
+              <span className="regulation-schematic__league-rank" aria-hidden="true">
+                {i + 1}
+              </span>
+              <span className="regulation-schematic__league-bar" aria-hidden="true"/>
+            </span>
+                    ),
+                )}
+            </div>
+        </div>
+    )
 }
 
-function buildStructureTokens(
+/** Splice helpers into RegulationPage.tsx — builders + labels. */
+
+// —— Phases: flow + rule builders ——
+
+function buildPhaseFlows(
     stage: OrganisationStageHubSummary,
     t: Translate,
-): RuleToken[] {
-    const tokens: RuleToken[] = []
+): PhaseFlow[] {
+    const flows: PhaseFlow[] = []
 
     if (stage.hasQualificationRules && stage.qualificationPathCount > 0) {
-        tokens.push({
+        const tip = t('tokens.qualificationTip', {
+            from: stage.teamCount,
+            count: stage.qualificationPathCount,
+        })
+        flows.push({
             key: 'qualification',
             ariaLabel: t('tokens.qualification', {
                 count: stage.qualificationPathCount,
             }),
             content: (
                 <>
-                    <LucideIcon icon={ArrowUpRight} size="sm"/>
-                    <span
-                        className="regulation-token__flow"
-                        title={t('tokens.qualificationTip', {
-                            from: stage.teamCount,
-                            count: stage.qualificationPathCount,
-                        })}
-                    >
-            <span className="regulation-chip">{stage.teamCount}</span>
-            <ArrowRight size={14} strokeWidth={2.25} aria-hidden="true"/>
-            <span className="regulation-chip regulation-chip--accent">
-              {stage.qualificationPathCount}
-            </span>
-            <span className="regulation-token__caption">
-              {t('tokens.qualifyOut')}
-            </span>
-          </span>
+                    <span className="regulation-rule-list__mark" aria-hidden="true">
+                        <LucideIcon icon={ArrowUpRight} size="sm"/>
+                    </span>
+                    <span className="regulation-flow__row" title={tip}>
+                        <Chip tone="neutral" title={tip}>
+                            {stage.teamCount}
+                        </Chip>
+                        <ArrowRight size={14} strokeWidth={2.25} aria-hidden="true"/>
+                        <Chip tone="accent" title={tip}>
+                            {stage.qualificationPathCount}
+                        </Chip>
+                        <span className="regulation-flow__caption">
+                            {t('tokens.qualifyOut')}
+                        </span>
+                    </span>
                 </>
             ),
         })
     }
 
     if (stage.hasProgressionRules && stage.progressionPathCount > 0) {
-        tokens.push({
+        const tip = t('tokens.progressionTip', {
+            count: stage.progressionPathCount,
+        })
+        flows.push({
             key: 'progression',
             ariaLabel: t('tokens.progression', {
                 count: stage.progressionPathCount,
             }),
             content: (
                 <>
-                    <LucideIcon icon={ArrowRight} size="sm"/>
-                    <span
-                        className="regulation-chip"
-                        title={t('tokens.progressionTip', {
-                            count: stage.progressionPathCount,
-                        })}
-                    >
-            {t('tokens.progression', {count: stage.progressionPathCount})}
-          </span>
+                    <span className="regulation-rule-list__mark" aria-hidden="true">
+                        <LucideIcon icon={ArrowRight} size="sm"/>
+                    </span>
+                    <span className="regulation-flow__row" title={tip}>
+                        <Chip tone="accent" title={tip}>
+                            {stage.progressionPathCount}
+                        </Chip>
+                        <span className="regulation-flow__caption">
+                            {t('tokens.progressionOut', {
+                                count: stage.progressionPathCount,
+                            })}
+                        </span>
+                    </span>
                 </>
             ),
         })
     }
 
-    return tokens
+    const awards = stage.placementAwards ?? []
+    if (
+        stage.hasPlacementAwardRules &&
+        (awards.length > 0 || (stage.placementAwardCount ?? 0) > 0)
+    ) {
+        const count = awards.length || stage.placementAwardCount || 0
+        flows.push({
+            key: 'placement',
+            ariaLabel: t('tokens.placement', {count}),
+            content: <PlacementAwardsList awards={awards} count={count} t={t}/>,
+        })
+    }
+
+    return flows
 }
 
-function buildRegulationTokens(
+function buildPhaseRuleColumns(
     stage: OrganisationStageHubSummary,
     t: Translate,
-): RuleToken[] {
-    const tokens: RuleToken[] = []
-    const extraPeriods = stage.extraTimeNumberOfPeriods
-    const extraMinutes = stage.extraTimeDurationPerPeriod
-    const kicks = stage.penaltyInitialKicksPerTeam
+): PhaseRuleColumn[] {
+    const columns: PhaseRuleColumn[] = []
 
-    tokens.push({
-        key: 'match',
-        ariaLabel: t('tokens.matchAria', {
-            periods: stage.numberOfPeriods,
-            minutes: stage.durationPerPeriod,
-        }),
-        content: (
-            <>
-                <LucideIcon icon={Clock3} size="sm"/>
-                <span className="regulation-token__chips">
-          <span
-              className="regulation-chip"
-              title={t('tokens.matchChipTip', {
-                  periods: stage.numberOfPeriods,
-                  minutes: stage.durationPerPeriod,
-              })}
-          >
-            {t('tokens.matchChip', {
+    const matchItems: PhaseRuleItem[] = [
+        {
+            key: 'duration',
+            label: t('tokens.matchSummary', {
                 periods: stage.numberOfPeriods,
                 minutes: stage.durationPerPeriod,
-            })}
-          </span>
-                    {stage.hasExtraTime ? (
-                        <span
-                            className="regulation-chip regulation-chip--soft"
-                            title={
-                                extraPeriods != null && extraMinutes != null
-                                    ? t('tokens.extraTimeTip', {
-                                        periods: extraPeriods,
-                                        minutes: extraMinutes,
-                                    })
-                                    : t('tokens.extraTimeTipSimple')
-                            }
-                        >
-              {t('tokens.extraTime')}
-            </span>
-                    ) : null}
-                    {stage.hasPenaltyShootout ? (
-                        <span
-                            className="regulation-chip regulation-chip--soft"
-                            title={
-                                kicks != null
-                                    ? t('tokens.penaltiesTip', {count: kicks})
-                                    : t('tokens.penaltiesTipSimple')
-                            }
-                        >
-              {t('tokens.penalties')}
-            </span>
-                    ) : null}
-        </span>
-            </>
-        ),
+            }),
+            icon: Clock3,
+        },
+    ]
+    if (stage.hasExtraTime) {
+        const periods = stage.extraTimeNumberOfPeriods
+        const minutes = stage.extraTimeDurationPerPeriod
+        const hasDetail = periods != null && minutes != null
+        matchItems.push({
+            key: 'extra-time',
+            label: (
+                <LabelWithDetail
+                    text={t('tokens.extraTime')}
+                    detail={
+                        hasDetail
+                            ? t('tokens.extraTimeDetail', {periods, minutes})
+                            : undefined
+                    }
+                />
+            ),
+            icon: Timer,
+            title: hasDetail
+                ? t('tokens.extraTimeTip', {periods, minutes})
+                : t('tokens.extraTime'),
+        })
+    }
+    if (stage.hasPenaltyShootout) {
+        const kicks = stage.penaltyInitialKicksPerTeam
+        matchItems.push({
+            key: 'penalties',
+            label: (
+                <LabelWithDetail
+                    text={t('tokens.penalties')}
+                    detail={
+                        kicks != null
+                            ? t('tokens.penaltiesDetail', {count: kicks})
+                            : undefined
+                    }
+                />
+            ),
+            icon: Goal,
+            title:
+                kicks != null
+                    ? t('tokens.penaltiesTip', {count: kicks})
+                    : t('tokens.penalties'),
+        })
+    }
+    columns.push({
+        key: 'match',
+        title: t('columns.match'),
+        icon: Volleyball,
+        items: matchItems,
     })
+
+    if (stage.hasTieFormat && stage.numberOfLegs != null) {
+        const twoLegs = stage.numberOfLegs > 1
+        const tieItems: PhaseRuleItem[] = [
+            {
+                key: 'legs',
+                label: twoLegs ? t('tokens.tieTwoLegs') : t('tokens.tieOneLeg'),
+                icon: twoLegs ? ArrowLeftRight : ArrowRight,
+                title: twoLegs ? t('tokens.tieTwoLegsTip') : t('tokens.tieOneLegTip'),
+            },
+        ]
+        if (stage.aggregateScoring) {
+            tieItems.push({
+                key: 'aggregate',
+                label: t('tokens.tieAggregate'),
+                icon: Sigma,
+                title: t('tokens.tieAggregateTip'),
+            })
+        }
+        if (stage.hasAwayGoalsRule) {
+            tieItems.push({
+                key: 'away-goals',
+                label: t('tokens.tieAwayGoals'),
+                icon: MapPin,
+                title: t('tokens.tieAwayGoalsTip'),
+            })
+        }
+        if (stage.hasTieExtraTime) {
+            tieItems.push({
+                key: 'tie-extra-time',
+                label: t('tokens.tieExtraTime'),
+                icon: Timer,
+                title: t('tokens.tieExtraTimeTip'),
+            })
+        }
+        if (stage.hasTiePenaltyShootout) {
+            tieItems.push({
+                key: 'tie-penalties',
+                label: t('tokens.tiePenalties'),
+                icon: Goal,
+                title: t('tokens.tiePenaltiesTip'),
+            })
+        }
+        columns.push({
+            key: 'tie',
+            title: t('columns.tie'),
+            icon: Handshake,
+            items: tieItems,
+        })
+    }
+
+    if (stage.hasDrawRules) {
+        const pots = stage.numberOfPots
+        const items: PhaseRuleItem[] = [
+            {
+                key: 'random',
+                label: t('tokens.drawRandom'),
+                icon: Dices,
+                title: t('tokens.drawRandomTip'),
+            },
+        ]
+        if (pots != null && pots > 0) {
+            items.push({
+                key: 'pots',
+                label: (
+                    <span className="regulation-rule-list__label-row">
+                        <Chip tone="soft" title={t('tokens.drawPotsTip', {count: pots})}>
+                            {pots}
+                        </Chip>
+                        <span>{t('tokens.drawPotsUnit', {count: pots})}</span>
+                    </span>
+                ),
+                icon: Layers,
+                title: t('tokens.drawPotsTip', {count: pots}),
+            })
+        }
+        columns.push({
+            key: 'draw',
+            title: t('columns.draw'),
+            icon: Shuffle,
+            items,
+        })
+    }
 
     if (
         stage.hasStandingRules !== false &&
@@ -922,86 +1235,117 @@ function buildRegulationTokens(
         stage.drawPoints != null &&
         stage.lossPoints != null
     ) {
-        tokens.push({
+        const criteria = stage.rankingCriteria ?? []
+        columns.push({
             key: 'standing',
-            ariaLabel: t('tokens.standingAria', {
-                win: stage.winPoints,
-                draw: stage.drawPoints,
-                loss: stage.lossPoints,
-            }),
-            content: (
-                <>
-                    <LucideIcon icon={Trophy} size="sm"/>
-                    <span className="regulation-token__chips">
-            <span
-                className="regulation-chip regulation-chip--win"
-                title={t('tokens.standingWinTip', {value: stage.winPoints})}
-            >
-              {stage.winPoints}
-            </span>
-            <span
-                className="regulation-chip regulation-chip--draw"
-                title={t('tokens.standingDrawTip', {value: stage.drawPoints})}
-            >
-              {stage.drawPoints}
-            </span>
-            <span
-                className="regulation-chip regulation-chip--loss"
-                title={t('tokens.standingLossTip', {value: stage.lossPoints})}
-            >
-              {stage.lossPoints}
-            </span>
-          </span>
-                </>
-            ),
+            title: t('columns.standing'),
+            icon: Trophy,
+            chips: [
+                {
+                    key: 'win',
+                    label: stage.winPoints,
+                    tone: 'win',
+                    title: t('tokens.standingWinTip', {value: stage.winPoints}),
+                },
+                {
+                    key: 'draw',
+                    label: stage.drawPoints,
+                    tone: 'draw',
+                    title: t('tokens.standingDrawTip', {value: stage.drawPoints}),
+                },
+                {
+                    key: 'loss',
+                    label: stage.lossPoints,
+                    tone: 'loss',
+                    title: t('tokens.standingLossTip', {value: stage.lossPoints}),
+                },
+            ],
+            items: criteria.map((criterion, index) => ({
+                key: criterion,
+                label: criterionLabel(criterion, t),
+                index: index + 1,
+            })),
         })
     }
 
-    if (stage.hasDrawRules) {
-        tokens.push({
-            key: 'draw',
-            ariaLabel: t('tokens.drawAutoTip'),
-            content: (
-                <>
-                    <LucideIcon icon={Shuffle} size="sm"/>
-                    <span
-                        className="regulation-chip regulation-chip--soft"
-                        title={t('tokens.drawAutoTip')}
+    return columns
+}
+
+function PlacementAwardsList({
+    awards,
+    count,
+    t,
+}: {
+    awards: OrganisationPlacementAward[]
+    count: number
+    t: Translate
+}) {
+    if (awards.length === 0) {
+        return (
+            <span className="regulation-flow__caption" title={t('tokens.placementTip', {count})}>
+                {t('tokens.placement', {count})}
+            </span>
+        )
+    }
+
+    return (
+        <ul
+            className="regulation-placement"
+            aria-label={t('tokens.placementTip', {count: awards.length})}
+        >
+            {awards.map((award) => {
+                const outcome = t(`tokens.outcome.${award.outcome}`)
+                const aria = t('tokens.placementPathAria', {
+                    outcome,
+                    rank: award.rank,
+                })
+                return (
+                    <li
+                        key={`${award.rank}-${award.outcome}`}
+                        className="regulation-placement__item"
+                        title={aria}
+                        aria-label={aria}
                     >
-            {t('tokens.drawAuto')}
-          </span>
-                </>
-            ),
-        })
-    }
+                        <span className="regulation-criteria__n" aria-hidden="true">
+                            {award.rank}
+                        </span>
+                        <span className="regulation-placement__text">
+                            {outcome}
+                            <span className="regulation-detail">
+                                {t('tokens.placementRank', {rank: award.rank})}
+                            </span>
+                        </span>
+                    </li>
+                )
+            })}
+        </ul>
+    )
+}
 
-    if (stage.hasTieFormat && stage.numberOfLegs != null) {
-        const twoLegs = stage.numberOfLegs > 1
-        const label = twoLegs ? t('tokens.tieTwoLegs') : t('tokens.tieOneLeg')
-        const tip = twoLegs ? t('tokens.tieTwoLegsTip') : t('tokens.tieOneLegTip')
-        tokens.push({
-            key: 'tie',
-            ariaLabel: tip,
-            content: (
-                <>
-                    {twoLegs ? (
-                        <LucideIcon icon={ArrowLeftRight} size="sm"/>
-                    ) : (
-                        <LucideIcon icon={Medal} size="sm"/>
-                    )}
-                    <span className="regulation-chip regulation-chip--soft" title={tip}>
-            {label}
-          </span>
-                </>
-            ),
-        })
-    }
 
-    return tokens
+// —— Shared labels ——
+
+function LabelWithDetail({
+    text,
+    detail,
+}: {
+    text: string
+    detail?: string
+}) {
+    return (
+        <>
+            {text}
+            {detail ? <span className="regulation-detail">{detail}</span> : null}
+        </>
+    )
 }
 
 function criterionLabel(criterion: RankingCriterion, t: Translate) {
     return t(`criteria.${criterion}`, {defaultValue: criterion})
+}
+
+function disciplineLabel(type: DisciplinaryType, t: Translate) {
+    return t(`discipline.${type}`, {defaultValue: type})
 }
 
 function periodLabel(n: number, t: Translate) {

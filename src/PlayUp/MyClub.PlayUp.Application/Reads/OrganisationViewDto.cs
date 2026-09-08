@@ -98,6 +98,8 @@ public sealed record OrganisationFormatSummaryDto(
 /// <param name="HasPenaltyShootout">Match PenaltyShootoutPolicy present.</param>
 /// <param name="PenaltyInitialKicksPerTeam">TAB initial kicks when HasPenaltyShootout.</param>
 /// <param name="RankingCriteria">Ordered standing ranking criteria.</param>
+/// <param name="ForfeitWinnerGoals">Administrative forfeit goals for the winning side.</param>
+/// <param name="ForfeitLoserGoals">Administrative forfeit goals for the losing side.</param>
 public sealed record OrganisationRegulationSummaryDto(
     int MinimumTeams,
     int MaximumTeams,
@@ -113,7 +115,9 @@ public sealed record OrganisationRegulationSummaryDto(
     int? ExtraTimeNumberOfPeriods = null,
     bool HasPenaltyShootout = false,
     int? PenaltyInitialKicksPerTeam = null,
-    IReadOnlyList<RankingCriterion>? RankingCriteria = null);
+    IReadOnlyList<RankingCriterion>? RankingCriteria = null,
+    int ForfeitWinnerGoals = 0,
+    int ForfeitLoserGoals = 0);
 
 /// <summary>Structure counts for the primary stage.</summary>
 /// <param name="GroupCount">Groups.</param>
@@ -182,9 +186,18 @@ public sealed record OrganisationReadinessDto(
 /// <param name="QualificationPathCount">Qualification path count.</param>
 /// <param name="HasProgressionRules">ProgressionRules present.</param>
 /// <param name="ProgressionPathCount">Progression path count.</param>
-/// <param name="HasTieFormat">TieFormat present.</param>
+/// <param name="HasTieFormat">TieFormat present (stage default or round).</param>
 /// <param name="NumberOfLegs">TieFormat legs when present (default one-leg if none).</param>
 /// <param name="AggregateScoring">TieFormat aggregate scoring when multi-leg.</param>
+/// <param name="HasAwayGoalsRule">Away-goals rule on the effective TieFormat.</param>
+/// <param name="HasTieExtraTime">Extra-time rule on the effective TieFormat (confrontation).</param>
+/// <param name="HasTiePenaltyShootout">Penalty-shootout rule on the effective TieFormat.</param>
+/// <param name="RankingCriteria">Stage StandingRules ranking criteria when HasStandingRules.</param>
+/// <param name="HasPlacementAwardRules">PlacementAwardRules present.</param>
+/// <param name="PlacementAwardCount">Placement award path count.</param>
+/// <param name="PlacementAwards">Placement paths (rank + outcome), ordered by rank.</param>
+/// <param name="FormatKind">Inferred structure format for this stage.</param>
+/// <param name="SwissRoundCount">Planned Swiss rounds when FormatKind is Swiss.</param>
 public sealed record OrganisationStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -213,4 +226,20 @@ public sealed record OrganisationStageHubSummaryDto(
     int ProgressionPathCount,
     bool HasTieFormat,
     int? NumberOfLegs,
-    bool? AggregateScoring);
+    bool? AggregateScoring,
+    bool HasAwayGoalsRule = false,
+    bool HasTieExtraTime = false,
+    bool HasTiePenaltyShootout = false,
+    IReadOnlyList<RankingCriterion>? RankingCriteria = null,
+    bool HasPlacementAwardRules = false,
+    int PlacementAwardCount = 0,
+    IReadOnlyList<OrganisationPlacementAwardDto>? PlacementAwards = null,
+    StructureFormatKind? FormatKind = null,
+    int? SwissRoundCount = null);
+
+/// <summary>One placement-award path for the Règlement hub.</summary>
+/// <param name="Rank">1-based final competition rank.</param>
+/// <param name="Outcome">Winner or Loser of the source confrontation.</param>
+public sealed record OrganisationPlacementAwardDto(
+    int Rank,
+    ProgressionOutcome Outcome);

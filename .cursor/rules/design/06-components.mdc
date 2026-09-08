@@ -26,6 +26,7 @@ Search these before building anything new. Reference implementations live in
 | Match Hero | Match object header, 3 states (scheduled/live/finished) | `design-system/components/MatchHero.tsx` |
 | `TeamCrest` | Team initials block | `design-system/TeamCrest.tsx` |
 | Status pill | `ds-status` tones (success/attention/error/info/neutral/live) | design system CSS |
+| `Chip` | Fact / rule token (neutral, soft, accent, win/draw/loss) — ≠ Status | `design-system/components/Chip.tsx` |
 | `Dialog` | Overlay centré : titre, corps, footer actions | `design-system/components/Dialog.tsx` |
 | `Toaster` / `notify` | Feedback événement éphémère (bas-droit canvas) | `design-system/components/Toaster.tsx`, `toastStore.ts` |
 | `Alert` | Inline soft-fill + tone icon (Ant Alert–inspired) | `design-system/components/Alert.tsx` |

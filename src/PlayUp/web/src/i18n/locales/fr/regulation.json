@@ -3,17 +3,31 @@
     "aria": "Équipes : {{min}} à {{max}}",
     "min": "Min.",
     "max": "Max.",
-    "notice": "Au moins {{min}} équipes sont requises pour démarrer la compétition. Le plafond est de {{max}} inscriptions — au-delà, aucune équipe supplémentaire ne peut être ajoutée. La taille de la structure se règle ailleurs."
+    "notice": "Au moins {{min}} équipes sont requises pour démarrer la compétition. Le plafond est de {{max}} inscriptions."
+  },
+  "columns": {
+    "match": "Match",
+    "tie": "Confrontation",
+    "draw": "Tirage",
+    "standing": "Classement"
   },
   "criteria": {
     "aria": "Ordre de départage",
     "heading": "Ordre de départage",
     "Points": "Points",
-    "GoalDifference": "Goal average",
+    "GoalDifference": "Différence de buts",
     "GoalsFor": "Buts marqués",
     "GoalsAgainst": "Buts encaissés",
     "Wins": "Victoires",
     "HeadToHead": "Confrontation directe"
+  },
+  "discipline": {
+    "aria": "Cartons autorisés",
+    "subtitle": "Carton(s) autorisé(s)",
+    "empty": "Aucun carton autorisé",
+    "Yellow": "Jaune",
+    "Red": "Rouge",
+    "White": "Blanc"
   },
   "editRegulation": "Modifier le règlement",
   "editRegulationDisabledHint": "Le règlement ne peut pas être modifié dans cet état.",
@@ -21,16 +35,16 @@
   "families": {
     "entries": "Équipes",
     "match": "Match",
-    "standing": "Classement"
+    "standing": "Classement",
+    "discipline": "Disciplinaire"
+  },
+  "forfeit": {
+    "heading": "Forfait",
+    "hint": "Score administratif",
+    "aria": "Score administratif en cas de forfait : {{winner}}–{{loser}}"
   },
   "frameHeading": "Cadre de la compétition",
-  "frameNote": "Les règles générales s’appliquent à l’ensemble de la compétition.",
-  "standingNote": "Ce barème s’applique aux phases qui produisent un classement (ex. poules). Les phases à élimination directe n’en ont pas.",
   "loadError": "Impossible de charger le règlement.",
-  "matchFlags": {
-    "extraTime": "Prolongations",
-    "penalties": "Tirs au but"
-  },
   "matchTimeline": {
     "aria": "Déroulement du match",
     "regulationHeading": "Temps réglementaire",
@@ -41,27 +55,19 @@
     "periodNth": "{{n}}e MT",
     "extra": "PR{{n}}",
     "break": "Pause",
-    "tab": "TAB",
     "tabAria": "{{count}} tirs au but par équipe",
-    "tabMeta": "{{count}} tirs / équipe",
     "maxAria": "Durée maximale du match {{minutes}} minutes, temps réglementaire et prolongations inclus",
     "maxLabel": "max.",
     "maxUnit": "min",
     "maxHint": "Réglementaire + prolongations"
   },
   "openInStructure": "Structure",
-  "phasesHeading": "Phases",
-  "phaseStructureAria": "Structure de la phase",
   "phaseRegulationAria": "Règlement de la phase",
-  "phaseKind": {
-    "groups": "Phase de groupe",
-    "cup": "Élimination directe",
-    "championship": "Championnat",
-    "swiss": "Suisse"
-  },
+  "phaseStructureAria": "Structure de la phase",
+  "phasesHeading": "Phases",
   "points": {
-    "aria": "Attribution des points",
-    "heading": "Attribution des points",
+    "aria": "Barème de points",
+    "heading": "Barème de points",
     "win": "Victoire",
     "draw": "Nul",
     "loss": "Défaite",
@@ -69,35 +75,55 @@
   },
   "schematic": {
     "bracket": "Tableau éliminatoire",
-    "groups": "{{count}} poules"
+    "groups": "{{count}} groupes",
+    "championship": "Championnat · {{teams}} équipes",
+    "swiss": "Système suisse · {{rounds}} rondes"
   },
   "title": "Règlement",
   "tokens": {
     "aria": "Règles de la phase",
-    "matchAria": "Durée : {{periods}} périodes de {{minutes}} minutes",
-    "matchChip": "{{periods}}×{{minutes}}′",
-    "matchChipTip": "{{periods}} périodes de {{minutes}} minutes",
-    "extraTime": "PR",
+    "matchSummary": "{{periods}}×{{minutes}}′",
+    "extraTime": "Prolongations",
+    "extraTimeDetail": " · {{periods}}×{{minutes}}′",
     "extraTimeTip": "Prolongations : {{periods}} périodes de {{minutes}} minutes",
-    "extraTimeTipSimple": "Prolongations",
     "penalties": "TAB",
+    "penaltiesDetail": " · {{count}} tirs",
     "penaltiesTip": "Tirs au but : {{count}} tirs / équipe",
-    "penaltiesTipSimple": "Tirs au but",
-    "standingAria": "Points : {{win}} / {{draw}} / {{loss}}",
     "standingWinTip": "Victoire : {{value}} pts",
     "standingDrawTip": "Nul : {{value}} pts",
     "standingLossTip": "Défaite : {{value}} pts",
-    "qualification": "{{count}} qualifiés",
-    "qualificationTip": "{{from}} équipes → {{count}} qualifiés pour la suite",
-    "qualifyOut": "qualifiés",
-    "drawAuto": "Auto",
-    "drawAutoTip": "Tirage au sort automatique",
-    "progression": "{{count}} passages",
-    "progressionTip": "{{count}} règles de passage vers le tour suivant",
+    "qualification": "{{count}} chemins de qualification",
+    "qualificationTip": "{{from}} équipes · {{count}} chemins de qualification vers la suite",
+    "qualifyOut": "chemins",
+    "drawRandom": "Tirage aléatoire",
+    "drawRandomTip": "Tirage au sort aléatoire",
+    "drawPotsUnit_one": "pot",
+    "drawPotsUnit_other": "pots",
+    "drawPotsTip": "Organisation en {{count}} pots",
+    "progression": "{{count}} progressions",
+    "progressionOut_one": "progression",
+    "progressionOut_other": "progressions",
+    "progressionTip": "{{count}} progressions vers le tour suivant",
     "tieTwoLegs": "Aller-retour",
     "tieTwoLegsTip": "Confrontation en deux matchs",
     "tieOneLeg": "Match unique",
-    "tieOneLegTip": "Confrontation en un seul match"
+    "tieOneLegTip": "Confrontation en un seul match",
+    "tieAggregate": "Cumul des scores",
+    "tieAggregateTip": "Scores des manches cumulés",
+    "tieAwayGoals": "Buts à l’extérieur",
+    "tieAwayGoalsTip": "Règle des buts à l’extérieur",
+    "tieExtraTime": "Prolongations",
+    "tieExtraTimeTip": "Prolongations pour départager la confrontation",
+    "tiePenalties": "TAB",
+    "tiePenaltiesTip": "Tirs au but pour départager la confrontation",
+    "placement": "{{count}} classements",
+    "placementTip": "{{count}} attributions de place finale",
+    "placementPathAria": "{{outcome}} → place {{rank}}",
+    "placementRank": " → place {{rank}}",
+    "outcome": {
+      "Winner": "Vainqueur",
+      "Loser": "Perdant"
+    }
   },
   "topology": {
     "aria": "{{teams}} équipes · {{matches}} matchs",

@@ -1,0 +1,43 @@
+/*
+ * Fact chip — compact rule / meta label. Distinct from Status (lifecycle tone).
+ */
+
+.ds-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-control);
+    background: var(--color-surface-secondary);
+    color: var(--color-text-primary);
+    font-size: var(--text-meta);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--leading-tight);
+    white-space: nowrap;
+    cursor: help;
+}
+
+.ds-chip--soft {
+    background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
+    color: var(--color-brand);
+}
+
+.ds-chip--accent {
+    background: color-mix(in srgb, var(--color-brand) 22%, var(--color-surface));
+    color: var(--color-brand);
+}
+
+.ds-chip--win {
+    background: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
+    color: var(--color-success);
+}
+
+.ds-chip--draw {
+    background: color-mix(in srgb, var(--color-attention) 16%, var(--color-surface));
+    color: var(--color-attention);
+}
+
+.ds-chip--loss {
+    background: var(--color-surface-secondary);
+    color: var(--color-text-secondary);
+}
