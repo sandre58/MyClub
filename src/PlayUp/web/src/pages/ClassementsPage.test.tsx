@@ -1,30 +1,30 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, fetchConsultation, fetchOrganisationView } from '../api'
-import { queryKeys } from '../queryKeys'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, within } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError, fetchConsultation, fetchOrganisationView } from '../api';
+import { queryKeys } from '../queryKeys';
 import type {
   ConsultationStandingRow,
   ConsultationView,
   OrganisationView,
-} from '../types'
-import { ClassementsPage } from './ClassementsPage'
+} from '../types';
+import { ClassementsPage } from './ClassementsPage';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchConsultation: vi.fn(),
     fetchOrganisationView: vi.fn(),
-  }
-})
+  };
+});
 
-const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-const entryA = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-const entryB = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
-const entryC = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-const stageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const entryA = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+const entryB = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+const entryC = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+const stageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 
 function organisationView(
   overrides: Partial<OrganisationView> = {},
@@ -75,7 +75,7 @@ function organisationView(
     },
     stages: [],
     ...overrides,
-  }
+  };
 }
 
 function standingRow(
@@ -92,7 +92,7 @@ function standingRow(
     goalDifference: 0,
     points: 0,
     ...overrides,
-  }
+  };
 }
 
 function consultationView(
@@ -162,7 +162,7 @@ function consultationView(
       stages: [],
     },
     ...overrides,
-  }
+  };
 }
 
 function renderClassementsPage() {
@@ -171,11 +171,13 @@ function renderClassementsPage() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-  })
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/competitions/${competitionId}/classements`]}>
+      <MemoryRouter
+        initialEntries={[`/competitions/${competitionId}/classements`]}
+      >
         <Routes>
           <Route
             path="/competitions/:competitionId/classements"
@@ -192,64 +194,64 @@ function renderClassementsPage() {
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-  )
+  );
 
-  return queryClient
+  return queryClient;
 }
 
 describe('ClassementsPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
-  })
+    vi.clearAllMocks();
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+  });
 
   it('shows loading while consultation is pending', () => {
-    vi.mocked(fetchConsultation).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchConsultation).mockReturnValue(new Promise(() => {}));
 
-    renderClassementsPage()
+    renderClassementsPage();
 
     expect(screen.getByRole('status')).toHaveTextContent(
       'Chargement des classements…',
-    )
-  })
+    );
+  });
 
   it('shows error when the GET fails', async () => {
     vi.mocked(fetchConsultation).mockRejectedValue(
       new ApiError(500, 'Server error'),
-    )
+    );
 
-    renderClassementsPage()
+    renderClassementsPage();
 
-    expect(await screen.findByRole('alert')).toBeInTheDocument()
-  })
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+  });
 
   it('uses the consultation query key and a single fetch', async () => {
-    vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
-    const client = renderClassementsPage()
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
+    const client = renderClassementsPage();
 
-    await screen.findByTestId(`standing-row-${entryA}`)
+    await screen.findByTestId(`standing-row-${entryA}`);
 
-    expect(fetchConsultation).toHaveBeenCalledTimes(1)
-    expect(fetchConsultation).toHaveBeenCalledWith(competitionId)
+    expect(fetchConsultation).toHaveBeenCalledTimes(1);
+    expect(fetchConsultation).toHaveBeenCalledWith(competitionId);
     expect(
       client.getQueryData(queryKeys.competitions.consultation(competitionId)),
-    ).toBeTruthy()
-  })
+    ).toBeTruthy();
+  });
 
   it('renders applicable standings rows from the Read', async () => {
-    vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
 
-    renderClassementsPage()
+    renderClassementsPage();
 
-    expect(await screen.findByText('Classement général')).toBeInTheDocument()
+    expect(await screen.findByText('Classement général')).toBeInTheDocument();
     expect(screen.getByTestId(`standing-row-${entryA}`)).toHaveTextContent(
       'Alpha',
-    )
+    );
     expect(screen.getByTestId(`standing-row-${entryB}`)).toHaveTextContent(
       'Beta',
-    )
-    expect(screen.getByText('Ligue Printemps')).toBeInTheDocument()
-  })
+    );
+    expect(screen.getByText('Ligue Printemps')).toBeInTheDocument();
+  });
 
   it('preserves Read row order (no client sort)', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(
@@ -288,18 +290,16 @@ describe('ClassementsPage', () => {
           ],
         },
       }),
-    )
+    );
 
-    renderClassementsPage()
+    renderClassementsPage();
 
-    const table = await screen.findByRole('table')
-    const bodies = within(table).getAllByRole('row').slice(1)
-    expect(bodies.map((row) => within(row).getAllByRole('cell')[1].textContent)).toEqual([
-      'Gamma',
-      'Alpha',
-      'Beta',
-    ])
-  })
+    const table = await screen.findByRole('table');
+    const bodies = within(table).getAllByRole('row').slice(1);
+    expect(
+      bodies.map((row) => within(row).getAllByRole('cell')[1].textContent),
+    ).toEqual(['Gamma', 'Alpha', 'Beta']);
+  });
 
   it('displays Read Diff / Pts / Position without recalculating', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(
@@ -329,19 +329,19 @@ describe('ClassementsPage', () => {
           ],
         },
       }),
-    )
+    );
 
-    renderClassementsPage()
+    renderClassementsPage();
 
-    const row = await screen.findByTestId(`standing-row-${entryA}`)
-    const cells = within(row).getAllByRole('cell')
-    expect(cells[0]).toHaveTextContent('7')
-    expect(cells[6]).toHaveTextContent('20')
-    expect(cells[7]).toHaveTextContent('10')
-    expect(cells[8]).toHaveTextContent('+99')
-    expect(cells[9]).toHaveTextContent('42')
-    expect(cells[8]).not.toHaveTextContent('+10')
-  })
+    const row = await screen.findByTestId(`standing-row-${entryA}`);
+    const cells = within(row).getAllByRole('cell');
+    expect(cells[0]).toHaveTextContent('7');
+    expect(cells[6]).toHaveTextContent('20');
+    expect(cells[7]).toHaveTextContent('10');
+    expect(cells[8]).toHaveTextContent('+99');
+    expect(cells[9]).toHaveTextContent('42');
+    expect(cells[8]).not.toHaveTextContent('+10');
+  });
 
   it('renders multiple group tables from the contract', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(
@@ -383,13 +383,13 @@ describe('ClassementsPage', () => {
           ],
         },
       }),
-    )
+    );
 
-    renderClassementsPage()
+    renderClassementsPage();
 
-    expect(await screen.findByText('Groupe A')).toBeInTheDocument()
-    expect(screen.getByText('Groupe B')).toBeInTheDocument()
-  })
+    expect(await screen.findByText('Groupe A')).toBeInTheDocument();
+    expect(screen.getByText('Groupe B')).toBeInTheDocument();
+  });
 
   it('shows NotApplicable with CupFormat reason', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(
@@ -402,17 +402,17 @@ describe('ClassementsPage', () => {
           tables: [],
         },
       }),
-    )
+    );
 
-    renderClassementsPage()
+    renderClassementsPage();
 
     expect(
       await screen.findByText('Classement non applicable'),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Ce format (coupe) ne produit pas de classement.'),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('shows NotApplicable with NoStructure reason', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(
@@ -425,16 +425,16 @@ describe('ClassementsPage', () => {
           tables: [],
         },
       }),
-    )
+    );
 
-    renderClassementsPage()
+    renderClassementsPage();
 
     expect(
       await screen.findByText(
         'Aucune structure sportive ne permet encore de calculer un classement.',
       ),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('shows empty when applicable with empty rows', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(
@@ -454,64 +454,66 @@ describe('ClassementsPage', () => {
           ],
         },
       }),
-    )
+    );
 
-    renderClassementsPage()
+    renderClassementsPage();
 
     expect(
       await screen.findByText('Aucun classement à afficher pour le moment.'),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('renders the last matchday slice from consultation results', async () => {
-    vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
 
-    renderClassementsPage()
+    renderClassementsPage();
 
-    expect(await screen.findByRole('heading', { name: 'Journée 1' })).toBeInTheDocument()
-    expect(await screen.findByText('3–1')).toBeInTheDocument()
-    expect(screen.queryByText('Finished')).not.toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Journée 1' }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText('3–1')).toBeInTheDocument();
+    expect(screen.queryByText('Finished')).not.toBeInTheDocument();
 
     const matchLink = screen.getByRole('link', {
       name: /Alpha.*Beta.*3–1/i,
-    })
+    });
     expect(matchLink).toHaveAttribute(
       'href',
       '/matches/ffffffff-ffff-ffff-ffff-ffffffffffff',
-    )
+    );
 
     const allMatches = screen.getByRole('link', {
       name: /Voir tous les matchs/i,
-    })
+    });
     expect(allMatches).toHaveAttribute(
       'href',
       `/competitions/${competitionId}/matches`,
-    )
-  })
+    );
+  });
 
   it('renders regulation points from organisation', async () => {
-    vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
 
-    renderClassementsPage()
+    renderClassementsPage();
 
-    expect(await screen.findByText('3 pts')).toBeInTheDocument()
-    expect(screen.getByText('1 pts')).toBeInTheDocument()
-    expect(screen.getByText('0 pts')).toBeInTheDocument()
-    expect(screen.getByText('2 × 45 min')).toBeInTheDocument()
-    expect(screen.getByText('2 – 64 équipes')).toBeInTheDocument()
-  })
+    expect(await screen.findByText('3 pts')).toBeInTheDocument();
+    expect(screen.getByText('1 pts')).toBeInTheDocument();
+    expect(screen.getByText('0 pts')).toBeInTheDocument();
+    expect(screen.getByText('2 × 45 min')).toBeInTheDocument();
+    expect(screen.getByText('2 – 64 équipes')).toBeInTheDocument();
+  });
 
   it('links the regulation panel to organisation', async () => {
-    vi.mocked(fetchConsultation).mockResolvedValue(consultationView())
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
 
-    renderClassementsPage()
+    renderClassementsPage();
 
     const link = await screen.findByRole('link', {
       name: /Voir l’organisation/i,
-    })
+    });
     expect(link).toHaveAttribute(
       'href',
       `/competitions/${competitionId}/organisation`,
-    )
-  })
-})
+    );
+  });
+});

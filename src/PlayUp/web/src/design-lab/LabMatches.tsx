@@ -1,16 +1,16 @@
-import { labRounds, labStandings } from './labData'
-import { OverviewAttentionIcon } from '../design-system/icons/overviewIcons'
-import { AttentionRow } from '../design-system/components/AttentionRow'
-import { MatchRound } from '../design-system/components/MatchRound'
-import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus'
-import { MatchRow, PanelHead } from './LabShared'
+import { labRounds, labStandings } from './labData';
+import { OverviewAttentionIcon } from '../design-system/icons/overviewIcons';
+import { AttentionRow } from '../design-system/components/AttentionRow';
+import { MatchRound } from '../design-system/components/MatchRound';
+import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus';
+import { MatchRow, PanelHead } from './LabShared';
 
 /**
  * Matchs — calendrier sportif par journée. Un seul panneau, journées en
  * sections typographiques (pas de boîtes imbriquées). Gate grille passé.
  */
 export function LabMatches() {
-  const leader = labStandings[0]
+  const leader = labStandings[0];
 
   return (
     <div className="ds-page">
@@ -83,5 +83,5 @@ export function LabMatches() {
         </section>
       </div>
     </div>
-  )
+  );
 }

@@ -6,22 +6,22 @@ import {
   type ChangeEvent,
   type InputHTMLAttributes,
   type ReactNode,
-} from 'react'
-import { CloseIcon } from '../icons/shellIcons'
-import { CheckIcon, CopyIcon } from '../icons/overviewIcons'
+} from 'react';
+import { CloseIcon } from '../icons/shellIcons';
+import { CheckIcon, CopyIcon } from '../icons/overviewIcons';
 
 export type TextInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'className' | 'size'
 > & {
-  leadingIcon?: ReactNode
-  invalid?: boolean
-  allowClear?: boolean
-  clearLabel?: string
-  allowCopy?: boolean
-  copyLabel?: string
-  copiedLabel?: string
-}
+  leadingIcon?: ReactNode;
+  invalid?: boolean;
+  allowClear?: boolean;
+  clearLabel?: string;
+  allowCopy?: boolean;
+  copyLabel?: string;
+  copiedLabel?: string;
+};
 
 /**
  * Text input shell — optional leading icon, clear, copy (+ copied feedback).
@@ -41,40 +41,38 @@ export function TextInput({
   onChange,
   ...props
 }: TextInputProps) {
-  const autoId = useId()
-  const inputId = id ?? autoId
-  const controlled = value !== undefined
-  const [uncontrolled, setUncontrolled] = useState(
-    String(defaultValue ?? ''),
-  )
-  const [copied, setCopied] = useState(false)
-  const copiedTimer = useRef<number | null>(null)
-  const current = controlled ? String(value ?? '') : uncontrolled
-  const showClear = allowClear && current.length > 0 && !disabled
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  const controlled = value !== undefined;
+  const [uncontrolled, setUncontrolled] = useState(String(defaultValue ?? ''));
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<number | null>(null);
+  const current = controlled ? String(value ?? '') : uncontrolled;
+  const showClear = allowClear && current.length > 0 && !disabled;
 
   useEffect(() => {
     return () => {
       if (copiedTimer.current != null) {
-        window.clearTimeout(copiedTimer.current)
+        window.clearTimeout(copiedTimer.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     if (!controlled) {
-      setUncontrolled(event.target.value)
+      setUncontrolled(event.target.value);
     }
-    onChange?.(event)
+    onChange?.(event);
   }
 
   function emitValue(next: string) {
     if (!controlled) {
-      setUncontrolled(next)
+      setUncontrolled(next);
     }
     onChange?.({
       target: { value: next },
       currentTarget: { value: next },
-    } as ChangeEvent<HTMLInputElement>)
+    } as ChangeEvent<HTMLInputElement>);
   }
 
   async function copyValue() {
@@ -82,18 +80,18 @@ export function TextInput({
       current.length === 0 ||
       typeof navigator.clipboard?.writeText !== 'function'
     ) {
-      return
+      return;
     }
     try {
-      await navigator.clipboard.writeText(current)
-      setCopied(true)
+      await navigator.clipboard.writeText(current);
+      setCopied(true);
       if (copiedTimer.current != null) {
-        window.clearTimeout(copiedTimer.current)
+        window.clearTimeout(copiedTimer.current);
       }
       copiedTimer.current = window.setTimeout(() => {
-        setCopied(false)
-        copiedTimer.current = null
-      }, 1600)
+        setCopied(false);
+        copiedTimer.current = null;
+      }, 1600);
     } catch {
       /* clipboard may be denied */
     }
@@ -129,7 +127,7 @@ export function TextInput({
           disabled={disabled || current.length === 0}
           tabIndex={-1}
           onClick={() => {
-            void copyValue()
+            void copyValue();
           }}
         >
           {copied ? (
@@ -157,5 +155,5 @@ export function TextInput({
         </button>
       ) : null}
     </div>
-  )
+  );
 }

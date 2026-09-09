@@ -5,113 +5,113 @@
  */
 
 .ds-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-8);
-    min-height: var(--control-height);
-    padding: 0 var(--space-16);
-    border: var(--border-width) solid transparent;
-    border-radius: var(--radius-control);
-    background: transparent;
-    color: var(--color-ink);
-    font-family: inherit;
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-semibold);
-    line-height: 1;
-    text-decoration: none;
-    cursor: pointer;
-    transition:
-        background-color var(--motion-duration) var(--motion-easing),
-        border-color var(--motion-duration) var(--motion-easing),
-        color var(--motion-duration) var(--motion-easing);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: var(--control-height);
+  padding: 0 var(--space-16);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing),
+    color var(--motion-duration) var(--motion-easing);
 }
 
 .ds-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.48;
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .ds-btn:disabled:has(.ds-spinner) {
-    opacity: 1;
-    cursor: wait;
+  opacity: 1;
+  cursor: wait;
 }
 
 .ds-btn--primary {
-    background: var(--color-brand);
-    border-color: var(--color-brand);
-    color: var(--color-on-brand);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-on-brand);
 }
 
 .ds-btn--primary:hover:not(:disabled) {
-    background: var(--color-brand-hover);
-    border-color: var(--color-brand-hover);
-    color: var(--color-on-brand);
+  background: var(--color-brand-hover);
+  border-color: var(--color-brand-hover);
+  color: var(--color-on-brand);
 }
 
 /* Ancres stylées en bouton — ne jamais hériter du lien de contenu. */
 .ds-root a.ds-btn,
 .ds-root a.ds-btn:hover {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 .ds-root a.ds-btn--primary,
 .ds-root a.ds-btn--primary:hover {
-    background: var(--color-brand);
-    border-color: var(--color-brand);
-    color: var(--color-on-brand);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-on-brand);
 }
 
 .ds-root a.ds-btn--primary:hover:not(:disabled) {
-    background: var(--color-brand-hover);
-    border-color: var(--color-brand-hover);
-    color: var(--color-on-brand);
+  background: var(--color-brand-hover);
+  border-color: var(--color-brand-hover);
+  color: var(--color-on-brand);
 }
 
 .ds-root a.ds-btn--secondary,
 .ds-root a.ds-btn--secondary:hover {
-    color: var(--color-ink);
-    text-decoration: none;
+  color: var(--color-ink);
+  text-decoration: none;
 }
 
 .ds-root a.ds-btn--destructive,
 .ds-root a.ds-btn--destructive:hover {
-    color: var(--color-error);
-    text-decoration: none;
+  color: var(--color-error);
+  text-decoration: none;
 }
 
 .ds-btn--secondary {
-    background: var(--color-surface);
-    border-color: var(--color-border-strong);
-    color: var(--color-ink);
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
 }
 
 .ds-btn--secondary:hover:not(:disabled) {
-    background: var(--color-surface-secondary);
+  background: var(--color-surface-secondary);
 }
 
 .ds-btn--ghost:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-ink) 6%, transparent);
+  background: color-mix(in srgb, var(--color-ink) 6%, transparent);
 }
 
 .ds-btn--destructive {
-    color: var(--color-error);
-    border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));
 }
 
 .ds-btn--destructive:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
+  background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
 }
 
 .ds-icon-button {
-    width: var(--control-height);
-    min-width: var(--control-height);
-    padding: 0;
+  width: var(--control-height);
+  min-width: var(--control-height);
+  padding: 0;
 }
 
 .ds-icon-button svg {
-    width: 1.125rem;
-    height: 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 /*
@@ -119,21 +119,21 @@
  * Hit target 1.75rem, glyph sm. Not a React widget: compose ds-btn.
  */
 .ds-icon-toolbar {
-    display: inline-flex;
-    align-items: center;
-    gap: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
 }
 
 .ds-btn.ds-icon-button--compact {
-    width: 1.75rem;
-    min-width: 1.75rem;
-    height: 1.75rem;
-    min-height: 1.75rem;
+  width: 1.75rem;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  min-height: 1.75rem;
 }
 
 .ds-btn.ds-icon-button--compact svg {
-    width: var(--icon-size-sm);
-    height: var(--icon-size-sm);
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
 }
 
 /*
@@ -142,14 +142,14 @@
  * dismiss = secondary ink — quieter than affirm, still ghost chrome.
  */
 .ds-btn.ds-icon-button--affirm {
-    color: var(--color-brand);
+  color: var(--color-brand);
 }
 
 .ds-btn.ds-icon-button--affirm:hover:not(:disabled) {
-    color: var(--color-brand-hover);
-    background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  color: var(--color-brand-hover);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
 }
 
 .ds-btn.ds-icon-button--dismiss {
-    color: var(--color-text-secondary);
+  color: var(--color-text-secondary);
 }

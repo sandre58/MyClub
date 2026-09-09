@@ -9,70 +9,70 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
-} from 'react'
-import { CloseIcon, ChevronDownIcon, ChevronUpIcon } from '../icons/shellIcons'
-import { MinusIcon, PlusIcon } from '../icons/overviewIcons'
+} from 'react';
+import { CloseIcon, ChevronDownIcon, ChevronUpIcon } from '../icons/shellIcons';
+import { MinusIcon, PlusIcon } from '../icons/overviewIcons';
 
-export type InputNumberControlsLayout = 'end' | 'split'
+export type InputNumberControlsLayout = 'end' | 'split';
 
 export type InputNumberProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'className' | 'size' | 'type' | 'value' | 'defaultValue' | 'onChange'
 > & {
-  value?: number | null
-  defaultValue?: number | null
-  onChange?: (value: number | null) => void
-  min?: number
-  max?: number
-  step?: number
-  precision?: number
-  controls?: boolean
+  value?: number | null;
+  defaultValue?: number | null;
+  onChange?: (value: number | null) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  precision?: number;
+  controls?: boolean;
   /**
    * `end` — Ant-like vertical chevrons (default).
    * `split` — horizontal − value + (édition dense / mockup règlement).
    */
-  controlsLayout?: InputNumberControlsLayout
-  leadingIcon?: ReactNode
+  controlsLayout?: InputNumberControlsLayout;
+  leadingIcon?: ReactNode;
   /** Static trailing unit (e.g. « min ») — not an action affix. */
-  suffix?: ReactNode
-  invalid?: boolean
-  allowClear?: boolean
-  clearLabel?: string
-}
+  suffix?: ReactNode;
+  invalid?: boolean;
+  allowClear?: boolean;
+  clearLabel?: string;
+};
 
-const REPEAT_DELAY_MS = 400
-const REPEAT_INTERVAL_MS = 75
+const REPEAT_DELAY_MS = 400;
+const REPEAT_INTERVAL_MS = 75;
 
 function clamp(n: number, min?: number, max?: number): number {
-  let next = n
+  let next = n;
   if (min != null && next < min) {
-    next = min
+    next = min;
   }
   if (max != null && next > max) {
-    next = max
+    next = max;
   }
-  return next
+  return next;
 }
 
 function formatNumber(n: number, precision?: number): string {
   if (precision == null) {
-    return String(n)
+    return String(n);
   }
-  return n.toFixed(precision)
+  return n.toFixed(precision);
 }
 
 function parseInput(raw: string): number | null {
-  const trimmed = raw.trim()
+  const trimmed = raw.trim();
   if (
     trimmed.length === 0 ||
     trimmed === '-' ||
     trimmed === '.' ||
     trimmed === '-.'
   ) {
-    return null
+    return null;
   }
-  const n = Number(trimmed)
-  return Number.isFinite(n) ? n : null
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
@@ -101,97 +101,97 @@ export function InputNumber({
   onKeyDown,
   ...props
 }: InputNumberProps) {
-  const autoId = useId()
-  const inputId = id ?? autoId
-  const controlled = value !== undefined
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  const controlled = value !== undefined;
   const [uncontrolled, setUncontrolled] = useState<number | null>(
     defaultValue ?? null,
-  )
-  const current = controlled ? (value ?? null) : uncontrolled
+  );
+  const current = controlled ? (value ?? null) : uncontrolled;
   const [draft, setDraft] = useState(() =>
     current == null ? '' : formatNumber(current, precision),
-  )
-  const [focused, setFocused] = useState(false)
+  );
+  const [focused, setFocused] = useState(false);
 
-  const delayRef = useRef<number | null>(null)
-  const intervalRef = useRef<number | null>(null)
-  const stepByRef = useRef<(direction: 1 | -1) => void>(() => undefined)
-  const currentRef = useRef(current)
-  currentRef.current = current
+  const delayRef = useRef<number | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const stepByRef = useRef<(direction: 1 | -1) => void>(() => undefined);
+  const currentRef = useRef(current);
+  currentRef.current = current;
 
   useEffect(() => {
     if (!focused) {
-      setDraft(current == null ? '' : formatNumber(current, precision))
+      setDraft(current == null ? '' : formatNumber(current, precision));
     }
-  }, [current, precision, focused])
+  }, [current, precision, focused]);
 
   useEffect(() => {
     return () => {
-      stopRepeat()
-    }
-  }, [])
+      stopRepeat();
+    };
+  }, []);
 
-  const showClear = allowClear && current != null && !disabled
-  const split = controls && controlsLayout === 'split'
+  const showClear = allowClear && current != null && !disabled;
+  const split = controls && controlsLayout === 'split';
   const decDisabled =
-    disabled || (min != null && current != null && current <= min)
+    disabled || (min != null && current != null && current <= min);
   const incDisabled =
-    disabled || (max != null && current != null && current >= max)
+    disabled || (max != null && current != null && current >= max);
 
   function emit(next: number | null) {
-    let committed = next
+    let committed = next;
     if (committed != null) {
-      committed = clamp(committed, min, max)
+      committed = clamp(committed, min, max);
       if (precision != null) {
-        const factor = 10 ** precision
-        committed = Math.round(committed * factor) / factor
+        const factor = 10 ** precision;
+        committed = Math.round(committed * factor) / factor;
       }
     }
-    currentRef.current = committed
+    currentRef.current = committed;
     if (!controlled) {
-      setUncontrolled(committed)
+      setUncontrolled(committed);
     }
-    setDraft(committed == null ? '' : formatNumber(committed, precision))
-    onChange?.(committed)
+    setDraft(committed == null ? '' : formatNumber(committed, precision));
+    onChange?.(committed);
   }
 
   function stepBy(direction: 1 | -1) {
     if (disabled) {
-      return
+      return;
     }
-    const base = currentRef.current ?? min ?? 0
+    const base = currentRef.current ?? min ?? 0;
     if (direction === 1 && max != null && base >= max) {
-      stopRepeat()
-      return
+      stopRepeat();
+      return;
     }
     if (direction === -1 && min != null && base <= min) {
-      stopRepeat()
-      return
+      stopRepeat();
+      return;
     }
-    emit(base + direction * step)
+    emit(base + direction * step);
   }
 
-  stepByRef.current = stepBy
+  stepByRef.current = stepBy;
 
   function stopRepeat() {
     if (delayRef.current != null) {
-      window.clearTimeout(delayRef.current)
-      delayRef.current = null
+      window.clearTimeout(delayRef.current);
+      delayRef.current = null;
     }
     if (intervalRef.current != null) {
-      window.clearInterval(intervalRef.current)
-      intervalRef.current = null
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
   }
 
   function startRepeat(direction: 1 | -1) {
-    stopRepeat()
-    stepByRef.current(direction)
+    stopRepeat();
+    stepByRef.current(direction);
     delayRef.current = window.setTimeout(() => {
       intervalRef.current = window.setInterval(() => {
-        stepByRef.current(direction)
-      }, REPEAT_INTERVAL_MS)
-    }, REPEAT_DELAY_MS)
+        stepByRef.current(direction);
+      }, REPEAT_INTERVAL_MS);
+    }, REPEAT_DELAY_MS);
   }
 
   function handleStepPointerDown(
@@ -199,54 +199,54 @@ export function InputNumber({
     event: ReactPointerEvent<HTMLButtonElement>,
   ) {
     if (event.button !== 0) {
-      return
+      return;
     }
-    event.preventDefault()
-    startRepeat(direction)
+    event.preventDefault();
+    startRepeat(direction);
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const raw = event.target.value
-    setDraft(raw)
-    const parsed = parseInput(raw)
+    const raw = event.target.value;
+    setDraft(raw);
+    const parsed = parseInput(raw);
     if (parsed == null) {
       if (raw.trim().length === 0) {
         if (!controlled) {
-          setUncontrolled(null)
+          setUncontrolled(null);
         }
-        onChange?.(null)
+        onChange?.(null);
       }
-      return
+      return;
     }
-    const committed = clamp(parsed, min, max)
+    const committed = clamp(parsed, min, max);
     if (!controlled) {
-      setUncontrolled(committed)
+      setUncontrolled(committed);
     }
-    onChange?.(committed)
+    onChange?.(committed);
   }
 
   function handleBlur(event: FocusEvent<HTMLInputElement>) {
-    setFocused(false)
-    emit(parseInput(draft))
-    onBlur?.(event)
+    setFocused(false);
+    emit(parseInput(draft));
+    onBlur?.(event);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      stepBy(1)
+      event.preventDefault();
+      stepBy(1);
     } else if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      stepBy(-1)
+      event.preventDefault();
+      stepBy(-1);
     }
-    onKeyDown?.(event)
+    onKeyDown?.(event);
   }
 
   const stepPointerHandlers = {
     onPointerUp: stopRepeat,
     onPointerLeave: stopRepeat,
     onPointerCancel: stopRepeat,
-  }
+  };
 
   const input = (
     <input
@@ -260,13 +260,13 @@ export function InputNumber({
       value={draft}
       onChange={handleChange}
       onFocus={(event) => {
-        setFocused(true)
-        onFocus?.(event)
+        setFocused(true);
+        onFocus?.(event);
       }}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
     />
-  )
+  );
 
   if (split) {
     return (
@@ -311,7 +311,7 @@ export function InputNumber({
           <PlusIcon size="sm" aria-hidden="true" />
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -372,5 +372,5 @@ export function InputNumber({
         </div>
       ) : null}
     </div>
-  )
+  );
 }

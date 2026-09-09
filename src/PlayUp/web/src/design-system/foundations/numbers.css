@@ -4,37 +4,37 @@
  */
 
 .ds-num {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 .ds-num-score {
-    font-size: var(--text-score);
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
-    letter-spacing: -0.02em;
+  font-size: var(--text-score);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .ds-num-hero {
-    font-size: var(--text-hero-num);
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
-    letter-spacing: -0.02em;
+  font-size: var(--text-hero-num);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
 
 .ds-num-row-score {
-    font-size: var(--text-row-score);
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
+  font-size: var(--text-row-score);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
 }
 
 .ds-num-pts {
-    font-size: var(--text-standings-pts);
-    font-weight: var(--font-weight-bold);
+  font-size: var(--text-standings-pts);
+  font-weight: var(--font-weight-bold);
 }
 
 .ds-num-counter {
-    font-size: var(--text-counter);
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
+  font-size: var(--text-counter);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
 }

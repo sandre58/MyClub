@@ -1,11 +1,11 @@
-import { HomeBrand } from '../design-system/components/HomeBrand'
-import { Status } from '../design-system/components/Status'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { ChevronRightIcon } from '../design-system/icons/shellIcons'
-import { PlusIcon } from '../design-system/icons/overviewIcons'
-import { declaredSchedule } from '../shell/competitionPeriod'
-import { labCompetitions } from './labData'
-import { LabWaitAtom, type LabWaitKind } from './LabWait'
+import { HomeBrand } from '../design-system/components/HomeBrand';
+import { Status } from '../design-system/components/Status';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { ChevronRightIcon } from '../design-system/icons/shellIcons';
+import { PlusIcon } from '../design-system/icons/overviewIcons';
+import { declaredSchedule } from '../shell/competitionPeriod';
+import { labCompetitions } from './labData';
+import { LabWaitAtom, type LabWaitKind } from './LabWait';
 
 /**
  * Accueil hors Shell — hub ops avec l'atmosphère décidée le 2026-09-01 :
@@ -16,8 +16,8 @@ export function LabHome({
   empty,
   waiting,
 }: {
-  empty: boolean
-  waiting?: LabWaitKind
+  empty: boolean;
+  waiting?: LabWaitKind;
 }) {
   return (
     <div className="ds-home">
@@ -53,7 +53,7 @@ export function LabHome({
                 const schedule = labScheduleLabel(
                   competition.scheduledStart,
                   competition.scheduledEnd,
-                )
+                );
                 return (
                   <button
                     key={competition.id}
@@ -83,29 +83,26 @@ export function LabHome({
                       </span>
                     </span>
                   </button>
-                )
+                );
               })}
             </div>
           </section>
         )}
       </main>
     </div>
-  )
+  );
 }
 
-function labScheduleLabel(
-  start?: string,
-  end?: string,
-): string | null {
-  const schedule = declaredSchedule(start, end)
+function labScheduleLabel(start?: string, end?: string): string | null {
+  const schedule = declaredSchedule(start, end);
   if (!schedule) {
-    return null
+    return null;
   }
   if (schedule.kind === 'both') {
-    return `${schedule.start} → ${schedule.end}`
+    return `${schedule.start} → ${schedule.end}`;
   }
   if (schedule.kind === 'start') {
-    return `À partir du ${schedule.date}`
+    return `À partir du ${schedule.date}`;
   }
-  return `Jusqu’au ${schedule.date}`
+  return `Jusqu’au ${schedule.date}`;
 }

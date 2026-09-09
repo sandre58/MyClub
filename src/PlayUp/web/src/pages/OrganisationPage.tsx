@@ -1,36 +1,38 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
-import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+  useEffect,
+  useId,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useParams } from 'react-router-dom';
 import {
   configureOrganisationStructure,
   fetchOrganisationView,
   setCompetitionSchedule,
   updateCompetitionPresentation,
-} from '../api'
-import { Dialog } from '../design-system/components/Dialog'
-import { Field } from '../design-system/components/Field'
-import { PageHead } from '../design-system/components/PageHead'
-import { TextInput } from '../design-system/components/TextInput'
-import { LogoMediaField } from './LogoMediaField'
-import { SHORT_NAME_MAX_LENGTH } from './deriveShortName'
+} from '../api';
+import { Dialog } from '../design-system/components/Dialog';
+import { Field } from '../design-system/components/Field';
+import { PageHead } from '../design-system/components/PageHead';
+import { TextInput } from '../design-system/components/TextInput';
+import { LogoMediaField } from './LogoMediaField';
+import { SHORT_NAME_MAX_LENGTH } from './deriveShortName';
 import {
   CheckIcon,
   RegulationIcon,
   StructureIcon,
   TeamsIcon,
-} from '../design-system/icons/overviewIcons'
+} from '../design-system/icons/overviewIcons';
 import {
   attentionSourceLabel,
   competitionStatusLabel,
   matchGenerationFormatLabel,
   structureFormatKindLabel,
-} from '../i18n/enumLabels'
-import { queryKeys } from '../queryKeys'
+} from '../i18n/enumLabels';
+import { queryKeys } from '../queryKeys';
 import {
   EmptyState,
   ErrorState,
@@ -38,19 +40,17 @@ import {
   MutationError,
   PendingLabel,
   StageStatusBadge,
-} from '../ui'
+} from '../ui';
 import {
   type MatchGenerationFormat,
   type OrganisationView,
   type StructureFormatKind,
-} from '../types'
-import {
-  invalidateAfterOrganisationMutation,
-  RegulationEditorDialog,
-} from './RegulationEditorDialog'
-import './organisation.css'
+} from '../types';
+import { invalidateAfterOrganisationMutation } from './organisationInvalidation';
+import { RegulationEditorDialog } from './RegulationEditorDialog';
+import './organisation.css';
 
-type OrganisationEditor = null | 'regulation' | 'structure'
+type OrganisationEditor = null | 'regulation' | 'structure';
 
 /**
  * Organisation Hub — GET /competitions/{id}/organisation + Slice 2 mutations.
@@ -58,13 +58,13 @@ type OrganisationEditor = null | 'regulation' | 'structure'
  * Hub is read-only; editing happens in modal dialogs.
  */
 export function OrganisationPage() {
-  const { competitionId = '' } = useParams()
+  const { competitionId = '' } = useParams();
 
   const query = useQuery({
     queryKey: queryKeys.competitions.organisation(competitionId),
     queryFn: () => fetchOrganisationView(competitionId),
     enabled: competitionId.length > 0,
-  })
+  });
 
   return (
     <main id="main" className="page page--organisation">
@@ -72,18 +72,18 @@ export function OrganisationPage() {
       {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <OrganisationViewPanel data={query.data} />}
     </main>
-  )
+  );
 }
 
 function OrganisationViewPanel({ data }: { data: OrganisationView }) {
-  const { t } = useTranslation('organisation')
-  const can = (action: string) => data.actions.includes(action)
-  const [editor, setEditor] = useState<OrganisationEditor>(null)
+  const { t } = useTranslation('organisation');
+  const can = (action: string) => data.actions.includes(action);
+  const [editor, setEditor] = useState<OrganisationEditor>(null);
 
-  const canReplace = can('ReplaceRegulation')
-  const canConfigure = can('ConfigureStructure')
+  const canReplace = can('ReplaceRegulation');
+  const canConfigure = can('ConfigureStructure');
 
-  const closeEditor = () => setEditor(null)
+  const closeEditor = () => setEditor(null);
 
   return (
     <div className="organisation">
@@ -91,10 +91,7 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
 
       <ContextBand data={data} />
       <IdentitySection data={data} />
-      <PreparationStrip
-        data={data}
-        onOpenEditor={(next) => setEditor(next)}
-      />
+      <PreparationStrip data={data} onOpenEditor={(next) => setEditor(next)} />
 
       <div className="organisation__mid">
         <TeamsFactSection data={data} />
@@ -122,15 +119,15 @@ function OrganisationViewPanel({ data }: { data: OrganisationView }) {
         onClose={closeEditor}
       />
     </div>
-  )
+  );
 }
 
 function ContextBand({ data }: { data: OrganisationView }) {
-  const { t } = useTranslation('organisation')
+  const { t } = useTranslation('organisation');
   const formatText = data.format.kind
     ? structureFormatKindLabel(data.format.kind)
-    : t('structure.formatNotConfigured')
-  const phaseCount = data.format.primaryStageId ? 1 : 0
+    : t('structure.formatNotConfigured');
+  const phaseCount = data.format.primaryStageId ? 1 : 0;
 
   return (
     <ul className="organisation-band" aria-label={data.name}>
@@ -150,30 +147,35 @@ function ContextBand({ data }: { data: OrganisationView }) {
         {t('band.phases', { count: phaseCount })}
       </li>
     </ul>
-  )
+  );
 }
 
 function IdentitySection({ data }: { data: OrganisationView }) {
-  const { t } = useTranslation('organisation')
-  const queryClient = useQueryClient()
-  const shortNameId = useId()
-  const [shortName, setShortName] = useState(data.shortName ?? '')
+  const { t } = useTranslation('organisation');
+  const queryClient = useQueryClient();
+  const shortNameId = useId();
+  const [shortName, setShortName] = useState(data.shortName ?? '');
   const [logoMediaId, setLogoMediaId] = useState<string | null>(
     data.logoMediaId ?? null,
-  )
+  );
   const [scheduledStart, setScheduledStart] = useState(
     data.scheduledStart?.slice(0, 10) ?? '',
-  )
+  );
   const [scheduledEnd, setScheduledEnd] = useState(
     data.scheduledEnd?.slice(0, 10) ?? '',
-  )
+  );
 
   useEffect(() => {
-    setShortName(data.shortName ?? '')
-    setLogoMediaId(data.logoMediaId ?? null)
-    setScheduledStart(data.scheduledStart?.slice(0, 10) ?? '')
-    setScheduledEnd(data.scheduledEnd?.slice(0, 10) ?? '')
-  }, [data.shortName, data.logoMediaId, data.scheduledStart, data.scheduledEnd])
+    setShortName(data.shortName ?? '');
+    setLogoMediaId(data.logoMediaId ?? null);
+    setScheduledStart(data.scheduledStart?.slice(0, 10) ?? '');
+    setScheduledEnd(data.scheduledEnd?.slice(0, 10) ?? '');
+  }, [
+    data.shortName,
+    data.logoMediaId,
+    data.scheduledStart,
+    data.scheduledEnd,
+  ]);
 
   const presentationMutation = useMutation({
     mutationFn: () =>
@@ -182,9 +184,12 @@ function IdentitySection({ data }: { data: OrganisationView }) {
         logoMediaId,
       }),
     onSuccess: async () => {
-      await invalidateAfterOrganisationMutation(queryClient, data.competitionId)
+      await invalidateAfterOrganisationMutation(
+        queryClient,
+        data.competitionId,
+      );
     },
-  })
+  });
 
   const scheduleMutation = useMutation({
     mutationFn: () =>
@@ -197,9 +202,12 @@ function IdentitySection({ data }: { data: OrganisationView }) {
           : null,
       }),
     onSuccess: async () => {
-      await invalidateAfterOrganisationMutation(queryClient, data.competitionId)
+      await invalidateAfterOrganisationMutation(
+        queryClient,
+        data.competitionId,
+      );
     },
-  })
+  });
 
   return (
     <section className="ds-panel" aria-labelledby="identity-heading">
@@ -211,8 +219,8 @@ function IdentitySection({ data }: { data: OrganisationView }) {
           className="ds-form"
           data-density="comfortable"
           onSubmit={(event: FormEvent) => {
-            event.preventDefault()
-            presentationMutation.mutate()
+            event.preventDefault();
+            presentationMutation.mutate();
           }}
         >
           <Field
@@ -255,8 +263,8 @@ function IdentitySection({ data }: { data: OrganisationView }) {
         <form
           className="form form--inline"
           onSubmit={(event: FormEvent) => {
-            event.preventDefault()
-            scheduleMutation.mutate()
+            event.preventDefault();
+            scheduleMutation.mutate();
           }}
         >
           <label className="field">
@@ -294,7 +302,7 @@ function IdentitySection({ data }: { data: OrganisationView }) {
         </form>
       </div>
     </section>
-  )
+  );
 }
 
 function PanelHead({
@@ -302,9 +310,9 @@ function PanelHead({
   icon,
   children,
 }: {
-  id: string
-  icon: ReactNode
-  children: ReactNode
+  id: string;
+  icon: ReactNode;
+  children: ReactNode;
 }) {
   return (
     <h2 id={id} className="organisation-panel__head">
@@ -313,26 +321,26 @@ function PanelHead({
       </span>
       {children}
     </h2>
-  )
+  );
 }
 
 function PreparationStrip({
   data,
   onOpenEditor,
 }: {
-  data: OrganisationView
-  onOpenEditor: (editor: Exclude<OrganisationEditor, null>) => void
+  data: OrganisationView;
+  onOpenEditor: (editor: Exclude<OrganisationEditor, null>) => void;
 }) {
-  const { t } = useTranslation('organisation')
-  const readiness = data.readiness
-  const formatKind = data.format.kind
-  const needsDraw = formatKind === 'Groups' || formatKind === 'Cup'
-  const readyToMaterialize = readiness.readyForMaterialization
-  const blockers = readiness.blockers
-  const openCount = blockers.length
+  const { t } = useTranslation('organisation');
+  const readiness = data.readiness;
+  const formatKind = data.format.kind;
+  const needsDraw = formatKind === 'Groups' || formatKind === 'Cup';
+  const readyToMaterialize = readiness.readyForMaterialization;
+  const blockers = readiness.blockers;
+  const openCount = blockers.length;
 
   if (readyToMaterialize) {
-    const isCup = formatKind === 'Cup'
+    const isCup = formatKind === 'Cup';
     return (
       <section
         className="organisation-strip organisation-strip--ready"
@@ -363,7 +371,7 @@ function PreparationStrip({
           </Link>
         </div>
       </section>
-    )
+    );
   }
 
   if (openCount === 0 && needsDraw && readiness.readyForDraw) {
@@ -379,18 +387,15 @@ function PreparationStrip({
           </h2>
         </div>
       </section>
-    )
+    );
   }
 
   if (openCount === 0) {
-    return null
+    return null;
   }
 
   return (
-    <section
-      className="organisation-strip"
-      aria-labelledby="readiness-heading"
-    >
+    <section className="organisation-strip" aria-labelledby="readiness-heading">
       <div className="organisation-strip__head">
         <h2 id="readiness-heading" className="organisation-strip__title">
           {t('readiness.openItems', { count: openCount })}
@@ -398,12 +403,12 @@ function PreparationStrip({
       </div>
       <ul className="organisation-strip__actions-list">
         {blockers.map((code) => {
-          const editor = editorForBlocker(code)
-          const label = attentionSourceLabel(code)
+          const editor = editorForBlocker(code);
+          const label = attentionSourceLabel(code);
           const teamsHref =
             code === 'InsufficientParticipants'
               ? `/competitions/${data.competitionId}/teams`
-              : null
+              : null;
           return (
             <li key={code}>
               {teamsHref ? (
@@ -429,33 +434,33 @@ function PreparationStrip({
                 </span>
               )}
             </li>
-          )
+          );
         })}
       </ul>
     </section>
-  )
+  );
 }
 
 function editorForBlocker(
   code: string,
 ): Exclude<OrganisationEditor, null> | null {
   if (code === 'MissingStage') {
-    return 'structure'
+    return 'structure';
   }
-  return null
+  return null;
 }
 
 function TeamsFactSection({ data }: { data: OrganisationView }) {
-  const { t } = useTranslation('organisation')
-  const teamsHref = `/competitions/${data.competitionId}/teams`
-  const activeCount = data.participants.activeCount
-  const belowMinimum = activeCount < data.regulation.minimumTeams
+  const { t } = useTranslation('organisation');
+  const teamsHref = `/competitions/${data.competitionId}/teams`;
+  const activeCount = data.participants.activeCount;
+  const belowMinimum = activeCount < data.regulation.minimumTeams;
   const summaryHint = belowMinimum
     ? t('participants.summaryIncomplete', {
         count: activeCount,
         minimum: data.regulation.minimumTeams,
       })
-    : t('participants.summaryComplete', { count: activeCount })
+    : t('participants.summaryComplete', { count: activeCount });
 
   return (
     <section className="ds-panel" aria-labelledby="participants-heading">
@@ -474,7 +479,7 @@ function TeamsFactSection({ data }: { data: OrganisationView }) {
         </Link>
       </p>
     </section>
-  )
+  );
 }
 
 function RegulationSection({
@@ -482,12 +487,12 @@ function RegulationSection({
   canReplace,
   onEdit,
 }: {
-  data: OrganisationView
-  canReplace: boolean
-  onEdit: () => void
+  data: OrganisationView;
+  canReplace: boolean;
+  onEdit: () => void;
 }) {
-  const { t } = useTranslation('organisation')
-  const regulation = data.regulation
+  const { t } = useTranslation('organisation');
+  const regulation = data.regulation;
 
   return (
     <section className="ds-panel" aria-labelledby="regulation-heading">
@@ -564,7 +569,7 @@ function RegulationSection({
         </div>
       )}
     </section>
-  )
+  );
 }
 
 function StructureSection({
@@ -572,19 +577,19 @@ function StructureSection({
   canConfigure,
   onConfigure,
 }: {
-  data: OrganisationView
-  canConfigure: boolean
-  onConfigure: () => void
+  data: OrganisationView;
+  canConfigure: boolean;
+  onConfigure: () => void;
 }) {
-  const { t } = useTranslation('organisation')
-  const formatKind = data.format.kind
-  const primaryStageId = data.format.primaryStageId
+  const { t } = useTranslation('organisation');
+  const formatKind = data.format.kind;
+  const primaryStageId = data.format.primaryStageId;
   const stageName =
-    data.format.primaryStageName ?? t('structure.primaryStageFallback')
+    data.format.primaryStageName ?? t('structure.primaryStageFallback');
   const formatLabel = formatKind
     ? structureFormatKindLabel(formatKind)
-    : t('structure.formatNotConfigured')
-  const phaseCount = primaryStageId ? 1 : 0
+    : t('structure.formatNotConfigured');
+  const phaseCount = primaryStageId ? 1 : 0;
   const drawLabel =
     formatKind === 'Championship'
       ? t('structure.drawNotRequired')
@@ -592,7 +597,7 @@ function StructureSection({
         ? t('structure.drawConfigured', {
             pots: data.structure.numberOfPots ?? '—',
           })
-        : t('structure.drawMissing')
+        : t('structure.drawMissing');
 
   return (
     <section
@@ -655,7 +660,9 @@ function StructureSection({
               <div className="organisation-phase__cell">
                 <dt>{t('structure.matchGenerationFormat')}</dt>
                 <dd>
-                  {matchGenerationFormatLabel(data.structure.matchGenerationFormat)}
+                  {matchGenerationFormatLabel(
+                    data.structure.matchGenerationFormat,
+                  )}
                 </dd>
               </div>
             )}
@@ -709,7 +716,7 @@ function StructureSection({
         </div>
       )}
     </section>
-  )
+  );
 }
 
 function StructureEditorDialog({
@@ -717,35 +724,35 @@ function StructureEditorDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView
-  open: boolean
-  onClose: () => void
+  data: OrganisationView;
+  open: boolean;
+  onClose: () => void;
 }) {
-  const { t } = useTranslation('organisation')
-  const { t: tCommon } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const formId = useId()
+  const { t } = useTranslation('organisation');
+  const { t: tCommon } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const formId = useId();
   const [format, setFormat] = useState<StructureFormatKind>(
     data.format.kind ?? 'Championship',
-  )
-  const [stageName, setStageName] = useState('')
+  );
+  const [stageName, setStageName] = useState('');
   const [matchdayCount, setMatchdayCount] = useState(
     Math.max(1, data.structure.matchdayCount || 1),
-  )
+  );
   const [groupCount, setGroupCount] = useState(
     Math.max(1, data.structure.groupCount || 2),
-  )
-  const [participantsPerGroup, setParticipantsPerGroup] = useState(2)
+  );
+  const [participantsPerGroup, setParticipantsPerGroup] = useState(2);
   const [bracketSize, setBracketSize] = useState(
     Math.max(2, data.structure.slotCount || 4),
-  )
+  );
   const [swissRoundCount, setSwissRoundCount] = useState(
     Math.max(1, data.structure.swissRoundCount || 3),
-  )
+  );
   const [matchGenerationFormat, setMatchGenerationFormat] =
     useState<MatchGenerationFormat>(
       data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
-    )
+    );
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -754,8 +761,7 @@ function StructureEditorDialog({
         stageName: stageName.trim() || null,
         matchdayCount: format === 'Championship' ? matchdayCount : null,
         groupCount: format === 'Groups' ? groupCount : null,
-        participantsPerGroup:
-          format === 'Groups' ? participantsPerGroup : null,
+        participantsPerGroup: format === 'Groups' ? participantsPerGroup : null,
         bracketSize: format === 'Cup' ? bracketSize : null,
         swissRoundCount: format === 'Swiss' ? swissRoundCount : null,
         matchGenerationFormat:
@@ -767,9 +773,9 @@ function StructureEditorDialog({
       await invalidateAfterOrganisationMutation(
         queryClient,
         data.competitionId,
-      )
+      );
     },
-  })
+  });
 
   return (
     <Dialog
@@ -808,11 +814,11 @@ function StructureEditorDialog({
         id={formId}
         className="form"
         onSubmit={(event: FormEvent) => {
-          event.preventDefault()
+          event.preventDefault();
           if (mutation.isPending) {
-            return
+            return;
           }
-          mutation.mutate()
+          mutation.mutate();
         }}
       >
         <fieldset className="fieldset" disabled={mutation.isPending}>
@@ -834,9 +840,7 @@ function StructureEditorDialog({
                 {structureFormatKindLabel('Groups')}
               </option>
               <option value="Cup">{structureFormatKindLabel('Cup')}</option>
-              <option value="Swiss">
-                {structureFormatKindLabel('Swiss')}
-              </option>
+              <option value="Swiss">{structureFormatKindLabel('Swiss')}</option>
             </select>
           </label>
           <label className="field">
@@ -950,5 +954,5 @@ function StructureEditorDialog({
         {mutation.isError && <MutationError error={mutation.error} />}
       </form>
     </Dialog>
-  )
+  );
 }

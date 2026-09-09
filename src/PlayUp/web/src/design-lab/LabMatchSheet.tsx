@@ -1,13 +1,13 @@
-import { labMatchEvents, labRounds, type LabLifecycle } from './labData'
-import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons'
-import { CalendarIcon } from '../design-system/icons/overviewIcons'
+import { labMatchEvents, labRounds, type LabLifecycle } from './labData';
+import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons';
+import { CalendarIcon } from '../design-system/icons/overviewIcons';
 import {
   MatchHero,
   MatchHeroMetaItem,
   MatchHeroScore,
-} from '../design-system/components/MatchHero'
-import { Status } from '../design-system/components/Status'
-import { Crest, PanelHead } from './LabShared'
+} from '../design-system/components/MatchHero';
+import { Status } from '../design-system/components/Status';
+import { Crest, PanelHead } from './LabShared';
 
 /**
  * Fiche match — la surface la plus sportive du produit.
@@ -22,16 +22,16 @@ import { Crest, PanelHead } from './LabShared'
 export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
   const match = labRounds
     .flatMap((r) => r.matches)
-    .find((m) => m.id === 'j3m2')
+    .find((m) => m.id === 'j3m2');
 
-  if (!match) return null
+  if (!match) return null;
 
   const heroState: 'scheduled' | 'live' | 'finished' =
     lifecycle === 'preparation'
       ? 'scheduled'
       : lifecycle === 'done'
         ? 'finished'
-        : 'live'
+        : 'live';
 
   return (
     <div className="ds-page">
@@ -50,10 +50,18 @@ export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
           scoreActions:
             heroState === 'live' ? (
               <div className="ds-match-hero__score-actions">
-                <button type="button" className="ds-match-hero__score-btn" aria-label="But domicile">
+                <button
+                  type="button"
+                  className="ds-match-hero__score-btn"
+                  aria-label="But domicile"
+                >
                   +
                 </button>
-                <button type="button" className="ds-match-hero__score-btn" aria-label="Retirer un but domicile">
+                <button
+                  type="button"
+                  className="ds-match-hero__score-btn"
+                  aria-label="Retirer un but domicile"
+                >
                   −
                 </button>
               </div>
@@ -65,10 +73,18 @@ export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
           scoreActions:
             heroState === 'live' ? (
               <div className="ds-match-hero__score-actions">
-                <button type="button" className="ds-match-hero__score-btn" aria-label="But extérieur">
+                <button
+                  type="button"
+                  className="ds-match-hero__score-btn"
+                  aria-label="But extérieur"
+                >
                   +
                 </button>
-                <button type="button" className="ds-match-hero__score-btn" aria-label="Retirer un but extérieur">
+                <button
+                  type="button"
+                  className="ds-match-hero__score-btn"
+                  aria-label="Retirer un but extérieur"
+                >
                   −
                 </button>
               </div>
@@ -108,8 +124,12 @@ export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
             <MatchHeroMetaItem icon={<CalendarIcon size="sm" />}>
               Sam. 26 sept. 2026
             </MatchHeroMetaItem>
-            <MatchHeroMetaItem icon={<ClockIcon size="sm" />}>15:00</MatchHeroMetaItem>
-            <MatchHeroMetaItem icon={<PinIcon size="sm" />}>Stade des Chênes</MatchHeroMetaItem>
+            <MatchHeroMetaItem icon={<ClockIcon size="sm" />}>
+              15:00
+            </MatchHeroMetaItem>
+            <MatchHeroMetaItem icon={<PinIcon size="sm" />}>
+              Stade des Chênes
+            </MatchHeroMetaItem>
             <MatchHeroMetaItem>Arbitre : M. Charpin</MatchHeroMetaItem>
           </>
         }
@@ -121,15 +141,15 @@ export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
         <FactsBody finished={heroState === 'finished'} />
       )}
     </div>
-  )
+  );
 }
 
 function HeroStatus({
   state,
   minute,
 }: {
-  state: 'scheduled' | 'live' | 'finished'
-  minute?: string
+  state: 'scheduled' | 'live' | 'finished';
+  minute?: string;
 }) {
   if (state === 'live') {
     return (
@@ -137,20 +157,20 @@ function HeroStatus({
         <span className="ds-live-dot" />
         {minute} · En cours
       </span>
-    )
+    );
   }
   if (state === 'finished') {
     return (
       <Status density="context" tone="neutral" variant="soft" shape="rounded">
         Terminé · Résultat officiel
       </Status>
-    )
+    );
   }
   return (
     <Status density="context" tone="info" variant="soft" shape="rounded">
       À venir
     </Status>
-  )
+  );
 }
 
 function ScheduledBody() {
@@ -178,7 +198,7 @@ function ScheduledBody() {
         </div>
       </section>
     </div>
-  )
+  );
 }
 
 function FactsBody({ finished }: { finished: boolean }) {
@@ -191,8 +211,14 @@ function FactsBody({ finished }: { finished: boolean }) {
         />
         <div className="ds-match-timeline">
           {labMatchEvents.map((event, i) => (
-            <div key={i} className="ds-match-timeline__row" data-kind={event.kind}>
-              <span className="ds-match-timeline__minute ds-num">{event.minute}</span>
+            <div
+              key={i}
+              className="ds-match-timeline__row"
+              data-kind={event.kind}
+            >
+              <span className="ds-match-timeline__minute ds-num">
+                {event.minute}
+              </span>
               <span>{event.text}</span>
             </div>
           ))}
@@ -217,8 +243,8 @@ function FactsBody({ finished }: { finished: boolean }) {
           <div className="ds-empty">
             <span className="ds-empty__title">Résultat intégré</span>
             <span className="ds-empty__body">
-              Le classement est à jour. Prochaine action : préparer la
-              journée 4.
+              Le classement est à jour. Prochaine action : préparer la journée
+              4.
             </span>
           </div>
         ) : (
@@ -232,5 +258,5 @@ function FactsBody({ finished }: { finished: boolean }) {
         )}
       </section>
     </div>
-  )
+  );
 }

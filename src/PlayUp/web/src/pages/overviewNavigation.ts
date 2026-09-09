@@ -1,51 +1,49 @@
-import type { OverviewNavigationHint, OverviewSituation } from '../types'
+import type { OverviewNavigationHint, OverviewSituation } from '../types';
 
 /**
  * Resolve an Overview navigationHint / situation target to an existing SPA route.
  * Uses Host-provided matchId when present — no Fixture → Match join in React.
  */
 export function overviewTargetHref(target: {
-  targetType: string | null | undefined
-  targetId: string | null | undefined
-  matchId?: string | null
-  stageId?: string | null
-  competitionId?: string | null
+  targetType: string | null | undefined;
+  targetId: string | null | undefined;
+  matchId?: string | null;
+  stageId?: string | null;
+  competitionId?: string | null;
 }): string | null {
-  const { targetType, targetId, matchId, stageId, competitionId } = target
+  const { targetType, targetId, matchId, stageId, competitionId } = target;
 
   if (matchId) {
-    return `/matches/${matchId}`
+    return `/matches/${matchId}`;
   }
 
   if (!targetType || !targetId) {
-    return null
+    return null;
   }
 
   switch (targetType) {
     case 'Stage':
-      return `/stages/${targetId}`
+      return `/stages/${targetId}`;
     case 'Slot': {
-      const stageFromSlot = targetId.split(':')[0]
-      return stageFromSlot ? `/stages/${stageFromSlot}` : null
+      const stageFromSlot = targetId.split(':')[0];
+      return stageFromSlot ? `/stages/${stageFromSlot}` : null;
     }
     case 'Fixture':
       // Without resolved matchId, fall back to stage matches or competition hub.
       if (stageId) {
-        return `/stages/${stageId}/matches`
+        return `/stages/${stageId}/matches`;
       }
-      return competitionId
-        ? `/competitions/${competitionId}/matches`
-        : null
+      return competitionId ? `/competitions/${competitionId}/matches` : null;
     case 'Match':
-      return `/matches/${targetId}`
+      return `/matches/${targetId}`;
     case 'Competition':
-      return `/competitions/${targetId}`
+      return `/competitions/${targetId}`;
     case 'Organisation':
-      return `/competitions/${targetId}/organisation`
+      return `/competitions/${targetId}/organisation`;
     case 'Draw':
-      return stageId ? `/stages/${stageId}` : null
+      return stageId ? `/stages/${stageId}` : null;
     default:
-      return null
+      return null;
   }
 }
 
@@ -54,7 +52,7 @@ export function situationHref(
   competitionId: string,
 ): string | null {
   if (situation.source === 'InsufficientParticipants') {
-    return `/competitions/${competitionId}/teams`
+    return `/competitions/${competitionId}/teams`;
   }
 
   return (
@@ -67,9 +65,11 @@ export function situationHref(
     (situation.targetType === 'Fixture'
       ? `/competitions/${competitionId}/matches`
       : null)
-  )
+  );
 }
 
-export function navigationHintHref(hint: OverviewNavigationHint): string | null {
-  return overviewTargetHref(hint)
+export function navigationHintHref(
+  hint: OverviewNavigationHint,
+): string | null {
+  return overviewTargetHref(hint);
 }

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export function MatchRound({
   id,
@@ -9,15 +9,15 @@ export function MatchRound({
   children,
   className,
 }: {
-  id?: string
-  label: ReactNode
-  date?: ReactNode
-  status?: ReactNode
-  sub?: ReactNode
-  children: ReactNode
-  className?: string
+  id?: string;
+  label: ReactNode;
+  date?: ReactNode;
+  status?: ReactNode;
+  sub?: ReactNode;
+  children: ReactNode;
+  className?: string;
 }) {
-  const classes = ['ds-match-round', className].filter(Boolean).join(' ')
+  const classes = ['ds-match-round', className].filter(Boolean).join(' ');
 
   return (
     <section className={classes} aria-labelledby={id}>
@@ -37,5 +37,5 @@ export function MatchRound({
       {sub != null ? <p className="ds-match-round__sub">{sub}</p> : null}
       <div>{children}</div>
     </section>
-  )
+  );
 }

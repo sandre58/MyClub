@@ -1,25 +1,25 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { fetchCompetitionOverview, fetchOrganisationView } from '../api'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { AttentionGroup } from '../design-system/components/AttentionGroup'
-import { OverviewNextAction } from '../design-system/components/OverviewNextAction'
-import { OverviewPodium } from '../design-system/components/OverviewPodium'
-import { PanelHead } from '../design-system/components/PanelHead'
-import { Status } from '../design-system/components/Status'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { fetchCompetitionOverview, fetchOrganisationView } from '../api';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { AttentionGroup } from '../design-system/components/AttentionGroup';
+import { OverviewNextAction } from '../design-system/components/OverviewNextAction';
+import { OverviewPodium } from '../design-system/components/OverviewPodium';
+import { PanelHead } from '../design-system/components/PanelHead';
+import { Status } from '../design-system/components/Status';
 import {
   ChevronRightIcon,
   ClassementsNavIcon,
   MatchesNavIcon,
-} from '../design-system/icons/shellIcons'
-import { AttentionSituationRow } from '../shell/AttentionSituationRow'
-import { TextLink } from '../design-system/components/TextLink'
-import { CalendarIcon } from '../design-system/icons/overviewIcons'
-import { actionLabel } from '../i18n/actionLabels'
-import { structureFormatKindLabel } from '../i18n/enumLabels'
-import { queryKeys } from '../queryKeys'
+} from '../design-system/icons/shellIcons';
+import { AttentionSituationRow } from '../shell/AttentionSituationRow';
+import { TextLink } from '../design-system/components/TextLink';
+import { CalendarIcon } from '../design-system/icons/overviewIcons';
+import { actionLabel } from '../i18n/actionLabels';
+import { structureFormatKindLabel } from '../i18n/enumLabels';
+import { queryKeys } from '../queryKeys';
 import type {
   OverviewAction,
   OverviewCalendarSummary,
@@ -33,17 +33,12 @@ import type {
   OverviewView,
   OrganisationEntry,
   StructureFormatKind,
-} from '../types'
-import {
-  ErrorState,
-  LoadingState,
-  MutationError,
-  PendingLabel,
-} from '../ui'
+} from '../types';
+import { ErrorState, LoadingState, MutationError, PendingLabel } from '../ui';
 import {
   overviewActionKey,
   resolveOverviewActionIntent,
-} from './overviewActions'
+} from './overviewActions';
 import {
   actionsForDraw,
   actionsForSlot,
@@ -56,28 +51,28 @@ import {
   secondaryActions,
   sortConstructionSlots,
   stageWideOperationalActions,
-} from './overviewComposition'
-import './overview.css'
+} from './overviewComposition';
+import './overview.css';
 import {
   NextActionIcon,
   OverviewAttentionIcon,
   RegulationIcon,
   StructureIcon,
   TeamsIcon,
-} from '../design-system/icons/overviewIcons'
+} from '../design-system/icons/overviewIcons';
 
 /**
  * Competition Overview — GET /competitions/{id}/overview.
  * Composes Read facts (prominence, situations, actions); does not recompute métier rules.
  */
 export function CompetitionOverviewPage() {
-  const { competitionId = '' } = useParams()
+  const { competitionId = '' } = useParams();
 
   const query = useQuery({
     queryKey: queryKeys.competitions.overview(competitionId),
     queryFn: () => fetchCompetitionOverview(competitionId),
     enabled: competitionId.length > 0,
-  })
+  });
 
   return (
     <main id="main" className="page page--overview">
@@ -85,112 +80,115 @@ export function CompetitionOverviewPage() {
       {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <OverviewViewBody data={query.data} />}
     </main>
-  )
+  );
 }
 
 function OverviewViewBody({ data }: { data: OverviewView }) {
-  const { t } = useTranslation('overview')
-  const actionRunner = useOverviewActionRunner(data)
+  const { t } = useTranslation('overview');
+  const actionRunner = useOverviewActionRunner(data);
 
   const orgQuery = useQuery({
     queryKey: queryKeys.competitions.organisation(data.competitionId),
     queryFn: () => fetchOrganisationView(data.competitionId),
-  })
+  });
 
   const slotActions = (slot: Parameters<typeof actionsForSlot>[1]) => {
-    const base = actionsForSlot(data.availableActions, slot)
+    const base = actionsForSlot(data.availableActions, slot);
     if (slot === 'teams') {
-      return primaryTeamActions(base)
+      return primaryTeamActions(base);
     }
     if (slot === 'operational') {
       // Stage/draw row actions are attached per object — not dumped here.
-      return stageWideOperationalActions(base)
+      return stageWideOperationalActions(base);
     }
-    return base
-  }
+    return base;
+  };
 
   const renderedKeys = useMemo(() => {
-    const keys = new Set<string>()
+    const keys = new Set<string>();
     const mark = (actions: OverviewAction[]) => {
       for (const action of actions) {
-        keys.add(overviewActionKey(action))
+        keys.add(overviewActionKey(action));
       }
-    }
-    mark(slotActions('teams'))
-    mark(slotActions('structure'))
-    mark(slotActions('regulation'))
-    mark(slotActions('matches'))
-    mark(slotActions('operational'))
-    mark(slotActions('closure'))
+    };
+    mark(slotActions('teams'));
+    mark(slotActions('structure'));
+    mark(slotActions('regulation'));
+    mark(slotActions('matches'));
+    mark(slotActions('operational'));
+    mark(slotActions('closure'));
     for (const stage of data.operationalFocus.stages) {
-      mark(actionsForStage(data.availableActions, stage.stageId))
+      mark(actionsForStage(data.availableActions, stage.stageId));
     }
     for (const draw of data.operationalFocus.draws) {
-      mark(actionsForDraw(data.availableActions, draw.stageId, draw.drawId))
+      mark(actionsForDraw(data.availableActions, draw.stageId, draw.drawId));
     }
     for (const action of data.availableActions) {
       if (isTeamAdminAction(action.code)) {
-        keys.add(overviewActionKey(action))
+        keys.add(overviewActionKey(action));
       }
     }
     const progression = data.naturalProgression?.code
       ? findActionByCode(data.availableActions, data.naturalProgression.code)
-      : undefined
+      : undefined;
     if (progression) {
-      keys.add(overviewActionKey(progression))
+      keys.add(overviewActionKey(progression));
     }
-    return keys
+    return keys;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- derived from data
-  }, [data])
+  }, [data]);
 
-  const leftover = secondaryActions(data.availableActions, renderedKeys)
+  const leftover = secondaryActions(data.availableActions, renderedKeys);
   const lifecycleActions = leftover.filter(
     (action) =>
-      action.code === 'PrepareCompetition' || action.code === 'StartCompetition',
-  )
-  const inProgress = data.cycleReading.code === 'InProgress'
+      action.code === 'PrepareCompetition' ||
+      action.code === 'StartCompetition',
+  );
+  const inProgress = data.cycleReading.code === 'InProgress';
   const completedLike =
     data.cycleReading.code === 'Completed' ||
-    data.cycleReading.code === 'Archived'
+    data.cycleReading.code === 'Archived';
   /** En cours + Terminée share Config + Sport composition (not Préparation). */
-  const operationalOverview = inProgress || completedLike
+  const operationalOverview = inProgress || completedLike;
   const generatedCalendar =
-    !operationalOverview && data.preparationFocus === 'GeneratedCalendar'
-  const slots = sortConstructionSlots(data).filter((slot) => slot !== 'matches')
-  const teamsVisible = slots.includes('teams')
-  const regulationVisible = slots.includes('regulation')
-  const structureVisible = slots.includes('structure') && !generatedCalendar
-  const gameRules = data.operationalFocus.referenceStageGameRules
+    !operationalOverview && data.preparationFocus === 'GeneratedCalendar';
+  const slots = sortConstructionSlots(data).filter(
+    (slot) => slot !== 'matches',
+  );
+  const teamsVisible = slots.includes('teams');
+  const regulationVisible = slots.includes('regulation');
+  const structureVisible = slots.includes('structure') && !generatedCalendar;
+  const gameRules = data.operationalFocus.referenceStageGameRules;
   const gameRegulationVisible =
-    operationalOverview && regulationVisible && gameRules != null
-  const orgHref = `/competitions/${data.competitionId}/organisation`
-  const teamsHref = `/competitions/${data.competitionId}/teams`
-  const matchesHref = `/competitions/${data.competitionId}/matches`
-  const classementsHref = `/competitions/${data.competitionId}/classements`
+    operationalOverview && regulationVisible && gameRules != null;
+  const orgHref = `/competitions/${data.competitionId}/organisation`;
+  const teamsHref = `/competitions/${data.competitionId}/teams`;
+  const matchesHref = `/competitions/${data.competitionId}/matches`;
+  const classementsHref = `/competitions/${data.competitionId}/classements`;
   const showProgression =
-    Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0
-  const focus = data.operationalFocus
+    Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0;
+  const focus = data.operationalFocus;
   // En cours + Terminée: standingCompact when Host projects it (independent of Outcome).
   // Terminée Résultat: Host presentation Winner|Podium — silence when Outcome null.
-  const showStanding = operationalOverview && focus.standingCompact != null
+  const showStanding = operationalOverview && focus.standingCompact != null;
   const showOutcome =
     completedLike &&
     data.competitionOutcome != null &&
-    data.competitionOutcome.places.length > 0
+    data.competitionOutcome.places.length > 0;
   // En cours: always Dernières + Prochaines (empty-state). Terminée: Dernières always; Prochaines only if nextUnit.
-  const showRecentUnit = operationalOverview
-  const showNextUnit = inProgress || (completedLike && focus.nextUnit != null)
-  const showTemporalUnits = showRecentUnit || showNextUnit
-  const showSport = showStanding || showOutcome || showTemporalUnits
-  const showCalendar =
-    generatedCalendar && data.calendarSummary != null
+  const showRecentUnit = operationalOverview;
+  const showNextUnit = inProgress || (completedLike && focus.nextUnit != null);
+  const showTemporalUnits = showRecentUnit || showNextUnit;
+  const showSport = showStanding || showOutcome || showTemporalUnits;
+  const showCalendar = generatedCalendar && data.calendarSummary != null;
 
-  const attentionItems = orderSituationsForDisplay(data.attentionSummary.items)
-  const attentionCount = data.attentionSummary.count
-  const showAttention = attentionCount > 0 && attentionItems.length > 0
-  const showPrepConfig = !operationalOverview && (teamsVisible || regulationVisible)
+  const attentionItems = orderSituationsForDisplay(data.attentionSummary.items);
+  const attentionCount = data.attentionSummary.count;
+  const showAttention = attentionCount > 0 && attentionItems.length > 0;
+  const showPrepConfig =
+    !operationalOverview && (teamsVisible || regulationVisible);
   const showOperationalConfig =
-    structureVisible || teamsVisible || gameRegulationVisible
+    structureVisible || teamsVisible || gameRegulationVisible;
 
   const operationalConfigBand =
     operationalOverview && showOperationalConfig ? (
@@ -233,9 +231,9 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
           />
         )}
       </div>
-    ) : null
+    ) : null;
 
-  const showResultColumn = showStanding || showOutcome
+  const showResultColumn = showStanding || showOutcome;
   const sportBand = showSport ? (
     <div
       className={
@@ -286,7 +284,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
         </div>
       )}
     </div>
-  ) : null
+  ) : null;
 
   return (
     <div className="overview ds-page">
@@ -424,89 +422,89 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
         <MutationError error={actionRunner.mutation.error} />
       )}
     </div>
-  )
+  );
 }
 
-type ActionRunner = ReturnType<typeof useOverviewActionRunner>
+type ActionRunner = ReturnType<typeof useOverviewActionRunner>;
 
 type MaterializeFollowUp = {
-  createdCount: number
-  attachedCount: number
-  alreadyComplete: boolean
-}
+  createdCount: number;
+  attachedCount: number;
+  alreadyComplete: boolean;
+};
 
 type MaterializeResult = {
-  createdCount: number
-  attachedMatchIds: string[]
-  alreadyComplete: boolean
-}
+  createdCount: number;
+  attachedMatchIds: string[];
+  alreadyComplete: boolean;
+};
 
 function useOverviewActionRunner(data: OverviewView) {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const [activeKey, setActiveKey] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [materializeFollowUp, setMaterializeFollowUp] =
-    useState<MaterializeFollowUp | null>(null)
+    useState<MaterializeFollowUp | null>(null);
 
   const mutation = useMutation({
     mutationFn: async (action: OverviewAction) => {
-      const intent = resolveOverviewActionIntent(action, data)
+      const intent = resolveOverviewActionIntent(action, data);
       if (intent.kind !== 'execute') {
-        throw new Error(`Action ${action.code} is not executable here`)
+        throw new Error(`Action ${action.code} is not executable here`);
       }
-      return intent.run()
+      return intent.run();
     },
     onSuccess: async (result, action) => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.overview(data.competitionId),
-      })
+      });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.attention(data.competitionId),
-      })
+      });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.workspace(data.competitionId),
-      })
+      });
 
       if (action.code === 'MaterializeMatches') {
-        const materialize = result as MaterializeResult
+        const materialize = result as MaterializeResult;
         await queryClient.invalidateQueries({
           queryKey: queryKeys.competitions.detail(data.competitionId),
-        })
+        });
         await queryClient.invalidateQueries({
           queryKey: queryKeys.competitions.organisation(data.competitionId),
-        })
+        });
         if (action.stageId) {
           await queryClient.invalidateQueries({
             queryKey: queryKeys.matches.byStage(action.stageId),
-          })
+          });
         } else {
           await queryClient.invalidateQueries({
             queryKey: ['matches', 'by-stage'],
-          })
+          });
         }
         setMaterializeFollowUp({
           createdCount: materialize.createdCount,
           attachedCount: materialize.attachedMatchIds.length,
           alreadyComplete: materialize.alreadyComplete,
-        })
+        });
       }
 
-      setActiveKey(null)
+      setActiveKey(null);
     },
     onError: () => {
-      setActiveKey(null)
+      setActiveKey(null);
     },
-  })
+  });
 
   function onActionClick(action: OverviewAction) {
-    const intent = resolveOverviewActionIntent(action, data)
+    const intent = resolveOverviewActionIntent(action, data);
     if (intent.kind === 'navigate') {
-      void navigate(intent.to)
-      return
+      void navigate(intent.to);
+      return;
     }
     if (intent.kind === 'execute') {
-      setActiveKey(overviewActionKey(action))
-      mutation.mutate(action)
+      setActiveKey(overviewActionKey(action));
+      mutation.mutate(action);
     }
   }
 
@@ -518,7 +516,7 @@ function useOverviewActionRunner(data: OverviewView) {
     activeKey,
     materializeFollowUp,
     clearMaterializeFollowUp: () => setMaterializeFollowUp(null),
-  }
+  };
 }
 
 function MaterializeFollowUpBanner({
@@ -526,13 +524,13 @@ function MaterializeFollowUpBanner({
   followUp,
   onDismiss,
 }: {
-  competitionId: string
-  followUp: MaterializeFollowUp
-  onDismiss: () => void
+  competitionId: string;
+  followUp: MaterializeFollowUp;
+  onDismiss: () => void;
 }) {
-  const { t } = useTranslation('overview')
-  const matchesHref = `/competitions/${competitionId}/matches`
-  const hasMatches = followUp.attachedCount > 0
+  const { t } = useTranslation('overview');
+  const matchesHref = `/competitions/${competitionId}/matches`;
+  const hasMatches = followUp.attachedCount > 0;
 
   return (
     <section
@@ -560,37 +558,41 @@ function MaterializeFollowUpBanner({
           <Link className="ds-btn ds-btn--primary" to={matchesHref}>
             {t('materializeFollowUp.openMatches')}
           </Link>{' '}
-          <button type="button" className="ds-btn ds-btn--secondary" onClick={onDismiss}>
+          <button
+            type="button"
+            className="ds-btn ds-btn--secondary"
+            onClick={onDismiss}
+          >
             {t('materializeFollowUp.dismiss')}
           </button>
         </p>
       )}
     </section>
-  )
+  );
 }
 
 function OutcomePodiumPanel({
   outcome,
   href,
 }: {
-  outcome: CompetitionOutcome
-  href: string
+  outcome: CompetitionOutcome;
+  href: string;
 }) {
-  const { t } = useTranslation('overview')
+  const { t } = useTranslation('overview');
   const byRank = (rank: number) =>
-    outcome.places.find((place) => place.rank === rank)
+    outcome.places.find((place) => place.rank === rank);
 
-  const first = byRank(1)
+  const first = byRank(1);
   if (!first) {
-    return null
+    return null;
   }
 
-  const isPodium = outcome.presentation === 'Podium'
-  const second = isPodium ? byRank(2) : undefined
-  const third = isPodium ? byRank(3) : undefined
+  const isPodium = outcome.presentation === 'Podium';
+  const second = isPodium ? byRank(2) : undefined;
+  const third = isPodium ? byRank(3) : undefined;
   const winnerLabel = isPodium
     ? t('sport.outcomeChampionLabel')
-    : t('sport.outcomeWinnerLabel')
+    : t('sport.outcomeWinnerLabel');
 
   return (
     <section className="ds-panel" aria-labelledby="overview-outcome-podium">
@@ -640,7 +642,10 @@ function OutcomePodiumPanel({
             className="overview-outcome__hero"
             data-testid={`overview-outcome-${first.entryId}`}
           >
-            <span className="overview-outcome__hero-rank ds-tabular" aria-hidden="true">
+            <span
+              className="overview-outcome__hero-rank ds-tabular"
+              aria-hidden="true"
+            >
               1
             </span>
             <p className="overview-outcome__hero-name">{first.displayName}</p>
@@ -652,30 +657,30 @@ function OutcomePodiumPanel({
         <TextLink to={href}>{t('sport.outcomeOpenFull')}</TextLink>
       </p>
     </section>
-  )
+  );
 }
 
 function StandingCompactPanel({
   standing,
   href,
 }: {
-  standing: OverviewStandingCompact
-  href: string
+  standing: OverviewStandingCompact;
+  href: string;
 }) {
-  const { t } = useTranslation('overview')
-  const tables = standing.tables
-  const isGroups = tables.length > 1 || tables[0]?.scope === 'Group'
-  const [tableIndex, setTableIndex] = useState(0)
-  const safeIndex = Math.min(tableIndex, Math.max(tables.length - 1, 0))
-  const table = tables[safeIndex]
+  const { t } = useTranslation('overview');
+  const tables = standing.tables;
+  const isGroups = tables.length > 1 || tables[0]?.scope === 'Group';
+  const [tableIndex, setTableIndex] = useState(0);
+  const safeIndex = Math.min(tableIndex, Math.max(tables.length - 1, 0));
+  const table = tables[safeIndex];
   if (!table) {
-    return null
+    return null;
   }
 
   const title =
     isGroups && table.groupName
       ? t('sport.standingGroupTitle', { name: table.groupName })
-      : t('sport.standingTitle')
+      : t('sport.standingTitle');
 
   return (
     <section className="ds-panel" aria-labelledby="overview-standing-compact">
@@ -685,7 +690,11 @@ function StandingCompactPanel({
         icon={<ClassementsNavIcon size="md" />}
       />
       {tables.length > 1 && (
-        <div className="overview-standing-nav" role="tablist" aria-label={t('sport.groupNav')}>
+        <div
+          className="overview-standing-nav"
+          role="tablist"
+          aria-label={t('sport.groupNav')}
+        >
           {tables.map((candidate, index) => (
             <button
               key={candidate.groupId ?? `${candidate.scope}-${index}`}
@@ -726,7 +735,9 @@ function StandingCompactPanel({
                 key={row.entryId}
                 data-testid={`overview-standing-${row.entryId}`}
                 className={
-                  row.position === 1 ? 'overview-standing__row--leader' : undefined
+                  row.position === 1
+                    ? 'overview-standing__row--leader'
+                    : undefined
                 }
               >
                 <td className="overview-standing__num">{row.position}</td>
@@ -742,19 +753,19 @@ function StandingCompactPanel({
         <TextLink to={href}>{t('sport.standingOpen')}</TextLink>
       </p>
     </section>
-  )
+  );
 }
 
 function CalendarSummaryPanel({
   summary,
   matchesHref,
 }: {
-  summary: OverviewCalendarSummary
-  matchesHref: string
+  summary: OverviewCalendarSummary;
+  matchesHref: string;
 }) {
-  const { t } = useTranslation('overview')
-  const titleId = 'overview-calendar-summary'
-  const next = summary.nextMatch
+  const { t } = useTranslation('overview');
+  const titleId = 'overview-calendar-summary';
+  const next = summary.nextMatch;
 
   return (
     <section
@@ -804,7 +815,7 @@ function CalendarSummaryPanel({
         <TextLink to={matchesHref}>{t('dimensions.openMatches')}</TextLink>
       </p>
     </section>
-  )
+  );
 }
 
 function SportUnitPanel({
@@ -812,22 +823,26 @@ function SportUnitPanel({
   unit,
   matchesHref,
 }: {
-  kind: 'recent' | 'next'
-  unit: OverviewSportUnit | null
-  matchesHref: string
+  kind: 'recent' | 'next';
+  unit: OverviewSportUnit | null;
+  matchesHref: string;
 }) {
-  const { t } = useTranslation('overview')
+  const { t } = useTranslation('overview');
   const titleId =
-    kind === 'recent' ? 'overview-recent-unit' : 'overview-next-unit'
+    kind === 'recent' ? 'overview-recent-unit' : 'overview-next-unit';
   const title =
-    kind === 'recent' ? t('sport.recentTitle') : t('sport.nextTitle')
+    kind === 'recent' ? t('sport.recentTitle') : t('sport.nextTitle');
   const empty =
-    kind === 'recent' ? t('sport.recentEmpty') : t('sport.nextEmpty')
-  const subtitle = unit ? sportUnitSubtitle(unit, t) : null
+    kind === 'recent' ? t('sport.recentEmpty') : t('sport.nextEmpty');
+  const subtitle = unit ? sportUnitSubtitle(unit, t) : null;
 
   return (
     <section className="ds-panel" aria-labelledby={titleId}>
-      <PanelHead id={titleId} title={title} icon={<MatchesNavIcon size="md" />} />
+      <PanelHead
+        id={titleId}
+        title={title}
+        icon={<MatchesNavIcon size="md" />}
+      />
       {subtitle ? (
         <p className="overview-sport-unit__subtitle">{subtitle}</p>
       ) : null}
@@ -842,7 +857,7 @@ function SportUnitPanel({
         <TextLink to={matchesHref}>{t('dimensions.openMatches')}</TextLink>
       </p>
     </section>
-  )
+  );
 }
 
 function sportUnitSubtitle(
@@ -852,14 +867,14 @@ function sportUnitSubtitle(
   const unitLabel =
     unit.unitKind === 'Matchday' && unit.matchdayNumber != null
       ? t('sport.unitMatchday', { number: unit.matchdayNumber })
-      : (unit.roundName?.trim() || unit.stageName)
-  const countLabel = t('sport.unitMatchCount', { count: unit.matchCount })
-  return `${unitLabel} · ${countLabel}`
+      : unit.roundName?.trim() || unit.stageName;
+  const countLabel = t('sport.unitMatchCount', { count: unit.matchCount });
+  return `${unitLabel} · ${countLabel}`;
 }
 
 function SportMatchLineList({ matches }: { matches: OverviewMatchLine[] }) {
-  const { t } = useTranslation('overview')
-  const { i18n } = useTranslation()
+  const { t } = useTranslation('overview');
+  const { i18n } = useTranslation();
 
   return (
     <ul className="overview-match-list">
@@ -867,13 +882,13 @@ function SportMatchLineList({ matches }: { matches: OverviewMatchLine[] }) {
         const score =
           match.score != null
             ? `${match.score.homeGoals}–${match.score.awayGoals}`
-            : null
-        const isLive = match.status === 'Live'
-        const isFinished = match.status === 'Finished'
+            : null;
+        const isLive = match.status === 'Live';
+        const isFinished = match.status === 'Finished';
         const scheduledLabel =
           match.scheduledAt != null
             ? formatMatchSchedule(match.scheduledAt, i18n.language)
-            : t('sport.scheduledUnset')
+            : t('sport.scheduledUnset');
 
         return (
           <li key={match.matchId}>
@@ -887,15 +902,24 @@ function SportMatchLineList({ matches }: { matches: OverviewMatchLine[] }) {
               data-testid={`overview-match-${match.matchId}`}
             >
               <span className="overview-match__teams">
-                <span className="overview-match__name">{match.homeDisplayName}</span>
+                <span className="overview-match__name">
+                  {match.homeDisplayName}
+                </span>
                 <span className="overview-match__vs" aria-hidden="true">
                   –
                 </span>
-                <span className="overview-match__name">{match.awayDisplayName}</span>
+                <span className="overview-match__name">
+                  {match.awayDisplayName}
+                </span>
               </span>
               <span className="overview-match__aside">
                 {isLive ? (
-                  <Status density="context" tone="live" variant="soft" shape="rounded">
+                  <Status
+                    density="context"
+                    tone="live"
+                    variant="soft"
+                    shape="rounded"
+                  >
                     {t('sport.liveBadge')}
                   </Status>
                 ) : isFinished && score ? (
@@ -909,21 +933,21 @@ function SportMatchLineList({ matches }: { matches: OverviewMatchLine[] }) {
               </span>
             </Link>
           </li>
-        )
+        );
       })}
     </ul>
-  )
+  );
 }
 
 function formatMatchSchedule(iso: string, locale: string): string {
-  const date = new Date(iso)
+  const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
-    return iso
+    return iso;
   }
   return new Intl.DateTimeFormat(locale, {
     dateStyle: 'short',
     timeStyle: 'short',
-  }).format(date)
+  }).format(date);
 }
 
 function AttentionSignalSection({
@@ -931,15 +955,15 @@ function AttentionSignalSection({
   count,
   competitionId,
 }: {
-  items: OverviewSituation[]
-  count: number
-  competitionId: string
+  items: OverviewSituation[];
+  count: number;
+  competitionId: string;
 }) {
-  const { t } = useTranslation('overview')
-  const preview = items.slice(0, 2)
+  const { t } = useTranslation('overview');
+  const preview = items.slice(0, 2);
 
   if (count === 0 || preview.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -963,7 +987,7 @@ function AttentionSignalSection({
         </p>
       )}
     </AttentionGroup>
-  )
+  );
 }
 
 function RegulationDimensionCard({
@@ -975,24 +999,24 @@ function RegulationDimensionCard({
   actions,
   actionRunner,
 }: {
-  variant?: 'construction' | 'game'
-  regulation: OverviewView['constructionDimensions']['regulation']
-  gameRules?: OverviewReferenceStageGameRules | null
-  href: string
-  hrefLabel: string
-  actions: OverviewAction[]
-  actionRunner: ActionRunner
+  variant?: 'construction' | 'game';
+  regulation: OverviewView['constructionDimensions']['regulation'];
+  gameRules?: OverviewReferenceStageGameRules | null;
+  href: string;
+  hrefLabel: string;
+  actions: OverviewAction[];
+  actionRunner: ActionRunner;
 }) {
-  const { t } = useTranslation('overview')
+  const { t } = useTranslation('overview');
 
   if (variant === 'game') {
     if (!gameRules) {
-      return null
+      return null;
     }
 
-    const isCup = gameRules.formatKind === 'Cup'
-    const textFacts = buildGameRegulationTextFacts(gameRules, t)
-    const showPoints = !isCup
+    const isCup = gameRules.formatKind === 'Cup';
+    const textFacts = buildGameRegulationTextFacts(gameRules, t);
+    const showPoints = !isCup;
 
     return (
       <article
@@ -1052,10 +1076,10 @@ function RegulationDimensionCard({
           <OverviewLink to={href}>{hrefLabel}</OverviewLink>
         </p>
       </article>
-    )
+    );
   }
 
-  const competition = regulation.competition
+  const competition = regulation.competition;
 
   return (
     <article
@@ -1096,7 +1120,7 @@ function RegulationDimensionCard({
         <OverviewLink to={href}>{hrefLabel}</OverviewLink>
       </p>
     </article>
-  )
+  );
 }
 
 function PointsChip({
@@ -1104,11 +1128,11 @@ function PointsChip({
   label,
   tone,
 }: {
-  value: number
-  label: string
-  tone: 'win' | 'draw' | 'loss'
+  value: number;
+  label: string;
+  tone: 'win' | 'draw' | 'loss';
 }) {
-  const { t } = useTranslation('overview')
+  const { t } = useTranslation('overview');
 
   return (
     <li className={`overview-chip overview-chip--${tone}`}>
@@ -1117,12 +1141,12 @@ function PointsChip({
       </span>
       <span className="overview-chip__label">{label}</span>
     </li>
-  )
+  );
 }
 
 /** Exit link toward the owning workspace — right-aligned, réf. V9. */
 function OverviewLink({ to, children }: { to: string; children: ReactNode }) {
-  return <TextLink to={to}>{children}</TextLink>
+  return <TextLink to={to}>{children}</TextLink>;
 }
 
 function TeamsPanel({
@@ -1134,22 +1158,22 @@ function TeamsPanel({
   actions,
   actionRunner,
 }: {
-  variant?: 'construction' | 'identity'
-  dimension: OverviewDimension
-  entries: OrganisationEntry[]
-  href: string
-  hrefLabel: string
-  actions: OverviewAction[]
-  actionRunner: ActionRunner
+  variant?: 'construction' | 'identity';
+  dimension: OverviewDimension;
+  entries: OrganisationEntry[];
+  href: string;
+  hrefLabel: string;
+  actions: OverviewAction[];
+  actionRunner: ActionRunner;
 }) {
-  const { t } = useTranslation('overview')
-  const identity = variant === 'identity'
-  const activeCount = Number(dimension.facts.activeCount ?? '0')
-  const minimumTeams = Number(dimension.facts.minimumTeams ?? '0')
-  const activeEntries = entries.filter((entry) => entry.status === 'Active')
-  const preview = activeEntries.slice(0, 6)
-  const overflow = Math.max(0, activeCount - preview.length)
-  const belowMinimum = minimumTeams > 0 && activeCount < minimumTeams
+  const { t } = useTranslation('overview');
+  const identity = variant === 'identity';
+  const activeCount = Number(dimension.facts.activeCount ?? '0');
+  const minimumTeams = Number(dimension.facts.minimumTeams ?? '0');
+  const activeEntries = entries.filter((entry) => entry.status === 'Active');
+  const preview = activeEntries.slice(0, 6);
+  const overflow = Math.max(0, activeCount - preview.length);
+  const belowMinimum = minimumTeams > 0 && activeCount < minimumTeams;
 
   return (
     <article
@@ -1210,7 +1234,7 @@ function TeamsPanel({
         <OverviewLink to={href}>{hrefLabel}</OverviewLink>
       </p>
     </article>
-  )
+  );
 }
 
 /**
@@ -1227,31 +1251,31 @@ function StructurePanel({
   actions,
   actionRunner,
 }: {
-  variant?: 'construction' | 'condensed'
-  dimension: OverviewDimension
-  stages: OverviewView['operationalFocus']['stages']
-  matchTotal: number
-  href: string
-  hrefLabel: string
-  actions: OverviewAction[]
-  actionRunner: ActionRunner
+  variant?: 'construction' | 'condensed';
+  dimension: OverviewDimension;
+  stages: OverviewView['operationalFocus']['stages'];
+  matchTotal: number;
+  href: string;
+  hrefLabel: string;
+  actions: OverviewAction[];
+  actionRunner: ActionRunner;
 }) {
-  const { t } = useTranslation('overview')
-  const formatKind = dimension.facts.formatKind
-  const formatConfigured = Boolean(formatKind) && formatKind !== 'None'
-  const groupCount = Number(dimension.facts.groupCount ?? '0')
-  const roundCount = Number(dimension.facts.roundCount ?? '0')
-  const matchdayCount = Number(dimension.facts.matchdayCount ?? '0')
-  const slotCount = Number(dimension.facts.slotCount ?? '0')
-  const swissRoundCount = Number(dimension.facts.swissRoundCount ?? '0')
-  const swissByeCount = Number(dimension.facts.swissByeCount ?? '0')
-  const stageNames = stages.map((stage) => stage.name).filter(Boolean)
+  const { t } = useTranslation('overview');
+  const formatKind = dimension.facts.formatKind;
+  const formatConfigured = Boolean(formatKind) && formatKind !== 'None';
+  const groupCount = Number(dimension.facts.groupCount ?? '0');
+  const roundCount = Number(dimension.facts.roundCount ?? '0');
+  const matchdayCount = Number(dimension.facts.matchdayCount ?? '0');
+  const slotCount = Number(dimension.facts.slotCount ?? '0');
+  const swissRoundCount = Number(dimension.facts.swissRoundCount ?? '0');
+  const swissByeCount = Number(dimension.facts.swissByeCount ?? '0');
+  const stageNames = stages.map((stage) => stage.name).filter(Boolean);
 
   if (variant === 'condensed') {
     const formatLabel =
       formatConfigured && formatKind
         ? structureFormatKindLabel(formatKind as StructureFormatKind)
-        : t('dimensions.structure.none')
+        : t('dimensions.structure.none');
     const metrics = buildStructureCondensedMetrics({
       t,
       formatKind,
@@ -1261,7 +1285,7 @@ function StructurePanel({
       roundCount,
       matchdayCount,
       swissRoundCount,
-    })
+    });
 
     return (
       <article
@@ -1295,7 +1319,7 @@ function StructurePanel({
           <OverviewLink to={href}>{hrefLabel}</OverviewLink>
         </p>
       </article>
-    )
+    );
   }
 
   return (
@@ -1345,12 +1369,16 @@ function StructurePanel({
         )}
         {formatKind !== 'Swiss' && matchdayCount > 0 && (
           <StructureFactRow
-            label={t('dimensions.structure.matchdays', { count: matchdayCount })}
+            label={t('dimensions.structure.matchdays', {
+              count: matchdayCount,
+            })}
           />
         )}
         {formatKind === 'Swiss' && swissByeCount > 0 && (
           <StructureFactRow
-            label={t('dimensions.structure.swissByes', { count: swissByeCount })}
+            label={t('dimensions.structure.swissByes', {
+              count: swissByeCount,
+            })}
             detail={t('dimensions.structure.swissByesHint')}
           />
         )}
@@ -1372,7 +1400,7 @@ function StructurePanel({
         <OverviewLink to={href}>{hrefLabel}</OverviewLink>
       </p>
     </article>
-  )
+  );
 }
 
 function buildStructureCondensedMetrics({
@@ -1385,21 +1413,21 @@ function buildStructureCondensedMetrics({
   matchdayCount,
   swissRoundCount,
 }: {
-  t: (key: string, options?: Record<string, unknown>) => string
-  formatKind: string | undefined
-  stages: OverviewView['operationalFocus']['stages']
-  stageNames: string[]
-  groupCount: number
-  roundCount: number
-  matchdayCount: number
-  swissRoundCount: number
+  t: (key: string, options?: Record<string, unknown>) => string;
+  formatKind: string | undefined;
+  stages: OverviewView['operationalFocus']['stages'];
+  stageNames: string[];
+  groupCount: number;
+  roundCount: number;
+  matchdayCount: number;
+  swissRoundCount: number;
 }): string[] {
-  const metrics: string[] = []
+  const metrics: string[] = [];
   const push = (value: string | null | undefined) => {
     if (value && metrics.length < 3) {
-      metrics.push(value)
+      metrics.push(value);
     }
-  }
+  };
 
   const phasesLabel =
     stages.length > 0
@@ -1409,59 +1437,59 @@ function buildStructureCondensedMetrics({
             names: stageNames.join(' · '),
           })
         : t('dimensions.structure.phases', { count: stages.length })
-      : null
+      : null;
 
   switch (formatKind) {
     case 'Championship':
-      push(phasesLabel)
+      push(phasesLabel);
       if (matchdayCount > 0) {
-        push(t('dimensions.structure.matchdays', { count: matchdayCount }))
+        push(t('dimensions.structure.matchdays', { count: matchdayCount }));
       }
       if (groupCount > 0) {
-        push(t('dimensions.structure.groups', { count: groupCount }))
+        push(t('dimensions.structure.groups', { count: groupCount }));
       }
-      break
+      break;
     case 'Groups':
-      push(phasesLabel)
+      push(phasesLabel);
       if (groupCount > 0) {
-        push(t('dimensions.structure.groups', { count: groupCount }))
+        push(t('dimensions.structure.groups', { count: groupCount }));
       }
       if (matchdayCount > 0) {
-        push(t('dimensions.structure.matchdays', { count: matchdayCount }))
+        push(t('dimensions.structure.matchdays', { count: matchdayCount }));
       }
-      break
+      break;
     case 'Cup':
-      push(phasesLabel)
+      push(phasesLabel);
       if (roundCount > 0) {
-        push(t('dimensions.structure.rounds', { count: roundCount }))
+        push(t('dimensions.structure.rounds', { count: roundCount }));
       }
-      break
+      break;
     case 'Swiss':
-      push(phasesLabel)
+      push(phasesLabel);
       if (swissRoundCount > 0 || matchdayCount > 0) {
         push(
           t('dimensions.structure.swissRounds', {
             generated: matchdayCount,
             planned: swissRoundCount,
           }),
-        )
+        );
       }
-      break
+      break;
     default:
-      push(phasesLabel)
+      push(phasesLabel);
       if (groupCount > 0) {
-        push(t('dimensions.structure.groups', { count: groupCount }))
+        push(t('dimensions.structure.groups', { count: groupCount }));
       }
       if (roundCount > 0) {
-        push(t('dimensions.structure.rounds', { count: roundCount }))
+        push(t('dimensions.structure.rounds', { count: roundCount }));
       }
       if (matchdayCount > 0) {
-        push(t('dimensions.structure.matchdays', { count: matchdayCount }))
+        push(t('dimensions.structure.matchdays', { count: matchdayCount }));
       }
-      break
+      break;
   }
 
-  return metrics
+  return metrics;
 }
 
 /** Text facts for En cours Règlement (points rendered separately as chips). */
@@ -1469,17 +1497,17 @@ function buildGameRegulationTextFacts(
   rules: OverviewReferenceStageGameRules,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string[] {
-  const facts: string[] = []
+  const facts: string[] = [];
   const push = (value: string | null | undefined) => {
     if (value && facts.length < 3) {
-      facts.push(value)
+      facts.push(value);
     }
-  }
+  };
 
   const duration = t('dimensions.regulation.formatDuration', {
     periods: rules.numberOfPeriods,
     duration: rules.durationPerPeriod,
-  })
+  });
 
   if (rules.formatKind === 'Cup') {
     if (rules.numberOfLegs >= 2) {
@@ -1487,26 +1515,26 @@ function buildGameRegulationTextFacts(
         rules.aggregateScoring
           ? t('dimensions.regulation.twoLegsAggregate')
           : t('dimensions.regulation.twoLegs'),
-      )
+      );
     } else {
-      push(t('dimensions.regulation.elimination'))
+      push(t('dimensions.regulation.elimination'));
     }
-    push(duration)
+    push(duration);
 
-    const extras: string[] = []
+    const extras: string[] = [];
     if (rules.hasExtraTime || rules.hasTieExtraTime) {
-      extras.push(t('dimensions.regulation.extraTime'))
+      extras.push(t('dimensions.regulation.extraTime'));
     }
     if (rules.hasPenaltyShootout || rules.hasTiePenaltyShootout) {
-      extras.push(t('dimensions.regulation.penalties'))
+      extras.push(t('dimensions.regulation.penalties'));
     }
     if (extras.length > 0) {
-      push(extras.join(' · '))
+      push(extras.join(' · '));
     }
-    return facts
+    return facts;
   }
 
-  push(duration)
+  push(duration);
   if (
     rules.formatKind === 'Swiss' &&
     rules.swissPlannedRounds != null &&
@@ -1516,25 +1544,25 @@ function buildGameRegulationTextFacts(
       t('dimensions.regulation.swissPlannedRounds', {
         count: rules.swissPlannedRounds,
       }),
-    )
+    );
   }
 
-  return facts
+  return facts;
 }
 
 function StructureFactRow({
   label,
   detail,
 }: {
-  label: string
-  detail?: string
+  label: string;
+  detail?: string;
 }) {
   return (
     <li className="overview-row">
       <span className="overview-row__label">{label}</span>
       {detail && <span className="overview-row__detail">{detail}</span>}
     </li>
-  )
+  );
 }
 
 function ActionButtons({
@@ -1542,31 +1570,34 @@ function ActionButtons({
   actionRunner,
   emphasizeFirst = false,
 }: {
-  actions: OverviewAction[]
-  actionRunner: ActionRunner
+  actions: OverviewAction[];
+  actionRunner: ActionRunner;
   /** Primary only when this region owns the single CTA — Identité §11. */
-  emphasizeFirst?: boolean
+  emphasizeFirst?: boolean;
 }) {
-  const { t } = useTranslation('overview')
+  const { t } = useTranslation('overview');
   if (actions.length === 0) {
-    return null
+    return null;
   }
 
   return (
-    <div className="overview-actions" aria-busy={actionRunner.mutation.isPending}>
+    <div
+      className="overview-actions"
+      aria-busy={actionRunner.mutation.isPending}
+    >
       {actions.map((action, index) => {
-        const key = overviewActionKey(action)
+        const key = overviewActionKey(action);
         const busy =
-          actionRunner.mutation.isPending && actionRunner.activeKey === key
+          actionRunner.mutation.isPending && actionRunner.activeKey === key;
         const label = actionLabel(action.code, {
           name: action.params?.stageName,
           ...action.params,
-        })
-        const intent = actionRunner.resolveIntent(action)
+        });
+        const intent = actionRunner.resolveIntent(action);
         const variant =
           emphasizeFirst && index === 0
             ? 'ds-btn--primary'
-            : 'ds-btn--secondary'
+            : 'ds-btn--secondary';
         if (intent.kind === 'navigate') {
           return (
             <Link
@@ -1577,7 +1608,7 @@ function ActionButtons({
             >
               {label}
             </Link>
-          )
+          );
         }
         return (
           <button
@@ -1589,10 +1620,10 @@ function ActionButtons({
           >
             {busy ? <PendingLabel>{t('actions.busy')}</PendingLabel> : label}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 function NaturalProgressionSection({
@@ -1600,19 +1631,21 @@ function NaturalProgressionSection({
   actionRunner,
   lifecycleActions,
 }: {
-  data: OverviewView
-  actionRunner: ActionRunner
+  data: OverviewView;
+  actionRunner: ActionRunner;
   /**
    * PrepareCompetition / StartCompetition leftovers — occupy Prochaine action only when
    * naturalProgression is null (never stacked with a structural tip).
    */
-  lifecycleActions: OverviewAction[]
+  lifecycleActions: OverviewAction[];
 }) {
-  const { t } = useTranslation('overview')
-  const code = data.naturalProgression?.code
-  const matched = code ? findActionByCode(data.availableActions, code) : undefined
-  const lifecycle = lifecycleActions[0]
-  const hasPrimary = Boolean(code)
+  const { t } = useTranslation('overview');
+  const code = data.naturalProgression?.code;
+  const matched = code
+    ? findActionByCode(data.availableActions, code)
+    : undefined;
+  const lifecycle = lifecycleActions[0];
+  const hasPrimary = Boolean(code);
 
   // Structural tip XOR lifecycle — never both (Préparation V1 P5).
   if (hasPrimary) {
@@ -1635,11 +1668,11 @@ function NaturalProgressionSection({
           ) : null
         }
       />
-    )
+    );
   }
 
   if (!lifecycle) {
-    return null
+    return null;
   }
 
   return (
@@ -1659,6 +1692,5 @@ function NaturalProgressionSection({
         />
       }
     />
-  )
+  );
 }
-

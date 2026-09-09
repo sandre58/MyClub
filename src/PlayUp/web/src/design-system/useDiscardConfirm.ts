@@ -1,38 +1,38 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react';
 
 /**
  * Dirty-dialog discard confirm — shared by identity / add dialogs.
  * When discard is open, parent Dialog should set trapFocus={false} and disable close.
  */
 export function useDiscardConfirm(isDirty: boolean, onDiscard: () => void) {
-  const [discardOpen, setDiscardOpen] = useState(false)
+  const [discardOpen, setDiscardOpen] = useState(false);
 
   const requestClose = useCallback(
     (busy?: boolean) => {
       if (busy) {
-        return
+        return;
       }
       if (isDirty) {
-        setDiscardOpen(true)
-        return
+        setDiscardOpen(true);
+        return;
       }
-      onDiscard()
+      onDiscard();
     },
     [isDirty, onDiscard],
-  )
+  );
 
   const cancelDiscard = useCallback(() => {
-    setDiscardOpen(false)
-  }, [])
+    setDiscardOpen(false);
+  }, []);
 
   const confirmDiscard = useCallback(() => {
-    setDiscardOpen(false)
-    onDiscard()
-  }, [onDiscard])
+    setDiscardOpen(false);
+    onDiscard();
+  }, [onDiscard]);
 
   const resetDiscard = useCallback(() => {
-    setDiscardOpen(false)
-  }, [])
+    setDiscardOpen(false);
+  }, []);
 
   return {
     discardOpen,
@@ -40,5 +40,5 @@ export function useDiscardConfirm(isDirty: boolean, onDiscard: () => void) {
     cancelDiscard,
     confirmDiscard,
     resetDiscard,
-  }
+  };
 }

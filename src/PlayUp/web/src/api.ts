@@ -30,20 +30,20 @@ import type {
   UpdateCompetitionPresentationRequest,
   UpdateEntryPresentationRequest,
   WorkspaceSummary,
-} from './types'
+} from './types';
 
 export class ApiError extends Error {
-  readonly status: number
-  readonly detail?: string
+  readonly status: number;
+  readonly detail?: string;
   /** ProblemDetails extensions.code when present. */
-  readonly code?: string
+  readonly code?: string;
 
   constructor(status: number, message: string, detail?: string, code?: string) {
-    super(message)
-    this.name = 'ApiError'
-    this.status = status
-    this.detail = detail
-    this.code = code
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.detail = detail;
+    this.code = code;
   }
 }
 
@@ -53,19 +53,19 @@ export class ApiError extends Error {
  */
 async function throwIfNotOk(response: Response): Promise<void> {
   if (response.ok) {
-    return
+    return;
   }
 
-  let detail: string | undefined
-  let code: string | undefined
+  let detail: string | undefined;
+  let code: string | undefined;
   try {
     const problem = (await response.json()) as {
-      title?: string
-      detail?: string
-      code?: string
-    }
-    detail = problem.detail ?? problem.title
-    code = typeof problem.code === 'string' ? problem.code : undefined
+      title?: string;
+      detail?: string;
+      code?: string;
+    };
+    detail = problem.detail ?? problem.title;
+    code = typeof problem.code === 'string' ? problem.code : undefined;
   } catch {
     // Non-JSON body (rare)
   }
@@ -75,7 +75,7 @@ async function throwIfNotOk(response: Response): Promise<void> {
     detail ?? `HTTP ${response.status}`,
     detail,
     code,
-  )
+  );
 }
 
 /**
@@ -84,9 +84,9 @@ async function throwIfNotOk(response: Response): Promise<void> {
  * Not a generic “API layer” — just one fetch path with typed return.
  */
 async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url)
-  await throwIfNotOk(response)
-  return (await response.json()) as T
+  const response = await fetch(url);
+  await throwIfNotOk(response);
+  return (await response.json()) as T;
 }
 
 /**
@@ -100,13 +100,11 @@ async function sendJson<T>(
   const response = await fetch(url, {
     method,
     headers:
-      body === undefined
-        ? undefined
-        : { 'Content-Type': 'application/json' },
+      body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
-  })
-  await throwIfNotOk(response)
-  return (await response.json()) as T
+  });
+  await throwIfNotOk(response);
+  return (await response.json()) as T;
 }
 
 /**
@@ -121,24 +119,19 @@ async function sendNoContent(
   const response = await fetch(url, {
     method,
     headers:
-      body === undefined
-        ? undefined
-        : { 'Content-Type': 'application/json' },
+      body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
-  })
-  await throwIfNotOk(response)
+  });
+  await throwIfNotOk(response);
 }
 
-async function postNoContent(
-  url: string,
-  body?: unknown,
-): Promise<void> {
-  return sendNoContent('POST', url, body)
+async function postNoContent(url: string, body?: unknown): Promise<void> {
+  return sendNoContent('POST', url, body);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions */
 export function fetchCompetitions(): Promise<CompetitionListItem[]> {
-  return getJson('/competitions')
+  return getJson('/competitions');
 }
 
 /**
@@ -148,42 +141,42 @@ export function fetchCompetitions(): Promise<CompetitionListItem[]> {
 export function createCompetition(
   request: CreateCompetitionRequest,
 ): Promise<WorkspaceSummary> {
-  return sendJson('POST', '/competitions', request)
+  return sendJson('POST', '/competitions', request);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/overview */
 export function fetchCompetitionOverview(
   competitionId: string,
 ): Promise<OverviewView> {
-  return getJson(`/competitions/${competitionId}/overview`)
+  return getJson(`/competitions/${competitionId}/overview`);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id} */
 export function fetchCompetitionDetail(
   competitionId: string,
 ): Promise<CompetitionDetail> {
-  return getJson(`/competitions/${competitionId}`)
+  return getJson(`/competitions/${competitionId}`);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/organisation */
 export function fetchOrganisationView(
   competitionId: string,
 ): Promise<OrganisationView> {
-  return getJson(`/competitions/${competitionId}/organisation`)
+  return getJson(`/competitions/${competitionId}/organisation`);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/consultation */
 export function fetchConsultation(
   competitionId: string,
 ): Promise<ConsultationView> {
-  return getJson(`/competitions/${competitionId}/consultation`)
+  return getJson(`/competitions/${competitionId}/consultation`);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/attention */
 export function fetchNeedsAttention(
   competitionId: string,
 ): Promise<NeedsAttention> {
-  return getJson(`/competitions/${competitionId}/attention`)
+  return getJson(`/competitions/${competitionId}/attention`);
 }
 
 /** POST /competitions/{id}/entries → OrganisationView */
@@ -191,16 +184,16 @@ export function addCompetitionEntry(
   competitionId: string,
   request: AddEntryRequest,
 ): Promise<OrganisationView> {
-  return sendJson('POST', `/competitions/${competitionId}/entries`, request)
+  return sendJson('POST', `/competitions/${competitionId}/entries`, request);
 }
 
 /** POST /media — multipart file upload → Media metadata. */
 export async function uploadMedia(file: File): Promise<{ id: string }> {
-  const form = new FormData()
-  form.append('file', file)
-  const response = await fetch('/media', { method: 'POST', body: form })
-  await throwIfNotOk(response)
-  return (await response.json()) as { id: string }
+  const form = new FormData();
+  form.append('file', file);
+  const response = await fetch('/media', { method: 'POST', body: form });
+  await throwIfNotOk(response);
+  return (await response.json()) as { id: string };
 }
 
 /** POST /competitions/{id}/presentation → OrganisationView */
@@ -208,7 +201,11 @@ export function updateCompetitionPresentation(
   competitionId: string,
   request: UpdateCompetitionPresentationRequest,
 ): Promise<OrganisationView> {
-  return sendJson('POST', `/competitions/${competitionId}/presentation`, request)
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/presentation`,
+    request,
+  );
 }
 
 /** POST /competitions/{id}/schedule → OrganisationView */
@@ -216,7 +213,7 @@ export function setCompetitionSchedule(
   competitionId: string,
   request: SetCompetitionScheduleRequest,
 ): Promise<OrganisationView> {
-  return sendJson('POST', `/competitions/${competitionId}/schedule`, request)
+  return sendJson('POST', `/competitions/${competitionId}/schedule`, request);
 }
 
 /** POST .../entries/{entryId}/presentation → OrganisationView */
@@ -229,7 +226,7 @@ export function updateEntryPresentation(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/presentation`,
     request,
-  )
+  );
 }
 
 /** POST .../entries/{entryId}/rename → OrganisationView */
@@ -242,7 +239,7 @@ export function renameCompetitionEntry(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/rename`,
     request,
-  )
+  );
 }
 
 /** POST .../entries/{entryId}/withdraw → OrganisationView */
@@ -253,7 +250,7 @@ export function withdrawCompetitionEntry(
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/withdraw`,
-  )
+  );
 }
 
 /** POST .../entries/{entryId}/declared-members → OrganisationView */
@@ -266,7 +263,7 @@ export function addDeclaredMember(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/declared-members`,
     request,
-  )
+  );
 }
 
 /** DELETE .../declared-members/{memberId} → OrganisationView */
@@ -278,7 +275,7 @@ export function removeDeclaredMember(
   return sendJson(
     'DELETE',
     `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}`,
-  )
+  );
 }
 
 /** POST .../declared-member-lots/remove → OrganisationView */
@@ -291,7 +288,7 @@ export function removeDeclaredMembers(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/declared-member-lots/remove`,
     request,
-  )
+  );
 }
 
 /** POST .../declared-members/{memberId}/rename → OrganisationView */
@@ -305,7 +302,7 @@ export function renameDeclaredMember(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}/rename`,
     request,
-  )
+  );
 }
 
 /** POST .../entries/{entryId}/delete → OrganisationView */
@@ -316,7 +313,7 @@ export function deleteCompetitionEntry(
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/delete`,
-  )
+  );
 }
 
 /** POST .../entry-lots/delete → OrganisationView */
@@ -328,7 +325,7 @@ export function deleteCompetitionEntries(
     'POST',
     `/competitions/${competitionId}/entry-lots/delete`,
     request,
-  )
+  );
 }
 
 /** POST .../entry-lots/withdraw → OrganisationView */
@@ -340,7 +337,7 @@ export function withdrawCompetitionEntries(
     'POST',
     `/competitions/${competitionId}/entry-lots/withdraw`,
     request,
-  )
+  );
 }
 
 /** PUT /competitions/{id}/regulation → OrganisationView */
@@ -348,7 +345,7 @@ export function replaceCompetitionRegulation(
   competitionId: string,
   request: ReplaceRegulationRequest,
 ): Promise<OrganisationView> {
-  return sendJson('PUT', `/competitions/${competitionId}/regulation`, request)
+  return sendJson('PUT', `/competitions/${competitionId}/regulation`, request);
 }
 
 /** POST /competitions/{id}/organisation/structure → OrganisationView */
@@ -360,34 +357,32 @@ export function configureOrganisationStructure(
     'POST',
     `/competitions/${competitionId}/organisation/structure`,
     request,
-  )
+  );
 }
 
 /** Relative URL → Vite proxy → Host GET /stages/{id} */
 export function fetchStageOverview(stageId: string): Promise<StageOverview> {
-  return getJson(`/stages/${stageId}`)
+  return getJson(`/stages/${stageId}`);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/matches-hub */
 export function fetchMatchHub(competitionId: string): Promise<MatchHubView> {
-  return getJson(`/competitions/${competitionId}/matches-hub`)
+  return getJson(`/competitions/${competitionId}/matches-hub`);
 }
 
 /** Relative URL → Vite proxy → Host GET /stages/{id}/matches */
-export function fetchMatchesByStage(
-  stageId: string,
-): Promise<MatchSummary[]> {
-  return getJson(`/stages/${stageId}/matches`)
+export function fetchMatchesByStage(stageId: string): Promise<MatchSummary[]> {
+  return getJson(`/stages/${stageId}/matches`);
 }
 
 /** Relative URL → Vite proxy → Host GET /matches/{id} */
 export function fetchMatchDetail(matchId: string): Promise<MatchDetail> {
-  return getJson(`/matches/${matchId}`)
+  return getJson(`/matches/${matchId}`);
 }
 
 /** POST /matches/{id}/start → 204 */
 export function startMatch(matchId: string): Promise<void> {
-  return postNoContent(`/matches/${matchId}/start`)
+  return postNoContent(`/matches/${matchId}/start`);
 }
 
 /** POST /matches/{id}/finish → 204 */
@@ -395,7 +390,7 @@ export function finishMatch(
   matchId: string,
   request: FinishMatchRequest,
 ): Promise<void> {
-  return postNoContent(`/matches/${matchId}/finish`, request)
+  return postNoContent(`/matches/${matchId}/finish`, request);
 }
 
 /** PUT /matches/{id}/running-score → 204 (Live only; absolute). */
@@ -406,7 +401,7 @@ export function setRunningScore(
   return sendNoContent('PUT', `/matches/${matchId}/running-score`, {
     homeGoals: score.homeGoals,
     awayGoals: score.awayGoals,
-  })
+  });
 }
 
 /** POST /matches/{id}/declared-participations → 204 */
@@ -414,7 +409,7 @@ export function addDeclaredParticipation(
   matchId: string,
   request: AddDeclaredParticipationRequest,
 ): Promise<void> {
-  return postNoContent(`/matches/${matchId}/declared-participations`, request)
+  return postNoContent(`/matches/${matchId}/declared-participations`, request);
 }
 
 /** DELETE /matches/{id}/declared-participations/{memberId} → 204 */
@@ -425,7 +420,7 @@ export function removeDeclaredParticipation(
   return sendNoContent(
     'DELETE',
     `/matches/${matchId}/declared-participations/${memberId}`,
-  )
+  );
 }
 
 /** PUT .../declared-participations/{memberId}/composition-status → 204 */
@@ -438,7 +433,7 @@ export function changeDeclaredParticipationCompositionStatus(
     'PUT',
     `/matches/${matchId}/declared-participations/${memberId}/composition-status`,
     { compositionStatus },
-  )
+  );
 }
 
 /** PUT .../declared-participations/{memberId}/jersey-number → 204 */
@@ -451,7 +446,7 @@ export function setDeclaredParticipationJerseyNumber(
     'PUT',
     `/matches/${matchId}/declared-participations/${memberId}/jersey-number`,
     { jerseyNumber },
-  )
+  );
 }
 
 /** POST /matches/{id}/recorded-goals → 204 (faits-only; Live RS is a separate call). */
@@ -459,7 +454,7 @@ export function recordGoal(
   matchId: string,
   request: RecordGoalRequest,
 ): Promise<void> {
-  return postNoContent(`/matches/${matchId}/recorded-goals`, request)
+  return postNoContent(`/matches/${matchId}/recorded-goals`, request);
 }
 
 /** PUT /matches/{id}/recorded-goals/{goalId} → 204 */
@@ -472,7 +467,7 @@ export function correctRecordedGoal(
     'PUT',
     `/matches/${matchId}/recorded-goals/${goalId}`,
     request,
-  )
+  );
 }
 
 /** DELETE /matches/{id}/recorded-goals/{goalId} → 204 */
@@ -480,7 +475,10 @@ export function removeRecordedGoal(
   matchId: string,
   goalId: string,
 ): Promise<void> {
-  return sendNoContent('DELETE', `/matches/${matchId}/recorded-goals/${goalId}`)
+  return sendNoContent(
+    'DELETE',
+    `/matches/${matchId}/recorded-goals/${goalId}`,
+  );
 }
 
 /** POST /matches/{id}/recorded-substitutions → 204 */
@@ -488,7 +486,7 @@ export function recordSubstitution(
   matchId: string,
   request: RecordSubstitutionRequest,
 ): Promise<void> {
-  return postNoContent(`/matches/${matchId}/recorded-substitutions`, request)
+  return postNoContent(`/matches/${matchId}/recorded-substitutions`, request);
 }
 
 /** PUT /matches/{id}/recorded-substitutions/{substitutionId} → 204 */
@@ -501,7 +499,7 @@ export function correctRecordedSubstitution(
     'PUT',
     `/matches/${matchId}/recorded-substitutions/${substitutionId}`,
     request,
-  )
+  );
 }
 
 /** DELETE /matches/{id}/recorded-substitutions/{substitutionId} → 204 */
@@ -512,7 +510,7 @@ export function removeRecordedSubstitution(
   return sendNoContent(
     'DELETE',
     `/matches/${matchId}/recorded-substitutions/${substitutionId}`,
-  )
+  );
 }
 
 /** POST /matches/{id}/recorded-disciplinary-events → 204 */
@@ -523,7 +521,7 @@ export function recordDisciplinaryEvent(
   return postNoContent(
     `/matches/${matchId}/recorded-disciplinary-events`,
     request,
-  )
+  );
 }
 
 /** PUT /matches/{id}/recorded-disciplinary-events/{disciplinaryEventId} → 204 */
@@ -536,7 +534,7 @@ export function correctRecordedDisciplinaryEvent(
     'PUT',
     `/matches/${matchId}/recorded-disciplinary-events/${disciplinaryEventId}`,
     request,
-  )
+  );
 }
 
 /** DELETE /matches/{id}/recorded-disciplinary-events/{disciplinaryEventId} → 204 */
@@ -547,7 +545,7 @@ export function removeRecordedDisciplinaryEvent(
   return sendNoContent(
     'DELETE',
     `/matches/${matchId}/recorded-disciplinary-events/${disciplinaryEventId}`,
-  )
+  );
 }
 
 /** POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression → 204 */
@@ -557,22 +555,22 @@ export function applyProgressionOutcome(
 ): Promise<void> {
   return postNoContent(
     `/stages/${stageId}/fixtures/${fixtureId}/apply-progression`,
-  )
+  );
 }
 
 /** POST /stages/{stageId}/prepare → 204 (bodyless; Draft → Ready) */
 export function prepareStage(stageId: string): Promise<void> {
-  return postNoContent(`/stages/${stageId}/prepare`)
+  return postNoContent(`/stages/${stageId}/prepare`);
 }
 
 /** POST /stages/{stageId}/start → 204 (bodyless; Ready → Running) */
 export function startStage(stageId: string): Promise<void> {
-  return postNoContent(`/stages/${stageId}/start`)
+  return postNoContent(`/stages/${stageId}/start`);
 }
 
 /** POST /stages/{stageId}/draws/{drawId}/publish → 204 */
 export function publishDraw(stageId: string, drawId: string): Promise<void> {
-  return postNoContent(`/stages/${stageId}/draws/${drawId}/publish`)
+  return postNoContent(`/stages/${stageId}/draws/${drawId}/publish`);
 }
 
 /** POST /stages/{stageId}/draws/{drawId}/apply → 204 */
@@ -581,52 +579,58 @@ export function applyDraw(
   drawId: string,
   request: ApplyDrawRequest,
 ): Promise<void> {
-  return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`, request)
+  return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`, request);
 }
 
 /** POST /stages/{stageId}/matches/materialize → MaterializeMatchesResponse */
-export function materializeMatches(
-  stageId: string,
-): Promise<{ createdCount: number; attachedMatchIds: string[]; alreadyComplete: boolean }> {
-  return sendJson('POST', `/stages/${stageId}/matches/materialize`)
+export function materializeMatches(stageId: string): Promise<{
+  createdCount: number;
+  attachedMatchIds: string[];
+  alreadyComplete: boolean;
+}> {
+  return sendJson('POST', `/stages/${stageId}/matches/materialize`);
 }
 
 /** POST /stages/{stageId}/swiss/generate-next-round → GenerateNextRoundResponse */
 export function generateNextSwissRound(stageId: string): Promise<{
-  roundIndex: number
-  createdCount: number
-  attachedMatchIds: string[]
-  byeEntryId: string | null
-  alreadyComplete: boolean
+  roundIndex: number;
+  createdCount: number;
+  attachedMatchIds: string[];
+  byeEntryId: string | null;
+  alreadyComplete: boolean;
 }> {
-  return sendJson('POST', `/stages/${stageId}/swiss/generate-next-round`)
+  return sendJson('POST', `/stages/${stageId}/swiss/generate-next-round`);
 }
 
 /** POST /stages/{stageId}/matches/materialize-from-slots → MaterializeMatchesResponse */
 export function materializeCupFromOccupiedSlots(
   stageId: string,
   pairs: { slotAKey: string; slotBKey: string }[],
-): Promise<{ createdCount: number; attachedMatchIds: string[]; alreadyComplete: boolean }> {
+): Promise<{
+  createdCount: number;
+  attachedMatchIds: string[];
+  alreadyComplete: boolean;
+}> {
   return sendJson('POST', `/stages/${stageId}/matches/materialize-from-slots`, {
     pairs,
-  })
+  });
 }
 
 /** POST /stages/{stageId}/qualification/apply → QualificationApplyResponse */
 export function applyQualification(
   stageId: string,
 ): Promise<{ appliedCount: number; assignments: unknown[] }> {
-  return sendJson('POST', `/stages/${stageId}/qualification/apply`)
+  return sendJson('POST', `/stages/${stageId}/qualification/apply`);
 }
 
 /** POST /competitions/{id}/prepare → 204 (bodyless; Draft → Ready) */
 export function prepareCompetition(competitionId: string): Promise<void> {
-  return postNoContent(`/competitions/${competitionId}/prepare`)
+  return postNoContent(`/competitions/${competitionId}/prepare`);
 }
 
 /** POST /competitions/{id}/start → 204 (bodyless; Ready → Running) */
 export function startCompetition(competitionId: string): Promise<void> {
-  return postNoContent(`/competitions/${competitionId}/start`)
+  return postNoContent(`/competitions/${competitionId}/start`);
 }
 
 /** POST /competitions/{id}/complete → 204 */
@@ -634,10 +638,10 @@ export function completeCompetition(
   competitionId: string,
   mode: 'Normal' | 'Administrative' | 'Abandoned' = 'Normal',
 ): Promise<void> {
-  return postNoContent(`/competitions/${competitionId}/complete`, { mode })
+  return postNoContent(`/competitions/${competitionId}/complete`, { mode });
 }
 
 /** POST /competitions/{id}/archive → 204 */
 export function archiveCompetition(competitionId: string): Promise<void> {
-  return postNoContent(`/competitions/${competitionId}/archive`)
+  return postNoContent(`/competitions/${competitionId}/archive`);
 }

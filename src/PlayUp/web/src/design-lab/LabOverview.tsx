@@ -3,24 +3,24 @@ import {
   labRounds,
   labStandings,
   type LabLifecycle,
-} from './labData'
+} from './labData';
 import {
   CalendarIcon,
   OverviewAttentionIcon,
   RegulationIcon,
   TeamsIcon,
-} from '../design-system/icons/overviewIcons'
-import { ClassementsNavIcon } from '../design-system/icons/shellIcons'
-import { AttentionGroup } from '../design-system/components/AttentionGroup'
-import { AttentionRow } from '../design-system/components/AttentionRow'
+} from '../design-system/icons/overviewIcons';
+import { ClassementsNavIcon } from '../design-system/icons/shellIcons';
+import { AttentionGroup } from '../design-system/components/AttentionGroup';
+import { AttentionRow } from '../design-system/components/AttentionRow';
 import {
   OverviewReading,
   OverviewReadingNum,
-} from '../design-system/components/OverviewReading'
-import { OverviewNextAction } from '../design-system/components/OverviewNextAction'
-import { OverviewPodium } from '../design-system/components/OverviewPodium'
-import { Crest, MatchRow, PanelHead } from './LabShared'
-import { TrendIcon } from '../design-system/TrendIcon'
+} from '../design-system/components/OverviewReading';
+import { OverviewNextAction } from '../design-system/components/OverviewNextAction';
+import { OverviewPodium } from '../design-system/components/OverviewPodium';
+import { Crest, MatchRow, PanelHead } from './LabShared';
+import { TrendIcon } from '../design-system/TrendIcon';
 
 /**
  * Vue d'ensemble — composition émergente selon le cycle.
@@ -30,11 +30,11 @@ import { TrendIcon } from '../design-system/TrendIcon'
 export function LabOverview({ lifecycle }: { lifecycle: LabLifecycle }) {
   switch (lifecycle) {
     case 'preparation':
-      return <OverviewPreparation />
+      return <OverviewPreparation />;
     case 'done':
-      return <OverviewDone />
+      return <OverviewDone />;
     default:
-      return <OverviewLive />
+      return <OverviewLive />;
   }
 }
 
@@ -102,12 +102,12 @@ function OverviewPreparation() {
         </section>
       </div>
     </div>
-  )
+  );
 }
 
 function OverviewLive() {
-  const currentRound = labRounds.find((r) => r.state === 'current')
-  const liveMatch = currentRound?.matches.find((m) => m.state === 'live')
+  const currentRound = labRounds.find((r) => r.state === 'current');
+  const liveMatch = currentRound?.matches.find((m) => m.state === 'live');
 
   return (
     <div className="ds-page">
@@ -215,11 +215,11 @@ function OverviewLive() {
         </section>
       </div>
     </div>
-  )
+  );
 }
 
 function OverviewDone() {
-  const podium = [labStandings[1], labStandings[0], labStandings[2]]
+  const podium = [labStandings[1], labStandings[0], labStandings[2]];
 
   return (
     <div className="ds-page">
@@ -257,6 +257,5 @@ function OverviewDone() {
         </div>
       </AttentionGroup>
     </div>
-  )
+  );
 }
-

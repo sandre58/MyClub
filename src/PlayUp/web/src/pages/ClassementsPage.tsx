@@ -1,23 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router-dom'
-import { fetchConsultation, fetchOrganisationView } from '../api'
-import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
-import { TextLink } from '../design-system/components/TextLink'
-import { PageHead } from '../design-system/components/PageHead'
-import { PanelHead } from '../design-system/components/PanelHead'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { RegulationIcon } from '../design-system/icons/overviewIcons'
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
+import { fetchConsultation, fetchOrganisationView } from '../api';
+import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow';
+import { TextLink } from '../design-system/components/TextLink';
+import { PageHead } from '../design-system/components/PageHead';
+import { PanelHead } from '../design-system/components/PanelHead';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { RegulationIcon } from '../design-system/icons/overviewIcons';
 import {
   ClassementsNavIcon,
   MatchesNavIcon,
-} from '../design-system/icons/shellIcons'
+} from '../design-system/icons/shellIcons';
 import {
   completionModeLabel,
   competitionStatusLabel,
   structureFormatKindLabel,
-} from '../i18n/enumLabels'
-import { queryKeys } from '../queryKeys'
+} from '../i18n/enumLabels';
+import { queryKeys } from '../queryKeys';
 import type {
   ConsultationResult,
   ConsultationStandingRow,
@@ -25,23 +25,23 @@ import type {
   ConsultationStandingsSection,
   ConsultationView,
   OrganisationRegulationSummary,
-} from '../types'
-import { EmptyState, ErrorState, LoadingState } from '../ui'
-import './classements.css'
+} from '../types';
+import { EmptyState, ErrorState, LoadingState } from '../ui';
+import './classements.css';
 
 /**
  * Classements workspace — GET /consultation (+ organisation for standing barème).
  * Presents Read facts only. Never recalculates rank or invents points.
  */
 export function ClassementsPage() {
-  const { competitionId = '' } = useParams()
-  const { t } = useTranslation('classements')
+  const { competitionId = '' } = useParams();
+  const { t } = useTranslation('classements');
 
   const query = useQuery({
     queryKey: queryKeys.competitions.consultation(competitionId),
     queryFn: () => fetchConsultation(competitionId),
     enabled: competitionId.length > 0,
-  })
+  });
 
   return (
     <main id="main" className="page page--classements">
@@ -49,17 +49,17 @@ export function ClassementsPage() {
       {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <ClassementsView data={query.data} />}
     </main>
-  )
+  );
 }
 
 function ClassementsView({ data }: { data: ConsultationView }) {
-  const { t } = useTranslation('classements')
-  const organisationHref = `/competitions/${data.competitionId}/organisation`
+  const { t } = useTranslation('classements');
+  const organisationHref = `/competitions/${data.competitionId}/organisation`;
 
   const orgQuery = useQuery({
     queryKey: queryKeys.competitions.organisation(data.competitionId),
     queryFn: () => fetchOrganisationView(data.competitionId),
-  })
+  });
 
   return (
     <div className="ds-page classements">
@@ -81,15 +81,15 @@ function ClassementsView({ data }: { data: ConsultationView }) {
         />
       </div>
     </div>
-  )
+  );
 }
 
 function ContextBand({ data }: { data: ConsultationView }) {
-  const { t } = useTranslation('classements')
+  const { t } = useTranslation('classements');
   const formatText =
     data.formatKind != null
       ? structureFormatKindLabel(data.formatKind)
-      : data.formatLabel
+      : data.formatLabel;
 
   return (
     <ul className="classements-band" aria-label={data.name}>
@@ -106,22 +106,22 @@ function ContextBand({ data }: { data: ConsultationView }) {
         </li>
       ) : null}
     </ul>
-  )
+  );
 }
 
 function StandingsSection({
   standings,
 }: {
-  standings: ConsultationStandingsSection
+  standings: ConsultationStandingsSection;
 }) {
-  const { t } = useTranslation('classements')
+  const { t } = useTranslation('classements');
 
   if (!standings.applicable) {
-    const reasonKey = standings.notApplicableReason
+    const reasonKey = standings.notApplicableReason;
     const reason =
       reasonKey === 'CupFormat' || reasonKey === 'NoStructure'
         ? t(`notApplicable.${reasonKey}`)
-        : t('notApplicable.unknown')
+        : t('notApplicable.unknown');
 
     return (
       <section className="ds-panel" aria-labelledby="classements-na">
@@ -132,7 +132,7 @@ function StandingsSection({
         />
         <EmptyState>{reason}</EmptyState>
       </section>
-    )
+    );
   }
 
   if (standings.tables.length === 0) {
@@ -145,7 +145,7 @@ function StandingsSection({
         />
         <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
       </section>
-    )
+    );
   }
 
   return (
@@ -154,24 +154,27 @@ function StandingsSection({
         <StandingTableBlock key={tableKey(table)} table={table} />
       ))}
     </div>
-  )
+  );
 }
 
 function tableKey(table: ConsultationStandingTable): string {
-  return `${table.stageId}:${table.groupId ?? table.scope}`
+  return `${table.stageId}:${table.groupId ?? table.scope}`;
 }
 
 function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
-  const { t } = useTranslation('classements')
+  const { t } = useTranslation('classements');
   const heading =
     table.scope === 'Group' && table.groupName
       ? t('table.group', { name: table.groupName })
       : table.scope === 'Overall'
         ? t('table.overall')
-        : t('table.stage', { name: table.stageName })
+        : t('table.stage', { name: table.stageName });
 
   return (
-    <section className="ds-panel" aria-labelledby={`standings-${tableKey(table)}`}>
+    <section
+      className="ds-panel"
+      aria-labelledby={`standings-${tableKey(table)}`}
+    >
       <PanelHead
         id={`standings-${tableKey(table)}`}
         title={heading}
@@ -225,7 +228,7 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
         </div>
       )}
     </section>
-  )
+  );
 }
 
 function StandingRow({ row }: { row: ConsultationStandingRow }) {
@@ -246,25 +249,25 @@ function StandingRow({ row }: { row: ConsultationStandingRow }) {
       <td className="ds-num">{formatSigned(row.goalDifference)}</td>
       <td className="pts ds-num ds-num-pts">{row.points}</td>
     </tr>
-  )
+  );
 }
 
 function LastMatchdayPanel({
   results,
   matchesHref,
 }: {
-  results: ConsultationResult[]
-  matchesHref: string
+  results: ConsultationResult[];
+  matchesHref: string;
 }) {
-  const { t } = useTranslation('classements')
-  const slice = selectLastMatchday(results)
+  const { t } = useTranslation('classements');
+  const slice = selectLastMatchday(results);
   const heading =
     slice == null
       ? t('lastMatchday.title')
       : (slice.contextLabel ??
         (slice.matchdayNumber != null
           ? t('lastMatchday.matchday', { n: slice.matchdayNumber })
-          : t('lastMatchday.title')))
+          : t('lastMatchday.title')));
 
   return (
     <section className="ds-panel" aria-labelledby="classements-last-matchday">
@@ -288,28 +291,31 @@ function LastMatchdayPanel({
         <TextLink to={matchesHref}>{t('lastMatchday.openMatches')}</TextLink>
       </div>
     </section>
-  )
+  );
 }
 
 function ConsultationMatchRow({ match }: { match: ConsultationResult }) {
-  const { t } = useTranslation('classements')
-  const homeName = match.home.displayName?.trim() || '—'
-  const awayName = match.away.displayName?.trim() || '—'
+  const { t } = useTranslation('classements');
+  const homeName = match.home.displayName?.trim() || '—';
+  const awayName = match.away.displayName?.trim() || '—';
   const note =
     match.resultType === 'Forfeit' || match.resultType === 'WalkOver'
       ? t(`lastMatchday.resultType.${match.resultType}`)
-      : null
+      : null;
   const scoreLabel =
     match.score != null
       ? `${match.score.homeGoals}–${match.score.awayGoals}`
-      : t('lastMatchday.pending')
+      : t('lastMatchday.pending');
 
   const score =
     match.score != null ? (
-      <MatchRowScore home={match.score.homeGoals} away={match.score.awayGoals} />
+      <MatchRowScore
+        home={match.score.homeGoals}
+        away={match.score.awayGoals}
+      />
     ) : (
       <MatchRowScore home={t('lastMatchday.pending')} away="" muted />
-    )
+    );
 
   return (
     <MatchRow
@@ -341,7 +347,7 @@ function ConsultationMatchRow({ match }: { match: ConsultationResult }) {
       score={score}
       aside={note ? <span className="ds-match-row__note">{note}</span> : null}
     />
-  )
+  );
 }
 
 function RegulationPanel({
@@ -349,11 +355,11 @@ function RegulationPanel({
   regulation,
   loading,
 }: {
-  href: string
-  regulation: OrganisationRegulationSummary | null
-  loading: boolean
+  href: string;
+  regulation: OrganisationRegulationSummary | null;
+  loading: boolean;
 }) {
-  const { t } = useTranslation('classements')
+  const { t } = useTranslation('classements');
 
   return (
     <section className="ds-panel" aria-labelledby="classements-regulation">
@@ -407,21 +413,25 @@ function RegulationPanel({
               </dd>
             </div>
           </dl>
-          <p className="classements-panel__muted">{t('regulation.rankingHint')}</p>
+          <p className="classements-panel__muted">
+            {t('regulation.rankingHint')}
+          </p>
         </>
       ) : loading ? (
         <p className="classements-panel__muted" role="status">
           {t('regulation.loading')}
         </p>
       ) : (
-        <p className="classements-panel__muted">{t('regulation.unavailable')}</p>
+        <p className="classements-panel__muted">
+          {t('regulation.unavailable')}
+        </p>
       )}
 
       <div className="classements-panel__footer">
         <TextLink to={href}>{t('regulation.openOrganisation')}</TextLink>
       </div>
     </section>
-  )
+  );
 }
 
 function PointsChip({
@@ -429,11 +439,11 @@ function PointsChip({
   label,
   tone,
 }: {
-  value: number
-  label: string
-  tone: 'win' | 'draw' | 'loss'
+  value: number;
+  label: string;
+  tone: 'win' | 'draw' | 'loss';
 }) {
-  const { t } = useTranslation('classements')
+  const { t } = useTranslation('classements');
 
   return (
     <li className={`classements-chip classements-chip--${tone}`}>
@@ -442,7 +452,7 @@ function PointsChip({
       </span>
       <span className="classements-chip__label">{label}</span>
     </li>
-  )
+  );
 }
 
 /**
@@ -451,48 +461,46 @@ function PointsChip({
  * otherwise groups by the last contextLabel in Read order.
  */
 function selectLastMatchday(results: ConsultationResult[]): {
-  matchdayNumber: number | null
-  contextLabel: string | null
-  matches: ConsultationResult[]
+  matchdayNumber: number | null;
+  contextLabel: string | null;
+  matches: ConsultationResult[];
 } | null {
   if (results.length === 0) {
-    return null
+    return null;
   }
 
-  const numbered = results.filter((r) => r.matchdayNumber != null)
+  const numbered = results.filter((r) => r.matchdayNumber != null);
   if (numbered.length > 0) {
-    const maxDay = Math.max(
-      ...numbered.map((r) => r.matchdayNumber as number),
-    )
-    const matches = results.filter((r) => r.matchdayNumber === maxDay)
+    const maxDay = Math.max(...numbered.map((r) => r.matchdayNumber as number));
+    const matches = results.filter((r) => r.matchdayNumber === maxDay);
     return {
       matchdayNumber: maxDay,
       contextLabel: matches.find((m) => m.contextLabel)?.contextLabel ?? null,
       matches,
-    }
+    };
   }
 
-  const last = results[results.length - 1]
-  const label = last.contextLabel
+  const last = results[results.length - 1];
+  const label = last.contextLabel;
   if (label) {
     return {
       matchdayNumber: null,
       contextLabel: label,
       matches: results.filter((r) => r.contextLabel === label),
-    }
+    };
   }
 
   return {
     matchdayNumber: null,
     contextLabel: null,
     matches: results,
-  }
+  };
 }
 
 /** Display helper only — does not recompute Diff from BP/BC. */
 function formatSigned(value: number): string {
   if (value > 0) {
-    return `+${value}`
+    return `+${value}`;
   }
-  return String(value)
+  return String(value);
 }

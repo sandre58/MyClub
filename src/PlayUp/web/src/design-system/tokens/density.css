@@ -2,33 +2,33 @@
  * Control / row heights. Breathing comes from group gaps, not extra padding.
  */
 .ds-root {
-    --control-height-compact: 32px;
-    --control-height-standard: 36px;
-    --control-height-comfortable: 40px;
-    --control-height: var(--control-height-standard);
+  --control-height-compact: 32px;
+  --control-height-standard: 36px;
+  --control-height-comfortable: 40px;
+  --control-height: var(--control-height-standard);
 }
 
 .ds-root[data-density='compact'] {
-    --control-height: var(--control-height-compact);
+  --control-height: var(--control-height-compact);
 }
 
 .ds-root[data-density='standard'] {
-    --control-height: var(--control-height-standard);
+  --control-height: var(--control-height-standard);
 }
 
 .ds-root[data-density='comfortable'] {
-    --control-height: var(--control-height-comfortable);
+  --control-height: var(--control-height-comfortable);
 }
 
 /* Nested density scopes (e.g. form regions inside standard chrome). */
 .ds-root [data-density='compact'] {
-    --control-height: var(--control-height-compact);
+  --control-height: var(--control-height-compact);
 }
 
 .ds-root [data-density='standard'] {
-    --control-height: var(--control-height-standard);
+  --control-height: var(--control-height-standard);
 }
 
 .ds-root [data-density='comfortable'] {
-    --control-height: var(--control-height-comfortable);
+  --control-height: var(--control-height-comfortable);
 }

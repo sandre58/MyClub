@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 /**
  * Multi-select chrome — count + icon toolbar.
@@ -9,16 +9,16 @@ export function SelectionBar({
   children,
   className,
 }: {
-  countLabel: ReactNode
-  children: ReactNode
-  className?: string
+  countLabel: ReactNode;
+  children: ReactNode;
+  className?: string;
 }) {
-  const classes = ['ds-selection-bar', className].filter(Boolean).join(' ')
+  const classes = ['ds-selection-bar', className].filter(Boolean).join(' ');
 
   return (
     <div className={classes} role="status">
       <p className="ds-selection-bar__count">{countLabel}</p>
       <div className="ds-icon-toolbar">{children}</div>
     </div>
-  )
+  );
 }

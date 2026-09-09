@@ -1,23 +1,23 @@
-import type { LucideIcon as LucideGlyph } from 'lucide-react'
-import type { ReactNode, SVGProps } from 'react'
+import type { LucideIcon as LucideGlyph } from 'lucide-react';
+import type { ReactNode, SVGProps } from 'react';
 
-export type IconSize = 'sm' | 'md' | 'lg'
+export type IconSize = 'sm' | 'md' | 'lg';
 
 const sizeClass: Record<IconSize, string> = {
   sm: 'ds-icon ds-icon--sm',
   md: 'ds-icon ds-icon--md',
   lg: 'ds-icon ds-icon--lg',
-}
+};
 
 const sizePixels: Record<IconSize, number> = {
   sm: 16,
   md: 20,
   lg: 24,
-}
+};
 
 export type AppIconProps = SVGProps<SVGSVGElement> & {
-  size?: IconSize
-}
+  size?: IconSize;
+};
 
 /**
  * Stroke icon wrapper — 24×24 grid, Lucide-compatible geometry.
@@ -29,10 +29,10 @@ export function Icon({
   children,
   ...props
 }: AppIconProps & {
-  size?: IconSize
-  children: ReactNode
+  size?: IconSize;
+  children: ReactNode;
 }) {
-  const classes = [sizeClass[size], className].filter(Boolean).join(' ')
+  const classes = [sizeClass[size], className].filter(Boolean).join(' ');
 
   return (
     <svg
@@ -48,7 +48,7 @@ export function Icon({
     >
       {children}
     </svg>
-  )
+  );
 }
 
 export function LucideIcon({
@@ -58,9 +58,9 @@ export function LucideIcon({
   strokeWidth,
   ...props
 }: AppIconProps & {
-  icon: LucideGlyph
+  icon: LucideGlyph;
 }) {
-  const classes = [sizeClass[size], className].filter(Boolean).join(' ')
+  const classes = [sizeClass[size], className].filter(Boolean).join(' ');
 
   return (
     <Glyph
@@ -70,5 +70,5 @@ export function LucideIcon({
       aria-hidden={props['aria-hidden'] ?? true}
       className={classes}
     />
-  )
+  );
 }

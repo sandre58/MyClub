@@ -5,8 +5,8 @@ export function PlayUpWordmark({
   className,
   surface = 'chrome',
 }: {
-  className?: string
-  surface?: 'chrome' | 'home'
+  className?: string;
+  surface?: 'chrome' | 'home';
 }) {
   if (surface === 'home') {
     return (
@@ -18,7 +18,7 @@ export function PlayUpWordmark({
         height={112}
         draggable={false}
       />
-    )
+    );
   }
 
   return (
@@ -30,5 +30,5 @@ export function PlayUpWordmark({
       height={112}
       draggable={false}
     />
-  )
+  );
 }

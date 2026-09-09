@@ -2,152 +2,155 @@ import {
   useMutation,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
+} from '@tanstack/react-query';
+import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   correctRecordedGoal,
   recordGoal,
   removeRecordedGoal,
   setRunningScore,
-} from '../api'
-import { queryKeys } from '../queryKeys'
-import { PanelHead } from '../design-system/components/PanelHead'
-import { EmptyState, MutationError, PendingLabel } from '../ui'
+} from '../api';
+import { queryKeys } from '../queryKeys';
+import { PanelHead } from '../design-system/components/PanelHead';
+import { EmptyState, MutationError, PendingLabel } from '../ui';
 import type {
   DeclaredParticipation,
   MatchDetail,
-  MatchScore,
   MatchSide,
   RecordedGoal,
   RecordGoalRequest,
-} from '../types'
+} from '../types';
+import {
+  adjustRunningScore,
+  canMutateRecordedGoals,
+} from './matchGoalsHelpers';
 
 /**
  * Nominative goals panel (Lot 3) — faits ≠ RunningScore ≠ Finish.
  * Live: RecordGoal / Correct / Remove then SetRunningScore as separate calls (not atomic).
  */
 export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
-  const { t } = useTranslation('matches')
-  const { t: tc } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const canMutate = canMutateRecordedGoals(match)
-  const isLive = match.status === 'Live'
-  const sheet = match.declaredParticipations ?? []
-  const goals = match.recordedGoals ?? []
+  const { t } = useTranslation('matches');
+  const { t: tc } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const canMutate = canMutateRecordedGoals(match);
+  const isLive = match.status === 'Live';
+  const sheet = match.declaredParticipations ?? [];
+  const goals = match.recordedGoals ?? [];
 
-  const [scorerId, setScorerId] = useState('')
-  const [creditedSide, setCreditedSide] = useState<MatchSide>('Home')
-  const [assisterId, setAssisterId] = useState('')
-  const [editingGoalId, setEditingGoalId] = useState<string | null>(null)
-  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
-  const [runningScoreError, setRunningScoreError] = useState<unknown>(null)
+  const [scorerId, setScorerId] = useState('');
+  const [creditedSide, setCreditedSide] = useState<MatchSide>('Home');
+  const [assisterId, setAssisterId] = useState('');
+  const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+  const [runningScoreError, setRunningScoreError] = useState<unknown>(null);
 
   const createMutation = useMutation({
     mutationFn: async (request: RecordGoalRequest) => {
-      setRunningScoreError(null)
-      await recordGoal(match.matchId, request)
+      setRunningScoreError(null);
+      await recordGoal(match.matchId, request);
       if (isLive) {
         try {
           await setRunningScore(
             match.matchId,
             adjustRunningScore(match.runningScore, request.creditedSide, 1),
-          )
+          );
         } catch (error) {
           // Fact succeeded; RS is a separate call — reload and surface desync.
-          setRunningScoreError(error)
+          setRunningScoreError(error);
         }
       }
     },
     onSuccess: async () => {
-      resetCreateForm()
-      await invalidateMatchGoals(queryClient, match)
+      resetCreateForm();
+      await invalidateMatchGoals(queryClient, match);
     },
-  })
+  });
 
   const correctMutation = useMutation({
     mutationFn: async ({
       goal,
       request,
     }: {
-      goal: RecordedGoal
-      request: RecordGoalRequest
+      goal: RecordedGoal;
+      request: RecordGoalRequest;
     }) => {
-      setRunningScoreError(null)
-      await correctRecordedGoal(match.matchId, goal.goalId, request)
+      setRunningScoreError(null);
+      await correctRecordedGoal(match.matchId, goal.goalId, request);
       if (isLive && goal.creditedSide !== request.creditedSide) {
         try {
           const afterMinus = adjustRunningScore(
             match.runningScore,
             goal.creditedSide,
             -1,
-          )
+          );
           await setRunningScore(
             match.matchId,
             adjustRunningScore(afterMinus, request.creditedSide, 1),
-          )
+          );
         } catch (error) {
-          setRunningScoreError(error)
+          setRunningScoreError(error);
         }
       }
     },
     onSuccess: async () => {
-      setEditingGoalId(null)
-      resetCreateForm()
-      await invalidateMatchGoals(queryClient, match)
+      setEditingGoalId(null);
+      resetCreateForm();
+      await invalidateMatchGoals(queryClient, match);
     },
-  })
+  });
 
   const removeMutation = useMutation({
     mutationFn: async (goal: RecordedGoal) => {
-      setRunningScoreError(null)
-      await removeRecordedGoal(match.matchId, goal.goalId)
+      setRunningScoreError(null);
+      await removeRecordedGoal(match.matchId, goal.goalId);
       if (isLive) {
         try {
           await setRunningScore(
             match.matchId,
             adjustRunningScore(match.runningScore, goal.creditedSide, -1),
-          )
+          );
         } catch (error) {
-          setRunningScoreError(error)
+          setRunningScoreError(error);
         }
       }
     },
     onSuccess: async () => {
-      setPendingRemoveId(null)
-      await invalidateMatchGoals(queryClient, match)
+      setPendingRemoveId(null);
+      await invalidateMatchGoals(queryClient, match);
     },
     onError: () => {
-      setPendingRemoveId(null)
+      setPendingRemoveId(null);
     },
-  })
+  });
 
   function resetCreateForm() {
-    setScorerId('')
-    setAssisterId('')
-    setCreditedSide('Home')
+    setScorerId('');
+    setAssisterId('');
+    setCreditedSide('Home');
   }
 
   function onScorerPicked(memberId: string) {
-    setScorerId(memberId)
-    const participation = sheet.find((row) => row.memberId === memberId)
+    setScorerId(memberId);
+    const participation = sheet.find((row) => row.memberId === memberId);
     if (participation) {
-      setCreditedSide(participation.side)
+      setCreditedSide(participation.side);
     }
     if (assisterId === memberId) {
-      setAssisterId('')
+      setAssisterId('');
     }
   }
 
-  const scorerParticipation = sheet.find((row) => row.memberId === scorerId)
+  const scorerParticipation = sheet.find((row) => row.memberId === scorerId);
   const isOwnGoalDraft =
-    scorerParticipation != null && scorerParticipation.side !== creditedSide
+    scorerParticipation != null && scorerParticipation.side !== creditedSide;
   const mutationError =
-    createMutation.error ?? correctMutation.error ?? removeMutation.error
+    createMutation.error ?? correctMutation.error ?? removeMutation.error;
   const busy =
     createMutation.isPending ||
     correctMutation.isPending ||
-    removeMutation.isPending
+    removeMutation.isPending;
 
   return (
     <section className="ds-panel" aria-labelledby="goals-heading">
@@ -171,7 +174,10 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
           {goals.map((goal) => (
             <div key={goal.goalId}>
               <div className="ds-match-timeline__row" data-kind="goal">
-                <span className="ds-match-timeline__minute ds-num" aria-hidden="true">
+                <span
+                  className="ds-match-timeline__minute ds-num"
+                  aria-hidden="true"
+                >
                   ·
                 </span>
                 <div className="match-goals__identity">
@@ -202,11 +208,11 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                       className="ds-btn ds-btn--ghost"
                       disabled={busy}
                       onClick={() => {
-                        setPendingRemoveId(null)
-                        setEditingGoalId(goal.goalId)
-                        setScorerId(goal.scorerMemberId)
-                        setCreditedSide(goal.creditedSide)
-                        setAssisterId(goal.assisterMemberId ?? '')
+                        setPendingRemoveId(null);
+                        setEditingGoalId(goal.goalId);
+                        setScorerId(goal.scorerMemberId);
+                        setCreditedSide(goal.creditedSide);
+                        setAssisterId(goal.assisterMemberId ?? '');
                       }}
                     >
                       {t('goals.correct')}
@@ -216,8 +222,8 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                       className="ds-btn ds-btn--ghost"
                       disabled={busy}
                       onClick={() => {
-                        setEditingGoalId(null)
-                        setPendingRemoveId(goal.goalId)
+                        setEditingGoalId(null);
+                        setPendingRemoveId(goal.goalId);
                       }}
                     >
                       {t('goals.remove')}
@@ -238,8 +244,8 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                   onCreditedSideChange={setCreditedSide}
                   onAssisterChange={setAssisterId}
                   onCancel={() => {
-                    setEditingGoalId(null)
-                    resetCreateForm()
+                    setEditingGoalId(null);
+                    resetCreateForm();
                   }}
                   onSubmit={(request) =>
                     correctMutation.mutate({ goal, request })
@@ -317,38 +323,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
         />
       )}
     </section>
-  )
-}
-
-export function canMutateRecordedGoals(match: MatchDetail): boolean {
-  if (
-    match.status === 'Scheduled' ||
-    match.status === 'Postponed' ||
-    match.status === 'Live'
-  ) {
-    return true
-  }
-
-  return match.status === 'Finished' && !match.hasObservedLive
-}
-
-export function adjustRunningScore(
-  current: MatchScore | null | undefined,
-  creditedSide: MatchSide,
-  delta: number,
-): MatchScore {
-  const base = current ?? { homeGoals: 0, awayGoals: 0 }
-  if (creditedSide === 'Home') {
-    return {
-      homeGoals: Math.max(0, base.homeGoals + delta),
-      awayGoals: base.awayGoals,
-    }
-  }
-
-  return {
-    homeGoals: base.homeGoals,
-    awayGoals: Math.max(0, base.awayGoals + delta),
-  }
+  );
 }
 
 async function invalidateMatchGoals(
@@ -368,7 +343,7 @@ async function invalidateMatchGoals(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.consultation(match.competitionId),
     }),
-  ])
+  ]);
 }
 
 function GoalForm({
@@ -386,40 +361,40 @@ function GoalForm({
   onCancel,
   onSubmit,
 }: {
-  sheet: DeclaredParticipation[]
-  scorerId: string
-  creditedSide: MatchSide
-  assisterId: string
-  pending: boolean
-  submitLabel: string
-  pendingLabel: string
-  showOwnGoalHint?: boolean
-  onScorerChange: (memberId: string) => void
-  onCreditedSideChange: (side: MatchSide) => void
-  onAssisterChange: (memberId: string) => void
-  onCancel?: () => void
-  onSubmit: (request: RecordGoalRequest) => void
+  sheet: DeclaredParticipation[];
+  scorerId: string;
+  creditedSide: MatchSide;
+  assisterId: string;
+  pending: boolean;
+  submitLabel: string;
+  pendingLabel: string;
+  showOwnGoalHint?: boolean;
+  onScorerChange: (memberId: string) => void;
+  onCreditedSideChange: (side: MatchSide) => void;
+  onAssisterChange: (memberId: string) => void;
+  onCancel?: () => void;
+  onSubmit: (request: RecordGoalRequest) => void;
 }) {
-  const { t } = useTranslation('matches')
-  const { t: tc } = useTranslation('common')
-  const scorer = sheet.find((row) => row.memberId === scorerId)
-  const isOwnGoal = scorer != null && scorer.side !== creditedSide
-  const assisters = sheet.filter((row) => row.memberId !== scorerId)
+  const { t } = useTranslation('matches');
+  const { t: tc } = useTranslation('common');
+  const scorer = sheet.find((row) => row.memberId === scorerId);
+  const isOwnGoal = scorer != null && scorer.side !== creditedSide;
+  const assisters = sheet.filter((row) => row.memberId !== scorerId);
 
   return (
     <form
       className="form match-goals__form"
       onSubmit={(event: FormEvent) => {
-        event.preventDefault()
+        event.preventDefault();
         if (scorerId.length === 0 || pending) {
-          return
+          return;
         }
         onSubmit({
           scorerMemberId: scorerId,
           creditedSide,
           assisterMemberId:
             isOwnGoal || assisterId.length === 0 ? null : assisterId,
-        })
+        });
       }}
     >
       <label className="field">
@@ -503,5 +478,5 @@ function GoalForm({
         )}
       </div>
     </form>
-  )
+  );
 }

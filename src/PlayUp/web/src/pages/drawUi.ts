@@ -1,4 +1,4 @@
-import type { StageDraw, StageFixture, StageRound, StageSlot } from '../types'
+import type { StageDraw, StageFixture, StageRound, StageSlot } from '../types';
 
 /**
  * UI-only projection of DrawStatus × DrawResolutionState (+ derived Applied).
@@ -6,10 +6,10 @@ import type { StageDraw, StageFixture, StageRound, StageSlot } from '../types'
  */
 export type DrawUiProjection = {
   /** i18n key under the `draw` namespace (SPA owns copy). */
-  messageKey: string
-  showResults: boolean
-  isApplied: boolean
-}
+  messageKey: string;
+  showResults: boolean;
+  isApplied: boolean;
+};
 
 /**
  * Pure projection: server enums → message key + flags for conditional rendering.
@@ -27,14 +27,14 @@ export function getDrawUiProjection(
   const isApplied =
     draw.resolutionState === 'Resolved' &&
     ((draw.kind === 'Slot' && isSlotDrawApplied(draw, slots)) ||
-      (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)))
+      (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)));
 
   if (draw.status === 'Cancelled') {
     return {
       messageKey: 'cancelled',
       showResults: draw.resolutionState === 'Resolved',
       isApplied: false,
-    }
+    };
   }
 
   if (draw.status === 'Draft' && draw.resolutionState === 'NotResolved') {
@@ -42,7 +42,7 @@ export function getDrawUiProjection(
       messageKey: 'draftNotResolved',
       showResults: false,
       isApplied: false,
-    }
+    };
   }
 
   if (draw.status === 'Draft' && draw.resolutionState === 'Resolved') {
@@ -50,7 +50,7 @@ export function getDrawUiProjection(
       messageKey: 'draftResolved',
       showResults: true,
       isApplied: false,
-    }
+    };
   }
 
   if (draw.status === 'Draft' && draw.resolutionState === 'NoSolution') {
@@ -58,29 +58,29 @@ export function getDrawUiProjection(
       messageKey: 'noSolution',
       showResults: false,
       isApplied: false,
-    }
+    };
   }
 
   if (draw.status === 'Published' && draw.resolutionState === 'Resolved') {
-    let messageKey = 'published'
+    let messageKey = 'published';
     if (isApplied && draw.kind === 'Slot') {
-      messageKey = 'publishedSlotApplied'
+      messageKey = 'publishedSlotApplied';
     } else if (isApplied && draw.kind === 'Pairing') {
-      messageKey = 'publishedPairingApplied'
+      messageKey = 'publishedPairingApplied';
     }
 
     return {
       messageKey,
       showResults: true,
       isApplied,
-    }
+    };
   }
 
   return {
     messageKey: 'fallback',
     showResults: draw.resolutionState === 'Resolved',
     isApplied: false,
-  }
+  };
 }
 
 /**
@@ -92,29 +92,27 @@ export function isSlotDrawApplied(
   slots: StageSlot[],
 ): boolean {
   if (draw.kind !== 'Slot' || draw.resolutionState !== 'Resolved') {
-    return false
+    return false;
   }
 
   if (draw.slotPlacements.length === 0) {
-    return false
+    return false;
   }
 
-  const byKey = new Map(slots.map((slot) => [slot.slotKey, slot]))
+  const byKey = new Map(slots.map((slot) => [slot.slotKey, slot]));
 
   return draw.slotPlacements.every((placement) => {
-    const slot = byKey.get(placement.slotKey)
-    return slot?.entryId != null && slot.entryId === placement.entryId
-  })
+    const slot = byKey.get(placement.slotKey);
+    return slot?.entryId != null && slot.entryId === placement.entryId;
+  });
 }
 
 /**
  * Fixtures in StageOverview order: rounds then fixtures within each round.
  * Host/repository reorder by SortOrder on load — this is the stable 1:1 source for Pairing Apply.
  */
-export function listStageFixturesInOrder(
-  rounds: StageRound[],
-): StageFixture[] {
-  return rounds.flatMap((round) => round.fixtures)
+export function listStageFixturesInOrder(rounds: StageRound[]): StageFixture[] {
+  return rounds.flatMap((round) => round.fixtures);
 }
 
 /**
@@ -126,19 +124,19 @@ export function resolvePairingFixtureIds(
   rounds: StageRound[],
 ): string[] | null {
   if (draw.kind !== 'Pairing' || draw.resolutionState !== 'Resolved') {
-    return null
+    return null;
   }
 
-  const fixtures = listStageFixturesInOrder(rounds)
+  const fixtures = listStageFixturesInOrder(rounds);
   if (
     draw.pairings.length === 0 ||
     fixtures.length === 0 ||
     draw.pairings.length !== fixtures.length
   ) {
-    return null
+    return null;
   }
 
-  return fixtures.map((fixture) => fixture.id)
+  return fixtures.map((fixture) => fixture.id);
 }
 
 /**
@@ -150,11 +148,11 @@ export function isPairingDrawApplied(
   draw: StageDraw,
   rounds: StageRound[],
 ): boolean {
-  const fixtureIds = resolvePairingFixtureIds(draw, rounds)
+  const fixtureIds = resolvePairingFixtureIds(draw, rounds);
   if (fixtureIds === null) {
-    return false
+    return false;
   }
 
-  const fixtures = listStageFixturesInOrder(rounds)
-  return fixtures.every((fixture) => fixture.attachments.length > 0)
+  const fixtures = listStageFixturesInOrder(rounds);
+  return fixtures.every((fixture) => fixture.attachments.length > 0);
 }

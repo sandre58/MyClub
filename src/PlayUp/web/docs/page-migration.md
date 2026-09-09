@@ -29,28 +29,28 @@ Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999p
 
 ### Migrated (P0 + P1-A)
 
-| Legacy | Replacement | Where |
-|---|---|---|
-| `--text-caption` | `--text-label` | pages / index (P0) |
-| `--space-xs/sm/md` | `--space-8/12/16` | index (P0) |
-| `--space-2xs` | `--space-4` | index |
-| `--space-lg` | `--space-24` | index |
-| `--space-2xl` | `--space-48` | index |
-| `--radius-sm` | `--radius-control` | index |
-| `--radius-md` | `--radius-panel` | index |
-| `--text-eyebrow` | `--text-meta` | index |
-| `--text-secondary` (size) | `--text-body` | index |
-| `--color-surface-muted` | `--color-surface-secondary` | teams.css |
-| `--radius-pill` | literal `999px` | teams.css gauge (P1-B SoT) |
-| Soft-tone aliases / unused `:root` ladder | removed | index `:root` |
+| Legacy                                    | Replacement                 | Where                      |
+| ----------------------------------------- | --------------------------- | -------------------------- |
+| `--text-caption`                          | `--text-label`              | pages / index (P0)         |
+| `--space-xs/sm/md`                        | `--space-8/12/16`           | index (P0)                 |
+| `--space-2xs`                             | `--space-4`                 | index                      |
+| `--space-lg`                              | `--space-24`                | index                      |
+| `--space-2xl`                             | `--space-48`                | index                      |
+| `--radius-sm`                             | `--radius-control`          | index                      |
+| `--radius-md`                             | `--radius-panel`            | index                      |
+| `--text-eyebrow`                          | `--text-meta`               | index                      |
+| `--text-secondary` (size)                 | `--text-body`               | index                      |
+| `--color-surface-muted`                   | `--color-surface-secondary` | teams.css                  |
+| `--radius-pill`                           | literal `999px`             | teams.css gauge (P1-B SoT) |
+| Soft-tone aliases / unused `:root` ladder | removed                     | index `:root`              |
 
 ### Remaining local (not a second token ladder)
 
-| Value | Where | Notes |
-|---|---|---|
-| `74rem` / `46rem` / `clamp(1rem, 4vw, 2rem)` | `.page` | layout chrome local to admin `.page` |
-| `999px` | teams gauge / circular swatches | Capsule or circle geometry — no shared pill token (P1-B) |
-| `140ms` easing / focus ring / mono stack | index admin chrome | preserve timing; DS motion is 160ms |
+| Value                                        | Where                           | Notes                                                    |
+| -------------------------------------------- | ------------------------------- | -------------------------------------------------------- |
+| `74rem` / `46rem` / `clamp(1rem, 4vw, 2rem)` | `.page`                         | layout chrome local to admin `.page`                     |
+| `999px`                                      | teams gauge / circular swatches | Capsule or circle geometry — no shared pill token (P1-B) |
+| `140ms` easing / focus ring / mono stack     | index admin chrome              | preserve timing; DS motion is 160ms                      |
 
 ## Deferred (do not add without an explicit trigger)
 

@@ -1,20 +1,20 @@
 export type StandingsLegendItem = {
-  label: string
-  color: string
-}
+  label: string;
+  color: string;
+};
 
 export function StandingsLegend({
   items,
   className,
 }: {
-  items: StandingsLegendItem[]
-  className?: string
+  items: StandingsLegendItem[];
+  className?: string;
 }) {
   if (items.length === 0) {
-    return null
+    return null;
   }
 
-  const classes = ['ds-standings-legend', className].filter(Boolean).join(' ')
+  const classes = ['ds-standings-legend', className].filter(Boolean).join(' ');
 
   return (
     <div className={classes}>
@@ -29,5 +29,5 @@ export function StandingsLegend({
         </span>
       ))}
     </div>
-  )
+  );
 }

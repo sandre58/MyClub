@@ -1,31 +1,32 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import type { ProxyOptions } from 'vite'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import type { ProxyOptions } from 'vite';
 
 // Dev only: browser calls /competitions|stages|matches on the Vite origin;
 // Vite forwards to the ASP.NET Host. No CORS needed in development.
-const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:5287'
+const apiProxyTarget =
+  process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:5287';
 
 /**
  * Same path prefix serves SPA deep-links (Accept: text/html) and API fetch (JSON).
  * Without this bypass, opening /matches/{id} in the address bar returns Host JSON.
  */
 function apiProxy(options?: { spaBypass?: boolean }): ProxyOptions {
-  const spaBypass = options?.spaBypass !== false
+  const spaBypass = options?.spaBypass !== false;
   return {
     target: apiProxyTarget,
     changeOrigin: true,
     bypass(req) {
       if (!spaBypass) {
-        return undefined
+        return undefined;
       }
 
-      const accept = req.headers.accept ?? ''
+      const accept = req.headers.accept ?? '';
       if (accept.includes('text/html')) {
-        return '/index.html'
+        return '/index.html';
       }
     },
-  }
+  };
 }
 
 export default defineConfig({
@@ -52,4 +53,4 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.tsx'],
     css: false,
   },
-})
+});

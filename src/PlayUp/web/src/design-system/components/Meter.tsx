@@ -1,36 +1,31 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export type MeterTone =
-  | 'brand'
-  | 'success'
-  | 'attention'
-  | 'error'
-  | 'info'
-  | 'neutral'
+  'brand' | 'success' | 'attention' | 'error' | 'info' | 'neutral';
 
 export type MeterProps = {
   /** Fill ratio in [0, 1]. */
-  ratio: number
-  tone?: MeterTone
-  size?: 'md' | 'lg'
+  ratio: number;
+  tone?: MeterTone;
+  size?: 'md' | 'lg';
   /** Clip overflow (hide marker spill). Default false so markers can sit outside. */
-  clip?: boolean
+  clip?: boolean;
   marker?: {
-    ratio: number
-    label?: ReactNode
-  }
-  className?: string
-  'aria-valuemin'?: number
-  'aria-valuemax'?: number
-  'aria-valuenow'?: number
-  'aria-valuetext'?: string
-  'aria-label'?: string
-  'aria-hidden'?: boolean | 'true' | 'false'
-}
+    ratio: number;
+    label?: ReactNode;
+  };
+  className?: string;
+  'aria-valuemin'?: number;
+  'aria-valuemax'?: number;
+  'aria-valuenow'?: number;
+  'aria-valuetext'?: string;
+  'aria-label'?: string;
+  'aria-hidden'?: boolean | 'true' | 'false';
+};
 
 function clamp01(n: number): number {
-  if (Number.isNaN(n)) return 0
-  return Math.min(1, Math.max(0, n))
+  if (Number.isNaN(n)) return 0;
+  return Math.min(1, Math.max(0, n));
 }
 
 /**
@@ -45,7 +40,7 @@ export function Meter({
   className,
   ...aria
 }: MeterProps) {
-  const fill = clamp01(ratio)
+  const fill = clamp01(ratio);
   const classes = [
     'ds-meter',
     size === 'lg' ? 'ds-meter--lg' : null,
@@ -53,20 +48,15 @@ export function Meter({
     className,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   const progressRole =
     aria['aria-valuenow'] != null || aria['aria-label'] != null
       ? 'progressbar'
-      : undefined
+      : undefined;
 
   return (
-    <div
-      className={classes}
-      data-tone={tone}
-      role={progressRole}
-      {...aria}
-    >
+    <div className={classes} data-tone={tone} role={progressRole} {...aria}>
       <span
         className="ds-meter__fill"
         style={{ width: `${fill * 100}%` }}
@@ -84,5 +74,5 @@ export function Meter({
         </span>
       ) : null}
     </div>
-  )
+  );
 }

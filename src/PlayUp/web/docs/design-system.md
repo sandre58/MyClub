@@ -8,12 +8,12 @@ Operational SoT for `src/design-system/`. Product intent: Notion **Identité vis
 
 ## Layers
 
-| Layer | Path | Role |
-|---|---|---|
-| Palette | `palettes/slate.css` | Hex / mixes (`--primitive-*`) — never consume in UI |
-| Tokens | `tokens/*.css` | Public API (`--color-*`, `--space-*`, type, geometry, density, motion) |
-| Foundations | `foundations/*.css` | Recipes (`.ds-*` classes) |
-| React | `components/`, icons, brand lockups, product visuals | Primitives without feature API / i18n |
+| Layer       | Path                                                 | Role                                                                   |
+| ----------- | ---------------------------------------------------- | ---------------------------------------------------------------------- |
+| Palette     | `palettes/slate.css`                                 | Hex / mixes (`--primitive-*`) — never consume in UI                    |
+| Tokens      | `tokens/*.css`                                       | Public API (`--color-*`, `--space-*`, type, geometry, density, motion) |
+| Foundations | `foundations/*.css`                                  | Recipes (`.ds-*` classes)                                              |
+| React       | `components/`, icons, brand lockups, product visuals | Primitives without feature API / i18n                                  |
 
 ### DS boundary
 
@@ -31,11 +31,11 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 
 ## Validation surfaces
 
-| Surface | Role |
-|---|---|
+| Surface            | Role                                                                                                                  |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `/dev/foundations` | Atom / token playground (Status, icons, crest, density, buttons CSS). **Not** the Form/Dialog/Toast specimen gallery. |
-| `/design-lab` | Compositions + **specimens of real DS components** (Form, Dialog, Toast, …). |
-| Product | Consumes DS; must adopt form stack for new/edited forms. |
+| `/design-lab`      | Compositions + **specimens of real DS components** (Form, Dialog, Toast, …).                                          |
+| Product            | Consumes DS; must adopt form stack for new/edited forms.                                                              |
 
 ### Design Lab anti-drift
 
@@ -58,11 +58,11 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 
 ## LiveStatus vs Status
 
-| | `LiveStatus` | `Status tone="live"` |
-|---|---|---|
-| Role | Match clock / in-play indicator | Chip / badge for live tone |
-| Chrome | Pulse `ds-live-dot` + soft live wash | Status density/variant/shape recipes |
-| Product | Prefer where a pulsing live mark is required | Prefer for list/chip “live” labels |
+|         | `LiveStatus`                                 | `Status tone="live"`                 |
+| ------- | -------------------------------------------- | ------------------------------------ |
+| Role    | Match clock / in-play indicator              | Chip / badge for live tone           |
+| Chrome  | Pulse `ds-live-dot` + soft live wash         | Status density/variant/shape recipes |
+| Product | Prefer where a pulsing live mark is required | Prefer for list/chip “live” labels   |
 
 Do not collapse them: pulse activity ≠ tone chip.
 
@@ -94,10 +94,10 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 ## Attention rows (two models — do not merge)
 
-| | `AttentionRow` (DS) | `AttentionSituationRow` (Shell) |
-|---|---|---|
-| Role | D9 Lab / Match Hub count+icon recipe | Product triage from GET /attention |
-| Where | Overview Lab, MatchHub needs-result | AttentionDrawer + Vue d'ensemble preview |
+|       | `AttentionRow` (DS)                  | `AttentionSituationRow` (Shell)          |
+| ----- | ------------------------------------ | ---------------------------------------- |
+| Role  | D9 Lab / Match Hub count+icon recipe | Product triage from GET /attention       |
+| Where | Overview Lab, MatchHub needs-result  | AttentionDrawer + Vue d'ensemble preview |
 
 ## Form stack
 

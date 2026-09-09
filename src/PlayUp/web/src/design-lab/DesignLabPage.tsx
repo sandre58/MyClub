@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import '../design-system/fonts'
-import '../design-system/index.css'
-import './design-lab.css'
-import { Status } from '../design-system/components/Status'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import '../design-system/fonts';
+import '../design-system/index.css';
+import './design-lab.css';
+import { Status } from '../design-system/components/Status';
 import {
   AttentionBellIcon,
   ClassementsNavIcon,
@@ -16,24 +16,24 @@ import {
   CloseIcon,
   TeamsNavIcon,
   VenuesNavIcon,
-} from '../design-system/icons/shellIcons'
-import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
-import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { LabOverview } from './LabOverview'
-import { LabHome } from './LabHome'
-import { LabMatches } from './LabMatches'
-import { LabMatchSheet } from './LabMatchSheet'
-import { LabStandings } from './LabStandings'
-import { LabDialog } from './LabDialog'
-import { LabToast } from './LabToast'
-import { LabForm } from './LabForm'
-import { LabRegulation } from './LabRegulation'
-import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait'
-import { Toaster } from '../design-system/components/Toaster'
-import type { LabLifecycle } from './labData'
+} from '../design-system/icons/shellIcons';
+import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark';
+import { PlayUpWordmark } from '../design-system/PlayUpWordmark';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { LabOverview } from './LabOverview';
+import { LabHome } from './LabHome';
+import { LabMatches } from './LabMatches';
+import { LabMatchSheet } from './LabMatchSheet';
+import { LabStandings } from './LabStandings';
+import { LabDialog } from './LabDialog';
+import { LabToast } from './LabToast';
+import { LabForm } from './LabForm';
+import { LabRegulation } from './LabRegulation';
+import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait';
+import { Toaster } from '../design-system/components/Toaster';
+import type { LabLifecycle } from './labData';
 
-type LabChromeVp = 'desktop' | 'tablet' | 'phone'
+type LabChromeVp = 'desktop' | 'tablet' | 'phone';
 
 type LabView =
   | 'home'
@@ -48,7 +48,7 @@ type LabView =
   | 'overview-loading'
   | 'matches'
   | 'match'
-  | 'standings'
+  | 'standings';
 
 /**
  * /design-lab — prototype de la direction « Grille de compétition, exécutée ».
@@ -58,73 +58,79 @@ type LabView =
  * (surface + état du cycle) ; tout le reste est le produit proposé.
  */
 export function DesignLabPage() {
-  const [view, setView] = useState<LabView>('overview')
-  const [lifecycle, setLifecycle] = useState<LabLifecycle>('live')
-  const [railCollapsed, setRailCollapsed] = useState(false)
-  const [chromeVp, setChromeVp] = useState<LabChromeVp>('desktop')
-  const [phoneNavOpen, setPhoneNavOpen] = useState(false)
-  const [motionViewport, setMotionViewport] = useState(chromeVp)
-  const [chromeReady, setChromeReady] = useState(chromeVp === 'desktop')
-  const [waitKind, setWaitKind] = useState<LabWaitKind>('c')
-  const labShellRef = useRef<HTMLDivElement>(null)
+  const [view, setView] = useState<LabView>('overview');
+  const [lifecycle, setLifecycle] = useState<LabLifecycle>('live');
+  const [railCollapsed, setRailCollapsed] = useState(false);
+  const [chromeVp, setChromeVp] = useState<LabChromeVp>('desktop');
+  const [phoneNavOpen, setPhoneNavOpen] = useState(false);
+  const [motionViewport, setMotionViewport] = useState(chromeVp);
+  const [chromeReady, setChromeReady] = useState(chromeVp === 'desktop');
+  const [waitKind, setWaitKind] = useState<LabWaitKind>('c');
+  const labShellRef = useRef<HTMLDivElement>(null);
 
   const isHome =
-    view === 'home' || view === 'home-empty' || view === 'home-loading'
-  const isWaitBoard = view === 'wait'
-  const isDialogBoard = view === 'dialog'
-  const isToastBoard = view === 'toast'
-  const isFormBoard = view === 'form'
-  const isRegulationBoard = view === 'regulation'
-  const labCollapsed = chromeVp === 'phone' ? false : railCollapsed
+    view === 'home' || view === 'home-empty' || view === 'home-loading';
+  const isWaitBoard = view === 'wait';
+  const isDialogBoard = view === 'dialog';
+  const isToastBoard = view === 'toast';
+  const isFormBoard = view === 'form';
+  const isRegulationBoard = view === 'regulation';
+  const labCollapsed = chromeVp === 'phone' ? false : railCollapsed;
 
   useEffect(() => {
     if (chromeVp === 'desktop') {
-      setMotionViewport('desktop')
-      setChromeReady(true)
-      return
+      setMotionViewport('desktop');
+      setChromeReady(true);
+      return;
     }
 
-    setChromeReady(false)
-    setMotionViewport(chromeVp)
-    let cancelled = false
+    setChromeReady(false);
+    setMotionViewport(chromeVp);
+    let cancelled = false;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (!cancelled) {
-          setChromeReady(true)
+          setChromeReady(true);
         }
-      })
-    })
+      });
+    });
     return () => {
-      cancelled = true
-    }
-  }, [chromeVp])
+      cancelled = true;
+    };
+  }, [chromeVp]);
 
   useLayoutEffect(() => {
-    const root = labShellRef.current
+    const root = labShellRef.current;
     if (!root || chromeVp !== 'phone') {
-      root?.style.removeProperty('--shell-phone-chrome-end')
-      return
+      root?.style.removeProperty('--shell-phone-chrome-end');
+      return;
     }
 
-    const header = root.querySelector('.ds-shell-header')
-    if (!(header instanceof HTMLElement) || typeof ResizeObserver === 'undefined') {
-      return
+    const header = root.querySelector('.ds-shell-header');
+    if (
+      !(header instanceof HTMLElement) ||
+      typeof ResizeObserver === 'undefined'
+    ) {
+      return;
     }
 
     const sync = () => {
-      root.style.setProperty('--shell-phone-chrome-end', `${header.offsetHeight}px`)
-    }
+      root.style.setProperty(
+        '--shell-phone-chrome-end',
+        `${header.offsetHeight}px`,
+      );
+    };
 
-    sync()
-    const observer = new ResizeObserver(sync)
-    observer.observe(header)
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(header);
     return () => {
-      observer.disconnect()
-      root.style.removeProperty('--shell-phone-chrome-end')
-    }
-  }, [chromeVp])
+      observer.disconnect();
+      root.style.removeProperty('--shell-phone-chrome-end');
+    };
+  }, [chromeVp]);
 
-  const navReady = chromeVp === motionViewport && chromeReady
+  const navReady = chromeVp === motionViewport && chromeReady;
 
   return (
     <div
@@ -144,10 +150,10 @@ export function DesignLabPage() {
         onWaitKind={setWaitKind}
         onRailCollapsed={setRailCollapsed}
         onChromeVp={(next) => {
-          setChromeVp(next)
-          setPhoneNavOpen(false)
+          setChromeVp(next);
+          setPhoneNavOpen(false);
           if (next === 'tablet') {
-            setRailCollapsed(true)
+            setRailCollapsed(true);
           }
         }}
       />
@@ -189,8 +195,8 @@ export function DesignLabPage() {
             collapsed={labCollapsed}
             hideCollapse={chromeVp === 'phone'}
             onView={(next) => {
-              setView(next)
-              setPhoneNavOpen(false)
+              setView(next);
+              setPhoneNavOpen(false);
             }}
             onToggleCollapse={() => setRailCollapsed((value) => !value)}
           />
@@ -223,7 +229,7 @@ export function DesignLabPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -244,24 +250,24 @@ const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'matches', label: 'Matchs' },
   { key: 'match', label: 'Fiche match' },
   { key: 'standings', label: 'Classements' },
-]
+];
 
 const waitKindOptions: Array<{ key: LabWaitKind; label: string }> = [
   { key: 'b', label: 'B — spinner' },
   { key: 'c', label: 'C — marque' },
-]
+];
 
 const lifecycleOptions: Array<{ key: LabLifecycle; label: string }> = [
   { key: 'preparation', label: 'Préparation' },
   { key: 'live', label: 'En cours' },
   { key: 'done', label: 'Terminée' },
-]
+];
 
 const chromeVpOptions: Array<{ key: LabChromeVp; label: string }> = [
   { key: 'desktop', label: 'Desktop' },
   { key: 'tablet', label: 'Tablette 768' },
   { key: 'phone', label: 'Phone 390' },
-]
+];
 
 function LabBar({
   view,
@@ -275,18 +281,18 @@ function LabBar({
   onRailCollapsed,
   onChromeVp,
 }: {
-  view: LabView
-  lifecycle: LabLifecycle
-  waitKind: LabWaitKind
-  railCollapsed: boolean
-  chromeVp: LabChromeVp
-  onView: (v: LabView) => void
-  onLifecycle: (l: LabLifecycle) => void
-  onWaitKind: (kind: LabWaitKind) => void
-  onRailCollapsed: (collapsed: boolean) => void
-  onChromeVp: (vp: LabChromeVp) => void
+  view: LabView;
+  lifecycle: LabLifecycle;
+  waitKind: LabWaitKind;
+  railCollapsed: boolean;
+  chromeVp: LabChromeVp;
+  onView: (v: LabView) => void;
+  onLifecycle: (l: LabLifecycle) => void;
+  onWaitKind: (kind: LabWaitKind) => void;
+  onRailCollapsed: (collapsed: boolean) => void;
+  onChromeVp: (vp: LabChromeVp) => void;
 }) {
-  const showWaitKind = view === 'home-loading' || view === 'overview-loading'
+  const showWaitKind = view === 'home-loading' || view === 'overview-loading';
 
   return (
     <div className="dlab-bar">
@@ -372,7 +378,7 @@ function LabBar({
       <Link to="/dev/foundations">Foundations</Link>
       <Link to="/">← Quitter le lab</Link>
     </div>
-  )
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -380,27 +386,49 @@ function LabBar({
 /* ------------------------------------------------------------------ */
 
 const labNavGroups: Array<{
-  id: string
-  label: string
+  id: string;
+  label: string;
   items: Array<{
-    key: LabView | 'structure' | 'teams' | 'venues' | 'regulation'
-    label: string
-    icon: typeof OverviewNavIcon
-    dest?: LabView
-  }>
+    key: LabView | 'structure' | 'teams' | 'venues' | 'regulation';
+    label: string;
+    icon: typeof OverviewNavIcon;
+    dest?: LabView;
+  }>;
 }> = [
   {
     id: 'pilotage',
     label: 'Pilotage',
-    items: [{ key: 'overview', label: "Vue d'ensemble", icon: OverviewNavIcon, dest: 'overview' }],
+    items: [
+      {
+        key: 'overview',
+        label: "Vue d'ensemble",
+        icon: OverviewNavIcon,
+        dest: 'overview',
+      },
+    ],
   },
   {
     id: 'competition',
     label: 'Compétition',
     items: [
-      { key: 'structure', label: 'Structure', icon: OrganisationNavIcon, dest: 'overview' },
-      { key: 'matches', label: 'Calendrier & matchs', icon: MatchesNavIcon, dest: 'matches' },
-      { key: 'standings', label: 'Classements', icon: ClassementsNavIcon, dest: 'standings' },
+      {
+        key: 'structure',
+        label: 'Structure',
+        icon: OrganisationNavIcon,
+        dest: 'overview',
+      },
+      {
+        key: 'matches',
+        label: 'Calendrier & matchs',
+        icon: MatchesNavIcon,
+        dest: 'matches',
+      },
+      {
+        key: 'standings',
+        label: 'Classements',
+        icon: ClassementsNavIcon,
+        dest: 'standings',
+      },
     ],
   },
   {
@@ -412,7 +440,7 @@ const labNavGroups: Array<{
       { key: 'regulation', label: 'Règlement', icon: RegulationNavIcon },
     ],
   },
-]
+];
 
 function LabRail({
   view,
@@ -421,11 +449,11 @@ function LabRail({
   onView,
   onToggleCollapse,
 }: {
-  view: LabView
-  collapsed: boolean
-  hideCollapse?: boolean
-  onView: (v: LabView) => void
-  onToggleCollapse: () => void
+  view: LabView;
+  collapsed: boolean;
+  hideCollapse?: boolean;
+  onView: (v: LabView) => void;
+  onToggleCollapse: () => void;
 }) {
   return (
     <aside
@@ -449,12 +477,12 @@ function LabRail({
           <div key={group.id} className="ds-shell-rail__group">
             <p className="ds-shell-rail__group-label">{group.label}</p>
             {group.items.map((item) => {
-              const Icon = item.icon
-              const railView = view === 'overview-loading' ? 'overview' : view
+              const Icon = item.icon;
+              const railView = view === 'overview-loading' ? 'overview' : view;
               const isActive =
                 item.dest !== undefined &&
                 item.dest === railView &&
-                item.key === item.dest
+                item.key === item.dest;
               if (!item.dest) {
                 return (
                   <button
@@ -467,7 +495,7 @@ function LabRail({
                     <Icon className="ds-shell-rail__icon" />
                     <span className="ds-shell-rail__label">{item.label}</span>
                   </button>
-                )
+                );
               }
               return (
                 <button
@@ -480,7 +508,7 @@ function LabRail({
                   <Icon className="ds-shell-rail__icon" />
                   <span className="ds-shell-rail__label">{item.label}</span>
                 </button>
-              )
+              );
             })}
           </div>
         ))}
@@ -503,7 +531,7 @@ function LabRail({
         </div>
       )}
     </aside>
-  )
+  );
 }
 
 function LabHeader({
@@ -512,24 +540,24 @@ function LabHeader({
   phoneNavOpen,
   onTogglePhoneNav,
 }: {
-  lifecycle: LabLifecycle
-  chromeVp: LabChromeVp
-  phoneNavOpen: boolean
-  onTogglePhoneNav: () => void
+  lifecycle: LabLifecycle;
+  chromeVp: LabChromeVp;
+  phoneNavOpen: boolean;
+  onTogglePhoneNav: () => void;
 }) {
   const statusLabel =
     lifecycle === 'preparation'
       ? 'Préparation'
       : lifecycle === 'done'
         ? 'Terminée'
-        : 'En cours'
+        : 'En cours';
 
   const statusTone =
     lifecycle === 'preparation'
       ? 'info'
       : lifecycle === 'done'
         ? 'neutral'
-        : 'live'
+        : 'live';
 
   return (
     <header className="ds-shell-header dlab-header">
@@ -548,7 +576,10 @@ function LabHeader({
           )}
         </button>
       ) : null}
-      <span className="ds-shell-header__crest dlab-header__crest" aria-hidden="true">
+      <span
+        className="ds-shell-header__crest dlab-header__crest"
+        aria-hidden="true"
+      >
         <TeamCrest
           name="Championnat des Vétérans — Automne 2026"
           size={chromeVp === 'phone' ? 'md' : 'lg'}
@@ -581,5 +612,5 @@ function LabHeader({
         ) : null}
       </button>
     </header>
-  )
+  );
 }

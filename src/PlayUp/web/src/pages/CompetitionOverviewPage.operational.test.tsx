@@ -1,6 +1,6 @@
-import { screen } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchCompetitionOverview } from '../api'
+import { screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fetchCompetitionOverview } from '../api';
 import {
   overviewSituation,
   overviewView,
@@ -12,10 +12,10 @@ import {
   renderOverviewPage,
   setupDefaultOrganisationMock,
   stageId,
-} from './competitionOverviewPageTestHelpers'
+} from './competitionOverviewPageTestHelpers';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchCompetitionOverview: vi.fn(),
@@ -24,21 +24,21 @@ vi.mock('../api', async (importOriginal) => {
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
     materializeMatches: vi.fn(),
-  }
-})
+  };
+});
 
 describe('CompetitionOverviewPage — En cours / Terminée', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    setupDefaultOrganisationMock()
-  })
+    vi.clearAllMocks();
+    setupDefaultOrganisationMock();
+  });
 
   it('composes En cours sport panels from Read recentUnit / nextUnit / standingCompact', async () => {
-    const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    const liveMatchId = '11111111-1111-1111-1111-111111111111'
-    const finishedMatchId = '22222222-2222-2222-2222-222222222222'
-    const nextMatchId = '33333333-3333-3333-3333-333333333333'
+    const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+    const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    const liveMatchId = '11111111-1111-1111-1111-111111111111';
+    const finishedMatchId = '22222222-2222-2222-2222-222222222222';
+    const nextMatchId = '33333333-3333-3333-3333-333333333333';
 
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
@@ -164,72 +164,80 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
         naturalProgression: null,
         availableActions: [],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Classement' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Prochaine action' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId(`overview-standing-${entryA}`)).toHaveTextContent(
       'Alpha',
-    )
+    );
     expect(
       screen.getByRole('heading', { name: 'Dernières rencontres' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/Journée 5/)).toBeInTheDocument()
-    expect(screen.getByTestId(`overview-match-${liveMatchId}`)).toHaveTextContent(
-      'Live',
-    )
-    expect(screen.getByTestId(`overview-match-${finishedMatchId}`)).toHaveTextContent(
-      '2–1',
-    )
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Journée 5/)).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`overview-match-${liveMatchId}`),
+    ).toHaveTextContent('Live');
+    expect(
+      screen.getByTestId(`overview-match-${finishedMatchId}`),
+    ).toHaveTextContent('2–1');
     expect(
       screen.getByRole('heading', { name: 'Prochaines rencontres' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/Journée 6/)).toBeInTheDocument()
-    expect(screen.getByTestId(`overview-match-${nextMatchId}`)).toHaveTextContent(
-      'Echo',
-    )
-    expect(screen.getByTestId('overview-structure-condensed')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Structure' })).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Journée 6/)).toBeInTheDocument();
+    expect(
+      screen.getByTestId(`overview-match-${nextMatchId}`),
+    ).toHaveTextContent('Echo');
+    expect(
+      screen.getByTestId('overview-structure-condensed'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Structure' }),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('overview-structure-format')).toHaveTextContent(
       'Championnat',
-    )
-    expect(screen.getByText(/34 journées/)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
-    expect(screen.getByText('équipes')).toBeInTheDocument()
-    expect(screen.queryByText(/complètes/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Max\./)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Minimum .* démarrer/)).not.toBeInTheDocument()
-    expect(screen.getByTestId('overview-regulation-game')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
-    expect(screen.getByText('3 pts')).toBeInTheDocument()
-    expect(screen.getByText('Victoire')).toBeInTheDocument()
-    expect(screen.getByText('1 pts')).toBeInTheDocument()
-    expect(screen.getByText('Nul')).toBeInTheDocument()
-    expect(screen.getByText('0 pts')).toBeInTheDocument()
-    expect(screen.getByText('Défaite')).toBeInTheDocument()
-    expect(screen.getByText('2×45 min')).toBeInTheDocument()
-    expect(screen.queryByText(/Règlement prêt/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/2–64 équipes/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/conditions à lever/)).not.toBeInTheDocument()
+    );
+    expect(screen.getByText(/34 journées/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('équipes')).toBeInTheDocument();
+    expect(screen.queryByText(/complètes/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Max\./)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Minimum .* démarrer/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('overview-regulation-game')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Règlement' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('3 pts')).toBeInTheDocument();
+    expect(screen.getByText('Victoire')).toBeInTheDocument();
+    expect(screen.getByText('1 pts')).toBeInTheDocument();
+    expect(screen.getByText('Nul')).toBeInTheDocument();
+    expect(screen.getByText('0 pts')).toBeInTheDocument();
+    expect(screen.getByText('Défaite')).toBeInTheDocument();
+    expect(screen.getByText('2×45 min')).toBeInTheDocument();
+    expect(screen.queryByText(/Règlement prêt/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/2–64 équipes/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/conditions à lever/)).not.toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Voir le classement' }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
+    ).toHaveAttribute('href', `/competitions/${competitionId}/classements`);
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('overview-region-sport')).not.toHaveClass(
       'overview__sport--solo',
-    )
-  })
+    );
+  });
 
   it('shows empty states for Dernières and Prochaines when units are null', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -244,32 +252,32 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           standingCompact: null,
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Dernières rencontres' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Prochaines rencontres' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Aucune unité engagée pour le moment'),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Aucune prochaine journée n’est encore générée'),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Prochaine action' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(screen.getByTestId('overview-region-sport')).toHaveClass(
       'overview__sport--solo',
-    )
-  })
+    );
+  });
 
   it('shows Prochaine action when En cours has a structural tip', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -286,31 +294,36 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           },
         ],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaine action' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/Générez le prochain tour Swiss/),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   describe('En cours layout DOM order', () => {
     it('orders Config then Sport when calm', async () => {
-      vi.mocked(fetchCompetitionOverview).mockResolvedValue(inProgressLayoutBase())
+      vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+        inProgressLayoutBase(),
+      );
 
-      renderOverviewPage()
+      renderOverviewPage();
 
-      await screen.findByTestId('overview-region-config')
-      expectOverviewRegionOrder('overview-region-config', 'overview-region-sport')
+      await screen.findByTestId('overview-region-config');
+      expectOverviewRegionOrder(
+        'overview-region-config',
+        'overview-region-sport',
+      );
       expectOverviewRegionsAbsent(
         'overview-region-attention',
         'overview-region-progression',
-      )
-    })
+      );
+    });
 
     it('orders Config then Prochaine action then Sport when tip only', async () => {
       vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -321,45 +334,49 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
               code: 'GenerateNextRound',
               guaranteed: false,
               stageId,
-              params: { stageName: 'Swiss', roundIndex: '2', plannedRounds: '8' },
+              params: {
+                stageName: 'Swiss',
+                roundIndex: '2',
+                plannedRounds: '8',
+              },
             },
           ],
         }),
-      )
+      );
 
-      renderOverviewPage()
+      renderOverviewPage();
 
-      await screen.findByTestId('overview-region-progression')
+      await screen.findByTestId('overview-region-progression');
       expectOverviewRegionOrder(
         'overview-region-config',
         'overview-region-progression',
         'overview-region-sport',
-      )
-      expectOverviewRegionsAbsent('overview-region-attention')
-    })
+      );
+      expectOverviewRegionsAbsent('overview-region-attention');
+    });
 
     it('orders À traiter before Config when attention only', async () => {
-      const situation = overviewSituation()
+      const situation = overviewSituation();
       vi.mocked(fetchCompetitionOverview).mockResolvedValue(
         inProgressLayoutBase({
           situations: [situation],
           attentionSummary: { count: 1, items: [situation] },
         }),
-      )
+      );
 
-      renderOverviewPage()
+      renderOverviewPage();
 
-      await screen.findByTestId('overview-region-attention')
+      await screen.findByTestId('overview-region-attention');
       expectOverviewRegionOrder(
         'overview-region-attention',
         'overview-region-config',
         'overview-region-sport',
-      )
-      expectOverviewRegionsAbsent('overview-region-progression')
-    })
+      );
+      expectOverviewRegionsAbsent('overview-region-progression');
+    });
 
     it('orders À traiter before Config before Prochaine action when both signals exist', async () => {
-      const situation = overviewSituation()
+      const situation = overviewSituation();
       vi.mocked(fetchCompetitionOverview).mockResolvedValue(
         inProgressLayoutBase({
           situations: [situation],
@@ -370,29 +387,33 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
               code: 'GenerateNextRound',
               guaranteed: false,
               stageId,
-              params: { stageName: 'Swiss', roundIndex: '2', plannedRounds: '8' },
+              params: {
+                stageName: 'Swiss',
+                roundIndex: '2',
+                plannedRounds: '8',
+              },
             },
           ],
         }),
-      )
+      );
 
-      renderOverviewPage()
+      renderOverviewPage();
 
-      await screen.findByTestId('overview-region-attention')
+      await screen.findByTestId('overview-region-attention');
       expectOverviewRegionOrder(
         'overview-region-attention',
         'overview-region-config',
         'overview-region-progression',
         'overview-region-sport',
-      )
-    })
-  })
+      );
+    });
+  });
 
   it('composes Terminée with Podium Résultat and standing compact Classement', async () => {
-    const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-    const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-    const entryC = '11111111-1111-1111-1111-111111111111'
-    const entryD = '22222222-2222-2222-2222-222222222222'
+    const entryA = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+    const entryB = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    const entryC = '11111111-1111-1111-1111-111111111111';
+    const entryD = '22222222-2222-2222-2222-222222222222';
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         status: 'Completed',
@@ -465,67 +486,74 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           referenceStageGameRules: referenceStageGameRules(),
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Résultat' }),
-    ).toBeInTheDocument()
-    const result = screen.getByTestId('overview-outcome-podium')
-    expect(result).toHaveAttribute('data-presentation', 'Podium')
+    ).toBeInTheDocument();
+    const result = screen.getByTestId('overview-outcome-podium');
+    expect(result).toHaveAttribute('data-presentation', 'Podium');
     expect(screen.getByTestId(`overview-outcome-${entryA}`)).toHaveTextContent(
       /Alpha/,
-    )
+    );
     expect(screen.getByTestId(`overview-outcome-${entryA}`)).toHaveTextContent(
       /Champion/,
-    )
+    );
     expect(screen.getByTestId(`overview-outcome-${entryB}`)).toHaveTextContent(
       /Bravo/,
-    )
+    );
     expect(screen.getByTestId(`overview-outcome-${entryC}`)).toHaveTextContent(
       /Charlie/,
-    )
+    );
     expect(
       screen.queryByTestId(`overview-outcome-${entryD}`),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Voir le classement complet/i }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/classements`)
+    ).toHaveAttribute('href', `/competitions/${competitionId}/classements`);
     expect(
       screen.getByRole('heading', { name: 'Classement' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Prochaine action' }),
-    ).not.toBeInTheDocument()
-    expect(screen.getByTestId('overview-structure-condensed')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
-    expect(screen.getByTestId('overview-regulation-game')).toBeInTheDocument()
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('overview-structure-condensed'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('overview-regulation-game')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Dernières rencontres' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Prochaines rencontres' }),
-    ).not.toBeInTheDocument()
-    expectOverviewRegionOrder('overview-region-config', 'overview-region-sport')
+    ).not.toBeInTheDocument();
+    expectOverviewRegionOrder(
+      'overview-region-config',
+      'overview-region-sport',
+    );
     expectOverviewRegionOrder(
       'overview-sport-result-column',
       'overview-sport-temporal-column',
-    )
-    const resultHeading = screen.getByRole('heading', { name: 'Résultat' })
-    const standingHeading = screen.getByRole('heading', { name: 'Classement' })
+    );
+    const resultHeading = screen.getByRole('heading', { name: 'Résultat' });
+    const standingHeading = screen.getByRole('heading', { name: 'Classement' });
     expect(
       resultHeading.compareDocumentPosition(standingHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy()
-  })
+    ).toBeTruthy();
+  });
 
   it('shows Cup Winner hero — finalist not staged as podium', async () => {
-    const winner = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1'
-    const runnerUp = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2'
+    const winner = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1';
+    const runnerUp = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2';
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         status: 'Completed',
@@ -570,35 +598,35 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           }),
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Résultat' }),
-    ).toBeInTheDocument()
-    const result = screen.getByTestId('overview-outcome-podium')
-    expect(result).toHaveAttribute('data-presentation', 'Winner')
+    ).toBeInTheDocument();
+    const result = screen.getByTestId('overview-outcome-podium');
+    expect(result).toHaveAttribute('data-presentation', 'Winner');
     expect(screen.getByTestId(`overview-outcome-${winner}`)).toHaveTextContent(
       /Finaliste A/,
-    )
+    );
     expect(screen.getByTestId(`overview-outcome-${winner}`)).toHaveTextContent(
       /Vainqueur/,
-    )
+    );
     expect(
       screen.queryByTestId(`overview-outcome-${runnerUp}`),
-    ).not.toBeInTheDocument()
-    expect(result.querySelectorAll('li')).toHaveLength(0)
+    ).not.toBeInTheDocument();
+    expect(result.querySelectorAll('li')).toHaveLength(0);
     expect(
       screen.queryByRole('heading', { name: 'Classement' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows Cup + bronze as Host Podium Top-3', async () => {
-    const a = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1'
-    const b = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2'
-    const c = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3'
-    const d = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4'
+    const a = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1';
+    const b = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2';
+    const c = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3';
+    const d = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb4';
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         status: 'Completed',
@@ -636,18 +664,20 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           }),
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByTestId('overview-outcome-podium'),
-    ).toHaveAttribute('data-presentation', 'Podium')
+    ).toHaveAttribute('data-presentation', 'Podium');
     expect(screen.getByTestId(`overview-outcome-${c}`)).toHaveTextContent(
       /Bronze/,
-    )
-    expect(screen.queryByTestId(`overview-outcome-${d}`)).not.toBeInTheDocument()
-  })
+    );
+    expect(
+      screen.queryByTestId(`overview-outcome-${d}`),
+    ).not.toBeInTheDocument();
+  });
 
   it('shows Groups-only Terminée Classement without Résultat', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -715,17 +745,17 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           }),
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Groupe A' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Résultat' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('hides Résultat when Terminée has no CompetitionOutcome (Abandoned / Groups-only)', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -758,23 +788,23 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           referenceStageGameRules: referenceStageGameRules(),
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByTestId('overview-region-config'),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Résultat' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('overview-outcome-podium'),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Classement' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows Prochaines on Terminée only when nextUnit is projected', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -799,17 +829,17 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           referenceStageGameRules: null,
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaines rencontres' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Dernières rencontres' }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('hides À traiter when attention count is 0', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -820,18 +850,18 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
         situations: [],
         attentionSummary: { count: 0, items: [] },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Dernières rencontres' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'À traiter' }),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText(/Rien à traiter/)).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Rien à traiter/)).not.toBeInTheDocument();
+  });
 
   it('hides En cours Règlement when referenceStageGameRules is null', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -859,21 +889,23 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           referenceStageGameRules: null,
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByTestId('overview-structure-condensed'),
-    ).toBeInTheDocument()
-    expect(screen.queryByTestId('overview-regulation-game')).not.toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('overview-regulation-game'),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Règlement' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows Cup game-rule facts without standing points', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -904,18 +936,18 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
           }),
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByTestId('overview-regulation-game'),
-    ).toBeInTheDocument()
-    expect(screen.getByText('2 manches · cumul des scores')).toBeInTheDocument()
-    expect(screen.getByText('2×45 min')).toBeInTheDocument()
-    expect(screen.getByText('Prolongation · Tirs au but')).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
-      screen.queryByText(/pts victoire/),
-    ).not.toBeInTheDocument()
-  })
-})
+      screen.getByText('2 manches · cumul des scores'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('2×45 min')).toBeInTheDocument();
+    expect(screen.getByText('Prolongation · Tirs au but')).toBeInTheDocument();
+    expect(screen.queryByText(/pts victoire/)).not.toBeInTheDocument();
+  });
+});

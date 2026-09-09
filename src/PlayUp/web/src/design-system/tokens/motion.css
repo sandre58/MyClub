@@ -3,19 +3,19 @@
  */
 :root,
 .ds-root {
-    --motion-duration: 160ms;
-    --motion-easing: cubic-bezier(0.2, 0, 0.2, 1);
+  --motion-duration: 160ms;
+  --motion-easing: cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .ds-root {
-        --motion-duration: 0ms;
-    }
+  .ds-root {
+    --motion-duration: 0ms;
+  }
 
-    .ds-root *,
-    .ds-root *::before,
-    .ds-root *::after {
-        animation: none !important;
-        transition: none !important;
-    }
+  .ds-root *,
+  .ds-root *::before,
+  .ds-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

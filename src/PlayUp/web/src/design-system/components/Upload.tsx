@@ -1,26 +1,22 @@
-import {
-  useRef,
-  type ChangeEvent,
-  type KeyboardEvent,
-} from 'react'
-import { TeamCrest } from '../TeamCrest'
-import { PlusIcon, TrashIcon } from '../icons/overviewIcons'
+import { useRef, type ChangeEvent, type KeyboardEvent } from 'react';
+import { TeamCrest } from '../TeamCrest';
+import { PlusIcon, TrashIcon } from '../icons/overviewIcons';
 
 export type UploadProps = {
   /** Crest initials when using letter-mark fallback. */
-  name: string
+  name: string;
   /** Object URL / remote URL; null = empty unless crestFallback. */
-  value: string | null
-  primaryColor?: string | null
+  value: string | null;
+  primaryColor?: string | null;
   /** Show letter crest as filled state without an image URL (Lab demos). */
-  crestFallback?: boolean
-  uploading?: boolean
-  disabled?: boolean
-  accept?: string
-  emptyLabel?: string
-  removeLabel?: string
-  onChange: (nextUrl: string | null, file: File | null) => void
-}
+  crestFallback?: boolean;
+  uploading?: boolean;
+  disabled?: boolean;
+  accept?: string;
+  emptyLabel?: string;
+  removeLabel?: string;
+  onChange: (nextUrl: string | null, file: File | null) => void;
+};
 
 /**
  * Single picture-card upload — crest/image in card, hover remove, loading overlay.
@@ -38,34 +34,37 @@ export function Upload({
   removeLabel = 'Retirer',
   onChange,
 }: UploadProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const filled = Boolean(value) || crestFallback
-  const busy = disabled || uploading
+  const inputRef = useRef<HTMLInputElement>(null);
+  const filled = Boolean(value) || crestFallback;
+  const busy = disabled || uploading;
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] ?? null
-    event.target.value = ''
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = '';
     if (!file) {
-      return
+      return;
     }
-    const url = URL.createObjectURL(file)
-    onChange(url, file)
+    const url = URL.createObjectURL(file);
+    onChange(url, file);
   }
 
-  function clear(event: { stopPropagation: () => void; preventDefault: () => void }) {
-    event.stopPropagation()
-    event.preventDefault()
+  function clear(event: {
+    stopPropagation: () => void;
+    preventDefault: () => void;
+  }) {
+    event.stopPropagation();
+    event.preventDefault();
     if (busy) {
-      return
+      return;
     }
-    onChange(null, null)
+    onChange(null, null);
   }
 
   function onCardKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
+      event.preventDefault();
       if (!busy) {
-        inputRef.current?.click()
+        inputRef.current?.click();
       }
     }
   }
@@ -83,7 +82,7 @@ export function Upload({
       onKeyDown={onCardKeyDown}
       onClick={() => {
         if (!busy) {
-          inputRef.current?.click()
+          inputRef.current?.click();
         }
       }}
     >
@@ -136,5 +135,5 @@ export function Upload({
         </span>
       ) : null}
     </div>
-  )
+  );
 }

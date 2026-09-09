@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import { pushDismissLayer } from './dismissStack'
+import { useEffect, useRef } from 'react';
+import { pushDismissLayer } from './dismissStack';
 
 export type UseDismissLayerOptions = {
   /**
@@ -7,8 +7,8 @@ export type UseDismissLayerOptions = {
    * Escape. Prefer leaving enabled and no-opping `onDismiss` when Escape
    * must be consumed without side effects (e.g. Dialog `closeDisabled`).
    */
-  enabled?: boolean
-}
+  enabled?: boolean;
+};
 
 /**
  * Registers an Escape-dismissible layer while `active`.
@@ -19,34 +19,37 @@ export function useDismissLayer(
   onDismiss: () => void,
   options?: UseDismissLayerOptions,
 ) {
-  const onDismissRef = useRef(onDismiss)
-  onDismissRef.current = onDismiss
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
 
-  const enabled = options?.enabled !== false
-  const handleRef = useRef<ReturnType<typeof pushDismissLayer> | null>(null)
+  const enabled = options?.enabled !== false;
+  const handleRef = useRef<ReturnType<typeof pushDismissLayer> | null>(null);
 
   // Keep enabled in sync without re-pushing (preserves LIFO order).
   if (handleRef.current) {
-    handleRef.current.setEnabled(enabled)
+    handleRef.current.setEnabled(enabled);
   }
 
   useEffect(() => {
     if (!active) {
-      return
+      return;
     }
 
-    const handle = pushDismissLayer(() => {
-      onDismissRef.current()
-    }, { enabled })
-    handleRef.current = handle
+    const handle = pushDismissLayer(
+      () => {
+        onDismissRef.current();
+      },
+      { enabled },
+    );
+    handleRef.current = handle;
 
     return () => {
-      handle.unregister()
+      handle.unregister();
       if (handleRef.current === handle) {
-        handleRef.current = null
+        handleRef.current = null;
       }
-    }
+    };
     // `enabled` is synced via setEnabled above — re-pushing would reorder LIFO.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- active only
-  }, [active])
+  }, [active]);
 }

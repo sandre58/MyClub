@@ -1,14 +1,14 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import i18n from '../i18n'
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import i18n from '../i18n';
 
 type PageErrorBoundaryProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 type PageErrorBoundaryState = {
-  hasError: boolean
-}
+  hasError: boolean;
+};
 
 /**
  * Contains render failures inside the page Outlet so shell chrome stays usable.
@@ -17,26 +17,26 @@ export class PageErrorBoundary extends Component<
   PageErrorBoundaryProps,
   PageErrorBoundaryState
 > {
-  state: PageErrorBoundaryState = { hasError: false }
+  state: PageErrorBoundaryState = { hasError: false };
 
   static getDerivedStateFromError(): PageErrorBoundaryState {
-    return { hasError: true }
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('Page render failed', error, info.componentStack)
+    console.error('Page render failed', error, info.componentStack);
   }
 
   private handleRetry = () => {
-    this.setState({ hasError: false })
-  }
+    this.setState({ hasError: false });
+  };
 
   render() {
     if (!this.state.hasError) {
-      return this.props.children
+      return this.props.children;
     }
 
-    const t = i18n.getFixedT(null, 'common')
+    const t = i18n.getFixedT(null, 'common');
 
     return (
       <main id="main" className="shell-page">
@@ -58,6 +58,6 @@ export class PageErrorBoundary extends Component<
           </Link>
         </p>
       </main>
-    )
+    );
   }
 }

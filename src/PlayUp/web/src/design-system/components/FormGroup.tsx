@@ -1,12 +1,12 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export type FormGroupProps = {
-  title: string
+  title: string;
   /** Optional short hint under the subsection title. */
-  description?: string
-  children: ReactNode
-  className?: string
-}
+  description?: string;
+  children: ReactNode;
+  className?: string;
+};
 
 /**
  * Subsection chrome inside a FormSection — title is structural, not a Field label.
@@ -27,5 +27,5 @@ export function FormGroup({
       </div>
       <div className="ds-form-group__body">{children}</div>
     </div>
-  )
+  );
 }

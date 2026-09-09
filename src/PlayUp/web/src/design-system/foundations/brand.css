@@ -6,47 +6,47 @@
 /* Lockup rasters — Accueil (`accueil-*.png`) and chrome wordmark (`*-on-chrome.png`). */
 .ds-lockup-mark,
 .ds-lockup-wordmark {
-    display: block;
-    width: auto;
-    max-width: 100%;
+  display: block;
+  width: auto;
+  max-width: 100%;
 }
 
 .ds-lockup-mark {
-    height: 3.5rem;
+  height: 3.5rem;
 }
 
 .ds-lockup-wordmark {
-    height: 2.625rem;
+  height: 2.625rem;
 }
 
 /* Trend — même vocabulaire que la marque. */
 .ds-trend {
-    display: inline-block;
-    width: 0.75rem;
-    height: 0.75rem;
-    vertical-align: -0.1em;
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  vertical-align: -0.1em;
 }
 
 .ds-trend path {
-    stroke: currentColor;
-    stroke-width: 2.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .ds-trend--up {
-    color: var(--color-brand);
+  color: var(--color-brand);
 }
 
 .ds-trend--down {
-    color: var(--color-text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .ds-trend[data-skew='9'] {
-    transform: rotate(-3deg);
+  transform: rotate(-3deg);
 }
 
 .ds-trend[data-skew='12'] {
-    transform: rotate(-5deg);
+  transform: rotate(-5deg);
 }

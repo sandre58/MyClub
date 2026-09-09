@@ -1,15 +1,15 @@
-import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '../design-system/icons/shellIcons'
-import { attentionTargetTypeLabel } from '../i18n/enumLabels'
-import { situationDescription, situationTitle } from '../i18n/situationCopy'
-import { situationHref } from '../pages/overviewNavigation'
-import type { OverviewSituation } from '../types'
+import { Link } from 'react-router-dom';
+import { ChevronRightIcon } from '../design-system/icons/shellIcons';
+import { attentionTargetTypeLabel } from '../i18n/enumLabels';
+import { situationDescription, situationTitle } from '../i18n/situationCopy';
+import { situationHref } from '../pages/overviewNavigation';
+import type { OverviewSituation } from '../types';
 
 type AttentionSituationRowProps = {
-  item: OverviewSituation
-  competitionId: string
-  onNavigate?: () => void
-}
+  item: OverviewSituation;
+  competitionId: string;
+  onNavigate?: () => void;
+};
 
 /**
  * Product À traiter row (drawer + Vue d'ensemble preview).
@@ -22,16 +22,16 @@ export function AttentionSituationRow({
   competitionId,
   onNavigate,
 }: AttentionSituationRowProps) {
-  const href = situationHref(item, competitionId)
-  const isBlocking = item.nature === 'Blocking'
-  const description = situationDescription(item.source, item.params)
+  const href = situationHref(item, competitionId);
+  const isBlocking = item.nature === 'Blocking';
+  const description = situationDescription(item.source, item.params);
   const targetLabel = item.targetType
     ? attentionTargetTypeLabel(item.targetType)
-    : null
-  const meta = description ?? targetLabel
+    : null;
+  const meta = description ?? targetLabel;
   const toneClass = isBlocking
     ? 'shell-attention-drawer__row--blocking'
-    : 'shell-attention-drawer__row--attention'
+    : 'shell-attention-drawer__row--attention';
 
   const content = (
     <>
@@ -53,7 +53,7 @@ export function AttentionSituationRow({
         />
       ) : null}
     </>
-  )
+  );
 
   return (
     <li className="shell-attention-drawer__item">
@@ -71,23 +71,5 @@ export function AttentionSituationRow({
         </div>
       )}
     </li>
-  )
-}
-
-export function partitionAttentionItems(items: OverviewSituation[]): {
-  blocking: OverviewSituation[]
-  attention: OverviewSituation[]
-} {
-  const blocking: OverviewSituation[] = []
-  const attention: OverviewSituation[] = []
-
-  for (const item of items) {
-    if (item.nature === 'Blocking') {
-      blocking.push(item)
-    } else {
-      attention.push(item)
-    }
-  }
-
-  return { blocking, attention }
+  );
 }

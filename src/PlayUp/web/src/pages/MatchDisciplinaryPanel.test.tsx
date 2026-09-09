@@ -1,8 +1,8 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchMatchDetail,
   fetchOrganisationView,
@@ -12,19 +12,19 @@ import {
   removeRecordedDisciplinaryEvent,
   setRunningScore,
   startMatch,
-} from '../api'
+} from '../api';
 import type {
   DeclaredParticipation,
   MatchDetail,
   OrganisationView,
   RecordedDisciplinaryEvent,
   StageOverview,
-} from '../types'
-import { canMutateRecordedDisciplinaryEvents } from './MatchDisciplinaryPanel'
-import { MatchPage } from './MatchPage'
+} from '../types';
+import { canMutateRecordedDisciplinaryEvents } from './matchDisciplinaryHelpers';
+import { MatchPage } from './MatchPage';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchMatchDetail: vi.fn(),
@@ -35,18 +35,18 @@ vi.mock('../api', async (importOriginal) => {
     setRunningScore: vi.fn(),
     recordDisciplinaryEvent: vi.fn(),
     removeRecordedDisciplinaryEvent: vi.fn(),
-  }
-})
+  };
+});
 
-const matchId = '11111111-1111-1111-1111-111111111111'
-const stageId = '22222222-2222-2222-2222-222222222222'
-const competitionId = '33333333-3333-3333-3333-333333333333'
-const fixtureId = '44444444-4444-4444-4444-444444444444'
-const homeEntryId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-const awayEntryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-const dupontId = '11111111-1111-1111-1111-111111111101'
-const coachId = '11111111-1111-1111-1111-111111111199'
-const eventId = '99999999-9999-9999-9999-999999999901'
+const matchId = '11111111-1111-1111-1111-111111111111';
+const stageId = '22222222-2222-2222-2222-222222222222';
+const competitionId = '33333333-3333-3333-3333-333333333333';
+const fixtureId = '44444444-4444-4444-4444-444444444444';
+const homeEntryId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const awayEntryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+const dupontId = '11111111-1111-1111-1111-111111111101';
+const coachId = '11111111-1111-1111-1111-111111111199';
+const eventId = '99999999-9999-9999-9999-999999999901';
 
 function participation(
   overrides: Partial<DeclaredParticipation> = {},
@@ -58,7 +58,7 @@ function participation(
     compositionStatus: 'Starter',
     jerseyNumber: 9,
     ...overrides,
-  }
+  };
 }
 
 function sheet(): DeclaredParticipation[] {
@@ -70,7 +70,7 @@ function sheet(): DeclaredParticipation[] {
       compositionStatus: 'Bench',
       jerseyNumber: null,
     }),
-  ]
+  ];
 }
 
 function disciplinaryEvent(
@@ -82,7 +82,7 @@ function disciplinaryEvent(
     memberDisplayName: 'Dupont',
     type: 'Yellow',
     ...overrides,
-  }
+  };
 }
 
 function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
@@ -103,7 +103,7 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
     recordedSubstitutions: [],
     recordedDisciplinaryEvents: [],
     ...overrides,
-  }
+  };
 }
 
 function organisationWithTypes(
@@ -155,18 +155,18 @@ function organisationWithTypes(
       blockers: [],
     },
     stages: [],
-  }
+  };
 }
 
 const stageOverview: StageOverview = {
   id: stageId,
   competitionId,
-  name: 'JournÃ©e 1',
+  name: 'Journée 1',
   status: 'Draft',
   rounds: [],
   slots: [],
   draws: [],
-}
+};
 
 function renderMatchPage() {
   const queryClient = new QueryClient({
@@ -174,7 +174,7 @@ function renderMatchPage() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-  })
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -188,17 +188,17 @@ function renderMatchPage() {
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-  )
+  );
 }
 
 describe('canMutateRecordedDisciplinaryEvents', () => {
   it('allows #4-like window including Scheduled', () => {
     expect(
       canMutateRecordedDisciplinaryEvents(baseMatch({ status: 'Scheduled' })),
-    ).toBe(true)
+    ).toBe(true);
     expect(
       canMutateRecordedDisciplinaryEvents(baseMatch({ status: 'Live' })),
-    ).toBe(true)
+    ).toBe(true);
     expect(
       canMutateRecordedDisciplinaryEvents(
         baseMatch({
@@ -207,66 +207,69 @@ describe('canMutateRecordedDisciplinaryEvents', () => {
           runningScore: null,
         }),
       ),
-    ).toBe(true)
+    ).toBe(true);
     expect(
       canMutateRecordedDisciplinaryEvents(
         baseMatch({ status: 'Finished', hasObservedLive: true }),
       ),
-    ).toBe(false)
+    ).toBe(false);
     expect(
       canMutateRecordedDisciplinaryEvents(baseMatch({ status: 'Cancelled' })),
-    ).toBe(false)
-  })
-})
+    ).toBe(false);
+  });
+});
 
 describe('MatchPage discipline (Lot 1)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview)
+    vi.clearAllMocks();
+    vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationWithTypes(['Yellow', 'Red']),
-    )
-    vi.mocked(startMatch).mockResolvedValue()
-    vi.mocked(finishMatch).mockResolvedValue()
-    vi.mocked(setRunningScore).mockResolvedValue()
-    vi.mocked(recordDisciplinaryEvent).mockResolvedValue()
-    vi.mocked(removeRecordedDisciplinaryEvent).mockResolvedValue()
-  })
+    );
+    vi.mocked(startMatch).mockResolvedValue();
+    vi.mocked(finishMatch).mockResolvedValue();
+    vi.mocked(setRunningScore).mockResolvedValue();
+    vi.mocked(recordDisciplinaryEvent).mockResolvedValue();
+    vi.mocked(removeRecordedDisciplinaryEvent).mockResolvedValue();
+  });
 
   it('Live: records Yellow for sheet member without touching RunningScore', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(recordDisciplinaryEvent).mock.calls.length > 0) {
         return baseMatch({
           recordedDisciplinaryEvents: [disciplinaryEvent()],
-        })
+        });
       }
-      return baseMatch()
-    })
+      return baseMatch();
+    });
 
-    renderMatchPage()
+    renderMatchPage();
 
-    const heading = await screen.findByRole('heading', { name: 'Discipline' })
-    const panel = heading.closest('section') as HTMLElement
+    const heading = await screen.findByRole('heading', { name: 'Discipline' });
+    const panel = heading.closest('section') as HTMLElement;
 
     await user.selectOptions(
       await within(panel).findByLabelText(/^Personne$/i),
       dupontId,
-    )
-    await user.selectOptions(await within(panel).findByLabelText(/^Type$/i), 'Yellow')
+    );
+    await user.selectOptions(
+      await within(panel).findByLabelText(/^Type$/i),
+      'Yellow',
+    );
     await user.click(
       await within(panel).findByRole('button', { name: 'Enregistrer le fait' }),
-    )
+    );
 
     await waitFor(() => {
       expect(recordDisciplinaryEvent).toHaveBeenCalledWith(matchId, {
         memberId: dupontId,
         type: 'Yellow',
-      })
-    })
-    expect(setRunningScore).not.toHaveBeenCalled()
-    expect(within(panel).getByText(/Jaune Â· Dupont/)).toBeInTheDocument()
-  })
+      });
+    });
+    expect(setRunningScore).not.toHaveBeenCalled();
+    expect(within(panel).getByText(/Jaune · Dupont/)).toBeInTheDocument();
+  });
 
   it('Scheduled: still allows Create (#4-like)', async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(
@@ -275,106 +278,106 @@ describe('MatchPage discipline (Lot 1)', () => {
         hasObservedLive: false,
         runningScore: null,
       }),
-    )
+    );
 
-    renderMatchPage()
+    renderMatchPage();
 
-    const heading = await screen.findByRole('heading', { name: 'Discipline' })
-    const panel = heading.closest('section') as HTMLElement
+    const heading = await screen.findByRole('heading', { name: 'Discipline' });
+    const panel = heading.closest('section') as HTMLElement;
 
     expect(
       await within(panel).findByRole('button', { name: 'Enregistrer le fait' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       within(panel).queryByText(/ne sont plus modifiables/i),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('allowedTypes []: explicit noneAllowed, no Create form', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationWithTypes([]),
-    )
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch())
+    );
+    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch());
 
-    renderMatchPage()
+    renderMatchPage();
 
-    const heading = await screen.findByRole('heading', { name: 'Discipline' })
-    const panel = heading.closest('section') as HTMLElement
+    const heading = await screen.findByRole('heading', { name: 'Discipline' });
+    const panel = heading.closest('section') as HTMLElement;
 
     expect(
-      await within(panel).findByText(/Aucun type disciplinaire autorisÃ©/i),
-    ).toBeInTheDocument()
+      await within(panel).findByText(/Aucun type disciplinaire autorisé/i),
+    ).toBeInTheDocument();
     expect(
-      within(panel).getByRole('link', { name: /Configurer le rÃ¨glement/i }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/organisation`)
+      within(panel).getByRole('link', { name: /Configurer le règlement/i }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}/organisation`);
     expect(
       within(panel).queryByRole('button', { name: 'Enregistrer le fait' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('type select only lists AllowedTypes (no White when not allowed)', async () => {
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch())
+    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch());
 
-    renderMatchPage()
+    renderMatchPage();
 
-    const heading = await screen.findByRole('heading', { name: 'Discipline' })
-    const panel = heading.closest('section') as HTMLElement
-    const typeSelect = await within(panel).findByLabelText(/^Type$/i)
+    const heading = await screen.findByRole('heading', { name: 'Discipline' });
+    const panel = heading.closest('section') as HTMLElement;
+    const typeSelect = await within(panel).findByLabelText(/^Type$/i);
 
     expect(
       within(typeSelect).getByRole('option', { name: 'Jaune' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       within(typeSelect).getByRole('option', { name: 'Rouge' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       within(typeSelect).queryByRole('option', { name: 'Blanc' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('offers every sheet member including Staff-like Bench', async () => {
-    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch())
+    vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch());
 
-    renderMatchPage()
+    renderMatchPage();
 
-    const heading = await screen.findByRole('heading', { name: 'Discipline' })
-    const panel = heading.closest('section') as HTMLElement
-    const memberSelect = await within(panel).findByLabelText(/^Personne$/i)
+    const heading = await screen.findByRole('heading', { name: 'Discipline' });
+    const panel = heading.closest('section') as HTMLElement;
+    const memberSelect = await within(panel).findByLabelText(/^Personne$/i);
 
     expect(
       within(memberSelect).getByRole('option', { name: /Dupont/ }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       within(memberSelect).getByRole('option', { name: /Coach/ }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('removes a disciplinary event with consequence confirm', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(removeRecordedDisciplinaryEvent).mock.calls.length > 0) {
-        return baseMatch({ recordedDisciplinaryEvents: [] })
+        return baseMatch({ recordedDisciplinaryEvents: [] });
       }
       return baseMatch({
         recordedDisciplinaryEvents: [disciplinaryEvent()],
-      })
-    })
+      });
+    });
 
-    renderMatchPage()
+    renderMatchPage();
 
-    const heading = await screen.findByRole('heading', { name: 'Discipline' })
-    const panel = heading.closest('section') as HTMLElement
+    const heading = await screen.findByRole('heading', { name: 'Discipline' });
+    const panel = heading.closest('section') as HTMLElement;
 
-    await user.click(within(panel).getByRole('button', { name: 'Retirer' }))
+    await user.click(within(panel).getByRole('button', { name: 'Retirer' }));
     await user.click(
       within(panel).getByRole('button', { name: 'Confirmer le retrait' }),
-    )
+    );
 
     await waitFor(() => {
       expect(removeRecordedDisciplinaryEvent).toHaveBeenCalledWith(
         matchId,
         eventId,
-      )
-    })
-  })
-})
+      );
+    });
+  });
+});

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 /** Live minute / match indicator — pulse dot + label. */
 export function LiveStatus({ children }: { children: ReactNode }) {
@@ -7,5 +7,5 @@ export function LiveStatus({ children }: { children: ReactNode }) {
       <span className="ds-live-dot" aria-hidden="true" />
       {children}
     </span>
-  )
+  );
 }

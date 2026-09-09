@@ -1,4 +1,4 @@
-import i18n from './index'
+import i18n from './index';
 
 /** Wire action / progression code → organizer label (`actions` namespace). */
 export function actionLabel(
@@ -9,5 +9,5 @@ export function actionLabel(
     ns: 'actions',
     defaultValue: i18n.t('fallback', { ns: 'actions', code }),
     ...params,
-  })
+  });
 }

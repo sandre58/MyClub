@@ -1,21 +1,22 @@
 /*
  * Native control heights follow density. Not a form component kit.
  */
-.ds-root :is(
+.ds-root
+  :is(
     input:not([type='radio'], [type='checkbox'], [type='hidden']),
     select,
     textarea
-) {
-    min-height: var(--control-height);
-    padding: 0 var(--space-12);
-    border: var(--border-width) solid var(--color-border-strong);
-    border-radius: var(--radius-control);
-    background: var(--color-surface);
-    color: var(--color-text-primary);
-    font: inherit;
+  ) {
+  min-height: var(--control-height);
+  padding: 0 var(--space-12);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
 }
 
 .ds-root textarea {
-    min-height: calc(var(--control-height) * 3);
-    padding: var(--space-8) var(--space-12);
+  min-height: calc(var(--control-height) * 3);
+  padding: var(--space-8) var(--space-12);
 }

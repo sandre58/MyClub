@@ -3,16 +3,16 @@ import {
   useQuery,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query'
+} from '@tanstack/react-query';
 import {
   useEffect,
   useId,
   useState,
   type FormEvent,
   type ReactNode,
-} from 'react'
-import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams } from 'react-router-dom'
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   addCompetitionEntry,
   deleteCompetitionEntries,
@@ -22,22 +22,25 @@ import {
   updateEntryPresentation,
   withdrawCompetitionEntries,
   withdrawCompetitionEntry,
-} from '../api'
-import { Dialog } from '../design-system/components/Dialog'
-import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
-import { Meter, type MeterTone } from '../design-system/components/Meter'
-import { PageHead } from '../design-system/components/PageHead'
-import { SelectionBar } from '../design-system/components/SelectionBar'
-import { useDiscardConfirm } from '../design-system/useDiscardConfirm'
-import { Field, type FieldMessageTone } from '../design-system/components/Field'
-import { TextInput } from '../design-system/components/TextInput'
-import { ColorPicker } from '../design-system/components/ColorPicker'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { notify } from '../design-system/toastStore'
-import { useDismissLayer } from '../design-system/useDismissLayer'
-import { deriveShortName, SHORT_NAME_MAX_LENGTH } from './deriveShortName'
-import { LogoMediaField } from './LogoMediaField'
-import { CloseIcon } from '../design-system/icons/shellIcons'
+} from '../api';
+import { Dialog } from '../design-system/components/Dialog';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
+import { Meter, type MeterTone } from '../design-system/components/Meter';
+import { PageHead } from '../design-system/components/PageHead';
+import { SelectionBar } from '../design-system/components/SelectionBar';
+import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
+import {
+  Field,
+  type FieldMessageTone,
+} from '../design-system/components/Field';
+import { TextInput } from '../design-system/components/TextInput';
+import { ColorPicker } from '../design-system/components/ColorPicker';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { notify } from '../design-system/toastStore';
+import { useDismissLayer } from '../design-system/useDismissLayer';
+import { deriveShortName, SHORT_NAME_MAX_LENGTH } from './deriveShortName';
+import { LogoMediaField } from './LogoMediaField';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import {
   EmptySelectionIcon,
   LayersIcon,
@@ -46,8 +49,8 @@ import {
   PlusIcon,
   TrashIcon,
   WithdrawIcon,
-} from '../design-system/icons/overviewIcons'
-import { queryKeys } from '../queryKeys'
+} from '../design-system/icons/overviewIcons';
+import { queryKeys } from '../queryKeys';
 import {
   ErrorState,
   LoadingState,
@@ -55,15 +58,15 @@ import {
   EmptyState,
   PendingLabel,
   StatusBadge,
-} from '../ui'
+} from '../ui';
 import type {
   EntryStatus,
   OrganisationEntry,
   OrganisationView,
-} from '../types'
-import { TeamRosterDrawer } from './TeamRosterDrawer'
-import { isTeamsNarrowViewport } from '../layout/viewportBreakpoints'
-import './teams.css'
+} from '../types';
+import { TeamRosterDrawer } from './TeamRosterDrawer';
+import { isTeamsNarrowViewport } from '../layout/viewportBreakpoints';
+import './teams.css';
 
 async function invalidateAfterTeamsMutation(
   queryClient: QueryClient,
@@ -85,7 +88,7 @@ async function invalidateAfterTeamsMutation(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.attention(competitionId),
     }),
-  ])
+  ]);
 }
 
 /**
@@ -93,98 +96,100 @@ async function invalidateAfterTeamsMutation(
  * Read: GET …/organisation. Mutations: Add/Rename/Presentation/Delete/Withdraw.
  */
 export function TeamsPage() {
-  const { competitionId = '', entryId } = useParams()
+  const { competitionId = '', entryId } = useParams();
 
   const query = useQuery({
     queryKey: queryKeys.competitions.organisation(competitionId),
     queryFn: () => fetchOrganisationView(competitionId),
     enabled: competitionId.length > 0,
-  })
+  });
 
   return (
     <main id="main" className="page page--teams">
       {query.isPending && !query.data && <LoadingState />}
       {query.isError && !query.data && <ErrorState error={query.error} />}
-      {query.data && (
-        <TeamsView data={query.data} routeEntryId={entryId} />
-      )}
+      {query.data && <TeamsView data={query.data} routeEntryId={entryId} />}
     </main>
-  )
+  );
 }
 
 function TeamsView({
   data,
   routeEntryId,
 }: {
-  data: OrganisationView
-  routeEntryId?: string
+  data: OrganisationView;
+  routeEntryId?: string;
 }) {
-  const { t } = useTranslation('teams')
-  const { t: tCommon } = useTranslation('common')
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const can = (action: string) => data.actions.includes(action)
-  const canAddAction = can('AddEntry')
-  const canDelete = can('DeleteEntry')
-  const canWithdraw = can('WithdrawEntry')
-  const atCap = data.participants.occupyingCount >= data.regulation.maximumTeams
-  const canAdd = canAddAction && !atCap
-  const showPlateauReading = true
+  const { t } = useTranslation('teams');
+  const { t: tCommon } = useTranslation('common');
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const can = (action: string) => data.actions.includes(action);
+  const canAddAction = can('AddEntry');
+  const canDelete = can('DeleteEntry');
+  const canWithdraw = can('WithdrawEntry');
+  const atCap =
+    data.participants.occupyingCount >= data.regulation.maximumTeams;
+  const canAdd = canAddAction && !atCap;
+  const showPlateauReading = true;
   const missingMinimum = Math.max(
     0,
     data.regulation.minimumTeams - data.participants.activeCount,
-  )
-  const emptyCount = canAdd ? missingMinimum : 0
-  const entries = data.participants.entries
-  const teamsHref = `/competitions/${data.competitionId}/teams`
+  );
+  const emptyCount = canAdd ? missingMinimum : 0;
+  const entries = data.participants.entries;
+  const teamsHref = `/competitions/${data.competitionId}/teams`;
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
     routeEntryId ? [routeEntryId] : [],
-  )
-  const [addOpen, setAddOpen] = useState(false)
-  const [identityEntryId, setIdentityEntryId] = useState<string | null>(null)
+  );
+  const [addOpen, setAddOpen] = useState(false);
+  const [identityEntryId, setIdentityEntryId] = useState<string | null>(null);
   const [pendingRemove, setPendingRemove] = useState<{
-    verb: 'delete' | 'withdraw'
-    targets: string[]
-    title: string
-    message: string
-    confirmLabel: string
-  } | null>(null)
+    verb: 'delete' | 'withdraw';
+    targets: string[];
+    title: string;
+    message: string;
+    confirmLabel: string;
+  } | null>(null);
 
-  const selectedCount = selectedIds.length
-  const multi = selectedCount >= 2
-  const drawerEntryId = selectedCount === 1 ? selectedIds[0] : undefined
+  const selectedCount = selectedIds.length;
+  const multi = selectedCount >= 2;
+  const drawerEntryId = selectedCount === 1 ? selectedIds[0] : undefined;
   const identityEntry =
     identityEntryId == null
       ? undefined
-      : entries.find((entry) => entry.entryId === identityEntryId)
+      : entries.find((entry) => entry.entryId === identityEntryId);
 
-  function goToSelection(nextIds: string[], options?: { openRoster?: boolean }) {
-    setSelectedIds(nextIds)
+  function goToSelection(
+    nextIds: string[],
+    options?: { openRoster?: boolean },
+  ) {
+    setSelectedIds(nextIds);
     if (nextIds.length === 0) {
-      navigate(teamsHref, { replace: true })
-      return
+      navigate(teamsHref, { replace: true });
+      return;
     }
     if (nextIds.length >= 2) {
-      navigate(teamsHref, { replace: true })
-      return
+      navigate(teamsHref, { replace: true });
+      return;
     }
-    const openRoster = options?.openRoster === true
+    const openRoster = options?.openRoster === true;
     if (openRoster || !isTeamsNarrowViewport()) {
-      navigate(`${teamsHref}/${nextIds[0]}`, { replace: true })
-      return
+      navigate(`${teamsHref}/${nextIds[0]}`, { replace: true });
+      return;
     }
-    navigate(teamsHref, { replace: true })
+    navigate(teamsHref, { replace: true });
   }
 
   useEffect(() => {
     if (routeEntryId) {
-      setSelectedIds([routeEntryId])
+      setSelectedIds([routeEntryId]);
     }
-  }, [routeEntryId])
+  }, [routeEntryId]);
 
   useDismissLayer(selectedIds.length > 0, () => {
-    goToSelection([])
-  })
+    goToSelection([]);
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (ids: string[]) =>
@@ -192,11 +197,11 @@ function TeamsView({
         ? deleteCompetitionEntry(data.competitionId, ids[0])
         : deleteCompetitionEntries(data.competitionId, { entryIds: ids }),
     onSuccess: async () => {
-      setPendingRemove(null)
-      goToSelection([])
-      await invalidateAfterTeamsMutation(queryClient, data.competitionId)
+      setPendingRemove(null);
+      goToSelection([]);
+      await invalidateAfterTeamsMutation(queryClient, data.competitionId);
     },
-  })
+  });
 
   const withdrawMutation = useMutation({
     mutationFn: (ids: string[]) =>
@@ -204,39 +209,40 @@ function TeamsView({
         ? withdrawCompetitionEntry(data.competitionId, ids[0])
         : withdrawCompetitionEntries(data.competitionId, { entryIds: ids }),
     onSuccess: async () => {
-      setPendingRemove(null)
-      goToSelection([])
-      await invalidateAfterTeamsMutation(queryClient, data.competitionId)
+      setPendingRemove(null);
+      goToSelection([]);
+      await invalidateAfterTeamsMutation(queryClient, data.competitionId);
     },
-  })
+  });
 
   function removeKind(): 'delete' | 'withdraw' {
     return data.status === 'Draft' || data.status === 'Ready'
       ? 'delete'
-      : 'withdraw'
+      : 'withdraw';
   }
 
   function canRemove() {
-    return removeKind() === 'delete' ? canDelete : canWithdraw
+    return removeKind() === 'delete' ? canDelete : canWithdraw;
   }
 
   function confirmAndRemove(ids: string[]) {
     if (ids.length === 0 || !canRemove()) {
-      return
+      return;
     }
-    const verb = removeKind()
+    const verb = removeKind();
     const targets =
       verb === 'withdraw'
         ? ids.filter(
             (id) =>
-              entries.find((entry) => entry.entryId === id)?.status === 'Active',
+              entries.find((entry) => entry.entryId === id)?.status ===
+              'Active',
           )
-        : ids
+        : ids;
     if (targets.length === 0) {
-      return
+      return;
     }
-    const first = entries.find((entry) => entry.entryId === targets[0])
-    const name = first?.displayName ?? targets[0]
+    const first = entries.find((entry) => entry.entryId === targets[0]);
+    const name = first?.displayName ?? targets[0];
     if (verb === 'delete') {
       setPendingRemove({
         verb,
@@ -250,8 +256,8 @@ function TeamsView({
             ? t('confirmDelete', { name })
             : t('confirmDeleteLot', { count: targets.length }),
         confirmLabel: t('deleteEntry'),
-      })
-      return
+      });
+      return;
     }
     setPendingRemove({
       verb,
@@ -265,86 +271,87 @@ function TeamsView({
           ? t('confirmWithdraw', { name })
           : t('confirmWithdrawLot', { count: targets.length }),
       confirmLabel: t('withdrawEntry'),
-    })
+    });
   }
 
   function onTileBody(entryId: string) {
     if (selectedCount < 2) {
-      goToSelection([entryId], { openRoster: true })
-      return
+      goToSelection([entryId], { openRoster: true });
+      return;
     }
     if (selectedIds.includes(entryId)) {
-      goToSelection(selectedIds.filter((id) => id !== entryId))
-      return
+      goToSelection(selectedIds.filter((id) => id !== entryId));
+      return;
     }
-    goToSelection([...selectedIds, entryId])
+    goToSelection([...selectedIds, entryId]);
   }
 
   function onToggleCheck(entryId: string) {
     if (selectedIds.includes(entryId)) {
-      goToSelection(selectedIds.filter((id) => id !== entryId))
-      return
+      goToSelection(selectedIds.filter((id) => id !== entryId));
+      return;
     }
-    goToSelection([...selectedIds, entryId])
+    goToSelection([...selectedIds, entryId]);
   }
 
-  const mutationError = deleteMutation.error ?? withdrawMutation.error
-  const removePending = deleteMutation.isPending || withdrawMutation.isPending
-  const removing = removeKind()
-  const removeEnabled = canRemove()
+  const mutationError = deleteMutation.error ?? withdrawMutation.error;
+  const removePending = deleteMutation.isPending || withdrawMutation.isPending;
+  const removing = removeKind();
+  const removeEnabled = canRemove();
   const selectedActiveCount = selectedIds.filter(
     (id) => entries.find((entry) => entry.entryId === id)?.status === 'Active',
-  ).length
+  ).length;
   const barRemoveEnabled =
-    removeEnabled &&
-    (removing === 'delete' || selectedActiveCount > 0)
+    removeEnabled && (removing === 'delete' || selectedActiveCount > 0);
   const removeLabel =
-    removing === 'delete' ? t('deleteEntry') : t('withdrawEntry')
+    removing === 'delete' ? t('deleteEntry') : t('withdrawEntry');
   const removeDisabledHint =
-    removing === 'delete' ? t('deleteDisabledHint') : t('withdrawDisabledHint')
+    removing === 'delete' ? t('deleteDisabledHint') : t('withdrawDisabledHint');
   const barRemoveHint =
     removing === 'withdraw' && selectedActiveCount === 0
       ? t('alreadyWithdrawnHint')
       : removeEnabled
         ? removeLabel
-        : removeDisabledHint
+        : removeDisabledHint;
 
   const compactIcon =
-    'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact'
+    'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
   const rosterOpen =
     selectedCount === 1 &&
     routeEntryId != null &&
-    routeEntryId === selectedIds[0]
+    routeEntryId === selectedIds[0];
   const teamsView =
-    selectedCount >= 2 ? 'multi' : rosterOpen ? 'detail' : 'list'
+    selectedCount >= 2 ? 'multi' : rosterOpen ? 'detail' : 'list';
 
   return (
-    <div className="teams" data-teams-view={teamsView} data-teams-multi={multi ? 'true' : 'false'}>
+    <div
+      className="teams"
+      data-teams-view={teamsView}
+      data-teams-multi={multi ? 'true' : 'false'}
+    >
       <div className="teams__layout">
         <div className="teams__main">
           <PageHead
             title={t('title')}
             titleMeta={
-              showPlateauReading
-                ? data.participants.occupyingCount
-                : undefined
+              showPlateauReading ? data.participants.occupyingCount : undefined
             }
             tools={
               <div className="teams__ops-row">
-              {showPlateauReading && (
-                <TeamsPlateauReading
-                  activeCount={data.participants.activeCount}
-                  occupyingCount={data.participants.occupyingCount}
-                  minimumTeams={data.regulation.minimumTeams}
-                  maximumTeams={data.regulation.maximumTeams}
-                />
-              )}
-              <div className="teams__ops-tail">
-                {selectedCount >= 1 && (
-                  <SelectionBar
-                    countLabel={t('selectionCount', { count: selectedCount })}
-                  >
+                {showPlateauReading && (
+                  <TeamsPlateauReading
+                    activeCount={data.participants.activeCount}
+                    occupyingCount={data.participants.occupyingCount}
+                    minimumTeams={data.regulation.minimumTeams}
+                    maximumTeams={data.regulation.maximumTeams}
+                  />
+                )}
+                <div className="teams__ops-tail">
+                  {selectedCount >= 1 && (
+                    <SelectionBar
+                      countLabel={t('selectionCount', { count: selectedCount })}
+                    >
                       <button
                         type="button"
                         className={compactIcon}
@@ -368,21 +375,21 @@ function TeamsView({
                       >
                         <CloseIcon size="sm" />
                       </button>
-                  </SelectionBar>
-                )}
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--primary teams__add"
-                  disabled={!canAdd}
-                  title={canAdd ? t('addAction') : t('addDisabledHint')}
-                  aria-label={t('addAction')}
-                  onClick={() => setAddOpen(true)}
-                >
-                  <PlusIcon size="sm" />
-                  <span className="teams__add-label">{t('addAction')}</span>
-                </button>
+                    </SelectionBar>
+                  )}
+                  <button
+                    type="button"
+                    className="ds-btn ds-btn--primary teams__add"
+                    disabled={!canAdd}
+                    title={canAdd ? t('addAction') : t('addDisabledHint')}
+                    aria-label={t('addAction')}
+                    onClick={() => setAddOpen(true)}
+                  >
+                    <PlusIcon size="sm" />
+                    <span className="teams__add-label">{t('addAction')}</span>
+                  </button>
+                </div>
               </div>
-            </div>
             }
           />
 
@@ -390,23 +397,24 @@ function TeamsView({
 
           <ul className="teams__grid">
             {entries.map((entry) => {
-              const selected = selectedIds.includes(entry.entryId)
-              const withdrawn = entry.status === 'Withdrawn'
+              const selected = selectedIds.includes(entry.entryId);
+              const withdrawn = entry.status === 'Withdrawn';
               const playerCount = (entry.declaredMembers ?? []).filter(
                 (member) => member.role === 'Player',
-              ).length
+              ).length;
               const tileCanRemove =
-                removeEnabled && !(removing === 'withdraw' && withdrawn)
-              const tileRemoveHint = withdrawn && removing === 'withdraw'
-                ? t('alreadyWithdrawnHint')
-                : tileCanRemove
-                  ? removeLabel
-                  : removeDisabledHint
+                removeEnabled && !(removing === 'withdraw' && withdrawn);
+              const tileRemoveHint =
+                withdrawn && removing === 'withdraw'
+                  ? t('alreadyWithdrawnHint')
+                  : tileCanRemove
+                    ? removeLabel
+                    : removeDisabledHint;
               const tileRemoveLabel =
                 removing === 'delete'
                   ? t('deleteEntryNamed', { name: entry.displayName })
-                  : t('withdrawEntryNamed', { name: entry.displayName })
-              const statusBadge = tileStatusBadge(entry.status, t)
+                  : t('withdrawEntryNamed', { name: entry.displayName });
+              const statusBadge = tileStatusBadge(entry.status, t);
               return (
                 <li key={entry.entryId}>
                   <article
@@ -481,7 +489,10 @@ function TeamsView({
                           <PersonIcon size="sm" />
                           <span className="ds-num">{playerCount}</span>
                         </span>
-                        <span className="teams-tile__swatches" aria-hidden="true">
+                        <span
+                          className="teams-tile__swatches"
+                          aria-hidden="true"
+                        >
                           <span
                             className="teams-tile__swatch"
                             style={{
@@ -502,7 +513,7 @@ function TeamsView({
                     </div>
                   </article>
                 </li>
-              )
+              );
             })}
             {Array.from({ length: emptyCount }, (_, index) => (
               <li key={`empty-${index}`}>
@@ -524,7 +535,10 @@ function TeamsView({
           </ul>
         </div>
 
-        <aside className="ds-panel teams-drawer" aria-label={t('roster.panelLabel')}>
+        <aside
+          className="ds-panel teams-drawer"
+          aria-label={t('roster.panelLabel')}
+        >
           {selectedCount === 0 && (
             <EmptyState
               variant="idle"
@@ -581,24 +595,24 @@ function TeamsView({
         }
         onCancel={() => {
           if (removePending) {
-            return
+            return;
           }
-          setPendingRemove(null)
+          setPendingRemove(null);
         }}
         onConfirm={() => {
           if (!pendingRemove || removePending) {
-            return
+            return;
           }
-          const { verb, targets } = pendingRemove
+          const { verb, targets } = pendingRemove;
           if (verb === 'delete') {
-            deleteMutation.mutate(targets)
-            return
+            deleteMutation.mutate(targets);
+            return;
           }
-          withdrawMutation.mutate(targets)
+          withdrawMutation.mutate(targets);
         }}
       />
     </div>
-  )
+  );
 }
 
 function AddEntryDialog({
@@ -606,29 +620,29 @@ function AddEntryDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView
-  open: boolean
-  onClose: () => void
+  data: OrganisationView;
+  open: boolean;
+  onClose: () => void;
 }) {
-  const { t } = useTranslation('teams')
-  const { t: tCommon } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const formId = useId()
-  const [displayName, setDisplayName] = useState('')
-  const [shortName, setShortName] = useState('')
-  const [nameTouched, setNameTouched] = useState(false)
-  const [shortNameTouched, setShortNameTouched] = useState(false)
-  const [logoMediaId, setLogoMediaId] = useState<string | null>(null)
-  const [primaryColor, setPrimaryColor] = useState('')
-  const [secondaryColor, setSecondaryColor] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const { t } = useTranslation('teams');
+  const { t: tCommon } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const formId = useId();
+  const [displayName, setDisplayName] = useState('');
+  const [shortName, setShortName] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
+  const [shortNameTouched, setShortNameTouched] = useState(false);
+  const [logoMediaId, setLogoMediaId] = useState<string | null>(null);
+  const [primaryColor, setPrimaryColor] = useState('');
+  const [secondaryColor, setSecondaryColor] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   const isDirty =
     displayName.trim().length > 0 ||
     shortName.trim().length > 0 ||
     logoMediaId != null ||
     primaryColor.trim().length > 0 ||
-    secondaryColor.trim().length > 0
+    secondaryColor.trim().length > 0;
 
   const {
     discardOpen,
@@ -636,36 +650,36 @@ function AddEntryDialog({
     cancelDiscard,
     confirmDiscard,
     resetDiscard,
-  } = useDiscardConfirm(isDirty, onClose)
+  } = useDiscardConfirm(isDirty, onClose);
 
   useEffect(() => {
     if (!open) {
-      return
+      return;
     }
-    setDisplayName('')
-    setShortName('')
-    setNameTouched(false)
-    setShortNameTouched(false)
-    setLogoMediaId(null)
-    setPrimaryColor('')
-    setSecondaryColor('')
-    setSubmitted(false)
-    resetDiscard()
-  }, [open, resetDiscard])
+    setDisplayName('');
+    setShortName('');
+    setNameTouched(false);
+    setShortNameTouched(false);
+    setLogoMediaId(null);
+    setPrimaryColor('');
+    setSecondaryColor('');
+    setSubmitted(false);
+    resetDiscard();
+  }, [open, resetDiscard]);
 
   const duplicateName = hasDuplicateEntryName(
     data.participants.entries,
     displayName,
-  )
+  );
 
   const nameError =
     (submitted || nameTouched) && displayName.trim().length === 0
       ? t('nameRequired')
-      : undefined
+      : undefined;
   const shortNameError =
     (submitted || shortNameTouched) && shortName.trim().length === 0
       ? t('shortNameRequired')
-      : undefined
+      : undefined;
 
   const addMutation = useMutation({
     mutationFn: () =>
@@ -677,111 +691,114 @@ function AddEntryDialog({
         secondaryColor: secondaryColor.trim() || null,
       }),
     onSuccess: async () => {
-      await invalidateAfterTeamsMutation(queryClient, data.competitionId)
-      notify.success(t('entryAddedToast'))
-      onClose()
+      await invalidateAfterTeamsMutation(queryClient, data.competitionId);
+      notify.success(t('entryAddedToast'));
+      onClose();
     },
-  })
+  });
 
   const canSubmit =
     displayName.trim().length > 0 &&
     shortName.trim().length > 0 &&
     shortName.trim().length <= SHORT_NAME_MAX_LENGTH &&
-    !addMutation.isPending
+    !addMutation.isPending;
 
   function requestClose() {
-    requestDiscardClose(addMutation.isPending)
+    requestDiscardClose(addMutation.isPending);
   }
 
   return (
     <>
-    <Dialog
-      open={open}
-      onClose={requestClose}
-      title={t('addDialogTitle')}
-      closeLabel={tCommon('close')}
-      closeDisabled={addMutation.isPending || discardOpen}
-      trapFocus={!discardOpen}
-      size="sm"
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            disabled={addMutation.isPending || discardOpen}
-            onClick={requestClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            className="ds-btn ds-btn--primary"
-            disabled={!canSubmit}
-          >
-            {addMutation.isPending ? (
-              <PendingLabel>{t('adding')}</PendingLabel>
-            ) : (
-              t('add')
-            )}
-          </button>
-        </>
-      }
-    >
-      <form
-        id={formId}
-        className="ds-form"
-        data-density="comfortable"
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault()
-          setSubmitted(true)
-          if (!canSubmit) {
-            return
-          }
-          addMutation.mutate()
-        }}
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={t('addDialogTitle')}
+        closeLabel={tCommon('close')}
+        closeDisabled={addMutation.isPending || discardOpen}
+        trapFocus={!discardOpen}
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost"
+              disabled={addMutation.isPending || discardOpen}
+              onClick={requestClose}
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="submit"
+              form={formId}
+              className="ds-btn ds-btn--primary"
+              disabled={!canSubmit}
+            >
+              {addMutation.isPending ? (
+                <PendingLabel>{t('adding')}</PendingLabel>
+              ) : (
+                t('add')
+              )}
+            </button>
+          </>
+        }
       >
-        {addMutation.isError && <MutationError error={addMutation.error} />}
-        <IdentityFields
-          name={displayName}
-          shortName={shortName}
-          logoMediaId={logoMediaId}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          disabled={addMutation.isPending}
-          nameMessage={nameError ?? (duplicateName ? t('duplicateNameWarning') : undefined)}
-          nameMessageTone={nameError ? 'error' : 'warning'}
-          shortNameMessage={shortNameError}
-          shortNameMessageTone="error"
-          onName={(value) => {
-            setNameTouched(true)
-            setDisplayName(value)
-            if (!shortNameTouched) {
-              setShortName(deriveShortName(value))
+        <form
+          id={formId}
+          className="ds-form"
+          data-density="comfortable"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault();
+            setSubmitted(true);
+            if (!canSubmit) {
+              return;
             }
+            addMutation.mutate();
           }}
-          onShortName={(value) => {
-            setShortNameTouched(true)
-            setShortName(value)
-          }}
-          onLogo={setLogoMediaId}
-          onPrimary={setPrimaryColor}
-          onSecondary={setSecondaryColor}
-        />
-      </form>
-    </Dialog>
-    <ConfirmDialog
-      open={discardOpen}
-      title={t('discardIdentityTitle')}
-      message={t('discardIdentityChanges')}
-      confirmLabel={t('discardIdentityConfirm')}
-      cancelLabel={tCommon('cancel')}
-      closeLabel={tCommon('close')}
-      onCancel={cancelDiscard}
-      onConfirm={confirmDiscard}
-    />
+        >
+          {addMutation.isError && <MutationError error={addMutation.error} />}
+          <IdentityFields
+            name={displayName}
+            shortName={shortName}
+            logoMediaId={logoMediaId}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            disabled={addMutation.isPending}
+            nameMessage={
+              nameError ??
+              (duplicateName ? t('duplicateNameWarning') : undefined)
+            }
+            nameMessageTone={nameError ? 'error' : 'warning'}
+            shortNameMessage={shortNameError}
+            shortNameMessageTone="error"
+            onName={(value) => {
+              setNameTouched(true);
+              setDisplayName(value);
+              if (!shortNameTouched) {
+                setShortName(deriveShortName(value));
+              }
+            }}
+            onShortName={(value) => {
+              setShortNameTouched(true);
+              setShortName(value);
+            }}
+            onLogo={setLogoMediaId}
+            onPrimary={setPrimaryColor}
+            onSecondary={setSecondaryColor}
+          />
+        </form>
+      </Dialog>
+      <ConfirmDialog
+        open={discardOpen}
+        title={t('discardIdentityTitle')}
+        message={t('discardIdentityChanges')}
+        confirmLabel={t('discardIdentityConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
     </>
-  )
+  );
 }
 
 function IdentityDialog({
@@ -791,41 +808,41 @@ function IdentityDialog({
   open,
   onClose,
 }: {
-  competitionId: string
-  entry: OrganisationEntry | null
-  entries: OrganisationEntry[]
-  open: boolean
-  onClose: () => void
+  competitionId: string;
+  entry: OrganisationEntry | null;
+  entries: OrganisationEntry[];
+  open: boolean;
+  onClose: () => void;
 }) {
-  const { t } = useTranslation('teams')
-  const { t: tCommon } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const formId = useId()
-  const [name, setName] = useState(entry?.displayName ?? '')
-  const [shortName, setShortName] = useState(entry?.shortName ?? '')
+  const { t } = useTranslation('teams');
+  const { t: tCommon } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const formId = useId();
+  const [name, setName] = useState(entry?.displayName ?? '');
+  const [shortName, setShortName] = useState(entry?.shortName ?? '');
   const [logoMediaId, setLogoMediaId] = useState<string | null>(
     entry?.logoMediaId ?? null,
-  )
-  const [primaryColor, setPrimaryColor] = useState(entry?.primaryColor ?? '')
+  );
+  const [primaryColor, setPrimaryColor] = useState(entry?.primaryColor ?? '');
   const [secondaryColor, setSecondaryColor] = useState(
     entry?.secondaryColor ?? '',
-  )
-  const [nameTouched, setNameTouched] = useState(false)
-  const [shortNameTouched, setShortNameTouched] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  );
+  const [nameTouched, setNameTouched] = useState(false);
+  const [shortNameTouched, setShortNameTouched] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  const baselineName = entry?.displayName ?? ''
-  const baselineShort = entry?.shortName ?? ''
-  const baselineLogo = entry?.logoMediaId ?? null
-  const baselinePrimary = entry?.primaryColor ?? ''
-  const baselineSecondary = entry?.secondaryColor ?? ''
+  const baselineName = entry?.displayName ?? '';
+  const baselineShort = entry?.shortName ?? '';
+  const baselineLogo = entry?.logoMediaId ?? null;
+  const baselinePrimary = entry?.primaryColor ?? '';
+  const baselineSecondary = entry?.secondaryColor ?? '';
 
   const isDirty =
     name.trim() !== baselineName.trim() ||
     shortName.trim() !== baselineShort.trim() ||
     logoMediaId !== baselineLogo ||
     primaryColor.trim() !== baselinePrimary.trim() ||
-    secondaryColor.trim() !== baselineSecondary.trim()
+    secondaryColor.trim() !== baselineSecondary.trim();
 
   const {
     discardOpen,
@@ -833,154 +850,157 @@ function IdentityDialog({
     cancelDiscard,
     confirmDiscard,
     resetDiscard,
-  } = useDiscardConfirm(isDirty, onClose)
+  } = useDiscardConfirm(isDirty, onClose);
 
   useEffect(() => {
     if (!entry) {
-      return
+      return;
     }
-    setName(entry.displayName)
-    setShortName(entry.shortName ?? '')
-    setLogoMediaId(entry.logoMediaId ?? null)
-    setPrimaryColor(entry.primaryColor ?? '')
-    setSecondaryColor(entry.secondaryColor ?? '')
-    setNameTouched(false)
-    setShortNameTouched(false)
-    setSubmitted(false)
-    resetDiscard()
-  }, [entry, resetDiscard])
+    setName(entry.displayName);
+    setShortName(entry.shortName ?? '');
+    setLogoMediaId(entry.logoMediaId ?? null);
+    setPrimaryColor(entry.primaryColor ?? '');
+    setSecondaryColor(entry.secondaryColor ?? '');
+    setNameTouched(false);
+    setShortNameTouched(false);
+    setSubmitted(false);
+    resetDiscard();
+  }, [entry, resetDiscard]);
 
-  const duplicateName = hasDuplicateEntryName(entries, name, entry?.entryId)
+  const duplicateName = hasDuplicateEntryName(entries, name, entry?.entryId);
 
   const nameError =
     (submitted || nameTouched) && name.trim().length === 0
       ? t('nameRequired')
-      : undefined
+      : undefined;
   const shortNameError =
     (submitted || shortNameTouched) && shortName.trim().length === 0
       ? t('shortNameRequired')
-      : undefined
+      : undefined;
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!entry) {
-        return
+        return;
       }
       if (name.trim() !== entry.displayName) {
         await renameCompetitionEntry(competitionId, entry.entryId, {
           displayName: name.trim(),
-        })
+        });
       }
       await updateEntryPresentation(competitionId, entry.entryId, {
         shortName: shortName.trim(),
         logoMediaId,
         primaryColor: primaryColor.trim() || null,
         secondaryColor: secondaryColor.trim() || null,
-      })
+      });
     },
     onSuccess: async () => {
-      await invalidateAfterTeamsMutation(queryClient, competitionId)
-      notify.success(t('identitySavedToast'))
-      onClose()
+      await invalidateAfterTeamsMutation(queryClient, competitionId);
+      notify.success(t('identitySavedToast'));
+      onClose();
     },
-  })
+  });
 
   const canSubmit =
     name.trim().length > 0 &&
     shortName.trim().length > 0 &&
     shortName.trim().length <= SHORT_NAME_MAX_LENGTH &&
-    !saveMutation.isPending
+    !saveMutation.isPending;
 
   function requestClose() {
-    requestDiscardClose(saveMutation.isPending)
+    requestDiscardClose(saveMutation.isPending);
   }
 
   return (
     <>
-    <Dialog
-      open={open}
-      onClose={requestClose}
-      title={t('identityDialogTitle')}
-      closeLabel={tCommon('close')}
-      closeDisabled={saveMutation.isPending || discardOpen}
-      trapFocus={!discardOpen}
-      size="sm"
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            disabled={saveMutation.isPending || discardOpen}
-            onClick={requestClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            className="ds-btn ds-btn--primary"
-            disabled={!canSubmit}
-          >
-            {saveMutation.isPending ? (
-              <PendingLabel>{t('saving')}</PendingLabel>
-            ) : (
-              t('saveIdentity')
-            )}
-          </button>
-        </>
-      }
-    >
-      <form
-        id={formId}
-        className="ds-form"
-        data-density="comfortable"
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault()
-          setSubmitted(true)
-          if (!canSubmit) {
-            return
-          }
-          saveMutation.mutate()
-        }}
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={t('identityDialogTitle')}
+        closeLabel={tCommon('close')}
+        closeDisabled={saveMutation.isPending || discardOpen}
+        trapFocus={!discardOpen}
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost"
+              disabled={saveMutation.isPending || discardOpen}
+              onClick={requestClose}
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="submit"
+              form={formId}
+              className="ds-btn ds-btn--primary"
+              disabled={!canSubmit}
+            >
+              {saveMutation.isPending ? (
+                <PendingLabel>{t('saving')}</PendingLabel>
+              ) : (
+                t('saveIdentity')
+              )}
+            </button>
+          </>
+        }
       >
-        {saveMutation.isError && <MutationError error={saveMutation.error} />}
-        <IdentityFields
-          name={name}
-          shortName={shortName}
-          logoMediaId={logoMediaId}
-          primaryColor={primaryColor}
-          secondaryColor={secondaryColor}
-          disabled={saveMutation.isPending}
-          nameMessage={nameError ?? (duplicateName ? t('duplicateNameWarning') : undefined)}
-          nameMessageTone={nameError ? 'error' : 'warning'}
-          shortNameMessage={shortNameError}
-          shortNameMessageTone="error"
-          onName={(value) => {
-            setNameTouched(true)
-            setName(value)
+        <form
+          id={formId}
+          className="ds-form"
+          data-density="comfortable"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault();
+            setSubmitted(true);
+            if (!canSubmit) {
+              return;
+            }
+            saveMutation.mutate();
           }}
-          onShortName={(value) => {
-            setShortNameTouched(true)
-            setShortName(value)
-          }}
-          onLogo={setLogoMediaId}
-          onPrimary={setPrimaryColor}
-          onSecondary={setSecondaryColor}
-        />
-      </form>
-    </Dialog>
-    <ConfirmDialog
-      open={discardOpen}
-      title={t('discardIdentityTitle')}
-      message={t('discardIdentityChanges')}
-      confirmLabel={t('discardIdentityConfirm')}
-      cancelLabel={tCommon('cancel')}
-      closeLabel={tCommon('close')}
-      onCancel={cancelDiscard}
-      onConfirm={confirmDiscard}
-    />
+        >
+          {saveMutation.isError && <MutationError error={saveMutation.error} />}
+          <IdentityFields
+            name={name}
+            shortName={shortName}
+            logoMediaId={logoMediaId}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+            disabled={saveMutation.isPending}
+            nameMessage={
+              nameError ??
+              (duplicateName ? t('duplicateNameWarning') : undefined)
+            }
+            nameMessageTone={nameError ? 'error' : 'warning'}
+            shortNameMessage={shortNameError}
+            shortNameMessageTone="error"
+            onName={(value) => {
+              setNameTouched(true);
+              setName(value);
+            }}
+            onShortName={(value) => {
+              setShortNameTouched(true);
+              setShortName(value);
+            }}
+            onLogo={setLogoMediaId}
+            onPrimary={setPrimaryColor}
+            onSecondary={setSecondaryColor}
+          />
+        </form>
+      </Dialog>
+      <ConfirmDialog
+        open={discardOpen}
+        title={t('discardIdentityTitle')}
+        message={t('discardIdentityChanges')}
+        confirmLabel={t('discardIdentityConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
     </>
-  )
+  );
 }
 
 function hasDuplicateEntryName(
@@ -988,15 +1008,15 @@ function hasDuplicateEntryName(
   name: string,
   excludeEntryId?: string,
 ): boolean {
-  const normalized = name.trim().toLocaleLowerCase('fr')
+  const normalized = name.trim().toLocaleLowerCase('fr');
   if (normalized.length === 0) {
-    return false
+    return false;
   }
   return entries.some(
     (entry) =>
       entry.entryId !== excludeEntryId &&
       entry.displayName.trim().toLocaleLowerCase('fr') === normalized,
-  )
+  );
 }
 
 function IdentityFields({
@@ -1016,27 +1036,27 @@ function IdentityFields({
   onPrimary,
   onSecondary,
 }: {
-  name: string
-  shortName: string
-  logoMediaId: string | null
-  primaryColor: string
-  secondaryColor: string
-  disabled: boolean
-  nameMessage?: string
-  nameMessageTone?: FieldMessageTone
-  shortNameMessage?: string
-  shortNameMessageTone?: FieldMessageTone
-  onName: (value: string) => void
-  onShortName: (value: string) => void
-  onLogo: (value: string | null) => void
-  onPrimary: (value: string) => void
-  onSecondary: (value: string) => void
+  name: string;
+  shortName: string;
+  logoMediaId: string | null;
+  primaryColor: string;
+  secondaryColor: string;
+  disabled: boolean;
+  nameMessage?: string;
+  nameMessageTone?: FieldMessageTone;
+  shortNameMessage?: string;
+  shortNameMessageTone?: FieldMessageTone;
+  onName: (value: string) => void;
+  onShortName: (value: string) => void;
+  onLogo: (value: string | null) => void;
+  onPrimary: (value: string) => void;
+  onSecondary: (value: string) => void;
 }) {
-  const { t } = useTranslation('teams')
-  const nameId = useId()
-  const shortId = useId()
-  const primaryId = useId()
-  const secondaryId = useId()
+  const { t } = useTranslation('teams');
+  const nameId = useId();
+  const shortId = useId();
+  const primaryId = useId();
+  const secondaryId = useId();
 
   return (
     <>
@@ -1111,7 +1131,7 @@ function IdentityFields({
         </Field>
       </div>
     </>
-  )
+  );
 }
 
 function TeamsPlateauReading({
@@ -1120,22 +1140,22 @@ function TeamsPlateauReading({
   minimumTeams,
   maximumTeams,
 }: {
-  activeCount: number
-  occupyingCount: number
-  minimumTeams: number
-  maximumTeams: number
+  activeCount: number;
+  occupyingCount: number;
+  minimumTeams: number;
+  maximumTeams: number;
 }) {
-  const { t } = useTranslation('teams')
-  const availableSlots = Math.max(0, maximumTeams - occupyingCount)
-  const belowMinimum = activeCount < minimumTeams
-  const atCap = occupyingCount >= maximumTeams
-  const missingMinimum = Math.max(0, minimumTeams - activeCount)
+  const { t } = useTranslation('teams');
+  const availableSlots = Math.max(0, maximumTeams - occupyingCount);
+  const belowMinimum = activeCount < minimumTeams;
+  const atCap = occupyingCount >= maximumTeams;
+  const missingMinimum = Math.max(0, minimumTeams - activeCount);
   const fillRatio =
-    maximumTeams > 0 ? Math.min(1, occupyingCount / maximumTeams) : 0
+    maximumTeams > 0 ? Math.min(1, occupyingCount / maximumTeams) : 0;
   const markerRatio =
-    maximumTeams > 0 ? Math.min(1, minimumTeams / maximumTeams) : 0
+    maximumTeams > 0 ? Math.min(1, minimumTeams / maximumTeams) : 0;
   const showMarker =
-    minimumTeams > 0 && maximumTeams > 0 && minimumTeams < maximumTeams
+    minimumTeams > 0 && maximumTeams > 0 && minimumTeams < maximumTeams;
 
   const statusTone = atCap
     ? 'cap'
@@ -1143,7 +1163,7 @@ function TeamsPlateauReading({
       ? missingMinimum === 1
         ? 'blocking'
         : 'warning'
-      : 'ok'
+      : 'ok';
 
   const meterTone: MeterTone =
     statusTone === 'cap'
@@ -1152,13 +1172,13 @@ function TeamsPlateauReading({
         ? 'error'
         : statusTone === 'warning'
           ? 'attention'
-          : 'success'
+          : 'success';
 
   const statusLabel = atCap
     ? t('plateauCapReached')
     : belowMinimum
       ? t('plateauStillNeeded', { count: missingMinimum })
-      : t('plateauMinimumReached')
+      : t('plateauMinimumReached');
 
   const gaugeAria = t('plateauGaugeAria', {
     count: occupyingCount,
@@ -1167,7 +1187,7 @@ function TeamsPlateauReading({
     min: minimumTeams,
     max: maximumTeams,
     available: t('plateauPlacesAvailable', { count: availableSlots }),
-  })
+  });
 
   return (
     <div className="teams__plateau" role="status">
@@ -1204,7 +1224,7 @@ function TeamsPlateauReading({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function tileStatusBadge(
@@ -1216,7 +1236,7 @@ function tileStatusBadge(
       <StatusBadge tone="warn" density="compact">
         {t('withdrawnBadge')}
       </StatusBadge>
-    )
+    );
   }
-  return null
+  return null;
 }

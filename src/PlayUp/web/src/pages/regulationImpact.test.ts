@@ -1,14 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest';
 import {
   buildRegulationImpactPreview,
   detectChangedHeritableParts,
   isStagePersonalized,
-} from './regulationImpact'
+} from './regulationImpact';
 import type {
   OrganisationRegulationSummary,
   OrganisationStageHubSummary,
   ReplaceRegulationRequest,
-} from '../types'
+} from '../types';
 
 const seed: OrganisationRegulationSummary = {
   minimumTeams: 8,
@@ -25,9 +25,11 @@ const seed: OrganisationRegulationSummary = {
   forfeitWinnerGoals: 3,
   forfeitLoserGoals: 0,
   allowedTypes: ['Yellow', 'Red'],
-}
+};
 
-function form(overrides: Partial<ReplaceRegulationRequest> = {}): ReplaceRegulationRequest {
+function form(
+  overrides: Partial<ReplaceRegulationRequest> = {},
+): ReplaceRegulationRequest {
   return {
     minimumTeams: 8,
     maximumTeams: 16,
@@ -44,7 +46,7 @@ function form(overrides: Partial<ReplaceRegulationRequest> = {}): ReplaceRegulat
     forfeitLoserGoals: 0,
     allowedTypes: ['Yellow', 'Red'],
     ...overrides,
-  }
+  };
 }
 
 function boundStage(
@@ -77,7 +79,7 @@ function boundStage(
       rankingCriteria: { isBound: true },
     },
     ...overrides,
-  }
+  };
 }
 
 describe('regulationImpact', () => {
@@ -87,13 +89,13 @@ describe('regulationImpact', () => {
         rankingCriteria: ['Points', 'GoalsFor', 'GoalDifference', 'HeadToHead'],
       }),
       seed,
-    )
-    expect(changed).toEqual(['rankingCriteria'])
-  })
+    );
+    expect(changed).toEqual(['rankingCriteria']);
+  });
 
   it('does not flag unchanged ordered criteria', () => {
-    expect(detectChangedHeritableParts(form(), seed)).toEqual([])
-  })
+    expect(detectChangedHeritableParts(form(), seed)).toEqual([]);
+  });
 
   it('aggregates inherit vs keep-override from DefaultsBinding', () => {
     const stages: OrganisationStageHubSummary[] = [
@@ -110,19 +112,25 @@ describe('regulationImpact', () => {
           rankingCriteria: null,
         },
       }),
-    ]
+    ];
 
-    const preview = buildRegulationImpactPreview(form({ durationPerPeriod: 40 }), {
-      regulation: seed,
-      stages,
-      status: 'Draft',
-    })
+    const preview = buildRegulationImpactPreview(
+      form({ durationPerPeriod: 40 }),
+      {
+        regulation: seed,
+        stages,
+        status: 'Draft',
+      },
+    );
 
-    expect(preview.hasChanges).toBe(true)
-    expect(preview.demotesToDraft).toBe(false)
-    expect(preview.changedParts).toEqual(['matchDuration'])
-    expect(preview.byPart.matchDuration).toEqual({ inherit: 2, keepOverride: 0 })
-    expect(preview.stagesUpdatedCount).toBe(2)
+    expect(preview.hasChanges).toBe(true);
+    expect(preview.demotesToDraft).toBe(false);
+    expect(preview.changedParts).toEqual(['matchDuration']);
+    expect(preview.byPart.matchDuration).toEqual({
+      inherit: 2,
+      keepOverride: 0,
+    });
+    expect(preview.stagesUpdatedCount).toBe(2);
     expect(preview.families).toEqual([
       {
         family: 'match',
@@ -130,17 +138,20 @@ describe('regulationImpact', () => {
         inherit: 2,
         keepOverride: 0,
       },
-    ])
-  })
+    ]);
+  });
 
   it('demotes Ready competitions when there are changes', () => {
-    const preview = buildRegulationImpactPreview(form({ durationPerPeriod: 40 }), {
-      regulation: seed,
-      stages: [boundStage('1')],
-      status: 'Ready',
-    })
-    expect(preview.demotesToDraft).toBe(true)
-  })
+    const preview = buildRegulationImpactPreview(
+      form({ durationPerPeriod: 40 }),
+      {
+        regulation: seed,
+        stages: [boundStage('1')],
+        status: 'Ready',
+      },
+    );
+    expect(preview.demotesToDraft).toBe(true);
+  });
 
   it('groups match / forfeit / standing families separately', () => {
     const preview = buildRegulationImpactPreview(
@@ -154,28 +165,31 @@ describe('regulationImpact', () => {
         stages: [boundStage('1')],
         status: 'Draft',
       },
-    )
+    );
     expect(preview.families.map((line) => line.family)).toEqual([
       'match',
       'forfeit',
       'standing',
-    ])
-  })
+    ]);
+  });
 
   it('flags runningIgnored when heritable parts change and a stage is Running', () => {
-    const preview = buildRegulationImpactPreview(form({ durationPerPeriod: 40 }), {
-      regulation: seed,
-      stages: [boundStage('1', { status: 'Running' })],
-      status: 'Draft',
-    })
+    const preview = buildRegulationImpactPreview(
+      form({ durationPerPeriod: 40 }),
+      {
+        regulation: seed,
+        stages: [boundStage('1', { status: 'Running' })],
+        status: 'Draft',
+      },
+    );
     expect(preview.families[0]).toMatchObject({
       family: 'match',
       inherit: 0,
       keepOverride: 0,
-    })
-    expect(preview.runningIgnored).toBe(true)
-    expect(preview.hasKeptOverrides).toBe(false)
-  })
+    });
+    expect(preview.runningIgnored).toBe(true);
+    expect(preview.hasKeptOverrides).toBe(false);
+  });
 
   it('marks hasKeptOverrides only when keepOverride > 0', () => {
     const preview = buildRegulationImpactPreview(form({ hasExtraTime: true }), {
@@ -193,10 +207,10 @@ describe('regulationImpact', () => {
         }),
       ],
       status: 'Draft',
-    })
-    expect(preview.families[0]?.keepOverride).toBe(1)
-    expect(preview.hasKeptOverrides).toBe(true)
-  })
+    });
+    expect(preview.families[0]?.keepOverride).toBe(1);
+    expect(preview.hasKeptOverrides).toBe(true);
+  });
 
   it('marks a stage personalized only from unbound parts', () => {
     expect(
@@ -213,7 +227,7 @@ describe('regulationImpact', () => {
           },
         }),
       ),
-    ).toBe(false)
+    ).toBe(false);
 
     expect(
       isStagePersonalized(
@@ -229,6 +243,6 @@ describe('regulationImpact', () => {
           },
         }),
       ),
-    ).toBe(true)
-  })
-})
+    ).toBe(true);
+  });
+});

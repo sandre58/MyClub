@@ -13,31 +13,31 @@
  */
 
 .ds-icon {
-    display: block;
-    flex: none;
-    width: var(--icon-size-md);
-    height: var(--icon-size-md);
+  display: block;
+  flex: none;
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
 }
 
 .ds-icon--sm {
-    width: var(--icon-size-sm);
-    height: var(--icon-size-sm);
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
 }
 
 .ds-icon--md {
-    width: var(--icon-size-md);
-    height: var(--icon-size-md);
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
 }
 
 .ds-icon--lg {
-    width: var(--icon-size-lg);
-    height: var(--icon-size-lg);
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
 }
 
 .ds-root {
-    --icon-size-sm: 1rem;
-    --icon-size-md: 1.25rem;
-    --icon-size-lg: 1.5rem;
-    /* Shared by custom SVG icons and Lucide icons. */
-    --icon-stroke-width: 1.8;
+  --icon-size-sm: 1rem;
+  --icon-size-md: 1.25rem;
+  --icon-size-lg: 1.5rem;
+  /* Shared by custom SVG icons and Lucide icons. */
+  --icon-stroke-width: 1.8;
 }

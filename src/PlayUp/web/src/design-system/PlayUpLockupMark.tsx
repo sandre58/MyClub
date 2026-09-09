@@ -4,11 +4,7 @@
  * surface (canvas or navy) shows through. Favicon uses the same PNG mark.
  * Tagline stays HTML (i18n).
  */
-export function PlayUpLockupMark({
-  className,
-}: {
-  className?: string
-}) {
+export function PlayUpLockupMark({ className }: { className?: string }) {
   return (
     <img
       className={['ds-lockup-mark', className].filter(Boolean).join(' ')}
@@ -18,5 +14,5 @@ export function PlayUpLockupMark({
       height={186}
       draggable={false}
     />
-  )
+  );
 }

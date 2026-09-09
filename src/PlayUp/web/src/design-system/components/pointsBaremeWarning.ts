@@ -10,10 +10,10 @@ export function pointsBaremeWarning(
   message: string,
 ): string | undefined {
   if (win == null || draw == null || loss == null) {
-    return undefined
+    return undefined;
   }
   if (win < draw || draw < loss) {
-    return message
+    return message;
   }
-  return undefined
+  return undefined;
 }

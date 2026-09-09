@@ -4,278 +4,278 @@
  */
 
 .ds-home {
-    /* One lockup composition (v3): mark height = wordmark + gap + tagline.
+  /* One lockup composition (v3): mark height = wordmark + gap + tagline.
        When the column is narrower, the whole lockup scales — proportions stay. */
-    --home-wordmark-h: 5.375rem;
-    --home-copy-gap: var(--space-8);
-    --home-tagline-h: calc(var(--text-label) * var(--leading-normal));
-    --home-lockup-h: calc(
-        var(--home-wordmark-h) + var(--home-copy-gap) + var(--home-tagline-h)
-    );
-    --home-wordmark-w: calc(var(--home-wordmark-h) * 406 / 112);
-    --home-mark-w: calc(var(--home-lockup-h) * 157 / 186);
-    --home-lockup-w: calc(
-        var(--home-mark-w) + var(--space-16) + var(--home-wordmark-w)
-    );
+  --home-wordmark-h: 5.375rem;
+  --home-copy-gap: var(--space-8);
+  --home-tagline-h: calc(var(--text-label) * var(--leading-normal));
+  --home-lockup-h: calc(
+    var(--home-wordmark-h) + var(--home-copy-gap) + var(--home-tagline-h)
+  );
+  --home-wordmark-w: calc(var(--home-wordmark-h) * 406 / 112);
+  --home-mark-w: calc(var(--home-lockup-h) * 157 / 186);
+  --home-lockup-w: calc(
+    var(--home-mark-w) + var(--space-16) + var(--home-wordmark-w)
+  );
 
-    min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
-    color: var(--color-text-primary);
-    background: var(--color-canvas);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  color: var(--color-text-primary);
+  background: var(--color-canvas);
 }
 
 /* Soft mesh: blobs sit inside the canvas (overflow clips negative inset). */
 .ds-home::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 22rem;
-    pointer-events: none;
-    z-index: 0;
-    background:
-        radial-gradient(
-            28rem 18rem at 18% 0%,
-            color-mix(in srgb, var(--color-brand) 55%, transparent),
-            transparent 72%
-        ),
-        radial-gradient(
-            32rem 20rem at 88% 8%,
-            color-mix(in srgb, var(--color-info) 48%, transparent),
-            transparent 74%
-        );
-    filter: blur(64px);
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 22rem;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      28rem 18rem at 18% 0%,
+      color-mix(in srgb, var(--color-brand) 55%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      32rem 20rem at 88% 8%,
+      color-mix(in srgb, var(--color-info) 48%, transparent),
+      transparent 74%
+    );
+  filter: blur(64px);
 }
 
 .ds-home__main {
-    position: relative;
-    z-index: 1;
-    box-sizing: border-box;
-    width: min(100%, 42rem);
-    margin: 0 auto;
-    padding: var(--space-48) var(--space-24);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-32);
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(100%, 42rem);
+  margin: 0 auto;
+  padding: var(--space-48) var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
 }
 
 .ds-home__brand {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
 }
 
 .ds-home__lockup {
-    /* Container for the child scale. Do not use cqi on this box itself —
+  /* Container for the child scale. Do not use cqi on this box itself —
        those units resolve against an ancestor, not this element's width. */
-    container-type: inline-size;
-    width: min(100%, var(--home-lockup-w));
-    aspect-ratio: calc(var(--home-lockup-w) / var(--home-lockup-h));
-    overflow: hidden;
+  container-type: inline-size;
+  width: min(100%, var(--home-lockup-w));
+  aspect-ratio: calc(var(--home-lockup-w) / var(--home-lockup-h));
+  overflow: hidden;
 }
 
 .ds-home__mark-row {
-    display: grid;
-    grid-template-columns: var(--home-mark-w) var(--home-wordmark-w);
-    column-gap: var(--space-16);
-    align-items: stretch;
-    width: var(--home-lockup-w);
-    height: var(--home-lockup-h);
-    transform-origin: top left;
-    transform: scale(calc(100cqi / var(--home-lockup-w)));
+  display: grid;
+  grid-template-columns: var(--home-mark-w) var(--home-wordmark-w);
+  column-gap: var(--space-16);
+  align-items: stretch;
+  width: var(--home-lockup-w);
+  height: var(--home-lockup-h);
+  transform-origin: top left;
+  transform: scale(calc(100cqi / var(--home-lockup-w)));
 }
 
 .ds-home__mark-slot {
-    position: relative;
-    min-width: 0;
-    min-height: 0;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
 }
 
 .ds-home__mark-slot .ds-lockup-mark {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    object-fit: contain;
-    object-position: left center;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .ds-home__lockup-copy {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--home-copy-gap);
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--home-copy-gap);
+  min-width: 0;
 }
 
 .ds-home__wordmark-heading {
-    margin: 0;
-    font: inherit;
-    font-weight: inherit;
-    line-height: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  line-height: 0;
 }
 
 .ds-home__wordmark,
 .ds-home__lockup-copy .ds-lockup-wordmark {
-    display: block;
-    height: var(--home-wordmark-h);
-    width: auto;
-    max-width: none;
+  display: block;
+  height: var(--home-wordmark-h);
+  width: auto;
+  max-width: none;
 }
 
 .ds-home__tagline {
-    margin: 0;
-    white-space: nowrap;
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--leading-normal);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-brand-bright);
+  margin: 0;
+  white-space: nowrap;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-normal);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-brand-bright);
 }
 
 .ds-home__lede {
-    margin: 0;
-    color: var(--color-text-secondary);
-    max-width: 30rem;
-    font-size: var(--text-body);
-    line-height: var(--leading-normal);
+  margin: 0;
+  color: var(--color-text-secondary);
+  max-width: 30rem;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
 }
 
 .ds-home__section-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-12) var(--space-16);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12) var(--space-16);
 }
 
 .ds-home__section-title {
-    margin: 0;
-    font-size: var(--text-meta);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--leading-tight);
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
 }
 
 .ds-home__panel {
-    background: var(--color-surface);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-panel);
-    padding: 0;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  padding: 0;
 }
 
 .ds-home__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .ds-home__row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-16);
-    padding: var(--space-16);
-    min-height: var(--control-height);
-    color: inherit;
-    text-decoration: none;
-    cursor: pointer;
-    border: none;
-    background: none;
-    width: 100%;
-    font: inherit;
-    text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-16);
+  min-height: var(--control-height);
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  font: inherit;
+  text-align: left;
 }
 
 .ds-home__list > li + li .ds-home__row,
 .ds-home__row + .ds-home__row {
-    border-top: var(--border-width) solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
 }
 
 .ds-home__row-main {
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
-    min-width: 0;
-    flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+  flex: 1;
 }
 
 .ds-home__row-copy {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .ds-home__row-name {
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--leading-tight);
-    color: var(--color-text-primary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ds-home__row-meta {
-    color: var(--color-text-secondary);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--leading-tight);
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-tight);
 }
 
 .ds-home__row-aside {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-8);
-    flex-shrink: 0;
-    color: var(--color-text-secondary);
-    font-size: var(--text-label);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
 }
 
 /* Same chrome breakpoints as layout/viewportBreakpoints.ts (phone < 48rem, tablet < 64rem). */
 @media (max-width: 47.999rem) {
-    .ds-home::before {
-        height: 14rem;
-        filter: blur(48px);
-    }
+  .ds-home::before {
+    height: 14rem;
+    filter: blur(48px);
+  }
 
-    .ds-home__main {
-        padding: max(var(--space-24), env(safe-area-inset-top, 0px))
-            max(var(--space-16), env(safe-area-inset-right, 0px))
-            max(var(--space-32), env(safe-area-inset-bottom, 0px))
-            max(var(--space-16), env(safe-area-inset-left, 0px));
-        gap: var(--space-24);
-    }
+  .ds-home__main {
+    padding: max(var(--space-24), env(safe-area-inset-top, 0px))
+      max(var(--space-16), env(safe-area-inset-right, 0px))
+      max(var(--space-32), env(safe-area-inset-bottom, 0px))
+      max(var(--space-16), env(safe-area-inset-left, 0px));
+    gap: var(--space-24);
+  }
 
-    .ds-home__lede {
-        max-width: none;
-    }
+  .ds-home__lede {
+    max-width: none;
+  }
 
-    .ds-home__section-head {
-        flex-direction: column;
-        align-items: stretch;
-    }
+  .ds-home__section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    .ds-home__section-head .ds-btn {
-        align-self: flex-start;
-    }
+  .ds-home__section-head .ds-btn {
+    align-self: flex-start;
+  }
 
-    .ds-home__row {
-        align-items: flex-start;
-        gap: var(--space-12);
-    }
+  .ds-home__row {
+    align-items: flex-start;
+    gap: var(--space-12);
+  }
 }
 
 @media (min-width: 48rem) and (max-width: 63.999rem) {
-    .ds-home__main {
-        padding: var(--space-32) var(--space-24);
-    }
+  .ds-home__main {
+    padding: var(--space-32) var(--space-24);
+  }
 }

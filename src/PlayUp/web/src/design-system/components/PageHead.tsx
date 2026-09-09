@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 /**
  * Workspace / drill-down page head.
@@ -16,17 +16,17 @@ export function PageHead({
   eyebrow,
   id,
 }: {
-  title: ReactNode
+  title: ReactNode;
   /** Inline meta after title (e.g. occupying count). */
-  titleMeta?: ReactNode
-  badges?: ReactNode
-  actions?: ReactNode
-  note?: ReactNode
+  titleMeta?: ReactNode;
+  badges?: ReactNode;
+  actions?: ReactNode;
+  note?: ReactNode;
   /** Second row — page-specific ops (Teams plateau + selection). */
-  tools?: ReactNode
-  back?: ReactNode
-  eyebrow?: ReactNode
-  id?: string
+  tools?: ReactNode;
+  back?: ReactNode;
+  eyebrow?: ReactNode;
+  id?: string;
 }) {
   return (
     <header className="ds-page-head">
@@ -39,16 +39,20 @@ export function PageHead({
             {titleMeta != null ? (
               <>
                 <span className="ds-page-head__title-sep"> · </span>
-                <span className="ds-page-head__title-meta ds-num">{titleMeta}</span>
+                <span className="ds-page-head__title-meta ds-num">
+                  {titleMeta}
+                </span>
               </>
             ) : null}
           </h1>
           {badges}
         </div>
-        {actions ? <div className="ds-page-head__actions">{actions}</div> : null}
+        {actions ? (
+          <div className="ds-page-head__actions">{actions}</div>
+        ) : null}
       </div>
       {note ? <div className="ds-page-head__note">{note}</div> : null}
       {tools ? <div className="ds-page-head__tools">{tools}</div> : null}
     </header>
-  )
+  );
 }

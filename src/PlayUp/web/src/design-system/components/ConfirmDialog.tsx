@@ -1,27 +1,27 @@
-import type { ReactNode } from 'react'
-import { Dialog } from './Dialog'
+import type { ReactNode } from 'react';
+import { Dialog } from './Dialog';
 
 export type ConfirmDialogProps = {
-  open: boolean
-  title: string
+  open: boolean;
+  title: string;
   /** Body copy under the title. */
-  message: ReactNode
-  confirmLabel: string
-  cancelLabel: string
-  closeLabel?: string
+  message: ReactNode;
+  confirmLabel: string;
+  cancelLabel: string;
+  closeLabel?: string;
   /** Primary confirm uses danger styling when true (destructive). Default false. */
-  danger?: boolean
-  confirmDisabled?: boolean
+  danger?: boolean;
+  confirmDisabled?: boolean;
   /**
    * API / mutation in flight on the confirm action.
    * Shows spinner + pending label; blocks cancel, close, and re-submit.
    */
-  confirmPending?: boolean
+  confirmPending?: boolean;
   /** Label while pending. Defaults to `confirmLabel`. */
-  confirmPendingLabel?: string
-  onConfirm: () => void
-  onCancel: () => void
-}
+  confirmPendingLabel?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+};
 
 /**
  * Stacked confirmation over another Dialog or page — branded replace for
@@ -42,8 +42,8 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  const busy = confirmPending
-  const confirmLocked = confirmDisabled || busy
+  const busy = confirmPending;
+  const confirmLocked = confirmDisabled || busy;
 
   return (
     <Dialog
@@ -89,5 +89,5 @@ export function ConfirmDialog({
         message
       )}
     </Dialog>
-  )
+  );
 }

@@ -1,18 +1,18 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Status,
   type StatusShape,
   type StatusTone,
   type StatusVariant,
-} from '../design-system/components/Status'
-import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
-import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
-import { TrendIcon } from '../design-system/TrendIcon'
-import { LiveStatus } from '../design-system/components/LiveStatus'
-import { TeamCrest } from '../design-system/TeamCrest'
-import '../design-system/fonts'
-import '../design-system/index.css'
+} from '../design-system/components/Status';
+import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark';
+import { PlayUpWordmark } from '../design-system/PlayUpWordmark';
+import { TrendIcon } from '../design-system/TrendIcon';
+import { LiveStatus } from '../design-system/components/LiveStatus';
+import { TeamCrest } from '../design-system/TeamCrest';
+import '../design-system/fonts';
+import '../design-system/index.css';
 import {
   AttentionBellIcon,
   AttentionIcon,
@@ -25,7 +25,7 @@ import {
   SettingsNavIcon,
   SidebarCollapseIcon,
   SwapIcon,
-} from '../design-system/icons/shellIcons'
+} from '../design-system/icons/shellIcons';
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -38,16 +38,16 @@ import {
   RegulationIcon,
   StructureIcon,
   TrashIcon,
-} from '../design-system/icons/overviewIcons'
-import './foundations-playground.css'
+} from '../design-system/icons/overviewIcons';
+import './foundations-playground.css';
 
-type Density = 'compact' | 'standard' | 'comfortable'
+type Density = 'compact' | 'standard' | 'comfortable';
 
 const semanticRoles: Array<{
-  token: string
-  role: string
-  usage: string
-  antiUsage: string
+  token: string;
+  role: string;
+  usage: string;
+  antiUsage: string;
 }> = [
   {
     token: '--color-canvas',
@@ -193,7 +193,7 @@ const semanticRoles: Array<{
     usage: 'Nav active (barre + icône)',
     antiUsage: 'Pas CTA contenu ; ≠ brand page',
   },
-]
+];
 
 const statusTones: StatusTone[] = [
   'neutral',
@@ -203,7 +203,7 @@ const statusTones: StatusTone[] = [
   'done',
   'attention',
   'error',
-]
+];
 
 /**
  * Visual validation terrain for Design System foundations.
@@ -211,8 +211,8 @@ const statusTones: StatusTone[] = [
  * Reveals the final language — does not invent tokens.
  */
 export function FoundationsPlayground() {
-  const [grayscale, setGrayscale] = useState(false)
-  const [density, setDensity] = useState<Density>('standard')
+  const [grayscale, setGrayscale] = useState(false);
+  const [density, setDensity] = useState<Density>('standard');
 
   return (
     <div
@@ -370,7 +370,11 @@ export function FoundationsPlayground() {
               <PlayUpWordmark surface="chrome" />
             </a>
             <nav className="ds-shell-rail__nav" aria-label="Exemple nav shell">
-              <a className="ds-shell-rail__link" href="#ds-preview" data-active="true">
+              <a
+                className="ds-shell-rail__link"
+                href="#ds-preview"
+                data-active="true"
+              >
                 <OverviewNavIcon className="ds-shell-rail__icon" />
                 Vue d&apos;ensemble
               </a>
@@ -412,7 +416,10 @@ export function FoundationsPlayground() {
               Étoile Filante de Metz
             </p>
           </div>
-          <div className="ds-state ds-state--attention" aria-label="3 à traiter">
+          <div
+            className="ds-state ds-state--attention"
+            aria-label="3 à traiter"
+          >
             <span className="ds-state__figure">3</span>
             <AttentionIcon className="ds-state__icon" size="sm" />
             <span className="ds-state__label">À traiter</span>
@@ -440,7 +447,9 @@ export function FoundationsPlayground() {
             <div className="ds-group">
               <p className="ds-label">Groupe</p>
               <p className="ds-body">Prochain match · 14:30</p>
-              <p className="ds-meta">Lié par le titre et la proximité — pas une boîte.</p>
+              <p className="ds-meta">
+                Lié par le titre et la proximité — pas une boîte.
+              </p>
             </div>
             <div className="ds-panel">
               <p className="ds-label">Panneau</p>
@@ -450,7 +459,11 @@ export function FoundationsPlayground() {
             </div>
             <div className="ds-overlay-host ds-canvas">
               <p className="ds-meta">Canvas derrière l’overlay</p>
-              <div className="ds-overlay" role="dialog" aria-label="Exemple d’overlay">
+              <div
+                className="ds-overlay"
+                role="dialog"
+                aria-label="Exemple d’overlay"
+              >
                 <p className="ds-label">Overlay</p>
                 <p className="ds-body">Ombre courte, pas de glow.</p>
               </div>
@@ -470,7 +483,10 @@ export function FoundationsPlayground() {
               <span className="ds-state__figure">8</span>
               <span className="ds-state__label">Équipes</span>
             </div>
-            <div className="ds-state ds-state--info ds-state--block" aria-label="4 prêts">
+            <div
+              className="ds-state ds-state--info ds-state--block"
+              aria-label="4 prêts"
+            >
               <span className="ds-state__figure">4</span>
               <PendingCircleIcon className="ds-state__icon" size="sm" />
               <span className="ds-state__label">Prêts</span>
@@ -491,7 +507,10 @@ export function FoundationsPlayground() {
               <AttentionIcon className="ds-state__icon" size="sm" />
               <span className="ds-state__label">À traiter</span>
             </div>
-            <div className="ds-state ds-state--error ds-state--block" aria-label="1 bloqué">
+            <div
+              className="ds-state ds-state--error ds-state--block"
+              aria-label="1 bloqué"
+            >
               <span className="ds-state__figure">1</span>
               <AttentionIcon className="ds-state__icon" size="sm" />
               <span className="ds-state__label">Bloqué</span>
@@ -528,7 +547,12 @@ export function FoundationsPlayground() {
           <p className="ds-label">Compact · soft (header)</p>
           <div className="ds-row">
             {statusTones.map((tone) => (
-              <Status key={`compact-${tone}`} density="compact" tone={tone} variant="soft">
+              <Status
+                key={`compact-${tone}`}
+                density="compact"
+                tone={tone}
+                variant="soft"
+              >
                 {tone}
               </Status>
             ))}
@@ -648,7 +672,10 @@ export function FoundationsPlayground() {
           </div>
         </section>
 
-        <section className="ds-section" aria-labelledby="section-interactive-row">
+        <section
+          className="ds-section"
+          aria-labelledby="section-interactive-row"
+        >
           <p className="ds-section__kicker">E2 — Ligne interactive</p>
           <h2 id="section-interactive-row" className="ds-heading">
             Hover A — wash surface-secondary
@@ -812,8 +839,12 @@ export function FoundationsPlayground() {
             pour comparaison.
           </p>
           <div className="ds-stack">
-            <div className="ds-density-rail ds-density-rail--compact">compact 32</div>
-            <div className="ds-density-rail ds-density-rail--standard">standard 36</div>
+            <div className="ds-density-rail ds-density-rail--compact">
+              compact 32
+            </div>
+            <div className="ds-density-rail ds-density-rail--standard">
+              standard 36
+            </div>
             <div className="ds-density-rail ds-density-rail--comfortable">
               comfortable 40
             </div>
@@ -833,7 +864,11 @@ export function FoundationsPlayground() {
             <label className="ds-label" htmlFor="ds-sample-textarea">
               Notes
             </label>
-            <textarea id="ds-sample-textarea" rows={3} defaultValue="Terrain de validation." />
+            <textarea
+              id="ds-sample-textarea"
+              rows={3}
+              defaultValue="Terrain de validation."
+            />
           </div>
           <p className="ds-meta">
             Tab jusqu’à un bouton ou un champ : anneau 2px + offset 2px.
@@ -847,18 +882,32 @@ export function FoundationsPlayground() {
             À juger dans le navigateur
           </h2>
           <ul className="ds-checks">
-            <li>1 Grayscale — Play’Up reste identifiable sans couleur de marque.</li>
-            <li>2 No card — les groupes se tiennent sans boîte autour de chaque bloc.</li>
+            <li>
+              1 Grayscale — Play’Up reste identifiable sans couleur de marque.
+            </li>
+            <li>
+              2 No card — les groupes se tiennent sans boîte autour de chaque
+              bloc.
+            </li>
             <li>3 No grid — hors classement, pas de quadrillage par défaut.</li>
-            <li>4 Numbers — le score et l’horaire sautent sans tout transformer en scoreboard.</li>
-            <li>5 D9 — « À traiter » se lit sans dépendre de la couleur seule.</li>
-            <li>6 Chrome — le rail sombre reste lisible (on-chrome, pas ink page).</li>
-            <li>7 Status / Crest / Icons — primitives React branchées sur le DS.</li>
+            <li>
+              4 Numbers — le score et l’horaire sautent sans tout transformer en
+              scoreboard.
+            </li>
+            <li>
+              5 D9 — « À traiter » se lit sans dépendre de la couleur seule.
+            </li>
+            <li>
+              6 Chrome — le rail sombre reste lisible (on-chrome, pas ink page).
+            </li>
+            <li>
+              7 Status / Crest / Icons — primitives React branchées sur le DS.
+            </li>
           </ul>
         </section>
       </main>
     </div>
-  )
+  );
 }
 
 function DialogPlaygroundSection() {
@@ -870,9 +919,9 @@ function DialogPlaygroundSection() {
       </h2>
       <p className="ds-meta">
         Close = icône X (<code>closeLabel</code> ARIA). Specimen interactif +
-        champs DS : Design Lab surface{' '}
-        <Link to="/design-lab">Dialog</Link> (pas de 2ᵉ galerie ici).
+        champs DS : Design Lab surface <Link to="/design-lab">Dialog</Link> (pas
+        de 2ᵉ galerie ici).
       </p>
     </section>
-  )
+  );
 }

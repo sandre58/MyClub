@@ -1,20 +1,25 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { expect, vi } from 'vitest'
-import { fetchOrganisationView } from '../api'
-import { CompetitionOverviewPage } from './CompetitionOverviewPage'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { expect, vi } from 'vitest';
+import { fetchOrganisationView } from '../api';
+import { CompetitionOverviewPage } from './CompetitionOverviewPage';
 import {
   overviewIds,
   overviewSituation,
   overviewView,
   referenceStageGameRules,
-} from '../test/overviewFixtures'
-import type { OverviewView, OrganisationView } from '../types'
+} from '../test/overviewFixtures';
+import type { OverviewView, OrganisationView } from '../types';
 
-export { overviewIds, overviewSituation, overviewView, referenceStageGameRules }
+export {
+  overviewIds,
+  overviewSituation,
+  overviewView,
+  referenceStageGameRules,
+};
 
-export const { competitionId, stageId } = overviewIds
+export const { competitionId, stageId } = overviewIds;
 
 export function renderOverviewPage() {
   const queryClient = new QueryClient({
@@ -22,7 +27,7 @@ export function renderOverviewPage() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-  })
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -54,10 +59,12 @@ export function renderOverviewPage() {
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-  )
+  );
 }
 
-export function inProgressLayoutBase(overrides: Partial<OverviewView> = {}): OverviewView {
+export function inProgressLayoutBase(
+  overrides: Partial<OverviewView> = {},
+): OverviewView {
   return overviewView({
     status: 'Running',
     cycleReading: { code: 'InProgress' },
@@ -94,29 +101,29 @@ export function inProgressLayoutBase(overrides: Partial<OverviewView> = {}): Ove
     availableActions: [],
     attentionSummary: { count: 0, items: [] },
     ...overrides,
-  })
+  });
 }
 
 export function expectOverviewRegionOrder(...regionTestIds: string[]) {
-  const overview = document.querySelector('.overview')
-  expect(overview).not.toBeNull()
+  const overview = document.querySelector('.overview');
+  expect(overview).not.toBeNull();
   const elements = regionTestIds.map((id) =>
     overview!.querySelector(`[data-testid="${id}"]`),
-  )
+  );
   for (const el of elements) {
-    expect(el).not.toBeNull()
+    expect(el).not.toBeNull();
   }
   for (let i = 0; i < elements.length - 1; i++) {
-    const relation = elements[i]!.compareDocumentPosition(elements[i + 1]!)
-    expect(relation & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const relation = elements[i]!.compareDocumentPosition(elements[i + 1]!);
+    expect(relation & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   }
 }
 
 export function expectOverviewRegionsAbsent(...regionTestIds: string[]) {
-  const overview = document.querySelector('.overview')
-  expect(overview).not.toBeNull()
+  const overview = document.querySelector('.overview');
+  expect(overview).not.toBeNull();
   for (const id of regionTestIds) {
-    expect(overview!.querySelector(`[data-testid="${id}"]`)).toBeNull()
+    expect(overview!.querySelector(`[data-testid="${id}"]`)).toBeNull();
   }
 }
 
@@ -172,9 +179,9 @@ export function defaultOrgView(): OrganisationView {
       blockers: [],
     },
     stages: [],
-  }
+  };
 }
 
 export function setupDefaultOrganisationMock() {
-  vi.mocked(fetchOrganisationView).mockResolvedValue(defaultOrgView())
+  vi.mocked(fetchOrganisationView).mockResolvedValue(defaultOrgView());
 }

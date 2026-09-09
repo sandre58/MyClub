@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useParams } from 'react-router-dom';
 import {
   applyDraw,
   fetchCompetitionDetail,
@@ -10,9 +10,9 @@ import {
   prepareStage,
   publishDraw,
   startStage,
-} from '../api'
-import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
-import { queryKeys } from '../queryKeys'
+} from '../api';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
+import { queryKeys } from '../queryKeys';
 import {
   DrawResolutionBadge,
   DrawStatusBadge,
@@ -24,20 +24,20 @@ import {
   PendingLabel,
   StageStatusBadge,
   StatusBadge,
-} from '../ui'
-import { drawResolutionKindLabel } from '../i18n/enumLabels'
+} from '../ui';
+import { drawResolutionKindLabel } from '../i18n/enumLabels';
 import {
   type StageDraw,
   type StageOverview,
   type StageRound,
   type StageSlot,
-} from '../types'
-import { getDrawUiProjection, resolvePairingFixtureIds } from './drawUi'
-import './StagePage.css'
+} from '../types';
+import { getDrawUiProjection, resolvePairingFixtureIds } from './drawUi';
+import './StagePage.css';
 
 export function StagePage() {
-  const { stageId = '' } = useParams()
-  const { t } = useTranslation('stage')
+  const { stageId = '' } = useParams();
+  const { t } = useTranslation('stage');
 
   // SERVER STATE: StageOverview lives in TanStack Query — one cache entry for the stage.
   // Draw UI below only reads this result; it never copies draws into useState.
@@ -45,15 +45,15 @@ export function StagePage() {
     queryKey: queryKeys.stages.detail(stageId),
     queryFn: () => fetchStageOverview(stageId),
     enabled: stageId.length > 0,
-  })
+  });
 
   // Same query key as GET /competitions/{id} (MatchHub / shell context).
-  const competitionId = stageQuery.data?.competitionId
+  const competitionId = stageQuery.data?.competitionId;
   const competitionQuery = useQuery({
     queryKey: queryKeys.competitions.detail(competitionId ?? ''),
     queryFn: () => fetchCompetitionDetail(competitionId!),
     enabled: Boolean(competitionId),
-  })
+  });
 
   return (
     <main id="main" className="page">
@@ -71,7 +71,9 @@ export function StagePage() {
             : undefined
         }
         badges={
-          stageQuery.data && <StageStatusBadge status={stageQuery.data.status} />
+          stageQuery.data && (
+            <StageStatusBadge status={stageQuery.data.status} />
+          )
         }
       />
 
@@ -79,20 +81,20 @@ export function StagePage() {
       {stageQuery.isError && <ErrorState error={stageQuery.error} />}
       {stageQuery.data && <StageOverviewView data={stageQuery.data} />}
     </main>
-  )
+  );
 }
 
 function StageOverviewView({ data }: { data: StageOverview }) {
-  const { t } = useTranslation('stage')
-  const queryClient = useQueryClient()
+  const { t } = useTranslation('stage');
+  const queryClient = useQueryClient();
   const fixtureCount = data.rounds.reduce(
     (sum, round) => sum + round.fixtures.length,
     0,
-  )
+  );
 
   // UX gate only: Domain still rejects Prepare / Start when status is wrong.
-  const canPrepare = data.status === 'Draft'
-  const canStart = data.status === 'Ready'
+  const canPrepare = data.status === 'Draft';
+  const canStart = data.status === 'Ready';
 
   // useMutation = write on user intent. Server state stays in the stage query.
   const prepareMutation = useMutation({
@@ -101,32 +103,32 @@ function StageOverviewView({ data }: { data: StageOverview }) {
       // Invalidate → active observers refetch → badge shows Ready from GET.
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(data.id),
-      })
+      });
       // CompetitionDetail.stages[].status would stay Draft for staleTime (30s)
       // after Back → Competition; Prepare changes that field, so invalidate it.
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.detail(data.competitionId),
-      })
+      });
     },
-  })
+  });
 
   const startMutation = useMutation({
     mutationFn: () => startStage(data.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(data.id),
-      })
+      });
       // Same field as Prepare: CompetitionPage shows stage status from overview.
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.detail(data.competitionId),
-      })
+      });
     },
-  })
+  });
 
-  const stageActionBusy = prepareMutation.isPending || startMutation.isPending
-  const stageActionError = prepareMutation.error ?? startMutation.error
+  const stageActionBusy = prepareMutation.isPending || startMutation.isPending;
+  const stageActionError = prepareMutation.error ?? startMutation.error;
   const showStageActions =
-    canPrepare || canStart || prepareMutation.isError || startMutation.isError
+    canPrepare || canStart || prepareMutation.isError || startMutation.isError;
 
   return (
     <div className="section-stack">
@@ -171,7 +173,10 @@ function StageOverviewView({ data }: { data: StageOverview }) {
               )}
             </span>
           )}
-          <Link className="ds-btn ds-btn--secondary" to={`/stages/${data.id}/matches`}>
+          <Link
+            className="ds-btn ds-btn--secondary"
+            to={`/stages/${data.id}/matches`}
+          >
             {t('operations.viewMatches')}
           </Link>
         </div>
@@ -201,7 +206,8 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                 <strong>{round.name}</strong>
                 <span className="muted">
                   {' '}
-                  · {t('rounds.fixtureCount', {
+                  ·{' '}
+                  {t('rounds.fixtureCount', {
                     count: round.fixtures.length,
                   })}
                 </span>
@@ -263,10 +269,10 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         rounds={data.rounds}
       />
     </div>
-  )
+  );
 }
 
-type CupSlotPairDraft = { slotAKey: string; slotBKey: string }
+type CupSlotPairDraft = { slotAKey: string; slotBKey: string };
 
 /**
  * Explicit SlotA↔SlotB pairing for materialize-from-slots (D2 / Slice 4).
@@ -274,22 +280,28 @@ type CupSlotPairDraft = { slotAKey: string; slotBKey: string }
  * covered by a complete Fixture (same rule as Overview readiness).
  */
 function CupConfrontationsPanel({ data }: { data: StageOverview }) {
-  const { t } = useTranslation('stage')
-  const queryClient = useQueryClient()
-  const [pairs, setPairs] = useState<CupSlotPairDraft[]>([])
-  const [slotA, setSlotA] = useState('')
-  const [slotB, setSlotB] = useState('')
+  const { t } = useTranslation('stage');
+  const queryClient = useQueryClient();
+  const [pairs, setPairs] = useState<CupSlotPairDraft[]>([]);
+  const [slotA, setSlotA] = useState('');
+  const [slotB, setSlotB] = useState('');
 
-  const occupied = data.slots.filter((slot) => slot.entryId != null)
-  const pairable = occupied.filter((slot) => !slot.coveredByCompleteFixture)
-  const coveredCount = occupied.filter((slot) => slot.coveredByCompleteFixture).length
-  const usedKeys = new Set(pairs.flatMap((pair) => [pair.slotAKey, pair.slotBKey]))
-  const availableForSelect = pairable.filter((slot) => !usedKeys.has(slot.slotKey))
+  const occupied = data.slots.filter((slot) => slot.entryId != null);
+  const pairable = occupied.filter((slot) => !slot.coveredByCompleteFixture);
+  const coveredCount = occupied.filter(
+    (slot) => slot.coveredByCompleteFixture,
+  ).length;
+  const usedKeys = new Set(
+    pairs.flatMap((pair) => [pair.slotAKey, pair.slotBKey]),
+  );
+  const availableForSelect = pairable.filter(
+    (slot) => !usedKeys.has(slot.slotKey),
+  );
 
   const canShow =
     (data.status === 'Draft' || data.status === 'Ready') &&
     data.rounds.length > 0 &&
-    occupied.length >= 2
+    occupied.length >= 2;
 
   const materializeMutation = useMutation({
     mutationFn: () =>
@@ -301,23 +313,23 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
         })),
       ),
     onSuccess: async () => {
-      setPairs([])
-      setSlotA('')
-      setSlotB('')
+      setPairs([]);
+      setSlotA('');
+      setSlotB('');
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(data.id),
-      })
+      });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.overview(data.competitionId),
-      })
+      });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.detail(data.competitionId),
-      })
+      });
     },
-  })
+  });
 
   if (!canShow) {
-    return null
+    return null;
   }
 
   const canAdd =
@@ -325,9 +337,9 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
     slotB.length > 0 &&
     slotA !== slotB &&
     !usedKeys.has(slotA) &&
-    !usedKeys.has(slotB)
+    !usedKeys.has(slotB);
 
-  const pairingExhausted = pairable.length < 2 && pairs.length === 0
+  const pairingExhausted = pairable.length < 2 && pairs.length === 0;
 
   return (
     <section className="ds-panel" aria-labelledby="confrontations-heading">
@@ -351,9 +363,15 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       ) : (
         <>
           {pairs.length > 0 && (
-            <ul className="plain-list" aria-label={t('confrontations.pairsHeading')}>
+            <ul
+              className="plain-list"
+              aria-label={t('confrontations.pairsHeading')}
+            >
               {pairs.map((pair) => (
-                <li key={`${pair.slotAKey}:${pair.slotBKey}`} className="button-row">
+                <li
+                  key={`${pair.slotAKey}:${pair.slotBKey}`}
+                  className="button-row"
+                >
                   <span>
                     {t('confrontations.pairLabel', {
                       slotA: pair.slotAKey,
@@ -391,7 +409,9 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
                   value={slotA}
                   onChange={(event) => setSlotA(event.target.value)}
                 >
-                  <option value="">{t('confrontations.selectPlaceholder')}</option>
+                  <option value="">
+                    {t('confrontations.selectPlaceholder')}
+                  </option>
                   {availableForSelect
                     .filter((slot) => slot.slotKey !== slotB)
                     .map((slot) => (
@@ -408,7 +428,9 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
                   value={slotB}
                   onChange={(event) => setSlotB(event.target.value)}
                 >
-                  <option value="">{t('confrontations.selectPlaceholder')}</option>
+                  <option value="">
+                    {t('confrontations.selectPlaceholder')}
+                  </option>
                   {availableForSelect
                     .filter((slot) => slot.slotKey !== slotA)
                     .map((slot) => (
@@ -427,9 +449,9 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
                   setPairs((current) => [
                     ...current,
                     { slotAKey: slotA, slotBKey: slotB },
-                  ])
-                  setSlotA('')
-                  setSlotB('')
+                  ]);
+                  setSlotA('');
+                  setSlotB('');
                 }}
               >
                 {t('confrontations.addPair')}
@@ -467,7 +489,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
         <MutationError error={materializeMutation.error} />
       )}
     </section>
-  )
+  );
 }
 
 /**
@@ -480,12 +502,12 @@ function DrawSection({
   slots,
   rounds,
 }: {
-  stageId: string
-  draws: StageDraw[]
-  slots: StageSlot[]
-  rounds: StageRound[]
+  stageId: string;
+  draws: StageDraw[];
+  slots: StageSlot[];
+  rounds: StageRound[];
 }) {
-  const { t } = useTranslation('stage')
+  const { t } = useTranslation('stage');
   return (
     <section className="ds-panel" aria-labelledby="draws-heading">
       <h2 id="draws-heading" className="ds-panel-head__title">
@@ -510,7 +532,7 @@ function DrawSection({
         </ul>
       )}
     </section>
-  )
+  );
 }
 
 function DrawCard({
@@ -519,14 +541,14 @@ function DrawCard({
   slots,
   rounds,
 }: {
-  stageId: string
-  draw: StageDraw
-  slots: StageSlot[]
-  rounds: StageRound[]
+  stageId: string;
+  draw: StageDraw;
+  slots: StageSlot[];
+  rounds: StageRound[];
 }) {
-  const { t } = useTranslation('draw')
+  const { t } = useTranslation('draw');
   // DERIVED UI: computed each render from props (server state), never useState.
-  const ui = getDrawUiProjection(draw, slots, rounds)
+  const ui = getDrawUiProjection(draw, slots, rounds);
 
   return (
     <article className="draw-card">
@@ -545,50 +567,56 @@ function DrawCard({
         {t(ui.messageKey)}
       </p>
 
-      {ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0 && (
-        <div className="stack stack--tight">
-          <h4 className="draw-card__results-title">{t('result')}</h4>
-          <ul className="draw-pairing-list">
-            {draw.pairings.map((pairing) => (
-              <li
-                key={`${pairing.entryAId}-${pairing.entryBId}`}
-                className="draw-pairing"
-              >
-                <span className="draw-pairing__side">
-                  {pairing.entryADisplayName?.trim() || t('unknownEntry', { ns: 'common' })}
-                </span>
-                <span className="draw-pairing__vs">{t('vs')}</span>
-                <span className="draw-pairing__side">
-                  {pairing.entryBDisplayName?.trim() || t('unknownEntry', { ns: 'common' })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {ui.showResults &&
+        draw.kind === 'Pairing' &&
+        draw.pairings.length > 0 && (
+          <div className="stack stack--tight">
+            <h4 className="draw-card__results-title">{t('result')}</h4>
+            <ul className="draw-pairing-list">
+              {draw.pairings.map((pairing) => (
+                <li
+                  key={`${pairing.entryAId}-${pairing.entryBId}`}
+                  className="draw-pairing"
+                >
+                  <span className="draw-pairing__side">
+                    {pairing.entryADisplayName?.trim() ||
+                      t('unknownEntry', { ns: 'common' })}
+                  </span>
+                  <span className="draw-pairing__vs">{t('vs')}</span>
+                  <span className="draw-pairing__side">
+                    {pairing.entryBDisplayName?.trim() ||
+                      t('unknownEntry', { ns: 'common' })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-      {ui.showResults && draw.kind === 'Slot' && draw.slotPlacements.length > 0 && (
-        <div className="stack stack--tight">
-          <h4 className="draw-card__results-title">{t('placements')}</h4>
-          <ul className="draw-placement-list">
-            {draw.slotPlacements.map((placement) => (
-              <li
-                key={`${placement.slotKey}-${placement.entryId}`}
-                className="draw-placement"
-              >
-                <code>{placement.slotKey}</code>
-                <span className="draw-placement__arrow" aria-hidden="true">
-                  →
-                </span>
-                <span className="draw-placement__entry">
-                  {placement.displayName?.trim() ||
-                    t('unknownEntry', { ns: 'common' })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {ui.showResults &&
+        draw.kind === 'Slot' &&
+        draw.slotPlacements.length > 0 && (
+          <div className="stack stack--tight">
+            <h4 className="draw-card__results-title">{t('placements')}</h4>
+            <ul className="draw-placement-list">
+              {draw.slotPlacements.map((placement) => (
+                <li
+                  key={`${placement.slotKey}-${placement.entryId}`}
+                  className="draw-placement"
+                >
+                  <code>{placement.slotKey}</code>
+                  <span className="draw-placement__arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="draw-placement__entry">
+                    {placement.displayName?.trim() ||
+                      t('unknownEntry', { ns: 'common' })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
       {ui.showResults &&
         draw.kind === 'Group' &&
@@ -605,7 +633,7 @@ function DrawCard({
         isApplied={ui.isApplied}
       />
     </article>
-  )
+  );
 }
 
 /**
@@ -618,28 +646,28 @@ function DrawActions({
   rounds,
   isApplied,
 }: {
-  stageId: string
-  draw: StageDraw
-  rounds: StageRound[]
-  isApplied: boolean
+  stageId: string;
+  draw: StageDraw;
+  rounds: StageRound[];
+  isApplied: boolean;
 }) {
-  const { t } = useTranslation('draw')
-  const { t: tCommon } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const [applyConfirmOpen, setApplyConfirmOpen] = useState(false)
+  const { t } = useTranslation('draw');
+  const { t: tCommon } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
 
   const canPublish =
-    draw.status === 'Draft' && draw.resolutionState === 'Resolved'
+    draw.status === 'Draft' && draw.resolutionState === 'Resolved';
   const canApply =
     draw.status === 'Published' &&
     draw.resolutionState === 'Resolved' &&
     !isApplied &&
-    (draw.kind === 'Slot' || draw.kind === 'Pairing')
+    (draw.kind === 'Slot' || draw.kind === 'Pairing');
 
   const pairingFixtureIds =
-    draw.kind === 'Pairing' ? resolvePairingFixtureIds(draw, rounds) : null
+    draw.kind === 'Pairing' ? resolvePairingFixtureIds(draw, rounds) : null;
   const pairingMapBlocked =
-    draw.kind === 'Pairing' && canApply && pairingFixtureIds === null
+    draw.kind === 'Pairing' && canApply && pairingFixtureIds === null;
 
   const publishMutation = useMutation({
     mutationFn: () => publishDraw(stageId, draw.id),
@@ -649,135 +677,135 @@ function DrawActions({
       // inactive keys refresh when next used.
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
-      })
+      });
     },
-  })
+  });
 
   const applyMutation = useMutation({
     mutationFn: () => {
       if (draw.kind === 'Slot') {
-        return applyDraw(stageId, draw.id, { fixtureIds: [] })
+        return applyDraw(stageId, draw.id, { fixtureIds: [] });
       }
 
       if (draw.kind === 'Pairing') {
-        const fixtureIds = resolvePairingFixtureIds(draw, rounds)
+        const fixtureIds = resolvePairingFixtureIds(draw, rounds);
         if (fixtureIds === null) {
           throw new Error(
             'Cannot apply pairing: fixture count must match pairing count for a 1:1 map.',
-          )
+          );
         }
-        return applyDraw(stageId, draw.id, { fixtureIds })
+        return applyDraw(stageId, draw.id, { fixtureIds });
       }
 
-      throw new Error('Apply is not available for this draw kind.')
+      throw new Error('Apply is not available for this draw kind.');
     },
     onSuccess: async () => {
-      setApplyConfirmOpen(false)
+      setApplyConfirmOpen(false);
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
-      })
+      });
       if (draw.kind === 'Pairing') {
         await queryClient.invalidateQueries({
           queryKey: queryKeys.matches.byStage(stageId),
-        })
+        });
       }
     },
-  })
+  });
 
-  const busy = publishMutation.isPending || applyMutation.isPending
-  const mutationError = publishMutation.error ?? applyMutation.error
+  const busy = publishMutation.isPending || applyMutation.isPending;
+  const mutationError = publishMutation.error ?? applyMutation.error;
 
   function handlePublish() {
-    publishMutation.mutate()
+    publishMutation.mutate();
   }
 
   function handleApply() {
-    setApplyConfirmOpen(true)
+    setApplyConfirmOpen(true);
   }
 
   if (!canPublish && !canApply && !pairingMapBlocked && !mutationError) {
-    return null
+    return null;
   }
 
   return (
     <>
-    <div className="button-row" aria-busy={busy}>
-      {canPublish && (
-        <button
-          type="button"
-          className="ds-btn ds-btn--primary"
-          disabled={busy}
-          onClick={handlePublish}
-        >
-          {publishMutation.isPending ? (
-            <PendingLabel>{t('publishing')}</PendingLabel>
-          ) : (
-            t('publish')
-          )}
-        </button>
-      )}
+      <div className="button-row" aria-busy={busy}>
+        {canPublish && (
+          <button
+            type="button"
+            className="ds-btn ds-btn--primary"
+            disabled={busy}
+            onClick={handlePublish}
+          >
+            {publishMutation.isPending ? (
+              <PendingLabel>{t('publishing')}</PendingLabel>
+            ) : (
+              t('publish')
+            )}
+          </button>
+        )}
 
-      {canApply && draw.kind === 'Slot' && (
-        <button
-          type="button"
-          className="ds-btn ds-btn--primary"
-          disabled={busy || applyConfirmOpen}
-          onClick={handleApply}
-        >
-          {applyMutation.isPending ? (
-            <PendingLabel>{t('applying')}</PendingLabel>
-          ) : (
-            t('apply')
-          )}
-        </button>
-      )}
+        {canApply && draw.kind === 'Slot' && (
+          <button
+            type="button"
+            className="ds-btn ds-btn--primary"
+            disabled={busy || applyConfirmOpen}
+            onClick={handleApply}
+          >
+            {applyMutation.isPending ? (
+              <PendingLabel>{t('applying')}</PendingLabel>
+            ) : (
+              t('apply')
+            )}
+          </button>
+        )}
 
-      {canApply && draw.kind === 'Pairing' && pairingFixtureIds !== null && (
-        <button
-          type="button"
-          className="ds-btn ds-btn--primary"
-          disabled={busy || applyConfirmOpen}
-          onClick={handleApply}
-        >
-          {applyMutation.isPending ? (
-            <PendingLabel>{t('applying')}</PendingLabel>
-          ) : (
-            t('apply')
-          )}
-        </button>
-      )}
+        {canApply && draw.kind === 'Pairing' && pairingFixtureIds !== null && (
+          <button
+            type="button"
+            className="ds-btn ds-btn--primary"
+            disabled={busy || applyConfirmOpen}
+            onClick={handleApply}
+          >
+            {applyMutation.isPending ? (
+              <PendingLabel>{t('applying')}</PendingLabel>
+            ) : (
+              t('apply')
+            )}
+          </button>
+        )}
 
-      {pairingMapBlocked && (
-        <p className="ds-notice ds-notice--warning" role="status">
-          {t('pairingMapBlocked')}
-        </p>
-      )}
+        {pairingMapBlocked && (
+          <p className="ds-notice ds-notice--warning" role="status">
+            {t('pairingMapBlocked')}
+          </p>
+        )}
 
-      {mutationError && <MutationError error={mutationError} />}
-    </div>
-    <ConfirmDialog
-      open={applyConfirmOpen}
-      title={t('confirmApplyTitle')}
-      message={t('confirmApply')}
-      confirmLabel={t('apply')}
-      cancelLabel={tCommon('cancel')}
-      closeLabel={tCommon('close')}
-      confirmDisabled={applyMutation.isPending}
-      confirmPending={applyMutation.isPending}
-      confirmPendingLabel={t('applying')}
-      onCancel={() => {
-        if (applyMutation.isPending) {
-          return
-        }
-        setApplyConfirmOpen(false)
-      }}
-      onConfirm={() => {
-        if (applyMutation.isPending) {
-          return
-        }
-        applyMutation.mutate()
-      }}
-    />
+        {mutationError && <MutationError error={mutationError} />}
+      </div>
+      <ConfirmDialog
+        open={applyConfirmOpen}
+        title={t('confirmApplyTitle')}
+        message={t('confirmApply')}
+        confirmLabel={t('apply')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        confirmDisabled={applyMutation.isPending}
+        confirmPending={applyMutation.isPending}
+        confirmPendingLabel={t('applying')}
+        onCancel={() => {
+          if (applyMutation.isPending) {
+            return;
+          }
+          setApplyConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          if (applyMutation.isPending) {
+            return;
+          }
+          applyMutation.mutate();
+        }}
+      />
     </>
-  )
+  );
 }

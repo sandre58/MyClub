@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '../icons/shellIcons'
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRightIcon } from '../icons/shellIcons';
 
 /**
  * Match row — state-driven score cell + aside (Design Lab grammar).
@@ -15,18 +15,18 @@ export function MatchRow({
   ariaLabel,
   scoreMuted = false,
 }: {
-  home: { name: string; crest: ReactNode }
-  away: { name: string; crest: ReactNode }
-  score: ReactNode
-  aside?: ReactNode
-  className?: string
-  to?: string
-  ariaLabel?: string
-  scoreMuted?: boolean
+  home: { name: string; crest: ReactNode };
+  away: { name: string; crest: ReactNode };
+  score: ReactNode;
+  aside?: ReactNode;
+  className?: string;
+  to?: string;
+  ariaLabel?: string;
+  scoreMuted?: boolean;
 }) {
   const classes = ['ds-match-row', to && 'ds-interactive-row', className]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
   const body = (
     <>
       <span className="ds-match-row__team ds-match-row__team--home">
@@ -61,17 +61,17 @@ export function MatchRow({
         </span>
       )}
     </>
-  )
+  );
 
   if (to) {
     return (
       <Link className={classes} to={to} aria-label={ariaLabel}>
         {body}
       </Link>
-    )
+    );
   }
 
-  return <div className={classes}>{body}</div>
+  return <div className={classes}>{body}</div>;
 }
 
 export function MatchRowScore({
@@ -79,13 +79,13 @@ export function MatchRowScore({
   away,
   muted = false,
 }: {
-  home: string | number
-  away: string | number
-  muted?: boolean
+  home: string | number;
+  away: string | number;
+  muted?: boolean;
 }) {
   if (muted) {
-    return <>{home}</>
+    return <>{home}</>;
   }
 
-  return `${home}–${away}`
+  return `${home}–${away}`;
 }

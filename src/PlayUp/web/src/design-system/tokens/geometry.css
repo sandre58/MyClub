@@ -4,11 +4,12 @@
  */
 :root,
 .ds-root {
-    --radius-control: 4px;
-    --radius-panel: 6px;
-    --border-width: 1px;
-    --focus-ring-width: 2px;
-    --focus-ring-offset: 2px;
-    --shadow-page: none;
-    --shadow-overlay: 0 4px 12px color-mix(in srgb, var(--color-ink) 14%, transparent);
+  --radius-control: 4px;
+  --radius-panel: 6px;
+  --border-width: 1px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --shadow-page: none;
+  --shadow-overlay: 0 4px 12px
+    color-mix(in srgb, var(--color-ink) 14%, transparent);
 }

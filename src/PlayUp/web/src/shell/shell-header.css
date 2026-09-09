@@ -4,57 +4,57 @@
  */
 
 .shell-header {
-    z-index: 2;
+  z-index: 2;
 }
 
 .shell-header__context {
-    display: flex;
-    flex: 1;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: var(--space-12);
-    min-width: 0;
+  display: flex;
+  flex: 1;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
 }
 
 .shell-header__meta-separator {
-    color: inherit;
-    font-size: var(--text-meta);
-    line-height: 1;
+  color: inherit;
+  font-size: var(--text-meta);
+  line-height: 1;
 }
 
 .shell-header__period {
-    margin: 0;
-    color: inherit;
+  margin: 0;
+  color: inherit;
 }
 
 .shell-header__context-message,
 .shell-header__context-loading {
-    min-width: 8rem;
-    color: color-mix(in srgb, var(--color-on-chrome) 72%, transparent);
-    font-size: var(--text-label);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--leading-tight);
+  min-width: 8rem;
+  color: color-mix(in srgb, var(--color-on-chrome) 72%, transparent);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-tight);
 }
 
 .shell-header__icon-control {
-    width: var(--shell-icon-hit);
-    min-width: var(--shell-icon-hit);
-    height: var(--shell-icon-hit);
-    color: var(--color-on-chrome);
+  width: var(--shell-icon-hit);
+  min-width: var(--shell-icon-hit);
+  height: var(--shell-icon-hit);
+  color: var(--color-on-chrome);
 }
 
 .shell-header__icon-control svg {
-    width: var(--shell-icon-glyph);
-    height: var(--shell-icon-glyph);
+  width: var(--shell-icon-glyph);
+  height: var(--shell-icon-glyph);
 }
 
 .shell-header .ds-btn--ghost:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
+  background: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
 }
 
 .shell-header__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-8);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
 }

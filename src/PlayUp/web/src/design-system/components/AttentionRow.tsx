@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 /**
  * D9 attention recipe — count + icon + title + detail + optional action.
@@ -12,12 +12,12 @@ export function AttentionRow({
   action,
   tone = 'attention',
 }: {
-  count: ReactNode
-  icon: ReactNode
-  title: string
-  detail?: string
-  action?: ReactNode
-  tone?: 'attention' | 'info'
+  count: ReactNode;
+  icon: ReactNode;
+  title: string;
+  detail?: string;
+  action?: ReactNode;
+  tone?: 'attention' | 'info';
 }) {
   return (
     <div className="ds-overview-attention__row" data-tone={tone}>
@@ -33,5 +33,5 @@ export function AttentionRow({
       </span>
       {action}
     </div>
-  )
+  );
 }

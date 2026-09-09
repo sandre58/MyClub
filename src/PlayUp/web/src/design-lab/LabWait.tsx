@@ -1,11 +1,8 @@
-import {
-  WaitMark,
-  type WaitSize,
-} from '../design-system/components/WaitMark'
-import { PanelHead } from '../design-system/components/PanelHead'
+import { WaitMark, type WaitSize } from '../design-system/components/WaitMark';
+import { PanelHead } from '../design-system/components/PanelHead';
 
-export type LabWaitKind = 'b' | 'c'
-export type LabWaitScale = WaitSize | 'button'
+export type LabWaitKind = 'b' | 'c';
+export type LabWaitScale = WaitSize | 'button';
 
 /**
  * Atome d'attente Lab — B spinner + barre (rejeté) · C WaitMark (retenu 2026-09-03).
@@ -15,18 +12,18 @@ export function LabWaitAtom({
   scale,
   label,
 }: {
-  kind: LabWaitKind
-  scale: LabWaitScale
-  label?: string
+  kind: LabWaitKind;
+  scale: LabWaitScale;
+  label?: string;
 }) {
-  const text = label ?? (scale === 'button' ? 'Traitement…' : 'Chargement…')
+  const text = label ?? (scale === 'button' ? 'Traitement…' : 'Chargement…');
 
   if (kind === 'c' && scale !== 'button') {
-    return <WaitMark size={scale}>{text}</WaitMark>
+    return <WaitMark size={scale}>{text}</WaitMark>;
   }
 
-  const showBar = kind === 'b' && scale !== 'button'
-  const glyph = <WaitSpinner />
+  const showBar = kind === 'b' && scale !== 'button';
+  const glyph = <WaitSpinner />;
 
   if (scale === 'button') {
     return (
@@ -45,7 +42,7 @@ export function LabWaitAtom({
         {glyph}
         {text}
       </button>
-    )
+    );
   }
 
   return (
@@ -64,11 +61,11 @@ export function LabWaitAtom({
       </span>
       {showBar ? <WaitBar /> : null}
     </p>
-  )
+  );
 }
 
 function WaitSpinner() {
-  return <span className="dlab-wait-spin" aria-hidden="true" />
+  return <span className="dlab-wait-spin" aria-hidden="true" />;
 }
 
 function WaitBar() {
@@ -76,7 +73,7 @@ function WaitBar() {
     <span className="dlab-wait-bar" aria-hidden="true">
       <span className="dlab-wait-bar__run" />
     </span>
-  )
+  );
 }
 
 /**
@@ -99,7 +96,9 @@ export function LabWait() {
         <div className="dlab-wait-board__col-head" aria-hidden="true" />
         <div className="dlab-wait-board__col-head">
           <p className="ds-label">B — spinner + barre</p>
-          <p className="ds-meta">Anneau currentColor · piste 12° · Chargement…</p>
+          <p className="ds-meta">
+            Anneau currentColor · piste 12° · Chargement…
+          </p>
         </div>
         <div className="dlab-wait-board__col-head">
           <p className="ds-label">C — marque + anneau (retenu)</p>
@@ -142,7 +141,7 @@ export function LabWait() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function RegionMock({ kind }: { kind: LabWaitKind }) {
@@ -150,7 +149,9 @@ function RegionMock({ kind }: { kind: LabWaitKind }) {
     <div className="dlab-wait-region">
       <section className="ds-panel">
         <PanelHead title="Journée 3" aside="1 / 3 terminé" />
-        <p className="dlab-wait-board__ghost ds-tabular">FC Nord 2–1 AS Montval</p>
+        <p className="dlab-wait-board__ghost ds-tabular">
+          FC Nord 2–1 AS Montval
+        </p>
         <p className="dlab-wait-board__ghost ds-tabular">United — Racing</p>
       </section>
       <section className="ds-panel">
@@ -158,5 +159,5 @@ function RegionMock({ kind }: { kind: LabWaitKind }) {
         <LabWaitAtom kind={kind} scale="region" />
       </section>
     </div>
-  )
+  );
 }

@@ -1,30 +1,30 @@
 .ds-root {
-    box-sizing: border-box;
-    min-height: 100vh;
-    background: var(--color-canvas);
-    color: var(--color-text-primary);
-    font-family: var(--font-sans);
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-regular);
-    line-height: var(--leading-normal);
-    -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
 }
 
 html:has(.shell),
 body:has(.shell),
 #root:has(.shell) {
-    height: 100%;
-    overflow: hidden;
+  height: 100%;
+  overflow: hidden;
 }
 
 .shell {
-    height: 100dvh;
+  height: 100dvh;
 }
 
 .ds-root *,
 .ds-root *::before,
 .ds-root *::after {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 /*
@@ -32,24 +32,21 @@ body:has(.shell),
  * Chrome (sidebar) and overlays are outside this scope so they keep
  * on-chrome / local colors. Exit links carry their own color.
  */
-.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(
-        .matches-link
-    ):not(.organisation-link):not(.organisation-stage-link):not(
-        .organisation-strip__action
-    ),
+.shell-main
+  a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(
+    .organisation-link
+  ):not(.organisation-stage-link):not(.organisation-strip__action),
 .ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link) {
-    color: var(--color-ink);
-    text-decoration-thickness: 0.08em;
-    text-underline-offset: 0.18em;
+  color: var(--color-ink);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
 }
 
 .shell-main
-    a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(
-        .matches-link
-    ):not(.organisation-link):not(.organisation-stage-link):not(
-        .organisation-strip__action
-    ):hover,
+  a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(
+    .organisation-link
+  ):not(.organisation-stage-link):not(.organisation-strip__action):hover,
 .ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):hover {
-    color: var(--color-ink);
-    text-decoration-thickness: 0.12em;
+  color: var(--color-ink);
+  text-decoration-thickness: 0.12em;
 }

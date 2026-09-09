@@ -1,29 +1,35 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   configureOrganisationStructure,
   fetchOrganisationView,
   replaceCompetitionRegulation,
   ApiError,
-} from '../api'
-import type { OrganisationView } from '../types'
-import { OrganisationPage } from './OrganisationPage'
+} from '../api';
+import type { OrganisationView } from '../types';
+import { OrganisationPage } from './OrganisationPage';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchOrganisationView: vi.fn(),
     replaceCompetitionRegulation: vi.fn(),
     configureOrganisationStructure: vi.fn(),
-  }
-})
+  };
+});
 
-const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-const entryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const entryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 function organisationView(
   overrides: Partial<OrganisationView> = {},
@@ -87,7 +93,7 @@ function organisationView(
     },
     stages: [],
     ...overrides,
-  }
+  };
 }
 
 function renderOrganisationPage() {
@@ -96,7 +102,7 @@ function renderOrganisationPage() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-  })
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -119,17 +125,17 @@ function renderOrganisationPage() {
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-  )
+  );
 
-  return { queryClient }
+  return { queryClient };
 }
 
 describe('OrganisationPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.clearAllMocks();
     vi.mocked(replaceCompetitionRegulation).mockResolvedValue(
       organisationView(),
-    )
+    );
     vi.mocked(configureOrganisationStructure).mockResolvedValue(
       organisationView({
         format: {
@@ -139,40 +145,40 @@ describe('OrganisationPage', () => {
           primaryStageStatus: 'Draft',
         },
       }),
-    )
-  })
+    );
+  });
 
   it('shows loading while organisation is pending', () => {
-    vi.mocked(fetchOrganisationView).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchOrganisationView).mockReturnValue(new Promise(() => {}));
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
-    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
-  })
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement…');
+  });
 
   it('renders organisation summary from the Host DTO', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Organisation' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/1 équipe · minimum 2/)).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText(/1 équipe · minimum 2/)).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Ouvrir Équipes/i }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/teams`)
+    ).toHaveAttribute('href', `/competitions/${competitionId}/teams`);
     expect(
       screen.getByRole('link', { name: /Participants insuffisants/i }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/teams`)
-    expect(screen.getByText(/2–64/)).toBeInTheDocument()
+    ).toHaveAttribute('href', `/competitions/${competitionId}/teams`);
+    expect(screen.getByText(/2–64/)).toBeInTheDocument();
     expect(
       screen.getByText('Aucun type disciplinaire autorisé'),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/Encore 2 éléments avant de démarrer/i),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('shows AllowedTypes on the regulation summary', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
@@ -188,39 +194,39 @@ describe('OrganisationPage', () => {
           allowedTypes: ['Yellow', 'Red'],
         },
       }),
-    )
+    );
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     expect(
       await screen.findByText('Discipline : Jaune, Rouge'),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('opens Équipes from the teams fact panel', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    const user = userEvent.setup();
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     await user.click(
       await screen.findByRole('link', { name: /Ouvrir Équipes/i }),
-    )
+    );
 
-    expect(screen.getByText('Teams route')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Teams route')).toBeInTheDocument();
+  });
 
   it('does not render redundant competition section navigation', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
-    await screen.findByRole('heading', { name: 'Organisation' })
+    await screen.findByRole('heading', { name: 'Organisation' });
 
     expect(
       screen.queryByRole('navigation', { name: 'Competition sections' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows empty participants fact', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
@@ -231,59 +237,64 @@ describe('OrganisationPage', () => {
           entries: [],
         },
       }),
-    )
+    );
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
-    expect(await screen.findByText(/0 équipe · minimum 2/)).toBeInTheDocument()
+    expect(await screen.findByText(/0 équipe · minimum 2/)).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Ouvrir Équipes/i }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('shows an error when organisation read fails', async () => {
     vi.mocked(fetchOrganisationView).mockRejectedValue(
       new ApiError(404, 'Competition was not found.'),
-    )
+    );
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "Introuvable. Vérifiez l'identifiant dans l'URL.",
-    )
-  })
+    );
+  });
 
-  it('navigates back to vue d’ensemble', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+  it('does not offer a page-level back link to vue d’ensemble', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
-    await user.click(
-      await screen.findByRole('link', {
-        name: /Vue d'ensemble/i,
-      }),
-    )
-
-    expect(screen.getByText('Workspace route')).toBeInTheDocument()
-  })
+    expect(
+      await screen.findByRole('heading', { name: 'Organisation' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Vue d'ensemble/i }),
+    ).not.toBeInTheDocument();
+  });
 
   it('replaces regulation with the Host payload', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    const user = userEvent.setup();
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     await user.click(
       await screen.findByRole('button', { name: /Modifier le règlement/i }),
-    )
-    const dialog = await screen.findByRole('dialog')
-    const minTeams = await within(dialog).findByLabelText(/Minimum d’équipes/i)
-    await user.clear(minTeams)
-    await user.type(minTeams, '4')
+    );
+    const dialog = await screen.findByRole('dialog');
+    const minTeams = await within(dialog).findByLabelText(/Minimum d’équipes/i);
+    await user.clear(minTeams);
+    await user.type(minTeams, '4');
     await user.click(
-      within(dialog).getByRole('button', { name: 'Enregistrer le règlement' }),
-    )
+      within(dialog).getByRole('button', { name: 'Enregistrer' }),
+    );
+
+    const confirmDialog = await screen.findByRole('dialog', {
+      name: 'Enregistrer les modifications du règlement ?',
+    });
+    await user.click(
+      within(confirmDialog).getByRole('button', { name: 'Enregistrer' }),
+    );
 
     await waitFor(() => {
       expect(replaceCompetitionRegulation).toHaveBeenCalledWith(
@@ -299,29 +310,29 @@ describe('OrganisationPage', () => {
           lossPoints: 0,
           allowedTypes: [],
         }),
-      )
-    })
-  })
+      );
+    });
+  });
 
   it('configures championship structure with the Host payload', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    const user = userEvent.setup();
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     await user.click(
       await screen.findByRole('button', { name: /Configurer la structure/i }),
-    )
-    const dialog = await screen.findByRole('dialog')
+    );
+    const dialog = await screen.findByRole('dialog');
     await user.selectOptions(
       await within(dialog).findByLabelText(/^Format$/i),
       'Championship',
-    )
-    const matchdays = within(dialog).getByLabelText(/Nombre de journées/i)
-    fireEvent.change(matchdays, { target: { value: '2' } })
+    );
+    const matchdays = within(dialog).getByLabelText(/Nombre de journées/i);
+    fireEvent.change(matchdays, { target: { value: '2' } });
     await user.click(
       within(dialog).getByRole('button', { name: 'Configurer la structure' }),
-    )
+    );
 
     await waitFor(() => {
       expect(configureOrganisationStructure).toHaveBeenCalledWith(
@@ -334,31 +345,31 @@ describe('OrganisationPage', () => {
           bracketSize: null,
           matchGenerationFormat: 'SingleRoundRobin',
         }),
-      )
-    })
-  })
+      );
+    });
+  });
 
   it('configures Championship with DoubleRoundRobin generation format', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    const user = userEvent.setup();
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     await user.click(
       await screen.findByRole('button', { name: /Configurer la structure/i }),
-    )
-    const dialog = await screen.findByRole('dialog')
+    );
+    const dialog = await screen.findByRole('dialog');
     await user.selectOptions(
       await within(dialog).findByLabelText(/^Format$/i),
       'Championship',
-    )
+    );
     await user.selectOptions(
       within(dialog).getByLabelText(/Génération des rencontres/i),
       'DoubleRoundRobin',
-    )
+    );
     await user.click(
       within(dialog).getByRole('button', { name: 'Configurer la structure' }),
-    )
+    );
 
     await waitFor(() => {
       expect(configureOrganisationStructure).toHaveBeenCalledWith(
@@ -367,9 +378,9 @@ describe('OrganisationPage', () => {
           format: 'Championship',
           matchGenerationFormat: 'DoubleRoundRobin',
         }),
-      )
-    })
-  })
+      );
+    });
+  });
 
   it('shows match generation format on a Championship structure panel', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
@@ -390,32 +401,32 @@ describe('OrganisationPage', () => {
           matchGenerationFormat: 'DoubleRoundRobin',
         },
       }),
-    )
+    );
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     expect(
       await screen.findByText(/Aller-retour \(double RR\)/i),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('hides mutations when Host actions omit them', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({ actions: [] }),
-    )
+    );
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Organisation' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Modifier le règlement/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Configurer la structure/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it("shows materialize readiness and Vue d'ensemble CTA for a ready Championship", async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
@@ -458,39 +469,37 @@ describe('OrganisationPage', () => {
           blockers: [],
         },
       }),
-    )
+    );
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     expect(
-      await screen.findByText(
-        /La compétition est prête à matérialiser/i,
-      ),
-    ).toBeInTheDocument()
+      await screen.findByText(/La compétition est prête à matérialiser/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('link', {
         name: /Aller à la Vue d’ensemble pour matérialiser/i,
       }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}`)
-    expect(screen.queryByText(/Prêt pour le tirage/i)).not.toBeInTheDocument()
-  })
+    ).toHaveAttribute('href', `/competitions/${competitionId}`);
+    expect(screen.queryByText(/Prêt pour le tirage/i)).not.toBeInTheDocument();
+  });
 
   it('shows blockers and hides Vue d’ensemble CTA when not ready to materialize', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
     expect(
       await screen.findByText(/Encore 2 éléments avant de démarrer/i),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
-    expect(screen.getByText('Phase manquante')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument();
+    expect(screen.getByText('Phase manquante')).toBeInTheDocument();
     expect(
       screen.queryByRole('link', {
         name: /Aller à la Vue d’ensemble pour matérialiser/i,
       }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows draw readiness for Groups but not as Championship next step', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
@@ -512,10 +521,10 @@ describe('OrganisationPage', () => {
           blockers: [],
         },
       }),
-    )
+    );
 
-    renderOrganisationPage()
+    renderOrganisationPage();
 
-    expect(await screen.findByText(/Prêt pour le tirage/i)).toBeInTheDocument()
-  })
-})
+    expect(await screen.findByText(/Prêt pour le tirage/i)).toBeInTheDocument();
+  });
+});

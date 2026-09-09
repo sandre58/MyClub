@@ -14,94 +14,103 @@
  */
 
 .ds-status {
-    display: inline-flex;
-    align-items: center;
-    flex: none;
-    font-weight: var(--font-weight-semibold);
-    line-height: var(--leading-tight);
-    white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
 }
 
 .ds-status--context {
-    padding: var(--space-4) var(--space-12);
-    font-size: var(--text-label);
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--text-label);
 }
 
 .ds-status--compact {
-    padding: 1px var(--space-8);
-    font-size: var(--text-meta);
+  padding: 1px var(--space-8);
+  font-size: var(--text-meta);
 }
 
 .ds-status--dense {
-    padding: 0;
-    font-size: var(--text-label);
-    color: var(--color-text-secondary);
+  padding: 0;
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
 }
 
 .ds-status--rounded {
-    border-radius: var(--radius-control);
+  border-radius: var(--radius-control);
 }
 
 .ds-status--pill {
-    border-radius: 999px;
+  border-radius: 999px;
 }
 
 .ds-status--tone-neutral,
 .ds-status--tone-done {
-    --status-ink: var(--color-text-secondary);
+  --status-ink: var(--color-text-secondary);
 }
 
 .ds-status--tone-info {
-    --status-ink: var(--color-info);
+  --status-ink: var(--color-info);
 }
 
 .ds-status--tone-success {
-    --status-ink: var(--color-success);
+  --status-ink: var(--color-success);
 }
 
 .ds-status--tone-live {
-    --status-ink: var(--color-live);
+  --status-ink: var(--color-live);
 }
 
 .ds-status--tone-attention {
-    --status-ink: var(--color-attention);
+  --status-ink: var(--color-attention);
 }
 
 .ds-status--tone-error {
-    --status-ink: var(--color-error);
+  --status-ink: var(--color-error);
 }
 
 .ds-status--soft,
 .ds-status--outline,
 .ds-status--plain {
-    color: light-dark(
-        var(--status-ink),
-        color-mix(in srgb, var(--status-ink) 58%, white)
-    );
+  color: light-dark(
+    var(--status-ink),
+    color-mix(in srgb, var(--status-ink) 58%, white)
+  );
 }
 
 .ds-status--soft {
-    --status-wash: 18%;
-    background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
+  --status-wash: 18%;
+  background: color-mix(
+    in srgb,
+    var(--status-ink) var(--status-wash),
+    transparent
+  );
 }
 
 .ds-status--soft.ds-status--tone-live {
-    --status-wash: 22%;
+  --status-wash: 22%;
 }
 
 .ds-status--outline {
-    --status-wash: 10%;
-    border: var(--border-width) solid color-mix(in srgb, var(--status-ink) 32%, transparent);
-    background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
+  --status-wash: 10%;
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--status-ink) 32%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--status-ink) var(--status-wash),
+    transparent
+  );
 }
 
 .ds-status--outline.ds-status--tone-neutral,
 .ds-status--outline.ds-status--tone-done {
-    border-color: var(--color-border-strong);
+  border-color: var(--color-border-strong);
 }
 
 .ds-status--plain {
-    padding: 0;
-    background: none;
-    border: none;
+  padding: 0;
+  background: none;
+  border: none;
 }

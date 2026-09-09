@@ -1,6 +1,6 @@
-import type { ComponentType, SVGProps } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import type { ComponentType, SVGProps } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   ClassementsNavIcon,
   MatchesNavIcon,
@@ -11,23 +11,23 @@ import {
   SidebarExpandIcon,
   TeamsNavIcon,
   VenuesNavIcon,
-} from '../design-system/icons/shellIcons'
-import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark'
-import { PlayUpWordmark } from '../design-system/PlayUpWordmark'
+} from '../design-system/icons/shellIcons';
+import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark';
+import { PlayUpWordmark } from '../design-system/PlayUpWordmark';
 import {
   resolveActiveDestination,
   shellDestinationHrefs,
   shellNavGroups,
   type ShellNavItemKey,
-} from './shellDestinations'
-import { useShellCompetitionContext } from './useShellCompetitionContext'
+} from './shellDestinations';
+import { useShellCompetitionContext } from './useShellCompetitionContext';
 
 type ShellSidebarProps = {
-  collapsed: boolean
-  hideCollapse?: boolean
-  inert?: boolean
-  onToggleCollapse: () => void
-}
+  collapsed: boolean;
+  hideCollapse?: boolean;
+  inert?: boolean;
+  onToggleCollapse: () => void;
+};
 
 const navIcons: Record<
   ShellNavItemKey,
@@ -40,7 +40,7 @@ const navIcons: Record<
   teams: TeamsNavIcon,
   venues: VenuesNavIcon,
   regulation: RegulationNavIcon,
-}
+};
 
 /**
  * Structural sidebar (Shell A). Lockup → Accueil. Collapse lives in the rail.
@@ -51,12 +51,12 @@ export function ShellSidebar({
   inert = false,
   onToggleCollapse,
 }: ShellSidebarProps) {
-  const { t } = useTranslation('shell')
-  const { stageId, matchId } = useParams()
-  const { competitionId } = useShellCompetitionContext()
-  const location = useLocation()
-  const activeKey = resolveActiveDestination(location.pathname)
-  const hrefs = shellDestinationHrefs({ competitionId, stageId, matchId })
+  const { t } = useTranslation('shell');
+  const { stageId, matchId } = useParams();
+  const { competitionId } = useShellCompetitionContext();
+  const location = useLocation();
+  const activeKey = resolveActiveDestination(location.pathname);
+  const hrefs = shellDestinationHrefs({ competitionId, stageId, matchId });
 
   return (
     <aside
@@ -89,10 +89,10 @@ export function ShellSidebar({
               {t(`groups.${group.id}`)}
             </p>
             {group.items.map((item) => {
-              const Icon = navIcons[item.key]
-              const label = t(`navigation.${item.key}`)
+              const Icon = navIcons[item.key];
+              const label = t(`navigation.${item.key}`);
               const isActive =
-                item.hrefKey !== undefined && item.hrefKey === activeKey
+                item.hrefKey !== undefined && item.hrefKey === activeKey;
 
               if (item.hrefKey) {
                 return (
@@ -107,7 +107,7 @@ export function ShellSidebar({
                     <Icon className="ds-shell-rail__icon" />
                     <span className="ds-shell-rail__label">{label}</span>
                   </Link>
-                )
+                );
               }
 
               return (
@@ -122,7 +122,7 @@ export function ShellSidebar({
                   <Icon className="ds-shell-rail__icon" />
                   <span className="ds-shell-rail__label">{label}</span>
                 </button>
-              )
+              );
             })}
           </div>
         ))}
@@ -148,5 +148,5 @@ export function ShellSidebar({
         </div>
       )}
     </aside>
-  )
+  );
 }

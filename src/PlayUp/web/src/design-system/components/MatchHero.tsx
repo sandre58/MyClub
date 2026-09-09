@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export type MatchHeroTeam = {
-  name: string
-  crest: ReactNode
-  scoreActions?: ReactNode
-}
+  name: string;
+  crest: ReactNode;
+  scoreActions?: ReactNode;
+};
 
 /**
  * Match Hero — canonical object header (scheduled / live / finished).
@@ -19,17 +19,19 @@ export function MatchHero({
   meta,
   className,
 }: {
-  eyebrow?: ReactNode
-  status?: ReactNode
-  home: MatchHeroTeam
-  away: MatchHeroTeam
-  center: ReactNode
-  meta?: ReactNode
-  className?: string
+  eyebrow?: ReactNode;
+  status?: ReactNode;
+  home: MatchHeroTeam;
+  away: MatchHeroTeam;
+  center: ReactNode;
+  meta?: ReactNode;
+  className?: string;
 }) {
   return (
     <section
-      className={['ds-panel ds-match-hero', className].filter(Boolean).join(' ')}
+      className={['ds-panel ds-match-hero', className]
+        .filter(Boolean)
+        .join(' ')}
     >
       <div className="ds-match-hero__top">
         {eyebrow ? <span className="ds-eyebrow">{eyebrow}</span> : <span />}
@@ -52,11 +54,9 @@ export function MatchHero({
         </div>
       </div>
 
-      {meta ? (
-        <div className="ds-match-hero__meta">{meta}</div>
-      ) : null}
+      {meta ? <div className="ds-match-hero__meta">{meta}</div> : null}
     </section>
-  )
+  );
 }
 
 export function MatchHeroScore({
@@ -64,9 +64,9 @@ export function MatchHeroScore({
   pending = false,
   ariaLabel,
 }: {
-  children: ReactNode
-  pending?: boolean
-  ariaLabel?: string
+  children: ReactNode;
+  pending?: boolean;
+  ariaLabel?: string;
 }) {
   return (
     <span
@@ -76,7 +76,7 @@ export function MatchHeroScore({
     >
       {children}
     </span>
-  )
+  );
 }
 
 export function MatchHeroSideScoreActions({
@@ -86,11 +86,11 @@ export function MatchHeroSideScoreActions({
   onDecrement,
   disabled = false,
 }: {
-  incrementLabel: string
-  decrementLabel: string
-  onIncrement: () => void
-  onDecrement: () => void
-  disabled?: boolean
+  incrementLabel: string;
+  decrementLabel: string;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="ds-match-hero__score-actions">
@@ -113,7 +113,7 @@ export function MatchHeroSideScoreActions({
         −
       </button>
     </div>
-  )
+  );
 }
 
 export function MatchHeroScoreActions({
@@ -127,15 +127,15 @@ export function MatchHeroScoreActions({
   awayDecrementLabel,
   disabled = false,
 }: {
-  onHomeIncrement: () => void
-  onHomeDecrement: () => void
-  onAwayIncrement: () => void
-  onAwayDecrement: () => void
-  homeIncrementLabel: string
-  homeDecrementLabel: string
-  awayIncrementLabel: string
-  awayDecrementLabel: string
-  disabled?: boolean
+  onHomeIncrement: () => void;
+  onHomeDecrement: () => void;
+  onAwayIncrement: () => void;
+  onAwayDecrement: () => void;
+  homeIncrementLabel: string;
+  homeDecrementLabel: string;
+  awayIncrementLabel: string;
+  awayDecrementLabel: string;
+  disabled?: boolean;
 }) {
   return {
     home: (
@@ -156,20 +156,20 @@ export function MatchHeroScoreActions({
         disabled={disabled}
       />
     ),
-  }
+  };
 }
 
 export function MatchHeroMetaItem({
   icon,
   children,
 }: {
-  icon?: ReactNode
-  children: ReactNode
+  icon?: ReactNode;
+  children: ReactNode;
 }) {
   return (
     <span className="ds-match-hero__meta-item">
       {icon}
       {children}
     </span>
-  )
+  );
 }

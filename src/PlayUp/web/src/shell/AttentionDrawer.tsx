@@ -1,27 +1,25 @@
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useId, useRef, useState, type RefObject } from 'react'
-import { useTranslation } from 'react-i18next'
-import { fetchNeedsAttention } from '../api'
-import { CloseIcon } from '../design-system/icons/shellIcons'
-import { EmptyState } from '../ui'
-import { useDismissLayer } from '../design-system/useDismissLayer'
-import { useFocusTrap } from '../design-system/useFocusTrap'
-import { queryKeys } from '../queryKeys'
-import type { OverviewSituation } from '../types'
-import {
-  AttentionSituationRow,
-  partitionAttentionItems,
-} from './AttentionSituationRow'
-import { needsAttentionItemsToSituations } from './needsAttentionToSituation'
-import { useShellCompetitionContext } from './useShellCompetitionContext'
-import { SHELL_MOTION_EXIT_MS } from './shellMotion'
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useId, useRef, useState, type RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
+import { fetchNeedsAttention } from '../api';
+import { CloseIcon } from '../design-system/icons/shellIcons';
+import { EmptyState } from '../ui';
+import { useDismissLayer } from '../design-system/useDismissLayer';
+import { useFocusTrap } from '../design-system/useFocusTrap';
+import { queryKeys } from '../queryKeys';
+import type { OverviewSituation } from '../types';
+import { AttentionSituationRow } from './AttentionSituationRow';
+import { partitionAttentionItems } from './attentionPartition';
+import { needsAttentionItemsToSituations } from './needsAttentionToSituation';
+import { useShellCompetitionContext } from './useShellCompetitionContext';
+import { SHELL_MOTION_EXIT_MS } from './shellMotion';
 
 type AttentionDrawerProps = {
-  open: boolean
-  panelId: string
-  onClose: () => void
-  returnFocusRef: RefObject<HTMLButtonElement | null>
-}
+  open: boolean;
+  panelId: string;
+  onClose: () => void;
+  returnFocusRef: RefObject<HTMLButtonElement | null>;
+};
 
 /**
  * Temporary triage surface (14.6.4) — not navigation, not a generic drawer primitive.
@@ -33,74 +31,79 @@ export function AttentionDrawer({
   onClose,
   returnFocusRef,
 }: AttentionDrawerProps) {
-  const { t } = useTranslation(['shell', 'common'])
-  const titleId = useId()
-  const panelRef = useRef<HTMLDivElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const hadOpenedRef = useRef(false)
-  const [mounted, setMounted] = useState(open)
-  const [visible, setVisible] = useState(open)
+  const { t } = useTranslation(['shell', 'common']);
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const hadOpenedRef = useRef(false);
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(open);
 
-  const { competitionId, state: contextState } = useShellCompetitionContext()
+  const { competitionId, state: contextState } = useShellCompetitionContext();
 
   const attentionQuery = useQuery({
     queryKey: queryKeys.competitions.attention(competitionId ?? ''),
     queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: (open || mounted) && Boolean(competitionId),
-  })
+  });
 
-  const items = needsAttentionItemsToSituations(attentionQuery.data?.items ?? [])
-  const count = attentionQuery.data?.count ?? items.length
-  const titleLabel = t('shell:attention.label')
-  const showCount = !attentionQuery.isPending && count > 0
+  const items = needsAttentionItemsToSituations(
+    attentionQuery.data?.items ?? [],
+  );
+  const count = attentionQuery.data?.count ?? items.length;
+  const titleLabel = t('shell:attention.label');
+  const showCount = !attentionQuery.isPending && count > 0;
 
   useEffect(() => {
     if (open) {
-      setMounted(true)
+      setMounted(true);
       const frame = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true))
-      })
-      return () => cancelAnimationFrame(frame)
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(frame);
     }
 
-    setVisible(false)
-    const timeout = window.setTimeout(() => setMounted(false), SHELL_MOTION_EXIT_MS)
-    return () => window.clearTimeout(timeout)
-  }, [open])
+    setVisible(false);
+    const timeout = window.setTimeout(
+      () => setMounted(false),
+      SHELL_MOTION_EXIT_MS,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [open]);
 
   useEffect(() => {
     if (!open || !visible) {
-      return
+      return;
     }
 
-    const shell = panelRef.current?.closest('.shell')
+    const shell = panelRef.current?.closest('.shell');
     if (shell instanceof HTMLElement) {
-      shell.scrollLeft = 0
-      shell.scrollTop = 0
+      shell.scrollLeft = 0;
+      shell.scrollTop = 0;
     }
 
-    closeButtonRef.current?.focus({ preventScroll: true })
-  }, [open, visible])
+    closeButtonRef.current?.focus({ preventScroll: true });
+  }, [open, visible]);
 
   useEffect(() => {
     if (open) {
-      hadOpenedRef.current = true
+      hadOpenedRef.current = true;
     }
-  }, [open])
+  }, [open]);
 
   useEffect(() => {
     if (hadOpenedRef.current && !mounted) {
-      hadOpenedRef.current = false
-      returnFocusRef.current?.focus({ preventScroll: true })
+      hadOpenedRef.current = false;
+      returnFocusRef.current?.focus({ preventScroll: true });
     }
-  }, [mounted, returnFocusRef])
+  }, [mounted, returnFocusRef]);
 
-  useDismissLayer(open, onClose)
+  useDismissLayer(open, onClose);
 
-  useFocusTrap(panelRef, open && visible)
+  useFocusTrap(panelRef, open && visible);
 
   if (!mounted) {
-    return null
+    return null;
   }
 
   return (
@@ -130,7 +133,9 @@ export function AttentionDrawer({
               <span className="shell-attention-drawer__count">{count}</span>
             ) : null}
             <span className="shell-attention-drawer__copy">
-              <span className="shell-attention-drawer__title">{titleLabel}</span>
+              <span className="shell-attention-drawer__title">
+                {titleLabel}
+              </span>
               <span className="shell-attention-drawer__lede">
                 {t('shell:attention.lede')}
               </span>
@@ -160,7 +165,7 @@ export function AttentionDrawer({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function AttentionDrawerContent({
@@ -171,14 +176,14 @@ function AttentionDrawerContent({
   items,
   onNavigate,
 }: {
-  contextState: ReturnType<typeof useShellCompetitionContext>['state']
-  competitionId?: string
-  pending: boolean
-  error: unknown
-  items: OverviewSituation[]
-  onNavigate: () => void
+  contextState: ReturnType<typeof useShellCompetitionContext>['state'];
+  competitionId?: string;
+  pending: boolean;
+  error: unknown;
+  items: OverviewSituation[];
+  onNavigate: () => void;
 }) {
-  const { t } = useTranslation('shell')
+  const { t } = useTranslation('shell');
 
   if (!competitionId) {
     if (contextState === 'loading') {
@@ -186,7 +191,7 @@ function AttentionDrawerContent({
         <p className="shell-attention-drawer__message" aria-busy="true">
           {t('competition.loading')}
         </p>
-      )
+      );
     }
 
     if (contextState === 'empty') {
@@ -194,14 +199,14 @@ function AttentionDrawerContent({
         <p className="shell-attention-drawer__message">
           {t('attention.emptyHost')}
         </p>
-      )
+      );
     }
 
     return (
       <p className="shell-attention-drawer__message">
         {t('attention.noContext')}
       </p>
-    )
+    );
   }
 
   if (contextState === 'loading' || pending) {
@@ -209,7 +214,7 @@ function AttentionDrawerContent({
       <p className="shell-attention-drawer__message" aria-busy="true">
         {t('competition.loading')}
       </p>
-    )
+    );
   }
 
   if (error) {
@@ -217,7 +222,7 @@ function AttentionDrawerContent({
       <p className="shell-attention-drawer__message" role="alert">
         {t('attention.loadError')}
       </p>
-    )
+    );
   }
 
   if (items.length === 0) {
@@ -225,10 +230,10 @@ function AttentionDrawerContent({
       <EmptyState variant="idle" title={t('attention.emptyTitle')}>
         {t('attention.emptyHint')}
       </EmptyState>
-    )
+    );
   }
 
-  const { blocking, attention } = partitionAttentionItems(items)
+  const { blocking, attention } = partitionAttentionItems(items);
 
   return (
     <div className="shell-attention-drawer__groups">
@@ -249,7 +254,7 @@ function AttentionDrawerContent({
         />
       ) : null}
     </div>
-  )
+  );
 }
 
 function AttentionDrawerGroup({
@@ -258,10 +263,10 @@ function AttentionDrawerGroup({
   competitionId,
   onNavigate,
 }: {
-  label: string
-  items: OverviewSituation[]
-  competitionId: string
-  onNavigate: () => void
+  label: string;
+  items: OverviewSituation[];
+  competitionId: string;
+  onNavigate: () => void;
 }) {
   return (
     <section className="shell-attention-drawer__group">
@@ -277,5 +282,5 @@ function AttentionDrawerGroup({
         ))}
       </ul>
     </section>
-  )
+  );
 }

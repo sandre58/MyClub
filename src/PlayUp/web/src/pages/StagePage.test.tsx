@@ -1,28 +1,27 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyDraw,
   fetchCompetitionDetail,
   fetchStageOverview,
-  materializeCupFromOccupiedSlots,
   prepareStage,
   publishDraw,
   startStage,
-} from '../api'
-import type { StageDraw, StageOverview, StageRound, StageSlot } from '../types'
+} from '../api';
+import type { StageDraw, StageOverview, StageRound, StageSlot } from '../types';
 import {
   getDrawUiProjection,
   isPairingDrawApplied,
   isSlotDrawApplied,
   resolvePairingFixtureIds,
-} from './drawUi'
-import { StagePage } from './StagePage'
+} from './drawUi';
+import { StagePage } from './StagePage';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchStageOverview: vi.fn(),
@@ -32,16 +31,16 @@ vi.mock('../api', async (importOriginal) => {
     publishDraw: vi.fn(),
     applyDraw: vi.fn(),
     materializeCupFromOccupiedSlots: vi.fn(),
-  }
-})
+  };
+});
 
-const stageId = '22222222-2222-2222-2222-222222222222'
-const competitionId = '33333333-3333-3333-3333-333333333333'
-const drawId = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
-const slotDrawId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
-const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
-const entryA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-const entryB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+const stageId = '22222222-2222-2222-2222-222222222222';
+const competitionId = '33333333-3333-3333-3333-333333333333';
+const drawId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+const slotDrawId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+const entryA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const entryB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
   return {
@@ -53,7 +52,7 @@ function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
     slots: [],
     draws: [],
     ...overrides,
-  }
+  };
 }
 
 function pairingDraw(overrides: Partial<StageDraw> = {}): StageDraw {
@@ -72,7 +71,7 @@ function pairingDraw(overrides: Partial<StageDraw> = {}): StageDraw {
     ],
     slotPlacements: [],
     ...overrides,
-  }
+  };
 }
 
 function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
@@ -90,18 +89,16 @@ function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
       },
     ],
     ...overrides,
-  }
+  };
 }
 
-async function confirmApplyInDialog(
-  user: ReturnType<typeof userEvent.setup>,
-) {
+async function confirmApplyInDialog(user: ReturnType<typeof userEvent.setup>) {
   const dialog = await screen.findByRole('dialog', {
     name: 'Appliquer le tirage ?',
-  })
+  });
   await user.click(
     within(dialog).getByRole('button', { name: 'Appliquer le tirage' }),
-  )
+  );
 }
 
 function oneEmptyFixtureRound(): StageRound[] {
@@ -118,7 +115,7 @@ function oneEmptyFixtureRound(): StageRound[] {
         },
       ],
     },
-  ]
+  ];
 }
 
 function renderStagePage() {
@@ -127,7 +124,7 @@ function renderStagePage() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-  })
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -137,44 +134,59 @@ function renderStagePage() {
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-  )
+  );
 }
 
 describe('isSlotDrawApplied', () => {
   const slotsOccupied: StageSlot[] = [
-    { slotKey: 'SF1-A', entryId: entryA, displayName: 'Alpha', coveredByCompleteFixture: false },
-  ]
+    {
+      slotKey: 'SF1-A',
+      entryId: entryA,
+      displayName: 'Alpha',
+      coveredByCompleteFixture: false,
+    },
+  ];
   const slotsEmpty: StageSlot[] = [
-    { slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false },
-  ]
+    {
+      slotKey: 'SF1-A',
+      entryId: null,
+      displayName: null,
+      coveredByCompleteFixture: false,
+    },
+  ];
   const slotsWrong: StageSlot[] = [
-    { slotKey: 'SF1-A', entryId: entryB, displayName: 'Beta', coveredByCompleteFixture: false },
-  ]
+    {
+      slotKey: 'SF1-A',
+      entryId: entryB,
+      displayName: 'Beta',
+      coveredByCompleteFixture: false,
+    },
+  ];
 
   it('is true when every placement matches the stage slot occupant', () => {
-    expect(isSlotDrawApplied(slotDraw(), slotsOccupied)).toBe(true)
-  })
+    expect(isSlotDrawApplied(slotDraw(), slotsOccupied)).toBe(true);
+  });
 
   it('is false when a target slot is empty', () => {
-    expect(isSlotDrawApplied(slotDraw(), slotsEmpty)).toBe(false)
-  })
+    expect(isSlotDrawApplied(slotDraw(), slotsEmpty)).toBe(false);
+  });
 
   it('is false when a slot has a different entry', () => {
-    expect(isSlotDrawApplied(slotDraw(), slotsWrong)).toBe(false)
-  })
-})
+    expect(isSlotDrawApplied(slotDraw(), slotsWrong)).toBe(false);
+  });
+});
 
 describe('resolvePairingFixtureIds', () => {
   it('maps pairing[i] to fixture[i] when counts match', () => {
     expect(
       resolvePairingFixtureIds(pairingDraw(), oneEmptyFixtureRound()),
-    ).toEqual([fixtureId])
-  })
+    ).toEqual([fixtureId]);
+  });
 
   it('returns null when counts differ', () => {
-    expect(resolvePairingFixtureIds(pairingDraw(), [])).toBeNull()
-  })
-})
+    expect(resolvePairingFixtureIds(pairingDraw(), [])).toBeNull();
+  });
+});
 
 describe('isPairingDrawApplied', () => {
   it('is true when each mapped fixture already has an attachment', () => {
@@ -191,328 +203,365 @@ describe('isPairingDrawApplied', () => {
           },
         ],
       },
-    ]
-    expect(isPairingDrawApplied(pairingDraw({ status: 'Published' }), rounds)).toBe(true)
-  })
+    ];
+    expect(
+      isPairingDrawApplied(pairingDraw({ status: 'Published' }), rounds),
+    ).toBe(true);
+  });
 
   it('is false when a target fixture has no attachment', () => {
     expect(
-      isPairingDrawApplied(pairingDraw({ status: 'Published' }), oneEmptyFixtureRound()),
-    ).toBe(false)
-  })
-})
+      isPairingDrawApplied(
+        pairingDraw({ status: 'Published' }),
+        oneEmptyFixtureRound(),
+      ),
+    ).toBe(false);
+  });
+});
 
 describe('getDrawUiProjection', () => {
   it('describes draft + not resolved without results', () => {
     const ui = getDrawUiProjection(
       pairingDraw({ resolutionState: 'NotResolved', pairings: [] }),
       [],
-    )
-    expect(ui.messageKey).toBe('draftNotResolved')
-    expect(ui.showResults).toBe(false)
-  })
+    );
+    expect(ui.messageKey).toBe('draftNotResolved');
+    expect(ui.showResults).toBe(false);
+  });
 
   it('describes draft + resolved as not published', () => {
-    const ui = getDrawUiProjection(pairingDraw(), [])
-    expect(ui.messageKey).toBe('draftResolved')
-    expect(ui.showResults).toBe(true)
-  })
-})
+    const ui = getDrawUiProjection(pairingDraw(), []);
+    expect(ui.messageKey).toBe('draftResolved');
+    expect(ui.showResults).toBe(true);
+  });
+});
 
 describe('StagePage prepare', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.clearAllMocks();
     vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
       status: 'Draft',
       entries: [],
       stages: [],
-    })
-    vi.mocked(prepareStage).mockResolvedValue(undefined)
-    vi.mocked(startStage).mockResolvedValue(undefined)
-    vi.mocked(publishDraw).mockResolvedValue(undefined)
-    vi.mocked(applyDraw).mockResolvedValue(undefined)
-  })
+    });
+    vi.mocked(prepareStage).mockResolvedValue(undefined);
+    vi.mocked(startStage).mockResolvedValue(undefined);
+    vi.mocked(publishDraw).mockResolvedValue(undefined);
+    vi.mocked(applyDraw).mockResolvedValue(undefined);
+  });
 
   it('shows Prepare stage when status is Draft', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Draft' }),
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     expect(
       await screen.findByRole('button', { name: 'Préparer la phase' }),
-    ).toBeEnabled()
-    expect(screen.getByText('Brouillon')).toBeInTheDocument()
-  })
+    ).toBeEnabled();
+    expect(screen.getByText('Brouillon')).toBeInTheDocument();
+  });
 
   it('hides Prepare stage when status is Ready', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Ready' }),
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Prêt')).toBeInTheDocument()
-    })
+      expect(screen.getByText('Prêt')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: /Préparer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('hides Prepare stage when status is Running', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Running' }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Running' }),
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('En cours')).toBeInTheDocument()
-    })
+      expect(screen.getByText('En cours')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: /Préparer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('Prepare calls prepareStage and shows Ready after refetch', async () => {
-    const user = userEvent.setup()
-    let prepared = false
+    const user = userEvent.setup();
+    let prepared = false;
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
       baseOverview({ status: prepared ? 'Ready' : 'Draft' }),
-    )
+    );
     vi.mocked(prepareStage).mockImplementation(async () => {
-      prepared = true
-    })
+      prepared = true;
+    });
 
-    renderStagePage()
+    renderStagePage();
     await user.click(
       await screen.findByRole('button', { name: 'Préparer la phase' }),
-    )
+    );
 
     await waitFor(() => {
-      expect(prepareStage).toHaveBeenCalledWith(stageId)
-      expect(screen.getByText('Prêt')).toBeInTheDocument()
-    })
+      expect(prepareStage).toHaveBeenCalledWith(stageId);
+      expect(screen.getByText('Prêt')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: /Préparer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('disables Prepare while pending', async () => {
-    const user = userEvent.setup()
-    let resolvePrepare!: () => void
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
+    const user = userEvent.setup();
+    let resolvePrepare!: () => void;
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Draft' }),
+    );
     vi.mocked(prepareStage).mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolvePrepare = () => resolve(undefined)
+          resolvePrepare = () => resolve(undefined);
         }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
     await user.click(
       await screen.findByRole('button', { name: 'Préparer la phase' }),
-    )
+    );
 
     expect(
       await screen.findByRole('button', { name: 'Préparation…' }),
-    ).toBeDisabled()
+    ).toBeDisabled();
 
-    resolvePrepare()
+    resolvePrepare();
     await waitFor(() => {
-      expect(prepareStage).toHaveBeenCalledWith(stageId)
-    })
-  })
+      expect(prepareStage).toHaveBeenCalledWith(stageId);
+    });
+  });
 
   it('shows Prepare error and keeps Draft with button usable', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
-    vi.mocked(prepareStage).mockRejectedValue(new Error('Prepare blocked'))
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Draft' }),
+    );
+    vi.mocked(prepareStage).mockRejectedValue(new Error('Prepare blocked'));
 
-    renderStagePage()
+    renderStagePage();
     await user.click(
       await screen.findByRole('button', { name: 'Préparer la phase' }),
-    )
+    );
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Prepare blocked')
-    expect(screen.getByText('Brouillon')).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Prepare blocked',
+    );
+    expect(screen.getByText('Brouillon')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Préparer la phase' }),
-    ).toBeEnabled()
-  })
-})
+    ).toBeEnabled();
+  });
+});
 
 describe('StagePage start', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.clearAllMocks();
     vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
       status: 'Draft',
       entries: [],
       stages: [],
-    })
-    vi.mocked(prepareStage).mockResolvedValue(undefined)
-    vi.mocked(startStage).mockResolvedValue(undefined)
-    vi.mocked(publishDraw).mockResolvedValue(undefined)
-    vi.mocked(applyDraw).mockResolvedValue(undefined)
-  })
+    });
+    vi.mocked(prepareStage).mockResolvedValue(undefined);
+    vi.mocked(startStage).mockResolvedValue(undefined);
+    vi.mocked(publishDraw).mockResolvedValue(undefined);
+    vi.mocked(applyDraw).mockResolvedValue(undefined);
+  });
 
   it('shows Start stage when status is Ready', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Ready' }),
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     expect(
       await screen.findByRole('button', { name: 'Démarrer la phase' }),
-    ).toBeEnabled()
-    expect(screen.getByText('Prêt')).toBeInTheDocument()
+    ).toBeEnabled();
+    expect(screen.getByText('Prêt')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Préparer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('hides Start stage when status is Draft', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Draft' }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Draft' }),
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Brouillon')).toBeInTheDocument()
-    })
+      expect(screen.getByText('Brouillon')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('hides Start stage when status is Running', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Running' }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Running' }),
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('En cours')).toBeInTheDocument()
-    })
+      expect(screen.getByText('En cours')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('hides Start stage when status is Completed', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Completed' }))
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Completed' }),
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Terminé')).toBeInTheDocument()
-    })
+      expect(screen.getByText('Terminé')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('Start calls startStage and shows Running after refetch', async () => {
-    const user = userEvent.setup()
-    let started = false
+    const user = userEvent.setup();
+    let started = false;
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
       baseOverview({ status: started ? 'Running' : 'Ready' }),
-    )
+    );
     vi.mocked(startStage).mockImplementation(async () => {
-      started = true
-    })
+      started = true;
+    });
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Démarrer la phase' }))
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Démarrer la phase' }),
+    );
 
     await waitFor(() => {
-      expect(startStage).toHaveBeenCalledWith(stageId)
-      expect(screen.getByText('En cours')).toBeInTheDocument()
-    })
+      expect(startStage).toHaveBeenCalledWith(stageId);
+      expect(screen.getByText('En cours')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('disables Start while pending', async () => {
-    const user = userEvent.setup()
-    let resolveStart!: () => void
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
+    const user = userEvent.setup();
+    let resolveStart!: () => void;
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Ready' }),
+    );
     vi.mocked(startStage).mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolveStart = () => resolve(undefined)
+          resolveStart = () => resolve(undefined);
         }),
-    )
+    );
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Démarrer la phase' }))
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Démarrer la phase' }),
+    );
 
     expect(
       await screen.findByRole('button', { name: 'Démarrage…' }),
-    ).toBeDisabled()
+    ).toBeDisabled();
 
-    resolveStart()
+    resolveStart();
     await waitFor(() => {
-      expect(startStage).toHaveBeenCalledWith(stageId)
-    })
-  })
+      expect(startStage).toHaveBeenCalledWith(stageId);
+    });
+  });
 
   it('shows Start error and keeps Ready with button usable', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchStageOverview).mockResolvedValue(baseOverview({ status: 'Ready' }))
-    vi.mocked(startStage).mockRejectedValue(new Error('Start blocked'))
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      baseOverview({ status: 'Ready' }),
+    );
+    vi.mocked(startStage).mockRejectedValue(new Error('Start blocked'));
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Démarrer la phase' }))
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Démarrer la phase' }),
+    );
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Start blocked')
-    expect(screen.getByText('Prêt')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Démarrer la phase' })).toBeEnabled()
-  })
-})
+    expect(await screen.findByRole('alert')).toHaveTextContent('Start blocked');
+    expect(screen.getByText('Prêt')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Démarrer la phase' }),
+    ).toBeEnabled();
+  });
+});
 
 describe('StagePage draws', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.clearAllMocks();
     vi.mocked(fetchCompetitionDetail).mockResolvedValue({
       id: competitionId,
       name: 'Dev Seed Cup',
       status: 'Draft',
       entries: [],
       stages: [],
-    })
-    vi.mocked(prepareStage).mockResolvedValue(undefined)
-    vi.mocked(startStage).mockResolvedValue(undefined)
-    vi.mocked(publishDraw).mockResolvedValue(undefined)
-    vi.mocked(applyDraw).mockResolvedValue(undefined)
-  })
+    });
+    vi.mocked(prepareStage).mockResolvedValue(undefined);
+    vi.mocked(startStage).mockResolvedValue(undefined);
+    vi.mocked(publishDraw).mockResolvedValue(undefined);
+    vi.mocked(applyDraw).mockResolvedValue(undefined);
+  });
 
   it('shows pairing result for draft + resolved without Apply', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({ draws: [pairingDraw()] }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
       expect(
         screen.getByText('Tirage résolu mais non publié.'),
-      ).toBeInTheDocument()
-    })
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByRole('heading', { name: /Tirage Appariement/i }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Résolu')).toBeInTheDocument()
-    expect(screen.getByText('Alpha')).toBeInTheDocument()
-    expect(screen.getByText('Beta')).toBeInTheDocument()
-    expect(screen.getByText('vs')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText('Résolu')).toBeInTheDocument();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+    expect(screen.getByText('vs')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Publier le tirage' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Appliquer le tirage/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('hides Publish and Apply for draft + not resolved', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -524,24 +573,24 @@ describe('StagePage draws', () => {
           }),
         ],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
       expect(
         screen.getByText('Tirage en préparation — pas encore de résultat.'),
-      ).toBeInTheDocument()
-    })
-    expect(screen.queryByText('Résultat')).not.toBeInTheDocument()
-    expect(screen.queryByText('Alpha')).not.toBeInTheDocument()
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Résultat')).not.toBeInTheDocument();
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Publier le tirage/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Appliquer le tirage/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows No solution without Publish or Apply', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -553,23 +602,23 @@ describe('StagePage draws', () => {
           }),
         ],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     expect(
       await screen.findByText(
         'Aucune solution admissible n’a été trouvée pour ce tirage.',
       ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Aucune solution')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText('Aucune solution')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Publier le tirage/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Appliquer le tirage/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows Cancelled without Publish or Apply', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -581,24 +630,24 @@ describe('StagePage draws', () => {
           }),
         ],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     expect(
       await screen.findByText(
         'Ce tirage a été annulé. Un nouveau tirage est nécessaire pour recommencer.',
       ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Annulé')).toBeInTheDocument()
-    expect(screen.getByText('Alpha')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText('Annulé')).toBeInTheDocument();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Publier le tirage/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Appliquer le tirage/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('shows Published with Apply when not yet applied', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -606,143 +655,159 @@ describe('StagePage draws', () => {
         draws: [pairingDraw({ status: 'Published' })],
         rounds: oneEmptyFixtureRound(),
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Tirage publié.')).toBeInTheDocument()
-    })
-    expect(screen.getByText('Publié')).toBeInTheDocument()
+      expect(screen.getByText('Tirage publié.')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Publié')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Publier le tirage/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Appliquer le tirage' }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('shows derived Applied when slot placements match stage slots', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: entryA, displayName: 'Alpha', coveredByCompleteFixture: false }],
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: entryA,
+            displayName: 'Alpha',
+            coveredByCompleteFixture: false,
+          },
+        ],
         draws: [slotDraw()],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Appliqué')).toBeInTheDocument()
-    })
+      expect(screen.getByText('Appliqué')).toBeInTheDocument();
+    });
     expect(
       screen.getByText(
         'Tirage publié. Les placements correspondent aux emplacements de la phase.',
       ),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Placements' }),
-    ).toBeInTheDocument()
-    expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1)
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.queryByRole('button', { name: /Appliquer le tirage/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('does not show Applied when slot occupants do not match', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
         draws: [slotDraw()],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Tirage publié.')).toBeInTheDocument()
-    })
-    expect(screen.queryByText('Appliqué')).not.toBeInTheDocument()
+      expect(screen.getByText('Tirage publié.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Appliqué')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Appliquer le tirage' }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('Publish calls publishDraw and shows Published after refetch', async () => {
-    const user = userEvent.setup()
-    let published = false
+    const user = userEvent.setup();
+    let published = false;
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
       baseOverview({
         draws: [pairingDraw({ status: published ? 'Published' : 'Draft' })],
         rounds: oneEmptyFixtureRound(),
       }),
-    )
+    );
     vi.mocked(publishDraw).mockImplementation(async () => {
-      published = true
-    })
+      published = true;
+    });
 
-    renderStagePage()
+    renderStagePage();
     const publishButton = await screen.findByRole('button', {
       name: 'Publier le tirage',
-    })
-    await user.click(publishButton)
+    });
+    await user.click(publishButton);
 
     await waitFor(() => {
-      expect(publishDraw).toHaveBeenCalledWith(stageId, drawId)
-      expect(screen.getByText('Publié')).toBeInTheDocument()
-      expect(screen.getByText('Tirage publié.')).toBeInTheDocument()
-    })
-  })
+      expect(publishDraw).toHaveBeenCalledWith(stageId, drawId);
+      expect(screen.getByText('Publié')).toBeInTheDocument();
+      expect(screen.getByText('Tirage publié.')).toBeInTheDocument();
+    });
+  });
 
   it('disables Publish while pending', async () => {
-    const user = userEvent.setup()
-    let resolvePublish!: () => void
+    const user = userEvent.setup();
+    let resolvePublish!: () => void;
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({ draws: [pairingDraw()] }),
-    )
+    );
     vi.mocked(publishDraw).mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolvePublish = () => resolve(undefined)
+          resolvePublish = () => resolve(undefined);
         }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
     const publishButton = await screen.findByRole('button', {
       name: 'Publier le tirage',
-    })
-    await user.click(publishButton)
+    });
+    await user.click(publishButton);
 
     expect(
       await screen.findByRole('button', { name: 'Publication…' }),
-    ).toBeDisabled()
+    ).toBeDisabled();
 
-    resolvePublish()
+    resolvePublish();
     await waitFor(() => {
-      expect(publishDraw).toHaveBeenCalled()
-    })
-  })
+      expect(publishDraw).toHaveBeenCalled();
+    });
+  });
 
   it('shows Publish error message', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({ draws: [pairingDraw()] }),
-    )
-    vi.mocked(publishDraw).mockRejectedValue(new Error('Publish blocked'))
+    );
+    vi.mocked(publishDraw).mockRejectedValue(new Error('Publish blocked'));
 
-    renderStagePage()
+    renderStagePage();
     await user.click(
       await screen.findByRole('button', { name: 'Publier le tirage' }),
-    )
+    );
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Publish blocked')
-  })
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Publish blocked',
+    );
+  });
 
   it('Apply Slot confirms then posts empty fixtureIds and shows Applied', async () => {
-    const user = userEvent.setup()
-    let applied = false
+    const user = userEvent.setup();
+    let applied = false;
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
       baseOverview({
@@ -756,113 +821,147 @@ describe('StagePage draws', () => {
         ],
         draws: [slotDraw()],
       }),
-    )
+    );
     vi.mocked(applyDraw).mockImplementation(async () => {
-      applied = true
-    })
+      applied = true;
+    });
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
-    await confirmApplyInDialog(user)
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+    );
+    await confirmApplyInDialog(user);
 
     await waitFor(() => {
       expect(applyDraw).toHaveBeenCalledWith(stageId, slotDrawId, {
         fixtureIds: [],
-      })
-      expect(screen.getByText('Appliqué')).toBeInTheDocument()
-    })
-  })
+      });
+      expect(screen.getByText('Appliqué')).toBeInTheDocument();
+    });
+  });
 
   it('disables Apply while pending', async () => {
-    const user = userEvent.setup()
-    let resolveApply!: () => void
+    const user = userEvent.setup();
+    let resolveApply!: () => void;
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
         draws: [slotDraw()],
       }),
-    )
+    );
     vi.mocked(applyDraw).mockImplementation(
       () =>
         new Promise((resolve) => {
-          resolveApply = () => resolve(undefined)
+          resolveApply = () => resolve(undefined);
         }),
-    )
+    );
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
-    await confirmApplyInDialog(user)
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+    );
+    await confirmApplyInDialog(user);
 
+    const confirmDialog = await screen.findByRole('dialog', {
+      name: 'Appliquer le tirage ?',
+    });
     expect(
-      await screen.findByRole('button', { name: 'Application…' }),
-    ).toBeDisabled()
+      within(confirmDialog).getByRole('button', { name: 'Application…' }),
+    ).toBeDisabled();
 
-    resolveApply()
+    resolveApply();
     await waitFor(() => {
-      expect(applyDraw).toHaveBeenCalled()
-    })
-  })
+      expect(applyDraw).toHaveBeenCalled();
+    });
+  });
 
   it('shows Apply error message', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
         draws: [slotDraw()],
       }),
-    )
-    vi.mocked(applyDraw).mockRejectedValue(new Error('Apply blocked'))
+    );
+    vi.mocked(applyDraw).mockRejectedValue(new Error('Apply blocked'));
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
-    await confirmApplyInDialog(user)
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+    );
+    await confirmApplyInDialog(user);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Apply blocked')
-  })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Apply blocked');
+  });
 
   it('cancelling Apply confirmation does not call applyDraw', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        slots: [{ slotKey: 'SF1-A', entryId: null, displayName: null, coveredByCompleteFixture: false }],
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
         draws: [slotDraw()],
       }),
-    )
+    );
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+    );
 
     const dialog = await screen.findByRole('dialog', {
       name: 'Appliquer le tirage ?',
-    })
-    await user.click(within(dialog).getByRole('button', { name: 'Annuler' }))
+    });
+    await user.click(within(dialog).getByRole('button', { name: 'Annuler' }));
 
-    expect(applyDraw).not.toHaveBeenCalled()
-  })
+    expect(applyDraw).not.toHaveBeenCalled();
+  });
 
   it('Apply Pairing posts 1:1 fixtureIds after confirmation', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [pairingDraw({ status: 'Published' })],
         rounds: oneEmptyFixtureRound(),
       }),
-    )
+    );
 
-    renderStagePage()
-    await user.click(await screen.findByRole('button', { name: 'Appliquer le tirage' }))
-    await confirmApplyInDialog(user)
+    renderStagePage();
+    await user.click(
+      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+    );
+    await confirmApplyInDialog(user);
 
     await waitFor(() => {
       expect(applyDraw).toHaveBeenCalledWith(stageId, drawId, {
         fixtureIds: [fixtureId],
-      })
-    })
-  })
+      });
+    });
+  });
 
   it('hides Apply for published Pairing when fixtures already have attachments', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -883,23 +982,23 @@ describe('StagePage draws', () => {
           },
         ],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     expect(
       await screen.findByText(
         'Tirage publié. Les rencontres cibles ont déjà des matchs attachés.',
       ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Appliqué')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText('Appliqué')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Appliquer le tirage/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('Confrontations excludes slots covered by a complete fixture', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         status: 'Draft',
@@ -944,27 +1043,27 @@ describe('StagePage draws', () => {
           },
         ],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     expect(
       await screen.findByRole('heading', { name: 'Confrontations' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/2 déjà couvert\(s\) par une confrontation complète/i),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
 
-    const slotA = screen.getByLabelText(/Emplacement A/i)
-    expect(within(slotA).queryByText(/SF1-A/)).not.toBeInTheDocument()
-    expect(within(slotA).getByText(/SF2-A/)).toBeInTheDocument()
-    expect(within(slotA).getByText(/SF2-B/)).toBeInTheDocument()
+    const slotA = screen.getByLabelText(/Emplacement A/i);
+    expect(within(slotA).queryByText(/SF1-A/)).not.toBeInTheDocument();
+    expect(within(slotA).getByText(/SF2-A/)).toBeInTheDocument();
+    expect(within(slotA).getByText(/SF2-B/)).toBeInTheDocument();
 
-    await user.selectOptions(slotA, 'SF2-A')
-    await user.selectOptions(screen.getByLabelText(/Emplacement B/i), 'SF2-B')
-    await user.click(screen.getByRole('button', { name: /Ajouter la paire/i }))
-    expect(screen.getByText(/SF2-A ↔ SF2-B/)).toBeInTheDocument()
-  })
+    await user.selectOptions(slotA, 'SF2-A');
+    await user.selectOptions(screen.getByLabelText(/Emplacement B/i), 'SF2-B');
+    await user.click(screen.getByRole('button', { name: /Ajouter la paire/i }));
+    expect(screen.getByText(/SF2-A ↔ SF2-B/)).toBeInTheDocument();
+  });
 
   it('Confrontations shows all-covered when no pairable slots remain', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -986,17 +1085,17 @@ describe('StagePage draws', () => {
           },
         ],
       }),
-    )
+    );
 
-    renderStagePage()
+    renderStagePage();
 
     expect(
       await screen.findByText(
         /Toutes les confrontations possibles sont déjà générées/i,
       ),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Générer les confrontations/i }),
-    ).not.toBeInTheDocument()
-  })
-})
+    ).not.toBeInTheDocument();
+  });
+});

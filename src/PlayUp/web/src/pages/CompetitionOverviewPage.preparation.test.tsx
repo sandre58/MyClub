@@ -1,8 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ApiError,
   fetchCompetitionOverview,
@@ -11,8 +11,8 @@ import {
   prepareCompetition,
   prepareStage,
   startCompetition,
-} from '../api'
-import { CompetitionOverviewPage } from './CompetitionOverviewPage'
+} from '../api';
+import { CompetitionOverviewPage } from './CompetitionOverviewPage';
 import {
   overviewIds,
   overviewSituation,
@@ -23,10 +23,10 @@ import {
   renderOverviewPage,
   setupDefaultOrganisationMock,
   stageId,
-} from './competitionOverviewPageTestHelpers'
+} from './competitionOverviewPageTestHelpers';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchCompetitionOverview: vi.fn(),
@@ -35,22 +35,22 @@ vi.mock('../api', async (importOriginal) => {
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
     materializeMatches: vi.fn(),
-  }
-})
+  };
+});
 
 describe('CompetitionOverviewPage — Construction / Préparation', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    setupDefaultOrganisationMock()
-  })
+    vi.clearAllMocks();
+    setupDefaultOrganisationMock();
+  });
 
   it('shows loading while the overview is pending', () => {
-    vi.mocked(fetchCompetitionOverview).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchCompetitionOverview).mockReturnValue(new Promise(() => {}));
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    expect(screen.getByRole('status')).toHaveTextContent('Chargement…')
-  })
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement…');
+  });
 
   it('renders Préparation overview without cycle panel or console blocks', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -91,55 +91,67 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           blockerCodes: ['ScheduledMatches'],
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       await screen.findByRole('heading', { name: 'Prochaine action' }),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Structure' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'À traiter' })).toBeInTheDocument()
-    expect(screen.getByText(/2×45 min/)).toBeInTheDocument()
-    expect(screen.queryByText(/situation\(s\) à traiter/i)).not.toBeInTheDocument()
-    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1)
-    expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument()
-    expect(screen.queryByText(/Bloque la préparation/)).not.toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Structure' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Règlement' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'À traiter' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/2×45 min/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/situation\(s\) à traiter/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1);
+    expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument();
+    expect(screen.queryByText(/Bloque la préparation/)).not.toBeInTheDocument();
     expect(
       screen.getByText(/Finalisez la configuration de la phase/),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Clôture' })).not.toBeInTheDocument()
-    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
-    expect(screen.queryByText('Espaces métier')).not.toBeInTheDocument()
-    expect(screen.queryByText('Socle de construction')).not.toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Clôture' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument();
+    expect(screen.queryByText('Espaces métier')).not.toBeInTheDocument();
+    expect(screen.queryByText('Socle de construction')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Actions disponibles' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Préparer la phase/i }),
-    ).toBeInTheDocument()
-    const structure = screen.getByTestId('overview-structure-construction')
+    ).toBeInTheDocument();
+    const structure = screen.getByTestId('overview-structure-construction');
     expect(
       within(structure).queryByRole('button', { name: /Préparer la phase/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Ajouter une équipe/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Renommer une équipe/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expectOverviewRegionOrder(
       'overview-region-progression',
       'overview-region-attention',
       'overview-region-config',
       'overview-region-structure',
-    )
-  })
+    );
+  });
 
   describe('Préparation layout DOM order', () => {
     it('orders Prochaine action then config then Structure when tip only', async () => {
@@ -157,21 +169,21 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           situations: [],
           attentionSummary: { count: 0, items: [] },
         }),
-      )
+      );
 
-      renderOverviewPage()
+      renderOverviewPage();
 
-      await screen.findByTestId('overview-region-progression')
+      await screen.findByTestId('overview-region-progression');
       expectOverviewRegionOrder(
         'overview-region-progression',
         'overview-region-config',
         'overview-region-structure',
-      )
-      expectOverviewRegionsAbsent('overview-region-attention')
-    })
+      );
+      expectOverviewRegionsAbsent('overview-region-attention');
+    });
 
     it('orders À traiter then config then Structure when attention only', async () => {
-      const situation = overviewSituation()
+      const situation = overviewSituation();
       vi.mocked(fetchCompetitionOverview).mockResolvedValue(
         overviewView({
           naturalProgression: null,
@@ -179,23 +191,23 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           situations: [situation],
           attentionSummary: { count: 1, items: [situation] },
         }),
-      )
+      );
 
-      renderOverviewPage()
+      renderOverviewPage();
 
-      await screen.findByTestId('overview-region-attention')
+      await screen.findByTestId('overview-region-attention');
       expectOverviewRegionOrder(
         'overview-region-attention',
         'overview-region-config',
         'overview-region-structure',
-      )
-      expectOverviewRegionsAbsent('overview-region-progression')
-    })
+      );
+      expectOverviewRegionsAbsent('overview-region-progression');
+    });
 
     it('keeps InsufficientParticipants on À traiter and minimum on Équipes without tip AddEntry', async () => {
       const situation = overviewSituation({
         params: { minimumTeams: '2', activeCount: '1' },
-      })
+      });
       vi.mocked(fetchCompetitionOverview).mockResolvedValue(
         overviewView({
           naturalProgression: { code: 'PrepareStage' },
@@ -211,27 +223,29 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           situations: [situation],
           attentionSummary: { count: 1, items: [situation] },
         }),
-      )
+      );
 
-      renderOverviewPage()
+      renderOverviewPage();
 
       expect(
         await screen.findByRole('heading', { name: 'À traiter' }),
-      ).toBeInTheDocument()
-      expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
-      expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument()
+      ).toBeInTheDocument();
+      expect(screen.getByText('Participants insuffisants')).toBeInTheDocument();
+      expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /Préparer la phase/i }),
-      ).toBeInTheDocument()
+      ).toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: /Continuer la préparation/i }),
-      ).not.toBeInTheDocument()
-      const progression = screen.getByTestId('overview-region-progression')
+      ).not.toBeInTheDocument();
+      const progression = screen.getByTestId('overview-region-progression');
       expect(
-        within(progression).queryByRole('link', { name: /Ajouter une équipe/i }),
-      ).not.toBeInTheDocument()
-    })
-  })
+        within(progression).queryByRole('link', {
+          name: /Ajouter une équipe/i,
+        }),
+      ).not.toBeInTheDocument();
+    });
+  });
 
   it('Préparation Équipes — minimum insuffisant : signal requis, pas de badge complet ni max', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -245,16 +259,20 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         },
         availableActions: [{ code: 'AddEntry', guaranteed: false }],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
-    expect(screen.getByText('Minimum requis : 4')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Ajouter une équipe/i })).toBeInTheDocument()
-    expect(screen.queryByText(/complète/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Max\./i)).not.toBeInTheDocument()
-  })
+    expect(
+      await screen.findByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Minimum requis : 4')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Ajouter une équipe/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/complète/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Max\./i)).not.toBeInTheDocument();
+  });
 
   it('Préparation Équipes — minimum atteint : count + crests, silence readiness', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue({
@@ -301,7 +319,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         attachedMatchCount: 0,
         blockers: [],
       },
-    })
+    });
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         constructionDimensions: {
@@ -313,17 +331,21 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         },
         availableActions: [{ code: 'AddEntry', guaranteed: false }],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
-    expect(screen.getByText('4')).toBeInTheDocument()
-    expect(screen.queryByText(/Minimum requis/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/complète/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Max\./i)).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Ajouter une équipe/i })).toBeInTheDocument()
-  })
+    expect(
+      await screen.findByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.queryByText(/Minimum requis/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/complète/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Max\./i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Ajouter une équipe/i }),
+    ).toBeInTheDocument();
+  });
 
   it('does not invent actions absent from availableActions', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -334,40 +356,38 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         },
         availableActions: [],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    await screen.findByRole('heading', { name: 'Équipes' })
+    await screen.findByRole('heading', { name: 'Équipes' });
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Préparer la compétition/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Démarrer la compétition/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('renders PrepareCompetition only when projected by availableActions', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
-        availableActions: [
-          { code: 'PrepareCompetition', guaranteed: false },
-        ],
+        availableActions: [{ code: 'PrepareCompetition', guaranteed: false }],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('button', { name: /Préparer la compétition/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Démarrer la compétition/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('Préparation Prochaine action — calme : carte absente (null + pas de lifecycle)', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -375,19 +395,23 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         naturalProgression: null,
         availableActions: [{ code: 'AddEntry', guaranteed: false }],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    expect(await screen.findByRole('heading', { name: 'Équipes' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Prochaine action' }),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText(/Continuer la préparation/i)).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Continuer la préparation/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Complétez les équipes/i),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('Préparation Prochaine action — lifecycle seul quand naturalProgression est null', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -395,17 +419,17 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         naturalProgression: null,
         availableActions: [{ code: 'StartCompetition', guaranteed: false }],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaine action' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Démarrer la compétition/i }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('Préparation Prochaine action — tip structurante sans empiler PrepareCompetition', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -421,40 +445,36 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           { code: 'PrepareCompetition', guaranteed: false },
         ],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'Prochaine action' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Préparer la phase/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Préparer la compétition/i }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('executes PrepareCompetition then StartCompetition via Host and invalidates overview', async () => {
-    const user = userEvent.setup()
-    vi.mocked(prepareCompetition).mockResolvedValue(undefined)
-    vi.mocked(startCompetition).mockResolvedValue(undefined)
+    const user = userEvent.setup();
+    vi.mocked(prepareCompetition).mockResolvedValue(undefined);
+    vi.mocked(startCompetition).mockResolvedValue(undefined);
     vi.mocked(fetchCompetitionOverview)
       .mockResolvedValueOnce(
         overviewView({
           status: 'Draft',
-          availableActions: [
-            { code: 'PrepareCompetition', guaranteed: false },
-          ],
+          availableActions: [{ code: 'PrepareCompetition', guaranteed: false }],
         }),
       )
       .mockResolvedValueOnce(
         overviewView({
           status: 'Ready',
-          availableActions: [
-            { code: 'StartCompetition', guaranteed: false },
-          ],
+          availableActions: [{ code: 'StartCompetition', guaranteed: false }],
         }),
       )
       .mockResolvedValueOnce(
@@ -464,38 +484,38 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           naturalProgression: null,
           availableActions: [],
         }),
-      )
+      );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     await user.click(
       await screen.findByRole('button', { name: /Préparer la compétition/i }),
-    )
+    );
 
     await waitFor(() => {
-      expect(prepareCompetition).toHaveBeenCalledWith(competitionId)
-    })
+      expect(prepareCompetition).toHaveBeenCalledWith(competitionId);
+    });
 
     await user.click(
       await screen.findByRole('button', { name: /Démarrer la compétition/i }),
-    )
+    );
 
     await waitFor(() => {
-      expect(startCompetition).toHaveBeenCalledWith(competitionId)
-    })
+      expect(startCompetition).toHaveBeenCalledWith(competitionId);
+    });
 
     await waitFor(() => {
       expect(
         screen.queryByRole('button', { name: /Préparer la compétition/i }),
-      ).not.toBeInTheDocument()
+      ).not.toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: /Démarrer la compétition/i }),
-      ).not.toBeInTheDocument()
-    })
+      ).not.toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('heading', { name: 'Où en est-on ?' }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('uses Host readiness copy without inventing draw chrome on overview', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -514,18 +534,18 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           ],
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    await screen.findByRole('heading', { name: 'Équipes' })
-    expect(screen.queryByText(/Appliqué/)).not.toBeInTheDocument()
-    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
-  })
+    await screen.findByRole('heading', { name: 'Équipes' });
+    expect(screen.queryByText(/Appliqué/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument();
+  });
 
   it('navigates Fixture targets via Host matchId without client join', async () => {
-    const user = userEvent.setup()
-    const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    const user = userEvent.setup();
+    const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         situations: [
@@ -558,19 +578,19 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           ],
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     await user.click(
       await screen.findByRole('link', { name: /Progression en attente/i }),
-    )
-    expect(screen.getByText('Match route')).toBeInTheDocument()
-  })
+    );
+    expect(screen.getByText('Match route')).toBeInTheDocument();
+  });
 
   it('executes a projected action and invalidates the overview query', async () => {
-    const user = userEvent.setup()
-    vi.mocked(prepareStage).mockResolvedValue(undefined)
+    const user = userEvent.setup();
+    vi.mocked(prepareStage).mockResolvedValue(undefined);
     vi.mocked(fetchCompetitionOverview)
       .mockResolvedValueOnce(
         overviewView({
@@ -601,22 +621,22 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
             stages: [{ stageId, name: 'Phase 1', status: 'Ready' }],
           },
         }),
-      )
+      );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     await user.click(
       await screen.findByRole('button', { name: /Préparer la phase/i }),
-    )
+    );
 
     await waitFor(() => {
-      expect(prepareStage).toHaveBeenCalledWith(stageId)
-    })
+      expect(prepareStage).toHaveBeenCalledWith(stageId);
+    });
 
     expect(
       await screen.findByRole('button', { name: /Démarrer la phase/i }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('Préparation Règlement — faits only (points, durée, action locale)', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -647,21 +667,27 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         },
         availableActions: [{ code: 'ReplaceRegulation', guaranteed: false }],
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    const regulation = await screen.findByTestId('overview-regulation-construction')
-    expect(regulation).toBeInTheDocument()
-    expect(within(regulation).getByText('2×45 min')).toBeInTheDocument()
-    expect(within(regulation).getByText('Victoire')).toBeInTheDocument()
+    const regulation = await screen.findByTestId(
+      'overview-regulation-construction',
+    );
+    expect(regulation).toBeInTheDocument();
+    expect(within(regulation).getByText('2×45 min')).toBeInTheDocument();
+    expect(within(regulation).getByText('Victoire')).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Modifier le règlement/i }),
-    ).toBeInTheDocument()
-    expect(within(regulation).queryByText(/Règlement prêt/i)).not.toBeInTheDocument()
-    expect(within(regulation).queryByText(/Matérialisation/i)).not.toBeInTheDocument()
-    expect(within(regulation).queryByText(/–/)).not.toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+    expect(
+      within(regulation).queryByText(/Règlement prêt/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(regulation).queryByText(/Matérialisation/i),
+    ).not.toBeInTheDocument();
+    expect(within(regulation).queryByText(/–/)).not.toBeInTheDocument();
+  });
 
   it('Préparation Structure — faits only (format, rows, ConfigureStructure, pas de pilotage phase)', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -702,26 +728,30 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         ],
         naturalProgression: { code: 'PrepareStage' },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    const structure = await screen.findByTestId('overview-structure-construction')
-    expect(within(structure).getByText('Championnat')).toBeInTheDocument()
-    expect(within(structure).getByText(/Phase 1/)).toBeInTheDocument()
-    expect(within(structure).getByText(/2 journées/)).toBeInTheDocument()
-    expect(within(structure).getByText(/Aucun match créé/)).toBeInTheDocument()
+    const structure = await screen.findByTestId(
+      'overview-structure-construction',
+    );
+    expect(within(structure).getByText('Championnat')).toBeInTheDocument();
+    expect(within(structure).getByText(/Phase 1/)).toBeInTheDocument();
+    expect(within(structure).getByText(/2 journées/)).toBeInTheDocument();
+    expect(within(structure).getByText(/Aucun match créé/)).toBeInTheDocument();
     expect(
       within(structure).getByRole('link', { name: /Configurer la structure/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       within(structure).queryByRole('button', { name: /Préparer la phase/i }),
-    ).not.toBeInTheDocument()
-    expect(within(structure).queryByText(/matchs? à créer/i)).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
+    expect(
+      within(structure).queryByText(/matchs? à créer/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Préparer la phase/i }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('Préparation Structure — format non configuré sans checkmark', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -734,14 +764,20 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           },
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    const structure = await screen.findByTestId('overview-structure-construction')
-    expect(within(structure).getByText('Format non configuré')).toBeInTheDocument()
-    expect(structure.querySelector('.overview-row__mark')).not.toBeInTheDocument()
-  })
+    const structure = await screen.findByTestId(
+      'overview-structure-construction',
+    );
+    expect(
+      within(structure).getByText('Format non configuré'),
+    ).toBeInTheDocument();
+    expect(
+      structure.querySelector('.overview-row__mark'),
+    ).not.toBeInTheDocument();
+  });
 
   it('renders regulation factual summary without transition readiness UI', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -771,17 +807,19 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           },
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    expect(await screen.findByText(/2×45 min/)).toBeInTheDocument()
-    expect(screen.queryByText(/Règlement prêt pour la suite/)).not.toBeInTheDocument()
-    expect(screen.queryByText('Tirage')).not.toBeInTheDocument()
-  })
+    expect(await screen.findByText(/2×45 min/)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Règlement prêt pour la suite/),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Tirage')).not.toBeInTheDocument();
+  });
 
   it('previews attention with the same item recipe as the drawer', async () => {
-    const situation = overviewSituation()
+    const situation = overviewSituation();
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         situations: [situation, situation],
@@ -790,38 +828,38 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           items: [situation, situation, situation],
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       (await screen.findAllByRole('heading', { name: 'À traiter' })).length,
-    ).toBe(1)
-    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(2)
+    ).toBe(1);
+    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(2);
     expect(
       screen.getByText(/3 situation\(s\) — détail dans le panneau À traiter/),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('does not show quantity hint when attention count is 1', async () => {
-    const situation = overviewSituation()
+    const situation = overviewSituation();
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         situations: [situation],
         attentionSummary: { count: 1, items: [situation] },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: 'À traiter' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument();
     expect(
       screen.queryByText(/situation\(s\) — détail dans le panneau/),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('hides Absent match dimension and console operational chrome', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -848,45 +886,45 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           referenceStageGameRules: null,
         },
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
-    await screen.findByRole('heading', { name: 'Équipes' })
+    await screen.findByRole('heading', { name: 'Équipes' });
     expect(
       screen.queryByRole('heading', { name: 'Matchs', level: 3 }),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Focus opérationnel')).not.toBeInTheDocument();
+  });
 
   it('navigates to Équipes from the teams dimension panel', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overviewView())
+    const user = userEvent.setup();
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(overviewView());
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     await user.click(
       await screen.findByRole('link', { name: /Voir les équipes/i }),
-    )
+    );
 
-    expect(screen.getByText('Teams route')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Teams route')).toBeInTheDocument();
+  });
 
   it('shows an error when the overview read fails', async () => {
     vi.mocked(fetchCompetitionOverview).mockRejectedValue(
       new ApiError(404, 'Competition was not found.'),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "Introuvable. Vérifiez l'identifiant dans l'URL.",
-    )
-  })
+    );
+  });
 
   it('materializes matches then offers Voir les matchs and invalidates match lists', async () => {
-    const user = userEvent.setup()
-    const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+    const user = userEvent.setup();
+    const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({
         availableActions: [
@@ -901,20 +939,20 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         ],
         naturalProgression: { code: 'MaterializeMatches' },
       }),
-    )
+    );
     vi.mocked(materializeMatches).mockResolvedValue({
       createdCount: 1,
       attachedMatchIds: [matchId],
       alreadyComplete: false,
-    })
+    });
 
     const queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
         mutations: { retry: false },
       },
-    })
-    const spy = vi.spyOn(queryClient, 'invalidateQueries')
+    });
+    const spy = vi.spyOn(queryClient, 'invalidateQueries');
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -931,29 +969,29 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>,
-    )
+    );
 
     const materializeButtons = await screen.findAllByRole('button', {
       name: /Créer les matchs/i,
-    })
-    await user.click(materializeButtons[0])
+    });
+    await user.click(materializeButtons[0]);
 
     await waitFor(() => {
-      expect(materializeMatches).toHaveBeenCalledWith(stageId)
-    })
+      expect(materializeMatches).toHaveBeenCalledWith(stageId);
+    });
 
     expect(
       await screen.findByRole('heading', { name: /Matchs créés/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: ['matches', 'by-stage', stageId],
       }),
-    )
+    );
 
-    await user.click(screen.getByRole('link', { name: /Voir les matchs/i }))
-    expect(screen.getByText('Match hub route')).toBeInTheDocument()
-  })
+    await user.click(screen.getByRole('link', { name: /Voir les matchs/i }));
+    expect(screen.getByText('Match hub route')).toBeInTheDocument();
+  });
 
   it('composes GeneratedCalendar from preparationFocus without Structure', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
@@ -1002,35 +1040,33 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
             total: 6,
           },
         },
-        availableActions: [
-          { code: 'StartCompetition', guaranteed: false },
-        ],
+        availableActions: [{ code: 'StartCompetition', guaranteed: false }],
         naturalProgression: null,
       }),
-    )
+    );
 
-    renderOverviewPage()
+    renderOverviewPage();
 
     expect(
       await screen.findByRole('heading', { name: /Calendrier sportif/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(screen.getByTestId('overview-calendar-panel')).toHaveTextContent(
       /3 journées/,
-    )
+    );
     expect(screen.getByTestId('overview-calendar-panel')).toHaveTextContent(
       /Alpha – Bravo/,
-    )
+    );
     expectOverviewRegionOrder(
       'overview-region-progression',
       'overview-region-calendar',
       'overview-region-config',
-    )
-    expectOverviewRegionsAbsent('overview-region-structure')
+    );
+    expectOverviewRegionsAbsent('overview-region-structure');
     expect(
       screen.queryByRole('heading', { name: /^Structure$/i }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /Prochaine action/i }),
-    ).toBeInTheDocument()
-  })
-})
+    ).toBeInTheDocument();
+  });
+});

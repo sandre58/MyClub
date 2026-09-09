@@ -7,45 +7,53 @@
  */
 
 .ds-root {
-    --shell-rail-width-expanded: 15rem;
-    --shell-rail-width-collapsed: 3.5rem;
-    --shell-header-min-height: 5rem;
-    --shell-workspace-radius: var(--space-12);
-    --shell-rail-inset: var(--space-8);
-    --shell-rail-item-radius: var(--radius-panel);
-    --shell-rail-bar-width: 3px;
-    --shell-rail-wash-hover: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
-    --shell-rail-wash-current: color-mix(in srgb, var(--color-on-chrome) 12%, transparent);
-    --shell-rail-wash-current-hover: color-mix(
-        in srgb,
-        var(--color-on-chrome) 16%,
-        transparent
-    );
-    --shell-lockup-mark-height: 2.5rem;
-    --shell-lockup-wordmark-height: 1.875rem;
-    --shell-header-min-height-phone: 3.5rem;
-    --shell-phone-chrome-end: var(--shell-header-min-height-phone);
+  --shell-rail-width-expanded: 15rem;
+  --shell-rail-width-collapsed: 3.5rem;
+  --shell-header-min-height: 5rem;
+  --shell-workspace-radius: var(--space-12);
+  --shell-rail-inset: var(--space-8);
+  --shell-rail-item-radius: var(--radius-panel);
+  --shell-rail-bar-width: 3px;
+  --shell-rail-wash-hover: color-mix(
+    in srgb,
+    var(--color-on-chrome) 8%,
+    transparent
+  );
+  --shell-rail-wash-current: color-mix(
+    in srgb,
+    var(--color-on-chrome) 12%,
+    transparent
+  );
+  --shell-rail-wash-current-hover: color-mix(
+    in srgb,
+    var(--color-on-chrome) 16%,
+    transparent
+  );
+  --shell-lockup-mark-height: 2.5rem;
+  --shell-lockup-wordmark-height: 1.875rem;
+  --shell-header-min-height-phone: 3.5rem;
+  --shell-phone-chrome-end: var(--shell-header-min-height-phone);
 }
 
 /* --- Rail ---------------------------------------------------------------- */
 
 .ds-shell-rail {
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    width: var(--shell-rail-width-expanded);
-    min-width: var(--shell-rail-width-expanded);
-    overflow: hidden;
-    background: var(--color-chrome);
-    color: var(--color-on-chrome);
-    transition:
-        width var(--motion-duration) var(--motion-easing),
-        min-width var(--motion-duration) var(--motion-easing);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--shell-rail-width-expanded);
+  min-width: var(--shell-rail-width-expanded);
+  overflow: hidden;
+  background: var(--color-chrome);
+  color: var(--color-on-chrome);
+  transition:
+    width var(--motion-duration) var(--motion-easing),
+    min-width var(--motion-duration) var(--motion-easing);
 }
 
 .ds-shell-rail[data-collapsed='true'] {
-    width: var(--shell-rail-width-collapsed);
-    min-width: var(--shell-rail-width-collapsed);
+  width: var(--shell-rail-width-collapsed);
+  min-width: var(--shell-rail-width-collapsed);
 }
 
 /* First paint after a viewport change must snap. Width/label tweens stay
@@ -56,366 +64,365 @@
 [data-nav-ready='false'] .ds-shell-rail__label,
 [data-nav-ready='false'] .ds-shell-rail__link,
 [data-nav-ready='false'] .ds-shell-rail__group-label {
-    transition: none;
+  transition: none;
 }
 
 .ds-shell-rail a {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 .ds-shell-rail a:hover {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 .ds-shell-rail__brand {
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
-    min-height: var(--shell-header-min-height);
-    padding: var(--space-16);
-    color: var(--color-on-chrome);
-    text-decoration: none;
-    font-size: 1.05rem;
-    transition: gap var(--motion-duration) var(--motion-easing);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--shell-header-min-height);
+  padding: var(--space-16);
+  color: var(--color-on-chrome);
+  text-decoration: none;
+  font-size: 1.05rem;
+  transition: gap var(--motion-duration) var(--motion-easing);
 }
 
 .ds-shell-rail[data-collapsed='true'] .ds-shell-rail__brand {
-    gap: 0;
+  gap: 0;
 }
 
 .ds-shell-rail__brand:hover {
-    color: var(--color-on-chrome);
+  color: var(--color-on-chrome);
 }
 
 .ds-shell-rail__nav {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-16);
-    padding: var(--space-8) var(--shell-rail-inset) var(--space-16);
-    flex: 1;
-    min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-8) var(--shell-rail-inset) var(--space-16);
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .ds-shell-rail__group {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .ds-shell-rail__group-label {
-    overflow: hidden;
-    max-height: 2rem;
-    padding: var(--space-4) var(--space-12);
-    color: color-mix(in srgb, var(--color-on-chrome) 48%, transparent);
-    font-size: var(--text-meta);
-    font-weight: var(--font-weight-semibold);
-    letter-spacing: 0.08em;
-    line-height: var(--leading-tight);
-    text-transform: uppercase;
-    white-space: nowrap;
-    opacity: 1;
-    transition:
-        max-height var(--motion-duration) var(--motion-easing),
-        opacity var(--motion-duration) var(--motion-easing),
-        padding var(--motion-duration) var(--motion-easing);
+  overflow: hidden;
+  max-height: 2rem;
+  padding: var(--space-4) var(--space-12);
+  color: color-mix(in srgb, var(--color-on-chrome) 48%, transparent);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 1;
+  transition:
+    max-height var(--motion-duration) var(--motion-easing),
+    opacity var(--motion-duration) var(--motion-easing),
+    padding var(--motion-duration) var(--motion-easing);
 }
 
 .ds-shell-rail[data-collapsed='true'] .ds-shell-rail__group-label {
-    max-height: 0;
-    padding-block: 0;
-    opacity: 0;
-    pointer-events: none;
+  max-height: 0;
+  padding-block: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ds-shell-rail__brand .ds-lockup-mark {
-    /* Override .ds-lockup-mark max-width: 100% — that squashes the PNG when
+  /* Override .ds-lockup-mark max-width: 100% — that squashes the PNG when
        the collapsed rail content box is narrower than the mark's natural width. */
-    height: var(--shell-lockup-mark-height);
-    width: auto;
-    max-width: none;
-    flex-shrink: 0;
-    aspect-ratio: 157 / 186;
-    object-fit: contain;
+  height: var(--shell-lockup-mark-height);
+  width: auto;
+  max-width: none;
+  flex-shrink: 0;
+  aspect-ratio: 157 / 186;
+  object-fit: contain;
 }
 
 .ds-shell-rail__wordmark {
-    display: block;
-    overflow: hidden;
-    min-width: 0;
-    max-width: 8rem;
-    opacity: 1;
-    transition:
-        max-width var(--motion-duration) var(--motion-easing),
-        opacity var(--motion-duration) var(--motion-easing);
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 8rem;
+  opacity: 1;
+  transition:
+    max-width var(--motion-duration) var(--motion-easing),
+    opacity var(--motion-duration) var(--motion-easing);
 }
 
 .ds-shell-rail[data-collapsed='true'] .ds-shell-rail__wordmark {
-    max-width: 0;
-    opacity: 0;
-    pointer-events: none;
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ds-shell-rail__brand .ds-lockup-wordmark {
-    height: var(--shell-lockup-wordmark-height);
-    max-width: none;
+  height: var(--shell-lockup-wordmark-height);
+  max-width: none;
 }
 
 .ds-shell-rail__link {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
-    min-height: var(--control-height);
-    padding: 0 var(--space-12);
-    overflow: hidden;
-    border: none;
-    border-radius: var(--shell-rail-item-radius);
-    background: transparent;
-    color: var(--color-on-chrome);
-    font: inherit;
-    font-weight: var(--font-weight-regular);
-    text-align: start;
-    text-decoration: none;
-    cursor: pointer;
-    transition:
-        background-color var(--motion-duration) var(--motion-easing),
-        color var(--motion-duration) var(--motion-easing),
-        gap var(--motion-duration) var(--motion-easing);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-height: var(--control-height);
+  padding: 0 var(--space-12);
+  overflow: hidden;
+  border: none;
+  border-radius: var(--shell-rail-item-radius);
+  background: transparent;
+  color: var(--color-on-chrome);
+  font: inherit;
+  font-weight: var(--font-weight-regular);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration) var(--motion-easing),
+    color var(--motion-duration) var(--motion-easing),
+    gap var(--motion-duration) var(--motion-easing);
 }
 
 .ds-shell-rail[data-collapsed='true'] .ds-shell-rail__link {
-    gap: 0;
+  gap: 0;
 }
 
 .ds-shell-rail__link:hover:not(:disabled) {
-    background: var(--shell-rail-wash-hover);
-    color: var(--color-on-chrome);
+  background: var(--shell-rail-wash-hover);
+  color: var(--color-on-chrome);
 }
 
 .ds-shell-rail__link[data-active='true'] {
-    background: var(--shell-rail-wash-current);
-    color: var(--color-chrome-accent);
+  background: var(--shell-rail-wash-current);
+  color: var(--color-chrome-accent);
 }
 
 .ds-shell-rail__link[data-active='true']:hover:not(:disabled) {
-    background: var(--shell-rail-wash-current-hover);
-    color: var(--color-chrome-accent);
+  background: var(--shell-rail-wash-current-hover);
+  color: var(--color-chrome-accent);
 }
 
 .ds-shell-rail__link[data-active='true']::before {
-    content: '';
-    position: absolute;
-    inset-inline-start: 0;
-    inset-block: 0;
-    width: var(--shell-rail-bar-width);
-    background: var(--color-chrome-accent);
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 0;
+  width: var(--shell-rail-bar-width);
+  background: var(--color-chrome-accent);
 }
 
 .ds-shell-rail__link:disabled {
-    cursor: default;
-    opacity: 0.48;
+  cursor: default;
+  opacity: 0.48;
 }
 
 .ds-shell-rail__link:focus-visible {
-    border-radius: var(--shell-rail-item-radius);
+  border-radius: var(--shell-rail-item-radius);
 }
 
 .ds-shell-rail__icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
 }
 
 .ds-shell-rail__label {
-    overflow: hidden;
-    min-width: 0;
-    max-width: 12rem;
-    white-space: nowrap;
-    opacity: 1;
-    transition:
-        max-width var(--motion-duration) var(--motion-easing),
-        opacity var(--motion-duration) var(--motion-easing);
+  overflow: hidden;
+  min-width: 0;
+  max-width: 12rem;
+  white-space: nowrap;
+  opacity: 1;
+  transition:
+    max-width var(--motion-duration) var(--motion-easing),
+    opacity var(--motion-duration) var(--motion-easing);
 }
 
 .ds-shell-rail[data-collapsed='true'] .ds-shell-rail__label {
-    max-width: 0;
-    opacity: 0;
-    pointer-events: none;
+  max-width: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ds-shell-rail__footer {
-    display: flex;
-    align-items: center;
-    padding: var(--space-8) var(--shell-rail-inset) var(--space-16);
+  display: flex;
+  align-items: center;
+  padding: var(--space-8) var(--shell-rail-inset) var(--space-16);
 }
 
 .ds-shell-rail__collapse {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--control-height);
-    height: var(--control-height);
-    padding: 0;
-    border: none;
-    border-radius: var(--shell-rail-item-radius);
-    background: transparent;
-    color: var(--color-on-chrome);
-    cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 0;
+  border: none;
+  border-radius: var(--shell-rail-item-radius);
+  background: transparent;
+  color: var(--color-on-chrome);
+  cursor: pointer;
 }
 
 .ds-shell-rail__collapse:hover {
-    background: var(--shell-rail-wash-hover);
+  background: var(--shell-rail-wash-hover);
 }
 
 /* --- Header (on chrome) -------------------------------------------------- */
 
 .ds-shell-header {
-    display: flex;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-12) var(--space-16);
-    min-height: var(--shell-header-min-height);
-    padding: var(--space-8) var(--space-24);
-    background: var(--color-chrome);
-    color: var(--color-on-chrome);
-    color-scheme: dark;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12) var(--space-16);
+  min-height: var(--shell-header-min-height);
+  padding: var(--space-8) var(--space-24);
+  background: var(--color-chrome);
+  color: var(--color-on-chrome);
+  color-scheme: dark;
 }
 
 .ds-shell-header__crest {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
 }
 
 .ds-shell-header__identity {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .ds-shell-header__name {
-    min-width: 0;
-    color: var(--color-on-chrome);
-    font-size: var(--text-heading);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  min-width: 0;
+  color: var(--color-on-chrome);
+  font-size: var(--text-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ds-shell-header__meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-8);
-    min-width: 0;
-    font-size: var(--text-meta);
-    color: color-mix(in srgb, var(--color-on-chrome) 62%, transparent);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-size: var(--text-meta);
+  color: color-mix(in srgb, var(--color-on-chrome) 62%, transparent);
 }
 
 .ds-shell-header__spacer {
-    flex: 1;
-    min-width: var(--space-8);
+  flex: 1;
+  min-width: var(--space-8);
 }
 
 .ds-shell-header__bell {
-    position: relative;
-    flex: none;
-    color: var(--color-on-chrome);
+  position: relative;
+  flex: none;
+  color: var(--color-on-chrome);
 }
 
 .ds-shell-header .ds-btn--ghost {
-    color: var(--color-on-chrome);
+  color: var(--color-on-chrome);
 }
 
 .ds-shell-header .ds-btn--ghost:hover:not(:disabled) {
-    background: var(--shell-rail-wash-hover);
+  background: var(--shell-rail-wash-hover);
 }
 
 .ds-shell-header__badge {
-    position: absolute;
-    inset-block-start: 2px;
-    inset-inline-end: 2px;
-    min-width: 1rem;
-    height: 1rem;
-    padding: 0 3px;
-    display: grid;
-    place-items: center;
-    border-radius: 999px;
-    background: var(--color-attention);
-    color: var(--color-on-ink);
-    font-size: 0.66rem;
-    font-weight: var(--font-weight-bold);
-    line-height: 1;
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-end: 2px;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 3px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-attention);
+  color: var(--color-on-ink);
+  font-size: 0.66rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
 }
 
 /* --- Workspace ----------------------------------------------------------- */
 
 .ds-shell-workspace {
-    background: var(--color-canvas);
-    border-start-start-radius: var(--shell-workspace-radius);
+  background: var(--color-canvas);
+  border-start-start-radius: var(--shell-workspace-radius);
 }
 
 /* --- Viewport: tablet is collapsed-in-flow; phone is overlay rail -------- */
 
 [data-shell-vp='phone'] .ds-shell-header {
-    position: relative;
-    z-index: 6;
-    flex-wrap: nowrap;
-    min-height: var(--shell-header-min-height-phone);
-    padding: max(var(--space-8), env(safe-area-inset-top, 0px))
-        max(var(--space-12), env(safe-area-inset-right, 0px))
-        var(--space-8)
-        max(var(--space-12), env(safe-area-inset-left, 0px));
+  position: relative;
+  z-index: 6;
+  flex-wrap: nowrap;
+  min-height: var(--shell-header-min-height-phone);
+  padding: max(var(--space-8), env(safe-area-inset-top, 0px))
+    max(var(--space-12), env(safe-area-inset-right, 0px)) var(--space-8)
+    max(var(--space-12), env(safe-area-inset-left, 0px));
 }
 
 [data-shell-vp='phone'] .ds-shell-header__nav-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
 }
 
 [data-shell-vp='phone'] .ds-shell-header__period,
 [data-shell-vp='phone'] .shell-header__period,
 [data-shell-vp='phone'] .shell-header__meta-separator {
-    display: none;
+  display: none;
 }
 
 [data-shell-vp='phone'] .ds-shell-workspace {
-    /* No encastrement corner: the rail is gone, the workspace is flush under the bar. */
-    border-start-start-radius: 0;
-    border-start-end-radius: 0;
+  /* No encastrement corner: the rail is gone, the workspace is flush under the bar. */
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
 }
 
 [data-shell-vp='phone'] .ds-shell-rail {
-    position: absolute;
-    inset-block-start: var(--shell-phone-chrome-end);
-    inset-block-end: 0;
-    inset-inline-start: 0;
-    z-index: 5;
-    width: var(--shell-rail-width-expanded);
-    min-width: var(--shell-rail-width-expanded);
-    transform: translateX(-100%);
-    pointer-events: none;
-    /* Snap off-screen when entering phone from a collapsed rail. Transform
+  position: absolute;
+  inset-block-start: var(--shell-phone-chrome-end);
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  z-index: 5;
+  width: var(--shell-rail-width-expanded);
+  min-width: var(--shell-rail-width-expanded);
+  transform: translateX(-100%);
+  pointer-events: none;
+  /* Snap off-screen when entering phone from a collapsed rail. Transform
        motion is enabled only after data-nav-ready (overlay open/close). */
-    transition: none;
+  transition: none;
 }
 
 [data-shell-vp='phone'] .ds-shell-rail__brand {
-    min-height: var(--shell-header-min-height-phone);
+  min-height: var(--shell-header-min-height-phone);
 }
 
 [data-shell-vp='phone'][data-nav-ready='true'] .ds-shell-rail {
-    transition: transform var(--motion-duration) var(--motion-easing);
+  transition: transform var(--motion-duration) var(--motion-easing);
 }
 
 [data-shell-vp='phone'] .ds-shell-rail__brand,
@@ -423,32 +430,32 @@
 [data-shell-vp='phone'] .ds-shell-rail__label,
 [data-shell-vp='phone'] .ds-shell-rail__link,
 [data-shell-vp='phone'] .ds-shell-rail__group-label {
-    transition: none;
+  transition: none;
 }
 
 [data-shell-vp='phone'][data-nav-open='true'] .ds-shell-rail {
-    transform: translateX(0);
-    pointer-events: auto;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 [data-shell-vp='phone'] .ds-shell-rail__collapse,
 [data-shell-vp='phone'] .ds-shell-rail__footer {
-    display: none;
+  display: none;
 }
 
 .shell-nav-backdrop {
-    position: absolute;
-    inset-inline: 0;
-    inset-block-end: 0;
-    inset-block-start: var(--shell-phone-chrome-end);
-    z-index: 4;
-    display: block;
-    border: 0;
-    padding: 0;
-    background: color-mix(in srgb, var(--color-ink) 28%, transparent);
-    cursor: default;
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  inset-block-start: var(--shell-phone-chrome-end);
+  z-index: 4;
+  display: block;
+  border: 0;
+  padding: 0;
+  background: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  cursor: default;
 }
 
 .shell-nav-backdrop[hidden] {
-    display: none;
+  display: none;
 }

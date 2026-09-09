@@ -1,4 +1,4 @@
-import i18n from './index'
+import i18n from './index';
 import type {
   CompetitionStatus,
   CompletionMode,
@@ -11,61 +11,63 @@ import type {
   ResultType,
   StageStatus,
   StructureFormatKind,
-} from '../types'
+} from '../types';
 
 /** Wire enum member name → user-facing label (enums namespace). */
 function enumLabel<T extends string>(group: string, code: T): string {
-  return i18n.t(`${group}.${code}`, { ns: 'enums', defaultValue: code })
+  return i18n.t(`${group}.${code}`, { ns: 'enums', defaultValue: code });
 }
 
 export function competitionStatusLabel(status: CompetitionStatus): string {
-  return enumLabel('competitionStatus', status)
+  return enumLabel('competitionStatus', status);
 }
 
 export function stageStatusLabel(status: StageStatus): string {
-  return enumLabel('stageStatus', status)
+  return enumLabel('stageStatus', status);
 }
 
 export function matchStatusLabel(status: MatchStatus): string {
-  return enumLabel('matchStatus', status)
+  return enumLabel('matchStatus', status);
 }
 
 export function entryStatusLabel(status: EntryStatus): string {
-  return enumLabel('entryStatus', status)
+  return enumLabel('entryStatus', status);
 }
 
 export function drawStatusLabel(status: DrawStatus): string {
-  return enumLabel('drawStatus', status)
+  return enumLabel('drawStatus', status);
 }
 
 export function drawResolutionStateLabel(state: DrawResolutionState): string {
-  return enumLabel('drawResolutionState', state)
+  return enumLabel('drawResolutionState', state);
 }
 
 export function drawResolutionKindLabel(kind: DrawResolutionKind): string {
-  return enumLabel('drawResolutionKind', kind)
+  return enumLabel('drawResolutionKind', kind);
 }
 
 export function structureFormatKindLabel(kind: StructureFormatKind): string {
-  return enumLabel('structureFormatKind', kind)
+  return enumLabel('structureFormatKind', kind);
 }
 
-export function matchGenerationFormatLabel(format: MatchGenerationFormat): string {
-  return enumLabel('matchGenerationFormat', format)
+export function matchGenerationFormatLabel(
+  format: MatchGenerationFormat,
+): string {
+  return enumLabel('matchGenerationFormat', format);
 }
 
 export function resultTypeLabel(type: ResultType): string {
-  return enumLabel('resultType', type)
+  return enumLabel('resultType', type);
 }
 
 export function completionModeLabel(mode: CompletionMode): string {
-  return enumLabel('completionMode', mode)
+  return enumLabel('completionMode', mode);
 }
 
 export function attentionSourceLabel(source: string): string {
-  return enumLabel('attentionSource', source)
+  return enumLabel('attentionSource', source);
 }
 
 export function attentionTargetTypeLabel(targetType: string): string {
-  return enumLabel('attentionTargetType', targetType)
+  return enumLabel('attentionTargetType', targetType);
 }

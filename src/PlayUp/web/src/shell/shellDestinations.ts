@@ -4,25 +4,23 @@ export type ShellDestinationKey =
   | 'matches'
   | 'classements'
   | 'teams'
-  | 'regulation'
+  | 'regulation';
 
-export type ShellNavItemKey =
-  | ShellDestinationKey
-  | 'venues'
+export type ShellNavItemKey = ShellDestinationKey | 'venues';
 
-export type ShellNavGroupId = 'pilotage' | 'competition' | 'referentiel'
+export type ShellNavGroupId = 'pilotage' | 'competition' | 'referentiel';
 
-export type ShellDestinationHrefs = Record<ShellDestinationKey, string>
+export type ShellDestinationHrefs = Record<ShellDestinationKey, string>;
 
 export type ShellNavItemSpec = {
-  key: ShellNavItemKey
-  hrefKey?: ShellDestinationKey
-}
+  key: ShellNavItemKey;
+  hrefKey?: ShellDestinationKey;
+};
 
 export type ShellNavGroupSpec = {
-  id: ShellNavGroupId
-  items: readonly ShellNavItemSpec[]
-}
+  id: ShellNavGroupId;
+  items: readonly ShellNavItemSpec[];
+};
 
 /** Visual SoT (Shell A). Stades has no product route yet. */
 export const shellNavGroups: readonly ShellNavGroupSpec[] = [
@@ -43,7 +41,7 @@ export const shellNavGroups: readonly ShellNavGroupSpec[] = [
       { key: 'regulation', hrefKey: 'regulation' },
     ],
   },
-]
+];
 
 /**
  * Structural sidebar hrefs. Uses resolved competition context when available.
@@ -54,11 +52,11 @@ export function shellDestinationHrefs({
   stageId,
   matchId,
 }: {
-  competitionId?: string
-  stageId?: string
-  matchId?: string
+  competitionId?: string;
+  stageId?: string;
+  matchId?: string;
 }): ShellDestinationHrefs {
-  const competitionListHref = '/'
+  const competitionListHref = '/';
 
   return {
     overview: competitionId ? `/competitions/${competitionId}` : '/',
@@ -81,28 +79,30 @@ export function shellDestinationHrefs({
     regulation: competitionId
       ? `/competitions/${competitionId}/regulation`
       : competitionListHref,
-  }
+  };
 }
 
-export function resolveActiveDestination(pathname: string): ShellDestinationKey | null {
+export function resolveActiveDestination(
+  pathname: string,
+): ShellDestinationKey | null {
   if (
     pathname === '/' ||
     pathname === '/competitions' ||
     /^\/competitions\/[^/]+$/.test(pathname)
   ) {
-    return 'overview'
+    return 'overview';
   }
 
   if (/^\/competitions\/[^/]+\/organisation$/.test(pathname)) {
-    return 'organisation'
+    return 'organisation';
   }
 
   if (/^\/competitions\/[^/]+\/teams(?:\/[^/]+)?$/.test(pathname)) {
-    return 'teams'
+    return 'teams';
   }
 
   if (/^\/competitions\/[^/]+\/regulation$/.test(pathname)) {
-    return 'regulation'
+    return 'regulation';
   }
 
   if (
@@ -111,12 +111,12 @@ export function resolveActiveDestination(pathname: string): ShellDestinationKey 
     /^\/matches\/[^/]+$/.test(pathname) ||
     /^\/stages\/[^/]+$/.test(pathname)
   ) {
-    return 'matches'
+    return 'matches';
   }
 
   if (/^\/competitions\/[^/]+\/classements$/.test(pathname)) {
-    return 'classements'
+    return 'classements';
   }
 
-  return null
+  return null;
 }

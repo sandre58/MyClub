@@ -5,46 +5,48 @@
  */
 
 .ds-interactive-row {
-    cursor: pointer;
-    text-decoration: none;
-    color: inherit;
-    background-color: transparent;
-    transition: background-color var(--motion-duration) var(--motion-easing);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  background-color: transparent;
+  transition: background-color var(--motion-duration) var(--motion-easing);
 }
 
 .ds-root a.ds-interactive-row,
 .ds-root a.ds-interactive-row:hover {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 .ds-interactive-row__chevron {
-    display: flex;
-    align-items: center;
-    flex: none;
-    color: var(--color-text-secondary);
-    transition: color var(--motion-duration) var(--motion-easing);
+  display: flex;
+  align-items: center;
+  flex: none;
+  color: var(--color-text-secondary);
+  transition: color var(--motion-duration) var(--motion-easing);
 }
 
 .ds-interactive-row:hover:not(:disabled):not([aria-disabled='true']),
 .ds-interactive-row:active:not(:disabled):not([aria-disabled='true']) {
-    background-color: var(--color-surface-secondary);
+  background-color: var(--color-surface-secondary);
 }
 
-.ds-interactive-row:hover:not(:disabled):not([aria-disabled='true']) .ds-interactive-row__chevron,
-.ds-interactive-row:active:not(:disabled):not([aria-disabled='true']) .ds-interactive-row__chevron {
-    color: var(--color-ink);
+.ds-interactive-row:hover:not(:disabled):not([aria-disabled='true'])
+  .ds-interactive-row__chevron,
+.ds-interactive-row:active:not(:disabled):not([aria-disabled='true'])
+  .ds-interactive-row__chevron {
+  color: var(--color-ink);
 }
 
 .ds-interactive-row:disabled,
 .ds-interactive-row[aria-disabled='true'] {
-    opacity: 0.48;
-    pointer-events: none;
-    cursor: not-allowed;
+  opacity: 0.48;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 
 /* Full-bleed wash inside padded .ds-panel (Accueil panel has no padding). */
 .ds-panel .ds-interactive-row {
-    margin-inline: calc(-1 * var(--space-16));
-    padding-inline: var(--space-16);
+  margin-inline: calc(-1 * var(--space-16));
+  padding-inline: var(--space-16);
 }

@@ -1,14 +1,14 @@
-import { useId, type ButtonHTMLAttributes } from 'react'
+import { useId, type ButtonHTMLAttributes } from 'react';
 
 export type SwitchProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   'role' | 'children' | 'onChange' | 'type'
 > & {
-  checked: boolean
-  onChange: (checked: boolean) => void
+  checked: boolean;
+  onChange: (checked: boolean) => void;
   /** Accessible name when no visible label is associated. */
-  label?: string
-}
+  label?: string;
+};
 
 /**
  * Binary switch — role="switch". Presentation only; caller owns state.
@@ -23,8 +23,8 @@ export function Switch({
   onClick,
   ...props
 }: SwitchProps) {
-  const autoId = useId()
-  const switchId = id ?? autoId
+  const autoId = useId();
+  const switchId = id ?? autoId;
 
   return (
     <button
@@ -39,9 +39,9 @@ export function Switch({
       data-checked={checked ? 'true' : 'false'}
       data-disabled={disabled ? 'true' : 'false'}
       onClick={(event) => {
-        onClick?.(event)
+        onClick?.(event);
         if (!event.defaultPrevented && !disabled) {
-          onChange(!checked)
+          onChange(!checked);
         }
       }}
     >
@@ -49,5 +49,5 @@ export function Switch({
         <span className="ds-switch__thumb" />
       </span>
     </button>
-  )
+  );
 }

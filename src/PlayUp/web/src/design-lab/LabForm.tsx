@@ -1,31 +1,34 @@
-import { useEffect, useId, useState, type FormEvent } from 'react'
-import { Clock3 } from 'lucide-react'
-import { Alert } from '../design-system/components/Alert'
-import { ChoiceSwatch, ChoiceTile } from '../design-system/components/ChoiceTile'
-import { ColorPicker } from '../design-system/components/ColorPicker'
-import { Field } from '../design-system/components/Field'
-import { FormGroup } from '../design-system/components/FormGroup'
-import { FormSection } from '../design-system/components/FormSection'
-import { InputNumber } from '../design-system/components/InputNumber'
+import { useEffect, useId, useState, type FormEvent } from 'react';
+import { Clock3 } from 'lucide-react';
+import { Alert } from '../design-system/components/Alert';
+import {
+  ChoiceSwatch,
+  ChoiceTile,
+} from '../design-system/components/ChoiceTile';
+import { ColorPicker } from '../design-system/components/ColorPicker';
+import { Field } from '../design-system/components/Field';
+import { FormGroup } from '../design-system/components/FormGroup';
+import { FormSection } from '../design-system/components/FormSection';
+import { InputNumber } from '../design-system/components/InputNumber';
 import {
   OutcomePoints,
   OutcomePointsCard,
-} from '../design-system/components/OutcomePoints'
-import { pointsBaremeWarning } from '../design-system/components/pointsBaremeWarning'
-import { ReorderList } from '../design-system/components/ReorderList'
-import { Select } from '../design-system/components/Select'
-import { Switch } from '../design-system/components/Switch'
-import { SwitchPanel } from '../design-system/components/SwitchPanel'
-import { TextInput } from '../design-system/components/TextInput'
-import { Upload } from '../design-system/components/Upload'
-import { LucideIcon } from '../design-system/icons/Icon'
+} from '../design-system/components/OutcomePoints';
+import { pointsBaremeWarning } from '../design-system/components/pointsBaremeWarning';
+import { ReorderList } from '../design-system/components/ReorderList';
+import { Select } from '../design-system/components/Select';
+import { Switch } from '../design-system/components/Switch';
+import { SwitchPanel } from '../design-system/components/SwitchPanel';
+import { TextInput } from '../design-system/components/TextInput';
+import { Upload } from '../design-system/components/Upload';
+import { LucideIcon } from '../design-system/icons/Icon';
 import {
   CrossIcon,
   EqualIcon,
   PersonIcon,
   PlusIcon,
   TrophyIcon,
-} from '../design-system/icons/overviewIcons'
+} from '../design-system/icons/overviewIcons';
 
 const CRITERION_OPTIONS = [
   { value: 'Points', label: 'Points' },
@@ -33,101 +36,101 @@ const CRITERION_OPTIONS = [
   { value: 'GoalsFor', label: 'Buts marqués' },
   { value: 'HeadToHead', label: 'Confrontations directes' },
   { value: 'Wins', label: 'Victoires' },
-] as const
+] as const;
 
-type Criterion = (typeof CRITERION_OPTIONS)[number]['value']
+type Criterion = (typeof CRITERION_OPTIONS)[number]['value'];
 
-const DURATION_PRESETS = [30, 40, 45] as const
+const DURATION_PRESETS = [30, 40, 45] as const;
 
 /**
  * Design Lab — all form / editor DS controls in one board.
  */
 export function LabForm() {
-  const [name, setName] = useState('RC Lens')
-  const [shortName, setShortName] = useState('RCL')
-  const [logoUrl, setLogoUrl] = useState<string | null>(null)
-  const [logoUploading, setLogoUploading] = useState(false)
-  const [primary, setPrimary] = useState('#C8102E')
-  const [secondary, setSecondary] = useState('#001F5B')
-  const [demoUploadUrl, setDemoUploadUrl] = useState<string | null>(null)
-  const [selectValue, setSelectValue] = useState<string | null>('fr')
-  const [numberValue, setNumberValue] = useState<number | null>(11)
-  const [periodMinutes, setPeriodMinutes] = useState<number | null>(45)
-  const [extraTime, setExtraTime] = useState(false)
-  const [etMinutes, setEtMinutes] = useState<number | null>(15)
-  const [standaloneSwitch, setStandaloneSwitch] = useState(true)
-  const [winPoints, setWinPoints] = useState<number | null>(3)
-  const [drawPoints, setDrawPoints] = useState<number | null>(1)
-  const [lossPoints, setLossPoints] = useState<number | null>(0)
-  const [cards, setCards] = useState({ yellow: true, red: true, white: false })
+  const [name, setName] = useState('RC Lens');
+  const [shortName, setShortName] = useState('RCL');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [primary, setPrimary] = useState('#C8102E');
+  const [secondary, setSecondary] = useState('#001F5B');
+  const [demoUploadUrl, setDemoUploadUrl] = useState<string | null>(null);
+  const [selectValue, setSelectValue] = useState<string | null>('fr');
+  const [numberValue, setNumberValue] = useState<number | null>(11);
+  const [periodMinutes, setPeriodMinutes] = useState<number | null>(45);
+  const [extraTime, setExtraTime] = useState(false);
+  const [etMinutes, setEtMinutes] = useState<number | null>(15);
+  const [standaloneSwitch, setStandaloneSwitch] = useState(true);
+  const [winPoints, setWinPoints] = useState<number | null>(3);
+  const [drawPoints, setDrawPoints] = useState<number | null>(1);
+  const [lossPoints, setLossPoints] = useState<number | null>(0);
+  const [cards, setCards] = useState({ yellow: true, red: true, white: false });
   const [criteria, setCriteria] = useState<Criterion[]>([
     'Points',
     'GoalDifference',
     'GoalsFor',
     'HeadToHead',
-  ])
-  const [addCriterion, setAddCriterion] = useState<string | null>(null)
+  ]);
+  const [addCriterion, setAddCriterion] = useState<string | null>(null);
 
-  const nameId = useId()
-  const shortId = useId()
-  const searchId = useId()
-  const selectId = useId()
-  const numberId = useId()
-  const durationId = useId()
-  const etId = useId()
-  const primaryId = useId()
-  const secondaryId = useId()
-  const addId = useId()
-  const winId = useId()
-  const drawId = useId()
-  const lossId = useId()
+  const nameId = useId();
+  const shortId = useId();
+  const searchId = useId();
+  const selectId = useId();
+  const numberId = useId();
+  const durationId = useId();
+  const etId = useId();
+  const primaryId = useId();
+  const secondaryId = useId();
+  const addId = useId();
+  const winId = useId();
+  const drawId = useId();
+  const lossId = useId();
 
   const baremeWarning = pointsBaremeWarning(
     winPoints,
     drawPoints,
     lossPoints,
     'Barème inhabituel : on attend Victoire ≥ Nul ≥ Défaite.',
-  )
+  );
   const availableCriteria = CRITERION_OPTIONS.filter(
     (option) => !criteria.includes(option.value),
-  )
+  );
 
   useEffect(() => {
     return () => {
       if (logoUrl) {
-        URL.revokeObjectURL(logoUrl)
+        URL.revokeObjectURL(logoUrl);
       }
       if (demoUploadUrl) {
-        URL.revokeObjectURL(demoUploadUrl)
+        URL.revokeObjectURL(demoUploadUrl);
       }
-    }
-  }, [logoUrl, demoUploadUrl])
+    };
+  }, [logoUrl, demoUploadUrl]);
 
   function onLogoChange(next: string | null) {
     setLogoUrl((prev) => {
       if (prev) {
-        URL.revokeObjectURL(prev)
+        URL.revokeObjectURL(prev);
       }
-      return next
-    })
+      return next;
+    });
     if (next) {
-      setLogoUploading(true)
-      window.setTimeout(() => setLogoUploading(false), 900)
+      setLogoUploading(true);
+      window.setTimeout(() => setLogoUploading(false), 900);
     } else {
-      setLogoUploading(false)
+      setLogoUploading(false);
     }
   }
 
   function criterionLabel(value: Criterion): string {
     return (
       CRITERION_OPTIONS.find((option) => option.value === value)?.label ?? value
-    )
+    );
   }
 
   const nameDup =
     name.trim().toLocaleLowerCase('fr') === 'rc lens'
       ? 'Une équipe porte déjà ce nom'
-      : undefined
+      : undefined;
 
   return (
     <div className="dlab-form">
@@ -137,8 +140,8 @@ export function LabForm() {
         <p className="dlab-form__lede">
           Tous les contrôles d’édition DS : Field, TextInput, Select,
           InputNumber (end / split + suffixe), Switch / SwitchPanel,
-          FormSection, FormGroup, OutcomePoints, ReorderList, ChoiceTile, Upload,
-          ColorPicker. Surface Règlement = garde-fous produit à part.
+          FormSection, FormGroup, OutcomePoints, ReorderList, ChoiceTile,
+          Upload, ColorPicker. Surface Règlement = garde-fous produit à part.
         </p>
       </header>
 
@@ -256,14 +259,20 @@ export function LabForm() {
                 onChange={setPeriodMinutes}
               />
             </Field>
-            <div className="dlab-form__presets" role="group" aria-label="Presets durée">
+            <div
+              className="dlab-form__presets"
+              role="group"
+              aria-label="Presets durée"
+            >
               {DURATION_PRESETS.map((minutes) => (
                 <button
                   key={minutes}
                   type="button"
                   className={[
                     'ds-chip',
-                    periodMinutes === minutes ? 'ds-chip--accent' : 'ds-chip--soft',
+                    periodMinutes === minutes
+                      ? 'ds-chip--accent'
+                      : 'ds-chip--soft',
                     'dlab-form__preset-btn',
                   ].join(' ')}
                   onClick={() => setPeriodMinutes(minutes)}
@@ -320,12 +329,18 @@ export function LabForm() {
           </div>
         </section>
 
-        <section className="ds-panel dlab-form__panel" aria-label="OutcomePoints">
+        <section
+          className="ds-panel dlab-form__panel"
+          aria-label="OutcomePoints"
+        >
           <h2 className="dlab-form__panel-title">OutcomePoints</h2>
           <div className="dlab-form__stack" data-density="comfortable">
             <Field
               label="Barème de points"
-              message={baremeWarning ?? 'Min 0. Soft-warn si Victoire < Nul ou Nul < Défaite.'}
+              message={
+                baremeWarning ??
+                'Min 0. Soft-warn si Victoire < Nul ou Nul < Défaite.'
+              }
               messageTone={baremeWarning ? 'warning' : 'hint'}
             >
               <OutcomePoints aria-label="Barème de points">
@@ -395,14 +410,14 @@ export function LabForm() {
               canDrag={(item) => item !== 'Points'}
               canRemove={(item) => item !== 'Points'}
               onReorder={(next) => {
-                const withoutPoints = next.filter((item) => item !== 'Points')
-                setCriteria(['Points', ...withoutPoints])
+                const withoutPoints = next.filter((item) => item !== 'Points');
+                setCriteria(['Points', ...withoutPoints]);
               }}
               onRemove={(item) => {
                 if (item === 'Points') {
-                  return
+                  return;
                 }
-                setCriteria((prev) => prev.filter((entry) => entry !== item))
+                setCriteria((prev) => prev.filter((entry) => entry !== item));
               }}
               aria-label="Ordre de départage"
               renderContent={(item) => criterionLabel(item)}
@@ -418,9 +433,9 @@ export function LabForm() {
                   label: option.label,
                 }))}
                 onChange={(next) => {
-                  setAddCriterion(null)
+                  setAddCriterion(null);
                   if (next && next !== 'Points') {
-                    setCriteria((prev) => [...prev, next as Criterion])
+                    setCriteria((prev) => [...prev, next as Criterion]);
                   }
                 }}
               />
@@ -472,10 +487,20 @@ export function LabForm() {
           >
             <div className="ds-form--inline">
               <Field label="Minimum">
-                <InputNumber defaultValue={8} min={2} max={64} controlsLayout="split" />
+                <InputNumber
+                  defaultValue={8}
+                  min={2}
+                  max={64}
+                  controlsLayout="split"
+                />
               </Field>
               <Field label="Maximum">
-                <InputNumber defaultValue={16} min={2} max={64} controlsLayout="split" />
+                <InputNumber
+                  defaultValue={16}
+                  min={2}
+                  max={64}
+                  controlsLayout="split"
+                />
               </Field>
             </div>
             <FormGroup
@@ -484,10 +509,20 @@ export function LabForm() {
             >
               <div className="ds-form--inline">
                 <Field label="Vainqueur">
-                  <InputNumber defaultValue={3} min={0} max={20} controlsLayout="split" />
+                  <InputNumber
+                    defaultValue={3}
+                    min={0}
+                    max={20}
+                    controlsLayout="split"
+                  />
                 </Field>
                 <Field label="Perdant">
-                  <InputNumber defaultValue={0} min={0} max={20} controlsLayout="split" />
+                  <InputNumber
+                    defaultValue={0}
+                    min={0}
+                    max={20}
+                    controlsLayout="split"
+                  />
                 </Field>
               </div>
             </FormGroup>
@@ -514,10 +549,10 @@ export function LabForm() {
                 onChange={(next) => {
                   setDemoUploadUrl((prev) => {
                     if (prev) {
-                      URL.revokeObjectURL(prev)
+                      URL.revokeObjectURL(prev);
                     }
-                    return next
-                  })
+                    return next;
+                  });
                 }}
               />
               <figcaption>Interactif</figcaption>
@@ -559,7 +594,7 @@ export function LabForm() {
           <form
             className="ds-form"
             onSubmit={(event: FormEvent) => {
-              event.preventDefault()
+              event.preventDefault();
             }}
           >
             <Field
@@ -613,5 +648,5 @@ export function LabForm() {
         </section>
       </div>
     </div>
-  )
+  );
 }

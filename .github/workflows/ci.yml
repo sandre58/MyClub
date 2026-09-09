@@ -59,8 +59,14 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Format
+        run: npm run format:check
+
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
         run: npm run test:run

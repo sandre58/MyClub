@@ -4,118 +4,122 @@
  */
 
 .ds-standings-wrap {
-    overflow-x: auto;
+  overflow-x: auto;
 }
 
 .ds-standings {
-    width: 100%;
-    border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
 
 .ds-standings th {
-    padding: var(--space-8);
-    font-size: var(--text-meta);
-    font-weight: var(--font-weight-semibold);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--color-text-secondary);
-    text-align: right;
-    border-bottom: var(--border-width) solid var(--color-border-strong);
+  padding: var(--space-8);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  text-align: right;
+  border-bottom: var(--border-width) solid var(--color-border-strong);
 }
 
 .ds-standings th.team {
-    text-align: left;
+  text-align: left;
 }
 
 .ds-standings td {
-    padding: var(--space-12) var(--space-8);
-    border-bottom: var(--border-width) solid var(--color-border);
-    text-align: right;
-    font-size: var(--text-body);
+  padding: var(--space-12) var(--space-8);
+  border-bottom: var(--border-width) solid var(--color-border);
+  text-align: right;
+  font-size: var(--text-body);
 }
 
 .ds-standings td.team {
-    text-align: left;
+  text-align: left;
 }
 
 .ds-standings tr {
-    position: relative;
+  position: relative;
 }
 
 .ds-standings td.rank {
-    position: relative;
-    width: 2.75rem;
-    text-align: center;
-    font-weight: var(--font-weight-bold);
-    color: var(--color-text-secondary);
+  position: relative;
+  width: 2.75rem;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
 }
 
 /* Zones sportives : barre latérale — la couleur confirme, la légende explique. */
 .ds-standings tr[data-zone='promotion'] td.rank::before,
 .ds-standings tr[data-zone='relegation'] td.rank::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 4px;
-    bottom: 4px;
-    width: 3px;
-    border-radius: 2px;
-    background: var(--color-brand);
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-brand);
 }
 
 .ds-standings tr[data-zone='relegation'] td.rank::before {
-    background: var(--color-error);
+  background: var(--color-error);
 }
 
 .ds-standings tr[data-rank='1'] .ds-standings__team-name {
-    font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-bold);
 }
 
 .ds-standings__team {
-    display: flex;
-    align-items: center;
-    gap: var(--space-12);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
 }
 
 .ds-standings__team-name {
-    font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-semibold);
 }
 
 .ds-standings td.pts {
-    font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-bold);
 }
 
 .ds-standings-penalty {
-    display: inline-block;
-    margin-left: var(--space-8);
-    padding: 1px var(--space-8);
-    border-radius: var(--radius-control);
-    background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface));
-    color: var(--color-attention);
-    font-size: var(--text-meta);
-    font-weight: var(--font-weight-semibold);
+  display: inline-block;
+  margin-left: var(--space-8);
+  padding: 1px var(--space-8);
+  border-radius: var(--radius-control);
+  background: color-mix(
+    in srgb,
+    var(--color-attention) 12%,
+    var(--color-surface)
+  );
+  color: var(--color-attention);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
 }
 
 .ds-standings-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-16);
-    font-size: var(--text-meta);
-    color: var(--color-text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
 }
 
 .ds-standings-legend__item {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-8);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
 }
 
 .ds-standings-legend__swatch {
-    width: 0.625rem;
-    height: 0.625rem;
-    border-radius: 2px;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
 }
 
 .ds-standings-legend--spaced {
-    margin-bottom: var(--space-12);
+  margin-bottom: var(--space-12);
 }

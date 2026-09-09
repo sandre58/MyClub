@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { clearToasts, notify } from '../design-system/toastStore'
+import { useEffect } from 'react';
+import { clearToasts, notify } from '../design-system/toastStore';
 
 /**
  * Design Lab — interactive Toast demos (tones, stack, sticky-ish error).
@@ -8,9 +8,9 @@ import { clearToasts, notify } from '../design-system/toastStore'
 export function LabToast() {
   useEffect(() => {
     return () => {
-      clearToasts()
-    }
-  }, [])
+      clearToasts();
+    };
+  }, []);
 
   return (
     <div className="dlab-toast">
@@ -19,8 +19,8 @@ export function LabToast() {
         <h1 className="dlab-toast__title">Toast</h1>
         <p className="dlab-toast__lede">
           Feedback d’événement éphémère — bas-droit du canvas. Soft fill ~16 %,
-          sans bordure ; icône tone ; barre 2 px vers la gauche (pause au survol).
-          Slot action réservé, pas en V1.
+          sans bordure ; icône tone ; barre 2 px vers la gauche (pause au
+          survol). Slot action réservé, pas en V1.
         </p>
       </header>
 
@@ -60,10 +60,10 @@ export function LabToast() {
             type="button"
             className="ds-btn ds-btn--ghost"
             onClick={() => {
-              notify.success('Équipe ajoutée')
-              notify.info('Structure à jour')
-              notify.attention('Vérifier les créneaux')
-              notify.error('Synchronisation différée')
+              notify.success('Équipe ajoutée');
+              notify.info('Structure à jour');
+              notify.attention('Vérifier les créneaux');
+              notify.error('Synchronisation différée');
             }}
           >
             Empiler (max 3)
@@ -84,5 +84,5 @@ export function LabToast() {
         </ul>
       </section>
     </div>
-  )
+  );
 }

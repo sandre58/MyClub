@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
-import { PlayUpLockupMark } from '../PlayUpLockupMark'
+import type { ReactNode } from 'react';
+import { PlayUpLockupMark } from '../PlayUpLockupMark';
 
-export type WaitSize = 'home' | 'page' | 'region'
+export type WaitSize = 'home' | 'page' | 'region';
 
 /**
  * Page / region wait — mark Accueil + orbiting ring, label centered under the animation.
@@ -14,8 +14,8 @@ export function WaitMark({
   children,
   size = 'page',
 }: {
-  children: ReactNode
-  size?: WaitSize
+  children: ReactNode;
+  size?: WaitSize;
 }) {
   return (
     <p
@@ -29,5 +29,5 @@ export function WaitMark({
       </span>
       <span className="ds-wait__label">{children}</span>
     </p>
-  )
+  );
 }

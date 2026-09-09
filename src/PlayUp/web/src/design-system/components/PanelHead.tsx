@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 /**
  * Panel title row — optional neutral icon (V9) + eyebrow meta on the right.
@@ -9,11 +9,11 @@ export function PanelHead({
   icon,
   id,
 }: {
-  title: string
-  aside?: ReactNode
-  icon?: ReactNode
+  title: string;
+  aside?: ReactNode;
+  icon?: ReactNode;
   /** For aria-labelledby on parent section. */
-  id?: string
+  id?: string;
 }) {
   return (
     <div className="ds-panel-head">
@@ -27,5 +27,5 @@ export function PanelHead({
       </h3>
       {aside ? <span className="ds-eyebrow">{aside}</span> : null}
     </div>
-  )
+  );
 }

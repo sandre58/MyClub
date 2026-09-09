@@ -1,25 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 import {
   SHELL_PHONE_QUERY,
   SHELL_TABLET_QUERY,
-} from '../layout/viewportBreakpoints'
+} from '../layout/viewportBreakpoints';
 
-export type ShellViewport = 'phone' | 'tablet' | 'desktop'
+export type ShellViewport = 'phone' | 'tablet' | 'desktop';
 
-export { SHELL_PHONE_QUERY, SHELL_TABLET_QUERY }
+export { SHELL_PHONE_QUERY, SHELL_TABLET_QUERY };
 
 export function readShellViewport(
   matchMedia: (query: string) => { matches: boolean } = window.matchMedia,
 ): ShellViewport {
   if (matchMedia(SHELL_PHONE_QUERY).matches) {
-    return 'phone'
+    return 'phone';
   }
 
   if (matchMedia(SHELL_TABLET_QUERY).matches) {
-    return 'tablet'
+    return 'tablet';
   }
 
-  return 'desktop'
+  return 'desktop';
 }
 
 /**
@@ -28,31 +28,34 @@ export function readShellViewport(
  */
 export function useShellViewport(): ShellViewport {
   const [viewport, setViewport] = useState<ShellViewport>(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-      return 'desktop'
+    if (
+      typeof window === 'undefined' ||
+      typeof window.matchMedia !== 'function'
+    ) {
+      return 'desktop';
     }
 
-    return readShellViewport()
-  })
+    return readShellViewport();
+  });
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') {
-      return
+      return;
     }
 
-    const phone = window.matchMedia(SHELL_PHONE_QUERY)
-    const tablet = window.matchMedia(SHELL_TABLET_QUERY)
-    const update = () => setViewport(readShellViewport())
+    const phone = window.matchMedia(SHELL_PHONE_QUERY);
+    const tablet = window.matchMedia(SHELL_TABLET_QUERY);
+    const update = () => setViewport(readShellViewport());
 
-    phone.addEventListener('change', update)
-    tablet.addEventListener('change', update)
-    update()
+    phone.addEventListener('change', update);
+    tablet.addEventListener('change', update);
+    update();
 
     return () => {
-      phone.removeEventListener('change', update)
-      tablet.removeEventListener('change', update)
-    }
-  }, [])
+      phone.removeEventListener('change', update);
+      tablet.removeEventListener('change', update);
+    };
+  }, []);
 
-  return viewport
+  return viewport;
 }

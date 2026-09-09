@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { Toaster } from '../design-system/components/Toaster'
+import type { ReactNode } from 'react';
+import { Toaster } from '../design-system/components/Toaster';
 
 /**
  * Primary content viewport. Pages keep their own `<main id="main">` landmark.
@@ -12,5 +12,5 @@ export function ShellMain({ children }: { children: ReactNode }) {
       {children}
       <Toaster />
     </div>
-  )
+  );
 }

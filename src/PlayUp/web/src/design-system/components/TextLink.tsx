@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronRightIcon } from '../icons/shellIcons'
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRightIcon } from '../icons/shellIcons';
 
 /**
  * Cross-surface text CTA — label + trailing chevron.
@@ -12,12 +12,12 @@ export function TextLink({
   className,
   showArrow = true,
 }: {
-  to: string
-  children: ReactNode
-  className?: string
-  showArrow?: boolean
+  to: string;
+  children: ReactNode;
+  className?: string;
+  showArrow?: boolean;
 }) {
-  const classes = ['ds-text-link', className].filter(Boolean).join(' ')
+  const classes = ['ds-text-link', className].filter(Boolean).join(' ');
 
   return (
     <Link className={classes} to={to}>
@@ -28,5 +28,5 @@ export function TextLink({
         </span>
       ) : null}
     </Link>
-  )
+  );
 }

@@ -5,8 +5,7 @@
 export const queryKeys = {
   competitions: {
     all: ['competitions'] as const,
-    detail: (competitionId: string) =>
-      ['competitions', competitionId] as const,
+    detail: (competitionId: string) => ['competitions', competitionId] as const,
     workspace: (competitionId: string) =>
       ['competitions', competitionId, 'workspace'] as const,
     overview: (competitionId: string) =>
@@ -27,4 +26,4 @@ export const queryKeys = {
     detail: (matchId: string) => ['matches', matchId] as const,
     byStage: (stageId: string) => ['matches', 'by-stage', stageId] as const,
   },
-} as const
+} as const;

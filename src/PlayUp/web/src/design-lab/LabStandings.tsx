@@ -1,7 +1,7 @@
-import { labRounds, labStandings } from './labData'
-import { Crest, MatchRow, PanelHead } from './LabShared'
-import { TrendIcon } from '../design-system/TrendIcon'
-import { StandingsLegend } from '../design-system/components/StandingsLegend'
+import { labRounds, labStandings } from './labData';
+import { Crest, MatchRow, PanelHead } from './LabShared';
+import { TrendIcon } from '../design-system/TrendIcon';
+import { StandingsLegend } from '../design-system/components/StandingsLegend';
 
 /**
  * Classements — consultation sportive. Grille légitime (gate passé) :
@@ -9,7 +9,7 @@ import { StandingsLegend } from '../design-system/components/StandingsLegend'
  * couleur en confirmation (barre latérale + légende).
  */
 export function LabStandings() {
-  const lastDone = [...labRounds].reverse().find((r) => r.state === 'done')
+  const lastDone = [...labRounds].reverse().find((r) => r.state === 'done');
 
   return (
     <div className="ds-page">
@@ -53,11 +53,7 @@ export function LabStandings() {
             </thead>
             <tbody>
               {labStandings.map((row) => (
-                <tr
-                  key={row.team.id}
-                  data-zone={row.zone}
-                  data-rank={row.rank}
-                >
+                <tr key={row.team.id} data-zone={row.zone} data-rank={row.rank}>
                   <td className="rank ds-num">{row.rank}</td>
                   <td className="team">
                     <span className="ds-standings__team">
@@ -94,7 +90,9 @@ export function LabStandings() {
         <section className="ds-panel">
           <PanelHead
             title={
-              lastDone ? `Dernière journée · ${lastDone.label}` : 'Dernière journée'
+              lastDone
+                ? `Dernière journée · ${lastDone.label}`
+                : 'Dernière journée'
             }
           />
           <div>
@@ -112,9 +110,9 @@ export function LabStandings() {
           <p className="ds-overview-situation__label">
             Victoire <strong className="ds-num">3 pts</strong> · nul{' '}
             <strong className="ds-num">1 pt</strong> · défaite{' '}
-            <strong className="ds-num">0 pt</strong>. Départage : différence
-            de buts, puis confrontation directe. Le premier est qualifié pour
-            le tournoi régional ; le dernier est relégué.
+            <strong className="ds-num">0 pt</strong>. Départage : différence de
+            buts, puis confrontation directe. Le premier est qualifié pour le
+            tournoi régional ; le dernier est relégué.
           </p>
           <button type="button" className="ds-btn ds-btn--ghost">
             Voir le règlement complet →
@@ -122,5 +120,5 @@ export function LabStandings() {
         </section>
       </div>
     </div>
-  )
+  );
 }

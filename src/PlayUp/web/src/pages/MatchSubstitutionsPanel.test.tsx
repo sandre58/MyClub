@@ -1,8 +1,8 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchMatchDetail,
   fetchOrganisationView,
@@ -12,22 +12,22 @@ import {
   removeRecordedSubstitution,
   setRunningScore,
   startMatch,
-} from '../api'
+} from '../api';
 import type {
   DeclaredParticipation,
   MatchDetail,
   OrganisationView,
   RecordedSubstitution,
   StageOverview,
-} from '../types'
+} from '../types';
 import {
   canMutateRecordedSubstitutions,
   deriveOnFieldMembers,
-} from './MatchSubstitutionsPanel'
-import { MatchPage } from './MatchPage'
+} from './matchSubstitutionsHelpers';
+import { MatchPage } from './MatchPage';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchMatchDetail: vi.fn(),
@@ -38,19 +38,19 @@ vi.mock('../api', async (importOriginal) => {
     setRunningScore: vi.fn(),
     recordSubstitution: vi.fn(),
     removeRecordedSubstitution: vi.fn(),
-  }
-})
+  };
+});
 
-const matchId = '11111111-1111-1111-1111-111111111111'
-const stageId = '22222222-2222-2222-2222-222222222222'
-const competitionId = '33333333-3333-3333-3333-333333333333'
-const fixtureId = '44444444-4444-4444-4444-444444444444'
-const homeEntryId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-const awayEntryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
-const dupontId = '11111111-1111-1111-1111-111111111101'
-const martinId = '11111111-1111-1111-1111-111111111102'
-const bernardId = '11111111-1111-1111-1111-111111111103'
-const subId = '99999999-9999-9999-9999-999999999901'
+const matchId = '11111111-1111-1111-1111-111111111111';
+const stageId = '22222222-2222-2222-2222-222222222222';
+const competitionId = '33333333-3333-3333-3333-333333333333';
+const fixtureId = '44444444-4444-4444-4444-444444444444';
+const homeEntryId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const awayEntryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+const dupontId = '11111111-1111-1111-1111-111111111101';
+const martinId = '11111111-1111-1111-1111-111111111102';
+const bernardId = '11111111-1111-1111-1111-111111111103';
+const subId = '99999999-9999-9999-9999-999999999901';
 
 function participation(
   overrides: Partial<DeclaredParticipation> = {},
@@ -62,7 +62,7 @@ function participation(
     compositionStatus: 'Starter',
     jerseyNumber: 9,
     ...overrides,
-  }
+  };
 }
 
 function sheetHome(): DeclaredParticipation[] {
@@ -80,7 +80,7 @@ function sheetHome(): DeclaredParticipation[] {
       compositionStatus: 'Starter',
       jerseyNumber: 7,
     }),
-  ]
+  ];
 }
 
 function substitution(
@@ -94,7 +94,7 @@ function substitution(
     inMemberId: martinId,
     inDisplayName: 'Martin',
     ...overrides,
-  }
+  };
 }
 
 function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
@@ -114,7 +114,7 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
     recordedGoals: [],
     recordedSubstitutions: [],
     ...overrides,
-  }
+  };
 }
 
 const emptyOrganisation: OrganisationView = {
@@ -161,18 +161,18 @@ const emptyOrganisation: OrganisationView = {
     attachedMatchCount: 0,
     blockers: [],
   },
-    stages: [],
-}
+  stages: [],
+};
 
 const stageOverview: StageOverview = {
   id: stageId,
   competitionId,
-  name: 'JournÃ©e 1',
+  name: 'Journée 1',
   status: 'Draft',
   rounds: [],
   slots: [],
   draws: [],
-}
+};
 
 function renderMatchPage() {
   const queryClient = new QueryClient({
@@ -180,7 +180,7 @@ function renderMatchPage() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-  })
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -190,20 +190,16 @@ function renderMatchPage() {
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-  )
+  );
 }
 
 describe('deriveOnFieldMembers / canMutateRecordedSubstitutions', () => {
   it('starts from Starters and replays ordered substitutions', () => {
-    const onField = deriveOnFieldMembers(
-      sheetHome(),
-      [substitution()],
-      'Home',
-    )
-    expect(onField.has(dupontId)).toBe(false)
-    expect(onField.has(martinId)).toBe(true)
-    expect(onField.has(bernardId)).toBe(true)
-  })
+    const onField = deriveOnFieldMembers(sheetHome(), [substitution()], 'Home');
+    expect(onField.has(dupontId)).toBe(false);
+    expect(onField.has(martinId)).toBe(true);
+    expect(onField.has(bernardId)).toBe(true);
+  });
 
   it('supports upToExclusive for Correct at an index', () => {
     const before = deriveOnFieldMembers(
@@ -211,79 +207,87 @@ describe('deriveOnFieldMembers / canMutateRecordedSubstitutions', () => {
       [substitution()],
       'Home',
       0,
-    )
-    expect(before.has(dupontId)).toBe(true)
-    expect(before.has(martinId)).toBe(false)
-  })
+    );
+    expect(before.has(dupontId)).toBe(true);
+    expect(before.has(martinId)).toBe(false);
+  });
 
-  it('allows Live and Finishedâˆ§Â¬Live only', () => {
+  it('allows Live and Finished∧¬Live only', () => {
     expect(canMutateRecordedSubstitutions(baseMatch({ status: 'Live' }))).toBe(
       true,
-    )
+    );
     expect(
       canMutateRecordedSubstitutions(
         baseMatch({ status: 'Finished', hasObservedLive: false }),
       ),
-    ).toBe(true)
+    ).toBe(true);
     expect(
       canMutateRecordedSubstitutions(
         baseMatch({ status: 'Finished', hasObservedLive: true }),
       ),
-    ).toBe(false)
+    ).toBe(false);
     expect(
       canMutateRecordedSubstitutions(baseMatch({ status: 'Scheduled' })),
-    ).toBe(false)
-  })
-})
+    ).toBe(false);
+  });
+});
 
 describe('MatchPage substitutions (Lot 1)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview)
-    vi.mocked(fetchOrganisationView).mockResolvedValue(emptyOrganisation)
-    vi.mocked(startMatch).mockResolvedValue()
-    vi.mocked(finishMatch).mockResolvedValue()
-    vi.mocked(setRunningScore).mockResolvedValue()
-    vi.mocked(recordSubstitution).mockResolvedValue()
-    vi.mocked(removeRecordedSubstitution).mockResolvedValue()
-  })
+    vi.clearAllMocks();
+    vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);
+    vi.mocked(fetchOrganisationView).mockResolvedValue(emptyOrganisation);
+    vi.mocked(startMatch).mockResolvedValue();
+    vi.mocked(finishMatch).mockResolvedValue();
+    vi.mocked(setRunningScore).mockResolvedValue();
+    vi.mocked(recordSubstitution).mockResolvedValue();
+    vi.mocked(removeRecordedSubstitution).mockResolvedValue();
+  });
 
-  it('Live: records Dupont â†’ Martin without touching RunningScore', async () => {
-    const user = userEvent.setup()
+  it('Live: records Dupont → Martin without touching RunningScore', async () => {
+    const user = userEvent.setup();
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(recordSubstitution).mock.calls.length > 0) {
-        return baseMatch({ recordedSubstitutions: [substitution()] })
+        return baseMatch({ recordedSubstitutions: [substitution()] });
       }
-      return baseMatch()
-    })
+      return baseMatch();
+    });
 
-    renderMatchPage()
+    renderMatchPage();
 
     const heading = await screen.findByRole('heading', {
       name: 'Remplacements',
-    })
-    const panel = heading.closest('section') as HTMLElement
+    });
+    const panel = heading.closest('section') as HTMLElement;
 
-    await user.selectOptions(within(panel).getByLabelText(/Sortant/i), dupontId)
-    await user.selectOptions(within(panel).getByLabelText(/Entrant/i), martinId)
+    await user.selectOptions(
+      within(panel).getByLabelText(/Sortant/i),
+      dupontId,
+    );
+    await user.selectOptions(
+      within(panel).getByLabelText(/Entrant/i),
+      martinId,
+    );
     await user.click(
-      within(panel).getByRole('button', { name: 'Enregistrer le remplacement' }),
-    )
+      within(panel).getByRole('button', {
+        name: 'Enregistrer le remplacement',
+      }),
+    );
 
     await waitFor(() => {
       expect(recordSubstitution).toHaveBeenCalledWith(matchId, {
         outMemberId: dupontId,
         inMemberId: martinId,
         side: 'Home',
-      })
-    })
-    expect(setRunningScore).not.toHaveBeenCalled()
+      });
+    });
+    expect(setRunningScore).not.toHaveBeenCalled();
     expect(
-      within(panel).getByText(/Dupont â†’ Martin/, {
+      within(panel).getByText(/Dupont → Martin/, {
         selector: '.match-subs__pair',
       }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('Scheduled: read-only (Domain refuses Create)', async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(
@@ -292,26 +296,26 @@ describe('MatchPage substitutions (Lot 1)', () => {
         hasObservedLive: false,
         runningScore: null,
       }),
-    )
+    );
 
-    renderMatchPage()
+    renderMatchPage();
 
     const heading = await screen.findByRole('heading', {
       name: 'Remplacements',
-    })
-    const panel = heading.closest('section') as HTMLElement
+    });
+    const panel = heading.closest('section') as HTMLElement;
 
     expect(
       within(panel).getByText(/ne sont plus modifiables/i),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       within(panel).queryByRole('button', {
         name: 'Enregistrer le remplacement',
       }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
-  it('Finishedâˆ§Live: read-only (CorrectAfterFinish hors V1)', async () => {
+  it('Finished∧Live: read-only (CorrectAfterFinish hors V1)', async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(
       baseMatch({
         status: 'Finished',
@@ -325,58 +329,58 @@ describe('MatchPage substitutions (Lot 1)', () => {
         },
         recordedSubstitutions: [substitution()],
       }),
-    )
+    );
 
-    renderMatchPage()
+    renderMatchPage();
 
     const heading = await screen.findByRole('heading', {
       name: 'Remplacements',
-    })
-    const panel = heading.closest('section') as HTMLElement
+    });
+    const panel = heading.closest('section') as HTMLElement;
 
     expect(
-      within(panel).getByText(/Dupont â†’ Martin/, {
+      within(panel).getByText(/Dupont → Martin/, {
         selector: '.match-subs__pair',
       }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       within(panel).queryByRole('button', { name: 'Corriger' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       within(panel).queryByRole('button', {
         name: 'Enregistrer le remplacement',
       }),
-    ).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+  });
 
   it('removes a substitution with consequence confirm', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(removeRecordedSubstitution).mock.calls.length > 0) {
-        return baseMatch({ recordedSubstitutions: [] })
+        return baseMatch({ recordedSubstitutions: [] });
       }
-      return baseMatch({ recordedSubstitutions: [substitution()] })
-    })
+      return baseMatch({ recordedSubstitutions: [substitution()] });
+    });
 
-    renderMatchPage()
+    renderMatchPage();
 
     const heading = await screen.findByRole('heading', {
       name: 'Remplacements',
-    })
-    const panel = heading.closest('section') as HTMLElement
+    });
+    const panel = heading.closest('section') as HTMLElement;
 
-    await user.click(within(panel).getByRole('button', { name: 'Retirer' }))
+    await user.click(within(panel).getByRole('button', { name: 'Retirer' }));
     await user.click(
       within(panel).getByRole('button', { name: 'Confirmer le retrait' }),
-    )
+    );
 
     await waitFor(() => {
-      expect(removeRecordedSubstitution).toHaveBeenCalledWith(matchId, subId)
-    })
-  })
+      expect(removeRecordedSubstitution).toHaveBeenCalledWith(matchId, subId);
+    });
+  });
 
-  it('Finishedâˆ§Â¬Live: allows create (reconstruction)', async () => {
-    const user = userEvent.setup()
+  it('Finished∧¬Live: allows create (reconstruction)', async () => {
+    const user = userEvent.setup();
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(recordSubstitution).mock.calls.length > 0) {
         return baseMatch({
@@ -391,7 +395,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
             shootout: null,
           },
           recordedSubstitutions: [substitution()],
-        })
+        });
       }
       return baseMatch({
         status: 'Finished',
@@ -404,24 +408,32 @@ describe('MatchPage substitutions (Lot 1)', () => {
           extraTimePlayed: false,
           shootout: null,
         },
-      })
-    })
+      });
+    });
 
-    renderMatchPage()
+    renderMatchPage();
 
     const heading = await screen.findByRole('heading', {
       name: 'Remplacements',
-    })
-    const panel = heading.closest('section') as HTMLElement
+    });
+    const panel = heading.closest('section') as HTMLElement;
 
-    await user.selectOptions(within(panel).getByLabelText(/Sortant/i), dupontId)
-    await user.selectOptions(within(panel).getByLabelText(/Entrant/i), martinId)
+    await user.selectOptions(
+      within(panel).getByLabelText(/Sortant/i),
+      dupontId,
+    );
+    await user.selectOptions(
+      within(panel).getByLabelText(/Entrant/i),
+      martinId,
+    );
     await user.click(
-      within(panel).getByRole('button', { name: 'Enregistrer le remplacement' }),
-    )
+      within(panel).getByRole('button', {
+        name: 'Enregistrer le remplacement',
+      }),
+    );
 
     await waitFor(() => {
-      expect(recordSubstitution).toHaveBeenCalled()
-    })
-  })
-})
+      expect(recordSubstitution).toHaveBeenCalled();
+    });
+  });
+});

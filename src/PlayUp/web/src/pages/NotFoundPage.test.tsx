@@ -1,8 +1,8 @@
-import { screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
-import { renderWithI18n } from '../test/renderWithI18n'
-import { NotFoundPage } from './NotFoundPage'
+import { screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, expect, it } from 'vitest';
+import { renderWithI18n } from '../test/renderWithI18n';
+import { NotFoundPage } from './NotFoundPage';
 
 function renderNotFound() {
   renderWithI18n(
@@ -12,18 +12,18 @@ function renderNotFound() {
         <Route path="/" element={<p>Home route</p>} />
       </Routes>
     </MemoryRouter>,
-  )
+  );
 }
 
 describe('NotFoundPage', () => {
   it('shows a localised 404 and a home link', () => {
-    renderNotFound()
+    renderNotFound();
 
     expect(
       screen.getByRole('heading', { name: 'Page introuvable' }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Retour à l’accueil' }),
-    ).toHaveAttribute('href', '/')
-  })
-})
+    ).toHaveAttribute('href', '/');
+  });
+});

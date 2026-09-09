@@ -1,24 +1,24 @@
-import { useId, useState } from 'react'
-import { Dialog } from '../design-system/components/Dialog'
-import { Field } from '../design-system/components/Field'
-import { TextInput } from '../design-system/components/TextInput'
-import { Select } from '../design-system/components/Select'
+import { useId, useState } from 'react';
+import { Dialog } from '../design-system/components/Dialog';
+import { Field } from '../design-system/components/Field';
+import { TextInput } from '../design-system/components/TextInput';
+import { Select } from '../design-system/components/Select';
 
 /**
  * Design Lab — interactive Dialog chrome (sm / md / closeDisabled / scroll).
  * Reference surface for the DS primitive; not a product page.
  */
 export function LabDialog() {
-  const [smOpen, setSmOpen] = useState(false)
-  const [mdOpen, setMdOpen] = useState(false)
-  const [lockedOpen, setLockedOpen] = useState(false)
-  const [scrollOpen, setScrollOpen] = useState(false)
-  const [format, setFormat] = useState<string | null>('Championship')
-  const smFormId = useId()
-  const mdFormId = useId()
-  const nameId = useId()
-  const formatId = useId()
-  const stageId = useId()
+  const [smOpen, setSmOpen] = useState(false);
+  const [mdOpen, setMdOpen] = useState(false);
+  const [lockedOpen, setLockedOpen] = useState(false);
+  const [scrollOpen, setScrollOpen] = useState(false);
+  const [format, setFormat] = useState<string | null>('Championship');
+  const smFormId = useId();
+  const mdFormId = useId();
+  const nameId = useId();
+  const formatId = useId();
+  const stageId = useId();
 
   return (
     <div className="dlab-dialog">
@@ -92,7 +92,11 @@ export function LabDialog() {
             >
               Annuler
             </button>
-            <button type="submit" form={smFormId} className="ds-btn ds-btn--primary">
+            <button
+              type="submit"
+              form={smFormId}
+              className="ds-btn ds-btn--primary"
+            >
               Créer
             </button>
           </>
@@ -103,8 +107,8 @@ export function LabDialog() {
           className="ds-form"
           data-density="comfortable"
           onSubmit={(event) => {
-            event.preventDefault()
-            setSmOpen(false)
+            event.preventDefault();
+            setSmOpen(false);
           }}
         >
           <Field label="Nom" htmlFor={nameId} required>
@@ -133,7 +137,11 @@ export function LabDialog() {
             >
               Annuler
             </button>
-            <button type="submit" form={mdFormId} className="ds-btn ds-btn--primary">
+            <button
+              type="submit"
+              form={mdFormId}
+              className="ds-btn ds-btn--primary"
+            >
               Enregistrer
             </button>
           </>
@@ -144,8 +152,8 @@ export function LabDialog() {
           className="ds-form"
           data-density="comfortable"
           onSubmit={(event) => {
-            event.preventDefault()
-            setMdOpen(false)
+            event.preventDefault();
+            setMdOpen(false);
           }}
         >
           <Field label="Format" htmlFor={formatId}>
@@ -219,5 +227,5 @@ export function LabDialog() {
         ))}
       </Dialog>
     </div>
-  )
+  );
 }

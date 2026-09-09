@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   type FormEvent,
   type RefObject,
@@ -6,53 +6,53 @@ import {
   useId,
   useRef,
   useState,
-} from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
-import { createCompetition, fetchCompetitions } from '../api'
-import { Dialog } from '../design-system/components/Dialog'
-import { Field } from '../design-system/components/Field'
-import { HomeBrand } from '../design-system/components/HomeBrand'
-import { TextInput } from '../design-system/components/TextInput'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { ChevronRightIcon } from '../design-system/icons/shellIcons'
-import { PlusIcon } from '../design-system/icons/overviewIcons'
-import '../design-system/fonts'
-import '../design-system/index.css'
-import { queryKeys } from '../queryKeys'
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useNavigate } from 'react-router-dom';
+import { createCompetition, fetchCompetitions } from '../api';
+import { Dialog } from '../design-system/components/Dialog';
+import { Field } from '../design-system/components/Field';
+import { HomeBrand } from '../design-system/components/HomeBrand';
+import { TextInput } from '../design-system/components/TextInput';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { ChevronRightIcon } from '../design-system/icons/shellIcons';
+import { PlusIcon } from '../design-system/icons/overviewIcons';
+import '../design-system/fonts';
+import '../design-system/index.css';
+import { queryKeys } from '../queryKeys';
 import {
   CompetitionStatusBadge,
   ErrorState,
   LoadingState,
   MutationError,
   PendingLabel,
-} from '../ui'
-import { declaredSchedule } from '../shell/competitionPeriod'
+} from '../ui';
+import { declaredSchedule } from '../shell/competitionPeriod';
 import {
   COMPETITION_NAME_MAX_LENGTH,
   type CompetitionListItem,
-} from '../types'
+} from '../types';
 
 /**
  * Accueil hub ops — hors Shell (`.ds-root` seul).
  * Choisir / créer une compétition. Shell V1 commence sur `/competitions/:id…`.
  */
 export function HomePage() {
-  const { t } = useTranslation('home')
-  const { t: tc } = useTranslation('competitions')
-  const { t: tCommon } = useTranslation('common')
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const createTriggerRef = useRef<HTMLButtonElement>(null)
+  const { t } = useTranslation('home');
+  const { t: tc } = useTranslation('competitions');
+  const { t: tCommon } = useTranslation('common');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const createTriggerRef = useRef<HTMLButtonElement>(null);
 
   const query = useQuery({
     queryKey: queryKeys.competitions.all,
     queryFn: fetchCompetitions,
-  })
+  });
 
-  const openCreate = () => setDialogOpen(true)
-  const closeCreate = () => setDialogOpen(false)
+  const openCreate = () => setDialogOpen(true);
+  const closeCreate = () => setDialogOpen(false);
 
-  const isEmpty = query.data !== undefined && query.data.length === 0
+  const isEmpty = query.data !== undefined && query.data.length === 0;
 
   return (
     <div
@@ -107,7 +107,7 @@ export function HomePage() {
         />
       </main>
     </div>
-  )
+  );
 }
 
 function CreateButton({
@@ -115,9 +115,9 @@ function CreateButton({
   label,
   buttonRef,
 }: {
-  onClick: () => void
-  label: string
-  buttonRef?: RefObject<HTMLButtonElement | null>
+  onClick: () => void;
+  label: string;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
 }) {
   return (
     <button
@@ -129,7 +129,7 @@ function CreateButton({
       <PlusIcon size="sm" />
       {label}
     </button>
-  )
+  );
 }
 
 function CompetitionSection({
@@ -138,17 +138,23 @@ function CompetitionSection({
   createTriggerRef,
   showList,
 }: {
-  items: CompetitionListItem[]
-  onCreateClick: () => void
-  createTriggerRef: RefObject<HTMLButtonElement | null>
-  showList: boolean
+  items: CompetitionListItem[];
+  onCreateClick: () => void;
+  createTriggerRef: RefObject<HTMLButtonElement | null>;
+  showList: boolean;
 }) {
-  const { t } = useTranslation('competitions')
+  const { t } = useTranslation('competitions');
 
   return (
-    <section className="ds-group" aria-labelledby="accueil-competitions-heading">
+    <section
+      className="ds-group"
+      aria-labelledby="accueil-competitions-heading"
+    >
       <div className="ds-home__section-head">
-        <h2 id="accueil-competitions-heading" className="ds-home__section-title">
+        <h2
+          id="accueil-competitions-heading"
+          className="ds-home__section-title"
+        >
           {t('listLabel')}
         </h2>
         <CreateButton
@@ -170,17 +176,17 @@ function CompetitionSection({
         </div>
       )}
     </section>
-  )
+  );
 }
 
 function CompetitionRow({ item }: { item: CompetitionListItem }) {
-  const { t, i18n } = useTranslation('competitions')
-  const locale = i18n.language === 'fr' ? 'fr-FR' : i18n.language
+  const { t, i18n } = useTranslation('competitions');
+  const locale = i18n.language === 'fr' ? 'fr-FR' : i18n.language;
   const schedule = declaredSchedule(
     item.scheduledStart,
     item.scheduledEnd,
     locale,
-  )
+  );
   const scheduleLabel =
     schedule?.kind === 'both'
       ? t('schedule.both', { start: schedule.start, end: schedule.end })
@@ -188,7 +194,7 @@ function CompetitionRow({ item }: { item: CompetitionListItem }) {
         ? t('schedule.from', { date: schedule.date })
         : schedule?.kind === 'end'
           ? t('schedule.until', { date: schedule.date })
-          : null
+          : null;
 
   return (
     <Link
@@ -211,7 +217,7 @@ function CompetitionRow({ item }: { item: CompetitionListItem }) {
         </span>
       </span>
     </Link>
-  )
+  );
 }
 
 function CreateCompetitionDialog({
@@ -219,39 +225,39 @@ function CreateCompetitionDialog({
   onClose,
   returnFocusRef,
 }: {
-  open: boolean
-  onClose: () => void
-  returnFocusRef: RefObject<HTMLButtonElement | null>
+  open: boolean;
+  onClose: () => void;
+  returnFocusRef: RefObject<HTMLButtonElement | null>;
 }) {
-  const { t } = useTranslation('competitions')
-  const { t: tCommon } = useTranslation('common')
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const formId = useId()
-  const nameId = useId()
-  const [name, setName] = useState('')
+  const { t } = useTranslation('competitions');
+  const { t: tCommon } = useTranslation('common');
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const formId = useId();
+  const nameId = useId();
+  const [name, setName] = useState('');
 
   useEffect(() => {
     if (open) {
-      setName('')
+      setName('');
     }
-  }, [open])
+  }, [open]);
 
   const mutation = useMutation({
     mutationFn: () => createCompetition({ name: name.trim() }),
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.all,
-      })
-      void navigate(`/competitions/${created.id}/organisation`)
+      });
+      void navigate(`/competitions/${created.id}/organisation`);
     },
-  })
+  });
 
-  const trimmed = name.trim()
+  const trimmed = name.trim();
   const canSubmit =
     trimmed.length > 0 &&
     trimmed.length <= COMPETITION_NAME_MAX_LENGTH &&
-    !mutation.isPending
+    !mutation.isPending;
 
   return (
     <Dialog
@@ -292,11 +298,11 @@ function CreateCompetitionDialog({
         className="ds-form"
         data-density="comfortable"
         onSubmit={(event: FormEvent) => {
-          event.preventDefault()
+          event.preventDefault();
           if (!canSubmit) {
-            return
+            return;
           }
-          mutation.mutate()
+          mutation.mutate();
         }}
       >
         <Field
@@ -321,5 +327,5 @@ function CreateCompetitionDialog({
         {mutation.isError && <MutationError error={mutation.error} />}
       </form>
     </Dialog>
-  )
+  );
 }

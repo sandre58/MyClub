@@ -278,6 +278,13 @@ resharper_check_namespace_highlighting = none
 [src/PlayUp/**/MyClub.PlayUp.Domain/**/*.cs]
 dotnet_diagnostic.CS1591.severity = warning
 
+# Play'Up SPA (TypeScript / CSS / JSON)
+[src/PlayUp/web/**/*.{js,jsx,ts,tsx,css,json,jsonc,html,md,yml,yaml}]
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
 # Test projects: no XML doc file — silence SA0001
 [tests/**/*.cs]
 dotnet_diagnostic.SA0001.severity = none

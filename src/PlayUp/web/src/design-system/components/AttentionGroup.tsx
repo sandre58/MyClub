@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { PanelHead } from './PanelHead'
+import type { ReactNode } from 'react';
+import { PanelHead } from './PanelHead';
 
 export function AttentionGroup({
   label,
@@ -10,20 +10,20 @@ export function AttentionGroup({
   icon,
 }: {
   /** Eyebrow label (Lab). */
-  label?: string
-  count?: number
-  children: ReactNode
+  label?: string;
+  count?: number;
+  children: ReactNode;
   /** Accessible section title (product). */
-  heading?: string
-  headingId?: string
-  icon?: ReactNode
+  heading?: string;
+  headingId?: string;
+  icon?: ReactNode;
 }) {
   const eyebrow =
     label != null
       ? count != null && count > 0
         ? `${label} · ${count}`
         : label
-      : undefined
+      : undefined;
 
   return (
     <section
@@ -38,5 +38,5 @@ export function AttentionGroup({
       ) : null}
       {children}
     </section>
-  )
+  );
 }

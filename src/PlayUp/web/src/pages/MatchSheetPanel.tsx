@@ -3,25 +3,25 @@ import {
   useQuery,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+} from '@tanstack/react-query';
+import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   addDeclaredParticipation,
   changeDeclaredParticipationCompositionStatus,
   fetchOrganisationView,
   removeDeclaredParticipation,
   setDeclaredParticipationJerseyNumber,
-} from '../api'
-import { queryKeys } from '../queryKeys'
+} from '../api';
+import { queryKeys } from '../queryKeys';
 import {
   EmptyState,
   ErrorState,
   LoadingState,
   MutationError,
   PendingLabel,
-} from '../ui'
+} from '../ui';
 import type {
   CompositionStatus,
   DeclaredMember,
@@ -29,23 +29,24 @@ import type {
   MatchDetail,
   MatchSide,
   OrganisationEntry,
-} from '../types'
+} from '../types';
+import { canMutateMatchSheet } from './matchSheetHelpers';
 
 /**
  * Championship match sheet — composition déclarée only (Lot 2).
  * No goals / subs / discipline. Effectif stays on Organisation (cas 7).
  */
 export function MatchSheetPanel({ match }: { match: MatchDetail }) {
-  const { t } = useTranslation('matches')
-  const queryClient = useQueryClient()
-  const canMutate = canMutateMatchSheet(match)
+  const { t } = useTranslation('matches');
+  const queryClient = useQueryClient();
+  const canMutate = canMutateMatchSheet(match);
 
   const organisationQuery = useQuery({
     queryKey: queryKeys.competitions.organisation(match.competitionId),
     queryFn: () => fetchOrganisationView(match.competitionId),
-  })
+  });
 
-  const participations = match.declaredParticipations ?? []
+  const participations = match.declaredParticipations ?? [];
 
   return (
     <section className="ds-panel" aria-labelledby="sheet-heading">
@@ -93,28 +94,20 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
         </div>
       )}
     </section>
-  )
-}
-
-export function canMutateMatchSheet(match: MatchDetail): boolean {
-  if (match.status === 'Scheduled' || match.status === 'Postponed') {
-    return true
-  }
-
-  return match.status === 'Finished' && !match.hasObservedLive
+  );
 }
 
 function findEntry(
   entries: OrganisationEntry[],
   entryId: string,
 ): OrganisationEntry | undefined {
-  return entries.find((entry) => entry.entryId === entryId)
+  return entries.find((entry) => entry.entryId === entryId);
 }
 
 function playersOf(entry: OrganisationEntry | undefined): DeclaredMember[] {
   return (entry?.declaredMembers ?? []).filter(
     (member) => member.role === 'Player',
-  )
+  );
 }
 
 async function invalidateMatchSheet(
@@ -131,7 +124,7 @@ async function invalidateMatchSheet(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.organisation(match.competitionId),
     }),
-  ])
+  ]);
 }
 
 function SheetSideColumn({
@@ -144,107 +137,100 @@ function SheetSideColumn({
   canMutate,
   queryClient,
 }: {
-  match: MatchDetail
-  side: MatchSide
-  sideLabel: string
-  entry: OrganisationEntry | undefined
-  participations: DeclaredParticipation[]
-  allParticipations: DeclaredParticipation[]
-  canMutate: boolean
-  queryClient: QueryClient
+  match: MatchDetail;
+  side: MatchSide;
+  sideLabel: string;
+  entry: OrganisationEntry | undefined;
+  participations: DeclaredParticipation[];
+  allParticipations: DeclaredParticipation[];
+  canMutate: boolean;
+  queryClient: QueryClient;
 }) {
-  const { t } = useTranslation('matches')
-  const { t: tc } = useTranslation('common')
+  const { t } = useTranslation('matches');
+  const { t: tc } = useTranslation('common');
   const rosterHref = entry
     ? `/competitions/${match.competitionId}/teams/${entry.entryId}`
-    : `/competitions/${match.competitionId}/teams`
+    : `/competitions/${match.competitionId}/teams`;
 
-  const onSheetIds = new Set(allParticipations.map((row) => row.memberId))
+  const onSheetIds = new Set(allParticipations.map((row) => row.memberId));
   const eligible = playersOf(entry).filter(
     (member) => !onSheetIds.has(member.memberId),
-  )
+  );
 
-  const [memberId, setMemberId] = useState('')
+  const [memberId, setMemberId] = useState('');
   const [compositionStatus, setCompositionStatus] =
-    useState<CompositionStatus>('Starter')
-  const [jerseyDraft, setJerseyDraft] = useState('')
-  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
-  const [jerseyEditId, setJerseyEditId] = useState<string | null>(null)
-  const [jerseyEditValue, setJerseyEditValue] = useState('')
+    useState<CompositionStatus>('Starter');
+  const [jerseyDraft, setJerseyDraft] = useState('');
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
+  const [jerseyEditId, setJerseyEditId] = useState<string | null>(null);
+  const [jerseyEditValue, setJerseyEditValue] = useState('');
 
   const addMutation = useMutation({
     mutationFn: () => {
-      const jersey = parseOptionalJersey(jerseyDraft)
+      const jersey = parseOptionalJersey(jerseyDraft);
       if (jersey === undefined) {
-        throw new Error('Invalid jersey')
+        throw new Error('Invalid jersey');
       }
       return addDeclaredParticipation(match.matchId, {
         memberId,
         side,
         compositionStatus,
         jerseyNumber: jersey,
-      })
+      });
     },
     onSuccess: async () => {
-      setMemberId('')
-      setJerseyDraft('')
-      setCompositionStatus('Starter')
-      await invalidateMatchSheet(queryClient, match)
+      setMemberId('');
+      setJerseyDraft('');
+      setCompositionStatus('Starter');
+      await invalidateMatchSheet(queryClient, match);
     },
-  })
+  });
 
   const statusMutation = useMutation({
-    mutationFn: ({
-      id,
-      status,
-    }: {
-      id: string
-      status: CompositionStatus
-    }) =>
+    mutationFn: ({ id, status }: { id: string; status: CompositionStatus }) =>
       changeDeclaredParticipationCompositionStatus(match.matchId, id, status),
     onSuccess: async () => {
-      await invalidateMatchSheet(queryClient, match)
+      await invalidateMatchSheet(queryClient, match);
     },
-  })
+  });
 
   const jerseyMutation = useMutation({
     mutationFn: ({
       id,
       jerseyNumber,
     }: {
-      id: string
-      jerseyNumber: number | null
+      id: string;
+      jerseyNumber: number | null;
     }) => setDeclaredParticipationJerseyNumber(match.matchId, id, jerseyNumber),
     onSuccess: async () => {
-      setJerseyEditId(null)
-      setJerseyEditValue('')
-      await invalidateMatchSheet(queryClient, match)
+      setJerseyEditId(null);
+      setJerseyEditValue('');
+      await invalidateMatchSheet(queryClient, match);
     },
-  })
+  });
 
   const removeMutation = useMutation({
-    mutationFn: (id: string) =>
-      removeDeclaredParticipation(match.matchId, id),
+    mutationFn: (id: string) => removeDeclaredParticipation(match.matchId, id),
     onSuccess: async () => {
-      setPendingRemoveId(null)
-      await invalidateMatchSheet(queryClient, match)
+      setPendingRemoveId(null);
+      await invalidateMatchSheet(queryClient, match);
     },
     onError: () => {
-      setPendingRemoveId(null)
+      setPendingRemoveId(null);
     },
-  })
+  });
 
   const mutationError =
     addMutation.error ??
     statusMutation.error ??
     jerseyMutation.error ??
-    removeMutation.error
+    removeMutation.error;
 
   const busy =
     addMutation.isPending ||
     statusMutation.isPending ||
     jerseyMutation.isPending ||
-    removeMutation.isPending
+    removeMutation.isPending;
 
   return (
     <div className="match-sheet__side" aria-label={sideLabel}>
@@ -320,13 +306,13 @@ function SheetSideColumn({
                         className="organisation-action"
                         disabled={busy}
                         onClick={() => {
-                          setPendingRemoveId(null)
-                          setJerseyEditId(row.memberId)
+                          setPendingRemoveId(null);
+                          setJerseyEditId(row.memberId);
                           setJerseyEditValue(
                             row.jerseyNumber != null
                               ? String(row.jerseyNumber)
                               : '',
-                          )
+                          );
                         }}
                       >
                         {t('sheet.editJersey')}
@@ -336,8 +322,8 @@ function SheetSideColumn({
                         className="organisation-action"
                         disabled={busy}
                         onClick={() => {
-                          setJerseyEditId(null)
-                          setPendingRemoveId(row.memberId)
+                          setJerseyEditId(null);
+                          setPendingRemoveId(row.memberId);
                         }}
                       >
                         {t('sheet.remove')}
@@ -349,18 +335,18 @@ function SheetSideColumn({
                   <form
                     className="form match-sheet__jersey-form"
                     onSubmit={(event: FormEvent) => {
-                      event.preventDefault()
+                      event.preventDefault();
                       if (jerseyMutation.isPending) {
-                        return
+                        return;
                       }
-                      const jerseyNumber = parseOptionalJersey(jerseyEditValue)
+                      const jerseyNumber = parseOptionalJersey(jerseyEditValue);
                       if (jerseyNumber === undefined) {
-                        return
+                        return;
                       }
                       jerseyMutation.mutate({
                         id: row.memberId,
                         jerseyNumber,
-                      })
+                      });
                     }}
                   >
                     <label className="field">
@@ -392,8 +378,8 @@ function SheetSideColumn({
                         className="ds-btn ds-btn--ghost"
                         disabled={jerseyMutation.isPending}
                         onClick={() => {
-                          setJerseyEditId(null)
-                          setJerseyEditValue('')
+                          setJerseyEditId(null);
+                          setJerseyEditValue('');
                         }}
                       >
                         {tc('cancel')}
@@ -459,11 +445,11 @@ function SheetSideColumn({
         <form
           className="form match-sheet__add"
           onSubmit={(event: FormEvent) => {
-            event.preventDefault()
+            event.preventDefault();
             if (memberId.length === 0 || addMutation.isPending) {
-              return
+              return;
             }
-            addMutation.mutate()
+            addMutation.mutate();
           }}
         >
           {eligible.length === 0 ? (
@@ -540,18 +526,18 @@ function SheetSideColumn({
         </form>
       )}
     </div>
-  )
+  );
 }
 
 function parseOptionalJersey(raw: string): number | null | undefined {
-  const trimmed = raw.trim()
+  const trimmed = raw.trim();
   if (trimmed.length === 0) {
-    return null
+    return null;
   }
 
   if (!/^\d+$/.test(trimmed)) {
-    return undefined
+    return undefined;
   }
 
-  return Number(trimmed)
+  return Number(trimmed);
 }

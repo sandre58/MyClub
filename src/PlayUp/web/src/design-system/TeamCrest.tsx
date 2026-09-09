@@ -1,12 +1,14 @@
-type CrestTone = 'a' | 'b' | 'c' | 'd' | 'e'
+import { mediaContentUrl } from './mediaContentUrl';
+
+type CrestTone = 'a' | 'b' | 'c' | 'd' | 'e';
 
 export type TeamCrestProps = {
-  name: string
-  logoMediaId?: string | null
-  primaryColor?: string | null
-  className?: string
-  size?: 'sm' | 'md' | 'lg'
-}
+  name: string;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
+  className?: string;
+  size?: 'sm' | 'md' | 'lg';
+};
 
 /**
  * Team crest: real logo via /media/{id}/content when logoMediaId is set,
@@ -19,10 +21,14 @@ export function TeamCrest({
   className = '',
   size = 'md',
 }: TeamCrestProps) {
-  const initial = crestInitials(name)
-  const tone = crestTone(name)
+  const initial = crestInitials(name);
+  const tone = crestTone(name);
   const sizeClass =
-    size === 'sm' ? 'team-crest--sm' : size === 'lg' ? 'team-crest--lg' : 'team-crest--md'
+    size === 'sm'
+      ? 'team-crest--sm'
+      : size === 'lg'
+        ? 'team-crest--lg'
+        : 'team-crest--md';
 
   if (logoMediaId) {
     return (
@@ -37,7 +43,7 @@ export function TeamCrest({
           loading="lazy"
         />
       </span>
-    )
+    );
   }
 
   return (
@@ -55,25 +61,20 @@ export function TeamCrest({
       </svg>
       <span className="team-crest__initial">{initial}</span>
     </span>
-  )
-}
-
-/** Relative URL for Media binary content (Vite proxy → Host). */
-export function mediaContentUrl(mediaId: string): string {
-  return `/media/${mediaId}/content`
+  );
 }
 
 function crestInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '?'
-  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
-  return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase()
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0] ?? ''}${parts[1]![0] ?? ''}`.toUpperCase();
 }
 
 function crestTone(name: string): CrestTone {
-  let hash = 0
+  let hash = 0;
   for (let i = 0; i < name.length; i++) {
-    hash = (hash + name.charCodeAt(i) * (i + 1)) % 5
+    hash = (hash + name.charCodeAt(i) * (i + 1)) % 5;
   }
-  return (['a', 'b', 'c', 'd', 'e'] as const)[hash]!
+  return (['a', 'b', 'c', 'd', 'e'] as const)[hash]!;
 }

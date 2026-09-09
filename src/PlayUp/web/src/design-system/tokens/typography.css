@@ -5,28 +5,28 @@
 :root,
 .ds-root,
 .ds-root[data-font='plex'] {
-    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
 }
 
 :root,
 .ds-root {
-    --text-display: 2rem;
-    --text-heading: 1.375rem;
-    --text-body: 0.9375rem;
-    --text-label: 0.8125rem;
-    --text-meta: 0.75rem;
+  --text-display: 2rem;
+  --text-heading: 1.375rem;
+  --text-body: 0.9375rem;
+  --text-label: 0.8125rem;
+  --text-meta: 0.75rem;
 
-    /* Numeric roles — chiffres tabulaires, vecteur d'identité (Design Lab V2). */
-    --text-score: 3.25rem;
-    --text-hero-num: 3.25rem;
-    --text-row-score: 1.0625rem;
-    --text-standings-pts: 1.0625rem;
-    --text-counter: 1.375rem;
+  /* Numeric roles — chiffres tabulaires, vecteur d'identité (Design Lab V2). */
+  --text-score: 3.25rem;
+  --text-hero-num: 3.25rem;
+  --text-row-score: 1.0625rem;
+  --text-standings-pts: 1.0625rem;
+  --text-counter: 1.375rem;
 
-    --font-weight-regular: 400;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 
-    --leading-tight: 1.2;
-    --leading-normal: 1.45;
+  --leading-tight: 1.2;
+  --leading-normal: 1.45;
 }

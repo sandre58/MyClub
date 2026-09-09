@@ -36,12 +36,12 @@ Open `http://127.0.0.1:5173/` — Accueil hub (list + create). Legacy `/competit
 
 Shared Run Configurations live in the repo under [`.run/`](../../../.run/) (not under gitignored `.idea/`):
 
-| Configuration | Role |
-|---|---|
-| **PlayUp Host** | ASP.NET Host (`launchSettings` → `http://localhost:5287`) |
-| **PlayUp Web** | `npm run dev` in this folder (Vite → `http://127.0.0.1:5173/`) |
-| **PlayUp Host + Web** | Compound — starts Host + Vite in parallel |
-| **PlayUp DevRunner** | One-shot CLI reset/seed (run when you need workspace data; not part of the daily compound) |
+| Configuration         | Role                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| **PlayUp Host**       | ASP.NET Host (`launchSettings` → `http://localhost:5287`)                                  |
+| **PlayUp Web**        | `npm run dev` in this folder (Vite → `http://127.0.0.1:5173/`)                             |
+| **PlayUp Host + Web** | Compound — starts Host + Vite in parallel                                                  |
+| **PlayUp DevRunner**  | One-shot CLI reset/seed (run when you need workspace data; not part of the daily compound) |
 
 **Daily use:** select **PlayUp Host + Web** in the Run widget → Run (or Debug for the Host). Stop the compound to stop both.
 
@@ -89,21 +89,21 @@ No CORS in development: the browser only talks to Vite; Vite forwards `/competit
 
 On Match detail:
 
-1. **Start** → `POST /matches/{id}/start` → invalidate match + stage match list → status Live  
-2. **Finish** (controlled form) → `POST /matches/{id}/finish` → invalidate match + stage match list  
+1. **Start** → `POST /matches/{id}/start` → invalidate match + stage match list → status Live
+2. **Finish** (controlled form) → `POST /matches/{id}/finish` → invalidate match + stage match list
 3. **Apply progression** → `POST /stages/{stageId}/fixtures/{fixtureId}/apply-progression` → invalidate match + list + stage (slot fill)
 
 Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slot `SF1-A`).
 
 ## Scripts
 
-| Script | Role |
-|---|---|
-| `npm run dev` | Vite HMR server |
-| `npm run build` | Typecheck + production bundle |
-| `npm run test` | Vitest watch |
-| `npm run test:run` | Vitest single run (CI) |
-| `npm run preview` | Serve the production bundle |
+| Script             | Role                          |
+| ------------------ | ----------------------------- |
+| `npm run dev`      | Vite HMR server               |
+| `npm run build`    | Typecheck + production bundle |
+| `npm run test`     | Vitest watch                  |
+| `npm run test:run` | Vitest single run (CI)        |
+| `npm run preview`  | Serve the production bundle   |
 
 ## Internationalization
 
@@ -121,13 +121,13 @@ When reworking a business page, follow [docs/page-migration.md](./docs/page-migr
 
 ## Out of scope (later — explicit trigger only)
 
-| Item | Trigger |
-|---|---|
-| `features/` | Domain collision / ownership pain in `pages/` |
-| OpenAPI / generated types | Frequent DTO drift or a second HTTP consumer |
-| Playwright E2E | Stable critical paths + unit CI already green |
-| Storybook | Reused DS components across many screens |
-| Sass / Tailwind / UI libraries | Notion decision to reopen styling stack |
-| Auth / Host CORS / deploy prod | Product/platform need |
+| Item                           | Trigger                                       |
+| ------------------------------ | --------------------------------------------- |
+| `features/`                    | Domain collision / ownership pain in `pages/` |
+| OpenAPI / generated types      | Frequent DTO drift or a second HTTP consumer  |
+| Playwright E2E                 | Stable critical paths + unit CI already green |
+| Storybook                      | Reused DS components across many screens      |
+| Sass / Tailwind / UI libraries | Notion decision to reopen styling stack       |
+| Auth / Host CORS / deploy prod | Product/platform need                         |
 
 Until then: Vitest + RTL, manual DTO mirrors in `types.ts`, progressive `pages/`.

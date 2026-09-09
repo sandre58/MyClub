@@ -1,7 +1,7 @@
-import { useEffect, type RefObject } from 'react'
+import { useEffect, type RefObject } from 'react';
 
 const FOCUSABLE_SELECTOR =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Keeps Tab cycling inside `containerRef` while `active`.
@@ -13,45 +13,47 @@ export function useFocusTrap(
 ) {
   useEffect(() => {
     if (!active || !containerRef.current) {
-      return
+      return;
     }
 
-    const container = containerRef.current
+    const container = containerRef.current;
 
     function getFocusableElements() {
       return Array.from(
         container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-      )
+      );
     }
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Tab') {
-        return
+        return;
       }
 
-      const focusable = getFocusableElements()
+      const focusable = getFocusableElements();
       if (focusable.length === 0) {
-        return
+        return;
       }
 
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      const activeElement = document.activeElement
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const activeElement = document.activeElement;
 
       if (event.shiftKey && activeElement === first) {
-        event.preventDefault()
-        last.focus({ preventScroll: true })
+        event.preventDefault();
+        last.focus({ preventScroll: true });
       } else if (!event.shiftKey && activeElement === last) {
-        event.preventDefault()
-        first.focus({ preventScroll: true })
+        event.preventDefault();
+        first.focus({ preventScroll: true });
       }
     }
 
-    container.addEventListener('keydown', onKeyDown)
-    return () => container.removeEventListener('keydown', onKeyDown)
-  }, [active, containerRef])
+    container.addEventListener('keydown', onKeyDown);
+    return () => container.removeEventListener('keydown', onKeyDown);
+  }, [active, containerRef]);
 }
 
 export function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+  );
 }

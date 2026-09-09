@@ -1,22 +1,22 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, createCompetition, fetchCompetitions } from '../api'
-import type { CompetitionListItem, WorkspaceSummary } from '../types'
-import { HomePage } from './HomePage'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ApiError, createCompetition, fetchCompetitions } from '../api';
+import type { CompetitionListItem, WorkspaceSummary } from '../types';
+import { HomePage } from './HomePage';
 
 vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>()
+  const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
     fetchCompetitions: vi.fn(),
     createCompetition: vi.fn(),
-  }
-})
+  };
+});
 
-const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
 function listItem(
   overrides: Partial<CompetitionListItem> = {},
@@ -26,7 +26,7 @@ function listItem(
     name: 'Spring Cup',
     status: 'Draft',
     ...overrides,
-  }
+  };
 }
 
 function createdSummary(
@@ -42,7 +42,7 @@ function createdSummary(
     canCompleteNormally: false,
     completionBlockers: null,
     ...overrides,
-  }
+  };
 }
 
 function renderHomePage() {
@@ -51,7 +51,7 @@ function renderHomePage() {
       queries: { retry: false },
       mutations: { retry: false },
     },
-  })
+  });
 
   render(
     <QueryClientProvider client={queryClient}>
@@ -69,61 +69,59 @@ function renderHomePage() {
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
-  )
+  );
 }
 
 describe('HomePage', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-  })
+    vi.clearAllMocks();
+  });
 
   it('renders Accueil hub chrome outside Shell (ds-root, no marketing vestibule)', async () => {
-    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    vi.mocked(fetchCompetitions).mockResolvedValue([]);
 
-    renderHomePage()
+    renderHomePage();
 
-    expect(document.querySelector('.ds-root.ds-home')).toBeInTheDocument()
-    expect(document.querySelector('.shell')).not.toBeInTheDocument()
+    expect(document.querySelector('.ds-root.ds-home')).toBeInTheDocument();
+    expect(document.querySelector('.shell')).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /Play’Up|Play'Up/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Bienvenue' }),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument();
     expect(
       await screen.findByRole('button', { name: /Créer une compétition/i }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('shows loading while the list is pending', () => {
-    vi.mocked(fetchCompetitions).mockReturnValue(new Promise(() => {}))
+    vi.mocked(fetchCompetitions).mockReturnValue(new Promise(() => {}));
 
-    renderHomePage()
+    renderHomePage();
 
-    const status = screen.getByRole('status')
-    expect(status).toHaveTextContent('Chargement…')
-    expect(status).toHaveClass('ds-wait--home')
-  })
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Chargement…');
+    expect(status).toHaveClass('ds-wait--home');
+  });
 
   it('shows first-run empty state with create CTA', async () => {
-    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    vi.mocked(fetchCompetitions).mockResolvedValue([]);
 
-    renderHomePage()
+    renderHomePage();
 
-    expect(
-      await screen.findByText(/Un nom suffit/i),
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/Un nom suffit/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Créer une compétition/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
       screen.queryByText(/Votre première compétition/i),
-    ).not.toBeInTheDocument()
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-  })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 
   it("renders competition rows with status and navigates to Vue d'ensemble", async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup();
     vi.mocked(fetchCompetitions).mockResolvedValue([
       listItem({ status: 'Running' }),
       listItem({
@@ -131,28 +129,26 @@ describe('HomePage', () => {
         name: 'Autumn League',
         status: 'Ready',
       }),
-    ])
+    ]);
 
-    renderHomePage()
+    renderHomePage();
 
     expect(
       await screen.findByRole('link', { name: /Spring Cup/i }),
-    ).toBeInTheDocument()
+    ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Choisissez une compétition ou créez-en une nouvelle/i,
-      ),
-    ).toBeInTheDocument()
+      screen.getByText(/Choisissez une compétition ou créez-en une nouvelle/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /^Compétitions$/i }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('En cours')).toBeInTheDocument()
-    expect(screen.getByText('Autumn League')).toBeInTheDocument()
-    expect(screen.getByText('Prêt')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(screen.getByText('En cours')).toBeInTheDocument();
+    expect(screen.getByText('Autumn League')).toBeInTheDocument();
+    expect(screen.getByText('Prêt')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('link', { name: /Spring Cup/i }))
-    expect(screen.getByText("Vue d'ensemble route")).toBeInTheDocument()
-  })
+    await user.click(screen.getByRole('link', { name: /Spring Cup/i }));
+    expect(screen.getByText("Vue d'ensemble route")).toBeInTheDocument();
+  });
 
   it('shows declared schedule when present and omits the line when unset', async () => {
     vi.mocked(fetchCompetitions).mockResolvedValue([
@@ -164,115 +160,120 @@ describe('HomePage', () => {
         name: 'No Dates Cup',
         status: 'Draft',
       }),
-    ])
+    ]);
 
-    renderHomePage()
+    renderHomePage();
 
-    expect(await screen.findByText(/À partir du/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /No Dates Cup/i })).toBeInTheDocument()
-    expect(screen.queryByText(/Jusqu’au|Jusqu'au/)).not.toBeInTheDocument()
-  })
+    expect(await screen.findByText(/À partir du/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /No Dates Cup/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Jusqu’au|Jusqu'au/)).not.toBeInTheDocument();
+  });
 
   it('keeps create CTA available when the list read fails (I4)', async () => {
     vi.mocked(fetchCompetitions).mockRejectedValue(
       new ApiError(500, 'Host unavailable'),
-    )
+    );
 
-    renderHomePage()
+    renderHomePage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Host unavailable (500)',
-    )
+    );
     expect(
       screen.getByRole('button', { name: /Créer une compétition/i }),
-    ).toBeInTheDocument()
-  })
+    ).toBeInTheDocument();
+  });
 
   it('opens name dialog from CTA and creates then navigates to Organisation', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    const user = userEvent.setup();
+    vi.mocked(fetchCompetitions).mockResolvedValue([]);
     vi.mocked(createCompetition).mockResolvedValue(
       createdSummary({ name: 'Tournoi printemps' }),
-    )
+    );
 
-    renderHomePage()
+    renderHomePage();
 
     await user.click(
       await screen.findByRole('button', { name: /Créer une compétition/i }),
-    )
+    );
 
-    const dialog = await screen.findByRole('dialog')
+    const dialog = await screen.findByRole('dialog');
     expect(
       within(dialog).getByRole('heading', { name: /Nouvelle compétition/i }),
-    ).toBeInTheDocument()
-    expect(dialog.querySelector('.ds-form')).toBeInTheDocument()
-    expect(within(dialog).getByText('0/100')).toBeInTheDocument()
+    ).toBeInTheDocument();
+    expect(dialog.querySelector('.ds-form')).toBeInTheDocument();
+    expect(within(dialog).getByText('0/100')).toBeInTheDocument();
 
-    await user.type(within(dialog).getByRole('textbox', { name: /Nom/i }), 'Tournoi printemps')
-    expect(within(dialog).getByText('17/100')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }))
+    await user.type(
+      within(dialog).getByRole('textbox', { name: /Nom/i }),
+      'Tournoi printemps',
+    );
+    expect(within(dialog).getByText('17/100')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }));
 
     await waitFor(() => {
       expect(createCompetition).toHaveBeenCalledWith({
         name: 'Tournoi printemps',
-      })
-    })
+      });
+    });
 
-    expect(await screen.findByText('Organisation route')).toBeInTheDocument()
-  })
+    expect(await screen.findByText('Organisation route')).toBeInTheDocument();
+  });
 
   it('shows API error inside dialog and does not navigate on create failure', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    const user = userEvent.setup();
+    vi.mocked(fetchCompetitions).mockResolvedValue([]);
     vi.mocked(createCompetition).mockRejectedValue(
       new ApiError(400, 'Competition name cannot be empty.'),
-    )
+    );
 
-    renderHomePage()
+    renderHomePage();
 
     await user.click(
       await screen.findByRole('button', { name: /Créer une compétition/i }),
-    )
-    const dialog = await screen.findByRole('dialog')
-    await user.type(within(dialog).getByRole('textbox', { name: /Nom/i }), 'X')
-    await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }))
+    );
+    const dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByRole('textbox', { name: /Nom/i }), 'X');
+    await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }));
 
-    expect(await within(dialog).findByRole('alert')).toBeInTheDocument()
-    expect(screen.queryByText('Organisation route')).not.toBeInTheDocument()
-  })
+    expect(await within(dialog).findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByText('Organisation route')).not.toBeInTheDocument();
+  });
 
   it('closes dialog on Escape and returns focus to create CTA', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchCompetitions).mockResolvedValue([listItem()])
+    const user = userEvent.setup();
+    vi.mocked(fetchCompetitions).mockResolvedValue([listItem()]);
 
-    renderHomePage()
+    renderHomePage();
 
     const createButton = await screen.findByRole('button', {
       name: /Créer une compétition/i,
-    })
-    await user.click(createButton)
-    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    });
+    await user.click(createButton);
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
 
-    await user.keyboard('{Escape}')
+    await user.keyboard('{Escape}');
     await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    })
-    expect(createButton).toHaveFocus()
-  })
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(createButton).toHaveFocus();
+  });
 
   it('keeps submit disabled when the name is blank', async () => {
-    const user = userEvent.setup()
-    vi.mocked(fetchCompetitions).mockResolvedValue([])
+    const user = userEvent.setup();
+    vi.mocked(fetchCompetitions).mockResolvedValue([]);
 
-    renderHomePage()
+    renderHomePage();
 
     await user.click(
       await screen.findByRole('button', { name: /Créer une compétition/i }),
-    )
+    );
     expect(
       within(await screen.findByRole('dialog')).getByRole('button', {
         name: /^Créer$/i,
       }),
-    ).toBeDisabled()
-  })
-})
+    ).toBeDisabled();
+  });
+});

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { ToastToneIcon } from '../icons/toastIcons'
-import { CloseIcon } from '../icons/shellIcons'
-import { DS_MOTION_EXIT_MS } from '../motion'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { ToastToneIcon } from '../icons/toastIcons';
+import { CloseIcon } from '../icons/shellIcons';
+import { DS_MOTION_EXIT_MS } from '../motion';
 import {
   dismissToast,
   getToastsServerSnapshot,
@@ -9,12 +9,12 @@ import {
   subscribeToasts,
   TOAST_DURATION_MS,
   type ToastItem,
-} from '../toastStore'
+} from '../toastStore';
 
 export type ToasterProps = {
   /** Accessible name for the dismiss control. */
-  closeLabel?: string
-}
+  closeLabel?: string;
+};
 
 /**
  * Canvas-local toast host — mount inside a `position: relative` workspace
@@ -26,10 +26,10 @@ export function Toaster({ closeLabel = 'Fermer' }: ToasterProps) {
     subscribeToasts,
     getToastsSnapshot,
     getToastsServerSnapshot,
-  )
+  );
 
   if (toasts.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -38,100 +38,100 @@ export function Toaster({ closeLabel = 'Fermer' }: ToasterProps) {
         <ToastView key={toast.id} toast={toast} closeLabel={closeLabel} />
       ))}
     </div>
-  )
+  );
 }
 
 function ToastView({
   toast,
   closeLabel,
 }: {
-  toast: ToastItem
-  closeLabel: string
+  toast: ToastItem;
+  closeLabel: string;
 }) {
-  const [open, setOpen] = useState(false)
-  const [leaving, setLeaving] = useState(false)
-  const [paused, setPaused] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const remainingRef = useRef(TOAST_DURATION_MS[toast.tone])
-  const startedAtRef = useRef(0)
-  const timerRef = useRef<number | null>(null)
-  const leavingRef = useRef(false)
+  const [open, setOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const remainingRef = useRef(TOAST_DURATION_MS[toast.tone]);
+  const startedAtRef = useRef(0);
+  const timerRef = useRef<number | null>(null);
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     function clearTimer() {
       if (timerRef.current != null) {
-        window.clearTimeout(timerRef.current)
-        timerRef.current = null
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
     }
 
     function beginLeave() {
       if (leavingRef.current) {
-        return
+        return;
       }
-      leavingRef.current = true
-      clearTimer()
-      setPaused(false)
-      setLeaving(true)
-      setOpen(false)
+      leavingRef.current = true;
+      clearTimer();
+      setPaused(false);
+      setLeaving(true);
+      setOpen(false);
     }
 
     function scheduleDismiss(delay: number) {
-      clearTimer()
+      clearTimer();
       if (delay <= 0) {
-        beginLeave()
-        return
+        beginLeave();
+        return;
       }
-      startedAtRef.current = Date.now()
+      startedAtRef.current = Date.now();
       timerRef.current = window.setTimeout(() => {
-        timerRef.current = null
-        beginLeave()
-      }, delay)
+        timerRef.current = null;
+        beginLeave();
+      }, delay);
     }
 
     const frame = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setOpen(true))
-    })
-    scheduleDismiss(remainingRef.current)
+      requestAnimationFrame(() => setOpen(true));
+    });
+    scheduleDismiss(remainingRef.current);
 
-    const node = rootRef.current
+    const node = rootRef.current;
 
     function onEnter() {
-      setPaused(true)
+      setPaused(true);
       if (timerRef.current != null) {
-        const elapsed = Date.now() - startedAtRef.current
-        remainingRef.current = Math.max(0, remainingRef.current - elapsed)
-        clearTimer()
+        const elapsed = Date.now() - startedAtRef.current;
+        remainingRef.current = Math.max(0, remainingRef.current - elapsed);
+        clearTimer();
       }
     }
 
     function onLeaveHover() {
-      setPaused(false)
+      setPaused(false);
       if (!leavingRef.current) {
-        scheduleDismiss(remainingRef.current)
+        scheduleDismiss(remainingRef.current);
       }
     }
 
-    node?.addEventListener('mouseenter', onEnter)
-    node?.addEventListener('mouseleave', onLeaveHover)
+    node?.addEventListener('mouseenter', onEnter);
+    node?.addEventListener('mouseleave', onLeaveHover);
 
     return () => {
-      cancelAnimationFrame(frame)
-      clearTimer()
-      node?.removeEventListener('mouseenter', onEnter)
-      node?.removeEventListener('mouseleave', onLeaveHover)
-    }
-  }, [toast.id])
+      cancelAnimationFrame(frame);
+      clearTimer();
+      node?.removeEventListener('mouseenter', onEnter);
+      node?.removeEventListener('mouseleave', onLeaveHover);
+    };
+  }, [toast.id]);
 
   useEffect(() => {
     if (!leaving) {
-      return
+      return;
     }
     const timeout = window.setTimeout(() => {
-      dismissToast(toast.id)
-    }, DS_MOTION_EXIT_MS)
-    return () => window.clearTimeout(timeout)
-  }, [leaving, toast.id])
+      dismissToast(toast.id);
+    }, DS_MOTION_EXIT_MS);
+    return () => window.clearTimeout(timeout);
+  }, [leaving, toast.id]);
 
   return (
     <div
@@ -155,16 +155,16 @@ function ToastView({
           title={closeLabel}
           onClick={() => {
             if (leavingRef.current) {
-              return
+              return;
             }
-            leavingRef.current = true
+            leavingRef.current = true;
             if (timerRef.current != null) {
-              window.clearTimeout(timerRef.current)
-              timerRef.current = null
+              window.clearTimeout(timerRef.current);
+              timerRef.current = null;
             }
-            setPaused(false)
-            setLeaving(true)
-            setOpen(false)
+            setPaused(false);
+            setLeaving(true);
+            setOpen(false);
           }}
         >
           <CloseIcon size="sm" aria-hidden="true" />
@@ -172,5 +172,5 @@ function ToastView({
       </div>
       <div className="ds-toast__progress" aria-hidden="true" />
     </div>
-  )
+  );
 }

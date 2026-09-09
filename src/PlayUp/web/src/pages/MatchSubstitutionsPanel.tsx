@@ -2,27 +2,27 @@ import {
   useMutation,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
+} from '@tanstack/react-query';
+import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   correctRecordedSubstitution,
   recordSubstitution,
   removeRecordedSubstitution,
-} from '../api'
-import { queryKeys } from '../queryKeys'
-import {
-  EmptyState,
-  MutationError,
-  PendingLabel,
-} from '../ui'
+} from '../api';
+import { queryKeys } from '../queryKeys';
+import { EmptyState, MutationError, PendingLabel } from '../ui';
 import type {
   DeclaredParticipation,
   MatchDetail,
   MatchSide,
   RecordedSubstitution,
   RecordSubstitutionRequest,
-} from '../types'
+} from '../types';
+import {
+  canMutateRecordedSubstitutions,
+  deriveOnFieldMembers,
+} from './matchSubstitutionsHelpers';
 
 /**
  * Nominative substitutions panel (Lot 1 Remplacements).
@@ -30,93 +30,95 @@ import type {
  * Présence dérivée (baseline Starter + journal) = pickers only.
  */
 export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
-  const { t } = useTranslation('matches')
-  const { t: tc } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const canMutate = canMutateRecordedSubstitutions(match)
-  const sheet = match.declaredParticipations ?? []
-  const substitutions = match.recordedSubstitutions ?? []
+  const { t } = useTranslation('matches');
+  const { t: tc } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const canMutate = canMutateRecordedSubstitutions(match);
+  const sheet = match.declaredParticipations ?? [];
+  const substitutions = match.recordedSubstitutions ?? [];
 
-  const [side, setSide] = useState<MatchSide>('Home')
-  const [outMemberId, setOutMemberId] = useState('')
-  const [inMemberId, setInMemberId] = useState('')
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
+  const [side, setSide] = useState<MatchSide>('Home');
+  const [outMemberId, setOutMemberId] = useState('');
+  const [inMemberId, setInMemberId] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: (request: RecordSubstitutionRequest) =>
       recordSubstitution(match.matchId, request),
     onSuccess: async () => {
-      resetForm()
-      await invalidateMatchSubs(queryClient, match)
+      resetForm();
+      await invalidateMatchSubs(queryClient, match);
     },
-  })
+  });
 
   const correctMutation = useMutation({
     mutationFn: ({
       substitutionId,
       request,
     }: {
-      substitutionId: string
-      request: RecordSubstitutionRequest
+      substitutionId: string;
+      request: RecordSubstitutionRequest;
     }) => correctRecordedSubstitution(match.matchId, substitutionId, request),
     onSuccess: async () => {
-      setEditingId(null)
-      resetForm()
-      await invalidateMatchSubs(queryClient, match)
+      setEditingId(null);
+      resetForm();
+      await invalidateMatchSubs(queryClient, match);
     },
-  })
+  });
 
   const removeMutation = useMutation({
     mutationFn: (substitutionId: string) =>
       removeRecordedSubstitution(match.matchId, substitutionId),
     onSuccess: async () => {
-      setPendingRemoveId(null)
-      await invalidateMatchSubs(queryClient, match)
+      setPendingRemoveId(null);
+      await invalidateMatchSubs(queryClient, match);
     },
     onError: () => {
-      setPendingRemoveId(null)
+      setPendingRemoveId(null);
     },
-  })
+  });
 
   function resetForm() {
-    setSide('Home')
-    setOutMemberId('')
-    setInMemberId('')
+    setSide('Home');
+    setOutMemberId('');
+    setInMemberId('');
   }
 
   function beginEdit(sub: RecordedSubstitution) {
-    setPendingRemoveId(null)
-    setEditingId(sub.substitutionId)
-    setSide(sub.side)
-    setOutMemberId(sub.outMemberId)
-    setInMemberId(sub.inMemberId)
+    setPendingRemoveId(null);
+    setEditingId(sub.substitutionId);
+    setSide(sub.side);
+    setOutMemberId(sub.outMemberId);
+    setInMemberId(sub.inMemberId);
   }
 
   const editingIndex =
     editingId == null
       ? -1
-      : substitutions.findIndex((row) => row.substitutionId === editingId)
+      : substitutions.findIndex((row) => row.substitutionId === editingId);
 
-  const presenceUpTo =
-    editingIndex >= 0 ? editingIndex : substitutions.length
+  const presenceUpTo = editingIndex >= 0 ? editingIndex : substitutions.length;
 
-  const onField = deriveOnFieldMembers(sheet, substitutions, side, presenceUpTo)
-  const sideSheet = sheet.filter((row) => row.side === side)
-  const outOptions = sideSheet.filter((row) => onField.has(row.memberId))
+  const onField = deriveOnFieldMembers(
+    sheet,
+    substitutions,
+    side,
+    presenceUpTo,
+  );
+  const sideSheet = sheet.filter((row) => row.side === side);
+  const outOptions = sideSheet.filter((row) => onField.has(row.memberId));
   const inOptions = sideSheet.filter(
     (row) => !onField.has(row.memberId) && row.memberId !== outMemberId,
-  )
+  );
 
-  const hasStarters = sheet.some(
-    (row) => row.compositionStatus === 'Starter',
-  )
+  const hasStarters = sheet.some((row) => row.compositionStatus === 'Starter');
   const mutationError =
-    createMutation.error ?? correctMutation.error ?? removeMutation.error
+    createMutation.error ?? correctMutation.error ?? removeMutation.error;
   const busy =
     createMutation.isPending ||
     correctMutation.isPending ||
-    removeMutation.isPending
+    removeMutation.isPending;
 
   return (
     <section className="ds-panel" aria-labelledby="subs-heading">
@@ -174,8 +176,8 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
                         className="organisation-action"
                         disabled={busy}
                         onClick={() => {
-                          setEditingId(null)
-                          setPendingRemoveId(sub.substitutionId)
+                          setEditingId(null);
+                          setPendingRemoveId(sub.substitutionId);
                         }}
                       >
                         {t('subs.remove')}
@@ -194,20 +196,20 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
                     submitLabel={t('subs.saveCorrect')}
                     pendingLabel={t('subs.saving')}
                     onSideChange={(next) => {
-                      setSide(next)
-                      setOutMemberId('')
-                      setInMemberId('')
+                      setSide(next);
+                      setOutMemberId('');
+                      setInMemberId('');
                     }}
                     onOutChange={(id) => {
-                      setOutMemberId(id)
+                      setOutMemberId(id);
                       if (inMemberId === id) {
-                        setInMemberId('')
+                        setInMemberId('');
                       }
                     }}
                     onInChange={setInMemberId}
                     onCancel={() => {
-                      setEditingId(null)
-                      resetForm()
+                      setEditingId(null);
+                      resetForm();
                     }}
                     onSubmit={(request) =>
                       correctMutation.mutate({
@@ -263,79 +265,33 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
 
       {mutationError && <MutationError error={mutationError} />}
 
-      {canMutate &&
-        sheet.length > 0 &&
-        hasStarters &&
-        editingId === null && (
-          <SubstitutionForm
-            side={side}
-            outMemberId={outMemberId}
-            inMemberId={inMemberId}
-            outOptions={outOptions}
-            inOptions={inOptions}
-            pending={createMutation.isPending}
-            submitLabel={t('subs.addAction')}
-            pendingLabel={t('subs.adding')}
-            onSideChange={(next) => {
-              setSide(next)
-              setOutMemberId('')
-              setInMemberId('')
-            }}
-            onOutChange={(id) => {
-              setOutMemberId(id)
-              if (inMemberId === id) {
-                setInMemberId('')
-              }
-            }}
-            onInChange={setInMemberId}
-            onSubmit={(request) => createMutation.mutate(request)}
-          />
-        )}
+      {canMutate && sheet.length > 0 && hasStarters && editingId === null && (
+        <SubstitutionForm
+          side={side}
+          outMemberId={outMemberId}
+          inMemberId={inMemberId}
+          outOptions={outOptions}
+          inOptions={inOptions}
+          pending={createMutation.isPending}
+          submitLabel={t('subs.addAction')}
+          pendingLabel={t('subs.adding')}
+          onSideChange={(next) => {
+            setSide(next);
+            setOutMemberId('');
+            setInMemberId('');
+          }}
+          onOutChange={(id) => {
+            setOutMemberId(id);
+            if (inMemberId === id) {
+              setInMemberId('');
+            }
+          }}
+          onInChange={setInMemberId}
+          onSubmit={(request) => createMutation.mutate(request)}
+        />
+      )}
     </section>
-  )
-}
-
-/** Domain CanMutateSubstitutionsFreely — Create/Remove/Correct UI V1. */
-export function canMutateRecordedSubstitutions(match: MatchDetail): boolean {
-  if (match.status === 'Live') {
-    return true
-  }
-
-  return match.status === 'Finished' && !match.hasObservedLive
-}
-
-/**
- * Derived on-field presence for one side: Starter baseline + ordered replay.
- * `upToExclusive` = apply only substitutions[0..upToExclusive) (for Correct at index).
- */
-export function deriveOnFieldMembers(
-  sheet: DeclaredParticipation[],
-  substitutions: RecordedSubstitution[],
-  side: MatchSide,
-  upToExclusive?: number,
-): Set<string> {
-  const onField = new Set(
-    sheet
-      .filter(
-        (row) =>
-          row.side === side && row.compositionStatus === 'Starter',
-      )
-      .map((row) => row.memberId),
-  )
-
-  const limit =
-    upToExclusive === undefined ? substitutions.length : upToExclusive
-
-  for (let index = 0; index < limit; index += 1) {
-    const sub = substitutions[index]
-    if (sub == null || sub.side !== side) {
-      continue
-    }
-    onField.delete(sub.outMemberId)
-    onField.add(sub.inMemberId)
-  }
-
-  return onField
+  );
 }
 
 async function invalidateMatchSubs(
@@ -355,7 +311,7 @@ async function invalidateMatchSubs(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.consultation(match.competitionId),
     }),
-  ])
+  ]);
 }
 
 function SubstitutionForm({
@@ -373,40 +329,36 @@ function SubstitutionForm({
   onCancel,
   onSubmit,
 }: {
-  side: MatchSide
-  outMemberId: string
-  inMemberId: string
-  outOptions: DeclaredParticipation[]
-  inOptions: DeclaredParticipation[]
-  pending: boolean
-  submitLabel: string
-  pendingLabel: string
-  onSideChange: (side: MatchSide) => void
-  onOutChange: (memberId: string) => void
-  onInChange: (memberId: string) => void
-  onCancel?: () => void
-  onSubmit: (request: RecordSubstitutionRequest) => void
+  side: MatchSide;
+  outMemberId: string;
+  inMemberId: string;
+  outOptions: DeclaredParticipation[];
+  inOptions: DeclaredParticipation[];
+  pending: boolean;
+  submitLabel: string;
+  pendingLabel: string;
+  onSideChange: (side: MatchSide) => void;
+  onOutChange: (memberId: string) => void;
+  onInChange: (memberId: string) => void;
+  onCancel?: () => void;
+  onSubmit: (request: RecordSubstitutionRequest) => void;
 }) {
-  const { t } = useTranslation('matches')
-  const { t: tc } = useTranslation('common')
+  const { t } = useTranslation('matches');
+  const { t: tc } = useTranslation('common');
 
   return (
     <form
       className="form match-subs__form"
       onSubmit={(event: FormEvent) => {
-        event.preventDefault()
-        if (
-          outMemberId.length === 0 ||
-          inMemberId.length === 0 ||
-          pending
-        ) {
-          return
+        event.preventDefault();
+        if (outMemberId.length === 0 || inMemberId.length === 0 || pending) {
+          return;
         }
         onSubmit({
           outMemberId,
           inMemberId,
           side,
-        })
+        });
       }}
     >
       <fieldset className="match-subs__side-fieldset">
@@ -479,9 +431,7 @@ function SubstitutionForm({
           type="submit"
           className="ds-btn ds-btn--primary"
           disabled={
-            pending ||
-            outMemberId.length === 0 ||
-            inMemberId.length === 0
+            pending || outMemberId.length === 0 || inMemberId.length === 0
           }
         >
           {pending ? <PendingLabel>{pendingLabel}</PendingLabel> : submitLabel}
@@ -498,5 +448,5 @@ function SubstitutionForm({
         )}
       </div>
     </form>
-  )
+  );
 }

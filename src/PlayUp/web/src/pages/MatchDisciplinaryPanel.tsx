@@ -3,76 +3,77 @@ import {
   useQuery,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+} from '@tanstack/react-query';
+import { useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   correctRecordedDisciplinaryEvent,
   fetchOrganisationView,
   recordDisciplinaryEvent,
   removeRecordedDisciplinaryEvent,
-} from '../api'
-import { queryKeys } from '../queryKeys'
+} from '../api';
+import { queryKeys } from '../queryKeys';
 import {
   EmptyState,
   ErrorState,
   LoadingState,
   MutationError,
   PendingLabel,
-} from '../ui'
+} from '../ui';
 import type {
   DeclaredParticipation,
   DisciplinaryType,
   MatchDetail,
   RecordDisciplinaryEventRequest,
   RecordedDisciplinaryEvent,
-} from '../types'
+} from '../types';
+import { canMutateRecordedDisciplinaryEvents } from './matchDisciplinaryHelpers';
 
 /**
  * Nominative discipline panel (Lot 1) — faits ≠ score ≠ présence ≠ conséquences.
  * Types = Organisation AllowedTypes ; cible = toute personne sur la feuille.
  */
 export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
-  const { t } = useTranslation('matches')
-  const { t: tc } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const canMutate = canMutateRecordedDisciplinaryEvents(match)
-  const sheet = match.declaredParticipations ?? []
-  const events = match.recordedDisciplinaryEvents ?? []
+  const { t } = useTranslation('matches');
+  const { t: tc } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const canMutate = canMutateRecordedDisciplinaryEvents(match);
+  const sheet = match.declaredParticipations ?? [];
+  const events = match.recordedDisciplinaryEvents ?? [];
 
   const organisationQuery = useQuery({
     queryKey: queryKeys.competitions.organisation(match.competitionId),
     queryFn: () => fetchOrganisationView(match.competitionId),
-  })
+  });
 
-  const allowedTypes = organisationQuery.data?.regulation.allowedTypes ?? []
-  const catalogueReady = organisationQuery.isSuccess
-  const noneAllowed = catalogueReady && allowedTypes.length === 0
+  const allowedTypes = organisationQuery.data?.regulation.allowedTypes ?? [];
+  const catalogueReady = organisationQuery.isSuccess;
+  const noneAllowed = catalogueReady && allowedTypes.length === 0;
   const canCreate =
-    canMutate && sheet.length > 0 && catalogueReady && allowedTypes.length > 0
+    canMutate && sheet.length > 0 && catalogueReady && allowedTypes.length > 0;
 
-  const [memberId, setMemberId] = useState('')
-  const [type, setType] = useState<DisciplinaryType | ''>('')
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null)
+  const [memberId, setMemberId] = useState('');
+  const [type, setType] = useState<DisciplinaryType | ''>('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [pendingRemoveId, setPendingRemoveId] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: (request: RecordDisciplinaryEventRequest) =>
       recordDisciplinaryEvent(match.matchId, request),
     onSuccess: async () => {
-      resetForm()
-      await invalidateMatchDiscipline(queryClient, match)
+      resetForm();
+      await invalidateMatchDiscipline(queryClient, match);
     },
-  })
+  });
 
   const correctMutation = useMutation({
     mutationFn: ({
       disciplinaryEventId,
       request,
     }: {
-      disciplinaryEventId: string
-      request: RecordDisciplinaryEventRequest
+      disciplinaryEventId: string;
+      request: RecordDisciplinaryEventRequest;
     }) =>
       correctRecordedDisciplinaryEvent(
         match.matchId,
@@ -80,42 +81,42 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
         request,
       ),
     onSuccess: async () => {
-      setEditingId(null)
-      resetForm()
-      await invalidateMatchDiscipline(queryClient, match)
+      setEditingId(null);
+      resetForm();
+      await invalidateMatchDiscipline(queryClient, match);
     },
-  })
+  });
 
   const removeMutation = useMutation({
     mutationFn: (disciplinaryEventId: string) =>
       removeRecordedDisciplinaryEvent(match.matchId, disciplinaryEventId),
     onSuccess: async () => {
-      setPendingRemoveId(null)
-      await invalidateMatchDiscipline(queryClient, match)
+      setPendingRemoveId(null);
+      await invalidateMatchDiscipline(queryClient, match);
     },
     onError: () => {
-      setPendingRemoveId(null)
+      setPendingRemoveId(null);
     },
-  })
+  });
 
   function resetForm() {
-    setMemberId('')
-    setType('')
+    setMemberId('');
+    setType('');
   }
 
   function beginEdit(evt: RecordedDisciplinaryEvent) {
-    setPendingRemoveId(null)
-    setEditingId(evt.disciplinaryEventId)
-    setMemberId(evt.memberId)
-    setType(evt.type)
+    setPendingRemoveId(null);
+    setEditingId(evt.disciplinaryEventId);
+    setMemberId(evt.memberId);
+    setType(evt.type);
   }
 
   const mutationError =
-    createMutation.error ?? correctMutation.error ?? removeMutation.error
+    createMutation.error ?? correctMutation.error ?? removeMutation.error;
   const busy =
     createMutation.isPending ||
     correctMutation.isPending ||
-    removeMutation.isPending
+    removeMutation.isPending;
 
   return (
     <section className="ds-panel" aria-labelledby="discipline-heading">
@@ -155,7 +156,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
           {events.map((evt) => {
             const participation = sheet.find(
               (row) => row.memberId === evt.memberId,
-            )
+            );
             return (
               <li key={evt.disciplinaryEventId}>
                 <div className="match-discipline__row">
@@ -192,8 +193,8 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                           className="organisation-action"
                           disabled={busy}
                           onClick={() => {
-                            setEditingId(null)
-                            setPendingRemoveId(evt.disciplinaryEventId)
+                            setEditingId(null);
+                            setPendingRemoveId(evt.disciplinaryEventId);
                           }}
                         >
                           {t('discipline.remove')}
@@ -215,8 +216,8 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                         onMemberChange={setMemberId}
                         onTypeChange={setType}
                         onCancel={() => {
-                          setEditingId(null)
-                          resetForm()
+                          setEditingId(null);
+                          resetForm();
                         }}
                         onSubmit={(request) =>
                           correctMutation.mutate({
@@ -227,49 +228,48 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                       />
                     )}
 
-                  {canMutate &&
-                    pendingRemoveId === evt.disciplinaryEventId && (
-                      <div
-                        className="match-discipline__confirm ds-notice ds-notice--warning"
-                        role="group"
-                      >
-                        <p>
-                          {t('discipline.removeConsequence', {
-                            type: typeLabel(t, evt.type),
-                            name: evt.memberDisplayName ?? evt.memberId,
-                          })}
-                        </p>
-                        <div className="match-discipline__confirm-actions">
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--destructive"
-                            disabled={removeMutation.isPending}
-                            onClick={() =>
-                              removeMutation.mutate(evt.disciplinaryEventId)
-                            }
-                          >
-                            {removeMutation.isPending ? (
-                              <PendingLabel>
-                                {t('discipline.removing')}
-                              </PendingLabel>
-                            ) : (
-                              t('discipline.confirmRemove')
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost"
-                            disabled={removeMutation.isPending}
-                            onClick={() => setPendingRemoveId(null)}
-                          >
-                            {tc('cancel')}
-                          </button>
-                        </div>
+                  {canMutate && pendingRemoveId === evt.disciplinaryEventId && (
+                    <div
+                      className="match-discipline__confirm ds-notice ds-notice--warning"
+                      role="group"
+                    >
+                      <p>
+                        {t('discipline.removeConsequence', {
+                          type: typeLabel(t, evt.type),
+                          name: evt.memberDisplayName ?? evt.memberId,
+                        })}
+                      </p>
+                      <div className="match-discipline__confirm-actions">
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--destructive"
+                          disabled={removeMutation.isPending}
+                          onClick={() =>
+                            removeMutation.mutate(evt.disciplinaryEventId)
+                          }
+                        >
+                          {removeMutation.isPending ? (
+                            <PendingLabel>
+                              {t('discipline.removing')}
+                            </PendingLabel>
+                          ) : (
+                            t('discipline.confirmRemove')
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost"
+                          disabled={removeMutation.isPending}
+                          onClick={() => setPendingRemoveId(null)}
+                        >
+                          {tc('cancel')}
+                        </button>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               </li>
-            )
+            );
           })}
         </ul>
       )}
@@ -291,35 +291,17 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
         />
       )}
     </section>
-  )
+  );
 }
 
-/** Domain CanMutateDisciplinaryEventsFreely — Create/Remove/Correct UI V1 (#4-like). */
-export function canMutateRecordedDisciplinaryEvents(
-  match: MatchDetail,
-): boolean {
-  if (
-    match.status === 'Scheduled' ||
-    match.status === 'Postponed' ||
-    match.status === 'Live'
-  ) {
-    return true
-  }
-
-  return match.status === 'Finished' && !match.hasObservedLive
-}
-
-function typeLabel(
-  t: (key: string) => string,
-  type: DisciplinaryType,
-): string {
+function typeLabel(t: (key: string) => string, type: DisciplinaryType): string {
   switch (type) {
     case 'Yellow':
-      return t('discipline.typeYellow')
+      return t('discipline.typeYellow');
     case 'Red':
-      return t('discipline.typeRed')
+      return t('discipline.typeRed');
     case 'White':
-      return t('discipline.typeWhite')
+      return t('discipline.typeWhite');
   }
 }
 
@@ -329,7 +311,7 @@ async function invalidateMatchDiscipline(
 ) {
   await queryClient.invalidateQueries({
     queryKey: queryKeys.matches.detail(match.matchId),
-  })
+  });
 }
 
 function DisciplinaryForm({
@@ -345,28 +327,28 @@ function DisciplinaryForm({
   onCancel,
   onSubmit,
 }: {
-  memberId: string
-  type: DisciplinaryType | ''
-  sheet: DeclaredParticipation[]
-  allowedTypes: DisciplinaryType[]
-  pending: boolean
-  submitLabel: string
-  pendingLabel: string
-  onMemberChange: (id: string) => void
-  onTypeChange: (type: DisciplinaryType | '') => void
-  onCancel?: () => void
-  onSubmit: (request: RecordDisciplinaryEventRequest) => void
+  memberId: string;
+  type: DisciplinaryType | '';
+  sheet: DeclaredParticipation[];
+  allowedTypes: DisciplinaryType[];
+  pending: boolean;
+  submitLabel: string;
+  pendingLabel: string;
+  onMemberChange: (id: string) => void;
+  onTypeChange: (type: DisciplinaryType | '') => void;
+  onCancel?: () => void;
+  onSubmit: (request: RecordDisciplinaryEventRequest) => void;
 }) {
-  const { t } = useTranslation('matches')
-  const { t: tc } = useTranslation('common')
+  const { t } = useTranslation('matches');
+  const { t: tc } = useTranslation('common');
 
   function handleSubmit(event: FormEvent) {
-    event.preventDefault()
+    event.preventDefault();
     if (!memberId || !type) {
-      return
+      return;
     }
 
-    onSubmit({ memberId, type })
+    onSubmit({ memberId, type });
   }
 
   return (
@@ -431,5 +413,5 @@ function DisciplinaryForm({
         )}
       </div>
     </form>
-  )
+  );
 }

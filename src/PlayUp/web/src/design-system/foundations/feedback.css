@@ -5,157 +5,178 @@
 /* Alert / notice — soft fill, tone icon, no thick rail (Ant Alert–inspired). */
 .ds-alert,
 .ds-notice {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-12);
-    margin: 0;
-    padding: var(--space-12) var(--space-16);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-panel);
-    background: var(--color-surface-secondary);
-    color: var(--color-text-primary);
-    font-size: var(--text-label);
-    line-height: var(--leading-normal);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+  margin: 0;
+  padding: var(--space-12) var(--space-16);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  font-size: var(--text-label);
+  line-height: var(--leading-normal);
 }
 
 .ds-alert__icon,
 .ds-notice__icon {
-    display: inline-flex;
-    flex: none;
-    margin-top: 0.1em;
-    color: var(--ds-alert-tone, var(--color-text-secondary));
+  display: inline-flex;
+  flex: none;
+  margin-top: 0.1em;
+  color: var(--ds-alert-tone, var(--color-text-secondary));
 }
 
 .ds-alert__body,
 .ds-notice__body {
-    flex: 1 1 auto;
-    min-width: 0;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .ds-alert--danger,
 .ds-notice--danger {
-    --ds-alert-tone: var(--color-error);
-    background: color-mix(in srgb, var(--color-error) 15%, var(--color-surface));
-    color: var(--color-text-primary);
-    border-color: color-mix(in srgb, var(--color-error) 60%, var(--color-surface));
+  --ds-alert-tone: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 15%, var(--color-surface));
+  color: var(--color-text-primary);
+  border-color: color-mix(
+    in srgb,
+    var(--color-error) 60%,
+    var(--color-surface)
+  );
 }
 
 .ds-alert--warning,
 .ds-notice--warning {
-    --ds-alert-tone: var(--color-attention);
-    background: color-mix(in srgb, var(--color-attention) 15%, var(--color-surface));
-    color: var(--color-text-primary);
-    border-color: color-mix(in srgb, var(--color-attention) 60%, var(--color-surface));
+  --ds-alert-tone: var(--color-attention);
+  background: color-mix(
+    in srgb,
+    var(--color-attention) 15%,
+    var(--color-surface)
+  );
+  color: var(--color-text-primary);
+  border-color: color-mix(
+    in srgb,
+    var(--color-attention) 60%,
+    var(--color-surface)
+  );
 }
 
 .ds-alert--info,
 .ds-notice--info {
-    --ds-alert-tone: var(--color-info);
-    background: color-mix(in srgb, var(--color-info) 15%, var(--color-surface));
-    color: var(--color-text-primary);
-    border-color: color-mix(in srgb, var(--color-info) 60%, var(--color-surface));
+  --ds-alert-tone: var(--color-info);
+  background: color-mix(in srgb, var(--color-info) 15%, var(--color-surface));
+  color: var(--color-text-primary);
+  border-color: color-mix(in srgb, var(--color-info) 60%, var(--color-surface));
 }
 
 .ds-alert--success,
 .ds-notice--success {
-    --ds-alert-tone: var(--color-success);
-    background: color-mix(in srgb, var(--color-success) 15%, var(--color-surface));
-    color: var(--color-text-primary);
-    border-color: color-mix(in srgb, var(--color-success) 60%, var(--color-surface));
+  --ds-alert-tone: var(--color-success);
+  background: color-mix(
+    in srgb,
+    var(--color-success) 15%,
+    var(--color-surface)
+  );
+  color: var(--color-text-primary);
+  border-color: color-mix(
+    in srgb,
+    var(--color-success) 60%,
+    var(--color-surface)
+  );
 }
 
 .ds-wait {
-    --wait-orbit: 5.5rem;
-    --wait-mark: 3.5rem;
-    --wait-ring: 3px;
-    --wait-gap: var(--space-12);
-    --wait-pad: var(--space-32);
+  --wait-orbit: 5.5rem;
+  --wait-mark: 3.5rem;
+  --wait-ring: 3px;
+  --wait-gap: var(--space-12);
+  --wait-pad: var(--space-32);
 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: var(--wait-gap);
-    margin: 0;
-    padding: var(--wait-pad) 0;
-    color: var(--color-brand);
-    font-size: var(--text-label);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--wait-gap);
+  margin: 0;
+  padding: var(--wait-pad) 0;
+  color: var(--color-brand);
+  font-size: var(--text-label);
 }
 
 .ds-wait--home {
-    --wait-orbit: 7.5rem;
-    --wait-mark: 5rem;
-    --wait-ring: 4px;
-    --wait-gap: var(--space-16);
+  --wait-orbit: 7.5rem;
+  --wait-mark: 5rem;
+  --wait-ring: 4px;
+  --wait-gap: var(--space-16);
 }
 
 .ds-wait--region {
-    --wait-orbit: 2.75rem;
-    --wait-mark: 1.75rem;
-    --wait-ring: 2px;
-    --wait-gap: var(--space-8);
-    --wait-pad: var(--space-8);
+  --wait-orbit: 2.75rem;
+  --wait-mark: 1.75rem;
+  --wait-ring: 2px;
+  --wait-gap: var(--space-8);
+  --wait-pad: var(--space-8);
 }
 
 .ds-wait__orbit {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: var(--wait-orbit);
-    height: var(--wait-orbit);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--wait-orbit);
+  height: var(--wait-orbit);
 }
 
 .ds-wait__ring {
-    position: absolute;
-    inset: 0;
-    box-sizing: border-box;
-    border: var(--wait-ring) solid color-mix(in srgb, currentColor 28%, transparent);
-    border-top-color: currentColor;
-    border-radius: 50%;
-    animation: ds-wait-spin 0.65s linear infinite;
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: var(--wait-ring) solid
+    color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: ds-wait-spin 0.65s linear infinite;
 }
 
 .ds-wait__mark.ds-lockup-mark {
-    height: var(--wait-mark);
+  height: var(--wait-mark);
 }
 
 .ds-wait__label {
-    font-weight: var(--font-weight-semibold);
-    color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
 }
 
 @keyframes ds-wait-spin {
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .ds-wait__ring {
-        animation: none;
-        border-color: currentColor;
-    }
+  .ds-wait__ring {
+    animation: none;
+    border-color: currentColor;
+  }
 }
 
 .ds-spinner {
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
-    border-top-color: currentColor;
-    border-radius: 50%;
-    animation: ds-spin 0.7s linear infinite;
-    flex: none;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: ds-spin 0.7s linear infinite;
+  flex: none;
 }
 
 @keyframes ds-spin {
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .ds-spinner {
-        animation-duration: 0.01ms;
-        animation-iteration-count: 1;
-    }
+  .ds-spinner {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
 }

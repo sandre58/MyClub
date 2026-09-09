@@ -11,28 +11,28 @@
  */
 :root,
 .ds-root {
-    --color-canvas: var(--primitive-canvas);
-    --color-surface: var(--primitive-surface);
-    --color-surface-secondary: var(--primitive-surface-secondary);
-    --color-ink: var(--primitive-ink);
-    --color-text-primary: var(--primitive-text-primary);
-    --color-text-secondary: var(--primitive-text-secondary);
-    --color-border: var(--primitive-border);
-    --color-border-strong: var(--primitive-border-strong);
-    --color-brand: var(--primitive-brand);
-    --color-brand-hover: var(--primitive-brand-hover);
-    --color-brand-deep: var(--primitive-brand-deep);
-    --color-brand-bright: var(--primitive-brand-bright);
-    --color-live: var(--primitive-live);
-    --color-success: var(--primitive-success);
-    --color-attention: var(--primitive-attention);
-    --color-error: var(--primitive-error);
-    --color-info: var(--primitive-info);
-    --color-focus: var(--primitive-focus);
-    --color-on-ink: var(--primitive-on-ink);
-    --color-on-brand: var(--primitive-on-brand);
-    --color-chrome: var(--primitive-chrome);
-    --color-on-chrome: var(--primitive-on-chrome);
-    --color-chrome-border: var(--primitive-chrome-border);
-    --color-chrome-accent: var(--primitive-chrome-accent);
+  --color-canvas: var(--primitive-canvas);
+  --color-surface: var(--primitive-surface);
+  --color-surface-secondary: var(--primitive-surface-secondary);
+  --color-ink: var(--primitive-ink);
+  --color-text-primary: var(--primitive-text-primary);
+  --color-text-secondary: var(--primitive-text-secondary);
+  --color-border: var(--primitive-border);
+  --color-border-strong: var(--primitive-border-strong);
+  --color-brand: var(--primitive-brand);
+  --color-brand-hover: var(--primitive-brand-hover);
+  --color-brand-deep: var(--primitive-brand-deep);
+  --color-brand-bright: var(--primitive-brand-bright);
+  --color-live: var(--primitive-live);
+  --color-success: var(--primitive-success);
+  --color-attention: var(--primitive-attention);
+  --color-error: var(--primitive-error);
+  --color-info: var(--primitive-info);
+  --color-focus: var(--primitive-focus);
+  --color-on-ink: var(--primitive-on-ink);
+  --color-on-brand: var(--primitive-on-brand);
+  --color-chrome: var(--primitive-chrome);
+  --color-on-chrome: var(--primitive-on-chrome);
+  --color-chrome-border: var(--primitive-chrome-border);
+  --color-chrome-accent: var(--primitive-chrome-accent);
 }

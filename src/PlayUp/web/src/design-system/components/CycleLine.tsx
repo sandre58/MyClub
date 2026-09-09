@@ -1,4 +1,4 @@
-export type CycleStepState = 'current' | 'done' | 'todo'
+export type CycleStepState = 'current' | 'done' | 'todo';
 
 export function CycleLine({
   steps,
@@ -6,22 +6,22 @@ export function CycleLine({
   done = [],
   'aria-label': ariaLabel = 'Cycle de vie',
 }: {
-  steps: string[]
-  current: string
-  done?: string[]
-  'aria-label'?: string
+  steps: string[];
+  current: string;
+  done?: string[];
+  'aria-label'?: string;
 }) {
   return (
     <div className="ds-overview-cycle" aria-label={ariaLabel}>
       {steps.map((step) => {
         const state: CycleStepState =
-          step === current ? 'current' : done.includes(step) ? 'done' : 'todo'
+          step === current ? 'current' : done.includes(step) ? 'done' : 'todo';
         return (
           <span key={step} data-state={state}>
             {step}
           </span>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

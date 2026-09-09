@@ -4,29 +4,29 @@ import {
   type DragEvent,
   type KeyboardEvent,
   type ReactNode,
-} from 'react'
-import { CloseIcon } from '../icons/shellIcons'
-import { GripIcon } from '../icons/overviewIcons'
+} from 'react';
+import { CloseIcon } from '../icons/shellIcons';
+import { GripIcon } from '../icons/overviewIcons';
 
 export type ReorderListProps<T> = {
-  items: T[]
-  getKey: (item: T) => string
-  onReorder: (next: T[]) => void
-  onRemove?: (item: T, index: number) => void
+  items: T[];
+  getKey: (item: T) => string;
+  onReorder: (next: T[]) => void;
+  onRemove?: (item: T, index: number) => void;
   /** When false, row cannot be dragged or keyboard-moved (e.g. pinned Points). */
-  canDrag?: (item: T, index: number) => boolean
+  canDrag?: (item: T, index: number) => boolean;
   /** When false, hide remove control for that row. */
-  canRemove?: (item: T, index: number) => boolean
+  canRemove?: (item: T, index: number) => boolean;
   /**
    * Lowest index a movable item may occupy (default 0).
    * Use 1 to keep a pinned head slot (e.g. Points always #1).
    */
-  minMoveIndex?: number
-  renderContent: (item: T, index: number) => ReactNode
-  removeLabel?: string
-  dragLabel?: string
-  'aria-label'?: string
-}
+  minMoveIndex?: number;
+  renderContent: (item: T, index: number) => ReactNode;
+  removeLabel?: string;
+  dragLabel?: string;
+  'aria-label'?: string;
+};
 
 function moveItem<T>(list: T[], from: number, to: number): T[] {
   if (
@@ -36,12 +36,12 @@ function moveItem<T>(list: T[], from: number, to: number): T[] {
     from >= list.length ||
     to >= list.length
   ) {
-    return list
+    return list;
   }
-  const next = [...list]
-  const [item] = next.splice(from, 1)
-  next.splice(to, 0, item)
-  return next
+  const next = [...list];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
 }
 
 /**
@@ -61,77 +61,77 @@ export function ReorderList<T>({
   dragLabel = 'Réordonner',
   'aria-label': ariaLabel,
 }: ReorderListProps<T>) {
-  const dragFrom = useRef<number | null>(null)
-  const [dropIndex, setDropIndex] = useState<number | null>(null)
+  const dragFrom = useRef<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
 
   function clampTarget(index: number): number {
-    return Math.max(minMoveIndex, Math.min(index, items.length - 1))
+    return Math.max(minMoveIndex, Math.min(index, items.length - 1));
   }
 
   function tryMove(from: number, rawTo: number) {
     if (!canDrag(items[from], from)) {
-      return
+      return;
     }
-    const to = clampTarget(rawTo)
+    const to = clampTarget(rawTo);
     if (to === from) {
-      return
+      return;
     }
-    onReorder(moveItem(items, from, to))
+    onReorder(moveItem(items, from, to));
   }
 
   function handleDragStart(index: number, event: DragEvent) {
     if (!canDrag(items[index], index)) {
-      event.preventDefault()
-      return
+      event.preventDefault();
+      return;
     }
-    dragFrom.current = index
-    event.dataTransfer.effectAllowed = 'move'
-    event.dataTransfer.setData('text/plain', String(index))
+    dragFrom.current = index;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(index));
   }
 
   function handleDragOver(index: number, event: DragEvent) {
-    event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
     if (dropIndex !== index) {
-      setDropIndex(index)
+      setDropIndex(index);
     }
   }
 
   function handleDrop(index: number, event: DragEvent) {
-    event.preventDefault()
-    const from = dragFrom.current
-    dragFrom.current = null
-    setDropIndex(null)
+    event.preventDefault();
+    const from = dragFrom.current;
+    dragFrom.current = null;
+    setDropIndex(null);
     if (from == null) {
-      return
+      return;
     }
-    tryMove(from, index)
+    tryMove(from, index);
   }
 
   function handleDragEnd() {
-    dragFrom.current = null
-    setDropIndex(null)
+    dragFrom.current = null;
+    setDropIndex(null);
   }
 
   function handleKeyDown(index: number, event: KeyboardEvent) {
     if (!event.altKey || !canDrag(items[index], index)) {
-      return
+      return;
     }
     if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      tryMove(index, index - 1)
+      event.preventDefault();
+      tryMove(index, index - 1);
     } else if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      tryMove(index, index + 1)
+      event.preventDefault();
+      tryMove(index, index + 1);
     }
   }
 
   return (
     <ul className="ds-reorder" aria-label={ariaLabel}>
       {items.map((item, index) => {
-        const key = getKey(item)
-        const draggable = canDrag(item, index)
-        const removable = onRemove != null && canRemove(item, index)
+        const key = getKey(item);
+        const draggable = canDrag(item, index);
+        const removable = onRemove != null && canRemove(item, index);
         return (
           <li
             key={key}
@@ -157,7 +157,9 @@ export function ReorderList<T>({
             <span className="ds-reorder__index" aria-hidden="true">
               {index + 1}
             </span>
-            <div className="ds-reorder__content">{renderContent(item, index)}</div>
+            <div className="ds-reorder__content">
+              {renderContent(item, index)}
+            </div>
             {removable ? (
               <button
                 type="button"
@@ -170,8 +172,8 @@ export function ReorderList<T>({
               </button>
             ) : null}
           </li>
-        )
+        );
       })}
     </ul>
-  )
+  );
 }

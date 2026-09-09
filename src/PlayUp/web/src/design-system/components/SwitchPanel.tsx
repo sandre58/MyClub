@@ -1,15 +1,15 @@
-import type { ReactNode } from 'react'
-import { Switch } from './Switch'
+import type { ReactNode } from 'react';
+import { Switch } from './Switch';
 
 export type SwitchPanelProps = {
-  title: string
-  description?: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-  disabled?: boolean
-  switchLabel?: string
-  children?: ReactNode
-}
+  title: string;
+  description?: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+  switchLabel?: string;
+  children?: ReactNode;
+};
 
 /**
  * Sub-section gated by a Switch — body is inert/dimmed when off.
@@ -24,7 +24,7 @@ export function SwitchPanel({
   switchLabel,
   children,
 }: SwitchPanelProps) {
-  const hasBody = children != null
+  const hasBody = children != null;
 
   return (
     <section
@@ -56,5 +56,5 @@ export function SwitchPanel({
         </div>
       ) : null}
     </section>
-  )
+  );
 }

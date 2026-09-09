@@ -1,15 +1,15 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 export type FormSectionProps = {
-  title: string
+  title: string;
   /** Optional family hint — used in edit; rare on read hub tiles. */
-  description?: string
-  icon?: ReactNode
-  children: ReactNode
+  description?: string;
+  icon?: ReactNode;
+  children: ReactNode;
   /** For aria-labelledby on dialogs / landmarks. */
-  id?: string
-  className?: string
-}
+  id?: string;
+  className?: string;
+};
 
 /**
  * Family section chrome — shared by hub read tiles and edit dialogs.
@@ -23,7 +23,7 @@ export function FormSection({
   id,
   className,
 }: FormSectionProps) {
-  const titleId = id ? `${id}-title` : undefined
+  const titleId = id ? `${id}-title` : undefined;
 
   return (
     <section
@@ -48,5 +48,5 @@ export function FormSection({
       </header>
       <div className="ds-form-section__body">{children}</div>
     </section>
-  )
+  );
 }

@@ -1,30 +1,30 @@
-import type { RefObject } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
-import { fetchNeedsAttention } from '../api'
-import { TeamCrest } from '../design-system/TeamCrest'
+import type { RefObject } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { fetchNeedsAttention } from '../api';
+import { TeamCrest } from '../design-system/TeamCrest';
 import {
   AttentionBellIcon,
   CloseIcon,
   SidebarExpandIcon,
-} from '../design-system/icons/shellIcons'
-import { queryKeys } from '../queryKeys'
-import type { CompetitionStatus } from '../types'
-import { CompetitionStatusBadge } from '../ui'
-import { formatCompetitionPeriod } from './competitionPeriod'
-import { useShellCompetitionContext } from './useShellCompetitionContext'
-import type { ShellViewport } from './useShellViewport'
+} from '../design-system/icons/shellIcons';
+import { queryKeys } from '../queryKeys';
+import type { CompetitionStatus } from '../types';
+import { CompetitionStatusBadge } from '../ui';
+import { formatCompetitionPeriod } from './competitionPeriod';
+import { useShellCompetitionContext } from './useShellCompetitionContext';
+import type { ShellViewport } from './useShellViewport';
 
 type ShellHeaderProps = {
-  viewport?: ShellViewport
-  phoneNavOpen?: boolean
-  navMenuTriggerRef?: RefObject<HTMLButtonElement | null>
-  onTogglePhoneNav?: () => void
-  attentionDrawerId?: string
-  attentionDrawerOpen?: boolean
-  attentionTriggerRef?: RefObject<HTMLButtonElement | null>
-  onAttentionClick?: () => void
-}
+  viewport?: ShellViewport;
+  phoneNavOpen?: boolean;
+  navMenuTriggerRef?: RefObject<HTMLButtonElement | null>;
+  onTogglePhoneNav?: () => void;
+  attentionDrawerId?: string;
+  attentionDrawerOpen?: boolean;
+  attentionTriggerRef?: RefObject<HTMLButtonElement | null>;
+  onAttentionClick?: () => void;
+};
 
 /**
  * Shell header (A) — competition context + À traiter on navy chrome.
@@ -41,20 +41,27 @@ export function ShellHeader({
   attentionTriggerRef,
   onAttentionClick,
 }: ShellHeaderProps) {
-  const { t } = useTranslation('shell')
-  const { competitionId, competitionName, logoMediaId, status, scheduledStart, scheduledEnd, state } =
-    useShellCompetitionContext()
+  const { t } = useTranslation('shell');
+  const {
+    competitionId,
+    competitionName,
+    logoMediaId,
+    status,
+    scheduledStart,
+    scheduledEnd,
+    state,
+  } = useShellCompetitionContext();
 
   const attentionQuery = useQuery({
     queryKey: queryKeys.competitions.attention(competitionId ?? ''),
     queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: Boolean(competitionId),
-  })
+  });
 
   const attentionCount =
-    attentionQuery.data?.count ?? attentionQuery.data?.items.length ?? 0
-  const competitionStatus = status
-  const periodLabel = formatCompetitionPeriod(scheduledStart, scheduledEnd)
+    attentionQuery.data?.count ?? attentionQuery.data?.items.length ?? 0;
+  const competitionStatus = status;
+  const periodLabel = formatCompetitionPeriod(scheduledStart, scheduledEnd);
 
   return (
     <header className="shell-header ds-shell-header">
@@ -65,7 +72,9 @@ export function ShellHeader({
           className="ds-shell-header__nav-toggle ds-btn ds-btn--ghost ds-icon-button shell-header__icon-control"
           aria-expanded={phoneNavOpen}
           aria-controls="shell-sidebar-nav"
-          aria-label={phoneNavOpen ? t('sidebar.menuClose') : t('sidebar.menuOpen')}
+          aria-label={
+            phoneNavOpen ? t('sidebar.menuClose') : t('sidebar.menuOpen')
+          }
           onClick={onTogglePhoneNav}
         >
           {phoneNavOpen ? (
@@ -97,7 +106,7 @@ export function ShellHeader({
         />
       </div>
     </header>
-  )
+  );
 }
 
 function ShellHeaderCompetitionContext({
@@ -108,14 +117,14 @@ function ShellHeaderCompetitionContext({
   state,
   crestSize,
 }: {
-  competitionName?: string
-  logoMediaId?: string | null
-  competitionStatus?: CompetitionStatus
-  periodLabel?: string | null
-  state: ReturnType<typeof useShellCompetitionContext>['state']
-  crestSize: 'md' | 'lg'
+  competitionName?: string;
+  logoMediaId?: string | null;
+  competitionStatus?: CompetitionStatus;
+  periodLabel?: string | null;
+  state: ReturnType<typeof useShellCompetitionContext>['state'];
+  crestSize: 'md' | 'lg';
 }) {
-  const { t } = useTranslation('shell')
+  const { t } = useTranslation('shell');
 
   if (state === 'loading') {
     return (
@@ -128,13 +137,19 @@ function ShellHeaderCompetitionContext({
           {t('competition.loading')}
         </span>
       </div>
-    )
+    );
   }
 
   if (state === 'selected' && competitionName) {
     return (
-      <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
-        <span className="ds-shell-header__crest shell-header__crest" aria-hidden="true">
+      <div
+        className="shell-header__context"
+        aria-label={t('competition.contextLabel')}
+      >
+        <span
+          className="ds-shell-header__crest shell-header__crest"
+          aria-hidden="true"
+        >
           <TeamCrest
             name={competitionName}
             logoMediaId={logoMediaId}
@@ -154,47 +169,61 @@ function ShellHeaderCompetitionContext({
                 />
               )}
               {competitionStatus && periodLabel && (
-                <span className="shell-header__meta-separator" aria-hidden="true">
+                <span
+                  className="shell-header__meta-separator"
+                  aria-hidden="true"
+                >
                   ·
                 </span>
               )}
               {periodLabel && (
-                <span className="shell-header__period ds-meta">{periodLabel}</span>
+                <span className="shell-header__period ds-meta">
+                  {periodLabel}
+                </span>
               )}
             </div>
           )}
         </div>
       </div>
-    )
+    );
   }
 
   if (state === 'unavailable') {
     return (
-      <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
+      <div
+        className="shell-header__context"
+        aria-label={t('competition.contextLabel')}
+      >
         <span className="shell-header__context-message">
           {t('competition.unavailable')}
         </span>
       </div>
-    )
+    );
   }
 
   if (state === 'empty') {
     return (
-      <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
+      <div
+        className="shell-header__context"
+        aria-label={t('competition.contextLabel')}
+      >
         <span className="shell-header__context-message">
           {t('competition.none')}
         </span>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="shell-header__context" aria-label={t('competition.contextLabel')}>
+    <div
+      className="shell-header__context"
+      aria-label={t('competition.contextLabel')}
+    >
       <span className="shell-header__context-message">
         {t('competition.choose')}
       </span>
     </div>
-  )
+  );
 }
 
 function AttentionTrigger({
@@ -204,16 +233,16 @@ function AttentionTrigger({
   onClick,
   buttonRef,
 }: {
-  count: number
-  drawerId?: string
-  drawerOpen: boolean
-  onClick?: () => void
-  buttonRef?: RefObject<HTMLButtonElement | null>
+  count: number;
+  drawerId?: string;
+  drawerOpen: boolean;
+  onClick?: () => void;
+  buttonRef?: RefObject<HTMLButtonElement | null>;
 }) {
-  const { t } = useTranslation('shell')
-  const hasAttention = count > 0
-  const accessibleLabel = t('attention.trigger', { count })
-  const tooltipLabel = t('attention.label')
+  const { t } = useTranslation('shell');
+  const hasAttention = count > 0;
+  const accessibleLabel = t('attention.trigger', { count });
+  const tooltipLabel = t('attention.label');
 
   return (
     <button
@@ -239,6 +268,5 @@ function AttentionTrigger({
         </span>
       )}
     </button>
-  )
+  );
 }
-

@@ -1,27 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
-import { fetchMatchHub } from '../api'
-import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow'
-import { AttentionRow } from '../design-system/components/AttentionRow'
-import { MatchRound } from '../design-system/components/MatchRound'
-import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus'
-import { PageHead } from '../design-system/components/PageHead'
-import { PanelHead } from '../design-system/components/PanelHead'
-import { Status } from '../design-system/components/Status'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { OverviewAttentionIcon } from '../design-system/icons/overviewIcons'
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { Link, useParams } from 'react-router-dom';
+import { fetchMatchHub } from '../api';
+import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow';
+import { AttentionRow } from '../design-system/components/AttentionRow';
+import { MatchRound } from '../design-system/components/MatchRound';
+import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus';
+import { PageHead } from '../design-system/components/PageHead';
+import { PanelHead } from '../design-system/components/PanelHead';
+import { Status } from '../design-system/components/Status';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { OverviewAttentionIcon } from '../design-system/icons/overviewIcons';
 import {
   ClassementsNavIcon,
   MatchesNavIcon,
-} from '../design-system/icons/shellIcons'
-import { competitionStatusLabel } from '../i18n/enumLabels'
-import { queryKeys } from '../queryKeys'
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-} from '../ui'
+} from '../design-system/icons/shellIcons';
+import { competitionStatusLabel } from '../i18n/enumLabels';
+import { queryKeys } from '../queryKeys';
+import { EmptyState, ErrorState, LoadingState } from '../ui';
 import {
   formatScore,
   sideLabel,
@@ -29,28 +25,28 @@ import {
   type CompetitionStageSummary,
   type MatchStatus,
   type MatchSummary,
-} from '../types'
+} from '../types';
 import {
   matchResultTypeLabel,
   matchScheduledLabel,
   matchSportingContext,
-} from './matchListMeta'
-import './matches.css'
+} from './matchListMeta';
+import './matches.css';
 
 /**
  * Matchs workspace — overview stages + stage match lists.
  * Presents Read facts by journée (V3). No page-level « À traiter » (Shell drawer).
  */
 export function MatchHubPage() {
-  const { competitionId = '' } = useParams()
+  const { competitionId = '' } = useParams();
 
   const hubQuery = useQuery({
     queryKey: queryKeys.competitions.matchHub(competitionId),
     queryFn: () => fetchMatchHub(competitionId),
     enabled: competitionId.length > 0,
-  })
+  });
 
-  const detail = hubQuery.data?.detail
+  const detail = hubQuery.data?.detail;
   const stages: CompetitionStageSummary[] =
     detail?.stages ??
     hubQuery.data?.stages.map((stage) => ({
@@ -58,9 +54,12 @@ export function MatchHubPage() {
       name: stage.name,
       status: stage.status,
     })) ??
-    []
+    [];
 
-  const rows = buildMatchRows(stages, hubQuery.data?.stages.map((stage) => stage.matches))
+  const rows = buildMatchRows(
+    stages,
+    hubQuery.data?.stages.map((stage) => stage.matches),
+  );
 
   return (
     <main id="main" className="page page--matches">
@@ -76,12 +75,12 @@ export function MatchHubPage() {
         />
       )}
     </main>
-  )
+  );
 }
 
 interface MatchHubRow {
-  match: MatchSummary
-  stageName: string
+  match: MatchSummary;
+  stageName: string;
 }
 
 function buildMatchRows(
@@ -89,20 +88,20 @@ function buildMatchRows(
   matchLists: (MatchSummary[] | undefined)[] | undefined,
 ): MatchHubRow[] {
   if (!matchLists) {
-    return []
+    return [];
   }
 
-  const rows: MatchHubRow[] = []
+  const rows: MatchHubRow[] = [];
   stages.forEach((stage, index) => {
-    const matches = matchLists[index]
+    const matches = matchLists[index];
     if (!matches) {
-      return
+      return;
     }
     for (const match of matches) {
-      rows.push({ match, stageName: stage.name })
+      rows.push({ match, stageName: stage.name });
     }
-  })
-  return rows
+  });
+  return rows;
 }
 
 function MatchesView({
@@ -112,18 +111,18 @@ function MatchesView({
   matchesPending,
   matchesError,
 }: {
-  data: CompetitionDetail
-  rows: MatchHubRow[]
-  stages: CompetitionStageSummary[]
-  matchesPending: boolean
-  matchesError: unknown
+  data: CompetitionDetail;
+  rows: MatchHubRow[];
+  stages: CompetitionStageSummary[];
+  matchesPending: boolean;
+  matchesError: unknown;
 }) {
-  const { t } = useTranslation('matches')
-  const classementsHref = `/competitions/${data.id}/classements`
-  const buckets = groupMatchesBySportingBucket(rows, t)
+  const { t } = useTranslation('matches');
+  const classementsHref = `/competitions/${data.id}/classements`;
+  const buckets = groupMatchesBySportingBucket(rows, t);
   const needsResult = rows.filter(
     (row) => row.match.status === 'Finished' && row.match.score == null,
-  )
+  );
 
   return (
     <div className="ds-page matches">
@@ -150,18 +149,18 @@ function MatchesView({
         </div>
       ) : null}
     </div>
-  )
+  );
 }
 
 function ContextBand({
   data,
   matchCount,
 }: {
-  data: CompetitionDetail
-  matchCount: number
+  data: CompetitionDetail;
+  matchCount: number;
 }) {
-  const { t } = useTranslation('matches')
-  const primaryStage = data.stages[0]
+  const { t } = useTranslation('matches');
+  const primaryStage = data.stages[0];
 
   return (
     <ul className="matches-band" aria-label={data.name}>
@@ -178,7 +177,7 @@ function ContextBand({
         {t('band.matches', { count: matchCount })}
       </li>
     </ul>
-  )
+  );
 }
 
 function CalendarPanel({
@@ -186,11 +185,11 @@ function CalendarPanel({
   stages,
   matchCount,
 }: {
-  buckets: SportingBucket[]
-  stages: CompetitionStageSummary[]
-  matchCount: number
+  buckets: SportingBucket[];
+  stages: CompetitionStageSummary[];
+  matchCount: number;
 }) {
-  const { t } = useTranslation('matches')
+  const { t } = useTranslation('matches');
 
   return (
     <section className="ds-panel" aria-labelledby="matches-calendar">
@@ -222,14 +221,17 @@ function CalendarPanel({
         ))
       )}
     </section>
-  )
+  );
 }
 
 function MatchdaySection({ bucket }: { bucket: SportingBucket }) {
-  const { t } = useTranslation('matches')
-  const status = journéeStatus(bucket.rows.map((row) => row.match.status))
-  const breakdown = journéeBreakdown(bucket.rows.map((row) => row.match.status), t)
-  const roundState = dayStatusToRoundState(status)
+  const { t } = useTranslation('matches');
+  const status = journéeStatus(bucket.rows.map((row) => row.match.status));
+  const breakdown = journéeBreakdown(
+    bucket.rows.map((row) => row.match.status),
+    t,
+  );
+  const roundState = dayStatusToRoundState(status);
 
   return (
     <MatchRound
@@ -251,44 +253,55 @@ function MatchdaySection({ bucket }: { bucket: SportingBucket }) {
             }}
           />
         ) : (
-          <span className="matches-day__status">{t(`calendar.dayStatus.${status}`)}</span>
+          <span className="matches-day__status">
+            {t(`calendar.dayStatus.${status}`)}
+          </span>
         )
       }
       sub={breakdown ?? undefined}
     >
       {bucket.rows.map(({ match, stageName }) => (
-        <MatchResultRow key={match.matchId} match={match} stageName={stageName} />
+        <MatchResultRow
+          key={match.matchId}
+          match={match}
+          stageName={stageName}
+        />
       ))}
     </MatchRound>
-  )
+  );
 }
 
 function MatchResultRow({
   match,
   stageName,
 }: {
-  match: MatchSummary
-  stageName: string
+  match: MatchSummary;
+  stageName: string;
 }) {
-  const { t } = useTranslation('matches')
-  const homeName = sideLabel(match.home)
-  const awayName = sideLabel(match.away)
-  const when = matchScheduledLabel(match)
-  const resultKind = matchResultTypeLabel(match)
-  const sporting = matchSportingContext(match, t)
-  const needsResult = match.status === 'Finished' && match.score == null
+  const { t } = useTranslation('matches');
+  const homeName = sideLabel(match.home);
+  const awayName = sideLabel(match.away);
+  const when = matchScheduledLabel(match);
+  const resultKind = matchResultTypeLabel(match);
+  const sporting = matchSportingContext(match, t);
+  const needsResult = match.status === 'Finished' && match.score == null;
 
   const asideLabel =
     match.score != null
       ? formatScore(match.score)
       : needsResult
         ? t('calendar.needsResult')
-        : (when ?? t('calendar.pending'))
+        : (when ?? t('calendar.pending'));
 
   const aside = (
     <>
       {match.score != null ? null : needsResult ? (
-        <Status density="context" tone="attention" variant="soft" shape="rounded">
+        <Status
+          density="context"
+          tone="attention"
+          variant="soft"
+          shape="rounded"
+        >
           {t('calendar.needsResult')}
         </Status>
       ) : match.status === 'Live' ? (
@@ -318,7 +331,7 @@ function MatchResultRow({
         <span className="matches-result__meta">{stageName}</span>
       ) : null}
     </>
-  )
+  );
 
   const score =
     match.score != null ? (
@@ -332,9 +345,9 @@ function MatchResultRow({
       <MatchRowScore home={when} away="" muted />
     ) : (
       <MatchRowScore home={t('calendar.pending')} away="" muted />
-    )
+    );
 
-  const scoreMuted = match.score == null
+  const scoreMuted = match.score == null;
 
   return (
     <MatchRow
@@ -366,11 +379,11 @@ function MatchResultRow({
       score={score}
       aside={aside}
     />
-  )
+  );
 }
 
 function NeedsResultPanel({ items }: { items: MatchHubRow[] }) {
-  const { t } = useTranslation('matches')
+  const { t } = useTranslation('matches');
 
   return (
     <section className="ds-panel" aria-labelledby="matches-needs-result">
@@ -385,8 +398,8 @@ function NeedsResultPanel({ items }: { items: MatchHubRow[] }) {
       ) : (
         <div className="ds-overview-attention">
           {items.slice(0, 5).map(({ match }) => {
-            const homeName = sideLabel(match.home)
-            const awayName = sideLabel(match.away)
+            const homeName = sideLabel(match.home);
+            const awayName = sideLabel(match.away);
             return (
               <AttentionRow
                 key={match.matchId}
@@ -403,23 +416,23 @@ function NeedsResultPanel({ items }: { items: MatchHubRow[] }) {
                   </Link>
                 }
               />
-            )
+            );
           })}
         </div>
       )}
     </section>
-  )
+  );
 }
 
 function ClassementsCrossLink({
   href,
   rows,
 }: {
-  href: string
-  rows: MatchHubRow[]
+  href: string;
+  rows: MatchHubRow[];
 }) {
-  const { t } = useTranslation('matches')
-  const hasFinished = rows.some((row) => row.match.status === 'Finished')
+  const { t } = useTranslation('matches');
+  const hasFinished = rows.some((row) => row.match.status === 'Finished');
 
   if (!hasFinished) {
     return (
@@ -431,7 +444,7 @@ function ClassementsCrossLink({
         />
         <p className="matches-panel__meta">{t('classements.empty')}</p>
       </section>
-    )
+    );
   }
 
   return (
@@ -449,14 +462,14 @@ function ClassementsCrossLink({
         </Link>
       </div>
     </section>
-  )
+  );
 }
 
 interface SportingBucket {
-  key: string
-  label: string
-  sort: number
-  rows: MatchHubRow[]
+  key: string;
+  label: string;
+  sort: number;
+  rows: MatchHubRow[];
 }
 
 /**
@@ -467,96 +480,98 @@ function groupMatchesBySportingBucket(
   rows: MatchHubRow[],
   t: ReturnType<typeof useTranslation<'matches'>>['t'],
 ): SportingBucket[] {
-  const map = new Map<string, SportingBucket>()
+  const map = new Map<string, SportingBucket>();
 
   for (const row of rows) {
-    const round = row.match.roundName?.trim()
-    let key: string
-    let label: string
-    let sort: number
+    const round = row.match.roundName?.trim();
+    let key: string;
+    let label: string;
+    let sort: number;
 
     if (round) {
-      key = `round:${round}`
-      label = round
-      sort = 10_000
+      key = `round:${round}`;
+      label = round;
+      sort = 10_000;
     } else if (row.match.matchdayNumber != null) {
-      key = `day:${row.match.matchdayNumber}`
-      label = t('list.matchday', { number: row.match.matchdayNumber })
-      sort = row.match.matchdayNumber
+      key = `day:${row.match.matchdayNumber}`;
+      label = t('list.matchday', { number: row.match.matchdayNumber });
+      sort = row.match.matchdayNumber;
     } else {
-      key = `stage:${row.match.stageId}`
-      label = row.stageName
-      sort = 20_000
+      key = `stage:${row.match.stageId}`;
+      label = row.stageName;
+      sort = 20_000;
     }
 
-    const bucket = map.get(key)
+    const bucket = map.get(key);
     if (bucket) {
-      bucket.rows.push(row)
+      bucket.rows.push(row);
     } else {
-      map.set(key, { key, label, sort, rows: [row] })
+      map.set(key, { key, label, sort, rows: [row] });
     }
   }
 
-  return [...map.values()].sort((a, b) => a.sort - b.sort || a.label.localeCompare(b.label))
+  return [...map.values()].sort(
+    (a, b) => a.sort - b.sort || a.label.localeCompare(b.label),
+  );
 }
 
-type DayStatus = 'upcoming' | 'live' | 'finished' | 'partial' | 'other'
+type DayStatus = 'upcoming' | 'live' | 'finished' | 'partial' | 'other';
 
 function dayStatusToRoundState(
   status: DayStatus,
 ): 'done' | 'current' | 'upcoming' | 'partial' | null {
   switch (status) {
     case 'finished':
-      return 'done'
+      return 'done';
     case 'live':
-      return 'current'
+      return 'current';
     case 'partial':
-      return 'partial'
+      return 'partial';
     case 'upcoming':
-      return 'upcoming'
+      return 'upcoming';
     default:
-      return null
+      return null;
   }
 }
 
 function journéeStatus(statuses: MatchStatus[]): DayStatus {
   if (statuses.length === 0) {
-    return 'other'
+    return 'other';
   }
   if (statuses.every((status) => status === 'Finished')) {
-    return 'finished'
+    return 'finished';
   }
   if (statuses.some((status) => status === 'Live')) {
-    return 'live'
+    return 'live';
   }
   if (statuses.every((status) => status === 'Scheduled')) {
-    return 'upcoming'
+    return 'upcoming';
   }
   if (
     statuses.some((status) => status === 'Finished') &&
     statuses.some((status) => status === 'Scheduled' || status === 'Live')
   ) {
-    return 'partial'
+    return 'partial';
   }
-  return 'other'
+  return 'other';
 }
 
 function journéeBreakdown(
   statuses: MatchStatus[],
   t: ReturnType<typeof useTranslation<'matches'>>['t'],
 ): string | null {
-  const finished = statuses.filter((status) => status === 'Finished').length
-  const live = statuses.filter((status) => status === 'Live').length
-  const upcoming = statuses.filter((status) => status === 'Scheduled').length
-  const parts: string[] = []
+  const finished = statuses.filter((status) => status === 'Finished').length;
+  const live = statuses.filter((status) => status === 'Live').length;
+  const upcoming = statuses.filter((status) => status === 'Scheduled').length;
+  const parts: string[] = [];
   if (finished > 0) {
-    parts.push(t('calendar.breakdown.finished', { count: finished }))
+    parts.push(t('calendar.breakdown.finished', { count: finished }));
   }
   if (live > 0) {
-    parts.push(t('calendar.breakdown.live', { count: live }))
+    parts.push(t('calendar.breakdown.live', { count: live }));
   }
   if (upcoming > 0) {
-    parts.push(t('calendar.breakdown.upcoming', { count: upcoming }))
+    parts.push(t('calendar.breakdown.upcoming', { count: upcoming }));
   }
-  return parts.length > 0 ? parts.join(' · ') : null
+  return parts.length > 0 ? parts.join(' · ') : null;
 }

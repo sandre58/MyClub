@@ -1,16 +1,10 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
-export type StatusDensity = 'context' | 'compact' | 'dense'
-export type StatusVariant = 'soft' | 'outline' | 'plain'
-export type StatusShape = 'rounded' | 'pill'
+export type StatusDensity = 'context' | 'compact' | 'dense';
+export type StatusVariant = 'soft' | 'outline' | 'plain';
+export type StatusShape = 'rounded' | 'pill';
 export type StatusTone =
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'live'
-  | 'done'
-  | 'attention'
-  | 'error'
+  'neutral' | 'info' | 'success' | 'live' | 'done' | 'attention' | 'error';
 
 /**
  * Status primitive — presentation only. Read supplies labels and meaning.
@@ -24,15 +18,15 @@ export function Status({
   className,
   title,
 }: {
-  density: StatusDensity
-  tone?: StatusTone
-  variant?: StatusVariant
-  shape?: StatusShape
-  children: ReactNode
-  className?: string
-  title?: string
+  density: StatusDensity;
+  tone?: StatusTone;
+  variant?: StatusVariant;
+  shape?: StatusShape;
+  children: ReactNode;
+  className?: string;
+  title?: string;
 }) {
-  const isChip = density !== 'dense'
+  const isChip = density !== 'dense';
   const classes = [
     'ds-status',
     `ds-status--${density}`,
@@ -42,28 +36,11 @@ export function Status({
     className,
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   return (
     <span className={classes} title={title}>
       {children}
     </span>
-  )
+  );
 }
-
-/** Maps legacy StatusBadge tone names to StatusTone. */
-export function statusToneFromLegacy(
-  tone: 'neutral' | 'info' | 'ok' | 'live' | 'done' | 'warn' | 'danger',
-): StatusTone {
-  switch (tone) {
-    case 'ok':
-      return 'success'
-    case 'warn':
-      return 'attention'
-    case 'danger':
-      return 'error'
-    default:
-      return tone
-  }
-}
-

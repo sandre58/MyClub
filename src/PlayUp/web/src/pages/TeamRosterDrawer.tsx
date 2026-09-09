@@ -2,7 +2,7 @@ import {
   useMutation,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query'
+} from '@tanstack/react-query';
 import {
   useEffect,
   useRef,
@@ -10,35 +10,32 @@ import {
   type CSSProperties,
   type FormEvent,
   type ReactNode,
-} from 'react'
-import { useTranslation } from 'react-i18next'
+} from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   addDeclaredMember,
   removeDeclaredMember,
   removeDeclaredMembers,
   renameDeclaredMember,
-} from '../api'
-import { SelectionBar } from '../design-system/components/SelectionBar'
-import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
-import { Alert } from '../design-system/components/Alert'
-import { TeamCrest } from '../design-system/TeamCrest'
+} from '../api';
+import { SelectionBar } from '../design-system/components/SelectionBar';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
+import { Alert } from '../design-system/components/Alert';
+import { TeamCrest } from '../design-system/TeamCrest';
 import {
   ChevronDownIcon,
   CloseIcon,
   SidebarCollapseIcon,
-} from '../design-system/icons/shellIcons'
+} from '../design-system/icons/shellIcons';
 import {
   CheckIcon,
   PencilIcon,
   PersonIcon,
   PlusIcon,
   TrashIcon,
-} from '../design-system/icons/overviewIcons'
-import { queryKeys } from '../queryKeys'
-import {
-  EntryStatusBadge,
-  MutationError,
-} from '../ui'
+} from '../design-system/icons/overviewIcons';
+import { queryKeys } from '../queryKeys';
+import { EntryStatusBadge, MutationError } from '../ui';
 import {
   MEMBER_DISPLAY_NAME_MAX_LENGTH,
   type DeclaredMember,
@@ -46,7 +43,7 @@ import {
   type EntryStatus,
   type OrganisationEntry,
   type OrganisationView,
-} from '../types'
+} from '../types';
 
 async function invalidateAfterRosterMutation(
   queryClient: QueryClient,
@@ -65,97 +62,97 @@ async function invalidateAfterRosterMutation(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.overview(competitionId),
     }),
-  ])
+  ]);
 }
 
 function membersOf(
   entry: OrganisationEntry,
   role: DeclaredMemberRole,
 ): DeclaredMember[] {
-  return (entry.declaredMembers ?? []).filter((member) => member.role === role)
+  return (entry.declaredMembers ?? []).filter((member) => member.role === role);
 }
 
 function memberInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
-    return '?'
+    return '?';
   }
   if (parts.length === 1) {
-    return parts[0].slice(0, 2).toUpperCase()
+    return parts[0].slice(0, 2).toUpperCase();
   }
-  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
+  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
 }
 
 function canMutateRoster(entryStatus: EntryStatus): boolean {
-  return entryStatus === 'Active'
+  return entryStatus === 'Active';
 }
 
 function parseRgbChannels(hex: string): [number, number, number] | null {
-  const raw = hex.replace('#', '')
+  const raw = hex.replace('#', '');
   if (raw.length !== 6 || Number.isNaN(Number.parseInt(raw, 16))) {
-    return null
+    return null;
   }
 
   return [
     Number.parseInt(raw.slice(0, 2), 16),
     Number.parseInt(raw.slice(2, 4), 16),
     Number.parseInt(raw.slice(4, 6), 16),
-  ]
+  ];
 }
 
 function contrastInk(hex: string): string {
-  const channels = parseRgbChannels(hex)
+  const channels = parseRgbChannels(hex);
   if (!channels) {
-    return 'var(--color-text-secondary)'
+    return 'var(--color-text-secondary)';
   }
 
-  const [r, g, b] = channels
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000
-  return yiq >= 150 ? '#1a1a1a' : '#fff'
+  const [r, g, b] = channels;
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 150 ? '#1a1a1a' : '#fff';
 }
 
 function relativeLuminance(hex: string): number | null {
-  const channels = parseRgbChannels(hex)
+  const channels = parseRgbChannels(hex);
   if (!channels) {
-    return null
+    return null;
   }
 
   const linear = channels.map((channel) => {
-    const c = channel / 255
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
-  })
-  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+    const c = channel / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
 }
 
 function hasReadableContrast(fill: string, ink: string): boolean {
-  const a = relativeLuminance(fill)
-  const b = relativeLuminance(ink)
+  const a = relativeLuminance(fill);
+  const b = relativeLuminance(ink);
   if (a == null || b == null) {
-    return false
+    return false;
   }
 
-  const lighter = Math.max(a, b)
-  const darker = Math.min(a, b)
-  return (lighter + 0.05) / (darker + 0.05) >= 2.5
+  const lighter = Math.max(a, b);
+  const darker = Math.min(a, b);
+  return (lighter + 0.05) / (darker + 0.05) >= 2.5;
 }
 
 function kitAvatarStyle(
   primary: string | null | undefined,
   secondary: string | null | undefined,
 ): CSSProperties | undefined {
-  const home = primary?.trim()
-  const away = secondary?.trim()
+  const home = primary?.trim();
+  const away = secondary?.trim();
   if (!home && !away) {
-    return undefined
+    return undefined;
   }
 
-  const fill = home || away!
+  const fill = home || away!;
   const awayInk =
-    away && away !== fill && hasReadableContrast(fill, away) ? away : null
+    away && away !== fill && hasReadableContrast(fill, away) ? away : null;
   return {
     backgroundColor: fill,
     color: awayInk ?? contrastInk(fill),
-  }
+  };
 }
 
 export function TeamRosterDrawer({
@@ -164,36 +161,36 @@ export function TeamRosterDrawer({
   onBack,
   onEditIdentity,
 }: {
-  data: OrganisationView
-  entryId: string
-  onBack?: () => void
-  onEditIdentity?: () => void
+  data: OrganisationView;
+  entryId: string;
+  onBack?: () => void;
+  onEditIdentity?: () => void;
 }) {
-  const { t } = useTranslation('teams')
-  const { t: tCommon } = useTranslation('common')
-  const queryClient = useQueryClient()
-  const nameRef = useRef<HTMLInputElement>(null)
-  const splitRef = useRef<HTMLDivElement>(null)
-  const [displayName, setDisplayName] = useState('')
-  const [staffMenuOpen, setStaffMenuOpen] = useState(false)
-  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
+  const { t } = useTranslation('teams');
+  const { t: tCommon } = useTranslation('common');
+  const queryClient = useQueryClient();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const splitRef = useRef<HTMLDivElement>(null);
+  const [displayName, setDisplayName] = useState('');
+  const [staffMenuOpen, setStaffMenuOpen] = useState(false);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [pendingRemove, setPendingRemove] = useState<{
-    removable: DeclaredMember[]
-    blocked: DeclaredMember[]
-  } | null>(null)
-  const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
-  const [renameDraft, setRenameDraft] = useState('')
+    removable: DeclaredMember[];
+    blocked: DeclaredMember[];
+  } | null>(null);
+  const [pendingRenameId, setPendingRenameId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState('');
 
   const entry = data.participants.entries.find(
     (candidate) => candidate.entryId === entryId,
-  )
+  );
 
   useEffect(() => {
-    setSelectedMemberIds([])
-    setPendingRemove(null)
-    setPendingRenameId(null)
-    setRenameDraft('')
-  }, [entryId])
+    setSelectedMemberIds([]);
+    setPendingRemove(null);
+    setPendingRenameId(null);
+    setRenameDraft('');
+  }, [entryId]);
 
   const addMutation = useMutation({
     mutationFn: (payload: { name: string; role: DeclaredMemberRole }) =>
@@ -202,12 +199,12 @@ export function TeamRosterDrawer({
         role: payload.role,
       }),
     onSuccess: async () => {
-      setDisplayName('')
-      setStaffMenuOpen(false)
-      await invalidateAfterRosterMutation(queryClient, data.competitionId)
-      nameRef.current?.focus()
+      setDisplayName('');
+      setStaffMenuOpen(false);
+      await invalidateAfterRosterMutation(queryClient, data.competitionId);
+      nameRef.current?.focus();
     },
-  })
+  });
 
   const renameMutation = useMutation({
     mutationFn: ({ memberId, name }: { memberId: string; name: string }) =>
@@ -215,11 +212,11 @@ export function TeamRosterDrawer({
         displayName: name,
       }),
     onSuccess: async () => {
-      setPendingRenameId(null)
-      setRenameDraft('')
-      await invalidateAfterRosterMutation(queryClient, data.competitionId)
+      setPendingRenameId(null);
+      setRenameDraft('');
+      await invalidateAfterRosterMutation(queryClient, data.competitionId);
     },
-  })
+  });
 
   const removeMutation = useMutation({
     mutationFn: (memberIds: string[]) =>
@@ -229,18 +226,18 @@ export function TeamRosterDrawer({
             memberIds,
           }),
     onSuccess: async () => {
-      setPendingRemove(null)
-      setSelectedMemberIds([])
-      await invalidateAfterRosterMutation(queryClient, data.competitionId)
+      setPendingRemove(null);
+      setSelectedMemberIds([]);
+      await invalidateAfterRosterMutation(queryClient, data.competitionId);
     },
     onError: () => {
-      setPendingRemove(null)
+      setPendingRemove(null);
     },
-  })
+  });
 
   useEffect(() => {
     if (!staffMenuOpen) {
-      return
+      return;
     }
     function onPointerDown(event: PointerEvent) {
       if (
@@ -248,28 +245,28 @@ export function TeamRosterDrawer({
         event.target instanceof Node &&
         !splitRef.current.contains(event.target)
       ) {
-        setStaffMenuOpen(false)
+        setStaffMenuOpen(false);
       }
     }
-    window.addEventListener('pointerdown', onPointerDown)
-    return () => window.removeEventListener('pointerdown', onPointerDown)
-  }, [staffMenuOpen])
+    window.addEventListener('pointerdown', onPointerDown);
+    return () => window.removeEventListener('pointerdown', onPointerDown);
+  }, [staffMenuOpen]);
 
   function clearRowEditors() {
-    setPendingRenameId(null)
-    setRenameDraft('')
+    setPendingRenameId(null);
+    setRenameDraft('');
   }
 
   function submitAdd(role: DeclaredMemberRole) {
-    const name = displayName.trim()
+    const name = displayName.trim();
     if (name.length === 0 || addMutation.isPending) {
-      return
+      return;
     }
-    clearRowEditors()
-    setPendingRemove(null)
-    renameMutation.reset()
-    removeMutation.reset()
-    addMutation.mutate({ name, role })
+    clearRowEditors();
+    setPendingRemove(null);
+    renameMutation.reset();
+    removeMutation.reset();
+    addMutation.mutate({ name, role });
   }
 
   if (!entry) {
@@ -279,89 +276,89 @@ export function TeamRosterDrawer({
           {t('roster.entryMissing')}
         </Alert>
       </div>
-    )
+    );
   }
 
-  const players = membersOf(entry, 'Player')
-  const staff = membersOf(entry, 'Staff')
-  const canMutate = canMutateRoster(entry.status)
-  const avatarStyle = kitAvatarStyle(entry.primaryColor, entry.secondaryColor)
+  const players = membersOf(entry, 'Player');
+  const staff = membersOf(entry, 'Staff');
+  const canMutate = canMutateRoster(entry.status);
+  const avatarStyle = kitAvatarStyle(entry.primaryColor, entry.secondaryColor);
   const mutationError =
-    addMutation.error ?? renameMutation.error ?? removeMutation.error
+    addMutation.error ?? renameMutation.error ?? removeMutation.error;
   const rowBusy =
     addMutation.isPending ||
     renameMutation.isPending ||
-    removeMutation.isPending
+    removeMutation.isPending;
   const addDisabled =
-    !canMutate || addMutation.isPending || displayName.trim().length === 0
+    !canMutate || addMutation.isPending || displayName.trim().length === 0;
 
   function startRename(member: DeclaredMember) {
-    addMutation.reset()
-    renameMutation.reset()
-    removeMutation.reset()
-    setPendingRemove(null)
-    setPendingRenameId(member.memberId)
-    setRenameDraft(member.displayName)
+    addMutation.reset();
+    renameMutation.reset();
+    removeMutation.reset();
+    setPendingRemove(null);
+    setPendingRenameId(member.memberId);
+    setRenameDraft(member.displayName);
   }
 
   function startRemove(member: DeclaredMember) {
     if (member.referencedOnMatchSheet) {
-      return
+      return;
     }
-    addMutation.reset()
-    renameMutation.reset()
-    removeMutation.reset()
-    clearRowEditors()
-    setPendingRemove({ removable: [member], blocked: [] })
+    addMutation.reset();
+    renameMutation.reset();
+    removeMutation.reset();
+    clearRowEditors();
+    setPendingRemove({ removable: [member], blocked: [] });
   }
 
   function startRemoveSelection() {
     if (!entry || selectedMemberIds.length === 0 || pendingRenameId != null) {
-      return
+      return;
     }
     const selected = (entry.declaredMembers ?? []).filter((member) =>
       selectedMemberIds.includes(member.memberId),
-    )
+    );
     const removable = selected.filter(
       (member) => member.referencedOnMatchSheet !== true,
-    )
+    );
     const blocked = selected.filter(
       (member) => member.referencedOnMatchSheet === true,
-    )
-    addMutation.reset()
-    renameMutation.reset()
-    removeMutation.reset()
-    clearRowEditors()
-    setPendingRemove({ removable, blocked })
+    );
+    addMutation.reset();
+    renameMutation.reset();
+    removeMutation.reset();
+    clearRowEditors();
+    setPendingRemove({ removable, blocked });
   }
 
   function toggleMember(memberId: string) {
     if (pendingRenameId != null) {
-      return
+      return;
     }
     setSelectedMemberIds((current) =>
       current.includes(memberId)
         ? current.filter((id) => id !== memberId)
         : [...current, memberId],
-    )
+    );
   }
 
   function confirmRename(member: DeclaredMember) {
-    const name = renameDraft.trim()
+    const name = renameDraft.trim();
     if (name.length === 0 || rowBusy) {
-      return
+      return;
     }
     if (name === member.displayName) {
-      clearRowEditors()
-      return
+      clearRowEditors();
+      return;
     }
-    addMutation.reset()
-    removeMutation.reset()
-    renameMutation.mutate({ memberId: member.memberId, name })
+    addMutation.reset();
+    removeMutation.reset();
+    renameMutation.mutate({ memberId: member.memberId, name });
   }
 
-  const selectionSuspended = pendingRenameId != null
-  const selectedCount = selectedMemberIds.length
+  const selectionSuspended = pendingRenameId != null;
+  const selectedCount = selectedMemberIds.length;
   const rosterGroupProps = {
     avatarStyle,
     canMutate,
@@ -377,20 +374,20 @@ export function TeamRosterDrawer({
     onStartRemove: startRemove,
     onConfirmRename: confirmRename,
     onCancelRow: clearRowEditors,
-  } as const
+  } as const;
 
   const compactIcon =
-    'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact'
-  const confirmRemovable = pendingRemove?.removable ?? []
-  const confirmBlocked = pendingRemove?.blocked ?? []
+    'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
+  const confirmRemovable = pendingRemove?.removable ?? [];
+  const confirmBlocked = pendingRemove?.blocked ?? [];
   const confirmNoneOk =
     pendingRemove != null &&
     confirmRemovable.length === 0 &&
-    confirmBlocked.length > 0
+    confirmBlocked.length > 0;
   const confirmMixed =
     pendingRemove != null &&
     confirmRemovable.length > 0 &&
-    confirmBlocked.length > 0
+    confirmBlocked.length > 0;
   const confirmTitle =
     pendingRemove == null
       ? ''
@@ -398,7 +395,7 @@ export function TeamRosterDrawer({
         ? t('roster.removeTitle', { name: confirmRemovable[0].displayName })
         : t('roster.removeLotTitle', {
             count: Math.max(confirmRemovable.length, selectedCount),
-          })
+          });
   const confirmMessage =
     pendingRemove == null ? (
       ''
@@ -431,20 +428,16 @@ export function TeamRosterDrawer({
       })
     ) : (
       t('roster.removeLotAllOk', { count: confirmRemovable.length })
-    )
+    );
   const confirmLabel =
     confirmRemovable.length <= 1
       ? t('roster.confirmRemove')
-      : t('roster.confirmRemoveLot', { count: confirmRemovable.length })
+      : t('roster.confirmRemoveLot', { count: confirmRemovable.length });
 
   return (
     <>
       {onBack && (
-        <button
-          type="button"
-          className="teams-drawer__back"
-          onClick={onBack}
-        >
+        <button type="button" className="teams-drawer__back" onClick={onBack}>
           <SidebarCollapseIcon size="sm" aria-hidden="true" />
           {t('title')}
         </button>
@@ -484,26 +477,26 @@ export function TeamRosterDrawer({
             <SelectionBar
               countLabel={t('roster.selectionCount', { count: selectedCount })}
             >
-                <button
-                  type="button"
-                  className={compactIcon}
-                  title={t('roster.removeSelection')}
-                  aria-label={t('roster.removeSelection')}
-                  disabled={rowBusy || selectionSuspended}
-                  onClick={startRemoveSelection}
-                >
-                  <TrashIcon size="sm" />
-                </button>
-                <button
-                  type="button"
-                  className={compactIcon}
-                  title={t('roster.clearSelection')}
-                  aria-label={t('roster.clearSelection')}
-                  disabled={selectionSuspended}
-                  onClick={() => setSelectedMemberIds([])}
-                >
-                  <CloseIcon size="sm" />
-                </button>
+              <button
+                type="button"
+                className={compactIcon}
+                title={t('roster.removeSelection')}
+                aria-label={t('roster.removeSelection')}
+                disabled={rowBusy || selectionSuspended}
+                onClick={startRemoveSelection}
+              >
+                <TrashIcon size="sm" />
+              </button>
+              <button
+                type="button"
+                className={compactIcon}
+                title={t('roster.clearSelection')}
+                aria-label={t('roster.clearSelection')}
+                disabled={selectionSuspended}
+                onClick={() => setSelectedMemberIds([])}
+              >
+                <CloseIcon size="sm" />
+              </button>
             </SelectionBar>
           )}
         </div>
@@ -552,8 +545,8 @@ export function TeamRosterDrawer({
       <form
         className="teams-drawer__add"
         onSubmit={(event: FormEvent) => {
-          event.preventDefault()
-          submitAdd('Player')
+          event.preventDefault();
+          submitAdd('Player');
         }}
       >
         <div className="teams-add-group" ref={splitRef}>
@@ -626,9 +619,9 @@ export function TeamRosterDrawer({
         confirmPendingLabel={t('roster.removing')}
         onCancel={() => {
           if (removeMutation.isPending) {
-            return
+            return;
           }
-          setPendingRemove(null)
+          setPendingRemove(null);
         }}
         onConfirm={() => {
           if (
@@ -636,15 +629,15 @@ export function TeamRosterDrawer({
             removeMutation.isPending ||
             pendingRemove.removable.length === 0
           ) {
-            return
+            return;
           }
           removeMutation.mutate(
             pendingRemove.removable.map((member) => member.memberId),
-          )
+          );
         }}
       />
     </>
-  )
+  );
 }
 
 function RosterGroup({
@@ -667,27 +660,27 @@ function RosterGroup({
   onConfirmRename,
   onCancelRow,
 }: {
-  headingId: string
-  heading: ReactNode
-  emptyLabel: string
-  members: DeclaredMember[]
-  avatarStyle?: CSSProperties
-  canMutate: boolean
-  rowBusy: boolean
-  pendingRenameId: string | null
-  renameDraft: string
-  renamePending: boolean
-  selectedMemberIds: string[]
-  selectionSuspended: boolean
-  onToggleMember: (memberId: string) => void
-  onRenameDraft: (value: string) => void
-  onStartRename: (member: DeclaredMember) => void
-  onStartRemove: (member: DeclaredMember) => void
-  onConfirmRename: (member: DeclaredMember) => void
-  onCancelRow: () => void
+  headingId: string;
+  heading: ReactNode;
+  emptyLabel: string;
+  members: DeclaredMember[];
+  avatarStyle?: CSSProperties;
+  canMutate: boolean;
+  rowBusy: boolean;
+  pendingRenameId: string | null;
+  renameDraft: string;
+  renamePending: boolean;
+  selectedMemberIds: string[];
+  selectionSuspended: boolean;
+  onToggleMember: (memberId: string) => void;
+  onRenameDraft: (value: string) => void;
+  onStartRename: (member: DeclaredMember) => void;
+  onStartRemove: (member: DeclaredMember) => void;
+  onConfirmRename: (member: DeclaredMember) => void;
+  onCancelRow: () => void;
 }) {
-  const { t } = useTranslation('teams')
-  const { t: tc } = useTranslation('common')
+  const { t } = useTranslation('teams');
+  const { t: tc } = useTranslation('common');
 
   return (
     <section className="teams-drawer__section" aria-labelledby={headingId}>
@@ -705,15 +698,15 @@ function RosterGroup({
       ) : (
         <ul className="teams-drawer__list">
           {members.map((member) => {
-            const editing = pendingRenameId === member.memberId
-            const onMatchSheet = member.referencedOnMatchSheet === true
-            const removeBlocked = !canMutate || onMatchSheet
-            const selected = selectedMemberIds.includes(member.memberId)
+            const editing = pendingRenameId === member.memberId;
+            const onMatchSheet = member.referencedOnMatchSheet === true;
+            const removeBlocked = !canMutate || onMatchSheet;
+            const selected = selectedMemberIds.includes(member.memberId);
             const removeHint = onMatchSheet
               ? t('roster.onMatchSheetHint')
               : canMutate
                 ? t('roster.removeMemberTooltip')
-                : t('roster.readOnly')
+                : t('roster.readOnly');
             return (
               <li key={member.memberId}>
                 <div
@@ -745,8 +738,8 @@ function RosterGroup({
                       <form
                         className="teams-member__edit"
                         onSubmit={(event: FormEvent) => {
-                          event.preventDefault()
-                          onConfirmRename(member)
+                          event.preventDefault();
+                          onConfirmRename(member);
                         }}
                       >
                         <label className="teams-member__edit-field">
@@ -834,10 +827,10 @@ function RosterGroup({
                   )}
                 </div>
               </li>
-            )
+            );
           })}
         </ul>
       )}
     </section>
-  )
+  );
 }

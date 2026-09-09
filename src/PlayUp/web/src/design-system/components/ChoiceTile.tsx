@@ -1,16 +1,16 @@
-import type { ReactNode } from 'react'
-import { CheckIcon } from '../icons/overviewIcons'
+import type { ReactNode } from 'react';
+import { CheckIcon } from '../icons/overviewIcons';
 
 export type ChoiceTileProps = {
-  label: string
-  selected: boolean
-  onChange: (selected: boolean) => void
+  label: string;
+  selected: boolean;
+  onChange: (selected: boolean) => void;
   /** Leading visual — swatch, icon, crest fragment. */
-  leading?: ReactNode
-  disabled?: boolean
+  leading?: ReactNode;
+  disabled?: boolean;
   /** Accessible name; defaults to label. */
-  'aria-label'?: string
-}
+  'aria-label'?: string;
+};
 
 /**
  * Selectable option tile — checkbox semantics with a visual leading mark.
@@ -36,7 +36,7 @@ export function ChoiceTile({
       data-disabled={disabled ? 'true' : 'false'}
       onClick={() => {
         if (!disabled) {
-          onChange(!selected)
+          onChange(!selected);
         }
       }}
     >
@@ -52,13 +52,13 @@ export function ChoiceTile({
         </span>
       ) : null}
     </button>
-  )
+  );
 }
 
 export type ChoiceSwatchProps = {
-  color: string
-  label?: string
-}
+  color: string;
+  label?: string;
+};
 
 /** Color swatch for ChoiceTile leading (cards, kits, …). */
 export function ChoiceSwatch({ color, label }: ChoiceSwatchProps) {
@@ -68,5 +68,5 @@ export function ChoiceSwatch({ color, label }: ChoiceSwatchProps) {
       style={{ backgroundColor: color }}
       title={label}
     />
-  )
+  );
 }

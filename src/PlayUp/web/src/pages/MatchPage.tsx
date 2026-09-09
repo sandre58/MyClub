@@ -3,50 +3,51 @@ import {
   useQuery,
   useQueryClient,
   type QueryClient,
-} from '@tanstack/react-query'
-import { useId, useState, type FormEvent } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router-dom'
+} from '@tanstack/react-query';
+import { useId, useState, type FormEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
 import {
   fetchMatchDetail,
   fetchStageOverview,
   finishMatch,
   setRunningScore,
   startMatch,
-} from '../api'
+} from '../api';
 import {
   MatchHero,
   MatchHeroMetaItem,
   MatchHeroScore,
   MatchHeroScoreActions,
-} from '../design-system/components/MatchHero'
-import { PageHead } from '../design-system/components/PageHead'
-import { Status } from '../design-system/components/Status'
-import { TeamCrest } from '../design-system/TeamCrest'
-import { CalendarIcon } from '../design-system/icons/overviewIcons'
-import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons'
-import { matchStatusLabel } from '../i18n/enumLabels'
-import { queryKeys } from '../queryKeys'
+} from '../design-system/components/MatchHero';
+import { PageHead } from '../design-system/components/PageHead';
+import { Status } from '../design-system/components/Status';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { CalendarIcon } from '../design-system/icons/overviewIcons';
+import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons';
+import { matchStatusLabel } from '../i18n/enumLabels';
+import { queryKeys } from '../queryKeys';
 import {
   BackLink,
   ErrorState,
   LoadingState,
   MutationError,
   PendingLabel,
-} from '../ui'
+} from '../ui';
 import {
   sideLabel,
   type FinishMatchRequest,
   type MatchDetail,
   type MatchScore,
   type MatchStatus,
-} from '../types'
-import { formatKickoffParts } from './matchListMeta'
-import { MatchDisciplinaryPanel } from './MatchDisciplinaryPanel'
-import { adjustRunningScore, MatchGoalsPanel } from './MatchGoalsPanel'
-import { MatchSheetPanel } from './MatchSheetPanel'
-import { MatchSubstitutionsPanel } from './MatchSubstitutionsPanel'
-import './matches.css'
+} from '../types';
+import { formatKickoffParts } from './matchListMeta';
+import { MatchDisciplinaryPanel } from './MatchDisciplinaryPanel';
+import { adjustRunningScore } from './matchGoalsHelpers';
+import { MatchGoalsPanel } from './MatchGoalsPanel';
+import { MatchSheetPanel } from './MatchSheetPanel';
+import { MatchSubstitutionsPanel } from './MatchSubstitutionsPanel';
+import './matches.css';
 
 /**
  * Championship match detail — two jobs for score, plus Lot 2 sheet:
@@ -54,20 +55,20 @@ import './matches.css'
  * Sheet = composition déclarée (Starter/Bench/jersey). No goals UI yet (Lot 3).
  */
 export function MatchPage() {
-  const { matchId = '' } = useParams()
+  const { matchId = '' } = useParams();
 
   const matchQuery = useQuery({
     queryKey: queryKeys.matches.detail(matchId),
     queryFn: () => fetchMatchDetail(matchId),
     enabled: matchId.length > 0,
-  })
+  });
 
-  const stageId = matchQuery.data?.stageId
+  const stageId = matchQuery.data?.stageId;
   const stageQuery = useQuery({
     queryKey: queryKeys.stages.detail(stageId ?? ''),
     queryFn: () => fetchStageOverview(stageId!),
     enabled: Boolean(stageId),
-  })
+  });
 
   return (
     <main id="main" className="page page--matches">
@@ -80,7 +81,7 @@ export function MatchPage() {
         />
       )}
     </main>
-  )
+  );
 }
 
 async function invalidateAfterMatchMutation(
@@ -106,7 +107,7 @@ async function invalidateAfterMatchMutation(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.consultation(data.competitionId),
     }),
-  ])
+  ]);
 }
 
 function championshipFinish(
@@ -118,61 +119,59 @@ function championshipFinish(
     homeGoals,
     awayGoals,
     extraTimePlayed: false,
-  }
+  };
 }
 
 function MatchDetailView({
   data,
   stageName,
 }: {
-  data: MatchDetail
-  stageName?: string
+  data: MatchDetail;
+  stageName?: string;
 }) {
-  const { t } = useTranslation('matches')
-  const queryClient = useQueryClient()
-  const homeName = sideLabel(data.home)
-  const awayName = sideLabel(data.away)
-  const board = displayedScore(data)
+  const { t } = useTranslation('matches');
+  const queryClient = useQueryClient();
+  const homeName = sideLabel(data.home);
+  const awayName = sideLabel(data.away);
+  const board = displayedScore(data);
 
   const startMutation = useMutation({
     mutationFn: () => startMatch(data.matchId),
     onSuccess: () => invalidateAfterMatchMutation(queryClient, data),
-  })
+  });
 
   const runningScoreMutation = useMutation({
     mutationFn: (score: MatchScore) => setRunningScore(data.matchId, score),
     onSuccess: () => invalidateAfterMatchMutation(queryClient, data),
-  })
+  });
 
   const finishMutation = useMutation({
     mutationFn: (request: FinishMatchRequest) =>
       finishMatch(data.matchId, request),
     onSuccess: () => invalidateAfterMatchMutation(queryClient, data),
-  })
+  });
 
   const mutationError =
-    startMutation.error ??
-    runningScoreMutation.error ??
-    finishMutation.error
+    startMutation.error ?? runningScoreMutation.error ?? finishMutation.error;
 
   const busy =
     startMutation.isPending ||
     runningScoreMutation.isPending ||
-    finishMutation.isPending
+    finishMutation.isPending;
 
-  const canStart = data.status === 'Scheduled'
-  const canSetRunningScore = data.status === 'Live'
+  const canStart = data.status === 'Scheduled';
+  const canSetRunningScore = data.status === 'Live';
   const canFinish =
     data.status === 'Scheduled' ||
     data.status === 'Postponed' ||
-    data.status === 'Live'
+    data.status === 'Live';
 
   const runningPrefill: MatchScore = data.runningScore ?? {
     homeGoals: 0,
     awayGoals: 0,
-  }
+  };
 
-  const kickoffParts = formatKickoffParts(data.scheduledAt)
+  const kickoffParts = formatKickoffParts(data.scheduledAt);
   const scoreStepper =
     canSetRunningScore &&
     MatchHeroScoreActions({
@@ -197,7 +196,7 @@ function MatchDetailView({
         runningScoreMutation.mutate(
           adjustRunningScore(data.runningScore, 'Away', -1),
         ),
-    })
+    });
 
   return (
     <div className="ds-page matches match-detail">
@@ -289,7 +288,9 @@ function MatchDetailView({
       ) : null}
 
       {board.source === 'official' ? (
-        <p className="match-detail__caption">{t('detail.scoreCaptionOfficial')}</p>
+        <p className="match-detail__caption">
+          {t('detail.scoreCaptionOfficial')}
+        </p>
       ) : null}
 
       <div className="ds-grid-2 ds-grid-2--major">
@@ -308,7 +309,9 @@ function MatchDetailView({
               <h2 className="matches-panel__head" id="counter-job-heading">
                 {t('detail.runningScore')}
               </h2>
-              <p className="matches-panel__meta">{t('detail.runningScoreHint')}</p>
+              <p className="matches-panel__meta">
+                {t('detail.runningScoreHint')}
+              </p>
               <RunningScoreForm
                 key={`${runningPrefill.homeGoals}-${runningPrefill.awayGoals}`}
                 homeName={homeName}
@@ -367,17 +370,17 @@ function MatchDetailView({
 
       {mutationError && <MutationError error={mutationError} />}
     </div>
-  )
+  );
 }
 
 function MatchHeroStatus({
   status,
   official,
 }: {
-  status: MatchStatus
-  official: boolean
+  status: MatchStatus;
+  official: boolean;
 }) {
-  const { t } = useTranslation('matches')
+  const { t } = useTranslation('matches');
 
   if (status === 'Live') {
     return (
@@ -385,7 +388,7 @@ function MatchHeroStatus({
         <span className="ds-live-dot" />
         {matchStatusLabel(status)}
       </span>
-    )
+    );
   }
 
   if (status === 'Finished' && official) {
@@ -393,17 +396,17 @@ function MatchHeroStatus({
       <Status density="context" tone="neutral" variant="soft" shape="rounded">
         {`${matchStatusLabel(status)} · ${t('detail.scoreCaptionOfficial')}`}
       </Status>
-    )
+    );
   }
 
   const tone =
-    status === 'Scheduled' || status === 'Postponed' ? 'info' : 'neutral'
+    status === 'Scheduled' || status === 'Postponed' ? 'info' : 'neutral';
 
   return (
     <Status density="context" tone={tone} variant="soft" shape="rounded">
       {matchStatusLabel(status)}
     </Status>
-  )
+  );
 }
 
 function MatchHeroCenter({
@@ -416,16 +419,16 @@ function MatchHeroCenter({
   homeName,
   awayName,
 }: {
-  board: ReturnType<typeof displayedScore>
-  canStart: boolean
-  kickoffTime: string | null
-  onStart: () => void
-  startPending: boolean
-  busy: boolean
-  homeName: string
-  awayName: string
+  board: ReturnType<typeof displayedScore>;
+  canStart: boolean;
+  kickoffTime: string | null;
+  onStart: () => void;
+  startPending: boolean;
+  busy: boolean;
+  homeName: string;
+  awayName: string;
 }) {
-  const { t } = useTranslation('matches')
+  const { t } = useTranslation('matches');
 
   if (canStart) {
     return (
@@ -444,11 +447,11 @@ function MatchHeroCenter({
           )}
         </button>
       </>
-    )
+    );
   }
 
   if (board.source === 'empty') {
-    return <MatchHeroScore pending>–</MatchHeroScore>
+    return <MatchHeroScore pending>–</MatchHeroScore>;
   }
 
   return (
@@ -466,15 +469,15 @@ function MatchHeroCenter({
       </span>
       {board.awayDisplay}
     </MatchHeroScore>
-  )
+  );
 }
 
 function displayedScore(data: MatchDetail): {
-  source: 'official' | 'live' | 'empty'
-  homeDisplay: string | number
-  awayDisplay: string | number
-  homeLabel: string
-  awayLabel: string
+  source: 'official' | 'live' | 'empty';
+  homeDisplay: string | number;
+  awayDisplay: string | number;
+  homeLabel: string;
+  awayLabel: string;
 } {
   if (data.result) {
     return {
@@ -483,7 +486,7 @@ function displayedScore(data: MatchDetail): {
       awayDisplay: data.result.awayGoals,
       homeLabel: String(data.result.homeGoals),
       awayLabel: String(data.result.awayGoals),
-    }
+    };
   }
   if (data.status === 'Live' && data.runningScore) {
     return {
@@ -492,7 +495,7 @@ function displayedScore(data: MatchDetail): {
       awayDisplay: data.runningScore.awayGoals,
       homeLabel: String(data.runningScore.homeGoals),
       awayLabel: String(data.runningScore.awayGoals),
-    }
+    };
   }
   return {
     source: 'empty',
@@ -500,15 +503,15 @@ function displayedScore(data: MatchDetail): {
     awayDisplay: '–',
     homeLabel: '–',
     awayLabel: '–',
-  }
+  };
 }
 
 function parseNonNegativeInt(raw: string): number | null {
-  const value = Number(raw)
+  const value = Number(raw);
   if (!Number.isInteger(value) || value < 0) {
-    return null
+    return null;
   }
-  return value
+  return value;
 }
 
 function OfficialScoreForm({
@@ -522,32 +525,32 @@ function OfficialScoreForm({
   hint,
   onSubmit,
 }: {
-  homeName: string
-  awayName: string
-  defaultHome: number
-  defaultAway: number
-  pending: boolean
-  submitLabel: string
-  pendingLabel: string
-  hint: string
-  onSubmit: (homeGoals: number, awayGoals: number) => void
+  homeName: string;
+  awayName: string;
+  defaultHome: number;
+  defaultAway: number;
+  pending: boolean;
+  submitLabel: string;
+  pendingLabel: string;
+  hint: string;
+  onSubmit: (homeGoals: number, awayGoals: number) => void;
 }) {
-  const { t } = useTranslation('matches')
-  const id = useId()
-  const [homeGoals, setHomeGoals] = useState(String(defaultHome))
-  const [awayGoals, setAwayGoals] = useState(String(defaultAway))
-  const [localError, setLocalError] = useState<string | null>(null)
+  const { t } = useTranslation('matches');
+  const id = useId();
+  const [homeGoals, setHomeGoals] = useState(String(defaultHome));
+  const [awayGoals, setAwayGoals] = useState(String(defaultAway));
+  const [localError, setLocalError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const home = parseNonNegativeInt(homeGoals)
-    const away = parseNonNegativeInt(awayGoals)
+    event.preventDefault();
+    const home = parseNonNegativeInt(homeGoals);
+    const away = parseNonNegativeInt(awayGoals);
     if (home == null || away == null) {
-      setLocalError(t('detail.errorGoals'))
-      return
+      setLocalError(t('detail.errorGoals'));
+      return;
     }
-    setLocalError(null)
-    onSubmit(home, away)
+    setLocalError(null);
+    onSubmit(home, away);
   }
 
   return (
@@ -599,7 +602,7 @@ function OfficialScoreForm({
         <span className="caption">{hint}</span>
       </div>
     </form>
-  )
+  );
 }
 
 function RunningScoreForm({
@@ -609,28 +612,28 @@ function RunningScoreForm({
   pending,
   onSubmit,
 }: {
-  homeName: string
-  awayName: string
-  defaultScore: MatchScore
-  pending: boolean
-  onSubmit: (score: MatchScore) => void
+  homeName: string;
+  awayName: string;
+  defaultScore: MatchScore;
+  pending: boolean;
+  onSubmit: (score: MatchScore) => void;
 }) {
-  const { t } = useTranslation('matches')
-  const id = useId()
-  const [homeGoals, setHomeGoals] = useState(String(defaultScore.homeGoals))
-  const [awayGoals, setAwayGoals] = useState(String(defaultScore.awayGoals))
-  const [localError, setLocalError] = useState<string | null>(null)
+  const { t } = useTranslation('matches');
+  const id = useId();
+  const [homeGoals, setHomeGoals] = useState(String(defaultScore.homeGoals));
+  const [awayGoals, setAwayGoals] = useState(String(defaultScore.awayGoals));
+  const [localError, setLocalError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const home = parseNonNegativeInt(homeGoals)
-    const away = parseNonNegativeInt(awayGoals)
+    event.preventDefault();
+    const home = parseNonNegativeInt(homeGoals);
+    const away = parseNonNegativeInt(awayGoals);
     if (home == null || away == null) {
-      setLocalError(t('detail.errorGoals'))
-      return
+      setLocalError(t('detail.errorGoals'));
+      return;
     }
-    setLocalError(null)
-    onSubmit({ homeGoals: home, awayGoals: away })
+    setLocalError(null);
+    onSubmit({ homeGoals: home, awayGoals: away });
   }
 
   return (
@@ -687,5 +690,5 @@ function RunningScoreForm({
         </button>
       </div>
     </form>
-  )
+  );
 }

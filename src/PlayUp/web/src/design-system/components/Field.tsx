@@ -1,21 +1,21 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
-export type FieldMessageTone = 'hint' | 'warning' | 'error'
+export type FieldMessageTone = 'hint' | 'warning' | 'error';
 
-export type FieldWidth = 'full' | 'sm'
+export type FieldWidth = 'full' | 'sm';
 
 export type FieldProps = {
-  label: string
-  htmlFor?: string
-  required?: boolean
-  counter?: string
-  message?: string
-  className?: string
-  messageTone?: FieldMessageTone
+  label: string;
+  htmlFor?: string;
+  required?: boolean;
+  counter?: string;
+  message?: string;
+  className?: string;
+  messageTone?: FieldMessageTone;
   /** Constrain control width (e.g. short name). Default full. */
-  width?: FieldWidth
-  children: ReactNode
-}
+  width?: FieldWidth;
+  children: ReactNode;
+};
 
 /**
  * Form field chrome — label row (optional counter) + control + message.
@@ -32,9 +32,9 @@ export function Field({
   width = 'full',
   children,
 }: FieldProps) {
-  const hasMessage = Boolean(message)
-  const invalid = messageTone === 'error' && hasMessage
-  const classes = ['ds-field', className].filter(Boolean).join(' ')
+  const hasMessage = Boolean(message);
+  const invalid = messageTone === 'error' && hasMessage;
+  const classes = ['ds-field', className].filter(Boolean).join(' ');
 
   return (
     <div
@@ -69,5 +69,5 @@ export function Field({
         </p>
       ) : null}
     </div>
-  )
+  );
 }

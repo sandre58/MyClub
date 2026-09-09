@@ -1,12 +1,12 @@
-import { useTranslation } from 'react-i18next'
-import { PlayUpLockupMark } from '../PlayUpLockupMark'
-import { PlayUpWordmark } from '../PlayUpWordmark'
+import { useTranslation } from 'react-i18next';
+import { PlayUpLockupMark } from '../PlayUpLockupMark';
+import { PlayUpWordmark } from '../PlayUpWordmark';
 
 /**
  * Accueil brand block — lockup raster mockup v3 (mark + wordmark) + tagline HTML.
  */
 export function HomeBrand({ lede }: { lede?: string }) {
-  const { t } = useTranslation('home')
+  const { t } = useTranslation('home');
 
   return (
     <header className="ds-home__brand">
@@ -25,5 +25,5 @@ export function HomeBrand({ lede }: { lede?: string }) {
       </div>
       {lede ? <p className="ds-home__lede">{lede}</p> : null}
     </header>
-  )
+  );
 }

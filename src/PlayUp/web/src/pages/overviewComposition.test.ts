@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { overviewSituation, overviewView } from '../test/overviewFixtures'
+import { describe, expect, it } from 'vitest';
+import { overviewSituation, overviewView } from '../test/overviewFixtures';
 import {
   actionPresentationSlot,
   actionsForDraw,
@@ -8,14 +8,14 @@ import {
   primaryTeamActions,
   secondaryActions,
   sortConstructionSlots,
-} from './overviewComposition'
-import { overviewActionKey } from './overviewActions'
+} from './overviewComposition';
+import { overviewActionKey } from './overviewActions';
 
 describe('overviewComposition', () => {
   it('hides Absent prominence', () => {
-    expect(isProminenceVisible('Absent')).toBe(false)
-    expect(isProminenceVisible('Dominant')).toBe(true)
-  })
+    expect(isProminenceVisible('Absent')).toBe(false);
+    expect(isProminenceVisible('Dominant')).toBe(true);
+  });
 
   it('orders construction slots by prominence without Absent', () => {
     const slots = sortConstructionSlots(
@@ -31,31 +31,31 @@ describe('overviewComposition', () => {
           matches: { prominence: 'Absent', facts: { total: '0' } },
         },
       }),
-    )
-    expect(slots).toEqual(['structure', 'teams', 'regulation'])
-  })
+    );
+    expect(slots).toEqual(['structure', 'teams', 'regulation']);
+  });
 
   it('maps action codes to presentation slots without inventing métier rules', () => {
-    expect(actionPresentationSlot('AddEntry')).toBe('teams')
-    expect(actionPresentationSlot('ConfigureStructure')).toBe('structure')
-    expect(actionPresentationSlot('PublishDraw')).toBe('operational')
-    expect(actionPresentationSlot('CompleteCompetition')).toBe('closure')
+    expect(actionPresentationSlot('AddEntry')).toBe('teams');
+    expect(actionPresentationSlot('ConfigureStructure')).toBe('structure');
+    expect(actionPresentationSlot('PublishDraw')).toBe('operational');
+    expect(actionPresentationSlot('CompleteCompetition')).toBe('closure');
     // Lifecycle Prepare/Start stay secondary — closure slot is hidden during Construction.
-    expect(actionPresentationSlot('PrepareCompetition')).toBe('secondary')
-    expect(actionPresentationSlot('StartCompetition')).toBe('secondary')
-  })
+    expect(actionPresentationSlot('PrepareCompetition')).toBe('secondary');
+    expect(actionPresentationSlot('StartCompetition')).toBe('secondary');
+  });
 
   it('excludes already-rendered and team-admin actions from the secondary strip', () => {
     const actions = [
       { code: 'AddEntry', guaranteed: false },
       { code: 'RenameEntry', guaranteed: false },
       { code: 'MaterializeMatches', guaranteed: false },
-    ]
-    const rendered = new Set([overviewActionKey(actions[0])])
+    ];
+    const rendered = new Set([overviewActionKey(actions[0])]);
     expect(secondaryActions(actions, rendered).map((a) => a.code)).toEqual([
       'MaterializeMatches',
-    ])
-  })
+    ]);
+  });
 
   it('keeps only AddEntry as primary team overview action', () => {
     expect(
@@ -64,31 +64,33 @@ describe('overviewComposition', () => {
         { code: 'RenameEntry', guaranteed: false },
         { code: 'WithdrawEntry', guaranteed: false },
       ]).map((a) => a.code),
-    ).toEqual(['AddEntry'])
-  })
+    ).toEqual(['AddEntry']);
+  });
 
   it('attaches PrepareStage and PublishDraw to stage/draw ids from the Read', () => {
-    const stageId = 'stage-1'
-    const drawId = 'draw-1'
+    const stageId = 'stage-1';
+    const drawId = 'draw-1';
     const actions = [
       { code: 'PrepareStage', guaranteed: false, stageId },
       { code: 'PublishDraw', guaranteed: false, stageId, drawId },
       { code: 'PrepareStage', guaranteed: false, stageId: 'other' },
-    ]
+    ];
     expect(actionsForStage(actions, stageId).map((a) => a.code)).toEqual([
       'PrepareStage',
-    ])
-    expect(actionsForDraw(actions, stageId, drawId).map((a) => a.code)).toEqual([
-      'PublishDraw',
-    ])
-  })
+    ]);
+    expect(actionsForDraw(actions, stageId, drawId).map((a) => a.code)).toEqual(
+      ['PublishDraw'],
+    );
+  });
 
   it('does not treat attentionSummary as a separate situation source', () => {
-    const situation = overviewSituation()
+    const situation = overviewSituation();
     const view = overviewView({
       situations: [situation],
       attentionSummary: { count: 1, items: [situation] },
-    })
-    expect(view.attentionSummary.items[0].source).toBe(view.situations[0].source)
-  })
-})
+    });
+    expect(view.attentionSummary.items[0].source).toBe(
+      view.situations[0].source,
+    );
+  });
+});

@@ -1,61 +1,63 @@
-import type { NeedsAttentionItem, OverviewSituation } from '../types'
+import type { NeedsAttentionItem, OverviewSituation } from '../types';
 
 function mapAttentionAction(source: string): string | null {
   switch (source) {
     case 'ProgressionPending':
     case 'ProgressionConflict':
-      return 'ApplyProgression'
+      return 'ApplyProgression';
     case 'QualificationPending':
     case 'QualificationConflict':
-      return 'ApplyQualification'
+      return 'ApplyQualification';
     case 'InsufficientParticipants':
-      return 'AddEntry'
+      return 'AddEntry';
     default:
-      return null
+      return null;
   }
 }
 
 function mapAttentionImpact(source: string): string | null {
   switch (source) {
     case 'DrawNoSolution':
-      return 'BlocksDraw'
+      return 'BlocksDraw';
     case 'ProgressionPending':
     case 'ProgressionConflict':
     case 'QualificationPending':
     case 'QualificationConflict':
-      return 'BlocksProgression'
+      return 'BlocksProgression';
     case 'InsufficientParticipants':
-      return 'BlocksConstruction'
+      return 'BlocksConstruction';
     default:
-      return null
+      return null;
   }
 }
 
-function buildSituationParams(item: NeedsAttentionItem): Record<string, string> {
+function buildSituationParams(
+  item: NeedsAttentionItem,
+): Record<string, string> {
   if (item.params && Object.keys(item.params).length > 0) {
-    return { ...item.params }
+    return { ...item.params };
   }
 
   if (item.targetType !== 'Slot' || !item.targetId) {
-    return {}
+    return {};
   }
 
-  const parts = item.targetId.split(':', 2)
+  const parts = item.targetId.split(':', 2);
   if (parts.length !== 2) {
-    return {}
+    return {};
   }
 
   return {
     slotKey: parts[1]!,
     destinationStageId: parts[0]!,
-  }
+  };
 }
 
 /** Maps GET /attention items to OverviewSituation rows for shared shell UI. */
 export function needsAttentionItemToSituation(
   item: NeedsAttentionItem,
 ): OverviewSituation {
-  const actionCode = mapAttentionAction(item.source)
+  const actionCode = mapAttentionAction(item.source);
 
   return {
     source: item.source,
@@ -67,11 +69,11 @@ export function needsAttentionItemToSituation(
     actionCode,
     impactCode: mapAttentionImpact(item.source),
     params: buildSituationParams(item),
-  }
+  };
 }
 
 export function needsAttentionItemsToSituations(
   items: NeedsAttentionItem[],
 ): OverviewSituation[] {
-  return items.map(needsAttentionItemToSituation)
+  return items.map(needsAttentionItemToSituation);
 }

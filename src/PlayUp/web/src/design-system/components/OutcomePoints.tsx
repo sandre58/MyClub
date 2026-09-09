@@ -1,14 +1,14 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
-export type OutcomeTone = 'win' | 'draw' | 'loss'
+export type OutcomeTone = 'win' | 'draw' | 'loss';
 
 export type OutcomePointsCardProps = {
-  tone: OutcomeTone
-  label: string
+  tone: OutcomeTone;
+  label: string;
   /** Points copy or nested control (e.g. InputNumber). */
-  value: ReactNode
-  icon?: ReactNode
-}
+  value: ReactNode;
+  icon?: ReactNode;
+};
 
 /**
  * Semantic points card — Victoire / Nul / Défaite barème display or edit slot.
@@ -31,13 +31,13 @@ export function OutcomePointsCard({
       </div>
       <div className="ds-outcome-points__value">{value}</div>
     </div>
-  )
+  );
 }
 
 export type OutcomePointsProps = {
-  children: ReactNode
-  'aria-label'?: string
-}
+  children: ReactNode;
+  'aria-label'?: string;
+};
 
 /** Horizontal row of OutcomePointsCard. */
 export function OutcomePoints({
@@ -48,5 +48,5 @@ export function OutcomePoints({
     <div className="ds-outcome-points" role="group" aria-label={ariaLabel}>
       {children}
     </div>
-  )
+  );
 }

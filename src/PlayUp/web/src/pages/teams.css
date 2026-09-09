@@ -180,12 +180,12 @@
   background-color: var(--color-surface-secondary);
 }
 
-.teams-tile[data-selected="true"] {
+.teams-tile[data-selected='true'] {
   border-color: var(--color-brand);
 }
 
-.teams-tile[data-withdrawn="true"] .teams-tile__figure {
-  opacity: 0.40;
+.teams-tile[data-withdrawn='true'] .teams-tile__figure {
+  opacity: 0.4;
 }
 
 .teams-tile__figure {
@@ -245,7 +245,9 @@
   }
 
   .teams[data-teams-multi='false'] .teams-tile:hover .teams-tile__check,
-  .teams[data-teams-multi='false'] .teams-tile:has(:focus-visible) .teams-tile__check {
+  .teams[data-teams-multi='false']
+    .teams-tile:has(:focus-visible)
+    .teams-tile__check {
     opacity: 1;
   }
 }
@@ -342,12 +344,17 @@
   width: 1rem;
   height: 1rem;
   border-radius: 999px;
-  border: var(--border-width) solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--color-ink) 12%, transparent);
 }
 
 .teams-tile--empty {
   border-style: dashed;
-  background: color-mix(in srgb, var(--color-surface-secondary) 55%, var(--color-surface));
+  background: color-mix(
+    in srgb,
+    var(--color-surface-secondary) 55%,
+    var(--color-surface)
+  );
 }
 
 .teams-tile--empty .teams-tile__body {
@@ -554,7 +561,8 @@
   width: 2rem;
   height: 2rem;
   border-radius: 999px;
-  border: var(--border-width) solid color-mix(in srgb, var(--color-ink) 22%, transparent);
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--color-ink) 22%, transparent);
   background: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: 0.6875rem;

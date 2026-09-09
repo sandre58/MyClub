@@ -5,46 +5,46 @@ import {
   useState,
   type ReactNode,
   type RefObject,
-} from 'react'
-import { CloseIcon } from '../icons/shellIcons'
-import { DS_MOTION_EXIT_MS } from '../motion'
-import { useDismissLayer } from '../useDismissLayer'
-import { getFocusableElements, useFocusTrap } from '../useFocusTrap'
+} from 'react';
+import { CloseIcon } from '../icons/shellIcons';
+import { DS_MOTION_EXIT_MS } from '../motion';
+import { useDismissLayer } from '../useDismissLayer';
+import { getFocusableElements, useFocusTrap } from '../useFocusTrap';
 
-export type DialogSize = 'sm' | 'md' | 'lg'
+export type DialogSize = 'sm' | 'md' | 'lg';
 
 export type DialogProps = {
-  open: boolean
-  onClose: () => void
-  title: string
+  open: boolean;
+  onClose: () => void;
+  title: string;
   /** Optional subtitle under the title (e.g. regulation editor scope). */
-  description?: string
-  children: ReactNode
+  description?: string;
+  children: ReactNode;
   /** Right-aligned action row. Close lives in the header only. */
-  footer?: ReactNode
+  footer?: ReactNode;
   /** Blocks Escape, backdrop, and the header close control. */
-  closeDisabled?: boolean
+  closeDisabled?: boolean;
   /**
    * When false, Tab is not trapped (e.g. parent dialog while a ConfirmDialog
    * is stacked on top). Default true.
    */
-  trapFocus?: boolean
+  trapFocus?: boolean;
   /** Element to restore focus on close. Defaults to the opener at mount. */
-  returnFocusRef?: RefObject<HTMLElement | null>
-  size?: DialogSize
+  returnFocusRef?: RefObject<HTMLElement | null>;
+  size?: DialogSize;
   /** Accessible name for the icon close control. */
-  closeLabel?: string
-}
+  closeLabel?: string;
+};
 
 function pickFooterInitialFocus(footer: HTMLElement): HTMLElement | null {
   const preferred = footer.querySelector<HTMLElement>(
     '.ds-btn--primary:not(:disabled), .ds-btn--destructive:not(:disabled)',
-  )
+  );
   if (preferred) {
-    return preferred
+    return preferred;
   }
-  const focusable = getFocusableElements(footer)
-  return focusable[focusable.length - 1] ?? null
+  const focusable = getFocusableElements(footer);
+  return focusable[focusable.length - 1] ?? null;
 }
 
 /**
@@ -64,119 +64,125 @@ export function Dialog({
   size = 'sm',
   closeLabel = 'Fermer',
 }: DialogProps) {
-  const titleId = useId()
-  const descriptionId = useId()
-  const panelRef = useRef<HTMLDivElement>(null)
-  const bodyRef = useRef<HTMLDivElement>(null)
-  const footerRef = useRef<HTMLDivElement>(null)
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const hadOpenedRef = useRef(false)
-  const fallbackReturnRef = useRef<HTMLElement | null>(null)
-  const [mounted, setMounted] = useState(open)
-  const [visible, setVisible] = useState(open)
+  const titleId = useId();
+  const descriptionId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const hadOpenedRef = useRef(false);
+  const fallbackReturnRef = useRef<HTMLElement | null>(null);
+  const [mounted, setMounted] = useState(open);
+  const [visible, setVisible] = useState(open);
 
   useEffect(() => {
     if (open) {
-      setMounted(true)
+      setMounted(true);
       const frame = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true))
-      })
-      return () => cancelAnimationFrame(frame)
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(frame);
     }
 
-    setVisible(false)
-    const timeout = window.setTimeout(() => setMounted(false), DS_MOTION_EXIT_MS)
-    return () => window.clearTimeout(timeout)
-  }, [open])
+    setVisible(false);
+    const timeout = window.setTimeout(
+      () => setMounted(false),
+      DS_MOTION_EXIT_MS,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [open]);
 
   useEffect(() => {
     if (open) {
-      hadOpenedRef.current = true
-      const active = document.activeElement
+      hadOpenedRef.current = true;
+      const active = document.activeElement;
       if (active instanceof HTMLElement) {
-        fallbackReturnRef.current = active
+        fallbackReturnRef.current = active;
       }
     }
-  }, [open])
+  }, [open]);
 
   useEffect(() => {
     if (hadOpenedRef.current && !mounted) {
-      hadOpenedRef.current = false
-      const target = returnFocusRef?.current ?? fallbackReturnRef.current
-      target?.focus({ preventScroll: true })
-      fallbackReturnRef.current = null
+      hadOpenedRef.current = false;
+      const target = returnFocusRef?.current ?? fallbackReturnRef.current;
+      target?.focus({ preventScroll: true });
+      fallbackReturnRef.current = null;
     }
-  }, [mounted, returnFocusRef])
+  }, [mounted, returnFocusRef]);
 
   useEffect(() => {
     if (!open || !visible) {
-      return
+      return;
     }
 
-    const body = bodyRef.current
-    const bodyFocusable = body ? getFocusableElements(body) : []
+    const body = bodyRef.current;
+    const bodyFocusable = body ? getFocusableElements(body) : [];
     const footerInitial = footerRef.current
       ? pickFooterInitialFocus(footerRef.current)
-      : null
+      : null;
     // Prefer a body field; otherwise the primary footer action (Enter confirms).
     // Never default to the header close control when an action footer exists.
-    const initial =
-      bodyFocusable[0] ?? footerInitial ?? closeButtonRef.current
-    initial?.focus({ preventScroll: true })
-  }, [open, visible])
+    const initial = bodyFocusable[0] ?? footerInitial ?? closeButtonRef.current;
+    initial?.focus({ preventScroll: true });
+  }, [open, visible]);
 
   // Stay on the dismiss stack while open so Escape is consumed even when
   // closeDisabled (nested popovers still dismiss first via LIFO).
   useDismissLayer(open, () => {
     if (!closeDisabled) {
-      onClose()
+      onClose();
     }
-  })
+  });
 
   useEffect(() => {
     if (!mounted || !panelRef.current) {
-      return
+      return;
     }
 
-    const panel = panelRef.current
-    const inerted: HTMLElement[] = []
-    let current: HTMLElement | null = panel
+    const panel = panelRef.current;
+    const inerted: HTMLElement[] = [];
+    let current: HTMLElement | null = panel;
 
     while (current && current !== document.body) {
-      const parent: HTMLElement | null = current.parentElement
+      const parent: HTMLElement | null = current.parentElement;
       if (!parent) {
-        break
+        break;
       }
       for (const sibling of Array.from(parent.children)) {
         if (sibling !== current && sibling instanceof HTMLElement) {
           if (!sibling.inert) {
-            sibling.inert = true
-            inerted.push(sibling)
+            sibling.inert = true;
+            inerted.push(sibling);
           }
         }
       }
-      current = parent
+      current = parent;
     }
 
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     return () => {
       for (const element of inerted) {
-        element.inert = false
+        element.inert = false;
       }
-      document.body.style.overflow = previousOverflow
-    }
-  }, [mounted])
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mounted]);
 
-  useFocusTrap(panelRef, open && visible && trapFocus)
+  useFocusTrap(panelRef, open && visible && trapFocus);
 
   if (!mounted) {
-    return null
+    return null;
   }
 
   return (
-    <div className="ds-dialog" data-open={visible ? 'true' : 'false'} data-size={size}>
+    <div
+      className="ds-dialog"
+      data-open={visible ? 'true' : 'false'}
+      data-size={size}
+    >
       <button
         type="button"
         className="ds-dialog__backdrop"
@@ -185,7 +191,7 @@ export function Dialog({
         disabled={closeDisabled}
         onClick={() => {
           if (!closeDisabled) {
-            onClose()
+            onClose();
           }
         }}
       />
@@ -230,5 +236,5 @@ export function Dialog({
         ) : null}
       </div>
     </div>
-  )
+  );
 }
