@@ -1,10 +1,27 @@
-import type { ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 export type StatusDensity = 'context' | 'compact' | 'dense';
 export type StatusVariant = 'soft' | 'outline' | 'plain';
 export type StatusShape = 'rounded' | 'pill';
 export type StatusTone =
-  'neutral' | 'info' | 'success' | 'live' | 'done' | 'attention' | 'error';
+  | 'neutral'
+  | 'info'
+  | 'success'
+  | 'live'
+  | 'done'
+  | 'attention'
+  | 'error';
+
+type StatusProps = {
+  density: StatusDensity;
+  tone?: StatusTone;
+  variant?: StatusVariant;
+  shape?: StatusShape;
+  children: ReactNode;
+  className?: string;
+  /** @deprecated Prefer wrapping with Tooltip for Hint content. */
+  title?: string;
+} & Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'title' | 'className'>;
 
 /**
  * Status primitive — presentation only. Read supplies labels and meaning.
@@ -17,15 +34,8 @@ export function Status({
   children,
   className,
   title,
-}: {
-  density: StatusDensity;
-  tone?: StatusTone;
-  variant?: StatusVariant;
-  shape?: StatusShape;
-  children: ReactNode;
-  className?: string;
-  title?: string;
-}) {
+  ...rest
+}: StatusProps) {
   const isChip = density !== 'dense';
   const classes = [
     'ds-status',
@@ -39,7 +49,7 @@ export function Status({
     .join(' ');
 
   return (
-    <span className={classes} title={title}>
+    <span className={classes} title={title} {...rest}>
       {children}
     </span>
   );

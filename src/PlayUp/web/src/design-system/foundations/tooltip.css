@@ -1,0 +1,78 @@
+/*
+ * Anchored tooltip surface — Hint / DisabledReason overlays.
+ * Placement is inline (fixed) from Tooltip.tsx.
+ * Lighter than Popover: meta type, tight padding, control radius.
+ */
+
+.ds-tooltip-trigger {
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.ds-tooltip {
+  --ds-tooltip-caret-inset: 1rem;
+  --ds-tooltip-enter-y: 4px;
+  position: relative;
+  box-sizing: border-box;
+  padding: var(--space-4) var(--space-8);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  /* Lighter than --shadow-overlay (Popover/Toast/Dialog) — local recipe, no --shadow-tooltip token. */
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-ink) 14%, transparent);
+  color: var(--color-text-primary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+  max-width: 280px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(var(--ds-tooltip-enter-y));
+  transition:
+    opacity var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
+}
+
+.ds-tooltip[data-side='bottom'] {
+  --ds-tooltip-enter-y: -4px;
+}
+
+.ds-tooltip[data-side='top'] {
+  --ds-tooltip-enter-y: 4px;
+}
+
+.ds-tooltip[data-state='open'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ds-tooltip[data-state='closed'] {
+  opacity: 0;
+  transform: translateY(var(--ds-tooltip-enter-y));
+}
+
+.ds-tooltip::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--ds-tooltip-caret-inset);
+  width: 6px;
+  height: 6px;
+  background: var(--color-surface);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.ds-tooltip[data-side='bottom']::before {
+  top: -4px;
+  bottom: auto;
+  border-block-start: var(--border-width) solid var(--color-border);
+  border-inline-start: var(--border-width) solid var(--color-border);
+}
+
+.ds-tooltip[data-side='top']::before {
+  top: auto;
+  bottom: -4px;
+  border-block-end: var(--border-width) solid var(--color-border);
+  border-inline-end: var(--border-width) solid var(--color-border);
+}

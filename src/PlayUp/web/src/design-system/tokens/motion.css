@@ -18,6 +18,8 @@
   .ds-root *::after,
   .ds-popover,
   .ds-popover::before,
+  .ds-tooltip,
+  .ds-tooltip::before,
   .ds-select__dropdown {
     animation: none !important;
     transition: none !important;

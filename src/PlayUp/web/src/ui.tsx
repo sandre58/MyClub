@@ -89,6 +89,7 @@ export function StatusBadge({
   shape = 'rounded',
   density = 'context',
   title,
+  ...rest
 }: {
   tone: StatusTone;
   children: ReactNode;
@@ -96,7 +97,10 @@ export function StatusBadge({
   shape?: 'rounded' | 'pill';
   density?: 'context' | 'compact';
   title?: string;
-}) {
+} & Omit<
+  import('react').HTMLAttributes<HTMLSpanElement>,
+  'children' | 'title' | 'className'
+>) {
   return (
     <Status
       density={density}
@@ -104,6 +108,7 @@ export function StatusBadge({
       variant={variant}
       shape={shape}
       title={title}
+      {...rest}
     >
       {children}
     </Status>

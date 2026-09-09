@@ -21,6 +21,7 @@ import {
 import { SelectionBar } from '../design-system/components/SelectionBar';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Alert } from '../design-system/components/Alert';
+import { Tooltip } from '../design-system/components/Tooltip';
 import { TeamCrest } from '../design-system/TeamCrest';
 import {
   ChevronDownIcon,
@@ -562,31 +563,59 @@ export function TeamRosterDrawer({
             />
           </label>
           <div className="teams-add-group__actions">
-            <button
-              type="submit"
-              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__add"
-              disabled={addDisabled}
-              title={canMutate ? t('roster.addPlayer') : t('roster.readOnly')}
-              aria-label={t('roster.addPlayer')}
-            >
-              {addMutation.isPending ? (
-                <span className="ds-spinner" aria-hidden="true" />
-              ) : (
-                <PlusIcon size="sm" />
-              )}
-            </button>
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__toggle"
-              disabled={!canMutate || addMutation.isPending}
-              aria-expanded={staffMenuOpen}
-              aria-haspopup="menu"
-              title={canMutate ? t('roster.addStaff') : t('roster.readOnly')}
-              aria-label={t('roster.addStaff')}
-              onClick={() => setStaffMenuOpen((open) => !open)}
-            >
-              <ChevronDownIcon size="sm" />
-            </button>
+            {canMutate ? (
+              <button
+                type="submit"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__add"
+                disabled={addDisabled}
+                title={t('roster.addPlayer')}
+                aria-label={t('roster.addPlayer')}
+              >
+                {addMutation.isPending ? (
+                  <span className="ds-spinner" aria-hidden="true" />
+                ) : (
+                  <PlusIcon size="sm" />
+                )}
+              </button>
+            ) : (
+              <Tooltip content={t('roster.readOnly')}>
+                <button
+                  type="submit"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__add"
+                  disabled
+                  aria-label={t('roster.addPlayer')}
+                >
+                  <PlusIcon size="sm" />
+                </button>
+              </Tooltip>
+            )}
+            {canMutate ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__toggle"
+                disabled={addMutation.isPending}
+                aria-expanded={staffMenuOpen}
+                aria-haspopup="menu"
+                title={t('roster.addStaff')}
+                aria-label={t('roster.addStaff')}
+                onClick={() => setStaffMenuOpen((open) => !open)}
+              >
+                <ChevronDownIcon size="sm" />
+              </button>
+            ) : (
+              <Tooltip content={t('roster.readOnly')}>
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__toggle"
+                  disabled
+                  aria-expanded={false}
+                  aria-haspopup="menu"
+                  aria-label={t('roster.addStaff')}
+                >
+                  <ChevronDownIcon size="sm" />
+                </button>
+              </Tooltip>
+            )}
           </div>
           {staffMenuOpen && (
             <ul className="teams-split__menu" role="menu">
@@ -794,34 +823,60 @@ function RosterGroup({
                   {!editing && (
                     <div className="teams-member__actions">
                       <div className="ds-icon-toolbar">
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
-                          disabled={!canMutate || rowBusy}
-                          title={
-                            canMutate
-                              ? t('roster.editMemberTooltip')
-                              : t('roster.readOnly')
-                          }
-                          aria-label={t('roster.editMember', {
-                            name: member.displayName,
-                          })}
-                          onClick={() => onStartRename(member)}
-                        >
-                          <PencilIcon size="sm" />
-                        </button>
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
-                          disabled={removeBlocked || rowBusy}
-                          title={removeHint}
-                          aria-label={t('roster.removeMember', {
-                            name: member.displayName,
-                          })}
-                          onClick={() => onStartRemove(member)}
-                        >
-                          <TrashIcon size="sm" />
-                        </button>
+                        {canMutate ? (
+                          <button
+                            type="button"
+                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                            disabled={rowBusy}
+                            title={t('roster.editMemberTooltip')}
+                            aria-label={t('roster.editMember', {
+                              name: member.displayName,
+                            })}
+                            onClick={() => onStartRename(member)}
+                          >
+                            <PencilIcon size="sm" />
+                          </button>
+                        ) : (
+                          <Tooltip content={t('roster.readOnly')}>
+                            <button
+                              type="button"
+                              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                              disabled
+                              aria-label={t('roster.editMember', {
+                                name: member.displayName,
+                              })}
+                            >
+                              <PencilIcon size="sm" />
+                            </button>
+                          </Tooltip>
+                        )}
+                        {removeBlocked ? (
+                          <Tooltip content={removeHint}>
+                            <button
+                              type="button"
+                              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                              disabled
+                              aria-label={t('roster.removeMember', {
+                                name: member.displayName,
+                              })}
+                            >
+                              <TrashIcon size="sm" />
+                            </button>
+                          </Tooltip>
+                        ) : (
+                          <button
+                            type="button"
+                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                            disabled={rowBusy}
+                            title={removeHint}
+                            aria-label={t('roster.removeMember', {
+                              name: member.displayName,
+                            })}
+                            onClick={() => onStartRemove(member)}
+                          >
+                            <TrashIcon size="sm" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}

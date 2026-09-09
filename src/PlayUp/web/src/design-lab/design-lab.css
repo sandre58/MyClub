@@ -391,6 +391,52 @@
   gap: var(--space-4);
 }
 
+/* Tooltip board — surface vs ink exploration (not a DS recipe) */
+.dlab-tooltip-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.dlab-tooltip-compare__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.dlab-tooltip-compare__item figcaption {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-normal);
+}
+
+.dlab-tooltip-mock {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 16rem;
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-control);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+}
+
+.dlab-tooltip-mock--surface {
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+
+.dlab-tooltip-mock--ink {
+  border: none;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-ink) 22%, transparent);
+}
+
 /* ---------- Form board ---------- */
 
 .dlab-form-board {

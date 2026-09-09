@@ -28,6 +28,7 @@ import { Chip, type ChipTone } from '../design-system/components/Chip';
 import { Meter, type MeterTone } from '../design-system/components/Meter';
 import { FormSection } from '../design-system/components/FormSection';
 import { PageHead } from '../design-system/components/PageHead';
+import { Tooltip } from '../design-system/components/Tooltip';
 import { TextLink } from '../design-system/components/TextLink';
 import { LucideIcon } from '../design-system/icons/Icon';
 import {
@@ -110,21 +111,30 @@ export function RegulationPage() {
         <PageHead
           title={t('title')}
           actions={
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
-              disabled={!canReplace}
-              title={
-                canReplace
-                  ? t('editRegulation')
-                  : t('editRegulationDisabledHint')
-              }
-              aria-label={t('editRegulation')}
-              onClick={() => setEditorOpen(true)}
-            >
-              <PencilIcon size="sm" />
-              <span>{t('editRegulation')}</span>
-            </button>
+            canReplace ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--primary"
+                title={t('editRegulation')}
+                aria-label={t('editRegulation')}
+                onClick={() => setEditorOpen(true)}
+              >
+                <PencilIcon size="sm" />
+                <span>{t('editRegulation')}</span>
+              </button>
+            ) : (
+              <Tooltip content={t('editRegulationDisabledHint')}>
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--primary"
+                  disabled
+                  aria-label={t('editRegulation')}
+                >
+                  <PencilIcon size="sm" />
+                  <span>{t('editRegulation')}</span>
+                </button>
+              </Tooltip>
+            )
           }
         />
 
@@ -394,17 +404,18 @@ function DisciplineTile({
           <ul className="regulation-cards" aria-label={t('discipline.aria')}>
             {types.map((type) => (
               <li key={type} className="regulation-cards__item">
-                <span
-                  className={`regulation-card-token regulation-card-token--${type.toLowerCase()}`}
-                  title={disciplineLabel(type, t)}
-                  aria-label={disciplineLabel(type, t)}
-                  role="img"
-                >
+                <Tooltip content={disciplineLabel(type, t)}>
                   <span
-                    className="regulation-card-token__face"
-                    aria-hidden="true"
-                  />
-                </span>
+                    className={`regulation-card-token regulation-card-token--${type.toLowerCase()}`}
+                    aria-label={disciplineLabel(type, t)}
+                    role="img"
+                  >
+                    <span
+                      className="regulation-card-token__face"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </Tooltip>
               </li>
             ))}
           </ul>
@@ -426,11 +437,11 @@ function MaxDurationRing({ minutes }: { minutes: number }) {
   const dash = circumference * ratio;
 
   return (
-    <div
-      className="regulation-max"
-      aria-label={t('matchTimeline.maxAria', { minutes })}
-      title={t('matchTimeline.maxHint')}
-    >
+    <Tooltip content={t('matchTimeline.maxHint')}>
+      <div
+        className="regulation-max"
+        aria-label={t('matchTimeline.maxAria', { minutes })}
+      >
       <svg
         className="regulation-max__svg"
         width={size}
@@ -468,6 +479,7 @@ function MaxDurationRing({ minutes }: { minutes: number }) {
         </span>
       </div>
     </div>
+    </Tooltip>
   );
 }
 
@@ -699,9 +711,11 @@ function PointGauge({
 function PersonalizedBadge() {
   const { t } = useTranslation('regulation');
   return (
-    <StatusBadge tone="warn" density="compact" title={t('differsFromFrame')}>
-      {t('personalized')}
-    </StatusBadge>
+    <Tooltip content={t('differsFromFrame')}>
+      <StatusBadge tone="warn" density="compact">
+        {t('personalized')}
+      </StatusBadge>
+    </Tooltip>
   );
 }
 
@@ -810,37 +824,34 @@ function PhaseTile({
                   </h4>
                   {column.chips && column.chips.length > 0 ? (
                     <div className="regulation-rule-col__chips">
-                      {column.chips.map((chip) => (
-                        <Chip
-                          key={chip.key}
-                          tone={chip.tone}
-                          title={chip.title}
-                          className={
-                            chip.overridden
-                              ? 'regulation-rule-chip--overridden'
-                              : undefined
-                          }
-                        >
-                          {chip.label}
-                        </Chip>
-                      ))}
+                      {column.chips.map((chip) => {
+                        const node = (
+                          <Chip
+                            tone={chip.tone}
+                            className={
+                              chip.overridden
+                                ? 'regulation-rule-chip--overridden'
+                                : undefined
+                            }
+                          >
+                            {chip.label}
+                          </Chip>
+                        );
+                        return chip.title ? (
+                          <Tooltip key={chip.key} content={chip.title}>
+                            {node}
+                          </Tooltip>
+                        ) : (
+                          <span key={chip.key}>{node}</span>
+                        );
+                      })}
                     </div>
                   ) : null}
                   {column.items.length > 0 ? (
                     <ul className="regulation-rule-list">
-                      {column.items.map((item) => (
-                        <li
-                          key={item.key}
-                          className={[
-                            'regulation-rule-list__item',
-                            item.overridden
-                              ? 'regulation-rule-list__item--overridden'
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                          title={item.title}
-                        >
+                      {column.items.map((item) => {
+                        const body = (
+                          <>
                           {item.index != null ? (
                             <span
                               className="regulation-criteria__n"
@@ -859,8 +870,32 @@ function PhaseTile({
                           <span className="regulation-rule-list__label">
                             {item.label}
                           </span>
+                          </>
+                        );
+                        return (
+                        <li
+                          key={item.key}
+                          className={[
+                            'regulation-rule-list__item',
+                            item.overridden
+                              ? 'regulation-rule-list__item--overridden'
+                              : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                        >
+                          {item.title ? (
+                            <Tooltip content={item.title}>
+                              <span className="regulation-rule-list__hit">
+                                {body}
+                              </span>
+                            </Tooltip>
+                          ) : (
+                            body
+                          )}
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   ) : null}
                 </section>
@@ -1110,18 +1145,16 @@ function buildPhaseFlows(
           <span className="regulation-rule-list__mark" aria-hidden="true">
             <LucideIcon icon={ArrowUpRight} size="sm" />
           </span>
-          <span className="regulation-flow__row" title={tip}>
-            <Chip tone="neutral" title={tip}>
-              {stage.teamCount}
-            </Chip>
-            <ArrowRight size={14} strokeWidth={2.25} aria-hidden="true" />
-            <Chip tone="accent" title={tip}>
-              {stage.qualificationPathCount}
-            </Chip>
-            <span className="regulation-flow__caption">
-              {t('tokens.qualifyOut')}
+          <Tooltip content={tip}>
+            <span className="regulation-flow__row">
+              <Chip tone="neutral">{stage.teamCount}</Chip>
+              <ArrowRight size={14} strokeWidth={2.25} aria-hidden="true" />
+              <Chip tone="accent">{stage.qualificationPathCount}</Chip>
+              <span className="regulation-flow__caption">
+                {t('tokens.qualifyOut')}
+              </span>
             </span>
-          </span>
+          </Tooltip>
         </>
       ),
     });
@@ -1141,16 +1174,16 @@ function buildPhaseFlows(
           <span className="regulation-rule-list__mark" aria-hidden="true">
             <LucideIcon icon={ArrowRight} size="sm" />
           </span>
-          <span className="regulation-flow__row" title={tip}>
-            <Chip tone="accent" title={tip}>
-              {stage.progressionPathCount}
-            </Chip>
-            <span className="regulation-flow__caption">
-              {t('tokens.progressionOut', {
-                count: stage.progressionPathCount,
-              })}
+          <Tooltip content={tip}>
+            <span className="regulation-flow__row">
+              <Chip tone="accent">{stage.progressionPathCount}</Chip>
+              <span className="regulation-flow__caption">
+                {t('tokens.progressionOut', {
+                  count: stage.progressionPathCount,
+                })}
+              </span>
             </span>
-          </span>
+          </Tooltip>
         </>
       ),
     });
@@ -1319,9 +1352,7 @@ function buildPhaseRuleColumns(
         key: 'pots',
         label: (
           <span className="regulation-rule-list__label-row">
-            <Chip tone="soft" title={t('tokens.drawPotsTip', { count: pots })}>
-              {pots}
-            </Chip>
+            <Chip tone="soft">{pots}</Chip>
             <span>{t('tokens.drawPotsUnit', { count: pots })}</span>
           </span>
         ),
@@ -1334,12 +1365,7 @@ function buildPhaseRuleColumns(
         key: 'seeds',
         label: (
           <span className="regulation-rule-list__label-row">
-            <Chip
-              tone="soft"
-              title={t('tokens.drawSeedsTip', { count: seeds })}
-            >
-              {seeds}
-            </Chip>
+            <Chip tone="soft">{seeds}</Chip>
             <span>{t('tokens.drawSeedsUnit', { count: seeds })}</span>
           </span>
         ),
@@ -1465,12 +1491,11 @@ function PlacementAwardsList({
 }) {
   if (awards.length === 0) {
     return (
-      <span
-        className="regulation-flow__caption"
-        title={t('tokens.placementTip', { count })}
-      >
-        {t('tokens.placement', { count })}
-      </span>
+      <Tooltip content={t('tokens.placementTip', { count })}>
+        <span className="regulation-flow__caption">
+          {t('tokens.placement', { count })}
+        </span>
+      </Tooltip>
     );
   }
 
@@ -1489,18 +1514,20 @@ function PlacementAwardsList({
           <li
             key={`${award.rank}-${award.outcome}`}
             className="regulation-placement__item"
-            title={aria}
-            aria-label={aria}
           >
-            <span className="regulation-criteria__n" aria-hidden="true">
-              {award.rank}
-            </span>
-            <span className="regulation-placement__text">
-              {outcome}
-              <span className="regulation-detail">
-                {t('tokens.placementRank', { rank: award.rank })}
+            <Tooltip content={aria}>
+              <span className="regulation-placement__hit" aria-label={aria}>
+                <span className="regulation-criteria__n" aria-hidden="true">
+                  {award.rank}
+                </span>
+                <span className="regulation-placement__text">
+                  {outcome}
+                  <span className="regulation-detail">
+                    {t('tokens.placementRank', { rank: award.rank })}
+                  </span>
+                </span>
               </span>
-            </span>
+            </Tooltip>
           </li>
         );
       })}

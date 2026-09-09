@@ -27,6 +27,7 @@ import { LabMatchSheet } from './LabMatchSheet';
 import { LabStandings } from './LabStandings';
 import { LabDialog } from './LabDialog';
 import { LabToast } from './LabToast';
+import { LabTooltip } from './LabTooltip';
 import { LabForm } from './LabForm';
 import { LabRegulation } from './LabRegulation';
 import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait';
@@ -42,6 +43,7 @@ type LabView =
   | 'wait'
   | 'dialog'
   | 'toast'
+  | 'tooltip'
   | 'form'
   | 'regulation'
   | 'overview'
@@ -73,6 +75,7 @@ export function DesignLabPage() {
   const isWaitBoard = view === 'wait';
   const isDialogBoard = view === 'dialog';
   const isToastBoard = view === 'toast';
+  const isTooltipBoard = view === 'tooltip';
   const isFormBoard = view === 'form';
   const isRegulationBoard = view === 'regulation';
   const labCollapsed = chromeVp === 'phone' ? false : railCollapsed;
@@ -169,6 +172,10 @@ export function DesignLabPage() {
           <LabToast />
           <Toaster />
         </main>
+      ) : isTooltipBoard ? (
+        <main className="dlab-toast-board ds-shell-workspace">
+          <LabTooltip />
+        </main>
       ) : isFormBoard ? (
         <main className="dlab-form-board ds-shell-workspace">
           <LabForm />
@@ -243,6 +250,7 @@ const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'wait', label: 'Attente' },
   { key: 'dialog', label: 'Dialog' },
   { key: 'toast', label: 'Toast' },
+  { key: 'tooltip', label: 'Tooltip' },
   { key: 'form', label: 'Form' },
   { key: 'regulation', label: 'Règlement' },
   { key: 'overview', label: "Vue d'ensemble" },

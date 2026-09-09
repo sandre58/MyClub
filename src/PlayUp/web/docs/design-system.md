@@ -69,6 +69,16 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 - Consumers: **ColorPicker** panel, Shell **Preferences** menu.
 - Density tokens (`--control-height`) are on `:root` so portaled panels resolve them.
 
+## Tooltip
+
+- Canonical: `components/Tooltip.tsx` + `foundations/tooltip.css`.
+- V1 = **Hint** + **DisabledReason** only (not icon-button Labels). Specimen: Design Lab **Tooltip**.
+- Chrome: Overlay family — `surface` + border + `radius-control` 4px. Local shadow `0 2px 6px` (lighter than `--shadow-overlay`; no `--shadow-tooltip` token). Not `ink`/`on-ink` (explored in Design Lab only).
+- Desktop: hover open **400 ms**, focus **0**, leave close **100 ms**, Escape/blur immediate.
+- Mobile: long-press (**500 ms**) on primary-action triggers; tap-toggle otherwise; auto-dismiss **~3 s**.
+- `role="tooltip"` + `aria-describedby`; text only; interactive content → Popover.
+- Do not auto-wire every `Chip.title` — wrap Hint chips/badges explicitly. Règlement is the reference migration. Do not infer Tooltip from the mere presence of `title` (Label vs Hint vs DisabledReason).
+
 ## Toast
 
 - `Toaster` + `toastStore` (`notify`) + `foundations/toast.css`.
@@ -90,6 +100,7 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 - Canonical: `components/Chip.tsx` + `foundations/chips.css`.
 - Fact / rule token (neutral, soft, accent, win/draw/loss) — **not** a lifecycle `Status`.
+- Hint copy: wrap with `Tooltip` (native `title` is not the V1 tip path).
 
 ## PageHead
 

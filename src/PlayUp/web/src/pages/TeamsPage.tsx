@@ -28,6 +28,7 @@ import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Meter, type MeterTone } from '../design-system/components/Meter';
 import { PageHead } from '../design-system/components/PageHead';
 import { SelectionBar } from '../design-system/components/SelectionBar';
+import { Tooltip } from '../design-system/components/Tooltip';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import {
   Field,
@@ -352,20 +353,37 @@ function TeamsView({
                     <SelectionBar
                       countLabel={t('selectionCount', { count: selectedCount })}
                     >
-                      <button
-                        type="button"
-                        className={compactIcon}
-                        disabled={!barRemoveEnabled || removePending}
-                        title={barRemoveHint}
-                        aria-label={removeLabel}
-                        onClick={() => confirmAndRemove(selectedIds)}
-                      >
-                        {removing === 'delete' ? (
-                          <TrashIcon size="sm" />
-                        ) : (
-                          <WithdrawIcon size="sm" />
-                        )}
-                      </button>
+                      {barRemoveEnabled ? (
+                        <button
+                          type="button"
+                          className={compactIcon}
+                          disabled={removePending}
+                          title={removeLabel}
+                          aria-label={removeLabel}
+                          onClick={() => confirmAndRemove(selectedIds)}
+                        >
+                          {removing === 'delete' ? (
+                            <TrashIcon size="sm" />
+                          ) : (
+                            <WithdrawIcon size="sm" />
+                          )}
+                        </button>
+                      ) : (
+                        <Tooltip content={barRemoveHint}>
+                          <button
+                            type="button"
+                            className={compactIcon}
+                            disabled
+                            aria-label={removeLabel}
+                          >
+                            {removing === 'delete' ? (
+                              <TrashIcon size="sm" />
+                            ) : (
+                              <WithdrawIcon size="sm" />
+                            )}
+                          </button>
+                        </Tooltip>
+                      )}
                       <button
                         type="button"
                         className={compactIcon}
@@ -377,17 +395,32 @@ function TeamsView({
                       </button>
                     </SelectionBar>
                   )}
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--primary teams__add"
-                    disabled={!canAdd}
-                    title={canAdd ? t('addAction') : t('addDisabledHint')}
-                    aria-label={t('addAction')}
-                    onClick={() => setAddOpen(true)}
-                  >
-                    <PlusIcon size="sm" />
-                    <span className="teams__add-label">{t('addAction')}</span>
-                  </button>
+                  {canAdd ? (
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--primary teams__add"
+                      title={t('addAction')}
+                      aria-label={t('addAction')}
+                      onClick={() => setAddOpen(true)}
+                    >
+                      <PlusIcon size="sm" />
+                      <span className="teams__add-label">{t('addAction')}</span>
+                    </button>
+                  ) : (
+                    <Tooltip content={t('addDisabledHint')}>
+                      <button
+                        type="button"
+                        className="ds-btn ds-btn--primary teams__add"
+                        disabled
+                        aria-label={t('addAction')}
+                      >
+                        <PlusIcon size="sm" />
+                        <span className="teams__add-label">
+                          {t('addAction')}
+                        </span>
+                      </button>
+                    </Tooltip>
+                  )}
                 </div>
               </div>
             }
@@ -454,20 +487,39 @@ function TeamsView({
                           >
                             <PencilIcon size="sm" />
                           </button>
-                          <button
-                            type="button"
-                            className={compactIcon}
-                            disabled={!tileCanRemove || removePending}
-                            title={tileRemoveHint}
-                            aria-label={tileRemoveLabel}
-                            onClick={() => confirmAndRemove([entry.entryId])}
-                          >
-                            {removing === 'delete' ? (
-                              <TrashIcon size="sm" />
-                            ) : (
-                              <WithdrawIcon size="sm" />
-                            )}
-                          </button>
+                          {tileCanRemove ? (
+                            <button
+                              type="button"
+                              className={compactIcon}
+                              disabled={removePending}
+                              title={removeLabel}
+                              aria-label={tileRemoveLabel}
+                              onClick={() =>
+                                confirmAndRemove([entry.entryId])
+                              }
+                            >
+                              {removing === 'delete' ? (
+                                <TrashIcon size="sm" />
+                              ) : (
+                                <WithdrawIcon size="sm" />
+                              )}
+                            </button>
+                          ) : (
+                            <Tooltip content={tileRemoveHint}>
+                              <button
+                                type="button"
+                                className={compactIcon}
+                                disabled
+                                aria-label={tileRemoveLabel}
+                              >
+                                {removing === 'delete' ? (
+                                  <TrashIcon size="sm" />
+                                ) : (
+                                  <WithdrawIcon size="sm" />
+                                )}
+                              </button>
+                            </Tooltip>
+                          )}
                         </div>
                       )}
                     </div>

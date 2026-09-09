@@ -945,6 +945,25 @@
   line-height: var(--leading-tight);
 }
 
+.regulation-rule-list__hit,
+.regulation-placement__hit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.regulation-rule-list__item > .ds-tooltip-trigger,
+.regulation-placement__item > .ds-tooltip-trigger,
+.regulation-rule-col__chips > .ds-tooltip-trigger,
+.regulation-flow > .ds-tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .regulation-rule-list__mark {
   display: inline-flex;
   flex: none;
