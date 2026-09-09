@@ -65,7 +65,9 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 - Canonical: `components/Popover.tsx` + `foundations/popover.css`.
 - Anchored surface: portal to `document.body`, fixed placement, Escape + outside click.
 - Shared caret notch: `data-side="below|above"` + `--ds-popover-caret-inset` toward the trigger.
+- Enter/exit: `data-state="open|closed"` — opacity + 6px translate (tokens `--motion-*`).
 - Consumers: **ColorPicker** panel, Shell **Preferences** menu.
+- Density tokens (`--control-height`) are on `:root` so portaled panels resolve them.
 
 ## Toast
 

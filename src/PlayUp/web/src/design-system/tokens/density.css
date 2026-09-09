@@ -1,6 +1,9 @@
 /*
  * Control / row heights. Breathing comes from group gaps, not extra padding.
+ * On :root for portaled overlays (Popover → document.body); .ds-root density
+ * attributes still override inside the product tree.
  */
+:root,
 .ds-root {
   --control-height-compact: 32px;
   --control-height-standard: 36px;

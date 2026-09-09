@@ -33,6 +33,14 @@
   max-width: 7.5rem;
 }
 
+.ds-field[data-width='md'] {
+  max-width: 12rem;
+}
+
+.ds-field[data-width='lg'] {
+  max-width: 18rem;
+}
+
 .ds-field__label-row {
   display: flex;
   align-items: baseline;
@@ -1079,6 +1087,22 @@
   border-radius: var(--radius-panel);
   background: var(--color-surface);
   box-shadow: var(--shadow-overlay);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
+}
+
+.ds-select__dropdown[data-state='open'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ds-select__dropdown[data-state='closed'] {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
 }
 
 .ds-select__option {

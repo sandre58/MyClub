@@ -2,9 +2,13 @@
  * Anchored popover surface — shared by ColorPicker, Preferences, …
  * Placement is inline (fixed) from Popover.tsx.
  * Caret notch points at the anchor; side flips with data-side.
+ * Enter/exit via data-state + opacity / translate (tokens --motion-*).
  */
 
 .ds-popover {
+  /* Defaults; Popover.tsx overrides caret inset toward the trigger center. */
+  --ds-popover-caret-inset: 1rem;
+  --ds-popover-enter-y: -6px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -16,12 +20,36 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-overlay);
   color: var(--color-text-primary);
+  opacity: 0;
+  transform: translateY(var(--ds-popover-enter-y));
+  transition:
+    opacity var(--motion-duration) var(--motion-easing),
+    transform var(--motion-duration) var(--motion-easing);
+}
+
+.ds-popover[data-side='below'] {
+  --ds-popover-enter-y: -6px;
+}
+
+.ds-popover[data-side='above'] {
+  --ds-popover-enter-y: 6px;
+}
+
+.ds-popover[data-state='open'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ds-popover[data-state='closed'] {
+  opacity: 0;
+  transform: translateY(var(--ds-popover-enter-y));
+  pointer-events: none;
 }
 
 .ds-popover::before {
   content: '';
   position: absolute;
-  inset-inline-start: var(--ds-popover-caret-inset, 1rem);
+  inset-inline-start: var(--ds-popover-caret-inset);
   width: 8px;
   height: 8px;
   background: var(--color-surface);

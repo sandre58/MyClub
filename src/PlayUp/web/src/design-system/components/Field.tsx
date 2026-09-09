@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export type FieldMessageTone = 'hint' | 'warning' | 'error';
 
-export type FieldWidth = 'full' | 'sm';
+export type FieldWidth = 'full' | 'sm' | 'md' | 'lg';
 
 export type FieldProps = {
   label: string;

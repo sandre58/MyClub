@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useDismissLayer } from '../useDismissLayer';
+import { usePresence } from '../usePresence';
 
 export type PopoverAlign = 'start' | 'end';
 export type PopoverSide = 'below' | 'above';
@@ -18,6 +19,8 @@ const VIEWPORT_PAD_PX = 16;
 const CARET_SIZE_PX = 8;
 /** Keep caret inset away from rounded corners. */
 const CARET_EDGE_PAD_PX = 12;
+/** Match --motion-duration (160ms) + small buffer for exit unmount. */
+const EXIT_MS = 200;
 
 export type PopoverProps = {
   open: boolean;
@@ -64,7 +67,7 @@ type Placement = {
 
 /**
  * Anchored surface panel — portal + fixed placement + Escape / outside dismiss.
- * Presentation chrome via `.ds-popover` (including caret notch).
+ * Presentation chrome via `.ds-popover` (including caret notch + enter/exit).
  */
 export function Popover({
   open,
@@ -83,9 +86,10 @@ export function Popover({
 }: PopoverProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [placement, setPlacement] = useState<Placement | undefined>();
+  const { present, state } = usePresence(open, EXIT_MS);
 
   useLayoutEffect(() => {
-    if (!open) {
+    if (!present) {
       setPlacement(undefined);
       return;
     }
@@ -116,7 +120,6 @@ export function Popover({
         spaceBelow >= flipThreshold || spaceBelow >= rect.top;
       const side: PopoverSide = preferBelow ? 'below' : 'above';
 
-      // Point caret at the anchor center; clamp inside rounded corners.
       const anchorCenterX = rect.left + rect.width / 2;
       const caretInset = Math.min(
         panelWidth - CARET_EDGE_PAD_PX - CARET_SIZE_PX,
@@ -146,7 +149,7 @@ export function Popover({
       window.removeEventListener('resize', placePanel);
       window.removeEventListener('scroll', placePanel, true);
     };
-  }, [open, align, width, flipThreshold, zIndex, anchorRef]);
+  }, [present, align, width, flipThreshold, zIndex, anchorRef]);
 
   useDismissLayer(open, () => {
     if (!isDismissEnabled(dismissEnabled)) {
@@ -180,7 +183,7 @@ export function Popover({
     };
   }, [open, onOpenChange, dismissEnabled, anchorRef]);
 
-  if (!open || !placement || typeof document === 'undefined') {
+  if (!present || !placement || typeof document === 'undefined') {
     return null;
   }
 
@@ -191,9 +194,11 @@ export function Popover({
       className={['ds-popover', className].filter(Boolean).join(' ')}
       role={role}
       aria-label={ariaLabel}
+      aria-hidden={open ? undefined : true}
       style={placement.style}
       data-align={align}
       data-side={placement.side}
+      data-state={state}
     >
       {children}
     </div>,

@@ -8,13 +8,17 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  :root,
   .ds-root {
     --motion-duration: 0ms;
   }
 
   .ds-root *,
   .ds-root *::before,
-  .ds-root *::after {
+  .ds-root *::after,
+  .ds-popover,
+  .ds-popover::before,
+  .ds-select__dropdown {
     animation: none !important;
     transition: none !important;
   }

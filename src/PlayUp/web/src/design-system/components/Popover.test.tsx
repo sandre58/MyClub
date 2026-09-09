@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, useState } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -42,8 +42,10 @@ describe('Popover', () => {
     expect(panel).toHaveAttribute('data-side', 'below');
 
     await user.click(document.body);
-    expect(
-      screen.queryByRole('dialog', { name: 'Demo panel' }),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: 'Demo panel' }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

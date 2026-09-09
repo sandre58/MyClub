@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { CloseIcon, ChevronDownIcon } from '../icons/shellIcons';
 import { useDismissLayer } from '../useDismissLayer';
+import { usePresence } from '../usePresence';
 
 export type SelectOption = {
   value: string;
@@ -84,6 +85,8 @@ function initialActiveIndex(options: SelectOption[], current: string | null) {
   return firstEnabledIndex(options);
 }
 
+const EXIT_MS = 200;
+
 /**
  * Select — TextInput shell + Ant-like dropdown list.
  * Optional leading icon and clear affix. Whole shell opens (except clear).
@@ -114,6 +117,7 @@ export function Select({
   );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const { present, state } = usePresence(open, EXIT_MS);
   const current = controlled ? (value ?? null) : uncontrolled;
   const selected = options.find((option) => option.value === current) ?? null;
   const triggerLeading = leadingIcon ?? selected?.leading ?? null;
@@ -243,7 +247,7 @@ export function Select({
         aria-label={ariaLabel}
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-controls={open ? listId : undefined}
+        aria-controls={present ? listId : undefined}
         aria-activedescendant={activeOptionId}
         aria-invalid={invalid || undefined}
         aria-disabled={disabled || undefined}
@@ -282,12 +286,14 @@ export function Select({
         </span>
       </div>
 
-      {open ? (
+      {present ? (
         <ul
           id={listId}
           className="ds-select__dropdown"
           role="listbox"
           aria-labelledby={triggerId}
+          aria-hidden={open ? undefined : true}
+          data-state={state}
         >
           {options.map((option, index) => {
             const isSelected = option.value === current;
@@ -301,7 +307,7 @@ export function Select({
                   role="option"
                   tabIndex={-1}
                   aria-selected={isSelected}
-                  disabled={option.disabled || disabled}
+                  disabled={option.disabled || disabled || !open}
                   data-selected={isSelected ? 'true' : 'false'}
                   data-active={isActive ? 'true' : 'false'}
                   onClick={() => selectOption(option.value)}

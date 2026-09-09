@@ -81,7 +81,7 @@ export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
       >
         <p className="shell-preferences__title">{t('preferences.title')}</p>
 
-        <Field label={t('preferences.language')} htmlFor={languageFieldId}>
+        <Field width="md" label={t('preferences.language')} htmlFor={languageFieldId}>
           <Select
             id={languageFieldId}
             aria-label={t('preferences.language')}
