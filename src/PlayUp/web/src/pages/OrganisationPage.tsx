@@ -3,7 +3,7 @@ import {
   useEffect,
   useId,
   useState,
-  type FormEvent,
+  type SubmitEvent,
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -218,7 +218,7 @@ function IdentitySection({ data }: { data: OrganisationView }) {
         <form
           className="ds-form"
           data-density="comfortable"
-          onSubmit={(event: FormEvent) => {
+          onSubmit={(event: SubmitEvent) => {
             event.preventDefault();
             presentationMutation.mutate();
           }}
@@ -262,7 +262,7 @@ function IdentitySection({ data }: { data: OrganisationView }) {
         </form>
         <form
           className="form form--inline"
-          onSubmit={(event: FormEvent) => {
+          onSubmit={(event: SubmitEvent) => {
             event.preventDefault();
             scheduleMutation.mutate();
           }}
@@ -813,7 +813,7 @@ function StructureEditorDialog({
       <form
         id={formId}
         className="form"
-        onSubmit={(event: FormEvent) => {
+        onSubmit={(event: SubmitEvent) => {
           event.preventDefault();
           if (mutation.isPending) {
             return;

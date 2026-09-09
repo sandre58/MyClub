@@ -4,7 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -334,7 +334,7 @@ function SheetSideColumn({
                 {canMutate && jerseyEditId === row.memberId && (
                   <form
                     className="form match-sheet__jersey-form"
-                    onSubmit={(event: FormEvent) => {
+                    onSubmit={(event: SubmitEvent) => {
                       event.preventDefault();
                       if (jerseyMutation.isPending) {
                         return;
@@ -444,7 +444,7 @@ function SheetSideColumn({
       {canMutate && (
         <form
           className="form match-sheet__add"
-          onSubmit={(event: FormEvent) => {
+          onSubmit={(event: SubmitEvent) => {
             event.preventDefault();
             if (memberId.length === 0 || addMutation.isPending) {
               return;

@@ -37,27 +37,15 @@
   --ds-alert-tone: var(--color-error);
   background: color-mix(in srgb, var(--color-error) 15%, var(--color-surface));
   color: var(--color-text-primary);
-  border-color: color-mix(
-    in srgb,
-    var(--color-error) 60%,
-    var(--color-surface)
-  );
+  border-color: color-mix(in srgb, var(--color-error) 60%, var(--color-surface));
 }
 
 .ds-alert--warning,
 .ds-notice--warning {
   --ds-alert-tone: var(--color-attention);
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 15%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-attention) 15%, var(--color-surface));
   color: var(--color-text-primary);
-  border-color: color-mix(
-    in srgb,
-    var(--color-attention) 60%,
-    var(--color-surface)
-  );
+  border-color: color-mix(in srgb, var(--color-attention) 60%, var(--color-surface));
 }
 
 .ds-alert--info,
@@ -71,17 +59,9 @@
 .ds-alert--success,
 .ds-notice--success {
   --ds-alert-tone: var(--color-success);
-  background: color-mix(
-    in srgb,
-    var(--color-success) 15%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-success) 15%, var(--color-surface));
   color: var(--color-text-primary);
-  border-color: color-mix(
-    in srgb,
-    var(--color-success) 60%,
-    var(--color-surface)
-  );
+  border-color: color-mix(in srgb, var(--color-success) 60%, var(--color-surface));
 }
 
 .ds-wait {
@@ -129,8 +109,7 @@
   position: absolute;
   inset: 0;
   box-sizing: border-box;
-  border: var(--wait-ring) solid
-    color-mix(in srgb, currentColor 28%, transparent);
+  border: var(--wait-ring) solid color-mix(in srgb, currentColor 28%, transparent);
   border-top-color: currentColor;
   border-radius: 50%;
   animation: ds-wait-spin 0.65s linear infinite;

@@ -8,7 +8,7 @@ import {
   useEffect,
   useId,
   useState,
-  type FormEvent,
+  type SubmitEvent,
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -746,7 +746,7 @@ function AddEntryDialog({
           id={formId}
           className="ds-form"
           data-density="comfortable"
-          onSubmit={(event: FormEvent) => {
+          onSubmit={(event: SubmitEvent) => {
             event.preventDefault();
             setSubmitted(true);
             if (!canSubmit) {
@@ -951,7 +951,7 @@ function IdentityDialog({
           id={formId}
           className="ds-form"
           data-density="comfortable"
-          onSubmit={(event: FormEvent) => {
+          onSubmit={(event: SubmitEvent) => {
             event.preventDefault();
             setSubmitted(true);
             if (!canSubmit) {

@@ -167,11 +167,7 @@
 }
 
 .classements-chip--win {
-  background: color-mix(
-    in srgb,
-    var(--color-success) 12%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
 }
 
 .classements-chip--win .classements-chip__value {

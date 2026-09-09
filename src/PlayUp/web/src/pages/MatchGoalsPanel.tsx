@@ -3,7 +3,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   correctRecordedGoal,
@@ -384,7 +384,7 @@ function GoalForm({
   return (
     <form
       className="form match-goals__form"
-      onSubmit={(event: FormEvent) => {
+      onSubmit={(event: SubmitEvent) => {
         event.preventDefault();
         if (scorerId.length === 0 || pending) {
           return;

@@ -90,11 +90,7 @@
   margin-left: var(--space-8);
   padding: 1px var(--space-8);
   border-radius: var(--radius-control);
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 12%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface));
   color: var(--color-attention);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);

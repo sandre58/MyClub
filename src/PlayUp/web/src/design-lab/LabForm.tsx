@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type SubmitEvent } from 'react';
 import { Clock3 } from 'lucide-react';
 import { Alert } from '../design-system/components/Alert';
 import {
@@ -593,7 +593,7 @@ export function LabForm() {
           </Alert>
           <form
             className="ds-form"
-            onSubmit={(event: FormEvent) => {
+            onSubmit={(event: SubmitEvent) => {
               event.preventDefault();
             }}
           >

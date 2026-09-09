@@ -4,7 +4,7 @@ import {
   useId,
   useMemo,
   useState,
-  type FormEvent,
+  type SubmitEvent,
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -483,7 +483,7 @@ export function RegulationEditorDialog({
         <form
           id={formId}
           className="regulation-editor"
-          onSubmit={(event: FormEvent) => {
+          onSubmit={(event: SubmitEvent) => {
             event.preventDefault();
             requestSave();
           }}

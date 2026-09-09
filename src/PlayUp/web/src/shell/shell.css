@@ -15,14 +15,9 @@
   --shell-pad-normal: var(--space-16);
   --shell-icon-hit: 2.5rem;
   --shell-icon-glyph: 1.75rem;
-  --shell-elevation-drawer: -8px 0 32px
-    color-mix(in srgb, var(--color-ink) 10%, transparent);
+  --shell-elevation-drawer: -8px 0 32px color-mix(in srgb, var(--color-ink) 10%, transparent);
   --shell-attention-count-fg: var(--color-attention);
-  --shell-attention-count-bg-soft: color-mix(
-    in srgb,
-    var(--color-attention) 14%,
-    var(--color-surface)
-  );
+  --shell-attention-count-bg-soft: color-mix(in srgb, var(--color-attention) 14%, var(--color-surface));
   --shell-attention-count-radius: var(--radius-control);
 
   position: relative;

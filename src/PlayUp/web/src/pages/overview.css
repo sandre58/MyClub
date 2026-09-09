@@ -235,20 +235,12 @@
 }
 
 .overview-crest:nth-child(5n + 3) {
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 14%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-attention) 14%, var(--color-surface));
   color: var(--color-attention);
 }
 
 .overview-crest:nth-child(5n + 4) {
-  background: color-mix(
-    in srgb,
-    var(--color-success) 16%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
   color: var(--color-success);
 }
 
@@ -293,11 +285,7 @@
 }
 
 .overview-chip--win {
-  background: color-mix(
-    in srgb,
-    var(--color-success) 12%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
 }
 
 .overview-chip--win .overview-chip__value {
@@ -621,7 +609,7 @@
 
 .overview-outcome__hero-name {
   margin: 0;
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), sans-serif;
   font-size: clamp(1.5rem, 2.5vw, 2rem);
   font-weight: var(--font-weight-bold);
   line-height: 1.15;

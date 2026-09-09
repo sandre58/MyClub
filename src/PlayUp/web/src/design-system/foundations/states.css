@@ -65,24 +65,12 @@
 
 .ds-state--block.ds-state--success {
   background: color-mix(in srgb, var(--color-success) 10%, var(--color-canvas));
-  border-color: color-mix(
-    in srgb,
-    var(--color-success) 32%,
-    var(--color-border)
-  );
+  border-color: color-mix(in srgb, var(--color-success) 32%, var(--color-border));
 }
 
 .ds-state--block.ds-state--attention {
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 12%,
-    var(--color-canvas)
-  );
-  border-color: color-mix(
-    in srgb,
-    var(--color-attention) 35%,
-    var(--color-border)
-  );
+  background: color-mix(in srgb, var(--color-attention) 12%, var(--color-canvas));
+  border-color: color-mix(in srgb, var(--color-attention) 35%, var(--color-border));
 }
 
 .ds-state--block.ds-state--error {

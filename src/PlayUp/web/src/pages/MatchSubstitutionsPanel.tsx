@@ -3,7 +3,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   correctRecordedSubstitution,
@@ -349,7 +349,7 @@ function SubstitutionForm({
   return (
     <form
       className="form match-subs__form"
-      onSubmit={(event: FormEvent) => {
+      onSubmit={(event: SubmitEvent) => {
         event.preventDefault();
         if (outMemberId.length === 0 || inMemberId.length === 0 || pending) {
           return;

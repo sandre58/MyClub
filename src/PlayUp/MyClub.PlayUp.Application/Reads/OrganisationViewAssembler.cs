@@ -186,10 +186,10 @@ public static class OrganisationViewAssembler
     {
         var binding = stage.DefaultsBinding;
         var classifying = stage.Regulation.StandingRules is not null;
-        OrganisationHeritablePartBindingDto? points = classifying
+        var points = classifying
             ? new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.Points))
             : null;
-        OrganisationHeritablePartBindingDto? rankingCriteria = classifying
+        var rankingCriteria = classifying
             ? new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.RankingCriteria))
             : null;
         return new OrganisationStageDefaultsBindingDto(

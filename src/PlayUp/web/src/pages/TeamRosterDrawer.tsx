@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type FormEvent,
+  type SubmitEvent,
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -544,7 +544,7 @@ export function TeamRosterDrawer({
 
       <form
         className="teams-drawer__add"
-        onSubmit={(event: FormEvent) => {
+        onSubmit={(event: SubmitEvent) => {
           event.preventDefault();
           submitAdd('Player');
         }}
@@ -737,7 +737,7 @@ function RosterGroup({
                     {editing ? (
                       <form
                         className="teams-member__edit"
-                        onSubmit={(event: FormEvent) => {
+                        onSubmit={(event: SubmitEvent) => {
                           event.preventDefault();
                           onConfirmRename(member);
                         }}

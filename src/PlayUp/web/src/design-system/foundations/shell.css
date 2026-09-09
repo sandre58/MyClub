@@ -14,21 +14,9 @@
   --shell-rail-inset: var(--space-8);
   --shell-rail-item-radius: var(--radius-panel);
   --shell-rail-bar-width: 3px;
-  --shell-rail-wash-hover: color-mix(
-    in srgb,
-    var(--color-on-chrome) 8%,
-    transparent
-  );
-  --shell-rail-wash-current: color-mix(
-    in srgb,
-    var(--color-on-chrome) 12%,
-    transparent
-  );
-  --shell-rail-wash-current-hover: color-mix(
-    in srgb,
-    var(--color-on-chrome) 16%,
-    transparent
-  );
+  --shell-rail-wash-hover: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
+  --shell-rail-wash-current: color-mix(in srgb, var(--color-on-chrome) 12%, transparent);
+  --shell-rail-wash-current-hover: color-mix(in srgb, var(--color-on-chrome) 16%, transparent);
   --shell-lockup-mark-height: 2.5rem;
   --shell-lockup-wordmark-height: 1.875rem;
   --shell-header-min-height-phone: 3.5rem;
@@ -183,7 +171,7 @@
   border-radius: var(--shell-rail-item-radius);
   background: transparent;
   color: var(--color-on-chrome);
-  font: inherit;
+  font-family: inherit;
   font-weight: var(--font-weight-regular);
   text-align: start;
   text-decoration: none;
@@ -378,9 +366,8 @@
   z-index: 6;
   flex-wrap: nowrap;
   min-height: var(--shell-header-min-height-phone);
-  padding: max(var(--space-8), env(safe-area-inset-top, 0px))
-    max(var(--space-12), env(safe-area-inset-right, 0px)) var(--space-8)
-    max(var(--space-12), env(safe-area-inset-left, 0px));
+  padding: max(var(--space-8), env(safe-area-inset-top, 0px)) max(var(--space-12), env(safe-area-inset-right, 0px))
+    var(--space-8) max(var(--space-12), env(safe-area-inset-left, 0px));
 }
 
 [data-shell-vp='phone'] .ds-shell-header__nav-toggle {

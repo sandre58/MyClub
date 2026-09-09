@@ -1,0 +1,35 @@
+---
+description: Play’Up web quality stack (Prettier, Oxlint, tsc, CI gates)
+globs: src/PlayUp/web/**/*.{ts,tsx,css,json}
+alwaysApply: false
+---
+
+# Play’Up web — qualité frontend
+
+## Stack (intentional)
+
+| Concern | Tool | Notes |
+|---|---|---|
+| Format | **Prettier** | Not oxfmt/Biome; matches existing quotes/semis |
+| Lint | **Oxlint** | Keep; do **not** add ESLint in parallel |
+| Types | `tsc -b` (`npm run typecheck`) | Strict via `tsconfig` |
+| CSS lint | none in CI | Rider warnings ≠ CI; Stylelint deferred |
+
+## Commands
+
+```bash
+cd src/PlayUp/web
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test:run
+```
+
+CI `web` job fails on **errors** from those steps (plus `build`). Oxlint warnings do not fail CI unless `--deny-warnings` is added later.
+
+## Conventions
+
+- Prettier: single quotes, trailing commas, semis, `printWidth` 80 (CSS 120)
+- Prefer extracting non-component exports (helpers) over disabling `only-export-components`
+- Form `onSubmit`: use `SubmitEvent`, not deprecated `FormEvent`
+- Do not add Stylelint / ESLint without a demonstrated problem beyond IDE noise

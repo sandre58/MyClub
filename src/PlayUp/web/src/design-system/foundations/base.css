@@ -3,7 +3,7 @@
   min-height: 100vh;
   background: var(--color-canvas);
   color: var(--color-text-primary);
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), sans-serif;
   font-size: var(--text-body);
   font-weight: var(--font-weight-regular);
   line-height: var(--leading-normal);
@@ -32,20 +32,16 @@ body:has(.shell),
  * Chrome (sidebar) and overlays are outside this scope so they keep
  * on-chrome / local colors. Exit links carry their own color.
  */
-.shell-main
-  a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(
-    .organisation-link
-  ):not(.organisation-stage-link):not(.organisation-strip__action),
+/* prettier-ignore */
+.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(.organisation-link):not(.organisation-stage-link):not(.organisation-strip__action),
 .ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link) {
   color: var(--color-ink);
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.18em;
 }
 
-.shell-main
-  a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(
-    .organisation-link
-  ):not(.organisation-stage-link):not(.organisation-strip__action):hover,
+/* prettier-ignore */
+.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(.organisation-link):not(.organisation-stage-link):not(.organisation-strip__action):hover,
 .ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):hover {
   color: var(--color-ink);
   text-decoration-thickness: 0.12em;

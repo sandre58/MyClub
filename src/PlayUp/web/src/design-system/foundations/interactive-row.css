@@ -31,10 +31,8 @@
   background-color: var(--color-surface-secondary);
 }
 
-.ds-interactive-row:hover:not(:disabled):not([aria-disabled='true'])
-  .ds-interactive-row__chevron,
-.ds-interactive-row:active:not(:disabled):not([aria-disabled='true'])
-  .ds-interactive-row__chevron {
+.ds-interactive-row:hover:not(:disabled):not([aria-disabled='true']) .ds-interactive-row__chevron,
+.ds-interactive-row:active:not(:disabled):not([aria-disabled='true']) .ds-interactive-row__chevron {
   color: var(--color-ink);
 }
 

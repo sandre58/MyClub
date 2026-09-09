@@ -98,14 +98,9 @@
 
 .regulation-capacity__pill--min {
   border: 2px solid var(--color-attention);
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 16%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-attention) 16%, var(--color-surface));
   color: var(--color-attention);
-  box-shadow: 0 0 0 4px
-    color-mix(in srgb, var(--color-attention) 12%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-attention) 12%, transparent);
 }
 
 .regulation-capacity__pill--exact {
@@ -135,8 +130,7 @@
       transparent 1px 0.55rem
     ),
     var(--color-surface-secondary);
-  box-shadow: inset 0 1px 2px
-    color-mix(in srgb, var(--color-ink) 8%, transparent);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--color-ink) 8%, transparent);
 }
 
 .regulation-capacity__rail-fill {
@@ -146,8 +140,7 @@
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--color-attention) 55%, var(--color-surface)),
-    color-mix(in srgb, var(--color-brand) 45%, var(--color-surface-secondary))
-      55%,
+    color-mix(in srgb, var(--color-brand) 45%, var(--color-surface-secondary)) 55%,
     color-mix(in srgb, var(--color-border-strong) 35%, var(--color-surface))
   );
   mask-image: linear-gradient(90deg, #000 0%, #000 72%, transparent 100%);
@@ -353,8 +346,7 @@
   height: 0.75rem;
   border-radius: 999px;
   background: var(--color-brand);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--color-brand) 40%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-brand) 40%, transparent);
 }
 
 .regulation-clock__piece--alt .regulation-clock__bar {
@@ -363,11 +355,7 @@
 
 .regulation-clock__piece--break .regulation-clock__bar {
   height: 0.45rem;
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 45%,
-    var(--color-surface-secondary)
-  );
+  background: color-mix(in srgb, var(--color-attention) 45%, var(--color-surface-secondary));
   box-shadow: none;
 }
 
@@ -633,8 +621,8 @@
   border-radius: 0.3rem;
   background: color-mix(in srgb, currentColor 18%, transparent);
   box-shadow:
-    0 1px 0 rgb(0 0 0 / 10%),
-    0 3px 8px rgb(0 0 0 / 12%);
+    0 1px 0 rgba(0, 0, 0, 0.1),
+    0 3px 8px rgba(0, 0, 0, 0.12);
   transform: rotate(-6deg);
 }
 
@@ -650,8 +638,8 @@
 .regulation-card-token--white .regulation-card-token__face {
   background: linear-gradient(160deg, #ffffff, #e8e8e8);
   box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 12%),
-    0 3px 8px rgb(0 0 0 / 10%);
+    inset 0 0 0 1px rgba(0, 0, 0, 0.12),
+    0 3px 8px rgba(0, 0, 0, 0.1);
 }
 
 .regulation-discipline {
@@ -1061,44 +1049,23 @@
   min-width: 0;
   padding: 0.35rem 0.4rem;
   border-radius: var(--radius-control);
-  border: var(--border-width) solid
-    color-mix(in srgb, var(--color-brand) 18%, var(--color-border));
+  border: var(--border-width) solid color-mix(in srgb, var(--color-brand) 18%, var(--color-border));
   background: color-mix(in srgb, var(--color-brand) 8%, var(--color-surface));
 }
 
 .regulation-schematic__card--1 {
   border-color: color-mix(in srgb, var(--color-brand) 12%, var(--color-border));
-  background: color-mix(
-    in srgb,
-    var(--color-brand-bright, var(--color-brand)) 10%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-brand-bright, var(--color-brand)) 10%, var(--color-surface));
 }
 
 .regulation-schematic__card--2 {
-  border-color: color-mix(
-    in srgb,
-    var(--color-success) 28%,
-    var(--color-border)
-  );
-  background: color-mix(
-    in srgb,
-    var(--color-success) 10%,
-    var(--color-surface)
-  );
+  border-color: color-mix(in srgb, var(--color-success) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
 }
 
 .regulation-schematic__card--3 {
-  border-color: color-mix(
-    in srgb,
-    var(--color-attention) 28%,
-    var(--color-border)
-  );
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 10%,
-    var(--color-surface)
-  );
+  border-color: color-mix(in srgb, var(--color-attention) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-surface));
 }
 
 .regulation-schematic__card-label {
@@ -1127,11 +1094,7 @@
 }
 
 .regulation-schematic__card--3 .regulation-schematic__dot {
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 55%,
-    var(--color-border)
-  );
+  background: color-mix(in srgb, var(--color-attention) 55%, var(--color-border));
 }
 
 .regulation-schematic--bracket {
@@ -1205,8 +1168,7 @@
   background: color-mix(in srgb, var(--color-brand) 28%, var(--color-border));
 }
 
-.regulation-schematic__league-row:nth-child(even)
-  .regulation-schematic__league-bar {
+.regulation-schematic__league-row:nth-child(even) .regulation-schematic__league-bar {
   width: 78%;
   flex: 0 1 78%;
 }
@@ -1235,8 +1197,7 @@
   background: color-mix(in srgb, var(--color-brand) 32%, var(--color-border));
 }
 
-.regulation-schematic__swiss-round:nth-child(even)
-  .regulation-schematic__swiss-pair:last-child {
+.regulation-schematic__swiss-round:nth-child(even) .regulation-schematic__swiss-pair:last-child {
   opacity: 0.55;
 }
 
@@ -1427,8 +1388,7 @@
   color: var(--color-attention);
 }
 
-.regulation-impact__consequence--attention
-  .regulation-impact__consequence-icon {
+.regulation-impact__consequence--attention .regulation-impact__consequence-icon {
   color: var(--color-attention);
 }
 
@@ -1457,24 +1417,15 @@
 
 .regulation-rule-list__item--overridden .regulation-criteria__n {
   color: var(--color-attention);
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 12%,
-    var(--color-surface)
-  );
+  background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface));
 }
 
 .regulation-rule-list__item--overridden .regulation-detail {
-  color: color-mix(
-    in srgb,
-    var(--color-attention) 72%,
-    var(--color-text-secondary)
-  );
+  color: color-mix(in srgb, var(--color-attention) 72%, var(--color-text-secondary));
   font-weight: var(--font-weight-regular);
 }
 
 .regulation-rule-chip--overridden {
   font-weight: var(--font-weight-bold);
-  box-shadow: inset 0 0 0 1px
-    color-mix(in srgb, var(--color-attention) 80%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-attention) 80%, transparent);
 }

@@ -74,19 +74,12 @@
 .ds-status--soft,
 .ds-status--outline,
 .ds-status--plain {
-  color: light-dark(
-    var(--status-ink),
-    color-mix(in srgb, var(--status-ink) 58%, white)
-  );
+  color: light-dark(var(--status-ink), color-mix(in srgb, var(--status-ink) 58%, white));
 }
 
 .ds-status--soft {
   --status-wash: 18%;
-  background: color-mix(
-    in srgb,
-    var(--status-ink) var(--status-wash),
-    transparent
-  );
+  background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
 }
 
 .ds-status--soft.ds-status--tone-live {
@@ -95,13 +88,8 @@
 
 .ds-status--outline {
   --status-wash: 10%;
-  border: var(--border-width) solid
-    color-mix(in srgb, var(--status-ink) 32%, transparent);
-  background: color-mix(
-    in srgb,
-    var(--status-ink) var(--status-wash),
-    transparent
-  );
+  border: var(--border-width) solid color-mix(in srgb, var(--status-ink) 32%, transparent);
+  background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
 }
 
 .ds-status--outline.ds-status--tone-neutral,

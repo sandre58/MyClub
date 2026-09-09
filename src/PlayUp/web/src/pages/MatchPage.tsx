@@ -4,7 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import {
@@ -541,7 +541,7 @@ function OfficialScoreForm({
   const [awayGoals, setAwayGoals] = useState(String(defaultAway));
   const [localError, setLocalError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const home = parseNonNegativeInt(homeGoals);
     const away = parseNonNegativeInt(awayGoals);
@@ -624,7 +624,7 @@ function RunningScoreForm({
   const [awayGoals, setAwayGoals] = useState(String(defaultScore.awayGoals));
   const [localError, setLocalError] = useState<string | null>(null);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const home = parseNonNegativeInt(homeGoals);
     const away = parseNonNegativeInt(awayGoals);

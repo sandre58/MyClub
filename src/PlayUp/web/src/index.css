@@ -27,7 +27,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), sans-serif;
   font-size: var(--text-body);
   line-height: var(--leading-normal);
   color: var(--color-text-primary);
@@ -250,7 +250,7 @@ textarea {
   border-radius: var(--radius-control);
   background: var(--color-surface);
   color: var(--color-text-primary);
-  font: inherit;
+  font-family: inherit;
   font-size: var(--text-body);
   transition:
     border-color 140ms cubic-bezier(0.2, 0, 0.2, 1),

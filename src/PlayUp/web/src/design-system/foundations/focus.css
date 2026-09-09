@@ -3,16 +3,14 @@
  * Prefer box-shadow so chrome works on bordered and borderless controls.
  */
 .ds-root {
-  --focus-halo: 0 0 0 2px
-    color-mix(in srgb, var(--color-brand) 22%, transparent);
+  --focus-halo: 0 0 0 2px color-mix(in srgb, var(--color-brand) 22%, transparent);
 }
 
 .ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus {
   outline: none;
 }
 
-.ds-root
-  :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+.ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: none;
   box-shadow: var(--focus-halo);
 }

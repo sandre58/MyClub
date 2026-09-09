@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  type FormEvent,
+  type SubmitEvent,
   type RefObject,
   useEffect,
   useId,
@@ -297,7 +297,7 @@ function CreateCompetitionDialog({
         id={formId}
         className="ds-form"
         data-density="comfortable"
-        onSubmit={(event: FormEvent) => {
+        onSubmit={(event: SubmitEvent) => {
           event.preventDefault();
           if (!canSubmit) {
             return;

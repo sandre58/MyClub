@@ -4,5 +4,13 @@
   "trailingComma": "all",
   "printWidth": 80,
   "tabWidth": 2,
-  "endOfLine": "lf"
+  "endOfLine": "lf",
+  "overrides": [
+    {
+      "files": "*.css",
+      "options": {
+        "printWidth": 120
+      }
+    }
+  ]
 }
