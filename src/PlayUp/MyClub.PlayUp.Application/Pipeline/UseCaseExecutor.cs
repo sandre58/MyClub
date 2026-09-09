@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using Microsoft.Extensions.Logging;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Matches;
@@ -33,6 +34,8 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// Does not know HTTP, EF Core, or Domain Event dispatch. Not a CQRS mediator — named methods only;
 /// do not introduce generic dispatch without a demonstrated need.
 /// Initializes a new instance of the <see cref="UseCaseExecutor"/> class.
+/// Lifecycle commands emit structured Information logs (IDs only); Domain has no logging;
+/// mapped HTTP 4xx stay silent in Host handlers.
 /// </remarks>
 /// <param name="stages">Stage persistence port.</param>
 /// <param name="matches">Match persistence port.</param>
@@ -40,13 +43,15 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// <param name="unitOfWork">Unit of work for a single commit after the use case.</param>
 /// <param name="clock">Clock forwarded to Domain / Application.</param>
 /// <param name="mediaReferences">Port that verifies Media identities exist before storing logo refs.</param>
-public sealed class UseCaseExecutor(
+/// <param name="logger">Structured logger for lifecycle milestones.</param>
+public sealed partial class UseCaseExecutor(
     IStageRepository stages,
     IMatchRepository matches,
     ICompetitionRepository competitions,
     IUnitOfWork unitOfWork,
     IClock clock,
-    IMediaReferenceChecker mediaReferences)
+    IMediaReferenceChecker mediaReferences,
+    ILogger<UseCaseExecutor> logger)
 {
     /// <summary>
     /// Loads a stage, runs <see cref="PrepareStage"/>, and saves changes.
@@ -91,6 +96,7 @@ public sealed class UseCaseExecutor(
         var target = competitionStages.First(candidate => candidate.Id.Equals(stageId));
         PrepareStage.Execute(target, competitionStages, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogStagePrepared(logger, stageId.Value, stage.CompetitionId.Value);
     }
 
     /// <summary>
@@ -116,6 +122,7 @@ public sealed class UseCaseExecutor(
 
         StartStage.Execute(stage, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogStageStarted(logger, stageId.Value, stage.CompetitionId.Value);
     }
 
     /// <summary>
@@ -251,6 +258,7 @@ public sealed class UseCaseExecutor(
 
         PublishDraw.Execute(stage, drawId, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogDrawPublished(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value);
     }
 
     /// <summary>
@@ -302,6 +310,7 @@ public sealed class UseCaseExecutor(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogDrawApplied(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value, result.CreatedMatches.Count);
     }
 
     private static IReadOnlyList<FixtureId> EnsurePairingFixtures(Stage stage, Draw draw, IClock clock)
@@ -346,6 +355,7 @@ public sealed class UseCaseExecutor(
 
         StartMatch.Execute(match, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogMatchStarted(logger, matchId.Value, match.CompetitionId.Value);
     }
 
     /// <summary>
@@ -373,6 +383,7 @@ public sealed class UseCaseExecutor(
 
         FinishMatch.Execute(match, result, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogMatchFinished(logger, matchId.Value, match.CompetitionId.Value);
     }
 
     /// <summary>
@@ -593,6 +604,7 @@ public sealed class UseCaseExecutor(
         EnsureCompetitionAllowsLifecycleMutation(competition);
         PrepareCompetition.Execute(competition, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogCompetitionPrepared(logger, competitionId.Value);
     }
 
     /// <summary>
@@ -609,6 +621,7 @@ public sealed class UseCaseExecutor(
         EnsureCompetitionAllowsLifecycleMutation(competition);
         StartCompetition.Execute(competition, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogCompetitionStarted(logger, competitionId.Value);
     }
 
     /// <summary>
@@ -631,6 +644,7 @@ public sealed class UseCaseExecutor(
         var analysis = CompletionAnalyzer.Analyze(competition, competitionStages, matchesByStage);
         CompleteCompetition.Execute(competition, mode, analysis, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogCompetitionCompleted(logger, competitionId.Value, mode);
     }
 
     /// <summary>
@@ -646,6 +660,7 @@ public sealed class UseCaseExecutor(
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         ArchiveCompetition.Execute(competition, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogCompetitionArchived(logger, competitionId.Value);
     }
 
     /// <summary>
@@ -661,6 +676,7 @@ public sealed class UseCaseExecutor(
         var competition = CreateCompetition.Execute(name, clock);
         competitions.Add(competition);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogCompetitionCreated(logger, competition.Id.Value);
         return WorkspaceSummaryAssembler.Assemble(competition);
     }
 

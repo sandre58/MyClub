@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
@@ -148,7 +149,7 @@ public sealed class UseCaseExecutorPrepareStartCompetitionTests
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         return (executor, unitOfWork);
     }
 

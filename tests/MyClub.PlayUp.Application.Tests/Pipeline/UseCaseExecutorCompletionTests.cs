@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
@@ -197,7 +198,8 @@ public sealed class UseCaseExecutorCompletionTests
             competitions.Object,
             unitOfWork.Object,
             _clock,
-            AlwaysExistingMedia.Instance);
+            AlwaysExistingMedia.Instance,
+            NullLogger<UseCaseExecutor>.Instance);
         return (executor, unitOfWork);
     }
 

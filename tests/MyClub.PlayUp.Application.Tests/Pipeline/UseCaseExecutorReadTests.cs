@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
@@ -33,7 +34,7 @@ public sealed class UseCaseExecutorReadTests
             .Setup(repository => repository.GetByIdReadOnlyAsync(It.IsAny<CompetitionId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Competition?)null);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var act = async () => await executor.GetCompetitionDetailAsync(CompetitionId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
@@ -55,7 +56,7 @@ public sealed class UseCaseExecutorReadTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((Stage?)null);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var act = async () => await executor.GetStageOverviewAsync(StageId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
@@ -74,7 +75,7 @@ public sealed class UseCaseExecutorReadTests
             .Setup(repository => repository.GetByIdReadOnlyAsync(It.IsAny<MatchId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((DomainMatch?)null);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var act = async () => await executor.GetMatchDetailAsync(MatchId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
@@ -110,7 +111,7 @@ public sealed class UseCaseExecutorReadTests
             .Setup(repository => repository.ListSummaryRowsByStageReadOnlyAsync(stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync([row]);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var summaries = await executor.ListMatchesByStageAsync(stage.Id);
 
         summaries.Should().ContainSingle();

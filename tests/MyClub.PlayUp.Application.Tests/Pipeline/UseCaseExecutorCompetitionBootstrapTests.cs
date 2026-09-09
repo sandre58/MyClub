@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
@@ -36,7 +37,7 @@ public sealed class UseCaseExecutorCompetitionBootstrapTests
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var summary = await executor.CreateCompetitionAsync("Bootstrap Cup");
 
         added.Should().NotBeNull();
@@ -60,7 +61,7 @@ public sealed class UseCaseExecutorCompetitionBootstrapTests
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var list = await executor.ListCompetitionsAsync();
 
         list.Should().HaveCount(2);
@@ -79,7 +80,7 @@ public sealed class UseCaseExecutorCompetitionBootstrapTests
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance);
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var act = async () => await executor.GetWorkspaceSummaryAsync(CompetitionId.New());
 
         (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
