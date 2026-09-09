@@ -54,6 +54,12 @@
     "locale": {
       "fr": "Français",
       "en": "English"
+    },
+    "theme": {
+      "label": "Thème",
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
     }
   }
 }

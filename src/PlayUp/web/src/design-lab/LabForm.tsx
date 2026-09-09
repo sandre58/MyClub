@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, type SubmitEvent } from 'react';
-import { Clock3 } from 'lucide-react';
+import { Clock3, Monitor, Moon, Sun } from 'lucide-react';
 import { Alert } from '../design-system/components/Alert';
 import {
   ChoiceSwatch,
@@ -20,6 +20,7 @@ import { Select } from '../design-system/components/Select';
 import { Switch } from '../design-system/components/Switch';
 import { SwitchPanel } from '../design-system/components/SwitchPanel';
 import { TextInput } from '../design-system/components/TextInput';
+import { ToggleButtonGroup } from '../design-system/components/ToggleButtonGroup';
 import { Upload } from '../design-system/components/Upload';
 import { LucideIcon } from '../design-system/icons/Icon';
 import {
@@ -63,6 +64,9 @@ export function LabForm() {
   const [drawPoints, setDrawPoints] = useState<number | null>(1);
   const [lossPoints, setLossPoints] = useState<number | null>(0);
   const [cards, setCards] = useState({ yellow: true, red: true, white: false });
+  const [themeDemo, setThemeDemo] = useState<'system' | 'light' | 'dark'>(
+    'system',
+  );
   const [criteria, setCriteria] = useState<Criterion[]>([
     'Points',
     'GoalDifference',
@@ -141,7 +145,8 @@ export function LabForm() {
           Tous les contrôles d’édition DS : Field, TextInput, Select,
           InputNumber (end / split + suffixe), Switch / SwitchPanel,
           FormSection, FormGroup, OutcomePoints, ReorderList, ChoiceTile,
-          Upload, ColorPicker. Surface Règlement = garde-fous produit à part.
+          ToggleButtonGroup, Upload, ColorPicker. Surface Règlement = garde-fous
+          produit à part.
         </p>
       </header>
 
@@ -471,6 +476,43 @@ export function LabForm() {
               }
             />
           </div>
+        </section>
+
+        <section
+          className="ds-panel dlab-form__panel"
+          aria-label="ToggleButtonGroup"
+        >
+          <h2 className="dlab-form__panel-title">ToggleButtonGroup</h2>
+          <p className="dlab-form__hint">
+            Choix exclusif en segment horizontal — option sélectionnée en fond
+            brand + texte on-brand.
+          </p>
+          <ToggleButtonGroup
+            value={themeDemo}
+            onChange={setThemeDemo}
+            aria-label="Thème (démo)"
+            options={[
+              {
+                value: 'system',
+                label: 'Système',
+                leading: (
+                  <LucideIcon icon={Monitor} size="sm" aria-hidden="true" />
+                ),
+              },
+              {
+                value: 'light',
+                label: 'Clair',
+                leading: <LucideIcon icon={Sun} size="sm" aria-hidden="true" />,
+              },
+              {
+                value: 'dark',
+                label: 'Sombre',
+                leading: (
+                  <LucideIcon icon={Moon} size="sm" aria-hidden="true" />
+                ),
+              },
+            ]}
+          />
         </section>
 
         <section className="ds-panel dlab-form__panel" aria-label="FormSection">

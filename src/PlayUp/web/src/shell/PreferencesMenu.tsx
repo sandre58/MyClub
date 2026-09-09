@@ -9,7 +9,13 @@ import {
   type SupportedLocale,
 } from '../i18n/config';
 import { setStoredLocale } from '../i18n/resolveLocale';
+import type { ThemePreference } from '../theme/config';
+import {
+  getThemePreference,
+  setThemePreference,
+} from '../theme/setThemePreference';
 import { localeFlag } from './localeFlags';
+import { ThemePreferenceListbox } from './ThemePreferenceListbox';
 import './preferences-menu.css';
 
 type PreferencesMenuProps = {
@@ -18,12 +24,14 @@ type PreferencesMenuProps = {
 };
 
 /**
- * Global preferences entry (language now; theme later).
+ * Global preferences entry — language and theme.
  * Immediate apply — no save button.
  */
 export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
   const { t, i18n } = useTranslation('shell');
   const [open, setOpen] = useState(false);
+  const [themePreference, setThemePreferenceState] =
+    useState<ThemePreference>(getThemePreference);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const languageFieldId = useId();
@@ -59,6 +67,11 @@ export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
     }
     setStoredLocale(value);
     await i18n.changeLanguage(value);
+  }
+
+  function onThemeChange(preference: ThemePreference) {
+    setThemePreferenceState(preference);
+    setThemePreference(preference);
   }
 
   const rootClass = ['shell-preferences', className].filter(Boolean).join(' ');
@@ -105,6 +118,17 @@ export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
                   leading: localeFlag('en'),
                 },
               ]}
+            />
+          </Field>
+
+          <Field
+            label={t('preferences.theme.label')}
+            className="shell-preferences__theme-field"
+          >
+            <ThemePreferenceListbox
+              value={themePreference}
+              onChange={onThemeChange}
+              aria-label={t('preferences.theme.label')}
             />
           </Field>
         </div>

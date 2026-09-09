@@ -30,6 +30,7 @@ import {
 } from '../ui';
 import { declaredSchedule } from '../shell/competitionPeriod';
 import { PreferencesMenu } from '../shell/PreferencesMenu';
+import { useThemeRoot } from '../theme/useThemeRoot';
 import {
   COMPETITION_NAME_MAX_LENGTH,
   type CompetitionListItem,
@@ -40,6 +41,7 @@ import {
  * Choisir / créer une compétition. Shell V1 commence sur `/competitions/:id…`.
  */
 export function HomePage() {
+  useThemeRoot();
   const { t } = useTranslation('home');
   const { t: tc } = useTranslation('competitions');
   const { t: tCommon } = useTranslation('common');

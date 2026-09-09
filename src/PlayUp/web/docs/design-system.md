@@ -29,6 +29,17 @@ Do **not** create `brand/`, `ui/`, or `design-system/product/` folders without a
 
 Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole product palette: **Slate** (`data-palette="slate"`).
 
+## Theme (light / dark)
+
+- User preference: `system` | `light` | `dark` — persisted as `playup:theme` (default `system`).
+- Resolved theme on DOM: `data-theme="light|dark"` on `.ds-root` and `document.documentElement`.
+- **`applyTheme()`** (`src/theme/applyTheme.ts`) is the **sole DOM authority** — do not set `data-theme` in React JSX.
+- Dark content tokens: `palettes/slate-dark.css` overrides **content primitives only** under `.ds-root[data-theme='dark']`.
+- **Chrome primitives** (`--primitive-chrome*`) stay in `slate.css` and are **never** overridden — shell navy is invariant.
+- Preference UI: `ToggleButtonGroup` in **Préférences** (icon + label inline; binds to preference, not resolved theme).
+- Accueil `PlayUpWordmark surface="home"` swaps light/dark rasters via CSS when `data-theme` changes.
+- `useThemeRoot()` re-stamps `data-theme` after each React commit (React strips attributes it does not own).
+
 ## Validation surfaces
 
 | Surface            | Role                                                                                                                  |
@@ -103,7 +114,8 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 Product forms (e.g. Teams identity dialogs) use:
 
-`Field`, `TextInput`, `InputNumber`, `Select`, `Upload`, `ColorPicker`, `Alert`.
+`Field`, `TextInput`, `InputNumber`, `Select`, `Upload`, `ColorPicker`, `Alert`,
+`Switch`, `SwitchPanel`, `ChoiceTile`, `ToggleButtonGroup`.
 
 Logo identity uses the DS **Upload** picture-card via `pages/LogoMediaField` (feature adapter). Do not reintroduce a crest+file-row chrome in product forms.
 

@@ -5,7 +5,8 @@
 
 /* Lockup rasters — Accueil (`accueil-*.png`) and chrome wordmark (`*-on-chrome.png`). */
 .ds-lockup-mark,
-.ds-lockup-wordmark {
+.ds-lockup-wordmark,
+.ds-lockup-wordmark-pair {
   display: block;
   width: auto;
   max-width: 100%;
@@ -17,6 +18,25 @@
 
 .ds-lockup-wordmark {
   height: 2.625rem;
+}
+
+.ds-lockup-wordmark-pair {
+  line-height: 0;
+}
+
+/* Accueil: light canvas uses dark ink wordmark; dark canvas uses on-chrome asset. */
+.ds-lockup-wordmark--on-dark {
+  display: none;
+}
+
+:root[data-theme='dark'] .ds-lockup-wordmark--on-light,
+.ds-root[data-theme='dark'] .ds-lockup-wordmark--on-light {
+  display: none;
+}
+
+:root[data-theme='dark'] .ds-lockup-wordmark--on-dark,
+.ds-root[data-theme='dark'] .ds-lockup-wordmark--on-dark {
+  display: block;
 }
 
 /* Trend — même vocabulaire que la marque. */

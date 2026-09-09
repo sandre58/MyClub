@@ -11,6 +11,7 @@ import { ShellHeader } from './ShellHeader';
 import { ShellMain } from './ShellMain';
 import { ShellSidebar } from './ShellSidebar';
 import { SHELL_ATTENTION_DRAWER_PANEL_ID } from './shellIds';
+import { useThemeRoot } from '../theme/useThemeRoot';
 import { useShellViewport } from './useShellViewport';
 
 const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed';
@@ -19,6 +20,7 @@ const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed';
  * Product shell (14.6.1) — global framing only. Business pages render via Outlet.
  */
 export function AppShell() {
+  useThemeRoot();
   const { t } = useTranslation('common');
   const location = useLocation();
   const viewport = useShellViewport();

@@ -1,6 +1,7 @@
 ﻿/*
  * Form controls — Field, TextInput, InputNumber, Select, Upload, ColorPicker,
- * Switch, SwitchPanel, ChoiceTile, OutcomePoints, ReorderList, FormSection.
+ * Switch, SwitchPanel, ChoiceTile, ToggleButtonGroup, OutcomePoints,
+ * ReorderList, FormSection.
  * Ant Design = interaction inspiration only; tokens / geometry = Play'Up.
  */
 
@@ -646,6 +647,103 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-8);
+}
+
+/* —— ToggleButtonGroup —— */
+.ds-toggle-button-group {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-secondary);
+}
+
+.ds-toggle-button-group[data-disabled='true'] {
+  opacity: 0.55;
+}
+
+.ds-toggle-button-group__option {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-width: 0;
+  min-height: var(--control-height);
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border: none;
+  border-radius: 0;
+  border-inline-end: var(--border-width) solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration) var(--motion-easing),
+    color var(--motion-duration) var(--motion-easing),
+    box-shadow var(--motion-duration) var(--motion-easing);
+}
+
+.ds-toggle-button-group__option:last-child {
+  border-inline-end: none;
+}
+
+/*
+ * End radii always match the group shell so a selected fill at either end
+ * follows the control’s rounded corners (not a sharp rectangle).
+ */
+.ds-toggle-button-group__option:first-child {
+  border-start-start-radius: calc(var(--radius-control) - var(--border-width));
+  border-end-start-radius: calc(var(--radius-control) - var(--border-width));
+}
+
+.ds-toggle-button-group__option:last-child {
+  border-start-end-radius: calc(var(--radius-control) - var(--border-width));
+  border-end-end-radius: calc(var(--radius-control) - var(--border-width));
+}
+
+.ds-toggle-button-group__option:hover:not(:disabled):not([data-selected='true']) {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-ink) 4%, transparent);
+}
+
+.ds-toggle-button-group__option[data-selected='true'] {
+  z-index: 1;
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ds-toggle-button-group__option:focus-visible {
+  z-index: 2;
+  outline: none;
+  box-shadow: var(--focus-halo);
+}
+
+.ds-toggle-button-group__option:disabled,
+.ds-toggle-button-group__option[data-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ds-toggle-button-group__leading {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: inherit;
+}
+
+.ds-toggle-button-group__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* —— OutcomePoints —— */

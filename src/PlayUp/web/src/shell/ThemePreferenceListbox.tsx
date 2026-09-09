@@ -1,0 +1,47 @@
+import { Monitor, Moon, Sun } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { ToggleButtonGroup } from '../design-system/components/ToggleButtonGroup';
+import { LucideIcon } from '../design-system/icons/Icon';
+import type { ThemePreference } from '../theme';
+
+type ThemePreferenceListboxProps = {
+  value: ThemePreference;
+  onChange: (preference: ThemePreference) => void;
+  'aria-label'?: string;
+};
+
+/**
+ * Theme preference control — binds to preference, not resolved theme.
+ */
+export function ThemePreferenceListbox({
+  value,
+  onChange,
+  'aria-label': ariaLabel,
+}: ThemePreferenceListboxProps) {
+  const { t } = useTranslation('shell');
+
+  return (
+    <ToggleButtonGroup
+      value={value}
+      onChange={onChange}
+      aria-label={ariaLabel}
+      options={[
+        {
+          value: 'system',
+          label: t('preferences.theme.system'),
+          leading: <LucideIcon icon={Monitor} size="sm" aria-hidden="true" />,
+        },
+        {
+          value: 'light',
+          label: t('preferences.theme.light'),
+          leading: <LucideIcon icon={Sun} size="sm" aria-hidden="true" />,
+        },
+        {
+          value: 'dark',
+          label: t('preferences.theme.dark'),
+          leading: <LucideIcon icon={Moon} size="sm" aria-hidden="true" />,
+        },
+      ]}
+    />
+  );
+}

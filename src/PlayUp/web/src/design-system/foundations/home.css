@@ -108,8 +108,14 @@
 }
 
 .ds-home__wordmark,
-.ds-home__lockup-copy .ds-lockup-wordmark {
+.ds-home__lockup-copy .ds-lockup-wordmark-pair {
   display: block;
+  height: var(--home-wordmark-h);
+  width: auto;
+  max-width: none;
+}
+
+.ds-home__lockup-copy .ds-lockup-wordmark-pair .ds-lockup-wordmark {
   height: var(--home-wordmark-h);
   width: auto;
   max-width: none;
