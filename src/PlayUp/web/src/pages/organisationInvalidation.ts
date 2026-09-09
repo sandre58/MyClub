@@ -4,6 +4,7 @@ import { queryKeys } from '../queryKeys';
 export async function invalidateAfterOrganisationMutation(
   queryClient: QueryClient,
   competitionId: string,
+  options?: { stageId?: string },
 ) {
   await Promise.all([
     queryClient.invalidateQueries({
@@ -18,5 +19,15 @@ export async function invalidateAfterOrganisationMutation(
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.overview(competitionId),
     }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.competitions.consultation(competitionId),
+    }),
+    ...(options?.stageId
+      ? [
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.stages.detail(options.stageId),
+          }),
+        ]
+      : []),
   ]);
 }

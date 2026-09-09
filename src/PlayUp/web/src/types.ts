@@ -1036,13 +1036,6 @@ export interface StageOverview {
   draws: StageDraw[];
 }
 
-export const resultTypeOptions: readonly ResultType[] = [
-  'Played',
-  'Forfeit',
-  'WalkOver',
-  'Administrative',
-] as const;
-
 export function sideLabel(side: EntrySide): string {
   return side.displayName?.trim() || i18n.t('unknownEntry');
 }

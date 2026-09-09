@@ -1157,22 +1157,14 @@ function TeamsPlateauReading({
   const showMarker =
     minimumTeams > 0 && maximumTeams > 0 && minimumTeams < maximumTeams;
 
-  const statusTone = atCap
-    ? 'cap'
-    : belowMinimum
-      ? missingMinimum === 1
-        ? 'blocking'
-        : 'warning'
-      : 'ok';
+  const statusTone = atCap ? 'cap' : belowMinimum ? 'blocking' : 'ok';
 
   const meterTone: MeterTone =
     statusTone === 'cap'
       ? 'info'
       : statusTone === 'blocking'
         ? 'error'
-        : statusTone === 'warning'
-          ? 'attention'
-          : 'success';
+        : 'success';
 
   const statusLabel = atCap
     ? t('plateauCapReached')

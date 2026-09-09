@@ -57,39 +57,18 @@ import {
   type HeritablePartKey,
   type RegulationImpactPreview,
 } from './regulationImpact';
+import {
+  ALL_RANKING_CRITERIA,
+  DEFAULT_RANKING_CRITERIA,
+  normalizeCriteria,
+} from './standingCriteria';
 import './regulation.css';
-
-const ALL_CRITERIA: RankingCriterion[] = [
-  'Points',
-  'GoalDifference',
-  'GoalsFor',
-  'GoalsAgainst',
-  'Wins',
-  'HeadToHead',
-];
-
-const DEFAULT_CRITERIA: RankingCriterion[] = [
-  'Points',
-  'GoalDifference',
-  'GoalsFor',
-  'HeadToHead',
-];
 
 const CARD_SWATCH: Record<DisciplinaryType, string> = {
   Yellow: '#F5C518',
   Red: '#E11D48',
   White: '#F8FAFC',
 };
-
-/** Points always first — T3 arbitration. */
-function normalizeCriteria(
-  criteria: RankingCriterion[] | null | undefined,
-): RankingCriterion[] {
-  const rest = (criteria ?? DEFAULT_CRITERIA).filter(
-    (item) => item !== 'Points',
-  );
-  return ['Points', ...rest];
-}
 
 function formFromView(data: OrganisationView): ReplaceRegulationRequest {
   const regulation = data.regulation;
@@ -403,9 +382,10 @@ export function RegulationEditorDialog({
     t,
   );
 
-  const criteria = form.rankingCriteria ?? DEFAULT_CRITERIA;
+  const criteria = form.rankingCriteria ?? DEFAULT_RANKING_CRITERIA;
   const availableCriteria = useMemo(
-    () => ALL_CRITERIA.filter((criterion) => !criteria.includes(criterion)),
+    () =>
+      ALL_RANKING_CRITERIA.filter((criterion) => !criteria.includes(criterion)),
     [criteria],
   );
 

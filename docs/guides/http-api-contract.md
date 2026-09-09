@@ -28,6 +28,7 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 | `StructureFormatKind` | organisation / consultation format (`Championship` \| `Groups` \| `Cup` \| `Swiss`) |
 | `MatchGenerationFormat` | organisation `structure.matchGenerationFormat`; `ConfigureStructureRequest.matchGenerationFormat` (`SingleRoundRobin` \| `DoubleRoundRobin`) |
 | `ProgressionOutcome` | progression-rules / placement-award-rules paths (`Winner` \| `Loser`) |
+| `RankingCriterion` | standing-rules / competition regulation (`Points` \| `GoalDifference` \| `GoalsFor` \| `GoalsAgainst` \| `Wins` \| `HeadToHead`) |
 
 ## Named response contracts (Phase 12.8)
 

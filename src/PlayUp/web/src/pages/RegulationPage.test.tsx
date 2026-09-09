@@ -3,7 +3,10 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { fetchOrganisationView, replaceCompetitionRegulation } from '../api';
+import {
+  fetchOrganisationView,
+  replaceCompetitionRegulation,
+} from '../api';
 import { RegulationPage } from './RegulationPage';
 import type {
   OrganisationStageDefaultsBinding,

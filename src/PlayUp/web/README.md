@@ -97,17 +97,17 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 
 ## Scripts
 
-| Script               | Role                                      |
-| -------------------- | ----------------------------------------- |
-| `npm run dev`        | Vite HMR server                           |
-| `npm run build`      | Typecheck + production bundle             |
-| `npm run format`     | Prettier write                            |
-| `npm run format:check` | Prettier check (CI)                     |
-| `npm run lint`       | Oxlint (React / TypeScript / oxc)         |
-| `npm run typecheck`  | `tsc -b`                                  |
-| `npm run test`       | Vitest watch                              |
-| `npm run test:run`   | Vitest single run (CI)                    |
-| `npm run preview`    | Serve the production bundle               |
+| Script                 | Role                              |
+| ---------------------- | --------------------------------- |
+| `npm run dev`          | Vite HMR server                   |
+| `npm run build`        | Typecheck + production bundle     |
+| `npm run format`       | Prettier write                    |
+| `npm run format:check` | Prettier check (CI)               |
+| `npm run lint`         | Oxlint (React / TypeScript / oxc) |
+| `npm run typecheck`    | `tsc -b`                          |
+| `npm run test`         | Vitest watch                      |
+| `npm run test:run`     | Vitest single run (CI)            |
+| `npm run preview`      | Serve the production bundle       |
 
 ### Quality gates (CI `web` job)
 

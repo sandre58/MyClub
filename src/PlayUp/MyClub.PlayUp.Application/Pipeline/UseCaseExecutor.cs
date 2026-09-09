@@ -1031,6 +1031,19 @@ public sealed class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Replaces StandingRules on a classifying stage (allowed after Start). No standing recalculation write-side.
+    /// </summary>
+    public async Task ReplaceStageStandingRulesAsync(
+        StageId stageId,
+        StandingRules standingRules,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageStandingRules.Execute(stage, standingRules, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Assembles <see cref="OrganisationViewDto"/> for the Organisation hub.
     /// </summary>
     public async Task<OrganisationViewDto> GetOrganisationViewAsync(
