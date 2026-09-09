@@ -14,7 +14,8 @@ namespace MyClub.PlayUp.Host;
 /// <summary>
 /// Maps Domain / Application failures to minimal ProblemDetails responses.
 /// </summary>
-internal sealed class PlayUpExceptionHandler : IExceptionHandler
+/// <param name="logger">Logger for server failures (≥ 500).</param>
+internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHandler> logger) : IExceptionHandler
 {
     /// <inheritdoc />
     public async ValueTask<bool> TryHandleAsync(
@@ -28,12 +29,14 @@ internal sealed class PlayUpExceptionHandler : IExceptionHandler
             return false;
         }
 
+        var correlationId = httpContext.GetCorrelationId();
         var problem = new ProblemDetails
         {
             Status = statusCode,
             Title = title,
             Detail = exception.Message,
-            Instance = httpContext.Request.Path
+            Instance = httpContext.Request.Path,
+            Extensions = { ["correlationId"] = correlationId }
         };
         if (code is not null)
         {
@@ -45,10 +48,26 @@ internal sealed class PlayUpExceptionHandler : IExceptionHandler
             problem.Extensions["reasons"] = application.Reasons;
         }
 
+        if (statusCode >= StatusCodes.Status500InternalServerError)
+        {
+            LogServerFailure(logger, exception, code, statusCode.Value, httpContext.Request.Path.Value);
+        }
+
         httpContext.Response.StatusCode = statusCode.Value;
         await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken).ConfigureAwait(false);
         return true;
     }
+
+    [LoggerMessage(
+        EventId = 1,
+        Level = LogLevel.Error,
+        Message = "Server failure {ErrorCode} returned {StatusCode} for {RequestPath}")]
+    private static partial void LogServerFailure(
+        ILogger logger,
+        Exception exception,
+        string? errorCode,
+        int statusCode,
+        string? requestPath);
 
     private static (int? StatusCode, string? Title, string? Code) Map(Exception exception) =>
         exception switch

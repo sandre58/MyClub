@@ -446,10 +446,17 @@ These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no
 | **404** | Missing resource — `ApplicationFailureException` with `Application.StageNotFound`, `Application.CompetitionNotFound`, or `Application.MatchNotFound` |
 | **409** | Business conflict / closed competition / Domain rule — specific Application codes below, or any `DomainException` (`extensions.code` = Domain code) |
 | **400** | Other `ApplicationFailureException` codes (invalid request / preconditions) |
-| **500** | Unhandled exception (not mapped by `PlayUpExceptionHandler`) |
+| **500** | Unhandled exception, or mapped server failure (e.g. Media `Media.StorageDeleteFailed`) |
+
+### Correlation
+
+- Request may send `X-Correlation-Id` (non-empty, ≤ 128 chars, `[A-Za-z0-9._-]`). Invalid or missing values are replaced by a server-generated Guid (`D` format).
+- Every response includes `X-Correlation-Id` with the resolved value.
+- Error `ProblemDetails` include the same value as `extensions.correlationId` (serialized alongside other extensions on the wire).
 
 ProblemDetails extensions:
 
+- `correlationId` — links the client-visible error to server logs for the same request
 - `code` — machine-readable string (SPA maps via `errors` i18n namespace; English `detail` is diagnostic fallback)
 - `reasons` — optional string array (e.g. completion blockers)
 

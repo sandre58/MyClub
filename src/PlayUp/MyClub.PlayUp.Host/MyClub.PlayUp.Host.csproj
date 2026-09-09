@@ -11,12 +11,14 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="Serilog.AspNetCore" />
+        <PackageReference Include="Serilog.Formatting.Compact" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj"/>
-        <ProjectReference Include="..\MyClub.PlayUp.Infrastructure\MyClub.PlayUp.Infrastructure.csproj"/>
-        <ProjectReference Include="..\..\Media\MyClub.Media.Infrastructure\MyClub.Media.Infrastructure.csproj"/>
+        <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+        <ProjectReference Include="..\MyClub.PlayUp.Infrastructure\MyClub.PlayUp.Infrastructure.csproj" />
+        <ProjectReference Include="..\..\Media\MyClub.Media.Infrastructure\MyClub.Media.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>
