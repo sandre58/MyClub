@@ -14,7 +14,6 @@
     font-weight: var(--font-weight-semibold);
     line-height: var(--leading-tight);
     white-space: nowrap;
-    cursor: help;
 }
 
 .ds-chip--soft {

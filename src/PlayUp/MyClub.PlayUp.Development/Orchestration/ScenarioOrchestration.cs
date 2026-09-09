@@ -499,7 +499,7 @@ internal static class ScenarioOrchestration
                 context,
                 recipe,
                 cancellationToken,
-                MatchEnrichment.WithExtraTimeAndPenalties(BootstrapRegulation.Standard()))
+                BootstrapRegulation.Standard())
             .ConfigureAwait(false);
         await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
@@ -523,6 +523,9 @@ internal static class ScenarioOrchestration
             context, competition, "sf", "Demis de finale", "Demis de finale", sfSlotKeys);
         var final = CreateKnockoutStage(
             context, competition, "final", "Finale", "Finale", finalSlotKeys);
+
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(semi, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
 
         Stage[] allStages = [roundOf32, roundOf16, quarter, semi, final];
 
@@ -613,7 +616,7 @@ internal static class ScenarioOrchestration
                 context,
                 recipe,
                 cancellationToken,
-                MatchEnrichment.WithExtraTimeAndPenalties(BootstrapRegulation.Standard()))
+                BootstrapRegulation.Standard())
             .ConfigureAwait(false);
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
@@ -636,6 +639,12 @@ internal static class ScenarioOrchestration
             context, competition, "final", "Finale", "Finale", finalSlotKeys);
         var bronze = CreateKnockoutStage(
             context, competition, "bronze", "Match pour la 3e place", "Match pour la 3e place", bronzeSlotKeys);
+
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(roundOf16, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(quarter, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(semi, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(bronze, context.Clock);
 
         WireWorldCupQualification(groups, roundOf16, context.Clock);
 
@@ -724,11 +733,10 @@ internal static class ScenarioOrchestration
         };
 
         var baseline = BootstrapRegulation.Standard();
-        var regulation = MatchEnrichment.WithExtraTimeAndPenalties(
-            new Regulation(
-                new EntryRules(minimumTeams: 8, maximumTeams: 16),
-                baseline.MatchRules,
-                baseline.StandingRules));
+        var regulation = new Regulation(
+            new EntryRules(minimumTeams: 8, maximumTeams: 16),
+            baseline.MatchRules,
+            baseline.StandingRules);
 
         var competition = await CreateCompetitionAsync(
                 context,
@@ -774,6 +782,7 @@ internal static class ScenarioOrchestration
             "Finale",
             "Finale",
             ["F-A", "F-B"]);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
         final.ReplaceDefaultTieFormat(richTie, context.Clock);
         final.ReplaceRoundTieFormat(final.Rounds[0].Id, richTie, context.Clock);
         var finalFixture = final.AddFixture(final.Rounds[0].Id, context.Clock);

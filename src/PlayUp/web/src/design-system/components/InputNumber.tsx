@@ -9,6 +9,9 @@ import {
   type ReactNode,
 } from 'react'
 import { CloseIcon, ChevronDownIcon, ChevronUpIcon } from '../icons/shellIcons'
+import { MinusIcon, PlusIcon } from '../icons/overviewIcons'
+
+export type InputNumberControlsLayout = 'end' | 'split'
 
 export type InputNumberProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -22,7 +25,14 @@ export type InputNumberProps = Omit<
   step?: number
   precision?: number
   controls?: boolean
+  /**
+   * `end` — Ant-like vertical chevrons (default).
+   * `split` — horizontal − value + (édition dense / mockup règlement).
+   */
+  controlsLayout?: InputNumberControlsLayout
   leadingIcon?: ReactNode
+  /** Static trailing unit (e.g. « min ») — not an action affix. */
+  suffix?: ReactNode
   invalid?: boolean
   allowClear?: boolean
   clearLabel?: string
@@ -73,7 +83,9 @@ export function InputNumber({
   step = 1,
   precision,
   controls = true,
+  controlsLayout = 'end',
   leadingIcon,
+  suffix,
   invalid = false,
   allowClear = false,
   clearLabel = 'Vider',
@@ -103,6 +115,11 @@ export function InputNumber({
   }, [current, precision, focused])
 
   const showClear = allowClear && current != null && !disabled
+  const split = controls && controlsLayout === 'split'
+  const decDisabled =
+    disabled || (min != null && current != null && current <= min)
+  const incDisabled =
+    disabled || (max != null && current != null && current >= max)
 
   function emit(next: number | null) {
     let committed = next
@@ -165,35 +182,89 @@ export function InputNumber({
     onKeyDown?.(event)
   }
 
+  const input = (
+    <input
+      {...props}
+      id={inputId}
+      type="text"
+      inputMode="decimal"
+      disabled={disabled}
+      className="ds-input__control"
+      aria-invalid={invalid || undefined}
+      value={draft}
+      onChange={handleChange}
+      onFocus={(event) => {
+        setFocused(true)
+        onFocus?.(event)
+      }}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+    />
+  )
+
+  if (split) {
+    return (
+      <div
+        className="ds-input ds-input-number ds-input-number--split"
+        data-disabled={disabled ? 'true' : 'false'}
+        data-invalid={invalid ? 'true' : 'false'}
+        data-controls="true"
+        data-controls-layout="split"
+      >
+        {leadingIcon ? (
+          <span className="ds-input__leading" aria-hidden="true">
+            {leadingIcon}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          className="ds-input__affix ds-input-number__step"
+          tabIndex={-1}
+          disabled={decDisabled}
+          aria-label="Diminuer"
+          onClick={() => stepBy(-1)}
+        >
+          <MinusIcon size="sm" aria-hidden="true" />
+        </button>
+        {input}
+        {suffix ? (
+          <span className="ds-input-number__suffix" aria-hidden="true">
+            {suffix}
+          </span>
+        ) : null}
+        <button
+          type="button"
+          className="ds-input__affix ds-input-number__step"
+          tabIndex={-1}
+          disabled={incDisabled}
+          aria-label="Augmenter"
+          onClick={() => stepBy(1)}
+        >
+          <PlusIcon size="sm" aria-hidden="true" />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
       className="ds-input ds-input-number"
       data-disabled={disabled ? 'true' : 'false'}
       data-invalid={invalid ? 'true' : 'false'}
       data-controls={controls ? 'true' : 'false'}
+      data-controls-layout="end"
     >
       {leadingIcon ? (
         <span className="ds-input__leading" aria-hidden="true">
           {leadingIcon}
         </span>
       ) : null}
-      <input
-        {...props}
-        id={inputId}
-        type="text"
-        inputMode="decimal"
-        disabled={disabled}
-        className="ds-input__control"
-        aria-invalid={invalid || undefined}
-        value={draft}
-        onChange={handleChange}
-        onFocus={(event) => {
-          setFocused(true)
-          onFocus?.(event)
-        }}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-      />
+      {input}
+      {suffix ? (
+        <span className="ds-input-number__suffix" aria-hidden="true">
+          {suffix}
+        </span>
+      ) : null}
       {showClear ? (
         <button
           type="button"
@@ -212,9 +283,7 @@ export function InputNumber({
             type="button"
             className="ds-input__affix ds-input-number__step"
             tabIndex={-1}
-            disabled={
-              disabled || (max != null && current != null && current >= max)
-            }
+            disabled={incDisabled}
             aria-label="Augmenter"
             onClick={() => stepBy(1)}
           >
@@ -224,9 +293,7 @@ export function InputNumber({
             type="button"
             className="ds-input__affix ds-input-number__step"
             tabIndex={-1}
-            disabled={
-              disabled || (min != null && current != null && current <= min)
-            }
+            disabled={decDisabled}
             aria-label="Diminuer"
             onClick={() => stepBy(-1)}
           >

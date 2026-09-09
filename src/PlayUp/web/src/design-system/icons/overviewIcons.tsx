@@ -1,16 +1,21 @@
 import {
-    ArrowRight,
-    CalendarPlus,
-    Check,
-    Clipboard,
-    Copy,
-    Flag,
-    Layers,
-    Pencil,
-    Pipette,
-    Plus,
-    Trash2,
-    UsersRound,
+  ArrowRight,
+  CalendarPlus,
+  Check,
+  Clipboard,
+  Copy,
+  Equal,
+  Flag,
+  GripVertical,
+  Layers,
+  Minus,
+  Pencil,
+  Pipette,
+  Plus,
+  Trash2,
+  Trophy,
+  UsersRound,
+  X,
 } from 'lucide-react'
 import type { SVGProps } from 'react'
 import { Icon, LucideIcon, type IconSize } from './Icon'
@@ -37,6 +42,31 @@ export function NextActionIcon({ size, ...props }: OverviewIconProps) {
 /** Ajout — plus (CTA Créer). */
 export function PlusIcon({ size, ...props }: OverviewIconProps) {
   return <LucideIcon icon={Plus} size={size} {...props} />
+}
+
+/** Stepper — moins. */
+export function MinusIcon({ size, ...props }: OverviewIconProps) {
+  return <LucideIcon icon={Minus} size={size} {...props} />
+}
+
+/** Drag handle — grip vertical. */
+export function GripIcon({ size, ...props }: OverviewIconProps) {
+  return <LucideIcon icon={GripVertical} size={size} {...props} />
+}
+
+/** Victoire / trophée. */
+export function TrophyIcon({ size, ...props }: OverviewIconProps) {
+  return <LucideIcon icon={Trophy} size={size} {...props} />
+}
+
+/** Nul — égalité. */
+export function EqualIcon({ size, ...props }: OverviewIconProps) {
+  return <LucideIcon icon={Equal} size={size} {...props} />
+}
+
+/** Défaite — croix. */
+export function CrossIcon({ size, ...props }: OverviewIconProps) {
+  return <LucideIcon icon={X} size={size} {...props} />
 }
 
 /** Identité — crayon. */

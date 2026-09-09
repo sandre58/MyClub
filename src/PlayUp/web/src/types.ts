@@ -651,6 +651,26 @@ export interface OrganisationStageHubSummary {
   numberOfSeeds?: number | null
   /** DrawRules.Constraints (all stored constraints). */
   drawConstraints?: OrganisationDrawConstraint[]
+  /** Provenance of heritable Match/Standing parts (DefaultsBinding). */
+  defaultsBinding?: OrganisationStageDefaultsBinding
+}
+
+/** Whether a heritable part still follows Competition defaults. */
+export interface OrganisationHeritablePartBinding {
+  isBound: boolean
+}
+
+/**
+ * Stage DefaultsBinding projection — never value equality.
+ * Standing parts are null when the phase does not classify.
+ */
+export interface OrganisationStageDefaultsBinding {
+  matchDuration: OrganisationHeritablePartBinding
+  extraTime: OrganisationHeritablePartBinding
+  penaltyShootout: OrganisationHeritablePartBinding
+  administrativeResult: OrganisationHeritablePartBinding
+  points: OrganisationHeritablePartBinding | null
+  rankingCriteria: OrganisationHeritablePartBinding | null
 }
 
 /** Host ProgressionOutcome — placement / progression selector. */

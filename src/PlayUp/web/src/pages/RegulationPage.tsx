@@ -26,6 +26,7 @@ import {fetchOrganisationView} from '../api'
 import {Alert} from '../design-system/components/Alert'
 import {Chip, type ChipTone} from '../design-system/components/Chip'
 import {Meter, type MeterTone} from '../design-system/components/Meter'
+import {FormSection} from '../design-system/components/FormSection'
 import {PageHead} from '../design-system/components/PageHead'
 import {TextLink} from '../design-system/components/TextLink'
 import {LucideIcon} from '../design-system/icons/Icon'
@@ -40,10 +41,11 @@ import type {
     RankingCriterion,
     StructureFormatKind,
 } from '../types'
+import {RegulationEditorDialog} from './RegulationEditorDialog'
 import {
-    RegulationEditorDialog,
-    type RegulationEditorSection,
-} from './RegulationEditorDialog'
+    isPartOverridden,
+    isStagePersonalized,
+} from './regulationImpact'
 import './regulation.css'
 import {stageStatusLabel} from "../i18n/enumLabels.ts";
 
@@ -65,8 +67,7 @@ type PhaseFlow = {
 export function RegulationPage() {
     const {competitionId = ''} = useParams()
     const {t} = useTranslation('regulation')
-    const [editorSection, setEditorSection] =
-        useState<RegulationEditorSection | null>(null)
+    const [editorOpen, setEditorOpen] = useState(false)
 
     const organisationQuery = useQuery({
         queryKey: queryKeys.competitions.organisation(competitionId),
@@ -93,8 +94,6 @@ export function RegulationPage() {
     const data = organisationQuery.data
     const {regulation, stages} = data
     const canReplace = data.actions.includes('ReplaceRegulation')
-    const openEditor = (section: RegulationEditorSection = 'entries') =>
-        setEditorSection(section)
     const showStandingTile = stages.some((stage) => stage.hasStandingRules === true)
 
     return (
@@ -113,7 +112,7 @@ export function RegulationPage() {
                                     : t('editRegulationDisabledHint')
                             }
                             aria-label={t('editRegulation')}
-                            onClick={() => openEditor('entries')}
+                            onClick={() => setEditorOpen(true)}
                         >
                             <PencilIcon size="sm"/>
                             <span>{t('editRegulation')}</span>
@@ -131,28 +130,12 @@ export function RegulationPage() {
                     aria-label={t('frameHeading')}
                 >
                     <div className="regulation-frame__stack">
-                        <EntriesTile
-                            regulation={regulation}
-                            canEdit={canReplace}
-                            onEdit={() => openEditor('entries')}
-                        />
-                        <DisciplineTile
-                            regulation={regulation}
-                            canEdit={canReplace}
-                            onEdit={() => openEditor('discipline')}
-                        />
+                        <EntriesTile regulation={regulation}/>
+                        <DisciplineTile regulation={regulation}/>
                     </div>
-                    <MatchTile
-                        regulation={regulation}
-                        canEdit={canReplace}
-                        onEdit={() => openEditor('match')}
-                    />
+                    <MatchTile regulation={regulation}/>
                     {showStandingTile ? (
-                        <StandingTile
-                            regulation={regulation}
-                            canEdit={canReplace}
-                            onEdit={() => openEditor('standing')}
-                        />
+                        <StandingTile regulation={regulation}/>
                     ) : null}
                 </section>
 
@@ -175,7 +158,6 @@ export function RegulationPage() {
                                     key={stage.stageId}
                                     stage={stage}
                                     ordinal={index + 1}
-                                    frame={regulation}
                                 />
                             ))}
                         </div>
@@ -185,9 +167,8 @@ export function RegulationPage() {
 
             <RegulationEditorDialog
                 data={data}
-                open={editorSection !== null}
-                initialSection={editorSection ?? 'entries'}
-                onClose={() => setEditorSection(null)}
+                open={editorOpen}
+                onClose={() => setEditorOpen(false)}
             />
         </main>
     )
@@ -200,38 +181,15 @@ function FrameCard({
                        icon,
                        title,
                        children,
-                       canEdit,
-                       onEdit,
-                       editAriaLabel,
                    }: {
     icon: ReactNode
     title: string
     children: ReactNode
-    canEdit?: boolean
-    onEdit?: () => void
-    editAriaLabel?: string
 }) {
     return (
-        <article className="regulation-card">
-            <header className="regulation-card__head">
-        <span className="regulation-card__icon" aria-hidden="true">
-          {icon}
-        </span>
-                <h3 className="regulation-card__title">{title}</h3>
-                {canEdit && onEdit ? (
-                    <button
-                        type="button"
-                        className="regulation-card__edit"
-                        aria-label={editAriaLabel ?? title}
-                        title={editAriaLabel}
-                        onClick={onEdit}
-                    >
-                        <PencilIcon size="sm" />
-                    </button>
-                ) : null}
-            </header>
-            <div className="regulation-card__body">{children}</div>
-        </article>
+        <FormSection icon={icon} title={title}>
+            {children}
+        </FormSection>
     )
 }
 
@@ -240,12 +198,8 @@ function FrameCard({
 
 function EntriesTile({
                          regulation,
-                         canEdit,
-                         onEdit,
                      }: {
     regulation: OrganisationRegulationSummary
-    canEdit?: boolean
-    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const min = regulation.minimumTeams
@@ -255,11 +209,6 @@ function EntriesTile({
         <FrameCard
             icon={<PersonIcon size="md"/>}
             title={t('families.entries')}
-            canEdit={canEdit}
-            onEdit={onEdit}
-            editAriaLabel={t('editSectionAria', {
-                section: t('families.entries'),
-            })}
         >
             <div
                 className="regulation-capacity"
@@ -298,12 +247,8 @@ function EntriesTile({
 
 function MatchTile({
                        regulation,
-                       canEdit,
-                       onEdit,
                    }: {
     regulation: OrganisationRegulationSummary
-    canEdit?: boolean
-    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const halfTime = regulation.halfTimeDuration ?? 0
@@ -338,11 +283,6 @@ function MatchTile({
         <FrameCard
             icon={<LucideIcon icon={Volleyball} size="md"/>}
             title={t('families.match')}
-            canEdit={canEdit}
-            onEdit={onEdit}
-            editAriaLabel={t('editSectionAria', {
-                section: t('families.match'),
-            })}
         >
             <div className="regulation-match" aria-label={t('matchTimeline.aria')}>
                 <div className="regulation-match__layout">
@@ -408,12 +348,8 @@ function MatchTile({
 
 function DisciplineTile({
                             regulation,
-                            canEdit,
-                            onEdit,
                         }: {
     regulation: OrganisationRegulationSummary
-    canEdit?: boolean
-    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const types = regulation.allowedTypes ?? []
@@ -422,11 +358,6 @@ function DisciplineTile({
         <FrameCard
             icon={<LucideIcon icon={PlayingCardsFan} size="md"/>}
             title={t('families.discipline')}
-            canEdit={canEdit}
-            onEdit={onEdit}
-            editAriaLabel={t('editSectionAria', {
-                section: t('families.discipline'),
-            })}
         >
             <p className="regulation-discipline__subtitle">{t('discipline.subtitle')}</p>
             {types.length === 0 ? (
@@ -601,12 +532,8 @@ function ClockRow({pieces}: { pieces: MatchClockPiece[] }) {
 
 function StandingTile({
                           regulation,
-                          canEdit,
-                          onEdit,
                       }: {
     regulation: OrganisationRegulationSummary
-    canEdit?: boolean
-    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const maxPts = Math.max(
@@ -624,11 +551,6 @@ function StandingTile({
         <FrameCard
             icon={<LucideIcon icon={Podium} size="md"/>}
             title={t('families.standing')}
-            canEdit={canEdit}
-            onEdit={onEdit}
-            editAriaLabel={t('editSectionAria', {
-                section: t('families.standing'),
-            })}
         >
             <div className="regulation-standing">
                 <div className="regulation-standing__points">
@@ -733,20 +655,27 @@ function PointGauge({
 
 // —— Phases: tile ——
 
+function PersonalizedBadge() {
+    const { t } = useTranslation('regulation')
+    return (
+        <StatusBadge tone="warn" density="compact">
+            {t('personalized')}
+        </StatusBadge>
+    )
+}
+
 function PhaseTile({
                        stage,
                        ordinal,
-                       frame,
                    }: {
     stage: OrganisationStageHubSummary
     ordinal: number
-    frame: OrganisationRegulationSummary
 }) {
     const {t} = useTranslation('regulation')
     const structureHref = `/stages/${stage.stageId}`
     const flows = buildPhaseFlows(stage, t)
     const ruleColumns = buildPhaseRuleColumns(stage, t)
-    const differsFromFrame = phaseDiffersFromFrame(stage, frame)
+    const personalized = isStagePersonalized(stage)
 
     return (
         <article className="regulation-phase">
@@ -759,11 +688,7 @@ function PhaseTile({
                 </div>
                 <span className="regulation-phase__head-meta">
                     <StageStatusBadge status={stage.status} density="compact"/>
-                    {differsFromFrame ? (
-                            <StatusBadge tone="warn" density="compact">
-                                {t('differsFromFrame')}
-                            </StatusBadge>
-                    ) : null}
+                    {personalized ? <PersonalizedBadge /> : null}
                 </span>
             </header>
 
@@ -842,6 +767,11 @@ function PhaseTile({
                                                     key={chip.key}
                                                     tone={chip.tone}
                                                     title={chip.title}
+                                                    className={
+                                                        chip.overridden
+                                                            ? 'regulation-rule-chip--overridden'
+                                                            : undefined
+                                                    }
                                                 >
                                                     {chip.label}
                                                 </Chip>
@@ -853,7 +783,14 @@ function PhaseTile({
                                             {column.items.map((item) => (
                                                 <li
                                                     key={item.key}
-                                                    className='regulation-rule-list__item'
+                                                    className={[
+                                                        'regulation-rule-list__item',
+                                                        item.overridden
+                                                            ? 'regulation-rule-list__item--overridden'
+                                                            : null,
+                                                    ]
+                                                        .filter(Boolean)
+                                                        .join(' ')}
                                                     title={item.title}
                                                 >
                                                     {item.index != null ? (
@@ -900,6 +837,8 @@ type PhaseRuleChip = {
     label: ReactNode
     tone?: ChipTone
     title?: string
+    /** Unbound heritable part — accent label on the phase tile. */
+    overridden?: boolean
 }
 
 type PhaseRuleItem = {
@@ -909,6 +848,8 @@ type PhaseRuleItem = {
     /** Numbered ranking-criteria pill when set. */
     index?: number
     icon?: LucideGlyph
+    /** Unbound heritable part — accent label on the phase tile. */
+    overridden?: boolean
 }
 
 type PhaseRuleColumn = {
@@ -1186,6 +1127,12 @@ function buildPhaseRuleColumns(
     t: Translate,
 ): PhaseRuleColumn[] {
     const columns: PhaseRuleColumn[] = []
+    const matchDurationOverridden = isPartOverridden(stage, 'matchDuration')
+    const extraTimeOverridden = isPartOverridden(stage, 'extraTime')
+    const penaltiesOverridden = isPartOverridden(stage, 'penaltyShootout')
+    const forfeitOverridden = isPartOverridden(stage, 'administrativeResult')
+    const pointsOverridden = isPartOverridden(stage, 'points')
+    const rankingOverridden = isPartOverridden(stage, 'rankingCriteria')
 
     const matchItems: PhaseRuleItem[] = [
         {
@@ -1195,6 +1142,7 @@ function buildPhaseRuleColumns(
                 minutes: stage.durationPerPeriod,
             }),
             icon: Clock3,
+            overridden: matchDurationOverridden,
         },
     ]
     if (stage.hasExtraTime) {
@@ -1217,6 +1165,7 @@ function buildPhaseRuleColumns(
             title: hasDetail
                 ? t('tokens.extraTimeTip', {periods, minutes})
                 : t('tokens.extraTime'),
+            overridden: extraTimeOverridden,
         })
     }
     if (stage.hasPenaltyShootout) {
@@ -1238,6 +1187,7 @@ function buildPhaseRuleColumns(
                 kicks != null
                     ? t('tokens.penaltiesTip', {count: kicks})
                     : t('tokens.penalties'),
+            overridden: penaltiesOverridden,
         })
     }
     columns.push({
@@ -1377,11 +1327,13 @@ function buildPhaseRuleColumns(
         })
     }
 
+    const classifies = stage.hasStandingRules === true
     const forfeitWinner = stage.forfeitWinnerGoals
     const forfeitLoser = stage.forfeitLoserGoals
-    const showForfeit = forfeitWinner != null && forfeitLoser != null
+    const showForfeit =
+        classifies && forfeitWinner != null && forfeitLoser != null
     const showStandingPoints =
-        stage.hasStandingRules !== false &&
+        classifies &&
         stage.winPoints != null &&
         stage.drawPoints != null &&
         stage.lossPoints != null
@@ -1392,6 +1344,7 @@ function buildPhaseRuleColumns(
             key: criterion,
             label: criterionLabel(criterion, t),
             index: index + 1,
+            overridden: rankingOverridden,
         }))
         if (showForfeit) {
             items.push({
@@ -1409,6 +1362,7 @@ function buildPhaseRuleColumns(
                     winner: forfeitWinner,
                     loser: forfeitLoser,
                 }),
+                overridden: forfeitOverridden,
             })
         }
         columns.push({
@@ -1422,18 +1376,21 @@ function buildPhaseRuleColumns(
                           label: stage.winPoints,
                           tone: 'win',
                           title: t('tokens.standingWinTip', {value: stage.winPoints}),
+                          overridden: pointsOverridden,
                       },
                       {
                           key: 'draw',
                           label: stage.drawPoints,
                           tone: 'draw',
                           title: t('tokens.standingDrawTip', {value: stage.drawPoints}),
+                          overridden: pointsOverridden,
                       },
                       {
                           key: 'loss',
                           label: stage.lossPoints,
                           tone: 'loss',
                           title: t('tokens.standingLossTip', {value: stage.lossPoints}),
+                          overridden: pointsOverridden,
                       },
                   ]
                 : undefined,
@@ -1442,80 +1399,6 @@ function buildPhaseRuleColumns(
     }
 
     return columns
-}
-
-function phaseDiffersFromFrame(
-    stage: OrganisationStageHubSummary,
-    frame: OrganisationRegulationSummary,
-): boolean {
-    if (stage.numberOfPeriods !== frame.numberOfPeriods) {
-        return true
-    }
-    if (stage.durationPerPeriod !== frame.durationPerPeriod) {
-        return true
-    }
-    if (Boolean(stage.hasExtraTime) !== Boolean(frame.hasExtraTime)) {
-        return true
-    }
-    if (stage.hasExtraTime) {
-        if (
-            (stage.extraTimeNumberOfPeriods ?? null) !==
-            (frame.extraTimeNumberOfPeriods ?? null)
-        ) {
-            return true
-        }
-        if (
-            (stage.extraTimeDurationPerPeriod ?? null) !==
-            (frame.extraTimeDurationPerPeriod ?? null)
-        ) {
-            return true
-        }
-    }
-    if (Boolean(stage.hasPenaltyShootout) !== Boolean(frame.hasPenaltyShootout)) {
-        return true
-    }
-    if (
-        stage.hasPenaltyShootout &&
-        (stage.penaltyInitialKicksPerTeam ?? null) !==
-            (frame.penaltyInitialKicksPerTeam ?? null)
-    ) {
-        return true
-    }
-
-    const stageForfeitWinner = stage.forfeitWinnerGoals
-    const stageForfeitLoser = stage.forfeitLoserGoals
-    const frameForfeitWinner = frame.forfeitWinnerGoals
-    const frameForfeitLoser = frame.forfeitLoserGoals
-    if (
-        stageForfeitWinner != null &&
-        stageForfeitLoser != null &&
-        frameForfeitWinner != null &&
-        frameForfeitLoser != null &&
-        (stageForfeitWinner !== frameForfeitWinner ||
-            stageForfeitLoser !== frameForfeitLoser)
-    ) {
-        return true
-    }
-
-    if (stage.hasStandingRules === true) {
-        if (
-            stage.winPoints != null &&
-            stage.drawPoints != null &&
-            stage.lossPoints != null &&
-            (stage.winPoints !== frame.winPoints ||
-                stage.drawPoints !== frame.drawPoints ||
-                stage.lossPoints !== frame.lossPoints)
-        ) {
-            return true
-        }
-        const stageCriteria = (stage.rankingCriteria ?? []).join('|')
-        const frameCriteria = (frame.rankingCriteria ?? []).join('|')
-        if (stageCriteria !== frameCriteria) {
-            return true
-        }
-    }
-
-    return false
 }
 
 function PlacementAwardsList({

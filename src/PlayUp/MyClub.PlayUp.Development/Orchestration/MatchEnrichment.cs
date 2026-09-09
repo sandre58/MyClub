@@ -43,6 +43,7 @@ internal static class MatchEnrichment
 
     /// <summary>
     /// Adds standard football extra time (2×15) and TAB (5 kicks) for cup / regulation demos.
+    /// Prefer <see cref="SpecializeWithExtraTimeAndPenalties"/> on stages when DefaultsBinding must unbind.
     /// </summary>
     public static Regulation WithExtraTimeAndPenalties(Regulation regulation)
     {
@@ -57,6 +58,24 @@ internal static class MatchEnrichment
                 new PenaltyShootoutPolicy(initialKicksPerTeam: 5)),
             regulation.StandingRules,
             regulation.DisciplinaryRules);
+    }
+
+    /// <summary>
+    /// Stage specialization: set ET+TAB via <see cref="Stage.ReplaceMatchRules"/> so ExtraTime and
+    /// PenaltyShootout unbind while MatchDuration stays bound when unchanged.
+    /// </summary>
+    public static void SpecializeWithExtraTimeAndPenalties(Stage stage, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(clock);
+        var match = stage.Regulation.MatchRules;
+        stage.ReplaceMatchRules(
+            new MatchRules(
+                match.Duration,
+                match.AdministrativeResultPolicy,
+                new ExtraTimePolicy(durationPerPeriod: 15, numberOfPeriods: 2),
+                new PenaltyShootoutPolicy(initialKicksPerTeam: 5)),
+            clock);
     }
 
     public static void ApplyRandomCompetitionSchedule(

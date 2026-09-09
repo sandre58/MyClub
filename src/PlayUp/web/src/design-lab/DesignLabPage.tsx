@@ -28,6 +28,7 @@ import { LabStandings } from './LabStandings'
 import { LabDialog } from './LabDialog'
 import { LabToast } from './LabToast'
 import { LabForm } from './LabForm'
+import { LabRegulation } from './LabRegulation'
 import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait'
 import { Toaster } from '../design-system/components/Toaster'
 import type { LabLifecycle } from './labData'
@@ -42,6 +43,7 @@ type LabView =
   | 'dialog'
   | 'toast'
   | 'form'
+  | 'regulation'
   | 'overview'
   | 'overview-loading'
   | 'matches'
@@ -72,6 +74,7 @@ export function DesignLabPage() {
   const isDialogBoard = view === 'dialog'
   const isToastBoard = view === 'toast'
   const isFormBoard = view === 'form'
+  const isRegulationBoard = view === 'regulation'
   const labCollapsed = chromeVp === 'phone' ? false : railCollapsed
 
   useEffect(() => {
@@ -164,6 +167,10 @@ export function DesignLabPage() {
         <main className="dlab-form-board ds-shell-workspace">
           <LabForm />
         </main>
+      ) : isRegulationBoard ? (
+        <main className="dlab-form-board ds-shell-workspace">
+          <LabRegulation />
+        </main>
       ) : isHome ? (
         <LabHome
           empty={view === 'home-empty'}
@@ -231,6 +238,7 @@ const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'dialog', label: 'Dialog' },
   { key: 'toast', label: 'Toast' },
   { key: 'form', label: 'Form' },
+  { key: 'regulation', label: 'Règlement' },
   { key: 'overview', label: "Vue d'ensemble" },
   { key: 'overview-loading', label: "Vue d'ensemble chargement" },
   { key: 'matches', label: 'Matchs' },

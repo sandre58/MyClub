@@ -186,7 +186,7 @@ public sealed class CrossGroupStandingAssemblerTests
             standings,
             position: 3,
             matches,
-            stage.Regulation.StandingRules,
+            stage.Regulation.StandingRules.OrThrow(),
             CalculateStanding.ToStandingPenalties(stage.Penalties));
 
         withPenalty.EntryAt(1).Should().Be(other);
@@ -238,7 +238,7 @@ public sealed class CrossGroupStandingAssemblerTests
         var standingA = CalculateStanding.Execute(
             entriesA, matches, stage.Regulation.StandingRules.OrThrow());
         var standingB = CalculateStanding.Execute(
-            entriesB, matches, stage.Regulation.StandingRules);
+            entriesB, matches, stage.Regulation.StandingRules.OrThrow());
 
         var thirds = new[] { standingA.EntryAt(3)!.Value, standingB.EntryAt(3)!.Value };
         var standings = new Dictionary<GroupId, Standing>

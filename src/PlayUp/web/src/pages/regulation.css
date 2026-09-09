@@ -42,97 +42,28 @@
     max-width: 100%;
 }
 
-.regulation-frame__stack > .regulation-card {
+.regulation-frame__stack > .ds-form-section {
     flex: 1 1 auto;
     width: 100%;
     min-width: 0;
     min-height: 0;
 }
 
-.regulation-frame > .regulation-card {
+.regulation-frame > .ds-form-section {
     flex: 1 1 18rem;
     min-width: min(100%, 16rem);
     max-width: 100%;
 }
 
-.regulation-frame--with-standing > .regulation-card:nth-of-type(1) {
+.regulation-frame--with-standing > .ds-form-section:nth-of-type(1) {
     flex: 1.15 1 17rem;
 }
 
-.regulation-frame--with-standing > .regulation-card:nth-of-type(2) {
+.regulation-frame--with-standing > .ds-form-section:nth-of-type(2) {
     flex: 1.45 1 20rem;
 }
 
-.regulation-card {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-16);
-    min-height: 0;
-    padding: var(--space-24);
-    background: var(--color-surface);
-    border: var(--border-width) solid var(--color-border);
-    border-radius: var(--radius-panel);
-    box-shadow: var(--shadow-page);
-}
-
-.regulation-card__head {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    min-width: 0;
-}
-
-.regulation-card__icon {
-    display: inline-flex;
-    flex: none;
-    color: var(--color-brand);
-    line-height: 0;
-}
-
-.regulation-card__icon .ds-icon {
-    color: inherit;
-}
-
-.regulation-card__title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--text-body);
-    font-weight: var(--font-weight-bold);
-    line-height: var(--leading-tight);
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.regulation-card__edit {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    margin-inline-start: auto;
-    padding: var(--space-4);
-    border: none;
-    border-radius: var(--radius-control);
-    background: transparent;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-}
-
-.regulation-card__edit:hover,
-.regulation-card__edit:focus-visible {
-    color: var(--color-brand);
-}
-
-.regulation-card__body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-16);
-    flex: 1 1 auto;
-    min-width: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-}
-
-/* -- Cadre: Equipes -- */
+/* Discipline token strip (not FormSection) */
 .regulation-capacity {
     display: flex;
     flex-direction: column;
@@ -1250,7 +1181,7 @@
 
 @media (max-width: 51.999rem) {
     .regulation-frame__stack,
-    .regulation-frame > .regulation-card {
+    .regulation-frame > .ds-form-section {
         flex: 1 1 100%;
         min-width: 100%;
         width: 100%;
@@ -1293,7 +1224,7 @@
         padding: var(--space-12);
     }
 
-    .regulation-card,
+    .ds-form-section,
     .regulation-phase {
         padding: var(--space-16);
     }
@@ -1337,8 +1268,14 @@
 
 .regulation-editor__subheading {
     margin: var(--space-8) 0 0;
-    font-size: var(--text-caption, 0.875rem);
+    font-size: var(--text-label, 0.875rem);
     font-weight: var(--font-weight-semibold, 600);
+    color: var(--color-text-secondary);
+}
+
+.regulation-editor__hint {
+    margin: 0;
+    font-size: var(--text-label, 0.875rem);
     color: var(--color-text-secondary);
 }
 
@@ -1360,4 +1297,50 @@
 .regulation-editor__criteria-actions {
     display: inline-flex;
     gap: var(--space-4);
+}
+
+.regulation-impact {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.regulation-impact__lead {
+    margin: 0;
+    font-weight: var(--font-weight-semibold, 600);
+}
+
+.regulation-impact__list {
+    margin: 0;
+    padding-inline-start: 1.25rem;
+}
+
+.regulation-impact__footnote {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-label, 0.875rem);
+}
+
+.regulation-rule-list__item--overridden {
+    color: var(--color-attention);
+    font-weight: var(--font-weight-semibold);
+}
+
+.regulation-rule-list__item--overridden .regulation-rule-list__mark {
+    color: var(--color-attention);
+}
+
+.regulation-rule-list__item--overridden .regulation-criteria__n {
+    color: var(--color-attention);
+    background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface));
+}
+
+.regulation-rule-list__item--overridden .regulation-detail {
+    color: color-mix(in srgb, var(--color-attention) 72%, var(--color-text-secondary));
+    font-weight: var(--font-weight-regular);
+}
+
+.regulation-rule-chip--overridden {
+    font-weight: var(--font-weight-bold);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-attention) 80%, transparent);
 }

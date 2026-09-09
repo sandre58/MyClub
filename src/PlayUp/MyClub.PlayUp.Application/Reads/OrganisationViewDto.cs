@@ -202,6 +202,7 @@ public sealed record OrganisationReadinessDto(
 /// <param name="ForfeitLoserGoals">Administrative forfeit goals for the losing side.</param>
 /// <param name="NumberOfSeeds">SeedingRules.NumberOfSeeds when DrawRules seeding is set.</param>
 /// <param name="DrawConstraints">DrawRules.Constraints (all stored constraints).</param>
+/// <param name="DefaultsBinding">Provenance of heritable Match/Standing parts (DefaultsBinding).</param>
 public sealed record OrganisationStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -243,7 +244,24 @@ public sealed record OrganisationStageHubSummaryDto(
     int? ForfeitWinnerGoals = null,
     int? ForfeitLoserGoals = null,
     int? NumberOfSeeds = null,
-    IReadOnlyList<OrganisationDrawConstraintDto>? DrawConstraints = null);
+    IReadOnlyList<OrganisationDrawConstraintDto>? DrawConstraints = null,
+    OrganisationStageDefaultsBindingDto? DefaultsBinding = null);
+
+/// <summary>Whether a heritable part still follows Competition defaults.</summary>
+/// <param name="IsBound"><see langword="true"/> when the part is bound to Competition.</param>
+public sealed record OrganisationHeritablePartBindingDto(bool IsBound);
+
+/// <summary>
+/// Stage DefaultsBinding projection for hub lecture / impact preview (never value equality).
+/// Standing parts are <see langword="null"/> when the phase does not classify.
+/// </summary>
+public sealed record OrganisationStageDefaultsBindingDto(
+    OrganisationHeritablePartBindingDto MatchDuration,
+    OrganisationHeritablePartBindingDto ExtraTime,
+    OrganisationHeritablePartBindingDto PenaltyShootout,
+    OrganisationHeritablePartBindingDto AdministrativeResult,
+    OrganisationHeritablePartBindingDto? Points,
+    OrganisationHeritablePartBindingDto? RankingCriteria);
 
 /// <summary>One placement-award path for the Règlement hub.</summary>
 /// <param name="Rank">1-based final competition rank.</param>

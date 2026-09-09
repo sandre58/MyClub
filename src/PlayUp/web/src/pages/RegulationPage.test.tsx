@@ -5,7 +5,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { fetchOrganisationView, replaceCompetitionRegulation } from '../api'
 import { RegulationPage } from './RegulationPage'
-import type { OrganisationView } from '../types'
+import type {
+  OrganisationStageDefaultsBinding,
+  OrganisationStageHubSummary,
+  OrganisationView,
+} from '../types'
 
 vi.mock('../api', () => ({
   fetchOrganisationView: vi.fn(),
@@ -15,6 +19,116 @@ vi.mock('../api', () => ({
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 const stageFinaleId = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+
+function binding(parts: {
+  matchDuration?: boolean
+  extraTime?: boolean
+  penaltyShootout?: boolean
+  administrativeResult?: boolean
+  points?: boolean | null
+  rankingCriteria?: boolean | null
+}): OrganisationStageDefaultsBinding {
+  return {
+    matchDuration: { isBound: parts.matchDuration ?? true },
+    extraTime: { isBound: parts.extraTime ?? true },
+    penaltyShootout: { isBound: parts.penaltyShootout ?? true },
+    administrativeResult: { isBound: parts.administrativeResult ?? true },
+    points:
+      parts.points === null
+        ? null
+        : { isBound: parts.points ?? true },
+    rankingCriteria:
+      parts.rankingCriteria === null
+        ? null
+        : { isBound: parts.rankingCriteria ?? true },
+  }
+}
+
+function groupesStage(
+  overrides: Partial<OrganisationStageHubSummary> = {},
+): OrganisationStageHubSummary {
+  return {
+    stageId,
+    name: 'Groupes',
+    status: 'Draft',
+    teamCount: 8,
+    matchCount: 12,
+    groupCount: 2,
+    roundCount: 0,
+    numberOfPeriods: 2,
+    durationPerPeriod: 45,
+    hasExtraTime: false,
+    hasPenaltyShootout: false,
+    hasStandingRules: true,
+    winPoints: 3,
+    drawPoints: 1,
+    lossPoints: 0,
+    rankingCriteria: ['Points', 'Wins', 'GoalDifference'],
+    hasDrawRules: true,
+    drawMode: 'Random',
+    numberOfPots: 4,
+    hasQualificationRules: true,
+    qualificationPathCount: 2,
+    hasProgressionRules: false,
+    progressionPathCount: 0,
+    hasTieFormat: false,
+    numberOfLegs: null,
+    aggregateScoring: null,
+    formatKind: 'Groups',
+    defaultsBinding: binding({}),
+    ...overrides,
+  }
+}
+
+function finaleStage(
+  overrides: Partial<OrganisationStageHubSummary> = {},
+): OrganisationStageHubSummary {
+  return {
+    stageId: stageFinaleId,
+    name: 'Finale',
+    status: 'Draft',
+    teamCount: 2,
+    matchCount: 0,
+    groupCount: 0,
+    roundCount: 1,
+    numberOfPeriods: 2,
+    durationPerPeriod: 45,
+    hasExtraTime: true,
+    extraTimeNumberOfPeriods: 2,
+    extraTimeDurationPerPeriod: 15,
+    hasPenaltyShootout: true,
+    penaltyInitialKicksPerTeam: 5,
+    hasStandingRules: false,
+    winPoints: null,
+    drawPoints: null,
+    lossPoints: null,
+    hasDrawRules: false,
+    hasQualificationRules: false,
+    qualificationPathCount: 0,
+    hasProgressionRules: false,
+    progressionPathCount: 0,
+    hasTieFormat: true,
+    numberOfLegs: 2,
+    aggregateScoring: true,
+    hasAwayGoalsRule: true,
+    hasTieExtraTime: true,
+    hasTiePenaltyShootout: true,
+    hasPlacementAwardRules: true,
+    placementAwardCount: 2,
+    placementAwards: [
+      { rank: 1, outcome: 'Winner' },
+      { rank: 2, outcome: 'Loser' },
+    ],
+    formatKind: 'Cup',
+    defaultsBinding: binding({
+      extraTime: false,
+      penaltyShootout: false,
+      points: null,
+      rankingCriteria: null,
+    }),
+    ...overrides,
+  }
+}
 
 function organisationView(
   overrides: Partial<OrganisationView> = {},
@@ -44,11 +158,8 @@ function organisationView(
       lossPoints: 0,
       allowedTypes: ['Yellow', 'Red'],
       halfTimeDuration: 15,
-      hasExtraTime: true,
-      extraTimeDurationPerPeriod: 15,
-      extraTimeNumberOfPeriods: 2,
-      hasPenaltyShootout: true,
-      penaltyInitialKicksPerTeam: 5,
+      hasExtraTime: false,
+      hasPenaltyShootout: false,
       rankingCriteria: [
         'Points',
         'GoalDifference',
@@ -78,75 +189,7 @@ function organisationView(
       attachedMatchCount: 0,
       blockers: [],
     },
-    stages: [
-      {
-        stageId,
-        name: 'Groupes',
-        status: 'Draft',
-        teamCount: 8,
-        matchCount: 12,
-        groupCount: 2,
-        roundCount: 0,
-        numberOfPeriods: 2,
-        durationPerPeriod: 45,
-        hasExtraTime: false,
-        hasPenaltyShootout: false,
-        hasStandingRules: true,
-        winPoints: 3,
-        drawPoints: 1,
-        lossPoints: 0,
-        rankingCriteria: ['Points', 'Wins', 'GoalDifference'],
-        hasDrawRules: true,
-        drawMode: 'Random',
-        numberOfPots: 4,
-        hasQualificationRules: true,
-        qualificationPathCount: 2,
-        hasProgressionRules: false,
-        progressionPathCount: 0,
-        hasTieFormat: false,
-        numberOfLegs: null,
-        aggregateScoring: null,
-        formatKind: 'Groups',
-      },
-      {
-        stageId: stageFinaleId,
-        name: 'Finale',
-        status: 'Draft',
-        teamCount: 2,
-        matchCount: 0,
-        groupCount: 0,
-        roundCount: 1,
-        numberOfPeriods: 2,
-        durationPerPeriod: 45,
-        hasExtraTime: true,
-        extraTimeNumberOfPeriods: 2,
-        extraTimeDurationPerPeriod: 15,
-        hasPenaltyShootout: true,
-        penaltyInitialKicksPerTeam: 5,
-        hasStandingRules: false,
-        winPoints: null,
-        drawPoints: null,
-        lossPoints: null,
-        hasDrawRules: false,
-        hasQualificationRules: false,
-        qualificationPathCount: 0,
-        hasProgressionRules: false,
-        progressionPathCount: 0,
-        hasTieFormat: true,
-        numberOfLegs: 2,
-        aggregateScoring: true,
-        hasAwayGoalsRule: true,
-        hasTieExtraTime: true,
-        hasTiePenaltyShootout: true,
-        hasPlacementAwardRules: true,
-        placementAwardCount: 2,
-        placementAwards: [
-          { rank: 1, outcome: 'Winner' },
-          { rank: 2, outcome: 'Loser' },
-        ],
-        formatKind: 'Cup',
-      },
-    ],
+    stages: [groupesStage(), finaleStage()],
     ...overrides,
   }
 }
@@ -195,13 +238,18 @@ describe('RegulationPage', () => {
     expect(screen.getAllByText('Différence de buts').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('1re MT')).toBeInTheDocument()
     expect(screen.getByText('Pause')).toBeInTheDocument()
-    expect(screen.getByText('PR1')).toBeInTheDocument()
+    expect(screen.queryByText('PR1')).not.toBeInTheDocument()
     expect(
-      screen.getByLabelText(/Durée maximale du match 120 minutes/),
+      screen.getByLabelText(/Durée maximale du match 90 minutes/),
     ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Modifier le règlement' })).toBeEnabled()
     expect(screen.getByRole('heading', { name: 'Groupes' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Finale' })).toBeInTheDocument()
+    const finaleTile = screen.getByRole('heading', { name: 'Finale' }).closest('article')
+    expect(finaleTile).not.toBeNull()
+    expect(
+      within(finaleTile!).queryByRole('heading', { name: 'Classement' }),
+    ).not.toBeInTheDocument()
     expect(screen.getAllByText('Brouillon').length).toBeGreaterThanOrEqual(2)
     expect(screen.getByText('Aller-retour')).toBeInTheDocument()
     expect(screen.getByText('Cumul des scores')).toBeInTheDocument()
@@ -209,7 +257,13 @@ describe('RegulationPage', () => {
     expect(screen.getByText('Tirage aléatoire')).toBeInTheDocument()
     expect(screen.getByText('pots')).toBeInTheDocument()
     expect(screen.getAllByText('4').length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText('Diffère du règlement global')).toBeInTheDocument()
+    expect(screen.getByText('Personnalisée')).toBeInTheDocument()
+    expect(screen.queryByText('Diffère du règlement global')).not.toBeInTheDocument()
+    expect(screen.queryByText('Personnalisation')).not.toBeInTheDocument()
+    const overriddenTokens = document.querySelectorAll(
+      '.regulation-rule-list__item--overridden',
+    )
+    expect(overriddenTokens.length).toBeGreaterThanOrEqual(2)
     expect(screen.getByLabelText('Vainqueur → place 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Perdant → place 2')).toBeInTheDocument()
     expect(
@@ -221,44 +275,13 @@ describe('RegulationPage', () => {
     expect(screen.getByText('· 2×15′')).toBeInTheDocument()
     expect(screen.getAllByText(/TAB/).length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('· 5 tirs')).toBeInTheDocument()
-    expect(screen.getByText('Tirs au but')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Structure' })).toHaveLength(2)
   })
 
   it('hides Classement when no classifying phase exists', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
-        stages: [
-          {
-            stageId: stageFinaleId,
-            name: 'Finale',
-            status: 'Draft',
-            teamCount: 2,
-            matchCount: 1,
-            groupCount: 0,
-            roundCount: 1,
-            numberOfPeriods: 2,
-            durationPerPeriod: 45,
-            hasExtraTime: true,
-            extraTimeNumberOfPeriods: 2,
-            extraTimeDurationPerPeriod: 15,
-            hasPenaltyShootout: true,
-            penaltyInitialKicksPerTeam: 5,
-            hasStandingRules: false,
-            winPoints: null,
-            drawPoints: null,
-            lossPoints: null,
-            hasDrawRules: false,
-            hasQualificationRules: false,
-            qualificationPathCount: 0,
-            hasProgressionRules: false,
-            progressionPathCount: 0,
-            hasTieFormat: true,
-            numberOfLegs: 1,
-            aggregateScoring: null,
-            formatKind: 'Cup',
-          },
-        ],
+        stages: [finaleStage({ matchCount: 1, numberOfLegs: 1, aggregateScoring: null })],
       }),
     )
 
@@ -298,25 +321,12 @@ describe('RegulationPage', () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         stages: [
-          {
-            stageId,
-            name: 'Groupes',
-            status: 'Draft',
-            teamCount: 8,
-            matchCount: 12,
-            groupCount: 2,
-            roundCount: 0,
-            numberOfPeriods: 2,
-            durationPerPeriod: 45,
+          groupesStage({
             hasExtraTime: true,
             extraTimeNumberOfPeriods: 2,
             extraTimeDurationPerPeriod: 15,
             hasPenaltyShootout: true,
             penaltyInitialKicksPerTeam: 5,
-            hasStandingRules: true,
-            winPoints: 3,
-            drawPoints: 1,
-            lossPoints: 0,
             rankingCriteria: [
               'Points',
               'GoalDifference',
@@ -325,9 +335,6 @@ describe('RegulationPage', () => {
             ],
             forfeitWinnerGoals: 3,
             forfeitLoserGoals: 0,
-            hasDrawRules: true,
-            drawMode: 'Random',
-            numberOfPots: 4,
             numberOfSeeds: 2,
             drawConstraints: [
               {
@@ -342,14 +349,16 @@ describe('RegulationPage', () => {
             ],
             hasQualificationRules: false,
             qualificationPathCount: 0,
-            hasProgressionRules: false,
-            progressionPathCount: 0,
-            hasTieFormat: false,
-            numberOfLegs: null,
-            aggregateScoring: null,
-            formatKind: 'Groups',
-          },
+          }),
         ],
+        regulation: {
+          ...organisationView().regulation,
+          hasExtraTime: true,
+          extraTimeDurationPerPeriod: 15,
+          extraTimeNumberOfPeriods: 2,
+          hasPenaltyShootout: true,
+          penaltyInitialKicksPerTeam: 5,
+        },
       }),
     )
 
@@ -357,6 +366,7 @@ describe('RegulationPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
     expect(screen.queryByText('Diffère du règlement global')).not.toBeInTheDocument()
+    expect(screen.queryByText('Personnalisée')).not.toBeInTheDocument()
     expect(screen.getAllByText('Forfait').length).toBeGreaterThanOrEqual(2)
     expect(
       screen.getByTitle('Score administratif en cas de forfait : 3–0'),
@@ -373,25 +383,16 @@ describe('RegulationPage', () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         stages: [
-          {
-            stageId,
+          groupesStage({
             name: 'Suisse',
-            status: 'Draft',
             teamCount: 16,
             matchCount: 0,
             groupCount: 0,
-            roundCount: 0,
-            numberOfPeriods: 2,
-            durationPerPeriod: 45,
             hasExtraTime: true,
             extraTimeNumberOfPeriods: 2,
             extraTimeDurationPerPeriod: 15,
             hasPenaltyShootout: true,
             penaltyInitialKicksPerTeam: 5,
-            hasStandingRules: true,
-            winPoints: 3,
-            drawPoints: 1,
-            lossPoints: 0,
             rankingCriteria: [
               'Points',
               'GoalDifference',
@@ -401,14 +402,9 @@ describe('RegulationPage', () => {
             hasDrawRules: false,
             hasQualificationRules: false,
             qualificationPathCount: 0,
-            hasProgressionRules: false,
-            progressionPathCount: 0,
-            hasTieFormat: false,
-            numberOfLegs: null,
-            aggregateScoring: null,
             formatKind: 'Swiss',
             swissRoundCount: null,
-          },
+          }),
         ],
       }),
     )
@@ -420,7 +416,7 @@ describe('RegulationPage', () => {
     expect(screen.queryByLabelText(/Système suisse · 3 rondes/)).not.toBeInTheDocument()
   })
 
-  it('opens a sectioned editor with sync banner for eligible stages', async () => {
+  it('opens a sectioned editor without sync banner', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
 
@@ -444,64 +440,34 @@ describe('RegulationPage', () => {
       within(dialog).getByRole('heading', { name: 'Disciplinaire' }),
     ).toBeInTheDocument()
     expect(
-      within(dialog).getByText(
+      within(dialog).queryByText(
         /Les modifications seront appliquées aux phases encore en préparation/,
       ),
-    ).toBeInTheDocument()
-    expect(within(dialog).getByLabelText(/Activer les prolongations/)).toBeChecked()
-    expect(within(dialog).getByLabelText(/Activer les tirs au but/)).toBeChecked()
+    ).not.toBeInTheDocument()
+    expect(within(dialog).getByLabelText(/Activer les prolongations/)).not.toBeChecked()
   })
 
-  it('hides the sync banner when no Draft/Ready stage is eligible', async () => {
-    const user = userEvent.setup()
+  it('shows personalized badge from DefaultsBinding even when values match the frame', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
         stages: [
-          {
-            stageId,
-            name: 'Groupes',
-            status: 'Running',
-            teamCount: 8,
-            matchCount: 12,
-            groupCount: 2,
-            roundCount: 0,
-            numberOfPeriods: 2,
-            durationPerPeriod: 45,
-            hasExtraTime: false,
-            hasPenaltyShootout: false,
-            hasStandingRules: true,
-            winPoints: 3,
-            drawPoints: 1,
-            lossPoints: 0,
-            hasDrawRules: false,
-            hasQualificationRules: false,
-            qualificationPathCount: 0,
-            hasProgressionRules: false,
-            progressionPathCount: 0,
-            hasTieFormat: false,
-            numberOfLegs: null,
-            aggregateScoring: null,
-            formatKind: 'Groups',
-          },
+          groupesStage({
+            defaultsBinding: binding({
+              matchDuration: false,
+              points: false,
+              rankingCriteria: false,
+            }),
+          }),
         ],
       }),
     )
 
     renderPage()
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Modifier le règlement' }),
-    )
-
-    const dialog = await screen.findByRole('dialog')
-    expect(
-      within(dialog).queryByText(
-        /Les modifications seront appliquées aux phases encore en préparation/,
-      ),
-    ).not.toBeInTheDocument()
+    expect(await screen.findByText('Personnalisée')).toBeInTheDocument()
   })
 
-  it('asks for Ready confirmation before submitting', async () => {
+  it('asks for a single impact confirm including Ready reopen copy', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({ status: 'Ready' }),
@@ -513,27 +479,37 @@ describe('RegulationPage', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Modifier le règlement' }),
     )
+    const dialog = await screen.findByRole('dialog')
+    await user.click(within(dialog).getByLabelText(/Activer les prolongations/))
     await user.click(
-      await screen.findByRole('button', { name: 'Enregistrer le règlement' }),
+      within(dialog).getByRole('button', { name: 'Enregistrer le règlement' }),
     )
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Modifier et rouvrir la compétition ?',
-      }),
+      await screen.findByRole('heading', { name: 'Appliquer les modifications ?' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Cette modification rouvrira également la compétition/,
+      ),
     ).toBeInTheDocument()
     expect(replaceCompetitionRegulation).not.toHaveBeenCalled()
 
-    await user.click(
-      screen.getByRole('button', { name: 'Modifier et rouvrir' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Appliquer' }))
 
     await waitFor(() => {
-      expect(replaceCompetitionRegulation).toHaveBeenCalled()
+      expect(replaceCompetitionRegulation).toHaveBeenCalledWith(
+        competitionId,
+        expect.objectContaining({
+          hasExtraTime: true,
+          extraTimeDurationPerPeriod: 15,
+          extraTimeNumberOfPeriods: 2,
+        }),
+      )
     })
   })
 
-  it('opens the Match section from a tile shortcut and submits full regulation', async () => {
+  it('projects duration inherit vs keep-override in the impact confirm', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
     vi.mocked(replaceCompetitionRegulation).mockResolvedValue(undefined as never)
@@ -541,39 +517,26 @@ describe('RegulationPage', () => {
     renderPage()
 
     await user.click(
-      await screen.findByRole('button', { name: 'Modifier la section Match' }),
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
     )
-
     const dialog = await screen.findByRole('dialog')
-    expect(
-      within(dialog).getByRole('heading', { name: 'Match' }),
-    ).toBeInTheDocument()
-
+    await user.click(within(dialog).getByLabelText(/Activer les prolongations/))
     await user.click(
       within(dialog).getByRole('button', { name: 'Enregistrer le règlement' }),
     )
 
+    expect(
+      await screen.findByRole('heading', { name: 'Appliquer les modifications ?' }),
+    ).toBeInTheDocument()
+    // Impact body is a ReactNode list — assert via document text content.
+    expect(document.body.textContent).toMatch(/héritera|hériteront/)
+    expect(document.body.textContent).toMatch(/conservera|conserveront/)
+    expect(document.body.textContent).toMatch(/Prolongations/)
+    expect(screen.queryByRole('button', { name: 'Modifier la section Match' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Appliquer' }))
     await waitFor(() => {
-      expect(replaceCompetitionRegulation).toHaveBeenCalledWith(
-        competitionId,
-        expect.objectContaining({
-          durationPerPeriod: 45,
-          numberOfPeriods: 2,
-          hasExtraTime: true,
-          extraTimeDurationPerPeriod: 15,
-          extraTimeNumberOfPeriods: 2,
-          hasPenaltyShootout: true,
-          penaltyInitialKicksPerTeam: 5,
-          rankingCriteria: [
-            'Points',
-            'GoalDifference',
-            'GoalsFor',
-            'HeadToHead',
-          ],
-          forfeitWinnerGoals: 3,
-          forfeitLoserGoals: 0,
-        }),
-      )
+      expect(replaceCompetitionRegulation).toHaveBeenCalled()
     })
   })
 })

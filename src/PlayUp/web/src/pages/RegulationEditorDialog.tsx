@@ -3,10 +3,9 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query'
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { replaceCompetitionRegulation } from '../api'
-import { Alert } from '../design-system/components/Alert'
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog'
 import { Dialog } from '../design-system/components/Dialog'
 import { Field } from '../design-system/components/Field'
@@ -19,6 +18,11 @@ import type {
   RankingCriterion,
   ReplaceRegulationRequest,
 } from '../types'
+import {
+  buildRegulationImpactPreview,
+  type HeritablePartKey,
+  type RegulationImpactPreview,
+} from './regulationImpact'
 import './regulation.css'
 
 export async function invalidateAfterOrganisationMutation(
@@ -40,12 +44,6 @@ export async function invalidateAfterOrganisationMutation(
     }),
   ])
 }
-
-export type RegulationEditorSection =
-  | 'entries'
-  | 'match'
-  | 'standing'
-  | 'discipline'
 
 const ALL_CRITERIA: RankingCriterion[] = [
   'Points',
@@ -86,17 +84,109 @@ function formFromView(data: OrganisationView): ReplaceRegulationRequest {
   }
 }
 
-/** Shared ReplaceRegulation dialog — Règlement hub + Organisation hub (F3). */
+function partLabelKey(part: HeritablePartKey): string {
+  return `heritable.${part}`
+}
+
+function buildImpactMessage(
+  preview: RegulationImpactPreview,
+  competitionReady: boolean,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): ReactNode {
+  const lines: ReactNode[] = []
+
+  if (competitionReady) {
+    lines.push(
+      <p key="ready" className="regulation-impact__lead">
+        {t('editor.impactReady')}
+      </p>,
+    )
+  } else {
+    lines.push(
+      <p key="lead" className="regulation-impact__lead">
+        {t('editor.impactLead')}
+      </p>,
+    )
+  }
+
+  const { competitionOnly, changedParts, byPart, stagesUpdatedCount, eligibleStageCount } =
+    preview
+
+  if (competitionOnly.entry || competitionOnly.discipline) {
+    const bits: string[] = []
+    if (competitionOnly.entry) {
+      bits.push(t('families.entries'))
+    }
+    if (competitionOnly.discipline) {
+      bits.push(t('families.discipline'))
+    }
+    lines.push(
+      <p key="comp-only">{t('editor.impactCompetitionOnly', { parts: bits.join(', ') })}</p>,
+    )
+  }
+
+  if (changedParts.length === 0 && !competitionOnly.entry && !competitionOnly.discipline) {
+    lines.push(<p key="none">{t('editor.impactNoChanges')}</p>)
+    return <div className="regulation-impact">{lines}</div>
+  }
+
+  if (eligibleStageCount === 0 && changedParts.length > 0) {
+    lines.push(<p key="no-elig">{t('editor.impactNoEligibleStages')}</p>)
+  } else if (changedParts.length > 0) {
+    lines.push(
+      <p key="updated">
+        {t('editor.impactStagesUpdated', { count: stagesUpdatedCount })}
+      </p>,
+    )
+    lines.push(
+      <ul key="parts" className="regulation-impact__list">
+        {changedParts.map((part) => {
+          const counts = byPart[part]
+          if (!counts) {
+            return null
+          }
+          const label = t(partLabelKey(part))
+          const items: string[] = []
+          if (counts.inherit > 0) {
+            items.push(
+              t('editor.impactInherit', { count: counts.inherit, part: label }),
+            )
+          }
+          if (counts.keepOverride > 0) {
+            items.push(
+              t('editor.impactKeep', {
+                count: counts.keepOverride,
+                part: label,
+              }),
+            )
+          }
+          return (
+            <li key={part}>
+              {items.length > 0 ? items.join(' · ') : label}
+            </li>
+          )
+        })}
+      </ul>,
+    )
+    lines.push(
+      <p key="kept" className="regulation-impact__footnote">
+        {t('editor.impactOverridesKept')}
+      </p>,
+    )
+  }
+
+  return <div className="regulation-impact">{lines}</div>
+}
+
+/** Shared ReplaceRegulation dialog — Règlement hub + Organisation hub (F3 / Lot 2.5). */
 export function RegulationEditorDialog({
   data,
   open,
   onClose,
-  initialSection = 'entries',
 }: {
   data: OrganisationView
   open: boolean
   onClose: () => void
-  initialSection?: RegulationEditorSection
 }) {
   const { t } = useTranslation('regulation')
   const { t: tCommon } = useTranslation('common')
@@ -104,10 +194,8 @@ export function RegulationEditorDialog({
   const formId = useId()
   const [form, setForm] = useState(() => formFromView(data))
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const entriesRef = useRef<HTMLElement>(null)
-  const matchRef = useRef<HTMLElement>(null)
-  const standingRef = useRef<HTMLElement>(null)
-  const disciplineRef = useRef<HTMLElement>(null)
+  const [pendingPreview, setPendingPreview] =
+    useState<RegulationImpactPreview | null>(null)
 
   useEffect(() => {
     if (!open) {
@@ -115,28 +203,8 @@ export function RegulationEditorDialog({
     }
     setForm(formFromView(data))
     setConfirmOpen(false)
+    setPendingPreview(null)
   }, [open, data])
-
-  useEffect(() => {
-    if (!open) {
-      return
-    }
-    const refs: Record<RegulationEditorSection, typeof entriesRef> = {
-      entries: entriesRef,
-      match: matchRef,
-      standing: standingRef,
-      discipline: disciplineRef,
-    }
-    refs[initialSection].current?.scrollIntoView({
-      block: 'start',
-      behavior: 'smooth',
-    })
-  }, [open, initialSection])
-
-  const eligibleStages = data.stages.filter(
-    (stage) => stage.status === 'Draft' || stage.status === 'Ready',
-  )
-  const needsReadyConfirm = data.status === 'Ready'
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -160,6 +228,7 @@ export function RegulationEditorDialog({
         data.competitionId,
       )
       setConfirmOpen(false)
+      setPendingPreview(null)
       onClose()
     },
   })
@@ -214,11 +283,9 @@ export function RegulationEditorDialog({
     if (mutation.isPending) {
       return
     }
-    if (needsReadyConfirm) {
-      setConfirmOpen(true)
-      return
-    }
-    mutation.mutate()
+    const preview = buildRegulationImpactPreview(form, data)
+    setPendingPreview(preview)
+    setConfirmOpen(true)
   }
 
   return (
@@ -264,20 +331,14 @@ export function RegulationEditorDialog({
             requestSave()
           }}
         >
-          {eligibleStages.length > 0 ? (
-            <Alert tone="info" role="status">
-              {t('editor.syncBanner')}
-            </Alert>
-          ) : null}
-
           <section
-            ref={entriesRef}
             className="regulation-editor__section"
             aria-labelledby={`${formId}-entries`}
           >
             <h3 id={`${formId}-entries`} className="regulation-editor__heading">
               {t('families.entries')}
             </h3>
+            <p className="regulation-editor__hint">{t('editor.hint.entry')}</p>
             <div className="form-row">
               <Field label={t('editor.minimumTeams')} required>
                 <InputNumber
@@ -299,15 +360,18 @@ export function RegulationEditorDialog({
           </section>
 
           <section
-            ref={matchRef}
             className="regulation-editor__section"
             aria-labelledby={`${formId}-match`}
           >
             <h3 id={`${formId}-match`} className="regulation-editor__heading">
               {t('families.match')}
             </h3>
+
             <p className="regulation-editor__subheading">
               {t('editor.regulationTime')}
+            </p>
+            <p className="regulation-editor__hint">
+              {t('editor.hint.matchDuration')}
             </p>
             <div className="form-row">
               <Field label={t('editor.numberOfPeriods')} required>
@@ -339,6 +403,7 @@ export function RegulationEditorDialog({
             <p className="regulation-editor__subheading">
               {t('editor.extraTime')}
             </p>
+            <p className="regulation-editor__hint">{t('editor.hint.extraTime')}</p>
             <label className="field field--checkbox">
               <input
                 type="checkbox"
@@ -372,6 +437,9 @@ export function RegulationEditorDialog({
             ) : null}
 
             <p className="regulation-editor__subheading">{t('editor.shootout')}</p>
+            <p className="regulation-editor__hint">
+              {t('editor.hint.penaltyShootout')}
+            </p>
             <label className="field field--checkbox">
               <input
                 type="checkbox"
@@ -396,6 +464,9 @@ export function RegulationEditorDialog({
             ) : null}
 
             <p className="regulation-editor__subheading">{t('forfeit.heading')}</p>
+            <p className="regulation-editor__hint">
+              {t('editor.hint.administrativeResult')}
+            </p>
             <div className="form-row">
               <Field label={t('editor.forfeitWinner')} required>
                 <InputNumber
@@ -415,7 +486,6 @@ export function RegulationEditorDialog({
           </section>
 
           <section
-            ref={standingRef}
             className="regulation-editor__section"
             aria-labelledby={`${formId}-standing`}
           >
@@ -425,6 +495,7 @@ export function RegulationEditorDialog({
             >
               {t('families.standing')}
             </h3>
+            <p className="regulation-editor__hint">{t('editor.hint.points')}</p>
             <div className="form-row">
               <Field label={t('editor.winPoints')} required>
                 <InputNumber
@@ -450,6 +521,9 @@ export function RegulationEditorDialog({
             </div>
             <p className="regulation-editor__subheading">
               {t('criteria.heading')}
+            </p>
+            <p className="regulation-editor__hint">
+              {t('editor.hint.rankingCriteria')}
             </p>
             <ol className="regulation-editor__criteria">
               {(form.rankingCriteria ?? []).map((criterion, index) => (
@@ -493,7 +567,6 @@ export function RegulationEditorDialog({
           </section>
 
           <section
-            ref={disciplineRef}
             className="regulation-editor__section"
             aria-labelledby={`${formId}-discipline`}
           >
@@ -503,7 +576,9 @@ export function RegulationEditorDialog({
             >
               {t('families.discipline')}
             </h3>
-            <p className="regulation-editor__subheading">{t('editor.disciplineHint')}</p>
+            <p className="regulation-editor__hint">
+              {t('editor.hint.discipline')}
+            </p>
             <div className="form-row">
               {(['Yellow', 'Red', 'White'] as const).map((type) => (
                 <label key={type} className="field field--checkbox">
@@ -523,15 +598,22 @@ export function RegulationEditorDialog({
       </Dialog>
 
       <ConfirmDialog
-        open={confirmOpen}
-        title={t('editor.readyConfirmTitle')}
-        message={t('editor.readyConfirmMessage')}
-        confirmLabel={t('editor.readyConfirmAction')}
+        open={confirmOpen && pendingPreview != null}
+        title={t('editor.impactTitle')}
+        message={
+          pendingPreview
+            ? buildImpactMessage(pendingPreview, data.status === 'Ready', t)
+            : null
+        }
+        confirmLabel={t('editor.impactConfirm')}
         cancelLabel={tCommon('cancel')}
         closeLabel={tCommon('close')}
         confirmPending={mutation.isPending}
         confirmPendingLabel={t('editor.saving')}
-        onCancel={() => setConfirmOpen(false)}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setPendingPreview(null)
+        }}
         onConfirm={() => mutation.mutate()}
       />
     </>

@@ -178,7 +178,27 @@ public static class OrganisationViewAssembler
             ForfeitWinnerGoals: match.AdministrativeResultPolicy.ForfeitWinnerGoals,
             ForfeitLoserGoals: match.AdministrativeResultPolicy.ForfeitLoserGoals,
             NumberOfSeeds: draw?.SeedingRules?.NumberOfSeeds,
-            DrawConstraints: drawConstraints);
+            DrawConstraints: drawConstraints,
+            DefaultsBinding: MapDefaultsBinding(stage));
+    }
+
+    private static OrganisationStageDefaultsBindingDto MapDefaultsBinding(Stage stage)
+    {
+        var binding = stage.DefaultsBinding;
+        var classifying = stage.Regulation.StandingRules is not null;
+        OrganisationHeritablePartBindingDto? points = classifying
+            ? new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.Points))
+            : null;
+        OrganisationHeritablePartBindingDto? rankingCriteria = classifying
+            ? new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.RankingCriteria))
+            : null;
+        return new OrganisationStageDefaultsBindingDto(
+            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.MatchDuration)),
+            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.ExtraTime)),
+            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.PenaltyShootout)),
+            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.AdministrativeResult)),
+            points,
+            rankingCriteria);
     }
 
     /// <summary>
