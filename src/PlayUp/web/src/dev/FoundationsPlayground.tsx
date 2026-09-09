@@ -11,6 +11,7 @@ import { PlayUpWordmark } from '../design-system/PlayUpWordmark';
 import { TrendIcon } from '../design-system/TrendIcon';
 import { LiveStatus } from '../design-system/components/LiveStatus';
 import { TeamCrest } from '../design-system/TeamCrest';
+import { Tooltip } from '../design-system/components/Tooltip';
 import '../design-system/fonts';
 import '../design-system/index.css';
 import {
@@ -336,7 +337,6 @@ export function FoundationsPlayground() {
                       <span
                         className="ds-swatch"
                         style={{ background: `var(${row.token})` }}
-                        title={row.token}
                       />
                     </td>
                     <td>
@@ -610,53 +610,59 @@ export function FoundationsPlayground() {
               <button type="button" className="ds-btn ds-btn--ghost">
                 Retour
               </button>
-              <button
-                type="button"
-                className="ds-btn ds-icon-button"
-                aria-label="Fermer"
-              >
-                <CloseIcon />
-              </button>
+              <Tooltip content="Fermer">
+                <button
+                  type="button"
+                  className="ds-btn ds-icon-button"
+                  aria-label="Fermer"
+                >
+                  <CloseIcon />
+                </button>
+              </Tooltip>
             </div>
             <p className="ds-label">Toolbar icônes compacte (tuiles, lignes)</p>
             <div className="ds-icon-toolbar">
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
-                aria-label="Modifier"
-                title="Modifier"
-              >
-                <PencilIcon size="sm" />
-              </button>
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
-                aria-label="Supprimer"
-                title="Supprimer"
-              >
-                <TrashIcon size="sm" />
-              </button>
+              <Tooltip content="Modifier">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                  aria-label="Modifier"
+                >
+                  <PencilIcon size="sm" />
+                </button>
+              </Tooltip>
+              <Tooltip content="Supprimer">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                  aria-label="Supprimer"
+                >
+                  <TrashIcon size="sm" />
+                </button>
+              </Tooltip>
             </div>
             <p className="ds-label">
               Commit inline (✓ brand ink · ✕ secondaire — pas de primary fill)
             </p>
             <div className="ds-icon-toolbar">
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
-                aria-label="Enregistrer"
-                title="Enregistrer"
-              >
-                <CheckIcon size="sm" />
-              </button>
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                aria-label="Annuler"
-                title="Annuler"
-              >
-                <CloseIcon size="sm" />
-              </button>
+              <Tooltip content="Enregistrer">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
+                  aria-label="Enregistrer"
+                >
+                  <CheckIcon size="sm" />
+                </button>
+              </Tooltip>
+              <Tooltip content="Annuler">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
+                  aria-label="Annuler"
+                >
+                  <CloseIcon size="sm" />
+                </button>
+              </Tooltip>
             </div>
           </div>
           <div className="ds-group">

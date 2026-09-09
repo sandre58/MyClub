@@ -32,6 +32,7 @@ import { LabForm } from './LabForm';
 import { LabRegulation } from './LabRegulation';
 import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait';
 import { Toaster } from '../design-system/components/Toaster';
+import { Tooltip } from '../design-system/components/Tooltip';
 import type { LabLifecycle } from './labData';
 
 type LabChromeVp = 'desktop' | 'tablet' | 'phone';
@@ -493,16 +494,19 @@ function LabRail({
                 item.key === item.dest;
               if (!item.dest) {
                 return (
-                  <button
+                  <Tooltip
                     key={item.key}
-                    type="button"
-                    className="ds-shell-rail__link"
-                    disabled
-                    title={`${item.label} — bientôt disponible`}
+                    content={`${item.label} — bientôt disponible`}
                   >
-                    <Icon className="ds-shell-rail__icon" />
-                    <span className="ds-shell-rail__label">{item.label}</span>
-                  </button>
+                    <button
+                      type="button"
+                      className="ds-shell-rail__link"
+                      disabled
+                    >
+                      <Icon className="ds-shell-rail__icon" />
+                      <span className="ds-shell-rail__label">{item.label}</span>
+                    </button>
+                  </Tooltip>
                 );
               }
               return (

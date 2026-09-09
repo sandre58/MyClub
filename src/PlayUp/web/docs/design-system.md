@@ -72,12 +72,12 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 ## Tooltip
 
 - Canonical: `components/Tooltip.tsx` + `foundations/tooltip.css`.
-- V1 = **Hint** + **DisabledReason** only (not icon-button Labels). Specimen: Design Lab **Tooltip**.
+- V1 = **Hint** + **DisabledReason** + short **Labels** on icon-only controls (case-by-case; do not mass-migrate every `title`). Specimen: Design Lab **Tooltip**.
 - Chrome: Overlay family — `surface` + border + `radius-control` 4px. Local shadow `0 2px 6px` (lighter than `--shadow-overlay`; no `--shadow-tooltip` token). Not `ink`/`on-ink` (explored in Design Lab only).
 - Desktop: hover open **400 ms**, focus **0**, leave close **100 ms**, Escape/blur immediate.
 - Mobile: long-press (**500 ms**) on primary-action triggers; tap-toggle otherwise; auto-dismiss **~3 s**.
 - `role="tooltip"` + `aria-describedby`; text only; interactive content → Popover.
-- Do not auto-wire every `Chip.title` — wrap Hint chips/badges explicitly. Règlement is the reference migration. Do not infer Tooltip from the mere presence of `title` (Label vs Hint vs DisabledReason).
+- Prefer short Tooltip when `aria-label` is richer (e.g. named entity). Crest: Tooltip only when the crest is the sole name cue. Do not infer Tooltip from the mere presence of `title` (Label vs Hint vs DisabledReason vs duplicate of visible text).
 
 ## Toast
 

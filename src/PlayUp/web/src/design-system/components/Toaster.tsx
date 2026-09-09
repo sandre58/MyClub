@@ -10,6 +10,7 @@ import {
   TOAST_DURATION_MS,
   type ToastItem,
 } from '../toastStore';
+import { Tooltip } from './Tooltip';
 
 export type ToasterProps = {
   /** Accessible name for the dismiss control. */
@@ -148,27 +149,28 @@ function ToastView({
           <ToastToneIcon tone={toast.tone} size="md" />
         </span>
         <p className="ds-toast__message">{toast.message}</p>
-        <button
-          type="button"
-          className="ds-btn ds-btn--ghost ds-icon-button ds-toast__close"
-          aria-label={closeLabel}
-          title={closeLabel}
-          onClick={() => {
-            if (leavingRef.current) {
-              return;
-            }
-            leavingRef.current = true;
-            if (timerRef.current != null) {
-              window.clearTimeout(timerRef.current);
-              timerRef.current = null;
-            }
-            setPaused(false);
-            setLeaving(true);
-            setOpen(false);
-          }}
-        >
-          <CloseIcon size="sm" aria-hidden="true" />
-        </button>
+        <Tooltip content={closeLabel}>
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost ds-icon-button ds-toast__close"
+            aria-label={closeLabel}
+            onClick={() => {
+              if (leavingRef.current) {
+                return;
+              }
+              leavingRef.current = true;
+              if (timerRef.current != null) {
+                window.clearTimeout(timerRef.current);
+                timerRef.current = null;
+              }
+              setPaused(false);
+              setLeaving(true);
+              setOpen(false);
+            }}
+          >
+            <CloseIcon size="sm" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
       <div className="ds-toast__progress" aria-hidden="true" />
     </div>

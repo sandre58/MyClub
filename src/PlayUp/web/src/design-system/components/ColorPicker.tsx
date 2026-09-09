@@ -11,6 +11,7 @@ import { TextInput } from './TextInput';
 import { InputNumber } from './InputNumber';
 import { Popover } from './Popover';
 import { Select } from './Select';
+import { Tooltip } from './Tooltip';
 import {
   HEX6,
   clamp01,
@@ -267,19 +268,20 @@ export function ColorPicker({
           {display}
         </span>
         {showClear ? (
-          <button
-            type="button"
-            className="ds-input__affix"
-            aria-label={clearLabel}
-            title={clearLabel}
-            tabIndex={-1}
-            onClick={(event) => {
-              event.stopPropagation();
-              clearValue();
-            }}
-          >
-            <CloseIcon size="sm" aria-hidden="true" />
-          </button>
+          <Tooltip content={clearLabel}>
+            <button
+              type="button"
+              className="ds-input__affix"
+              aria-label={clearLabel}
+              tabIndex={-1}
+              onClick={(event) => {
+                event.stopPropagation();
+                clearValue();
+              }}
+            >
+              <CloseIcon size="sm" aria-hidden="true" />
+            </button>
+          </Tooltip>
         ) : null}
       </div>
 
@@ -390,18 +392,19 @@ export function ColorPicker({
                   aria-hidden="true"
                 />
                 {eyedropperSupported ? (
-                  <button
-                    type="button"
-                    className="ds-color-picker__eyedropper"
-                    disabled={disabled}
-                    aria-label={eyedropperLabel}
-                    title={eyedropperLabel}
-                    onClick={() => {
-                      void onEyedropper();
-                    }}
-                  >
-                    <PipetteIcon size="sm" aria-hidden="true" />
-                  </button>
+                  <Tooltip content={eyedropperLabel}>
+                    <button
+                      type="button"
+                      className="ds-color-picker__eyedropper"
+                      disabled={disabled}
+                      aria-label={eyedropperLabel}
+                      onClick={() => {
+                        void onEyedropper();
+                      }}
+                    >
+                      <PipetteIcon size="sm" aria-hidden="true" />
+                    </button>
+                  </Tooltip>
                 ) : null}
               </div>
 

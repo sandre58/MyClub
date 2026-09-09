@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { CloseIcon, ChevronDownIcon, ChevronUpIcon } from '../icons/shellIcons';
 import { MinusIcon, PlusIcon } from '../icons/overviewIcons';
+import { Tooltip } from './Tooltip';
 
 export type InputNumberControlsLayout = 'end' | 'split';
 
@@ -334,16 +335,17 @@ export function InputNumber({
         </span>
       ) : null}
       {showClear ? (
-        <button
-          type="button"
-          className="ds-input__affix"
-          aria-label={clearLabel}
-          title={clearLabel}
-          tabIndex={-1}
-          onClick={() => emit(null)}
-        >
-          <CloseIcon size="sm" aria-hidden="true" />
-        </button>
+        <Tooltip content={clearLabel}>
+          <button
+            type="button"
+            className="ds-input__affix"
+            aria-label={clearLabel}
+            tabIndex={-1}
+            onClick={() => emit(null)}
+          >
+            <CloseIcon size="sm" aria-hidden="true" />
+          </button>
+        </Tooltip>
       ) : null}
       {controls ? (
         <div className="ds-input-number__controls">

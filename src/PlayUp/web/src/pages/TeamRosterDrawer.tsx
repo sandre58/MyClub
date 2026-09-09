@@ -459,15 +459,16 @@ export function TeamRosterDrawer({
         </div>
         {onEditIdentity && (
           <div className="teams-drawer__identity-actions">
-            <button
-              type="button"
-              className={compactIcon}
-              title={t('roster.editIdentityTooltip')}
-              aria-label={t('roster.editIdentity')}
-              onClick={onEditIdentity}
-            >
-              <PencilIcon size="sm" />
-            </button>
+            <Tooltip content={t('roster.editIdentityTooltip')}>
+              <button
+                type="button"
+                className={compactIcon}
+                aria-label={t('roster.editIdentity')}
+                onClick={onEditIdentity}
+              >
+                <PencilIcon size="sm" />
+              </button>
+            </Tooltip>
           </div>
         )}
       </header>
@@ -478,26 +479,28 @@ export function TeamRosterDrawer({
             <SelectionBar
               countLabel={t('roster.selectionCount', { count: selectedCount })}
             >
-              <button
-                type="button"
-                className={compactIcon}
-                title={t('roster.removeSelection')}
-                aria-label={t('roster.removeSelection')}
-                disabled={rowBusy || selectionSuspended}
-                onClick={startRemoveSelection}
-              >
-                <TrashIcon size="sm" />
-              </button>
-              <button
-                type="button"
-                className={compactIcon}
-                title={t('roster.clearSelection')}
-                aria-label={t('roster.clearSelection')}
-                disabled={selectionSuspended}
-                onClick={() => setSelectedMemberIds([])}
-              >
-                <CloseIcon size="sm" />
-              </button>
+              <Tooltip content={t('roster.removeSelection')}>
+                <button
+                  type="button"
+                  className={compactIcon}
+                  aria-label={t('roster.removeSelection')}
+                  disabled={rowBusy || selectionSuspended}
+                  onClick={startRemoveSelection}
+                >
+                  <TrashIcon size="sm" />
+                </button>
+              </Tooltip>
+              <Tooltip content={t('roster.clearSelection')}>
+                <button
+                  type="button"
+                  className={compactIcon}
+                  aria-label={t('roster.clearSelection')}
+                  disabled={selectionSuspended}
+                  onClick={() => setSelectedMemberIds([])}
+                >
+                  <CloseIcon size="sm" />
+                </button>
+              </Tooltip>
             </SelectionBar>
           )}
         </div>
@@ -564,19 +567,20 @@ export function TeamRosterDrawer({
           </label>
           <div className="teams-add-group__actions">
             {canMutate ? (
-              <button
-                type="submit"
-                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__add"
-                disabled={addDisabled}
-                title={t('roster.addPlayer')}
-                aria-label={t('roster.addPlayer')}
-              >
-                {addMutation.isPending ? (
-                  <span className="ds-spinner" aria-hidden="true" />
-                ) : (
-                  <PlusIcon size="sm" />
-                )}
-              </button>
+              <Tooltip content={t('roster.addPlayer')}>
+                <button
+                  type="submit"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__add"
+                  disabled={addDisabled}
+                  aria-label={t('roster.addPlayer')}
+                >
+                  {addMutation.isPending ? (
+                    <span className="ds-spinner" aria-hidden="true" />
+                  ) : (
+                    <PlusIcon size="sm" />
+                  )}
+                </button>
+              </Tooltip>
             ) : (
               <Tooltip content={t('roster.readOnly')}>
                 <button
@@ -590,18 +594,19 @@ export function TeamRosterDrawer({
               </Tooltip>
             )}
             {canMutate ? (
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__toggle"
-                disabled={addMutation.isPending}
-                aria-expanded={staffMenuOpen}
-                aria-haspopup="menu"
-                title={t('roster.addStaff')}
-                aria-label={t('roster.addStaff')}
-                onClick={() => setStaffMenuOpen((open) => !open)}
-              >
-                <ChevronDownIcon size="sm" />
-              </button>
+              <Tooltip content={t('roster.addStaff')}>
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact teams-add-group__toggle"
+                  disabled={addMutation.isPending}
+                  aria-expanded={staffMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label={t('roster.addStaff')}
+                  onClick={() => setStaffMenuOpen((open) => !open)}
+                >
+                  <ChevronDownIcon size="sm" />
+                </button>
+              </Tooltip>
             ) : (
               <Tooltip content={t('roster.readOnly')}>
                 <button
@@ -787,31 +792,33 @@ function RosterGroup({
                           />
                         </label>
                         <div className="ds-icon-toolbar">
-                          <button
-                            type="submit"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
-                            disabled={
-                              renamePending || renameDraft.trim().length === 0
-                            }
-                            title={t('roster.confirmRename')}
-                            aria-label={t('roster.confirmRename')}
-                          >
-                            {renamePending ? (
-                              <span className="ds-spinner" aria-hidden="true" />
-                            ) : (
-                              <CheckIcon size="sm" />
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                            disabled={renamePending}
-                            title={tc('cancel')}
-                            aria-label={tc('cancel')}
-                            onClick={onCancelRow}
-                          >
-                            <CloseIcon size="sm" />
-                          </button>
+                          <Tooltip content={t('roster.confirmRename')}>
+                            <button
+                              type="submit"
+                              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
+                              disabled={
+                                renamePending || renameDraft.trim().length === 0
+                              }
+                              aria-label={t('roster.confirmRename')}
+                            >
+                              {renamePending ? (
+                                <span className="ds-spinner" aria-hidden="true" />
+                              ) : (
+                                <CheckIcon size="sm" />
+                              )}
+                            </button>
+                          </Tooltip>
+                          <Tooltip content={tc('cancel')}>
+                            <button
+                              type="button"
+                              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
+                              disabled={renamePending}
+                              aria-label={tc('cancel')}
+                              onClick={onCancelRow}
+                            >
+                              <CloseIcon size="sm" />
+                            </button>
+                          </Tooltip>
                         </div>
                       </form>
                     ) : (
@@ -824,18 +831,19 @@ function RosterGroup({
                     <div className="teams-member__actions">
                       <div className="ds-icon-toolbar">
                         {canMutate ? (
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
-                            disabled={rowBusy}
-                            title={t('roster.editMemberTooltip')}
-                            aria-label={t('roster.editMember', {
-                              name: member.displayName,
-                            })}
-                            onClick={() => onStartRename(member)}
-                          >
-                            <PencilIcon size="sm" />
-                          </button>
+                          <Tooltip content={t('roster.editMemberTooltip')}>
+                            <button
+                              type="button"
+                              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                              disabled={rowBusy}
+                              aria-label={t('roster.editMember', {
+                                name: member.displayName,
+                              })}
+                              onClick={() => onStartRename(member)}
+                            >
+                              <PencilIcon size="sm" />
+                            </button>
+                          </Tooltip>
                         ) : (
                           <Tooltip content={t('roster.readOnly')}>
                             <button
@@ -864,18 +872,19 @@ function RosterGroup({
                             </button>
                           </Tooltip>
                         ) : (
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
-                            disabled={rowBusy}
-                            title={removeHint}
-                            aria-label={t('roster.removeMember', {
-                              name: member.displayName,
-                            })}
-                            onClick={() => onStartRemove(member)}
-                          >
-                            <TrashIcon size="sm" />
-                          </button>
+                          <Tooltip content={removeHint}>
+                            <button
+                              type="button"
+                              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                              disabled={rowBusy}
+                              aria-label={t('roster.removeMember', {
+                                name: member.displayName,
+                              })}
+                              onClick={() => onStartRemove(member)}
+                            >
+                              <TrashIcon size="sm" />
+                            </button>
+                          </Tooltip>
                         )}
                       </div>
                     </div>

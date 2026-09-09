@@ -9,6 +9,7 @@ import {
 import { CloseIcon, ChevronDownIcon } from '../icons/shellIcons';
 import { useDismissLayer } from '../useDismissLayer';
 import { usePresence } from '../usePresence';
+import { Tooltip } from './Tooltip';
 
 export type SelectOption = {
   value: string;
@@ -266,20 +267,21 @@ export function Select({
           {selected ? selected.label : placeholder}
         </span>
         {showClear ? (
-          <button
-            type="button"
-            className="ds-input__affix"
-            aria-label={clearLabel}
-            title={clearLabel}
-            tabIndex={-1}
-            onClick={(event) => {
-              event.stopPropagation();
-              emit(null);
-              setOpen(false);
-            }}
-          >
-            <CloseIcon size="sm" aria-hidden="true" />
-          </button>
+          <Tooltip content={clearLabel}>
+            <button
+              type="button"
+              className="ds-input__affix"
+              aria-label={clearLabel}
+              tabIndex={-1}
+              onClick={(event) => {
+                event.stopPropagation();
+                emit(null);
+                setOpen(false);
+              }}
+            >
+              <CloseIcon size="sm" aria-hidden="true" />
+            </button>
+          </Tooltip>
         ) : null}
         <span className="ds-select__arrow" aria-hidden="true">
           <ChevronDownIcon size="sm" />

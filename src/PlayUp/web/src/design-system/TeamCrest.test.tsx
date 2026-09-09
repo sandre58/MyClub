@@ -21,9 +21,11 @@ describe('TeamCrest', () => {
   });
 
   it('renders placeholder crest when logoMediaId is absent', () => {
-    render(<TeamCrest name="Paris Saint-Germain" />);
+    const { container } = render(<TeamCrest name="Paris Saint-Germain" />);
 
     expect(screen.queryByRole('img')).toBeNull();
-    expect(screen.getByTitle('Paris Saint-Germain')).toBeInTheDocument();
+    expect(container.querySelector('.team-crest__initial')).toHaveTextContent(
+      'PS',
+    );
   });
 });

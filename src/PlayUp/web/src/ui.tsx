@@ -88,7 +88,6 @@ export function StatusBadge({
   variant = 'soft',
   shape = 'rounded',
   density = 'context',
-  title,
   ...rest
 }: {
   tone: StatusTone;
@@ -96,7 +95,6 @@ export function StatusBadge({
   variant?: 'soft' | 'outline';
   shape?: 'rounded' | 'pill';
   density?: 'context' | 'compact';
-  title?: string;
 } & Omit<
   import('react').HTMLAttributes<HTMLSpanElement>,
   'children' | 'title' | 'className'
@@ -107,7 +105,6 @@ export function StatusBadge({
       tone={statusToneFromLegacy(tone)}
       variant={variant}
       shape={shape}
-      title={title}
       {...rest}
     >
       {children}

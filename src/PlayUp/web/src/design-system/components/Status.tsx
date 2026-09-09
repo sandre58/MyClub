@@ -19,12 +19,11 @@ type StatusProps = {
   shape?: StatusShape;
   children: ReactNode;
   className?: string;
-  /** @deprecated Prefer wrapping with Tooltip for Hint content. */
-  title?: string;
 } & Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'title' | 'className'>;
 
 /**
  * Status primitive — presentation only. Read supplies labels and meaning.
+ * Hint copy: wrap with Tooltip (do not pass native `title`).
  */
 export function Status({
   density,
@@ -33,7 +32,6 @@ export function Status({
   shape = 'rounded',
   children,
   className,
-  title,
   ...rest
 }: StatusProps) {
   const isChip = density !== 'dense';
@@ -49,7 +47,7 @@ export function Status({
     .join(' ');
 
   return (
-    <span className={classes} title={title} {...rest}>
+    <span className={classes} {...rest}>
       {children}
     </span>
   );

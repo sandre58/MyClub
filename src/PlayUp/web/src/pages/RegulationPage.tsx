@@ -115,7 +115,6 @@ export function RegulationPage() {
               <button
                 type="button"
                 className="ds-btn ds-btn--primary"
-                title={t('editRegulation')}
                 aria-label={t('editRegulation')}
                 onClick={() => setEditorOpen(true)}
               >

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { fetchNeedsAttention } from '../api';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 import { EmptyState } from '../ui';
+import { Tooltip } from '../design-system/components/Tooltip';
 import { useDismissLayer } from '../design-system/useDismissLayer';
 import { useFocusTrap } from '../design-system/useFocusTrap';
 import { queryKeys } from '../queryKeys';
@@ -141,16 +142,17 @@ export function AttentionDrawer({
               </span>
             </span>
           </h2>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className="ds-btn ds-btn--ghost ds-icon-button shell-attention-drawer__close"
-            aria-label={t('common:close')}
-            title={t('common:close')}
-            onClick={onClose}
-          >
-            <CloseIcon size="md" aria-hidden="true" />
-          </button>
+          <Tooltip content={t('common:close')}>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="ds-btn ds-btn--ghost ds-icon-button shell-attention-drawer__close"
+              aria-label={t('common:close')}
+              onClick={onClose}
+            >
+              <CloseIcon size="md" aria-hidden="true" />
+            </button>
+          </Tooltip>
         </header>
 
         <div className="shell-attention-drawer__body">

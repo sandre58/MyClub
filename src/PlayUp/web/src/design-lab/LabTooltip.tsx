@@ -4,7 +4,7 @@ import { Tooltip } from '../design-system/components/Tooltip';
 import { PencilIcon } from '../design-system/icons/overviewIcons';
 
 /**
- * Design Lab — Tooltip specimens (Hint + DisabledReason).
+ * Design Lab — Tooltip specimens (Hint + DisabledReason + Label).
  * Contract: Notion task DS Tooltip V1.
  * Surface vs ink mock: documents why surface won; ink is exploration only.
  */
@@ -15,7 +15,7 @@ export function LabTooltip() {
         <p className="ds-eyebrow">Design System</p>
         <h1 className="dlab-toast__title">Tooltip</h1>
         <p className="dlab-toast__lede">
-          Hint et DisabledReason uniquement — pas les Labels d’icon-button.
+          Hint, DisabledReason, et Labels courts sur icon-only (cas par cas).
           Desktop : hover 400&nbsp;ms, focus immédiat. Mobile : long-press sur
           action primaire, tap-toggle sinon. Texte seul ; Popover pour le riche.
           Surface Overlay (= Popover) ; ombre locale plus courte que{' '}
@@ -62,6 +62,24 @@ export function LabTooltip() {
             </button>
           </Tooltip>
         </div>
+      </section>
+
+      <section className="ds-panel dlab-toast__panel" aria-label="Label">
+        <h2 className="dlab-form__panel-title">Label (icon-only)</h2>
+        <div className="dlab-toast__actions">
+          <Tooltip content="Modifier">
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+              aria-label="Modifier Racing Sablons"
+            >
+              <PencilIcon size="sm" />
+            </button>
+          </Tooltip>
+        </div>
+        <p className="dlab-form__hint">
+          Tooltip court · <code>aria-label</code> peut rester plus riche (nom).
+        </p>
       </section>
 
       <section
@@ -112,7 +130,7 @@ export function LabTooltip() {
             mobile
           </li>
           <li>
-            Labels icon-button hors V1 — ne pas déduire Tooltip de tout{' '}
+            Labels icon-only au cas par cas — ne pas déduire Tooltip de tout{' '}
             <code>title</code>
           </li>
         </ul>

@@ -121,7 +121,7 @@ function clearTimer(ref: { current: number | null }) {
 }
 
 /**
- * Contextual tip for Hint / DisabledReason — not Labels.
+ * Contextual tip for Hint / DisabledReason / short Labels (icon-only).
  * Desktop: hover (delayed) + focus. Mobile: long-press or tap-toggle.
  * Text only; interactive content → use Popover.
  *

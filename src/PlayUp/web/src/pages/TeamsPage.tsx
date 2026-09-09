@@ -354,20 +354,21 @@ function TeamsView({
                       countLabel={t('selectionCount', { count: selectedCount })}
                     >
                       {barRemoveEnabled ? (
-                        <button
-                          type="button"
-                          className={compactIcon}
-                          disabled={removePending}
-                          title={removeLabel}
-                          aria-label={removeLabel}
-                          onClick={() => confirmAndRemove(selectedIds)}
-                        >
-                          {removing === 'delete' ? (
-                            <TrashIcon size="sm" />
-                          ) : (
-                            <WithdrawIcon size="sm" />
-                          )}
-                        </button>
+                        <Tooltip content={removeLabel}>
+                          <button
+                            type="button"
+                            className={compactIcon}
+                            disabled={removePending}
+                            aria-label={removeLabel}
+                            onClick={() => confirmAndRemove(selectedIds)}
+                          >
+                            {removing === 'delete' ? (
+                              <TrashIcon size="sm" />
+                            ) : (
+                              <WithdrawIcon size="sm" />
+                            )}
+                          </button>
+                        </Tooltip>
                       ) : (
                         <Tooltip content={barRemoveHint}>
                           <button
@@ -384,22 +385,22 @@ function TeamsView({
                           </button>
                         </Tooltip>
                       )}
-                      <button
-                        type="button"
-                        className={compactIcon}
-                        title={t('clearSelection')}
-                        aria-label={t('clearSelection')}
-                        onClick={() => goToSelection([])}
-                      >
-                        <CloseIcon size="sm" />
-                      </button>
+                      <Tooltip content={t('clearSelection')}>
+                        <button
+                          type="button"
+                          className={compactIcon}
+                          aria-label={t('clearSelection')}
+                          onClick={() => goToSelection([])}
+                        >
+                          <CloseIcon size="sm" />
+                        </button>
+                      </Tooltip>
                     </SelectionBar>
                   )}
                   {canAdd ? (
                     <button
                       type="button"
                       className="ds-btn ds-btn--primary teams__add"
-                      title={t('addAction')}
                       aria-label={t('addAction')}
                       onClick={() => setAddOpen(true)}
                     >
@@ -476,34 +477,36 @@ function TeamsView({
                       )}
                       {!multi && (
                         <div className="ds-icon-toolbar">
-                          <button
-                            type="button"
-                            className={compactIcon}
-                            title={t('editIdentityTooltip')}
-                            aria-label={t('editIdentity', {
-                              name: entry.displayName,
-                            })}
-                            onClick={() => setIdentityEntryId(entry.entryId)}
-                          >
-                            <PencilIcon size="sm" />
-                          </button>
-                          {tileCanRemove ? (
+                          <Tooltip content={t('editIdentityTooltip')}>
                             <button
                               type="button"
                               className={compactIcon}
-                              disabled={removePending}
-                              title={removeLabel}
-                              aria-label={tileRemoveLabel}
-                              onClick={() =>
-                                confirmAndRemove([entry.entryId])
-                              }
+                              aria-label={t('editIdentity', {
+                                name: entry.displayName,
+                              })}
+                              onClick={() => setIdentityEntryId(entry.entryId)}
                             >
-                              {removing === 'delete' ? (
-                                <TrashIcon size="sm" />
-                              ) : (
-                                <WithdrawIcon size="sm" />
-                              )}
+                              <PencilIcon size="sm" />
                             </button>
+                          </Tooltip>
+                          {tileCanRemove ? (
+                            <Tooltip content={removeLabel}>
+                              <button
+                                type="button"
+                                className={compactIcon}
+                                disabled={removePending}
+                                aria-label={tileRemoveLabel}
+                                onClick={() =>
+                                  confirmAndRemove([entry.entryId])
+                                }
+                              >
+                                {removing === 'delete' ? (
+                                  <TrashIcon size="sm" />
+                                ) : (
+                                  <WithdrawIcon size="sm" />
+                                )}
+                              </button>
+                            </Tooltip>
                           ) : (
                             <Tooltip content={tileRemoveHint}>
                               <button

@@ -13,6 +13,7 @@ export type TeamCrestProps = {
 /**
  * Team crest: real logo via /media/{id}/content when logoMediaId is set,
  * otherwise letter-mark placeholder.
+ * No native `title` — wrap with Tooltip only when the crest is the sole name cue.
  */
 export function TeamCrest({
   name,
@@ -34,7 +35,6 @@ export function TeamCrest({
     return (
       <span
         className={`team-crest team-crest--logo ${sizeClass} ${className}`.trim()}
-        title={name}
       >
         <img
           src={mediaContentUrl(logoMediaId)}
@@ -49,7 +49,6 @@ export function TeamCrest({
   return (
     <span
       className={`team-crest team-crest--${tone} ${sizeClass} ${className}`.trim()}
-      title={name}
       style={
         primaryColor
           ? { ['--team-crest-fill' as string]: primaryColor }

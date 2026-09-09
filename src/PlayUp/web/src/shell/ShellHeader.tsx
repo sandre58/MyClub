@@ -16,6 +16,7 @@ import { formatCompetitionPeriod } from './competitionPeriod';
 import { PreferencesMenu } from './PreferencesMenu';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import type { ShellViewport } from './useShellViewport';
+import { Tooltip } from '../design-system/components/Tooltip';
 
 type ShellHeaderProps = {
   viewport?: ShellViewport;
@@ -252,28 +253,29 @@ function AttentionTrigger({
   const tooltipLabel = t('attention.label');
 
   return (
-    <button
-      ref={buttonRef}
-      type="button"
-      className="ds-shell-header__bell ds-btn ds-btn--ghost ds-icon-button shell-header__attention shell-header__icon-control"
-      aria-expanded={hasAttention ? drawerOpen : undefined}
-      aria-haspopup={hasAttention ? 'dialog' : undefined}
-      aria-controls={hasAttention ? drawerId : undefined}
-      aria-label={accessibleLabel}
-      title={tooltipLabel}
-      disabled={!hasAttention}
-      onClick={hasAttention ? onClick : undefined}
-    >
-      <AttentionBellIcon
-        size="lg"
-        className="shell-header__attention-icon"
-        aria-hidden="true"
-      />
-      {hasAttention && (
-        <span className="ds-shell-header__badge ds-num" aria-hidden="true">
-          {count}
-        </span>
-      )}
-    </button>
+    <Tooltip content={tooltipLabel}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className="ds-shell-header__bell ds-btn ds-btn--ghost ds-icon-button shell-header__attention shell-header__icon-control"
+        aria-expanded={hasAttention ? drawerOpen : undefined}
+        aria-haspopup={hasAttention ? 'dialog' : undefined}
+        aria-controls={hasAttention ? drawerId : undefined}
+        aria-label={accessibleLabel}
+        disabled={!hasAttention}
+        onClick={hasAttention ? onClick : undefined}
+      >
+        <AttentionBellIcon
+          size="lg"
+          className="shell-header__attention-icon"
+          aria-hidden="true"
+        />
+        {hasAttention && (
+          <span className="ds-shell-header__badge ds-num" aria-hidden="true">
+            {count}
+          </span>
+        )}
+      </button>
+    </Tooltip>
   );
 }

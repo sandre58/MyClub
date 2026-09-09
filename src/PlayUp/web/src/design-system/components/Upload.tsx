@@ -1,6 +1,7 @@
 import { useRef, type ChangeEvent, type KeyboardEvent } from 'react';
 import { TeamCrest } from '../TeamCrest';
 import { PlusIcon, TrashIcon } from '../icons/overviewIcons';
+import { Tooltip } from './Tooltip';
 
 export type UploadProps = {
   /** Crest initials when using letter-mark fallback. */
@@ -116,16 +117,17 @@ export function Upload({
 
       {filled && !uploading ? (
         <div className="ds-upload__toolbar">
-          <button
-            type="button"
-            className="ds-upload__toolbar-btn"
-            aria-label={removeLabel}
-            title={removeLabel}
-            disabled={busy}
-            onClick={clear}
-          >
-            <TrashIcon size="sm" aria-hidden="true" />
-          </button>
+          <Tooltip content={removeLabel}>
+            <button
+              type="button"
+              className="ds-upload__toolbar-btn"
+              aria-label={removeLabel}
+              disabled={busy}
+              onClick={clear}
+            >
+              <TrashIcon size="sm" aria-hidden="true" />
+            </button>
+          </Tooltip>
         </div>
       ) : null}
 

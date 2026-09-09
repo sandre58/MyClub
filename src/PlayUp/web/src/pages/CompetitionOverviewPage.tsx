@@ -9,6 +9,7 @@ import { OverviewNextAction } from '../design-system/components/OverviewNextActi
 import { OverviewPodium } from '../design-system/components/OverviewPodium';
 import { PanelHead } from '../design-system/components/PanelHead';
 import { Status } from '../design-system/components/Status';
+import { Tooltip } from '../design-system/components/Tooltip';
 import {
   ChevronRightIcon,
   ClassementsNavIcon,
@@ -1204,17 +1205,15 @@ function TeamsPanel({
           }
         >
           {preview.map((entry) => (
-            <li
-              key={entry.entryId}
-              className="overview-crest"
-              title={entry.displayName}
-            >
-              <TeamCrest
-                name={entry.displayName}
-                logoMediaId={entry.logoMediaId}
-                primaryColor={entry.primaryColor}
-                size="sm"
-              />
+            <li key={entry.entryId} className="overview-crest">
+              <Tooltip content={entry.displayName}>
+                <TeamCrest
+                  name={entry.displayName}
+                  logoMediaId={entry.logoMediaId}
+                  primaryColor={entry.primaryColor}
+                  size="sm"
+                />
+              </Tooltip>
             </li>
           ))}
           {overflow > 0 && (

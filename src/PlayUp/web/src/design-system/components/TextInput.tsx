@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { CloseIcon } from '../icons/shellIcons';
 import { CheckIcon, CopyIcon } from '../icons/overviewIcons';
+import { Tooltip } from './Tooltip';
 
 export type TextInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -118,41 +119,43 @@ export function TextInput({
         onChange={handleChange}
       />
       {allowCopy ? (
-        <button
-          type="button"
-          className="ds-input__affix"
-          data-copied={copied ? 'true' : 'false'}
-          aria-label={copied ? copiedLabel : copyLabel}
-          title={copied ? copiedLabel : copyLabel}
-          disabled={disabled || current.length === 0}
-          tabIndex={-1}
-          onClick={() => {
-            void copyValue();
-          }}
-        >
-          {copied ? (
-            <CheckIcon size="sm" aria-hidden="true" />
-          ) : (
-            <CopyIcon size="sm" aria-hidden="true" />
-          )}
-          {copied ? (
-            <span className="ds-input__affix-tip" role="status">
-              {copiedLabel}
-            </span>
-          ) : null}
-        </button>
+        <Tooltip content={copied ? copiedLabel : copyLabel}>
+          <button
+            type="button"
+            className="ds-input__affix"
+            data-copied={copied ? 'true' : 'false'}
+            aria-label={copied ? copiedLabel : copyLabel}
+            disabled={disabled || current.length === 0}
+            tabIndex={-1}
+            onClick={() => {
+              void copyValue();
+            }}
+          >
+            {copied ? (
+              <CheckIcon size="sm" aria-hidden="true" />
+            ) : (
+              <CopyIcon size="sm" aria-hidden="true" />
+            )}
+            {copied ? (
+              <span className="ds-input__affix-tip" role="status">
+                {copiedLabel}
+              </span>
+            ) : null}
+          </button>
+        </Tooltip>
       ) : null}
       {showClear ? (
-        <button
-          type="button"
-          className="ds-input__affix"
-          aria-label={clearLabel}
-          title={clearLabel}
-          tabIndex={-1}
-          onClick={() => emitValue('')}
-        >
-          <CloseIcon size="sm" aria-hidden="true" />
-        </button>
+        <Tooltip content={clearLabel}>
+          <button
+            type="button"
+            className="ds-input__affix"
+            aria-label={clearLabel}
+            tabIndex={-1}
+            onClick={() => emitValue('')}
+          >
+            <CloseIcon size="sm" aria-hidden="true" />
+          </button>
+        </Tooltip>
       ) : null}
     </div>
   );

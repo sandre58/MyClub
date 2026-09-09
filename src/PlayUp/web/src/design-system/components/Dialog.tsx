@@ -10,6 +10,7 @@ import { CloseIcon } from '../icons/shellIcons';
 import { DS_MOTION_EXIT_MS } from '../motion';
 import { useDismissLayer } from '../useDismissLayer';
 import { getFocusableElements, useFocusTrap } from '../useFocusTrap';
+import { Tooltip } from './Tooltip';
 
 export type DialogSize = 'sm' | 'md' | 'lg';
 
@@ -214,17 +215,18 @@ export function Dialog({
               </p>
             ) : null}
           </div>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            className="ds-btn ds-btn--ghost ds-icon-button"
-            aria-label={closeLabel}
-            title={closeLabel}
-            disabled={closeDisabled}
-            onClick={onClose}
-          >
-            <CloseIcon size="md" aria-hidden="true" />
-          </button>
+          <Tooltip content={closeLabel}>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              className="ds-btn ds-btn--ghost ds-icon-button"
+              aria-label={closeLabel}
+              disabled={closeDisabled}
+              onClick={onClose}
+            >
+              <CloseIcon size="md" aria-hidden="true" />
+            </button>
+          </Tooltip>
         </header>
         <div ref={bodyRef} className="ds-dialog__body">
           {children}

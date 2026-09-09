@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { CloseIcon } from '../icons/shellIcons';
 import { GripIcon } from '../icons/overviewIcons';
+import { Tooltip } from './Tooltip';
 
 export type ReorderListProps<T> = {
   items: T[];
@@ -146,14 +147,25 @@ export function ReorderList<T>({
             onKeyDown={(event) => handleKeyDown(index, event)}
             tabIndex={0}
           >
-            <span
-              className="ds-reorder__handle"
-              aria-hidden="true"
-              title={draggable ? dragLabel : undefined}
-              data-disabled={draggable ? 'false' : 'true'}
-            >
-              <GripIcon size="sm" />
-            </span>
+            {draggable ? (
+              <Tooltip content={dragLabel}>
+                <span
+                  className="ds-reorder__handle"
+                  aria-hidden="true"
+                  data-disabled="false"
+                >
+                  <GripIcon size="sm" />
+                </span>
+              </Tooltip>
+            ) : (
+              <span
+                className="ds-reorder__handle"
+                aria-hidden="true"
+                data-disabled="true"
+              >
+                <GripIcon size="sm" />
+              </span>
+            )}
             <span className="ds-reorder__index" aria-hidden="true">
               {index + 1}
             </span>
@@ -161,15 +173,16 @@ export function ReorderList<T>({
               {renderContent(item, index)}
             </div>
             {removable ? (
-              <button
-                type="button"
-                className="ds-reorder__remove"
-                aria-label={removeLabel}
-                title={removeLabel}
-                onClick={() => onRemove(item, index)}
-              >
-                <CloseIcon size="sm" aria-hidden="true" />
-              </button>
+              <Tooltip content={removeLabel}>
+                <button
+                  type="button"
+                  className="ds-reorder__remove"
+                  aria-label={removeLabel}
+                  onClick={() => onRemove(item, index)}
+                >
+                  <CloseIcon size="sm" aria-hidden="true" />
+                </button>
+              </Tooltip>
             ) : null}
           </li>
         );

@@ -21,6 +21,7 @@ import {
   type ShellNavItemKey,
 } from './shellDestinations';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
+import { Tooltip } from '../design-system/components/Tooltip';
 
 type ShellSidebarProps = {
   collapsed: boolean;
@@ -95,14 +96,28 @@ export function ShellSidebar({
                 item.hrefKey !== undefined && item.hrefKey === activeKey;
 
               if (item.hrefKey) {
-                return (
+                const link = (
+                  <Link
+                    to={hrefs[item.hrefKey]}
+                    className="ds-shell-rail__link"
+                    data-active={isActive ? 'true' : 'false'}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <Icon className="ds-shell-rail__icon" />
+                    <span className="ds-shell-rail__label">{label}</span>
+                  </Link>
+                );
+                return collapsed ? (
+                  <Tooltip key={item.key} content={label}>
+                    {link}
+                  </Tooltip>
+                ) : (
                   <Link
                     key={item.key}
                     to={hrefs[item.hrefKey]}
                     className="ds-shell-rail__link"
                     data-active={isActive ? 'true' : 'false'}
                     aria-current={isActive ? 'page' : undefined}
-                    title={collapsed ? label : undefined}
                   >
                     <Icon className="ds-shell-rail__icon" />
                     <span className="ds-shell-rail__label">{label}</span>
@@ -111,17 +126,20 @@ export function ShellSidebar({
               }
 
               return (
-                <button
+                <Tooltip
                   key={item.key}
-                  type="button"
-                  className="ds-shell-rail__link"
-                  disabled
-                  aria-label={t('sidebar.comingSoon', { label })}
-                  title={t('sidebar.comingSoon', { label })}
+                  content={t('sidebar.comingSoon', { label })}
                 >
-                  <Icon className="ds-shell-rail__icon" />
-                  <span className="ds-shell-rail__label">{label}</span>
-                </button>
+                  <button
+                    type="button"
+                    className="ds-shell-rail__link"
+                    disabled
+                    aria-label={t('sidebar.comingSoon', { label })}
+                  >
+                    <Icon className="ds-shell-rail__icon" />
+                    <span className="ds-shell-rail__label">{label}</span>
+                  </button>
+                </Tooltip>
               );
             })}
           </div>
@@ -130,21 +148,26 @@ export function ShellSidebar({
 
       {hideCollapse ? null : (
         <div className="ds-shell-rail__footer">
-          <button
-            type="button"
-            className="ds-shell-rail__collapse"
-            aria-expanded={!collapsed}
-            aria-controls="shell-sidebar-nav"
-            aria-label={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
-            title={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
-            onClick={onToggleCollapse}
+          <Tooltip
+            content={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
           >
-            {collapsed ? (
-              <SidebarExpandIcon size="sm" />
-            ) : (
-              <SidebarCollapseIcon size="sm" />
-            )}
-          </button>
+            <button
+              type="button"
+              className="ds-shell-rail__collapse"
+              aria-expanded={!collapsed}
+              aria-controls="shell-sidebar-nav"
+              aria-label={
+                collapsed ? t('sidebar.expand') : t('sidebar.collapse')
+              }
+              onClick={onToggleCollapse}
+            >
+              {collapsed ? (
+                <SidebarExpandIcon size="sm" />
+              ) : (
+                <SidebarCollapseIcon size="sm" />
+              )}
+            </button>
+          </Tooltip>
         </div>
       )}
     </aside>
