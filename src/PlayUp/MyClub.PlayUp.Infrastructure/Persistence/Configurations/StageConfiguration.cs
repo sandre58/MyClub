@@ -70,6 +70,13 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasConversion(new StageRegulationJsonConverter(), StageRegulationJsonConverter.Comparer)
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
+        builder.Property(stage => stage.DefaultsBinding)
+            .HasColumnName("defaults_binding")
+            .HasColumnType("jsonb")
+            .IsRequired()
+            .HasConversion(new DefaultsBindingJsonConverter(), DefaultsBindingJsonConverter.Comparer)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Ignore(stage => stage.DomainEvents);
         builder.Metadata.AddIgnored("_domainEvents");
 

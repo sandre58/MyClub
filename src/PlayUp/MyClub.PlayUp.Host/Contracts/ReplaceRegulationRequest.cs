@@ -9,11 +9,11 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
-/// HTTP body for replacing competition regulation (Slice 2).
-/// Ranking criteria stay on the bootstrap baseline (Points, GD, GF, H2H).
+/// HTTP body for replacing the full competition regulation (defaults), then propagating bound stage parts.
 /// <see cref="AllowedTypes"/>: omit/<see langword="null"/> = preserve existing
 /// <see cref="DisciplinaryRules"/>; empty = <see cref="DisciplinaryRules.None"/>;
 /// non-empty = replace catalogue.
+/// Extra time / shootout: omit or null = disabled; send values when enabled.
 /// </summary>
 public sealed record ReplaceRegulationRequest(
     int MinimumTeams,
@@ -26,4 +26,10 @@ public sealed record ReplaceRegulationRequest(
     int LossPoints,
     int ForfeitWinnerGoals = 3,
     int ForfeitLoserGoals = 0,
-    IReadOnlyList<DisciplinaryType>? AllowedTypes = null);
+    IReadOnlyList<DisciplinaryType>? AllowedTypes = null,
+    IReadOnlyList<RankingCriterion>? RankingCriteria = null,
+    bool HasExtraTime = false,
+    int? ExtraTimeDurationPerPeriod = null,
+    int? ExtraTimeNumberOfPeriods = null,
+    bool HasPenaltyShootout = false,
+    int? PenaltyInitialKicksPerTeam = null);

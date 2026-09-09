@@ -99,6 +99,27 @@
     font-size: var(--text-body);
     font-weight: var(--font-weight-bold);
     line-height: var(--leading-tight);
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.regulation-card__edit {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    margin-inline-start: auto;
+    padding: var(--space-4);
+    border: none;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.regulation-card__edit:hover,
+.regulation-card__edit:focus-visible {
+    color: var(--color-brand);
 }
 
 .regulation-card__body {
@@ -1285,4 +1306,58 @@
         width: auto;
         min-width: 5.5rem;
     }
+}
+
+/* -- Regulation editor dialog (F3) -- */
+.regulation-editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-24);
+}
+
+.regulation-editor__section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    padding-block: var(--space-8);
+    border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.regulation-editor__section:first-of-type {
+    border-block-start: none;
+    padding-block-start: 0;
+}
+
+.regulation-editor__heading {
+    margin: 0;
+    font-size: var(--text-body);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
+}
+
+.regulation-editor__subheading {
+    margin: var(--space-8) 0 0;
+    font-size: var(--text-caption, 0.875rem);
+    font-weight: var(--font-weight-semibold, 600);
+    color: var(--color-text-secondary);
+}
+
+.regulation-editor__criteria {
+    margin: 0;
+    padding-inline-start: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.regulation-editor__criteria li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+}
+
+.regulation-editor__criteria-actions {
+    display: inline-flex;
+    gap: var(--space-4);
 }

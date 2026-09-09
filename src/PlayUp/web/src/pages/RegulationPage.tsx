@@ -40,7 +40,10 @@ import type {
     RankingCriterion,
     StructureFormatKind,
 } from '../types'
-import {RegulationEditorDialog} from './RegulationEditorDialog'
+import {
+    RegulationEditorDialog,
+    type RegulationEditorSection,
+} from './RegulationEditorDialog'
 import './regulation.css'
 import {stageStatusLabel} from "../i18n/enumLabels.ts";
 
@@ -62,7 +65,8 @@ type PhaseFlow = {
 export function RegulationPage() {
     const {competitionId = ''} = useParams()
     const {t} = useTranslation('regulation')
-    const [editorOpen, setEditorOpen] = useState(false)
+    const [editorSection, setEditorSection] =
+        useState<RegulationEditorSection | null>(null)
 
     const organisationQuery = useQuery({
         queryKey: queryKeys.competitions.organisation(competitionId),
@@ -89,7 +93,8 @@ export function RegulationPage() {
     const data = organisationQuery.data
     const {regulation, stages} = data
     const canReplace = data.actions.includes('ReplaceRegulation')
-    const openEditor = () => setEditorOpen(true)
+    const openEditor = (section: RegulationEditorSection = 'entries') =>
+        setEditorSection(section)
     const showStandingTile = stages.some((stage) => stage.hasStandingRules === true)
 
     return (
@@ -108,7 +113,7 @@ export function RegulationPage() {
                                     : t('editRegulationDisabledHint')
                             }
                             aria-label={t('editRegulation')}
-                            onClick={openEditor}
+                            onClick={() => openEditor('entries')}
                         >
                             <PencilIcon size="sm"/>
                             <span>{t('editRegulation')}</span>
@@ -126,11 +131,29 @@ export function RegulationPage() {
                     aria-label={t('frameHeading')}
                 >
                     <div className="regulation-frame__stack">
-                        <EntriesTile regulation={regulation}/>
-                        <DisciplineTile regulation={regulation}/>
+                        <EntriesTile
+                            regulation={regulation}
+                            canEdit={canReplace}
+                            onEdit={() => openEditor('entries')}
+                        />
+                        <DisciplineTile
+                            regulation={regulation}
+                            canEdit={canReplace}
+                            onEdit={() => openEditor('discipline')}
+                        />
                     </div>
-                    <MatchTile regulation={regulation}/>
-                    {showStandingTile ? <StandingTile regulation={regulation}/> : null}
+                    <MatchTile
+                        regulation={regulation}
+                        canEdit={canReplace}
+                        onEdit={() => openEditor('match')}
+                    />
+                    {showStandingTile ? (
+                        <StandingTile
+                            regulation={regulation}
+                            canEdit={canReplace}
+                            onEdit={() => openEditor('standing')}
+                        />
+                    ) : null}
                 </section>
 
                 <section
@@ -162,8 +185,9 @@ export function RegulationPage() {
 
             <RegulationEditorDialog
                 data={data}
-                open={editorOpen}
-                onClose={() => setEditorOpen(false)}
+                open={editorSection !== null}
+                initialSection={editorSection ?? 'entries'}
+                onClose={() => setEditorSection(null)}
             />
         </main>
     )
@@ -176,10 +200,16 @@ function FrameCard({
                        icon,
                        title,
                        children,
+                       canEdit,
+                       onEdit,
+                       editAriaLabel,
                    }: {
     icon: ReactNode
     title: string
     children: ReactNode
+    canEdit?: boolean
+    onEdit?: () => void
+    editAriaLabel?: string
 }) {
     return (
         <article className="regulation-card">
@@ -188,6 +218,17 @@ function FrameCard({
           {icon}
         </span>
                 <h3 className="regulation-card__title">{title}</h3>
+                {canEdit && onEdit ? (
+                    <button
+                        type="button"
+                        className="regulation-card__edit"
+                        aria-label={editAriaLabel ?? title}
+                        title={editAriaLabel}
+                        onClick={onEdit}
+                    >
+                        <PencilIcon size="sm" />
+                    </button>
+                ) : null}
             </header>
             <div className="regulation-card__body">{children}</div>
         </article>
@@ -199,8 +240,12 @@ function FrameCard({
 
 function EntriesTile({
                          regulation,
+                         canEdit,
+                         onEdit,
                      }: {
     regulation: OrganisationRegulationSummary
+    canEdit?: boolean
+    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const min = regulation.minimumTeams
@@ -210,6 +255,11 @@ function EntriesTile({
         <FrameCard
             icon={<PersonIcon size="md"/>}
             title={t('families.entries')}
+            canEdit={canEdit}
+            onEdit={onEdit}
+            editAriaLabel={t('editSectionAria', {
+                section: t('families.entries'),
+            })}
         >
             <div
                 className="regulation-capacity"
@@ -248,8 +298,12 @@ function EntriesTile({
 
 function MatchTile({
                        regulation,
+                       canEdit,
+                       onEdit,
                    }: {
     regulation: OrganisationRegulationSummary
+    canEdit?: boolean
+    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const halfTime = regulation.halfTimeDuration ?? 0
@@ -284,6 +338,11 @@ function MatchTile({
         <FrameCard
             icon={<LucideIcon icon={Volleyball} size="md"/>}
             title={t('families.match')}
+            canEdit={canEdit}
+            onEdit={onEdit}
+            editAriaLabel={t('editSectionAria', {
+                section: t('families.match'),
+            })}
         >
             <div className="regulation-match" aria-label={t('matchTimeline.aria')}>
                 <div className="regulation-match__layout">
@@ -349,8 +408,12 @@ function MatchTile({
 
 function DisciplineTile({
                             regulation,
+                            canEdit,
+                            onEdit,
                         }: {
     regulation: OrganisationRegulationSummary
+    canEdit?: boolean
+    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const types = regulation.allowedTypes ?? []
@@ -359,6 +422,11 @@ function DisciplineTile({
         <FrameCard
             icon={<LucideIcon icon={PlayingCardsFan} size="md"/>}
             title={t('families.discipline')}
+            canEdit={canEdit}
+            onEdit={onEdit}
+            editAriaLabel={t('editSectionAria', {
+                section: t('families.discipline'),
+            })}
         >
             <p className="regulation-discipline__subtitle">{t('discipline.subtitle')}</p>
             {types.length === 0 ? (
@@ -533,8 +601,12 @@ function ClockRow({pieces}: { pieces: MatchClockPiece[] }) {
 
 function StandingTile({
                           regulation,
+                          canEdit,
+                          onEdit,
                       }: {
     regulation: OrganisationRegulationSummary
+    canEdit?: boolean
+    onEdit?: () => void
 }) {
     const {t} = useTranslation('regulation')
     const maxPts = Math.max(
@@ -552,6 +624,11 @@ function StandingTile({
         <FrameCard
             icon={<LucideIcon icon={Podium} size="md"/>}
             title={t('families.standing')}
+            canEdit={canEdit}
+            onEdit={onEdit}
+            editAriaLabel={t('editSectionAria', {
+                section: t('families.standing'),
+            })}
         >
             <div className="regulation-standing">
                 <div className="regulation-standing__points">

@@ -351,6 +351,11 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("stage_regulation");
 
+                    b.Property<string>("DefaultsBinding")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("defaults_binding");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer")
                         .HasColumnName("status");

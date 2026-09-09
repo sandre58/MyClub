@@ -74,7 +74,7 @@ public sealed class OrganisationUseCaseTests
             SampleRegulations.Standard().MatchRules,
             SampleRegulations.Standard().StandingRules);
 
-        ReplaceRegulation.Execute(competition, replacement, _clock);
+        ReplaceRegulation.Execute(competition, stages: [], replacement, _clock);
 
         competition.Regulation.EntryRules.MinimumTeams.Should().Be(4);
         competition.Regulation.EntryRules.MaximumTeams.Should().Be(16);

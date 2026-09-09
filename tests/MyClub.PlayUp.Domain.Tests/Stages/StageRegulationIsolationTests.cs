@@ -44,7 +44,38 @@ public sealed class StageRegulationIsolationTests
     }
 
     [Fact]
-    public void Stage_regulation_stays_unchanged_when_competition_regulation_is_replaced()
+    public void Stage_regulation_propagates_bound_parts_when_competition_regulation_is_replaced()
+    {
+        // Arrange
+        var competition = Competition.Create(
+            new CompetitionName("League"),
+            SampleRegulations.Standard(),
+            _clock);
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            competition.Regulation,
+            _clock);
+
+        var replacement = new Regulation(
+            new EntryRules(4, 8),
+            new MatchRules(
+                new MatchDuration(40, 2, 10),
+                new AdministrativeResultPolicy(2, 0)),
+            competition.Regulation.StandingRules);
+
+        // Act
+        competition.ReplaceRegulation(replacement, _clock);
+        stage.PropagateBoundDefaults(competition.Regulation, _clock);
+
+        // Assert
+        competition.Regulation.Should().Be(replacement);
+        stage.Regulation.MatchRules.Duration.DurationPerPeriod.Should().Be(40);
+        stage.DefaultsBinding.IsBound(HeritableRegulationPart.MatchDuration).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Competition_replace_alone_does_not_mutate_stage_until_propagate()
     {
         // Arrange
         var competition = Competition.Create(
@@ -68,11 +99,9 @@ public sealed class StageRegulationIsolationTests
         // Act
         competition.ReplaceRegulation(replacement, _clock);
 
-        // Assert
-        competition.Regulation.Should().Be(replacement);
+        // Assert — Domain Competition replace does not touch Stage; Application orchestrates propagate
         stage.Regulation.Should().Be(stageSnapshot);
         stage.Regulation.MatchRules.Duration.DurationPerPeriod.Should().Be(45);
-        competition.Regulation.MatchRules.Duration.DurationPerPeriod.Should().Be(40);
     }
 
     [Fact]

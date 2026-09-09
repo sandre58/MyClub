@@ -920,8 +920,9 @@ public sealed class UseCaseExecutor(
         ArgumentNullException.ThrowIfNull(buildReplacement);
 
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var competitionStagesForUpdate = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
         var regulation = buildReplacement(competition.Regulation);
-        ReplaceRegulation.Execute(competition, regulation, clock);
+        ReplaceRegulation.Execute(competition, competitionStagesForUpdate, regulation, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }

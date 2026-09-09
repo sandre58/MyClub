@@ -712,7 +712,7 @@ export interface RenameEntryRequest {
   displayName: string
 }
 
-/** PUT /competitions/{id}/regulation */
+/** PUT /competitions/{id}/regulation — full competition regulation + bound-stage propagation. */
 export interface ReplaceRegulationRequest {
   minimumTeams: number
   maximumTeams: number
@@ -729,6 +729,13 @@ export interface ReplaceRegulationRequest {
    * send explicit catalogue to replace.
    */
   allowedTypes?: DisciplinaryType[] | null
+  /** Ordered ranking criteria; omit/empty → Host bootstrap baseline. */
+  rankingCriteria?: RankingCriterion[] | null
+  hasExtraTime?: boolean
+  extraTimeDurationPerPeriod?: number | null
+  extraTimeNumberOfPeriods?: number | null
+  hasPenaltyShootout?: boolean
+  penaltyInitialKicksPerTeam?: number | null
 }
 
 /** POST /competitions/{id}/organisation/structure */

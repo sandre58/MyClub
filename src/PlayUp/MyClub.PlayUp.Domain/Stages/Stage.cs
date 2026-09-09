@@ -27,12 +27,18 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<MatchPlacement> _matchPlacements = [];
     private readonly List<SwissBye> _swissByeHistory = [];
 
-    private Stage(StageId id, CompetitionId competitionId, StageName name, StageRegulation regulation)
+    private Stage(
+        StageId id,
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        DefaultsBinding defaultsBinding)
         : base(id)
     {
         CompetitionId = competitionId;
         Name = name;
         Regulation = regulation;
+        DefaultsBinding = defaultsBinding;
         Status = StageStatus.Draft;
         MatchGenerationFormat = MatchGenerationFormat.SingleRoundRobin;
     }
@@ -51,6 +57,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the materialized stage regulation (independent from the competition regulation).
     /// </summary>
     public StageRegulation Regulation { get; private set; }
+
+    /// <summary>
+    /// Gets which heritable regulation parts still follow Competition defaults.
+    /// </summary>
+    public DefaultsBinding DefaultsBinding { get; private set; }
 
     /// <summary>
     /// Gets the stage lifecycle status.
@@ -136,7 +147,13 @@ public sealed class Stage : AggregateRoot<StageId>
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(competitionRegulation);
-        return Create(competitionId, name, StageRegulation.MaterializeFrom(competitionRegulation), clock);
+        const bool classifying = true;
+        return Create(
+            competitionId,
+            name,
+            StageRegulation.MaterializeFrom(competitionRegulation),
+            DefaultsBinding.AllBound(classifying),
+            clock);
     }
 
     /// <summary>
@@ -156,55 +173,86 @@ public sealed class Stage : AggregateRoot<StageId>
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(competitionRegulation);
-        return Create(competitionId, name, StageRegulation.MaterializeFrom(competitionRegulation), id, clock);
+        const bool classifying = true;
+        return Create(
+            competitionId,
+            name,
+            StageRegulation.MaterializeFrom(competitionRegulation),
+            DefaultsBinding.AllBound(classifying),
+            id,
+            clock);
     }
 
     /// <summary>
     /// Creates a new stage in Draft status with an independent copy of the given stage regulation.
+    /// Binding defaults to all-bound for classifying capacity when standing is present.
     /// </summary>
-    /// <param name="competitionId">The owning competition identity.</param>
-    /// <param name="name">The stage name.</param>
-    /// <param name="regulation">The stage regulation (cloned on create).</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    /// <returns>The created stage.</returns>
     public static Stage Create(
         CompetitionId competitionId,
         StageName name,
         StageRegulation regulation,
         IClock clock) =>
-        Create(competitionId, name, regulation, StageId.New(), clock);
+        Create(
+            competitionId,
+            name,
+            regulation,
+            DefaultsBinding.AllBound(regulation.StandingRules is not null),
+            StageId.New(),
+            clock);
+
+    /// <summary>
+    /// Creates a new stage with an explicit defaults binding (MaterializeFrom + AllBound path).
+    /// </summary>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        DefaultsBinding defaultsBinding,
+        IClock clock) =>
+        Create(competitionId, name, regulation, defaultsBinding, StageId.New(), clock);
 
     /// <summary>
     /// Creates a new stage in Draft status with an explicit identity and an independent copy of the given stage regulation.
     /// </summary>
-    /// <param name="competitionId">The owning competition identity.</param>
-    /// <param name="name">The stage name.</param>
-    /// <param name="regulation">The stage regulation (cloned on create).</param>
-    /// <param name="id">The stage identity (must not be empty).</param>
-    /// <param name="clock">The clock used for domain events.</param>
-    /// <returns>The created stage.</returns>
     public static Stage Create(
         CompetitionId competitionId,
         StageName name,
         StageRegulation regulation,
         StageId id,
+        IClock clock) =>
+        Create(
+            competitionId,
+            name,
+            regulation,
+            DefaultsBinding.AllBound(regulation.StandingRules is not null),
+            id,
+            clock);
+
+    /// <summary>
+    /// Creates a new stage in Draft with explicit regulation and defaults binding.
+    /// </summary>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        DefaultsBinding defaultsBinding,
+        StageId id,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(name);
         ArgumentNullException.ThrowIfNull(regulation);
+        ArgumentNullException.ThrowIfNull(defaultsBinding);
         ArgumentNullException.ThrowIfNull(clock);
 
-        var stage = new Stage(id, competitionId, name, regulation.Copy());
+        var stage = new Stage(id, competitionId, name, regulation.Copy(), defaultsBinding.Copy());
         stage.Raise(new StageCreated(stage.Id, competitionId, name.Value, clock));
         return stage;
     }
 
     /// <summary>
-    /// Replaces the stage regulation as a whole (including match rules).
+    /// Replaces the stage regulation as a whole (specialization). Unbinds heritable parts that change.
     /// Allowed in Draft or Ready; Ready is demoted to Draft.
     /// </summary>
-    /// <param name="regulation">The new stage regulation.</param>
-    /// <param name="clock">The clock used for domain events.</param>
     public void ReplaceRegulation(StageRegulation regulation, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(regulation);
@@ -212,17 +260,34 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureDraftOrReady();
         DemoteToDraftIfReady();
 
+        UnbindChangedMatchParts(Regulation.MatchRules, regulation.MatchRules);
+        UnbindChangedStandingParts(Regulation.StandingRules, regulation.StandingRules);
+
         Regulation = regulation.Copy();
         EnsureStandingRulesInvariant();
         Raise(new StageRegulationReplaced(Id, clock));
     }
 
     /// <summary>
-    /// Replaces standing rules only. Allowed after Start (calculation ≠ structure).
-    /// Rejects explicitly when the stage has no standing capacity (non-classifying / Standing absent).
+    /// Replaces match rules (specialization). Unbinds each Match part whose value changes.
+    /// Allowed in Draft or Ready; Ready is demoted to Draft.
     /// </summary>
-    /// <param name="standingRules">The new standing rules.</param>
-    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceMatchRules(MatchRules matchRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(matchRules);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        UnbindChangedMatchParts(Regulation.MatchRules, matchRules);
+        Regulation = Regulation.WithMatchRules(matchRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces standing rules only. Allowed after Start (calculation ≠ structure).
+    /// Specialization: unbinds Points and RankingCriteria.
+    /// </summary>
     public void ReplaceStandingRules(StandingRules standingRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(standingRules);
@@ -236,8 +301,135 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.StandingRulesInvariant);
         }
 
+        DefaultsBinding = DefaultsBinding
+            .Unbind(HeritableRegulationPart.Points)
+            .Unbind(HeritableRegulationPart.RankingCriteria);
+
         Regulation = Regulation.WithStandingRules(standingRules);
         Raise(new StageStandingRulesReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Copies bound heritable parts from Competition defaults into this stage's effective regulation.
+    /// Never mutates <see cref="DefaultsBinding"/>. No-op when status is not Draft or Ready.
+    /// </summary>
+    public void PropagateBoundDefaults(Regulation competitionRegulation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        {
+            return;
+        }
+
+        var match = Regulation.MatchRules;
+        var duration = DefaultsBinding.IsBound(HeritableRegulationPart.MatchDuration)
+            ? CloneMatchDuration(competitionRegulation.MatchRules.Duration)
+            : match.Duration;
+        var administrative = DefaultsBinding.IsBound(HeritableRegulationPart.AdministrativeResult)
+            ? CloneAdministrative(competitionRegulation.MatchRules.AdministrativeResultPolicy)
+            : match.AdministrativeResultPolicy;
+        var extraTime = DefaultsBinding.IsBound(HeritableRegulationPart.ExtraTime)
+            ? CloneExtraTime(competitionRegulation.MatchRules.ExtraTimePolicy)
+            : match.ExtraTimePolicy;
+        var shootout = DefaultsBinding.IsBound(HeritableRegulationPart.PenaltyShootout)
+            ? CloneShootout(competitionRegulation.MatchRules.PenaltyShootoutPolicy)
+            : match.PenaltyShootoutPolicy;
+
+        var nextMatch = new MatchRules(duration, administrative, extraTime, shootout);
+        var nextStanding = Regulation.StandingRules;
+
+        if (nextStanding is not null)
+        {
+            var points = DefaultsBinding.IsBound(HeritableRegulationPart.Points)
+                ? ClonePoints(competitionRegulation.StandingRules.Points)
+                : nextStanding.Points;
+            var criteria = DefaultsBinding.IsBound(HeritableRegulationPart.RankingCriteria)
+                ? competitionRegulation.StandingRules.RankingCriteria.ToArray()
+                : nextStanding.RankingCriteria.ToArray();
+            nextStanding = new StandingRules(points, criteria);
+        }
+
+        var previous = Regulation;
+        Regulation = previous.WithMatchRules(nextMatch);
+        if (nextStanding is not null)
+        {
+            Regulation = Regulation.WithStandingRules(nextStanding);
+        }
+
+        if (!Regulation.Equals(previous))
+        {
+            Raise(new StageRegulationReplaced(Id, clock));
+        }
+    }
+
+    /// <summary>
+    /// Rebinds a heritable part to Competition defaults (copies value + marks bound).
+    /// Domain primitive — no Host/SPA surface in Lot 2.
+    /// </summary>
+    public void BindToCompetition(HeritableRegulationPart part, Regulation competitionRegulation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        switch (part)
+        {
+            case HeritableRegulationPart.MatchDuration:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        CloneMatchDuration(competitionRegulation.MatchRules.Duration),
+                        Regulation.MatchRules.AdministrativeResultPolicy,
+                        Regulation.MatchRules.ExtraTimePolicy,
+                        Regulation.MatchRules.PenaltyShootoutPolicy));
+                break;
+            case HeritableRegulationPart.ExtraTime:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        Regulation.MatchRules.Duration,
+                        Regulation.MatchRules.AdministrativeResultPolicy,
+                        CloneExtraTime(competitionRegulation.MatchRules.ExtraTimePolicy),
+                        Regulation.MatchRules.PenaltyShootoutPolicy));
+                break;
+            case HeritableRegulationPart.PenaltyShootout:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        Regulation.MatchRules.Duration,
+                        Regulation.MatchRules.AdministrativeResultPolicy,
+                        Regulation.MatchRules.ExtraTimePolicy,
+                        CloneShootout(competitionRegulation.MatchRules.PenaltyShootoutPolicy)));
+                break;
+            case HeritableRegulationPart.AdministrativeResult:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        Regulation.MatchRules.Duration,
+                        CloneAdministrative(competitionRegulation.MatchRules.AdministrativeResultPolicy),
+                        Regulation.MatchRules.ExtraTimePolicy,
+                        Regulation.MatchRules.PenaltyShootoutPolicy));
+                break;
+            case HeritableRegulationPart.Points:
+                EnsureStandingPresentForBind();
+                Regulation = Regulation.WithStandingRules(
+                    new StandingRules(
+                        ClonePoints(competitionRegulation.StandingRules.Points),
+                        Regulation.StandingRules!.RankingCriteria.ToArray()));
+                break;
+            case HeritableRegulationPart.RankingCriteria:
+                EnsureStandingPresentForBind();
+                Regulation = Regulation.WithStandingRules(
+                    new StandingRules(
+                        Regulation.StandingRules!.Points,
+                        competitionRegulation.StandingRules.RankingCriteria.ToArray()));
+                break;
+            default:
+                throw new DomainException(
+                    $"Unknown heritable regulation part '{part}'.",
+                    StageErrorCodes.InvalidTransition);
+        }
+
+        DefaultsBinding = DefaultsBinding.Bind(part);
+        Raise(new StageRegulationReplaced(Id, clock));
     }
 
     /// <summary>
@@ -1776,6 +1968,80 @@ public sealed class Stage : AggregateRoot<StageId>
             Status = StageStatus.Draft;
         }
     }
+
+    private void UnbindChangedMatchParts(MatchRules before, MatchRules after)
+    {
+        if (!before.Duration.Equals(after.Duration))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.MatchDuration);
+        }
+
+        if (!Equals(before.ExtraTimePolicy, after.ExtraTimePolicy))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.ExtraTime);
+        }
+
+        if (!Equals(before.PenaltyShootoutPolicy, after.PenaltyShootoutPolicy))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.PenaltyShootout);
+        }
+
+        if (!before.AdministrativeResultPolicy.Equals(after.AdministrativeResultPolicy))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.AdministrativeResult);
+        }
+    }
+
+    private void UnbindChangedStandingParts(StandingRules? before, StandingRules? after)
+    {
+        if (before is null && after is null)
+        {
+            return;
+        }
+
+        if (before is null || after is null)
+        {
+            DefaultsBinding = DefaultsBinding
+                .Unbind(HeritableRegulationPart.Points)
+                .Unbind(HeritableRegulationPart.RankingCriteria);
+            return;
+        }
+
+        if (!before.Points.Equals(after.Points))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.Points);
+        }
+
+        if (!before.RankingCriteria.SequenceEqual(after.RankingCriteria))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.RankingCriteria);
+        }
+    }
+
+    private void EnsureStandingPresentForBind()
+    {
+        if (Regulation.StandingRules is null)
+        {
+            throw new DomainException(
+                "Standing rules cannot be bound on a stage without StandingRules.",
+                StageErrorCodes.StandingRulesInvariant);
+        }
+    }
+
+    private static MatchDuration CloneMatchDuration(MatchDuration source) =>
+        new(source.DurationPerPeriod, source.NumberOfPeriods, source.HalfTimeDuration);
+
+    private static AdministrativeResultPolicy CloneAdministrative(AdministrativeResultPolicy source) =>
+        new(source.ForfeitWinnerGoals, source.ForfeitLoserGoals);
+
+    private static ExtraTimePolicy? CloneExtraTime(ExtraTimePolicy? source) =>
+        source is null ? null : new ExtraTimePolicy(source.DurationPerPeriod, source.NumberOfPeriods);
+
+    private static PenaltyShootoutPolicy? CloneShootout(PenaltyShootoutPolicy? source) =>
+        source is null ? null : new PenaltyShootoutPolicy(source.InitialKicksPerTeam);
+
+    private static PointsPolicy ClonePoints(PointsPolicy source) =>
+        new(source.WinPoints, source.DrawPoints, source.LossPoints);
 
     private void EnsureDraftOrReady()
     {

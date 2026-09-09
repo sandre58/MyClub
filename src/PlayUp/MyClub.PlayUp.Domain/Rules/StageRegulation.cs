@@ -119,6 +119,24 @@ public sealed record StageRegulation
             PlacementAwardRules?.Copy());
 
     /// <summary>
+    /// Returns a copy with replaced match rules (new nested instances for match only).
+    /// </summary>
+    /// <param name="matchRules">The new match rules.</param>
+    /// <returns>A new stage regulation.</returns>
+    public StageRegulation WithMatchRules(MatchRules matchRules)
+    {
+        ArgumentNullException.ThrowIfNull(matchRules);
+        return new StageRegulation(
+            CloneMatchRules(matchRules),
+            CloneStandingRulesOrNull(StandingRules),
+            TieFormat?.Copy(),
+            DrawRules?.Copy(),
+            QualificationRules?.Copy(),
+            ProgressionRules?.Copy(),
+            PlacementAwardRules?.Copy());
+    }
+
+    /// <summary>
     /// Returns a copy with replaced standing rules (new nested instances for standing only).
     /// </summary>
     /// <param name="standingRules">The new standing rules, or <see langword="null"/> to clear.</param>

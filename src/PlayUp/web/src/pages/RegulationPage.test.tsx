@@ -1,9 +1,9 @@
 ﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
-import { fetchOrganisationView } from '../api'
+import { fetchOrganisationView, replaceCompetitionRegulation } from '../api'
 import { RegulationPage } from './RegulationPage'
 import type { OrganisationView } from '../types'
 
@@ -418,5 +418,162 @@ describe('RegulationPage', () => {
     expect(await screen.findByRole('heading', { name: 'Règlement' })).toBeInTheDocument()
     expect(screen.getByLabelText('Système suisse')).toBeInTheDocument()
     expect(screen.queryByLabelText(/Système suisse · 3 rondes/)).not.toBeInTheDocument()
+  })
+
+  it('opens a sectioned editor with sync banner for eligible stages', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('heading', { name: 'Match' }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('heading', { name: 'Classement' }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByRole('heading', { name: 'Disciplinaire' }),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(
+        /Les modifications seront appliquées aux phases encore en préparation/,
+      ),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByLabelText(/Activer les prolongations/)).toBeChecked()
+    expect(within(dialog).getByLabelText(/Activer les tirs au but/)).toBeChecked()
+  })
+
+  it('hides the sync banner when no Draft/Ready stage is eligible', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          {
+            stageId,
+            name: 'Groupes',
+            status: 'Running',
+            teamCount: 8,
+            matchCount: 12,
+            groupCount: 2,
+            roundCount: 0,
+            numberOfPeriods: 2,
+            durationPerPeriod: 45,
+            hasExtraTime: false,
+            hasPenaltyShootout: false,
+            hasStandingRules: true,
+            winPoints: 3,
+            drawPoints: 1,
+            lossPoints: 0,
+            hasDrawRules: false,
+            hasQualificationRules: false,
+            qualificationPathCount: 0,
+            hasProgressionRules: false,
+            progressionPathCount: 0,
+            hasTieFormat: false,
+            numberOfLegs: null,
+            aggregateScoring: null,
+            formatKind: 'Groups',
+          },
+        ],
+      }),
+    )
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).queryByText(
+        /Les modifications seront appliquées aux phases encore en préparation/,
+      ),
+    ).not.toBeInTheDocument()
+  })
+
+  it('asks for Ready confirmation before submitting', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({ status: 'Ready' }),
+    )
+    vi.mocked(replaceCompetitionRegulation).mockResolvedValue(undefined as never)
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+    await user.click(
+      await screen.findByRole('button', { name: 'Enregistrer le règlement' }),
+    )
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Modifier et rouvrir la compétition ?',
+      }),
+    ).toBeInTheDocument()
+    expect(replaceCompetitionRegulation).not.toHaveBeenCalled()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Modifier et rouvrir' }),
+    )
+
+    await waitFor(() => {
+      expect(replaceCompetitionRegulation).toHaveBeenCalled()
+    })
+  })
+
+  it('opens the Match section from a tile shortcut and submits full regulation', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    vi.mocked(replaceCompetitionRegulation).mockResolvedValue(undefined as never)
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier la section Match' }),
+    )
+
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByRole('heading', { name: 'Match' }),
+    ).toBeInTheDocument()
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Enregistrer le règlement' }),
+    )
+
+    await waitFor(() => {
+      expect(replaceCompetitionRegulation).toHaveBeenCalledWith(
+        competitionId,
+        expect.objectContaining({
+          durationPerPeriod: 45,
+          numberOfPeriods: 2,
+          hasExtraTime: true,
+          extraTimeDurationPerPeriod: 15,
+          extraTimeNumberOfPeriods: 2,
+          hasPenaltyShootout: true,
+          penaltyInitialKicksPerTeam: 5,
+          rankingCriteria: [
+            'Points',
+            'GoalDifference',
+            'GoalsFor',
+            'HeadToHead',
+          ],
+          forfeitWinnerGoals: 3,
+          forfeitLoserGoals: 0,
+        }),
+      )
+    })
   })
 })

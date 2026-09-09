@@ -76,6 +76,44 @@ public static class OrganisationRequestMapper
             ? existingDisciplinaryRules
             : new DisciplinaryRules(request.AllowedTypes);
 
+        ExtraTimePolicy? extraTime = null;
+        if (request.HasExtraTime)
+        {
+            if (request.ExtraTimeDurationPerPeriod is null || request.ExtraTimeNumberOfPeriods is null)
+            {
+                throw new ApplicationFailureException(
+                    "HasExtraTime requires ExtraTimeDurationPerPeriod and ExtraTimeNumberOfPeriods.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
+            extraTime = new ExtraTimePolicy(
+                request.ExtraTimeDurationPerPeriod.Value,
+                request.ExtraTimeNumberOfPeriods.Value);
+        }
+
+        PenaltyShootoutPolicy? shootout = null;
+        if (request.HasPenaltyShootout)
+        {
+            if (request.PenaltyInitialKicksPerTeam is null)
+            {
+                throw new ApplicationFailureException(
+                    "HasPenaltyShootout requires PenaltyInitialKicksPerTeam.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
+            shootout = new PenaltyShootoutPolicy(request.PenaltyInitialKicksPerTeam.Value);
+        }
+
+        var criteria = request.RankingCriteria is { Count: > 0 }
+            ? request.RankingCriteria
+            :
+            [
+                RankingCriterion.Points,
+                RankingCriterion.GoalDifference,
+                RankingCriterion.GoalsFor,
+                RankingCriterion.HeadToHead
+            ];
+
         return new Regulation(
             new EntryRules(request.MinimumTeams, request.MaximumTeams),
             new MatchRules(
@@ -83,15 +121,12 @@ public static class OrganisationRequestMapper
                     request.DurationPerPeriod,
                     request.NumberOfPeriods,
                     request.HalfTimeDuration),
-                new AdministrativeResultPolicy(request.ForfeitWinnerGoals, request.ForfeitLoserGoals)),
+                new AdministrativeResultPolicy(request.ForfeitWinnerGoals, request.ForfeitLoserGoals),
+                extraTime,
+                shootout),
             new StandingRules(
                 new PointsPolicy(request.WinPoints, request.DrawPoints, request.LossPoints),
-                [
-                    RankingCriterion.Points,
-                    RankingCriterion.GoalDifference,
-                    RankingCriterion.GoalsFor,
-                    RankingCriterion.HeadToHead
-                ]),
+                criteria),
             disciplinary);
     }
 

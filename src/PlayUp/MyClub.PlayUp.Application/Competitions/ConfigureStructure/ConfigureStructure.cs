@@ -65,6 +65,7 @@ public static class ConfigureStructure
                 competition.Id,
                 new StageName(intent.StageName),
                 StageRegulation.MaterializeFrom(competition.Regulation, isClassifying),
+                DefaultsBinding.AllBound(isClassifying),
                 clock);
             competition.AddStage(stage.Id, clock);
             stageCreated = true;
