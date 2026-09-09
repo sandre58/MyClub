@@ -1,19 +1,16 @@
 import {
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
-  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { createPortal } from 'react-dom';
 import { CloseIcon } from '../icons/shellIcons';
 import { PipetteIcon } from '../icons/overviewIcons';
 import { TextInput } from './TextInput';
 import { InputNumber } from './InputNumber';
+import { Popover } from './Popover';
 import { Select } from './Select';
-import { useDismissLayer } from '../useDismissLayer';
 import {
   HEX6,
   clamp01,
@@ -76,14 +73,12 @@ export function ColorPicker({
   const triggerId = id ?? autoId;
   const panelId = `${triggerId}-panel`;
   const rootRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const svRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
   const hsvRef = useRef<Hsv>(defaultHsv());
   const pickingRef = useRef(false);
 
   const [open, setOpen] = useState(false);
-  const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>();
   const [format, setFormat] = useState<ColorFormat>('hex');
   const [hexDraft, setHexDraft] = useState(value);
   const [hsv, setHsv] = useState<Hsv>(() => {
@@ -105,77 +100,6 @@ export function ColorPicker({
       setHsv(next);
     }
   }, [value]);
-
-  useLayoutEffect(() => {
-    if (!open) {
-      setPanelStyle(undefined);
-      return;
-    }
-
-    function placePanel() {
-      const anchor = rootRef.current;
-      if (!anchor) {
-        return;
-      }
-      const rect = anchor.getBoundingClientRect();
-      const gap = 8;
-      const panelWidth = Math.min(window.innerWidth - 32, 18.5 * 16);
-      let left = rect.left;
-      if (left + panelWidth > window.innerWidth - 16) {
-        left = Math.max(16, window.innerWidth - 16 - panelWidth);
-      }
-      const spaceBelow = window.innerHeight - rect.bottom - gap;
-      const preferBelow = spaceBelow >= 280 || spaceBelow >= rect.top;
-      setPanelStyle({
-        position: 'fixed',
-        top: preferBelow ? rect.bottom + gap : undefined,
-        bottom: preferBelow ? undefined : window.innerHeight - rect.top + gap,
-        left,
-        width: panelWidth,
-        zIndex: 50,
-      });
-    }
-
-    placePanel();
-    window.addEventListener('resize', placePanel);
-    window.addEventListener('scroll', placePanel, true);
-    return () => {
-      window.removeEventListener('resize', placePanel);
-      window.removeEventListener('scroll', placePanel, true);
-    };
-  }, [open]);
-
-  useDismissLayer(open && !disabled, () => {
-    if (pickingRef.current) {
-      return;
-    }
-    setOpen(false);
-  });
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    function onPointerDown(event: MouseEvent) {
-      if (pickingRef.current) {
-        return;
-      }
-      const target = event.target as Node;
-      if (
-        rootRef.current?.contains(target) ||
-        panelRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setOpen(false);
-    }
-
-    document.addEventListener('mousedown', onPointerDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-    };
-  }, [open]);
 
   const normalized = value.trim();
   const valid = HEX6.test(normalized);
@@ -301,41 +225,47 @@ export function ColorPicker({
   return (
     <div className="ds-color-picker" ref={rootRef}>
       <div
+        id={triggerId}
         className="ds-input ds-color-picker__shell"
+        role="button"
+        tabIndex={disabled ? -1 : 0}
         data-disabled={disabled ? 'true' : 'false'}
         data-open={open ? 'true' : 'false'}
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls={open ? panelId : undefined}
+        aria-disabled={disabled || undefined}
+        onClick={() => {
+          if (!disabled) {
+            setOpen((current) => !current);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (disabled) {
+            return;
+          }
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setOpen((current) => !current);
+          }
+        }}
       >
-        <button
-          type="button"
-          id={triggerId}
-          className="ds-color-picker__trigger"
-          disabled={disabled}
-          aria-label={ariaLabel}
-          aria-expanded={open}
-          aria-haspopup="dialog"
-          aria-controls={open ? panelId : undefined}
-          onClick={() => {
-            if (!disabled) {
-              setOpen((current) => !current);
-            }
-          }}
+        <span
+          className="ds-color-picker__swatch"
+          data-empty={empty || !valid ? 'true' : 'false'}
+          style={
+            valid
+              ? ({ ['--ds-color-swatch' as string]: normalized } as object)
+              : undefined
+          }
+        />
+        <span
+          className="ds-color-picker__value"
+          data-empty={empty ? 'true' : 'false'}
         >
-          <span
-            className="ds-color-picker__swatch"
-            data-empty={empty || !valid ? 'true' : 'false'}
-            style={
-              valid
-                ? ({ ['--ds-color-swatch' as string]: normalized } as object)
-                : undefined
-            }
-          />
-          <span
-            className="ds-color-picker__value"
-            data-empty={empty ? 'true' : 'false'}
-          >
-            {display}
-          </span>
-        </button>
+          {display}
+        </span>
         {showClear ? (
           <button
             type="button"
@@ -353,17 +283,17 @@ export function ColorPicker({
         ) : null}
       </div>
 
-      {open && panelStyle
-        ? createPortal(
-            <div
-              ref={panelRef}
-              id={panelId}
-              className="ds-color-picker__panel"
-              data-portaled="true"
-              role="dialog"
-              aria-label={ariaLabel}
-              style={panelStyle}
-            >
+      <Popover
+        open={open && !disabled}
+        onOpenChange={setOpen}
+        anchorRef={rootRef}
+        id={panelId}
+        className="ds-color-picker__panel"
+        aria-label={ariaLabel}
+        width={18.5 * 16}
+        flipThreshold={280}
+        dismissEnabled={() => !pickingRef.current}
+      >
               <div
                 ref={svRef}
                 className="ds-color-picker__sv"
@@ -645,10 +575,7 @@ export function ColorPicker({
                   </div>
                 )}
               </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      </Popover>
     </div>
   );
 }

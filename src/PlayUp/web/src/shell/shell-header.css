@@ -9,7 +9,7 @@
 
 .shell-header__context {
   display: flex;
-  flex: 1;
+  flex: 0 1 auto;
   flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-12);

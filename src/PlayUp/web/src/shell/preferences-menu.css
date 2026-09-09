@@ -24,33 +24,14 @@
   background: color-mix(in srgb, var(--color-on-chrome) 8%, transparent);
 }
 
-.shell-preferences__panel {
-  position: absolute;
-  top: calc(100% + var(--space-8));
-  right: 0;
-  z-index: 30;
-  /* Wide enough for theme ToggleButtonGroup labels (Système / Clair / Sombre). */
-  min-width: 22.5rem;
-  padding: var(--space-12);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-overlay);
-  color: var(--color-text-primary);
-}
-
+/* Content chrome on shared `.ds-popover` surface (gap from `.ds-popover`). */
 .shell-preferences__title {
-  margin: 0 0 var(--space-12);
+  margin: 0;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-}
-
-.shell-preferences__panel .ds-field + .ds-field,
-.shell-preferences__theme-field {
-  margin-top: var(--space-16);
 }
 
 /* Accueil: pin to top-right of the home root (no shell header). */

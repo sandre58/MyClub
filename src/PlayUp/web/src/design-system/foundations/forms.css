@@ -1163,25 +1163,10 @@
 
 .ds-color-picker__shell {
   padding-inline-end: var(--space-8);
-}
-
-.ds-color-picker__trigger {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: start;
   cursor: pointer;
 }
 
-.ds-color-picker__trigger:disabled {
+.ds-color-picker__shell[data-disabled='true'] {
   cursor: not-allowed;
 }
 
@@ -1216,42 +1201,9 @@
   color: var(--color-text-secondary);
 }
 
+/* Color picker content layout on top of shared `.ds-popover`. */
 .ds-color-picker__panel {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + var(--space-8));
-  inset-inline-start: 0;
-  display: flex;
-  flex-direction: column;
   gap: var(--space-12);
-  width: min(100vw - 2rem, 18.5rem);
-  padding: var(--space-12);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-overlay);
-}
-
-.ds-color-picker__panel[data-portaled='true'] {
-  /* Position comes from inline style (fixed + coordinates). */
-  position: fixed;
-  top: auto;
-  inset-inline-start: auto;
-  width: auto;
-  z-index: 50;
-}
-
-.ds-color-picker__panel::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  inset-inline-start: 1rem;
-  width: 8px;
-  height: 8px;
-  border-block-start: var(--border-width) solid var(--color-border);
-  border-inline-start: var(--border-width) solid var(--color-border);
-  background: var(--color-surface);
-  transform: rotate(45deg);
 }
 
 .ds-color-picker__sv {

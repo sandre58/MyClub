@@ -60,6 +60,13 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 - Interactive specimen: Design Lab surface **Dialog** only.
 - `AttentionDrawer` is Shell triage — not Dialog.
 
+## Popover
+
+- Canonical: `components/Popover.tsx` + `foundations/popover.css`.
+- Anchored surface: portal to `document.body`, fixed placement, Escape + outside click.
+- Shared caret notch: `data-side="below|above"` + `--ds-popover-caret-inset` toward the trigger.
+- Consumers: **ColorPicker** panel, Shell **Preferences** menu.
+
 ## Toast
 
 - `Toaster` + `toastStore` (`notify`) + `foundations/toast.css`.

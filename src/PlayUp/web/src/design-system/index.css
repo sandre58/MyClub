@@ -28,6 +28,7 @@
 @import './foundations/live.css';
 @import './foundations/surfaces.css';
 @import './foundations/dialog.css';
+@import './foundations/popover.css';
 @import './foundations/toast.css';
 @import './foundations/focus.css';
 @import './foundations/states.css';

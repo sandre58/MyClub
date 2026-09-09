@@ -18,7 +18,7 @@
   --shell-rail-wash-current: color-mix(in srgb, var(--color-on-chrome) 12%, transparent);
   --shell-rail-wash-current-hover: color-mix(in srgb, var(--color-on-chrome) 16%, transparent);
   --shell-lockup-mark-height: 2.5rem;
-  --shell-lockup-wordmark-height: 1.875rem;
+  --shell-lockup-wordmark-height: 2.7rem;
   --shell-header-min-height-phone: 3.5rem;
   --shell-phone-chrome-end: var(--shell-header-min-height-phone);
 }

@@ -1,8 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Field } from '../design-system/components/Field';
+import { Popover } from '../design-system/components/Popover';
 import { Select } from '../design-system/components/Select';
-import { useDismissLayer } from '../design-system/useDismissLayer';
 import { SettingsNavIcon } from '../design-system/icons/shellIcons';
 import {
   isSupportedLocale,
@@ -40,27 +40,6 @@ export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
     ? i18n.language
     : 'fr';
 
-  useDismissLayer(open, () => {
-    setOpen(false);
-  });
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', onPointerDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-    };
-  }, [open]);
-
   async function onLanguageChange(value: string | null) {
     if (!value || !isSupportedLocale(value)) {
       return;
@@ -90,49 +69,51 @@ export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
         <SettingsNavIcon size="sm" aria-hidden="true" />
       </button>
 
-      {open ? (
-        <div
-          id={panelId}
-          className="shell-preferences__panel"
-          role="dialog"
-          aria-label={t('preferences.title')}
+      <Popover
+        open={open}
+        onOpenChange={setOpen}
+        anchorRef={rootRef}
+        id={panelId}
+        className="shell-preferences__panel"
+        aria-label={t('preferences.title')}
+        align="end"
+        width={22.5 * 16}
+      >
+        <p className="shell-preferences__title">{t('preferences.title')}</p>
+
+        <Field label={t('preferences.language')} htmlFor={languageFieldId}>
+          <Select
+            id={languageFieldId}
+            aria-label={t('preferences.language')}
+            value={locale}
+            allowClear={false}
+            onChange={onLanguageChange}
+            options={[
+              {
+                value: 'fr',
+                label: t('preferences.locale.fr'),
+                leading: localeFlag('fr'),
+              },
+              {
+                value: 'en',
+                label: t('preferences.locale.en'),
+                leading: localeFlag('en'),
+              },
+            ]}
+          />
+        </Field>
+
+        <Field
+          label={t('preferences.theme.label')}
+          className="shell-preferences__theme-field"
         >
-          <p className="shell-preferences__title">{t('preferences.title')}</p>
-
-          <Field label={t('preferences.language')} htmlFor={languageFieldId}>
-            <Select
-              id={languageFieldId}
-              aria-label={t('preferences.language')}
-              value={locale}
-              allowClear={false}
-              onChange={onLanguageChange}
-              options={[
-                {
-                  value: 'fr',
-                  label: t('preferences.locale.fr'),
-                  leading: localeFlag('fr'),
-                },
-                {
-                  value: 'en',
-                  label: t('preferences.locale.en'),
-                  leading: localeFlag('en'),
-                },
-              ]}
-            />
-          </Field>
-
-          <Field
-            label={t('preferences.theme.label')}
-            className="shell-preferences__theme-field"
-          >
-            <ThemePreferenceListbox
-              value={themePreference}
-              onChange={onThemeChange}
-              aria-label={t('preferences.theme.label')}
-            />
-          </Field>
-        </div>
-      ) : null}
+          <ThemePreferenceListbox
+            value={themePreference}
+            onChange={onThemeChange}
+            aria-label={t('preferences.theme.label')}
+          />
+        </Field>
+      </Popover>
     </div>
   );
 }

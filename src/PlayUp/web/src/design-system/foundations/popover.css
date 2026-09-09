@@ -1,0 +1,46 @@
+/*
+ * Anchored popover surface — shared by ColorPicker, Preferences, …
+ * Placement is inline (fixed) from Popover.tsx.
+ * Caret notch points at the anchor; side flips with data-side.
+ */
+
+.ds-popover {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  box-sizing: border-box;
+  padding: var(--space-12);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-overlay);
+  color: var(--color-text-primary);
+}
+
+.ds-popover::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--ds-popover-caret-inset, 1rem);
+  width: 8px;
+  height: 8px;
+  background: var(--color-surface);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+/* Opens below the trigger — notch on the top edge, pointing up. */
+.ds-popover[data-side='below']::before {
+  top: -5px;
+  bottom: auto;
+  border-block-start: var(--border-width) solid var(--color-border);
+  border-inline-start: var(--border-width) solid var(--color-border);
+}
+
+/* Opens above the trigger — notch on the bottom edge, pointing down. */
+.ds-popover[data-side='above']::before {
+  top: auto;
+  bottom: -5px;
+  border-block-end: var(--border-width) solid var(--color-border);
+  border-inline-end: var(--border-width) solid var(--color-border);
+}
