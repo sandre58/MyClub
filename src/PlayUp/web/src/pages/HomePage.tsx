@@ -20,6 +20,7 @@ import { PlusIcon } from '../design-system/icons/overviewIcons';
 import '../design-system/fonts';
 import '../design-system/index.css';
 import { queryKeys } from '../queryKeys';
+import { toIntlLocale } from '../i18n/intlLocale';
 import {
   CompetitionStatusBadge,
   ErrorState,
@@ -28,6 +29,7 @@ import {
   PendingLabel,
 } from '../ui';
 import { declaredSchedule } from '../shell/competitionPeriod';
+import { PreferencesMenu } from '../shell/PreferencesMenu';
 import {
   COMPETITION_NAME_MAX_LENGTH,
   type CompetitionListItem,
@@ -64,6 +66,8 @@ export function HomePage() {
       <a className="ds-skip-link" href="#main">
         {tCommon('skipToContent')}
       </a>
+
+      <PreferencesMenu className="shell-preferences--home" />
 
       <main id="main" className="ds-home__main">
         <HomeBrand lede={isEmpty ? tc('emptyHint') : t('lede')} />
@@ -181,11 +185,10 @@ function CompetitionSection({
 
 function CompetitionRow({ item }: { item: CompetitionListItem }) {
   const { t, i18n } = useTranslation('competitions');
-  const locale = i18n.language === 'fr' ? 'fr-FR' : i18n.language;
   const schedule = declaredSchedule(
     item.scheduledStart,
     item.scheduledEnd,
-    locale,
+    toIntlLocale(i18n.language),
   );
   const scheduleLabel =
     schedule?.kind === 'both'

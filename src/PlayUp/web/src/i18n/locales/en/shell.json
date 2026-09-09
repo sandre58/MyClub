@@ -1,0 +1,59 @@
+{
+  "navigation": {
+    "overview": "Overview",
+    "organisation": "Structure",
+    "matches": "Fixtures & matches",
+    "classements": "Standings",
+    "teams": "Teams",
+    "venues": "Venues",
+    "regulation": "Regulations"
+  },
+  "groups": {
+    "pilotage": "Operations",
+    "competition": "Competition",
+    "referentiel": "Reference"
+  },
+  "sidebar": {
+    "label": "Main sidebar",
+    "primary": "Primary navigation",
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar",
+    "menuOpen": "Open navigation menu",
+    "menuClose": "Close navigation menu",
+    "home": "Play’Up home",
+    "comingSoon": "{{label}} — coming soon"
+  },
+  "competition": {
+    "choose": "Choose a competition",
+    "none": "No competition",
+    "loading": "Loading",
+    "unavailable": "Context unavailable",
+    "contextLabel": "Competition context"
+  },
+  "attention": {
+    "label": "Needs attention",
+    "trigger_zero": "Needs attention, no items",
+    "trigger_one": "Needs attention, {{count}} item",
+    "trigger_other": "Needs attention, {{count}} items",
+    "closeDrawer": "Close Needs attention",
+    "emptyHost": "No competition is available on this Host.",
+    "noContext": "Open a competition to see what needs your attention.",
+    "loadError": "Unable to load items needing attention.",
+    "emptyAria": "No items needing attention",
+    "emptyTitle": "Nothing to handle for now",
+    "emptyHint": "Items appear here when the Host reports a blocked or pending step.",
+    "lede": "Situations that need action.",
+    "groupBlocking": "Blocking",
+    "groupAttention": "Needs attention",
+    "open": "Open →"
+  },
+  "preferences": {
+    "open": "Open preferences",
+    "title": "Preferences",
+    "language": "Language",
+    "locale": {
+      "fr": "Français",
+      "en": "English"
+    }
+  }
+}

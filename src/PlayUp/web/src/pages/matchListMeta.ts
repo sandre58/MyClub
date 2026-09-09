@@ -1,5 +1,7 @@
 import type { TFunction } from 'i18next';
+import { DEFAULT_LOCALE } from '../i18n/config';
 import { resultTypeLabel } from '../i18n/enumLabels';
+import { toIntlLocale } from '../i18n/intlLocale';
 import type { MatchSummary } from '../types';
 
 /**
@@ -22,6 +24,7 @@ export function matchSportingContext(
 /** Kickoff display from Read scheduledAt (ISO). */
 export function formatMatchKickoff(
   scheduledAt: string | null | undefined,
+  language: string = DEFAULT_LOCALE,
 ): string | null {
   if (!scheduledAt) {
     return null;
@@ -30,14 +33,17 @@ export function formatMatchKickoff(
   if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return new Intl.DateTimeFormat('fr-FR', {
+  return new Intl.DateTimeFormat(toIntlLocale(language), {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date);
 }
 
 /** Date and time parts for Match Hero meta band. */
-export function formatKickoffParts(scheduledAt: string | null | undefined): {
+export function formatKickoffParts(
+  scheduledAt: string | null | undefined,
+  language: string = DEFAULT_LOCALE,
+): {
   date: string | null;
   time: string | null;
 } {
@@ -48,16 +54,20 @@ export function formatKickoffParts(scheduledAt: string | null | undefined): {
   if (Number.isNaN(date.getTime())) {
     return { date: null, time: null };
   }
+  const locale = toIntlLocale(language);
   return {
-    date: new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(
+    date: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
       date,
     ),
-    time: new Intl.DateTimeFormat('fr-FR', { timeStyle: 'short' }).format(date),
+    time: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(date),
   };
 }
 
-export function matchScheduledLabel(match: MatchSummary): string | null {
-  return formatMatchKickoff(match.scheduledAt);
+export function matchScheduledLabel(
+  match: MatchSummary,
+  language: string = DEFAULT_LOCALE,
+): string | null {
+  return formatMatchKickoff(match.scheduledAt, language);
 }
 
 /** Result type label from Read — null when Domain has no result. */

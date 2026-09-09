@@ -1,0 +1,54 @@
+{
+  "eyebrow": "Stage",
+  "titleFallback": "Stage",
+  "backNamed": "Back to {{name}}",
+  "back": "Back to competition",
+  "operations": {
+    "heading": "Stage operations",
+    "prepare": "Prepare stage",
+    "preparing": "Preparing…",
+    "start": "Start stage",
+    "starting": "Starting…",
+    "viewMatches": "View matches"
+  },
+  "rounds": {
+    "heading": "Rounds ({{count}})",
+    "subtitle_one": "{{count}} fixture in total · the match list is a separate view",
+    "subtitle_other": "{{count}} fixtures in total · the match list is a separate view",
+    "emptyTitle": "No rounds defined",
+    "emptyBody": "Preparing the stage creates its rounds and fixtures.",
+    "fixtureCount_one": "{{count}} fixture",
+    "fixtureCount_other": "{{count}} fixtures",
+    "leg": "leg {{index}}"
+  },
+  "slots": {
+    "heading": "Slots ({{count}})",
+    "emptyTitle": "No slots on this stage",
+    "emptyBody": "Slots appear once the structure defines the positions.",
+    "empty": "empty"
+  },
+  "draws": {
+    "heading": "Draws ({{count}})",
+    "emptyTitle": "No draws",
+    "emptyBody": "A draw appears when the stage structure requires one."
+  },
+  "confrontations": {
+    "heading": "Fixtures",
+    "intro": "Explicitly pair occupied slots not yet covered (Slot A ↔ Slot B), then generate the fixtures.",
+    "occupiedHint": "{{count}} occupied slot(s).",
+    "coveredHint": "{{count}} already covered by a complete fixture — excluded from pairing.",
+    "allCovered": "All possible fixtures are already generated for the occupied slots.",
+    "slotA": "Slot A",
+    "slotB": "Slot B",
+    "selectPlaceholder": "Choose…",
+    "addPair": "Add pair",
+    "removePair": "Remove",
+    "pairsHeading": "Pairs to materialise",
+    "pairsEmpty": "No pairs — add at least one fixture.",
+    "pairLabel": "{{slotA}} ↔ {{slotB}}",
+    "submit": "Generate fixtures",
+    "submitting": "Generating…",
+    "successCreated": "{{count}} match(es) created.",
+    "successAlreadyComplete": "These fixtures were already generated."
+  }
+}

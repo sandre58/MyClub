@@ -83,11 +83,11 @@ function MatchList({ matches }: { matches: MatchSummary[] }) {
 }
 
 function StageMatchRow({ match }: { match: MatchSummary }) {
-  const { t } = useTranslation('matches');
+  const { t, i18n } = useTranslation('matches');
   const homeName = sideLabel(match.home);
   const awayName = sideLabel(match.away);
   const sporting = matchSportingContext(match, t, 'stageList.matchday');
-  const when = matchScheduledLabel(match);
+  const when = matchScheduledLabel(match, i18n.language);
   const resultKind = matchResultTypeLabel(match);
   const asideLabel = match.score
     ? `${match.score.homeGoals}–${match.score.awayGoals}`

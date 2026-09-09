@@ -93,6 +93,9 @@ describe('HomePage', () => {
     expect(
       await screen.findByRole('button', { name: /Créer une compétition/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Ouvrir les préférences' }),
+    ).toBeInTheDocument();
   });
 
   it('shows loading while the list is pending', () => {

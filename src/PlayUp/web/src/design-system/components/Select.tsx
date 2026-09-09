@@ -13,6 +13,8 @@ export type SelectOption = {
   value: string;
   label: string;
   disabled?: boolean;
+  /** Optional leading mark (e.g. locale flag) — shown in list and on closed trigger when `leadingIcon` is omitted. */
+  leading?: ReactNode;
 };
 
 export type SelectProps = {
@@ -114,6 +116,7 @@ export function Select({
   const [activeIndex, setActiveIndex] = useState(-1);
   const current = controlled ? (value ?? null) : uncontrolled;
   const selected = options.find((option) => option.value === current) ?? null;
+  const triggerLeading = leadingIcon ?? selected?.leading ?? null;
   const showClear = allowClear && current != null && !disabled;
   const activeOption =
     activeIndex >= 0 && activeIndex < options.length
@@ -247,9 +250,9 @@ export function Select({
         onClick={toggleOpen}
         onKeyDown={onShellKeyDown}
       >
-        {leadingIcon ? (
+        {triggerLeading ? (
           <span className="ds-input__leading" aria-hidden="true">
-            {leadingIcon}
+            {triggerLeading}
           </span>
         ) : null}
         <span
@@ -303,7 +306,15 @@ export function Select({
                   data-active={isActive ? 'true' : 'false'}
                   onClick={() => selectOption(option.value)}
                 >
-                  {option.label}
+                  {option.leading ? (
+                    <span
+                      className="ds-select__option-leading"
+                      aria-hidden="true"
+                    >
+                      {option.leading}
+                    </span>
+                  ) : null}
+                  <span className="ds-select__option-label">{option.label}</span>
                 </button>
               </li>
             );

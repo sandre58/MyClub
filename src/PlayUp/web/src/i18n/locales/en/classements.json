@@ -1,0 +1,67 @@
+{
+  "title": "Standings",
+  "back": "Overview",
+  "context": {
+    "format": "Format",
+    "status": "Status"
+  },
+  "loading": "Loading standings…",
+  "error": "Unable to load standings.",
+  "empty": "No standings to display yet.",
+  "emptyHint": "Played matches will feed the table when available.",
+  "notApplicable": {
+    "title": "Standings not applicable",
+    "CupFormat": "This format (cup) does not produce a league table.",
+    "NoStructure": "No sporting structure yet allows a table to be calculated.",
+    "unknown": "Standings are not applicable to this competition."
+  },
+  "table": {
+    "overall": "Overall standings",
+    "group": "{{name}}",
+    "stage": "{{name}}"
+  },
+  "columns": {
+    "position": "Pos.",
+    "team": "Team",
+    "played": "P",
+    "wins": "W",
+    "draws": "D",
+    "losses": "L",
+    "goalsFor": "GF",
+    "goalsAgainst": "GA",
+    "goalDifference": "GD",
+    "points": "Pts"
+  },
+  "lastMatchday": {
+    "title": "Last matchday",
+    "matchday": "Matchday {{n}}",
+    "empty": "No results to display yet.",
+    "pending": "—",
+    "openMatches": "View all matches",
+    "columns": {
+      "match": "Match",
+      "score": "Score"
+    },
+    "resultType": {
+      "Forfeit": "Forfeit",
+      "WalkOver": "Walk-over"
+    }
+  },
+  "regulation": {
+    "title": "Standings regulations",
+    "lede": "Points and match settings from organisation — the table above is calculated by the domain engine.",
+    "pointsHeading": "Points scale",
+    "pointsValue": "{{value}} pts",
+    "pointsWin": "Win",
+    "pointsDraw": "Draw",
+    "pointsLoss": "Loss",
+    "match": "Match duration",
+    "matchValue": "{{periods}} × {{duration}} min",
+    "teams": "Expected squad size",
+    "teamsValue": "{{min}} – {{max}} teams",
+    "rankingHint": "Tie-break criteria (goal difference, etc.) remain those of the Domain; they are not recalculated here.",
+    "loading": "Loading regulations…",
+    "unavailable": "Regulation details are not available at the moment.",
+    "openOrganisation": "View organisation"
+  }
+}

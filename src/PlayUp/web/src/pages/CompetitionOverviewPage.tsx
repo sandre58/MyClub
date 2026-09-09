@@ -19,6 +19,7 @@ import { TextLink } from '../design-system/components/TextLink';
 import { CalendarIcon } from '../design-system/icons/overviewIcons';
 import { actionLabel } from '../i18n/actionLabels';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
+import { toIntlLocale } from '../i18n/intlLocale';
 import { queryKeys } from '../queryKeys';
 import type {
   OverviewAction,
@@ -887,7 +888,7 @@ function SportMatchLineList({ matches }: { matches: OverviewMatchLine[] }) {
         const isFinished = match.status === 'Finished';
         const scheduledLabel =
           match.scheduledAt != null
-            ? formatMatchSchedule(match.scheduledAt, i18n.language)
+            ? formatMatchSchedule(match.scheduledAt, toIntlLocale(i18n.language))
             : t('sport.scheduledUnset');
 
         return (

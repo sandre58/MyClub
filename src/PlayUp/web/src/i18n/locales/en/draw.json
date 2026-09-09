@@ -1,0 +1,23 @@
+{
+  "cancelled": "This draw has been cancelled. A new draw is required to start again.",
+  "draftNotResolved": "Draw in preparation — no result yet.",
+  "draftResolved": "Draw resolved but not published.",
+  "noSolution": "No admissible solution was found for this draw.",
+  "published": "Draw published.",
+  "publishedSlotApplied": "Draw published. Placements match the stage slots.",
+  "publishedPairingApplied": "Draw published. Target fixtures already have matches attached.",
+  "fallback": "The draw state is available below.",
+  "title": "Draw {{kind}}",
+  "applied": "Applied",
+  "result": "Result",
+  "placements": "Placements",
+  "vs": "vs",
+  "groupPlacementsHint": "Group placements are not yet shown in this preview.",
+  "publish": "Publish the draw",
+  "publishing": "Publishing…",
+  "apply": "Apply the draw",
+  "applying": "Applying…",
+  "confirmApplyTitle": "Apply the draw?",
+  "confirmApply": "This will update the stage and may create matches.",
+  "pairingMapBlocked": "Apply unavailable: the number of pairings must equal the number of stage fixtures for a 1:1 match."
+}

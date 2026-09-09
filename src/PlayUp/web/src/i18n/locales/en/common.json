@@ -1,0 +1,24 @@
+{
+  "loading": "Loading…",
+  "close": "Close",
+  "cancel": "Cancel",
+  "back": "Back",
+  "skipToContent": "Skip to content",
+  "notFound": "Not found. Check the identifier in the URL.",
+  "notFoundPage": {
+    "eyebrow": "404 error",
+    "title": "Page not found",
+    "lede": "This route does not exist in the organiser application.",
+    "home": "Back to home"
+  },
+  "unexpectedError": {
+    "eyebrow": "Error",
+    "title": "Unable to display this page",
+    "lede": "An unexpected error occurred. You can try again or return home.",
+    "retry": "Try again",
+    "home": "Back to home"
+  },
+  "unknownError": "Unknown error",
+  "errorWithStatus": "{{message}} ({{status}})",
+  "unknownEntry": "Unknown entry"
+}

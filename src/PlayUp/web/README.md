@@ -118,7 +118,7 @@ Config: `.prettierrc.json`, `.oxlintrc.json`, `.vscode/` (Prettier format-on-sav
 
 ## Internationalization
 
-Default locale is **`fr`**. See [docs/i18n.md](./docs/i18n.md) for conventions, namespaces, and the rule that new UI strings must go through i18n.
+Locales **`fr`** (default) and **`en`**. Language preference lives in **Préférences** (shell + Accueil). See [docs/i18n.md](./docs/i18n.md) for conventions, namespaces, parity, and the rule that new UI strings must go through i18n.
 
 ## Design System
 

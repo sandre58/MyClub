@@ -1,0 +1,129 @@
+{
+  "dimensions": {
+    "teams": {
+      "title": "Teams",
+      "figureLabel": "registered teams",
+      "figureLabelIdentity": "teams",
+      "crestsLabel": "Registered teams",
+      "crestsLabelIdentity": "Participating teams",
+      "minimumRequired": "Minimum required: {{minimumTeams}}"
+    },
+    "structure": {
+      "title": "Structure",
+      "none": "Format not configured",
+      "phases_one": "{{count}} stage",
+      "phases_other": "{{count}} stages",
+      "phasesDetail_one": "{{count}} stage · {{names}}",
+      "phasesDetail_other": "{{count}} stages · {{names}}",
+      "groups_one": "{{count}} group",
+      "groups_other": "{{count}} groups",
+      "rounds_one": "{{count}} round",
+      "rounds_other": "{{count}} rounds",
+      "matchdays_one": "{{count}} matchday",
+      "matchdays_other": "{{count}} matchdays",
+      "swissRounds": "Swiss · {{generated}} / {{planned}} rounds generated",
+      "swissByes_one": "{{count}} bye (pairing event)",
+      "swissByes_other": "{{count}} byes (pairing events)",
+      "swissByesHint": "Not a match — the team is exempt for the round.",
+      "slots_one": "{{count}} slot",
+      "slots_other": "{{count}} slots",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matches",
+      "matchesNone": "No matches created"
+    },
+    "regulation": {
+      "title": "Regulations",
+      "pointsValue": "{{value}} pts",
+      "pointsWin": "Win",
+      "pointsDraw": "Draw",
+      "pointsLoss": "Loss",
+      "formatDuration": "{{periods}}×{{duration}} min",
+      "elimination": "Knockout",
+      "twoLegs": "2 legs",
+      "twoLegsAggregate": "2 legs · aggregate score",
+      "extraTime": "Extra time",
+      "penalties": "Penalties",
+      "swissPlannedRounds_one": "{{count}} planned matchday",
+      "swissPlannedRounds_other": "{{count}} planned matchdays"
+    },
+    "calendar": {
+      "title": "Sporting calendar",
+      "matchdays_one": "{{count}} matchday",
+      "matchdays_other": "{{count}} matchdays",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matches",
+      "matchdayLine_one": "Matchday {{number}} · {{count}} match",
+      "matchdayLine_other": "Matchday {{number}} · {{count}} matches",
+      "nextHeading": "Next fixture",
+      "nextLine": "{{home}} – {{away}}",
+      "nextMatchday": "MD{{number}}"
+    },
+    "openMatches": "View matches",
+    "openTeams": "View teams",
+    "openRegulation": "View regulations",
+    "openStructure": "View structure"
+  },
+  "situations": {
+    "heading": "Needs attention"
+  },
+  "attention": {
+    "triageHint": "{{count}} situation(s) — details in the Needs attention panel (header)."
+  },
+  "progression": {
+    "heading": "Next action",
+    "codes": {
+      "MaterializeMatches": "Create fixtures / matches to progress (league) or the fixture skeleton (cup).",
+      "MaterializeFromOccupiedSlots": "Slots are occupied — open the stage to configure fixtures (SlotA ↔ SlotB).",
+      "GenerateNextRound": "Generate the next Swiss round (pairings + matches) — after current round results if needed.",
+      "PublishDraw": "Publish the draw to lock the composition.",
+      "ApplyDraw": "Apply the published draw to place the teams.",
+      "ApplyProgression": "Apply progression to advance the stage.",
+      "ApplyQualification": "Apply qualification to feed the next stage.",
+      "PrepareCompetition": "Move the competition to the ready state.",
+      "StartCompetition": "Open the sporting cycle — the competition starts.",
+      "PrepareStage": "Finalise the stage configuration before sporting operations.",
+      "StartStage": "Open the stage for matches and sporting operations.",
+      "CompleteCompetition": "Normal completion of the competition is possible."
+    }
+  },
+  "materializeFollowUp": {
+    "heading": "Matches created",
+    "created": "{{created}} match(es) created · {{total}} attached.",
+    "alreadyComplete": "Matches were already created ({{count}} attached).",
+    "openMatches": "View matches",
+    "dismiss": "Close"
+  },
+  "actions": {
+    "busy": "Running…",
+    "openSpace": "Continue"
+  },
+  "sport": {
+    "standingTitle": "Standings",
+    "standingGroupTitle": "Group {{name}}",
+    "standingOpen": "View standings",
+    "outcomeTitle": "Result",
+    "outcomeWinnerLabel": "Winner",
+    "outcomeChampionLabel": "Champion",
+    "outcomeOpenFull": "View full standings",
+    "groupNav": "Groups",
+    "recentTitle": "Recent fixtures",
+    "nextTitle": "Upcoming fixtures",
+    "recentEmpty": "No units engaged yet",
+    "nextEmpty": "No upcoming matchday has been generated yet",
+    "unitMatchday": "Matchday {{number}}",
+    "unitMatchCount": "{{count}} matches",
+    "unitMatchCount_one": "{{count}} match",
+    "liveBadge": "Live",
+    "scheduledUnset": "Unscheduled",
+    "cols": {
+      "position": "Pos.",
+      "team": "Team",
+      "played": "P",
+      "points": "Pts"
+    }
+  },
+  "nature": {
+    "Blocking": "Blocking",
+    "Informational": "Info"
+  }
+}

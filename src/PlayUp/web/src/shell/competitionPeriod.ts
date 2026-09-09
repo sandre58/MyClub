@@ -1,3 +1,6 @@
+import { DEFAULT_LOCALE } from '../i18n/config';
+import { toIntlLocale } from '../i18n/intlLocale';
+
 /**
  * Formats competition period for shell chrome when Read exposes dates.
  * Returns null when neither boundary is available — UI omits the segment.
@@ -5,7 +8,7 @@
 export function formatCompetitionPeriod(
   start?: string | null,
   end?: string | null,
-  locale = 'fr-FR',
+  locale: string = toIntlLocale(DEFAULT_LOCALE),
 ): string | null {
   const parts = declaredSchedule(start, end, locale);
   if (!parts) {
@@ -31,7 +34,7 @@ export type DeclaredSchedule =
 export function declaredSchedule(
   start?: string | null,
   end?: string | null,
-  locale = 'fr-FR',
+  locale: string = toIntlLocale(DEFAULT_LOCALE),
 ): DeclaredSchedule | null {
   const startDate = parseDateOnly(start);
   const endDate = parseDateOnly(end);

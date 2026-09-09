@@ -11,7 +11,9 @@ import {
 import { queryKeys } from '../queryKeys';
 import type { CompetitionStatus } from '../types';
 import { CompetitionStatusBadge } from '../ui';
+import { toIntlLocale } from '../i18n/intlLocale';
 import { formatCompetitionPeriod } from './competitionPeriod';
+import { PreferencesMenu } from './PreferencesMenu';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import type { ShellViewport } from './useShellViewport';
 
@@ -41,7 +43,7 @@ export function ShellHeader({
   attentionTriggerRef,
   onAttentionClick,
 }: ShellHeaderProps) {
-  const { t } = useTranslation('shell');
+  const { t, i18n } = useTranslation('shell');
   const {
     competitionId,
     competitionName,
@@ -61,7 +63,11 @@ export function ShellHeader({
   const attentionCount =
     attentionQuery.data?.count ?? attentionQuery.data?.items.length ?? 0;
   const competitionStatus = status;
-  const periodLabel = formatCompetitionPeriod(scheduledStart, scheduledEnd);
+  const periodLabel = formatCompetitionPeriod(
+    scheduledStart,
+    scheduledEnd,
+    toIntlLocale(i18n.language),
+  );
 
   return (
     <header className="shell-header ds-shell-header">
@@ -97,6 +103,7 @@ export function ShellHeader({
       <span className="ds-shell-header__spacer" aria-hidden="true" />
 
       <div className="shell-header__actions">
+        <PreferencesMenu />
         <AttentionTrigger
           buttonRef={attentionTriggerRef}
           count={attentionCount}

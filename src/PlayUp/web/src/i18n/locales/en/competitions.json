@@ -1,0 +1,18 @@
+{
+  "listLabel": "Competitions",
+  "schedule": {
+    "both": "{{start}} → {{end}}",
+    "from": "From {{date}}",
+    "until": "Until {{date}}"
+  },
+  "emptyHint": "A name is enough. You will configure teams and format afterwards.",
+  "create": {
+    "cta": "Create a competition",
+    "heading": "New competition",
+    "subtitle": "A name is enough. You will configure teams and format afterwards.",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Spring tournament",
+    "submit": "Create",
+    "submitting": "Creating…"
+  }
+}

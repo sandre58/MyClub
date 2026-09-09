@@ -129,7 +129,7 @@ function MatchDetailView({
   data: MatchDetail;
   stageName?: string;
 }) {
-  const { t } = useTranslation('matches');
+  const { t, i18n } = useTranslation('matches');
   const queryClient = useQueryClient();
   const homeName = sideLabel(data.home);
   const awayName = sideLabel(data.away);
@@ -171,7 +171,7 @@ function MatchDetailView({
     awayGoals: 0,
   };
 
-  const kickoffParts = formatKickoffParts(data.scheduledAt);
+  const kickoffParts = formatKickoffParts(data.scheduledAt, i18n.language);
   const scoreStepper =
     canSetRunningScore &&
     MatchHeroScoreActions({

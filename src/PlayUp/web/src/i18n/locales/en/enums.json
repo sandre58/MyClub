@@ -1,0 +1,107 @@
+{
+  "competitionStatus": {
+    "Draft": "Draft",
+    "Ready": "Ready",
+    "Running": "In progress",
+    "Suspended": "Suspended",
+    "Completed": "Completed",
+    "Archived": "Archived"
+  },
+  "stageStatus": {
+    "Draft": "Draft",
+    "Ready": "Ready",
+    "Running": "In progress",
+    "Suspended": "Suspended",
+    "Completed": "Completed"
+  },
+  "matchStatus": {
+    "Scheduled": "Scheduled",
+    "Live": "Live",
+    "Finished": "Finished",
+    "Postponed": "Postponed",
+    "Cancelled": "Cancelled"
+  },
+  "entryStatus": {
+    "Active": "Active",
+    "Withdrawn": "Withdrawn"
+  },
+  "drawStatus": {
+    "Draft": "Draft",
+    "Published": "Published",
+    "Cancelled": "Cancelled"
+  },
+  "drawResolutionState": {
+    "NotResolved": "Not resolved",
+    "Resolved": "Resolved",
+    "NoSolution": "No solution"
+  },
+  "drawResolutionKind": {
+    "Slot": "Slot",
+    "Group": "Group",
+    "Pairing": "Pairing"
+  },
+  "structureFormatKind": {
+    "Championship": "League",
+    "Groups": "Groups",
+    "Cup": "Cup",
+    "Swiss": "Swiss"
+  },
+  "matchGenerationFormat": {
+    "SingleRoundRobin": "Single round-robin",
+    "DoubleRoundRobin": "Home and away"
+  },
+  "resultType": {
+    "Played": "Played",
+    "Forfeit": "Forfeit",
+    "WalkOver": "Walk-over",
+    "Administrative": "Administrative"
+  },
+  "completionMode": {
+    "Normal": "Normal",
+    "Administrative": "Administrative",
+    "Abandoned": "Abandoned"
+  },
+  "attentionSource": {
+    "DrawNoSolution": "Draw with no solution",
+    "QualificationPending": "Qualification pending",
+    "QualificationConflict": "Qualification conflict",
+    "ProgressionPending": "Progression pending",
+    "ProgressionConflict": "Progression conflict",
+    "DrawPending": "Draw pending",
+    "StageReady": "Stage ready",
+    "InsufficientParticipants": "Insufficient participants",
+    "InsufficientOccupiedSlots": "Insufficient occupied slots for fixtures",
+    "MissingStage": "Missing stage",
+    "MissingStructure": "Missing structure",
+    "MissingPotRules": "Missing pot rules",
+    "CupBracketInvalid": "Invalid cup bracket",
+    "SwissStageNotRunning": "Swiss stage not started yet",
+    "SwissAwaitingRoundResults": "Awaiting results for the current Swiss round",
+    "SwissRoundsComplete": "All planned Swiss rounds are generated",
+    "SwissInsufficientParticipants": "Insufficient participants for a Swiss round",
+    "CompetitionSuspended": "Competition suspended"
+  },
+  "attentionDescription": {
+    "InsufficientParticipants_one": "{{count}} team short to start ({{activeCount}} / {{minimumTeams}}).",
+    "InsufficientParticipants_other": "{{count}} teams short to start ({{activeCount}} / {{minimumTeams}})."
+  },
+  "attentionSeverity": {
+    "Blocking": "Blocking",
+    "Warning": "Warning",
+    "Info": "Info"
+  },
+  "completionBlocker": {
+    "ScheduledMatches": "Matches are still scheduled",
+    "LiveMatches": "Matches are still in progress",
+    "PostponedMatches": "Matches are still postponed"
+  },
+  "attentionTargetType": {
+    "Stage": "Stage",
+    "Slot": "Slot",
+    "Fixture": "Fixture",
+    "Match": "Match",
+    "Competition": "Competition",
+    "Organisation": "Organisation",
+    "Draw": "Draw"
+  }
+}

@@ -1,7 +1,12 @@
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { ApiError } from '../api';
-import { competitionStatusLabel, matchStatusLabel } from '../i18n/enumLabels';
+import {
+  competitionStatusLabel,
+  entryStatusLabel,
+  matchGenerationFormatLabel,
+  matchStatusLabel,
+} from '../i18n/enumLabels';
 import i18n from '../i18n';
 import { ErrorState, LoadingState, MutationError } from '../ui';
 import { renderWithI18n } from './renderWithI18n';
@@ -55,6 +60,39 @@ describe('shell attention trigger plurals', () => {
   it('uses trigger_other when count is 2', () => {
     expect(i18n.t('shell:attention.trigger', { count: 2 })).toBe(
       'À traiter, 2 éléments',
+    );
+  });
+});
+
+describe('english locale smoke', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  it('resolves common and shell strings in English', async () => {
+    await i18n.changeLanguage('en');
+    expect(i18n.t('common:loading')).toBe('Loading…');
+    expect(i18n.t('shell:preferences.title')).toBe('Preferences');
+  });
+
+  it('uses English plurals for attention.trigger', async () => {
+    await i18n.changeLanguage('en');
+    expect(i18n.t('shell:attention.trigger', { count: 0 })).toBe(
+      'Needs attention, no items',
+    );
+    expect(i18n.t('shell:attention.trigger', { count: 1 })).toBe(
+      'Needs attention, 1 item',
+    );
+    expect(i18n.t('shell:attention.trigger', { count: 2 })).toBe(
+      'Needs attention, 2 items',
+    );
+  });
+
+  it('maps fixed enum vocabulary in English', async () => {
+    await i18n.changeLanguage('en');
+    expect(entryStatusLabel('Withdrawn')).toBe('Withdrawn');
+    expect(matchGenerationFormatLabel('DoubleRoundRobin')).toBe(
+      'Home and away',
     );
   });
 });
