@@ -22,6 +22,7 @@ export function Status({
   shape = 'rounded',
   children,
   className,
+  title,
 }: {
   density: StatusDensity
   tone?: StatusTone
@@ -29,6 +30,7 @@ export function Status({
   shape?: StatusShape
   children: ReactNode
   className?: string
+  title?: string
 }) {
   const isChip = density !== 'dense'
   const classes = [
@@ -42,7 +44,11 @@ export function Status({
     .filter(Boolean)
     .join(' ')
 
-  return <span className={classes}>{children}</span>
+  return (
+    <span className={classes} title={title}>
+      {children}
+    </span>
+  )
 }
 
 /** Maps legacy StatusBadge tone names to StatusTone. */

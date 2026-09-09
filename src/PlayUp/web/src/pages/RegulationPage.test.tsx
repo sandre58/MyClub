@@ -278,6 +278,53 @@ describe('RegulationPage', () => {
     expect(screen.getAllByRole('link', { name: 'Structure' })).toHaveLength(2)
   })
 
+  it('shows a single exact capacity pill when min equals max', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        regulation: {
+          ...organisationView().regulation,
+          minimumTeams: 8,
+          maximumTeams: 8,
+        },
+      }),
+    )
+
+    renderPage()
+
+    expect(
+      await screen.findByLabelText('Effectif obligatoire : 8 équipes'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('La compétition exige exactement 8 équipes.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Min.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Max.')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Équipes : 8 à 8')).not.toBeInTheDocument()
+  })
+
+  it('shows a discipline empty state when no cards are allowed', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        regulation: {
+          ...organisationView().regulation,
+          allowedTypes: [],
+        },
+      }),
+    )
+
+    renderPage()
+
+    expect(
+      await screen.findByText('Aucun carton autorisé'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Aucun type de carton n’est autorisé pour cette compétition.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Carton(s) autorisé(s)')).not.toBeInTheDocument()
+  })
+
   it('hides Classement when no classifying phase exists', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({
@@ -440,10 +487,16 @@ describe('RegulationPage', () => {
       within(dialog).getByRole('heading', { name: 'Disciplinaire' }),
     ).toBeInTheDocument()
     expect(
-      within(dialog).queryByText(
-        /Les modifications seront appliquées aux phases encore en préparation/,
-      ),
+      within(dialog).getByRole('heading', { name: 'Forfait' }),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByText('Ordre de départage')).toBeInTheDocument()
+    expect(
+      within(dialog).queryByRole('heading', { name: 'Ordre de départage' }),
     ).not.toBeInTheDocument()
+    expect(
+      within(dialog).getByText('Carton(s) autorisé(s)'),
+    ).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Enregistrer' })).toBeDisabled()
     expect(within(dialog).getByLabelText(/Activer les prolongations/)).not.toBeChecked()
   })
 
@@ -464,7 +517,14 @@ describe('RegulationPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Personnalisée')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Personnalisée'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByTitle(
+        'Cette phase a au moins une règle découplée du règlement général. Les jetons en couleur signalent les règles concernées.',
+      ),
+    ).toBeInTheDocument()
   })
 
   it('asks for a single impact confirm including Ready reopen copy', async () => {
@@ -482,20 +542,36 @@ describe('RegulationPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.click(within(dialog).getByLabelText(/Activer les prolongations/))
     await user.click(
-      within(dialog).getByRole('button', { name: 'Enregistrer le règlement' }),
+      within(dialog).getByRole('button', { name: 'Enregistrer' }),
     )
 
     expect(
-      await screen.findByRole('heading', { name: 'Appliquer les modifications ?' }),
+      await screen.findByRole('heading', {
+        name: 'Enregistrer les modifications du règlement ?',
+      }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(
-        /Cette modification rouvrira également la compétition/,
-      ),
+      screen.getByText('La compétition repassera en Brouillon.'),
+    ).toBeInTheDocument()
+    const confirmHeading = await screen.findByRole('heading', {
+      name: 'Enregistrer les modifications du règlement ?',
+    })
+    const confirmDialog = confirmHeading.closest('[role="dialog"]')
+    expect(confirmDialog).not.toBeNull()
+    expect(
+      within(confirmDialog!).getByText('Mise à jour des phases'),
+    ).toBeInTheDocument()
+    expect(
+      within(confirmDialog!).getByText(/Prolongations/),
+    ).toBeInTheDocument()
+    expect(
+      within(confirmDialog!).getByText(/1 phase sera mise à jour/),
     ).toBeInTheDocument()
     expect(replaceCompetitionRegulation).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('button', { name: 'Appliquer' }))
+    await user.click(
+      within(confirmDialog!).getByRole('button', { name: 'Enregistrer' }),
+    )
 
     await waitFor(() => {
       expect(replaceCompetitionRegulation).toHaveBeenCalledWith(
@@ -522,21 +598,209 @@ describe('RegulationPage', () => {
     const dialog = await screen.findByRole('dialog')
     await user.click(within(dialog).getByLabelText(/Activer les prolongations/))
     await user.click(
-      within(dialog).getByRole('button', { name: 'Enregistrer le règlement' }),
+      within(dialog).getByRole('button', { name: 'Enregistrer' }),
     )
 
-    expect(
-      await screen.findByRole('heading', { name: 'Appliquer les modifications ?' }),
-    ).toBeInTheDocument()
-    // Impact body is a ReactNode list — assert via document text content.
-    expect(document.body.textContent).toMatch(/héritera|hériteront/)
-    expect(document.body.textContent).toMatch(/conservera|conserveront/)
-    expect(document.body.textContent).toMatch(/Prolongations/)
+    const confirmHeading = await screen.findByRole('heading', {
+      name: 'Enregistrer les modifications du règlement ?',
+    })
+    const confirmDialog = confirmHeading.closest('[role="dialog"]')
+    expect(confirmDialog).not.toBeNull()
+    expect(within(confirmDialog!).getByText('Mise à jour des phases')).toBeInTheDocument()
+    expect(within(confirmDialog!).getByText(/phase sera mise à jour/)).toBeInTheDocument()
+    expect(within(confirmDialog!).getByText(/phase personnalisée ne sera pas modifiée/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Modifier la section Match' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Appliquer' }))
+    await user.click(
+      within(confirmDialog!).getByRole('button', { name: 'Enregistrer' }),
+    )
     await waitFor(() => {
       expect(replaceCompetitionRegulation).toHaveBeenCalled()
     })
+  })
+
+  it('asks to discard dirty edits when closing the editor', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await user.click(within(dialog).getByLabelText(/Activer les prolongations/))
+    await user.click(within(dialog).getByRole('button', { name: 'Annuler' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Quitter sans enregistrer ?' }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Abandonner' }))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  it('keeps Enregistrer disabled when the form is untouched', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByRole('button', { name: 'Enregistrer' })).toBeDisabled()
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Enregistrer les modifications du règlement ?',
+      }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('reports competition-only impact when only entry bounds change', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    vi.mocked(replaceCompetitionRegulation).mockResolvedValue(undefined as never)
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    const maxField = within(dialog).getByLabelText(/Maximum d’équipes/)
+    const maxShell = maxField.closest('.ds-input-number')
+    expect(maxShell).not.toBeNull()
+    await user.click(
+      within(maxShell as HTMLElement).getByRole('button', {
+        name: 'Augmenter',
+      }),
+    )
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Enregistrer' }),
+    )
+
+    const confirmHeading = await screen.findByRole('heading', {
+      name: 'Enregistrer les modifications du règlement ?',
+    })
+    const confirmDialog = confirmHeading.closest('[role="dialog"]')
+    expect(confirmDialog).not.toBeNull()
+    expect(
+      within(confirmDialog!).getByText('Cadre de la compétition'),
+    ).toBeInTheDocument()
+    expect(
+      within(confirmDialog!).getByText(/Mis à jour sur la compétition uniquement/),
+    ).toBeInTheDocument()
+  })
+
+  it('reports no eligible stages when all phases are Running', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          groupesStage({ status: 'Running' }),
+          finaleStage({ status: 'Running' }),
+        ],
+      }),
+    )
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await user.click(within(dialog).getByLabelText(/Activer les prolongations/))
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Enregistrer' }),
+    )
+
+    expect(
+      await screen.findByText('Aucune phase ne sera mise à jour.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Les phases déjà en cours ne seront pas modifiées.'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows soft-warns for unusual points and forfeit scores', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        regulation: {
+          ...organisationView().regulation,
+          winPoints: 0,
+          drawPoints: 1,
+          lossPoints: 0,
+          forfeitWinnerGoals: 0,
+          forfeitLoserGoals: 1,
+        },
+      }),
+    )
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      within(dialog).getByText(/Barème inhabituel/),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).getByText(/Score de forfait inhabituel/),
+    ).toBeInTheDocument()
+  })
+
+  it('can save with no allowed cards', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView())
+    vi.mocked(replaceCompetitionRegulation).mockResolvedValue(undefined as never)
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Modifier le règlement' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Jaune' }))
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Rouge' }))
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Enregistrer' }),
+    )
+    const confirmHeading = await screen.findByRole('heading', {
+      name: 'Enregistrer les modifications du règlement ?',
+    })
+    const confirmDialog = confirmHeading.closest('[role="dialog"]')
+    expect(confirmDialog).not.toBeNull()
+    await user.click(
+      within(confirmDialog!).getByRole('button', { name: 'Enregistrer' }),
+    )
+
+    await waitFor(() => {
+      expect(replaceCompetitionRegulation).toHaveBeenCalledWith(
+        competitionId,
+        expect.objectContaining({ allowedTypes: [] }),
+      )
+    })
+  })
+
+  it('renders one TAB kick pill per configured kick', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        regulation: {
+          ...organisationView().regulation,
+          hasPenaltyShootout: true,
+          penaltyInitialKicksPerTeam: 10,
+        },
+      }),
+    )
+
+    renderPage()
+
+    expect(await screen.findByLabelText(/10 tirs au but/)).toBeInTheDocument()
+    expect(document.querySelectorAll('.regulation-tab__kick')).toHaveLength(10)
   })
 })

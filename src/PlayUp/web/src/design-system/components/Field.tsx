@@ -10,6 +10,7 @@ export type FieldProps = {
   required?: boolean
   counter?: string
   message?: string
+  className?: string
   messageTone?: FieldMessageTone
   /** Constrain control width (e.g. short name). Default full. */
   width?: FieldWidth
@@ -26,16 +27,18 @@ export function Field({
   required = false,
   counter,
   message,
+  className = '',
   messageTone = 'hint',
   width = 'full',
   children,
 }: FieldProps) {
   const hasMessage = Boolean(message)
   const invalid = messageTone === 'error' && hasMessage
+  const classes = ['ds-field', className].filter(Boolean).join(' ')
 
   return (
     <div
-      className="ds-field"
+      className={classes}
       data-invalid={invalid ? 'true' : 'false'}
       data-tone={hasMessage ? messageTone : undefined}
       data-width={width === 'full' ? undefined : width}

@@ -96,12 +96,14 @@ export function StatusBadge({
   variant = 'soft',
   shape = 'rounded',
   density = 'context',
+  title,
 }: {
   tone: StatusTone
   children: ReactNode
   variant?: 'soft' | 'outline'
   shape?: 'rounded' | 'pill'
   density?: 'context' | 'compact'
+  title?: string
 }) {
   return (
     <Status
@@ -109,6 +111,7 @@ export function StatusBadge({
       tone={statusToneFromLegacy(tone)}
       variant={variant}
       shape={shape}
+      title={title}
     >
       {children}
     </Status>

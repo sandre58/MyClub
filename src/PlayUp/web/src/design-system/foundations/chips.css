@@ -32,11 +32,11 @@
 }
 
 .ds-chip--draw {
-    background: color-mix(in srgb, var(--color-attention) 16%, var(--color-surface));
-    color: var(--color-attention);
+    background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
+    color: var(--color-brand);
 }
 
 .ds-chip--loss {
-    background: var(--color-surface-secondary);
-    color: var(--color-text-secondary);
+    background: color-mix(in srgb, var(--color-error) 12%, var(--color-surface));
+    color: var(--color-error);
 }

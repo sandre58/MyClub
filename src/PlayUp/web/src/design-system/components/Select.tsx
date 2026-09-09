@@ -28,6 +28,7 @@ export type SelectProps = {
   clearLabel?: string
   id?: string
   'aria-label'?: string
+  className?: string
 }
 
 function isEnabled(option: SelectOption) {
@@ -102,6 +103,7 @@ export function Select({
   clearLabel = 'Vider',
   id,
   'aria-label': ariaLabel,
+  className = '',
 }: SelectProps) {
   const autoId = useId()
   const triggerId = id ?? autoId
@@ -122,6 +124,7 @@ export function Select({
       : null
   const activeOptionId =
     open && activeOption ? `${listId}-opt-${activeOption.value}` : undefined
+    const classes = ['ds-select', className].filter(Boolean).join(' ')
 
   useDismissLayer(open && !disabled, () => {
     setOpen(false)
@@ -228,7 +231,7 @@ export function Select({
   }
 
   return (
-    <div className="ds-select" ref={rootRef}>
+    <div className={classes} ref={rootRef}>
       <div
         id={triggerId}
         className="ds-input ds-select__shell"

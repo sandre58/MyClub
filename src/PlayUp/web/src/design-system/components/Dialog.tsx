@@ -11,12 +11,14 @@ import { DS_MOTION_EXIT_MS } from '../motion'
 import { useDismissLayer } from '../useDismissLayer'
 import { getFocusableElements, useFocusTrap } from '../useFocusTrap'
 
-export type DialogSize = 'sm' | 'md'
+export type DialogSize = 'sm' | 'md' | 'lg'
 
 export type DialogProps = {
   open: boolean
   onClose: () => void
   title: string
+  /** Optional subtitle under the title (e.g. regulation editor scope). */
+  description?: string
   children: ReactNode
   /** Right-aligned action row. Close lives in the header only. */
   footer?: ReactNode
@@ -53,6 +55,7 @@ export function Dialog({
   open,
   onClose,
   title,
+  description,
   children,
   footer,
   closeDisabled = false,
@@ -62,6 +65,7 @@ export function Dialog({
   closeLabel = 'Fermer',
 }: DialogProps) {
   const titleId = useId()
+  const descriptionId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
@@ -191,11 +195,19 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
       >
         <header className="ds-dialog__header">
-          <h3 id={titleId} className="ds-dialog__title">
-            {title}
-          </h3>
+          <div className="ds-dialog__heading">
+            <h3 id={titleId} className="ds-dialog__title">
+              {title}
+            </h3>
+            {description ? (
+              <p id={descriptionId} className="ds-dialog__description">
+                {description}
+              </p>
+            ) : null}
+          </div>
           <button
             ref={closeButtonRef}
             type="button"

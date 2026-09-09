@@ -1,11 +1,13 @@
 import {
   useEffect,
   useId,
+  useRef,
   useState,
   type ChangeEvent,
   type FocusEvent,
   type InputHTMLAttributes,
   type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
 import { CloseIcon, ChevronDownIcon, ChevronUpIcon } from '../icons/shellIcons'
@@ -37,6 +39,9 @@ export type InputNumberProps = Omit<
   allowClear?: boolean
   clearLabel?: string
 }
+
+const REPEAT_DELAY_MS = 400
+const REPEAT_INTERVAL_MS = 75
 
 function clamp(n: number, min?: number, max?: number): number {
   let next = n
@@ -71,8 +76,8 @@ function parseInput(raw: string): number | null {
 }
 
 /**
- * Numeric input — TextInput shell + Ant-like steppers.
- * Optional leading icon and clear affix.
+ * Numeric input — TextInput shell + Ant-like steppers (press-and-hold repeat).
+ * Optional leading icon, suffix, and clear affix.
  */
 export function InputNumber({
   value,
@@ -108,11 +113,23 @@ export function InputNumber({
   )
   const [focused, setFocused] = useState(false)
 
+  const delayRef = useRef<number | null>(null)
+  const intervalRef = useRef<number | null>(null)
+  const stepByRef = useRef<(direction: 1 | -1) => void>(() => undefined)
+  const currentRef = useRef(current)
+  currentRef.current = current
+
   useEffect(() => {
     if (!focused) {
       setDraft(current == null ? '' : formatNumber(current, precision))
     }
   }, [current, precision, focused])
+
+  useEffect(() => {
+    return () => {
+      stopRepeat()
+    }
+  }, [])
 
   const showClear = allowClear && current != null && !disabled
   const split = controls && controlsLayout === 'split'
@@ -130,6 +147,7 @@ export function InputNumber({
         committed = Math.round(committed * factor) / factor
       }
     }
+    currentRef.current = committed
     if (!controlled) {
       setUncontrolled(committed)
     }
@@ -141,8 +159,50 @@ export function InputNumber({
     if (disabled) {
       return
     }
-    const base = current ?? min ?? 0
+    const base = currentRef.current ?? min ?? 0
+    if (direction === 1 && max != null && base >= max) {
+      stopRepeat()
+      return
+    }
+    if (direction === -1 && min != null && base <= min) {
+      stopRepeat()
+      return
+    }
     emit(base + direction * step)
+  }
+
+  stepByRef.current = stepBy
+
+  function stopRepeat() {
+    if (delayRef.current != null) {
+      window.clearTimeout(delayRef.current)
+      delayRef.current = null
+    }
+    if (intervalRef.current != null) {
+      window.clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }
+
+  function startRepeat(direction: 1 | -1) {
+    stopRepeat()
+    stepByRef.current(direction)
+    delayRef.current = window.setTimeout(() => {
+      intervalRef.current = window.setInterval(() => {
+        stepByRef.current(direction)
+      }, REPEAT_INTERVAL_MS)
+    }, REPEAT_DELAY_MS)
+  }
+
+  function handleStepPointerDown(
+    direction: 1 | -1,
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) {
+    if (event.button !== 0) {
+      return
+    }
+    event.preventDefault()
+    startRepeat(direction)
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -180,6 +240,12 @@ export function InputNumber({
       stepBy(-1)
     }
     onKeyDown?.(event)
+  }
+
+  const stepPointerHandlers = {
+    onPointerUp: stopRepeat,
+    onPointerLeave: stopRepeat,
+    onPointerCancel: stopRepeat,
   }
 
   const input = (
@@ -222,7 +288,8 @@ export function InputNumber({
           tabIndex={-1}
           disabled={decDisabled}
           aria-label="Diminuer"
-          onClick={() => stepBy(-1)}
+          onPointerDown={(event) => handleStepPointerDown(-1, event)}
+          {...stepPointerHandlers}
         >
           <MinusIcon size="sm" aria-hidden="true" />
         </button>
@@ -238,7 +305,8 @@ export function InputNumber({
           tabIndex={-1}
           disabled={incDisabled}
           aria-label="Augmenter"
-          onClick={() => stepBy(1)}
+          onPointerDown={(event) => handleStepPointerDown(1, event)}
+          {...stepPointerHandlers}
         >
           <PlusIcon size="sm" aria-hidden="true" />
         </button>
@@ -285,7 +353,8 @@ export function InputNumber({
             tabIndex={-1}
             disabled={incDisabled}
             aria-label="Augmenter"
-            onClick={() => stepBy(1)}
+            onPointerDown={(event) => handleStepPointerDown(1, event)}
+            {...stepPointerHandlers}
           >
             <ChevronUpIcon size="sm" aria-hidden="true" />
           </button>
@@ -295,7 +364,8 @@ export function InputNumber({
             tabIndex={-1}
             disabled={decDisabled}
             aria-label="Diminuer"
-            onClick={() => stepBy(-1)}
+            onPointerDown={(event) => handleStepPointerDown(-1, event)}
+            {...stepPointerHandlers}
           >
             <ChevronDownIcon size="sm" aria-hidden="true" />
           </button>

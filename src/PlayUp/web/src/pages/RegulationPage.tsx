@@ -30,9 +30,9 @@ import {FormSection} from '../design-system/components/FormSection'
 import {PageHead} from '../design-system/components/PageHead'
 import {TextLink} from '../design-system/components/TextLink'
 import {LucideIcon} from '../design-system/icons/Icon'
-import {PencilIcon, PersonIcon} from '../design-system/icons/overviewIcons'
+import {PencilIcon, PersonIcon, EmptySelectionIcon} from '../design-system/icons/overviewIcons'
 import {queryKeys} from '../queryKeys'
-import {ErrorState, LoadingState, StageStatusBadge, StatusBadge} from '../ui'
+import {ErrorState, EmptyState, LoadingState, StageStatusBadge, StatusBadge} from '../ui'
 import type {
     DisciplinaryType,
     OrganisationPlacementAward,
@@ -47,7 +47,6 @@ import {
     isStagePersonalized,
 } from './regulationImpact'
 import './regulation.css'
-import {stageStatusLabel} from "../i18n/enumLabels.ts";
 
 type Translate = (key: string, options?: Record<string, unknown>) => string
 
@@ -204,6 +203,7 @@ function EntriesTile({
     const {t} = useTranslation('regulation')
     const min = regulation.minimumTeams
     const max = regulation.maximumTeams
+    const exact = min === max
 
     return (
         <FrameCard
@@ -212,31 +212,50 @@ function EntriesTile({
         >
             <div
                 className="regulation-capacity"
-                aria-label={t('capacity.aria', {min, max})}
+                aria-label={
+                    exact
+                        ? t('capacity.exactAria', {count: min})
+                        : t('capacity.aria', {min, max})
+                }
             >
-                <div className="regulation-capacity__scale" aria-hidden="true">
-          <span className="regulation-capacity__pill regulation-capacity__pill--min">
-            {min}
-          </span>
-                    <span className="regulation-capacity__rail">
-            <span className="regulation-capacity__rail-fill"/>
-            <span className="regulation-capacity__rail-glow"/>
-          </span>
-                    <span className="regulation-capacity__pill regulation-capacity__pill--max">
-            {max}
-          </span>
-                </div>
-                <div className="regulation-capacity__caps">
-          <span className="regulation-capacity__cap regulation-capacity__cap--min">
-            {t('capacity.min')}
-          </span>
-                    <span className="regulation-capacity__cap regulation-capacity__cap--max">
-            {t('capacity.max')}
-          </span>
-                </div>
+                {exact ? (
+                    <div
+                        className="regulation-capacity__scale regulation-capacity__scale--exact"
+                        aria-hidden="true"
+                    >
+                        <span className="regulation-capacity__pill regulation-capacity__pill--exact">
+                            {min}
+                        </span>
+                    </div>
+                ) : (
+                    <>
+                        <div className="regulation-capacity__scale" aria-hidden="true">
+                            <span className="regulation-capacity__pill regulation-capacity__pill--min">
+                                {min}
+                            </span>
+                            <span className="regulation-capacity__rail">
+                                <span className="regulation-capacity__rail-fill"/>
+                                <span className="regulation-capacity__rail-glow"/>
+                            </span>
+                            <span className="regulation-capacity__pill regulation-capacity__pill--max">
+                                {max}
+                            </span>
+                        </div>
+                        <div className="regulation-capacity__caps">
+                            <span className="regulation-capacity__cap regulation-capacity__cap--min">
+                                {t('capacity.min')}
+                            </span>
+                            <span className="regulation-capacity__cap regulation-capacity__cap--max">
+                                {t('capacity.max')}
+                            </span>
+                        </div>
+                    </>
+                )}
             </div>
             <Alert tone="info" role="status">
-                {t('capacity.notice', {min, max})}
+                {exact
+                    ? t('capacity.exactNotice', {count: min})
+                    : t('capacity.notice', {min, max})}
             </Alert>
         </FrameCard>
     )
@@ -325,7 +344,7 @@ function MatchTile({
                                         {kicks != null ? (
                                             <span className="regulation-tab-row__dots" aria-hidden="true">
                       {Array.from(
-                          {length: Math.min(Math.max(kicks, 1), 8)},
+                          {length: Math.max(kicks, 1)},
                           (_, i) => (
                               <span key={i} className="regulation-tab__kick"/>
                           ),
@@ -359,26 +378,35 @@ function DisciplineTile({
             icon={<LucideIcon icon={PlayingCardsFan} size="md"/>}
             title={t('families.discipline')}
         >
-            <p className="regulation-discipline__subtitle">{t('discipline.subtitle')}</p>
             {types.length === 0 ? (
-                <p className="regulation-discipline__empty" role="status">
-                    {t('discipline.empty')}
-                </p>
+                <div className="regulation-discipline">
+                    <EmptyState
+                        icon={<EmptySelectionIcon size="md"/>}
+                        title={t('discipline.emptyTitle')}
+                    >
+                        {t('discipline.empty')}
+                    </EmptyState>
+                </div>
             ) : (
-                <ul className="regulation-cards" aria-label={t('discipline.aria')}>
-                    {types.map((type) => (
-                        <li key={type} className="regulation-cards__item">
-                            <span
-                                className={`regulation-card-token regulation-card-token--${type.toLowerCase()}`}
-                                title={disciplineLabel(type, t)}
-                                aria-label={disciplineLabel(type, t)}
-                                role="img"
-                            >
-                <span className="regulation-card-token__face" aria-hidden="true"/>
-              </span>
-                        </li>
-                    ))}
-                </ul>
+                <div className="regulation-discipline">
+                    <p className="regulation-discipline__subtitle">
+                        {t('discipline.subtitle')}
+                    </p>
+                    <ul className="regulation-cards" aria-label={t('discipline.aria')}>
+                        {types.map((type) => (
+                            <li key={type} className="regulation-cards__item">
+                                <span
+                                    className={`regulation-card-token regulation-card-token--${type.toLowerCase()}`}
+                                    title={disciplineLabel(type, t)}
+                                    aria-label={disciplineLabel(type, t)}
+                                    role="img"
+                                >
+                                    <span className="regulation-card-token__face" aria-hidden="true"/>
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             )}
         </FrameCard>
     )
@@ -637,7 +665,7 @@ function PointGauge({
     const {t} = useTranslation('regulation')
     const ratio = max > 0 ? Math.max(value === 0 ? 0 : 0.12, value / max) : 0
     const meterTone: MeterTone =
-        tone === 'win' ? 'success' : tone === 'draw' ? 'attention' : 'neutral'
+        tone === 'win' ? 'success' : tone === 'draw' ? 'brand' : 'error'
     return (
         <li className="regulation-gauge">
             <div className="regulation-gauge__top">
@@ -658,7 +686,11 @@ function PointGauge({
 function PersonalizedBadge() {
     const { t } = useTranslation('regulation')
     return (
-        <StatusBadge tone="warn" density="compact">
+        <StatusBadge
+            tone="warn"
+            density="compact"
+            title={t('differsFromFrame')}
+        >
             {t('personalized')}
         </StatusBadge>
     )
@@ -684,7 +716,7 @@ function PhaseTile({
                     <span className="regulation-phase__ordinal" aria-hidden="true">
                         {ordinal}
                     </span>
-                    <h3 className="regulation-card__title">{stage.name}</h3>
+                    <h3 className="regulation-phase__title">{stage.name}</h3>
                 </div>
                 <span className="regulation-phase__head-meta">
                     <StageStatusBadge status={stage.status} density="compact"/>

@@ -61,6 +61,14 @@
     --ds-dialog-width: 36rem;
 }
 
+.ds-dialog[data-size='lg'] {
+    --ds-dialog-width: 56rem;
+}
+
+.ds-dialog[data-size='lg'] .ds-dialog__panel {
+    max-height: min(92vh, 52rem);
+}
+
 .ds-dialog[data-open='true'] .ds-dialog__panel {
     opacity: 1;
     transform: translateY(0);
@@ -69,10 +77,15 @@
 .ds-dialog__header {
     display: flex;
     flex: none;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-12);
     min-width: 0;
+}
+
+.ds-dialog__heading {
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .ds-dialog__title {
@@ -85,6 +98,13 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.ds-dialog__description {
+    margin: var(--space-4) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--text-meta);
+    line-height: var(--leading-normal);
 }
 
 .ds-dialog__body {

@@ -1,4 +1,5 @@
 import type {
+  CompetitionStatus,
   OrganisationHeritablePartBinding,
   OrganisationRegulationSummary,
   OrganisationStageDefaultsBinding,
@@ -16,7 +17,10 @@ export type HeritablePartKey =
   | 'points'
   | 'rankingCriteria'
 
-const MATCH_PARTS: HeritablePartKey[] = [
+/** UX families for ConfirmDialog — aggregates Domain parts. */
+export type ImpactFamilyKey = 'match' | 'forfeit' | 'standing'
+
+const DOMAIN_MATCH_PARTS: HeritablePartKey[] = [
   'matchDuration',
   'extraTime',
   'penaltyShootout',
@@ -25,13 +29,21 @@ const MATCH_PARTS: HeritablePartKey[] = [
 
 const STANDING_PARTS: HeritablePartKey[] = ['points', 'rankingCriteria']
 
+const FAMILY_PARTS: Record<ImpactFamilyKey, HeritablePartKey[]> = {
+  match: ['matchDuration', 'extraTime', 'penaltyShootout'],
+  forfeit: ['administrativeResult'],
+  standing: ['points', 'rankingCriteria'],
+}
+
+const FAMILY_ORDER: ImpactFamilyKey[] = ['match', 'forfeit', 'standing']
+
 export function applicableHeritableParts(
   binding: OrganisationStageDefaultsBinding | undefined,
 ): HeritablePartKey[] {
   if (!binding) {
     return []
   }
-  const parts = [...MATCH_PARTS]
+  const parts = [...DOMAIN_MATCH_PARTS]
   if (binding.points != null) {
     parts.push('points')
   }
@@ -83,31 +95,6 @@ export function isStagePersonalized(
   return applicableHeritableParts(binding).some((part) =>
     isPartOverridden(stage, part),
   )
-}
-
-export function overriddenParts(
-  stage: OrganisationStageHubSummary,
-): HeritablePartKey[] {
-  const binding = stage.defaultsBinding
-  if (!binding) {
-    return []
-  }
-  return applicableHeritableParts(binding).filter((part) =>
-    isPartOverridden(stage, part),
-  )
-}
-
-export function boundParts(
-  stage: OrganisationStageHubSummary,
-): HeritablePartKey[] {
-  const binding = stage.defaultsBinding
-  if (!binding) {
-    return []
-  }
-  return applicableHeritableParts(binding).filter((part) => {
-    const entry = partBinding(binding, part)
-    return entry != null && entry.isBound
-  })
 }
 
 function sortedAllowedTypes(types: string[] | null | undefined): string {
@@ -215,17 +202,79 @@ export type PartImpactCounts = {
   keepOverride: number
 }
 
-export type RegulationImpactPreview = {
-  eligibleStageCount: number
-  /** Stages that will receive at least one bound-part update. */
-  stagesUpdatedCount: number
-  byPart: Partial<Record<HeritablePartKey, PartImpactCounts>>
-  competitionOnly: { entry: boolean; discipline: boolean }
+export type FamilyImpactLine = {
+  family: ImpactFamilyKey
   changedParts: HeritablePartKey[]
+  inherit: number
+  keepOverride: number
+}
+
+export type RegulationImpactPreview = {
+  hasChanges: boolean
+  demotesToDraft: boolean
+  competitionOnly: { entry: boolean; discipline: boolean }
+  /** UX families with at least one Domain part changed — ConfirmDialog source. */
+  families: FamilyImpactLine[]
+  byPart: Partial<Record<HeritablePartKey, PartImpactCounts>>
+  changedParts: HeritablePartKey[]
+  eligibleStageCount: number
+  stagesUpdatedCount: number
+  /** Heritable parts changed and at least one stage is Running/Suspended. */
+  runningIgnored: boolean
+  hasKeptOverrides: boolean
 }
 
 function isEligibleForPropagation(status: string): boolean {
   return status === 'Draft' || status === 'Ready'
+}
+
+function isRunningLike(status: string): boolean {
+  return status === 'Running' || status === 'Suspended'
+}
+
+function aggregateFamily(
+  family: ImpactFamilyKey,
+  changedParts: HeritablePartKey[],
+  eligible: OrganisationStageHubSummary[],
+): FamilyImpactLine | null {
+  const familyParts = FAMILY_PARTS[family]
+  const changedInFamily = changedParts.filter((part) =>
+    familyParts.includes(part),
+  )
+  if (changedInFamily.length === 0) {
+    return null
+  }
+
+  const inheritIds = new Set<string>()
+  const keepIds = new Set<string>()
+
+  for (const stage of eligible) {
+    const binding = stage.defaultsBinding
+    if (!binding) {
+      continue
+    }
+    for (const part of changedInFamily) {
+      if (STANDING_PARTS.includes(part) && stage.hasStandingRules !== true) {
+        continue
+      }
+      const entry = partBinding(binding, part)
+      if (entry == null) {
+        continue
+      }
+      if (entry.isBound) {
+        inheritIds.add(stage.stageId)
+      } else {
+        keepIds.add(stage.stageId)
+      }
+    }
+  }
+
+  return {
+    family,
+    changedParts: changedInFamily,
+    inherit: inheritIds.size,
+    keepOverride: keepIds.size,
+  }
 }
 
 /**
@@ -237,10 +286,16 @@ export function buildRegulationImpactPreview(
   data: {
     regulation: OrganisationRegulationSummary
     stages: OrganisationStageHubSummary[]
+    status: CompetitionStatus
   },
 ): RegulationImpactPreview {
   const changedParts = detectChangedHeritableParts(form, data.regulation)
   const competitionOnly = detectCompetitionOnlyChanges(form, data.regulation)
+  const hasChanges =
+    changedParts.length > 0 ||
+    competitionOnly.entry ||
+    competitionOnly.discipline
+
   const eligible = data.stages.filter((stage) =>
     isEligibleForPropagation(stage.status),
   )
@@ -281,11 +336,25 @@ export function buildRegulationImpactPreview(
     }
   }
 
+  const families = FAMILY_ORDER.map((family) =>
+    aggregateFamily(family, changedParts, eligible),
+  ).filter((line): line is FamilyImpactLine => line != null)
+
+  const hasKeptOverrides = families.some((line) => line.keepOverride > 0)
+  const runningIgnored =
+    changedParts.length > 0 &&
+    data.stages.some((stage) => isRunningLike(stage.status))
+
   return {
+    hasChanges,
+    demotesToDraft: hasChanges && data.status === 'Ready',
+    competitionOnly,
+    families,
+    byPart,
+    changedParts,
     eligibleStageCount: eligible.length,
     stagesUpdatedCount,
-    byPart,
-    competitionOnly,
-    changedParts,
+    runningIgnored,
+    hasKeptOverrides,
   }
 }

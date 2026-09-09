@@ -4,6 +4,7 @@ import { Alert } from '../design-system/components/Alert'
 import { ChoiceSwatch, ChoiceTile } from '../design-system/components/ChoiceTile'
 import { ColorPicker } from '../design-system/components/ColorPicker'
 import { Field } from '../design-system/components/Field'
+import { FormGroup } from '../design-system/components/FormGroup'
 import { FormSection } from '../design-system/components/FormSection'
 import { InputNumber } from '../design-system/components/InputNumber'
 import {
@@ -81,7 +82,12 @@ export function LabForm() {
   const drawId = useId()
   const lossId = useId()
 
-  const baremeWarning = pointsBaremeWarning(winPoints, drawPoints, lossPoints)
+  const baremeWarning = pointsBaremeWarning(
+    winPoints,
+    drawPoints,
+    lossPoints,
+    'Barème inhabituel : on attend Victoire ≥ Nul ≥ Défaite.',
+  )
   const availableCriteria = CRITERION_OPTIONS.filter(
     (option) => !criteria.includes(option.value),
   )
@@ -131,7 +137,7 @@ export function LabForm() {
         <p className="dlab-form__lede">
           Tous les contrôles d’édition DS : Field, TextInput, Select,
           InputNumber (end / split + suffixe), Switch / SwitchPanel,
-          FormSection, OutcomePoints, ReorderList, ChoiceTile, Upload,
+          FormSection, FormGroup, OutcomePoints, ReorderList, ChoiceTile, Upload,
           ColorPicker. Surface Règlement = garde-fous produit à part.
         </p>
       </header>
@@ -317,65 +323,62 @@ export function LabForm() {
         <section className="ds-panel dlab-form__panel" aria-label="OutcomePoints">
           <h2 className="dlab-form__panel-title">OutcomePoints</h2>
           <div className="dlab-form__stack" data-density="comfortable">
-            <OutcomePoints aria-label="Barème de points">
-              <OutcomePointsCard
-                tone="win"
-                label="Victoire"
-                icon={<TrophyIcon size="sm" />}
-                value={
-                  <InputNumber
-                    id={winId}
-                    value={winPoints}
-                    min={0}
-                    max={99}
-                    controlsLayout="split"
-                    aria-label="Points victoire"
-                    onChange={setWinPoints}
-                  />
-                }
-              />
-              <OutcomePointsCard
-                tone="draw"
-                label="Nul"
-                icon={<EqualIcon size="sm" />}
-                value={
-                  <InputNumber
-                    id={drawId}
-                    value={drawPoints}
-                    min={0}
-                    max={99}
-                    controlsLayout="split"
-                    aria-label="Points nul"
-                    onChange={setDrawPoints}
-                  />
-                }
-              />
-              <OutcomePointsCard
-                tone="loss"
-                label="Défaite"
-                icon={<CrossIcon size="sm" />}
-                value={
-                  <InputNumber
-                    id={lossId}
-                    value={lossPoints}
-                    min={0}
-                    max={99}
-                    controlsLayout="split"
-                    aria-label="Points défaite"
-                    onChange={setLossPoints}
-                  />
-                }
-              />
-            </OutcomePoints>
-            {baremeWarning ? (
-              <Alert tone="warning" role="status">
-                {baremeWarning}
-              </Alert>
-            ) : (
-              <p className="dlab-form__hint">
-                Min 0. Soft-warn si Victoire &lt; Nul ou Nul &lt; Défaite.
-              </p>
-            )}
+            <Field
+              label="Barème de points"
+              message={baremeWarning ?? 'Min 0. Soft-warn si Victoire < Nul ou Nul < Défaite.'}
+              messageTone={baremeWarning ? 'warning' : 'hint'}
+            >
+              <OutcomePoints aria-label="Barème de points">
+                <OutcomePointsCard
+                  tone="win"
+                  label="Victoire"
+                  icon={<TrophyIcon size="sm" />}
+                  value={
+                    <InputNumber
+                      id={winId}
+                      value={winPoints}
+                      min={0}
+                      max={99}
+                      controlsLayout="split"
+                      aria-label="Points victoire"
+                      onChange={setWinPoints}
+                    />
+                  }
+                />
+                <OutcomePointsCard
+                  tone="draw"
+                  label="Nul"
+                  icon={<EqualIcon size="sm" />}
+                  value={
+                    <InputNumber
+                      id={drawId}
+                      value={drawPoints}
+                      min={0}
+                      max={99}
+                      controlsLayout="split"
+                      aria-label="Points nul"
+                      onChange={setDrawPoints}
+                    />
+                  }
+                />
+                <OutcomePointsCard
+                  tone="loss"
+                  label="Défaite"
+                  icon={<CrossIcon size="sm" />}
+                  value={
+                    <InputNumber
+                      id={lossId}
+                      value={lossPoints}
+                      min={0}
+                      max={99}
+                      controlsLayout="split"
+                      aria-label="Points défaite"
+                      onChange={setLossPoints}
+                    />
+                  }
+                />
+              </OutcomePoints>
+            </Field>
           </div>
         </section>
 
@@ -456,10 +459,11 @@ export function LabForm() {
         </section>
 
         <section className="ds-panel dlab-form__panel" aria-label="FormSection">
-          <h2 className="dlab-form__panel-title">FormSection</h2>
+          <h2 className="dlab-form__panel-title">FormSection / FormGroup</h2>
           <p className="dlab-form__hint">
             Chrome famille partagée hub lecture + Dialog édition (
-            <code>description?</code>).
+            <code>description?</code>). <code>FormGroup</code> = sous-section
+            structurelle (titre ≠ label Field).
           </p>
           <FormSection
             title="Équipes"
@@ -474,6 +478,19 @@ export function LabForm() {
                 <InputNumber defaultValue={16} min={2} max={64} controlsLayout="split" />
               </Field>
             </div>
+            <FormGroup
+              title="Forfait"
+              description="Score attribué en cas de forfait."
+            >
+              <div className="ds-form--inline">
+                <Field label="Vainqueur">
+                  <InputNumber defaultValue={3} min={0} max={20} controlsLayout="split" />
+                </Field>
+                <Field label="Perdant">
+                  <InputNumber defaultValue={0} min={0} max={20} controlsLayout="split" />
+                </Field>
+              </div>
+            </FormGroup>
           </FormSection>
         </section>
 
