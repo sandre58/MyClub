@@ -26,7 +26,7 @@ public sealed class DefaultsBinding : IEquatable<DefaultsBinding>
             HeritableRegulationPart.MatchDuration,
             HeritableRegulationPart.ExtraTime,
             HeritableRegulationPart.PenaltyShootout,
-            HeritableRegulationPart.AdministrativeResult,
+            HeritableRegulationPart.AdministrativeResult
         ];
 
         return !isClassifyingPhase
@@ -35,7 +35,7 @@ public sealed class DefaultsBinding : IEquatable<DefaultsBinding>
         [
             ..match,
             HeritableRegulationPart.Points,
-            HeritableRegulationPart.RankingCriteria,
+            HeritableRegulationPart.RankingCriteria
         ]);
     }
 

@@ -798,7 +798,7 @@ internal static class ScenarioOrchestration
                     2,
                     QualificationSource.FromGroup(orderedGroups[1].Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(final.Id, "F-B")),
+                    new QualificationDestination(final.Id, "F-B"))
             ]),
             context.Clock);
 

@@ -27,5 +27,5 @@ public enum HeritableRegulationPart
     Points = 4,
 
     /// <summary>StandingRules.RankingCriteria.</summary>
-    RankingCriteria = 5,
+    RankingCriteria = 5
 }

@@ -12,6 +12,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyNet.Primitives;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -31,7 +32,7 @@ public sealed class MechanismBoundaryTests
         var terminal = CreateSlots(competitionId, "Terminal", ["Champ"]);
         var entries = CreateEntries(2);
         var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -105,7 +106,7 @@ public sealed class MechanismBoundaryTests
         var knockout = CreateSlots(competitionId, "KO", ["SF1-A", "SF1-B"]);
         var entries = CreateEntries(2);
         var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
             new QualificationRules(
             [

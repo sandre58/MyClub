@@ -12,6 +12,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyNet.Primitives;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -141,7 +142,7 @@ public sealed class PipelineCompositionTests
         var standing = CalculateStanding.Execute(
             entries,
             [rr],
-            league.Regulation.StandingRules);
+            league.Regulation.StandingRules.OrThrow());
 
         league.ReplaceQualificationRules(
             new QualificationRules(
@@ -219,7 +220,7 @@ public sealed class PipelineCompositionTests
         var standing = CalculateStanding.Execute(
             [a, b, c, d],
             [m1, m2],
-            groups.Regulation.StandingRules);
+            groups.Regulation.StandingRules.OrThrow());
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [

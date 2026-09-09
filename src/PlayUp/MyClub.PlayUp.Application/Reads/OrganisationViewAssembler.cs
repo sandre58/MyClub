@@ -94,7 +94,7 @@ public static class OrganisationViewAssembler
             competition.ScheduledEnd);
     }
 
-    private static IReadOnlyList<OrganisationStageHubSummaryDto> BuildStageHubSummaries(
+    private static List<OrganisationStageHubSummaryDto> BuildStageHubSummaries(
         Competition competition,
         IReadOnlyList<Stage> stages)
     {
@@ -126,20 +126,16 @@ public static class OrganisationViewAssembler
             ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
         var hasTie = storedTie is not null;
         var tie = hasTie ? TieFormat.OrDefaultOneLeg(storedTie) : null;
-        IReadOnlyList<OrganisationPlacementAwardDto>? placementAwards = placement is null
-            ? null
-            : placement.Paths
-                .OrderBy(path => path.Rank)
-                .Select(path => new OrganisationPlacementAwardDto(path.Rank, path.Outcome))
-                .ToArray();
-        IReadOnlyList<OrganisationDrawConstraintDto>? drawConstraints = draw is null
-            ? null
-            : draw.Constraints
-                .Select(constraint => new OrganisationDrawConstraintDto(
-                    constraint.ConstraintType,
-                    constraint.Enforcement,
-                    constraint.MaxPerGroup))
-                .ToArray();
+        IReadOnlyList<OrganisationPlacementAwardDto>? placementAwards = placement?.Paths
+            .OrderBy(path => path.Rank)
+            .Select(path => new OrganisationPlacementAwardDto(path.Rank, path.Outcome))
+            .ToArray();
+        IReadOnlyList<OrganisationDrawConstraintDto>? drawConstraints = draw?.Constraints
+            .Select(constraint => new OrganisationDrawConstraintDto(
+                constraint.ConstraintType,
+                constraint.Enforcement,
+                constraint.MaxPerGroup))
+            .ToArray();
 
         return new OrganisationStageHubSummaryDto(
             stage.Id.Value,
@@ -188,20 +184,10 @@ public static class OrganisationViewAssembler
     /// <summary>
     /// Topology team count: distinct group occupants, else slot capacity, else competition occupying.
     /// </summary>
-    private static int CountStageTeams(Competition competition, Stage stage)
-    {
-        if (stage.Groups.Count > 0)
-        {
-            return stage.Groups.SelectMany(group => group.EntryIds).Distinct().Count();
-        }
-
-        if (stage.Slots.Count > 0)
-        {
-            return stage.Slots.Count;
-        }
-
-        return competition.Entries.Count;
-    }
+    private static int CountStageTeams(Competition competition, Stage stage) =>
+        stage.Groups.Count > 0
+            ? stage.Groups.SelectMany(group => group.EntryIds).Distinct().Count()
+            : stage.Slots.Count > 0 ? stage.Slots.Count : competition.Entries.Count;
 
     private static int CountAttachedMatches(Stage? primary) =>
         primary?.Matchdays.SelectMany(matchday => matchday.Fixtures)

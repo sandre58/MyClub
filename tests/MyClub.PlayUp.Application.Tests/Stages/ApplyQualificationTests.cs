@@ -14,6 +14,7 @@ using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
+using MyNet.Primitives;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -30,7 +31,7 @@ public sealed class ApplyQualificationTests
         var terminal = CreateSlotStage(competitionId, "Terminal", ["Champ", "Europe1", "Europe2"]);
         var entries = CreateEntries(3);
         var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
 
         league.ReplaceQualificationRules(
             new QualificationRules(
@@ -58,7 +59,7 @@ public sealed class ApplyQualificationTests
         var playoff = CreateSlotStage(competitionId, "Playoff", ["PO1", "PO2", "PO3"]);
         var entries = CreateEntries(5);
         var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
 
         league.ReplaceQualificationRules(
             new QualificationRules(
@@ -93,7 +94,7 @@ public sealed class ApplyQualificationTests
         var matches = BuildRoundRobin(league, [..entries.Take(8)]);
 
         // Lightweight standings: matches among first 8; remaining entries fill bottom positions.
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
 
         var paths = new List<QualificationPath>();
         var order = 1;
@@ -130,7 +131,7 @@ public sealed class ApplyQualificationTests
         var ko = CreateSlotStage(competitionId, "KO", ["KO1"]);
         var entries = CreateEntries(36);
         var matches = BuildRoundRobin(league, [..entries.Take(4)]);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
 
         league.ReplaceQualificationRules(
             new QualificationRules([Path(1, SelectionMode.Position, 1, ko.Id, "KO1")]),
@@ -159,7 +160,7 @@ public sealed class ApplyQualificationTests
         }
 
         var matches = BuildRoundRobin(groups, entries);
-        var standingA = CalculateStanding.Execute(groupA.EntryIds, matches, groups.Regulation.StandingRules);
+        var standingA = CalculateStanding.Execute(groupA.EntryIds, matches, groups.Regulation.StandingRules.OrThrow());
 
         groups.ReplaceQualificationRules(
             new QualificationRules(
@@ -194,7 +195,7 @@ public sealed class ApplyQualificationTests
         }
 
         var matches = BuildRoundRobin(groups, entries);
-        var standingA = CalculateStanding.Execute(groupA.EntryIds, matches, groups.Regulation.StandingRules);
+        var standingA = CalculateStanding.Execute(groupA.EntryIds, matches, groups.Regulation.StandingRules.OrThrow());
 
         groups.ReplaceQualificationRules(
             new QualificationRules(
@@ -236,8 +237,8 @@ public sealed class ApplyQualificationTests
 
         var matchesA = BuildRoundRobin(groups, aEntries);
         var matchesB = BuildRoundRobin(groups, bEntries);
-        var standingA = CalculateStanding.Execute(groupA.EntryIds, matchesA, groups.Regulation.StandingRules);
-        var standingB = CalculateStanding.Execute(groupB.EntryIds, matchesB, groups.Regulation.StandingRules);
+        var standingA = CalculateStanding.Execute(groupA.EntryIds, matchesA, groups.Regulation.StandingRules.OrThrow());
+        var standingB = CalculateStanding.Execute(groupB.EntryIds, matchesB, groups.Regulation.StandingRules.OrThrow());
 
         groups.ReplaceQualificationRules(
             new QualificationRules(
@@ -303,15 +304,15 @@ public sealed class ApplyQualificationTests
         var standingA = CalculateStanding.Execute(
             groupA.EntryIds,
             BuildRoundRobin(groups, aEntries),
-            groups.Regulation.StandingRules);
+            groups.Regulation.StandingRules.OrThrow());
         var standingB = CalculateStanding.Execute(
             groupB.EntryIds,
             BuildRoundRobin(groups, bEntries),
-            groups.Regulation.StandingRules);
+            groups.Regulation.StandingRules.OrThrow());
         var standingC = CalculateStanding.Execute(
             groupC.EntryIds,
             BuildRoundRobin(groups, cEntries),
-            groups.Regulation.StandingRules);
+            groups.Regulation.StandingRules.OrThrow());
 
         groups.ReplaceQualificationRules(
             new QualificationRules(
@@ -362,7 +363,7 @@ public sealed class ApplyQualificationTests
         var standingA = CalculateStanding.Execute(
             groupA.EntryIds,
             BuildRoundRobin(groups, entries),
-            groups.Regulation.StandingRules);
+            groups.Regulation.StandingRules.OrThrow());
 
         groups.ReplaceQualificationRules(
             new QualificationRules(
@@ -425,7 +426,7 @@ public sealed class ApplyQualificationTests
         var unknownGroupId = GroupId.New();
         var entries = CreateEntries(2);
         var matches = BuildRoundRobin(groups, entries);
-        var standing = CalculateStanding.Execute(entries, matches, groups.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, groups.Regulation.StandingRules.OrThrow());
 
         groups.ReplaceQualificationRules(
             new QualificationRules(
@@ -478,8 +479,8 @@ public sealed class ApplyQualificationTests
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
 
-        var all = CalculateStanding.Execute([a, b], [match], stage.Regulation.StandingRules);
-        var home = CalculateStanding.Execute([a, b], [match], stage.Regulation.StandingRules, MatchFilter.Home);
+        var all = CalculateStanding.Execute([a, b], [match], stage.Regulation.StandingRules.OrThrow());
+        var home = CalculateStanding.Execute([a, b], [match], stage.Regulation.StandingRules.OrThrow(), MatchFilter.Home);
 
         all.Find(a)!.Played.Should().Be(1);
         all.Find(b)!.Played.Should().Be(1);
@@ -495,7 +496,7 @@ public sealed class ApplyQualificationTests
         var terminal = CreateSlotStage(competitionId, "Terminal", ["Champ"]);
         var entries = CreateEntries(2);
         var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
             new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
             _clock);
@@ -508,7 +509,7 @@ public sealed class ApplyQualificationTests
             [
                 Finish(Match.Create(competitionId, league.Id, entries[1], entries[0], _clock), 5, 0)
             ],
-            league.Regulation.StandingRules);
+            league.Regulation.StandingRules.OrThrow());
         ApplyQualification.Execute(league, inverted, [league, terminal], _clock);
 
         terminal.FindSlot("Champ")!.EntryId.Should().Be(inverted.EntryAt(1));
@@ -524,7 +525,7 @@ public sealed class ApplyQualificationTests
         terminal.AddRound("R1", _clock);
         var entries = CreateEntries(2);
         var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
             new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
             _clock);
@@ -548,7 +549,7 @@ public sealed class ApplyQualificationTests
         terminal.AddRound("R1", _clock);
         var entries = CreateEntries(2);
         var matches = BuildRoundRobin(league, entries);
-        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
             new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
             _clock);
@@ -587,7 +588,7 @@ public sealed class ApplyQualificationTests
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         for (var i = 1; i <= 4; i++)
         {
@@ -626,7 +627,7 @@ public sealed class ApplyQualificationTests
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         for (var i = 1; i <= 4; i++)
         {
@@ -659,7 +660,7 @@ public sealed class ApplyQualificationTests
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         terminal.FindSlot("Best1")!.EntryId.Should().Be(derived.EntryAt(1));
         terminal.FindSlot("Best2")!.EntryId.Should().Be(derived.EntryAt(2));
@@ -675,13 +676,13 @@ public sealed class ApplyQualificationTests
             .Distinct()
             .ToArray();
         var overall = CalculateStanding.Execute(
-            allEntries, scenario.Matches, scenario.GroupsStage.Regulation.StandingRules);
+            allEntries, scenario.Matches, scenario.GroupsStage.Regulation.StandingRules.OrThrow());
         var derivedThirds = CrossGroupStandingAssembler.Build(
             scenario.GroupsStage.Groups,
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         var overallTop4 = Enumerable.Range(1, 4).Select(i => overall.EntryAt(i)!.Value).ToArray();
         var thirdsTop4 = Enumerable.Range(1, 4).Select(i => derivedThirds.EntryAt(i)!.Value).ToArray();
@@ -717,14 +718,14 @@ public sealed class ApplyQualificationTests
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         var again = CrossGroupStandingAssembler.Build(
             scenario.GroupsStage.Groups,
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         derived.Rows.Select(r => r.EntryId).Should().Equal(again.Rows.Select(r => r.EntryId));
         derived.Rows.Select(r => r.Points).Should().OnlyContain(p => p == derived.Rows[0].Points);
@@ -784,8 +785,8 @@ public sealed class ApplyQualificationTests
             Finish(Match.Create(competitionId, groups.Id, a1, b1, _clock), 2, 0)
         };
 
-        var standingA = CalculateStanding.Execute([a1, a2], matches, groups.Regulation.StandingRules);
-        var standingB = CalculateStanding.Execute([b1, b2], matches, groups.Regulation.StandingRules);
+        var standingA = CalculateStanding.Execute([a1, a2], matches, groups.Regulation.StandingRules.OrThrow());
+        var standingB = CalculateStanding.Execute([b1, b2], matches, groups.Regulation.StandingRules.OrThrow());
         standingA.EntryAt(1).Should().Be(a1);
         standingB.EntryAt(1).Should().Be(b1);
 
@@ -794,7 +795,7 @@ public sealed class ApplyQualificationTests
             new Dictionary<GroupId, Standing> { [groupA.Id] = standingA, [groupB.Id] = standingB },
             position: 1,
             matches,
-            groups.Regulation.StandingRules);
+            groups.Regulation.StandingRules.OrThrow());
 
         // a1 beat b1 head-to-head; both candidates reuse StandingCalculator criteria.
         derived.EntryAt(1).Should().Be(a1);
@@ -846,7 +847,7 @@ public sealed class ApplyQualificationTests
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         terminal.FindSlot("A1")!.EntryId.Should().Be(scenario.GroupStandings[groupA.Id].EntryAt(1));
         terminal.FindSlot("B1")!.EntryId.Should().Be(scenario.GroupStandings[groupB.Id].EntryAt(1));
@@ -1003,7 +1004,7 @@ public sealed class ApplyQualificationTests
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
         var bestThird = derived.Rows[0];
         scenario.GroupsStage.ReplaceQualificationRules(
             new QualificationRules(
@@ -1079,7 +1080,7 @@ public sealed class ApplyQualificationTests
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         terminal.FindSlot("BestThird")!.EntryId.Should().Be(derived.EntryAt(1));
     }
@@ -1093,13 +1094,13 @@ public sealed class ApplyQualificationTests
             .Distinct()
             .ToArray();
         var overall = CalculateStanding.Execute(
-            allEntries, scenario.Matches, scenario.GroupsStage.Regulation.StandingRules);
+            allEntries, scenario.Matches, scenario.GroupsStage.Regulation.StandingRules.OrThrow());
         var derivedThirds = CrossGroupStandingAssembler.Build(
             scenario.GroupsStage.Groups,
             scenario.GroupStandings,
             3,
             scenario.Matches,
-            scenario.GroupsStage.Regulation.StandingRules);
+            scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         var overallBest1 = QualificationApplier.SelectEntries(
             overall, new QualificationSelection(SelectionMode.Best, 1))[0];
@@ -1233,7 +1234,7 @@ public sealed class ApplyQualificationTests
 
             matches.AddRange(BuildRoundRobin(groupsStage, entries, goalOffset: strengthSpread ? g : 0));
             groupStandings[group.Id] = CalculateStanding.Execute(
-                entries, matches, groupsStage.Regulation.StandingRules);
+                entries, matches, groupsStage.Regulation.StandingRules.OrThrow());
         }
 
         return new GroupsScenario(competitionId, groupsStage, groupStandings, matches);

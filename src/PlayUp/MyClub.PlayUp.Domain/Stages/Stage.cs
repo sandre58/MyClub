@@ -413,14 +413,14 @@ public sealed class Stage : AggregateRoot<StageId>
                 Regulation = Regulation.WithStandingRules(
                     new StandingRules(
                         ClonePoints(competitionRegulation.StandingRules.Points),
-                        Regulation.StandingRules!.RankingCriteria.ToArray()));
+                        [.. Regulation.StandingRules!.RankingCriteria]));
                 break;
             case HeritableRegulationPart.RankingCriteria:
                 EnsureStandingPresentForBind();
                 Regulation = Regulation.WithStandingRules(
                     new StandingRules(
                         Regulation.StandingRules!.Points,
-                        competitionRegulation.StandingRules.RankingCriteria.ToArray()));
+                        [.. competitionRegulation.StandingRules.RankingCriteria]));
                 break;
             default:
                 throw new DomainException(
@@ -1961,6 +1961,21 @@ public sealed class Stage : AggregateRoot<StageId>
         }
     }
 
+    private static MatchDuration CloneMatchDuration(MatchDuration source) =>
+        new(source.DurationPerPeriod, source.NumberOfPeriods, source.HalfTimeDuration);
+
+    private static AdministrativeResultPolicy CloneAdministrative(AdministrativeResultPolicy source) =>
+        new(source.ForfeitWinnerGoals, source.ForfeitLoserGoals);
+
+    private static ExtraTimePolicy? CloneExtraTime(ExtraTimePolicy? source) =>
+        source is null ? null : new ExtraTimePolicy(source.DurationPerPeriod, source.NumberOfPeriods);
+
+    private static PenaltyShootoutPolicy? CloneShootout(PenaltyShootoutPolicy? source) =>
+        source is null ? null : new PenaltyShootoutPolicy(source.InitialKicksPerTeam);
+
+    private static PointsPolicy ClonePoints(PointsPolicy source) =>
+        new(source.WinPoints, source.DrawPoints, source.LossPoints);
+
     private void DemoteToDraftIfReady()
     {
         if (Status == StageStatus.Ready)
@@ -2027,21 +2042,6 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.StandingRulesInvariant);
         }
     }
-
-    private static MatchDuration CloneMatchDuration(MatchDuration source) =>
-        new(source.DurationPerPeriod, source.NumberOfPeriods, source.HalfTimeDuration);
-
-    private static AdministrativeResultPolicy CloneAdministrative(AdministrativeResultPolicy source) =>
-        new(source.ForfeitWinnerGoals, source.ForfeitLoserGoals);
-
-    private static ExtraTimePolicy? CloneExtraTime(ExtraTimePolicy? source) =>
-        source is null ? null : new ExtraTimePolicy(source.DurationPerPeriod, source.NumberOfPeriods);
-
-    private static PenaltyShootoutPolicy? CloneShootout(PenaltyShootoutPolicy? source) =>
-        source is null ? null : new PenaltyShootoutPolicy(source.InitialKicksPerTeam);
-
-    private static PointsPolicy ClonePoints(PointsPolicy source) =>
-        new(source.WinPoints, source.DrawPoints, source.LossPoints);
 
     private void EnsureDraftOrReady()
     {

@@ -12,6 +12,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
+using MyNet.Primitives;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -30,7 +31,7 @@ public sealed class CrossGroupStandingAssemblerTests
             standings,
             position: 3,
             matches,
-            stage.Regulation.StandingRules);
+            stage.Regulation.StandingRules.OrThrow());
 
         derived.Rows.Should().HaveCount(2);
         derived.Rows.Select(r => r.EntryId).Should().BeEquivalentTo(thirds);
@@ -65,7 +66,7 @@ public sealed class CrossGroupStandingAssemblerTests
             standings,
             position: 3,
             matches: [],
-            stage.Regulation.StandingRules);
+            stage.Regulation.StandingRules.OrThrow());
 
         derived.Rows.Should().ContainSingle();
         derived.EntryAt(1).Should().Be(b3);
@@ -92,7 +93,7 @@ public sealed class CrossGroupStandingAssemblerTests
             standings,
             position: 1,
             matches: [],
-            stage.Regulation.StandingRules);
+            stage.Regulation.StandingRules.OrThrow());
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.QualificationCandidateDuplicate);
@@ -117,7 +118,7 @@ public sealed class CrossGroupStandingAssemblerTests
             standings,
             position: 3,
             matches: [],
-            stage.Regulation.StandingRules);
+            stage.Regulation.StandingRules.OrThrow());
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.QualificationCandidatesEmpty);
@@ -136,7 +137,7 @@ public sealed class CrossGroupStandingAssemblerTests
             new Dictionary<GroupId, Standing>(),
             position: 3,
             matches: [],
-            stage.Regulation.StandingRules);
+            stage.Regulation.StandingRules.OrThrow());
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.QualificationStandingMissing);
@@ -152,7 +153,7 @@ public sealed class CrossGroupStandingAssemblerTests
             standings,
             position: 3,
             matches,
-            stage.Regulation.StandingRules);
+            stage.Regulation.StandingRules.OrThrow());
 
         foreach (var third in thirds)
         {
@@ -174,7 +175,7 @@ public sealed class CrossGroupStandingAssemblerTests
             standings,
             position: 3,
             matches,
-            stage.Regulation.StandingRules);
+            stage.Regulation.StandingRules.OrThrow());
         var leader = without.EntryAt(1)!.Value;
         var other = thirds.Single(t => !t.Equals(leader));
         var leaderPoints = without.Find(leader)!.Points;
@@ -235,7 +236,7 @@ public sealed class CrossGroupStandingAssemblerTests
         matches.AddRange(BuildRoundRobin(stage, entriesB));
 
         var standingA = CalculateStanding.Execute(
-            entriesA, matches, stage.Regulation.StandingRules);
+            entriesA, matches, stage.Regulation.StandingRules.OrThrow());
         var standingB = CalculateStanding.Execute(
             entriesB, matches, stage.Regulation.StandingRules);
 
