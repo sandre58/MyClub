@@ -38,7 +38,7 @@ public sealed class RandomScenario : IScenario
     {
         ArgumentNullException.ThrowIfNull(context);
         var recipe = BuildRecipe(context);
-        return ScenarioOrchestration.BuildStructuredAsync(context, recipe, cancellationToken);
+        return ScenarioOrchestration.BuildStructuredAsync(context, recipe, cancellationToken: cancellationToken);
     }
 
     private static CompetitionRecipe BuildRecipe(ScenarioContext context)

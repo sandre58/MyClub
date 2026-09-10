@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CupScenario.cs" company="Stéphane ANDRE">
+// <copyright file="GroupsSuspendedScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,36 +11,41 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Cup of 16 (single principal round) with selectable <see cref="SeedProgress"/>.
+/// Groups mid-run then Suspended (competition + stage).
 /// </summary>
-public sealed class CupScenario : IScenario
+public sealed class GroupsSuspendedScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "cup";
+    public string Id => "groups-suspended";
 
     /// <inheritdoc />
-    public string Name => "Cup";
+    public string Name => "Groups Suspended";
 
     /// <inheritdoc />
-    public string Description => "Cup 16 — single principal knockout round. Use :prepared|:running|:finished.";
+    public string Description => "Groups 4×4 mid-results, then Suspended.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;
 
     /// <inheritdoc />
-    public bool AcceptsProgress => true;
+    public bool AcceptsProgress => false;
 
     /// <inheritdoc />
     public CompetitionRecipe? Recipe { get; } = new()
     {
-        DisplayName = "Coupe — tour principal",
-        Format = RecipeFormat.Cup,
+        DisplayName = "Groupes Suspended",
+        Format = RecipeFormat.Groups,
         TeamCount = 16,
-        BracketSize = 16,
-        StageName = "Tour à élimination"
+        GroupCount = 4,
+        ParticipantsPerGroup = 4,
+        StageName = "Phase de groupes"
     };
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe!, cancellationToken: cancellationToken);
+        ScenarioOrchestration.BuildStructuredAsync(
+            context,
+            Recipe!,
+            StructuredSeedLifecycle.Suspended,
+            cancellationToken);
 }

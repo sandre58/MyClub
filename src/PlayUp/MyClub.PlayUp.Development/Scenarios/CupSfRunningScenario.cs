@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CupScenario.cs" company="Stéphane ANDRE">
+// <copyright file="CupSfRunningScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,36 +11,30 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Cup of 16 (single principal round) with selectable <see cref="SeedProgress"/>.
+/// Multi-stage Cup Running with SF half-played (healthy mid-bracket ops).
 /// </summary>
-public sealed class CupScenario : IScenario
+public sealed class CupSfRunningScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "cup";
+    public string Id => "cup-sf-running";
 
     /// <inheritdoc />
-    public string Name => "Cup";
+    public string Name => "Cup SF running";
 
     /// <inheritdoc />
-    public string Description => "Cup 16 — single principal knockout round. Use :prepared|:running|:finished.";
+    public string Description =>
+        "QF done + SF materialized ~50% played — multi-phase Running. Contrast: cup-qf-sf stops before from-slots.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;
 
     /// <inheritdoc />
-    public bool AcceptsProgress => true;
+    public bool AcceptsProgress => false;
 
     /// <inheritdoc />
-    public CompetitionRecipe? Recipe { get; } = new()
-    {
-        DisplayName = "Coupe — tour principal",
-        Format = RecipeFormat.Cup,
-        TeamCount = 16,
-        BracketSize = 16,
-        StageName = "Tour à élimination"
-    };
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe!, cancellationToken: cancellationToken);
+        ScenarioOrchestration.BuildCupSfRunningAsync(context, cancellationToken);
 }

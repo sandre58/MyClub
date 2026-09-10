@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="ChampionshipScenario.cs" company="Stéphane ANDRE">
+// <copyright file="ChampionshipReadyScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,29 +11,29 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Generated championship (8 teams) with selectable <see cref="SeedProgress"/>.
+/// Championship materialized and Prepared — competition/stage Ready (not started).
 /// </summary>
-public sealed class ChampionshipScenario : IScenario
+public sealed class ChampionshipReadyScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "championship";
+    public string Id => "championship-ready";
 
     /// <inheritdoc />
-    public string Name => "Championship";
+    public string Name => "Championship Ready";
 
     /// <inheritdoc />
-    public string Description => "Generated championship (8 teams). Use :prepared|:running|:finished.";
+    public string Description => "8-team championship — Structure Ready (matches Scheduled, not started).";
 
     /// <inheritdoc />
-    public ScenarioCategory Category => ScenarioCategory.Operational;
+    public ScenarioCategory Category => ScenarioCategory.Construction;
 
     /// <inheritdoc />
-    public bool AcceptsProgress => true;
+    public bool AcceptsProgress => false;
 
     /// <inheritdoc />
     public CompetitionRecipe? Recipe { get; } = new()
     {
-        DisplayName = "Championnat généré",
+        DisplayName = "Championnat Ready",
         Format = RecipeFormat.Championship,
         TeamCount = 8,
         MatchdayCount = 7,
@@ -42,5 +42,9 @@ public sealed class ChampionshipScenario : IScenario
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe!, cancellationToken: cancellationToken);
+        ScenarioOrchestration.BuildStructuredAsync(
+            context,
+            Recipe!,
+            StructuredSeedLifecycle.Ready,
+            cancellationToken);
 }

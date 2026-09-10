@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="CupScenario.cs" company="Stéphane ANDRE">
+// <copyright file="RegistrationWithdrawnScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,36 +11,29 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Cup of 16 (single principal round) with selectable <see cref="SeedProgress"/>.
+/// Full roster then one withdrawal — active count below EntryRules minimum.
 /// </summary>
-public sealed class CupScenario : IScenario
+public sealed class RegistrationWithdrawnScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "cup";
+    public string Id => "registration-withdrawn";
 
     /// <inheritdoc />
-    public string Name => "Cup";
+    public string Name => "Registration withdrawn";
 
     /// <inheritdoc />
-    public string Description => "Cup 16 — single principal knockout round. Use :prepared|:running|:finished.";
+    public string Description => "Championship Running mid-results then 1 withdrawn (forfait) — operational problem.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;
 
     /// <inheritdoc />
-    public bool AcceptsProgress => true;
+    public bool AcceptsProgress => false;
 
     /// <inheritdoc />
-    public CompetitionRecipe? Recipe { get; } = new()
-    {
-        DisplayName = "Coupe — tour principal",
-        Format = RecipeFormat.Cup,
-        TeamCount = 16,
-        BracketSize = 16,
-        StageName = "Tour à élimination"
-    };
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe!, cancellationToken: cancellationToken);
+        ScenarioOrchestration.BuildRegistrationWithdrawnAsync(context, cancellationToken);
 }

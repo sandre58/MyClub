@@ -37,11 +37,21 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, EmptyWorkspaceScenario>();
         services.AddSingleton<IScenario, DraftEmptyScenario>();
         services.AddSingleton<IScenario, RegistrationOpenScenario>();
+        services.AddSingleton<IScenario, RegistrationWithdrawnScenario>();
         services.AddSingleton<IScenario, ChampionshipScenario>();
+        services.AddSingleton<IScenario, ChampionshipReadyScenario>();
+        services.AddSingleton<IScenario, ChampionshipArchivedScenario>();
+        services.AddSingleton<IScenario, ChampionshipStructureDraftScenario>();
         services.AddSingleton<IScenario, GroupsScenario>();
+        services.AddSingleton<IScenario, GroupsSuspendedScenario>();
+        services.AddSingleton<IScenario, GroupsDrawPendingScenario>();
+        services.AddSingleton<IScenario, GroupsToKoMidScenario>();
         services.AddSingleton<IScenario, CupScenario>();
+        services.AddSingleton<IScenario, CupDrawPendingScenario>();
         services.AddSingleton<IScenario, CupQfSfScenario>();
+        services.AddSingleton<IScenario, CupSfRunningScenario>();
         services.AddSingleton<IScenario, Swiss8X3Scenario>();
+        services.AddSingleton<IScenario, SwissReadyScenario>();
         services.AddSingleton<IScenario, RandomScenario>();
         services.AddSingleton(static sp => new ScenarioCatalog(sp.GetServices<IScenario>()));
 

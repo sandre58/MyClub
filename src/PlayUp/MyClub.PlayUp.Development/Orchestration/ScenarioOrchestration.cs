@@ -315,6 +315,15 @@ internal static class ScenarioOrchestration
         competition.Start(context.Clock);
     }
 
+    /// <summary>
+    /// Transitions stage + competition to Ready without starting.
+    /// </summary>
+    public static void PrepareOnly(ScenarioContext context, Competition competition, Stage stage)
+    {
+        stage.Prepare(context.Clock);
+        competition.Prepare(context.Clock);
+    }
+
     public static void CompleteRunning(ScenarioContext context, Competition competition, Stage stage) => CompleteAllRunning(context, competition, [stage]);
 
     /// <summary>
@@ -341,15 +350,16 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Builds a structured competition (register → configure → materialize → prepare/start → progress).
+    /// Builds a structured competition (register → configure → materialize → lifecycle).
     /// </summary>
     /// <remarks>
-    /// Swiss skips upfront materialize: Prepare/Start first, then progressive
-    /// <see cref="GenerateNextRound"/> according to <see cref="SeedProgress"/>.
+    /// Swiss skips upfront materialize: Ready/Progressive Prepare(/Start) first, then progressive
+    /// <see cref="GenerateNextRound"/> according to <see cref="SeedProgress"/> when lifecycle is Progressive.
     /// </remarks>
     public static async Task BuildStructuredAsync(
         ScenarioContext context,
         CompetitionRecipe recipe,
+        StructuredSeedLifecycle lifecycle = StructuredSeedLifecycle.Progressive,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -364,17 +374,395 @@ internal static class ScenarioOrchestration
 
         if (recipe.Format == RecipeFormat.Swiss)
         {
-            PrepareAndStart(context, competition, stage);
-            ApplySwissProgress(context, competition, stage, context.Progress);
+            ApplyStructuredLifecycleSwiss(context, competition, stage, lifecycle);
         }
         else
         {
             var matches = MaterializeForFormat(context, competition, stage, recipe, entries);
-            PrepareAndStart(context, competition, stage);
-            ApplyProgress(context, competition, stage, matches, context.Progress);
+            ApplyStructuredLifecycle(context, competition, stage, matches, lifecycle);
         }
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Groups stage with pot DrawRules and empty groups — Structure “draw pending”, stays Draft.
+    /// </summary>
+    public static async Task BuildGroupsDrawPendingAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Groupes — tirage en attente",
+            Format = RecipeFormat.Groups,
+            TeamCount = 16,
+            GroupCount = 4,
+            ParticipantsPerGroup = 4,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(context, competition, recipe);
+        stage.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(4)),
+            context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Cup bracket structured, entries registered, draw <strong>not</strong> created — Draft, ready for pairing draw.
+    /// </summary>
+    public static async Task BuildCupDrawPendingAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Coupe — tirage en attente",
+            Format = RecipeFormat.Cup,
+            TeamCount = 16,
+            BracketSize = 16,
+            StageName = "Tour à élimination",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        _ = ConfigurePrimaryStage(context, competition, recipe);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Championship Running mid-state then one withdrawal (forfait) — Domain allows Withdraw only when Running/Suspended.
+    /// </summary>
+    public static async Task BuildRegistrationWithdrawnAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Championnat — forfait",
+            Format = RecipeFormat.Championship,
+            TeamCount = 8,
+            MatchdayCount = 7,
+            StageName = "Championnat",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(context, competition, recipe);
+        var matches = MaterializeForFormat(context, competition, stage, recipe, entries);
+        PrepareAndStart(context, competition, stage);
+        ApplyProgress(context, competition, stage, matches, SeedProgress.Running);
+
+        var withdrawn = entries.OrderBy(entry => entry.Id.Value).First();
+        competition.WithdrawEntry(withdrawn.Id, context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Healthy multi-phase mid-state: Groups 2×4 finished → Top2 filled into QF slots; KO stays Draft.
+    /// </summary>
+    public static async Task BuildGroupsToKoMidAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Groupes → QF (mi-parcours)",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            ParticipantsPerGroup = 4,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+
+        var qfSlotKeys = PairSlotKeys("QF", pairCount: 2);
+        var quarter = CreateKnockoutStage(
+            context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(quarter, context.Clock);
+
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        if (orderedGroups.Length != 2)
+        {
+            throw new InvalidOperationException(
+                $"Expected 2 groups for groups-to-ko-mid, found {orderedGroups.Length}.");
+        }
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(quarter.Id, "QF-1-A")),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(quarter.Id, "QF-1-B")),
+                new QualificationPath(
+                    3,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(quarter.Id, "QF-2-A")),
+                new QualificationPath(
+                    4,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(quarter.Id, "QF-2-B"))
+            ]),
+            context.Clock);
+
+        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
+        PrepareAndStart(context, competition, groups);
+        PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
+
+        var groupStandings = new Dictionary<GroupId, Standing>();
+        foreach (var group in groups.Groups)
+        {
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                groupMatches,
+                groups.Regulation.StandingRules ?? BootstrapRegulation.Standard().StandingRules);
+        }
+
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            groupStandings,
+            [groups, quarter],
+            context.Clock);
+
+        groups.Complete(context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Multi-stage Cup Running: QF played → SF materialized and ~half played (healthy ops mid-bracket).
+    /// </summary>
+    public static async Task BuildCupSfRunningAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Coupe QF → SF (running)",
+            Format = RecipeFormat.Cup,
+            TeamCount = 8,
+            BracketSize = 8,
+            StageName = "Quart de finale",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var quarter = ConfigurePrimaryStage(context, competition, recipe);
+        quarter.ReplaceRoundTieFormat(
+            quarter.Rounds[0].Id,
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            context.Clock);
+        var qfMatches = ApplyCupPairingDeterministic(context, competition, quarter);
+
+        var semi = Stage.Create(
+            competition.Id,
+            new StageName("Demi-finale"),
+            competition.Regulation,
+            context.Ids.Stage("sf"),
+            context.Clock);
+        semi.AddRound("Demi-finales", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
+        foreach (var key in new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" })
+        {
+            semi.AddSlot(key);
+        }
+
+        competition.AddStage(semi.Id, context.Clock);
+        context.Stages.Add(semi);
+
+        var qfFixtures = quarter.Rounds[0].Fixtures
+            .OrderBy(fixture => fixture.Id.Value)
+            .Take(4)
+            .ToArray();
+        if (qfFixtures.Length != 4)
+        {
+            throw new InvalidOperationException(
+                $"Expected 4 QF fixtures for cup-sf-running, found {qfFixtures.Length}.");
+        }
+
+        var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
+        var paths = new List<ProgressionPath>(4);
+        for (var i = 0; i < 4; i++)
+        {
+            paths.Add(
+                new ProgressionPath(
+                    qfFixtures[i].Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(semi.Id, destinationKeys[i])));
+        }
+
+        quarter.ReplaceProgressionRules(new ProgressionRules(paths), context.Clock);
+
+        quarter.Prepare(context.Clock);
+        competition.Prepare(context.Clock);
+        quarter.Start(context.Clock);
+        competition.Start(context.Clock);
+
+        PlayDecisiveMatches(context, competition, qfMatches);
+
+        Stage[] competitionStages = [quarter, semi];
+        foreach (var fixture in qfFixtures)
+        {
+            var legMatches = qfMatches
+                .Where(match => fixture.MatchIds.Contains(match.Id))
+                .ToArray();
+            ApplyProgressionOutcome.Execute(
+                quarter,
+                fixture.Id,
+                legMatches,
+                competitionStages,
+                context.Clock);
+        }
+
+        quarter.Complete(context.Clock);
+
+        var sfPairs = AdjacentPairs(destinationKeys);
+        var sfMatches = MaterializeFromSlots(context, competition, semi, sfPairs);
+        PrepareAndStartStage(context, semi);
+        PlayMatches(context, competition, sfMatches, count: Math.Max(1, sfMatches.Count / 2));
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Championship structure assigned + materialize, stays Draft (healthy Structure edit surface).
+    /// </summary>
+    public static async Task BuildChampionshipStructureDraftAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Championnat — structure Draft",
+            Format = RecipeFormat.Championship,
+            TeamCount = 8,
+            MatchdayCount = 7,
+            StageName = "Championnat",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(context, competition, recipe);
+        _ = MaterializeForFormat(context, competition, stage, recipe, entries);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void ApplyStructuredLifecycle(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Match> matches,
+        StructuredSeedLifecycle lifecycle)
+    {
+        switch (lifecycle)
+        {
+            case StructuredSeedLifecycle.Ready:
+                PrepareOnly(context, competition, stage);
+                return;
+            case StructuredSeedLifecycle.Suspended:
+                PrepareAndStart(context, competition, stage);
+                ApplyProgress(context, competition, stage, matches, SeedProgress.Running);
+                stage.Suspend(context.Clock);
+                competition.Suspend(context.Clock);
+                return;
+            case StructuredSeedLifecycle.Archived:
+                PrepareAndStart(context, competition, stage);
+                ApplyProgress(context, competition, stage, matches, SeedProgress.Finished);
+                competition.Archive(context.Clock);
+                return;
+            case StructuredSeedLifecycle.Progressive:
+                PrepareAndStart(context, competition, stage);
+                ApplyProgress(context, competition, stage, matches, context.Progress);
+                return;
+            default:
+                throw new InvalidOperationException($"Unsupported structured lifecycle '{lifecycle}'.");
+        }
+    }
+
+    private static void ApplyStructuredLifecycleSwiss(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        StructuredSeedLifecycle lifecycle)
+    {
+        switch (lifecycle)
+        {
+            case StructuredSeedLifecycle.Ready:
+                PrepareOnly(context, competition, stage);
+                return;
+            case StructuredSeedLifecycle.Suspended:
+                PrepareAndStart(context, competition, stage);
+                ApplySwissProgress(context, competition, stage, SeedProgress.Running);
+                stage.Suspend(context.Clock);
+                competition.Suspend(context.Clock);
+                return;
+            case StructuredSeedLifecycle.Archived:
+                PrepareAndStart(context, competition, stage);
+                ApplySwissProgress(context, competition, stage, SeedProgress.Finished);
+                competition.Archive(context.Clock);
+                return;
+            case StructuredSeedLifecycle.Progressive:
+                PrepareAndStart(context, competition, stage);
+                ApplySwissProgress(context, competition, stage, context.Progress);
+                return;
+            default:
+                throw new InvalidOperationException($"Unsupported structured lifecycle '{lifecycle}'.");
+        }
     }
 
     /// <summary>

@@ -155,6 +155,99 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
+    public async Task Structure_lifecycle_and_draw_pending_scenariosAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync(
+        [
+            SeedSpec.Parse("championship-ready"),
+            SeedSpec.Parse("groups-suspended"),
+            SeedSpec.Parse("championship-archived"),
+            SeedSpec.Parse("cup-draw-pending"),
+            SeedSpec.Parse("groups-draw-pending"),
+            SeedSpec.Parse("registration-withdrawn")
+        ]);
+
+        using var scope = fixture.Services.CreateScope();
+        var list = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().ListAsync();
+        list.Should().HaveCount(6);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Ready);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Suspended);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Archived);
+        list.Should().Contain(c =>
+            c.Status == CompetitionStatus.Running
+            && c.Entries.Count(e => e.Status == EntryStatus.Withdrawn) == 1);
+    }
+
+    [Fact]
+    public async Task Groups_to_ko_mid_and_cup_sf_running_multi_phaseAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync(
+        [
+            SeedSpec.Parse("groups-to-ko-mid"),
+            SeedSpec.Parse("cup-sf-running")
+        ]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var list = await competitions.ListAsync();
+        list.Should().HaveCount(2);
+
+        var groupsToKoSummary = list.Single(c => c.Name.Value.Contains("Groupes → QF", StringComparison.Ordinal));
+        var groupsToKo = await competitions.GetByIdForUpdateAsync(groupsToKoSummary.Id);
+        groupsToKo.Should().NotBeNull();
+        groupsToKo.Status.Should().Be(CompetitionStatus.Running);
+        groupsToKo.StageIds.Should().HaveCount(2);
+        var ko = await stages.GetByIdForUpdateAsync(groupsToKo.StageIds[1]);
+        ko.Should().NotBeNull();
+        ko.Status.Should().Be(StageStatus.Draft);
+        ko.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
+
+        var cupSfSummary = list.Single(c => c.Name.Value.Contains("SF (running)", StringComparison.Ordinal));
+        var cupSf = await competitions.GetByIdForUpdateAsync(cupSfSummary.Id);
+        cupSf.Should().NotBeNull();
+        cupSf.Status.Should().Be(CompetitionStatus.Running);
+        var semi = await stages.GetByIdForUpdateAsync(cupSf.StageIds[1]);
+        semi.Should().NotBeNull();
+        semi.Status.Should().Be(StageStatus.Running);
+        var sfMatches = await matches.ListByStageForUpdateAsync(semi.Id);
+        sfMatches.Should().NotBeEmpty();
+        sfMatches.Should().Contain(m => m.Status == MatchStatus.Finished);
+        sfMatches.Should().Contain(m => m.Status == MatchStatus.Scheduled);
+    }
+
+    [Fact]
+    public async Task Structure_qa_scenario_matrix_seeds_statusesAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync(
+        [
+            SeedSpec.Parse("championship-ready"),
+            SeedSpec.Parse("groups-suspended"),
+            SeedSpec.Parse("championship-archived"),
+            SeedSpec.Parse("swiss-ready"),
+            SeedSpec.Parse("championship-structure-draft"),
+            SeedSpec.Parse("groups-draw-pending"),
+            SeedSpec.Parse("cup-draw-pending"),
+            SeedSpec.Parse("registration-withdrawn"),
+            SeedSpec.Parse("groups-to-ko-mid"),
+            SeedSpec.Parse("cup-sf-running")
+        ]);
+
+        using var scope = fixture.Services.CreateScope();
+        var list = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().ListAsync();
+        list.Should().HaveCount(10);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Ready);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Suspended);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Archived);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Running);
+        list.Should().Contain(c => c.Status == CompetitionStatus.Draft);
+    }
+
+    [Fact]
     public async Task Cup_qf_sf_fills_semi_slots_and_projects_from_slots_overview_actionAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();

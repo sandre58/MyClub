@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="Swiss8X3Scenario.cs" company="Stéphane ANDRE">
+// <copyright file="SwissReadyScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,37 +11,40 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Lot 2 reference case 1: Swiss classique, 8 teams × 3 rounds (progressive GenerateNextRound).
+/// Swiss 8×3 Prepared only — Ready, 0 rounds yet.
 /// </summary>
-public sealed class Swiss8X3Scenario : IScenario
+public sealed class SwissReadyScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "swiss-8x3";
+    public string Id => "swiss-ready";
 
     /// <inheritdoc />
-    public string Name => "Swiss 8×3";
+    public string Name => "Swiss Ready";
 
     /// <inheritdoc />
-    public string Description =>
-        "Swiss classique (8 teams, 3 rounds). Use :prepared|:running|:finished. Matchdays via GenerateNextRound.";
+    public string Description => "Swiss 8×3 — Ready (no GenerateNextRound yet).";
 
     /// <inheritdoc />
-    public ScenarioCategory Category => ScenarioCategory.Operational;
+    public ScenarioCategory Category => ScenarioCategory.Construction;
 
     /// <inheritdoc />
-    public bool AcceptsProgress => true;
+    public bool AcceptsProgress => false;
 
     /// <inheritdoc />
     public CompetitionRecipe? Recipe { get; } = new()
     {
-        DisplayName = "Swiss 8×3",
+        DisplayName = "Suisse Ready",
         Format = RecipeFormat.Swiss,
         TeamCount = 8,
         SwissRoundCount = 3,
-        StageName = "Swiss"
+        StageName = "Suisse"
     };
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe!, cancellationToken: cancellationToken);
+        ScenarioOrchestration.BuildStructuredAsync(
+            context,
+            Recipe!,
+            StructuredSeedLifecycle.Ready,
+            cancellationToken);
 }

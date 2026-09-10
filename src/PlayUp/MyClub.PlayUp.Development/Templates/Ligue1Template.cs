@@ -41,5 +41,5 @@ public sealed class Ligue1Template : ICompetitionTemplate
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(context, Recipe, cancellationToken);
+        ScenarioOrchestration.BuildStructuredAsync(context, Recipe, cancellationToken: cancellationToken);
 }
