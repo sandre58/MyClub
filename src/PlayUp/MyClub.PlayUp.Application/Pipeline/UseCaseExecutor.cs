@@ -1165,6 +1165,60 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Specializes MatchRules on a stage (unbinds changed heritable parts).
+    /// </summary>
+    public async Task ReplaceStageMatchRulesAsync(
+        StageId stageId,
+        MatchRules matchRules,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageMatchRules.Execute(stage, matchRules, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Rebinds Match or Standing heritable parts to Competition defaults.
+    /// </summary>
+    public async Task BindStageRegulationAsync(
+        StageId stageId,
+        string scope,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        BindStageRegulation.Execute(stage, competition, scope, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Replaces or clears DrawRules on a stage.
+    /// </summary>
+    public async Task ReplaceStageDrawRulesAsync(
+        StageId stageId,
+        DrawRules? drawRules,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageDrawRules.Execute(stage, drawRules, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Replaces or clears the stage default TieFormat.
+    /// </summary>
+    public async Task ReplaceStageDefaultTieFormatAsync(
+        StageId stageId,
+        TieFormat? tieFormat,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageDefaultTieFormat.Execute(stage, tieFormat, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Assembles <see cref="OrganisationViewDto"/> for the Organisation hub.
     /// </summary>
     public async Task<OrganisationViewDto> GetOrganisationViewAsync(

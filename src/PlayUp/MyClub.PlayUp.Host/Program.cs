@@ -781,6 +781,98 @@ try
             return Results.NoContent();
         });
 
+    app.MapPut(
+        "/stages/{stageId:guid}/match-rules",
+        async (
+            Guid stageId,
+            ReplaceStageMatchRulesRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            var matchRules = OrganisationRequestMapper.ToMatchRules(request);
+            await executor
+                .ReplaceStageMatchRulesAsync(new StageId(stageId), matchRules, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPost(
+        "/stages/{stageId:guid}/bind-to-competition",
+        async (
+            Guid stageId,
+            BindStageRegulationRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            await executor
+                .BindStageRegulationAsync(new StageId(stageId), request.Scope, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPut(
+        "/stages/{stageId:guid}/draw-rules",
+        async (
+            Guid stageId,
+            ReplaceStageDrawRulesRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            DrawRules? drawRules = null;
+            if (!request.Clear)
+            {
+                if (request.Mode is null)
+                {
+                    throw new ApplicationFailureException(
+                        "DrawRules require Mode when Clear is false.",
+                        ApplicationErrorCodes.InvalidStructureIntent);
+                }
+
+                SeedingRules? seeding = request.NumberOfSeeds is null
+                    ? null
+                    : new SeedingRules(request.NumberOfSeeds.Value);
+                PotRules? pots = request.NumberOfPots is null
+                    ? null
+                    : new PotRules(request.NumberOfPots.Value);
+                drawRules = new DrawRules(request.Mode.Value, seeding, pots);
+            }
+
+            await executor
+                .ReplaceStageDrawRulesAsync(new StageId(stageId), drawRules, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPut(
+        "/stages/{stageId:guid}/tie-format",
+        async (
+            Guid stageId,
+            ReplaceStageDefaultTieFormatRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            TieFormat? tieFormat = null;
+            if (!request.Clear)
+            {
+                var aggregate = request.NumberOfLegs == TieFormat.TwoLegs;
+                tieFormat = new TieFormat(
+                    request.NumberOfLegs,
+                    aggregate,
+                    request.HasAwayGoalsRule ? new AwayGoalsRule() : null,
+                    request.HasExtraTimeRule ? new ExtraTimeRule() : null,
+                    request.HasPenaltyShootoutRule ? new PenaltyShootoutRule() : null);
+            }
+
+            await executor
+                .ReplaceStageDefaultTieFormatAsync(new StageId(stageId), tieFormat, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
     app.MapGet(
         "/competitions/{competitionId:guid}",
         async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>

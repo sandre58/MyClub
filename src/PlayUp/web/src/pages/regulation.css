@@ -903,6 +903,11 @@
   text-transform: uppercase;
 }
 
+.regulation-rule-col__link {
+  margin: var(--space-4) 0 var(--space-8);
+  font-size: var(--text-meta);
+}
+
 .regulation-rule-col__icon {
   display: inline-flex;
   line-height: 0;

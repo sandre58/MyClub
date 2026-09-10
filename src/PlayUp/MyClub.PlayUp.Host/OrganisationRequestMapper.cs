@@ -130,6 +130,51 @@ public static class OrganisationRequestMapper
             disciplinary);
     }
 
+    /// <summary>
+    /// Maps <see cref="ReplaceStageMatchRulesRequest"/> to <see cref="MatchRules"/>.
+    /// </summary>
+    public static MatchRules ToMatchRules(ReplaceStageMatchRulesRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        ExtraTimePolicy? extraTime = null;
+        if (request.HasExtraTime)
+        {
+            if (request.ExtraTimeDurationPerPeriod is null || request.ExtraTimeNumberOfPeriods is null)
+            {
+                throw new ApplicationFailureException(
+                    "HasExtraTime requires ExtraTimeDurationPerPeriod and ExtraTimeNumberOfPeriods.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
+            extraTime = new ExtraTimePolicy(
+                request.ExtraTimeDurationPerPeriod.Value,
+                request.ExtraTimeNumberOfPeriods.Value);
+        }
+
+        PenaltyShootoutPolicy? shootout = null;
+        if (request.HasPenaltyShootout)
+        {
+            if (request.PenaltyInitialKicksPerTeam is null)
+            {
+                throw new ApplicationFailureException(
+                    "HasPenaltyShootout requires PenaltyInitialKicksPerTeam.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
+            shootout = new PenaltyShootoutPolicy(request.PenaltyInitialKicksPerTeam.Value);
+        }
+
+        return new MatchRules(
+            new MatchDuration(
+                request.DurationPerPeriod,
+                request.NumberOfPeriods,
+                request.HalfTimeDuration),
+            new AdministrativeResultPolicy(request.ForfeitWinnerGoals, request.ForfeitLoserGoals),
+            extraTime,
+            shootout);
+    }
+
     private static MatchGenerationFormat ParseMatchGenerationFormat(string? value) =>
         string.IsNullOrWhiteSpace(value)
             ? MatchGenerationFormat.SingleRoundRobin

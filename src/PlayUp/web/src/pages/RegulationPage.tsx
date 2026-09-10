@@ -54,6 +54,8 @@ import type {
 } from '../types';
 import { RegulationEditorDialog } from './RegulationEditorDialog';
 import { isPartOverridden, isStagePersonalized } from './regulationImpact';
+import { structureDeepLink } from './structureNavigation';
+import type { StructureSectionId } from './structureHubSections';
 import './regulation.css';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -171,6 +173,7 @@ export function RegulationPage() {
               {stages.map((stage, index) => (
                 <PhaseTile
                   key={stage.stageId}
+                  competitionId={competitionId}
                   stage={stage}
                   ordinal={index + 1}
                 />
@@ -719,16 +722,21 @@ function PersonalizedBadge() {
 }
 
 function PhaseTile({
+  competitionId,
   stage,
   ordinal,
 }: {
+  competitionId: string;
   stage: OrganisationStageHubSummary;
   ordinal: number;
 }) {
   const { t } = useTranslation('regulation');
-  const structureHref = `/stages/${stage.stageId}`;
+  const structureHref = structureDeepLink({
+    competitionId,
+    stageId: stage.stageId,
+  });
   const flows = buildPhaseFlows(stage, t);
-  const ruleColumns = buildPhaseRuleColumns(stage, t);
+  const ruleColumns = buildPhaseRuleColumns(stage, t, competitionId);
   const personalized = isStagePersonalized(stage);
 
   return (
@@ -821,6 +829,13 @@ function PhaseTile({
                     </span>
                     {column.title}
                   </h4>
+                  {column.structureHref ? (
+                    <p className="regulation-rule-col__link">
+                      <TextLink to={column.structureHref}>
+                        {t('openInStructure')}
+                      </TextLink>
+                    </p>
+                  ) : null}
                   {column.chips && column.chips.length > 0 ? (
                     <div className="regulation-rule-col__chips">
                       {column.chips.map((chip) => {
@@ -911,6 +926,8 @@ type PhaseRuleColumn = {
   items: PhaseRuleItem[];
   /** Optional subsections (e.g. Confrontation multi-format). */
   sections?: PhaseRuleSection[];
+  /** Structure deep-link section when this column maps to a construction family. */
+  structureHref?: string;
 };
 
 function PhaseRuleItemList({ items }: { items: PhaseRuleItem[] }) {
@@ -1300,8 +1317,15 @@ function buildTiePropertyItems(
 function buildPhaseRuleColumns(
   stage: OrganisationStageHubSummary,
   t: Translate,
+  competitionId: string,
 ): PhaseRuleColumn[] {
   const columns: PhaseRuleColumn[] = [];
+  const sectionLink = (section: StructureSectionId) =>
+    structureDeepLink({
+      competitionId,
+      stageId: stage.stageId,
+      section,
+    });
   const matchDurationOverridden = isPartOverridden(stage, 'matchDuration');
   const extraTimeOverridden = isPartOverridden(stage, 'extraTime');
   const penaltiesOverridden = isPartOverridden(stage, 'penaltyShootout');
@@ -1370,6 +1394,7 @@ function buildPhaseRuleColumns(
     title: t('columns.match'),
     icon: Volleyball,
     items: matchItems,
+    structureHref: sectionLink('matchs'),
   });
 
   if (stage.hasTieFormat) {
@@ -1395,6 +1420,7 @@ function buildPhaseRuleColumns(
           title: segment.rounds.map((round) => round.name).join('/'),
           items: buildTiePropertyItems(segment, t, `seg-${index}`),
         })),
+        structureHref: sectionLink('confrontation'),
       });
     } else if (stage.numberOfLegs != null) {
       columns.push({
@@ -1411,6 +1437,7 @@ function buildPhaseRuleColumns(
           },
           t,
         ),
+        structureHref: sectionLink('confrontation'),
       });
     }
   }
@@ -1488,6 +1515,7 @@ function buildPhaseRuleColumns(
       title: t('columns.draw'),
       icon: Shuffle,
       items,
+      structureHref: sectionLink('tirage'),
     });
   }
 
@@ -1559,6 +1587,7 @@ function buildPhaseRuleColumns(
           ]
         : undefined,
       items,
+      structureHref: sectionLink('classement'),
     });
   }
 

@@ -211,6 +211,7 @@ public sealed record OrganisationReadinessDto(
 /// <param name="QualificationPaths">Authoring projection of qualification paths when present.</param>
 /// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
+/// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 public sealed record OrganisationStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -258,7 +259,8 @@ public sealed record OrganisationStageHubSummaryDto(
     IReadOnlyList<string>? Actions = null,
     IReadOnlyList<OrganisationQualificationPathDto>? QualificationPaths = null,
     IReadOnlyList<OrganisationProgressionPathDto>? ProgressionPaths = null,
-    IReadOnlyList<string>? StructureIssues = null);
+    IReadOnlyList<string>? StructureIssues = null,
+    int HalfTimeDuration = 0);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>

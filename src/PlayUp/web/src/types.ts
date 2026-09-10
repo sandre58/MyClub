@@ -593,6 +593,8 @@ export interface OrganisationStageHubSummary {
   extraTimeDurationPerPeriod?: number | null;
   hasPenaltyShootout: boolean;
   penaltyInitialKicksPerTeam?: number | null;
+  /** MatchRules half-time break minutes. */
+  halfTimeDuration?: number;
   /** A5: standing present only when the phase classifies. */
   hasStandingRules?: boolean;
   winPoints?: number | null;
@@ -703,6 +705,50 @@ export interface ReplaceQualificationRulesRequest {
 /** PUT /stages/{id}/progression-rules */
 export interface ReplaceProgressionRulesRequest {
   paths: OrganisationProgressionPath[] | null;
+}
+
+/** PUT /stages/{id}/match-rules */
+export interface ReplaceStageMatchRulesRequest {
+  durationPerPeriod: number;
+  numberOfPeriods: number;
+  halfTimeDuration: number;
+  forfeitWinnerGoals?: number;
+  forfeitLoserGoals?: number;
+  hasExtraTime?: boolean;
+  extraTimeDurationPerPeriod?: number | null;
+  extraTimeNumberOfPeriods?: number | null;
+  hasPenaltyShootout?: boolean;
+  penaltyInitialKicksPerTeam?: number | null;
+}
+
+/** PUT /stages/{id}/standing-rules */
+export interface ReplaceStageStandingRulesRequest {
+  winPoints: number;
+  drawPoints: number;
+  lossPoints: number;
+  rankingCriteria: RankingCriterion[];
+}
+
+/** POST /stages/{id}/bind-to-competition */
+export interface BindStageRegulationRequest {
+  scope: 'Match' | 'Standing';
+}
+
+/** PUT /stages/{id}/draw-rules */
+export interface ReplaceStageDrawRulesRequest {
+  clear?: boolean;
+  mode?: DrawMode | null;
+  numberOfPots?: number | null;
+  numberOfSeeds?: number | null;
+}
+
+/** PUT /stages/{id}/tie-format */
+export interface ReplaceStageDefaultTieFormatRequest {
+  clear?: boolean;
+  numberOfLegs?: number;
+  hasAwayGoalsRule?: boolean;
+  hasExtraTimeRule?: boolean;
+  hasPenaltyShootoutRule?: boolean;
 }
 
 /** Round identity + display name inside a confrontation segment. */

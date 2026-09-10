@@ -8,7 +8,7 @@ import {
   type SubmitEvent,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   configureOrganisationStructure,
   fetchOrganisationView,
@@ -50,6 +50,17 @@ import {
   STRUCTURE_SWITCHER_SECTIONS,
   type StructureSectionId,
 } from './structureHubSections';
+import {
+  parseStructureDeepLink,
+  STRUCTURE_ROUND_PARAM,
+  STRUCTURE_SECTION_PARAM,
+  STRUCTURE_STAGE_PARAM,
+} from './structureNavigation';
+import {
+  ConfrontationEditors,
+  MatchStandingEditors,
+  TirageEditors,
+} from './StructureRegulationDialogs';
 import './structure.css';
 
 type DrillInSection = StructureSectionId | null;
@@ -78,33 +89,82 @@ export function StructurePage() {
 
 function StructureHub({ data }: { data: OrganisationView }) {
   const { t } = useTranslation('structure');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const deepLink = parseStructureDeepLink(searchParams.toString());
   const canConfigure = data.actions.includes('ConfigureStructure');
   const [structureEditorOpen, setStructureEditorOpen] = useState(false);
   const stages = useMemo(() => resolveStages(data), [data]);
-  const [selectedStageId, setSelectedStageId] = useState<string | null>(
-    stages[0]?.stageId ?? null,
-  );
-  const [drillIn, setDrillIn] = useState<DrillInSection>(null);
+  const [selectedStageId, setSelectedStageId] = useState<string | null>(() => {
+    if (
+      deepLink.stageId &&
+      stages.some((stage) => stage.stageId === deepLink.stageId)
+    ) {
+      return deepLink.stageId;
+    }
+    return stages[0]?.stageId ?? null;
+  });
+  const [drillIn, setDrillIn] = useState<DrillInSection>(() => deepLink.section);
 
   useEffect(() => {
+    const parsed = parseStructureDeepLink(searchParams.toString());
     if (stages.length === 0) {
       setSelectedStageId(null);
       setDrillIn(null);
       return;
     }
-    const stillThere = stages.some((stage) => stage.stageId === selectedStageId);
-    if (!stillThere) {
-      setSelectedStageId(stages[0]!.stageId);
-      setDrillIn(null);
+    if (
+      parsed.stageId &&
+      stages.some((stage) => stage.stageId === parsed.stageId)
+    ) {
+      setSelectedStageId(parsed.stageId);
+      setDrillIn(parsed.section);
+      return;
     }
-  }, [stages, selectedStageId]);
+    setSelectedStageId((current) => {
+      if (current && stages.some((stage) => stage.stageId === current)) {
+        return current;
+      }
+      return stages[0]!.stageId;
+    });
+  }, [searchParams, stages]);
 
   const selectedStage =
     stages.find((stage) => stage.stageId === selectedStageId) ?? null;
 
-  useEffect(() => {
+  const selectStage = (stageId: string) => {
+    setSelectedStageId(stageId);
     setDrillIn(null);
-  }, [selectedStageId]);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set(STRUCTURE_STAGE_PARAM, stageId);
+        next.delete(STRUCTURE_SECTION_PARAM);
+        next.delete(STRUCTURE_ROUND_PARAM);
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
+  const selectDrillIn = (section: DrillInSection) => {
+    setDrillIn(section);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (selectedStageId) {
+          next.set(STRUCTURE_STAGE_PARAM, selectedStageId);
+        }
+        if (section) {
+          next.set(STRUCTURE_SECTION_PARAM, section);
+        } else {
+          next.delete(STRUCTURE_SECTION_PARAM);
+        }
+        next.delete(STRUCTURE_ROUND_PARAM);
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   return (
     <div className="structure-hub">
@@ -131,7 +191,7 @@ function StructureHub({ data }: { data: OrganisationView }) {
         <TopologyPanel
           stages={stages}
           selectedStageId={selectedStageId}
-          onSelectStage={setSelectedStageId}
+          onSelectStage={selectStage}
           canConfigure={canConfigure}
           onConfigure={() => setStructureEditorOpen(true)}
         />
@@ -139,7 +199,7 @@ function StructureHub({ data }: { data: OrganisationView }) {
           data={data}
           stage={selectedStage}
           drillIn={drillIn}
-          onDrillIn={setDrillIn}
+          onDrillIn={selectDrillIn}
           canConfigure={canConfigure}
           onConfigure={() => setStructureEditorOpen(true)}
         />
@@ -762,7 +822,9 @@ function SectionDetail({
       );
     case 'confrontation':
       return (
-        <DetailCard>
+        <DetailCard
+          action={<ConfrontationEditors data={data} stage={stage} />}
+        >
           <dl className="structure-detail__grid">
             <DetailCell
               label={t('hub.detail.legs')}
@@ -789,7 +851,7 @@ function SectionDetail({
       );
     case 'tirage':
       return (
-        <DetailCard>
+        <DetailCard action={<TirageEditors data={data} stage={stage} />}>
           <dl className="structure-detail__grid">
             <DetailCell
               label={t('structure.draw')}
@@ -813,12 +875,24 @@ function SectionDetail({
       );
     case 'matchs':
       return (
-        <DetailCard>
+        <DetailCard
+          action={<MatchStandingEditors data={data} stage={stage} section="matchs" />}
+        >
           <p className="structure-detail__lede">
             {isMatchFrameBound(stage.defaultsBinding)
               ? t('hub.detail.matchBoundLede')
               : t('hub.detail.matchCustomLede')}
           </p>
+          <dl className="structure-detail__grid">
+            <DetailCell
+              label={t('regulation.numberOfPeriods')}
+              value={String(stage.numberOfPeriods)}
+            />
+            <DetailCell
+              label={t('regulation.durationPerPeriod')}
+              value={String(stage.durationPerPeriod)}
+            />
+          </dl>
           <p className="structure-detail__footer">
             <Link className="structure-link" to={regulationHref}>
               {t('hub.overview.openRegulation')}
@@ -829,12 +903,32 @@ function SectionDetail({
       );
     case 'classement':
       return (
-        <DetailCard>
+        <DetailCard
+          action={
+            <MatchStandingEditors data={data} stage={stage} section="classement" />
+          }
+        >
           <p className="structure-detail__lede">
             {isStandingFrameBound(stage.defaultsBinding)
               ? t('hub.detail.standingBoundLede')
               : t('hub.detail.standingCustomLede')}
           </p>
+          {stage.winPoints != null && (
+            <dl className="structure-detail__grid">
+              <DetailCell
+                label={t('regulation.winPoints')}
+                value={String(stage.winPoints)}
+              />
+              <DetailCell
+                label={t('regulation.drawPoints')}
+                value={String(stage.drawPoints ?? 0)}
+              />
+              <DetailCell
+                label={t('regulation.lossPoints')}
+                value={String(stage.lossPoints ?? 0)}
+              />
+            </dl>
+          )}
           <p className="structure-detail__footer">
             <Link className="structure-link" to={regulationHref}>
               {t('hub.overview.openRegulation')}

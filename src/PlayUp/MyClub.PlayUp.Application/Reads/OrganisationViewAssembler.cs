@@ -88,6 +88,21 @@ public static class OrganisationViewAssembler
     /// <summary>Per-phase action: replace progression rules.</summary>
     public const string ActionReplaceProgressionRules = "ReplaceProgressionRules";
 
+    /// <summary>Specialize MatchRules (unbind changed heritable parts).</summary>
+    public const string ActionReplaceMatchRules = "ReplaceMatchRules";
+
+    /// <summary>Specialize StandingRules (Draft/Ready Structure authoring).</summary>
+    public const string ActionReplaceStandingRules = "ReplaceStandingRules";
+
+    /// <summary>Rebind Match or Standing bundle to Competition defaults.</summary>
+    public const string ActionBindToCompetition = "BindToCompetition";
+
+    /// <summary>Replace or clear DrawRules.</summary>
+    public const string ActionReplaceDrawRules = "ReplaceDrawRules";
+
+    /// <summary>Replace or clear stage default TieFormat.</summary>
+    public const string ActionReplaceDefaultTieFormat = "ReplaceDefaultTieFormat";
+
     /// <summary>Stage structure issue: qualification destination stage missing from competition.</summary>
     public const string IssueDanglingQualificationTarget = "DanglingQualificationTarget";
 
@@ -278,7 +293,8 @@ public static class OrganisationViewAssembler
             Actions: BuildStageActions(competition, stage),
             QualificationPaths: qualificationPaths,
             ProgressionPaths: progressionPaths,
-            StructureIssues: BuildStructureIssues(stage, competitionStages));
+            StructureIssues: BuildStructureIssues(stage, competitionStages),
+            HalfTimeDuration: match.Duration.HalfTimeDuration);
     }
 
     private static IReadOnlyList<OrganisationQualificationPathDto>? MapQualificationPaths(
@@ -342,8 +358,26 @@ public static class OrganisationViewAssembler
         {
             ActionRenameStage,
             ActionReplaceQualificationRules,
-            ActionReplaceProgressionRules
+            ActionReplaceProgressionRules,
+            ActionReplaceMatchRules,
+            ActionBindToCompetition
         };
+
+        if (stage.Regulation.StandingRules is not null
+            && !StageClassification.IsNonClassifyingPhase(stage))
+        {
+            actions.Add(ActionReplaceStandingRules);
+        }
+
+        if (StageNeedsDrawRulesAction(stage))
+        {
+            actions.Add(ActionReplaceDrawRules);
+        }
+
+        if (StageNeedsTieFormatAction(stage))
+        {
+            actions.Add(ActionReplaceDefaultTieFormat);
+        }
 
         var format = InferFormat(stage);
         var attachedMatches = CountAttachedMatches(stage);
@@ -385,6 +419,27 @@ public static class OrganisationViewAssembler
         }
 
         return actions;
+    }
+
+    private static bool StageNeedsDrawRulesAction(Stage stage)
+    {
+        if (stage.Regulation.DrawRules is not null)
+        {
+            return true;
+        }
+
+        var format = InferFormat(stage);
+        return format is StructureFormatKind.Groups or StructureFormatKind.Cup;
+    }
+
+    private static bool StageNeedsTieFormatAction(Stage stage)
+    {
+        if (stage.Regulation.TieFormat is not null || stage.Rounds.Any(round => round.TieFormat is not null))
+        {
+            return true;
+        }
+
+        return InferFormat(stage) is StructureFormatKind.Cup;
     }
 
     private static IReadOnlyList<string> BuildStructureIssues(

@@ -163,7 +163,7 @@ function organisationView(
   };
 }
 
-function renderStructurePage() {
+function renderStructurePage(initialPath?: string) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -174,7 +174,9 @@ function renderStructurePage() {
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
-        initialEntries={[`/competitions/${competitionId}/structure`]}
+        initialEntries={[
+          initialPath ?? `/competitions/${competitionId}/structure`,
+        ]}
       >
         <Routes>
           <Route
@@ -395,6 +397,39 @@ describe('StructurePage Structure hub', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       "Introuvable. Vérifiez l'identifiant dans l'URL.",
     );
+  });
+
+  it('hydrates drill-in from Structure deep-link query params', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          championshipStage({
+            actions: [
+              'ReplaceMatchRules',
+              'BindToCompetition',
+              'ReplaceStandingRules',
+            ],
+          }),
+        ],
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+      }),
+    );
+
+    renderStructurePage(
+      `/competitions/${competitionId}/structure?stage=${stageId}&section=matchs`,
+    );
+
+    expect(
+      await screen.findByText(/Les règles de match suivent le cadre/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Personnaliser les matchs/i }),
+    ).toBeInTheDocument();
   });
 
   it('configures championship structure via dialog', async () => {

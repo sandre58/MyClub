@@ -31,6 +31,11 @@ import type {
   ReplaceProgressionRulesRequest,
   ReplaceQualificationRulesRequest,
   ReplaceRegulationRequest,
+  ReplaceStageDefaultTieFormatRequest,
+  ReplaceStageDrawRulesRequest,
+  ReplaceStageMatchRulesRequest,
+  ReplaceStageStandingRulesRequest,
+  BindStageRegulationRequest,
   SetCompetitionScheduleRequest,
   StageOverview,
   UpdateCompetitionPresentationRequest,
@@ -462,6 +467,46 @@ export function replaceStageProgressionRules(
   request: ReplaceProgressionRulesRequest,
 ): Promise<void> {
   return sendNoContent('PUT', `/stages/${stageId}/progression-rules`, request);
+}
+
+/** PUT /stages/{id}/match-rules → 204 */
+export function replaceStageMatchRules(
+  stageId: string,
+  request: ReplaceStageMatchRulesRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/match-rules`, request);
+}
+
+/** PUT /stages/{id}/standing-rules → 204 */
+export function replaceStageStandingRules(
+  stageId: string,
+  request: ReplaceStageStandingRulesRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/standing-rules`, request);
+}
+
+/** POST /stages/{id}/bind-to-competition → 204 */
+export function bindStageRegulation(
+  stageId: string,
+  request: BindStageRegulationRequest,
+): Promise<void> {
+  return postNoContent(`/stages/${stageId}/bind-to-competition`, request);
+}
+
+/** PUT /stages/{id}/draw-rules → 204 */
+export function replaceStageDrawRules(
+  stageId: string,
+  request: ReplaceStageDrawRulesRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/draw-rules`, request);
+}
+
+/** PUT /stages/{id}/tie-format → 204 */
+export function replaceStageDefaultTieFormat(
+  stageId: string,
+  request: ReplaceStageDefaultTieFormatRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/tie-format`, request);
 }
 
 /** Relative URL → Vite proxy → Host GET /stages/{id} */
