@@ -634,6 +634,32 @@ export interface OrganisationStageHubSummary {
   drawConstraints?: OrganisationDrawConstraint[];
   /** Provenance of heritable Match/Standing parts (DefaultsBinding). */
   defaultsBinding?: OrganisationStageDefaultsBinding;
+  /**
+   * Consecutive Round runs sharing the same effective TieFormat when hasTieFormat
+   * and the stage has rounds; otherwise omitted/null.
+   */
+  confrontationSegments?: OrganisationConfrontationSegment[] | null;
+}
+
+/** Round identity + display name inside a confrontation segment. */
+export interface OrganisationConfrontationRoundRef {
+  roundId: string;
+  name: string;
+  /** Stage round order (0-based). */
+  sortOrder: number;
+}
+
+/**
+ * Consecutive rounds that share the same effective TieFormat
+ * (legs + aggregate / away goals / tie ET / TAB).
+ */
+export interface OrganisationConfrontationSegment {
+  rounds: OrganisationConfrontationRoundRef[];
+  numberOfLegs: number;
+  aggregateScoring: boolean;
+  hasAwayGoalsRule: boolean;
+  hasTieExtraTime: boolean;
+  hasTiePenaltyShootout: boolean;
 }
 
 /** Whether a heritable part still follows Competition defaults. */

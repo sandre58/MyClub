@@ -846,56 +846,22 @@ function PhaseTile({
                       })}
                     </div>
                   ) : null}
-                  {column.items.length > 0 ? (
-                    <ul className="regulation-rule-list">
-                      {column.items.map((item) => {
-                        const body = (
-                          <>
-                          {item.index != null ? (
-                            <span
-                              className="regulation-criteria__n"
-                              aria-hidden="true"
-                            >
-                              {item.index}
-                            </span>
-                          ) : item.icon ? (
-                            <span
-                              className="regulation-rule-list__mark"
-                              aria-hidden="true"
-                            >
-                              <LucideIcon icon={item.icon} size="sm" />
-                            </span>
-                          ) : null}
-                          <span className="regulation-rule-list__label">
-                            {item.label}
-                          </span>
-                          </>
-                        );
-                        return (
-                        <li
-                          key={item.key}
-                          className={[
-                            'regulation-rule-list__item',
-                            item.overridden
-                              ? 'regulation-rule-list__item--overridden'
-                              : null,
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
+                  {column.sections && column.sections.length > 0 ? (
+                    <div className="regulation-rule-col__sections">
+                      {column.sections.map((section) => (
+                        <div
+                          key={section.key}
+                          className="regulation-rule-section"
                         >
-                          {item.title ? (
-                            <Tooltip content={item.title}>
-                              <span className="regulation-rule-list__hit">
-                                {body}
-                              </span>
-                            </Tooltip>
-                          ) : (
-                            body
-                          )}
-                        </li>
-                        );
-                      })}
-                    </ul>
+                          <h5 className="regulation-rule-section__title">
+                            {section.title}
+                          </h5>
+                          <PhaseRuleItemList items={section.items} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : column.items.length > 0 ? (
+                    <PhaseRuleItemList items={column.items} />
                   ) : null}
                 </section>
               ))}
@@ -931,13 +897,63 @@ type PhaseRuleItem = {
   overridden?: boolean;
 };
 
+type PhaseRuleSection = {
+  key: string;
+  title: string;
+  items: PhaseRuleItem[];
+};
+
 type PhaseRuleColumn = {
   key: string;
   title: string;
   icon: LucideGlyph;
   chips?: PhaseRuleChip[];
   items: PhaseRuleItem[];
+  /** Optional subsections (e.g. Confrontation multi-format). */
+  sections?: PhaseRuleSection[];
 };
+
+function PhaseRuleItemList({ items }: { items: PhaseRuleItem[] }) {
+  return (
+    <ul className="regulation-rule-list">
+      {items.map((item) => {
+        const body = (
+          <>
+            {item.index != null ? (
+              <span className="regulation-criteria__n" aria-hidden="true">
+                {item.index}
+              </span>
+            ) : item.icon ? (
+              <span className="regulation-rule-list__mark" aria-hidden="true">
+                <LucideIcon icon={item.icon} size="sm" />
+              </span>
+            ) : null}
+            <span className="regulation-rule-list__label">{item.label}</span>
+          </>
+        );
+        return (
+          <li
+            key={item.key}
+            className={[
+              'regulation-rule-list__item',
+              item.overridden ? 'regulation-rule-list__item--overridden' : null,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {item.title ? (
+              <Tooltip content={item.title}>
+                <span className="regulation-rule-list__hit">{body}</span>
+              </Tooltip>
+            ) : (
+              body
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 // —— Phases: schematic ——
 
@@ -1031,55 +1047,74 @@ function PhaseSchematic({ stage }: { stage: OrganisationStageHubSummary }) {
   }
 
   if (kind === 'cup' || roundCount > 0 || stage.hasTieFormat) {
-    const leaves = Math.min(
-      8,
-      2 ** Math.max(1, Math.ceil(Math.log2(Math.max(stage.teamCount, 2)))),
-    );
+    const rounds = Math.min(Math.max(roundCount || 1, 1), 4);
+    const leaves = Math.min(8, 2 ** rounds);
+    const colGap = 28;
+    const startX = 8;
+    const top = 6;
+    const span = 52;
+    const width = startX + rounds * colGap + 20;
+    const columns: number[][] = [];
+    for (let col = 0; col <= rounds; col += 1) {
+      const count = leaves / 2 ** col;
+      const ys: number[] = [];
+      for (let i = 0; i < count; i += 1) {
+        if (col === 0) {
+          ys.push(top + i * (span / Math.max(leaves - 1, 1)));
+        } else {
+          const y1 = columns[col - 1]![i * 2]!;
+          const y2 = columns[col - 1]![i * 2 + 1]!;
+          ys.push((y1 + y2) / 2);
+        }
+      }
+      columns.push(ys);
+    }
+
     return (
       <div
         className="regulation-schematic regulation-schematic--bracket"
-        aria-label={t('schematic.bracket')}
+        aria-label={
+          rounds > 1
+            ? t('schematic.bracketRounds', { rounds })
+            : t('schematic.bracket')
+        }
       >
         <svg
           className="regulation-schematic__wire"
-          viewBox="0 0 120 64"
-          width="120"
-          height="64"
+          viewBox={`0 0 ${width} 64`}
+          width={width}
+          height={64}
           aria-hidden="true"
         >
-          {Array.from({ length: leaves }, (_, i) => {
-            const y = 6 + i * (52 / Math.max(leaves - 1, 1));
+          {columns.map((ys, col) => {
+            const x = startX + col * colGap;
             return (
-              <g key={`leaf-${i}`}>
-                <circle
-                  cx="8"
-                  cy={y}
-                  r="2.5"
-                  className="regulation-schematic__wire-node"
-                />
-                <path
-                  d={`M 10.5 ${y} H 36`}
-                  className="regulation-schematic__wire-line"
-                />
-              </g>
-            );
-          })}
-          {Array.from({ length: leaves / 2 }, (_, i) => {
-            const y1 = 6 + i * 2 * (52 / Math.max(leaves - 1, 1));
-            const y2 = 6 + (i * 2 + 1) * (52 / Math.max(leaves - 1, 1));
-            const mid = (y1 + y2) / 2;
-            return (
-              <g key={`q-${i}`}>
-                <path
-                  d={`M 36 ${y1} V ${y2} M 36 ${mid} H 64`}
-                  className="regulation-schematic__wire-line"
-                />
-                <circle
-                  cx="66"
-                  cy={mid}
-                  r="2.25"
-                  className="regulation-schematic__wire-node"
-                />
+              <g key={`col-${col}`}>
+                {ys.map((y, i) => (
+                  <circle
+                    key={`n-${col}-${i}`}
+                    cx={x}
+                    cy={y}
+                    r="2.5"
+                    className="regulation-schematic__wire-node"
+                  />
+                ))}
+                {col < rounds
+                  ? Array.from({ length: ys.length / 2 }, (_, pair) => {
+                      const y1 = ys[pair * 2]!;
+                      const y2 = ys[pair * 2 + 1]!;
+                      const mid = (y1 + y2) / 2;
+                      const xMid = x + colGap / 2;
+                      const xNext = startX + (col + 1) * colGap;
+                      return (
+                        <path
+                          key={`e-${col}-${pair}`}
+                          d={`M ${x} ${y1} H ${xMid} M ${x} ${y2} H ${xMid} M ${xMid} ${y1} V ${y2} M ${xMid} ${mid} H ${xNext}`}
+                          className="regulation-schematic__wire-line"
+                        />
+                      );
+                    })
+                  : null}
               </g>
             );
           })}
@@ -1204,6 +1239,64 @@ function buildPhaseFlows(
   return flows;
 }
 
+type TieFormatTokens = {
+  numberOfLegs: number;
+  aggregateScoring?: boolean | null;
+  hasAwayGoalsRule?: boolean;
+  hasTieExtraTime?: boolean;
+  hasTiePenaltyShootout?: boolean;
+};
+
+function buildTiePropertyItems(
+  tie: TieFormatTokens,
+  t: Translate,
+  keyPrefix = '',
+): PhaseRuleItem[] {
+  const twoLegs = tie.numberOfLegs > 1;
+  const prefix = keyPrefix ? `${keyPrefix}-` : '';
+  const items: PhaseRuleItem[] = [
+    {
+      key: `${prefix}legs`,
+      label: twoLegs ? t('tokens.tieTwoLegs') : t('tokens.tieOneLeg'),
+      icon: twoLegs ? ArrowLeftRight : ArrowRight,
+      title: twoLegs ? t('tokens.tieTwoLegsTip') : t('tokens.tieOneLegTip'),
+    },
+  ];
+  if (tie.aggregateScoring) {
+    items.push({
+      key: `${prefix}aggregate`,
+      label: t('tokens.tieAggregate'),
+      icon: Sigma,
+      title: t('tokens.tieAggregateTip'),
+    });
+  }
+  if (tie.hasAwayGoalsRule) {
+    items.push({
+      key: `${prefix}away-goals`,
+      label: t('tokens.tieAwayGoals'),
+      icon: MapPin,
+      title: t('tokens.tieAwayGoalsTip'),
+    });
+  }
+  if (tie.hasTieExtraTime) {
+    items.push({
+      key: `${prefix}tie-extra-time`,
+      label: t('tokens.tieExtraTime'),
+      icon: Timer,
+      title: t('tokens.tieExtraTimeTip'),
+    });
+  }
+  if (tie.hasTiePenaltyShootout) {
+    items.push({
+      key: `${prefix}tie-penalties`,
+      label: t('tokens.tiePenalties'),
+      icon: Goal,
+      title: t('tokens.tiePenaltiesTip'),
+    });
+  }
+  return items;
+}
+
 function buildPhaseRuleColumns(
   stage: OrganisationStageHubSummary,
   t: Translate,
@@ -1279,54 +1372,47 @@ function buildPhaseRuleColumns(
     items: matchItems,
   });
 
-  if (stage.hasTieFormat && stage.numberOfLegs != null) {
-    const twoLegs = stage.numberOfLegs > 1;
-    const tieItems: PhaseRuleItem[] = [
-      {
-        key: 'legs',
-        label: twoLegs ? t('tokens.tieTwoLegs') : t('tokens.tieOneLeg'),
-        icon: twoLegs ? ArrowLeftRight : ArrowRight,
-        title: twoLegs ? t('tokens.tieTwoLegsTip') : t('tokens.tieOneLegTip'),
+  if (stage.hasTieFormat) {
+    const segments = [...(stage.confrontationSegments ?? [])].sort(
+      (left, right) => {
+        const leftOrder = Math.min(
+          ...left.rounds.map((round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER),
+        );
+        const rightOrder = Math.min(
+          ...right.rounds.map((round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER),
+        );
+        return leftOrder - rightOrder;
       },
-    ];
-    if (stage.aggregateScoring) {
-      tieItems.push({
-        key: 'aggregate',
-        label: t('tokens.tieAggregate'),
-        icon: Sigma,
-        title: t('tokens.tieAggregateTip'),
+    );
+    if (segments.length > 1) {
+      columns.push({
+        key: 'tie',
+        title: t('columns.tie'),
+        icon: Handshake,
+        items: [],
+        sections: segments.map((segment, index) => ({
+          key: `tie-section-${index}`,
+          title: segment.rounds.map((round) => round.name).join('/'),
+          items: buildTiePropertyItems(segment, t, `seg-${index}`),
+        })),
+      });
+    } else if (stage.numberOfLegs != null) {
+      columns.push({
+        key: 'tie',
+        title: t('columns.tie'),
+        icon: Handshake,
+        items: buildTiePropertyItems(
+          {
+            numberOfLegs: stage.numberOfLegs,
+            aggregateScoring: stage.aggregateScoring,
+            hasAwayGoalsRule: stage.hasAwayGoalsRule,
+            hasTieExtraTime: stage.hasTieExtraTime,
+            hasTiePenaltyShootout: stage.hasTiePenaltyShootout,
+          },
+          t,
+        ),
       });
     }
-    if (stage.hasAwayGoalsRule) {
-      tieItems.push({
-        key: 'away-goals',
-        label: t('tokens.tieAwayGoals'),
-        icon: MapPin,
-        title: t('tokens.tieAwayGoalsTip'),
-      });
-    }
-    if (stage.hasTieExtraTime) {
-      tieItems.push({
-        key: 'tie-extra-time',
-        label: t('tokens.tieExtraTime'),
-        icon: Timer,
-        title: t('tokens.tieExtraTimeTip'),
-      });
-    }
-    if (stage.hasTiePenaltyShootout) {
-      tieItems.push({
-        key: 'tie-penalties',
-        label: t('tokens.tiePenalties'),
-        icon: Goal,
-        title: t('tokens.tiePenaltiesTip'),
-      });
-    }
-    columns.push({
-      key: 'tie',
-      title: t('columns.tie'),
-      icon: Handshake,
-      items: tieItems,
-    });
   }
 
   if (stage.hasDrawRules) {

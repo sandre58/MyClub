@@ -299,6 +299,127 @@ describe('RegulationPage', () => {
     expect(screen.getAllByRole('link', { name: 'Structure' })).toHaveLength(2);
   });
 
+  it('renders an aggregate Confrontation line when rounds differ', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          groupesStage(),
+          finaleStage({
+            name: 'Phase finale',
+            roundCount: 3,
+            confrontationSegments: [
+              {
+                rounds: [
+                  {
+                    roundId: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
+                    name: 'Finale',
+                    sortOrder: 2,
+                  },
+                ],
+                numberOfLegs: 1,
+                aggregateScoring: false,
+                hasAwayGoalsRule: false,
+                hasTieExtraTime: false,
+                hasTiePenaltyShootout: false,
+              },
+              {
+                rounds: [
+                  {
+                    roundId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+                    name: 'Quarts de finale',
+                    sortOrder: 0,
+                  },
+                  {
+                    roundId: 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+                    name: 'Demis de finale',
+                    sortOrder: 1,
+                  },
+                ],
+                numberOfLegs: 2,
+                aggregateScoring: true,
+                hasAwayGoalsRule: true,
+                hasTieExtraTime: true,
+                hasTiePenaltyShootout: true,
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+
+    renderPage();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Phase finale' }),
+    ).toBeInTheDocument();
+    const phaseTile = screen
+      .getByRole('heading', { name: 'Phase finale' })
+      .closest('article');
+    expect(phaseTile).not.toBeNull();
+    expect(
+      within(phaseTile!).getByText('Quarts de finale/Demis de finale'),
+    ).toBeInTheDocument();
+    expect(within(phaseTile!).getByText('Aller-retour')).toBeInTheDocument();
+    expect(within(phaseTile!).getByText('Cumul des scores')).toBeInTheDocument();
+    expect(
+      within(phaseTile!).getByText('Buts à l’extérieur'),
+    ).toBeInTheDocument();
+    expect(
+      within(phaseTile!).getByText('Finale', { exact: true }),
+    ).toBeInTheDocument();
+    expect(within(phaseTile!).getByText('Match unique')).toBeInTheDocument();
+    expect(
+      within(phaseTile!).getByLabelText('Tableau éliminatoire · 3 tours'),
+    ).toBeInTheDocument();
+    expect(
+      phaseTile!.querySelectorAll('.regulation-schematic__wire-line').length,
+    ).toBeGreaterThan(0);
+    const sectionTitles = phaseTile!.querySelectorAll(
+      '.regulation-rule-section__title',
+    );
+    expect(sectionTitles[0]?.textContent).toBe(
+      'Quarts de finale/Demis de finale',
+    );
+    expect(sectionTitles[1]?.textContent).toBe('Finale');
+  });
+
+  it('keeps Confrontation tokens when a single segment is homogeneous', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        stages: [
+          groupesStage(),
+          finaleStage({
+            confrontationSegments: [
+              {
+                rounds: [
+                  {
+                    roundId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+                    name: 'Finale',
+                    sortOrder: 0,
+                  },
+                ],
+                numberOfLegs: 2,
+                aggregateScoring: true,
+                hasAwayGoalsRule: true,
+                hasTieExtraTime: true,
+                hasTiePenaltyShootout: true,
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+
+    renderPage();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Finale' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Aller-retour')).toBeInTheDocument();
+    expect(screen.getByText('Cumul des scores')).toBeInTheDocument();
+    expect(screen.getByText('Buts à l’extérieur')).toBeInTheDocument();
+  });
+
   it('shows a single exact capacity pill when min equals max', async () => {
     vi.mocked(fetchOrganisationView).mockResolvedValue(
       organisationView({

@@ -307,6 +307,8 @@ Additional stages / rounds / slots / progression rules without Domain seeding. D
 
 `numberOfLegs` / `aggregateScoring` optional. Omit legs to leave the Round without an explicit TieFormat (stage regulation default may still apply at Domain add). **Effective contract:** null `Round.TieFormat` means **OneLeg** for materialize / draw / prepare / progression; **TwoLegs** only when explicit (`numberOfLegs: 2`). `numberOfLegs` must be `1` or `2` when set.
 
+Organisation hub (`OrganisationViewDto.stages[]`) projects `confrontationSegments` when `hasTieFormat` and the stage has rounds: consecutive rounds that share the same effective TieFormat (legs + aggregate / away goals / tie ET / TAB) are grouped. Flat `numberOfLegs` / tie flags remain the **first** segment (or stage default when there are no rounds). SPA Règlement uses multiple segments for an aggregate Confrontation line; a single segment keeps the token row.
+
 ```json
 { "roundId": "<guid>", "name": "SF" }
 ```

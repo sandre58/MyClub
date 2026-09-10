@@ -125,7 +125,41 @@ public static class OrganisationViewAssembler
         var storedTie = regulation.TieFormat
             ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
         var hasTie = storedTie is not null;
-        var tie = hasTie ? TieFormat.OrDefaultOneLeg(storedTie) : null;
+        var confrontationSegments = hasTie && stage.Rounds.Count > 0
+            ? BuildConfrontationSegments(stage)
+            : null;
+        int? numberOfLegs;
+        bool? aggregateScoring;
+        bool hasAwayGoalsRule;
+        bool hasTieExtraTime;
+        bool hasTiePenaltyShootout;
+        if (confrontationSegments is { Count: > 0 })
+        {
+            var first = confrontationSegments[0];
+            numberOfLegs = first.NumberOfLegs;
+            aggregateScoring = first.AggregateScoring;
+            hasAwayGoalsRule = first.HasAwayGoalsRule;
+            hasTieExtraTime = first.HasTieExtraTime;
+            hasTiePenaltyShootout = first.HasTiePenaltyShootout;
+        }
+        else if (hasTie)
+        {
+            var tie = TieFormat.OrDefaultOneLeg(storedTie);
+            numberOfLegs = tie.NumberOfLegs;
+            aggregateScoring = tie.AggregateScoring;
+            hasAwayGoalsRule = tie.AwayGoalsRule is not null;
+            hasTieExtraTime = tie.ExtraTimeRule is not null;
+            hasTiePenaltyShootout = tie.PenaltyShootoutRule is not null;
+        }
+        else
+        {
+            numberOfLegs = null;
+            aggregateScoring = null;
+            hasAwayGoalsRule = false;
+            hasTieExtraTime = false;
+            hasTiePenaltyShootout = false;
+        }
+
         IReadOnlyList<OrganisationPlacementAwardDto>? placementAwards = placement?.Paths
             .OrderBy(path => path.Rank)
             .Select(path => new OrganisationPlacementAwardDto(path.Rank, path.Outcome))
@@ -164,11 +198,11 @@ public static class OrganisationViewAssembler
             HasProgressionRules: regulation.ProgressionRules is not null,
             ProgressionPathCount: progressionPaths,
             HasTieFormat: hasTie,
-            NumberOfLegs: tie?.NumberOfLegs,
-            AggregateScoring: tie?.AggregateScoring,
-            HasAwayGoalsRule: tie?.AwayGoalsRule is not null,
-            HasTieExtraTime: tie?.ExtraTimeRule is not null,
-            HasTiePenaltyShootout: tie?.PenaltyShootoutRule is not null,
+            NumberOfLegs: numberOfLegs,
+            AggregateScoring: aggregateScoring,
+            HasAwayGoalsRule: hasAwayGoalsRule,
+            HasTieExtraTime: hasTieExtraTime,
+            HasTiePenaltyShootout: hasTiePenaltyShootout,
             RankingCriteria: standing?.RankingCriteria,
             HasPlacementAwardRules: placement is not null,
             PlacementAwardCount: placement?.Paths.Count ?? 0,
@@ -179,8 +213,52 @@ public static class OrganisationViewAssembler
             ForfeitLoserGoals: match.AdministrativeResultPolicy.ForfeitLoserGoals,
             NumberOfSeeds: draw?.SeedingRules?.NumberOfSeeds,
             DrawConstraints: drawConstraints,
-            DefaultsBinding: MapDefaultsBinding(stage));
+            DefaultsBinding: MapDefaultsBinding(stage),
+            ConfrontationSegments: confrontationSegments);
     }
+
+    /// <summary>
+    /// Groups consecutive rounds that share the same effective TieFormat signature.
+    /// </summary>
+    private static List<OrganisationConfrontationSegmentDto> BuildConfrontationSegments(Stage stage)
+    {
+        var segments = new List<OrganisationConfrontationSegmentDto>();
+        OrganisationConfrontationSegmentDto? current = null;
+
+        for (var index = 0; index < stage.Rounds.Count; index++)
+        {
+            var round = stage.Rounds[index];
+            var tie = TieFormat.OrDefaultOneLeg(round.TieFormat);
+            var roundRef = new OrganisationConfrontationRoundRefDto(round.Id.Value, round.Name, index);
+            if (current is not null && SameTieSignature(current, tie))
+            {
+                current = current with
+                {
+                    Rounds = [.. current.Rounds, roundRef]
+                };
+                segments[^1] = current;
+                continue;
+            }
+
+            current = new OrganisationConfrontationSegmentDto(
+                [roundRef],
+                tie.NumberOfLegs,
+                tie.AggregateScoring,
+                HasAwayGoalsRule: tie.AwayGoalsRule is not null,
+                HasTieExtraTime: tie.ExtraTimeRule is not null,
+                HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null);
+            segments.Add(current);
+        }
+
+        return segments;
+    }
+
+    private static bool SameTieSignature(OrganisationConfrontationSegmentDto segment, TieFormat tie) =>
+        segment.NumberOfLegs == tie.NumberOfLegs
+        && segment.AggregateScoring == tie.AggregateScoring
+        && segment.HasAwayGoalsRule == (tie.AwayGoalsRule is not null)
+        && segment.HasTieExtraTime == (tie.ExtraTimeRule is not null)
+        && segment.HasTiePenaltyShootout == (tie.PenaltyShootoutRule is not null);
 
     private static OrganisationStageDefaultsBindingDto MapDefaultsBinding(Stage stage)
     {

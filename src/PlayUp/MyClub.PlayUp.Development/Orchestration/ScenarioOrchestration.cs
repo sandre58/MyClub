@@ -711,8 +711,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Hub Règlement QA seed: groupes classants + finale KO riche, ET+TAB, remains <see cref="CompetitionStatus.Draft"/>
-    /// so <c>ReplaceRegulation</c> stays available.
+    /// Hub Règlement QA seed: groupes classants + phase finale multi-tours (QF/SF A/R · Finale unique),
+    /// ET+TAB MatchRules, remains <see cref="CompetitionStatus.Draft"/> so <c>ReplaceRegulation</c> stays available.
     /// </summary>
     public static async Task BuildRegulationHubDemoAsync(
         ScenarioContext context,
@@ -774,19 +774,27 @@ internal static class ScenarioOrchestration
             awayGoalsRule: new AwayGoalsRule(),
             extraTimeRule: new ExtraTimeRule(),
             penaltyShootoutRule: new PenaltyShootoutRule());
+        var finalTie = new TieFormat(TieFormat.SingleLeg, aggregateScoring: false);
 
-        var final = CreateKnockoutStage(
-            context,
-            competition,
-            "final",
-            "Finale",
-            "Finale",
-            ["F-A", "F-B"]);
-        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
-        final.ReplaceDefaultTieFormat(richTie, context.Clock);
-        final.ReplaceRoundTieFormat(final.Rounds[0].Id, richTie, context.Clock);
-        var finalFixture = final.AddFixture(final.Rounds[0].Id, context.Clock);
-        WireFinalPlacementAwards(final, finalFixture, context.Clock);
+        var knockout = Stage.Create(
+            competition.Id,
+            new StageName("Phase finale"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            context.Ids.Stage("final"),
+            context.Clock);
+        knockout.ReplaceDefaultTieFormat(richTie, context.Clock);
+        var quarterRound = knockout.AddRound("Quarts de finale", richTie, context.Clock);
+        var semiRound = knockout.AddRound("Demis de finale", richTie, context.Clock);
+        var finalRound = knockout.AddRound("Finale", finalTie, context.Clock);
+        knockout.ArrangeRounds([quarterRound.Id, semiRound.Id, finalRound.Id]);
+        knockout.AddSlot("QF-1-A");
+        knockout.AddSlot("QF-1-B");
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(knockout, context.Clock);
+        competition.AddStage(knockout.Id, context.Clock);
+        context.Stages.Add(knockout);
+
+        var finalFixture = knockout.AddFixture(finalRound.Id, context.Clock);
+        WireFinalPlacementAwards(knockout, finalFixture, context.Clock);
 
         var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
         if (orderedGroups.Length != 2)
@@ -802,14 +810,63 @@ internal static class ScenarioOrchestration
                     1,
                     QualificationSource.FromGroup(orderedGroups[0].Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(final.Id, "F-A")),
+                    new QualificationDestination(knockout.Id, "QF-1-A")),
                 new QualificationPath(
                     2,
                     QualificationSource.FromGroup(orderedGroups[1].Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(final.Id, "F-B"))
+                    new QualificationDestination(knockout.Id, "QF-1-B"))
             ]),
             context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Hub Règlement QA seed: single KO round with a rich TwoLegs TieFormat (homogeneous tokens),
+    /// remains <see cref="CompetitionStatus.Draft"/>.
+    /// </summary>
+    public static async Task BuildRegulationTieHomogeneousDemoAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Démo Confrontation homogène",
+            Format = RecipeFormat.Cup,
+            TeamCount = 2,
+            BracketSize = 2,
+            StageName = "Finale",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        var richTie = new TieFormat(
+            TieFormat.TwoLegs,
+            aggregateScoring: true,
+            awayGoalsRule: new AwayGoalsRule(),
+            extraTimeRule: new ExtraTimeRule(),
+            penaltyShootoutRule: new PenaltyShootoutRule());
+
+        var final = CreateKnockoutStage(
+            context,
+            competition,
+            "final",
+            "Finale",
+            "Finale",
+            ["F-A", "F-B"]);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
+        final.ReplaceDefaultTieFormat(richTie, context.Clock);
+        final.ReplaceRoundTieFormat(final.Rounds[0].Id, richTie, context.Clock);
+        var finalFixture = final.AddFixture(final.Rounds[0].Id, context.Clock);
+        WireFinalPlacementAwards(final, finalFixture, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

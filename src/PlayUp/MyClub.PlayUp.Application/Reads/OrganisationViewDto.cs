@@ -203,6 +203,10 @@ public sealed record OrganisationReadinessDto(
 /// <param name="NumberOfSeeds">SeedingRules.NumberOfSeeds when DrawRules seeding is set.</param>
 /// <param name="DrawConstraints">DrawRules.Constraints (all stored constraints).</param>
 /// <param name="DefaultsBinding">Provenance of heritable Match/Standing parts (DefaultsBinding).</param>
+/// <param name="ConfrontationSegments">
+/// Consecutive Round runs sharing the same effective TieFormat when HasTieFormat and the stage has rounds;
+/// otherwise <see langword="null"/>.
+/// </param>
 public sealed record OrganisationStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -245,7 +249,31 @@ public sealed record OrganisationStageHubSummaryDto(
     int? ForfeitLoserGoals = null,
     int? NumberOfSeeds = null,
     IReadOnlyList<OrganisationDrawConstraintDto>? DrawConstraints = null,
-    OrganisationStageDefaultsBindingDto? DefaultsBinding = null);
+    OrganisationStageDefaultsBindingDto? DefaultsBinding = null,
+    IReadOnlyList<OrganisationConfrontationSegmentDto>? ConfrontationSegments = null);
+
+/// <summary>Round identity + display name inside a confrontation segment.</summary>
+/// <param name="RoundId">Round identity.</param>
+/// <param name="Name">Round display name.</param>
+/// <param name="SortOrder">Stage round order (0-based), for stable multi-segment display.</param>
+public sealed record OrganisationConfrontationRoundRefDto(Guid RoundId, string Name, int SortOrder);
+
+/// <summary>
+/// Consecutive rounds that share the same effective TieFormat (legs + resolution options).
+/// </summary>
+/// <param name="Rounds">Rounds in stage order for this segment.</param>
+/// <param name="NumberOfLegs">Effective legs (1 or 2).</param>
+/// <param name="AggregateScoring">Aggregate scoring on the effective TieFormat.</param>
+/// <param name="HasAwayGoalsRule">Away-goals rule present.</param>
+/// <param name="HasTieExtraTime">Confrontation extra-time rule present.</param>
+/// <param name="HasTiePenaltyShootout">Confrontation penalty-shootout rule present.</param>
+public sealed record OrganisationConfrontationSegmentDto(
+    IReadOnlyList<OrganisationConfrontationRoundRefDto> Rounds,
+    int NumberOfLegs,
+    bool AggregateScoring,
+    bool HasAwayGoalsRule,
+    bool HasTieExtraTime,
+    bool HasTiePenaltyShootout);
 
 /// <summary>Whether a heritable part still follows Competition defaults.</summary>
 /// <param name="IsBound"><see langword="true"/> when the part is bound to Competition.</param>

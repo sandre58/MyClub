@@ -149,6 +149,7 @@
   },
   "schematic": {
     "bracket": "Tableau éliminatoire",
+    "bracketRounds": "Tableau éliminatoire · {{rounds}} tours",
     "groups": "{{count}} groupes",
     "championship": "Championnat · {{teams}} équipes",
     "swiss": "Système suisse · {{rounds}} rondes",
@@ -200,6 +201,7 @@
     "tieTwoLegsTip": "Confrontation en deux matchs",
     "tieOneLeg": "Match unique",
     "tieOneLegTip": "Confrontation en un seul match",
+    "tieAggregateLineTip": "Formats de confrontation par tour",
     "tieAggregate": "Cumul des scores",
     "tieAggregateTip": "Scores des manches cumulés",
     "tieAwayGoals": "Buts à l’extérieur",

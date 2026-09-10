@@ -149,6 +149,7 @@
   },
   "schematic": {
     "bracket": "Knockout bracket",
+    "bracketRounds": "Knockout bracket · {{rounds}} rounds",
     "groups": "{{count}} groups",
     "championship": "League · {{teams}} teams",
     "swiss": "Swiss system · {{rounds}} rounds",
@@ -200,6 +201,7 @@
     "tieTwoLegsTip": "Tie over two matches",
     "tieOneLeg": "Single match",
     "tieOneLegTip": "Tie in a single match",
+    "tieAggregateLineTip": "Confrontation formats by round",
     "tieAggregate": "Aggregate score",
     "tieAggregateTip": "Leg scores aggregated",
     "tieAwayGoals": "Away goals",

@@ -50,6 +50,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<ICompetitionTemplate, WorldCupTemplate>();
         services.AddSingleton<ICompetitionTemplate, CoupeDeFranceTemplate>();
         services.AddSingleton<ICompetitionTemplate, RegulationDemoTemplate>();
+        services.AddSingleton<ICompetitionTemplate, RegulationTieHomogeneousTemplate>();
         services.AddSingleton<ICompetitionTemplate, RegulationChampionshipTemplate>();
         services.AddSingleton<ICompetitionTemplate, RegulationSwissTemplate>();
         services.AddSingleton(static sp => new TemplateCatalog(sp.GetServices<ICompetitionTemplate>()));

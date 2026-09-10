@@ -147,14 +147,14 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             StageLoadProfile.Summary => query,
             StageLoadProfile.Structure => query
                 .Include(candidate => candidate.Groups)
-                .Include(candidate => candidate.Rounds)
+                .Include(candidate => candidate.Rounds.OrderBy(round => EF.Property<int>(round, "SortOrder")))
                 .ThenInclude(round => round.Fixtures)
                 .Include(candidate => candidate.Matchdays)
                 .ThenInclude(matchday => matchday.Fixtures)
                 .Include(candidate => candidate.MatchPlacements),
             StageLoadProfile.Full => query
                 .Include(candidate => candidate.Groups)
-                .Include(candidate => candidate.Rounds)
+                .Include(candidate => candidate.Rounds.OrderBy(round => EF.Property<int>(round, "SortOrder")))
                 .ThenInclude(round => round.Fixtures)
                 .Include(candidate => candidate.Matchdays)
                 .ThenInclude(matchday => matchday.Fixtures)
@@ -232,8 +232,16 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             StageOrderedCollectionsAccessor.ReorderEntryIds(group, orderedEntryIds);
         }
 
+        // Read sort_order from SQL — Entry().Property is unreliable for AsNoTracking graphs
+        // and can leave rounds in PK/heap order (Finale appearing before Quarts).
+        var roundSortOrders = await context.Set<Round>()
+            .AsNoTracking()
+            .Where(round => EF.Property<StageId>(round, "stage_id") == stage.Id)
+            .Select(round => new { round.Id, SortOrder = EF.Property<int>(round, "SortOrder") })
+            .ToDictionaryAsync(row => row.Id, row => row.SortOrder, cancellationToken)
+            .ConfigureAwait(false);
         var rounds = StageOrderedCollectionsAccessor.GetRounds(stage)
-            .OrderBy(round => context.Entry(round).Property<int>("SortOrder").CurrentValue)
+            .OrderBy(round => roundSortOrders.GetValueOrDefault(round.Id, int.MaxValue))
             .ToList();
         StageOrderedCollectionsAccessor.ReorderRounds(stage, rounds);
 
