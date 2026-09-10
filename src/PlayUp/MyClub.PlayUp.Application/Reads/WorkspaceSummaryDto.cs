@@ -19,7 +19,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Id">Competition identity.</param>
 /// <param name="Name">Display name.</param>
 /// <param name="Status">Lifecycle status.</param>
-/// <param name="NextActionCode">Stable machine code for the stub next step (e.g. ContinueOrganisation).</param>
+/// <param name="NextActionCode">Stable machine code for the stub next step (e.g. ContinueStructure).</param>
 /// <param name="AttentionCount">Derived Needs Attention count.</param>
 /// <param name="CompletionMode">How the competition was completed, when Completed/Archived.</param>
 /// <param name="CanCompleteNormally">Whether Complete(Normal) is currently allowed.</param>

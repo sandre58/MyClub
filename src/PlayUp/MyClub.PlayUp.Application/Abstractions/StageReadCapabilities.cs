@@ -19,7 +19,7 @@ public sealed record StageReadCapabilities(
     bool IncludeSlots = false,
     bool IncludePenalties = false)
 {
-    /// <summary>Maps legacy profile-only loads to capabilities.</summary>
+    /// <summary>Maps profile-only loads to capabilities.</summary>
     public static StageReadCapabilities FromProfile(StageLoadProfile profile) =>
         profile switch
         {

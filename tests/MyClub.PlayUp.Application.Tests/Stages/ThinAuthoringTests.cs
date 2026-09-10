@@ -115,7 +115,7 @@ public sealed class ThinAuthoringTests
         var act = () => AddCompetitionStage.Execute(competition, "TooLate", _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public sealed class ThinAuthoringTests
         var act = () => AddStageRound.Execute(stage, "R2", null, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public sealed class ThinAuthoringTests
         var act = () => AddStageSlot.Execute(stage, "X");
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [Fact]
@@ -210,7 +210,7 @@ public sealed class ThinAuthoringTests
             _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [Fact]
@@ -235,7 +235,7 @@ public sealed class ThinAuthoringTests
             _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [Fact]

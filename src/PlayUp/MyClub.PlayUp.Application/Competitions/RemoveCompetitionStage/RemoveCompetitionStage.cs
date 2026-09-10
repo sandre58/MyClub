@@ -42,14 +42,14 @@ public static class RemoveCompetitionStage
         {
             throw new ApplicationFailureException(
                 $"Stages cannot be removed while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (target.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
             throw new ApplicationFailureException(
                 $"Stage '{target.Id}' cannot be removed while status is '{target.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (!competition.StageIds.Contains(target.Id))
@@ -70,7 +70,7 @@ public static class RemoveCompetitionStage
         {
             throw new ApplicationFailureException(
                 $"Stage '{target.Id}' cannot be removed while matches are attached.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         var scrubbedQualificationPaths = 0;

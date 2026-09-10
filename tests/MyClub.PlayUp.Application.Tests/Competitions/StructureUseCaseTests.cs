@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="OrganisationUseCaseTests.cs" company="Stéphane ANDRE">
+// <copyright file="StructureUseCaseTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -16,7 +16,7 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Competitions;
 
-public sealed class OrganisationUseCaseTests
+public sealed class StructureUseCaseTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 10, 0, 0, TimeSpan.Zero));
 
@@ -154,7 +154,7 @@ public sealed class OrganisationUseCaseTests
     }
 
     [Fact]
-    public void OrganisationView_swiss_ready_for_schedule_path_not_materialization()
+    public void StructureView_swiss_ready_for_schedule_path_not_materialization()
     {
         var competition = CreateCompetition.Execute("Swiss Ready", _clock);
         AddEntry.Execute(competition, "A", _clock);
@@ -164,7 +164,7 @@ public sealed class OrganisationUseCaseTests
             null,
             StructureIntent.Swiss(4),
             _clock);
-        var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
+        var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
 
         view.Format.Kind.Should().Be(StructureFormatKind.Swiss);
         view.Structure.SwissRoundCount.Should().Be(4);
@@ -177,13 +177,13 @@ public sealed class OrganisationUseCaseTests
     }
 
     [Fact]
-    public void OrganisationView_readiness_requires_participants_and_structure()
+    public void StructureView_readiness_requires_participants_and_structure()
     {
         var competition = CreateCompetition.Execute("Ready", _clock);
-        var empty = OrganisationViewAssembler.Assemble(competition, []);
+        var empty = StructureViewAssembler.Assemble(competition, []);
         empty.Readiness.ReadyForNextSlice.Should().BeFalse();
-        empty.Readiness.Blockers.Should().Contain(OrganisationViewAssembler.BlockerInsufficientParticipants);
-        empty.Readiness.Blockers.Should().Contain(OrganisationViewAssembler.BlockerMissingStage);
+        empty.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerInsufficientParticipants);
+        empty.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerMissingStage);
 
         AddEntry.Execute(competition, "A", _clock);
         AddEntry.Execute(competition, "B", _clock);
@@ -192,7 +192,7 @@ public sealed class OrganisationUseCaseTests
             null,
             StructureIntent.Championship(),
             _clock);
-        var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
+        var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
 
         view.Format.Kind.Should().Be(StructureFormatKind.Championship);
         view.Readiness.ReadyForNextSlice.Should().BeTrue();
@@ -202,7 +202,7 @@ public sealed class OrganisationUseCaseTests
     }
 
     [Fact]
-    public void OrganisationView_groups_ready_for_draw()
+    public void StructureView_groups_ready_for_draw()
     {
         var competition = CreateCompetition.Execute("G", _clock);
         AddEntry.Execute(competition, "A", _clock);
@@ -212,14 +212,14 @@ public sealed class OrganisationUseCaseTests
             null,
             StructureIntent.Groups(2, 2),
             _clock);
-        var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
+        var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
 
         view.Readiness.ReadyForDraw.Should().BeTrue();
         view.Readiness.ReadyForNextSlice.Should().BeTrue();
     }
 
     [Fact]
-    public void OrganisationView_orders_entries_and_declared_members_by_display_name()
+    public void StructureView_orders_entries_and_declared_members_by_display_name()
     {
         var competition = CreateCompetition.Execute("Sort Cup", _clock);
         AddEntry.Execute(competition, "Zebra", _clock);
@@ -231,7 +231,7 @@ public sealed class OrganisationUseCaseTests
         AddDeclaredMember.Execute(competition, middle.Id, "Dupont", DeclaredMemberRole.Staff, _clock);
         AddDeclaredMember.Execute(competition, middle.Id, "Alain", DeclaredMemberRole.Staff, _clock);
 
-        var view = OrganisationViewAssembler.Assemble(competition, []);
+        var view = StructureViewAssembler.Assemble(competition, []);
 
         view.Participants.Entries.Select(entry => entry.DisplayName)
             .Should()

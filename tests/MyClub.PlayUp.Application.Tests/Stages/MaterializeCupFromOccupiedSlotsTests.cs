@@ -174,7 +174,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
             _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
             _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.OrganisationNotMutable);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [Fact]

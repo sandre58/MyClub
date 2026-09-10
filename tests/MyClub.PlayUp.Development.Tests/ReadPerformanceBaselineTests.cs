@@ -34,23 +34,23 @@ public sealed class ReadPerformanceBaselineTests(
         var stageIds = await LoadStageIdsAsync(competitionId);
 
         var overviewSql = await MeasureAsync(executor => executor.GetOverviewViewAsync(competitionId));
-        var organisationSql = await MeasureAsync(executor => executor.GetOrganisationViewAsync(competitionId));
+        var structureSql = await MeasureAsync(executor => executor.GetStructureViewAsync(competitionId));
         var consultationSql = await MeasureAsync(executor => executor.GetConsultationAsync(competitionId));
         var attentionSql = await MeasureAsync(executor => executor.GetNeedsAttentionAsync(competitionId));
         var detailSql = await MeasureAsync(executor => executor.GetCompetitionDetailAsync(competitionId));
         var matchHubSql = await MeasureAsync(executor => executor.GetMatchHubViewAsync(competitionId));
 
         var matchHubStageSql = new List<(Guid StageId, int Sql)>(stageIds.Count);
-        var matchHubLegacyTotalSql = detailSql;
+        var matchHubFanOutTotalSql = detailSql;
         foreach (var stageId in stageIds)
         {
             var stageSql = await MeasureAsync(executor => executor.ListMatchesByStageAsync(stageId));
             matchHubStageSql.Add((stageId.Value, stageSql));
-            matchHubLegacyTotalSql += stageSql;
+            matchHubFanOutTotalSql += stageSql;
         }
 
-        var overviewPageSql = overviewSql + organisationSql;
-        var classementsPageSql = consultationSql + organisationSql;
+        var overviewPageSql = overviewSql + structureSql;
+        var classementsPageSql = consultationSql + structureSql;
         var shellChromeSql = attentionSql + detailSql;
 
         WriteScenario(
@@ -61,27 +61,27 @@ public sealed class ReadPerformanceBaselineTests(
             new Dictionary<string, int>
             {
                 ["GET /overview (GetOverviewViewAsync)"] = overviewSql,
-                ["GET /structure (GetOrganisationViewAsync)"] = organisationSql,
+                ["GET /structure (GetStructureViewAsync)"] = structureSql,
                 ["GET /consultation (GetConsultationAsync)"] = consultationSql,
                 ["GET /attention (GetNeedsAttentionAsync)"] = attentionSql,
                 ["GET /competitions/{id} (GetCompetitionDetailAsync)"] = detailSql,
                 ["GET /matches-hub (GetMatchHubViewAsync)"] = matchHubSql,
-                ["Match Hub legacy — GET /competitions/{id}"] = detailSql,
-                ["Match Hub legacy — sum GET /stages/{id}/matches"] = matchHubStageSql.Sum(row => row.Sql),
-                ["Match Hub legacy — total (1 + N HTTP requests)"] = matchHubLegacyTotalSql,
-                ["Overview page (overview + organisation)"] = overviewPageSql,
-                ["Classements page (consultation + organisation)"] = classementsPageSql,
+                ["Match Hub fan-out — GET /competitions/{id}"] = detailSql,
+                ["Match Hub fan-out — sum GET /stages/{id}/matches"] = matchHubStageSql.Sum(row => row.Sql),
+                ["Match Hub fan-out — total (1 + N HTTP requests)"] = matchHubFanOutTotalSql,
+                ["Overview page (overview + structure)"] = overviewPageSql,
+                ["Classements page (consultation + structure)"] = classementsPageSql,
                 ["Shell chrome (attention + detail)"] = shellChromeSql
             },
             [.. matchHubStageSql.Select(row => $"  stage {row.StageId}: {row.Sql} SQL")]);
 
         overviewSql.Should().BeGreaterThan(8, "baseline sanity — overview still issues multiple SQL commands");
         detailSql.Should().BeLessThan(10, "GetCompetitionDetail should use projection, not full stage graphs");
-        matchHubSql.Should().BeLessThan(matchHubLegacyTotalSql, "unified Match Hub should beat legacy 1+N fan-out");
+        matchHubSql.Should().BeLessThan(matchHubFanOutTotalSql, "unified Match Hub should beat 1+N fan-out");
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
-        attentionSql.Should().BeLessThan(18, "attention path should stay below legacy shell overview cost");
+        attentionSql.Should().BeLessThan(18, "attention path should stay below shell overview cost");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
-        organisationSql.Should().BeLessThan(overviewSql, "organisation bundle should beat full overview load");
+        structureSql.Should().BeLessThan(overviewSql, "structure bundle should beat full overview load");
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public sealed class ReadPerformanceBaselineTests(
                 ["GET /competitions/{id}"] = detailSql,
                 ["GET /stages/{id}/matches"] = matchesSql,
                 ["GET /matches-hub"] = matchHubSql,
-                ["Match Hub legacy (detail + 1 stage matches)"] = detailSql + matchesSql
+                ["Match Hub fan-out (detail + 1 stage matches)"] = detailSql + matchesSql
             });
 
         matchesSql.Should().BeGreaterThan(3, "list endpoint loads stage + competition + matches");

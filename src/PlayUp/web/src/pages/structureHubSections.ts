@@ -1,6 +1,6 @@
 import type {
-  OrganisationStageDefaultsBinding,
-  OrganisationStageHubSummary,
+  StructureStageDefaultsBinding,
+  StructureStageHubSummary,
   StructureFormatKind,
 } from '../types';
 
@@ -24,7 +24,7 @@ export const STRUCTURE_SWITCHER_SECTIONS: StructureSectionId[] = [
 ];
 
 export function isMatchFrameBound(
-  binding: OrganisationStageDefaultsBinding | undefined,
+  binding: StructureStageDefaultsBinding | undefined,
 ): boolean {
   if (!binding) {
     return true;
@@ -38,7 +38,7 @@ export function isMatchFrameBound(
 }
 
 export function isStandingFrameBound(
-  binding: OrganisationStageDefaultsBinding | undefined,
+  binding: StructureStageDefaultsBinding | undefined,
 ): boolean | null {
   if (!binding) {
     return true;
@@ -56,7 +56,7 @@ export function isStandingFrameBound(
  * Matchs/Classement are never major switcher items.
  */
 export function relevantSwitcherSections(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
 ): StructureSectionId[] {
   const sections: StructureSectionId[] = ['construction'];
   const actions = stage.actions ?? [];
@@ -83,7 +83,7 @@ export function relevantSwitcherSections(
   return sections;
 }
 
-function stageNeedsDrawSection(stage: OrganisationStageHubSummary): boolean {
+function stageNeedsDrawSection(stage: StructureStageHubSummary): boolean {
   if (stage.hasDrawRules) {
     return true;
   }
@@ -91,7 +91,7 @@ function stageNeedsDrawSection(stage: OrganisationStageHubSummary): boolean {
   return kind === 'Groups' || kind === 'Cup';
 }
 
-export function constructionSummaryFacts(stage: OrganisationStageHubSummary): {
+export function constructionSummaryFacts(stage: StructureStageHubSummary): {
   formatKind: StructureFormatKind | null;
   groupCount: number;
   teamCount: number;

@@ -9,7 +9,7 @@
     "CompletionNotAllowed": "La clôture normale n’est pas possible pour le moment.",
     "CompetitionClosed": "La compétition est clôturée ou archivée.",
     "EntryCapacityExceeded": "Capacité d’inscriptions dépassée.",
-    "OrganisationNotMutable": "L’organisation n’est plus modifiable dans cet état.",
+    "StructureNotMutable": "La structure n’est plus modifiable dans cet état.",
     "InvalidStructureIntent": "Paramètres de structure invalides.",
     "CupBracketNotPowerOfTwo": "Le tableau de coupe doit avoir une taille puissance de 2.",
     "DrawApplyFailure": "Impossible d’appliquer le tirage.",

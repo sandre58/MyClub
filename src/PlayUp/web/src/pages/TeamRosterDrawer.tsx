@@ -42,8 +42,8 @@ import {
   type DeclaredMember,
   type DeclaredMemberRole,
   type EntryStatus,
-  type OrganisationEntry,
-  type OrganisationView,
+  type StructureEntry,
+  type StructureView,
 } from '../types';
 
 async function invalidateAfterRosterMutation(
@@ -67,7 +67,7 @@ async function invalidateAfterRosterMutation(
 }
 
 function membersOf(
-  entry: OrganisationEntry,
+  entry: StructureEntry,
   role: DeclaredMemberRole,
 ): DeclaredMember[] {
   return (entry.declaredMembers ?? []).filter((member) => member.role === role);
@@ -162,7 +162,7 @@ export function TeamRosterDrawer({
   onBack,
   onEditIdentity,
 }: {
-  data: OrganisationView;
+  data: StructureView;
   entryId: string;
   onBack?: () => void;
   onEditIdentity?: () => void;

@@ -17,7 +17,7 @@ import {
   addCompetitionEntry,
   deleteCompetitionEntries,
   deleteCompetitionEntry,
-  fetchOrganisationView,
+  fetchStructureView,
   renameCompetitionEntry,
   updateEntryPresentation,
   withdrawCompetitionEntries,
@@ -62,8 +62,8 @@ import {
 } from '../ui';
 import type {
   EntryStatus,
-  OrganisationEntry,
-  OrganisationView,
+  StructureEntry,
+  StructureView,
 } from '../types';
 import { TeamRosterDrawer } from './TeamRosterDrawer';
 import { isTeamsNarrowViewport } from '../layout/viewportBreakpoints';
@@ -101,7 +101,7 @@ export function TeamsPage() {
 
   const query = useQuery({
     queryKey: queryKeys.competitions.structure(competitionId),
-    queryFn: () => fetchOrganisationView(competitionId),
+    queryFn: () => fetchStructureView(competitionId),
     enabled: competitionId.length > 0,
   });
 
@@ -118,7 +118,7 @@ function TeamsView({
   data,
   routeEntryId,
 }: {
-  data: OrganisationView;
+  data: StructureView;
   routeEntryId?: string;
 }) {
   const { t } = useTranslation('teams');
@@ -675,7 +675,7 @@ function AddEntryDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
+  data: StructureView;
   open: boolean;
   onClose: () => void;
 }) {
@@ -864,8 +864,8 @@ function IdentityDialog({
   onClose,
 }: {
   competitionId: string;
-  entry: OrganisationEntry | null;
-  entries: OrganisationEntry[];
+  entry: StructureEntry | null;
+  entries: StructureEntry[];
   open: boolean;
   onClose: () => void;
 }) {
@@ -1059,7 +1059,7 @@ function IdentityDialog({
 }
 
 function hasDuplicateEntryName(
-  entries: OrganisationEntry[],
+  entries: StructureEntry[],
   name: string,
   excludeEntryId?: string,
 ): boolean {

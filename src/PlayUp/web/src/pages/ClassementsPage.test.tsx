@@ -2,12 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, fetchConsultation, fetchOrganisationView } from '../api';
+import { ApiError, fetchConsultation, fetchStructureView } from '../api';
 import { queryKeys } from '../queryKeys';
 import type {
   ConsultationStandingRow,
   ConsultationView,
-  OrganisationView,
+  StructureView,
 } from '../types';
 import { ClassementsPage } from './ClassementsPage';
 
@@ -16,7 +16,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchConsultation: vi.fn(),
-    fetchOrganisationView: vi.fn(),
+    fetchStructureView: vi.fn(),
   };
 });
 
@@ -26,9 +26,9 @@ const entryB = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 const entryC = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 const stageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 
-function organisationView(
-  overrides: Partial<OrganisationView> = {},
-): OrganisationView {
+function structureView(
+  overrides: Partial<StructureView> = {},
+): StructureView {
   return {
     competitionId,
     name: 'Ligue Printemps',
@@ -189,7 +189,7 @@ function renderClassementsPage() {
           />
           <Route
             path="/competitions/:competitionId/structure"
-            element={<p>Organisation route</p>}
+            element={<p>Structure route</p>}
           />
         </Routes>
       </MemoryRouter>
@@ -202,7 +202,7 @@ function renderClassementsPage() {
 describe('ClassementsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
   });
 
   it('shows loading while consultation is pending', () => {
@@ -491,7 +491,7 @@ describe('ClassementsPage', () => {
     );
   });
 
-  it('renders regulation points from organisation', async () => {
+  it('renders regulation points from structure', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
 
     renderClassementsPage();
@@ -503,13 +503,13 @@ describe('ClassementsPage', () => {
     expect(screen.getByText('2 – 64 équipes')).toBeInTheDocument();
   });
 
-  it('links the regulation panel to organisation', async () => {
+  it('links the regulation panel to Structure', async () => {
     vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
 
     renderClassementsPage();
 
     const link = await screen.findByRole('link', {
-      name: /Voir l’organisation/i,
+      name: /Voir la structure/i,
     });
     expect(link).toHaveAttribute(
       'href',

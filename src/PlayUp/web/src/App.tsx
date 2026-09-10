@@ -1,9 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { LoadingState } from './ui';
 import { CompetitionOverviewPage } from './pages/CompetitionOverviewPage';
-import { CompetitionsPage } from './pages/CompetitionsPage';
 import { ClassementsPage } from './pages/ClassementsPage';
 import { HomePage } from './pages/HomePage';
 import { MatchHubPage } from './pages/MatchHubPage';
@@ -28,7 +27,7 @@ const DesignLabPage = lazy(async () => {
 /**
  * Route table only.
  *
- * / and /competitions (legacy redirect) are outside AppLayout: Accueil hub
+ * / and /competitions (redirect to Accueil) are outside AppLayout: Accueil hub
  * (pré-compétition). Shell V1 starts at /competitions/:id….
  *
  * /dev/foundations is outside AppLayout: 14.5 validation terrain,
@@ -39,7 +38,6 @@ const DesignLabPage = lazy(async () => {
  *
  * Nested under AppLayout so Outlet swaps page content while the 14.6 shell stays.
  * Params (:competitionId, :stageId, :matchId, :entryId) are opaque ids — not business fields.
- * Legacy /organisation → /structure ; /organisation/entries/:entryId → /teams/:entryId.
  */
 export default function App() {
   return (
@@ -61,7 +59,7 @@ export default function App() {
         }
       />
       <Route path="/" element={<HomePage />} />
-      <Route path="/competitions" element={<CompetitionsPage />} />
+      <Route path="/competitions" element={<Navigate to="/" replace />} />
       <Route element={<AppLayout />}>
         <Route
           path="/competitions/:competitionId"
@@ -84,14 +82,6 @@ export default function App() {
           element={<StructurePage />}
         />
         <Route
-          path="/competitions/:competitionId/organisation/entries/:entryId"
-          element={<OrganisationEntryRedirect />}
-        />
-        <Route
-          path="/competitions/:competitionId/organisation"
-          element={<OrganisationToStructureRedirect />}
-        />
-        <Route
           path="/competitions/:competitionId/classements"
           element={<ClassementsPage />}
         />
@@ -105,19 +95,5 @@ export default function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
-  );
-}
-
-function OrganisationToStructureRedirect() {
-  const { competitionId = '' } = useParams();
-  return (
-    <Navigate to={`/competitions/${competitionId}/structure`} replace />
-  );
-}
-
-function OrganisationEntryRedirect() {
-  const { competitionId = '', entryId = '' } = useParams();
-  return (
-    <Navigate to={`/competitions/${competitionId}/teams/${entryId}`} replace />
   );
 }

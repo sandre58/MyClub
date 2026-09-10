@@ -152,7 +152,7 @@ export function resolveOverviewActionIntent(
 
     case 'ConfigureStructure':
     case 'ReplaceRegulation':
-    case 'ContinueOrganisation':
+    case 'ContinueStructure':
       return {
         kind: 'navigate',
         to: `/competitions/${competitionId}/structure`,

@@ -9,7 +9,7 @@
     "CompletionNotAllowed": "Normal completion is not possible at the moment.",
     "CompetitionClosed": "The competition is completed or archived.",
     "EntryCapacityExceeded": "Entry capacity exceeded.",
-    "OrganisationNotMutable": "Organisation can no longer be edited in this state.",
+    "StructureNotMutable": "Structure can no longer be edited in this state.",
     "InvalidStructureIntent": "Invalid structure parameters.",
     "CupBracketNotPowerOfTwo": "The cup bracket size must be a power of 2.",
     "DrawApplyFailure": "Unable to apply the draw.",

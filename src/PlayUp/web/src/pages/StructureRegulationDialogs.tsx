@@ -13,8 +13,8 @@ import { Field } from '../design-system/components/Field';
 import { InputNumber } from '../design-system/components/InputNumber';
 import { MutationError, PendingLabel } from '../ui';
 import type {
-  OrganisationStageHubSummary,
-  OrganisationView,
+  StructureStageHubSummary,
+  StructureView,
   RankingCriterion,
   ReplaceStageDefaultTieFormatRequest,
   ReplaceStageDrawRulesRequest,
@@ -23,7 +23,7 @@ import type {
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 
-function stageActions(stage: OrganisationStageHubSummary): string[] {
+function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
 }
 
@@ -39,8 +39,8 @@ export function MatchStandingEditors({
   stage,
   section,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   section: 'matchs' | 'classement';
 }) {
   const { t } = useTranslation('structure');
@@ -120,8 +120,8 @@ export function TirageEditors({
   data,
   stage,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
 }) {
   const { t } = useTranslation('structure');
   const [open, setOpen] = useState(false);
@@ -153,8 +153,8 @@ export function ConfrontationEditors({
   data,
   stage,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
 }) {
   const { t } = useTranslation('structure');
   const [open, setOpen] = useState(false);
@@ -189,7 +189,7 @@ function MatchRulesDialog({
   onClose,
 }: {
   competitionId: string;
-  stage: OrganisationStageHubSummary;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -421,7 +421,7 @@ function StandingRulesDialog({
   onClose,
 }: {
   competitionId: string;
-  stage: OrganisationStageHubSummary;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -542,7 +542,7 @@ function RebindDialog({
   onClose,
 }: {
   competitionId: string;
-  stage: OrganisationStageHubSummary;
+  stage: StructureStageHubSummary;
   scope: 'Match' | 'Standing';
   open: boolean;
   onClose: () => void;
@@ -608,7 +608,7 @@ function DrawRulesDialog({
   onClose,
 }: {
   competitionId: string;
-  stage: OrganisationStageHubSummary;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -741,7 +741,7 @@ function TieFormatDialog({
   onClose,
 }: {
   competitionId: string;
-  stage: OrganisationStageHubSummary;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -886,7 +886,7 @@ function TieFormatDialog({
 }
 
 function matchFormFromStage(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
 ): ReplaceStageMatchRulesRequest {
   return {
     durationPerPeriod: stage.durationPerPeriod,
@@ -903,7 +903,7 @@ function matchFormFromStage(
 }
 
 function standingFormFromStage(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
 ): ReplaceStageStandingRulesRequest {
   return {
     winPoints: stage.winPoints ?? 3,
@@ -917,7 +917,7 @@ function standingFormFromStage(
 }
 
 function tieFormFromStage(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
 ): ReplaceStageDefaultTieFormatRequest {
   return {
     clear: false,

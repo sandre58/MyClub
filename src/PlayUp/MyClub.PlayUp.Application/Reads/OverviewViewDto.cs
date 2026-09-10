@@ -13,7 +13,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Aggregated Overview Read projection (Phase 16.1) — Application interpretation, not Domain.
 /// </summary>
 /// <remarks>
-/// One projection among several Read Surfaces (R22). Does not replace workspace / organisation / attention endpoints.
+/// One projection among several Read Surfaces (R22). Does not replace workspace / structure / attention endpoints.
 /// Available actions are opportunities based on known state (R19) — not execution guarantees.
 /// Organizer-facing copy lives in the SPA i18n layer (codes + facts only on the wire).
 /// </remarks>
@@ -43,7 +43,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="AvailableActions">Semantic actions/transitions available from known state.</param>
 /// <param name="NaturalProgression">
 /// One structural tip to highlight, or null when none.
-/// Draft/Ready: null is a valid calm Construction state (no ContinueOrganisation fallback).
+/// Draft/Ready: null is a valid calm Construction state (no ContinueStructure fallback).
 /// Running/Suspended: null is a valid calm state (no OpenMatches fallback).
 /// Distinct from <paramref name="AvailableActions"/> (full opportunity set).
 /// PrepareCompetition / StartCompetition are never elevated here (lifecycle — L7).
@@ -156,7 +156,7 @@ public sealed record OverviewDimensionDto(
 /// <param name="TransitionReadiness">Readiness relative to identified Host-relevant transitions (construction only).</param>
 public sealed record OverviewRegulationDimensionDto(
     string Prominence,
-    OrganisationRegulationSummaryDto Competition,
+    StructureRegulationSummaryDto Competition,
     OverviewStageRegulationSummaryDto? Stage,
     bool CompetitionRegulationMutable,
     IReadOnlyList<OverviewTransitionReadinessDto> TransitionReadiness);
@@ -184,8 +184,8 @@ public sealed record OverviewStageRegulationSummaryDto(
 
 /// <summary>Readiness relative to a concrete transition (R5) — not a global regulation validity claim.</summary>
 /// <param name="Transition">Stable code (e.g. MaterializeMatches, Draw).</param>
-/// <param name="Ready">True when Organisation readiness says the transition path is identifiable.</param>
-/// <param name="BlockerCodes">Same machine codes as Organisation / Situations when not ready.</param>
+/// <param name="Ready">True when Structure readiness says the transition path is identifiable.</param>
+/// <param name="BlockerCodes">Same machine codes as Structure / Situations when not ready.</param>
 public sealed record OverviewTransitionReadinessDto(
     string Transition,
     bool Ready,

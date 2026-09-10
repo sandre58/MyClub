@@ -25,7 +25,7 @@ public static class ReplaceStageSwissSettings
         {
             throw new ApplicationFailureException(
                 $"Swiss settings cannot be changed while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (roundCount < 1)

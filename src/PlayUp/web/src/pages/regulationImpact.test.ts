@@ -5,12 +5,12 @@ import {
   isStagePersonalized,
 } from './regulationImpact';
 import type {
-  OrganisationRegulationSummary,
-  OrganisationStageHubSummary,
+  StructureRegulationSummary,
+  StructureStageHubSummary,
   ReplaceRegulationRequest,
 } from '../types';
 
-const seed: OrganisationRegulationSummary = {
+const seed: StructureRegulationSummary = {
   minimumTeams: 8,
   maximumTeams: 16,
   durationPerPeriod: 45,
@@ -51,8 +51,8 @@ function form(
 
 function boundStage(
   id: string,
-  overrides: Partial<OrganisationStageHubSummary> = {},
-): OrganisationStageHubSummary {
+  overrides: Partial<StructureStageHubSummary> = {},
+): StructureStageHubSummary {
   return {
     stageId: id,
     name: id,
@@ -98,7 +98,7 @@ describe('regulationImpact', () => {
   });
 
   it('aggregates inherit vs keep-override from DefaultsBinding', () => {
-    const stages: OrganisationStageHubSummary[] = [
+    const stages: StructureStageHubSummary[] = [
       boundStage('1'),
       boundStage('2', {
         name: 'Finale',

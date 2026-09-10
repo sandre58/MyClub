@@ -33,7 +33,7 @@ body:has(.shell),
  * on-chrome / local colors. Exit links carry their own color.
  */
 /* prettier-ignore */
-.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(.organisation-link):not(.organisation-stage-link):not(.organisation-strip__action),
+.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(.structure-link):not(.structure-strip__action),
 .ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link) {
   color: var(--color-ink);
   text-decoration-thickness: 0.08em;
@@ -41,7 +41,7 @@ body:has(.shell),
 }
 
 /* prettier-ignore */
-.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(.organisation-link):not(.organisation-stage-link):not(.organisation-strip__action):hover,
+.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):not(.structure-link):not(.structure-strip__action):hover,
 .ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):hover {
   color: var(--color-ink);
   text-decoration-thickness: 0.12em;

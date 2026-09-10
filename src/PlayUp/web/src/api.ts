@@ -21,7 +21,7 @@ import type {
   MatchSummary,
   MatchGenerationFormat,
   NeedsAttention,
-  OrganisationView,
+  StructureView,
   RecordDisciplinaryEventRequest,
   RecordGoalRequest,
   RecordSubstitutionRequest,
@@ -101,7 +101,7 @@ async function getJson<T>(url: string): Promise<T> {
 }
 
 /**
- * POST/PUT helpers for Host commands that return a JSON body (Organisation mutations).
+ * POST/PUT helpers for Host commands that return a JSON body (Structure mutations).
  */
 async function sendJson<T>(
   method: 'POST' | 'PUT' | 'DELETE',
@@ -147,7 +147,7 @@ export function fetchCompetitions(): Promise<CompetitionListItem[]> {
 
 /**
  * POST /competitions → WorkspaceSummary (201).
- * Host Location points at legacy /workspace; SPA navigates to Organisation.
+ * Host Location points at /workspace; SPA navigates to Structure.
  */
 export function createCompetition(
   request: CreateCompetitionRequest,
@@ -170,9 +170,9 @@ export function fetchCompetitionDetail(
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/structure */
-export function fetchOrganisationView(
+export function fetchStructureView(
   competitionId: string,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return getJson(`/competitions/${competitionId}/structure`);
 }
 
@@ -190,11 +190,11 @@ export function fetchNeedsAttention(
   return getJson(`/competitions/${competitionId}/attention`);
 }
 
-/** POST /competitions/{id}/entries → OrganisationView */
+/** POST /competitions/{id}/entries → StructureView */
 export function addCompetitionEntry(
   competitionId: string,
   request: AddEntryRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson('POST', `/competitions/${competitionId}/entries`, request);
 }
 
@@ -207,11 +207,11 @@ export async function uploadMedia(file: File): Promise<{ id: string }> {
   return (await response.json()) as { id: string };
 }
 
-/** POST /competitions/{id}/presentation → OrganisationView */
+/** POST /competitions/{id}/presentation → StructureView */
 export function updateCompetitionPresentation(
   competitionId: string,
   request: UpdateCompetitionPresentationRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/presentation`,
@@ -219,20 +219,20 @@ export function updateCompetitionPresentation(
   );
 }
 
-/** POST /competitions/{id}/schedule → OrganisationView */
+/** POST /competitions/{id}/schedule → StructureView */
 export function setCompetitionSchedule(
   competitionId: string,
   request: SetCompetitionScheduleRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson('POST', `/competitions/${competitionId}/schedule`, request);
 }
 
-/** POST .../entries/{entryId}/presentation → OrganisationView */
+/** POST .../entries/{entryId}/presentation → StructureView */
 export function updateEntryPresentation(
   competitionId: string,
   entryId: string,
   request: UpdateEntryPresentationRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/presentation`,
@@ -240,12 +240,12 @@ export function updateEntryPresentation(
   );
 }
 
-/** POST .../entries/{entryId}/rename → OrganisationView */
+/** POST .../entries/{entryId}/rename → StructureView */
 export function renameCompetitionEntry(
   competitionId: string,
   entryId: string,
   request: RenameEntryRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/rename`,
@@ -253,23 +253,23 @@ export function renameCompetitionEntry(
   );
 }
 
-/** POST .../entries/{entryId}/withdraw → OrganisationView */
+/** POST .../entries/{entryId}/withdraw → StructureView */
 export function withdrawCompetitionEntry(
   competitionId: string,
   entryId: string,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/withdraw`,
   );
 }
 
-/** POST .../entries/{entryId}/declared-members → OrganisationView */
+/** POST .../entries/{entryId}/declared-members → StructureView */
 export function addDeclaredMember(
   competitionId: string,
   entryId: string,
   request: AddDeclaredMemberRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/declared-members`,
@@ -277,24 +277,24 @@ export function addDeclaredMember(
   );
 }
 
-/** DELETE .../declared-members/{memberId} → OrganisationView */
+/** DELETE .../declared-members/{memberId} → StructureView */
 export function removeDeclaredMember(
   competitionId: string,
   entryId: string,
   memberId: string,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'DELETE',
     `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}`,
   );
 }
 
-/** POST .../declared-member-lots/remove → OrganisationView */
+/** POST .../declared-member-lots/remove → StructureView */
 export function removeDeclaredMembers(
   competitionId: string,
   entryId: string,
   request: MemberIdsRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/declared-member-lots/remove`,
@@ -302,13 +302,13 @@ export function removeDeclaredMembers(
   );
 }
 
-/** POST .../declared-members/{memberId}/rename → OrganisationView */
+/** POST .../declared-members/{memberId}/rename → StructureView */
 export function renameDeclaredMember(
   competitionId: string,
   entryId: string,
   memberId: string,
   request: RenameDeclaredMemberRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/declared-members/${memberId}/rename`,
@@ -316,22 +316,22 @@ export function renameDeclaredMember(
   );
 }
 
-/** POST .../entries/{entryId}/delete → OrganisationView */
+/** POST .../entries/{entryId}/delete → StructureView */
 export function deleteCompetitionEntry(
   competitionId: string,
   entryId: string,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entries/${entryId}/delete`,
   );
 }
 
-/** POST .../entry-lots/delete → OrganisationView */
+/** POST .../entry-lots/delete → StructureView */
 export function deleteCompetitionEntries(
   competitionId: string,
   request: EntryIdsRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entry-lots/delete`,
@@ -339,11 +339,11 @@ export function deleteCompetitionEntries(
   );
 }
 
-/** POST .../entry-lots/withdraw → OrganisationView */
+/** POST .../entry-lots/withdraw → StructureView */
 export function withdrawCompetitionEntries(
   competitionId: string,
   request: EntryIdsRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/entry-lots/withdraw`,
@@ -351,16 +351,16 @@ export function withdrawCompetitionEntries(
   );
 }
 
-/** PUT /competitions/{id}/regulation → OrganisationView */
+/** PUT /competitions/{id}/regulation → StructureView */
 export function replaceCompetitionRegulation(
   competitionId: string,
   request: ReplaceRegulationRequest,
-): Promise<OrganisationView> {
+): Promise<StructureView> {
   return sendJson('PUT', `/competitions/${competitionId}/regulation`, request);
 }
 
 /** POST /competitions/{id}/structure → ConfigureStructureResponse */
-export function configureOrganisationStructure(
+export function configureStructure(
   competitionId: string,
   request: ConfigureStructureRequest,
 ): Promise<ConfigureStructureResponse> {

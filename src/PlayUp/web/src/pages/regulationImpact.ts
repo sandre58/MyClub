@@ -1,9 +1,9 @@
 import type {
   CompetitionStatus,
-  OrganisationHeritablePartBinding,
-  OrganisationRegulationSummary,
-  OrganisationStageDefaultsBinding,
-  OrganisationStageHubSummary,
+  StructureHeritablePartBinding,
+  StructureRegulationSummary,
+  StructureStageDefaultsBinding,
+  StructureStageHubSummary,
   RankingCriterion,
   ReplaceRegulationRequest,
 } from '../types';
@@ -38,7 +38,7 @@ const FAMILY_PARTS: Record<ImpactFamilyKey, HeritablePartKey[]> = {
 const FAMILY_ORDER: ImpactFamilyKey[] = ['match', 'forfeit', 'standing'];
 
 export function applicableHeritableParts(
-  binding: OrganisationStageDefaultsBinding | undefined,
+  binding: StructureStageDefaultsBinding | undefined,
 ): HeritablePartKey[] {
   if (!binding) {
     return [];
@@ -54,9 +54,9 @@ export function applicableHeritableParts(
 }
 
 export function partBinding(
-  binding: OrganisationStageDefaultsBinding,
+  binding: StructureStageDefaultsBinding,
   part: HeritablePartKey,
-): OrganisationHeritablePartBinding | null {
+): StructureHeritablePartBinding | null {
   switch (part) {
     case 'matchDuration':
       return binding.matchDuration;
@@ -74,7 +74,7 @@ export function partBinding(
 }
 
 export function isPartOverridden(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
   part: HeritablePartKey,
 ): boolean {
   const binding = stage.defaultsBinding;
@@ -86,7 +86,7 @@ export function isPartOverridden(
 }
 
 export function isStagePersonalized(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
 ): boolean {
   const binding = stage.defaultsBinding;
   if (!binding) {
@@ -160,7 +160,7 @@ function pointsKey(source: {
  */
 export function detectChangedHeritableParts(
   form: ReplaceRegulationRequest,
-  seed: OrganisationRegulationSummary,
+  seed: StructureRegulationSummary,
 ): HeritablePartKey[] {
   const changed: HeritablePartKey[] = [];
   if (matchDurationKey(form) !== matchDurationKey(seed)) {
@@ -186,7 +186,7 @@ export function detectChangedHeritableParts(
 
 export function detectCompetitionOnlyChanges(
   form: ReplaceRegulationRequest,
-  seed: OrganisationRegulationSummary,
+  seed: StructureRegulationSummary,
 ): { entry: boolean; discipline: boolean } {
   const entry =
     form.minimumTeams !== seed.minimumTeams ||
@@ -235,7 +235,7 @@ function isRunningLike(status: string): boolean {
 function aggregateFamily(
   family: ImpactFamilyKey,
   changedParts: HeritablePartKey[],
-  eligible: OrganisationStageHubSummary[],
+  eligible: StructureStageHubSummary[],
 ): FamilyImpactLine | null {
   const familyParts = FAMILY_PARTS[family];
   const changedInFamily = changedParts.filter((part) =>
@@ -284,8 +284,8 @@ function aggregateFamily(
 export function buildRegulationImpactPreview(
   form: ReplaceRegulationRequest,
   data: {
-    regulation: OrganisationRegulationSummary;
-    stages: OrganisationStageHubSummary[];
+    regulation: StructureRegulationSummary;
+    stages: StructureStageHubSummary[];
     status: CompetitionStatus;
   },
 ): RegulationImpactPreview {

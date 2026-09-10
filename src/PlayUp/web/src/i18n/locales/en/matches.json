@@ -50,7 +50,7 @@
   },
   "list": {
     "noStagesTitle": "No stages",
-    "noStagesBody": "Configure the structure in Organisation first.",
+    "noStagesBody": "Configure the competition structure first.",
     "noMatchesTitle": "No matches",
     "noMatchesBody": "Open a stage to prepare draws and create matches.",
     "matchday": "Matchday {{number}}",

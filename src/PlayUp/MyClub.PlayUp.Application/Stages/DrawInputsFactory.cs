@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Builds default <see cref="DrawInputs"/> for V1 Organisation → Draw flows.
+/// Builds default <see cref="DrawInputs"/> for V1 Structure → Draw flows.
 /// </summary>
 public static class DrawInputsFactory
 {

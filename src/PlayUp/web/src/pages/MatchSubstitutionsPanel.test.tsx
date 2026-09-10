@@ -1,11 +1,11 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchMatchDetail,
-  fetchOrganisationView,
+  fetchStructureView,
   fetchStageOverview,
   finishMatch,
   recordSubstitution,
@@ -16,7 +16,7 @@ import {
 import type {
   DeclaredParticipation,
   MatchDetail,
-  OrganisationView,
+  StructureView,
   RecordedSubstitution,
   StageOverview,
 } from '../types';
@@ -32,7 +32,7 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchMatchDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
-    fetchOrganisationView: vi.fn(),
+    fetchStructureView: vi.fn(),
     startMatch: vi.fn(),
     finishMatch: vi.fn(),
     setRunningScore: vi.fn(),
@@ -117,7 +117,7 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
   };
 }
 
-const emptyOrganisation: OrganisationView = {
+const emptyStructure: StructureView = {
   competitionId,
   name: 'Spring Cup',
   status: 'Ready',
@@ -236,7 +236,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);
-    vi.mocked(fetchOrganisationView).mockResolvedValue(emptyOrganisation);
+    vi.mocked(fetchStructureView).mockResolvedValue(emptyStructure);
     vi.mocked(startMatch).mockResolvedValue();
     vi.mocked(finishMatch).mockResolvedValue();
     vi.mocked(setRunningScore).mockResolvedValue();

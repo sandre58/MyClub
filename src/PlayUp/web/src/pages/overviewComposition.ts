@@ -69,7 +69,7 @@ export function actionPresentationSlot(
     case 'CompleteCompetition':
     case 'ArchiveCompetition':
       return 'closure';
-    case 'ContinueOrganisation':
+    case 'ContinueStructure':
     case 'OpenMatches':
     case 'OpenConsultation':
       return 'navigation';

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CompetitionsPage } from './CompetitionsPage';
 
 describe('CompetitionsPage', () => {
-  it('redirects legacy /competitions to Accueil hub /', () => {
+  it('redirects /competitions to Accueil hub /', () => {
     render(
       <MemoryRouter initialEntries={['/competitions']}>
         <Routes>

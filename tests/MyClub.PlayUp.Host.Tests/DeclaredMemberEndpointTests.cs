@@ -29,19 +29,19 @@ public sealed class DeclaredMemberEndpointTests(HostPostgresFixture fixture)
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 31, 9, 30, 0, TimeSpan.Zero));
 
     [IntegrationFact]
-    public async Task Declared_member_crud_returns_organisation_view_with_rosterAsync()
+    public async Task Declared_member_crud_returns_structure_view_with_rosterAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedCompetitionWithEntryAsync(factory);
         using var client = factory.CreateClient();
 
-        OrganisationViewDto? view;
+        StructureViewDto? view;
         using (var add = await client.PostAsJsonAsync(
             DeclaredMembersUri(seed.CompetitionId, seed.EntryId),
             new AddDeclaredMemberRequest("Dupont", DeclaredMemberRole.Player)))
         {
             add.StatusCode.Should().Be(HttpStatusCode.OK);
-            view = await add.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+            view = await add.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         }
 
         view.Should().NotBeNull();
@@ -56,7 +56,7 @@ public sealed class DeclaredMemberEndpointTests(HostPostgresFixture fixture)
             new RenameDeclaredMemberRequest("Jean Dupont")))
         {
             rename.StatusCode.Should().Be(HttpStatusCode.OK);
-            view = await rename.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+            view = await rename.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         }
 
         view!.Participants.Entries.Single(e => e.EntryId == seed.EntryId.Value)
@@ -66,7 +66,7 @@ public sealed class DeclaredMemberEndpointTests(HostPostgresFixture fixture)
             MemberUri(seed.CompetitionId, seed.EntryId, memberId)))
         {
             remove.StatusCode.Should().Be(HttpStatusCode.OK);
-            view = await remove.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+            view = await remove.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         }
 
         view!.Participants.Entries.Single(e => e.EntryId == seed.EntryId.Value)

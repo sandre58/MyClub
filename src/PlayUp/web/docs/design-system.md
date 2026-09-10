@@ -145,9 +145,9 @@ Do not reintroduce raw `<input>` / `<select>` chrome for those flows.
 
 `shell/` is Play’Up-local chrome. It consumes the DS; it does not redefine tokens.
 
-## Legacy `src/index.css`
+## Shared `src/index.css`
 
-Global reset + legacy admin chrome classes only. **No second token ladder.**
+Global reset + shared admin chrome classes only. **No second token ladder.**
 
 Token sheets are imported for early paint; product foundations still load via Shell / Lab / Accueil.
 

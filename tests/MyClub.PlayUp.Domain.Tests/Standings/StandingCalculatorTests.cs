@@ -292,7 +292,7 @@ public sealed class StandingCalculatorTests
     }
 
     [Fact]
-    public void Calculate_null_or_empty_penalties_match_legacy_behavior()
+    public void Calculate_null_or_empty_penalties_match_baseline_behavior()
     {
         var rules = Rules(RankingCriterion.Points, RankingCriterion.GoalDifference);
         var matches = new[]
@@ -302,12 +302,12 @@ public sealed class StandingCalculatorTests
             new StandingMatch(_b, _c, 3, 1)
         };
 
-        var legacy = StandingCalculator.Calculate([_a, _b, _c], matches, rules);
+        var baseline = StandingCalculator.Calculate([_a, _b, _c], matches, rules);
         var withNull = StandingCalculator.Calculate([_a, _b, _c], matches, rules, penalties: null);
         var withEmpty = StandingCalculator.Calculate([_a, _b, _c], matches, rules, penalties: []);
 
-        withNull.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(legacy.Rows.Select(r => (r.EntryId, r.Points)));
-        withEmpty.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(legacy.Rows.Select(r => (r.EntryId, r.Points)));
+        withNull.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(baseline.Rows.Select(r => (r.EntryId, r.Points)));
+        withEmpty.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(baseline.Rows.Select(r => (r.EntryId, r.Points)));
     }
 
     private static StandingRules Rules(params RankingCriterion[] criteria) =>

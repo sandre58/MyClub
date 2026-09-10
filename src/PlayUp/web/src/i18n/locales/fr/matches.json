@@ -50,7 +50,7 @@
   },
   "list": {
     "noStagesTitle": "Aucune phase",
-    "noStagesBody": "Configurez d’abord la structure dans Organisation.",
+    "noStagesBody": "Configurez d’abord la structure de la compétition.",
     "noMatchesTitle": "Aucun match",
     "noMatchesBody": "Ouvrez une phase pour préparer les tirages et créer les matchs.",
     "matchday": "Journée {{number}}",

@@ -13,11 +13,11 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// </summary>
 /// <param name="StageCreated">True when the primary stage was created.</param>
 /// <param name="RebuildImpact">Cleared topology when an existing skeleton was rebuilt.</param>
-/// <param name="Organisation">Refreshed Organisation / Structure hub view.</param>
+/// <param name="Structure">Refreshed Structure hub view.</param>
 public sealed record ConfigureStructureResponse(
     bool StageCreated,
     StructureRebuildImpactDto? RebuildImpact,
-    OrganisationViewDto Organisation);
+    StructureViewDto Structure);
 
 /// <summary>
 /// Cleared topology counts for an explicit rebuild.

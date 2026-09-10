@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="OrganisationViewDto.cs" company="Stéphane ANDRE">
+// <copyright file="StructureViewDto.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Assembled Organisation hub read for Slice 2 (not a Domain mirror).
+/// Assembled Structure hub read for Slice 2 (not a Domain mirror).
 /// </summary>
 /// <param name="CompetitionId">Competition identity.</param>
 /// <param name="Name">Competition name.</param>
@@ -20,24 +20,24 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Format">Inferred / configured format summary.</param>
 /// <param name="Regulation">High-level regulation summary.</param>
 /// <param name="Structure">Structure counts (not full Domain graph).</param>
-/// <param name="Actions">Available organisation action codes.</param>
+/// <param name="Actions">Available structure action codes.</param>
 /// <param name="Readiness">Application readiness diagnostic for Slice 3.</param>
 /// <param name="Stages">Per-stage topology + regulation tokens (Règlement hub Lot 1).</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="ScheduledStart">Optional declared start.</param>
 /// <param name="ScheduledEnd">Optional declared end.</param>
-public sealed record OrganisationViewDto(
+public sealed record StructureViewDto(
     Guid CompetitionId,
     string Name,
     CompetitionStatus Status,
-    OrganisationParticipantsSummaryDto Participants,
-    OrganisationFormatSummaryDto Format,
-    OrganisationRegulationSummaryDto Regulation,
-    OrganisationStructureSummaryDto Structure,
+    StructureParticipantsSummaryDto Participants,
+    StructureFormatSummaryDto Format,
+    StructureRegulationSummaryDto Regulation,
+    StructureTopologySummaryDto Structure,
     IReadOnlyList<string> Actions,
-    OrganisationReadinessDto Readiness,
-    IReadOnlyList<OrganisationStageHubSummaryDto> Stages,
+    StructureReadinessDto Readiness,
+    IReadOnlyList<StructureStageHubSummaryDto> Stages,
     string? ShortName = null,
     Guid? LogoMediaId = null,
     DateTimeOffset? ScheduledStart = null,
@@ -47,12 +47,12 @@ public sealed record OrganisationViewDto(
 /// <param name="ActiveCount">Active entries.</param>
 /// <param name="OccupyingCount">Entries still present (Active + Withdrawn — forfait keeps the place).</param>
 /// <param name="Entries">Light entry rows.</param>
-public sealed record OrganisationParticipantsSummaryDto(
+public sealed record StructureParticipantsSummaryDto(
     int ActiveCount,
     int OccupyingCount,
-    IReadOnlyList<OrganisationEntryDto> Entries);
+    IReadOnlyList<StructureEntryDto> Entries);
 
-/// <summary>Entry row for Organisation.</summary>
+/// <summary>Entry row for Structure.</summary>
 /// <param name="EntryId">Entry identity.</param>
 /// <param name="DisplayName">Display name.</param>
 /// <param name="Status">Entry status.</param>
@@ -61,7 +61,7 @@ public sealed record OrganisationParticipantsSummaryDto(
 /// <param name="PrimaryColor">Optional primary kit color.</param>
 /// <param name="SecondaryColor">Optional secondary kit color.</param>
 /// <param name="DeclaredMembers">Declared roster members for this entry.</param>
-public sealed record OrganisationEntryDto(
+public sealed record StructureEntryDto(
     Guid EntryId,
     string DisplayName,
     EntryStatus Status,
@@ -76,7 +76,7 @@ public sealed record OrganisationEntryDto(
 /// <param name="PrimaryStageId">Primary stage id when present.</param>
 /// <param name="PrimaryStageName">Primary stage name when present.</param>
 /// <param name="PrimaryStageStatus">Primary stage status when present.</param>
-public sealed record OrganisationFormatSummaryDto(
+public sealed record StructureFormatSummaryDto(
     StructureFormatKind? Kind,
     Guid? PrimaryStageId,
     string? PrimaryStageName,
@@ -100,7 +100,7 @@ public sealed record OrganisationFormatSummaryDto(
 /// <param name="RankingCriteria">Ordered standing ranking criteria.</param>
 /// <param name="ForfeitWinnerGoals">Administrative forfeit goals for the winning side.</param>
 /// <param name="ForfeitLoserGoals">Administrative forfeit goals for the losing side.</param>
-public sealed record OrganisationRegulationSummaryDto(
+public sealed record StructureRegulationSummaryDto(
     int MinimumTeams,
     int MaximumTeams,
     int DurationPerPeriod,
@@ -128,7 +128,7 @@ public sealed record OrganisationRegulationSummaryDto(
 /// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
 /// <param name="MatchGenerationFormat">Championship / Groups generation mode.</param>
 /// <param name="SwissRoundCount">Planned Swiss rounds K when Kind is Swiss.</param>
-public sealed record OrganisationStructureSummaryDto(
+public sealed record StructureTopologySummaryDto(
     int GroupCount,
     int RoundCount,
     int MatchdayCount,
@@ -139,15 +139,15 @@ public sealed record OrganisationStructureSummaryDto(
     int? SwissRoundCount = null);
 
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
-/// <param name="ReadyForNextSlice">True when organisation is sufficient for Slice 3 entry.</param>
+/// <param name="ReadyForNextSlice">True when structure is sufficient for Slice 3 entry.</param>
 /// <param name="ReadyForDraw">True when a Draw path is identifiable.</param>
 /// <param name="ReadyForMaterialization">True when Fixtures/Matches can be materialized (Cup: primary skeleton fixtures incomplete; not from-slots).</param>
 /// <param name="ReadyForSchedule">True when attached Matches exist for scheduling.</param>
 /// <param name="ReadyForMatchOperation">True when Slice 4 can start (Matches attached; schedule optional).</param>
-/// <param name="ReadyForSchedulePath">Legacy Slice 2 hint: championship schedule path identifiable from structure.</param>
+/// <param name="ReadyForSchedulePath">Slice 2 hint: championship schedule path identifiable from structure.</param>
 /// <param name="AttachedMatchCount">Matches attached to the primary stage.</param>
 /// <param name="Blockers">Machine-readable blocker codes (authoritative for SPA i18n).</param>
-public sealed record OrganisationReadinessDto(
+public sealed record StructureReadinessDto(
     bool ReadyForNextSlice,
     bool ReadyForDraw,
     bool ReadyForMaterialization,
@@ -212,7 +212,7 @@ public sealed record OrganisationReadinessDto(
 /// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
-public sealed record OrganisationStageHubSummaryDto(
+public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
     StageStatus Status,
@@ -247,18 +247,18 @@ public sealed record OrganisationStageHubSummaryDto(
     IReadOnlyList<RankingCriterion>? RankingCriteria = null,
     bool HasPlacementAwardRules = false,
     int PlacementAwardCount = 0,
-    IReadOnlyList<OrganisationPlacementAwardDto>? PlacementAwards = null,
+    IReadOnlyList<StructurePlacementAwardDto>? PlacementAwards = null,
     StructureFormatKind? FormatKind = null,
     int? SwissRoundCount = null,
     int? ForfeitWinnerGoals = null,
     int? ForfeitLoserGoals = null,
     int? NumberOfSeeds = null,
-    IReadOnlyList<OrganisationDrawConstraintDto>? DrawConstraints = null,
-    OrganisationStageDefaultsBindingDto? DefaultsBinding = null,
-    IReadOnlyList<OrganisationConfrontationSegmentDto>? ConfrontationSegments = null,
+    IReadOnlyList<StructureDrawConstraintDto>? DrawConstraints = null,
+    StructureStageDefaultsBindingDto? DefaultsBinding = null,
+    IReadOnlyList<StructureConfrontationSegmentDto>? ConfrontationSegments = null,
     IReadOnlyList<string>? Actions = null,
-    IReadOnlyList<OrganisationQualificationPathDto>? QualificationPaths = null,
-    IReadOnlyList<OrganisationProgressionPathDto>? ProgressionPaths = null,
+    IReadOnlyList<StructureQualificationPathDto>? QualificationPaths = null,
+    IReadOnlyList<StructureProgressionPathDto>? ProgressionPaths = null,
     IReadOnlyList<string>? StructureIssues = null,
     int HalfTimeDuration = 0);
 
@@ -273,7 +273,7 @@ public sealed record OrganisationStageHubSummaryDto(
 /// <param name="AcrossGroupsPosition">Across-groups position when applicable.</param>
 /// <param name="SelectionEndValue">Range upper bound when mode is Range.</param>
 /// <param name="MinimumPoints">Optional Points ≥ gate.</param>
-public sealed record OrganisationQualificationPathDto(
+public sealed record StructureQualificationPathDto(
     int Order,
     SelectionMode SelectionMode,
     int SelectionValue,
@@ -290,7 +290,7 @@ public sealed record OrganisationQualificationPathDto(
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
 /// <param name="DestinationSlotKey">Destination slot key.</param>
-public sealed record OrganisationProgressionPathDto(
+public sealed record StructureProgressionPathDto(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
@@ -300,7 +300,7 @@ public sealed record OrganisationProgressionPathDto(
 /// <param name="RoundId">Round identity.</param>
 /// <param name="Name">Round display name.</param>
 /// <param name="SortOrder">Stage round order (0-based), for stable multi-segment display.</param>
-public sealed record OrganisationConfrontationRoundRefDto(Guid RoundId, string Name, int SortOrder);
+public sealed record StructureConfrontationRoundRefDto(Guid RoundId, string Name, int SortOrder);
 
 /// <summary>
 /// Consecutive rounds that share the same effective TieFormat (legs + resolution options).
@@ -311,8 +311,8 @@ public sealed record OrganisationConfrontationRoundRefDto(Guid RoundId, string N
 /// <param name="HasAwayGoalsRule">Away-goals rule present.</param>
 /// <param name="HasTieExtraTime">Confrontation extra-time rule present.</param>
 /// <param name="HasTiePenaltyShootout">Confrontation penalty-shootout rule present.</param>
-public sealed record OrganisationConfrontationSegmentDto(
-    IReadOnlyList<OrganisationConfrontationRoundRefDto> Rounds,
+public sealed record StructureConfrontationSegmentDto(
+    IReadOnlyList<StructureConfrontationRoundRefDto> Rounds,
     int NumberOfLegs,
     bool AggregateScoring,
     bool HasAwayGoalsRule,
@@ -321,24 +321,24 @@ public sealed record OrganisationConfrontationSegmentDto(
 
 /// <summary>Whether a heritable part still follows Competition defaults.</summary>
 /// <param name="IsBound"><see langword="true"/> when the part is bound to Competition.</param>
-public sealed record OrganisationHeritablePartBindingDto(bool IsBound);
+public sealed record StructureHeritablePartBindingDto(bool IsBound);
 
 /// <summary>
 /// Stage DefaultsBinding projection for hub lecture / impact preview (never value equality).
 /// Standing parts are <see langword="null"/> when the phase does not classify.
 /// </summary>
-public sealed record OrganisationStageDefaultsBindingDto(
-    OrganisationHeritablePartBindingDto MatchDuration,
-    OrganisationHeritablePartBindingDto ExtraTime,
-    OrganisationHeritablePartBindingDto PenaltyShootout,
-    OrganisationHeritablePartBindingDto AdministrativeResult,
-    OrganisationHeritablePartBindingDto? Points,
-    OrganisationHeritablePartBindingDto? RankingCriteria);
+public sealed record StructureStageDefaultsBindingDto(
+    StructureHeritablePartBindingDto MatchDuration,
+    StructureHeritablePartBindingDto ExtraTime,
+    StructureHeritablePartBindingDto PenaltyShootout,
+    StructureHeritablePartBindingDto AdministrativeResult,
+    StructureHeritablePartBindingDto? Points,
+    StructureHeritablePartBindingDto? RankingCriteria);
 
 /// <summary>One placement-award path for the Règlement hub.</summary>
 /// <param name="Rank">1-based final competition rank.</param>
 /// <param name="Outcome">Winner or Loser of the source confrontation.</param>
-public sealed record OrganisationPlacementAwardDto(
+public sealed record StructurePlacementAwardDto(
     int Rank,
     ProgressionOutcome Outcome);
 
@@ -346,7 +346,7 @@ public sealed record OrganisationPlacementAwardDto(
 /// <param name="Type">DrawConstraintType member name.</param>
 /// <param name="Enforcement">Preferred or Required.</param>
 /// <param name="MaxPerGroup">Only for MaxSameAssociationPerGroup.</param>
-public sealed record OrganisationDrawConstraintDto(
+public sealed record StructureDrawConstraintDto(
     DrawConstraintType Type,
     ConstraintEnforcement Enforcement,
     int? MaxPerGroup = null);

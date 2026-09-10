@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ApiError,
   fetchCompetitionOverview,
-  fetchOrganisationView,
+  fetchStructureView,
   materializeMatches,
   prepareCompetition,
   prepareStage,
@@ -21,7 +21,7 @@ import {
   expectOverviewRegionOrder,
   expectOverviewRegionsAbsent,
   renderOverviewPage,
-  setupDefaultOrganisationMock,
+  setupDefaultStructureMock,
   stageId,
 } from './competitionOverviewPageTestHelpers';
 
@@ -30,7 +30,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchCompetitionOverview: vi.fn(),
-    fetchOrganisationView: vi.fn(),
+    fetchStructureView: vi.fn(),
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock('../api', async (importOriginal) => {
 describe('CompetitionOverviewPage — Construction / Préparation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    setupDefaultOrganisationMock();
+    setupDefaultStructureMock();
   });
 
   it('shows loading while the overview is pending', () => {
@@ -275,7 +275,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
   });
 
   it('Préparation Équipes — minimum atteint : count + crests, silence readiness', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue({
+    vi.mocked(fetchStructureView).mockResolvedValue({
       competitionId,
       name: 'Spring Cup',
       status: 'Draft',

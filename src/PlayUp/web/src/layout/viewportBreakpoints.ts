@@ -18,7 +18,7 @@ export const SHELL_PHONE_QUERY = `(max-width: ${VIEWPORT_PHONE_MAX})` as const;
 export const SHELL_TABLET_QUERY =
   '(min-width: 48rem) and (max-width: 63.999rem)' as const;
 
-/** Page grids — Overview, Organisation, Matchs, Classements, Équipes split. */
+/** Page grids — Overview, Structure, Matchs, Classements, Équipes split. */
 export const PAGE_GRID_MIN = '52rem';
 export const PAGE_GRID_NARROW_QUERY = '(max-width: 51.999rem)' as const;
 

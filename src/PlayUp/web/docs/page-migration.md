@@ -19,17 +19,17 @@ Workspace → Match hub → Stage / `drawUi` → Structure → remaining pages.
 
 ## End of `index.css`
 
-`src/index.css` holds global reset + legacy admin chrome classes (`.page`, `.form`, `.row`, draws…). Visual tokens come from `design-system/tokens/*` only — no concurrent ladder.
+`src/index.css` holds global reset + shared admin chrome classes (`.page`, `.form`, `.row`, draws…). Visual tokens come from `design-system/tokens/*` only — no concurrent ladder.
 
 Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999px`) stay inlined where used until those surfaces migrate off this file.
 
-## Legacy tokens
+## Retired token aliases
 
 **SoT:** `design-system/tokens/*` on `:root` + `.ds-root`.
 
 ### Migrated (P0 + P1-A)
 
-| Legacy                                    | Replacement                 | Where                      |
+| Previous name                             | Replacement                 | Where                      |
 | ----------------------------------------- | --------------------------- | -------------------------- |
 | `--text-caption`                          | `--text-label`              | pages / index (P0)         |
 | `--space-xs/sm/md`                        | `--space-8/12/16`           | index (P0)                 |
@@ -38,20 +38,10 @@ Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999p
 | `--space-2xl`                             | `--space-48`                | index                      |
 | `--radius-sm`                             | `--radius-control`          | index                      |
 | `--radius-md`                             | `--radius-panel`            | index                      |
-| `--text-eyebrow`                          | `--text-meta`               | index                      |
-| `--text-secondary` (size)                 | `--text-body`               | index                      |
-| `--color-surface-muted`                   | `--color-surface-secondary` | teams.css                  |
-| `--radius-pill`                           | literal `999px`             | teams.css gauge (P1-B SoT) |
-| Soft-tone aliases / unused `:root` ladder | removed                     | index `:root`              |
+| `--radius-lg`                             | `--radius-overlay`          | index                      |
+| `--color-bg` / `--color-surface` / …      | `--bg` / `--surface` / …    | index + pages              |
+| `--color-text` / `--color-muted`          | `--text` / `--text-muted`   | index + pages              |
+| `--color-border`                          | `--border`                  | index + pages              |
+| `--color-danger` / `--color-warning` / …  | `--danger` / `--warning` / …| index + pages              |
 
-### Remaining local (not a second token ladder)
-
-| Value                                        | Where                           | Notes                                                    |
-| -------------------------------------------- | ------------------------------- | -------------------------------------------------------- |
-| `74rem` / `46rem` / `clamp(1rem, 4vw, 2rem)` | `.page`                         | layout chrome local to admin `.page`                     |
-| `999px`                                      | teams gauge / circular swatches | Capsule or circle geometry — no shared pill token (P1-B) |
-| `140ms` easing / focus ring / mono stack     | index admin chrome              | preserve timing; DS motion is 160ms                      |
-
-## Deferred (do not add without an explicit trigger)
-
-See README **Out of scope** — OpenAPI, Playwright, Storybook, `features/`, Tailwind / UI kits.
+Do not reintroduce the previous names. New CSS uses only the replacement tokens.

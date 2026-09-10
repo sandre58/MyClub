@@ -69,12 +69,6 @@ describe('resolveActiveDestination', () => {
     ).toBe('structure');
   });
 
-  it('maps legacy /organisation URL to Structure destination', () => {
-    expect(
-      resolveActiveDestination(`/competitions/${competitionId}/organisation`),
-    ).toBe('structure');
-  });
-
   it('maps teams routes to Équipes', () => {
     expect(
       resolveActiveDestination(`/competitions/${competitionId}/teams`),

@@ -30,7 +30,7 @@ public static class ReplaceStageQualificationRules
         {
             throw new ApplicationFailureException(
                 $"Qualification rules cannot be replaced while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (paths is null || paths.Count == 0)

@@ -26,7 +26,7 @@ public sealed record MatchAttentionSlice(
     EntryId AwayEntryId,
     MatchResult? Result)
 {
-    /// <summary>Maps a loaded aggregate to the attention read slice (tests and legacy callers).</summary>
+    /// <summary>Maps a loaded aggregate to the attention read slice (tests and older call sites).</summary>
     public static MatchAttentionSlice FromMatch(Match match)
     {
         ArgumentNullException.ThrowIfNull(match);

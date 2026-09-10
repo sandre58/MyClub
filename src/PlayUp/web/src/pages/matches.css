@@ -90,6 +90,29 @@
   color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
 }
 
+.matches-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-info);
+  font: inherit;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.matches-action:hover:not(:disabled) {
+  color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
+}
+
+.matches-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ---------- Bandeau ---------- */
 
 .matches-band {

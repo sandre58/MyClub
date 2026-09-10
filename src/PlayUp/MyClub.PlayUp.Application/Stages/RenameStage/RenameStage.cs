@@ -24,7 +24,7 @@ public static class RenameStage
         {
             throw new ApplicationFailureException(
                 $"Stage '{stage.Id}' cannot be renamed while status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         stage.Rename(new StageName(name));

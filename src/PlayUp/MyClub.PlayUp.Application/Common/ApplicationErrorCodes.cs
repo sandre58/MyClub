@@ -54,7 +54,7 @@ public static class ApplicationErrorCodes
     public const string TieFormatRequired = "Application.TieFormatRequired";
 
     /// <summary>
-    /// Legacy code: group-scoped paths once rejected before multi-Standing orchestration (7.0.9.2).
+    /// Historical code: group-scoped paths once rejected before multi-Standing orchestration (7.0.9.2).
     /// Prefer <see cref="QualificationStandingMissing"/> / <see cref="QualificationGroupNotFound"/>.
     /// </summary>
     public const string QualificationSourceNotSupported = "Application.QualificationSourceNotSupported";
@@ -129,9 +129,9 @@ public static class ApplicationErrorCodes
     public const string CupBracketNotPowerOfTwo = "Application.CupBracketNotPowerOfTwo";
 
     /// <summary>
-    /// Gets the code when Organisation mutations are refused for the current lifecycle status.
+    /// Gets the code when Structure mutations are refused for the current lifecycle status.
     /// </summary>
-    public const string OrganisationNotMutable = "Application.OrganisationNotMutable";
+    public const string StructureNotMutable = "Application.StructureNotMutable";
 
     /// <summary>
     /// Gets the code when Fixture/Match materialization cannot run.

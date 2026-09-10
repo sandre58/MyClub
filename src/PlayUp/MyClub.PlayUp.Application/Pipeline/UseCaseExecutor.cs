@@ -21,10 +21,10 @@ namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <summary>
 /// Minimal persistence orchestration for Application use cases and named read methods
-/// (CreateCompetition, Organisation Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
+/// (CreateCompetition, Structure Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
 /// PublishDraw, ApplyDraw, StartMatch, FinishMatch, PrepareCompetition, StartCompetition,
 /// CompleteCompetition, ArchiveCompetition, ListCompetitions, GetWorkspaceSummary,
-/// GetCompetitionDetail, GetOrganisationView, GetStageOverview, ListMatchesByStage,
+/// GetCompetitionDetail, GetStructureView, GetStageOverview, ListMatchesByStage,
 /// GetMatchDetail, GetConsultation).
 /// </summary>
 /// <remarks>
@@ -681,9 +681,9 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Adds an entry and returns the updated <see cref="OrganisationViewDto"/>.
+    /// Adds an entry and returns the updated <see cref="StructureViewDto"/>.
     /// </summary>
-    public async Task<OrganisationViewDto> AddEntryAsync(
+    public async Task<StructureViewDto> AddEntryAsync(
         CompetitionId competitionId,
         string displayName,
         Guid? teamId = null,
@@ -710,13 +710,13 @@ public sealed partial class UseCaseExecutor(
             teamId is null ? null : new TeamId(teamId.Value),
             presentation);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Updates competition presentation and returns the updated organisation view.
+    /// Updates competition presentation and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> UpdateCompetitionPresentationAsync(
+    public async Task<StructureViewDto> UpdateCompetitionPresentationAsync(
         CompetitionId competitionId,
         string? shortName,
         Guid? logoMediaId,
@@ -726,13 +726,13 @@ public sealed partial class UseCaseExecutor(
         await EnsureLogoMediaExistsAsync(logoMediaId, cancellationToken).ConfigureAwait(false);
         UpdateCompetitionPresentation.Execute(competition, shortName, logoMediaId, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Sets declared competition schedule and returns the updated organisation view.
+    /// Sets declared competition schedule and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> SetCompetitionScheduleAsync(
+    public async Task<StructureViewDto> SetCompetitionScheduleAsync(
         CompetitionId competitionId,
         DateTimeOffset? scheduledStart,
         DateTimeOffset? scheduledEnd,
@@ -741,13 +741,13 @@ public sealed partial class UseCaseExecutor(
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         SetCompetitionSchedule.Execute(competition, scheduledStart, scheduledEnd, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Updates entry presentation and returns the updated organisation view.
+    /// Updates entry presentation and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> UpdateEntryPresentationAsync(
+    public async Task<StructureViewDto> UpdateEntryPresentationAsync(
         CompetitionId competitionId,
         EntryId entryId,
         string? shortName,
@@ -767,13 +767,13 @@ public sealed partial class UseCaseExecutor(
             secondaryColor,
             clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Renames an entry and returns the updated organisation view.
+    /// Renames an entry and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> RenameEntryAsync(
+    public async Task<StructureViewDto> RenameEntryAsync(
         CompetitionId competitionId,
         EntryId entryId,
         string displayName,
@@ -782,13 +782,13 @@ public sealed partial class UseCaseExecutor(
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         RenameEntry.Execute(competition, entryId, displayName, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Withdraws an entry (forfait) and returns the updated organisation view.
+    /// Withdraws an entry (forfait) and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> WithdrawEntryAsync(
+    public async Task<StructureViewDto> WithdrawEntryAsync(
         CompetitionId competitionId,
         EntryId entryId,
         CancellationToken cancellationToken = default)
@@ -799,13 +799,13 @@ public sealed partial class UseCaseExecutor(
                 .ConfigureAwait(false);
         WithdrawEntry.Execute(competition, entryId, competitionStages, competitionMatches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Hard-deletes an entry and returns the updated organisation view.
+    /// Hard-deletes an entry and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> DeleteEntryAsync(
+    public async Task<StructureViewDto> DeleteEntryAsync(
         CompetitionId competitionId,
         EntryId entryId,
         CancellationToken cancellationToken = default)
@@ -816,13 +816,13 @@ public sealed partial class UseCaseExecutor(
                 .ConfigureAwait(false);
         DeleteEntry.Execute(competition, entryId, competitionStages, competitionMatches, matches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Hard-deletes several entries atomically and returns the updated organisation view.
+    /// Hard-deletes several entries atomically and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> DeleteEntriesAsync(
+    public async Task<StructureViewDto> DeleteEntriesAsync(
         CompetitionId competitionId,
         IReadOnlyList<EntryId> entryIds,
         CancellationToken cancellationToken = default)
@@ -833,13 +833,13 @@ public sealed partial class UseCaseExecutor(
                 .ConfigureAwait(false);
         DeleteEntries.Execute(competition, entryIds, competitionStages, competitionMatches, matches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Withdraws several entries atomically and returns the updated organisation view.
+    /// Withdraws several entries atomically and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> WithdrawEntriesAsync(
+    public async Task<StructureViewDto> WithdrawEntriesAsync(
         CompetitionId competitionId,
         IReadOnlyList<EntryId> entryIds,
         CancellationToken cancellationToken = default)
@@ -850,13 +850,13 @@ public sealed partial class UseCaseExecutor(
                 .ConfigureAwait(false);
         WithdrawEntries.Execute(competition, entryIds, competitionStages, competitionMatches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Removes several declared members atomically and returns the updated organisation view.
+    /// Removes several declared members atomically and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> RemoveDeclaredMembersAsync(
+    public async Task<StructureViewDto> RemoveDeclaredMembersAsync(
         CompetitionId competitionId,
         EntryId entryId,
         IReadOnlyList<MemberId> memberIds,
@@ -867,13 +867,13 @@ public sealed partial class UseCaseExecutor(
             await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
         RemoveDeclaredMembers.Execute(competition, entryId, memberIds, competitionMatches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Adds a declared member to an entry roster and returns the updated organisation view.
+    /// Adds a declared member to an entry roster and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> AddDeclaredMemberAsync(
+    public async Task<StructureViewDto> AddDeclaredMemberAsync(
         CompetitionId competitionId,
         EntryId entryId,
         string displayName,
@@ -883,13 +883,13 @@ public sealed partial class UseCaseExecutor(
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         AddDeclaredMember.Execute(competition, entryId, displayName, role, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Removes a declared member from an entry roster and returns the updated organisation view.
+    /// Removes a declared member from an entry roster and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> RemoveDeclaredMemberAsync(
+    public async Task<StructureViewDto> RemoveDeclaredMemberAsync(
         CompetitionId competitionId,
         EntryId entryId,
         MemberId memberId,
@@ -900,13 +900,13 @@ public sealed partial class UseCaseExecutor(
             await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
         RemoveDeclaredMember.Execute(competition, entryId, memberId, competitionMatches, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Renames a declared member and returns the updated organisation view.
+    /// Renames a declared member and returns the updated structure view.
     /// </summary>
-    public async Task<OrganisationViewDto> RenameDeclaredMemberAsync(
+    public async Task<StructureViewDto> RenameDeclaredMemberAsync(
         CompetitionId competitionId,
         EntryId entryId,
         MemberId memberId,
@@ -916,11 +916,11 @@ public sealed partial class UseCaseExecutor(
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
         RenameDeclaredMember.Execute(competition, entryId, memberId, displayName, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Replaces competition regulation and returns the updated organisation view.
+    /// Replaces competition regulation and returns the updated structure view.
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>
     /// <param name="buildReplacement">
@@ -928,7 +928,7 @@ public sealed partial class UseCaseExecutor(
     /// (so omitted disciplinary AllowedTypes can preserve existing rules).
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task<OrganisationViewDto> ReplaceRegulationAsync(
+    public async Task<StructureViewDto> ReplaceRegulationAsync(
         CompetitionId competitionId,
         Func<Regulation, Regulation> buildReplacement,
         CancellationToken cancellationToken = default)
@@ -940,14 +940,14 @@ public sealed partial class UseCaseExecutor(
         var regulation = buildReplacement(competition.Regulation);
         ReplaceRegulation.Execute(competition, competitionStagesForUpdate, regulation, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Configures primary stage structure from a typed intent (atomic SaveChanges).
     /// First-time create or explicit rebuild of the primary skeleton.
     /// </summary>
-    public async Task<(ConfigureStructureResult Result, OrganisationViewDto View)> ConfigureStructureAsync(
+    public async Task<(ConfigureStructureResult Result, StructureViewDto View)> ConfigureStructureAsync(
         CompetitionId competitionId,
         StructureIntent intent,
         CancellationToken cancellationToken = default)
@@ -972,7 +972,7 @@ public sealed partial class UseCaseExecutor(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var view = await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
         return (result, view);
     }
 
@@ -994,7 +994,7 @@ public sealed partial class UseCaseExecutor(
     /// <summary>
     /// Removes a stage and scrubs peer Qualif/Prog paths that targeted it.
     /// </summary>
-    public async Task<(RemoveCompetitionStageResult Impact, OrganisationViewDto View)> RemoveCompetitionStageAsync(
+    public async Task<(RemoveCompetitionStageResult Impact, StructureViewDto View)> RemoveCompetitionStageAsync(
         CompetitionId competitionId,
         StageId stageId,
         CancellationToken cancellationToken = default)
@@ -1010,7 +1010,7 @@ public sealed partial class UseCaseExecutor(
         var impact = RemoveCompetitionStage.Execute(competition, target, peerStages, clock);
         stages.Remove(target);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var view = await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
         return (impact, view);
     }
 
@@ -1219,9 +1219,9 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Assembles <see cref="OrganisationViewDto"/> for the Organisation hub.
+    /// Assembles <see cref="StructureViewDto"/> for the Structure hub.
     /// </summary>
-    public async Task<OrganisationViewDto> GetOrganisationViewAsync(
+    public async Task<StructureViewDto> GetStructureViewAsync(
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
@@ -1230,7 +1230,7 @@ public sealed partial class UseCaseExecutor(
             ?? throw new ApplicationFailureException(
                 $"Competition '{competitionId}' was not found.",
                 ApplicationErrorCodes.CompetitionNotFound);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -1524,12 +1524,12 @@ public sealed partial class UseCaseExecutor(
         }
     }
 
-    private async Task<OrganisationViewDto> AssembleOrganisationViewAsync(
+    private async Task<StructureViewDto> AssembleStructureViewAsync(
         Competition competition,
         CancellationToken cancellationToken)
     {
-        var bundle = await LoadOrganisationReadBundleAsync(competition, cancellationToken).ConfigureAwait(false);
-        return OrganisationViewAssembler.Assemble(
+        var bundle = await LoadStructureReadBundleAsync(competition, cancellationToken).ConfigureAwait(false);
+        return StructureViewAssembler.Assemble(
             bundle.Competition,
             bundle.Stages,
             bundle.SheetMemberRefs);
@@ -2067,11 +2067,11 @@ public sealed partial class UseCaseExecutor(
         return new ConsultationReadBundle(competition, competitionStages, matchesByStage);
     }
 
-    private async Task<OrganisationReadBundle> LoadOrganisationReadBundleAsync(
+    private async Task<StructureReadBundle> LoadStructureReadBundleAsync(
         Competition competition,
         CancellationToken cancellationToken)
     {
-        var spec = CompetitionReadBundleSpec.Organisation;
+        var spec = CompetitionReadBundleSpec.Structure;
         var competitionStagesReadOnly = await LoadCompetitionStagesReadOnlyAsync(
             competition,
             spec.StageCapabilities,
@@ -2080,8 +2080,8 @@ public sealed partial class UseCaseExecutor(
             ? await matches
                 .ListSheetMemberRefsByCompetitionReadOnlyAsync(competition.Id, cancellationToken)
                 .ConfigureAwait(false)
-            : throw new InvalidOperationException("Organisation bundle expects no match aggregate load.");
-        return new OrganisationReadBundle(competition, competitionStagesReadOnly, sheetMemberRefs);
+            : throw new InvalidOperationException("Structure bundle expects no match aggregate load.");
+        return new StructureReadBundle(competition, competitionStagesReadOnly, sheetMemberRefs);
     }
 
     private async Task<CompetitionReadBundle> LoadCompetitionReadBundleAsync(

@@ -22,7 +22,7 @@ internal sealed record CompetitionReadBundle(
     IReadOnlyList<Stage> Stages,
     IReadOnlyDictionary<StageId, IReadOnlyList<Match>> MatchesByStage)
 {
-    /// <summary>Gets flattens <see cref="MatchesByStage"/> for organisation-style assemblers.</summary>
+    /// <summary>Gets flattens <see cref="MatchesByStage"/> for structure-style assemblers.</summary>
     public IReadOnlyList<Match> AllMatches { get; } =
         [.. MatchesByStage.Values.SelectMany(stageMatches => stageMatches)];
 }

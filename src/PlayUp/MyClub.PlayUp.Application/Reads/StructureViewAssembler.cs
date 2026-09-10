@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="OrganisationViewAssembler.cs" company="Stéphane ANDRE">
+// <copyright file="StructureViewAssembler.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -15,9 +15,9 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Assembles <see cref="OrganisationViewDto"/> from Competition + loaded stages.
+/// Assembles <see cref="StructureViewDto"/> from Competition + loaded stages.
 /// </summary>
-public static class OrganisationViewAssembler
+public static class StructureViewAssembler
 {
     /// <summary>
     /// Display-name order for entries and declared members (Équipes SoT: nom affiché).
@@ -116,7 +116,7 @@ public static class OrganisationViewAssembler
     public const string IssueMissingProgressionDestinationSlot = "MissingProgressionDestinationSlot";
 
     /// <summary>
-    /// Builds the Organisation view.
+    /// Builds the Structure view.
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Stages loaded for <see cref="Competition.StageIds"/> (same order).</param>
@@ -124,8 +124,8 @@ public static class OrganisationViewAssembler
     /// Optional sheet member references. When provided, declared members get
     /// <see cref="DeclaredMemberDto.ReferencedOnMatchSheet"/> without loading full matches.
     /// </param>
-    /// <returns>Organisation view DTO.</returns>
-    public static OrganisationViewDto Assemble(
+    /// <returns>Structure view DTO.</returns>
+    public static StructureViewDto Assemble(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<MatchSheetMemberRef>? sheetMemberRefs = null)
@@ -149,7 +149,7 @@ public static class OrganisationViewAssembler
             stageHubs);
         var actions = BuildActions(competition);
 
-        return new OrganisationViewDto(
+        return new StructureViewDto(
             competition.Id.Value,
             competition.Name.Value,
             competition.Status,
@@ -166,12 +166,12 @@ public static class OrganisationViewAssembler
             competition.ScheduledEnd);
     }
 
-    private static List<OrganisationStageHubSummaryDto> BuildStageHubSummaries(
+    private static List<StructureStageHubSummaryDto> BuildStageHubSummaries(
         Competition competition,
         IReadOnlyList<Stage> stages)
     {
         var byId = stages.ToDictionary(stage => stage.Id);
-        var ordered = new List<OrganisationStageHubSummaryDto>(competition.StageIds.Count);
+        var ordered = new List<StructureStageHubSummaryDto>(competition.StageIds.Count);
         foreach (var stageId in competition.StageIds)
         {
             if (!byId.TryGetValue(stageId, out var stage))
@@ -185,7 +185,7 @@ public static class OrganisationViewAssembler
         return ordered;
     }
 
-    private static OrganisationStageHubSummaryDto BuildStageHubSummary(
+    private static StructureStageHubSummaryDto BuildStageHubSummary(
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages)
@@ -235,18 +235,18 @@ public static class OrganisationViewAssembler
             hasTiePenaltyShootout = false;
         }
 
-        IReadOnlyList<OrganisationPlacementAwardDto>? placementAwards = placement?.Paths
+        IReadOnlyList<StructurePlacementAwardDto>? placementAwards = placement?.Paths
             .OrderBy(path => path.Rank)
-            .Select(path => new OrganisationPlacementAwardDto(path.Rank, path.Outcome))
+            .Select(path => new StructurePlacementAwardDto(path.Rank, path.Outcome))
             .ToArray();
-        IReadOnlyList<OrganisationDrawConstraintDto>? drawConstraints = draw?.Constraints
-            .Select(constraint => new OrganisationDrawConstraintDto(
+        IReadOnlyList<StructureDrawConstraintDto>? drawConstraints = draw?.Constraints
+            .Select(constraint => new StructureDrawConstraintDto(
                 constraint.ConstraintType,
                 constraint.Enforcement,
                 constraint.MaxPerGroup))
             .ToArray();
 
-        return new OrganisationStageHubSummaryDto(
+        return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
             stage.Status,
@@ -297,7 +297,7 @@ public static class OrganisationViewAssembler
             HalfTimeDuration: match.Duration.HalfTimeDuration);
     }
 
-    private static IReadOnlyList<OrganisationQualificationPathDto>? MapQualificationPaths(
+    private static IReadOnlyList<StructureQualificationPathDto>? MapQualificationPaths(
         QualificationRules? rules)
     {
         if (rules is null)
@@ -307,7 +307,7 @@ public static class OrganisationViewAssembler
 
         return
         [
-            .. rules.Paths.Select(path => new OrganisationQualificationPathDto(
+            .. rules.Paths.Select(path => new StructureQualificationPathDto(
                 path.Order,
                 path.Selection.Mode,
                 path.Selection.Value,
@@ -321,7 +321,7 @@ public static class OrganisationViewAssembler
         ];
     }
 
-    private static IReadOnlyList<OrganisationProgressionPathDto>? MapProgressionPaths(
+    private static IReadOnlyList<StructureProgressionPathDto>? MapProgressionPaths(
         ProgressionRules? rules)
     {
         if (rules is null)
@@ -331,7 +331,7 @@ public static class OrganisationViewAssembler
 
         return
         [
-            .. rules.Paths.Select(path => new OrganisationProgressionPathDto(
+            .. rules.Paths.Select(path => new StructureProgressionPathDto(
                 path.SourceFixtureId.Value,
                 path.Outcome,
                 path.Destination.StageId.Value,
@@ -509,16 +509,16 @@ public static class OrganisationViewAssembler
     /// <summary>
     /// Groups consecutive rounds that share the same effective TieFormat signature.
     /// </summary>
-    private static List<OrganisationConfrontationSegmentDto> BuildConfrontationSegments(Stage stage)
+    private static List<StructureConfrontationSegmentDto> BuildConfrontationSegments(Stage stage)
     {
-        var segments = new List<OrganisationConfrontationSegmentDto>();
-        OrganisationConfrontationSegmentDto? current = null;
+        var segments = new List<StructureConfrontationSegmentDto>();
+        StructureConfrontationSegmentDto? current = null;
 
         for (var index = 0; index < stage.Rounds.Count; index++)
         {
             var round = stage.Rounds[index];
             var tie = TieFormat.OrDefaultOneLeg(round.TieFormat);
-            var roundRef = new OrganisationConfrontationRoundRefDto(round.Id.Value, round.Name, index);
+            var roundRef = new StructureConfrontationRoundRefDto(round.Id.Value, round.Name, index);
             if (current is not null && SameTieSignature(current, tie))
             {
                 current = current with
@@ -529,7 +529,7 @@ public static class OrganisationViewAssembler
                 continue;
             }
 
-            current = new OrganisationConfrontationSegmentDto(
+            current = new StructureConfrontationSegmentDto(
                 [roundRef],
                 tie.NumberOfLegs,
                 tie.AggregateScoring,
@@ -542,28 +542,28 @@ public static class OrganisationViewAssembler
         return segments;
     }
 
-    private static bool SameTieSignature(OrganisationConfrontationSegmentDto segment, TieFormat tie) =>
+    private static bool SameTieSignature(StructureConfrontationSegmentDto segment, TieFormat tie) =>
         segment.NumberOfLegs == tie.NumberOfLegs
         && segment.AggregateScoring == tie.AggregateScoring
         && segment.HasAwayGoalsRule == (tie.AwayGoalsRule is not null)
         && segment.HasTieExtraTime == (tie.ExtraTimeRule is not null)
         && segment.HasTiePenaltyShootout == (tie.PenaltyShootoutRule is not null);
 
-    private static OrganisationStageDefaultsBindingDto MapDefaultsBinding(Stage stage)
+    private static StructureStageDefaultsBindingDto MapDefaultsBinding(Stage stage)
     {
         var binding = stage.DefaultsBinding;
         var classifying = stage.Regulation.StandingRules is not null;
         var points = classifying
-            ? new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.Points))
+            ? new StructureHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.Points))
             : null;
         var rankingCriteria = classifying
-            ? new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.RankingCriteria))
+            ? new StructureHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.RankingCriteria))
             : null;
-        return new OrganisationStageDefaultsBindingDto(
-            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.MatchDuration)),
-            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.ExtraTime)),
-            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.PenaltyShootout)),
-            new OrganisationHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.AdministrativeResult)),
+        return new StructureStageDefaultsBindingDto(
+            new StructureHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.MatchDuration)),
+            new StructureHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.ExtraTime)),
+            new StructureHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.PenaltyShootout)),
+            new StructureHeritablePartBindingDto(binding.IsBound(HeritableRegulationPart.AdministrativeResult)),
             points,
             rankingCriteria);
     }
@@ -594,14 +594,14 @@ public static class OrganisationViewAssembler
         return stages.FirstOrDefault(stage => stage.Id.Equals(primaryId));
     }
 
-    private static OrganisationParticipantsSummaryDto BuildParticipants(
+    private static StructureParticipantsSummaryDto BuildParticipants(
         Competition competition,
         IReadOnlyList<MatchSheetMemberRef> sheetMemberRefs)
     {
         var sheetReferenced = BuildSheetReferencedMemberIds(sheetMemberRefs);
         var entries = competition.Entries
             .OrderBy(entry => entry.DisplayName, DisplayNameComparer)
-            .Select(entry => new OrganisationEntryDto(
+            .Select(entry => new StructureEntryDto(
                 entry.Id.Value,
                 entry.DisplayName,
                 entry.Status,
@@ -621,7 +621,7 @@ public static class OrganisationViewAssembler
             .ToList();
         var active = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
         var occupying = competition.Entries.Count;
-        return new OrganisationParticipantsSummaryDto(active, occupying, entries);
+        return new StructureParticipantsSummaryDto(active, occupying, entries);
     }
 
     /// <summary>
@@ -640,12 +640,12 @@ public static class OrganisationViewAssembler
         return referenced;
     }
 
-    private static OrganisationRegulationSummaryDto BuildRegulation(Competition competition)
+    private static StructureRegulationSummaryDto BuildRegulation(Competition competition)
     {
         var regulation = competition.Regulation;
         var match = regulation.MatchRules;
         var extra = match.ExtraTimePolicy;
-        return new OrganisationRegulationSummaryDto(
+        return new StructureRegulationSummaryDto(
             regulation.EntryRules.MinimumTeams,
             regulation.EntryRules.MaximumTeams,
             match.Duration.DurationPerPeriod,
@@ -665,10 +665,10 @@ public static class OrganisationViewAssembler
             ForfeitLoserGoals: match.AdministrativeResultPolicy.ForfeitLoserGoals);
     }
 
-    private static OrganisationFormatSummaryDto BuildFormatSummary(Stage? primary) =>
+    private static StructureFormatSummaryDto BuildFormatSummary(Stage? primary) =>
         primary is null
-            ? new OrganisationFormatSummaryDto(null, null, null, null)
-            : new OrganisationFormatSummaryDto(
+            ? new StructureFormatSummaryDto(null, null, null, null)
+            : new StructureFormatSummaryDto(
                 InferFormat(primary),
                 primary.Id.Value,
                 primary.Name.Value,
@@ -685,11 +685,11 @@ public static class OrganisationViewAssembler
             ? StructureFormatKind.Championship
             : null;
 
-    private static OrganisationStructureSummaryDto BuildStructureSummary(Stage? primary)
+    private static StructureTopologySummaryDto BuildStructureSummary(Stage? primary)
     {
         if (primary is null)
         {
-            return new OrganisationStructureSummaryDto(
+            return new StructureTopologySummaryDto(
                 0,
                 0,
                 0,
@@ -700,7 +700,7 @@ public static class OrganisationViewAssembler
         }
 
         var drawRules = primary.Regulation.DrawRules;
-        return new OrganisationStructureSummaryDto(
+        return new StructureTopologySummaryDto(
             primary.Groups.Count,
             primary.Rounds.Count,
             primary.Matchdays.Count,
@@ -711,13 +711,13 @@ public static class OrganisationViewAssembler
             primary.SwissSettings?.RoundCount);
     }
 
-    private static OrganisationReadinessDto BuildReadiness(
+    private static StructureReadinessDto BuildReadiness(
         Competition competition,
         Stage? primary,
         StructureFormatKind? formatKind,
-        OrganisationStructureSummaryDto structure,
+        StructureTopologySummaryDto structure,
         int attachedMatchCount,
-        IReadOnlyList<OrganisationStageHubSummaryDto> stageHubs)
+        IReadOnlyList<StructureStageHubSummaryDto> stageHubs)
     {
         var blockers = new List<string>();
 
@@ -813,7 +813,7 @@ public static class OrganisationViewAssembler
             || blockers.Contains(BlockerStructureGraphInvalid);
         var readyForNext = !constructionBlocked && (readyForDraw || readyForSchedulePath);
 
-        return new OrganisationReadinessDto(
+        return new StructureReadinessDto(
             readyForNext,
             readyForDraw,
             readyForMaterialization,

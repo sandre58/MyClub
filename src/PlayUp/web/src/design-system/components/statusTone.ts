@@ -1,7 +1,7 @@
 import type { StatusTone } from './Status';
 
-/** Maps legacy StatusBadge tone names to StatusTone. */
-export function statusToneFromLegacy(
+/** Maps StatusBadge tone names to StatusTone. */
+export function statusToneFromBadgeTone(
   tone: 'neutral' | 'info' | 'ok' | 'live' | 'done' | 'warn' | 'danger',
 ): StatusTone {
   switch (tone) {

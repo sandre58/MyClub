@@ -1038,7 +1038,7 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Clears Swiss Kind settings and bye history (Organisation reconfigure). Draft/Ready only.
+    /// Clears Swiss Kind settings and bye history (Structure reconfigure). Draft/Ready only.
     /// </summary>
     public void ClearSwissConfiguration()
     {

@@ -23,7 +23,7 @@ public sealed class OverviewAssemblerTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 20, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Assemble_draft_exposes_construction_cycle_and_organisation_actions()
+    public void Assemble_draft_exposes_construction_cycle_and_structure_actions()
     {
         var competition = Competition.Create(new CompetitionName("Draft Cup"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Alpha", _clock);
@@ -41,8 +41,8 @@ public sealed class OverviewAssemblerTests
         view.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeTrue();
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotBeEmpty();
         view.NaturalProgression.Should().BeNull(
-            "Construction calm: no structural tip and no ContinueOrganisation fallback");
-        view.AvailableActions.Should().Contain(action => action.Code == OrganisationViewAssembler.ActionAddEntry);
+            "Construction calm: no structural tip and no ContinueStructure fallback");
+        view.AvailableActions.Should().Contain(action => action.Code == StructureViewAssembler.ActionAddEntry);
 
         // Entry without stage — PrepareCompetition must not be projected (Domain precondition).
         view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionPrepareCompetition);
@@ -247,10 +247,10 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.Situations.Should().Contain(item =>
-            item.Source == OrganisationViewAssembler.BlockerInsufficientParticipants
+            item.Source == StructureViewAssembler.BlockerInsufficientParticipants
             && item.Nature == OverviewAssembler.NatureBlocking
             && item.Actionable
-            && item.ActionCode == OrganisationViewAssembler.ActionAddEntry
+            && item.ActionCode == StructureViewAssembler.ActionAddEntry
             && item.ImpactCode == OverviewAssembler.ImpactBlocksConstruction);
         view.AttentionSummary.Count.Should().Be(view.AttentionSummary.Items.Count);
         view.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == OverviewAssembler.NatureBlocking);
@@ -272,7 +272,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.Situations.Should().NotContain(item =>
-            item.Source == OrganisationViewAssembler.BlockerInsufficientParticipants);
+            item.Source == StructureViewAssembler.BlockerInsufficientParticipants);
     }
 
     [Fact]
@@ -532,7 +532,7 @@ public sealed class OverviewAssemblerTests
         regulation.TransitionReadiness.Should().Contain(item =>
             item.Transition == OverviewAssembler.TransitionMaterializeMatches && !item.Ready);
         regulation.TransitionReadiness.Should().OnlyContain(item =>
-            item.BlockerCodes.Contains(OrganisationViewAssembler.BlockerInsufficientParticipants));
+            item.BlockerCodes.Contains(StructureViewAssembler.BlockerInsufficientParticipants));
     }
 
     [Fact]
@@ -726,9 +726,9 @@ public sealed class OverviewAssemblerTests
             _clock);
         MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
 
-        var organisation = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
-        organisation.Readiness.ReadyForDraw.Should().BeTrue();
-        organisation.Readiness.ReadyForMaterialization.Should().BeFalse();
+        var structureView = StructureViewAssembler.Assemble(competition, [configured.Stage]);
+        structureView.Readiness.ReadyForDraw.Should().BeTrue();
+        structureView.Readiness.ReadyForMaterialization.Should().BeFalse();
 
         var view = OverviewAssembler.Assemble(
             competition,

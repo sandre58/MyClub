@@ -1,4 +1,4 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -7,7 +7,7 @@ import {
   addDeclaredParticipation,
   changeDeclaredParticipationCompositionStatus,
   fetchMatchDetail,
-  fetchOrganisationView,
+  fetchStructureView,
   fetchStageOverview,
   finishMatch,
   removeDeclaredParticipation,
@@ -17,7 +17,7 @@ import {
 import type {
   DeclaredParticipation,
   MatchDetail,
-  OrganisationView,
+  StructureView,
   StageOverview,
 } from '../types';
 import { MatchPage } from './MatchPage';
@@ -28,7 +28,7 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchMatchDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
-    fetchOrganisationView: vi.fn(),
+    fetchStructureView: vi.fn(),
     startMatch: vi.fn(),
     finishMatch: vi.fn(),
     setRunningScore: vi.fn(),
@@ -64,7 +64,7 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
   };
 }
 
-function organisationView(): OrganisationView {
+function structureView(): StructureView {
   return {
     competitionId,
     name: 'Spring Cup',
@@ -177,7 +177,7 @@ describe('MatchPage sheet (Lot 2)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
     vi.mocked(addDeclaredParticipation).mockResolvedValue();
     vi.mocked(removeDeclaredParticipation).mockResolvedValue();
     vi.mocked(changeDeclaredParticipationCompositionStatus).mockResolvedValue();
@@ -186,7 +186,7 @@ describe('MatchPage sheet (Lot 2)', () => {
     vi.mocked(setRunningScore).mockResolvedValue();
   });
 
-  it('adds a home starter from the organisation roster', async () => {
+  it('adds a home starter from the structure roster', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(addDeclaredParticipation).mock.calls.length > 0) {

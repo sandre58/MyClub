@@ -178,7 +178,7 @@
     },
     "drawPotsUnit_one": "pot",
     "drawPotsUnit_other": "pots",
-    "drawPotsTip": "Organisation en {{count}} pots",
+    "drawPotsTip": "Répartition en {{count}} pots",
     "drawSeedsUnit_one": "tête de série",
     "drawSeedsUnit_other": "têtes de série",
     "drawSeedsTip": "{{count}} têtes de série",

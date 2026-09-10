@@ -178,7 +178,7 @@
     },
     "drawPotsUnit_one": "pot",
     "drawPotsUnit_other": "pots",
-    "drawPotsTip": "Organisation in {{count}} pots",
+    "drawPotsTip": "Draw setup in {{count}} pots",
     "drawSeedsUnit_one": "seed",
     "drawSeedsUnit_other": "seeds",
     "drawSeedsTip": "{{count}} seeds",

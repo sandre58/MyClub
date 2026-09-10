@@ -19,7 +19,7 @@ namespace MyClub.PlayUp.Host.Tests;
 public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fixture)
 {
     [IntegrationFact]
-    public async Task Presentation_and_schedule_round_trip_on_organisation_viewAsync()
+    public async Task Presentation_and_schedule_round_trip_on_structure_viewAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();
@@ -39,7 +39,7 @@ public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fix
             $"/competitions/{id}/presentation",
             new UpdateCompetitionPresentationRequest("META", competitionLogoId));
         presentation.StatusCode.Should().Be(HttpStatusCode.OK);
-        var org = await presentation.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        var org = await presentation.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         org.Should().NotBeNull();
         org.ShortName.Should().Be("META");
         org.LogoMediaId.Should().Be(competitionLogoId);
@@ -50,7 +50,7 @@ public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fix
             $"/competitions/{id}/schedule",
             new SetCompetitionScheduleRequest(start, end));
         schedule.EnsureSuccessStatusCode();
-        org = await schedule.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        org = await schedule.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         org!.ScheduledStart.Should().Be(start);
         org.ScheduledEnd.Should().Be(end);
 
@@ -71,7 +71,7 @@ public sealed class CompetitionPresentationEndpointTests(HostPostgresFixture fix
                 PrimaryColor: "#004170",
                 SecondaryColor: "#DA291C"));
         add.EnsureSuccessStatusCode();
-        org = await add.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        org = await add.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         var entry = org!.Participants.Entries.Should().ContainSingle().Subject;
         entry.ShortName.Should().Be("PSG");
         entry.LogoMediaId.Should().Be(entryLogoId);

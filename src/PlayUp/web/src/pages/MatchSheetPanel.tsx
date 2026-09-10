@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import {
   addDeclaredParticipation,
   changeDeclaredParticipationCompositionStatus,
-  fetchOrganisationView,
+  fetchStructureView,
   removeDeclaredParticipation,
   setDeclaredParticipationJerseyNumber,
 } from '../api';
@@ -28,22 +28,22 @@ import type {
   DeclaredParticipation,
   MatchDetail,
   MatchSide,
-  OrganisationEntry,
+  StructureEntry,
 } from '../types';
 import { canMutateMatchSheet } from './matchSheetHelpers';
 
 /**
  * Championship match sheet — composition déclarée only (Lot 2).
- * No goals / subs / discipline. Effectif stays on Organisation (cas 7).
+ * No goals / subs / discipline. Effectif stays on Structure/Teams (cas 7).
  */
 export function MatchSheetPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');
   const queryClient = useQueryClient();
   const canMutate = canMutateMatchSheet(match);
 
-  const organisationQuery = useQuery({
+  const structureQuery = useQuery({
     queryKey: queryKeys.competitions.structure(match.competitionId),
-    queryFn: () => fetchOrganisationView(match.competitionId),
+    queryFn: () => fetchStructureView(match.competitionId),
   });
 
   const participations = match.declaredParticipations ?? [];
@@ -59,18 +59,18 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
         <p className="ds-notice ds-notice--info">{t('sheet.readOnly')}</p>
       )}
 
-      {organisationQuery.isPending && <LoadingState size="region" />}
-      {organisationQuery.isError && (
-        <ErrorState error={organisationQuery.error} />
+      {structureQuery.isPending && <LoadingState size="region" />}
+      {structureQuery.isError && (
+        <ErrorState error={structureQuery.error} />
       )}
-      {organisationQuery.data && (
+      {structureQuery.data && (
         <div className="match-sheet__sides">
           <SheetSideColumn
             match={match}
             side="Home"
             sideLabel={t('detail.home')}
             entry={findEntry(
-              organisationQuery.data.participants.entries,
+              structureQuery.data.participants.entries,
               match.home.entryId,
             )}
             participations={participations.filter((row) => row.side === 'Home')}
@@ -83,7 +83,7 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
             side="Away"
             sideLabel={t('detail.away')}
             entry={findEntry(
-              organisationQuery.data.participants.entries,
+              structureQuery.data.participants.entries,
               match.away.entryId,
             )}
             participations={participations.filter((row) => row.side === 'Away')}
@@ -98,13 +98,13 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
 }
 
 function findEntry(
-  entries: OrganisationEntry[],
+  entries: StructureEntry[],
   entryId: string,
-): OrganisationEntry | undefined {
+): StructureEntry | undefined {
   return entries.find((entry) => entry.entryId === entryId);
 }
 
-function playersOf(entry: OrganisationEntry | undefined): DeclaredMember[] {
+function playersOf(entry: StructureEntry | undefined): DeclaredMember[] {
   return (entry?.declaredMembers ?? []).filter(
     (member) => member.role === 'Player',
   );
@@ -140,7 +140,7 @@ function SheetSideColumn({
   match: MatchDetail;
   side: MatchSide;
   sideLabel: string;
-  entry: OrganisationEntry | undefined;
+  entry: StructureEntry | undefined;
   participations: DeclaredParticipation[];
   allParticipations: DeclaredParticipation[];
   canMutate: boolean;
@@ -303,7 +303,7 @@ function SheetSideColumn({
                       </button>
                       <button
                         type="button"
-                        className="organisation-action"
+                        className="matches-action"
                         disabled={busy}
                         onClick={() => {
                           setPendingRemoveId(null);
@@ -319,7 +319,7 @@ function SheetSideColumn({
                       </button>
                       <button
                         type="button"
-                        className="organisation-action"
+                        className="matches-action"
                         disabled={busy}
                         onClick={() => {
                           setJerseyEditId(null);

@@ -26,7 +26,7 @@ public static class AddStageGroup
         {
             throw new ApplicationFailureException(
                 $"Groups cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         var resolved = string.IsNullOrWhiteSpace(name)

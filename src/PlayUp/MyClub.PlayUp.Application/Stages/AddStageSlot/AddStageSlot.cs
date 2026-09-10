@@ -24,7 +24,7 @@ public static class AddStageSlot
         return stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed
             ? throw new ApplicationFailureException(
                 $"Slots cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable)
+                ApplicationErrorCodes.StructureNotMutable)
             : string.IsNullOrWhiteSpace(slotKey)
             ? throw new ApplicationFailureException(
                 "Slot key must be non-empty.",

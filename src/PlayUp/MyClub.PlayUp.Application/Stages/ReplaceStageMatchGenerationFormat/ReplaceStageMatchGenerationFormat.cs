@@ -25,7 +25,7 @@ public static class ReplaceStageMatchGenerationFormat
         {
             throw new ApplicationFailureException(
                 $"Match generation format cannot be changed while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (!Enum.IsDefined(format))

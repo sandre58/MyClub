@@ -212,18 +212,7 @@ try
         async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
         {
             var view = await executor
-                .GetOrganisationViewAsync(new CompetitionId(competitionId), cancellationToken)
-                .ConfigureAwait(false);
-            return Results.Ok(view);
-        });
-
-    // Legacy alias — SPA Structure hub; prefer GET …/structure.
-    app.MapGet(
-        "/competitions/{competitionId:guid}/organisation",
-        async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
-        {
-            var view = await executor
-                .GetOrganisationViewAsync(new CompetitionId(competitionId), cancellationToken)
+                .GetStructureViewAsync(new CompetitionId(competitionId), cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(view);
         });
@@ -485,7 +474,7 @@ try
             var view = await executor
                 .ReplaceRegulationAsync(
                     new CompetitionId(competitionId),
-                    existing => OrganisationRequestMapper.ToRegulation(
+                    existing => StructureRequestMapper.ToRegulation(
                         request,
                         existing.DisciplinaryRules),
                     cancellationToken)
@@ -495,19 +484,6 @@ try
 
     app.MapPost(
         "/competitions/{competitionId:guid}/structure",
-        async (
-            Guid competitionId,
-            ConfigureStructureRequest request,
-            UseCaseExecutor executor,
-            CancellationToken cancellationToken) =>
-        {
-            return await ConfigureStructureHttpAsync(competitionId, request, executor, cancellationToken)
-                .ConfigureAwait(false);
-        });
-
-    // Legacy alias — prefer POST …/structure.
-    app.MapPost(
-        "/competitions/{competitionId:guid}/organisation/structure",
         async (
             Guid competitionId,
             ConfigureStructureRequest request,
@@ -800,7 +776,7 @@ try
             CancellationToken cancellationToken) =>
         {
             ArgumentNullException.ThrowIfNull(request);
-            var matchRules = OrganisationRequestMapper.ToMatchRules(request);
+            var matchRules = StructureRequestMapper.ToMatchRules(request);
             await executor
                 .ReplaceStageMatchRulesAsync(new StageId(stageId), matchRules, cancellationToken)
                 .ConfigureAwait(false);
@@ -1468,7 +1444,7 @@ static async Task<IResult> ConfigureStructureHttpAsync(
     UseCaseExecutor executor,
     CancellationToken cancellationToken)
 {
-    var intent = OrganisationRequestMapper.ToStructureIntent(request);
+    var intent = StructureRequestMapper.ToStructureIntent(request);
     var (result, view) = await executor
         .ConfigureStructureAsync(new CompetitionId(competitionId), intent, cancellationToken)
         .ConfigureAwait(false);

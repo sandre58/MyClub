@@ -34,7 +34,7 @@ public static class AddCompetitionStage
         {
             throw new ApplicationFailureException(
                 $"Stages cannot be added while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         var stage = Stage.Create(

@@ -46,7 +46,7 @@ import {
 import { MutationError, PendingLabel } from '../ui';
 import type {
   DisciplinaryType,
-  OrganisationView,
+  StructureView,
   RankingCriterion,
   ReplaceRegulationRequest,
 } from '../types';
@@ -70,7 +70,7 @@ const CARD_SWATCH: Record<DisciplinaryType, string> = {
   White: '#F8FAFC',
 };
 
-function formFromView(data: OrganisationView): ReplaceRegulationRequest {
+function formFromView(data: StructureView): ReplaceRegulationRequest {
   const regulation = data.regulation;
   return {
     minimumTeams: regulation.minimumTeams,
@@ -267,13 +267,13 @@ function buildImpactMessage(
   );
 }
 
-/** Shared ReplaceRegulation dialog — Règlement hub + Organisation hub (F3 / Lot 2.5). */
+/** Shared ReplaceRegulation dialog — Règlement hub + Structure hub (F3 / Lot 2.5). */
 export function RegulationEditorDialog({
   data,
   open,
   onClose,
 }: {
-  data: OrganisationView;
+  data: StructureView;
   open: boolean;
   onClose: () => void;
 }) {

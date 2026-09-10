@@ -10,8 +10,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
-  configureOrganisationStructure,
-  fetchOrganisationView,
+  configureStructure,
+  fetchStructureView,
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { PageHead } from '../design-system/components/PageHead';
@@ -31,8 +31,8 @@ import {
 } from '../ui';
 import {
   type MatchGenerationFormat,
-  type OrganisationStageHubSummary,
-  type OrganisationView,
+  type StructureStageHubSummary,
+  type StructureView,
   type StructureFormatKind,
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
@@ -74,7 +74,7 @@ export function StructurePage() {
 
   const query = useQuery({
     queryKey: queryKeys.competitions.structure(competitionId),
-    queryFn: () => fetchOrganisationView(competitionId),
+    queryFn: () => fetchStructureView(competitionId),
     enabled: competitionId.length > 0,
   });
 
@@ -87,7 +87,7 @@ export function StructurePage() {
   );
 }
 
-function StructureHub({ data }: { data: OrganisationView }) {
+function StructureHub({ data }: { data: StructureView }) {
   const { t } = useTranslation('structure');
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLink = parseStructureDeepLink(searchParams.toString());
@@ -215,7 +215,7 @@ function StructureHub({ data }: { data: OrganisationView }) {
 }
 
 /** Prefer Host `stages[]`; synthesize one card from format summary when empty. */
-function resolveStages(data: OrganisationView): OrganisationStageHubSummary[] {
+function resolveStages(data: StructureView): StructureStageHubSummary[] {
   if (data.stages.length > 0) {
     return data.stages;
   }
@@ -259,7 +259,7 @@ function TopologyPanel({
   canConfigure,
   onConfigure,
 }: {
-  stages: OrganisationStageHubSummary[];
+  stages: StructureStageHubSummary[];
   selectedStageId: string | null;
   onSelectStage: (stageId: string) => void;
   canConfigure: boolean;
@@ -335,7 +335,7 @@ function TopologyPanel({
 }
 
 function topologyCardMeta(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
   const kind = stage.formatKind
@@ -353,8 +353,8 @@ function topologyCardMeta(
 }
 
 function edgeLabelBetween(
-  previous: OrganisationStageHubSummary | undefined,
-  current: OrganisationStageHubSummary,
+  previous: StructureStageHubSummary | undefined,
+  current: StructureStageHubSummary,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string | null {
   if (!previous) {
@@ -377,8 +377,8 @@ function PhaseFiche({
   canConfigure,
   onConfigure,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary | null;
+  data: StructureView;
+  stage: StructureStageHubSummary | null;
   drillIn: DrillInSection;
   onDrillIn: (section: DrillInSection) => void;
   canConfigure: boolean;
@@ -431,8 +431,8 @@ function PhaseOverview({
   canConfigure,
   onConfigure,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   onDrillIn: (section: StructureSectionId) => void;
   canConfigure: boolean;
   onConfigure: () => void;
@@ -643,8 +643,8 @@ function PhaseDrillIn({
   canConfigure,
   onConfigure,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   section: StructureSectionId;
   onBack: () => void;
   onSwitch: (section: StructureSectionId) => void;
@@ -713,8 +713,8 @@ function SectionDetail({
   canConfigure,
   onConfigure,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   section: StructureSectionId;
   canConfigure: boolean;
   onConfigure: () => void;
@@ -989,7 +989,7 @@ function ReadinessStrip({
   data,
   onConfigure,
 }: {
-  data: OrganisationView;
+  data: StructureView;
   onConfigure: () => void;
 }) {
   const { t } = useTranslation('structure');
@@ -1169,7 +1169,7 @@ function StructureEditorDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
+  data: StructureView;
   open: boolean;
   onClose: () => void;
 }) {
@@ -1210,7 +1210,7 @@ function StructureEditorDialog({
 
   const mutation = useMutation({
     mutationFn: () =>
-      configureOrganisationStructure(data.competitionId, {
+      configureStructure(data.competitionId, {
         format,
         stageName: stageName.trim() || null,
         matchdayCount: format === 'Championship' ? matchdayCount : null,
@@ -1226,7 +1226,7 @@ function StructureEditorDialog({
     onSuccess: async (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(data.competitionId),
-        response.organisation,
+        response.structure,
       );
       await invalidateAfterStructureMutation(
         queryClient,

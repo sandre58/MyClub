@@ -10,13 +10,13 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  configureOrganisationStructure,
-  fetchOrganisationView,
+  configureStructure,
+  fetchStructureView,
   ApiError,
 } from '../api';
 import type {
-  OrganisationStageHubSummary,
-  OrganisationView,
+  StructureStageHubSummary,
+  StructureView,
 } from '../types';
 import { StructurePage } from './StructurePage';
 import { relevantSwitcherSections } from './structureHubSections';
@@ -25,8 +25,8 @@ vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
-    fetchOrganisationView: vi.fn(),
-    configureOrganisationStructure: vi.fn(),
+    fetchStructureView: vi.fn(),
+    configureStructure: vi.fn(),
   };
 });
 
@@ -35,8 +35,8 @@ const entryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 
 function championshipStage(
-  overrides: Partial<OrganisationStageHubSummary> = {},
-): OrganisationStageHubSummary {
+  overrides: Partial<StructureStageHubSummary> = {},
+): StructureStageHubSummary {
   return {
     stageId,
     name: 'League',
@@ -70,8 +70,8 @@ function championshipStage(
 }
 
 function groupesStage(
-  overrides: Partial<OrganisationStageHubSummary> = {},
-): OrganisationStageHubSummary {
+  overrides: Partial<StructureStageHubSummary> = {},
+): StructureStageHubSummary {
   return {
     stageId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
     name: 'Groupes',
@@ -105,9 +105,9 @@ function groupesStage(
   };
 }
 
-function organisationView(
-  overrides: Partial<OrganisationView> = {},
-): OrganisationView {
+function structureView(
+  overrides: Partial<StructureView> = {},
+): StructureView {
   return {
     competitionId,
     name: 'Spring Cup',
@@ -233,10 +233,10 @@ describe('relevantSwitcherSections', () => {
 describe('StructurePage Structure hub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(configureOrganisationStructure).mockResolvedValue({
+    vi.mocked(configureStructure).mockResolvedValue({
       stageCreated: true,
       rebuildImpact: null,
-      organisation: organisationView({
+      structure: structureView({
         format: {
           kind: 'Championship',
           primaryStageId: stageId,
@@ -248,8 +248,8 @@ describe('StructurePage Structure hub', () => {
     });
   });
 
-  it('shows loading while organisation is pending', () => {
-    vi.mocked(fetchOrganisationView).mockReturnValue(new Promise(() => {}));
+  it('shows loading while structure is pending', () => {
+    vi.mocked(fetchStructureView).mockReturnValue(new Promise(() => {}));
 
     renderStructurePage();
 
@@ -257,7 +257,7 @@ describe('StructurePage Structure hub', () => {
   });
 
   it('renders Structure hub without identity / teams / regulation panels', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderStructurePage();
 
@@ -282,8 +282,8 @@ describe('StructurePage Structure hub', () => {
 
   it('shows master-detail for a championship stage without progression chrome', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         format: {
           kind: 'Championship',
           primaryStageId: stageId,
@@ -340,8 +340,8 @@ describe('StructurePage Structure hub', () => {
 
   it('supports overview drill-in and contextual section switcher', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         format: {
           kind: 'Groups',
           primaryStageId: groupesStage().stageId,
@@ -387,8 +387,8 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows an error when organisation read fails', async () => {
-    vi.mocked(fetchOrganisationView).mockRejectedValue(
+  it('shows an error when structure read fails', async () => {
+    vi.mocked(fetchStructureView).mockRejectedValue(
       new ApiError(404, 'Competition was not found.'),
     );
 
@@ -400,8 +400,8 @@ describe('StructurePage Structure hub', () => {
   });
 
   it('hydrates drill-in from Structure deep-link query params', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           championshipStage({
             actions: [
@@ -434,7 +434,7 @@ describe('StructurePage Structure hub', () => {
 
   it('configures championship structure via dialog', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderStructurePage();
 
@@ -454,7 +454,7 @@ describe('StructurePage Structure hub', () => {
     );
 
     await waitFor(() => {
-      expect(configureOrganisationStructure).toHaveBeenCalledWith(
+      expect(configureStructure).toHaveBeenCalledWith(
         competitionId,
         expect.objectContaining({
           format: 'Championship',
@@ -469,8 +469,8 @@ describe('StructurePage Structure hub', () => {
   });
 
   it('offers add-phase when Host exposes AddCompetitionStage', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         actions: ['ConfigureStructure', 'AddCompetitionStage'],
         stages: [championshipStage()],
         format: {
@@ -500,8 +500,8 @@ describe('StructurePage Structure hub', () => {
   });
 
   it('hides configure when Host actions omit it', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({ actions: [] }),
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({ actions: [] }),
     );
 
     renderStructurePage();
@@ -515,8 +515,8 @@ describe('StructurePage Structure hub', () => {
   });
 
   it("shows materialize readiness CTA for a ready Championship", async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         format: {
           kind: 'Championship',
           primaryStageId: stageId,
@@ -565,8 +565,8 @@ describe('StructurePage Structure hub', () => {
   });
 
   it('shows draw-required strip with Overview link only (no ops command)', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         format: {
           kind: 'Groups',
           primaryStageId: groupesStage().stageId,
@@ -607,8 +607,8 @@ describe('StructurePage Structure hub', () => {
 
   it('routes MissingStructure incomplete CTA to configure dialog', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         readiness: {
           readyForNextSlice: false,
           readyForDraw: false,

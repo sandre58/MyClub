@@ -17,8 +17,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </remarks>
 public static class WorkspaceSummaryAssembler
 {
-    /// <summary>Machine code: continue preparation in Organisation hub.</summary>
-    public const string ContinueOrganisationCode = "ContinueOrganisation";
+    /// <summary>Machine code: continue preparation in Structure hub.</summary>
+    public const string ContinueStructureCode = "ContinueStructure";
 
     /// <summary>Machine code: competition is ready for Normal completion.</summary>
     public const string CompleteCompetitionCode = "CompleteCompetition";
@@ -57,7 +57,7 @@ public static class WorkspaceSummaryAssembler
     private static string? ResolveNextStub(CompetitionStatus status, bool canCompleteNormally) =>
         status switch
         {
-            CompetitionStatus.Draft or CompetitionStatus.Ready => ContinueOrganisationCode,
+            CompetitionStatus.Draft or CompetitionStatus.Ready => ContinueStructureCode,
             CompetitionStatus.Running when canCompleteNormally => CompleteCompetitionCode,
             CompetitionStatus.Suspended when canCompleteNormally => CompleteCompetitionCode,
             CompetitionStatus.Running or CompetitionStatus.Suspended => "OpenMatches",

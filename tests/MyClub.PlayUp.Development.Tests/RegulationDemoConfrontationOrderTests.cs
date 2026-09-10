@@ -65,7 +65,7 @@ public sealed class RegulationDemoConfrontationOrderTests(DevelopmentPostgresFix
             "Finale");
         sortOrders.Select(row => row.SortOrder).Should().Equal(0, 1, 2);
 
-        var view = OrganisationViewAssembler.Assemble(competition, loaded);
+        var view = StructureViewAssembler.Assemble(competition, loaded);
         var hub = view.Stages.Single(stage => stage.Name == "Phase finale");
         hub.ConfrontationSegments.Should().NotBeNull();
         hub.ConfrontationSegments!.Should().HaveCount(2);

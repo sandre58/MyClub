@@ -44,7 +44,7 @@ public sealed class UseCaseExecutorCompetitionBootstrapTests
         summary.Id.Should().Be(added!.Id.Value);
         summary.Name.Should().Be("Bootstrap Cup");
         summary.Status.Should().Be(CompetitionStatus.Draft);
-        summary.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueOrganisationCode);
+        summary.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueStructureCode);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

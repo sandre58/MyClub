@@ -52,7 +52,7 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
             new ConfigureStructureRequest("Championship", MatchdayCount: 1));
         structureResponse.EnsureSuccessStatusCode();
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
-            .Organisation;
+            .Structure;
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var materializeResponse = await client.PostAsync(

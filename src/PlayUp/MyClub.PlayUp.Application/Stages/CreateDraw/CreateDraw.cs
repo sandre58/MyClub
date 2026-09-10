@@ -25,17 +25,17 @@ public static class CreateDraw
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureOrganisationMutable(stage);
+        EnsureStructureMutable(stage);
         return stage.CreateDraw(kind, clock);
     }
 
-    private static void EnsureOrganisationMutable(Stage stage)
+    private static void EnsureStructureMutable(Stage stage)
     {
         if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
             throw new ApplicationFailureException(
                 $"Draw cannot be created when stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
     }
 }

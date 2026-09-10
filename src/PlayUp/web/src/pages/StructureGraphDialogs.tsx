@@ -11,10 +11,10 @@ import { Dialog } from '../design-system/components/Dialog';
 import { queryKeys } from '../queryKeys';
 import { MutationError, PendingLabel } from '../ui';
 import type {
-  OrganisationProgressionPath,
-  OrganisationQualificationPath,
-  OrganisationStageHubSummary,
-  OrganisationView,
+  StructureProgressionPath,
+  StructureQualificationPath,
+  StructureStageHubSummary,
+  StructureView,
   ProgressionOutcome,
   SelectionMode,
 } from '../types';
@@ -35,7 +35,7 @@ type ProgDraft = {
   destinationSlotKey: string;
 };
 
-function stageActions(stage: OrganisationStageHubSummary): string[] {
+function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
 }
 
@@ -43,8 +43,8 @@ export function StructureGraphToolbar({
   data,
   stage,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary | null;
+  data: StructureView;
+  stage: StructureStageHubSummary | null;
 }) {
   const { t } = useTranslation('structure');
   const canAdd = data.actions.includes('AddCompetitionStage');
@@ -99,8 +99,8 @@ export function RelationEditors({
   stage,
   section,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   section: 'qualification' | 'progression';
 }) {
   const { t } = useTranslation('structure');
@@ -149,7 +149,7 @@ export function RelationEditors({
 export function StructureIssuesBanner({
   stage,
 }: {
-  stage: OrganisationStageHubSummary;
+  stage: StructureStageHubSummary;
 }) {
   const { t } = useTranslation('structure');
   const issues = stage.structureIssues ?? [];
@@ -258,8 +258,8 @@ function RemovePhaseDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -295,7 +295,7 @@ function RemovePhaseDialog({
     onSuccess: async (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(data.competitionId),
-        response.organisation,
+        response.structure,
       );
       await invalidateAfterStructureMutation(queryClient, data.competitionId);
       onClose();
@@ -350,8 +350,8 @@ function QualificationRulesDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -390,7 +390,7 @@ function QualificationRulesDialog({
   }, [open, stage.stageId, stage.qualificationPaths, defaultDest]);
 
   const mutation = useMutation({
-    mutationFn: (paths: OrganisationQualificationPath[] | null) =>
+    mutationFn: (paths: StructureQualificationPath[] | null) =>
       replaceStageQualificationRules(stage.stageId, { paths }),
     onSuccess: async () => {
       await invalidateAfterStructureMutation(queryClient, data.competitionId);
@@ -591,8 +591,8 @@ function ProgressionRulesDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -629,7 +629,7 @@ function ProgressionRulesDialog({
   }, [open, stage.stageId, stage.progressionPaths, defaultDest]);
 
   const mutation = useMutation({
-    mutationFn: (paths: OrganisationProgressionPath[] | null) =>
+    mutationFn: (paths: StructureProgressionPath[] | null) =>
       replaceStageProgressionRules(stage.stageId, { paths }),
     onSuccess: async () => {
       await invalidateAfterStructureMutation(queryClient, data.competitionId);

@@ -93,10 +93,7 @@ export function resolveActiveDestination(
     return 'overview';
   }
 
-  if (
-    /^\/competitions\/[^/]+\/structure$/.test(pathname) ||
-    /^\/competitions\/[^/]+\/organisation$/.test(pathname)
-  ) {
+  if (/^\/competitions\/[^/]+\/structure$/.test(pathname)) {
     return 'structure';
   }
 

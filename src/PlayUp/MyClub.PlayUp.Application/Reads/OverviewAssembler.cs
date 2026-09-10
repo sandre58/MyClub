@@ -59,7 +59,7 @@ public static class OverviewAssembler
     /// <summary>Situation nature: informational (minimal V1).</summary>
     public const string NatureInformational = "Informational";
 
-    /// <summary>Impact: construction / organisation progress blocked.</summary>
+    /// <summary>Impact: construction / structure progress blocked.</summary>
     public const string ImpactBlocksConstruction = "BlocksConstruction";
 
     /// <summary>Impact: draw pipeline cannot produce a usable result.</summary>
@@ -174,14 +174,14 @@ public static class OverviewAssembler
         ArgumentNullException.ThrowIfNull(stages);
         ArgumentNullException.ThrowIfNull(matchesByStage);
 
-        var organisation = OrganisationViewAssembler.Assemble(competition, stages);
+        var structureView = StructureViewAssembler.Assemble(competition, stages);
         var attention = NeedsAttentionAssembler.Assemble(competition, stages, matchesByStage);
         var completion = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended
             ? CompletionAnalyzer.Analyze(competition, stages, matchesByStage)
             : null;
 
         var fixtureToMatch = BuildFixtureToMatchMap(stages);
-        var situations = BuildSituations(competition, organisation, attention, stages, fixtureToMatch);
+        var situations = BuildSituations(competition, structureView, attention, stages, fixtureToMatch);
         var attentionSummary = BuildAttentionSummary(situations);
 
         var matchCounts = BuildMatchCounts(matchesByStage);
@@ -189,7 +189,7 @@ public static class OverviewAssembler
         var preparationFocus = ResolvePreparationFocus(
             cycleReading.Code,
             competition.Status,
-            organisation.Format.Kind,
+            structureView.Format.Kind,
             matchCounts.Total);
         var calendarSummary = preparationFocus == PreparationFocusGeneratedCalendar
             ? BuildCalendarSummary(
@@ -197,21 +197,21 @@ public static class OverviewAssembler
                 stages,
                 matchesByStage,
                 matchCounts.Total,
-                organisation.Format.PrimaryStageId)
+                structureView.Format.PrimaryStageId)
             : null;
         var operationalFocus = BuildOperationalFocus(
             competition,
             stages,
             matchesByStage,
             matchCounts,
-            organisation.Format.Kind);
+            structureView.Format.Kind);
         var competitionOutcome = BuildCompetitionOutcome(
             competition,
             stages,
             matchesByStage,
-            organisation.Format.Kind);
-        var dimensions = BuildDimensions(competition, organisation, stages, matchCounts, matchesByStage);
-        var actions = BuildActions(competition, stages, matchesByStage, organisation, attention, completion, fixtureToMatch);
+            structureView.Format.Kind);
+        var dimensions = BuildDimensions(competition, structureView, stages, matchCounts, matchesByStage);
+        var actions = BuildActions(competition, stages, matchesByStage, structureView, attention, completion, fixtureToMatch);
         var fromSlotsOpportunities = stages
             .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))
             .Select(stage => stage.Id)
@@ -387,28 +387,28 @@ public static class OverviewAssembler
 
     private static OverviewConstructionDimensionsDto BuildDimensions(
         Competition competition,
-        OrganisationViewDto organisation,
+        StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
         OverviewMatchCountsDto matchCounts,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
     {
         var inConstruction = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
         var running = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
-        var hasOrgBlockers = organisation.Readiness.Blockers.Count > 0;
+        var hasStructureBlockers = structureView.Readiness.Blockers.Count > 0;
 
         var teamsProminence = inConstruction
-            ? hasOrgBlockers &&
-              organisation.Readiness.Blockers.Contains(OrganisationViewAssembler.BlockerInsufficientParticipants)
+            ? hasStructureBlockers &&
+              structureView.Readiness.Blockers.Contains(StructureViewAssembler.BlockerInsufficientParticipants)
                 ? ProminenceDominant
                 : ProminencePresent
             : ProminenceCondensed;
 
         var structureProminence = inConstruction
-            ? organisation.Readiness.Blockers.Any(blocker =>
-                blocker is OrganisationViewAssembler.BlockerMissingStage
-                    or OrganisationViewAssembler.BlockerMissingStructure
-                    or OrganisationViewAssembler.BlockerMissingPotRules
-                    or OrganisationViewAssembler.BlockerCupBracketInvalid)
+            ? structureView.Readiness.Blockers.Any(blocker =>
+                blocker is StructureViewAssembler.BlockerMissingStage
+                    or StructureViewAssembler.BlockerMissingStructure
+                    or StructureViewAssembler.BlockerMissingPotRules
+                    or StructureViewAssembler.BlockerCupBracketInvalid)
                 ? ProminenceDominant
                 : ProminencePresent
             : ProminenceCondensed;
@@ -422,32 +422,32 @@ public static class OverviewAssembler
 
         var structureFacts = new Dictionary<string, string>
         {
-            ["formatKind"] = organisation.Format.Kind?.ToString() ?? "None",
-            ["groupCount"] = organisation.Structure.GroupCount.ToString(CultureInfo.InvariantCulture),
-            ["roundCount"] = organisation.Structure.RoundCount.ToString(CultureInfo.InvariantCulture),
+            ["formatKind"] = structureView.Format.Kind?.ToString() ?? "None",
+            ["groupCount"] = structureView.Structure.GroupCount.ToString(CultureInfo.InvariantCulture),
+            ["roundCount"] = structureView.Structure.RoundCount.ToString(CultureInfo.InvariantCulture),
             ["matchdayCount"] =
-                organisation.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
-            ["slotCount"] = organisation.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
+                structureView.Structure.MatchdayCount.ToString(CultureInfo.InvariantCulture),
+            ["slotCount"] = structureView.Structure.SlotCount.ToString(CultureInfo.InvariantCulture)
         };
-        if (organisation.Format.Kind != StructureFormatKind.Swiss)
+        if (structureView.Format.Kind != StructureFormatKind.Swiss)
         {
             return new OverviewConstructionDimensionsDto(
                 new OverviewDimensionDto(
                     teamsProminence,
                     new Dictionary<string, string>
                     {
-                        ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                        ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
                         ["occupyingCount"] =
-                            organisation.Participants.OccupyingCount.ToString(CultureInfo.InvariantCulture),
+                            structureView.Participants.OccupyingCount.ToString(CultureInfo.InvariantCulture),
                         ["minimumTeams"] =
-                            organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                            structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
                         ["maximumTeams"] =
-                            organisation.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
+                            structureView.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
                     }),
                 new OverviewDimensionDto(structureProminence, structureFacts),
                 BuildRegulationDimension(
                     competition,
-                    organisation,
+                    structureView,
                     stages,
                     matchesByStage,
                     regulationProminence,
@@ -464,7 +464,7 @@ public static class OverviewAssembler
         }
 
         structureFacts["swissRoundCount"] =
-            (organisation.Structure.SwissRoundCount ?? 0).ToString(CultureInfo.InvariantCulture);
+            (structureView.Structure.SwissRoundCount ?? 0).ToString(CultureInfo.InvariantCulture);
         structureFacts["swissByeCount"] = stages
             .Where(stage => stage.IsSwiss)
             .Sum(stage => stage.SwissByeHistory.Count)
@@ -475,18 +475,18 @@ public static class OverviewAssembler
                 teamsProminence,
                 new Dictionary<string, string>
                 {
-                    ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                    ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
                     ["occupyingCount"] =
-                        organisation.Participants.OccupyingCount.ToString(CultureInfo.InvariantCulture),
+                        structureView.Participants.OccupyingCount.ToString(CultureInfo.InvariantCulture),
                     ["minimumTeams"] =
-                        organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                        structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
                     ["maximumTeams"] =
-                        organisation.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
+                        structureView.Regulation.MaximumTeams.ToString(CultureInfo.InvariantCulture)
                 }),
             new OverviewDimensionDto(structureProminence, structureFacts),
             BuildRegulationDimension(
                 competition,
-                organisation,
+                structureView,
                 stages,
                 matchesByStage,
                 regulationProminence,
@@ -506,39 +506,39 @@ public static class OverviewAssembler
     /// Builds the regulation dimension: factual Competition + Stage summaries and transition readiness.
     /// </summary>
     /// <remarks>
-    /// Reuses <see cref="OrganisationViewAssembler"/> readiness — does not invent Domain validation.
+    /// Reuses <see cref="StructureViewAssembler"/> readiness — does not invent Domain validation.
     /// PrepareStage / StartStage are status transitions, not regulation content gates — not projected here.
     /// Competition Prepare/Start are projected in <see cref="BuildActions"/>, not as regulation readiness.
     /// </remarks>
     private static OverviewRegulationDimensionDto BuildRegulationDimension(
         Competition competition,
-        OrganisationViewDto organisation,
+        StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
         string prominence,
         bool inConstruction)
     {
-        var stageSummary = BuildStageRegulationSummary(organisation, stages);
+        var stageSummary = BuildStageRegulationSummary(structureView, stages);
         var mutable = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
         var readiness = inConstruction
-            ? BuildRegulationTransitionReadiness(organisation)
+            ? BuildRegulationTransitionReadiness(structureView)
             : [];
         AppendFromSlotsTransitionReadiness(competition, stages, readiness);
-        AppendSwissGenerateNextRoundReadiness(competition, organisation, stages, matchesByStage, readiness);
+        AppendSwissGenerateNextRoundReadiness(competition, structureView, stages, matchesByStage, readiness);
 
         return new OverviewRegulationDimensionDto(
             prominence,
-            organisation.Regulation,
+            structureView.Regulation,
             stageSummary,
             mutable,
             readiness);
     }
 
     private static OverviewStageRegulationSummaryDto? BuildStageRegulationSummary(
-        OrganisationViewDto organisation,
+        StructureViewDto structureView,
         IReadOnlyList<Stage> stages)
     {
-        if (organisation.Format.PrimaryStageId is not { } primaryId)
+        if (structureView.Format.PrimaryStageId is not { } primaryId)
         {
             return null;
         }
@@ -566,11 +566,11 @@ public static class OverviewAssembler
     }
 
     private static List<OverviewTransitionReadinessDto> BuildRegulationTransitionReadiness(
-        OrganisationViewDto organisation)
+        StructureViewDto structureView)
     {
-        var blockers = organisation.Readiness.Blockers;
+        var blockers = structureView.Readiness.Blockers;
         var readiness = new List<OverviewTransitionReadinessDto>();
-        var kind = organisation.Format.Kind;
+        var kind = structureView.Format.Kind;
 
         // Championship / Swiss never use the draw path — omit Draw readiness.
         if (kind is not StructureFormatKind.Championship and not StructureFormatKind.Swiss)
@@ -578,8 +578,8 @@ public static class OverviewAssembler
             readiness.Add(
                 new OverviewTransitionReadinessDto(
                     TransitionDraw,
-                    organisation.Readiness.ReadyForDraw,
-                    organisation.Readiness.ReadyForDraw ? [] : blockers));
+                    structureView.Readiness.ReadyForDraw,
+                    structureView.Readiness.ReadyForDraw ? [] : blockers));
         }
 
         // Swiss uses GenerateNextRound — omit MaterializeMatches (always false with empty blockers).
@@ -588,8 +588,8 @@ public static class OverviewAssembler
             readiness.Add(
                 new OverviewTransitionReadinessDto(
                     TransitionMaterializeMatches,
-                    organisation.Readiness.ReadyForMaterialization,
-                    organisation.Readiness.ReadyForMaterialization ? [] : blockers));
+                    structureView.Readiness.ReadyForMaterialization,
+                    structureView.Readiness.ReadyForMaterialization ? [] : blockers));
         }
 
         return readiness;
@@ -597,12 +597,12 @@ public static class OverviewAssembler
 
     private static void AppendSwissGenerateNextRoundReadiness(
         Competition competition,
-        OrganisationViewDto organisation,
+        StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
         List<OverviewTransitionReadinessDto> readiness)
     {
-        if (organisation.Format.Kind is not StructureFormatKind.Swiss)
+        if (structureView.Format.Kind is not StructureFormatKind.Swiss)
         {
             return;
         }
@@ -614,7 +614,7 @@ public static class OverviewAssembler
 
         var evaluation = TryEvaluateSwissGenerateNextRound(
             competition,
-            organisation,
+            structureView,
             stages,
             matchesByStage,
             out _,
@@ -1172,14 +1172,14 @@ public static class OverviewAssembler
     /// </summary>
     /// <remarks>
     /// AttentionSummary V1 = Blocking only (not a second calculation).
-    /// Organisation readiness blockers become situations only during Draft/Ready (construction).
+    /// Structure readiness blockers become situations only during Draft/Ready (construction).
     /// <c>InsufficientParticipants</c> is projected from Needs Attention (single SoT); other org blockers still merge here.
     /// Completion blockers stay on ClosureHint — never merged here.
     /// Identity = Source + TargetType + TargetId; duplicates collapsed.
     /// </remarks>
     private static List<OverviewSituationDto> BuildSituations(
         Competition competition,
-        OrganisationViewDto organisation,
+        StructureViewDto structureView,
         NeedsAttentionDto attention,
         IReadOnlyList<Stage> stages,
         Dictionary<Guid, Guid> fixtureToMatch)
@@ -1188,7 +1188,7 @@ public static class OverviewAssembler
             .Select(item =>
             {
                 var actionCode = MapAttentionAction(item.Source);
-                var parameters = BuildSituationParams(item, organisation);
+                var parameters = BuildSituationParams(item, structureView);
                 return CreateSituation(
                     item.Source,
                     NatureBlocking,
@@ -1205,21 +1205,21 @@ public static class OverviewAssembler
         {
             case CompetitionStatus.Draft or CompetitionStatus.Ready:
                 items.AddRange(
-                    from blocker in organisation.Readiness.Blockers
-                    where blocker != OrganisationViewAssembler.BlockerInsufficientParticipants
+                    from blocker in structureView.Readiness.Blockers
+                    where blocker != StructureViewAssembler.BlockerInsufficientParticipants
                     let actionCode = MapOrgBlockerAction(blocker)
                     select CreateSituation(
                         blocker,
                         NatureBlocking,
-                        "Organisation",
+                        "Structure",
                         competition.Id.Value.ToString(),
                         null,
                         actionCode,
                         ImpactBlocksConstruction,
                         new Dictionary<string, string>
                         {
-                            ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                            ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture)
+                            ["minimumTeams"] = structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                            ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture)
                         }));
                 break;
             case CompetitionStatus.Suspended:
@@ -1267,7 +1267,7 @@ public static class OverviewAssembler
             NeedsAttentionAssembler.SourceQualificationPending
                 or NeedsAttentionAssembler.SourceQualificationConflict => ActionApplyQualification,
             NeedsAttentionAssembler.SourceInsufficientParticipants =>
-                OrganisationViewAssembler.ActionAddEntry,
+                StructureViewAssembler.ActionAddEntry,
 
             // DrawNoSolution: regenerate/reconfigure lives on Stage — no Host action projected here.
             _ => null
@@ -1297,11 +1297,11 @@ public static class OverviewAssembler
 
     private static Dictionary<string, string> BuildSituationParams(
         NeedsAttentionItemDto item,
-        OrganisationViewDto organisation)
+        StructureViewDto structureView)
     {
         if (item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants)
         {
-            // Prefer wire params from Needs Attention when present; else Organisation facts.
+            // Prefer wire params from Needs Attention when present; else Structure facts.
             if (item.Params is { Count: > 0 })
             {
                 return item.Params.ToDictionary(
@@ -1312,11 +1312,11 @@ public static class OverviewAssembler
 
             return new Dictionary<string, string>
             {
-                ["minimumTeams"] = organisation.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                ["activeCount"] = organisation.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                ["minimumTeams"] = structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
                 ["missingCount"] = Math.Max(
                         0,
-                        organisation.Regulation.MinimumTeams - organisation.Participants.ActiveCount)
+                        structureView.Regulation.MinimumTeams - structureView.Participants.ActiveCount)
                     .ToString(CultureInfo.InvariantCulture)
             };
         }
@@ -1342,12 +1342,12 @@ public static class OverviewAssembler
     private static string? MapOrgBlockerAction(string blocker) =>
         blocker switch
         {
-            OrganisationViewAssembler.BlockerInsufficientParticipants => OrganisationViewAssembler.ActionAddEntry,
-            OrganisationViewAssembler.BlockerMissingStage
-                or OrganisationViewAssembler.BlockerMissingStructure
-                or OrganisationViewAssembler.BlockerMissingPotRules
-                or OrganisationViewAssembler.BlockerCupBracketInvalid =>
-                OrganisationViewAssembler.ActionConfigureStructure,
+            StructureViewAssembler.BlockerInsufficientParticipants => StructureViewAssembler.ActionAddEntry,
+            StructureViewAssembler.BlockerMissingStage
+                or StructureViewAssembler.BlockerMissingStructure
+                or StructureViewAssembler.BlockerMissingPotRules
+                or StructureViewAssembler.BlockerCupBracketInvalid =>
+                StructureViewAssembler.ActionConfigureStructure,
             _ => null
         };
 
@@ -1355,18 +1355,18 @@ public static class OverviewAssembler
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
-        OrganisationViewDto organisation,
+        StructureViewDto structureView,
         NeedsAttentionDto attention,
         CompletionAnalysis? completion,
         Dictionary<Guid, Guid> fixtureToMatch)
     {
         var competitionOpen = competition.Status is not (CompetitionStatus.Completed or CompetitionStatus.Archived);
 
-        var actions = organisation.Actions
+        var actions = structureView.Actions
             .Select(code => new OverviewActionDto(
                 code,
                 Guaranteed: false,
-                StageId: organisation.Format.PrimaryStageId))
+                StageId: structureView.Format.PrimaryStageId))
             .ToList();
 
         if (!competitionOpen)
@@ -1440,9 +1440,9 @@ public static class OverviewAssembler
             }
         }
 
-        if (organisation.Readiness.ReadyForMaterialization
+        if (structureView.Readiness.ReadyForMaterialization
             && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
-            && organisation.Format.PrimaryStageId is { } materializeStageId)
+            && structureView.Format.PrimaryStageId is { } materializeStageId)
         {
             actions.Add(new OverviewActionDto(
                 ActionMaterializeMatches,
@@ -1452,7 +1452,7 @@ public static class OverviewAssembler
 
         if (TryEvaluateSwissGenerateNextRound(
                 competition,
-                organisation,
+                structureView,
                 stages,
                 matchesByStage,
                 out var swissStageId,
@@ -1494,8 +1494,8 @@ public static class OverviewAssembler
                 }));
         }
 
-        if (organisation.Readiness.ReadyForSchedule
-            && organisation.Format.PrimaryStageId is { } scheduleStageId)
+        if (structureView.Readiness.ReadyForSchedule
+            && structureView.Format.PrimaryStageId is { } scheduleStageId)
         {
             actions.Add(new OverviewActionDto(
                 ActionGenerateSchedule,
@@ -1676,7 +1676,7 @@ public static class OverviewAssembler
     /// <summary>
     /// Natural progression hint: one structural tip, or null when none.
     /// Draft/Ready: from-slots or <see cref="ConstructionStructuralProgressionPriority"/> —
-    /// null is a valid calm Construction state (no ContinueOrganisation fallback).
+    /// null is a valid calm Construction state (no ContinueStructure fallback).
     /// Running/Suspended: <see cref="InProgressStructuralProgressionPriority"/> —
     /// null is a valid calm-competition outcome (not OpenMatches fallback).
     /// </summary>
@@ -1719,7 +1719,7 @@ public static class OverviewAssembler
     /// </summary>
     private static (bool Ready, Guid StageId)? TryEvaluateSwissGenerateNextRound(
         Competition competition,
-        OrganisationViewDto organisation,
+        StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
         out Guid? stageId,
@@ -1727,8 +1727,8 @@ public static class OverviewAssembler
     {
         stageId = null;
         blockers = [];
-        if (organisation.Format.Kind is not StructureFormatKind.Swiss
-            || organisation.Format.PrimaryStageId is not { } primaryId)
+        if (structureView.Format.Kind is not StructureFormatKind.Swiss
+            || structureView.Format.PrimaryStageId is not { } primaryId)
         {
             return null;
         }
@@ -1865,7 +1865,7 @@ public static class OverviewAssembler
         var hints = new List<OverviewNavigationHintDto>
         {
             new("Competition", competition.Id.Value.ToString(), null, null, competition.Id.Value),
-            new("Organisation", competition.Id.Value.ToString(), null, null, competition.Id.Value)
+            new("Structure", competition.Id.Value.ToString(), null, null, competition.Id.Value)
         };
         hints.AddRange(stages.Select(stage =>
             new OverviewNavigationHintDto("Stage", stage.Id.Value.ToString(), null, stage.Id.Value, competition.Id.Value)));

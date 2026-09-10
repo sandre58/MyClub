@@ -5,7 +5,7 @@ import { ApiError } from './api';
 import { apiErrorLabel } from './i18n/apiErrorLabel';
 import { PageHead } from './design-system/components/PageHead';
 import { Status } from './design-system/components/Status';
-import { statusToneFromLegacy } from './design-system/components/statusTone';
+import { statusToneFromBadgeTone } from './design-system/components/statusTone';
 import { Alert } from './design-system/components/Alert';
 import { WaitMark, type WaitSize } from './design-system/components/WaitMark';
 import type {
@@ -102,7 +102,7 @@ export function StatusBadge({
   return (
     <Status
       density={density}
-      tone={statusToneFromLegacy(tone)}
+      tone={statusToneFromBadgeTone(tone)}
       variant={variant}
       shape={shape}
       {...rest}

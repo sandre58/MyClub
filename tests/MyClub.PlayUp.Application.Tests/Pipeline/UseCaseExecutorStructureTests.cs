@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="UseCaseExecutorOrganisationTests.cs" company="Stéphane ANDRE">
+// <copyright file="UseCaseExecutorStructureTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -17,7 +17,7 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Pipeline;
 
-public sealed class UseCaseExecutorOrganisationTests
+public sealed class UseCaseExecutorStructureTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 10, 30, 0, TimeSpan.Zero));
 
@@ -71,7 +71,7 @@ public sealed class UseCaseExecutorOrganisationTests
     }
 
     [Fact]
-    public async Task AddEntryAsync_persists_and_returns_organisation_viewAsync()
+    public async Task AddEntryAsync_persists_and_returns_structure_viewAsync()
     {
         var competition = CreateCompetition.Execute("Entries", _clock);
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);

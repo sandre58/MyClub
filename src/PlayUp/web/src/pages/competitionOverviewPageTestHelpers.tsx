@@ -1,8 +1,8 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { expect, vi } from 'vitest';
-import { fetchOrganisationView } from '../api';
+import { fetchStructureView } from '../api';
 import { CompetitionOverviewPage } from './CompetitionOverviewPage';
 import {
   overviewIds,
@@ -10,7 +10,7 @@ import {
   overviewView,
   referenceStageGameRules,
 } from '../test/overviewFixtures';
-import type { OverviewView, OrganisationView } from '../types';
+import type { OverviewView, StructureView } from '../types';
 
 export {
   overviewIds,
@@ -43,7 +43,7 @@ export function renderOverviewPage() {
           />
           <Route
             path="/competitions/:competitionId/structure"
-            element={<p>Organisation route</p>}
+            element={<p>Structure route</p>}
           />
           <Route
             path="/competitions/:competitionId/matches"
@@ -127,7 +127,7 @@ export function expectOverviewRegionsAbsent(...regionTestIds: string[]) {
   }
 }
 
-export function defaultOrgView(): OrganisationView {
+export function defaultOrgView(): StructureView {
   return {
     competitionId,
     name: 'Spring Cup',
@@ -182,6 +182,6 @@ export function defaultOrgView(): OrganisationView {
   };
 }
 
-export function setupDefaultOrganisationMock() {
-  vi.mocked(fetchOrganisationView).mockResolvedValue(defaultOrgView());
+export function setupDefaultStructureMock() {
+  vi.mocked(fetchStructureView).mockResolvedValue(defaultOrgView());
 }

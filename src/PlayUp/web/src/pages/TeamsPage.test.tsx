@@ -7,21 +7,21 @@ import {
   addCompetitionEntry,
   addDeclaredMember,
   deleteCompetitionEntry,
-  fetchOrganisationView,
+  fetchStructureView,
   removeDeclaredMember,
   removeDeclaredMembers,
   renameCompetitionEntry,
   renameDeclaredMember,
   withdrawCompetitionEntry,
 } from '../api';
-import type { DeclaredMember, OrganisationView } from '../types';
+import type { DeclaredMember, StructureView } from '../types';
 import { TeamsPage } from './TeamsPage';
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>();
   return {
     ...actual,
-    fetchOrganisationView: vi.fn(),
+    fetchStructureView: vi.fn(),
     addCompetitionEntry: vi.fn(),
     renameCompetitionEntry: vi.fn(),
     deleteCompetitionEntry: vi.fn(),
@@ -48,12 +48,12 @@ function player(overrides: Partial<DeclaredMember> = {}): DeclaredMember {
   };
 }
 
-function organisationView(
-  overrides: Partial<OrganisationView> = {},
+function structureView(
+  overrides: Partial<StructureView> = {},
   entryOverrides: Partial<
-    OrganisationView['participants']['entries'][number]
+    StructureView['participants']['entries'][number]
   > = {},
-): OrganisationView {
+): StructureView {
   return {
     competitionId,
     name: 'Spring Cup',
@@ -156,18 +156,18 @@ function identityShortNameInput(dialog: HTMLElement) {
 describe('TeamsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(addCompetitionEntry).mockResolvedValue(organisationView());
-    vi.mocked(renameCompetitionEntry).mockResolvedValue(organisationView());
-    vi.mocked(deleteCompetitionEntry).mockResolvedValue(organisationView());
-    vi.mocked(withdrawCompetitionEntry).mockResolvedValue(organisationView());
-    vi.mocked(addDeclaredMember).mockResolvedValue(organisationView());
-    vi.mocked(removeDeclaredMember).mockResolvedValue(organisationView());
-    vi.mocked(removeDeclaredMembers).mockResolvedValue(organisationView());
-    vi.mocked(renameDeclaredMember).mockResolvedValue(organisationView());
+    vi.mocked(addCompetitionEntry).mockResolvedValue(structureView());
+    vi.mocked(renameCompetitionEntry).mockResolvedValue(structureView());
+    vi.mocked(deleteCompetitionEntry).mockResolvedValue(structureView());
+    vi.mocked(withdrawCompetitionEntry).mockResolvedValue(structureView());
+    vi.mocked(addDeclaredMember).mockResolvedValue(structureView());
+    vi.mocked(removeDeclaredMember).mockResolvedValue(structureView());
+    vi.mocked(removeDeclaredMembers).mockResolvedValue(structureView());
+    vi.mocked(renameDeclaredMember).mockResolvedValue(structureView());
   });
 
   it('shows the plateau gauge in Draft and Ready', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -195,8 +195,8 @@ describe('TeamsPage', () => {
   });
 
   it('shows the plateau gauge in all competition statuses', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         status: 'Running',
         actions: ['WithdrawEntry', 'RenameEntry'],
       }),
@@ -211,8 +211,8 @@ describe('TeamsPage', () => {
   });
 
   it('counts withdrawn entries in the title and gauge (occupation)', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         status: 'Running',
         actions: ['WithdrawEntry', 'RenameEntry'],
         participants: {
@@ -252,8 +252,8 @@ describe('TeamsPage', () => {
   });
 
   it('does not show Qualified or Eliminated badges (statuses removed from entry)', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         status: 'Running',
         actions: ['WithdrawEntry', 'RenameEntry'],
         participants: {
@@ -285,8 +285,8 @@ describe('TeamsPage', () => {
   });
 
   it('shows player counts on the tile and in the fiche headings', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView(
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView(
         {},
         {
           declaredMembers: [
@@ -313,8 +313,8 @@ describe('TeamsPage', () => {
   });
 
   it('disables member remove when already on a match sheet', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView(
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView(
         {},
         {
           declaredMembers: [player({ referencedOnMatchSheet: true })],
@@ -332,8 +332,8 @@ describe('TeamsPage', () => {
   });
 
   it('shows a Forfait badge on a withdrawn team', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({}, { status: 'Withdrawn' }),
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({}, { status: 'Withdrawn' }),
     );
 
     renderTeamsPage();
@@ -342,8 +342,8 @@ describe('TeamsPage', () => {
   });
 
   it('does not allow withdrawing an already withdrawn team', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView(
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView(
         { status: 'Running', actions: ['WithdrawEntry', 'RenameEntry'] },
         { status: 'Withdrawn' },
       ),
@@ -359,7 +359,7 @@ describe('TeamsPage', () => {
 
   it('shows empty tiles for the missing minimum and adds from them', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -378,9 +378,9 @@ describe('TeamsPage', () => {
 
   it('adds an entry with the Host payload and refreshes', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockImplementation(async () => {
+    vi.mocked(fetchStructureView).mockImplementation(async () => {
       if (vi.mocked(addCompetitionEntry).mock.calls.length > 0) {
-        return organisationView({
+        return structureView({
           participants: {
             activeCount: 2,
             occupyingCount: 2,
@@ -391,7 +391,7 @@ describe('TeamsPage', () => {
           },
         });
       }
-      return organisationView();
+      return structureView();
     });
 
     renderTeamsPage();
@@ -418,7 +418,7 @@ describe('TeamsPage', () => {
 
   it('warns on duplicate display name without blocking submit', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -437,7 +437,7 @@ describe('TeamsPage', () => {
 
   it('confirms before closing a dirty identity dialog', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -463,8 +463,8 @@ describe('TeamsPage', () => {
   });
 
   it('greys the add button and shows cap reached in the plateau reading at capacity', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         participants: {
           activeCount: 2,
           occupyingCount: 2,
@@ -506,7 +506,7 @@ describe('TeamsPage', () => {
   });
 
   it('keeps the roster panel visible with an idle state', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -531,7 +531,7 @@ describe('TeamsPage', () => {
     }));
 
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -557,7 +557,7 @@ describe('TeamsPage', () => {
 
   it('opens the roster drawer from a tile and keeps the grid', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -589,8 +589,8 @@ describe('TeamsPage', () => {
   });
 
   it('shows selection chrome and switches to multi view', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         participants: {
           activeCount: 2,
           occupyingCount: 2,
@@ -623,7 +623,7 @@ describe('TeamsPage', () => {
 
   it('returns to the list from the roster back control', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -643,8 +643,8 @@ describe('TeamsPage', () => {
   });
 
   it('lists players and staff in the drawer', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView(
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView(
         {},
         {
           declaredMembers: [
@@ -663,9 +663,9 @@ describe('TeamsPage', () => {
 
   it('adds a staff member from the drawer', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockImplementation(async () => {
+    vi.mocked(fetchStructureView).mockImplementation(async () => {
       if (vi.mocked(addDeclaredMember).mock.calls.length > 0) {
-        return organisationView(
+        return structureView(
           {},
           {
             declaredMembers: [
@@ -674,7 +674,7 @@ describe('TeamsPage', () => {
           },
         );
       }
-      return organisationView();
+      return structureView();
     });
 
     renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`);
@@ -698,7 +698,7 @@ describe('TeamsPage', () => {
 
   it('opens identity dialog from the roster fiche pencil', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`);
 
@@ -713,8 +713,8 @@ describe('TeamsPage', () => {
   it('removes a selectable lot of members and skips those on match sheets', async () => {
     const user = userEvent.setup();
     const blockedId = '33333333-3333-3333-3333-333333333333';
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView(
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView(
         {},
         {
           declaredMembers: [
@@ -772,11 +772,11 @@ describe('TeamsPage', () => {
 
   it('asks for confirmation before removing a player', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockImplementation(async () => {
+    vi.mocked(fetchStructureView).mockImplementation(async () => {
       if (vi.mocked(removeDeclaredMember).mock.calls.length > 0) {
-        return organisationView();
+        return structureView();
       }
-      return organisationView({}, { declaredMembers: [player()] });
+      return structureView({}, { declaredMembers: [player()] });
     });
 
     renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`);
@@ -802,16 +802,16 @@ describe('TeamsPage', () => {
 
   it('renames a member inline without changing role', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockImplementation(async () => {
+    vi.mocked(fetchStructureView).mockImplementation(async () => {
       if (vi.mocked(renameDeclaredMember).mock.calls.length > 0) {
-        return organisationView(
+        return structureView(
           {},
           {
             declaredMembers: [{ ...player(), displayName: 'Jean Dupont' }],
           },
         );
       }
-      return organisationView({}, { declaredMembers: [player()] });
+      return structureView({}, { declaredMembers: [player()] });
     });
 
     renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`);
@@ -837,8 +837,8 @@ describe('TeamsPage', () => {
 
   it('suspends member selection while a row is being renamed', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView(
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView(
         {},
         {
           declaredMembers: [
@@ -871,8 +871,8 @@ describe('TeamsPage', () => {
   });
 
   it('clears multi-selection on Escape, but not while ConfirmDialog is open', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         participants: {
           activeCount: 2,
           occupyingCount: 2,
@@ -932,8 +932,8 @@ describe('TeamsPage', () => {
   });
 
   it('clears selection on Escape when no overlay is open', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         participants: {
           activeCount: 2,
           occupyingCount: 2,
@@ -967,7 +967,7 @@ describe('TeamsPage', () => {
 
   it('deletes an entry from the selected tile', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderTeamsPage();
 
@@ -995,8 +995,8 @@ describe('TeamsPage', () => {
 
   it('withdraws when DeleteEntry is not available', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         status: 'Running',
         actions: ['WithdrawEntry'],
       }),
@@ -1029,8 +1029,8 @@ describe('TeamsPage', () => {
   });
 
   it('is read-only when the competition is completed', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         status: 'Completed',
         actions: [],
       }),
@@ -1054,8 +1054,8 @@ describe('TeamsPage', () => {
   });
 
   it('keeps roster editable when the competition is completed', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView(
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView(
         { status: 'Completed', actions: [] },
         { declaredMembers: [player()] },
       ),

@@ -22,7 +22,7 @@
   "StartCompetition": "Start the competition",
   "CompleteCompetition": "Complete the competition",
   "ArchiveCompetition": "Archive the competition",
-  "ContinueOrganisation": "Continue preparation",
+  "ContinueStructure": "Continue preparation",
   "OpenMatches": "Follow matches",
   "OpenConsultation": "View standings",
   "fallback": "{{code}}"

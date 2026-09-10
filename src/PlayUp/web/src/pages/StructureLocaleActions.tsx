@@ -15,12 +15,12 @@ import { matchGenerationFormatLabel } from '../i18n/enumLabels';
 import { MutationError, PendingLabel } from '../ui';
 import type {
   MatchGenerationFormat,
-  OrganisationStageHubSummary,
-  OrganisationView,
+  StructureStageHubSummary,
+  StructureView,
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 
-function stageActions(stage: OrganisationStageHubSummary): string[] {
+function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
 }
 
@@ -32,8 +32,8 @@ export function ConstructionLocaleActions({
   data,
   stage,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
 }) {
   const { t } = useTranslation('structure');
   const actions = stageActions(stage);
@@ -190,8 +190,8 @@ function RenameStageDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -268,8 +268,8 @@ function MatchGenerationDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {
@@ -358,8 +358,8 @@ function SwissSettingsDialog({
   open,
   onClose,
 }: {
-  data: OrganisationView;
-  stage: OrganisationStageHubSummary;
+  data: StructureView;
+  stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
 }) {

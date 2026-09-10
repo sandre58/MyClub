@@ -358,7 +358,7 @@ public static class MaterializeMatches
     }
 
     /// <summary>
-    /// Legacy overload kept for callers that still pass combinatorial pairs (extracts entries).
+    /// Overload for callers that still pass combinatorial pairs (extracts entries).
     /// </summary>
     internal static IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> CircleMethodRounds(
         IReadOnlyList<(EntryId Home, EntryId Away)> allPairs) =>
@@ -426,14 +426,14 @@ public static class MaterializeMatches
         {
             throw new ApplicationFailureException(
                 $"Matches cannot be materialized while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
             throw new ApplicationFailureException(
                 $"Matches cannot be materialized while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
     }
 

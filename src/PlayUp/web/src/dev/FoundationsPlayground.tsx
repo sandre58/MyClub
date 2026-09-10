@@ -271,7 +271,7 @@ export function FoundationsPlayground() {
           <p className="ds-wordmark">Play’Up</p>
           <p className="ds-meta">
             Terrain de validation — foundations + primitives React. Les pages
-            legacy restent hors scope.
+            produit restent hors scope.
           </p>
         </header>
 
@@ -380,7 +380,7 @@ export function FoundationsPlayground() {
               </a>
               <a className="ds-shell-rail__link" href="#ds-preview">
                 <StructureNavIcon className="ds-shell-rail__icon" />
-                Organisation
+                Structure
               </a>
               <a className="ds-shell-rail__link" href="#ds-preview">
                 <MatchesNavIcon className="ds-shell-rail__icon" />

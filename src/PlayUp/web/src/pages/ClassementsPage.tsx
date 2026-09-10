@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { fetchConsultation, fetchOrganisationView } from '../api';
+import { fetchConsultation, fetchStructureView } from '../api';
 import { MatchRow, MatchRowScore } from '../design-system/components/MatchRow';
 import { TextLink } from '../design-system/components/TextLink';
 import { PageHead } from '../design-system/components/PageHead';
@@ -24,13 +24,13 @@ import type {
   ConsultationStandingTable,
   ConsultationStandingsSection,
   ConsultationView,
-  OrganisationRegulationSummary,
+  StructureRegulationSummary,
 } from '../types';
 import { EmptyState, ErrorState, LoadingState } from '../ui';
 import './classements.css';
 
 /**
- * Classements workspace — GET /consultation (+ organisation for standing barème).
+ * Classements workspace — GET /consultation (+ structure for standing barème).
  * Presents Read facts only. Never recalculates rank or invents points.
  */
 export function ClassementsPage() {
@@ -58,7 +58,7 @@ function ClassementsView({ data }: { data: ConsultationView }) {
 
   const orgQuery = useQuery({
     queryKey: queryKeys.competitions.structure(data.competitionId),
-    queryFn: () => fetchOrganisationView(data.competitionId),
+    queryFn: () => fetchStructureView(data.competitionId),
   });
 
   return (
@@ -356,7 +356,7 @@ function RegulationPanel({
   loading,
 }: {
   href: string;
-  regulation: OrganisationRegulationSummary | null;
+  regulation: StructureRegulationSummary | null;
   loading: boolean;
 }) {
   const { t } = useTranslation('classements');

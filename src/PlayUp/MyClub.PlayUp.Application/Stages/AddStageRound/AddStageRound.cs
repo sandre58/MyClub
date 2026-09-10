@@ -68,7 +68,7 @@ public static class AddStageRound
         {
             throw new ApplicationFailureException(
                 $"Rounds cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
     }
 }

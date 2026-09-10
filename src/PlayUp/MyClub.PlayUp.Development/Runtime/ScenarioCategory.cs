@@ -14,7 +14,7 @@ public enum ScenarioCategory
     /// <summary>Empty workspace / list.</summary>
     Workspace = 0,
 
-    /// <summary>Construction / organisation.</summary>
+    /// <summary>Construction / structure setup.</summary>
     Construction = 1,
 
     /// <summary>Running competition.</summary>

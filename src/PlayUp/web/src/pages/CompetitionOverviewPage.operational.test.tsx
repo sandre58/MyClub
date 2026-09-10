@@ -10,7 +10,7 @@ import {
   inProgressLayoutBase,
   referenceStageGameRules,
   renderOverviewPage,
-  setupDefaultOrganisationMock,
+  setupDefaultStructureMock,
   stageId,
 } from './competitionOverviewPageTestHelpers';
 
@@ -19,7 +19,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchCompetitionOverview: vi.fn(),
-    fetchOrganisationView: vi.fn(),
+    fetchStructureView: vi.fn(),
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('../api', async (importOriginal) => {
 describe('CompetitionOverviewPage — En cours / Terminée', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    setupDefaultOrganisationMock();
+    setupDefaultStructureMock();
   });
 
   it('composes En cours sport panels from Read recentUnit / nextUnit / standingCompact', async () => {

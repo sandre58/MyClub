@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="OrganisationRequestMapperRegulationTests.cs" company="Stéphane ANDRE">
+// <copyright file="StructureRequestMapperRegulationTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,7 +11,7 @@ using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
 
-public sealed class OrganisationRequestMapperRegulationTests
+public sealed class StructureRequestMapperRegulationTests
 {
     [Fact]
     public void ToRegulation_omitted_AllowedTypes_preserves_existing_disciplinary_rules()
@@ -27,7 +27,7 @@ public sealed class OrganisationRequestMapperRegulationTests
             DrawPoints: 1,
             LossPoints: 0);
 
-        var regulation = OrganisationRequestMapper.ToRegulation(request, existing);
+        var regulation = StructureRequestMapper.ToRegulation(request, existing);
 
         regulation.DisciplinaryRules.AllowedTypes.Should().BeEquivalentTo(
             [DisciplinaryType.Yellow, DisciplinaryType.White]);
@@ -48,7 +48,7 @@ public sealed class OrganisationRequestMapperRegulationTests
             LossPoints: 0,
             AllowedTypes: []);
 
-        var regulation = OrganisationRequestMapper.ToRegulation(request, existing);
+        var regulation = StructureRequestMapper.ToRegulation(request, existing);
 
         regulation.DisciplinaryRules.Should().Be(DisciplinaryRules.None);
     }
@@ -68,7 +68,7 @@ public sealed class OrganisationRequestMapperRegulationTests
             LossPoints: 0,
             AllowedTypes: [DisciplinaryType.Yellow, DisciplinaryType.Red]);
 
-        var regulation = OrganisationRequestMapper.ToRegulation(request, existing);
+        var regulation = StructureRequestMapper.ToRegulation(request, existing);
 
         regulation.DisciplinaryRules.AllowedTypes.Should().BeEquivalentTo(
             [DisciplinaryType.Yellow, DisciplinaryType.Red]);

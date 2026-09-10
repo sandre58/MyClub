@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="OrganisationConfrontationSegmentsTests.cs" company="Stéphane ANDRE">
+// <copyright file="StructureConfrontationSegmentsTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -15,7 +15,7 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
-public sealed class OrganisationConfrontationSegmentsTests
+public sealed class StructureConfrontationSegmentsTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 9, 10, 8, 0, 0, TimeSpan.Zero));
 
@@ -41,7 +41,7 @@ public sealed class OrganisationConfrontationSegmentsTests
         stage.AddRound("Finale", oneLeg, _clock);
         competition.AddStage(stage.Id, _clock);
 
-        var view = OrganisationViewAssembler.Assemble(competition, [stage]);
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
         var hub = view.Stages.Should().ContainSingle().Subject;
 
         hub.HasTieFormat.Should().BeTrue();
@@ -81,7 +81,7 @@ public sealed class OrganisationConfrontationSegmentsTests
         stage.AddRound("Finale", oneLeg, _clock);
         competition.AddStage(stage.Id, _clock);
 
-        var hub = OrganisationViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
 
         hub.HasTieFormat.Should().BeTrue();
         hub.ConfrontationSegments.Should().ContainSingle();
@@ -99,7 +99,7 @@ public sealed class OrganisationConfrontationSegmentsTests
             StructureIntent.Championship(3),
             _clock);
 
-        var hub = OrganisationViewAssembler.Assemble(competition, [result.Stage]).Stages.Single();
+        var hub = StructureViewAssembler.Assemble(competition, [result.Stage]).Stages.Single();
 
         hub.HasTieFormat.Should().BeFalse();
         hub.ConfrontationSegments.Should().BeNull();

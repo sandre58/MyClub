@@ -1,11 +1,11 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchMatchDetail,
-  fetchOrganisationView,
+  fetchStructureView,
   fetchStageOverview,
   finishMatch,
   recordDisciplinaryEvent,
@@ -16,7 +16,7 @@ import {
 import type {
   DeclaredParticipation,
   MatchDetail,
-  OrganisationView,
+  StructureView,
   RecordedDisciplinaryEvent,
   StageOverview,
 } from '../types';
@@ -29,7 +29,7 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchMatchDetail: vi.fn(),
     fetchStageOverview: vi.fn(),
-    fetchOrganisationView: vi.fn(),
+    fetchStructureView: vi.fn(),
     startMatch: vi.fn(),
     finishMatch: vi.fn(),
     setRunningScore: vi.fn(),
@@ -106,9 +106,9 @@ function baseMatch(overrides: Partial<MatchDetail> = {}): MatchDetail {
   };
 }
 
-function organisationWithTypes(
+function structureWithTypes(
   allowedTypes: Array<'Yellow' | 'Red' | 'White'> = ['Yellow', 'Red'],
-): OrganisationView {
+): StructureView {
   return {
     competitionId,
     name: 'Spring Cup',
@@ -183,7 +183,7 @@ function renderMatchPage() {
           <Route path="/matches/:matchId" element={<MatchPage />} />
           <Route
             path="/competitions/:competitionId/structure"
-            element={<p>Organisation route</p>}
+            element={<p>Structure route</p>}
           />
         </Routes>
       </MemoryRouter>
@@ -223,8 +223,8 @@ describe('MatchPage discipline (Lot 1)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationWithTypes(['Yellow', 'Red']),
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureWithTypes(['Yellow', 'Red']),
     );
     vi.mocked(startMatch).mockResolvedValue();
     vi.mocked(finishMatch).mockResolvedValue();
@@ -294,8 +294,8 @@ describe('MatchPage discipline (Lot 1)', () => {
   });
 
   it('allowedTypes []: explicit noneAllowed, no Create form', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationWithTypes([]),
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureWithTypes([]),
     );
     vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch());
 

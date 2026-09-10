@@ -71,7 +71,7 @@ public sealed class DatasetCatalog
     }
 
     /// <summary>
-    /// Resolves a dataset by key (also accepts legacy aliases).
+    /// Resolves a dataset by key (also accepts alternate aliases).
     /// </summary>
     /// <param name="key">Dataset key.</param>
     /// <returns>Dataset document.</returns>

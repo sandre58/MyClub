@@ -18,7 +18,7 @@ public sealed class WorkspaceSummaryAssemblerTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 8, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Assemble_draft_returns_continue_organisation_stub()
+    public void Assemble_draft_returns_continue_structure_stub()
     {
         var competition = CreateCompetition.Execute("Draft Cup", _clock);
 
@@ -26,7 +26,7 @@ public sealed class WorkspaceSummaryAssemblerTests
 
         summary.Name.Should().Be("Draft Cup");
         summary.Status.Should().Be(CompetitionStatus.Draft);
-        summary.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueOrganisationCode);
+        summary.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueStructureCode);
         summary.AttentionCount.Should().Be(0);
         summary.CanCompleteNormally.Should().BeFalse();
         summary.CompletionMode.Should().BeNull();

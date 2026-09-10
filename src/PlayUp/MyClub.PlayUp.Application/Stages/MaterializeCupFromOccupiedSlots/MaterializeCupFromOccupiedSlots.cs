@@ -207,14 +207,14 @@ public static class MaterializeCupFromOccupiedSlots
         {
             throw new ApplicationFailureException(
                 $"Matches cannot be materialized while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
             throw new ApplicationFailureException(
                 $"Matches cannot be materialized while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
     }
 }

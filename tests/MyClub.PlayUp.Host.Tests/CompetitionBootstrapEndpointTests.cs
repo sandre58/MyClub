@@ -36,7 +36,7 @@ public sealed class CompetitionBootstrapEndpointTests(HostPostgresFixture fixtur
         created.Should().NotBeNull();
         created.Name.Should().Be(name);
         created.Status.Should().Be(CompetitionStatus.Draft);
-        created.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueOrganisationCode);
+        created.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueStructureCode);
         created.AttentionCount.Should().Be(0);
         createResponse.Headers.Location.Should().NotBeNull();
         createResponse.Headers.Location!.ToString()
@@ -55,7 +55,7 @@ public sealed class CompetitionBootstrapEndpointTests(HostPostgresFixture fixtur
         workspace.Id.Should().Be(created.Id);
         workspace.Name.Should().Be(name);
         workspace.Status.Should().Be(CompetitionStatus.Draft);
-        workspace.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueOrganisationCode);
+        workspace.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueStructureCode);
     }
 
     [IntegrationFact]

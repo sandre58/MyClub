@@ -72,12 +72,12 @@ public sealed class RegulationJsonConverterTests
     [Fact]
     public void Convert_defaults_missing_disciplinary_rules_to_none()
     {
-        const string legacyJson =
+        const string previousFormatJson =
             """
             {"EntryRules":{"MinimumTeams":2,"MaximumTeams":64},"MatchRules":{"Duration":{"DurationPerPeriod":45,"NumberOfPeriods":2,"HalfTimeDuration":15},"AdministrativeResultPolicy":{"ForfeitWinnerGoals":3,"ForfeitLoserGoals":0},"ExtraTimePolicy":null,"PenaltyShootoutPolicy":null},"StandingRules":{"Points":{"WinPoints":3,"DrawPoints":1,"LossPoints":0},"RankingCriteria":[0,1,2,5]}}
             """;
 
-        var restored = _converter.ConvertFromProvider(legacyJson);
+        var restored = _converter.ConvertFromProvider(previousFormatJson);
 
         restored.Should().BeOfType<Regulation>().Which.DisciplinaryRules.Should().Be(DisciplinaryRules.None);
     }

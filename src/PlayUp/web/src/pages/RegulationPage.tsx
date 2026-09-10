@@ -22,7 +22,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
-import { fetchOrganisationView } from '../api';
+import { fetchStructureView } from '../api';
 import { Alert } from '../design-system/components/Alert';
 import { Chip, type ChipTone } from '../design-system/components/Chip';
 import { Meter, type MeterTone } from '../design-system/components/Meter';
@@ -46,9 +46,9 @@ import {
 } from '../ui';
 import type {
   DisciplinaryType,
-  OrganisationPlacementAward,
-  OrganisationRegulationSummary,
-  OrganisationStageHubSummary,
+  StructurePlacementAward,
+  StructureRegulationSummary,
+  StructureStageHubSummary,
   RankingCriterion,
   StructureFormatKind,
 } from '../types';
@@ -78,13 +78,13 @@ export function RegulationPage() {
   const { t } = useTranslation('regulation');
   const [editorOpen, setEditorOpen] = useState(false);
 
-  const organisationQuery = useQuery({
+  const structureQuery = useQuery({
     queryKey: queryKeys.competitions.structure(competitionId),
-    queryFn: () => fetchOrganisationView(competitionId),
+    queryFn: () => fetchStructureView(competitionId),
     enabled: competitionId.length > 0,
   });
 
-  if (organisationQuery.isPending) {
+  if (structureQuery.isPending) {
     return (
       <main id="main" className="page page--regulation">
         <LoadingState />
@@ -92,15 +92,15 @@ export function RegulationPage() {
     );
   }
 
-  if (organisationQuery.isError || !organisationQuery.data) {
+  if (structureQuery.isError || !structureQuery.data) {
     return (
       <main id="main" className="page page--regulation">
-        <ErrorState error={organisationQuery.error} />
+        <ErrorState error={structureQuery.error} />
       </main>
     );
   }
 
-  const data = organisationQuery.data;
+  const data = structureQuery.data;
   const { regulation, stages } = data;
   const canReplace = data.actions.includes('ReplaceRegulation');
   const showStandingTile = stages.some(
@@ -215,7 +215,7 @@ function FrameCard({
 function EntriesTile({
   regulation,
 }: {
-  regulation: OrganisationRegulationSummary;
+  regulation: StructureRegulationSummary;
 }) {
   const { t } = useTranslation('regulation');
   const min = regulation.minimumTeams;
@@ -280,7 +280,7 @@ function EntriesTile({
 function MatchTile({
   regulation,
 }: {
-  regulation: OrganisationRegulationSummary;
+  regulation: StructureRegulationSummary;
 }) {
   const { t } = useTranslation('regulation');
   const halfTime = regulation.halfTimeDuration ?? 0;
@@ -379,7 +379,7 @@ function MatchTile({
 function DisciplineTile({
   regulation,
 }: {
-  regulation: OrganisationRegulationSummary;
+  regulation: StructureRegulationSummary;
 }) {
   const { t } = useTranslation('regulation');
   const types = regulation.allowedTypes ?? [];
@@ -579,7 +579,7 @@ function ClockRow({ pieces }: { pieces: MatchClockPiece[] }) {
 function StandingTile({
   regulation,
 }: {
-  regulation: OrganisationRegulationSummary;
+  regulation: StructureRegulationSummary;
 }) {
   const { t } = useTranslation('regulation');
   const maxPts = Math.max(
@@ -727,7 +727,7 @@ function PhaseTile({
   ordinal,
 }: {
   competitionId: string;
-  stage: OrganisationStageHubSummary;
+  stage: StructureStageHubSummary;
   ordinal: number;
 }) {
   const { t } = useTranslation('regulation');
@@ -975,7 +975,7 @@ function PhaseRuleItemList({ items }: { items: PhaseRuleItem[] }) {
 // —— Phases: schematic ——
 
 function inferPhaseKind(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
 ): 'groups' | 'cup' | 'championship' | 'swiss' {
   const kind: StructureFormatKind | null | undefined = stage.formatKind;
   if (kind === 'Swiss') {
@@ -990,7 +990,7 @@ function inferPhaseKind(
   return 'championship';
 }
 
-function PhaseSchematic({ stage }: { stage: OrganisationStageHubSummary }) {
+function PhaseSchematic({ stage }: { stage: StructureStageHubSummary }) {
   const { t } = useTranslation('regulation');
   const kind = inferPhaseKind(stage);
   const groupCount = stage.groupCount ?? 0;
@@ -1176,7 +1176,7 @@ function PhaseSchematic({ stage }: { stage: OrganisationStageHubSummary }) {
 // —— Phases: flow + rule builders ——
 
 function buildPhaseFlows(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
   t: Translate,
 ): PhaseFlow[] {
   const flows: PhaseFlow[] = [];
@@ -1315,7 +1315,7 @@ function buildTiePropertyItems(
 }
 
 function buildPhaseRuleColumns(
-  stage: OrganisationStageHubSummary,
+  stage: StructureStageHubSummary,
   t: Translate,
   competitionId: string,
 ): PhaseRuleColumn[] {
@@ -1599,7 +1599,7 @@ function PlacementAwardsList({
   count,
   t,
 }: {
-  awards: OrganisationPlacementAward[];
+  awards: StructurePlacementAward[];
   count: number;
   t: Translate;
 }) {

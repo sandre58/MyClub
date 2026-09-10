@@ -42,7 +42,7 @@ describe('resolveOverviewActionIntent', () => {
     expect(intent).toEqual({ kind: 'unsupported' });
   });
 
-  it('navigates organisation actions instead of inventing POST bodies', () => {
+  it('navigates structure actions instead of inventing POST bodies', () => {
     const intent = resolveOverviewActionIntent(
       { code: 'AddEntry', guaranteed: false },
       overviewView(),
@@ -141,7 +141,7 @@ describe('situationHref', () => {
         {
           source: 'InsufficientParticipants',
           nature: 'Blocking',
-          targetType: 'Organisation',
+          targetType: 'Structure',
           targetId: competitionId,
           matchId: null,
           actionable: true,

@@ -1,21 +1,21 @@
-﻿import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import {
-  fetchOrganisationView,
+  fetchStructureView,
   replaceCompetitionRegulation,
 } from '../api';
 import { RegulationPage } from './RegulationPage';
 import type {
-  OrganisationStageDefaultsBinding,
-  OrganisationStageHubSummary,
-  OrganisationView,
+  StructureStageDefaultsBinding,
+  StructureStageHubSummary,
+  StructureView,
 } from '../types';
 
 vi.mock('../api', () => ({
-  fetchOrganisationView: vi.fn(),
+  fetchStructureView: vi.fn(),
   replaceCompetitionRegulation: vi.fn(),
 }));
 
@@ -30,7 +30,7 @@ function binding(parts: {
   administrativeResult?: boolean;
   points?: boolean | null;
   rankingCriteria?: boolean | null;
-}): OrganisationStageDefaultsBinding {
+}): StructureStageDefaultsBinding {
   return {
     matchDuration: { isBound: parts.matchDuration ?? true },
     extraTime: { isBound: parts.extraTime ?? true },
@@ -45,8 +45,8 @@ function binding(parts: {
 }
 
 function groupesStage(
-  overrides: Partial<OrganisationStageHubSummary> = {},
-): OrganisationStageHubSummary {
+  overrides: Partial<StructureStageHubSummary> = {},
+): StructureStageHubSummary {
   return {
     stageId,
     name: 'Groupes',
@@ -81,8 +81,8 @@ function groupesStage(
 }
 
 function finaleStage(
-  overrides: Partial<OrganisationStageHubSummary> = {},
-): OrganisationStageHubSummary {
+  overrides: Partial<StructureStageHubSummary> = {},
+): StructureStageHubSummary {
   return {
     stageId: stageFinaleId,
     name: 'Finale',
@@ -130,9 +130,9 @@ function finaleStage(
   };
 }
 
-function organisationView(
-  overrides: Partial<OrganisationView> = {},
-): OrganisationView {
+function structureView(
+  overrides: Partial<StructureView> = {},
+): StructureView {
   return {
     competitionId,
     name: 'Coupe',
@@ -216,7 +216,7 @@ function renderPage() {
 
 describe('RegulationPage', () => {
   it('renders frame tiles, phases, and a single edit action', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderPage();
 
@@ -300,8 +300,8 @@ describe('RegulationPage', () => {
   });
 
   it('renders an aggregate Confrontation line when rounds differ', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           groupesStage(),
           finaleStage({
@@ -384,8 +384,8 @@ describe('RegulationPage', () => {
   });
 
   it('keeps Confrontation tokens when a single segment is homogeneous', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           groupesStage(),
           finaleStage({
@@ -421,10 +421,10 @@ describe('RegulationPage', () => {
   });
 
   it('shows a single exact capacity pill when min equals max', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         regulation: {
-          ...organisationView().regulation,
+          ...structureView().regulation,
           minimumTeams: 8,
           maximumTeams: 8,
         },
@@ -445,10 +445,10 @@ describe('RegulationPage', () => {
   });
 
   it('shows a discipline empty state when no cards are allowed', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         regulation: {
-          ...organisationView().regulation,
+          ...structureView().regulation,
           allowedTypes: [],
         },
       }),
@@ -468,8 +468,8 @@ describe('RegulationPage', () => {
   });
 
   it('hides Classement when no classifying phase exists', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           finaleStage({
             matchCount: 1,
@@ -495,7 +495,7 @@ describe('RegulationPage', () => {
 
   it('opens the regulation editor from the page action', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderPage();
 
@@ -506,8 +506,8 @@ describe('RegulationPage', () => {
   });
 
   it('keeps the edit action visible but disabled when ReplaceRegulation is unavailable', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({ actions: [] }),
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({ actions: [] }),
     );
 
     renderPage();
@@ -521,8 +521,8 @@ describe('RegulationPage', () => {
   });
 
   it('shows forfeit under phase Classement and draw seeds with constraints', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           groupesStage({
             hasExtraTime: true,
@@ -555,7 +555,7 @@ describe('RegulationPage', () => {
           }),
         ],
         regulation: {
-          ...organisationView().regulation,
+          ...structureView().regulation,
           hasExtraTime: true,
           extraTimeDurationPerPeriod: 15,
           extraTimeNumberOfPeriods: 2,
@@ -589,8 +589,8 @@ describe('RegulationPage', () => {
   });
 
   it('does not invent Swiss rounds when swissRoundCount is unknown', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           groupesStage({
             name: 'Suisse',
@@ -631,7 +631,7 @@ describe('RegulationPage', () => {
 
   it('opens a sectioned editor without sync banner', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderPage();
 
@@ -671,8 +671,8 @@ describe('RegulationPage', () => {
   });
 
   it('shows personalized badge from DefaultsBinding even when values match the frame', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           groupesStage({
             defaultsBinding: binding({
@@ -697,8 +697,8 @@ describe('RegulationPage', () => {
 
   it('asks for a single impact confirm including Ready reopen copy', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({ status: 'Ready' }),
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({ status: 'Ready' }),
     );
     vi.mocked(replaceCompetitionRegulation).mockResolvedValue(
       undefined as never,
@@ -759,7 +759,7 @@ describe('RegulationPage', () => {
 
   it('projects duration inherit vs keep-override in the impact confirm', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
     vi.mocked(replaceCompetitionRegulation).mockResolvedValue(
       undefined as never,
     );
@@ -807,7 +807,7 @@ describe('RegulationPage', () => {
 
   it('asks to discard dirty edits when closing the editor', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderPage();
 
@@ -833,7 +833,7 @@ describe('RegulationPage', () => {
 
   it('keeps Enregistrer disabled when the form is untouched', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
 
     renderPage();
 
@@ -853,7 +853,7 @@ describe('RegulationPage', () => {
 
   it('reports competition-only impact when only entry bounds change', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
     vi.mocked(replaceCompetitionRegulation).mockResolvedValue(
       undefined as never,
     );
@@ -893,8 +893,8 @@ describe('RegulationPage', () => {
 
   it('reports no eligible stages when all phases are Running', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         stages: [
           groupesStage({ status: 'Running' }),
           finaleStage({ status: 'Running' }),
@@ -925,10 +925,10 @@ describe('RegulationPage', () => {
 
   it('shows soft-warns for unusual points and forfeit scores', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         regulation: {
-          ...organisationView().regulation,
+          ...structureView().regulation,
           winPoints: 0,
           drawPoints: 1,
           lossPoints: 0,
@@ -952,7 +952,7 @@ describe('RegulationPage', () => {
 
   it('can save with no allowed cards', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchOrganisationView).mockResolvedValue(organisationView());
+    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
     vi.mocked(replaceCompetitionRegulation).mockResolvedValue(
       undefined as never,
     );
@@ -986,10 +986,10 @@ describe('RegulationPage', () => {
   });
 
   it('renders one TAB kick pill per configured kick', async () => {
-    vi.mocked(fetchOrganisationView).mockResolvedValue(
-      organisationView({
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
         regulation: {
-          ...organisationView().regulation,
+          ...structureView().regulation,
           hasPenaltyShootout: true,
           penaltyInitialKicksPerTeam: 10,
         },

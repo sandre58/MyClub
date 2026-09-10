@@ -97,7 +97,7 @@ public sealed class StageSlotLifecycleTests
     }
 
     [Fact]
-    public void Legacy_cup_without_slot_keys_can_start_when_ready()
+    public void Cup_without_slot_keys_can_start_when_ready()
     {
         var stage = Stage.Create(
             CompetitionId.New(),

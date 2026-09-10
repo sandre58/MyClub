@@ -32,7 +32,7 @@ export type DrawResolutionKind = 'Slot' | 'Group' | 'Pairing';
 
 export type DrawResolutionState = 'NotResolved' | 'Resolved' | 'NoSolution';
 
-/** Application StructureFormatKind — organisation format intent (string on wire). */
+/** Application StructureFormatKind — structure format intent (string on wire). */
 export type StructureFormatKind = 'Championship' | 'Groups' | 'Cup' | 'Swiss';
 
 /** Domain MatchGenerationFormat — Championship / Groups RR mode (string on wire). */
@@ -79,7 +79,7 @@ export const MEMBER_DISPLAY_NAME_MAX_LENGTH = 100;
 /** Host DeclaredMemberRole — string enum member names. */
 export type DeclaredMemberRole = 'Player' | 'Staff';
 
-/** GET organisation `entries[].declaredMembers[]`. */
+/** GET structure `entries[].declaredMembers[]`. */
 export interface DeclaredMember {
   memberId: string;
   displayName: string;
@@ -235,7 +235,7 @@ export interface OverviewDimension {
 export interface OverviewRegulationDimension {
   prominence: OverviewProminence | string;
   /** Competition regulation factual summary (Entry / Match / Standing). */
-  competition: OrganisationRegulationSummary;
+  competition: StructureRegulationSummary;
   /** Primary stage regulation flags when a primary stage exists. */
   stage: OverviewStageRegulationSummary | null;
   /** Domain: ReplaceRegulation allowed in Draft/Ready. */
@@ -466,32 +466,32 @@ export interface MatchHubStageMatches {
   matches: MatchSummary[];
 }
 
-/** GET /competitions/{id}/structure — Host OrganisationView (SPA Structure hub). */
-export interface OrganisationView {
+/** GET /competitions/{id}/structure — Host StructureView (SPA Structure hub). */
+export interface StructureView {
   competitionId: string;
   name: string;
   status: CompetitionStatus;
-  participants: OrganisationParticipantsSummary;
-  format: OrganisationFormatSummary;
-  regulation: OrganisationRegulationSummary;
-  structure: OrganisationStructureSummary;
+  participants: StructureParticipantsSummary;
+  format: StructureFormatSummary;
+  regulation: StructureRegulationSummary;
+  structure: StructureTopologySummary;
   actions: string[];
-  readiness: OrganisationReadiness;
+  readiness: StructureReadiness;
   /** Per-stage topology + regulation tokens (Règlement hub). */
-  stages: OrganisationStageHubSummary[];
+  stages: StructureStageHubSummary[];
   shortName?: string | null;
   logoMediaId?: string | null;
   scheduledStart?: string | null;
   scheduledEnd?: string | null;
 }
 
-export interface OrganisationParticipantsSummary {
+export interface StructureParticipantsSummary {
   activeCount: number;
   occupyingCount: number;
-  entries: OrganisationEntry[];
+  entries: StructureEntry[];
 }
 
-export interface OrganisationEntry {
+export interface StructureEntry {
   entryId: string;
   displayName: string;
   status: EntryStatus;
@@ -502,14 +502,14 @@ export interface OrganisationEntry {
   declaredMembers?: DeclaredMember[];
 }
 
-export interface OrganisationFormatSummary {
+export interface StructureFormatSummary {
   kind: StructureFormatKind | null;
   primaryStageId: string | null;
   primaryStageName: string | null;
   primaryStageStatus: StageStatus | null;
 }
 
-export interface OrganisationRegulationSummary {
+export interface StructureRegulationSummary {
   minimumTeams: number;
   maximumTeams: number;
   durationPerPeriod: number;
@@ -549,7 +549,7 @@ export type RankingCriterion =
 /** Host DisciplinaryType — string enum member names. */
 export type DisciplinaryType = 'Yellow' | 'Red' | 'White';
 
-export interface OrganisationStructureSummary {
+export interface StructureTopologySummary {
   groupCount: number;
   roundCount: number;
   matchdayCount: number;
@@ -561,7 +561,7 @@ export interface OrganisationStructureSummary {
   swissRoundCount?: number | null;
 }
 
-export interface OrganisationReadiness {
+export interface StructureReadiness {
   readyForNextSlice: boolean;
   readyForDraw: boolean;
   readyForMaterialization: boolean;
@@ -575,8 +575,8 @@ export interface OrganisationReadiness {
 /** Host DrawMode — string enum member names. */
 export type DrawMode = 'Random';
 
-/** GET organisation `stages[]` — Règlement hub phase row. */
-export interface OrganisationStageHubSummary {
+/** GET structure `stages[]` — Règlement hub phase row. */
+export interface StructureStageHubSummary {
   stageId: string;
   name: string;
   status: StageStatus;
@@ -621,7 +621,7 @@ export interface OrganisationStageHubSummary {
   hasPlacementAwardRules?: boolean;
   placementAwardCount?: number;
   /** Placement paths (rank + outcome), ordered by rank. */
-  placementAwards?: OrganisationPlacementAward[];
+  placementAwards?: StructurePlacementAward[];
   /** Inferred structure format for schematic / badge context. */
   formatKind?: StructureFormatKind | null;
   /** Planned Swiss rounds when formatKind is Swiss. */
@@ -633,26 +633,26 @@ export interface OrganisationStageHubSummary {
   /** SeedingRules.NumberOfSeeds when draw seeding is set. */
   numberOfSeeds?: number | null;
   /** DrawRules.Constraints (all stored constraints). */
-  drawConstraints?: OrganisationDrawConstraint[];
+  drawConstraints?: StructureDrawConstraint[];
   /** Provenance of heritable Match/Standing parts (DefaultsBinding). */
-  defaultsBinding?: OrganisationStageDefaultsBinding;
+  defaultsBinding?: StructureStageDefaultsBinding;
   /**
    * Consecutive Round runs sharing the same effective TieFormat when hasTieFormat
    * and the stage has rounds; otherwise omitted/null.
    */
-  confrontationSegments?: OrganisationConfrontationSegment[] | null;
+  confrontationSegments?: StructureConfrontationSegment[] | null;
   /** Per-phase Structure mutation action codes (server-gated). */
   actions?: string[];
   /** Authoring projection of qualification paths when present. */
-  qualificationPaths?: OrganisationQualificationPath[] | null;
+  qualificationPaths?: StructureQualificationPath[] | null;
   /** Authoring projection of progression paths when present. */
-  progressionPaths?: OrganisationProgressionPath[] | null;
+  progressionPaths?: StructureProgressionPath[] | null;
   /** Machine-readable graph validity codes (Draft-persistable). */
   structureIssues?: string[];
 }
 
 /** One qualification path for Structure authoring / impact preview. */
-export interface OrganisationQualificationPath {
+export interface StructureQualificationPath {
   order: number;
   selectionMode: SelectionMode;
   selectionValue: number;
@@ -666,7 +666,7 @@ export interface OrganisationQualificationPath {
 }
 
 /** One progression path for Structure authoring / impact preview. */
-export interface OrganisationProgressionPath {
+export interface StructureProgressionPath {
   sourceFixtureId: string;
   outcome: ProgressionOutcome;
   destinationStageId: string;
@@ -688,7 +688,7 @@ export interface RemoveCompetitionStageResponse {
   removedStageId: string;
   scrubbedQualificationPaths: number;
   scrubbedProgressionPaths: number;
-  organisation: OrganisationView;
+  structure: StructureView;
 }
 
 /** POST /competitions/{id}/stages */
@@ -699,12 +699,12 @@ export interface AddCompetitionStageResponse {
 
 /** PUT /stages/{id}/qualification-rules */
 export interface ReplaceQualificationRulesRequest {
-  paths: OrganisationQualificationPath[] | null;
+  paths: StructureQualificationPath[] | null;
 }
 
 /** PUT /stages/{id}/progression-rules */
 export interface ReplaceProgressionRulesRequest {
-  paths: OrganisationProgressionPath[] | null;
+  paths: StructureProgressionPath[] | null;
 }
 
 /** PUT /stages/{id}/match-rules */
@@ -752,7 +752,7 @@ export interface ReplaceStageDefaultTieFormatRequest {
 }
 
 /** Round identity + display name inside a confrontation segment. */
-export interface OrganisationConfrontationRoundRef {
+export interface StructureConfrontationRoundRef {
   roundId: string;
   name: string;
   /** Stage round order (0-based). */
@@ -763,8 +763,8 @@ export interface OrganisationConfrontationRoundRef {
  * Consecutive rounds that share the same effective TieFormat
  * (legs + aggregate / away goals / tie ET / TAB).
  */
-export interface OrganisationConfrontationSegment {
-  rounds: OrganisationConfrontationRoundRef[];
+export interface StructureConfrontationSegment {
+  rounds: StructureConfrontationRoundRef[];
   numberOfLegs: number;
   aggregateScoring: boolean;
   hasAwayGoalsRule: boolean;
@@ -773,7 +773,7 @@ export interface OrganisationConfrontationSegment {
 }
 
 /** Whether a heritable part still follows Competition defaults. */
-export interface OrganisationHeritablePartBinding {
+export interface StructureHeritablePartBinding {
   isBound: boolean;
 }
 
@@ -781,19 +781,19 @@ export interface OrganisationHeritablePartBinding {
  * Stage DefaultsBinding projection — never value equality.
  * Standing parts are null when the phase does not classify.
  */
-export interface OrganisationStageDefaultsBinding {
-  matchDuration: OrganisationHeritablePartBinding;
-  extraTime: OrganisationHeritablePartBinding;
-  penaltyShootout: OrganisationHeritablePartBinding;
-  administrativeResult: OrganisationHeritablePartBinding;
-  points: OrganisationHeritablePartBinding | null;
-  rankingCriteria: OrganisationHeritablePartBinding | null;
+export interface StructureStageDefaultsBinding {
+  matchDuration: StructureHeritablePartBinding;
+  extraTime: StructureHeritablePartBinding;
+  penaltyShootout: StructureHeritablePartBinding;
+  administrativeResult: StructureHeritablePartBinding;
+  points: StructureHeritablePartBinding | null;
+  rankingCriteria: StructureHeritablePartBinding | null;
 }
 
 /** Host ProgressionOutcome — placement / progression selector. */
 export type ProgressionOutcome = 'Winner' | 'Loser';
 
-export interface OrganisationPlacementAward {
+export interface StructurePlacementAward {
   rank: number;
   outcome: ProgressionOutcome;
 }
@@ -808,7 +808,7 @@ export type DrawConstraintType =
 /** Host ConstraintEnforcement — string enum member names. */
 export type ConstraintEnforcement = 'Preferred' | 'Required';
 
-export interface OrganisationDrawConstraint {
+export interface StructureDrawConstraint {
   type: DrawConstraintType;
   enforcement: ConstraintEnforcement;
   maxPerGroup?: number | null;
@@ -904,7 +904,7 @@ export interface StructureRebuildImpact {
 export interface ConfigureStructureResponse {
   stageCreated: boolean;
   rebuildImpact: StructureRebuildImpact | null;
-  organisation: OrganisationView;
+  structure: StructureView;
 }
 
 /** GET /competitions/{id}/consultation — Slice 7 multi-consumer Read (camelCase wire). */

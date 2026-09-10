@@ -134,7 +134,7 @@ export function overviewSituation(
   return {
     source: 'InsufficientParticipants',
     nature: 'Blocking',
-    targetType: 'Organisation',
+    targetType: 'Structure',
     targetId: competitionId,
     matchId: null,
     actionable: true,

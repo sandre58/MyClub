@@ -26,7 +26,7 @@ public static class AddStageMatchday
         {
             throw new ApplicationFailureException(
                 $"Matchdays cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         var resolved = number ?? (stage.Matchdays.Count == 0

@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   correctRecordedDisciplinaryEvent,
-  fetchOrganisationView,
+  fetchStructureView,
   recordDisciplinaryEvent,
   removeRecordedDisciplinaryEvent,
 } from '../api';
@@ -32,7 +32,7 @@ import { canMutateRecordedDisciplinaryEvents } from './matchDisciplinaryHelpers'
 
 /**
  * Nominative discipline panel (Lot 1) — faits ≠ score ≠ présence ≠ conséquences.
- * Types = Organisation AllowedTypes ; cible = toute personne sur la feuille.
+ * Types = Structure AllowedTypes ; cible = toute personne sur la feuille.
  */
 export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');
@@ -42,13 +42,13 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
   const sheet = match.declaredParticipations ?? [];
   const events = match.recordedDisciplinaryEvents ?? [];
 
-  const organisationQuery = useQuery({
+  const structureQuery = useQuery({
     queryKey: queryKeys.competitions.structure(match.competitionId),
-    queryFn: () => fetchOrganisationView(match.competitionId),
+    queryFn: () => fetchStructureView(match.competitionId),
   });
 
-  const allowedTypes = organisationQuery.data?.regulation.allowedTypes ?? [];
-  const catalogueReady = organisationQuery.isSuccess;
+  const allowedTypes = structureQuery.data?.regulation.allowedTypes ?? [];
+  const catalogueReady = structureQuery.isSuccess;
   const noneAllowed = catalogueReady && allowedTypes.length === 0;
   const canCreate =
     canMutate && sheet.length > 0 && catalogueReady && allowedTypes.length > 0;
@@ -129,9 +129,9 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
         <p className="ds-notice ds-notice--info">{t('discipline.readOnly')}</p>
       )}
 
-      {organisationQuery.isPending && <LoadingState size="region" />}
-      {organisationQuery.isError && (
-        <ErrorState error={organisationQuery.error} />
+      {structureQuery.isPending && <LoadingState size="region" />}
+      {structureQuery.isError && (
+        <ErrorState error={structureQuery.error} />
       )}
 
       {canMutate && catalogueReady && sheet.length === 0 && (
@@ -182,7 +182,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                       <div className="match-discipline__row-actions">
                         <button
                           type="button"
-                          className="organisation-action"
+                          className="matches-action"
                           disabled={busy}
                           onClick={() => beginEdit(evt)}
                         >
@@ -190,7 +190,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                         </button>
                         <button
                           type="button"
-                          className="organisation-action"
+                          className="matches-action"
                           disabled={busy}
                           onClick={() => {
                             setEditingId(null);

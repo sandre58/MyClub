@@ -38,7 +38,7 @@ export function overviewTargetHref(target: {
       return `/matches/${targetId}`;
     case 'Competition':
       return `/competitions/${targetId}`;
-    case 'Organisation':
+    case 'Structure':
       return `/competitions/${targetId}/structure`;
     case 'Draw':
       return stageId ? `/stages/${stageId}` : null;
@@ -66,10 +66,4 @@ export function situationHref(
       ? `/competitions/${competitionId}/matches`
       : null)
   );
-}
-
-export function navigationHintHref(
-  hint: OverviewNavigationHint,
-): string | null {
-  return overviewTargetHref(hint);
 }

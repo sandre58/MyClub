@@ -36,7 +36,7 @@ function createdSummary(
     id: competitionId,
     name: 'New Cup',
     status: 'Draft',
-    nextActionCode: 'ContinueOrganisation',
+    nextActionCode: 'ContinueStructure',
     attentionCount: 0,
     completionMode: null,
     canCompleteNormally: false,
@@ -64,7 +64,7 @@ function renderHomePage() {
           />
           <Route
             path="/competitions/:competitionId/structure"
-            element={<p>Organisation route</p>}
+            element={<p>Structure route</p>}
           />
         </Routes>
       </MemoryRouter>
@@ -189,7 +189,7 @@ describe('HomePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('opens name dialog from CTA and creates then navigates to Organisation', async () => {
+  it('opens name dialog from CTA and creates then navigates to Structure', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchCompetitions).mockResolvedValue([]);
     vi.mocked(createCompetition).mockResolvedValue(
@@ -222,7 +222,7 @@ describe('HomePage', () => {
       });
     });
 
-    expect(await screen.findByText('Organisation route')).toBeInTheDocument();
+    expect(await screen.findByText('Structure route')).toBeInTheDocument();
   });
 
   it('shows API error inside dialog and does not navigate on create failure', async () => {
@@ -242,7 +242,7 @@ describe('HomePage', () => {
     await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }));
 
     expect(await within(dialog).findByRole('alert')).toBeInTheDocument();
-    expect(screen.queryByText('Organisation route')).not.toBeInTheDocument();
+    expect(screen.queryByText('Structure route')).not.toBeInTheDocument();
   });
 
   it('closes dialog on Escape and returns focus to create CTA', async () => {

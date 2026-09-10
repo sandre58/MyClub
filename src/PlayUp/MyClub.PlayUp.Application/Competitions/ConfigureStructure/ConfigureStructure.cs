@@ -45,8 +45,8 @@ public static class ConfigureStructure
             or CompetitionStatus.Archived)
         {
             throw new ApplicationFailureException(
-                $"Organisation structure cannot be configured while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                $"Structure cannot be configured while competition status is '{competition.Status}'.",
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         var stageCreated = false;
@@ -84,7 +84,7 @@ public static class ConfigureStructure
             {
                 throw new ApplicationFailureException(
                     $"Stage '{primaryStage.Id}' cannot be rebuilt while matches are attached.",
-                    ApplicationErrorCodes.OrganisationNotMutable);
+                    ApplicationErrorCodes.StructureNotMutable);
             }
 
             stage = primaryStage;

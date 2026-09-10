@@ -48,7 +48,7 @@ public sealed class MaterializeMatchesTests
         second.AlreadyComplete.Should().BeTrue();
         second.AttachedMatchIds.Should().HaveCount(6);
 
-        var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
+        var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
         view.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(6);
         view.Readiness.ReadyForSchedule.Should().BeTrue();
@@ -206,7 +206,7 @@ public sealed class MaterializeMatchesTests
         result.CreatedMatches.Should().BeEmpty();
         configured.Stage.Rounds[0].Fixtures.Should().HaveCount(2);
 
-        var view = OrganisationViewAssembler.Assemble(competition, [configured.Stage]);
+        var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
         view.Readiness.ReadyForMatchOperation.Should().BeFalse();
     }
 

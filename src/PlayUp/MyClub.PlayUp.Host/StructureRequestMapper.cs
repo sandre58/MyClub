@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="OrganisationRequestMapper.cs" company="Stéphane ANDRE">
+// <copyright file="StructureRequestMapper.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -13,9 +13,9 @@ using MyClub.PlayUp.Host.Contracts;
 namespace MyClub.PlayUp.Host;
 
 /// <summary>
-/// Maps Organisation HTTP contracts to Application commands (no business logic).
+/// Maps Structure HTTP contracts to Application commands (no business logic).
 /// </summary>
-public static class OrganisationRequestMapper
+public static class StructureRequestMapper
 {
     /// <summary>
     /// Maps <see cref="ConfigureStructureRequest"/> to <see cref="StructureIntent"/>.
@@ -54,7 +54,7 @@ public static class OrganisationRequestMapper
                     ApplicationErrorCodes.InvalidStructureIntent)
                 : StructureIntent.Swiss(request.SwissRoundCount.Value, request.StageName)
             : throw new ApplicationFailureException(
-            $"Unknown organisation format '{request.Format}'. Expected Championship, Groups, Cup, or Swiss.",
+            $"Unknown structure format '{request.Format}'. Expected Championship, Groups, Cup, or Swiss.",
             ApplicationErrorCodes.InvalidStructureIntent);
     }
 

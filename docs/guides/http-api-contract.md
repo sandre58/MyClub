@@ -16,17 +16,17 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 
 | Enum | Typical fields |
 | :--- | :--- |
-| `CompetitionStatus` | workspace / overview / organisation / consultation / detail `status` |
+| `CompetitionStatus` | workspace / overview / structure / consultation / detail `status` |
 | `CompletionMode` | completion mode on workspace / overview / consultation / detail |
 | `EntryStatus` | entry rows |
-| `StageStatus` | stage / organisation format / overview operational focus |
+| `StageStatus` | stage / structure format / overview operational focus |
 | `MatchStatus` | match list / detail / consultation results |
 | `ResultType` | match detail / finish request / consultation |
 | `DrawResolutionKind` | draw summaries / stage overview / overview draws |
 | `DrawStatus` | draw summaries / stage overview / overview draws |
 | `DrawResolutionState` | draw summaries / stage overview / overview draws |
-| `StructureFormatKind` | organisation / consultation format (`Championship` \| `Groups` \| `Cup` \| `Swiss`) |
-| `MatchGenerationFormat` | organisation `structure.matchGenerationFormat`; `ConfigureStructureRequest.matchGenerationFormat` (`SingleRoundRobin` \| `DoubleRoundRobin`) |
+| `StructureFormatKind` | structure / consultation format (`Championship` \| `Groups` \| `Cup` \| `Swiss`) |
+| `MatchGenerationFormat` | structure `structure.matchGenerationFormat`; `ConfigureStructureRequest.matchGenerationFormat` (`SingleRoundRobin` \| `DoubleRoundRobin`) |
 | `ProgressionOutcome` | progression-rules / placement-award-rules paths (`Winner` \| `Loser`) |
 | `RankingCriterion` | standing-rules / competition regulation (`Points` \| `GoalDifference` \| `GoalsFor` \| `GoalsAgainst` \| `Wins` \| `HeadToHead`) |
 
@@ -54,7 +54,7 @@ Stages + entries for the organizer. **Not** the Vue d'ensemble hub — that is `
 
 ### `GET /competitions/{competitionId}/overview` → `OverviewViewDto` (Phase 16.1)
 
-Aggregated Overview Read projection (Application interpretation). Does **not** replace workspace / organisation / attention endpoints.
+Aggregated Overview Read projection (Application interpretation). Does **not** replace workspace / structure / attention endpoints.
 
 **String strategy:** organizer-facing copy is **not** on the wire. The API exposes **codes + structured facts** only; the SPA maps codes to i18n labels. Exception diagnostics remain English on ProblemDetails.
 
@@ -131,7 +131,7 @@ Aggregated Overview Read projection (Application interpretation). Does **not** r
   "situations": [{
     "source": "InsufficientParticipants",
     "nature": "Blocking",
-    "targetType": "Organisation",
+    "targetType": "Structure",
     "targetId": "<guid>",
     "matchId": null,
     "actionable": true,
@@ -189,10 +189,10 @@ Contract notes:
 - Nature V1: `Blocking` | `Informational` only. Richer natures (e.g. Opportunity) remain OPEN — opportunities live in `availableActions` / `naturalProgression`.
 - `draws[].isApplied` is Application-derived (Publish ≠ Apply). Domain has no Applied status.
 - `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking.
-- Organisation construction blockers (`InsufficientParticipants`, `MissingStage`, …) become Overview situations only while competition is Draft/Ready.
+- Structure construction blockers (`InsufficientParticipants`, `MissingStage`, …) become Overview situations only while competition is Draft/Ready.
 - `constructionDimensions.regulation` (Phase 16.4): factual Competition summary (`competition`) + optional Stage regulation flags (`stage`) + `competitionRegulationMutable` + `transitionReadiness[]`. **No** global `isValid` / `isSatisfactory`.
-- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots` | `GenerateNextRound`. `Draw` / `MaterializeMatches` reuse Organisation readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. **Championship** and **Swiss** omit `Draw`. **Swiss** omits `MaterializeMatches` and projects `GenerateNextRound` instead (ready when stage Running, previous round Finished, rounds remaining).
-- `transitionReadiness` for Draw / MaterializeMatches reuses Organisation readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Organisation / Situations — not a parallel validation system. **Cup `ReadyForMaterialization`** means the primary stage still needs its empty Fixture **skeleton** (fixture count below `slotCount / 2`) — it is **not** the from-slots path and is **not** equal to `ReadyForDraw` after the skeleton exists. From-slots uses its own opportunity check; the Overview projects that transition **only when ready** (no standing `InsufficientOccupiedSlots` regulation gap during early Cup construction). Swiss `GenerateNextRound` blockers: `SwissStageNotRunning` | `SwissAwaitingRoundResults` | `SwissRoundsComplete` | `SwissInsufficientParticipants`.
+- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots` | `GenerateNextRound`. `Draw` / `MaterializeMatches` reuse Structure readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. **Championship** and **Swiss** omit `Draw`. **Swiss** omits `MaterializeMatches` and projects `GenerateNextRound` instead (ready when stage Running, previous round Finished, rounds remaining).
+- `transitionReadiness` for Draw / MaterializeMatches reuses Structure readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Structure / Situations — not a parallel validation system. **Cup `ReadyForMaterialization`** means the primary stage still needs its empty Fixture **skeleton** (fixture count below `slotCount / 2`) — it is **not** the from-slots path and is **not** equal to `ReadyForDraw` after the skeleton exists. From-slots uses its own opportunity check; the Overview projects that transition **only when ready** (no standing `InsufficientOccupiedSlots` regulation gap during early Cup construction). Swiss `GenerateNextRound` blockers: `SwissStageNotRunning` | `SwissAwaitingRoundResults` | `SwissRoundsComplete` | `SwissInsufficientParticipants`.
 - Structure facts may include `swissRoundCount` / `swissByeCount` when Kind is Swiss. `operationalFocus.swissByes[]` lists recorded bye pairing events (`roundIndex`, `entryId`, `entryDisplayName`) — **not** fixtures/matches.
 - `operationalFocus.recentUnit` / `nextUnit`: temporal sport units on **ReferenceStage** only (Championship/Groups/Swiss → Matchday; Cup → Round). Full unit, **no** silent truncation.
   - `recentUnit` = highest-order unit with ≥1 `Live` or `Finished` match (includes that unit’s `Scheduled` matches). Null → SPA empty state « Dernières » (card still shown in En cours).
@@ -212,7 +212,7 @@ Contract notes:
   - Projected only when competition is Running / Suspended / Completed / Archived.
   - Same `CalculateStanding` path as Consultation (`ProjectStandingsForStage`) — not a second ranking algorithm.
 - Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage).
-- `naturalProgression` (Draft / Ready): **0 or 1** structural tip — from-slots when applicable, else scan projected actions by priority `PrepareStage` → `StartStage` → `MaterializeMatches` → `PublishDraw` → `ApplyDraw`. **`null` is a valid calm Construction state** (no `ContinueOrganisation` fallback; SPA hides the card unless a lifecycle Prepare/Start competition action is available alone). Distinct from `availableActions` and from À traiter. `AddEntry` is never a tip.
+- `naturalProgression` (Draft / Ready): **0 or 1** structural tip — from-slots when applicable, else scan projected actions by priority `PrepareStage` → `StartStage` → `MaterializeMatches` → `PublishDraw` → `ApplyDraw`. **`null` is a valid calm Construction state** (no `ContinueStructure` fallback; SPA hides the card unless a lifecycle Prepare/Start competition action is available alone). Distinct from `availableActions` and from À traiter. `AddEntry` is never a tip.
 - `naturalProgression` (Running / Suspended): **0 or 1** structural tip from `availableActions` in fixed priority — `MaterializeFromOccupiedSlots` → `GenerateNextRound` → `PublishDraw` → `ApplyDraw` → `ApplyProgression` → `ApplyQualification` → `PrepareStage` → `StartStage` → `CompleteCompetition`. **`null` is a valid calm state** (no `OpenMatches` fallback; SPA hides the card). Distinct from `availableActions` and from À traiter.
 - `naturalProgression` (Completed / Archived): **`null`** — no Overview tip (consultation is not a “next action”; `OpenConsultation` may still appear on other surfaces such as workspace).
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
@@ -231,22 +231,18 @@ DTO source: `MyClub.PlayUp.Application.Reads.OverviewViewDto`.
 All organizer-facing copy is owned by the SPA i18n layer. Read DTOs expose **codes + structured facts** only:
 
 - Workspace: `nextActionCode` (no `nextActionLabel`)
-- Organisation: `format.kind`, `structure.matchGenerationFormat`, `readiness.blockers` (no `format.label`, no `hints`)
+- Structure: `format.kind`, `structure.matchGenerationFormat`, `readiness.blockers` (no `format.label`, no `hints`)
 - Needs Attention: `source` / `severity` / targets (no `reason`)
 - Completion: reason `code` only (no `message`)
 - Overview: codes + facts only (already)
 
-### `GET /competitions/{competitionId}/structure` → `OrganisationViewDto`
+### `GET /competitions/{competitionId}/structure` → `StructureViewDto`
 
-Structure hub read (product name **Structure**). Wire DTO type remains `OrganisationViewDto` until a dedicated rename.
-
-Legacy alias (same handler): `GET /competitions/{competitionId}/organisation`.
+Structure hub read (product name **Structure**). Wire DTO type: `StructureViewDto`.
 
 ### `POST /competitions/{competitionId}/structure` → 200 `ConfigureStructureResponse`
 
-Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`OrganisationNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `organisation` (same DTO type).
-
-Legacy alias (same handler): `POST /competitions/{competitionId}/organisation/structure`.
+Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`StructureNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `structure` (same `StructureViewDto` type).
 
 ```json
 {
@@ -269,7 +265,7 @@ Legacy alias (same handler): `POST /competitions/{competitionId}/organisation/st
 
 **Materialization principle:** `POST …/matches/materialize` does **not** accept a generation-mode body. `MaterializeMatches` reads `Stage.MatchGenerationFormat` persisted by ConfigureStructure (or Domain defaults). **Swiss** stages reject materialize — use `GenerateNextRound` instead.
 
-Structure Read already exposes `structure.matchGenerationFormat` and `structure.swissRoundCount` on `OrganisationStructureSummaryDto` (same enum / nullable int on wire).
+Structure Read already exposes `structure.matchGenerationFormat` and `structure.swissRoundCount` on `StructureTopologySummaryDto` (same enum / nullable int on wire).
 
 Host contract: `MyClub.PlayUp.Host.Contracts.ConfigureStructureRequest`.
 
@@ -299,7 +295,7 @@ Additional stages / rounds / slots / progression rules without Domain seeding. D
 
 #### `POST /competitions/{competitionId}/structure` → 200 `ConfigureStructureResponse`
 
-Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`OrganisationNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `organisation`. Legacy alias: `POST …/organisation/structure`.
+Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`StructureNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `structure`.
 
 Locale non-destructive skeleton edits (Lot 3):
 
@@ -323,14 +319,14 @@ Stage hub `actions` may include `RebuildStructure`, `RenameStage`, `AddMatchday`
 
 #### `DELETE /competitions/{competitionId}/stages/{stageId}` → 200 `RemoveCompetitionStageResponse`
 
-Removes a Draft/Ready stage (not the last stage; not when matches are attached). Scrubs peer Qualification/Progression paths that targeted the removed stage. Returns impact counts + refreshed Organisation view.
+Removes a Draft/Ready stage (not the last stage; not when matches are attached). Scrubs peer Qualification/Progression paths that targeted the removed stage. Returns impact counts + refreshed Structure hub view.
 
 ```json
 {
   "removedStageId": "<guid>",
   "scrubbedQualificationPaths": 1,
   "scrubbedProgressionPaths": 0,
-  "organisation": { }
+  "structure": { }
 }
 ```
 
@@ -342,7 +338,7 @@ Removes a Draft/Ready stage (not the last stage; not when matches are attached).
 
 `numberOfLegs` / `aggregateScoring` optional. Omit legs to leave the Round without an explicit TieFormat (stage regulation default may still apply at Domain add). **Effective contract:** null `Round.TieFormat` means **OneLeg** for materialize / draw / prepare / progression; **TwoLegs** only when explicit (`numberOfLegs: 2`). `numberOfLegs` must be `1` or `2` when set.
 
-Organisation hub (`OrganisationViewDto.stages[]`) projects `confrontationSegments` when `hasTieFormat` and the stage has rounds: consecutive rounds that share the same effective TieFormat (legs + aggregate / away goals / tie ET / TAB) are grouped. Flat `numberOfLegs` / tie flags remain the **first** segment (or stage default when there are no rounds). SPA Règlement uses multiple segments for an aggregate Confrontation line; a single segment keeps the token row.
+Structure hub (`StructureViewDto.stages[]`) projects `confrontationSegments` when `hasTieFormat` and the stage has rounds: consecutive rounds that share the same effective TieFormat (legs + aggregate / away goals / tie ET / TAB) are grouped. Flat `numberOfLegs` / tie flags remain the **first** segment (or stage default when there are no rounds). SPA Règlement uses multiple segments for an aggregate Confrontation line; a single segment keeps the token row.
 
 ```json
 { "roundId": "<guid>", "name": "SF" }
@@ -392,9 +388,9 @@ Empty or null `paths` clears rules. Domain validates source fixture ownership an
 }
 ```
 
-Empty or null `paths` clears rules. Optional: `groupId`, `acrossGroupsPosition`, `selectionEndValue`, `minimumPoints`. Rejected while stage is Running / Suspended / Completed (`OrganisationNotMutable`).
+Empty or null `paths` clears rules. Optional: `groupId`, `acrossGroupsPosition`, `selectionEndValue`, `minimumPoints`. Rejected while stage is Running / Suspended / Completed (`StructureNotMutable`).
 
-Organisation hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationPaths` / `progressionPaths`, and `structureIssues` (Draft-persistable graph validity). Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
+Structure hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationPaths` / `progressionPaths`, and `structureIssues` (Draft-persistable graph validity). Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
 
 #### `PUT /stages/{stageId}/placement-award-rules` → 204 No Content
 
@@ -417,7 +413,7 @@ Configuration only — does **not** resolve awards, mutate slots, or compute `Co
 }
 ```
 
-Empty or null `paths` clears rules. Domain validates source fixture ownership, unique `(fixture, outcome)` pairs, and unique ranks (`rank ≥ 1`). Rejected while stage is Running / Suspended / Completed (`OrganisationNotMutable`).
+Empty or null `paths` clears rules. Domain validates source fixture ownership, unique `(fixture, outcome)` pairs, and unique ranks (`rank ≥ 1`). Rejected while stage is Running / Suspended / Completed (`StructureNotMutable`).
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 
@@ -483,7 +479,7 @@ Response shape is the same `MaterializeMatchesResponse` as materialize.
 | :--- | :--- |
 | Competition | `Draft` \| `Ready` \| `Running` |
 | Target stage | `Draft` \| `Ready` only |
-| Target stage `Running` | Rejected (`Application.OrganisationNotMutable`) |
+| Target stage `Running` | Rejected (`Application.StructureNotMutable`) |
 | StructureLocked / AttachMatch on Running stage | Unchanged — not unlocked by this endpoint |
 
 Typical product flow (Overview is readiness + navigation only):
@@ -534,7 +530,7 @@ ProblemDetails extensions:
 
 ### Other Application codes (400 by default)
 
-Including (non-exhaustive; see `ApplicationErrorCodes`): `DanglingFeedTarget`, `StageNotInCompetition`, `SlotFeedsInvalid`, `FixtureInvalid`, `TieFormatRequired`, qualification standing codes, `DrawApplyFailure`, `DrawKindNotSupported`, `DrawGenerationFailure`, `ScheduleGenerationFailure`, `ScheduleApplyFailure`, `EntryCapacityExceeded`, `InvalidStructureIntent`, `CupBracketNotPowerOfTwo`, `OrganisationNotMutable`, `MaterializationFailure`, `SwissRoundGenerationFailure`, `InvalidCompletionMode`.
+Including (non-exhaustive; see `ApplicationErrorCodes`): `DanglingFeedTarget`, `StageNotInCompetition`, `SlotFeedsInvalid`, `FixtureInvalid`, `TieFormatRequired`, qualification standing codes, `DrawApplyFailure`, `DrawKindNotSupported`, `DrawGenerationFailure`, `ScheduleGenerationFailure`, `ScheduleApplyFailure`, `EntryCapacityExceeded`, `InvalidStructureIntent`, `CupBracketNotPowerOfTwo`, `StructureNotMutable`, `MaterializationFailure`, `SwissRoundGenerationFailure`, `InvalidCompletionMode`.
 
 Overview from-slots readiness is projected only when an opportunity exists (occupied uncovered slots). It does **not** leave a standing regulation blocker `InsufficientOccupiedSlots` when slots are still empty during early Cup construction.
 

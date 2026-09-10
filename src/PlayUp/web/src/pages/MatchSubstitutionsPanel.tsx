@@ -165,7 +165,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
                     <div className="match-subs__row-actions">
                       <button
                         type="button"
-                        className="organisation-action"
+                        className="matches-action"
                         disabled={busy}
                         onClick={() => beginEdit(sub)}
                       >
@@ -173,7 +173,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
                       </button>
                       <button
                         type="button"
-                        className="organisation-action"
+                        className="matches-action"
                         disabled={busy}
                         onClick={() => {
                           setEditingId(null);

@@ -30,7 +30,7 @@ npm install
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173/` — Accueil hub (list + create). Legacy `/competitions` redirects to `/`.
+Open `http://127.0.0.1:5173/` — Accueil hub (list + create). `/competitions` redirects to `/`.
 
 ### Rider (Host + Vite in one click)
 

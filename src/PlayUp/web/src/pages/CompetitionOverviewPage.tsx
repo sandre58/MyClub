@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { fetchCompetitionOverview, fetchOrganisationView } from '../api';
+import { fetchCompetitionOverview, fetchStructureView } from '../api';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { AttentionGroup } from '../design-system/components/AttentionGroup';
 import { OverviewNextAction } from '../design-system/components/OverviewNextAction';
@@ -33,7 +33,7 @@ import type {
   OverviewStandingCompact,
   CompetitionOutcome,
   OverviewView,
-  OrganisationEntry,
+  StructureEntry,
   StructureFormatKind,
 } from '../types';
 import { ErrorState, LoadingState, MutationError, PendingLabel } from '../ui';
@@ -91,7 +91,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
 
   const orgQuery = useQuery({
     queryKey: queryKeys.competitions.structure(data.competitionId),
-    queryFn: () => fetchOrganisationView(data.competitionId),
+    queryFn: () => fetchStructureView(data.competitionId),
   });
 
   const slotActions = (slot: Parameters<typeof actionsForSlot>[1]) => {
@@ -1162,7 +1162,7 @@ function TeamsPanel({
 }: {
   variant?: 'construction' | 'identity';
   dimension: OverviewDimension;
-  entries: OrganisationEntry[];
+  entries: StructureEntry[];
   href: string;
   hrefLabel: string;
   actions: OverviewAction[];

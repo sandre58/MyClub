@@ -148,7 +148,7 @@ public static class GenerateNextRound
         {
             throw new ApplicationFailureException(
                 $"Swiss rounds cannot be generated while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.OrganisationNotMutable);
+                ApplicationErrorCodes.StructureNotMutable);
         }
 
         if (stage.Status is not StageStatus.Running)
