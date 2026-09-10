@@ -551,6 +551,16 @@ function PhaseOverview({
                   : t('hub.overview.tirageRequired')
               }
               onOpen={() => onDrillIn('tirage')}
+              trailing={
+                data.readiness.readyForDraw ? (
+                  <Link
+                    className="structure-overview__side-link"
+                    to={`/competitions/${data.competitionId}`}
+                  >
+                    {t('readiness.goToOverviewDraw')}
+                  </Link>
+                ) : undefined
+              }
             />
           </OverviewBlock>
         )}
@@ -871,6 +881,17 @@ function SectionDetail({
             )}
           </dl>
           <p className="structure-detail__hint">{t('hub.detail.tirageOpsHint')}</p>
+          {data.readiness.readyForDraw && (
+            <p className="structure-detail__footer">
+              <Link
+                className="structure-link"
+                to={`/competitions/${data.competitionId}`}
+              >
+                {t('readiness.goToOverviewDraw')}
+                <span aria-hidden="true">→</span>
+              </Link>
+            </p>
+          )}
         </DetailCard>
       );
     case 'matchs':
@@ -975,9 +996,43 @@ function ReadinessStrip({
   const readiness = data.readiness;
   const formatKind = data.format.kind;
   const needsDraw = formatKind === 'Groups' || formatKind === 'Cup';
-  const readyToMaterialize = readiness.readyForMaterialization;
+  const overviewHref = `/competitions/${data.competitionId}`;
   const blockers = readiness.blockers;
-  const openCount = blockers.length;
+  const incomplete = blockers.length > 0;
+  const readyToMaterialize = readiness.readyForMaterialization;
+  const drawRequired =
+    !incomplete &&
+    needsDraw &&
+    readiness.readyForDraw &&
+    !readyToMaterialize;
+  const readyNext =
+    !incomplete &&
+    !readyToMaterialize &&
+    !drawRequired &&
+    readiness.readyForNextSlice;
+
+  if (incomplete) {
+    return (
+      <section className="structure-strip" aria-labelledby="readiness-heading">
+        <div className="structure-strip__head">
+          <h2 id="readiness-heading" className="structure-strip__title">
+            {t('readiness.structureIncomplete', { count: blockers.length })}
+          </h2>
+        </div>
+        <ul className="structure-strip__actions-list">
+          {blockers.map((code) => (
+            <li key={code}>
+              <IncompleteBlockerAction
+                code={code}
+                competitionId={data.competitionId}
+                onConfigure={onConfigure}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
 
   if (readyToMaterialize) {
     const isCup = formatKind === 'Cup';
@@ -999,10 +1054,7 @@ function ReadinessStrip({
               ? t('readiness.cupSkeletonHint')
               : t('readiness.materializeHint')}
           </p>
-          <Link
-            className="structure-link"
-            to={`/competitions/${data.competitionId}`}
-          >
+          <Link className="structure-link" to={overviewHref}>
             {isCup
               ? t('readiness.goToOverviewCupSkeleton')
               : t('readiness.goToOverviewMaterialize')}
@@ -1013,7 +1065,7 @@ function ReadinessStrip({
     );
   }
 
-  if (openCount === 0 && needsDraw && readiness.readyForDraw) {
+  if (drawRequired) {
     return (
       <section
         className="structure-strip structure-strip--ready"
@@ -1021,60 +1073,94 @@ function ReadinessStrip({
       >
         <div className="structure-strip__head">
           <h2 id="readiness-heading" className="structure-strip__title">
-            {t('readiness.readyForDraw')}
+            {t('readiness.drawRequired')}
           </h2>
+        </div>
+        <div className="structure-strip__actions">
+          <p className="structure-panel__muted">{t('readiness.drawHint')}</p>
+          <Link className="structure-link" to={overviewHref}>
+            {t('readiness.goToOverviewDraw')}
+            <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </section>
     );
   }
 
-  if (openCount === 0) {
-    return null;
+  if (readyNext) {
+    return (
+      <section
+        className="structure-strip structure-strip--ready"
+        aria-labelledby="readiness-heading"
+      >
+        <div className="structure-strip__head">
+          <h2 id="readiness-heading" className="structure-strip__title">
+            {t('readiness.readyForNextSlice')}
+          </h2>
+        </div>
+        <div className="structure-strip__actions">
+          <p className="structure-panel__muted">{t('readiness.nextSliceHint')}</p>
+          <Link className="structure-link" to={overviewHref}>
+            {t('readiness.goToOverview')}
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+      </section>
+    );
   }
 
+  return null;
+}
+
+function IncompleteBlockerAction({
+  code,
+  competitionId,
+  onConfigure,
+}: {
+  code: string;
+  competitionId: string;
+  onConfigure: () => void;
+}) {
+  const label = attentionSourceLabel(code);
+
+  if (code === 'InsufficientParticipants') {
+    return (
+      <Link
+        className="structure-strip__action"
+        to={`/competitions/${competitionId}/teams`}
+      >
+        <span aria-hidden="true">•</span>
+        {label}
+        <span aria-hidden="true">→</span>
+      </Link>
+    );
+  }
+
+  if (
+    code === 'MissingStage' ||
+    code === 'MissingStructure' ||
+    code === 'MissingPotRules' ||
+    code === 'CupBracketInvalid'
+  ) {
+    return (
+      <button
+        type="button"
+        className="structure-strip__action"
+        onClick={onConfigure}
+      >
+        <span aria-hidden="true">•</span>
+        {label}
+        <span aria-hidden="true">→</span>
+      </button>
+    );
+  }
+
+  // StructureGraphInvalid and unknown codes: stay on Structure (banner on phase).
   return (
-    <section className="structure-strip" aria-labelledby="readiness-heading">
-      <div className="structure-strip__head">
-        <h2 id="readiness-heading" className="structure-strip__title">
-          {t('readiness.openItems', { count: openCount })}
-        </h2>
-      </div>
-      <ul className="structure-strip__actions-list">
-        {blockers.map((code) => {
-          const label = attentionSourceLabel(code);
-          const teamsHref =
-            code === 'InsufficientParticipants'
-              ? `/competitions/${data.competitionId}/teams`
-              : null;
-          return (
-            <li key={code}>
-              {teamsHref ? (
-                <Link className="structure-strip__action" to={teamsHref}>
-                  <span aria-hidden="true">•</span>
-                  {label}
-                  <span aria-hidden="true">→</span>
-                </Link>
-              ) : code === 'MissingStage' ? (
-                <button
-                  type="button"
-                  className="structure-strip__action"
-                  onClick={onConfigure}
-                >
-                  <span aria-hidden="true">•</span>
-                  {label}
-                  <span aria-hidden="true">→</span>
-                </button>
-              ) : (
-                <span className="structure-strip__action structure-strip__action--static">
-                  <span aria-hidden="true">•</span>
-                  {label}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <span className="structure-strip__action structure-strip__action--static">
+      <span aria-hidden="true">•</span>
+      {label}
+    </span>
   );
 }
 

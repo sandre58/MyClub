@@ -265,7 +265,7 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Topologie' }),
+      screen.getByRole('heading', { name: /Structure incomplète/i }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Identité' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Équipes' })).not.toBeInTheDocument();
@@ -559,5 +559,77 @@ describe('StructurePage Structure hub', () => {
         name: /Aller à la Vue d’ensemble pour matérialiser/i,
       }),
     ).toHaveAttribute('href', `/competitions/${competitionId}`);
+    expect(
+      screen.queryByRole('button', { name: /Préparer|Démarrer|Tirer|Matérialiser/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows draw-required strip with Overview link only (no ops command)', async () => {
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: groupesStage().stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [groupesStage()],
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: true,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: false,
+          attachedMatchCount: 0,
+          blockers: [],
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('heading', { name: /Tirage requis/i }),
+    ).toBeInTheDocument();
+    const drawLinks = screen.getAllByRole('link', {
+      name: /Aller à la Vue d’ensemble pour le tirage/i,
+    });
+    expect(drawLinks.length).toBeGreaterThanOrEqual(1);
+    expect(drawLinks[0]).toHaveAttribute(
+      'href',
+      `/competitions/${competitionId}`,
+    );
+    expect(
+      screen.queryByRole('button', { name: /Préparer|Démarrer|Publier|Appliquer/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('routes MissingStructure incomplete CTA to configure dialog', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchOrganisationView).mockResolvedValue(
+      organisationView({
+        readiness: {
+          readyForNextSlice: false,
+          readyForDraw: false,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: false,
+          attachedMatchCount: 0,
+          blockers: ['MissingStructure'],
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('heading', { name: /Structure incomplète/i }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /Structure manquante/i }),
+    );
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 });
