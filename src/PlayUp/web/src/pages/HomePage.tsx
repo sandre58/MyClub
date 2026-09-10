@@ -254,7 +254,7 @@ function CreateCompetitionDialog({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.all,
       });
-      void navigate(`/competitions/${created.id}/organisation`);
+      void navigate(`/competitions/${created.id}/structure`);
     },
   });
 

@@ -50,7 +50,7 @@ import type {
   RankingCriterion,
   ReplaceRegulationRequest,
 } from '../types';
-import { invalidateAfterOrganisationMutation } from './organisationInvalidation';
+import { invalidateAfterStructureMutation } from './structureInvalidation';
 import {
   buildRegulationImpactPreview,
   type FamilyImpactLine,
@@ -330,7 +330,7 @@ export function RegulationEditorDialog({
       return replaceCompetitionRegulation(data.competitionId, body);
     },
     onSuccess: async () => {
-      await invalidateAfterOrganisationMutation(
+      await invalidateAfterStructureMutation(
         queryClient,
         data.competitionId,
       );

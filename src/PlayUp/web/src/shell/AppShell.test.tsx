@@ -76,12 +76,12 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             element={<p>Regulation page</p>}
           />
           <Route
-            path="/competitions/:competitionId/organisation/entries/:entryId"
+            path="/competitions/:competitionId/teams/:entryId"
             element={<p>Roster page</p>}
           />
           <Route
-            path="/competitions/:competitionId/organisation"
-            element={<p>Organisation page</p>}
+            path="/competitions/:competitionId/structure"
+            element={<p>Structure page</p>}
           />
           <Route
             path="/competitions/:competitionId/matches"
@@ -204,9 +204,9 @@ describe('AppShell', () => {
     );
   });
 
-  it('marks Organisation active for organisation routes', () => {
+  it('marks Structure active for /structure routes', () => {
     renderWithShell(
-      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/organisation',
+      '/competitions/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/structure',
     );
 
     expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(

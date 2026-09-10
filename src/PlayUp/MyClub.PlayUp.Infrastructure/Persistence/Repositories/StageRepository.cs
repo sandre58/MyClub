@@ -111,6 +111,13 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         context.Set<Stage>().Add(stage);
     }
 
+    /// <inheritdoc />
+    public void Remove(Stage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        context.Set<Stage>().Remove(stage);
+    }
+
     private static bool RequiresStructureHydration(StageReadCapabilities capabilities) =>
         capabilities.Profile >= StageLoadProfile.Structure;
 

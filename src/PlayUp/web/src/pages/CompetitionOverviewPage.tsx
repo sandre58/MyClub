@@ -90,7 +90,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
   const actionRunner = useOverviewActionRunner(data);
 
   const orgQuery = useQuery({
-    queryKey: queryKeys.competitions.organisation(data.competitionId),
+    queryKey: queryKeys.competitions.structure(data.competitionId),
     queryFn: () => fetchOrganisationView(data.competitionId),
   });
 
@@ -163,7 +163,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
   const gameRules = data.operationalFocus.referenceStageGameRules;
   const gameRegulationVisible =
     operationalOverview && regulationVisible && gameRules != null;
-  const orgHref = `/competitions/${data.competitionId}/organisation`;
+  const structureHref = `/competitions/${data.competitionId}/structure`;
   const teamsHref = `/competitions/${data.competitionId}/teams`;
   const matchesHref = `/competitions/${data.competitionId}/matches`;
   const classementsHref = `/competitions/${data.competitionId}/classements`;
@@ -204,7 +204,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
             dimension={data.constructionDimensions.structure}
             stages={data.operationalFocus.stages}
             matchTotal={data.operationalFocus.matchCounts.total}
-            href={orgHref}
+            href={structureHref}
             hrefLabel={t('dimensions.openStructure')}
             actions={[]}
             actionRunner={actionRunner}
@@ -226,7 +226,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
             variant="game"
             regulation={data.constructionDimensions.regulation}
             gameRules={gameRules}
-            href={orgHref}
+            href={structureHref}
             hrefLabel={t('dimensions.openRegulation')}
             actions={[]}
             actionRunner={actionRunner}
@@ -383,7 +383,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
                 <RegulationDimensionCard
                   variant="construction"
                   regulation={data.constructionDimensions.regulation}
-                  href={orgHref}
+                  href={structureHref}
                   hrefLabel={t('dimensions.openRegulation')}
                   actions={generatedCalendar ? [] : slotActions('regulation')}
                   actionRunner={actionRunner}
@@ -402,7 +402,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
                 dimension={data.constructionDimensions.structure}
                 stages={data.operationalFocus.stages}
                 matchTotal={data.operationalFocus.matchCounts.total}
-                href={orgHref}
+                href={structureHref}
                 hrefLabel={t('dimensions.openStructure')}
                 actions={slotActions('structure')}
                 actionRunner={actionRunner}
@@ -473,7 +473,7 @@ function useOverviewActionRunner(data: OverviewView) {
           queryKey: queryKeys.competitions.detail(data.competitionId),
         });
         await queryClient.invalidateQueries({
-          queryKey: queryKeys.competitions.organisation(data.competitionId),
+          queryKey: queryKeys.competitions.structure(data.competitionId),
         });
         if (action.stageId) {
           await queryClient.invalidateQueries({

@@ -188,7 +188,7 @@ function renderClassementsPage() {
             element={<p>Vue d'ensemble route</p>}
           />
           <Route
-            path="/competitions/:competitionId/organisation"
+            path="/competitions/:competitionId/structure"
             element={<p>Organisation route</p>}
           />
         </Routes>
@@ -513,7 +513,7 @@ describe('ClassementsPage', () => {
     });
     expect(link).toHaveAttribute(
       'href',
-      `/competitions/${competitionId}/organisation`,
+      `/competitions/${competitionId}/structure`,
     );
   });
 });

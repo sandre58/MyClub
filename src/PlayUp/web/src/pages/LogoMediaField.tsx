@@ -27,7 +27,7 @@ export function LogoMediaField({
   label,
   primaryColor = null,
 }: LogoMediaFieldProps) {
-  const { t } = useTranslation('organisation');
+  const { t } = useTranslation('structure');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);

@@ -182,7 +182,7 @@ function renderMatchPage() {
         <Routes>
           <Route path="/matches/:matchId" element={<MatchPage />} />
           <Route
-            path="/competitions/:competitionId/organisation"
+            path="/competitions/:competitionId/structure"
             element={<p>Organisation route</p>}
           />
         </Routes>
@@ -309,7 +309,7 @@ describe('MatchPage discipline (Lot 1)', () => {
     ).toBeInTheDocument();
     expect(
       within(panel).getByRole('link', { name: /Configurer le règlement/i }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/organisation`);
+    ).toHaveAttribute('href', `/competitions/${competitionId}/structure`);
     expect(
       within(panel).queryByRole('button', { name: 'Enregistrer le fait' }),
     ).not.toBeInTheDocument();

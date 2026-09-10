@@ -75,6 +75,7 @@
     "MissingStructure": "Missing structure",
     "MissingPotRules": "Missing pot rules",
     "CupBracketInvalid": "Invalid cup bracket",
+    "StructureGraphInvalid": "Invalid structure graph",
     "SwissStageNotRunning": "Swiss stage not started yet",
     "SwissAwaitingRoundResults": "Awaiting results for the current Swiss round",
     "SwissRoundsComplete": "All planned Swiss rounds are generated",

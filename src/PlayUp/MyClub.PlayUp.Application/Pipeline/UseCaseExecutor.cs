@@ -990,6 +990,29 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Removes a stage and scrubs peer Qualif/Prog paths that targeted it.
+    /// </summary>
+    public async Task<(RemoveCompetitionStageResult Impact, OrganisationViewDto View)> RemoveCompetitionStageAsync(
+        CompetitionId competitionId,
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var peerStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+            .ConfigureAwait(false);
+        var target = peerStages.FirstOrDefault(stage => stage.Id.Equals(stageId))
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+
+        var impact = RemoveCompetitionStage.Execute(competition, target, peerStages, clock);
+        stages.Remove(target);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var view = await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return (impact, view);
+    }
+
+    /// <summary>
     /// Adds a round (optional TieFormat) to a stage.
     /// </summary>
     public async Task<Round> AddStageRoundAsync(
@@ -1030,6 +1053,19 @@ public sealed partial class UseCaseExecutor(
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         ReplaceStageProgressionRules.Execute(stage, paths, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Replaces qualification rules on a stage (null/empty clears).
+    /// </summary>
+    public async Task ReplaceStageQualificationRulesAsync(
+        StageId stageId,
+        IReadOnlyList<QualificationPathSpec>? paths,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageQualificationRules.Execute(stage, paths, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

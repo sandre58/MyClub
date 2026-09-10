@@ -77,7 +77,7 @@ export function RegulationPage() {
   const [editorOpen, setEditorOpen] = useState(false);
 
   const organisationQuery = useQuery({
-    queryKey: queryKeys.competitions.organisation(competitionId),
+    queryKey: queryKeys.competitions.structure(competitionId),
     queryFn: () => fetchOrganisationView(competitionId),
     enabled: competitionId.length > 0,
   });

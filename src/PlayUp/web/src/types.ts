@@ -466,7 +466,7 @@ export interface MatchHubStageMatches {
   matches: MatchSummary[];
 }
 
-/** GET /competitions/{id}/organisation — Slice 2 Organisation hub. */
+/** GET /competitions/{id}/organisation — Host OrganisationView (SPA Structure hub). */
 export interface OrganisationView {
   competitionId: string;
   name: string;
@@ -639,6 +639,70 @@ export interface OrganisationStageHubSummary {
    * and the stage has rounds; otherwise omitted/null.
    */
   confrontationSegments?: OrganisationConfrontationSegment[] | null;
+  /** Per-phase Structure mutation action codes (server-gated). */
+  actions?: string[];
+  /** Authoring projection of qualification paths when present. */
+  qualificationPaths?: OrganisationQualificationPath[] | null;
+  /** Authoring projection of progression paths when present. */
+  progressionPaths?: OrganisationProgressionPath[] | null;
+  /** Machine-readable graph validity codes (Draft-persistable). */
+  structureIssues?: string[];
+}
+
+/** One qualification path for Structure authoring / impact preview. */
+export interface OrganisationQualificationPath {
+  order: number;
+  selectionMode: SelectionMode;
+  selectionValue: number;
+  destinationStageId: string;
+  destinationSlotKey: string;
+  rankingScope?: RankingScope | null;
+  groupId?: string | null;
+  acrossGroupsPosition?: number | null;
+  selectionEndValue?: number | null;
+  minimumPoints?: number | null;
+}
+
+/** One progression path for Structure authoring / impact preview. */
+export interface OrganisationProgressionPath {
+  sourceFixtureId: string;
+  outcome: ProgressionOutcome;
+  destinationStageId: string;
+  destinationSlotKey: string;
+}
+
+export type SelectionMode =
+  | 'Position'
+  | 'Top'
+  | 'Bottom'
+  | 'Best'
+  | 'Worst'
+  | 'Range';
+
+export type RankingScope = 'Overall' | 'Group' | 'AcrossGroups';
+
+/** DELETE /competitions/{id}/stages/{stageId} */
+export interface RemoveCompetitionStageResponse {
+  removedStageId: string;
+  scrubbedQualificationPaths: number;
+  scrubbedProgressionPaths: number;
+  organisation: OrganisationView;
+}
+
+/** POST /competitions/{id}/stages */
+export interface AddCompetitionStageResponse {
+  stageId: string;
+  name: string;
+}
+
+/** PUT /stages/{id}/qualification-rules */
+export interface ReplaceQualificationRulesRequest {
+  paths: OrganisationQualificationPath[] | null;
+}
+
+/** PUT /stages/{id}/progression-rules */
+export interface ReplaceProgressionRulesRequest {
+  paths: OrganisationProgressionPath[] | null;
 }
 
 /** Round identity + display name inside a confrontation segment. */

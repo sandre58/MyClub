@@ -158,7 +158,7 @@ public sealed record OrganisationReadinessDto(
     IReadOnlyList<string> Blockers);
 
 /// <summary>
-/// Per-stage hub row for Règlement lecture (topology facts + regulation tokens).
+/// Per-stage hub row for Structure / Règlement (topology + regulation tokens + graph authoring).
 /// Optional families omitted when absent (présence seule).
 /// </summary>
 /// <param name="StageId">Stage identity.</param>
@@ -207,6 +207,10 @@ public sealed record OrganisationReadinessDto(
 /// Consecutive Round runs sharing the same effective TieFormat when HasTieFormat and the stage has rounds;
 /// otherwise <see langword="null"/>.
 /// </param>
+/// <param name="Actions">Per-phase Structure mutation action codes (server-gated).</param>
+/// <param name="QualificationPaths">Authoring projection of qualification paths when present.</param>
+/// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
+/// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 public sealed record OrganisationStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -250,7 +254,45 @@ public sealed record OrganisationStageHubSummaryDto(
     int? NumberOfSeeds = null,
     IReadOnlyList<OrganisationDrawConstraintDto>? DrawConstraints = null,
     OrganisationStageDefaultsBindingDto? DefaultsBinding = null,
-    IReadOnlyList<OrganisationConfrontationSegmentDto>? ConfrontationSegments = null);
+    IReadOnlyList<OrganisationConfrontationSegmentDto>? ConfrontationSegments = null,
+    IReadOnlyList<string>? Actions = null,
+    IReadOnlyList<OrganisationQualificationPathDto>? QualificationPaths = null,
+    IReadOnlyList<OrganisationProgressionPathDto>? ProgressionPaths = null,
+    IReadOnlyList<string>? StructureIssues = null);
+
+/// <summary>One qualification path for Structure authoring / impact preview.</summary>
+/// <param name="Order">Path order (≥ 1).</param>
+/// <param name="SelectionMode">Selection mode.</param>
+/// <param name="SelectionValue">Position, count, or range lower bound.</param>
+/// <param name="DestinationStageId">Destination stage.</param>
+/// <param name="DestinationSlotKey">Destination slot key.</param>
+/// <param name="RankingScope">Optional ranking scope.</param>
+/// <param name="GroupId">Group when scope is Group.</param>
+/// <param name="AcrossGroupsPosition">Across-groups position when applicable.</param>
+/// <param name="SelectionEndValue">Range upper bound when mode is Range.</param>
+/// <param name="MinimumPoints">Optional Points ≥ gate.</param>
+public sealed record OrganisationQualificationPathDto(
+    int Order,
+    SelectionMode SelectionMode,
+    int SelectionValue,
+    Guid DestinationStageId,
+    string DestinationSlotKey,
+    RankingScope? RankingScope = null,
+    Guid? GroupId = null,
+    int? AcrossGroupsPosition = null,
+    int? SelectionEndValue = null,
+    int? MinimumPoints = null);
+
+/// <summary>One progression path for Structure authoring / impact preview.</summary>
+/// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
+/// <param name="Outcome">Winner or Loser.</param>
+/// <param name="DestinationStageId">Destination stage.</param>
+/// <param name="DestinationSlotKey">Destination slot key.</param>
+public sealed record OrganisationProgressionPathDto(
+    Guid SourceFixtureId,
+    ProgressionOutcome Outcome,
+    Guid DestinationStageId,
+    string DestinationSlotKey);
 
 /// <summary>Round identity + display name inside a confrontation segment.</summary>
 /// <param name="RoundId">Round identity.</param>

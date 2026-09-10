@@ -9,7 +9,7 @@ import { HomePage } from './pages/HomePage';
 import { MatchHubPage } from './pages/MatchHubPage';
 import { MatchPage } from './pages/MatchPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { OrganisationPage } from './pages/OrganisationPage';
+import { StructurePage } from './pages/StructurePage';
 import { StageMatchesPage } from './pages/StageMatchesPage';
 import { StagePage } from './pages/StagePage';
 import { RegulationPage } from './pages/RegulationPage';
@@ -39,7 +39,7 @@ const DesignLabPage = lazy(async () => {
  *
  * Nested under AppLayout so Outlet swaps page content while the 14.6 shell stays.
  * Params (:competitionId, :stageId, :matchId, :entryId) are opaque ids — not business fields.
- * Legacy /organisation/entries/:entryId redirects to /teams/:entryId.
+ * Legacy /organisation → /structure ; /organisation/entries/:entryId → /teams/:entryId.
  */
 export default function App() {
   return (
@@ -80,12 +80,16 @@ export default function App() {
           element={<RegulationPage />}
         />
         <Route
+          path="/competitions/:competitionId/structure"
+          element={<StructurePage />}
+        />
+        <Route
           path="/competitions/:competitionId/organisation/entries/:entryId"
           element={<OrganisationEntryRedirect />}
         />
         <Route
           path="/competitions/:competitionId/organisation"
-          element={<OrganisationPage />}
+          element={<OrganisationToStructureRedirect />}
         />
         <Route
           path="/competitions/:competitionId/classements"
@@ -101,6 +105,13 @@ export default function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
+  );
+}
+
+function OrganisationToStructureRedirect() {
+  const { competitionId = '' } = useParams();
+  return (
+    <Navigate to={`/competitions/${competitionId}/structure`} replace />
   );
 }
 

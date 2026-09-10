@@ -155,7 +155,7 @@ export function resolveOverviewActionIntent(
     case 'ContinueOrganisation':
       return {
         kind: 'navigate',
-        to: `/competitions/${competitionId}/organisation`,
+        to: `/competitions/${competitionId}/structure`,
       };
 
     case 'GenerateSchedule':

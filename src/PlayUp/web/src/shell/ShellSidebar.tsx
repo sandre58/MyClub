@@ -4,7 +4,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   ClassementsNavIcon,
   MatchesNavIcon,
-  OrganisationNavIcon,
+  StructureNavIcon,
   OverviewNavIcon,
   RegulationNavIcon,
   SidebarCollapseIcon,
@@ -35,7 +35,7 @@ const navIcons: Record<
   ComponentType<SVGProps<SVGSVGElement>>
 > = {
   overview: OverviewNavIcon,
-  organisation: OrganisationNavIcon,
+  structure: StructureNavIcon,
   matches: MatchesNavIcon,
   classements: ClassementsNavIcon,
   teams: TeamsNavIcon,

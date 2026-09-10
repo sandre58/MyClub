@@ -22,8 +22,8 @@ import homeEn from './locales/en/home.json';
 import homeFr from './locales/fr/home.json';
 import matchesEn from './locales/en/matches.json';
 import matchesFr from './locales/fr/matches.json';
-import organisationEn from './locales/en/organisation.json';
-import organisationFr from './locales/fr/organisation.json';
+import structureEn from './locales/en/structure.json';
+import structureFr from './locales/fr/structure.json';
 import shellEn from './locales/en/shell.json';
 import shellFr from './locales/fr/shell.json';
 import teamsEn from './locales/en/teams.json';
@@ -54,7 +54,7 @@ void i18n.use(initReactI18next).init({
       overview: overviewFr,
       matches: matchesFr,
       draw: drawFr,
-      organisation: organisationFr,
+      structure: structureFr,
       teams: teamsFr,
       regulation: regulationFr,
       stage: stageFr,
@@ -71,7 +71,7 @@ void i18n.use(initReactI18next).init({
       overview: overviewEn,
       matches: matchesEn,
       draw: drawEn,
-      organisation: organisationEn,
+      structure: structureEn,
       teams: teamsEn,
       regulation: regulationEn,
       stage: stageEn,

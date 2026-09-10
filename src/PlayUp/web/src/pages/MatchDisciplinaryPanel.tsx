@@ -43,7 +43,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
   const events = match.recordedDisciplinaryEvents ?? [];
 
   const organisationQuery = useQuery({
-    queryKey: queryKeys.competitions.organisation(match.competitionId),
+    queryKey: queryKeys.competitions.structure(match.competitionId),
     queryFn: () => fetchOrganisationView(match.competitionId),
   });
 
@@ -141,7 +141,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       {canMutate && noneAllowed && (
         <p className="ds-notice ds-notice--info">
           {t('discipline.noneAllowed')}{' '}
-          <Link to={`/competitions/${match.competitionId}/organisation`}>
+          <Link to={`/competitions/${match.competitionId}/structure`}>
             {t('discipline.configureRegulation')}
           </Link>
         </p>

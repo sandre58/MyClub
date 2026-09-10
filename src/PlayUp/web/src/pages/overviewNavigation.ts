@@ -39,7 +39,7 @@ export function overviewTargetHref(target: {
     case 'Competition':
       return `/competitions/${targetId}`;
     case 'Organisation':
-      return `/competitions/${targetId}/organisation`;
+      return `/competitions/${targetId}/structure`;
     case 'Draw':
       return stageId ? `/stages/${stageId}` : null;
     default:

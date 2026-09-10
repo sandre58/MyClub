@@ -75,6 +75,35 @@ public sealed class ThinAuthoringTests
     }
 
     [Fact]
+    public void ReplaceStageQualificationRules_authors_path_and_clears()
+    {
+        var competition = CreateCompetition.Execute("Cup-Qualif", _clock);
+        var groups = AddCompetitionStage.Execute(competition, "Groups", _clock);
+        var ko = AddCompetitionStage.Execute(competition, "KO", _clock);
+        AddStageSlot.Execute(ko, "QF1");
+
+        ReplaceStageQualificationRules.Execute(
+            groups,
+            [
+                new QualificationPathSpec(
+                    1,
+                    SelectionMode.Top,
+                    2,
+                    ko.Id.Value,
+                    "QF1",
+                    RankingScope.Overall)
+            ],
+            _clock);
+
+        groups.Regulation.QualificationRules.Should().NotBeNull();
+        groups.Regulation.QualificationRules!.Paths.Should().ContainSingle();
+        groups.Regulation.QualificationRules.Paths[0].Destination.SlotKey.Should().Be("QF1");
+
+        ReplaceStageQualificationRules.Execute(groups, null, _clock);
+        groups.Regulation.QualificationRules.Should().BeNull();
+    }
+
+    [Fact]
     public void AddCompetitionStage_rejects_when_competition_running()
     {
         var competition = CreateCompetition.Execute("Cup-D1-Run", _clock);

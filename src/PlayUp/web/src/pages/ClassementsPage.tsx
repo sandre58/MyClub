@@ -54,10 +54,10 @@ export function ClassementsPage() {
 
 function ClassementsView({ data }: { data: ConsultationView }) {
   const { t } = useTranslation('classements');
-  const organisationHref = `/competitions/${data.competitionId}/organisation`;
+  const structureHref = `/competitions/${data.competitionId}/structure`;
 
   const orgQuery = useQuery({
-    queryKey: queryKeys.competitions.organisation(data.competitionId),
+    queryKey: queryKeys.competitions.structure(data.competitionId),
     queryFn: () => fetchOrganisationView(data.competitionId),
   });
 
@@ -75,7 +75,7 @@ function ClassementsView({ data }: { data: ConsultationView }) {
           matchesHref={`/competitions/${data.competitionId}/matches`}
         />
         <RegulationPanel
-          href={organisationHref}
+          href={structureHref}
           regulation={orgQuery.data?.regulation ?? null}
           loading={orgQuery.isPending}
         />
@@ -428,7 +428,7 @@ function RegulationPanel({
       )}
 
       <div className="classements-panel__footer">
-        <TextLink to={href}>{t('regulation.openOrganisation')}</TextLink>
+        <TextLink to={href}>{t('regulation.openStructure')}</TextLink>
       </div>
     </section>
   );

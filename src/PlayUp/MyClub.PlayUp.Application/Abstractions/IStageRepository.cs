@@ -73,4 +73,10 @@ public interface IStageRepository
     /// </summary>
     /// <param name="stage">The stage to add.</param>
     void Add(Stage stage);
+
+    /// <summary>
+    /// Removes a stage from the current unit of work.
+    /// </summary>
+    /// <param name="stage">The stage to remove.</param>
+    void Remove(Stage stage);
 }

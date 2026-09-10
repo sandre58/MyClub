@@ -42,7 +42,7 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
   const canMutate = canMutateMatchSheet(match);
 
   const organisationQuery = useQuery({
-    queryKey: queryKeys.competitions.organisation(match.competitionId),
+    queryKey: queryKeys.competitions.structure(match.competitionId),
     queryFn: () => fetchOrganisationView(match.competitionId),
   });
 
@@ -122,7 +122,7 @@ async function invalidateMatchSheet(
       queryKey: queryKeys.matches.byStage(match.stageId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.organisation(match.competitionId),
+      queryKey: queryKeys.competitions.structure(match.competitionId),
     }),
   ]);
 }

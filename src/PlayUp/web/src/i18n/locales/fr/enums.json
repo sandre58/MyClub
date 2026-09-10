@@ -75,6 +75,7 @@
     "MissingStructure": "Structure manquante",
     "MissingPotRules": "Règles de pots manquantes",
     "CupBracketInvalid": "Tableau de coupe invalide",
+    "StructureGraphInvalid": "Graphe de structure invalide",
     "SwissStageNotRunning": "Phase Swiss pas encore démarrée",
     "SwissAwaitingRoundResults": "En attente des résultats du tour Swiss en cours",
     "SwissRoundsComplete": "Tous les tours Swiss planifiés sont générés",

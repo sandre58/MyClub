@@ -105,7 +105,7 @@ Do not collapse them: pulse activity ≠ tone chip.
 ## PageHead
 
 - Canonical: `components/PageHead.tsx` + `foundations/page-head.css`.
-- Workspace Shell destinations (Équipes, Règlement, Organisation, Matchs, Classements): **title `--text-display`**, optional `actions` / `note` / `tools`, **no back** (rail is enough).
+- Workspace Shell destinations (Équipes, Règlement, Structure, Matchs, Classements): **title `--text-display`**, optional `actions` / `note` / `tools`, **no back** (rail is enough).
 - Drill-downs (Stage, fiche match…): `back` + optional `eyebrow` / badges — `PageHeader` in `ui.tsx` is a thin adapter.
 - Do **not** confuse with `PanelHead` (panel/section titles, `--text-body`).
 

@@ -142,23 +142,23 @@ describe('Shell chrome context states', () => {
     ).toHaveAttribute('href', '/');
   });
 
-  it('updates sidebar organisation link after a stage deep link resolves', async () => {
+  it('updates sidebar Structure link after a stage deep link resolves', async () => {
     renderWithShell(`/stages/${stageId}`);
 
     await screen.findByText('Coupe U18');
     expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
       'href',
-      `/competitions/${competitionId}/organisation`,
+      `/competitions/${competitionId}/structure`,
     );
   });
 
-  it('updates sidebar organisation link after a match deep link resolves', async () => {
+  it('updates sidebar Structure link after a match deep link resolves', async () => {
     renderWithShell(`/matches/${matchId}`);
 
     await screen.findByText('Coupe U18');
     expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
       'href',
-      `/competitions/${competitionId}/organisation`,
+      `/competitions/${competitionId}/structure`,
     );
   });
 

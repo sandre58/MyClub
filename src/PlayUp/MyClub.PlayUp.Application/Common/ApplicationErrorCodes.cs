@@ -237,4 +237,9 @@ public static class ApplicationErrorCodes
     /// Gets the code when a disciplinary type is not authorized by competition rules.
     /// </summary>
     public const string DisciplinaryTypeNotAllowed = "Application.DisciplinaryTypeNotAllowed";
+
+    /// <summary>
+    /// Gets the code when RemoveCompetitionStage is refused because the competition has a single stage.
+    /// </summary>
+    public const string LastStageCannotBeRemoved = "Application.LastStageCannotBeRemoved";
 }

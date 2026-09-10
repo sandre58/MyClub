@@ -23,7 +23,7 @@ export function OverviewNavIcon({ size, ...props }: ShellIconProps) {
 }
 
 /** Structure — org tree. */
-export function OrganisationNavIcon({ size, ...props }: ShellIconProps) {
+export function StructureNavIcon({ size, ...props }: ShellIconProps) {
   return (
     <Icon size={size} {...props}>
       <rect x="9" y="2" width="6" height="6" rx="1" />

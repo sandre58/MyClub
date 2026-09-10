@@ -21,7 +21,7 @@ import {
   ClassementsNavIcon,
   CloseIcon,
   MatchesNavIcon,
-  OrganisationNavIcon,
+  StructureNavIcon,
   OverviewNavIcon,
   SettingsNavIcon,
   SidebarCollapseIcon,
@@ -379,7 +379,7 @@ export function FoundationsPlayground() {
                 Vue d&apos;ensemble
               </a>
               <a className="ds-shell-rail__link" href="#ds-preview">
-                <OrganisationNavIcon className="ds-shell-rail__icon" />
+                <StructureNavIcon className="ds-shell-rail__icon" />
                 Organisation
               </a>
               <a className="ds-shell-rail__link" href="#ds-preview">
@@ -804,7 +804,7 @@ export function FoundationsPlayground() {
           <p className="ds-label">Shell (fond clair)</p>
           <div className="ds-icon-grid">
             <OverviewNavIcon />
-            <OrganisationNavIcon />
+            <StructureNavIcon />
             <MatchesNavIcon />
             <ClassementsNavIcon />
             <SettingsNavIcon />
@@ -829,7 +829,7 @@ export function FoundationsPlayground() {
           <p className="ds-label">Sur chrome</p>
           <div className="ds-icon-grid ds-icon-grid--chrome">
             <OverviewNavIcon />
-            <OrganisationNavIcon />
+            <StructureNavIcon />
             <MatchesNavIcon />
             <AttentionBellIcon />
           </div>

@@ -40,6 +40,9 @@ public static class OrganisationViewAssembler
     /// <summary>Blocker: Cup slots not a power of two (V1).</summary>
     public const string BlockerCupBracketInvalid = "CupBracketInvalid";
 
+    /// <summary>Blocker: Qualif/Prog graph has dangling destinations (Draft persistable; Ready/Prepare blocked).</summary>
+    public const string BlockerStructureGraphInvalid = "StructureGraphInvalid";
+
     /// <summary>Action: add participant.</summary>
     public const string ActionAddEntry = "AddEntry";
 
@@ -48,6 +51,30 @@ public static class OrganisationViewAssembler
 
     /// <summary>Action: replace regulation.</summary>
     public const string ActionReplaceRegulation = "ReplaceRegulation";
+
+    /// <summary>Action: add an additional competition stage (thin authoring).</summary>
+    public const string ActionAddCompetitionStage = "AddCompetitionStage";
+
+    /// <summary>Per-phase action: remove this stage (with peer dependency scrubbing).</summary>
+    public const string ActionRemoveStage = "RemoveStage";
+
+    /// <summary>Per-phase action: replace qualification rules.</summary>
+    public const string ActionReplaceQualificationRules = "ReplaceQualificationRules";
+
+    /// <summary>Per-phase action: replace progression rules.</summary>
+    public const string ActionReplaceProgressionRules = "ReplaceProgressionRules";
+
+    /// <summary>Stage structure issue: qualification destination stage missing from competition.</summary>
+    public const string IssueDanglingQualificationTarget = "DanglingQualificationTarget";
+
+    /// <summary>Stage structure issue: progression destination stage missing from competition.</summary>
+    public const string IssueDanglingProgressionTarget = "DanglingProgressionTarget";
+
+    /// <summary>Stage structure issue: qualification destination slot missing on target stage.</summary>
+    public const string IssueMissingQualificationDestinationSlot = "MissingQualificationDestinationSlot";
+
+    /// <summary>Stage structure issue: progression destination slot missing on target stage.</summary>
+    public const string IssueMissingProgressionDestinationSlot = "MissingProgressionDestinationSlot";
 
     /// <summary>
     /// Builds the Organisation view.
@@ -72,10 +99,16 @@ public static class OrganisationViewAssembler
         var structure = BuildStructureSummary(primary);
         var participants = BuildParticipants(competition, sheetMemberRefs ?? []);
         var regulation = BuildRegulation(competition);
-        var attachedMatchCount = CountAttachedMatches(primary);
-        var readiness = BuildReadiness(competition, primary, format.Kind, structure, attachedMatchCount);
-        var actions = BuildActions(competition);
         var stageHubs = BuildStageHubSummaries(competition, stages);
+        var attachedMatchCount = CountAttachedMatches(primary);
+        var readiness = BuildReadiness(
+            competition,
+            primary,
+            format.Kind,
+            structure,
+            attachedMatchCount,
+            stageHubs);
+        var actions = BuildActions(competition);
 
         return new OrganisationViewDto(
             competition.Id.Value,
@@ -107,20 +140,23 @@ public static class OrganisationViewAssembler
                 continue;
             }
 
-            ordered.Add(BuildStageHubSummary(competition, stage));
+            ordered.Add(BuildStageHubSummary(competition, stage, stages));
         }
 
         return ordered;
     }
 
-    private static OrganisationStageHubSummaryDto BuildStageHubSummary(Competition competition, Stage stage)
+    private static OrganisationStageHubSummaryDto BuildStageHubSummary(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
     {
         var regulation = stage.Regulation;
         var match = regulation.MatchRules;
         var standing = regulation.StandingRules;
         var draw = regulation.DrawRules;
-        var qualificationPaths = regulation.QualificationRules?.Paths.Count ?? 0;
-        var progressionPaths = regulation.ProgressionRules?.Paths.Count ?? 0;
+        var qualificationPaths = MapQualificationPaths(regulation.QualificationRules);
+        var progressionPaths = MapProgressionPaths(regulation.ProgressionRules);
         var placement = regulation.PlacementAwardRules;
         var storedTie = regulation.TieFormat
             ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
@@ -194,9 +230,9 @@ public static class OrganisationViewAssembler
             DrawMode: draw?.Mode,
             NumberOfPots: draw?.PotRules?.NumberOfPots,
             HasQualificationRules: regulation.QualificationRules is not null,
-            QualificationPathCount: qualificationPaths,
+            QualificationPathCount: qualificationPaths?.Count ?? 0,
             HasProgressionRules: regulation.ProgressionRules is not null,
-            ProgressionPathCount: progressionPaths,
+            ProgressionPathCount: progressionPaths?.Count ?? 0,
             HasTieFormat: hasTie,
             NumberOfLegs: numberOfLegs,
             AggregateScoring: aggregateScoring,
@@ -214,7 +250,146 @@ public static class OrganisationViewAssembler
             NumberOfSeeds: draw?.SeedingRules?.NumberOfSeeds,
             DrawConstraints: drawConstraints,
             DefaultsBinding: MapDefaultsBinding(stage),
-            ConfrontationSegments: confrontationSegments);
+            ConfrontationSegments: confrontationSegments,
+            Actions: BuildStageActions(competition, stage),
+            QualificationPaths: qualificationPaths,
+            ProgressionPaths: progressionPaths,
+            StructureIssues: BuildStructureIssues(stage, competitionStages));
+    }
+
+    private static IReadOnlyList<OrganisationQualificationPathDto>? MapQualificationPaths(
+        QualificationRules? rules)
+    {
+        if (rules is null)
+        {
+            return null;
+        }
+
+        return
+        [
+            .. rules.Paths.Select(path => new OrganisationQualificationPathDto(
+                path.Order,
+                path.Selection.Mode,
+                path.Selection.Value,
+                path.Destination.StageId.Value,
+                path.Destination.SlotKey,
+                path.Source.Scope,
+                path.Source.GroupId?.Value,
+                path.Source.AcrossGroupsPosition,
+                path.Selection.EndValue,
+                path.Condition?.MinimumPoints))
+        ];
+    }
+
+    private static IReadOnlyList<OrganisationProgressionPathDto>? MapProgressionPaths(
+        ProgressionRules? rules)
+    {
+        if (rules is null)
+        {
+            return null;
+        }
+
+        return
+        [
+            .. rules.Paths.Select(path => new OrganisationProgressionPathDto(
+                path.SourceFixtureId.Value,
+                path.Outcome,
+                path.Destination.StageId.Value,
+                path.Destination.SlotKey))
+        ];
+    }
+
+    private static IReadOnlyList<string> BuildStageActions(Competition competition, Stage stage)
+    {
+        if (competition.Status is CompetitionStatus.Completed
+            or CompetitionStatus.Archived
+            or CompetitionStatus.Running
+            or CompetitionStatus.Suspended)
+        {
+            return [];
+        }
+
+        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
+        {
+            return [];
+        }
+
+        var actions = new List<string>
+        {
+            ActionReplaceQualificationRules,
+            ActionReplaceProgressionRules
+        };
+
+        if (competition.StageIds.Count > 1 && CountAttachedMatches(stage) == 0)
+        {
+            actions.Add(ActionRemoveStage);
+        }
+
+        return actions;
+    }
+
+    private static IReadOnlyList<string> BuildStructureIssues(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        var issues = new List<string>();
+        var byId = competitionStages.ToDictionary(candidate => candidate.Id);
+
+        if (stage.Regulation.QualificationRules is { } qualification)
+        {
+            foreach (var path in qualification.Paths)
+            {
+                if (path.Destination.StageId.Equals(stage.Id))
+                {
+                    if (stage.FindSlot(path.Destination.SlotKey) is null)
+                    {
+                        issues.Add(IssueMissingQualificationDestinationSlot);
+                    }
+
+                    continue;
+                }
+
+                if (!byId.TryGetValue(path.Destination.StageId, out var destination))
+                {
+                    issues.Add(IssueDanglingQualificationTarget);
+                    continue;
+                }
+
+                if (destination.FindSlot(path.Destination.SlotKey) is null)
+                {
+                    issues.Add(IssueMissingQualificationDestinationSlot);
+                }
+            }
+        }
+
+        if (stage.Regulation.ProgressionRules is { } progression)
+        {
+            foreach (var path in progression.Paths)
+            {
+                if (path.Destination.StageId.Equals(stage.Id))
+                {
+                    if (stage.FindSlot(path.Destination.SlotKey) is null)
+                    {
+                        issues.Add(IssueMissingProgressionDestinationSlot);
+                    }
+
+                    continue;
+                }
+
+                if (!byId.TryGetValue(path.Destination.StageId, out var destination))
+                {
+                    issues.Add(IssueDanglingProgressionTarget);
+                    continue;
+                }
+
+                if (destination.FindSlot(path.Destination.SlotKey) is null)
+                {
+                    issues.Add(IssueMissingProgressionDestinationSlot);
+                }
+            }
+        }
+
+        return issues.Distinct(StringComparer.Ordinal).ToArray();
     }
 
     /// <summary>
@@ -427,7 +602,8 @@ public static class OrganisationViewAssembler
         Stage? primary,
         StructureFormatKind? formatKind,
         OrganisationStructureSummaryDto structure,
-        int attachedMatchCount)
+        int attachedMatchCount,
+        IReadOnlyList<OrganisationStageHubSummaryDto> stageHubs)
     {
         var blockers = new List<string>();
 
@@ -447,11 +623,19 @@ public static class OrganisationViewAssembler
             blockers.Add(BlockerMissingStructure);
         }
 
+        if (stageHubs.Any(hub => hub.StructureIssues is { Count: > 0 }))
+        {
+            blockers.Add(BlockerStructureGraphInvalid);
+        }
+
         var readyForDraw = false;
         var readyForSchedulePath = false;
         var readyForMaterialization = false;
 
-        if (primary is not null && formatKind is not null && blockers.Count == 0)
+        if (primary is not null && formatKind is not null
+            && !blockers.Contains(BlockerInsufficientParticipants)
+            && !blockers.Contains(BlockerMissingStage)
+            && !blockers.Contains(BlockerMissingStructure))
         {
             switch (formatKind)
             {
@@ -507,7 +691,13 @@ public static class OrganisationViewAssembler
         var readyForMatchOperation = attachedMatchCount > 0
             && competition.Status is not CompetitionStatus.Completed
             and not CompetitionStatus.Archived;
-        var readyForNext = blockers.Count == 0 && (readyForDraw || readyForSchedulePath);
+        var constructionBlocked = blockers.Contains(BlockerInsufficientParticipants)
+            || blockers.Contains(BlockerMissingStage)
+            || blockers.Contains(BlockerMissingStructure)
+            || blockers.Contains(BlockerMissingPotRules)
+            || blockers.Contains(BlockerCupBracketInvalid)
+            || blockers.Contains(BlockerStructureGraphInvalid);
+        var readyForNext = !constructionBlocked && (readyForDraw || readyForSchedulePath);
 
         return new OrganisationReadinessDto(
             readyForNext,
@@ -527,7 +717,11 @@ public static class OrganisationViewAssembler
             CompetitionStatus.Running or CompetitionStatus.Suspended => ["WithdrawEntry", "RenameEntry"],
             _ =>
             [
-                ActionAddEntry, ActionConfigureStructure, ActionReplaceRegulation, "RenameEntry",
+                ActionAddEntry,
+                ActionConfigureStructure,
+                ActionAddCompetitionStage,
+                ActionReplaceRegulation,
+                "RenameEntry",
                 "DeleteEntry"
             ]
         };

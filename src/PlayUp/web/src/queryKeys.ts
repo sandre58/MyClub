@@ -10,8 +10,8 @@ export const queryKeys = {
       ['competitions', competitionId, 'workspace'] as const,
     overview: (competitionId: string) =>
       ['competitions', competitionId, 'overview'] as const,
-    organisation: (competitionId: string) =>
-      ['competitions', competitionId, 'organisation'] as const,
+    structure: (competitionId: string) =>
+      ['competitions', competitionId, 'structure'] as const,
     attention: (competitionId: string) =>
       ['competitions', competitionId, 'attention'] as const,
     consultation: (competitionId: string) =>

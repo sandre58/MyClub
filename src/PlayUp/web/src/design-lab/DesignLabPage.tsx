@@ -8,7 +8,7 @@ import {
   AttentionBellIcon,
   ClassementsNavIcon,
   MatchesNavIcon,
-  OrganisationNavIcon,
+  StructureNavIcon,
   OverviewNavIcon,
   RegulationNavIcon,
   SidebarCollapseIcon,
@@ -423,7 +423,7 @@ const labNavGroups: Array<{
       {
         key: 'structure',
         label: 'Structure',
-        icon: OrganisationNavIcon,
+        icon: StructureNavIcon,
         dest: 'overview',
       },
       {

@@ -75,7 +75,7 @@ async function invalidateAfterTeamsMutation(
 ) {
   await Promise.all([
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.organisation(competitionId),
+      queryKey: queryKeys.competitions.structure(competitionId),
     }),
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.detail(competitionId),
@@ -94,13 +94,13 @@ async function invalidateAfterTeamsMutation(
 
 /**
  * Équipes — grille de tuiles + tiroir d’effectif.
- * Read: GET …/organisation. Mutations: Add/Rename/Presentation/Delete/Withdraw.
+ * Read: GET …/structure. Mutations: Add/Rename/Presentation/Delete/Withdraw.
  */
 export function TeamsPage() {
   const { competitionId = '', entryId } = useParams();
 
   const query = useQuery({
-    queryKey: queryKeys.competitions.organisation(competitionId),
+    queryKey: queryKeys.competitions.structure(competitionId),
     queryFn: () => fetchOrganisationView(competitionId),
     enabled: competitionId.length > 0,
   });

@@ -12,7 +12,7 @@ describe('shellDestinationHrefs', () => {
   it('routes competition-scoped links to the list when context is absent', () => {
     expect(shellDestinationHrefs({})).toEqual({
       overview: '/',
-      organisation: '/',
+      structure: '/',
       matches: '/',
       classements: '/',
       teams: '/',
@@ -23,7 +23,7 @@ describe('shellDestinationHrefs', () => {
   it('uses resolved competition routes when context is known', () => {
     expect(shellDestinationHrefs({ competitionId })).toEqual({
       overview: `/competitions/${competitionId}`,
-      organisation: `/competitions/${competitionId}/organisation`,
+      structure: `/competitions/${competitionId}/structure`,
       matches: `/competitions/${competitionId}/matches`,
       classements: `/competitions/${competitionId}/classements`,
       teams: `/competitions/${competitionId}/teams`,
@@ -34,7 +34,7 @@ describe('shellDestinationHrefs', () => {
   it('keeps stage deep-link fallbacks while competition resolves', () => {
     expect(shellDestinationHrefs({ stageId })).toEqual({
       overview: '/',
-      organisation: '/',
+      structure: '/',
       matches: `/stages/${stageId}/matches`,
       classements: '/',
       teams: '/',
@@ -45,7 +45,7 @@ describe('shellDestinationHrefs', () => {
   it('keeps match deep-link fallbacks while competition resolves', () => {
     expect(shellDestinationHrefs({ matchId })).toEqual({
       overview: '/',
-      organisation: '/',
+      structure: '/',
       matches: `/matches/${matchId}`,
       classements: '/',
       teams: '/',
@@ -63,10 +63,16 @@ describe('resolveActiveDestination', () => {
     );
   });
 
-  it('maps organisation routes to Organisation', () => {
+  it('maps /structure URL to Structure destination', () => {
+    expect(
+      resolveActiveDestination(`/competitions/${competitionId}/structure`),
+    ).toBe('structure');
+  });
+
+  it('maps legacy /organisation URL to Structure destination', () => {
     expect(
       resolveActiveDestination(`/competitions/${competitionId}/organisation`),
-    ).toBe('organisation');
+    ).toBe('structure');
   });
 
   it('maps teams routes to Équipes', () => {

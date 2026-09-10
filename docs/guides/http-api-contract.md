@@ -299,6 +299,19 @@ Additional stages / rounds / slots / progression rules without Domain seeding. D
 { "stageId": "<guid>", "name": "Semi-Finals" }
 ```
 
+#### `DELETE /competitions/{competitionId}/stages/{stageId}` → 200 `RemoveCompetitionStageResponse`
+
+Removes a Draft/Ready stage (not the last stage; not when matches are attached). Scrubs peer Qualification/Progression paths that targeted the removed stage. Returns impact counts + refreshed Organisation view.
+
+```json
+{
+  "removedStageId": "<guid>",
+  "scrubbedQualificationPaths": 1,
+  "scrubbedProgressionPaths": 0,
+  "organisation": { }
+}
+```
+
 #### `POST /stages/{stageId}/rounds` → 201 `AddStageRoundResponse`
 
 ```json
@@ -339,6 +352,27 @@ Organisation hub (`OrganisationViewDto.stages[]`) projects `confrontationSegment
 ```
 
 Empty or null `paths` clears rules. Domain validates source fixture ownership and local destinations.
+
+#### `PUT /stages/{stageId}/qualification-rules` → 204 No Content
+
+```json
+{
+  "paths": [
+    {
+      "order": 1,
+      "selectionMode": "Top",
+      "selectionValue": 2,
+      "destinationStageId": "<guid>",
+      "destinationSlotKey": "QF1",
+      "rankingScope": "Overall"
+    }
+  ]
+}
+```
+
+Empty or null `paths` clears rules. Optional: `groupId`, `acrossGroupsPosition`, `selectionEndValue`, `minimumPoints`. Rejected while stage is Running / Suspended / Completed (`OrganisationNotMutable`).
+
+Organisation hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationPaths` / `progressionPaths`, and `structureIssues` (Draft-persistable graph validity). Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
 
 #### `PUT /stages/{stageId}/placement-award-rules` → 204 No Content
 

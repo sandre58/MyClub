@@ -2,6 +2,7 @@ import type {
   AddDeclaredMemberRequest,
   AddDeclaredParticipationRequest,
   AddEntryRequest,
+  AddCompetitionStageResponse,
   EntryIdsRequest,
   MemberIdsRequest,
   ApplyDrawRequest,
@@ -22,8 +23,11 @@ import type {
   RecordDisciplinaryEventRequest,
   RecordGoalRequest,
   RecordSubstitutionRequest,
+  RemoveCompetitionStageResponse,
   RenameDeclaredMemberRequest,
   RenameEntryRequest,
+  ReplaceProgressionRulesRequest,
+  ReplaceQualificationRulesRequest,
   ReplaceRegulationRequest,
   SetCompetitionScheduleRequest,
   StageOverview,
@@ -358,6 +362,41 @@ export function configureOrganisationStructure(
     `/competitions/${competitionId}/organisation/structure`,
     request,
   );
+}
+
+/** POST /competitions/{id}/stages → AddCompetitionStageResponse */
+export function addCompetitionStage(
+  competitionId: string,
+  name: string,
+): Promise<AddCompetitionStageResponse> {
+  return sendJson('POST', `/competitions/${competitionId}/stages`, { name });
+}
+
+/** DELETE /competitions/{id}/stages/{stageId} → RemoveCompetitionStageResponse */
+export function removeCompetitionStage(
+  competitionId: string,
+  stageId: string,
+): Promise<RemoveCompetitionStageResponse> {
+  return sendJson(
+    'DELETE',
+    `/competitions/${competitionId}/stages/${stageId}`,
+  );
+}
+
+/** PUT /stages/{id}/qualification-rules → 204 */
+export function replaceStageQualificationRules(
+  stageId: string,
+  request: ReplaceQualificationRulesRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/qualification-rules`, request);
+}
+
+/** PUT /stages/{id}/progression-rules → 204 */
+export function replaceStageProgressionRules(
+  stageId: string,
+  request: ReplaceProgressionRulesRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/progression-rules`, request);
 }
 
 /** Relative URL → Vite proxy → Host GET /stages/{id} */

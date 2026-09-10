@@ -1,6 +1,6 @@
 export type ShellDestinationKey =
   | 'overview'
-  | 'organisation'
+  | 'structure'
   | 'matches'
   | 'classements'
   | 'teams'
@@ -28,7 +28,7 @@ export const shellNavGroups: readonly ShellNavGroupSpec[] = [
   {
     id: 'competition',
     items: [
-      { key: 'organisation', hrefKey: 'organisation' },
+      { key: 'structure', hrefKey: 'structure' },
       { key: 'matches', hrefKey: 'matches' },
       { key: 'classements', hrefKey: 'classements' },
     ],
@@ -60,8 +60,8 @@ export function shellDestinationHrefs({
 
   return {
     overview: competitionId ? `/competitions/${competitionId}` : '/',
-    organisation: competitionId
-      ? `/competitions/${competitionId}/organisation`
+    structure: competitionId
+      ? `/competitions/${competitionId}/structure`
       : competitionListHref,
     matches: competitionId
       ? `/competitions/${competitionId}/matches`
@@ -93,8 +93,11 @@ export function resolveActiveDestination(
     return 'overview';
   }
 
-  if (/^\/competitions\/[^/]+\/organisation$/.test(pathname)) {
-    return 'organisation';
+  if (
+    /^\/competitions\/[^/]+\/structure$/.test(pathname) ||
+    /^\/competitions\/[^/]+\/organisation$/.test(pathname)
+  ) {
+    return 'structure';
   }
 
   if (/^\/competitions\/[^/]+\/teams(?:\/[^/]+)?$/.test(pathname)) {

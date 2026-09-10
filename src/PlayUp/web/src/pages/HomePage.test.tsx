@@ -63,7 +63,7 @@ function renderHomePage() {
             element={<p>Vue d'ensemble route</p>}
           />
           <Route
-            path="/competitions/:competitionId/organisation"
+            path="/competitions/:competitionId/structure"
             element={<p>Organisation route</p>}
           />
         </Routes>

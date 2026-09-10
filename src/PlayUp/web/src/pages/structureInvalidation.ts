@@ -1,14 +1,14 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../queryKeys';
 
-export async function invalidateAfterOrganisationMutation(
+export async function invalidateAfterStructureMutation(
   queryClient: QueryClient,
   competitionId: string,
   options?: { stageId?: string },
 ) {
   await Promise.all([
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.organisation(competitionId),
+      queryKey: queryKeys.competitions.structure(competitionId),
     }),
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.detail(competitionId),

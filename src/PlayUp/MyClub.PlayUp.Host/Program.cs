@@ -514,6 +514,28 @@ try
                 new AddCompetitionStageResponse(stage.Id.Value, stage.Name.Value));
         });
 
+    app.MapDelete(
+        "/competitions/{competitionId:guid}/stages/{stageId:guid}",
+        async (
+            Guid competitionId,
+            Guid stageId,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            var (impact, view) = await executor
+                .RemoveCompetitionStageAsync(
+                    new CompetitionId(competitionId),
+                    new StageId(stageId),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(
+                new RemoveCompetitionStageResponse(
+                    impact.RemovedStageId.Value,
+                    impact.ScrubbedQualificationPaths,
+                    impact.ScrubbedProgressionPaths,
+                    view));
+        });
+
     app.MapPost(
         "/stages/{stageId:guid}/rounds",
         async (
@@ -578,6 +600,40 @@ try
 
             await executor
                 .ReplaceStageProgressionRulesAsync(new StageId(stageId), paths, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPut(
+        "/stages/{stageId:guid}/qualification-rules",
+        async (
+            Guid stageId,
+            ReplaceStageQualificationRulesRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            IReadOnlyList<QualificationPathSpec>? paths = null;
+            if (request.Paths is { Count: > 0 })
+            {
+                paths =
+                [
+                    .. request.Paths.Select(path => new QualificationPathSpec(
+                        path.Order,
+                        path.SelectionMode,
+                        path.SelectionValue,
+                        path.DestinationStageId,
+                        path.DestinationSlotKey,
+                        path.RankingScope,
+                        path.GroupId,
+                        path.AcrossGroupsPosition,
+                        path.SelectionEndValue,
+                        path.MinimumPoints))
+                ];
+            }
+
+            await executor
+                .ReplaceStageQualificationRulesAsync(new StageId(stageId), paths, cancellationToken)
                 .ConfigureAwait(false);
             return Results.NoContent();
         });

@@ -52,7 +52,7 @@ async function invalidateAfterRosterMutation(
 ) {
   await Promise.all([
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.organisation(competitionId),
+      queryKey: queryKeys.competitions.structure(competitionId),
     }),
     queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.detail(competitionId),
