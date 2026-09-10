@@ -1,34 +1,33 @@
 /*
- * Structure hub (Lot 1) — master-detail N1|N2.
- * Shared Structure panel tokens / strip styles.
+ * Structure hub — master-detail N1|N2.
+ * Page shell / column tiles aligned with Teams & Regulation (DS surfaces).
  */
 
 .page.page--structure {
-  --structure-shadow:
-    0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent),
-    0 2px 10px color-mix(in srgb, var(--color-ink) 6%, transparent);
-
   width: 100%;
   max-width: none;
   margin-inline: 0;
   padding: var(--space-16);
   gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overflow-x: hidden;
+}
+
+.structure-hub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  width: 100%;
+  max-width: none;
+  min-width: 0;
 }
 
 .structure {
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
-}
-
-.page--structure .ds-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-  border: none;
-  border-radius: var(--radius-panel);
-  padding: var(--space-24);
-  box-shadow: var(--structure-shadow);
 }
 
 /* ---------- Panneau ---------- */
@@ -120,9 +119,10 @@
   align-items: center;
   gap: var(--space-8);
   padding: var(--space-8) var(--space-12);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
-  box-shadow: var(--structure-shadow);
+  box-shadow: var(--shadow-page);
   color: var(--color-text-primary);
   font-size: var(--text-label);
   font-weight: var(--font-weight-semibold);
@@ -139,19 +139,13 @@
   color: var(--color-success);
 }
 
-/* ---------- Strip préparation ---------- */
+/* ---------- Readiness (layout inside DS Alert) ---------- */
 
 .structure-strip {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
-  padding: var(--space-16);
-  border-radius: var(--radius-panel);
-  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-surface));
-}
-
-.structure-strip--ready {
-  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+  min-width: 0;
 }
 
 .structure-strip__title {
@@ -211,6 +205,17 @@
 
 .structure-strip__action--static {
   cursor: default;
+}
+
+.structure-strip--ready .structure-strip__action,
+.structure-strip--ready .structure-link {
+  color: color-mix(in srgb, var(--color-success) 55%, var(--color-ink));
+}
+
+.structure-strip--ready .structure-strip__action:hover,
+.structure-strip--ready .structure-link:hover,
+.ds-root .structure-strip--ready a.structure-link:hover {
+  color: var(--color-success);
 }
 
 /* ---------- Mid grid ---------- */
@@ -637,19 +642,21 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
-  padding: var(--space-24);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  box-shadow: var(--structure-shadow);
   min-width: 0;
+  padding: var(--space-24);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-page);
+  box-sizing: border-box;
 }
 
 .structure-topology__title,
 .structure-fiche__title {
   margin: 0;
   color: var(--color-text-primary);
-  font-size: 1rem;
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-bold);
   line-height: var(--leading-tight);
 }
 
@@ -680,21 +687,21 @@
   padding: var(--space-12);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-panel);
-  background: color-mix(in srgb, var(--color-ink) 2%, var(--color-surface));
+  background: var(--color-surface);
   color: inherit;
   font: inherit;
   text-align: start;
   cursor: pointer;
+  transition: background-color var(--motion-duration) var(--motion-easing);
 }
 
 .structure-topology__card:hover {
-  border-color: color-mix(in srgb, var(--color-info) 35%, var(--color-border));
+  background-color: var(--color-surface-secondary);
 }
 
 .structure-topology__card--selected {
-  border-color: var(--color-info);
-  box-shadow: inset 3px 0 0 var(--color-info);
-  background: color-mix(in srgb, var(--color-info) 6%, var(--color-surface));
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 6%, var(--color-surface));
 }
 
 .structure-topology__card-head {
@@ -876,7 +883,7 @@
 .structure-switcher__tab[aria-selected='true'] {
   background: var(--color-surface);
   color: var(--color-text-primary);
-  box-shadow: var(--structure-shadow);
+  box-shadow: var(--shadow-page);
 }
 
 .structure-detail {
@@ -936,7 +943,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-8);
-  margin-block: var(--space-12) var(--space-16);
+  margin: 0;
 }
 
 .structure-issues {

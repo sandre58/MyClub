@@ -13,6 +13,7 @@ import {
   configureStructure,
   fetchStructureView,
 } from '../api';
+import { Alert } from '../design-system/components/Alert';
 import { Dialog } from '../design-system/components/Dialog';
 import { PageHead } from '../design-system/components/PageHead';
 import {
@@ -1013,23 +1014,27 @@ function ReadinessStrip({
 
   if (incomplete) {
     return (
-      <section className="structure-strip" aria-labelledby="readiness-heading">
-        <div className="structure-strip__head">
-          <h2 id="readiness-heading" className="structure-strip__title">
-            {t('readiness.structureIncomplete', { count: blockers.length })}
-          </h2>
-        </div>
-        <ul className="structure-strip__actions-list">
-          {blockers.map((code) => (
-            <li key={code}>
-              <IncompleteBlockerAction
-                code={code}
-                competitionId={data.competitionId}
-                onConfigure={onConfigure}
-              />
-            </li>
-          ))}
-        </ul>
+      <section aria-labelledby="readiness-heading">
+        <Alert tone="warning" role="status">
+          <div className="structure-strip">
+            <div className="structure-strip__head">
+              <h2 id="readiness-heading" className="structure-strip__title">
+                {t('readiness.structureIncomplete', { count: blockers.length })}
+              </h2>
+            </div>
+            <ul className="structure-strip__actions-list">
+              {blockers.map((code) => (
+                <li key={code}>
+                  <IncompleteBlockerAction
+                    code={code}
+                    competitionId={data.competitionId}
+                    onConfigure={onConfigure}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Alert>
       </section>
     );
   }
@@ -1037,79 +1042,83 @@ function ReadinessStrip({
   if (readyToMaterialize) {
     const isCup = formatKind === 'Cup';
     return (
-      <section
-        className="structure-strip structure-strip--ready"
-        aria-labelledby="readiness-heading"
-      >
-        <div className="structure-strip__head">
-          <h2 id="readiness-heading" className="structure-strip__title">
-            {isCup
-              ? t('readiness.readyForCupSkeleton')
-              : t('readiness.readyForMaterialization')}
-          </h2>
-        </div>
-        <div className="structure-strip__actions">
-          <p className="structure-panel__muted">
-            {isCup
-              ? t('readiness.cupSkeletonHint')
-              : t('readiness.materializeHint')}
-          </p>
-          <Link className="structure-link" to={overviewHref}>
-            {isCup
-              ? t('readiness.goToOverviewCupSkeleton')
-              : t('readiness.goToOverviewMaterialize')}
-            <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </section>
+      <ReadinessReadyAlert
+        title={
+          isCup
+            ? t('readiness.readyForCupSkeleton')
+            : t('readiness.readyForMaterialization')
+        }
+        hint={
+          isCup
+            ? t('readiness.cupSkeletonHint')
+            : t('readiness.materializeHint')
+        }
+        href={overviewHref}
+        linkLabel={
+          isCup
+            ? t('readiness.goToOverviewCupSkeleton')
+            : t('readiness.goToOverviewMaterialize')
+        }
+      />
     );
   }
 
   if (drawRequired) {
     return (
-      <section
-        className="structure-strip structure-strip--ready"
-        aria-labelledby="readiness-heading"
-      >
-        <div className="structure-strip__head">
-          <h2 id="readiness-heading" className="structure-strip__title">
-            {t('readiness.drawRequired')}
-          </h2>
-        </div>
-        <div className="structure-strip__actions">
-          <p className="structure-panel__muted">{t('readiness.drawHint')}</p>
-          <Link className="structure-link" to={overviewHref}>
-            {t('readiness.goToOverviewDraw')}
-            <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </section>
+      <ReadinessReadyAlert
+        title={t('readiness.drawRequired')}
+        hint={t('readiness.drawHint')}
+        href={overviewHref}
+        linkLabel={t('readiness.goToOverviewDraw')}
+      />
     );
   }
 
   if (readyNext) {
     return (
-      <section
-        className="structure-strip structure-strip--ready"
-        aria-labelledby="readiness-heading"
-      >
-        <div className="structure-strip__head">
-          <h2 id="readiness-heading" className="structure-strip__title">
-            {t('readiness.readyForNextSlice')}
-          </h2>
-        </div>
-        <div className="structure-strip__actions">
-          <p className="structure-panel__muted">{t('readiness.nextSliceHint')}</p>
-          <Link className="structure-link" to={overviewHref}>
-            {t('readiness.goToOverview')}
-            <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-      </section>
+      <ReadinessReadyAlert
+        title={t('readiness.readyForNextSlice')}
+        hint={t('readiness.nextSliceHint')}
+        href={overviewHref}
+        linkLabel={t('readiness.goToOverview')}
+      />
     );
   }
 
   return null;
+}
+
+function ReadinessReadyAlert({
+  title,
+  hint,
+  href,
+  linkLabel,
+}: {
+  title: string;
+  hint: string;
+  href: string;
+  linkLabel: string;
+}) {
+  return (
+    <section aria-labelledby="readiness-heading">
+      <Alert tone="success" role="status">
+        <div className="structure-strip structure-strip--ready">
+          <div className="structure-strip__head">
+            <h2 id="readiness-heading" className="structure-strip__title">
+              {title}
+            </h2>
+          </div>
+          <div className="structure-strip__actions">
+            <p className="structure-panel__muted">{hint}</p>
+            <Link className="structure-link" to={href}>
+              {linkLabel}
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+        </div>
+      </Alert>
+    </section>
+  );
 }
 
 function IncompleteBlockerAction({
