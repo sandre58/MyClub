@@ -55,7 +55,7 @@ Initial domain: **amateur football**.
 
 | Product | Role | Status |
 | :------ | :--- | :----- |
-| **Play'Up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, Accueil, Vue d'ensemble, organisation, match hub). See Notion Play'Up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
+| **Play'Up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, Accueil, Vue d'ensemble, Structure, match hub). See Notion Play'Up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
 | **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned (not started) |
 | **Train'in** | Training session design and follow-up. | Future (not started) |
 
@@ -67,7 +67,7 @@ Initial domain: **amateur football**.
 
 **Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'Up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
 
-**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs + React SPA (`src/PlayUp/web`). Host exposes organizer write/read surfaces (stage prepare, draw publish/apply, match lifecycle, progression, competition/stage/match reads, and additional workspace/organisation/attention reads). Contract details: [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). Catalog bootstrap remains a later tranche.
+**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs + React SPA (`src/PlayUp/web`). Host exposes organizer write/read surfaces (stage prepare, draw publish/apply, match lifecycle, progression, competition/stage/match reads, and additional workspace/structure/attention reads). Contract details: [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). Catalog bootstrap remains a later tranche.
 
 ```text
 src/

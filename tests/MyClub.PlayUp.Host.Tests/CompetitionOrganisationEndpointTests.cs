@@ -50,7 +50,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         addSecond.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var structureResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Championship", MatchdayCount: 2));
         structureResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var structured = await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
@@ -62,7 +62,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         structured.Organisation.Readiness.ReadyForNextSlice.Should().BeTrue();
         structured.Organisation.Readiness.ReadyForSchedulePath.Should().BeTrue();
 
-        using var getResponse = await client.GetAsync($"/competitions/{competitionId}/organisation");
+        using var getResponse = await client.GetAsync($"/competitions/{competitionId}/structure");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var reloaded = await getResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         reloaded.Should().NotBeNull();
@@ -83,7 +83,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("B"));
 
         using var groupsResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
         groupsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var groups = await groupsResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
@@ -92,7 +92,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         groups.Organisation.Readiness.ReadyForDraw.Should().BeTrue();
 
         using var cupResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 4));
         cupResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var cup = await cupResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
@@ -117,7 +117,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("B"));
 
         using var swissResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Swiss", SwissRoundCount: 5));
         swissResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var swiss = await swissResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
@@ -250,7 +250,7 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         var competitionId = await CreateCompetitionAsync(client, "BadCup");
 
         using var response = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 6));
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
@@ -263,10 +263,32 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();
 
-        using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}/organisation");
+        using var response = await client.GetAsync($"/competitions/{Guid.CreateVersion7()}/structure");
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.CompetitionNotFound);
+    }
+
+    [IntegrationFact]
+    public async Task Legacy_organisation_paths_remain_aliasesAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        var competitionId = await CreateCompetitionAsync(client, "LegacyOrg");
+        await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("A"));
+        await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("B"));
+
+        using var configure = await client.PostAsJsonAsync(
+            $"/competitions/{competitionId}/organisation/structure",
+            new ConfigureStructureRequest("Championship", MatchdayCount: 1));
+        configure.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        using var getLegacy = await client.GetAsync($"/competitions/{competitionId}/organisation");
+        getLegacy.StatusCode.Should().Be(HttpStatusCode.OK);
+        var view = await getLegacy.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        view.Should().NotBeNull();
+        view.Format.Kind.Should().Be(StructureFormatKind.Championship);
     }
 
     private static async Task<Guid> CreateCompetitionAsync(HttpClient client, string prefix)

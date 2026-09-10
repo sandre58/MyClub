@@ -466,7 +466,7 @@ export interface MatchHubStageMatches {
   matches: MatchSummary[];
 }
 
-/** GET /competitions/{id}/organisation — Host OrganisationView (SPA Structure hub). */
+/** GET /competitions/{id}/structure — Host OrganisationView (SPA Structure hub). */
 export interface OrganisationView {
   competitionId: string;
   name: string;
@@ -875,7 +875,7 @@ export interface ReplaceRegulationRequest {
   penaltyInitialKicksPerTeam?: number | null;
 }
 
-/** POST /competitions/{id}/organisation/structure */
+/** POST /competitions/{id}/structure */
 export type ConfigureStructureRequest = {
   format: StructureFormatKind | string;
   stageName?: string | null;
@@ -900,7 +900,7 @@ export interface StructureRebuildImpact {
   clearedSwissSettings: boolean;
 }
 
-/** POST /competitions/{id}/organisation/structure response. */
+/** POST /competitions/{id}/structure response. */
 export interface ConfigureStructureResponse {
   stageCreated: boolean;
   rebuildImpact: StructureRebuildImpact | null;

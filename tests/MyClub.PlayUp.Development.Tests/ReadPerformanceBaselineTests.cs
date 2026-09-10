@@ -61,7 +61,7 @@ public sealed class ReadPerformanceBaselineTests(
             new Dictionary<string, int>
             {
                 ["GET /overview (GetOverviewViewAsync)"] = overviewSql,
-                ["GET /organisation (GetOrganisationViewAsync)"] = organisationSql,
+                ["GET /structure (GetOrganisationViewAsync)"] = organisationSql,
                 ["GET /consultation (GetConsultationAsync)"] = consultationSql,
                 ["GET /attention (GetNeedsAttentionAsync)"] = attentionSql,
                 ["GET /competitions/{id} (GetCompetitionDetailAsync)"] = detailSql,

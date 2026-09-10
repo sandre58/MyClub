@@ -28,7 +28,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         await AddEntriesAsync(client, competitionId, 4);
 
         using var structureResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Championship", MatchdayCount: 1));
         structureResponse.EnsureSuccessStatusCode();
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
@@ -40,7 +40,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             null);
         materializeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/organisation");
+        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
         var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(6);
@@ -81,7 +81,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         await AddEntriesAsync(client, competitionId, 4);
 
         using var structureResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Organisation;
@@ -121,7 +121,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             null);
         materialize.EnsureSuccessStatusCode();
 
-        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/organisation");
+        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
         var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(2);
@@ -137,7 +137,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         await AddEntriesAsync(client, competitionId, 4);
 
         using var structureResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/organisation/structure",
+            $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 4));
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Organisation;
@@ -160,7 +160,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             new ApplyDrawRequest());
         apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/organisation");
+        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
         var view = await orgAfter.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(2);

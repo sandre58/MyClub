@@ -169,11 +169,11 @@ export function fetchCompetitionDetail(
   return getJson(`/competitions/${competitionId}`);
 }
 
-/** Relative URL → Vite proxy → Host GET /competitions/{id}/organisation */
+/** Relative URL → Vite proxy → Host GET /competitions/{id}/structure */
 export function fetchOrganisationView(
   competitionId: string,
 ): Promise<OrganisationView> {
-  return getJson(`/competitions/${competitionId}/organisation`);
+  return getJson(`/competitions/${competitionId}/structure`);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/consultation */
@@ -359,14 +359,14 @@ export function replaceCompetitionRegulation(
   return sendJson('PUT', `/competitions/${competitionId}/regulation`, request);
 }
 
-/** POST /competitions/{id}/organisation/structure → ConfigureStructureResponse */
+/** POST /competitions/{id}/structure → ConfigureStructureResponse */
 export function configureOrganisationStructure(
   competitionId: string,
   request: ConfigureStructureRequest,
 ): Promise<ConfigureStructureResponse> {
   return sendJson(
     'POST',
-    `/competitions/${competitionId}/organisation/structure`,
+    `/competitions/${competitionId}/structure`,
     request,
   );
 }

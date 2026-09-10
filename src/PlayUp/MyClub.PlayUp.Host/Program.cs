@@ -208,6 +208,17 @@ try
         });
 
     app.MapGet(
+        "/competitions/{competitionId:guid}/structure",
+        async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+        {
+            var view = await executor
+                .GetOrganisationViewAsync(new CompetitionId(competitionId), cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(view);
+        });
+
+    // Legacy alias — SPA Structure hub; prefer GET …/structure.
+    app.MapGet(
         "/competitions/{competitionId:guid}/organisation",
         async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
         {
@@ -483,6 +494,19 @@ try
         });
 
     app.MapPost(
+        "/competitions/{competitionId:guid}/structure",
+        async (
+            Guid competitionId,
+            ConfigureStructureRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            return await ConfigureStructureHttpAsync(competitionId, request, executor, cancellationToken)
+                .ConfigureAwait(false);
+        });
+
+    // Legacy alias — prefer POST …/structure.
+    app.MapPost(
         "/competitions/{competitionId:guid}/organisation/structure",
         async (
             Guid competitionId,
@@ -490,22 +514,8 @@ try
             UseCaseExecutor executor,
             CancellationToken cancellationToken) =>
         {
-            var intent = OrganisationRequestMapper.ToStructureIntent(request);
-            var (result, view) = await executor
-                .ConfigureStructureAsync(new CompetitionId(competitionId), intent, cancellationToken)
+            return await ConfigureStructureHttpAsync(competitionId, request, executor, cancellationToken)
                 .ConfigureAwait(false);
-            StructureRebuildImpactDto? impact = result.RebuildImpact is null
-                ? null
-                : new StructureRebuildImpactDto(
-                    result.RebuildImpact.ClearedMatchdays,
-                    result.RebuildImpact.ClearedGroups,
-                    result.RebuildImpact.ClearedRounds,
-                    result.RebuildImpact.ClearedSlots,
-                    result.RebuildImpact.ClearedDirectAssignments,
-                    result.RebuildImpact.ClearedDrawRules,
-                    result.RebuildImpact.ClearedSwissSettings);
-            return Results.Ok(
-                new ConfigureStructureResponse(result.StageCreated, impact, view));
         });
 
     app.MapPost(
@@ -1451,6 +1461,29 @@ finally
 }
 
 return;
+
+static async Task<IResult> ConfigureStructureHttpAsync(
+    Guid competitionId,
+    ConfigureStructureRequest request,
+    UseCaseExecutor executor,
+    CancellationToken cancellationToken)
+{
+    var intent = OrganisationRequestMapper.ToStructureIntent(request);
+    var (result, view) = await executor
+        .ConfigureStructureAsync(new CompetitionId(competitionId), intent, cancellationToken)
+        .ConfigureAwait(false);
+    StructureRebuildImpactDto? impact = result.RebuildImpact is null
+        ? null
+        : new StructureRebuildImpactDto(
+            result.RebuildImpact.ClearedMatchdays,
+            result.RebuildImpact.ClearedGroups,
+            result.RebuildImpact.ClearedRounds,
+            result.RebuildImpact.ClearedSlots,
+            result.RebuildImpact.ClearedDirectAssignments,
+            result.RebuildImpact.ClearedDrawRules,
+            result.RebuildImpact.ClearedSwissSettings);
+    return Results.Ok(new ConfigureStructureResponse(result.StageCreated, impact, view));
+}
 
 static CompletionMode parseCompletionMode(string mode) => mode.Equals("Normal", StringComparison.OrdinalIgnoreCase)
     ? CompletionMode.Normal

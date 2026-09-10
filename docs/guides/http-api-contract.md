@@ -236,9 +236,17 @@ All organizer-facing copy is owned by the SPA i18n layer. Read DTOs expose **cod
 - Completion: reason `code` only (no `message`)
 - Overview: codes + facts only (already)
 
-### `POST /competitions/{competitionId}/organisation/structure` → `OrganisationViewDto`
+### `GET /competitions/{competitionId}/structure` → `OrganisationViewDto`
 
-Configures primary stage structure (`ConfigureStructureRequest`).
+Structure hub read (product name **Structure**). Wire DTO type remains `OrganisationViewDto` until a dedicated rename.
+
+Legacy alias (same handler): `GET /competitions/{competitionId}/organisation`.
+
+### `POST /competitions/{competitionId}/structure` → 200 `ConfigureStructureResponse`
+
+Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`OrganisationNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `organisation` (same DTO type).
+
+Legacy alias (same handler): `POST /competitions/{competitionId}/organisation/structure`.
 
 ```json
 {
@@ -261,7 +269,7 @@ Configures primary stage structure (`ConfigureStructureRequest`).
 
 **Materialization principle:** `POST …/matches/materialize` does **not** accept a generation-mode body. `MaterializeMatches` reads `Stage.MatchGenerationFormat` persisted by ConfigureStructure (or Domain defaults). **Swiss** stages reject materialize — use `GenerateNextRound` instead.
 
-Organisation Read already exposes `structure.matchGenerationFormat` and `structure.swissRoundCount` on `OrganisationStructureSummaryDto` (same enum / nullable int on wire).
+Structure Read already exposes `structure.matchGenerationFormat` and `structure.swissRoundCount` on `OrganisationStructureSummaryDto` (same enum / nullable int on wire).
 
 Host contract: `MyClub.PlayUp.Host.Contracts.ConfigureStructureRequest`.
 
@@ -289,9 +297,9 @@ Competition lifecycle: Domain `Ready → Running`. No request body.
 
 Additional stages / rounds / slots / progression rules without Domain seeding. Does **not** author Fixtures (first tour remains MaterializeCup + Pairing; later tours use materialize-from-slots).
 
-#### `POST /competitions/{competitionId}/organisation/structure` → 200 `ConfigureStructureResponse`
+#### `POST /competitions/{competitionId}/structure` → 200 `ConfigureStructureResponse`
 
-Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`OrganisationNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `organisation`.
+Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`OrganisationNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `organisation`. Legacy alias: `POST …/organisation/structure`.
 
 Locale non-destructive skeleton edits (Lot 3):
 
