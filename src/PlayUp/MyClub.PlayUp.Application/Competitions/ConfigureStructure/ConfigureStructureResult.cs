@@ -13,4 +13,10 @@ namespace MyClub.PlayUp.Application.Competitions;
 /// </summary>
 /// <param name="Stage">Primary stage after structure mutation.</param>
 /// <param name="StageCreated">True when the stage was created in this call.</param>
-public sealed record ConfigureStructureResult(Stage Stage, bool StageCreated);
+/// <param name="RebuildImpact">
+/// Cleared topology counts when an existing skeleton was rebuilt; otherwise <see langword="null"/>.
+/// </param>
+public sealed record ConfigureStructureResult(
+    Stage Stage,
+    bool StageCreated,
+    StructureRebuildImpact? RebuildImpact = null);

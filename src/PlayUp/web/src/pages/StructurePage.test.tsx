@@ -231,8 +231,10 @@ describe('relevantSwitcherSections', () => {
 describe('StructurePage Structure hub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(configureOrganisationStructure).mockResolvedValue(
-      organisationView({
+    vi.mocked(configureOrganisationStructure).mockResolvedValue({
+      stageCreated: true,
+      rebuildImpact: null,
+      organisation: organisationView({
         format: {
           kind: 'Championship',
           primaryStageId: stageId,
@@ -241,7 +243,7 @@ describe('StructurePage Structure hub', () => {
         },
         stages: [championshipStage()],
       }),
-    );
+    });
   });
 
   it('shows loading while organisation is pending', () => {
@@ -402,7 +404,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     const configureButtons = await screen.findAllByRole('button', {
-      name: /Configurer la structure/i,
+      name: /Créer la structure/i,
     });
     await user.click(configureButtons[0]!);
     const dialog = await screen.findByRole('dialog');
@@ -413,7 +415,7 @@ describe('StructurePage Structure hub', () => {
     const matchdays = within(dialog).getByLabelText(/Nombre de journées/i);
     fireEvent.change(matchdays, { target: { value: '2' } });
     await user.click(
-      within(dialog).getByRole('button', { name: 'Configurer la structure' }),
+      within(dialog).getByRole('button', { name: 'Créer la structure' }),
     );
 
     await waitFor(() => {
@@ -473,7 +475,7 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Configurer la structure/i }),
+      screen.queryByRole('button', { name: /Créer la structure/i }),
     ).not.toBeInTheDocument();
   });
 

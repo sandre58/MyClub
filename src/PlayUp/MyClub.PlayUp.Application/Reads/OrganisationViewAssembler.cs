@@ -49,6 +49,30 @@ public static class OrganisationViewAssembler
     /// <summary>Action: configure structure.</summary>
     public const string ActionConfigureStructure = "ConfigureStructure";
 
+    /// <summary>Per-phase action: explicit skeleton rebuild (destructive).</summary>
+    public const string ActionRebuildStructure = "RebuildStructure";
+
+    /// <summary>Per-phase action: rename stage (locale).</summary>
+    public const string ActionRenameStage = "RenameStage";
+
+    /// <summary>Per-phase action: add matchday (locale).</summary>
+    public const string ActionAddMatchday = "AddMatchday";
+
+    /// <summary>Per-phase action: add group (locale).</summary>
+    public const string ActionAddGroup = "AddGroup";
+
+    /// <summary>Per-phase action: add round (locale).</summary>
+    public const string ActionAddRound = "AddRound";
+
+    /// <summary>Per-phase action: add slot (locale).</summary>
+    public const string ActionAddSlot = "AddSlot";
+
+    /// <summary>Per-phase action: set match generation format (locale).</summary>
+    public const string ActionReplaceMatchGenerationFormat = "ReplaceMatchGenerationFormat";
+
+    /// <summary>Per-phase action: set Swiss planned rounds (locale).</summary>
+    public const string ActionReplaceSwissSettings = "ReplaceSwissSettings";
+
     /// <summary>Action: replace regulation.</summary>
     public const string ActionReplaceRegulation = "ReplaceRegulation";
 
@@ -316,11 +340,46 @@ public static class OrganisationViewAssembler
 
         var actions = new List<string>
         {
+            ActionRenameStage,
             ActionReplaceQualificationRules,
             ActionReplaceProgressionRules
         };
 
-        if (competition.StageIds.Count > 1 && CountAttachedMatches(stage) == 0)
+        var format = InferFormat(stage);
+        var attachedMatches = CountAttachedMatches(stage);
+
+        if (attachedMatches == 0)
+        {
+            actions.Add(ActionRebuildStructure);
+        }
+
+        if (format is StructureFormatKind.Championship or StructureFormatKind.Groups or null)
+        {
+            actions.Add(ActionAddMatchday);
+        }
+
+        if (format is StructureFormatKind.Groups or null)
+        {
+            actions.Add(ActionAddGroup);
+        }
+
+        if (format is StructureFormatKind.Cup or null)
+        {
+            actions.Add(ActionAddRound);
+            actions.Add(ActionAddSlot);
+        }
+
+        if (format is StructureFormatKind.Championship or StructureFormatKind.Groups)
+        {
+            actions.Add(ActionReplaceMatchGenerationFormat);
+        }
+
+        if (format is StructureFormatKind.Swiss)
+        {
+            actions.Add(ActionReplaceSwissSettings);
+        }
+
+        if (competition.StageIds.Count > 1 && attachedMatches == 0)
         {
             actions.Add(ActionRemoveStage);
         }

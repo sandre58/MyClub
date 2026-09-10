@@ -289,6 +289,20 @@ Competition lifecycle: Domain `Ready → Running`. No request body.
 
 Additional stages / rounds / slots / progression rules without Domain seeding. Does **not** author Fixtures (first tour remains MaterializeCup + Pairing; later tours use materialize-from-slots).
 
+#### `POST /competitions/{competitionId}/organisation/structure` → 200 `ConfigureStructureResponse`
+
+Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`OrganisationNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `organisation`.
+
+Locale non-destructive skeleton edits (Lot 3):
+
+- `POST /stages/{stageId}/rename` → 204
+- `POST /stages/{stageId}/matchdays` → 201
+- `POST /stages/{stageId}/groups` → 201
+- `PUT /stages/{stageId}/match-generation-format` → 204
+- `PUT /stages/{stageId}/swiss-settings` → 204
+
+Stage hub `actions` may include `RebuildStructure`, `RenameStage`, `AddMatchday`, `AddGroup`, `AddRound`, `AddSlot`, `ReplaceMatchGenerationFormat`, `ReplaceSwissSettings`.
+
 #### `POST /competitions/{competitionId}/stages` → 201 `AddCompetitionStageResponse`
 
 ```json

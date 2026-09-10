@@ -41,6 +41,7 @@ import {
   StructureGraphToolbar,
   StructureIssuesBanner,
 } from './StructureGraphDialogs';
+import { ConstructionLocaleActions } from './StructureLocaleActions';
 import {
   constructionSummaryFacts,
   isMatchFrameBound,
@@ -712,6 +713,7 @@ function SectionDetail({
               value={String(stage.matchCount)}
             />
           </dl>
+          <ConstructionLocaleActions data={data} stage={stage} />
         </DetailCard>
       );
     case 'qualification':
@@ -1017,6 +1019,15 @@ function StructureEditorDialog({
       data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
     );
 
+  const isRebuild = data.stages.length > 0 || data.format.primaryStageId != null;
+  const [confirmRebuild, setConfirmRebuild] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setConfirmRebuild(false);
+    }
+  }, [open]);
+
   const mutation = useMutation({
     mutationFn: () =>
       configureOrganisationStructure(data.competitionId, {
@@ -1032,7 +1043,11 @@ function StructureEditorDialog({
             ? matchGenerationFormat
             : null,
       }),
-    onSuccess: async () => {
+    onSuccess: async (response) => {
+      queryClient.setQueryData(
+        queryKeys.competitions.structure(data.competitionId),
+        response.organisation,
+      );
       await invalidateAfterStructureMutation(
         queryClient,
         data.competitionId,
@@ -1041,11 +1056,22 @@ function StructureEditorDialog({
     },
   });
 
+  const submitLabel = isRebuild
+    ? t('structure.rebuildSubmit')
+    : t('structure.configure');
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title={t('structure.configureLegend')}
+      title={
+        isRebuild
+          ? t('structure.rebuildLegend')
+          : t('structure.configureLegend')
+      }
+      description={
+        isRebuild ? t('structure.rebuildHint') : t('structure.configureHint')
+      }
       closeLabel={tCommon('close')}
       closeDisabled={mutation.isPending}
       size="md"
@@ -1063,12 +1089,12 @@ function StructureEditorDialog({
             type="submit"
             form={formId}
             className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || (isRebuild && !confirmRebuild)}
           >
             {mutation.isPending ? (
               <PendingLabel>{t('structure.configuring')}</PendingLabel>
             ) : (
-              t('structure.configure')
+              submitLabel
             )}
           </button>
         </>
@@ -1087,7 +1113,9 @@ function StructureEditorDialog({
       >
         <fieldset className="fieldset" disabled={mutation.isPending}>
           <legend className="fieldset__legend">
-            {t('structure.configureLegend')}
+            {isRebuild
+              ? t('structure.rebuildLegend')
+              : t('structure.configureLegend')}
           </legend>
           <label className="field">
             {t('structure.format')}
@@ -1214,7 +1242,23 @@ function StructureEditorDialog({
             </label>
           )}
         </fieldset>
-        <p className="caption">{t('structure.configureHint')}</p>
+        {isRebuild ? (
+          <label className="field">
+            <input
+              type="checkbox"
+              checked={confirmRebuild}
+              onChange={(event) => setConfirmRebuild(event.target.checked)}
+            />{' '}
+            {t('structure.rebuildConfirm', {
+              matchdays: data.structure.matchdayCount,
+              groups: data.structure.groupCount,
+              rounds: data.structure.roundCount,
+              slots: data.structure.slotCount,
+            })}
+          </label>
+        ) : (
+          <p className="caption">{t('structure.configureHint')}</p>
+        )}
         {mutation.isError && <MutationError error={mutation.error} />}
       </form>
     </Dialog>

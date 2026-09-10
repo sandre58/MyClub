@@ -51,7 +51,8 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Championship", MatchdayCount: 1));
         structureResponse.EnsureSuccessStatusCode();
-        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
+            .Organisation;
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var materializeResponse = await client.PostAsync(

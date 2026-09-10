@@ -31,7 +31,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Championship", MatchdayCount: 1));
         structureResponse.EnsureSuccessStatusCode();
-        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
+            .Organisation;
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var materializeResponse = await client.PostAsync(
@@ -82,7 +83,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
-        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
+            .Organisation;
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var createDraw = await client.PostAsJsonAsync(
@@ -137,7 +139,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 4));
-        var org = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
+            .Organisation;
         var stageId = org!.Format.PrimaryStageId!.Value;
 
         using var createDraw = await client.PostAsJsonAsync(

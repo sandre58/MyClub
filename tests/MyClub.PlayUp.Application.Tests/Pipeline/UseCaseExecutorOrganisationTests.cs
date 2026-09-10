@@ -57,11 +57,13 @@ public sealed class UseCaseExecutorOrganisationTests
             .Returns(Task.CompletedTask);
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
-        var view = await executor.ConfigureStructureAsync(
+        var (result, view) = await executor.ConfigureStructureAsync(
             competition.Id,
             StructureIntent.Groups(2, 4));
 
         addedStage.Should().NotBeNull();
+        result.StageCreated.Should().BeTrue();
+        result.RebuildImpact.Should().BeNull();
         view.Structure.GroupCount.Should().Be(2);
         view.Format.Kind.Should().Be(StructureFormatKind.Groups);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);

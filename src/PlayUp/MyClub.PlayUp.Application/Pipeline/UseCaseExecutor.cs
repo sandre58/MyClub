@@ -945,8 +945,9 @@ public sealed partial class UseCaseExecutor(
 
     /// <summary>
     /// Configures primary stage structure from a typed intent (atomic SaveChanges).
+    /// First-time create or explicit rebuild of the primary skeleton.
     /// </summary>
-    public async Task<OrganisationViewDto> ConfigureStructureAsync(
+    public async Task<(ConfigureStructureResult Result, OrganisationViewDto View)> ConfigureStructureAsync(
         CompetitionId competitionId,
         StructureIntent intent,
         CancellationToken cancellationToken = default)
@@ -971,7 +972,8 @@ public sealed partial class UseCaseExecutor(
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        var view = await AssembleOrganisationViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return (result, view);
     }
 
     /// <summary>
@@ -1041,6 +1043,73 @@ public sealed partial class UseCaseExecutor(
         var slot = AddStageSlot.Execute(stage, slotKey);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return slot;
+    }
+
+    /// <summary>
+    /// Renames a stage (locale).
+    /// </summary>
+    public async Task RenameStageAsync(
+        StageId stageId,
+        string name,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        RenameStage.Execute(stage, name);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Adds a matchday to a stage (locale).
+    /// </summary>
+    public async Task<Matchday> AddStageMatchdayAsync(
+        StageId stageId,
+        int? number,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var matchday = AddStageMatchday.Execute(stage, number, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return matchday;
+    }
+
+    /// <summary>
+    /// Adds a group to a stage (locale).
+    /// </summary>
+    public async Task<Group> AddStageGroupAsync(
+        StageId stageId,
+        string? name,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var group = AddStageGroup.Execute(stage, name, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return group;
+    }
+
+    /// <summary>
+    /// Sets Championship / Groups match generation format (locale).
+    /// </summary>
+    public async Task ReplaceStageMatchGenerationFormatAsync(
+        StageId stageId,
+        MatchGenerationFormat format,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageMatchGenerationFormat.Execute(stage, format);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Sets Swiss planned round count K (locale).
+    /// </summary>
+    public async Task ReplaceStageSwissSettingsAsync(
+        StageId stageId,
+        int roundCount,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceStageSwissSettings.Execute(stage, roundCount);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

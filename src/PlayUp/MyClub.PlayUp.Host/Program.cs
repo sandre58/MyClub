@@ -491,10 +491,21 @@ try
             CancellationToken cancellationToken) =>
         {
             var intent = OrganisationRequestMapper.ToStructureIntent(request);
-            var view = await executor
+            var (result, view) = await executor
                 .ConfigureStructureAsync(new CompetitionId(competitionId), intent, cancellationToken)
                 .ConfigureAwait(false);
-            return Results.Ok(view);
+            StructureRebuildImpactDto? impact = result.RebuildImpact is null
+                ? null
+                : new StructureRebuildImpactDto(
+                    result.RebuildImpact.ClearedMatchdays,
+                    result.RebuildImpact.ClearedGroups,
+                    result.RebuildImpact.ClearedRounds,
+                    result.RebuildImpact.ClearedSlots,
+                    result.RebuildImpact.ClearedDirectAssignments,
+                    result.RebuildImpact.ClearedDrawRules,
+                    result.RebuildImpact.ClearedSwissSettings);
+            return Results.Ok(
+                new ConfigureStructureResponse(result.StageCreated, impact, view));
         });
 
     app.MapPost(
@@ -573,6 +584,89 @@ try
             return Results.Created(
                 $"/stages/{stageId}/slots/{Uri.EscapeDataString(slot.SlotKey)}",
                 new AddStageSlotResponse(slot.SlotKey));
+        });
+
+    app.MapPost(
+        "/stages/{stageId:guid}/rename",
+        async (
+            Guid stageId,
+            RenameStageRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            await executor
+                .RenameStageAsync(new StageId(stageId), request.Name, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPost(
+        "/stages/{stageId:guid}/matchdays",
+        async (
+            Guid stageId,
+            AddStageMatchdayRequest? request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            var matchday = await executor
+                .AddStageMatchdayAsync(new StageId(stageId), request?.Number, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Created(
+                $"/stages/{stageId}/matchdays/{matchday.Id.Value}",
+                new AddStageMatchdayResponse(matchday.Id.Value, matchday.Number));
+        });
+
+    app.MapPost(
+        "/stages/{stageId:guid}/groups",
+        async (
+            Guid stageId,
+            AddStageGroupRequest? request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            var group = await executor
+                .AddStageGroupAsync(new StageId(stageId), request?.Name, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Created(
+                $"/stages/{stageId}/groups/{group.Id.Value}",
+                new AddStageGroupResponse(group.Id.Value, group.Name));
+        });
+
+    app.MapPut(
+        "/stages/{stageId:guid}/match-generation-format",
+        async (
+            Guid stageId,
+            ReplaceStageMatchGenerationFormatRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            if (!Enum.TryParse<MatchGenerationFormat>(request.Format, ignoreCase: true, out var format)
+                || !Enum.IsDefined(format))
+            {
+                return Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
+            }
+
+            await executor
+                .ReplaceStageMatchGenerationFormatAsync(new StageId(stageId), format, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPut(
+        "/stages/{stageId:guid}/swiss-settings",
+        async (
+            Guid stageId,
+            ReplaceStageSwissSettingsRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            await executor
+                .ReplaceStageSwissSettingsAsync(new StageId(stageId), request.RoundCount, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
         });
 
     app.MapPut(

@@ -50,6 +50,7 @@ public static class ConfigureStructure
         }
 
         var stageCreated = false;
+        StructureRebuildImpact? rebuildImpact = null;
         Stage stage;
         if (primaryStage is null)
         {
@@ -79,12 +80,20 @@ public static class ConfigureStructure
                     ApplicationErrorCodes.StageNotInCompetition);
             }
 
+            if (CountAttachedMatches(primaryStage) > 0)
+            {
+                throw new ApplicationFailureException(
+                    $"Stage '{primaryStage.Id}' cannot be rebuilt while matches are attached.",
+                    ApplicationErrorCodes.OrganisationNotMutable);
+            }
+
             stage = primaryStage;
             if (!string.Equals(stage.Name.Value, intent.StageName, StringComparison.Ordinal))
             {
                 stage.Rename(new StageName(intent.StageName));
             }
 
+            rebuildImpact = SnapshotClearImpact(stage);
             ClearStructure(stage, clock);
             AlignStandingRulesForIntent(stage, intent.Format, competition.Regulation.StandingRules, clock);
         }
@@ -117,7 +126,7 @@ public static class ConfigureStructure
             stage.SetMatchGenerationFormat(intent.MatchGenerationFormat);
         }
 
-        return new ConfigureStructureResult(stage, stageCreated);
+        return new ConfigureStructureResult(stage, stageCreated, rebuildImpact);
     }
 
     /// <summary>
@@ -180,6 +189,23 @@ public static class ConfigureStructure
         stage.ReplaceDrawRules(null, clock);
         stage.SetSwissSettings(new SwissSettings(roundCount));
     }
+
+    private static StructureRebuildImpact SnapshotClearImpact(Stage stage) =>
+        new(
+            ClearedMatchdays: stage.Matchdays.Count,
+            ClearedGroups: stage.Groups.Count,
+            ClearedRounds: stage.Rounds.Count,
+            ClearedSlots: stage.Slots.Count,
+            ClearedDirectAssignments: stage.DirectAssignments.Count,
+            ClearedDrawRules: stage.Regulation.DrawRules is not null,
+            ClearedSwissSettings: stage.SwissSettings is not null);
+
+    private static int CountAttachedMatches(Stage stage) =>
+        stage.Matchdays.SelectMany(matchday => matchday.Fixtures)
+            .Concat(stage.Rounds.SelectMany(round => round.Fixtures))
+            .SelectMany(fixture => fixture.MatchIds)
+            .Distinct()
+            .Count();
 
     private static void ClearStructure(Stage stage, IClock clock)
     {

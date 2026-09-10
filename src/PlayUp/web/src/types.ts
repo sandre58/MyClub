@@ -843,6 +843,24 @@ export type ConfigureStructureRequest = {
   swissRoundCount?: number | null;
 };
 
+/** Cleared topology counts when an existing skeleton was rebuilt. */
+export interface StructureRebuildImpact {
+  clearedMatchdays: number;
+  clearedGroups: number;
+  clearedRounds: number;
+  clearedSlots: number;
+  clearedDirectAssignments: number;
+  clearedDrawRules: boolean;
+  clearedSwissSettings: boolean;
+}
+
+/** POST /competitions/{id}/organisation/structure response. */
+export interface ConfigureStructureResponse {
+  stageCreated: boolean;
+  rebuildImpact: StructureRebuildImpact | null;
+  organisation: OrganisationView;
+}
+
 /** GET /competitions/{id}/consultation — Slice 7 multi-consumer Read (camelCase wire). */
 export interface ConsultationView {
   competitionId: string;

@@ -11,6 +11,7 @@ import type {
   CompetitionDetail,
   CompositionStatus,
   ConfigureStructureRequest,
+  ConfigureStructureResponse,
   ConsultationView,
   CreateCompetitionRequest,
   FinishMatchRequest,
@@ -18,6 +19,7 @@ import type {
   MatchHubView,
   MatchScore,
   MatchSummary,
+  MatchGenerationFormat,
   NeedsAttention,
   OrganisationView,
   RecordDisciplinaryEventRequest,
@@ -352,16 +354,79 @@ export function replaceCompetitionRegulation(
   return sendJson('PUT', `/competitions/${competitionId}/regulation`, request);
 }
 
-/** POST /competitions/{id}/organisation/structure → OrganisationView */
+/** POST /competitions/{id}/organisation/structure → ConfigureStructureResponse */
 export function configureOrganisationStructure(
   competitionId: string,
   request: ConfigureStructureRequest,
-): Promise<OrganisationView> {
+): Promise<ConfigureStructureResponse> {
   return sendJson(
     'POST',
     `/competitions/${competitionId}/organisation/structure`,
     request,
   );
+}
+
+/** POST /stages/{id}/rename → 204 */
+export function renameStage(stageId: string, name: string): Promise<void> {
+  return sendNoContent('POST', `/stages/${stageId}/rename`, { name });
+}
+
+/** POST /stages/{id}/matchdays → AddStageMatchdayResponse */
+export function addStageMatchday(
+  stageId: string,
+  number?: number | null,
+): Promise<{ matchdayId: string; number: number }> {
+  return sendJson('POST', `/stages/${stageId}/matchdays`, { number: number ?? null });
+}
+
+/** POST /stages/{id}/groups → AddStageGroupResponse */
+export function addStageGroup(
+  stageId: string,
+  name?: string | null,
+): Promise<{ groupId: string; name: string }> {
+  return sendJson('POST', `/stages/${stageId}/groups`, { name: name ?? null });
+}
+
+/** PUT /stages/{id}/match-generation-format → 204 */
+export function replaceStageMatchGenerationFormat(
+  stageId: string,
+  format: MatchGenerationFormat,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/match-generation-format`, {
+    format,
+  });
+}
+
+/** PUT /stages/{id}/swiss-settings → 204 */
+export function replaceStageSwissSettings(
+  stageId: string,
+  roundCount: number,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/swiss-settings`, {
+    roundCount,
+  });
+}
+
+/** POST /stages/{id}/rounds → AddStageRoundResponse */
+export function addStageRound(
+  stageId: string,
+  name: string,
+  numberOfLegs?: number | null,
+  aggregateScoring?: boolean | null,
+): Promise<{ roundId: string; name: string }> {
+  return sendJson('POST', `/stages/${stageId}/rounds`, {
+    name,
+    numberOfLegs: numberOfLegs ?? null,
+    aggregateScoring: aggregateScoring ?? null,
+  });
+}
+
+/** POST /stages/{id}/slots → AddStageSlotResponse */
+export function addStageSlot(
+  stageId: string,
+  slotKey: string,
+): Promise<{ slotKey: string }> {
+  return sendJson('POST', `/stages/${stageId}/slots`, { slotKey });
 }
 
 /** POST /competitions/{id}/stages → AddCompetitionStageResponse */

@@ -53,12 +53,14 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Championship", MatchdayCount: 2));
         structureResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var structured = await structureResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
+        var structured = await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
         structured.Should().NotBeNull();
-        structured.Format.Kind.Should().Be(StructureFormatKind.Championship);
-        structured.Structure.MatchdayCount.Should().Be(2);
-        structured.Readiness.ReadyForNextSlice.Should().BeTrue();
-        structured.Readiness.ReadyForSchedulePath.Should().BeTrue();
+        structured.StageCreated.Should().BeTrue();
+        structured.RebuildImpact.Should().BeNull();
+        structured.Organisation.Format.Kind.Should().Be(StructureFormatKind.Championship);
+        structured.Organisation.Structure.MatchdayCount.Should().Be(2);
+        structured.Organisation.Readiness.ReadyForNextSlice.Should().BeTrue();
+        structured.Organisation.Readiness.ReadyForSchedulePath.Should().BeTrue();
 
         using var getResponse = await client.GetAsync($"/competitions/{competitionId}/organisation");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -84,20 +86,23 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
         groupsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var groups = await groupsResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
-        groups!.Structure.GroupCount.Should().Be(2);
-        groups.Structure.NumberOfPots.Should().Be(2);
-        groups.Readiness.ReadyForDraw.Should().BeTrue();
+        var groups = await groupsResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
+        groups!.Organisation.Structure.GroupCount.Should().Be(2);
+        groups.Organisation.Structure.NumberOfPots.Should().Be(2);
+        groups.Organisation.Readiness.ReadyForDraw.Should().BeTrue();
 
         using var cupResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 4));
         cupResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var cup = await cupResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
-        cup!.Format.Kind.Should().Be(StructureFormatKind.Cup);
-        cup.Structure.SlotCount.Should().Be(4);
-        cup.Structure.RoundCount.Should().Be(1);
-        cup.Readiness.ReadyForDraw.Should().BeTrue();
+        var cup = await cupResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
+        cup!.StageCreated.Should().BeFalse();
+        cup.RebuildImpact.Should().NotBeNull();
+        cup.RebuildImpact!.ClearedGroups.Should().Be(2);
+        cup.Organisation.Format.Kind.Should().Be(StructureFormatKind.Cup);
+        cup.Organisation.Structure.SlotCount.Should().Be(4);
+        cup.Organisation.Structure.RoundCount.Should().Be(1);
+        cup.Organisation.Readiness.ReadyForDraw.Should().BeTrue();
     }
 
     [IntegrationFact]
@@ -115,12 +120,12 @@ public sealed class CompetitionOrganisationEndpointTests(HostPostgresFixture fix
             $"/competitions/{competitionId}/organisation/structure",
             new ConfigureStructureRequest("Swiss", SwissRoundCount: 5));
         swissResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var swiss = await swissResponse.Content.ReadFromJsonAsync<OrganisationViewDto>(HostJson.Options);
-        swiss!.Format.Kind.Should().Be(StructureFormatKind.Swiss);
-        swiss.Structure.SwissRoundCount.Should().Be(5);
-        swiss.Structure.MatchdayCount.Should().Be(0);
-        swiss.Readiness.ReadyForSchedulePath.Should().BeTrue();
-        swiss.Readiness.ReadyForMaterialization.Should().BeFalse();
+        var swiss = await swissResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
+        swiss!.Organisation.Format.Kind.Should().Be(StructureFormatKind.Swiss);
+        swiss.Organisation.Structure.SwissRoundCount.Should().Be(5);
+        swiss.Organisation.Structure.MatchdayCount.Should().Be(0);
+        swiss.Organisation.Readiness.ReadyForSchedulePath.Should().BeTrue();
+        swiss.Organisation.Readiness.ReadyForMaterialization.Should().BeFalse();
     }
 
     [IntegrationFact]
