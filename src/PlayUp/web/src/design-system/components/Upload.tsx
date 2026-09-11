@@ -1,6 +1,6 @@
 import { useRef, type ChangeEvent, type KeyboardEvent } from 'react';
 import { TeamCrest } from '../TeamCrest';
-import { PlusIcon, TrashIcon } from '../icons/overviewIcons';
+import { PlusIcon, TrashIcon } from '../icons/contentIcons';
 import { Tooltip } from './Tooltip';
 
 export type UploadProps = {

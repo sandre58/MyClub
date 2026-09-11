@@ -1,48 +1,41 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
+import {type ReactNode, type SubmitEvent, useEffect, useId, useMemo, useState,} from 'react';
+import {useTranslation} from 'react-i18next';
+import {Link, useParams, useSearchParams} from 'react-router-dom';
+import {configureStructure, fetchStructureView,} from '../api';
+import {Alert} from '../design-system/components/Alert';
+import {Dialog} from '../design-system/components/Dialog';
+import {FormSection} from '../design-system/components/FormSection';
+import {PageHead} from '../design-system/components/PageHead';
+import {Tooltip} from '../design-system/components/Tooltip';
 import {
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-  type ReactNode,
-  type SubmitEvent,
-} from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
-import {
-  configureStructure,
-  fetchStructureView,
-} from '../api';
-import { Alert } from '../design-system/components/Alert';
-import { Dialog } from '../design-system/components/Dialog';
-import { PageHead } from '../design-system/components/PageHead';
-import {
-  attentionSourceLabel,
-  matchGenerationFormatLabel,
-  structureFormatKindLabel,
-} from '../i18n/enumLabels';
-import { queryKeys } from '../queryKeys';
-import {
-  EmptyState,
-  ErrorState,
-  LoadingState,
-  MutationError,
-  PendingLabel,
-  StageStatusBadge,
-} from '../ui';
+  ChampionshipFormatIcon,
+  CheckIcon,
+  CupFormatIcon,
+  DrawPendingIcon,
+  GroupsFormatIcon,
+  LegsStatIcon,
+  MatchdayStatIcon,
+  MatchesStatIcon,
+  OverviewAttentionIcon,
+  RoundsStatIcon,
+  StructureIcon,
+  StructureIssueIcon,
+  SwissFormatIcon,
+  TeamsIcon,
+} from '../design-system/icons/contentIcons';
+import {attentionSourceLabel, matchGenerationFormatLabel, structureFormatKindLabel,} from '../i18n/enumLabels';
+import {queryKeys} from '../queryKeys';
+import {EmptyState, ErrorState, LoadingState, MutationError, PendingLabel, StageStatusBadge,} from '../ui';
 import {
   type MatchGenerationFormat,
+  type StructureFormatKind,
   type StructureStageHubSummary,
   type StructureView,
-  type StructureFormatKind,
 } from '../types';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
-import {
-  RelationEditors,
-  StructureGraphToolbar,
-  StructureIssuesBanner,
-} from './StructureGraphDialogs';
-import { ConstructionLocaleActions } from './StructureLocaleActions';
+import {invalidateAfterStructureMutation} from './structureInvalidation';
+import {AddPhaseDialog, RelationEditors, RemovePhaseAction,} from './StructureGraphDialogs';
+import {ConstructionLocaleActions} from './StructureLocaleActions';
 import {
   constructionSummaryFacts,
   isMatchFrameBound,
@@ -57,11 +50,7 @@ import {
   STRUCTURE_SECTION_PARAM,
   STRUCTURE_STAGE_PARAM,
 } from './structureNavigation';
-import {
-  ConfrontationEditors,
-  MatchStandingEditors,
-  TirageEditors,
-} from './StructureRegulationDialogs';
+import {ConfrontationEditors, MatchStandingEditors, TirageEditors,} from './StructureRegulationDialogs';
 import './structure.css';
 
 type DrillInSection = StructureSectionId | null;
@@ -93,8 +82,14 @@ function StructureHub({ data }: { data: StructureView }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const deepLink = parseStructureDeepLink(searchParams.toString());
   const canConfigure = data.actions.includes('ConfigureStructure');
+  const canAddPhase = data.actions.includes('AddCompetitionStage');
   const [structureEditorOpen, setStructureEditorOpen] = useState(false);
+  const [addPhaseOpen, setAddPhaseOpen] = useState(false);
   const stages = useMemo(() => resolveStages(data), [data]);
+  const structuralAnomalies = useMemo(
+    () => collectStructuralAnomalies(stages),
+    [stages],
+  );
   const [selectedStageId, setSelectedStageId] = useState<string | null>(() => {
     if (
       deepLink.stageId &&
@@ -167,34 +162,78 @@ function StructureHub({ data }: { data: StructureView }) {
     );
   };
 
+  const openRelationFix = (
+    stageId: string,
+    section: 'qualification' | 'progression',
+  ) => {
+    setSelectedStageId(stageId);
+    setDrillIn(section);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set(STRUCTURE_STAGE_PARAM, stageId);
+        next.set(STRUCTURE_SECTION_PARAM, section);
+        next.delete(STRUCTURE_ROUND_PARAM);
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
+  const headActions = (
+    <>
+      <Tooltip
+        content={
+          canConfigure
+            ? t('hub.configureStructure')
+            : t('hub.configureDisabledHint')
+        }
+      >
+        <span>
+          <button
+            type="button"
+            className="ds-btn ds-btn--secondary"
+            disabled={!canConfigure}
+            onClick={() => setStructureEditorOpen(true)}
+          >
+            {t('hub.configureStructure')}
+          </button>
+        </span>
+      </Tooltip>
+      <Tooltip
+        content={
+          canAddPhase ? t('graph.addPhase') : t('hub.addPhaseDisabledHint')
+        }
+      >
+        <span>
+          <button
+            type="button"
+            className="ds-btn ds-btn--primary"
+            disabled={!canAddPhase}
+            onClick={() => setAddPhaseOpen(true)}
+          >
+            {t('graph.addPhase')}
+          </button>
+        </span>
+      </Tooltip>
+    </>
+  );
+
   return (
     <div className="structure-hub">
       <PageHead
         title={t('title')}
-        actions={
-          canConfigure ? (
-            <button
-              type="button"
-              className="ds-btn ds-btn--secondary"
-              onClick={() => setStructureEditorOpen(true)}
-            >
-              {t('hub.configureStructure')}
-            </button>
-          ) : undefined
-        }
+        actions={headActions}
+        note={readinessStatusNote(data, () => setStructureEditorOpen(true))}
       />
-
-      <ReadinessStrip data={data} onConfigure={() => setStructureEditorOpen(true)} />
-
-      <StructureGraphToolbar data={data} stage={selectedStage} />
 
       <div className="structure-hub__layout">
         <TopologyPanel
           stages={stages}
           selectedStageId={selectedStageId}
           onSelectStage={selectStage}
-          canConfigure={canConfigure}
-          onConfigure={() => setStructureEditorOpen(true)}
+          anomalies={structuralAnomalies}
+          onFixRelation={openRelationFix}
         />
         <PhaseFiche
           data={data}
@@ -210,6 +249,11 @@ function StructureHub({ data }: { data: StructureView }) {
         data={data}
         open={structureEditorOpen}
         onClose={() => setStructureEditorOpen(false)}
+      />
+      <AddPhaseDialog
+        competitionId={data.competitionId}
+        open={addPhaseOpen}
+        onClose={() => setAddPhaseOpen(false)}
       />
     </div>
   );
@@ -253,28 +297,71 @@ function resolveStages(data: StructureView): StructureStageHubSummary[] {
   ];
 }
 
+type StructuralAnomaly = {
+  key: string;
+  stageId: string;
+  stageName: string;
+  code: string;
+  section: 'qualification' | 'progression';
+};
+
+function collectStructuralAnomalies(
+  stages: StructureStageHubSummary[],
+): StructuralAnomaly[] {
+  const anomalies: StructuralAnomaly[] = [];
+  for (const stage of stages) {
+    for (const code of stage.structureIssues ?? []) {
+      anomalies.push({
+        key: `${stage.stageId}:${code}`,
+        stageId: stage.stageId,
+        stageName: stage.name,
+        code,
+        section: sectionForStructureIssue(code),
+      });
+    }
+  }
+  return anomalies;
+}
+
+function sectionForStructureIssue(
+  code: string,
+): 'qualification' | 'progression' {
+  return code.includes('Progression') ? 'progression' : 'qualification';
+}
+
 function TopologyPanel({
   stages,
   selectedStageId,
   onSelectStage,
-  canConfigure,
-  onConfigure,
+  anomalies,
+  onFixRelation,
 }: {
   stages: StructureStageHubSummary[];
   selectedStageId: string | null;
   onSelectStage: (stageId: string) => void;
-  canConfigure: boolean;
-  onConfigure: () => void;
+  anomalies: StructuralAnomaly[];
+  onFixRelation: (
+    stageId: string,
+    section: 'qualification' | 'progression',
+  ) => void;
 }) {
   const { t } = useTranslation('structure');
   const multiPhase = stages.length > 1;
+  const stageNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const stage of stages) {
+      map.set(stage.stageId, stage.name);
+    }
+    return map;
+  }, [stages]);
 
   return (
-    <aside className="structure-topology" aria-labelledby="topology-heading">
-      <h2 id="topology-heading" className="structure-topology__title">
-        {t('hub.topology')}
-      </h2>
-
+    <FormSection
+      id="topology"
+      className="structure-topology"
+      icon={<StructureIcon size="md" aria-hidden="true" />}
+      title={t('hub.topology')}
+    >
       {stages.length === 0 ? (
         <EmptyState title={t('structure.emptyTitle')}>
           {t('structure.emptyBody')}
@@ -285,87 +372,411 @@ function TopologyPanel({
         >
           {stages.map((stage, index) => {
             const selected = stage.stageId === selectedStageId;
-            const edge = multiPhase
-              ? edgeLabelBetween(stages[index - 1], stage, t)
-              : null;
+            const next = stages[index + 1];
+            const outbound = outboundDestinations(stage);
+            const facts = topologyCardFacts(stage, t);
+            const hasIssues = (stage.structureIssues ?? []).length > 0;
+            const formatLabel = stage.formatKind
+              ? structureFormatKindLabel(stage.formatKind)
+              : t('structure.formatNotConfigured');
+            const univocalToNext =
+              outbound.length === 1 &&
+              next != null &&
+              outbound[0] === next.stageId;
+            const bridgeMode: 'connector' | 'outbound' | 'empty' = univocalToNext
+              ? 'connector'
+              : outbound.length > 0
+                ? 'outbound'
+                : 'empty';
+            const edgeLabel =
+              bridgeMode === 'connector'
+                ? edgeLabelFromSource(stage, t)
+                : null;
+
             return (
               <li key={stage.stageId} className="structure-topology__item">
-                {edge && (
-                  <p className="structure-topology__edge" aria-hidden="true">
-                    {edge}
-                  </p>
-                )}
                 <button
                   type="button"
-                  className={`structure-topology__card${selected ? ' structure-topology__card--selected' : ''}`}
+                  className="structure-topology__card ds-selectable-tile"
+                  data-selected={selected ? 'true' : 'false'}
                   aria-current={selected ? 'true' : undefined}
                   onClick={() => onSelectStage(stage.stageId)}
                 >
                   <span className="structure-topology__card-head">
-                    <span className="structure-topology__card-name">
-                      {stage.name}
+                    <span className="structure-topology__card-title">
+                      <Tooltip content={formatLabel}>
+                        <span className="structure-topology__format-icon">
+                          <StageFormatGlyph
+                            kind={stage.formatKind}
+                            size="sm"
+                          />
+                        </span>
+                      </Tooltip>
+                      <span className="structure-topology__card-name">
+                        {stage.name}
+                      </span>
                     </span>
-                    <StageStatusBadge status={stage.status} />
+                    <span className="structure-topology__card-status">
+                      <StageStatusBadge
+                        status={stage.status}
+                        density="compact"
+                      />
+                      {hasIssues && (
+                        <Tooltip content={t('hub.phaseStructuralAnomaly')}>
+                          <span className="structure-topology__issue">
+                            <StructureIssueIcon size="sm" aria-hidden="true" />
+                            <span className="ds-visually-hidden">
+                              {t('hub.phaseStructuralAnomaly')}
+                            </span>
+                          </span>
+                        </Tooltip>
+                      )}
+                    </span>
                   </span>
-                  <span className="structure-topology__card-meta">
-                    {topologyCardMeta(stage, t)}
+
+                  <span className="structure-topology__card-facts">
+                    {facts.map((fact) => (
+                      <span
+                        key={fact.id}
+                        className="structure-topology__fact"
+                      >
+                        <span className="structure-topology__fact-icon">
+                          {fact.icon}
+                        </span>
+                        <span className="structure-topology__fact-value">
+                          {fact.value}
+                        </span>
+                      </span>
+                    ))}
                   </span>
+
+                  <TopologyDrawHint stage={stage} />
                 </button>
+
+                {index < stages.length - 1 && (
+                  <div
+                    className="structure-topology__bridge"
+                    data-bridge={bridgeMode}
+                  >
+                    {bridgeMode === 'outbound' ? (
+                      <TopologyOutboundLinks
+                        destinationIds={outbound}
+                        stageNameById={stageNameById}
+                        onSelectStage={onSelectStage}
+                      />
+                    ) : bridgeMode === 'connector' && edgeLabel != null ? (
+                      <div
+                        className="structure-topology__connector"
+                        aria-hidden="true"
+                      >
+                        <span className="structure-topology__edge">
+                          {edgeLabel}
+                        </span>
+                        <span className="structure-topology__connector-arrow">
+                          <span className="structure-topology__connector-shaft" />
+                          <span className="structure-topology__connector-head" />
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
               </li>
             );
           })}
         </ol>
       )}
 
-      {canConfigure && (
-        <div className="structure-topology__footer">
-          <button
-            type="button"
-            className="structure-action"
-            onClick={onConfigure}
-          >
-            {stages.length === 0
-              ? t('structure.configureAction')
-              : t('hub.configureStructure')}
-            <span aria-hidden="true">→</span>
-          </button>
-        </div>
+      {anomalies.length > 0 && (
+        <Alert tone="danger" role="status">
+          <div className="structure-topology__alert">
+            <p className="structure-topology__alert-title">
+              {t('hub.structuralAnomaly', { count: anomalies.length })}
+            </p>
+            <ul className="structure-topology__alert-list">
+              {anomalies.map((anomaly) => (
+                <li key={anomaly.key} className="structure-topology__alert-item">
+                  <div className="structure-topology__alert-copy">
+                    <span className="structure-topology__alert-stage">
+                      {anomaly.stageName}
+                    </span>
+                    <span className="structure-topology__alert-issue">
+                      {t(`graph.issues.${anomaly.code}`, {
+                        defaultValue: anomaly.code,
+                      })}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="structure-topology__alert-fix"
+                    onClick={() =>
+                      onFixRelation(anomaly.stageId, anomaly.section)
+                    }
+                  >
+                    {t('hub.fixRelation')}
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Alert>
       )}
-    </aside>
+    </FormSection>
   );
 }
 
-function topologyCardMeta(
-  stage: StructureStageHubSummary,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  const kind = stage.formatKind
-    ? structureFormatKindLabel(stage.formatKind)
-    : t('structure.formatNotConfigured');
-  const teams = t('hub.teamCount', { count: stage.teamCount });
-  if ((stage.groupCount ?? 0) > 0) {
-    return t('hub.topologyMetaGroups', {
-      format: kind,
-      groups: stage.groupCount,
-      teams: stage.teamCount,
-    });
+const OUTBOUND_VISIBLE_MAX = 4;
+
+function TopologyOutboundLinks({
+  destinationIds,
+  stageNameById,
+  onSelectStage,
+}: {
+  destinationIds: string[];
+  stageNameById: Map<string, string>;
+  onSelectStage: (stageId: string) => void;
+}) {
+  const { t } = useTranslation('structure');
+  const truncated = destinationIds.length > OUTBOUND_VISIBLE_MAX;
+  const visible = truncated
+    ? destinationIds.slice(0, OUTBOUND_VISIBLE_MAX)
+    : destinationIds;
+
+  if (truncated) {
+    return (
+      <div className="structure-topology__outbound">
+        <span className="structure-topology__outbound-summary">
+          {t('hub.multiDestinations', { count: destinationIds.length })}
+        </span>
+      </div>
+    );
   }
-  return `${kind} · ${teams}`;
+
+  return (
+    <div className="structure-topology__outbound">
+      {visible.map((id) => (
+        <button
+          key={id}
+          type="button"
+          className="structure-topology__outbound-link"
+          aria-label={t('hub.outboundTo', {
+            name: stageNameById.get(id) ?? id,
+          })}
+          onClick={() => onSelectStage(id)}
+        >
+          <span aria-hidden="true">→ </span>
+          {stageNameById.get(id) ?? id}
+        </button>
+      ))}
+    </div>
+  );
 }
 
-function edgeLabelBetween(
-  previous: StructureStageHubSummary | undefined,
-  current: StructureStageHubSummary,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string | null {
-  if (!previous) {
+function TopologyDrawHint({ stage }: { stage: StructureStageHubSummary }) {
+  const { t } = useTranslation('structure');
+  const needsDraw = stage.formatKind === 'Groups' || stage.formatKind === 'Cup';
+  if (!needsDraw) {
     return null;
   }
-  if (previous.hasProgressionRules && previous.progressionPathCount > 0) {
-    return t('hub.edgeProgression', { count: previous.progressionPathCount });
+
+  if (stage.hasDrawRules) {
+    const pots = stage.numberOfPots;
+    const label =
+      pots != null && pots > 0
+        ? t('hub.drawPots', { count: pots })
+        : t('hub.drawConfigured');
+    return (
+      <Tooltip content={t('hub.drawConfiguredTooltip')}>
+        <span className="structure-topology__signal">
+          <DrawPendingIcon size="sm" aria-hidden="true" />
+          <span>{label}</span>
+        </span>
+      </Tooltip>
+    );
   }
-  if (current.hasQualificationRules && current.qualificationPathCount > 0) {
-    return t('hub.edgeQualification', { count: current.qualificationPathCount });
+
+  return (
+    <span className="structure-topology__signal structure-topology__signal--warning">
+      <DrawPendingIcon size="sm" aria-hidden="true" />
+      <span>{t('hub.drawPending')}</span>
+    </span>
+  );
+}
+
+function StageFormatGlyph({
+  kind,
+  size = 'sm',
+}: {
+  kind?: StructureFormatKind | null;
+  size?: 'sm' | 'md' | 'lg';
+}) {
+  switch (kind) {
+    case 'Cup':
+      return <CupFormatIcon size={size} aria-hidden="true" />;
+    case 'Championship':
+      return <ChampionshipFormatIcon size={size} aria-hidden="true" />;
+    case 'Groups':
+      return <GroupsFormatIcon size={size} aria-hidden="true" />;
+    case 'Swiss':
+      return <SwissFormatIcon size={size} aria-hidden="true" />;
+    default:
+      return <StructureIcon size={size} aria-hidden="true" />;
+  }
+}
+
+function outboundDestinations(stage: StructureStageHubSummary): string[] {
+  const destinations: string[] = [];
+  const seen = new Set<string>();
+  for (const path of stage.progressionPaths ?? []) {
+    if (
+      path.destinationStageId !== stage.stageId &&
+      !seen.has(path.destinationStageId)
+    ) {
+      seen.add(path.destinationStageId);
+      destinations.push(path.destinationStageId);
+    }
+  }
+  for (const path of stage.qualificationPaths ?? []) {
+    if (
+      path.destinationStageId !== stage.stageId &&
+      !seen.has(path.destinationStageId)
+    ) {
+      seen.add(path.destinationStageId);
+      destinations.push(path.destinationStageId);
+    }
+  }
+  return destinations;
+}
+
+function topologyCardFacts(
+  stage: StructureStageHubSummary,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): { id: string; icon: ReactNode; value: string }[] {
+  const kind = stage.formatKind;
+  const teams = t('hub.teamCount', { count: stage.teamCount });
+  const matchdays = t('hub.topologyStatMatchdays', {
+    count: stage.matchdayCount ?? 0,
+  });
+  const matches = t('hub.topologyStatMatches', { count: stage.matchCount });
+
+  switch (kind) {
+    case 'Cup': {
+      return [
+        {
+          id: 'rounds',
+          icon: <RoundsStatIcon size="md" aria-hidden="true"/>,
+          value: t('hub.topologyStatRounds', {
+            count: stage.roundCount ?? 0,
+          }),
+        },
+        {
+          id: 'legs',
+          icon: <LegsStatIcon size="md" aria-hidden="true"/>,
+          value:
+            (stage.numberOfLegs ?? 1) >= 2
+              ? t('hub.topologyLegsReturn')
+              : t('hub.topologyLegsSingle'),
+        },
+        {
+          id: 'slots',
+          icon: <CupFormatIcon size="md" aria-hidden="true"/>,
+          value: t('hub.topologyStatSlots', {
+            count: stage.slotCount ?? 0,
+          }),
+        },
+      ];
+    }
+    case 'Championship':
+      return [
+        {
+          id: 'matchdays',
+          icon: <MatchdayStatIcon size="md" aria-hidden="true" />,
+          value: matchdays,
+        },
+        {
+          id: 'matches',
+          icon: <MatchesStatIcon size="md" aria-hidden="true" />,
+          value: matches,
+        },
+        {
+          id: 'teams',
+          icon: <TeamsIcon size="md" aria-hidden="true" />,
+          value: teams,
+        },
+      ];
+    case 'Groups': {
+      const groups = stage.groupCount ?? 0;
+      const sizeFact =
+        groups > 0 && stage.teamCount % groups === 0
+          ? {
+              id: 'grid',
+              icon: <GroupsFormatIcon size="md" aria-hidden="true" />,
+              value: t('hub.topologyStatGroupGrid', {
+                groups,
+                size: stage.teamCount / groups,
+              }),
+            }
+          : {
+              id: 'groups',
+              icon: <GroupsFormatIcon size="md" aria-hidden="true" />,
+              value: t('hub.topologyStatGroups', { count: groups }),
+            };
+      return [
+        {
+          id: 'matchdays',
+          icon: <MatchdayStatIcon size="md" aria-hidden="true" />,
+          value: matchdays,
+        },
+        sizeFact,
+        {
+          id: 'teams',
+          icon: <TeamsIcon size="md" aria-hidden="true" />,
+          value: teams,
+        },
+      ];
+    }
+    case 'Swiss':
+      return [
+        {
+          id: 'swiss',
+          icon: <SwissFormatIcon size="md" aria-hidden="true" />,
+          value: t('hub.topologyStatSwiss', {
+            count: stage.swissRoundCount ?? 0,
+          }),
+        },
+        {
+          id: 'matches',
+          icon: <MatchesStatIcon size="md" aria-hidden="true" />,
+          value: matches,
+        },
+        {
+          id: 'teams',
+          icon: <TeamsIcon size="md" aria-hidden="true" />,
+          value: teams,
+        },
+      ];
+    default:
+      return [
+        {
+          id: 'teams',
+          icon: <TeamsIcon size="md" aria-hidden="true" />,
+          value: teams,
+        },
+      ];
+  }
+}
+
+function edgeLabelFromSource(
+  source: StructureStageHubSummary,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (source.hasProgressionRules && source.progressionPathCount > 0) {
+    return t('hub.edgeProgression', { count: source.progressionPathCount });
+  }
+  if (source.hasQualificationRules && source.qualificationPathCount > 0) {
+    return t('hub.edgeQualification', {
+      count: source.qualificationPathCount,
+    });
   }
   return t('hub.edgeGeneric');
 }
@@ -467,19 +878,20 @@ function PhaseOverview({
             </li>
           </ul>
         </div>
-        {canConfigure && (
-          <button
-            type="button"
-            className="structure-action"
-            onClick={onConfigure}
-          >
-            {t('structure.editPhase')}
-            <span aria-hidden="true">→</span>
-          </button>
-        )}
+        <div className="structure-fiche__actions">
+          <RemovePhaseAction data={data} stage={stage} />
+          {canConfigure && (
+            <button
+              type="button"
+              className="structure-action"
+              onClick={onConfigure}
+            >
+              {t('structure.editPhase')}
+              <span aria-hidden="true">→</span>
+            </button>
+          )}
+        </div>
       </header>
-
-      <StructureIssuesBanner stage={stage} />
 
       <div className="structure-overview">
         {(stage.hasQualificationRules ||
@@ -552,16 +964,6 @@ function PhaseOverview({
                   : t('hub.overview.tirageRequired')
               }
               onOpen={() => onDrillIn('tirage')}
-              trailing={
-                data.readiness.readyForDraw ? (
-                  <Link
-                    className="structure-overview__side-link"
-                    to={`/competitions/${data.competitionId}`}
-                  >
-                    {t('readiness.goToOverviewDraw')}
-                  </Link>
-                ) : undefined
-              }
             />
           </OverviewBlock>
         )}
@@ -882,17 +1284,6 @@ function SectionDetail({
             )}
           </dl>
           <p className="structure-detail__hint">{t('hub.detail.tirageOpsHint')}</p>
-          {data.readiness.readyForDraw && (
-            <p className="structure-detail__footer">
-              <Link
-                className="structure-link"
-                to={`/competitions/${data.competitionId}`}
-              >
-                {t('readiness.goToOverviewDraw')}
-                <span aria-hidden="true">→</span>
-              </Link>
-            </p>
-          )}
         </DetailCard>
       );
     case 'matchs':
@@ -986,19 +1377,18 @@ function DetailCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ReadinessStrip({
-  data,
-  onConfigure,
-}: {
-  data: StructureView;
-  onConfigure: () => void;
-}) {
-  const { t } = useTranslation('structure');
+function readinessStatusNote(
+  data: StructureView,
+  onConfigure: () => void,
+): ReactNode {
   const readiness = data.readiness;
   const formatKind = data.format.kind;
   const needsDraw = formatKind === 'Groups' || formatKind === 'Cup';
-  const overviewHref = `/competitions/${data.competitionId}`;
   const blockers = readiness.blockers;
+  /** StructureGraphInvalid counted in readiness but listed only in Topology. */
+  const headerBlockers = blockers.filter(
+    (code) => code !== 'StructureGraphInvalid',
+  );
   const incomplete = blockers.length > 0;
   const readyToMaterialize = readiness.readyForMaterialization;
   const drawRequired =
@@ -1014,110 +1404,91 @@ function ReadinessStrip({
 
   if (incomplete) {
     return (
-      <section aria-labelledby="readiness-heading">
-        <Alert tone="warning" role="status">
-          <div className="structure-strip">
-            <div className="structure-strip__head">
-              <h2 id="readiness-heading" className="structure-strip__title">
-                {t('readiness.structureIncomplete', { count: blockers.length })}
-              </h2>
-            </div>
-            <ul className="structure-strip__actions-list">
-              {blockers.map((code) => (
-                <li key={code}>
-                  <IncompleteBlockerAction
-                    code={code}
-                    competitionId={data.competitionId}
-                    onConfigure={onConfigure}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Alert>
-      </section>
+      <ReadinessNotReadyStatus
+        competitionId={data.competitionId}
+        headerBlockers={headerBlockers}
+        onConfigure={onConfigure}
+      />
     );
   }
 
   if (readyToMaterialize) {
     const isCup = formatKind === 'Cup';
     return (
-      <ReadinessReadyAlert
-        title={
+      <ReadinessReadyStatus
+        titleKey={
           isCup
-            ? t('readiness.readyForCupSkeleton')
-            : t('readiness.readyForMaterialization')
-        }
-        hint={
-          isCup
-            ? t('readiness.cupSkeletonHint')
-            : t('readiness.materializeHint')
-        }
-        href={overviewHref}
-        linkLabel={
-          isCup
-            ? t('readiness.goToOverviewCupSkeleton')
-            : t('readiness.goToOverviewMaterialize')
+            ? 'readiness.readyForCupSkeleton'
+            : 'readiness.readyForMaterialization'
         }
       />
     );
   }
 
   if (drawRequired) {
-    return (
-      <ReadinessReadyAlert
-        title={t('readiness.drawRequired')}
-        hint={t('readiness.drawHint')}
-        href={overviewHref}
-        linkLabel={t('readiness.goToOverviewDraw')}
-      />
-    );
+    return <ReadinessReadyStatus titleKey="readiness.drawRequired" />;
   }
 
   if (readyNext) {
-    return (
-      <ReadinessReadyAlert
-        title={t('readiness.readyForNextSlice')}
-        hint={t('readiness.nextSliceHint')}
-        href={overviewHref}
-        linkLabel={t('readiness.goToOverview')}
-      />
-    );
+    return <ReadinessReadyStatus titleKey="readiness.readyForNextSlice" />;
   }
 
   return null;
 }
 
-function ReadinessReadyAlert({
-  title,
-  hint,
-  href,
-  linkLabel,
+function ReadinessNotReadyStatus({
+  competitionId,
+  headerBlockers,
+  onConfigure,
 }: {
-  title: string;
-  hint: string;
-  href: string;
-  linkLabel: string;
+  competitionId: string;
+  headerBlockers: string[];
+  onConfigure: () => void;
 }) {
+  const { t } = useTranslation('structure');
+
   return (
-    <section aria-labelledby="readiness-heading">
-      <Alert tone="success" role="status">
-        <div className="structure-strip structure-strip--ready">
-          <div className="structure-strip__head">
-            <h2 id="readiness-heading" className="structure-strip__title">
-              {title}
-            </h2>
-          </div>
-          <div className="structure-strip__actions">
-            <p className="structure-panel__muted">{hint}</p>
-            <Link className="structure-link" to={href}>
-              {linkLabel}
-              <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-        </div>
-      </Alert>
-    </section>
+    <div className="structure-status" role="status">
+      <p
+        id="readiness-heading"
+        className="structure-status__title structure-status__title--attention"
+      >
+        <OverviewAttentionIcon size="sm" aria-hidden="true" />
+        <span>{t('readiness.structureNotReady')}</span>
+      </p>
+      {headerBlockers.length > 0 && (
+        <ul
+          className="structure-status__actions"
+          aria-labelledby="readiness-heading"
+        >
+          {headerBlockers.map((code) => (
+            <li key={code}>
+              <IncompleteBlockerAction
+                code={code}
+                competitionId={competitionId}
+                onConfigure={onConfigure}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ReadinessReadyStatus({ titleKey }: { titleKey: string }) {
+  const { t } = useTranslation('structure');
+
+  return (
+    <div className="structure-status" role="status">
+      <p
+        id="readiness-heading"
+        className="structure-status__title structure-status__title--ready"
+      >
+        <CheckIcon size="sm" aria-hidden="true" />
+        <span>{t(titleKey)}</span>
+      </p>
+    </div>
   );
 }
 
@@ -1135,10 +1506,9 @@ function IncompleteBlockerAction({
   if (code === 'InsufficientParticipants') {
     return (
       <Link
-        className="structure-strip__action"
+        className="structure-status__action"
         to={`/competitions/${competitionId}/teams`}
       >
-        <span aria-hidden="true">•</span>
         {label}
         <span aria-hidden="true">→</span>
       </Link>
@@ -1154,20 +1524,17 @@ function IncompleteBlockerAction({
     return (
       <button
         type="button"
-        className="structure-strip__action"
+        className="structure-status__action"
         onClick={onConfigure}
       >
-        <span aria-hidden="true">•</span>
         {label}
         <span aria-hidden="true">→</span>
       </button>
     );
   }
 
-  // StructureGraphInvalid and unknown codes: stay on Structure (banner on phase).
   return (
-    <span className="structure-strip__action structure-strip__action--static">
-      <span aria-hidden="true">•</span>
+    <span className="structure-status__action structure-status__action--static">
       {label}
     </span>
   );

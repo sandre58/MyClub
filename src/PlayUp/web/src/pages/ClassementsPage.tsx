@@ -7,7 +7,7 @@ import { TextLink } from '../design-system/components/TextLink';
 import { PageHead } from '../design-system/components/PageHead';
 import { PanelHead } from '../design-system/components/PanelHead';
 import { TeamCrest } from '../design-system/TeamCrest';
-import { RegulationIcon } from '../design-system/icons/overviewIcons';
+import { RegulationIcon } from '../design-system/icons/contentIcons';
 import {
   ClassementsNavIcon,
   MatchesNavIcon,

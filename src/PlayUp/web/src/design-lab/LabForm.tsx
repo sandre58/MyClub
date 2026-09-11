@@ -29,7 +29,7 @@ import {
   PersonIcon,
   PlusIcon,
   TrophyIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 
 const CRITERION_OPTIONS = [
   { value: 'Points', label: 'Points' },

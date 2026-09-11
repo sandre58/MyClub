@@ -123,6 +123,11 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 - Prefer `Alert` over bare `.ds-notice` when an icon helps scan. Soft-fill tone recipes in `feedback.css`.
 
+## Selectable tile
+
+- Canonical: `foundations/selectable-tile.css` (`.ds-selectable-tile`).
+- Shared selected chrome for Teams tiles and Structure topology cards: brand border + light brand tint via tokens (`data-selected="true"`). Never hard-code selection blue on pages.
+
 ## Attention rows (two models — do not merge)
 
 |       | `AttentionRow` (DS)                  | `AttentionSituationRow` (Shell)          |

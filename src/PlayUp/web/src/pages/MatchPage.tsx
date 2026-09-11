@@ -23,7 +23,7 @@ import {
 import { PageHead } from '../design-system/components/PageHead';
 import { Status } from '../design-system/components/Status';
 import { TeamCrest } from '../design-system/TeamCrest';
-import { CalendarIcon } from '../design-system/icons/overviewIcons';
+import { CalendarIcon } from '../design-system/icons/contentIcons';
 import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons';
 import { matchStatusLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';

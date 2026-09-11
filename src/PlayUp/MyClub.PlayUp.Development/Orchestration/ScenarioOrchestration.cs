@@ -702,6 +702,112 @@ internal static class ScenarioOrchestration
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Draft multi-phase graph with intentional Structure validity issues (missing slots)
+    /// and a multi-destination progression — Topology / anomaly QA, stays Draft.
+    /// </summary>
+    public static async Task BuildStructureGraphInvalidAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Structure — graphe invalide",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            ParticipantsPerGroup = 4,
+            StageName = "Poules",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+
+        var barrages = CreateKnockoutStage(
+            context,
+            competition,
+            "barrages",
+            "Barrages",
+            "Barrages",
+            ["BR-1-A", "BR-1-B"]);
+        var finale = CreateKnockoutStage(
+            context,
+            competition,
+            "final",
+            "Finale",
+            "Finale",
+            ["F-A", "F-B"]);
+        var bronze = CreateKnockoutStage(
+            context,
+            competition,
+            "bronze",
+            "Match pour la 3e place",
+            "Match pour la 3e place",
+            ["BRZ-A", "BRZ-B"]);
+
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        if (orderedGroups.Length != 2)
+        {
+            throw new InvalidOperationException(
+                $"Expected 2 groups for structure-graph-invalid, found {orderedGroups.Length}.");
+        }
+
+        // Two valid feeds + two missing destination slots → MissingQualificationDestinationSlot.
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(barrages.Id, "BR-1-A")),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(barrages.Id, "BR-1-B")),
+                new QualificationPath(
+                    3,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(barrages.Id, "BR-2-A")),
+                new QualificationPath(
+                    4,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(barrages.Id, "BR-2-B"))
+            ]),
+            context.Clock);
+
+        var barragesFixture = barrages.AddFixture(barrages.Rounds[0].Id, context.Clock);
+        barrages.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    barragesFixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(finale.Id, "F-A")),
+                new ProgressionPath(
+                    barragesFixture.Id,
+                    ProgressionOutcome.Loser,
+                    new ProgressionDestination(bronze.Id, "BRZ-A"))
+            ]),
+            context.Clock);
+
+        AssignGroupsRoundRobin(groups, entries);
+        _ = MaterializeGroupsMatches(context, competition, groups);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     private static void ApplyStructuredLifecycle(
         ScenarioContext context,
         Competition competition,

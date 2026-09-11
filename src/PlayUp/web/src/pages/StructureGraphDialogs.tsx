@@ -8,6 +8,7 @@ import {
   replaceStageQualificationRules,
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
+import { Tooltip } from '../design-system/components/Tooltip';
 import { queryKeys } from '../queryKeys';
 import { MutationError, PendingLabel } from '../ui';
 import type {
@@ -39,50 +40,37 @@ function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
 }
 
-export function StructureGraphToolbar({
+/** Remove-phase control for the phase fiche (N2) — not page-level chrome. */
+export function RemovePhaseAction({
   data,
   stage,
 }: {
   data: StructureView;
-  stage: StructureStageHubSummary | null;
+  stage: StructureStageHubSummary;
 }) {
   const { t } = useTranslation('structure');
-  const canAdd = data.actions.includes('AddCompetitionStage');
-  const canRemove =
-    stage != null && stageActions(stage).includes('RemoveStage');
-  const [addOpen, setAddOpen] = useState(false);
+  const canRemove = stageActions(stage).includes('RemoveStage');
   const [removeOpen, setRemoveOpen] = useState(false);
 
-  if (!canAdd && !canRemove) {
-    return null;
-  }
-
   return (
-    <div className="structure-graph-toolbar">
-      {canAdd && (
-        <button
-          type="button"
-          className="ds-btn ds-btn--secondary"
-          onClick={() => setAddOpen(true)}
-        >
-          {t('graph.addPhase')}
-        </button>
-      )}
-      {canRemove && stage && (
-        <button
-          type="button"
-          className="ds-btn ds-btn--secondary"
-          onClick={() => setRemoveOpen(true)}
-        >
-          {t('graph.removePhase')}
-        </button>
-      )}
-      <AddPhaseDialog
-        competitionId={data.competitionId}
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-      />
-      {stage && (
+    <>
+      <Tooltip
+        content={
+          canRemove ? t('graph.removePhase') : t('graph.removePhaseDisabled')
+        }
+      >
+        <span>
+          <button
+            type="button"
+            className="ds-btn ds-btn--secondary"
+            disabled={!canRemove}
+            onClick={() => setRemoveOpen(true)}
+          >
+            {t('graph.removePhase')}
+          </button>
+        </span>
+      </Tooltip>
+      {canRemove && (
         <RemovePhaseDialog
           data={data}
           stage={stage}
@@ -90,7 +78,7 @@ export function StructureGraphToolbar({
           onClose={() => setRemoveOpen(false)}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -146,31 +134,7 @@ export function RelationEditors({
   );
 }
 
-export function StructureIssuesBanner({
-  stage,
-}: {
-  stage: StructureStageHubSummary;
-}) {
-  const { t } = useTranslation('structure');
-  const issues = stage.structureIssues ?? [];
-  if (issues.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="structure-issues" role="status">
-      <p className="structure-issues__title">{t('graph.issuesHeading')}</p>
-      <ul className="structure-issues__list">
-        {issues.map((code) => (
-          <li key={code}>{t(`graph.issues.${code}`, { defaultValue: code })}</li>
-        ))}
-      </ul>
-      <p className="structure-issues__hint">{t('graph.issuesDraftHint')}</p>
-    </div>
-  );
-}
-
-function AddPhaseDialog({
+export function AddPhaseDialog({
   competitionId,
   open,
   onClose,

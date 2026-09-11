@@ -1,6 +1,6 @@
 import { labMatchEvents, labRounds, type LabLifecycle } from './labData';
 import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons';
-import { CalendarIcon } from '../design-system/icons/overviewIcons';
+import { CalendarIcon } from '../design-system/icons/contentIcons';
 import {
   MatchHero,
   MatchHeroMetaItem,

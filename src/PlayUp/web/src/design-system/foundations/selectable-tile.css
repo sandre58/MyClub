@@ -1,0 +1,29 @@
+/*
+ * Selectable surface tile — shared selected state for Teams / Structure topology.
+ * Border brand + light brand tint via tokens (never hard-coded blue).
+ */
+
+.ds-selectable-tile {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  color: inherit;
+  transition:
+    background-color var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing);
+}
+
+.ds-selectable-tile:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: var(--color-surface-secondary);
+}
+
+.ds-selectable-tile[data-selected='true'],
+.ds-selectable-tile--selected {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 6%, var(--color-surface));
+}
+
+.ds-selectable-tile[data-selected='true']:hover:not(:disabled):not([aria-disabled='true']),
+.ds-selectable-tile--selected:hover:not(:disabled):not([aria-disabled='true']) {
+  background: color-mix(in srgb, var(--color-brand) 9%, var(--color-surface));
+}

@@ -265,7 +265,7 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Structure incomplète/i }),
+      screen.getByText(/Structure non prête/i),
     ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Identité' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Équipes' })).not.toBeInTheDocument();
@@ -497,9 +497,182 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('button', { name: /Ajouter une phase/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Créer la structure/i }),
+    ).toBeInTheDocument();
   });
 
-  it('hides configure when Host actions omit it', async () => {
+  it('surfaces structural anomalies in topology with a Qual/Prog fix CTA', async () => {
+    const user = userEvent.setup();
+    const knockOutId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        actions: [],
+        stages: [
+          groupesStage({
+            structureIssues: ['MissingQualificationDestinationSlot'],
+            qualificationPathCount: 1,
+            hasProgressionRules: false,
+            progressionPathCount: 0,
+            hasDrawRules: false,
+            qualificationPaths: [
+              {
+                order: 1,
+                selectionMode: 'Top',
+                selectionValue: 2,
+                destinationStageId: knockOutId,
+                destinationSlotKey: 'missing-slot',
+              },
+            ],
+          }),
+          championshipStage({
+            stageId: knockOutId,
+            name: 'Barrages',
+            formatKind: 'Cup',
+            hasStandingRules: false,
+            hasQualificationRules: false,
+            qualificationPathCount: 0,
+          }),
+        ],
+        format: {
+          kind: 'Groups',
+          primaryStageId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Draft',
+        },
+        readiness: {
+          readyForNextSlice: false,
+          readyForDraw: false,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: false,
+          attachedMatchCount: 0,
+          blockers: ['StructureGraphInvalid', 'MissingPotRules'],
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByText(/Structure non prête/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Règles de pots manquantes/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Graphe de structure invalide/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/points à lever/i),
+    ).not.toBeInTheDocument();
+
+    const topology = screen.getByRole('region', {
+      name: /Topologie/i,
+    });
+    expect(
+      within(topology).getByText(/^1 anomalie structurelle$/i),
+    ).toBeInTheDocument();
+    expect(
+      within(topology).getByText(/Emplacement de qualification manquant/i),
+    ).toBeInTheDocument();
+    expect(
+      within(topology).getByText(/^Anomalie structurelle$/i),
+    ).toBeInTheDocument();
+    expect(
+      within(topology).getAllByText(/Tirage à définir/i).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      within(topology).getByText(/Qualification · 1 chemin/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(topology).getByRole('button', { name: /Corriger la relation/i }),
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: /^Qualification$/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('signals multi-destination stages without drawing a fake graph', async () => {
+    const finaleId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    const bronzeId = '99999999-9999-9999-9999-999999999999';
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        actions: [],
+        stages: [
+          championshipStage({
+            name: 'Demi',
+            formatKind: 'Cup',
+            hasStandingRules: false,
+            hasProgressionRules: true,
+            progressionPathCount: 2,
+            progressionPaths: [
+              {
+                sourceFixtureId: 'sf-1',
+                outcome: 'Winner',
+                destinationStageId: finaleId,
+                destinationSlotKey: 'home',
+              },
+              {
+                sourceFixtureId: 'sf-1',
+                outcome: 'Loser',
+                destinationStageId: bronzeId,
+                destinationSlotKey: 'home',
+              },
+            ],
+          }),
+          championshipStage({
+            stageId: finaleId,
+            name: 'Finale',
+            formatKind: 'Cup',
+            hasStandingRules: false,
+          }),
+          championshipStage({
+            stageId: bronzeId,
+            name: 'Match bronze',
+            formatKind: 'Cup',
+            hasStandingRules: false,
+          }),
+        ],
+        format: {
+          kind: 'Cup',
+          primaryStageId: stageId,
+          primaryStageName: 'Demi',
+          primaryStageStatus: 'Draft',
+        },
+        readiness: {
+          readyForNextSlice: false,
+          readyForDraw: false,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: false,
+          attachedMatchCount: 0,
+          blockers: [],
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    const topology = await screen.findByRole('region', {
+      name: /Topologie/i,
+    });
+    expect(
+      within(topology).getByRole('button', { name: '→ Finale' }),
+    ).toBeInTheDocument();
+    expect(
+      within(topology).getByRole('button', { name: '→ Match bronze' }),
+    ).toBeInTheDocument();
+    expect(
+      within(topology).queryByText(/Progression ·/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it('disables configure when Host actions omit it', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({ actions: [] }),
     );
@@ -510,11 +683,14 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Créer la structure/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /Créer la structure/i }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: /Ajouter une phase/i }),
+    ).toBeDisabled();
   });
 
-  it("shows materialize readiness CTA for a ready Championship", async () => {
+  it('shows materialize readiness status without Overview CTA', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -555,16 +731,14 @@ describe('StructurePage Structure hub', () => {
       await screen.findByText(/La compétition est prête à matérialiser/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', {
-        name: /Aller à la Vue d’ensemble pour matérialiser/i,
-      }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}`);
+      screen.queryByRole('link', { name: /Vue d’ensemble/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Préparer|Démarrer|Tirer|Matérialiser/i }),
     ).not.toBeInTheDocument();
   });
 
-  it('shows draw-required strip with Overview link only (no ops command)', async () => {
+  it('shows draw-required status without Overview CTA or ops command', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -590,16 +764,11 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByRole('heading', { name: /Tirage requis/i }),
+      await screen.findByText(/Tirage requis/i),
     ).toBeInTheDocument();
-    const drawLinks = screen.getAllByRole('link', {
-      name: /Aller à la Vue d’ensemble pour le tirage/i,
-    });
-    expect(drawLinks.length).toBeGreaterThanOrEqual(1);
-    expect(drawLinks[0]).toHaveAttribute(
-      'href',
-      `/competitions/${competitionId}`,
-    );
+    expect(
+      screen.queryByRole('link', { name: /Vue d’ensemble/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Préparer|Démarrer|Publier|Appliquer/i }),
     ).not.toBeInTheDocument();
@@ -625,7 +794,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByRole('heading', { name: /Structure incomplète/i }),
+      await screen.findByText(/Structure non prête/i),
     ).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: /Structure manquante/i }),

@@ -586,6 +586,10 @@ export interface StructureStageHubSummary {
   groupCount?: number;
   /** Topology: cup rounds in this phase. Optional in older fixtures. */
   roundCount?: number;
+  /** Topology: matchdays in this phase. */
+  matchdayCount?: number;
+  /** Topology: bracket / cup slots in this phase. */
+  slotCount?: number;
   numberOfPeriods: number;
   durationPerPeriod: number;
   hasExtraTime: boolean;

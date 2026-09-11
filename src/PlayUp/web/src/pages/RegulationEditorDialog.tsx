@@ -37,7 +37,7 @@ import {
   PersonIcon,
   PlusIcon,
   TrophyIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 import {
   ClassementsNavIcon,
   MatchesNavIcon,

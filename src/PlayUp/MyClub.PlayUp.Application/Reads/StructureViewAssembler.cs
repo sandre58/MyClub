@@ -254,6 +254,8 @@ public static class StructureViewAssembler
             CountAttachedMatches(stage),
             stage.Groups.Count,
             stage.Rounds.Count,
+            stage.Matchdays.Count,
+            stage.Slots.Count,
             match.Duration.NumberOfPeriods,
             match.Duration.DurationPerPeriod,
             HasExtraTime: match.ExtraTimePolicy is not null,

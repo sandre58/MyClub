@@ -35,7 +35,7 @@ import {
   PencilIcon,
   PersonIcon,
   EmptySelectionIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 import { queryKeys } from '../queryKeys';
 import {
   ErrorState,
@@ -829,13 +829,6 @@ function PhaseTile({
                     </span>
                     {column.title}
                   </h4>
-                  {column.structureHref ? (
-                    <p className="regulation-rule-col__link">
-                      <TextLink to={column.structureHref}>
-                        {t('openInStructure')}
-                      </TextLink>
-                    </p>
-                  ) : null}
                   {column.chips && column.chips.length > 0 ? (
                     <div className="regulation-rule-col__chips">
                       {column.chips.map((chip) => {
@@ -926,8 +919,6 @@ type PhaseRuleColumn = {
   items: PhaseRuleItem[];
   /** Optional subsections (e.g. Confrontation multi-format). */
   sections?: PhaseRuleSection[];
-  /** Structure deep-link section when this column maps to a construction family. */
-  structureHref?: string;
 };
 
 function PhaseRuleItemList({ items }: { items: PhaseRuleItem[] }) {
@@ -1394,7 +1385,6 @@ function buildPhaseRuleColumns(
     title: t('columns.match'),
     icon: Volleyball,
     items: matchItems,
-    structureHref: sectionLink('matchs'),
   });
 
   if (stage.hasTieFormat) {
@@ -1420,7 +1410,6 @@ function buildPhaseRuleColumns(
           title: segment.rounds.map((round) => round.name).join('/'),
           items: buildTiePropertyItems(segment, t, `seg-${index}`),
         })),
-        structureHref: sectionLink('confrontation'),
       });
     } else if (stage.numberOfLegs != null) {
       columns.push({
@@ -1437,7 +1426,6 @@ function buildPhaseRuleColumns(
           },
           t,
         ),
-        structureHref: sectionLink('confrontation'),
       });
     }
   }
@@ -1514,8 +1502,7 @@ function buildPhaseRuleColumns(
       key: 'draw',
       title: t('columns.draw'),
       icon: Shuffle,
-      items,
-      structureHref: sectionLink('tirage'),
+      items
     });
   }
 
@@ -1586,8 +1573,7 @@ function buildPhaseRuleColumns(
             },
           ]
         : undefined,
-      items,
-      structureHref: sectionLink('classement'),
+      items
     });
   }
 

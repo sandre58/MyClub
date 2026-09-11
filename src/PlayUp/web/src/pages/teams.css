@@ -161,21 +161,8 @@
   width: 100%;
   min-height: 11.25rem;
   padding: var(--space-8) var(--space-12) var(--space-12);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
   color: inherit;
   text-align: left;
-  transition: background-color var(--motion-duration) var(--motion-easing);
-}
-
-.teams-tile:hover,
-.teams-tile--empty:hover {
-  background-color: var(--color-surface-secondary);
-}
-
-.teams-tile[data-selected='true'] {
-  border-color: var(--color-brand);
 }
 
 .teams-tile[data-withdrawn='true'] .teams-tile__figure {

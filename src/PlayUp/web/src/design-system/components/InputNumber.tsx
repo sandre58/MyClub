@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { CloseIcon, ChevronDownIcon, ChevronUpIcon } from '../icons/shellIcons';
-import { MinusIcon, PlusIcon } from '../icons/overviewIcons';
+import { MinusIcon, PlusIcon } from '../icons/contentIcons';
 import { Tooltip } from './Tooltip';
 
 export type InputNumberControlsLayout = 'end' | 'split';

@@ -2,7 +2,7 @@ import { HomeBrand } from '../design-system/components/HomeBrand';
 import { Status } from '../design-system/components/Status';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
-import { PlusIcon } from '../design-system/icons/overviewIcons';
+import { PlusIcon } from '../design-system/icons/contentIcons';
 import { declaredSchedule } from '../shell/competitionPeriod';
 import { labCompetitions } from './labData';
 import { LabWaitAtom, type LabWaitKind } from './LabWait';

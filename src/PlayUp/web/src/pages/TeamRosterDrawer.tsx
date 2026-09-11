@@ -34,7 +34,7 @@ import {
   PersonIcon,
   PlusIcon,
   TrashIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 import { queryKeys } from '../queryKeys';
 import { EntryStatusBadge, MutationError } from '../ui';
 import {

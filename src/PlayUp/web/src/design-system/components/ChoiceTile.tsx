@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { CheckIcon } from '../icons/overviewIcons';
+import { CheckIcon } from '../icons/contentIcons';
 
 export type ChoiceTileProps = {
   label: string;

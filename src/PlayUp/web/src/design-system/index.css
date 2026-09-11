@@ -27,6 +27,7 @@
 @import './foundations/numbers.css';
 @import './foundations/live.css';
 @import './foundations/surfaces.css';
+@import './foundations/selectable-tile.css';
 @import './foundations/dialog.css';
 @import './foundations/popover.css';
 @import './foundations/tooltip.css';

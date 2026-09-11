@@ -57,7 +57,7 @@ Applies to **templates** and most **structured scenarios** (`championship`, `gro
 
 Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`, `swiss-8x3:running`).
 
-Fixed UX / Structure scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `cup-draw-pending`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
+Fixed UX / Structure scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `cup-draw-pending`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
 
 ### Aliases (compat — do not change silently)
 
@@ -98,6 +98,7 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `registration-open` | no | Partial registration (3/16) — construction problem |
 | `registration-withdrawn` | no | Championship Running then 1 forfait (Withdraw) — operational problem |
 | `championship-structure-draft` | no | Championship materialized, stays Draft — healthy Structure authoring |
+| `structure-graph-invalid` | no | Poules → Barrages → Finale/Bronze Draft with missing qual slots + multi-dest progression — Structure Topology / anomaly QA |
 | `championship-ready` | no | Championship Ready (not started) |
 | `championship-archived` | no | Championship Completed then Archived |
 | `championship` / `groups` / `cup` / `random` | yes | Mono progressive. Cup = pairing draw applied + single principal round |
@@ -117,7 +118,7 @@ Multi-stage **templates** `coupe-de-france` and `world-cup` also ignore `:progre
 Each scenario runs in its own seed scope (deterministic ids). Seed the full Structure matrix:
 
 ```bash
-dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios championship-structure-draft,championship-ready,swiss-ready,groups-draw-pending,cup-draw-pending,registration-open,registration-withdrawn,groups-suspended,championship-archived,groups-to-ko-mid,cup-qf-sf,cup-sf-running,championship:running,groups:running,cup:prepared,swiss-8x3:running
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios championship-structure-draft,structure-graph-invalid,championship-ready,swiss-ready,groups-draw-pending,cup-draw-pending,registration-open,registration-withdrawn,groups-suspended,championship-archived,groups-to-ko-mid,cup-qf-sf,cup-sf-running,championship:running,groups:running,cup:prepared,swiss-8x3:running
 ```
 
 ## Three PostgreSQL usages (do not mix)

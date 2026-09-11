@@ -50,7 +50,7 @@ import {
   PlusIcon,
   TrashIcon,
   WithdrawIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 import { queryKeys } from '../queryKeys';
 import {
   ErrorState,
@@ -452,7 +452,7 @@ function TeamsView({
               return (
                 <li key={entry.entryId}>
                   <article
-                    className="teams-tile"
+                    className="teams-tile ds-selectable-tile"
                     data-selected={selected ? 'true' : 'false'}
                     data-withdrawn={withdrawn ? 'true' : 'false'}
                   >
@@ -572,7 +572,7 @@ function TeamsView({
             })}
             {Array.from({ length: emptyCount }, (_, index) => (
               <li key={`empty-${index}`}>
-                <article className="teams-tile teams-tile--empty">
+                <article className="teams-tile teams-tile--empty ds-selectable-tile">
                   <button
                     type="button"
                     className="teams-tile__hit"

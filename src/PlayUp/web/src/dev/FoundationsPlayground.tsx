@@ -39,7 +39,7 @@ import {
   RegulationIcon,
   StructureIcon,
   TrashIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 import './foundations-playground.css';
 
 type Density = 'compact' | 'standard' | 'comfortable';

@@ -1,7 +1,7 @@
 import { Chip } from '../design-system/components/Chip';
 import { Status } from '../design-system/components/Status';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { PencilIcon } from '../design-system/icons/overviewIcons';
+import { PencilIcon } from '../design-system/icons/contentIcons';
 
 /**
  * Design Lab — Tooltip specimens (Hint + DisabledReason + Label).

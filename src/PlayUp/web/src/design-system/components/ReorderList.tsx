@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { CloseIcon } from '../icons/shellIcons';
-import { GripIcon } from '../icons/overviewIcons';
+import { GripIcon } from '../icons/contentIcons';
 import { Tooltip } from './Tooltip';
 
 export type ReorderListProps<T> = {

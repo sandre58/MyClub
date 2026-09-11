@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { CloseIcon } from '../icons/shellIcons';
-import { CheckIcon, CopyIcon } from '../icons/overviewIcons';
+import { CheckIcon, CopyIcon } from '../icons/contentIcons';
 import { Tooltip } from './Tooltip';
 
 export type TextInputProps = Omit<

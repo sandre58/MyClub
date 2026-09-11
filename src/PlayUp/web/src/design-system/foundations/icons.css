@@ -6,7 +6,7 @@
  *   md 20px — nav, header actions (default)
  *   lg 24px — empty states, emphasis
  *
- * Content icons (Vue d'ensemble panels): design-system/icons/overviewIcons.tsx
+ * Content icons (Vue d'ensemble panels): design-system/icons/contentIcons.tsx
  * Chrome icons (nav / header / drawer): design-system/icons/shellIcons.tsx
  *
  * No duotone in chrome; semantic colour comes from parent, not fills inside SVG.

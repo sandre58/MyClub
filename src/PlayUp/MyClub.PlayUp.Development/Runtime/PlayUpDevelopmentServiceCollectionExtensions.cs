@@ -42,6 +42,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, ChampionshipReadyScenario>();
         services.AddSingleton<IScenario, ChampionshipArchivedScenario>();
         services.AddSingleton<IScenario, ChampionshipStructureDraftScenario>();
+        services.AddSingleton<IScenario, StructureGraphInvalidScenario>();
         services.AddSingleton<IScenario, GroupsScenario>();
         services.AddSingleton<IScenario, GroupsSuspendedScenario>();
         services.AddSingleton<IScenario, GroupsDrawPendingScenario>();

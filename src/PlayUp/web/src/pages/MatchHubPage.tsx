@@ -10,7 +10,7 @@ import { PageHead } from '../design-system/components/PageHead';
 import { PanelHead } from '../design-system/components/PanelHead';
 import { Status } from '../design-system/components/Status';
 import { TeamCrest } from '../design-system/TeamCrest';
-import { OverviewAttentionIcon } from '../design-system/icons/overviewIcons';
+import { OverviewAttentionIcon } from '../design-system/icons/contentIcons';
 import {
   ClassementsNavIcon,
   MatchesNavIcon,

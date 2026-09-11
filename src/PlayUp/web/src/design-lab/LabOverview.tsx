@@ -9,7 +9,7 @@ import {
   OverviewAttentionIcon,
   RegulationIcon,
   TeamsIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 import { ClassementsNavIcon } from '../design-system/icons/shellIcons';
 import { AttentionGroup } from '../design-system/components/AttentionGroup';
 import { AttentionRow } from '../design-system/components/AttentionRow';

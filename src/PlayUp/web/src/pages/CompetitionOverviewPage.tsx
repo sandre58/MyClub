@@ -17,7 +17,7 @@ import {
 } from '../design-system/icons/shellIcons';
 import { AttentionSituationRow } from '../shell/AttentionSituationRow';
 import { TextLink } from '../design-system/components/TextLink';
-import { CalendarIcon } from '../design-system/icons/overviewIcons';
+import { CalendarIcon } from '../design-system/icons/contentIcons';
 import { actionLabel } from '../i18n/actionLabels';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { toIntlLocale } from '../i18n/intlLocale';
@@ -61,7 +61,7 @@ import {
   RegulationIcon,
   StructureIcon,
   TeamsIcon,
-} from '../design-system/icons/overviewIcons';
+} from '../design-system/icons/contentIcons';
 
 /**
  * Competition Overview — GET /competitions/{id}/overview.

@@ -220,6 +220,8 @@ public sealed record StructureStageHubSummaryDto(
     int MatchCount,
     int GroupCount,
     int RoundCount,
+    int MatchdayCount,
+    int SlotCount,
     int NumberOfPeriods,
     int DurationPerPeriod,
     bool HasExtraTime,

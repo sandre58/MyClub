@@ -1,5 +1,5 @@
 import { labRounds, labStandings } from './labData';
-import { OverviewAttentionIcon } from '../design-system/icons/overviewIcons';
+import { OverviewAttentionIcon } from '../design-system/icons/contentIcons';
 import { AttentionRow } from '../design-system/components/AttentionRow';
 import { MatchRound } from '../design-system/components/MatchRound';
 import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus';

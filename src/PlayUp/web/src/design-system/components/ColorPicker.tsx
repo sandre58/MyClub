@@ -6,7 +6,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { CloseIcon } from '../icons/shellIcons';
-import { PipetteIcon } from '../icons/overviewIcons';
+import { PipetteIcon } from '../icons/contentIcons';
 import { TextInput } from './TextInput';
 import { InputNumber } from './InputNumber';
 import { Popover } from './Popover';

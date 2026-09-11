@@ -16,7 +16,7 @@ import { HomeBrand } from '../design-system/components/HomeBrand';
 import { TextInput } from '../design-system/components/TextInput';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
-import { PlusIcon } from '../design-system/icons/overviewIcons';
+import { PlusIcon } from '../design-system/icons/contentIcons';
 import '../design-system/fonts';
 import '../design-system/index.css';
 import { queryKeys } from '../queryKeys';
