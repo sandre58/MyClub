@@ -1286,6 +1286,16 @@ try
         });
 
     app.MapPost(
+        "/stages/{stageId:guid}/draws/{drawId:guid}/cancel",
+        async (Guid stageId, Guid drawId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+        {
+            await executor
+                .CancelDrawAsync(new StageId(stageId), new DrawId(drawId), cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPost(
         "/stages/{stageId:guid}/draws/{drawId:guid}/apply",
         async (
             Guid stageId,

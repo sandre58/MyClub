@@ -262,6 +262,32 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Loads a stage, runs <see cref="CancelDraw"/>, and saves changes.
+    /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="drawId">Draw identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the draw is cancelled and persisted.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
+    public async Task CancelDrawAsync(
+        StageId stageId,
+        DrawId drawId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+
+        CancelDraw.Execute(stage, drawId, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogDrawCancelled(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value);
+    }
+
+    /// <summary>
     /// Loads a stage, runs <see cref="ApplyDraw"/>, adds newly created Matches, and saves once.
     /// </summary>
     /// <param name="stageId">Stage that owns the draw.</param>

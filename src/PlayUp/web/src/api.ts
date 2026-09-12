@@ -731,6 +731,57 @@ export function publishDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/publish`);
 }
 
+/** POST /stages/{stageId}/draws/{drawId}/cancel → 204 */
+export function cancelDraw(stageId: string, drawId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/draws/${drawId}/cancel`);
+}
+
+/** POST /stages/{stageId}/draws → 201 DrawSummary */
+export function createDraw(
+  stageId: string,
+  kind: 'Slot' | 'Group' | 'Pairing',
+): Promise<{ drawId: string }> {
+  return sendJson('POST', `/stages/${stageId}/draws`, { kind });
+}
+
+/** POST /stages/{stageId}/draws/{drawId}/inputs → DrawSummary */
+export function configureDrawInputs(
+  stageId: string,
+  drawId: string,
+): Promise<{ drawId: string }> {
+  return sendJson('POST', `/stages/${stageId}/draws/${drawId}/inputs`);
+}
+
+/** POST /stages/{stageId}/draws/{drawId}/generate → DrawGeneration */
+export function generateDraw(
+  stageId: string,
+  drawId: string,
+): Promise<{
+  drawId: string;
+  isResolved: boolean;
+  isNoSolution: boolean;
+}> {
+  return sendJson('POST', `/stages/${stageId}/draws/${drawId}/generate`);
+}
+
+/**
+ * G2 — one UI gesture « Nouveau tirage »: Create → default inputs → Generate.
+ * Generate is not a separate product action in V1.
+ */
+export async function createAndGenerateDraw(
+  stageId: string,
+  kind: 'Slot' | 'Group' | 'Pairing',
+): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
+  const created = await createDraw(stageId, kind);
+  await configureDrawInputs(stageId, created.drawId);
+  const generated = await generateDraw(stageId, created.drawId);
+  return {
+    drawId: created.drawId,
+    isResolved: generated.isResolved,
+    isNoSolution: generated.isNoSolution,
+  };
+}
+
 /** POST /stages/{stageId}/draws/{drawId}/apply → 204 */
 export function applyDraw(
   stageId: string,

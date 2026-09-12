@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { fetchStageOverview } from '../api';
 import { Chip } from '../design-system/components/Chip';
 import { Popover } from '../design-system/components/Popover';
@@ -67,6 +66,7 @@ import {
   StandingRulesDialog,
   TieFormatDialog,
 } from './StructureRegulationDialogs';
+import { StructureDrawDialog } from './StructureDrawDialog';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -1091,11 +1091,13 @@ export function StructurePhaseFiche({
   const [schematicMode, setSchematicMode] = useState<SchematicMode>('slots');
   const [edit, setEdit] = useState<EditTarget>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
 
   useEffect(() => {
     setSchematicMode('slots');
     setEdit(null);
     setRemoveOpen(false);
+    setDrawWorkflowOpen(false);
   }, [stage?.stageId]);
 
   useEffect(() => {
@@ -1154,7 +1156,6 @@ export function StructurePhaseFiche({
   const sections = relevantPhaseSections(stage);
   const actions = stageActions(stage);
   const regulationHref = `/competitions/${data.competitionId}/regulation`;
-  const drawHref = `/competitions/${data.competitionId}/stages/${stage.stageId}`;
   const showTirage = sections.includes('tirage');
   const showConfrontation = sections.includes('confrontation');
   const tirageRequired = showTirage && !stage.hasDrawRules;
@@ -1381,10 +1382,14 @@ export function StructurePhaseFiche({
             </ul>
             {showTirage ? (
               <div className="structure-phase-hero__draw">
-                <Link className="ds-btn ds-btn--primary" to={drawHref}>
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--primary"
+                  onClick={() => setDrawWorkflowOpen(true)}
+                >
                   <DrawPendingIcon size="sm" />
                   <span>{t('fiche.openDrawWorkflow')}</span>
-                </Link>
+                </button>
               </div>
             ) : null}
           </div>
@@ -1605,6 +1610,12 @@ export function StructurePhaseFiche({
         stage={stage}
         open={edit === 'tirage'}
         onClose={() => setEdit(null)}
+      />
+      <StructureDrawDialog
+        competitionId={data.competitionId}
+        stage={stage}
+        open={drawWorkflowOpen}
+        onClose={() => setDrawWorkflowOpen(false)}
       />
       <TieFormatDialog
         competitionId={data.competitionId}

@@ -19,5 +19,9 @@
   "applying": "Applying…",
   "confirmApplyTitle": "Apply the draw?",
   "confirmApply": "This will update the stage and may create matches.",
-  "pairingMapBlocked": "Apply unavailable: the number of pairings must equal the number of stage fixtures for a 1:1 match."
+  "pairingMapBlocked": "Apply unavailable: the number of pairings must equal the number of stage fixtures for a 1:1 match.",
+  "cancel": "Cancel the draw",
+  "cancelling": "Cancelling…",
+  "confirmCancelTitle": "Cancel this execution?",
+  "confirmCancel": "The execution will be cancelled. A new draw is required to start again."
 }
