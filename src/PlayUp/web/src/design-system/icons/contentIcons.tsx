@@ -8,6 +8,7 @@ import {
   CircleAlert,
   Clipboard,
   Copy,
+  Dices,
   Equal,
   Flag,
   GitBranch,
@@ -15,16 +16,20 @@ import {
   LayoutGrid,
   Layers,
   ListOrdered,
+  Lock,
   Minus,
+  Medal,
   Network,
   Pencil,
   Pipette,
   Plus,
+  Podium,
   Shuffle,
   Trash2,
   Trophy,
   UsersRound,
-  X,
+  Volleyball,
+  X, Handshake,
 } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { Icon, LucideIcon, type IconSize } from './Icon';
@@ -68,6 +73,11 @@ export function TrophyIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Trophy} size={size} {...props} />;
 }
 
+/** Attribution des places. */
+export function AttributionIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Medal} size={size} {...props} />;
+}
+
 /** Poules — grille de groupes. */
 export function GroupsFormatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={LayoutGrid} size={size} {...props} />;
@@ -98,6 +108,21 @@ export function MatchesStatIcon({ size, ...props }: ContentIconProps) {
   return <MatchesNavIcon size={size} {...props} />;
 }
 
+/** Règles de match (cadre / phase) — aligné Règlement. */
+export function MatchRulesIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Volleyball} size={size} {...props} />;
+}
+
+/** Classement — podium (aligné Règlement). */
+export function StandingRulesIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Podium} size={size} {...props} />;
+}
+
+/** Confrontations */
+export function ConfrontationIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Handshake} size={size} {...props} />;
+}
+
 /** Aller-retour / manches. */
 export function LegsStatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowLeftRight} size={size} {...props} />;
@@ -111,6 +136,26 @@ export function StructureIssueIcon({ size, ...props }: ContentIconProps) {
 /** Tirage à définir — mélange / pots (≠ anomalie). */
 export function DrawPendingIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Shuffle} size={size} {...props} />;
+}
+
+/** Tirage — configuration (aligné Règlement Shuffle). */
+export function DrawConfigIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Shuffle} size={size} {...props} />;
+}
+
+/** Têtes de série. */
+export function SeedsIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Medal} size={size} {...props} />;
+}
+
+/** Contraintes de tirage. */
+export function DrawConstraintIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Lock} size={size} {...props} />;
+}
+
+/** Tirage aléatoire. */
+export function RandomIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Dices} size={size} {...props} />;
 }
 
 /** Swiss — réseau de paires. */

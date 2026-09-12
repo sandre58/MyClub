@@ -182,7 +182,7 @@ export function ConfrontationEditors({
   );
 }
 
-function MatchRulesDialog({
+export function MatchRulesDialog({
   competitionId,
   stage,
   open,
@@ -414,7 +414,7 @@ function MatchRulesDialog({
   );
 }
 
-function StandingRulesDialog({
+export function StandingRulesDialog({
   competitionId,
   stage,
   open,
@@ -534,7 +534,7 @@ function StandingRulesDialog({
   );
 }
 
-function RebindDialog({
+export function RebindDialog({
   competitionId,
   stage,
   scope,
@@ -601,7 +601,7 @@ function RebindDialog({
   );
 }
 
-function DrawRulesDialog({
+export function DrawRulesDialog({
   competitionId,
   stage,
   open,
@@ -734,7 +734,7 @@ function DrawRulesDialog({
   );
 }
 
-function TieFormatDialog({
+export function TieFormatDialog({
   competitionId,
   stage,
   open,

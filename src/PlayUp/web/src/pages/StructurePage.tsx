@@ -18,6 +18,7 @@ import {
   MatchdayStatIcon,
   MatchesStatIcon,
   OverviewAttentionIcon,
+  PlusIcon,
   RoundsStatIcon,
   StructureIcon,
   StructureIssueIcon,
@@ -34,26 +35,16 @@ import {
   type StructureView,
 } from '../types';
 import {invalidateAfterStructureMutation} from './structureInvalidation';
-import {AddPhaseDialog, RelationEditors, RemovePhaseAction,} from './StructureGraphDialogs';
-import {ConstructionLocaleActions} from './StructureLocaleActions';
-import {
-  constructionSummaryFacts,
-  isMatchFrameBound,
-  isStandingFrameBound,
-  relevantSwitcherSections,
-  STRUCTURE_SWITCHER_SECTIONS,
-  type StructureSectionId,
-} from './structureHubSections';
+import {AddPhaseDialog} from './StructureGraphDialogs';
+import {StructurePhaseFiche} from './StructurePhaseFiche';
+import {type StructureSectionId} from './structureHubSections';
 import {
   parseStructureDeepLink,
   STRUCTURE_ROUND_PARAM,
   STRUCTURE_SECTION_PARAM,
   STRUCTURE_STAGE_PARAM,
 } from './structureNavigation';
-import {ConfrontationEditors, MatchStandingEditors, TirageEditors,} from './StructureRegulationDialogs';
 import './structure.css';
-
-type DrillInSection = StructureSectionId | null;
 
 /**
  * Structure hub — master-detail N1|N2 + Lot 2 graph mutations (dialogs).
@@ -99,13 +90,15 @@ function StructureHub({ data }: { data: StructureView }) {
     }
     return stages[0]?.stageId ?? null;
   });
-  const [drillIn, setDrillIn] = useState<DrillInSection>(() => deepLink.section);
+  const [pendingEdit, setPendingEdit] = useState<StructureSectionId | null>(
+    () => deepLink.section,
+  );
 
   useEffect(() => {
     const parsed = parseStructureDeepLink(searchParams.toString());
     if (stages.length === 0) {
       setSelectedStageId(null);
-      setDrillIn(null);
+      setPendingEdit(null);
       return;
     }
     if (
@@ -113,7 +106,7 @@ function StructureHub({ data }: { data: StructureView }) {
       stages.some((stage) => stage.stageId === parsed.stageId)
     ) {
       setSelectedStageId(parsed.stageId);
-      setDrillIn(parsed.section);
+      setPendingEdit(parsed.section);
       return;
     }
     setSelectedStageId((current) => {
@@ -129,7 +122,7 @@ function StructureHub({ data }: { data: StructureView }) {
 
   const selectStage = (stageId: string) => {
     setSelectedStageId(stageId);
-    setDrillIn(null);
+    setPendingEdit(null);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -142,32 +135,12 @@ function StructureHub({ data }: { data: StructureView }) {
     );
   };
 
-  const selectDrillIn = (section: DrillInSection) => {
-    setDrillIn(section);
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (selectedStageId) {
-          next.set(STRUCTURE_STAGE_PARAM, selectedStageId);
-        }
-        if (section) {
-          next.set(STRUCTURE_SECTION_PARAM, section);
-        } else {
-          next.delete(STRUCTURE_SECTION_PARAM);
-        }
-        next.delete(STRUCTURE_ROUND_PARAM);
-        return next;
-      },
-      { replace: true },
-    );
-  };
-
   const openRelationFix = (
     stageId: string,
     section: 'qualification' | 'progression',
   ) => {
     setSelectedStageId(stageId);
-    setDrillIn(section);
+    setPendingEdit(section);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -185,7 +158,9 @@ function StructureHub({ data }: { data: StructureView }) {
       <Tooltip
         content={
           canConfigure
-            ? t('hub.configureStructure')
+            ? stages.length > 0
+              ? t('structure.rebuildLegend')
+              : t('hub.configureStructure')
             : t('hub.configureDisabledHint')
         }
       >
@@ -196,7 +171,12 @@ function StructureHub({ data }: { data: StructureView }) {
             disabled={!canConfigure}
             onClick={() => setStructureEditorOpen(true)}
           >
-            {t('hub.configureStructure')}
+            <StructureIcon size="sm" />
+            <span>
+              {stages.length > 0
+                ? t('structure.rebuildSubmit')
+                : t('hub.configureStructure')}
+            </span>
           </button>
         </span>
       </Tooltip>
@@ -212,7 +192,8 @@ function StructureHub({ data }: { data: StructureView }) {
             disabled={!canAddPhase}
             onClick={() => setAddPhaseOpen(true)}
           >
-            {t('graph.addPhase')}
+            <PlusIcon size="sm" />
+            <span>{t('graph.addPhase')}</span>
           </button>
         </span>
       </Tooltip>
@@ -235,13 +216,25 @@ function StructureHub({ data }: { data: StructureView }) {
           anomalies={structuralAnomalies}
           onFixRelation={openRelationFix}
         />
-        <PhaseFiche
+        <StructurePhaseFiche
           data={data}
           stage={selectedStage}
-          drillIn={drillIn}
-          onDrillIn={selectDrillIn}
           canConfigure={canConfigure}
           onConfigure={() => setStructureEditorOpen(true)}
+          onSelectStage={selectStage}
+          initialEdit={pendingEdit}
+          onInitialEditConsumed={() => {
+            setPendingEdit(null);
+            setSearchParams(
+              (prev) => {
+                const next = new URLSearchParams(prev);
+                next.delete(STRUCTURE_SECTION_PARAM);
+                next.delete(STRUCTURE_ROUND_PARAM);
+                return next;
+              },
+              { replace: true },
+            );
+          }}
         />
       </div>
 
@@ -739,7 +732,7 @@ function topologyCardFacts(
       return [
         {
           id: 'swiss',
-          icon: <SwissFormatIcon size="md" aria-hidden="true" />,
+          icon: <RoundsStatIcon size="md" aria-hidden="true" />,
           value: t('hub.topologyStatSwiss', {
             count: stage.swissRoundCount ?? 0,
           }),
@@ -781,601 +774,6 @@ function edgeLabelFromSource(
   return t('hub.edgeGeneric');
 }
 
-function PhaseFiche({
-  data,
-  stage,
-  drillIn,
-  onDrillIn,
-  canConfigure,
-  onConfigure,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary | null;
-  drillIn: DrillInSection;
-  onDrillIn: (section: DrillInSection) => void;
-  canConfigure: boolean;
-  onConfigure: () => void;
-}) {
-  const { t } = useTranslation('structure');
-
-  if (!stage) {
-    return (
-      <section className="structure-fiche" aria-labelledby="fiche-empty">
-        <h2 id="fiche-empty" className="structure-fiche__title">
-          {t('hub.phaseFiche')}
-        </h2>
-        <EmptyState title={t('hub.noPhaseSelectedTitle')}>
-          {t('hub.noPhaseSelectedBody')}
-        </EmptyState>
-      </section>
-    );
-  }
-
-  if (drillIn) {
-    return (
-      <PhaseDrillIn
-        data={data}
-        stage={stage}
-        section={drillIn}
-        onBack={() => onDrillIn(null)}
-        onSwitch={onDrillIn}
-        canConfigure={canConfigure}
-        onConfigure={onConfigure}
-      />
-    );
-  }
-
-  return (
-    <PhaseOverview
-      data={data}
-      stage={stage}
-      onDrillIn={onDrillIn}
-      canConfigure={canConfigure}
-      onConfigure={onConfigure}
-    />
-  );
-}
-
-function PhaseOverview({
-  data,
-  stage,
-  onDrillIn,
-  canConfigure,
-  onConfigure,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary;
-  onDrillIn: (section: StructureSectionId) => void;
-  canConfigure: boolean;
-  onConfigure: () => void;
-}) {
-  const { t } = useTranslation('structure');
-  const formatLabel = stage.formatKind
-    ? structureFormatKindLabel(stage.formatKind)
-    : t('structure.formatNotConfigured');
-  const facts = constructionSummaryFacts(stage);
-  const matchBound = isMatchFrameBound(stage.defaultsBinding);
-  const standingBound = isStandingFrameBound(stage.defaultsBinding);
-  const regulationHref = `/competitions/${data.competitionId}/regulation`;
-
-  return (
-    <section
-      className="structure-fiche"
-      aria-labelledby="phase-overview-heading"
-    >
-      <header className="structure-fiche__header">
-        <div className="structure-fiche__titles">
-          <h2 id="phase-overview-heading" className="structure-fiche__title">
-            {stage.name}
-          </h2>
-          <ul className="structure-fiche__pills">
-            <li className="structure-fiche__pill">{formatLabel}</li>
-            <li className="structure-fiche__pill">
-              {t('hub.teamCount', { count: stage.teamCount })}
-            </li>
-            <li className="structure-fiche__pill structure-fiche__pill--status">
-              <StageStatusBadge status={stage.status} />
-            </li>
-          </ul>
-        </div>
-        <div className="structure-fiche__actions">
-          <RemovePhaseAction data={data} stage={stage} />
-          {canConfigure && (
-            <button
-              type="button"
-              className="structure-action"
-              onClick={onConfigure}
-            >
-              {t('structure.editPhase')}
-              <span aria-hidden="true">→</span>
-            </button>
-          )}
-        </div>
-      </header>
-
-      <div className="structure-overview">
-        {(stage.hasQualificationRules ||
-          stage.hasProgressionRules ||
-          (stage.actions ?? []).includes('ReplaceQualificationRules') ||
-          (stage.actions ?? []).includes('ReplaceProgressionRules')) && (
-          <OverviewBlock title={t('hub.overview.parcours')}>
-            {((stage.actions ?? []).includes('ReplaceQualificationRules') ||
-              stage.hasQualificationRules) && (
-              <OverviewPointer
-                label={t('hub.overview.qualificationIn', {
-                  count: stage.qualificationPathCount,
-                })}
-                onOpen={() => onDrillIn('qualification')}
-              />
-            )}
-            {((stage.actions ?? []).includes('ReplaceProgressionRules') ||
-              stage.hasProgressionRules) && (
-              <OverviewPointer
-                label={t('hub.overview.progressionOut', {
-                  count: stage.progressionPathCount,
-                })}
-                onOpen={() => onDrillIn('progression')}
-              />
-            )}
-          </OverviewBlock>
-        )}
-
-        <OverviewBlock title={t('hub.overview.construction')}>
-          <OverviewPointer
-            label={constructionPointerLabel(facts, t)}
-            onOpen={() => onDrillIn('construction')}
-          />
-        </OverviewBlock>
-
-        <OverviewBlock title={t('hub.overview.cadre')}>
-          <OverviewPointer
-            label={
-              matchBound
-                ? t('hub.overview.matchBound')
-                : t('hub.overview.matchCustom')
-            }
-            onOpen={() => onDrillIn('matchs')}
-            trailing={
-              <Link className="structure-overview__side-link" to={regulationHref}>
-                {t('hub.overview.openRegulation')}
-              </Link>
-            }
-          />
-          {standingBound !== null && (
-            <OverviewPointer
-              label={
-                standingBound
-                  ? t('hub.overview.standingBound')
-                  : t('hub.overview.standingCustom')
-              }
-              onOpen={() => onDrillIn('classement')}
-            />
-          )}
-        </OverviewBlock>
-
-        {relevantSwitcherSections(stage).includes('tirage') && (
-          <OverviewBlock title={t('hub.overview.tirage')}>
-            <OverviewPointer
-              label={
-                stage.hasDrawRules
-                  ? t('hub.overview.tirageConfigured', {
-                      pots: stage.numberOfPots ?? '—',
-                    })
-                  : t('hub.overview.tirageRequired')
-              }
-              onOpen={() => onDrillIn('tirage')}
-            />
-          </OverviewBlock>
-        )}
-
-        {stage.hasTieFormat && (
-          <OverviewBlock title={t('hub.overview.confrontation')}>
-            <OverviewPointer
-              label={t('hub.overview.confrontationSummary', {
-                legs: stage.numberOfLegs ?? 1,
-              })}
-              onOpen={() => onDrillIn('confrontation')}
-            />
-          </OverviewBlock>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function constructionPointerLabel(
-  facts: ReturnType<typeof constructionSummaryFacts>,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  if (facts.groupCount > 0) {
-    return t('hub.overview.constructionGroups', {
-      groups: facts.groupCount,
-      teams: facts.teamCount,
-    });
-  }
-  if (facts.legs != null) {
-    return t('hub.overview.constructionLegs', {
-      teams: facts.teamCount,
-      legs: facts.legs,
-    });
-  }
-  return t('hub.overview.constructionTeams', { teams: facts.teamCount });
-}
-
-function OverviewBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="structure-overview__block">
-      <h3 className="structure-overview__block-title">{title}</h3>
-      <ul className="structure-overview__list">{children}</ul>
-    </section>
-  );
-}
-
-function OverviewPointer({
-  label,
-  onOpen,
-  trailing,
-}: {
-  label: string;
-  onOpen: () => void;
-  trailing?: ReactNode;
-}) {
-  return (
-    <li className="structure-overview__row">
-      <button type="button" className="structure-overview__pointer" onClick={onOpen}>
-        <span>{label}</span>
-        <span aria-hidden="true">→</span>
-      </button>
-      {trailing}
-    </li>
-  );
-}
-
-function PhaseDrillIn({
-  data,
-  stage,
-  section,
-  onBack,
-  onSwitch,
-  canConfigure,
-  onConfigure,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary;
-  section: StructureSectionId;
-  onBack: () => void;
-  onSwitch: (section: StructureSectionId) => void;
-  canConfigure: boolean;
-  onConfigure: () => void;
-}) {
-  const { t } = useTranslation('structure');
-  const switcherSections = relevantSwitcherSections(stage);
-  const showSwitcher =
-    (STRUCTURE_SWITCHER_SECTIONS as StructureSectionId[]).includes(section) &&
-    switcherSections.length > 1;
-
-  return (
-    <section
-      className="structure-fiche structure-fiche--drill"
-      aria-labelledby="drill-heading"
-    >
-      <header className="structure-drill__header">
-        <button type="button" className="structure-drill__back" onClick={onBack}>
-          <span aria-hidden="true">←</span>
-          {stage.name}
-        </button>
-        <h2 id="drill-heading" className="structure-fiche__title">
-          {t(`hub.section.${section}`)}
-        </h2>
-      </header>
-
-      {showSwitcher && (
-        <div
-          className="structure-switcher"
-          role="tablist"
-          aria-label={t('hub.sectionSwitcher')}
-        >
-          {switcherSections.map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={id === section}
-              className={`structure-switcher__tab${id === section ? ' structure-switcher__tab--active' : ''}`}
-              onClick={() => onSwitch(id)}
-            >
-              {t(`hub.section.${id}`)}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="structure-drill__body">
-        <SectionDetail
-          data={data}
-          stage={stage}
-          section={section}
-          canConfigure={canConfigure}
-          onConfigure={onConfigure}
-        />
-      </div>
-    </section>
-  );
-}
-
-function SectionDetail({
-  data,
-  stage,
-  section,
-  canConfigure,
-  onConfigure,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary;
-  section: StructureSectionId;
-  canConfigure: boolean;
-  onConfigure: () => void;
-}) {
-  const { t } = useTranslation('structure');
-  const regulationHref = `/competitions/${data.competitionId}/regulation`;
-
-  switch (section) {
-    case 'construction':
-      return (
-        <DetailCard
-          action={
-            canConfigure ? (
-              <button
-                type="button"
-                className="ds-btn ds-btn--secondary"
-                onClick={onConfigure}
-              >
-                {t('hub.editConstruction')}
-              </button>
-            ) : null
-          }
-        >
-          <dl className="structure-detail__grid">
-            <DetailCell
-              label={t('structure.format')}
-              value={
-                stage.formatKind
-                  ? structureFormatKindLabel(stage.formatKind)
-                  : t('structure.formatNotConfigured')
-              }
-            />
-            {(stage.formatKind === 'Championship' ||
-              stage.formatKind === 'Groups') && (
-              <DetailCell
-                label={t('structure.matchGenerationFormat')}
-                value={matchGenerationFormatLabel(
-                  data.structure.matchGenerationFormat,
-                )}
-              />
-            )}
-            {(stage.groupCount ?? 0) > 0 && (
-              <DetailCell
-                label={t('structure.groups')}
-                value={String(stage.groupCount)}
-              />
-            )}
-            <DetailCell
-              label={t('hub.detail.teams')}
-              value={String(stage.teamCount)}
-            />
-            {(stage.roundCount ?? 0) > 0 && (
-              <DetailCell
-                label={t('structure.rounds')}
-                value={String(stage.roundCount)}
-              />
-            )}
-            {stage.formatKind === 'Swiss' && stage.swissRoundCount != null && (
-              <DetailCell
-                label={t('structure.swissRoundCount')}
-                value={String(stage.swissRoundCount)}
-              />
-            )}
-            <DetailCell
-              label={t('hub.detail.matches')}
-              value={String(stage.matchCount)}
-            />
-          </dl>
-          <ConstructionLocaleActions data={data} stage={stage} />
-        </DetailCard>
-      );
-    case 'qualification':
-      return (
-        <DetailCard>
-          <p className="structure-detail__lede">
-            {t('hub.detail.qualificationLede', {
-              count: stage.qualificationPathCount,
-              teams: stage.teamCount,
-            })}
-          </p>
-          {(stage.qualificationPaths ?? []).length > 0 && (
-            <ul className="structure-path-list">
-              {(stage.qualificationPaths ?? []).map((path) => (
-                <li key={`${path.order}-${path.destinationSlotKey}`}>
-                  #{path.order} · {path.selectionMode} {path.selectionValue} →{' '}
-                  {path.destinationSlotKey}
-                </li>
-              ))}
-            </ul>
-          )}
-          <RelationEditors data={data} stage={stage} section="qualification" />
-        </DetailCard>
-      );
-    case 'progression':
-      return (
-        <DetailCard>
-          <p className="structure-detail__lede">
-            {t('hub.detail.progressionLede', {
-              count: stage.progressionPathCount,
-            })}
-          </p>
-          {(stage.progressionPaths ?? []).length > 0 && (
-            <ul className="structure-path-list">
-              {(stage.progressionPaths ?? []).map((path) => (
-                <li
-                  key={`${path.sourceFixtureId}-${path.outcome}-${path.destinationSlotKey}`}
-                >
-                  {path.outcome} → {path.destinationSlotKey}
-                </li>
-              ))}
-            </ul>
-          )}
-          <RelationEditors data={data} stage={stage} section="progression" />
-        </DetailCard>
-      );
-    case 'confrontation':
-      return (
-        <DetailCard
-          action={<ConfrontationEditors data={data} stage={stage} />}
-        >
-          <dl className="structure-detail__grid">
-            <DetailCell
-              label={t('hub.detail.legs')}
-              value={String(stage.numberOfLegs ?? 1)}
-            />
-            <DetailCell
-              label={t('hub.detail.aggregate')}
-              value={
-                stage.aggregateScoring
-                  ? t('hub.detail.yes')
-                  : t('hub.detail.no')
-              }
-            />
-            <DetailCell
-              label={t('hub.detail.awayGoals')}
-              value={
-                stage.hasAwayGoalsRule
-                  ? t('hub.detail.yes')
-                  : t('hub.detail.no')
-              }
-            />
-          </dl>
-        </DetailCard>
-      );
-    case 'tirage':
-      return (
-        <DetailCard action={<TirageEditors data={data} stage={stage} />}>
-          <dl className="structure-detail__grid">
-            <DetailCell
-              label={t('structure.draw')}
-              value={
-                stage.hasDrawRules
-                  ? t('structure.drawConfigured', {
-                      pots: stage.numberOfPots ?? '—',
-                    })
-                  : t('structure.drawMissing')
-              }
-            />
-            {stage.numberOfSeeds != null && (
-              <DetailCell
-                label={t('hub.detail.seeds')}
-                value={String(stage.numberOfSeeds)}
-              />
-            )}
-          </dl>
-          <p className="structure-detail__hint">{t('hub.detail.tirageOpsHint')}</p>
-        </DetailCard>
-      );
-    case 'matchs':
-      return (
-        <DetailCard
-          action={<MatchStandingEditors data={data} stage={stage} section="matchs" />}
-        >
-          <p className="structure-detail__lede">
-            {isMatchFrameBound(stage.defaultsBinding)
-              ? t('hub.detail.matchBoundLede')
-              : t('hub.detail.matchCustomLede')}
-          </p>
-          <dl className="structure-detail__grid">
-            <DetailCell
-              label={t('regulation.numberOfPeriods')}
-              value={String(stage.numberOfPeriods)}
-            />
-            <DetailCell
-              label={t('regulation.durationPerPeriod')}
-              value={String(stage.durationPerPeriod)}
-            />
-          </dl>
-          <p className="structure-detail__footer">
-            <Link className="structure-link" to={regulationHref}>
-              {t('hub.overview.openRegulation')}
-              <span aria-hidden="true">→</span>
-            </Link>
-          </p>
-        </DetailCard>
-      );
-    case 'classement':
-      return (
-        <DetailCard
-          action={
-            <MatchStandingEditors data={data} stage={stage} section="classement" />
-          }
-        >
-          <p className="structure-detail__lede">
-            {isStandingFrameBound(stage.defaultsBinding)
-              ? t('hub.detail.standingBoundLede')
-              : t('hub.detail.standingCustomLede')}
-          </p>
-          {stage.winPoints != null && (
-            <dl className="structure-detail__grid">
-              <DetailCell
-                label={t('regulation.winPoints')}
-                value={String(stage.winPoints)}
-              />
-              <DetailCell
-                label={t('regulation.drawPoints')}
-                value={String(stage.drawPoints ?? 0)}
-              />
-              <DetailCell
-                label={t('regulation.lossPoints')}
-                value={String(stage.lossPoints ?? 0)}
-              />
-            </dl>
-          )}
-          <p className="structure-detail__footer">
-            <Link className="structure-link" to={regulationHref}>
-              {t('hub.overview.openRegulation')}
-              <span aria-hidden="true">→</span>
-            </Link>
-          </p>
-        </DetailCard>
-      );
-  }
-}
-
-function DetailCard({
-  children,
-  action,
-}: {
-  children: ReactNode;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="structure-detail">
-      {action && <div className="structure-detail__actions">{action}</div>}
-      {children}
-    </div>
-  );
-}
-
-function DetailCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="structure-detail__cell">
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-    </div>
-  );
-}
 
 function readinessStatusNote(
   data: StructureView,

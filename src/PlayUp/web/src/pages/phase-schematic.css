@@ -1,0 +1,458 @@
+/* -- Phases: schematics -- */
+.regulation-schematic {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  min-height: 2.75rem;
+  width: 100%;
+  padding: var(--space-8);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+  min-width: 0;
+}
+
+.regulation-schematic--groups {
+  justify-content: flex-start;
+}
+
+.regulation-schematic__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.regulation-schematic__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1 1 7.5rem;
+  min-width: 7.5rem;
+  max-width: 100%;
+  padding: 0.35rem 0.4rem;
+  border-radius: var(--radius-control);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-brand) 18%, var(--color-border));
+  background: color-mix(in srgb, var(--color-brand) 8%, var(--color-surface));
+}
+
+.regulation-schematic__card--1 {
+  border-color: color-mix(in srgb, var(--color-brand) 12%, var(--color-border));
+  background: color-mix(in srgb, var(--color-brand-bright, var(--color-brand)) 10%, var(--color-surface));
+}
+
+.regulation-schematic__card--2 {
+  border-color: color-mix(in srgb, var(--color-success) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+}
+
+.regulation-schematic__card--3 {
+  border-color: color-mix(in srgb, var(--color-attention) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-surface));
+}
+
+.regulation-schematic__card-label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.regulation-schematic__dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+}
+
+.regulation-schematic__dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-brand) 45%, var(--color-border));
+}
+
+.regulation-schematic__card--2 .regulation-schematic__dot {
+  background: color-mix(in srgb, var(--color-success) 55%, var(--color-border));
+}
+
+.regulation-schematic__card--3 .regulation-schematic__dot {
+  background: color-mix(in srgb, var(--color-attention) 55%, var(--color-border));
+}
+
+.regulation-schematic--bracket {
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+}
+
+.regulation-schematic__wire {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.regulation-schematic__wire-node {
+  fill: var(--color-brand);
+}
+
+.regulation-schematic__wire-line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-brand) 55%, var(--color-border));
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.regulation-schematic__trophy {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-brand);
+}
+
+.regulation-schematic__trophy .ds-icon {
+  color: inherit;
+}
+
+.regulation-rule-col__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.regulation-rule-section__title {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.regulation-schematic--championship {
+  justify-content: flex-start;
+}
+
+.regulation-schematic__league {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  width: 100%;
+}
+
+.regulation-schematic__league-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 0.35rem;
+}
+
+.regulation-schematic__league-rank {
+  flex: none;
+  width: 0.75rem;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.regulation-schematic__league-bar {
+  display: block;
+  flex: 1 1 auto;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-brand) 28%, var(--color-border));
+}
+
+.regulation-schematic__league-row:nth-child(even) .regulation-schematic__league-bar {
+  width: 78%;
+  flex: 0 1 78%;
+}
+
+.regulation-schematic--swiss {
+  justify-content: flex-start;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.regulation-schematic__swiss-caption {
+  margin: 0 0 var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.regulation-schematic__swiss-rounds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.regulation-schematic__swiss-round {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.regulation-schematic__swiss-round-label {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.regulation-schematic__swiss-pairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.regulation-schematic__swiss-pair-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem;
+  border-radius: var(--radius-control);
+  background: transparent;
+}
+
+.regulation-schematic__swiss-pair-slot .regulation-schematic__slot {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 1.1rem;
+}
+
+.regulation-schematic__swiss-vs {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: 1;
+}
+
+.regulation-schematic__swiss-pair {
+  flex: 1 1 0;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-brand) 32%, var(--color-border));
+}
+
+.regulation-schematic--hero {
+  min-height: 7.5rem;
+  justify-content: center;
+  padding: var(--space-16);
+}
+
+.regulation-schematic__labels {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.regulation-schematic__label {
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.regulation-schematic__occupants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.regulation-schematic__occupants li {
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+}
+
+.regulation-schematic__league-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.regulation-schematic__slot {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 1.15rem;
+  border-radius: var(--radius-control);
+  border: var(--border-width) dashed color-mix(in srgb, var(--color-brand) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  box-sizing: border-box;
+}
+
+.regulation-schematic__slot--row {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 1.25rem;
+}
+
+.regulation-schematic--hero {
+  min-height: 11rem;
+  margin: auto;
+}
+
+.regulation-schematic--hero.regulation-schematic--groups .regulation-schematic__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.regulation-schematic--hero.regulation-schematic--groups .regulation-schematic__card {
+  flex: none;
+  min-width: 0;
+  max-width: none;
+}
+
+.regulation-schematic--hero.regulation-schematic--cup-entry {
+  align-items: stretch;
+  justify-content: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  min-width: 0;
+}
+
+.regulation-schematic--hero.regulation-schematic--cup-entry .regulation-schematic__wire--fluid {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.regulation-schematic--hero.regulation-schematic--championship .regulation-schematic__league,
+.regulation-schematic--hero.regulation-schematic--swiss .regulation-schematic__swiss-rounds {
+  width: 100%;
+  min-width: 0;
+}
+
+.regulation-schematic--hero.regulation-schematic--groups {
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.regulation-schematic--hero .regulation-schematic__card {
+  padding: var(--space-8);
+  gap: var(--space-8);
+}
+
+.regulation-schematic--hero .regulation-schematic__label,
+.regulation-schematic--hero .regulation-schematic__slot {
+  min-height: 1.35rem;
+  font-size: var(--text-label);
+}
+
+.regulation-schematic__occupants-slot {
+  min-width: 4.5rem;
+  min-height: 1.35rem;
+  border: var(--border-width) dashed var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-secondary) 80%, transparent);
+}
+
+.regulation-schematic--cup-entry {
+  flex-wrap: nowrap;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-8);
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.regulation-schematic__entry-slots {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: none;
+  width: 5.5rem;
+}
+
+.regulation-schematic__entry-slot {
+  display: flex;
+  align-items: center;
+  min-height: 1.25rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-control);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-brand) 28%, var(--color-border));
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.regulation-schematic__entry-slot--empty {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  color: transparent;
+}
+
+.regulation-schematic__wire-slot {
+  fill: var(--color-surface);
+  stroke: color-mix(in srgb, var(--color-brand) 45%, var(--color-border));
+  stroke-width: 1.25;
+}
+
+.regulation-schematic__wire-slot--empty {
+  fill: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  stroke-dasharray: 3 2;
+}
+
+.regulation-schematic__wire-slot--round {
+  fill: color-mix(in srgb, var(--color-brand) 18%, var(--color-surface));
+}
+
+.regulation-schematic__wire-label {
+  fill: var(--color-text-primary);
+  font-size: 7px;
+  font-weight: 600;
+}
+
+.regulation-schematic__wire-label--muted {
+  fill: var(--color-text-secondary);
+}
+
+.regulation-schematic__wire-match-n {
+  fill: var(--color-text-secondary);
+  font-size: 7px;
+  font-weight: 600;
+}

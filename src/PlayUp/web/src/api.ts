@@ -29,6 +29,7 @@ import type {
   RenameDeclaredMemberRequest,
   RenameEntryRequest,
   ReplaceProgressionRulesRequest,
+  ReplacePlacementAwardRulesRequest,
   ReplaceQualificationRulesRequest,
   ReplaceRegulationRequest,
   ReplaceStageDefaultTieFormatRequest,
@@ -467,6 +468,14 @@ export function replaceStageProgressionRules(
   request: ReplaceProgressionRulesRequest,
 ): Promise<void> {
   return sendNoContent('PUT', `/stages/${stageId}/progression-rules`, request);
+}
+
+/** PUT /stages/{id}/placement-award-rules → 204 */
+export function replaceStagePlacementAwardRules(
+  stageId: string,
+  request: ReplacePlacementAwardRulesRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/placement-award-rules`, request);
 }
 
 /** PUT /stages/{id}/match-rules → 204 */

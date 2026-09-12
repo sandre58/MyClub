@@ -59,6 +59,7 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
+  justify-content: flex-end;
   gap: var(--teams-ops-gap);
   flex: 1 1 auto;
   min-width: min(100%, var(--teams-add-min-width));

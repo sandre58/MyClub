@@ -33,7 +33,7 @@
     "White": "White"
   },
   "differsFromFrame": "This stage has at least one rule decoupled from the general regulations. Coloured tokens mark the rules concerned.",
-  "personalized": "Custom",
+  "personalized": "Personalized",
   "editRegulation": "Edit regulations",
   "editRegulationDisabledHint": "Regulations cannot be edited in this state.",
   "editor": {
@@ -153,7 +153,8 @@
     "groups": "{{count}} groups",
     "championship": "League · {{teams}} teams",
     "swiss": "Swiss system · {{rounds}} rounds",
-    "swissGeneric": "Swiss system"
+    "swissGeneric": "Swiss system",
+    "swissRound": "Round {{n}}"
   },
   "title": "Regulations",
   "tokens": {

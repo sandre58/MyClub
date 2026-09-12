@@ -653,6 +653,8 @@ export interface StructureStageHubSummary {
   progressionPaths?: StructureProgressionPath[] | null;
   /** Machine-readable graph validity codes (Draft-persistable). */
   structureIssues?: string[];
+  /** Configured DirectAssignment count (slot → entry). */
+  directAssignmentCount?: number;
 }
 
 /** One qualification path for Structure authoring / impact preview. */
@@ -664,6 +666,8 @@ export interface StructureQualificationPath {
   destinationSlotKey: string;
   rankingScope?: RankingScope | null;
   groupId?: string | null;
+  /** Resolved group display name when groupId is set. */
+  groupName?: string | null;
   acrossGroupsPosition?: number | null;
   selectionEndValue?: number | null;
   minimumPoints?: number | null;
@@ -675,6 +679,8 @@ export interface StructureProgressionPath {
   outcome: ProgressionOutcome;
   destinationStageId: string;
   destinationSlotKey: string;
+  /** Resolved fixture label (round · #order · slots) when available. */
+  sourceLabel?: string | null;
 }
 
 export type SelectionMode =
@@ -709,6 +715,11 @@ export interface ReplaceQualificationRulesRequest {
 /** PUT /stages/{id}/progression-rules */
 export interface ReplaceProgressionRulesRequest {
   paths: StructureProgressionPath[] | null;
+}
+
+/** PUT /stages/{id}/placement-award-rules */
+export interface ReplacePlacementAwardRulesRequest {
+  paths: StructurePlacementAward[] | null;
 }
 
 /** PUT /stages/{id}/match-rules */
@@ -800,6 +811,8 @@ export type ProgressionOutcome = 'Winner' | 'Loser';
 export interface StructurePlacementAward {
   rank: number;
   outcome: ProgressionOutcome;
+  sourceFixtureId?: string | null;
+  sourceLabel?: string | null;
 }
 
 /** Host DrawConstraintType — string enum member names. */

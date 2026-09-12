@@ -153,3 +153,7 @@
 .ds-btn.ds-icon-button--dismiss {
   color: var(--color-text-secondary);
 }
+
+.ds-icon-toolbar .ds-btn--destructive {
+  border: 0;
+ }

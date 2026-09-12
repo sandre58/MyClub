@@ -19,7 +19,7 @@ import type {
   StructureView,
 } from '../types';
 import { StructurePage } from './StructurePage';
-import { relevantSwitcherSections } from './structureHubSections';
+import { relevantPhaseSections } from './structureHubSections';
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>();
@@ -203,15 +203,15 @@ function renderStructurePage(initialPath?: string) {
   return { queryClient };
 }
 
-describe('relevantSwitcherSections', () => {
+describe('relevantPhaseSections', () => {
   it('omits absent sections instead of disabling them', () => {
-    expect(relevantSwitcherSections(championshipStage())).toEqual([
+    expect(relevantPhaseSections(championshipStage())).toEqual([
       'construction',
     ]);
   });
 
   it('includes qualification, progression and tirage when present', () => {
-    expect(relevantSwitcherSections(groupesStage())).toEqual([
+    expect(relevantPhaseSections(groupesStage())).toEqual([
       'construction',
       'qualification',
       'progression',
@@ -221,7 +221,7 @@ describe('relevantSwitcherSections', () => {
 
   it('includes relation sections when per-phase edit actions are offered', () => {
     expect(
-      relevantSwitcherSections(
+      relevantPhaseSections(
         championshipStage({
           actions: ['ReplaceQualificationRules', 'ReplaceProgressionRules'],
         }),
@@ -280,8 +280,7 @@ describe('StructurePage Structure hub', () => {
     ).toHaveAttribute('href', `/competitions/${competitionId}/teams`);
   });
 
-  it('shows master-detail for a championship stage without progression chrome', async () => {
-    const user = userEvent.setup();
+  it('shows flat phase fiche with match tile for a championship stage', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -317,29 +316,21 @@ describe('StructurePage Structure hub', () => {
 
     expect(await screen.findByRole('button', { name: /League/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'League' })).toBeInTheDocument();
-    expect(screen.getByText(/Matchs : Suit le cadre/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Match$/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Entrées/i })).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Qualification/i }),
+      screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
+    expect(screen.getAllByText('Général').length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.queryByRole('button', { name: /Progression/i }),
-    ).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: '2 équipes' }));
-
-    expect(
-      await screen.findByRole('heading', { name: 'Construction' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Aller-retour \(double RR\)/i),
+      screen.getByRole('group', { name: /Affichage de la silhouette/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('tablist', { name: /Sections de la phase/i }),
     ).not.toBeInTheDocument();
   });
 
-  it('supports overview drill-in and contextual section switcher', async () => {
-    const user = userEvent.setup();
+  it('shows groups fiche tiles without domain drill pages', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -365,26 +356,14 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
-    await user.click(
-      screen.getByRole('button', { name: '2 groupes · 8 équipes' }),
-    );
-
+    expect(screen.getByRole('heading', { name: /Tirage/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Entrées/i })).toBeInTheDocument();
     expect(
-      await screen.findByRole('tablist', { name: /Sections de la phase/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Construction' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByRole('tab', { name: 'Qualification' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Progression' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tirage' })).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Matchs' })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('tab', { name: 'Qualification' }));
+      screen.queryByRole('heading', { name: /^Sorties$/i }),
+    ).not.toBeInTheDocument();
     expect(
-      await screen.findByText(/2 chemins de qualification/i),
-    ).toBeInTheDocument();
+      screen.queryByRole('tablist', { name: /Sections de la phase/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows an error when structure read fails', async () => {
@@ -399,7 +378,7 @@ describe('StructurePage Structure hub', () => {
     );
   });
 
-  it('hydrates drill-in from Structure deep-link query params', async () => {
+  it('opens match rules dialog from Structure deep-link section', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         stages: [
@@ -425,10 +404,9 @@ describe('StructurePage Structure hub', () => {
     );
 
     expect(
-      await screen.findByText(/Les règles de match suivent le cadre/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Personnaliser les matchs/i }),
+      await screen.findByRole('dialog', {
+        name: /Règles de match de la phase/i,
+      }),
     ).toBeInTheDocument();
   });
 
@@ -498,8 +476,8 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('button', { name: /Ajouter une phase/i }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Créer la structure/i }),
-    ).toBeInTheDocument();
+      screen.getAllByRole('button', { name: /Reconstruire/i }).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it('surfaces structural anomalies in topology with a Qual/Prog fix CTA', async () => {
@@ -592,7 +570,9 @@ describe('StructurePage Structure hub', () => {
     );
 
     expect(
-      await screen.findByRole('heading', { name: /^Qualification$/i }),
+      await screen.findByRole('dialog', {
+        name: /Règles de qualification/i,
+      }),
     ).toBeInTheDocument();
   });
 

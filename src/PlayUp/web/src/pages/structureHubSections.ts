@@ -14,15 +14,6 @@ export type StructureSectionId =
   | 'matchs'
   | 'classement';
 
-/** Major switcher destinations — Matchs/Classement stay Overview pointers / secondary drill-in. */
-export const STRUCTURE_SWITCHER_SECTIONS: StructureSectionId[] = [
-  'construction',
-  'qualification',
-  'progression',
-  'confrontation',
-  'tirage',
-];
-
 export function isMatchFrameBound(
   binding: StructureStageDefaultsBinding | undefined,
 ): boolean {
@@ -52,10 +43,10 @@ export function isStandingFrameBound(
 }
 
 /**
- * Sections present for this phase. Absent model → omitted (no disabled chrome).
- * Matchs/Classement are never major switcher items.
+ * Domains reachable from Overview for this phase (S0: no inter-domain switcher).
+ * Absent model → omitted. Matchs/Classement stay separate Overview pointers.
  */
-export function relevantSwitcherSections(
+export function relevantPhaseSections(
   stage: StructureStageHubSummary,
 ): StructureSectionId[] {
   const sections: StructureSectionId[] = ['construction'];

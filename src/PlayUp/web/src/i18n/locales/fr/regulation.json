@@ -33,7 +33,7 @@
     "White": "Blanc"
   },
   "differsFromFrame": "Cette phase a au moins une règle découplée du règlement général. Les jetons en couleur signalent les règles concernées.",
-  "personalized": "Personnalisée",
+  "personalized": "Personnalisé",
   "editRegulation": "Modifier le règlement",
   "editRegulationDisabledHint": "Le règlement ne peut pas être modifié dans cet état.",
   "editor": {
@@ -153,7 +153,8 @@
     "groups": "{{count}} groupes",
     "championship": "Championnat · {{teams}} équipes",
     "swiss": "Système suisse · {{rounds}} rondes",
-    "swissGeneric": "Système suisse"
+    "swissGeneric": "Système suisse",
+    "swissRound": "Ronde {{n}}"
   },
   "title": "Règlement",
   "tokens": {

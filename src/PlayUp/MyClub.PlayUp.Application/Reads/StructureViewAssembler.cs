@@ -103,6 +103,9 @@ public static class StructureViewAssembler
     /// <summary>Replace or clear stage default TieFormat.</summary>
     public const string ActionReplaceDefaultTieFormat = "ReplaceDefaultTieFormat";
 
+    /// <summary>Replace or clear PlacementAwardRules (final competition ranks).</summary>
+    public const string ActionReplacePlacementAwardRules = "ReplacePlacementAwardRules";
+
     /// <summary>Stage structure issue: qualification destination stage missing from competition.</summary>
     public const string IssueDanglingQualificationTarget = "DanglingQualificationTarget";
 
@@ -194,8 +197,8 @@ public static class StructureViewAssembler
         var match = regulation.MatchRules;
         var standing = regulation.StandingRules;
         var draw = regulation.DrawRules;
-        var qualificationPaths = MapQualificationPaths(regulation.QualificationRules);
-        var progressionPaths = MapProgressionPaths(regulation.ProgressionRules);
+        var qualificationPaths = MapQualificationPaths(stage, regulation.QualificationRules);
+        var progressionPaths = MapProgressionPaths(stage, regulation.ProgressionRules);
         var placement = regulation.PlacementAwardRules;
         var storedTie = regulation.TieFormat
             ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
@@ -237,7 +240,11 @@ public static class StructureViewAssembler
 
         IReadOnlyList<StructurePlacementAwardDto>? placementAwards = placement?.Paths
             .OrderBy(path => path.Rank)
-            .Select(path => new StructurePlacementAwardDto(path.Rank, path.Outcome))
+            .Select(path => new StructurePlacementAwardDto(
+                path.Rank,
+                path.Outcome,
+                path.SourceFixtureId.Value,
+                ResolveFixtureSourceLabel(stage, path.SourceFixtureId)))
             .ToArray();
         IReadOnlyList<StructureDrawConstraintDto>? drawConstraints = draw?.Constraints
             .Select(constraint => new StructureDrawConstraintDto(
@@ -296,10 +303,12 @@ public static class StructureViewAssembler
             QualificationPaths: qualificationPaths,
             ProgressionPaths: progressionPaths,
             StructureIssues: BuildStructureIssues(stage, competitionStages),
-            HalfTimeDuration: match.Duration.HalfTimeDuration);
+            HalfTimeDuration: match.Duration.HalfTimeDuration,
+            DirectAssignmentCount: stage.DirectAssignments.Count);
     }
 
     private static IReadOnlyList<StructureQualificationPathDto>? MapQualificationPaths(
+        Stage stage,
         QualificationRules? rules)
     {
         if (rules is null)
@@ -309,21 +318,32 @@ public static class StructureViewAssembler
 
         return
         [
-            .. rules.Paths.Select(path => new StructureQualificationPathDto(
-                path.Order,
-                path.Selection.Mode,
-                path.Selection.Value,
-                path.Destination.StageId.Value,
-                path.Destination.SlotKey,
-                path.Source.Scope,
-                path.Source.GroupId?.Value,
-                path.Source.AcrossGroupsPosition,
-                path.Selection.EndValue,
-                path.Condition?.MinimumPoints))
+            .. rules.Paths.Select(path =>
+            {
+                string? groupName = null;
+                if (path.Source.GroupId is { } groupId)
+                {
+                    groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
+                }
+
+                return new StructureQualificationPathDto(
+                    path.Order,
+                    path.Selection.Mode,
+                    path.Selection.Value,
+                    path.Destination.StageId.Value,
+                    path.Destination.SlotKey,
+                    path.Source.Scope,
+                    path.Source.GroupId?.Value,
+                    path.Source.AcrossGroupsPosition,
+                    path.Selection.EndValue,
+                    path.Condition?.MinimumPoints,
+                    groupName);
+            })
         ];
     }
 
     private static IReadOnlyList<StructureProgressionPathDto>? MapProgressionPaths(
+        Stage stage,
         ProgressionRules? rules)
     {
         if (rules is null)
@@ -333,12 +353,70 @@ public static class StructureViewAssembler
 
         return
         [
-            .. rules.Paths.Select(path => new StructureProgressionPathDto(
-                path.SourceFixtureId.Value,
-                path.Outcome,
-                path.Destination.StageId.Value,
-                path.Destination.SlotKey))
+            .. rules.Paths.Select(path =>
+            {
+                return new StructureProgressionPathDto(
+                    path.SourceFixtureId.Value,
+                    path.Outcome,
+                    path.Destination.StageId.Value,
+                    path.Destination.SlotKey,
+                    ResolveFixtureSourceLabel(stage, path.SourceFixtureId));
+            })
         ];
+    }
+
+    /// <summary>
+    /// Human fixture label: round/matchday · #order, optionally · slotA vs slotB when keys exist.
+    /// </summary>
+    private static string? ResolveFixtureSourceLabel(Stage stage, FixtureId fixtureId)
+    {
+        foreach (var round in stage.Rounds)
+        {
+            for (var i = 0; i < round.Fixtures.Count; i++)
+            {
+                var fixture = round.Fixtures[i];
+                if (!fixture.Id.Equals(fixtureId))
+                {
+                    continue;
+                }
+
+                return FormatFixtureSourceLabel(round.Name, i + 1, fixture);
+            }
+        }
+
+        foreach (var matchday in stage.Matchdays)
+        {
+            for (var i = 0; i < matchday.Fixtures.Count; i++)
+            {
+                var fixture = matchday.Fixtures[i];
+                if (!fixture.Id.Equals(fixtureId))
+                {
+                    continue;
+                }
+
+                return FormatFixtureSourceLabel(
+                    $"J{matchday.Number.ToString(CultureInfo.InvariantCulture)}",
+                    i + 1,
+                    fixture);
+            }
+        }
+
+        return null;
+    }
+
+    private static string FormatFixtureSourceLabel(string containerName, int order, Fixture fixture)
+    {
+        var a = fixture.SlotAKey?.Trim();
+        var b = fixture.SlotBKey?.Trim();
+        var hasSlots = !string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b);
+        if (!hasSlots)
+        {
+            return $"{containerName} · #{order.ToString(CultureInfo.InvariantCulture)}";
+        }
+
+        var left = string.IsNullOrEmpty(a) ? "—" : a;
+        var right = string.IsNullOrEmpty(b) ? "—" : b;
+        return $"{containerName} · #{order.ToString(CultureInfo.InvariantCulture)} · {left} vs {right}";
     }
 
     private static IReadOnlyList<string> BuildStageActions(Competition competition, Stage stage)
@@ -361,6 +439,7 @@ public static class StructureViewAssembler
             ActionRenameStage,
             ActionReplaceQualificationRules,
             ActionReplaceProgressionRules,
+            ActionReplacePlacementAwardRules,
             ActionReplaceMatchRules,
             ActionBindToCompetition
         };

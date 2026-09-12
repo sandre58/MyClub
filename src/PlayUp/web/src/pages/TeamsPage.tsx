@@ -317,6 +317,8 @@ function TeamsView({
 
   const compactIcon =
     'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
+  const compactDangerIcon =
+    'ds-btn ds-btn--destructive ds-icon-button ds-icon-button--compact';
 
   const rosterOpen =
     selectedCount === 1 &&
@@ -357,7 +359,7 @@ function TeamsView({
                         <Tooltip content={removeLabel}>
                           <button
                             type="button"
-                            className={compactIcon}
+                            className={compactDangerIcon}
                             disabled={removePending}
                             aria-label={removeLabel}
                             onClick={() => confirmAndRemove(selectedIds)}
@@ -373,7 +375,7 @@ function TeamsView({
                         <Tooltip content={barRemoveHint}>
                           <button
                             type="button"
-                            className={compactIcon}
+                            className={compactDangerIcon}
                             disabled
                             aria-label={removeLabel}
                           >
@@ -493,7 +495,7 @@ function TeamsView({
                             <Tooltip content={removeLabel}>
                               <button
                                 type="button"
-                                className={compactIcon}
+                                className={compactDangerIcon}
                                 disabled={removePending}
                                 aria-label={tileRemoveLabel}
                                 onClick={() =>
@@ -511,7 +513,7 @@ function TeamsView({
                             <Tooltip content={tileRemoveHint}>
                               <button
                                 type="button"
-                                className={compactIcon}
+                                className={compactDangerIcon}
                                 disabled
                                 aria-label={tileRemoveLabel}
                               >

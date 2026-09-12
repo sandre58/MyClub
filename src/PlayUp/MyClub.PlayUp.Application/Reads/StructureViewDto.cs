@@ -212,6 +212,7 @@ public sealed record StructureReadinessDto(
 /// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
+/// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -262,7 +263,8 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<StructureQualificationPathDto>? QualificationPaths = null,
     IReadOnlyList<StructureProgressionPathDto>? ProgressionPaths = null,
     IReadOnlyList<string>? StructureIssues = null,
-    int HalfTimeDuration = 0);
+    int HalfTimeDuration = 0,
+    int DirectAssignmentCount = 0);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>
@@ -275,6 +277,7 @@ public sealed record StructureStageHubSummaryDto(
 /// <param name="AcrossGroupsPosition">Across-groups position when applicable.</param>
 /// <param name="SelectionEndValue">Range upper bound when mode is Range.</param>
 /// <param name="MinimumPoints">Optional Points ≥ gate.</param>
+/// <param name="GroupName">Resolved group display name when <paramref name="GroupId"/> is set.</param>
 public sealed record StructureQualificationPathDto(
     int Order,
     SelectionMode SelectionMode,
@@ -285,18 +288,21 @@ public sealed record StructureQualificationPathDto(
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
     int? SelectionEndValue = null,
-    int? MinimumPoints = null);
+    int? MinimumPoints = null,
+    string? GroupName = null);
 
 /// <summary>One progression path for Structure authoring / impact preview.</summary>
 /// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
 /// <param name="DestinationSlotKey">Destination slot key.</param>
+/// <param name="SourceLabel">Resolved fixture label (round · #order · slots) when the fixture exists.</param>
 public sealed record StructureProgressionPathDto(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
-    string DestinationSlotKey);
+    string DestinationSlotKey,
+    string? SourceLabel = null);
 
 /// <summary>Round identity + display name inside a confrontation segment.</summary>
 /// <param name="RoundId">Round identity.</param>
@@ -337,12 +343,16 @@ public sealed record StructureStageDefaultsBindingDto(
     StructureHeritablePartBindingDto? Points,
     StructureHeritablePartBindingDto? RankingCriteria);
 
-/// <summary>One placement-award path for the Règlement hub.</summary>
+/// <summary>One placement-award path for the Règlement / Structure hubs.</summary>
 /// <param name="Rank">1-based final competition rank.</param>
 /// <param name="Outcome">Winner or Loser of the source confrontation.</param>
+/// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
+/// <param name="SourceLabel">Resolved fixture label (round · #order · slots) when found.</param>
 public sealed record StructurePlacementAwardDto(
     int Rank,
-    ProgressionOutcome Outcome);
+    ProgressionOutcome Outcome,
+    Guid? SourceFixtureId = null,
+    string? SourceLabel = null);
 
 /// <summary>One draw constraint for the Règlement hub Tirage column.</summary>
 /// <param name="Type">DrawConstraintType member name.</param>
