@@ -107,7 +107,7 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Championship_does_not_project_composition_onto_roster_places()
+    public void Championship_places_composition_entries_into_roster_places()
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
@@ -117,7 +117,6 @@ public sealed class StageSchematicAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("Ligue"), SampleRegulations.Standard(), _clock);
         stage.AddMatchday(1, _clock);
 
-        // Composition set k=2 — must NOT fill RosterPlace 1..2.
         stage.ReplaceCompositionEntries(
             [
                 competition.Entries.ElementAt(0).Id,
@@ -129,12 +128,53 @@ public sealed class StageSchematicAssemblerTests
 
         schematic.FormatKind.Should().Be(StructureFormatKind.Championship);
         schematic.Cases.Should().HaveCount(4);
-        schematic.Cases.Should().OnlyContain(c =>
-            c.FormPosition.Kind == StageSchematicAssembler.FormKindRosterPlace
-            && c.Entry == null
-            && c.Assignment == null
-            && c.FeedOrigin == null);
+        schematic.Cases[0].Entry!.DisplayName.Should().Be("A");
+        schematic.Cases[1].Entry!.DisplayName.Should().Be("B");
+        schematic.Cases[2].Entry.Should().BeNull();
+        schematic.Cases[3].Entry.Should().BeNull();
         schematic.Connections.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Cup_match_numbers_are_stable_across_fixture_collection_order()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var source = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
+        source.AddRound("R32", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("S1");
+        source.AddSlot("S2");
+        source.AddSlot("S3");
+        source.AddSlot("S4");
+        var early = source.AddFixture(source.Rounds[0].Id, _clock, "S1", "S2");
+        var late = source.AddFixture(source.Rounds[0].Id, _clock, "S3", "S4");
+
+        var target = Stage.Create(competition.Id, new StageName("R16"), SampleRegulations.Standard(), _clock);
+        target.AddRound("R16", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        target.AddSlot("R16-A");
+        target.AddSlot("R16-B");
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    late.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(target.Id, "R16-A")),
+                new ProgressionPath(
+                    early.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(target.Id, "R16-B"))
+            ]),
+            _clock);
+
+        var schematic = StageSchematicAssembler.Assemble(target, competition, [source, target]);
+        var sourceSchematic = StageSchematicAssembler.Assemble(source, competition, [source, target]);
+
+        var lateNumber = sourceSchematic.Connections.Single(c => c.FixtureId == late.Id.Value).MatchNumber;
+        var earlyNumber = sourceSchematic.Connections.Single(c => c.FixtureId == early.Id.Value).MatchNumber;
+        schematic.Cases.Single(c => c.FormPosition.SlotKey == "R16-A")
+            .FeedOrigin!.SourceFixtureNumber.Should().Be(lateNumber);
+        schematic.Cases.Single(c => c.FormPosition.SlotKey == "R16-B")
+            .FeedOrigin!.SourceFixtureNumber.Should().Be(earlyNumber);
     }
 
     [Fact]
@@ -213,19 +253,23 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Swiss_exposes_round_count_and_capacity_places()
+    public void Swiss_places_composition_into_pool_slots()
     {
         var competition = Competition.Create(new CompetitionName("Swiss"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
         competition.AddEntry(TeamId.New(), "B", _clock);
         var stage = Stage.Create(competition.Id, new StageName("Suisse"), SampleRegulations.Standard(), _clock);
         stage.SetSwissSettings(new SwissSettings(roundCount: 5));
+        stage.ReplaceCompositionEntries(
+            [competition.Entries.ElementAt(0).Id, competition.Entries.ElementAt(1).Id],
+            _clock);
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage]);
 
         schematic.FormatKind.Should().Be(StructureFormatKind.Swiss);
         schematic.SwissRoundCount.Should().Be(5);
         schematic.Cases.Should().HaveCount(2);
-        schematic.Cases.Should().OnlyContain(c => c.Entry == null);
+        schematic.Cases[0].Entry!.DisplayName.Should().Be("A");
+        schematic.Cases[1].Entry!.DisplayName.Should().Be("B");
     }
 }

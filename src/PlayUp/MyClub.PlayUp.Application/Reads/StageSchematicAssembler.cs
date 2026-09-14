@@ -91,9 +91,12 @@ public static class StageSchematicAssembler
         for (var roundOrder = 0; roundOrder < stage.Rounds.Count; roundOrder++)
         {
             var round = stage.Rounds[roundOrder];
-            for (var fixtureIndex = 0; fixtureIndex < round.Fixtures.Count; fixtureIndex++)
+            var fixtures = OrderedFixtures(round);
+
+            // Stable Match #n: EF collection order is not deterministic across loads.
+            for (var fixtureIndex = 0; fixtureIndex < fixtures.Count; fixtureIndex++)
             {
-                var fixture = round.Fixtures[fixtureIndex];
+                var fixture = fixtures[fixtureIndex];
                 if (fixture.SlotAKey is not null && fixture.SlotBKey is not null)
                 {
                     connections.Add(
@@ -230,8 +233,9 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// Championship / Swiss V1: RosterPlace 1..N capacity only.
-    /// No Composition/Active projection onto places (k stays in Entrées rail).
+    /// Championship / Swiss: RosterPlace 1..N with Composition entries placed in order.
+    /// These formats have no separate placement mechanism — the constituted set is the roster.
+    /// Surplus k beyond N stays in the Entrées rail only.
     /// </summary>
     private static StageSchematicDto AssembleRosterCapacity(
         Stage stage,
@@ -239,20 +243,27 @@ public static class StageSchematicAssembler
         StructureFormatKind format,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
-        _ = entries;
         var places = ResolvePlaces(competition, stage, format);
         if (places is null or < 1)
         {
             return Empty(stage, format);
         }
 
+        var placed = stage.CompositionEntries
+            .Select(compositionEntry => compositionEntry.EntryId)
+            .ToArray();
+
         var cases = Enumerable
             .Range(1, places.Value)
-            .Select(index => new SchematicCaseDto(
-                new SchematicFormPositionDto(FormKindRosterPlace, Index: index),
-                FeedOrigin: null,
-                Entry: null,
-                Assignment: null))
+            .Select(index =>
+            {
+                EntryId? entryId = index <= placed.Length ? placed[index - 1] : null;
+                return new SchematicCaseDto(
+                    new SchematicFormPositionDto(FormKindRosterPlace, Index: index),
+                    FeedOrigin: null,
+                    MapEntry(entryId, entries),
+                    MapAssignment(entryId, entries));
+            })
             .ToArray();
 
         return new StageSchematicDto(
@@ -267,7 +278,7 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// 1-based index of a real fixture within its round on the source stage (Match #n identity).
+    /// Stable 1-based Match #n within the fixture's round (ordered by FixtureId).
     /// </summary>
     private static int? FindFixtureNumber(
         StageId sourceStageId,
@@ -282,9 +293,10 @@ public static class StageSchematicAssembler
 
         foreach (var round in source.Rounds)
         {
-            for (var index = 0; index < round.Fixtures.Count; index++)
+            var fixtures = OrderedFixtures(round);
+            for (var index = 0; index < fixtures.Count; index++)
             {
-                if (round.Fixtures[index].Id.Equals(fixtureId))
+                if (fixtures[index].Id.Equals(fixtureId))
                 {
                     return index + 1;
                 }
@@ -293,6 +305,9 @@ public static class StageSchematicAssembler
 
         return null;
     }
+
+    private static IReadOnlyList<Fixture> OrderedFixtures(Round round) =>
+        [.. round.Fixtures.OrderBy(fixture => fixture.Id.Value)];
 
     private static SchematicFeedOriginDto? MapFeedOrigin(
         SlotFeedResolution? resolution,

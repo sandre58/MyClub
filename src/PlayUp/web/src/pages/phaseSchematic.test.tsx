@@ -91,7 +91,7 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText('Beta')).toBeInTheDocument();
   });
 
-  it('championship roster stays empty when cases have no entry (no k projection)', () => {
+  it('championship roster shows composition entries in places', () => {
     const schematic: StageSchematic = {
       stageId: 's1',
       competitionId: 'c1',
@@ -99,16 +99,19 @@ describe('PhaseSchematic', () => {
       status: 'Draft',
       formatKind: 'Championship',
       cases: [
-        { formPosition: { kind: 'RosterPlace', index: 1 } },
+        {
+          formPosition: { kind: 'RosterPlace', index: 1 },
+          entry: { entryId: 'e1', displayName: 'Alpha' },
+          assignment: { entryId: 'e1', displayName: 'Alpha' },
+        },
         { formPosition: { kind: 'RosterPlace', index: 2 } },
       ],
       connections: [],
     };
     const { container } = render(<PhaseSchematic schematic={schematic} />);
-    expect(container.querySelectorAll('.schematic-slot--empty')).toHaveLength(
-      2,
-    );
-    expect(container.querySelector('.schematic-slot__primary')).toBeNull();
+    expect(container.querySelectorAll('.schematic-slot')).toHaveLength(2);
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(container.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
   });
 
   it('swiss shows planned round count, distinct from championship', () => {

@@ -481,14 +481,16 @@ public static class StructureViewAssembler
 
     /// <summary>
     /// Human fixture label: round/matchday · #order, optionally · slotA vs slotB when keys exist.
+    /// Match #order is stable (fixtures ordered by id) so labels match StageSchematic.
     /// </summary>
     private static string? ResolveFixtureSourceLabel(Stage stage, FixtureId fixtureId)
     {
         foreach (var round in stage.Rounds)
         {
-            for (var i = 0; i < round.Fixtures.Count; i++)
+            var fixtures = round.Fixtures.OrderBy(fixture => fixture.Id.Value).ToArray();
+            for (var i = 0; i < fixtures.Length; i++)
             {
-                var fixture = round.Fixtures[i];
+                var fixture = fixtures[i];
                 if (!fixture.Id.Equals(fixtureId))
                 {
                     continue;
@@ -500,9 +502,10 @@ public static class StructureViewAssembler
 
         foreach (var matchday in stage.Matchdays)
         {
-            for (var i = 0; i < matchday.Fixtures.Count; i++)
+            var fixtures = matchday.Fixtures.OrderBy(fixture => fixture.Id.Value).ToArray();
+            for (var i = 0; i < fixtures.Length; i++)
             {
-                var fixture = matchday.Fixtures[i];
+                var fixture = fixtures[i];
                 if (!fixture.Id.Equals(fixtureId))
                 {
                     continue;
