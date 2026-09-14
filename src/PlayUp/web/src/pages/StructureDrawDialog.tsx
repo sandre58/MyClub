@@ -21,6 +21,7 @@ import type {
 } from '../types';
 import {
   getDrawUiProjection,
+  pickDefaultDrawId,
   resolvePairingFixtureIds,
 } from './drawUi';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
@@ -42,15 +43,6 @@ function resolveDrawKindForFormat(
     return 'Pairing';
   }
   return null;
-}
-
-function pickDefaultDrawId(draws: StageDraw[]): string | null {
-  if (draws.length === 0) {
-    return null;
-  }
-  const newestFirst = [...draws].reverse();
-  const active = newestFirst.find((d) => d.status !== 'Cancelled');
-  return (active ?? newestFirst[0])?.id ?? null;
 }
 
 type StructureDrawDialogProps = {

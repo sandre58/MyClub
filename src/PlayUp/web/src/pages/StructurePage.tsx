@@ -578,32 +578,22 @@ function TopologyOutboundLinks({
 
 function TopologyDrawHint({ stage }: { stage: StructureStageHubSummary }) {
   const { t } = useTranslation('structure');
-  const needsDraw = stage.formatKind === 'Groups' || stage.formatKind === 'Cup';
-  if (!needsDraw) {
+  if (!stage.hasDrawRules) {
     return null;
   }
 
-  if (stage.hasDrawRules) {
-    const pots = stage.numberOfPots;
-    const label =
-      pots != null && pots > 0
-        ? t('hub.drawPots', { count: pots })
-        : t('hub.drawConfigured');
-    return (
-      <Tooltip content={t('hub.drawConfiguredTooltip')}>
-        <span className="structure-topology__signal">
-          <DrawPendingIcon size="sm" aria-hidden="true" />
-          <span>{label}</span>
-        </span>
-      </Tooltip>
-    );
-  }
-
+  const pots = stage.numberOfPots;
+  const label =
+    pots != null && pots > 0
+      ? t('hub.drawPots', { count: pots })
+      : t('hub.drawConfigured');
   return (
-    <span className="structure-topology__signal structure-topology__signal--warning">
-      <DrawPendingIcon size="sm" aria-hidden="true" />
-      <span>{t('hub.drawPending')}</span>
-    </span>
+    <Tooltip content={t('hub.drawConfiguredTooltip')}>
+      <span className="structure-topology__signal">
+        <DrawPendingIcon size="sm" aria-hidden="true" />
+        <span>{label}</span>
+      </span>
+    </Tooltip>
   );
 }
 
@@ -777,7 +767,6 @@ function readinessStatusNote(
 ): ReactNode {
   const readiness = data.readiness;
   const formatKind = data.format.kind;
-  const needsDraw = formatKind === 'Groups' || formatKind === 'Cup';
   const blockers = readiness.blockers;
   /** StructureGraphInvalid counted in readiness but listed only in Topology. */
   const headerBlockers = blockers.filter(
@@ -785,16 +774,8 @@ function readinessStatusNote(
   );
   const incomplete = blockers.length > 0;
   const readyToMaterialize = readiness.readyForMaterialization;
-  const drawRequired =
-    !incomplete &&
-    needsDraw &&
-    readiness.readyForDraw &&
-    !readyToMaterialize;
   const readyNext =
-    !incomplete &&
-    !readyToMaterialize &&
-    !drawRequired &&
-    readiness.readyForNextSlice;
+    !incomplete && !readyToMaterialize && readiness.readyForNextSlice;
 
   if (incomplete) {
     return (
@@ -817,10 +798,6 @@ function readinessStatusNote(
         }
       />
     );
-  }
-
-  if (drawRequired) {
-    return <ReadinessReadyStatus titleKey="readiness.drawRequired" />;
   }
 
   if (readyNext) {

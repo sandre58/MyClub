@@ -12,6 +12,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   configureStructure,
   fetchStructureView,
+  fetchStageOverview,
+  fetchStageSchematic,
   ApiError,
 } from '../api';
 import type {
@@ -27,6 +29,8 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchStructureView: vi.fn(),
     configureStructure: vi.fn(),
+    fetchStageOverview: vi.fn(),
+    fetchStageSchematic: vi.fn(),
   };
 });
 
@@ -219,6 +223,12 @@ describe('relevantPhaseSections', () => {
     ]);
   });
 
+  it('omits tirage for Groups/Cup until DrawRules are configured', () => {
+    expect(
+      relevantPhaseSections(groupesStage({ hasDrawRules: false })),
+    ).toEqual(['construction', 'qualification', 'progression']);
+  });
+
   it('includes relation sections when per-phase edit actions are offered', () => {
     expect(
       relevantPhaseSections(
@@ -233,6 +243,24 @@ describe('relevantPhaseSections', () => {
 describe('StructurePage Structure hub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(fetchStageOverview).mockResolvedValue({
+      id: stageId,
+      competitionId,
+      name: 'Phase',
+      status: 'Draft',
+      rounds: [],
+      slots: [],
+      draws: [],
+    });
+    vi.mocked(fetchStageSchematic).mockResolvedValue({
+      stageId,
+      competitionId,
+      name: 'Phase',
+      status: 'Draft',
+      formatKind: 'Championship',
+      cases: [],
+      connections: [],
+    });
     vi.mocked(configureStructure).mockResolvedValue({
       stageCreated: true,
       rebuildImpact: null,
@@ -560,8 +588,11 @@ describe('StructurePage Structure hub', () => {
       within(topology).getByText(/^Anomalie structurelle$/i),
     ).toBeInTheDocument();
     expect(
-      within(topology).getAllByText(/Tirage à définir/i).length,
-    ).toBeGreaterThanOrEqual(1);
+      within(topology).queryByText(/Affectation par tirage/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(topology).queryByText(/Tirage (à définir|requis|configuré)/i),
+    ).not.toBeInTheDocument();
     expect(
       within(topology).getByText(/Qualification · 1 chemin/i),
     ).toBeInTheDocument();
@@ -719,7 +750,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows draw-required status without Overview CTA or ops command', async () => {
+  it('shows next-slice readiness for Groups when draw-ready without claiming draw required', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -745,8 +776,9 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Tirage requis/i),
+      await screen.findByText(/Prêt pour la suite/i),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Tirage requis/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();

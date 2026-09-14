@@ -12,6 +12,63 @@ export type DrawUiProjection = {
 };
 
 /**
+ * Single primary summary for the Structure Tirage tile (not a lifecycle strip).
+ * Priority: Applied > Published > Resolved > Draft (NoSolution stays distinct).
+ */
+export type DrawTilePrimarySummary =
+  | 'applied'
+  | 'published'
+  | 'resolved'
+  | 'draft'
+  | 'noSolution';
+
+/**
+ * Current non-cancelled draw for Structure chrome (newest first).
+ * Cancelled-only history → null (capacity / config, not engagement).
+ */
+export function pickActiveDraw(draws: StageDraw[]): StageDraw | null {
+  if (draws.length === 0) {
+    return null;
+  }
+  const newestFirst = [...draws].reverse();
+  return newestFirst.find((d) => d.status !== 'Cancelled') ?? null;
+}
+
+/** Default selection id for the Tirage dialog (prefers active, else newest). */
+export function pickDefaultDrawId(draws: StageDraw[]): string | null {
+  if (draws.length === 0) {
+    return null;
+  }
+  const newestFirst = [...draws].reverse();
+  const active = newestFirst.find((d) => d.status !== 'Cancelled');
+  return (active ?? newestFirst[0])?.id ?? null;
+}
+
+/**
+ * One product-facing summary for the Tirage tile — never “effectué”.
+ */
+export function getDrawTilePrimarySummary(
+  draw: StageDraw,
+  slots: StageSlot[],
+  rounds: StageRound[] = [],
+): DrawTilePrimarySummary {
+  const projection = getDrawUiProjection(draw, slots, rounds);
+  if (projection.isApplied) {
+    return 'applied';
+  }
+  if (draw.status === 'Published') {
+    return 'published';
+  }
+  if (draw.resolutionState === 'Resolved') {
+    return 'resolved';
+  }
+  if (draw.resolutionState === 'NoSolution') {
+    return 'noSolution';
+  }
+  return 'draft';
+}
+
+/**
  * Pure projection: server enums → message key + flags for conditional rendering.
  * Not a Domain state machine — only helps the component avoid nested if spaghetti.
  *

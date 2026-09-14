@@ -50,7 +50,8 @@
     "drawPots_other": "{{count}} pots",
     "drawConfigured": "Draw configured",
     "drawConfiguredTooltip": "Draw rules are set for this stage",
-    "drawPending": "Draw to define",
+    "drawCapability": "Assignment by draw",
+    "drawCapabilityTooltip": "Optional population capability — not required",
     "outboundTo": "→ {{name}}",
     "section": {
       "construction": "Construction",
@@ -80,7 +81,7 @@
       "standingCustom": "Standings: Custom",
       "openRegulation": "Regulations",
       "tirageConfigured": "Configured · {{pots}} pot(s)",
-      "tirageRequired": "Draw required",
+      "tirageCapability": "Assignment by draw",
       "confrontationSummary": "Home & away · {{legs}} leg(s)"
     },
     "detail": {
@@ -116,8 +117,7 @@
     "structureIncomplete_one": "Incomplete structure · {{count}} item to clear",
     "structureIncomplete_other": "Incomplete structure · {{count}} items to clear",
     "structureNotReady": "Structure not ready",
-    "drawRequired": "Draw required",
-    "drawHint": "Structure is ready — run the draw in the operational workflow.",
+    "drawHint": "Structure is ready — population by draw is optional (Draw dialog).",
     "nextSliceHint": "Go to Overview for the next operational step.",
     "ready": "Ready for the next step",
     "readyToMaterializeBadge": "Ready to materialise",
@@ -396,6 +396,7 @@
     "teamsCount_other": "{{count}} teams",
     "statsAria": "Phase facts",
     "openDrawWorkflow": "Open draw",
+    "configureDraw": "Configure draw",
     "drawWorkflow": {
       "title": "Draw executions",
       "description": "Phase “{{phase}}” — multiple executions ≠ multiple rounds.",
@@ -432,8 +433,14 @@
     },
     "tirage": {
       "pots": "{{pots}} pots",
-      "required": "Draw required",
-      "missingBody": "A draw is required for this phase, but no draw rules are set yet.",
+      "capabilityBody": "Assignment by draw",
+      "summary": {
+        "applied": "Applied",
+        "published": "Published",
+        "resolved": "Resolved",
+        "draft": "Draft",
+        "noSolution": "No solution"
+      },
       "random": "Random draw",
       "seeds": "{{count}} seeds",
       "constraints": "{{count}} constraint(s)"

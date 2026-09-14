@@ -50,7 +50,8 @@
     "drawPots_other": "{{count}} pots",
     "drawConfigured": "Tirage configuré",
     "drawConfiguredTooltip": "Règles de tirage définies pour cette phase",
-    "drawPending": "Tirage à définir",
+    "drawCapability": "Affectation par tirage",
+    "drawCapabilityTooltip": "Capacité de peuplement optionnelle — non requise",
     "outboundTo": "→ {{name}}",
     "section": {
       "construction": "Construction",
@@ -80,7 +81,7 @@
       "standingCustom": "Classement : Personnalisé",
       "openRegulation": "Règlement",
       "tirageConfigured": "Configuré · {{pots}} pot(s)",
-      "tirageRequired": "Tirage requis",
+      "tirageCapability": "Affectation par tirage",
       "confrontationSummary": "Aller-retour · {{legs}} manche(s)"
     },
     "detail": {
@@ -116,8 +117,7 @@
     "structureIncomplete_one": "Structure incomplète · {{count}} point à lever",
     "structureIncomplete_other": "Structure incomplète · {{count}} points à lever",
     "structureNotReady": "Structure non prête",
-    "drawRequired": "Tirage requis",
-    "drawHint": "La structure est prête — le tirage se fait dans le workflow opérationnel.",
+    "drawHint": "La structure est prête — le peuplement par tirage est optionnel (dialog Tirage).",
     "nextSliceHint": "Passez à la Vue d’ensemble pour la suite opérationnelle.",
     "ready": "Prêt pour la suite",
     "readyToMaterializeBadge": "Prête à matérialiser",
@@ -396,6 +396,7 @@
     "teamsCount_other": "{{count}} équipes",
     "statsAria": "Faits de la phase",
     "openDrawWorkflow": "Ouvrir le tirage",
+    "configureDraw": "Configurer le tirage",
     "drawWorkflow": {
       "title": "Exécutions de tirage",
       "description": "Phase « {{phase}} » — plusieurs exécutions ≠ plusieurs tours.",
@@ -432,8 +433,14 @@
     },
     "tirage": {
       "pots": "{{pots}} pots",
-      "required": "Tirage requis",
-      "missingBody": "Le tirage est requis pour cette phase, mais aucune règle n’est encore définie.",
+      "capabilityBody": "Affectation par tirage",
+      "summary": {
+        "applied": "Appliqué",
+        "published": "Publié",
+        "resolved": "Résolu",
+        "draft": "Brouillon",
+        "noSolution": "Sans solution"
+      },
       "random": "Tirage aléatoire",
       "seeds": "{{count}} têtes de série",
       "constraints": "{{count}} contrainte(s)"

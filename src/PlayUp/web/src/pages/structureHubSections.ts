@@ -75,11 +75,9 @@ export function relevantPhaseSections(
 }
 
 function stageNeedsDrawSection(stage: StructureStageHubSummary): boolean {
-  if (stage.hasDrawRules) {
-    return true;
-  }
-  const kind = stage.formatKind;
-  return kind === 'Groups' || kind === 'Cup';
+  // Engaged mechanism only (DrawRules). Format alone ≠ obligation / chrome.
+  // Active Draw without rules = edge case handled on the fiche via overview fetch.
+  return stage.hasDrawRules;
 }
 
 export function constructionSummaryFacts(stage: StructureStageHubSummary): {

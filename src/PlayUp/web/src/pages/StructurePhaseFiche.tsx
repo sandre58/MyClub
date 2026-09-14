@@ -11,10 +11,9 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchStageSchematic } from '../api';
+import { fetchStageOverview, fetchStageSchematic } from '../api';
 import { Chip } from '../design-system/components/Chip';
 import { Popover } from '../design-system/components/Popover';
-import { Status } from '../design-system/components/Status';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { TextLink } from '../design-system/components/TextLink';
 import { LucideIcon } from '../design-system/icons/Icon';
@@ -71,6 +70,10 @@ import {
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
+import {
+  getDrawTilePrimarySummary,
+  pickActiveDraw,
+} from './drawUi';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -1280,6 +1283,16 @@ export function StructurePhaseFiche({
     enabled: !!stage?.stageId,
   });
 
+  const drawOverviewQuery = useQuery({
+    queryKey: queryKeys.stages.detail(stage?.stageId ?? ''),
+    queryFn: () => fetchStageOverview(stage!.stageId),
+    enabled:
+      !!stage?.stageId &&
+      (stage.formatKind === 'Groups' ||
+        stage.formatKind === 'Cup' ||
+        Boolean(stage.hasDrawRules)),
+  });
+
   if (!stage) {
     return (
       <section className="structure-fiche" aria-labelledby="fiche-empty">
@@ -1304,9 +1317,16 @@ export function StructurePhaseFiche({
   const sections = relevantPhaseSections(stage);
   const actions = stageActions(stage);
   const regulationHref = `/competitions/${data.competitionId}/regulation`;
-  const showTirage = sections.includes('tirage');
+  const activeDraw = pickActiveDraw(drawOverviewQuery.data?.draws ?? []);
+  const showTirage = stage.hasDrawRules || Boolean(activeDraw);
   const showConfrontation = sections.includes('confrontation');
-  const tirageRequired = showTirage && !stage.hasDrawRules;
+  const tiragePrimary = activeDraw
+    ? getDrawTilePrimarySummary(
+        activeDraw,
+        drawOverviewQuery.data?.slots ?? [],
+        drawOverviewQuery.data?.rounds ?? [],
+      )
+    : null;
   const canEditProg = actions.includes('ReplaceProgressionRules');
   const canEditPlacement = actions.includes('ReplacePlacementAwardRules');
   const canEditDraw = actions.includes('ReplaceDrawRules');
@@ -1380,6 +1400,13 @@ export function StructurePhaseFiche({
   }
 
   const overflowItems: OverflowItem[] = [];
+  if (canEditDraw && !showTirage) {
+    overflowItems.push({
+      id: 'configure-draw',
+      label: t('fiche.configureDraw'),
+      onSelect: () => setEdit('tirage'),
+    });
+  }
   if (canEditProg && !hasExits) {
     overflowItems.push({
       id: 'add-exit',
@@ -1691,17 +1718,11 @@ export function StructurePhaseFiche({
             editLabel={t('fiche.edit')}
             onEdit={canEditDraw ? () => setEdit('tirage') : undefined}
             compact
-            attention={tirageRequired}
-            badge={
-              tirageRequired ? (
-                <Status density="compact" tone="attention">
-                  {t('fiche.tirage.required')}
-                </Status>
-              ) : undefined
-            }
           >
-            {tirageRequired ? (
-              <p className="structure-panel__muted">{t('fiche.tirage.missingBody')}</p>
+            {tiragePrimary ? (
+              <p className="structure-panel__muted">
+                {t(`fiche.tirage.summary.${tiragePrimary}`)}
+              </p>
             ) : (
               <DrawConfigPanel stage={stage} />
             )}
