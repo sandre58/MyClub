@@ -19,6 +19,7 @@ import type {
   StructureView,
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { EditSkeletonDialog } from './StructureGraphDialogs';
 
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
@@ -26,7 +27,7 @@ function stageActions(stage: StructureStageHubSummary): string[] {
 
 /**
  * Locale Construction editors (Lot 3) — additive / rename / RR / Swiss K.
- * Rebuild stays on StructureEditorDialog.
+ * Same-kind skeleton rebuild → EditSkeletonDialog.
  */
 export function ConstructionLocaleActions({
   data,
@@ -40,6 +41,7 @@ export function ConstructionLocaleActions({
   const [renameOpen, setRenameOpen] = useState(false);
   const [rrOpen, setRrOpen] = useState(false);
   const [swissOpen, setSwissOpen] = useState(false);
+  const [skeletonOpen, setSkeletonOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const addMatchday = useMutation({
@@ -69,6 +71,7 @@ export function ConstructionLocaleActions({
   });
 
   const anyLocale =
+    actions.includes('RebuildStructure') ||
     actions.includes('RenameStage') ||
     actions.includes('AddMatchday') ||
     actions.includes('AddGroup') ||
@@ -85,6 +88,15 @@ export function ConstructionLocaleActions({
     <div className="structure-locale-actions">
       <p className="structure-detail__lede">{t('locale.heading')}</p>
       <div className="structure-graph-toolbar">
+        {actions.includes('RebuildStructure') && (
+          <button
+            type="button"
+            className="ds-btn ds-btn--secondary"
+            onClick={() => setSkeletonOpen(true)}
+          >
+            {t('skeleton.editAction')}
+          </button>
+        )}
         {actions.includes('RenameStage') && (
           <button
             type="button"
@@ -179,6 +191,12 @@ export function ConstructionLocaleActions({
         stage={stage}
         open={swissOpen}
         onClose={() => setSwissOpen(false)}
+      />
+      <EditSkeletonDialog
+        data={data}
+        stage={stage}
+        open={skeletonOpen}
+        onClose={() => setSkeletonOpen(false)}
       />
     </div>
   );

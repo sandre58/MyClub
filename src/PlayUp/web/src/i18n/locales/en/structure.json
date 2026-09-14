@@ -274,9 +274,21 @@
     "configuring": "Configuring…",
     "configureHint": "Creates the primary stage skeleton (first-time setup).",
     "rebuildLegend": "Rebuild structure",
-    "rebuildHint": "Destructive: clears the current skeleton (matchdays, groups, rounds, slots, draw) then rebuilds for the chosen format.",
+    "rebuildHint": "Destructive: clears the current skeleton then rebuilds the same phase type (type is immutable).",
     "rebuildSubmit": "Rebuild",
-    "rebuildConfirm": "I confirm clearing the current skeleton ({{matchdays}} matchdays · {{groups}} groups · {{rounds}} rounds · {{slots}} slots)."
+    "rebuildConfirm": "I confirm clearing the current skeleton ({{matchdays}} matchdays · {{groups}} groups · {{rounds}} rounds · {{slots}} slots).",
+    "bracketHint": "Power of two between 2 and 64."
+  },
+  "skeleton": {
+    "wizardIdentityLede": "Phase identity. The type cannot be changed after creation.",
+    "wizardSkeletonLede": "Minimal structural form — capacity and format parameters, no relations or draw.",
+    "next": "Continue",
+    "back": "Back",
+    "formatImmutable": "Type is immutable after creation.",
+    "placesCapacityHint": "Form capacity (places), not the teams that will fill them.",
+    "editTitle": "Edit skeleton",
+    "editLede": "Rebuilds the phase form (same type). Does not create draw rules or relations.",
+    "editAction": "Edit skeleton"
   },
   "locale": {
     "heading": "Local adjustments (no rebuild)",

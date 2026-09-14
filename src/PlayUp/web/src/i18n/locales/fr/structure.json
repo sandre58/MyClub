@@ -274,9 +274,21 @@
     "configuring": "Configuration…",
     "configureHint": "Crée le squelette de la phase principale (première configuration).",
     "rebuildLegend": "Reconstruire la structure",
-    "rebuildHint": "Opération destructive : efface le squelette actuel (journées, groupes, tours, emplacements, tirage) puis reconstruit selon le format choisi.",
+    "rebuildHint": "Opération destructive : efface le squelette actuel puis reconstruit le même type de phase (type immutable).",
     "rebuildSubmit": "Reconstruire",
-    "rebuildConfirm": "Je confirme l’effacement du squelette actuel ({{matchdays}} journées · {{groups}} groupes · {{rounds}} tours · {{slots}} emplacements)."
+    "rebuildConfirm": "Je confirme l’effacement du squelette actuel ({{matchdays}} journées · {{groups}} groupes · {{rounds}} tours · {{slots}} emplacements).",
+    "bracketHint": "Puissance de 2 entre 2 et 64."
+  },
+  "skeleton": {
+    "wizardIdentityLede": "Identité de la phase. Le type ne pourra plus être changé après création.",
+    "wizardSkeletonLede": "Forme structurelle minimale — capacité et paramètres de format, sans relations ni tirage.",
+    "next": "Continuer",
+    "back": "Retour",
+    "formatImmutable": "Type immutable après création.",
+    "placesCapacityHint": "Capacité de forme (places), pas les équipes qui les rempliront.",
+    "editTitle": "Modifier le squelette",
+    "editLede": "Reconstruit la forme de la phase (même type). Aucun tirage ni relation n’est créé.",
+    "editAction": "Modifier le squelette"
   },
   "locale": {
     "heading": "Ajustements locaux (sans rebuild)",

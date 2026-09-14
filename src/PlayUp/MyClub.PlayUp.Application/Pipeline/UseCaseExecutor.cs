@@ -1003,18 +1003,43 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Adds an additional stage to a competition (thin multi-stage authoring).
+    /// Atomic stage birth: identity + skeleton in one SaveChanges.
     /// </summary>
-    public async Task<Stage> AddCompetitionStageAsync(
+    public async Task<(Stage Stage, StructureViewDto View)> AddCompetitionStageAsync(
         CompetitionId competitionId,
-        string name,
+        StructureIntent intent,
         CancellationToken cancellationToken = default)
     {
         var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var stage = AddCompetitionStage.Execute(competition, name, clock);
+        var stage = AddCompetitionStage.Execute(competition, intent, clock);
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return stage;
+        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return (stage, view);
+    }
+
+    /// <summary>
+    /// Rebuilds a stage skeleton (same format kind; 0 attached matches).
+    /// </summary>
+    /// <param name="stageId">Target stage.</param>
+    /// <param name="buildIntent">
+    /// Builds the intent using the current stage display name (for optional rename omission).
+    /// </param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public async Task<(StructureRebuildImpact Impact, StructureViewDto View)> RebuildStageStructureAsync(
+        StageId stageId,
+        Func<string, StructureIntent> buildIntent,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(buildIntent);
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var intent = buildIntent(stage.Name.Value);
+        var impact = RebuildStageStructure.Execute(competition, stage, intent, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return (impact, view);
     }
 
     /// <summary>

@@ -503,12 +503,42 @@ try
             CancellationToken cancellationToken) =>
         {
             ArgumentNullException.ThrowIfNull(request);
-            var stage = await executor
-                .AddCompetitionStageAsync(new CompetitionId(competitionId), request.Name, cancellationToken)
+            var intent = StructureRequestMapper.ToStructureIntent(request);
+            var (stage, view) = await executor
+                .AddCompetitionStageAsync(new CompetitionId(competitionId), intent, cancellationToken)
                 .ConfigureAwait(false);
             return Results.Created(
                 $"/stages/{stage.Id.Value}",
-                new AddCompetitionStageResponse(stage.Id.Value, stage.Name.Value));
+                new AddCompetitionStageResponse(stage.Id.Value, stage.Name.Value, view));
+        });
+
+    app.MapPut(
+        "/stages/{stageId:guid}/structure",
+        async (
+            Guid stageId,
+            RebuildStageStructureRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            var (impact, view) = await executor
+                .RebuildStageStructureAsync(
+                    new StageId(stageId),
+                    currentName => StructureRequestMapper.ToStructureIntent(request, currentName),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(
+                new RebuildStageStructureResponse(
+                    new StructureRebuildImpactDto(
+                        impact.ClearedMatchdays,
+                        impact.ClearedGroups,
+                        impact.ClearedRounds,
+                        impact.ClearedSlots,
+                        impact.ClearedDirectAssignments,
+                        impact.ClearedCompositionEntries,
+                        impact.ClearedDrawRules,
+                        impact.ClearedSwissSettings),
+                    view));
         });
 
     app.MapDelete(

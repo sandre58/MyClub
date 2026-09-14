@@ -35,7 +35,7 @@ import {
   type StructureView,
 } from '../types';
 import {invalidateAfterStructureMutation} from './structureInvalidation';
-import {AddPhaseDialog} from './StructureGraphDialogs';
+import {AddPhaseDialog, EditSkeletonDialog} from './StructureGraphDialogs';
 import {StructurePhaseFiche} from './StructurePhaseFiche';
 import {type StructureSectionId} from './structureHubSections';
 import {resolvePlacesN, resolvePlacesPerGroup} from './structurePlaces';
@@ -77,6 +77,7 @@ function StructureHub({ data }: { data: StructureView }) {
   const canConfigure = data.actions.includes('ConfigureStructure');
   const canAddPhase = data.actions.includes('AddCompetitionStage');
   const [structureEditorOpen, setStructureEditorOpen] = useState(false);
+  const [editSkeletonOpen, setEditSkeletonOpen] = useState(false);
   const [addPhaseOpen, setAddPhaseOpen] = useState(false);
   const stages = useMemo(() => resolveStages(data), [data]);
   const structuralAnomalies = useMemo(
@@ -161,6 +162,14 @@ function StructureHub({ data }: { data: StructureView }) {
     );
   };
 
+  const openStructureEditor = () => {
+    if (stages.length > 0) {
+      setEditSkeletonOpen(true);
+      return;
+    }
+    setStructureEditorOpen(true);
+  };
+
   const headActions = (
     <>
       <Tooltip
@@ -177,7 +186,7 @@ function StructureHub({ data }: { data: StructureView }) {
             type="button"
             className="ds-btn ds-btn--secondary"
             disabled={!canConfigure}
-            onClick={() => setStructureEditorOpen(true)}
+            onClick={openStructureEditor}
           >
             <StructureIcon size="sm" />
             <span>
@@ -213,7 +222,7 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={headActions}
-        note={readinessStatusNote(data, () => setStructureEditorOpen(true))}
+        note={readinessStatusNote(data, openStructureEditor)}
       />
 
       <div className="structure-hub__layout">
@@ -228,7 +237,7 @@ function StructureHub({ data }: { data: StructureView }) {
           data={data}
           stage={selectedStage}
           canConfigure={canConfigure}
-          onConfigure={() => setStructureEditorOpen(true)}
+          onConfigure={openStructureEditor}
           onSelectStage={selectStage}
           initialEdit={pendingEdit}
           initialCompose={pendingCompose}
@@ -254,6 +263,14 @@ function StructureHub({ data }: { data: StructureView }) {
         open={structureEditorOpen}
         onClose={() => setStructureEditorOpen(false)}
       />
+      {selectedStage && (
+        <EditSkeletonDialog
+          data={data}
+          stage={selectedStage}
+          open={editSkeletonOpen}
+          onClose={() => setEditSkeletonOpen(false)}
+        />
+      )}
       <AddPhaseDialog
         competitionId={data.competitionId}
         open={addPhaseOpen}
@@ -928,32 +945,26 @@ function StructureEditorDialog({
     data.format.kind ?? 'Championship',
   );
   const [stageName, setStageName] = useState('');
-  const [matchdayCount, setMatchdayCount] = useState(
-    Math.max(1, data.structure.matchdayCount || 1),
-  );
-  const [groupCount, setGroupCount] = useState(
-    Math.max(1, data.structure.groupCount || 2),
-  );
+  const [matchdayCount, setMatchdayCount] = useState(1);
+  const [groupCount, setGroupCount] = useState(2);
   const [participantsPerGroup, setParticipantsPerGroup] = useState(2);
-  const [bracketSize, setBracketSize] = useState(
-    Math.max(2, data.structure.slotCount || 4),
-  );
-  const [swissRoundCount, setSwissRoundCount] = useState(
-    Math.max(1, data.structure.swissRoundCount || 3),
-  );
+  const [bracketSize, setBracketSize] = useState(4);
+  const [swissRoundCount, setSwissRoundCount] = useState(3);
   const [matchGenerationFormat, setMatchGenerationFormat] =
-    useState<MatchGenerationFormat>(
-      data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
-    );
-
-  const isRebuild = data.stages.length > 0 || data.format.primaryStageId != null;
-  const [confirmRebuild, setConfirmRebuild] = useState(false);
+    useState<MatchGenerationFormat>('SingleRoundRobin');
 
   useEffect(() => {
     if (open) {
-      setConfirmRebuild(false);
+      setFormat(data.format.kind ?? 'Championship');
+      setStageName('');
+      setMatchdayCount(1);
+      setGroupCount(2);
+      setParticipantsPerGroup(2);
+      setBracketSize(4);
+      setSwissRoundCount(3);
+      setMatchGenerationFormat('SingleRoundRobin');
     }
-  }, [open]);
+  }, [open, data.format.kind]);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -983,22 +994,12 @@ function StructureEditorDialog({
     },
   });
 
-  const submitLabel = isRebuild
-    ? t('structure.rebuildSubmit')
-    : t('structure.configure');
-
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title={
-        isRebuild
-          ? t('structure.rebuildLegend')
-          : t('structure.configureLegend')
-      }
-      description={
-        isRebuild ? t('structure.rebuildHint') : t('structure.configureHint')
-      }
+      title={t('structure.configureLegend')}
+      description={t('structure.configureHint')}
       closeLabel={tCommon('close')}
       closeDisabled={mutation.isPending}
       size="md"
@@ -1016,12 +1017,12 @@ function StructureEditorDialog({
             type="submit"
             form={formId}
             className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending || (isRebuild && !confirmRebuild)}
+            disabled={mutation.isPending}
           >
             {mutation.isPending ? (
               <PendingLabel>{t('structure.configuring')}</PendingLabel>
             ) : (
-              submitLabel
+              t('structure.configure')
             )}
           </button>
         </>
@@ -1040,9 +1041,7 @@ function StructureEditorDialog({
       >
         <fieldset className="fieldset" disabled={mutation.isPending}>
           <legend className="fieldset__legend">
-            {isRebuild
-              ? t('structure.rebuildLegend')
-              : t('structure.configureLegend')}
+            {t('structure.configureLegend')}
           </legend>
           <label className="field">
             {t('structure.format')}
@@ -1114,10 +1113,10 @@ function StructureEditorDialog({
                 {t('structure.groupCount')}
                 <input
                   type="number"
-                  min={1}
+                  min={2}
                   value={groupCount}
                   onChange={(event) =>
-                    setGroupCount(Number(event.target.value) || 1)
+                    setGroupCount(Number(event.target.value) || 2)
                   }
                   required
                 />
@@ -1126,10 +1125,10 @@ function StructureEditorDialog({
                 {t('structure.participantsPerGroup')}
                 <input
                   type="number"
-                  min={1}
+                  min={2}
                   value={participantsPerGroup}
                   onChange={(event) =>
-                    setParticipantsPerGroup(Number(event.target.value) || 1)
+                    setParticipantsPerGroup(Number(event.target.value) || 2)
                   }
                   required
                 />
@@ -1142,12 +1141,14 @@ function StructureEditorDialog({
               <input
                 type="number"
                 min={2}
+                max={64}
                 value={bracketSize}
                 onChange={(event) =>
                   setBracketSize(Number(event.target.value) || 2)
                 }
                 required
               />
+              <span className="caption">{t('structure.bracketHint')}</span>
             </label>
           )}
           {format === 'Swiss' && (
@@ -1169,23 +1170,7 @@ function StructureEditorDialog({
             </label>
           )}
         </fieldset>
-        {isRebuild ? (
-          <label className="field">
-            <input
-              type="checkbox"
-              checked={confirmRebuild}
-              onChange={(event) => setConfirmRebuild(event.target.checked)}
-            />{' '}
-            {t('structure.rebuildConfirm', {
-              matchdays: data.structure.matchdayCount,
-              groups: data.structure.groupCount,
-              rounds: data.structure.roundCount,
-              slots: data.structure.slotCount,
-            })}
-          </label>
-        ) : (
-          <p className="caption">{t('structure.configureHint')}</p>
-        )}
+        <p className="caption">{t('structure.configureHint')}</p>
         {mutation.isError && <MutationError error={mutation.error} />}
       </form>
     </Dialog>

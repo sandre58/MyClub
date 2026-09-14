@@ -134,6 +134,11 @@ public static class ApplicationErrorCodes
     public const string StructureNotMutable = "Application.StructureNotMutable";
 
     /// <summary>
+    /// Gets the code when a stage skeleton rebuild attempts to change <c>StructureFormatKind</c>.
+    /// </summary>
+    public const string StructureFormatImmutable = "Application.StructureFormatImmutable";
+
+    /// <summary>
     /// Gets the code when Fixture/Match materialization cannot run.
     /// </summary>
     public const string MaterializationFailure = "Application.MaterializationFailure";

@@ -23,38 +23,97 @@ public static class StructureRequestMapper
     public static StructureIntent ToStructureIntent(ConfigureStructureRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var format = request.Format.Trim();
-        var matchGenerationFormat = ParseMatchGenerationFormat(request.MatchGenerationFormat);
+        return ToStructureIntent(
+            request.Format,
+            request.StageName,
+            request.MatchdayCount,
+            request.GroupCount,
+            request.ParticipantsPerGroup,
+            request.BracketSize,
+            request.MatchGenerationFormat,
+            request.SwissRoundCount);
+    }
+
+    /// <summary>
+    /// Maps <see cref="AddCompetitionStageRequest"/> to <see cref="StructureIntent"/>.
+    /// </summary>
+    public static StructureIntent ToStructureIntent(AddCompetitionStageRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return ToStructureIntent(
+            request.Format,
+            request.Name,
+            request.MatchdayCount,
+            request.GroupCount,
+            request.ParticipantsPerGroup,
+            request.BracketSize,
+            request.MatchGenerationFormat,
+            request.SwissRoundCount);
+    }
+
+    /// <summary>
+    /// Maps <see cref="RebuildStageStructureRequest"/> to <see cref="StructureIntent"/>.
+    /// </summary>
+    /// <param name="request">HTTP rebuild body.</param>
+    /// <param name="currentStageName">Current stage name when <see cref="RebuildStageStructureRequest.StageName"/> is omitted.</param>
+    public static StructureIntent ToStructureIntent(
+        RebuildStageStructureRequest request,
+        string currentStageName)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return ToStructureIntent(
+            request.Format,
+            string.IsNullOrWhiteSpace(request.StageName) ? currentStageName : request.StageName,
+            request.MatchdayCount,
+            request.GroupCount,
+            request.ParticipantsPerGroup,
+            request.BracketSize,
+            request.MatchGenerationFormat,
+            request.SwissRoundCount);
+    }
+
+    private static StructureIntent ToStructureIntent(
+        string formatRaw,
+        string? stageName,
+        int? matchdayCount,
+        int? groupCount,
+        int? participantsPerGroup,
+        int? bracketSize,
+        string? matchGenerationFormatRaw,
+        int? swissRoundCount)
+    {
+        var format = formatRaw.Trim();
+        var matchGenerationFormat = ParseMatchGenerationFormat(matchGenerationFormatRaw);
 
         return format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
             || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase)
-            ? StructureIntent.Championship(request.MatchdayCount ?? 1, request.StageName, matchGenerationFormat)
+            ? StructureIntent.Championship(matchdayCount ?? 1, stageName, matchGenerationFormat)
             : format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
             || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase)
-            ? request.GroupCount is null || request.ParticipantsPerGroup is null
+            ? groupCount is null || participantsPerGroup is null
                 ? throw new ApplicationFailureException(
                     "Groups format requires GroupCount and ParticipantsPerGroup.",
                     ApplicationErrorCodes.InvalidStructureIntent)
                 : StructureIntent.Groups(
-                    request.GroupCount.Value,
-                    request.ParticipantsPerGroup.Value,
-                    request.StageName,
+                    groupCount.Value,
+                    participantsPerGroup.Value,
+                    stageName,
                     matchGenerationFormat)
             : format.Equals("Cup", StringComparison.OrdinalIgnoreCase)
             || format.Equals("Coupe", StringComparison.OrdinalIgnoreCase)
-            ? request.BracketSize is null
+            ? bracketSize is null
                 ? throw new ApplicationFailureException(
                     "Cup format requires BracketSize (power of two, 2–64).",
                     ApplicationErrorCodes.InvalidStructureIntent)
-                : StructureIntent.Cup(request.BracketSize.Value, request.StageName)
+                : StructureIntent.Cup(bracketSize.Value, stageName)
             : format.Equals("Swiss", StringComparison.OrdinalIgnoreCase)
-            ? request.SwissRoundCount is null
+            ? swissRoundCount is null
                 ? throw new ApplicationFailureException(
                     "Swiss format requires SwissRoundCount (≥ 1).",
                     ApplicationErrorCodes.InvalidStructureIntent)
-                : StructureIntent.Swiss(request.SwissRoundCount.Value, request.StageName)
+                : StructureIntent.Swiss(swissRoundCount.Value, stageName)
             : throw new ApplicationFailureException(
-            $"Unknown structure format '{request.Format}'. Expected Championship, Groups, Cup, or Swiss.",
+            $"Unknown structure format '{formatRaw}'. Expected Championship, Groups, Cup, or Swiss.",
             ApplicationErrorCodes.InvalidStructureIntent);
     }
 

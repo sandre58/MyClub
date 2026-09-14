@@ -2,6 +2,7 @@ import type {
   AddDeclaredMemberRequest,
   AddDeclaredParticipationRequest,
   AddEntryRequest,
+  AddCompetitionStageRequest,
   AddCompetitionStageResponse,
   EntryIdsRequest,
   MemberIdsRequest,
@@ -25,6 +26,8 @@ import type {
   RecordDisciplinaryEventRequest,
   RecordGoalRequest,
   RecordSubstitutionRequest,
+  RebuildStageStructureRequest,
+  RebuildStageStructureResponse,
   RemoveCompetitionStageResponse,
   RenameDeclaredMemberRequest,
   RenameEntryRequest,
@@ -439,9 +442,17 @@ export function addStageSlot(
 /** POST /competitions/{id}/stages → AddCompetitionStageResponse */
 export function addCompetitionStage(
   competitionId: string,
-  name: string,
+  request: AddCompetitionStageRequest,
 ): Promise<AddCompetitionStageResponse> {
-  return sendJson('POST', `/competitions/${competitionId}/stages`, { name });
+  return sendJson('POST', `/competitions/${competitionId}/stages`, request);
+}
+
+/** PUT /stages/{id}/structure → RebuildStageStructureResponse */
+export function rebuildStageStructure(
+  stageId: string,
+  request: RebuildStageStructureRequest,
+): Promise<RebuildStageStructureResponse> {
+  return sendJson('PUT', `/stages/${stageId}/structure`, request);
 }
 
 /** DELETE /competitions/{id}/stages/{stageId} → RemoveCompetitionStageResponse */

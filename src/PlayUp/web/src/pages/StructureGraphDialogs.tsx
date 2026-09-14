@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   addCompetitionStage,
   fetchStageOverview,
+  rebuildStageStructure,
   removeCompetitionStage,
   replaceStagePlacementAwardRules,
   replaceStageProgressionRules,
@@ -11,9 +12,11 @@ import {
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { Tooltip } from '../design-system/components/Tooltip';
+import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { MutationError, PendingLabel } from '../ui';
 import type {
+  StructureFormatKind,
   StructurePlacementAward,
   StructureProgressionPath,
   StructureQualificationPath,
@@ -24,6 +27,12 @@ import type {
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { listFixtureOptions } from './structureFixtureLabels';
+import {
+  defaultSkeletonForm,
+  SkeletonFields,
+  skeletonPayload,
+  skeletonStepValid,
+} from './structureSkeletonForm';
 
 type QualDraft = {
   order: string;
@@ -202,29 +211,222 @@ export function AddPhaseDialog({
   const { t: tCommon } = useTranslation('common');
   const formId = useId();
   const queryClient = useQueryClient();
+  const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
+  const [skeleton, setSkeleton] = useState(defaultSkeletonForm());
 
   useEffect(() => {
     if (open) {
+      setStep(1);
       setName('');
+      setSkeleton(defaultSkeletonForm());
     }
   }, [open]);
 
   const mutation = useMutation({
-    mutationFn: () => addCompetitionStage(competitionId, name.trim()),
-    onSuccess: async () => {
+    mutationFn: () =>
+      addCompetitionStage(competitionId, {
+        format: skeleton.format,
+        name: name.trim(),
+        ...skeletonPayload(skeleton),
+      }),
+    onSuccess: async (response) => {
+      queryClient.setQueryData(
+        queryKeys.competitions.structure(competitionId),
+        response.structure,
+      );
       await invalidateAfterStructureMutation(queryClient, competitionId);
       onClose();
     },
   });
+
+  const identityOk = name.trim().length > 0;
+  const skeletonOk = skeletonStepValid(skeleton);
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
       title={t('graph.addPhaseTitle')}
+      description={
+        step === 1 ? t('skeleton.wizardIdentityLede') : t('skeleton.wizardSkeletonLede')
+      }
       closeLabel={tCommon('close')}
       closeDisabled={mutation.isPending}
+      size="md"
+      footer={
+        <>
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost"
+            disabled={mutation.isPending}
+            onClick={step === 1 ? onClose : () => setStep(1)}
+          >
+            {step === 1 ? tCommon('cancel') : t('skeleton.back')}
+          </button>
+          {step === 1 ? (
+            <button
+              type="button"
+              className="ds-btn ds-btn--primary"
+              disabled={!identityOk}
+              onClick={() => setStep(2)}
+            >
+              {t('skeleton.next')}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              form={formId}
+              className="ds-btn ds-btn--primary"
+              disabled={!skeletonOk || mutation.isPending}
+            >
+              {mutation.isPending ? <PendingLabel /> : t('graph.addPhaseSubmit')}
+            </button>
+          )}
+        </>
+      }
+    >
+      <form
+        id={formId}
+        onSubmit={(event: FormEvent) => {
+          event.preventDefault();
+          if (step !== 2 || !identityOk || !skeletonOk || mutation.isPending) {
+            return;
+          }
+          mutation.mutate();
+        }}
+      >
+        {step === 1 ? (
+          <>
+            <label className="ds-field">
+              <span className="ds-field__label">{t('graph.phaseName')}</span>
+              <input
+                className="ds-input"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+                autoFocus
+              />
+            </label>
+            <label className="ds-field">
+              <span className="ds-field__label">{t('structure.format')}</span>
+              <select
+                className="ds-input"
+                value={skeleton.format}
+                onChange={(event) =>
+                  setSkeleton({
+                    ...skeleton,
+                    format: event.target.value as StructureFormatKind,
+                  })
+                }
+              >
+                <option value="Championship">
+                  {structureFormatKindLabel('Championship')}
+                </option>
+                <option value="Groups">
+                  {structureFormatKindLabel('Groups')}
+                </option>
+                <option value="Cup">{structureFormatKindLabel('Cup')}</option>
+                <option value="Swiss">
+                  {structureFormatKindLabel('Swiss')}
+                </option>
+              </select>
+              <span className="caption">{t('skeleton.formatImmutable')}</span>
+            </label>
+          </>
+        ) : (
+          <SkeletonFields
+            state={skeleton}
+            onChange={setSkeleton}
+            t={t}
+            formatLocked
+          />
+        )}
+        <MutationError error={mutation.error} />
+      </form>
+    </Dialog>
+  );
+}
+
+export function EditSkeletonDialog({
+  data,
+  stage,
+  open,
+  onClose,
+}: {
+  data: StructureView;
+  stage: StructureStageHubSummary;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('structure');
+  const { t: tCommon } = useTranslation('common');
+  const formId = useId();
+  const queryClient = useQueryClient();
+  const format = (stage.formatKind ?? 'Championship') as StructureFormatKind;
+  const [stageName, setStageName] = useState(stage.name);
+  const [confirmRebuild, setConfirmRebuild] = useState(false);
+  const [skeleton, setSkeleton] = useState(() => ({
+    ...defaultSkeletonForm(format),
+    matchdayCount: Math.max(1, stage.matchdayCount || 1),
+    groupCount: Math.max(2, stage.groupCount || 2),
+    participantsPerGroup: Math.max(2, stage.placesPerGroup || 2),
+    bracketSize: Math.max(2, stage.slotCount || 4),
+    swissRoundCount: Math.max(1, stage.swissRoundCount || 3),
+    matchGenerationFormat:
+      data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
+  }));
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const kind = (stage.formatKind ?? 'Championship') as StructureFormatKind;
+    setStageName(stage.name);
+    setConfirmRebuild(false);
+    setSkeleton({
+      ...defaultSkeletonForm(kind),
+      matchdayCount: Math.max(1, stage.matchdayCount || 1),
+      groupCount: Math.max(2, stage.groupCount || 2),
+      participantsPerGroup: Math.max(2, stage.placesPerGroup || 2),
+      bracketSize: Math.max(2, stage.slotCount || 4),
+      swissRoundCount: Math.max(1, stage.swissRoundCount || 3),
+      matchGenerationFormat:
+        data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
+    });
+  }, [open, stage, data.structure.matchGenerationFormat]);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      rebuildStageStructure(stage.stageId, {
+        format: skeleton.format,
+        stageName: stageName.trim() || stage.name,
+        ...skeletonPayload(skeleton),
+      }),
+    onSuccess: async (response) => {
+      queryClient.setQueryData(
+        queryKeys.competitions.structure(data.competitionId),
+        response.structure,
+      );
+      await invalidateAfterStructureMutation(queryClient, data.competitionId);
+      onClose();
+    },
+  });
+
+  const canSubmit =
+    stageName.trim().length > 0 &&
+    skeletonStepValid(skeleton) &&
+    confirmRebuild;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={t('skeleton.editTitle')}
+      description={t('skeleton.editLede')}
+      closeLabel={tCommon('close')}
+      closeDisabled={mutation.isPending}
+      size="md"
       footer={
         <>
           <button
@@ -239,9 +441,13 @@ export function AddPhaseDialog({
             type="submit"
             form={formId}
             className="ds-btn ds-btn--primary"
-            disabled={!name.trim() || mutation.isPending}
+            disabled={!canSubmit || mutation.isPending}
           >
-            {mutation.isPending ? <PendingLabel /> : t('graph.addPhaseSubmit')}
+            {mutation.isPending ? (
+              <PendingLabel>{t('structure.configuring')}</PendingLabel>
+            ) : (
+              t('structure.rebuildSubmit')
+            )}
           </button>
         </>
       }
@@ -250,7 +456,7 @@ export function AddPhaseDialog({
         id={formId}
         onSubmit={(event: FormEvent) => {
           event.preventDefault();
-          if (!name.trim() || mutation.isPending) {
+          if (!canSubmit || mutation.isPending) {
             return;
           }
           mutation.mutate();
@@ -260,10 +466,31 @@ export function AddPhaseDialog({
           <span className="ds-field__label">{t('graph.phaseName')}</span>
           <input
             className="ds-input"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            value={stageName}
+            onChange={(event) => setStageName(event.target.value)}
             required
           />
+        </label>
+        <SkeletonFields
+          state={skeleton}
+          onChange={setSkeleton}
+          t={t}
+          formatLocked
+        />
+        <label className="ds-field ds-field--checkbox">
+          <input
+            type="checkbox"
+            checked={confirmRebuild}
+            onChange={(event) => setConfirmRebuild(event.target.checked)}
+          />
+          <span>
+            {t('structure.rebuildConfirm', {
+              matchdays: stage.matchdayCount ?? 0,
+              groups: stage.groupCount ?? 0,
+              rounds: stage.roundCount ?? 0,
+              slots: stage.slotCount ?? 0,
+            })}
+          </span>
         </label>
         <MutationError error={mutation.error} />
       </form>

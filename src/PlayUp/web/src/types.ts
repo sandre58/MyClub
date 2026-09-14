@@ -717,11 +717,42 @@ export interface RemoveCompetitionStageResponse {
   structure: StructureView;
 }
 
+/** POST /competitions/{id}/stages — identity + skeleton */
+export type AddCompetitionStageRequest = {
+  format: StructureFormatKind | string;
+  name: string;
+  matchdayCount?: number | null;
+  groupCount?: number | null;
+  participantsPerGroup?: number | null;
+  bracketSize?: number | null;
+  matchGenerationFormat?: MatchGenerationFormat | null;
+  swissRoundCount?: number | null;
+};
+
 /** POST /competitions/{id}/stages */
 export interface AddCompetitionStageResponse {
   stageId: string;
   name: string;
+  structure: StructureView;
 }
+
+/** PUT /stages/{id}/structure — same-kind skeleton rebuild */
+export type RebuildStageStructureRequest = {
+  format: StructureFormatKind | string;
+  stageName?: string | null;
+  matchdayCount?: number | null;
+  groupCount?: number | null;
+  participantsPerGroup?: number | null;
+  bracketSize?: number | null;
+  matchGenerationFormat?: MatchGenerationFormat | null;
+  swissRoundCount?: number | null;
+};
+
+export interface RebuildStageStructureResponse {
+  impact: StructureRebuildImpact;
+  structure: StructureView;
+}
+
 
 /** PUT /stages/{id}/qualification-rules */
 export interface ReplaceQualificationRulesRequest {

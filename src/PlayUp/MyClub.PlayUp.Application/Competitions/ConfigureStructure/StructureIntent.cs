@@ -92,7 +92,8 @@ public sealed class StructureIntent
                 swissRoundCount: 0);
 
     /// <summary>
-    /// Builds a groups intent (empty groups + matchday + PlacesPerGroup form fact + Draw PotRules derived from it).
+    /// Builds a groups intent (empty groups + technical initial matchday + PlacesPerGroup form fact).
+    /// Does not seed DrawRules — tirage remains an optional post-birth mechanism.
     /// </summary>
     /// <param name="groupCount">Number of groups (≥ 2).</param>
     /// <param name="participantsPerGroup">

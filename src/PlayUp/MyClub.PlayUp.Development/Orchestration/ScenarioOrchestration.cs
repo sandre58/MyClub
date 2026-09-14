@@ -467,7 +467,10 @@ internal static class ScenarioOrchestration
             .ConfigureAwait(false);
         await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        _ = ConfigurePrimaryStage(context, competition, recipe);
+        var stage = ConfigurePrimaryStage(context, competition, recipe);
+
+        // DrawRules are not seeded by ConfigureStructure — engage tirage for this scenario.
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
 
         // Intentionally no AssignRootComposition — Structure Entrées E0 (0 / 16).
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -529,6 +532,7 @@ internal static class ScenarioOrchestration
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
         AssignRootComposition(stage, entries, context.Clock);
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
