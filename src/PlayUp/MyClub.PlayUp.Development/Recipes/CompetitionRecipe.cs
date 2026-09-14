@@ -36,8 +36,11 @@ public sealed record CompetitionRecipe
     /// <summary>Gets group count (Groups).</summary>
     public int? GroupCount { get; init; }
 
-    /// <summary>Gets participants per group (Groups).</summary>
-    public int? ParticipantsPerGroup { get; init; }
+    /// <summary>
+    /// Gets structural places per group (Groups) — form fact for Places N (= groupCount × placesPerGroup).
+    /// Independent of DrawRules.
+    /// </summary>
+    public int? PlacesPerGroup { get; init; }
 
     /// <summary>Gets cup bracket size (Cup, power of two).</summary>
     public int? BracketSize { get; init; }

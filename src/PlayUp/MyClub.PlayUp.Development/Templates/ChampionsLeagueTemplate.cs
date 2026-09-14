@@ -36,7 +36,7 @@ public sealed class ChampionsLeagueTemplate : ICompetitionTemplate
         Format = RecipeFormat.Groups,
         TeamCount = 32,
         GroupCount = 8,
-        ParticipantsPerGroup = 4,
+        PlacesPerGroup = 4,
         StageName = "Phase de groupes",
         TeamNames = TeamNameSource.Dataset,
         DatasetCompetitionKey = "champions-league"

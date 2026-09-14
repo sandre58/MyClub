@@ -60,7 +60,7 @@ public sealed class RandomScenario : IScenario
                 Format = RecipeFormat.Groups,
                 TeamCount = 16,
                 GroupCount = 4,
-                ParticipantsPerGroup = 4,
+                PlacesPerGroup = 4,
                 StageName = "Phase de groupes"
             },
             _ => new CompetitionRecipe

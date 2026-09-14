@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchStageOverview } from '../api';
+import { fetchStageSchematic } from '../api';
 import { Chip } from '../design-system/components/Chip';
 import { Popover } from '../design-system/components/Popover';
 import { Status } from '../design-system/components/Status';
@@ -39,13 +39,16 @@ import {
   StandingRulesIcon,
   StructureIcon,
   SwissFormatIcon,
+  EmptySelectionIcon,
 } from '../design-system/icons/contentIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
-import { StageStatusBadge, StatusBadge } from '../ui';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { EmptyState, LoadingState, StageStatusBadge, StatusBadge } from '../ui';
 import type {
   SelectionMode,
   StructureConfrontationSegment,
+  StructureEntry,
   StructureFormatKind,
   StructurePlacementAward,
   StructureProgressionPath,
@@ -67,12 +70,14 @@ import {
   TieFormatDialog,
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
+import { StructureCompositionDialog } from './StructureCompositionDialog';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
   relevantPhaseSections,
   type StructureSectionId,
 } from './structureHubSections';
+import { resolvePlacesN } from './structurePlaces';
 import { PhaseSchematic } from './phaseSchematic';
 import {
   MatchRulesPanel,
@@ -91,8 +96,6 @@ type EditTarget =
   | 'rebind-match'
   | 'rebind-standing'
   | null;
-
-type SchematicMode = 'slots' | 'equipes';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
@@ -627,56 +630,243 @@ function FluxGroupList({
   );
 }
 
-function RootEntriesEmpty({
-  data,
+function RootEntriesRail({
   stage,
-  showTirage,
+  entries,
 }: {
-  data: StructureView;
   stage: StructureStageHubSummary;
-  showTirage: boolean;
+  entries: StructureEntry[];
 }) {
   const { t } = useTranslation('structure');
-  const teamsHref = `/competitions/${data.competitionId}/teams`;
-  const competitionTeams =
-    data.participants.activeCount ?? data.participants.occupyingCount ?? 0;
-  const directAssignments = stage.directAssignmentCount ?? 0;
+  const k = stage.compositionEntryCount ?? 0;
+  const n = resolvePlacesN(stage);
+  const ineligible = stage.compositionIneligibleCount ?? 0;
+  const composedIds = stage.compositionEntryIds ?? [];
+  const byId = useMemo(
+    () => new Map(entries.map((entry) => [entry.entryId, entry])),
+    [entries],
+  );
+  const composed = useMemo(
+    () =>
+      composedIds
+        .map((id) => byId.get(id))
+        .filter((entry): entry is StructureEntry => entry != null)
+        .sort((a, b) =>
+          a.displayName.localeCompare(b.displayName, undefined, {
+            sensitivity: 'base',
+          }),
+        ),
+    [composedIds, byId],
+  );
+
+  let state: 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
+  if (n == null) {
+    state = 'E4';
+  } else if (k === 0) {
+    state = 'E0';
+  } else if (k > n) {
+    state = 'E3';
+  } else if (k < n) {
+    state = 'E1';
+  } else {
+    state = 'E2';
+  }
+
+  const danger = state === 'E0' || state === 'E1';
+  const warn = state === 'E3';
+  const soft = state === 'E4';
 
   return (
-    <div className="structure-entries-root">
-      <p className="structure-entries-root__lede">{t('fiche.entriesRootLede')}</p>
-      <ul className="structure-entries-root__facts">
-        <li className="structure-entries-root__fact">
-          <span>{t('fiche.entriesRootCompetitionTeams')}</span>
-          <Chip tone="neutral">
-            {t('fiche.teamsCount', { count: competitionTeams })}
-          </Chip>
-        </li>
-        <li className="structure-entries-root__fact">
-          <span>{t('fiche.entriesRootDirectAssignments')}</span>
-          <Chip tone="neutral">
-            {t('fiche.teamsCount', { count: directAssignments })}
-          </Chip>
-        </li>
-        {showTirage ? (
-          <li className="structure-entries-root__fact">
-            <span>
-              {stage.hasDrawRules
-                ? t('fiche.entriesRootDrawConfigured')
-                : t('fiche.entriesRootDrawRequired')}
-            </span>
-          </li>
-        ) : null}
-      </ul>
-      <TextLink to={teamsHref}>{t('fiche.entriesRootOpenTeams')}</TextLink>
+    <div
+      className={[
+        'structure-entries',
+        danger ? 'structure-entries--danger' : null,
+        warn ? 'structure-entries--warn' : null,
+        soft ? 'structure-entries--soft' : null,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className="structure-entries__main">
+        {composed.length > 0 ? (
+          <ul className="structure-entries__teams">
+            {composed.map((entry) => (
+              <li
+                key={entry.entryId}
+                className={[
+                  'structure-entries__team',
+                  entry.status !== 'Active'
+                    ? 'structure-entries__team--ineligible'
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                <TeamCrest
+                  name={entry.displayName}
+                  logoMediaId={entry.logoMediaId}
+                  primaryColor={entry.primaryColor}
+                  size="sm"
+                />
+                <span className="structure-entries__team-name">
+                  {entry.displayName}
+                </span>
+                {entry.status !== 'Active' ? (
+                  <span className="structure-entries__team-warn">
+                    {t('composition.noLongerEligible')}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : ineligible > 0 ? (
+          <p className="structure-entries__anomaly" role="status">
+            {t('entries.ineligibleOverlay', { count: ineligible })}
+          </p>
+        ) : (
+          <EmptyState
+            variant="idle"
+            icon={<EmptySelectionIcon size="lg" />}
+            title={t('entries.emptyTitle')}
+          >
+            {t('entries.emptyBody')}
+          </EmptyState>
+        )}
+      </div>
+      <div className="structure-entries__footer">
+        <CompositionMeter entries={k} places={n} t={t} />
+      </div>
+    </div>
+  );
+}
+
+function AvalEntriesRail({
+  groups,
+  capacity,
+  configuredVolume,
+  onOpenPeer,
+  teamsLabel,
+  stageStatus,
+}: {
+  groups: FeedGroup[];
+  capacity: number;
+  configuredVolume: number;
+  onOpenPeer: (stageId: string) => void;
+  teamsLabel: (count: number) => string;
+  stageStatus: string;
+}) {
+  const { t } = useTranslation('structure');
+  const n = capacity;
+  const k = configuredVolume;
+  const running =
+    stageStatus === 'Running' ||
+    stageStatus === 'Suspended' ||
+    stageStatus === 'Completed';
+
+  let state: 'A0' | 'A1' | 'A2' | 'A3';
+  if (running) {
+    state = 'A3';
+  } else if (groups.length === 0 || (n > 0 && k === 0)) {
+    state = 'A0';
+  } else if (n > 0 && k < n) {
+    state = 'A2';
+  } else {
+    state = 'A1';
+  }
+
+  const attention = state === 'A0' || state === 'A2';
+
+  return (
+    <div
+      className={[
+        'structure-entries',
+        attention ? 'structure-entries--warn' : null,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className="structure-entries__main">
+        {groups.length > 0 ? (
+          <FluxGroupList
+            groups={groups}
+            onOpenPeer={onOpenPeer}
+            teamsLabel={teamsLabel}
+          />
+        ) : (
+          <EmptyState
+            variant="idle"
+            icon={<EmptySelectionIcon size="lg" />}
+            title={t('entries.emptySourcesTitle')}
+          >
+            {t('entries.emptySourcesBody')}
+          </EmptyState>
+        )}
+      </div>
+      <div className="structure-entries__footer">
+        <CompositionMeter
+          entries={k}
+          places={n > 0 ? n : null}
+          t={t}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Cardinality gauge — shortfall = danger (empty places); surplus = warning. */
+function CompositionMeter({
+  entries,
+  places,
+  t,
+}: {
+  entries: number;
+  places: number | null;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const gap = places != null && places > 0 ? entries - places : null;
+  const ratio =
+    places != null && places > 0
+      ? Math.min(1, Math.max(0, entries / places))
+      : entries > 0
+        ? 1
+        : 0;
+  const tone =
+    gap == null || gap === 0 ? 'ok' : gap < 0 ? 'short' : 'over';
+  return (
+    <div
+      className={`structure-assembly structure-assembly--${tone}`}
+      aria-label={t('entries.meterAria')}
+    >
+      <div className="structure-assembly__row">
+        <span>{t('entries.meter.teams')}</span>
+        <strong>{entries}</strong>
+      </div>
+      <div className="structure-assembly__track" aria-hidden="true">
+        <span
+          className="structure-assembly__fill"
+          style={{ width: `${ratio * 100}%` }}
+        />
+      </div>
+      <div className="structure-assembly__row">
+        <span>{t('entries.meter.places')}</span>
+        <strong>{places ?? '—'}</strong>
+      </div>
+      {gap != null && gap !== 0 ? (
+        <p className="structure-assembly__gap" role="status">
+          <span className="structure-assembly__gap-icon" aria-hidden="true">
+            <LucideIcon icon={CircleAlert} size="sm" />
+          </span>
+          {gap < 0
+            ? t('entries.meter.shortfall', { count: Math.abs(gap) })
+            : t('entries.meter.surplus', { count: gap })}
+        </p>
+      ) : null}
     </div>
   );
 }
 
 function phaseCapacity(stage: StructureStageHubSummary): number {
-  if ((stage.slotCount ?? 0) > 0) return stage.slotCount!;
-  if ((stage.teamCount ?? 0) > 0) return stage.teamCount;
-  return 0;
+  return resolvePlacesN(stage) ?? 0;
 }
 
 type OverflowItem = {
@@ -874,53 +1064,6 @@ function FluxRail({
   );
 }
 
-function AssemblyMeter({
-  entries,
-  places,
-  gap,
-  t,
-}: {
-  entries: number;
-  places: number;
-  gap: number | null;
-  t: (key: string, opts?: Record<string, unknown>) => string;
-}) {
-  const ratio =
-    places > 0 ? Math.min(1, Math.max(0, entries / places)) : entries > 0 ? 1 : 0;
-  const tone = gap == null || gap === 0 ? 'ok' : gap < 0 ? 'short' : 'over';
-  return (
-    <div
-      className={`structure-assembly structure-assembly--${tone}`}
-      aria-label={t('fiche.assemblyAria')}
-    >
-      <div className="structure-assembly__row">
-        <span>{t('fiche.assembly.entries')}</span>
-        <strong>{entries}</strong>
-      </div>
-      <div className="structure-assembly__track" aria-hidden="true">
-        <span
-          className="structure-assembly__fill"
-          style={{ width: `${ratio * 100}%` }}
-        />
-      </div>
-      <div className="structure-assembly__row">
-        <span>{t('fiche.assembly.places')}</span>
-        <strong>{places}</strong>
-      </div>
-      {gap != null && gap !== 0 ? (
-        <p className="structure-assembly__gap" role="status">
-          <span className="structure-assembly__gap-icon" aria-hidden="true">
-            <LucideIcon icon={CircleAlert} size="sm" />
-          </span>
-          {gap < 0
-            ? t('fiche.assembly.shortfall', { count: Math.abs(gap) })
-            : t('fiche.assembly.surplus', { count: gap })}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 function ConfrontationPanel({
   stage,
 }: {
@@ -1077,6 +1220,7 @@ export function StructurePhaseFiche({
   onConfigure,
   onSelectStage,
   initialEdit,
+  initialCompose,
   onInitialEditConsumed,
 }: {
   data: StructureView;
@@ -1085,23 +1229,33 @@ export function StructurePhaseFiche({
   onConfigure: () => void;
   onSelectStage?: (stageId: string) => void;
   initialEdit?: StructureSectionId | null;
+  initialCompose?: boolean;
   onInitialEditConsumed?: () => void;
 }) {
   const { t } = useTranslation('structure');
-  const [schematicMode, setSchematicMode] = useState<SchematicMode>('slots');
   const [edit, setEdit] = useState<EditTarget>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeFocusSearch, setComposeFocusSearch] = useState(false);
 
   useEffect(() => {
-    setSchematicMode('slots');
     setEdit(null);
     setRemoveOpen(false);
     setDrawWorkflowOpen(false);
+    setComposeOpen(false);
+    setComposeFocusSearch(false);
   }, [stage?.stageId]);
 
   useEffect(() => {
-    if (!initialEdit || !stage) return;
+    if (!stage) return;
+    if (initialCompose) {
+      setComposeFocusSearch(true);
+      setComposeOpen(true);
+      onInitialEditConsumed?.();
+      return;
+    }
+    if (!initialEdit) return;
     const map: Partial<Record<StructureSectionId, EditTarget>> = {
       qualification: 'qualification',
       progression: 'progression',
@@ -1118,20 +1272,13 @@ export function StructurePhaseFiche({
       onConfigure();
     }
     onInitialEditConsumed?.();
-  }, [initialEdit, stage, onConfigure, onInitialEditConsumed]);
+  }, [initialEdit, initialCompose, stage, onConfigure, onInitialEditConsumed]);
 
-  const occupantsQuery = useQuery({
-    queryKey: queryKeys.stages.detail(stage?.stageId ?? ''),
-    queryFn: () => fetchStageOverview(stage!.stageId),
-    enabled: schematicMode === 'equipes' && !!stage?.stageId,
+  const schematicQuery = useQuery({
+    queryKey: queryKeys.stages.schematic(stage?.stageId ?? ''),
+    queryFn: () => fetchStageSchematic(stage!.stageId),
+    enabled: !!stage?.stageId,
   });
-
-  const occupantLabels = useMemo(() => {
-    if (schematicMode !== 'equipes' || !occupantsQuery.data) return undefined;
-    return occupantsQuery.data.slots.map(
-      (s) => s.displayName?.trim() || '',
-    );
-  }, [schematicMode, occupantsQuery.data]);
 
   if (!stage) {
     return (
@@ -1148,7 +1295,8 @@ export function StructurePhaseFiche({
   const feeds = inboundFeeds(data, stage.stageId, t);
   const feedGroups = groupFeeds(feeds);
   const feedSum = feeds.reduce((acc, f) => acc + f.volume, 0);
-  const gap = capacity > 0 ? feedSum - capacity : null;
+  const isRootEntries =
+    stage.isRootComposition !== false && feedGroups.length === 0;
   const outbounds = outboundFeeds(data, stage, t);
   const outboundGroups = groupFeeds(outbounds);
   const matchBound = isMatchFrameBound(stage.defaultsBinding);
@@ -1167,6 +1315,8 @@ export function StructurePhaseFiche({
   const canEditStanding = actions.includes('ReplaceStandingRules');
   const canRebind = actions.includes('BindToCompetition');
   const canRemove = actions.includes('RemoveStage');
+  const canCompose = actions.includes('ReplaceCompositionEntries');
+  const canEditQualif = actions.includes('ReplaceQualificationRules');
   const placementAwards = stage.placementAwards ?? [];
   const hasExits = outboundGroups.length > 0;
   const hasAttribution = placementAwards.length > 0;
@@ -1175,6 +1325,16 @@ export function StructurePhaseFiche({
   const formatLabel = stage.formatKind
     ? structureFormatKindLabel(stage.formatKind)
     : null;
+
+  const openCompose = (focusSearch = false) => {
+    setComposeFocusSearch(focusSearch);
+    setComposeOpen(true);
+  };
+
+  const openAvalSources = () => {
+    if (canEditQualif) setEdit('qualification');
+    else if (canEditProg) setEdit('progression');
+  };
 
   const heroFacts: { icon: ReactNode; value: string | number; label: string }[] =
     [];
@@ -1209,12 +1369,14 @@ export function StructurePhaseFiche({
     });
   }
   {
-    const n = capacity || stage.teamCount;
-    heroFacts.push({
-      icon: <LayersIcon size="sm" />,
-      value: n,
-      label: t('fiche.stat.teams', { count: n }),
-    });
+    const n = resolvePlacesN(stage);
+    if (n != null && n > 0) {
+      heroFacts.push({
+        icon: <LayersIcon size="sm" />,
+        value: n,
+        label: t('fiche.stat.places', { count: n }),
+      });
+    }
   }
 
   const overflowItems: OverflowItem[] = [];
@@ -1291,72 +1453,58 @@ export function StructurePhaseFiche({
             side="in"
             title={t('fiche.tiles.entries')}
             icon={<ArrowDownIcon size="md" />}
-            editLabel={t('fiche.edit')}
+            editLabel={
+              isRootEntries
+                ? t('entries.editComposition')
+                : t('entries.editSources')
+            }
+            onEdit={
+              isRootEntries
+                ? canCompose
+                  ? () => openCompose(false)
+                  : undefined
+                : canEditQualif || canEditProg
+                  ? openAvalSources
+                  : undefined
+            }
           >
-            {feedGroups.length === 0 ? (
-              <RootEntriesEmpty
-                data={data}
+            {isRootEntries ? (
+              <RootEntriesRail
                 stage={stage}
-                showTirage={showTirage}
+                entries={data.participants.entries}
               />
             ) : (
-              <FluxGroupList
+              <AvalEntriesRail
                 groups={feedGroups}
+                capacity={capacity}
+                configuredVolume={feedSum}
                 onOpenPeer={onSelectStage}
                 teamsLabel={teamsLabel}
+                stageStatus={stage.status}
               />
             )}
-            {capacity > 0 ? (
-              <AssemblyMeter
-                entries={feedSum}
-                places={capacity}
-                gap={gap}
-                t={t}
-              />
-            ) : null}
           </FluxRail>
 
           <div className="structure-phase-hero__center">
-            <div className="structure-phase-hero__toolbar">
-              <div
-                className="structure-schematic-toggle"
-                role="group"
-                aria-label={t('fiche.schematicToggle')}
-              >
-                <button
-                  type="button"
-                  className={
-                    schematicMode === 'slots'
-                      ? 'structure-schematic-toggle__btn structure-schematic-toggle__btn--active'
-                      : 'structure-schematic-toggle__btn'
-                  }
-                  aria-pressed={schematicMode === 'slots'}
-                  onClick={() => setSchematicMode('slots')}
-                >
-                  {t('fiche.slots')}
-                </button>
-                <button
-                  type="button"
-                  className={
-                    schematicMode === 'equipes'
-                      ? 'structure-schematic-toggle__btn structure-schematic-toggle__btn--active'
-                      : 'structure-schematic-toggle__btn'
-                  }
-                  aria-pressed={schematicMode === 'equipes'}
-                  onClick={() => setSchematicMode('equipes')}
-                >
-                  {t('fiche.equipes')}
-                </button>
-              </div>
-            </div>
             <div className="structure-schematic-viewport">
               <div className="structure-schematic-viewport__scale">
-                <PhaseSchematic
-                  stage={stage}
-                  density="hero"
-                  occupantLabels={occupantLabels}
-                  showSlotPlaceholders={schematicMode === 'slots'}
-                />
+                {schematicQuery.data ? (
+                  <PhaseSchematic
+                    schematic={schematicQuery.data}
+                    terminal={!hasExits}
+                  />
+                ) : schematicQuery.isError ? (
+                  <p className="structure-panel__muted">
+                    {t('fiche.occupantsUnavailable')}
+                  </p>
+                ) : (
+                  <div className="structure-schematic-loading">
+                    <LoadingState
+                      size="region"
+                      label={t('fiche.schematicLoading')}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             <ul
@@ -1451,11 +1599,6 @@ export function StructurePhaseFiche({
             </div>
           ) : null}
         </div>
-        {schematicMode === 'equipes' && occupantsQuery.isError ? (
-          <p className="structure-panel__muted">
-            {t('fiche.occupantsUnavailable')}
-          </p>
-        ) : null}
       </div>
 
       <div className="structure-domain-tiles">
@@ -1616,6 +1759,17 @@ export function StructurePhaseFiche({
         stage={stage}
         open={drawWorkflowOpen}
         onClose={() => setDrawWorkflowOpen(false)}
+      />
+      <StructureCompositionDialog
+        open={composeOpen}
+        onClose={() => {
+          setComposeOpen(false);
+          setComposeFocusSearch(false);
+        }}
+        competitionId={data.competitionId}
+        stage={stage}
+        entries={data.participants.entries}
+        focusSearch={composeFocusSearch}
       />
       <TieFormatDialog
         competitionId={data.competitionId}

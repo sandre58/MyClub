@@ -22,7 +22,8 @@ public sealed class ChampionshipStructureDraftScenario : IScenario
     public string Name => "Championship structure Draft";
 
     /// <inheritdoc />
-    public string Description => "8-team championship materialized, stays Draft — healthy Structure authoring.";
+    public string Description =>
+        "8-team championship materialized + full composition, stays Draft (E4 capacité inconnue).";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

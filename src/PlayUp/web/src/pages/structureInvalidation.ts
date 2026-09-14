@@ -27,7 +27,17 @@ export async function invalidateAfterStructureMutation(
           queryClient.invalidateQueries({
             queryKey: queryKeys.stages.detail(options.stageId),
           }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.stages.schematic(options.stageId),
+          }),
         ]
-      : []),
+      : [
+          queryClient.invalidateQueries({
+            predicate: (query) =>
+              Array.isArray(query.queryKey) &&
+              query.queryKey[0] === 'stages' &&
+              query.queryKey[2] === 'schematic',
+          }),
+        ]),
   ]);
 }

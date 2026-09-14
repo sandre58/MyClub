@@ -166,6 +166,9 @@ public static class ConfigureStructure
         }
 
         stage.AddMatchday(1, clock);
+
+        // Form capacity SoT — Draw PotRules is derived from it (one-way), never the reverse.
+        stage.SetPlacesPerGroup(participantsPerGroup);
         stage.ReplaceDrawRules(
             new DrawRules(DrawMode.Random, potRules: new PotRules(participantsPerGroup)),
             clock);
@@ -197,6 +200,7 @@ public static class ConfigureStructure
             ClearedRounds: stage.Rounds.Count,
             ClearedSlots: stage.Slots.Count,
             ClearedDirectAssignments: stage.DirectAssignments.Count,
+            ClearedCompositionEntries: stage.CompositionEntries.Count,
             ClearedDrawRules: stage.Regulation.DrawRules is not null,
             ClearedSwissSettings: stage.SwissSettings is not null);
 
@@ -237,7 +241,9 @@ public static class ConfigureStructure
             stage.RemoveSlot(slot.SlotKey);
         }
 
+        stage.ClearCompositionEntries(clock);
         stage.ReplaceDrawRules(null, clock);
+        stage.SetPlacesPerGroup(null);
     }
 
     private static string GroupLabel(int index) => index < 26 ? ((char)('A' + index)).ToString() : $"G{index + 1}";

@@ -243,6 +243,77 @@ public sealed class StructureUseCaseTests
         roster.Should().Equal("Alain", "Bernard", "Dupont", "Martin");
     }
 
+    [Fact]
+    public void StructureView_places_by_format_and_clear_draw_preserves_groups_places()
+    {
+        var cupCompetition = CreateCompetition.Execute("Cup N", _clock);
+        AddEntry.Execute(cupCompetition, "A", _clock);
+        AddEntry.Execute(cupCompetition, "B", _clock);
+        var cup = ConfigureStructure.Execute(
+            cupCompetition,
+            null,
+            StructureIntent.Cup(8),
+            _clock);
+        var cupHub = StructureViewAssembler.Assemble(cupCompetition, [cup.Stage]).Stages.Single();
+        cupHub.CompositionCapacity.Should().Be(8);
+
+        var championshipCompetition = CreateCompetition.Execute("Champ N", _clock);
+        AddEntry.Execute(championshipCompetition, "A", _clock);
+        AddEntry.Execute(championshipCompetition, "B", _clock);
+        AddEntry.Execute(championshipCompetition, "C", _clock);
+        var championship = ConfigureStructure.Execute(
+            championshipCompetition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        var championshipHub = StructureViewAssembler
+            .Assemble(championshipCompetition, [championship.Stage])
+            .Stages.Single();
+        championshipHub.CompositionCapacity.Should().Be(3);
+
+        AddEntry.Execute(championshipCompetition, "D", _clock);
+        StructureViewAssembler
+            .Assemble(championshipCompetition, [championship.Stage])
+            .Stages.Single()
+            .CompositionCapacity.Should()
+            .Be(4);
+
+        var swissCompetition = CreateCompetition.Execute("Swiss N", _clock);
+        AddEntry.Execute(swissCompetition, "A", _clock);
+        AddEntry.Execute(swissCompetition, "B", _clock);
+        var swiss = ConfigureStructure.Execute(
+            swissCompetition,
+            null,
+            StructureIntent.Swiss(3),
+            _clock);
+        StructureViewAssembler.Assemble(swissCompetition, [swiss.Stage])
+            .Stages.Single()
+            .CompositionCapacity.Should()
+            .Be(2);
+
+        var groupsCompetition = CreateCompetition.Execute("Groups N", _clock);
+        AddEntry.Execute(groupsCompetition, "A", _clock);
+        AddEntry.Execute(groupsCompetition, "B", _clock);
+        AddEntry.Execute(groupsCompetition, "C", _clock);
+        AddEntry.Execute(groupsCompetition, "D", _clock);
+        var groups = ConfigureStructure.Execute(
+            groupsCompetition,
+            null,
+            StructureIntent.Groups(2, 4),
+            _clock);
+        groups.Stage.PlacesPerGroup.Should().Be(4);
+        var groupsHub = StructureViewAssembler.Assemble(groupsCompetition, [groups.Stage]).Stages.Single();
+        groupsHub.CompositionCapacity.Should().Be(8);
+        groupsHub.PlacesPerGroup.Should().Be(4);
+
+        groups.Stage.ReplaceDrawRules(null, _clock);
+        groups.Stage.PlacesPerGroup.Should().Be(4);
+        StructureViewAssembler.Assemble(groupsCompetition, [groups.Stage])
+            .Stages.Single()
+            .CompositionCapacity.Should()
+            .Be(8);
+    }
+
     private sealed class NoOpMatchRepository : IMatchRepository
     {
         public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>

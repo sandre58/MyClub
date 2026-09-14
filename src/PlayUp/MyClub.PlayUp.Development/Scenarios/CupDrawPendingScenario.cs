@@ -22,7 +22,8 @@ public sealed class CupDrawPendingScenario : IScenario
     public string Name => "Cup draw pending";
 
     /// <inheritdoc />
-    public string Description => "Cup 16 bracket + entries, no pairing draw yet (Draft). Contrast: cup:prepared applies draw.";
+    public string Description =>
+        "Cup 16 bracket + entries, composition empty (E0 Constituer), no pairing draw. Contrast: cup-composition-complete / cup:prepared.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

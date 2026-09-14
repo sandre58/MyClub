@@ -213,6 +213,17 @@ public sealed record StructureReadinessDto(
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 /// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
+/// <param name="CompositionEntryCount">Root composition set size (k).</param>
+/// <param name="CompositionEntryIds">Root composition entry identities (stable order as stored).</param>
+/// <param name="CompositionCapacity">
+/// Target Places N at T (≠ composition set k). Cup = slots; Championship/Swiss = Active;
+/// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
+/// </param>
+/// <param name="CompositionPreviewNames">Short display-name preview for the composition set.</param>
+/// <param name="CompositionPreviewOverflow">Count of composition entries beyond the preview.</param>
+/// <param name="CompositionIneligibleCount">Composition entries that are no longer Active.</param>
+/// <param name="IsRootComposition">True when the phase has no inbound Qualif/Prog feeds (Affectation).</param>
+/// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N); independent of Draw.</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -264,7 +275,15 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<StructureProgressionPathDto>? ProgressionPaths = null,
     IReadOnlyList<string>? StructureIssues = null,
     int HalfTimeDuration = 0,
-    int DirectAssignmentCount = 0);
+    int DirectAssignmentCount = 0,
+    int CompositionEntryCount = 0,
+    IReadOnlyList<Guid>? CompositionEntryIds = null,
+    int? CompositionCapacity = null,
+    IReadOnlyList<string>? CompositionPreviewNames = null,
+    int CompositionPreviewOverflow = 0,
+    int CompositionIneligibleCount = 0,
+    bool IsRootComposition = true,
+    int? PlacesPerGroup = null);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>

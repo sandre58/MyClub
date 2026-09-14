@@ -116,6 +116,28 @@ internal static class ScenarioOrchestration
         return entries;
     }
 
+    /// <summary>
+    /// Seeds the root composition entry set (Affectation) from registered teams.
+    /// </summary>
+    /// <param name="stage">Root stage.</param>
+    /// <param name="entries">Competition entries (Active preferred).</param>
+    /// <param name="clock">Clock for domain events.</param>
+    /// <param name="take">Optional partial take (first N Active) for incomplete composition QA.</param>
+    public static void AssignRootComposition(
+        Stage stage,
+        IReadOnlyList<CompetitionEntry> entries,
+        IClock clock,
+        int? take = null)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(entries);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var active = entries.Where(entry => entry.Status == EntryStatus.Active);
+        var selected = take is { } limit ? active.Take(limit) : active;
+        stage.ReplaceCompositionEntries([.. selected.Select(entry => entry.Id)], clock);
+    }
+
     public static Stage ConfigurePrimaryStage(
         ScenarioContext context,
         Competition competition,
@@ -371,6 +393,7 @@ internal static class ScenarioOrchestration
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(stage, entries, context.Clock);
 
         if (recipe.Format == RecipeFormat.Swiss)
         {
@@ -401,16 +424,17 @@ internal static class ScenarioOrchestration
             Format = RecipeFormat.Groups,
             TeamCount = 16,
             GroupCount = 4,
-            ParticipantsPerGroup = 4,
+            PlacesPerGroup = 4,
             StageName = "Phase de groupes",
             TeamNames = TeamNameSource.Generated
         };
 
         var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
             .ConfigureAwait(false);
-        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(stage, entries, context.Clock);
         stage.ReplaceDrawRules(
             new DrawRules(DrawMode.Random, potRules: new PotRules(4)),
             context.Clock);
@@ -419,7 +443,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Cup bracket structured, entries registered, draw <strong>not</strong> created — Draft, ready for pairing draw.
+    /// Cup bracket structured, entries registered, composition <strong>empty</strong>, draw not created —
+    /// Draft E0 (Constituer les entrées) + tirage pending.
     /// </summary>
     public static async Task BuildCupDrawPendingAsync(
         ScenarioContext context,
@@ -443,6 +468,67 @@ internal static class ScenarioOrchestration
         await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         _ = ConfigurePrimaryStage(context, competition, recipe);
+
+        // Intentionally no AssignRootComposition — Structure Entrées E0 (0 / 16).
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Cup 16 with partial composition (10 / 16) — Draft E1 Completer les entrées.
+    /// </summary>
+    public static async Task BuildCupCompositionPartialAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Coupe — composition partielle",
+            Format = RecipeFormat.Cup,
+            TeamCount = 16,
+            BracketSize = 16,
+            StageName = "Tour à élimination",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(stage, entries, context.Clock, take: 10);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Cup 16 with full composition (16 / 16) — Draft E2 Modifier les entrées + tirage pending.
+    /// </summary>
+    public static async Task BuildCupCompositionCompleteAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Coupe — composition complète",
+            Format = RecipeFormat.Cup,
+            TeamCount = 16,
+            BracketSize = 16,
+            StageName = "Tour à élimination",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(stage, entries, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -498,7 +584,7 @@ internal static class ScenarioOrchestration
             Format = RecipeFormat.Groups,
             TeamCount = 8,
             GroupCount = 2,
-            ParticipantsPerGroup = 4,
+            PlacesPerGroup = 4,
             StageName = "Phase de groupes",
             TeamNames = TeamNameSource.Generated
         };
@@ -697,6 +783,7 @@ internal static class ScenarioOrchestration
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(stage, entries, context.Clock);
         _ = MaterializeForFormat(context, competition, stage, recipe, entries);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -719,7 +806,7 @@ internal static class ScenarioOrchestration
             Format = RecipeFormat.Groups,
             TeamCount = 8,
             GroupCount = 2,
-            ParticipantsPerGroup = 4,
+            PlacesPerGroup = 4,
             StageName = "Poules",
             TeamNames = TeamNameSource.Generated
         };
@@ -998,6 +1085,7 @@ internal static class ScenarioOrchestration
         await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var roundOf32 = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(roundOf32, competition.Entries.ToList(), context.Clock);
         roundOf32.ReplaceRoundTieFormat(
             roundOf32.Rounds[0].Id,
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
@@ -1100,7 +1188,7 @@ internal static class ScenarioOrchestration
             Format = RecipeFormat.Groups,
             TeamCount = 32,
             GroupCount = 8,
-            ParticipantsPerGroup = 4,
+            PlacesPerGroup = 4,
             StageName = "Phase de groupes",
             TeamNames = TeamNameSource.Dataset,
             DatasetCompetitionKey = "world-cup"
@@ -1115,6 +1203,7 @@ internal static class ScenarioOrchestration
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var groups = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(groups, entries, context.Clock);
 
         var r16SlotKeys = WorldCupR16SlotKeys;
         var r16Pairs = WorldCupR16Pairs;
@@ -1221,7 +1310,7 @@ internal static class ScenarioOrchestration
             Format = RecipeFormat.Groups,
             TeamCount = 8,
             GroupCount = 2,
-            ParticipantsPerGroup = 4,
+            PlacesPerGroup = 4,
             StageName = "Groupes",
             TeamNames = TeamNameSource.Generated
         };

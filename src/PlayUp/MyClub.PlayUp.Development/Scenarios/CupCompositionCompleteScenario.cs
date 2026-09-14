@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="GroupsDrawPendingScenario.cs" company="Stéphane ANDRE">
+// <copyright file="CupCompositionCompleteScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,19 +11,19 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Groups with pot DrawRules, empty groups — tirage not applied (Draft).
+/// Cup 16 with full root composition (16/16) — Structure Entrées E2 + tirage pending.
 /// </summary>
-public sealed class GroupsDrawPendingScenario : IScenario
+public sealed class CupCompositionCompleteScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "groups-draw-pending";
+    public string Id => "cup-composition-complete";
 
     /// <inheritdoc />
-    public string Name => "Groups draw pending";
+    public string Name => "Cup composition complete";
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 4×4 + pot DrawRules + full composition, groups empty — Draft awaiting draw (E4).";
+        "Cup 16 bracket, composition 16/16 (E2 Modifier), no pairing draw yet.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;
@@ -36,5 +36,5 @@ public sealed class GroupsDrawPendingScenario : IScenario
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildGroupsDrawPendingAsync(context, cancellationToken);
+        ScenarioOrchestration.BuildCupCompositionCompleteAsync(context, cancellationToken);
 }

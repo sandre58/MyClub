@@ -364,6 +364,10 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("swiss_round_count");
 
+                    b.Property<int?>("PlacesPerGroup")
+                        .HasColumnType("integer")
+                        .HasColumnName("places_per_group");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CompetitionId");
@@ -790,6 +794,23 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                                 .HasForeignKey("stage_id");
                         });
 
+                    b.OwnsMany("MyClub.PlayUp.Domain.Stages.CompositionEntry", "CompositionEntries", b1 =>
+                        {
+                            b1.Property<Guid>("stage_id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("EntryId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("entry_id");
+
+                            b1.HasKey("stage_id", "EntryId");
+
+                            b1.ToTable("stage_composition_entries", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("stage_id");
+                        });
+
                     b.OwnsMany("MyClub.PlayUp.Domain.Stages.MatchPlacement", "MatchPlacements", b1 =>
                         {
                             b1.Property<Guid>("stage_id")
@@ -843,6 +864,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("stage_id");
                         });
+
+                    b.Navigation("CompositionEntries");
 
                     b.Navigation("DirectAssignments");
 

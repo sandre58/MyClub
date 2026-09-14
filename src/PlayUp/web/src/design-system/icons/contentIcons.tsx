@@ -25,6 +25,7 @@ import {
   Plus,
   Podium,
   Shuffle,
+  SquareOff,
   Trash2,
   Trophy,
   UsersRound,
@@ -195,11 +196,7 @@ export function WithdrawIcon({ size, ...props }: ContentIconProps) {
 
 /** Empty state — cadre en pointillés (rien de sélectionné). */
 export function EmptySelectionIcon({ size, ...props }: ContentIconProps) {
-  return (
-    <Icon size={size} strokeDasharray="3 3" {...props}>
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-    </Icon>
-  );
+  return <LucideIcon icon={SquareOff} size={size} {...props} />;
 }
 
 /** Sélection multiple — deux calques. */

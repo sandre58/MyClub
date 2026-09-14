@@ -37,6 +37,11 @@ public static class DeleteEntry
 
         _ = competition.GetEntry(entryId);
         RemoveMatchesForEntry(entryId, competitionStages, competitionMatches, matchRepository, clock);
+        foreach (var stage in competitionStages)
+        {
+            stage.RemoveCompositionEntryIfPresent(entryId, clock);
+        }
+
         competition.DeleteEntry(entryId, clock);
     }
 

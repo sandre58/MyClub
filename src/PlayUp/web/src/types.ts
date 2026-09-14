@@ -655,6 +655,22 @@ export interface StructureStageHubSummary {
   structureIssues?: string[];
   /** Configured DirectAssignment count (slot → entry). */
   directAssignmentCount?: number;
+  /** Root composition set size (k). */
+  compositionEntryCount?: number;
+  /** Root composition entry identities. */
+  compositionEntryIds?: string[] | null;
+  /** Target Places N at T (≠ composition set k). Null = E4 indeterminable. */
+  compositionCapacity?: number | null;
+  /** Groups form fact: places per group (SoT for Places N); independent of Draw. */
+  placesPerGroup?: number | null;
+  /** Short display-name preview for the composition set. */
+  compositionPreviewNames?: string[] | null;
+  /** Count of composition entries beyond the preview. */
+  compositionPreviewOverflow?: number;
+  /** Composition entries that are no longer Active. */
+  compositionIneligibleCount?: number;
+  /** True when the phase has no inbound Qualif/Prog feeds (Affectation). */
+  isRootComposition?: boolean;
 }
 
 /** One qualification path for Structure authoring / impact preview. */
@@ -913,6 +929,7 @@ export interface StructureRebuildImpact {
   clearedRounds: number;
   clearedSlots: number;
   clearedDirectAssignments: number;
+  clearedCompositionEntries: number;
   clearedDrawRules: boolean;
   clearedSwissSettings: boolean;
 }
@@ -1205,6 +1222,87 @@ export interface StageOverview {
   rounds: StageRound[];
   slots: StageSlot[];
   draws: StageDraw[];
+}
+
+/** GET /stages/{id}/schematic — form units + placed entries (S1–S8). */
+export type SchematicFormPositionKind = 'CupSlot' | 'GroupPlace' | 'RosterPlace';
+
+export type SchematicFeedKind =
+  | 'Qualification'
+  | 'Progression'
+  | 'Direct'
+  | 'Draw';
+
+export interface SchematicFormPosition {
+  kind: SchematicFormPositionKind;
+  slotKey?: string | null;
+  groupId?: string | null;
+  groupName?: string | null;
+  index?: number | null;
+  /** Backing fixture when the unit is a pairing-draw bracket side (no slot binding). */
+  fixtureId?: string | null;
+  /** Bracket side ('A' | 'B') when fixtureId is set. */
+  side?: string | null;
+}
+
+export interface SchematicFeedOrigin {
+  kind: SchematicFeedKind;
+  sourceStageId?: string | null;
+  pathOrder?: number | null;
+  selectionMode?: SelectionMode | null;
+  selectionValue?: number | null;
+  selectionEndValue?: number | null;
+  rankingScope?: RankingScope | null;
+  groupId?: string | null;
+  groupName?: string | null;
+  acrossGroupsPosition?: number | null;
+  sourceFixtureId?: string | null;
+  sourceFixtureNumber?: number | null;
+  outcome?: ProgressionOutcome | null;
+  drawId?: string | null;
+  configuredEntryId?: string | null;
+  slotKey?: string | null;
+}
+
+export interface SchematicEntryRef {
+  entryId: string;
+  displayName?: string | null;
+}
+
+export interface SchematicParticipantRef {
+  entryId: string;
+  displayName?: string | null;
+  shortName?: string | null;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
+}
+
+export interface SchematicCase {
+  formPosition: SchematicFormPosition;
+  feedOrigin?: SchematicFeedOrigin | null;
+  entry?: SchematicEntryRef | null;
+  assignment?: SchematicParticipantRef | null;
+}
+
+export interface SchematicConnection {
+  fixtureId: string;
+  roundOrder: number;
+  slotAKey?: string | null;
+  slotBKey?: string | null;
+  matchNumber: number;
+}
+
+export interface StageSchematic {
+  stageId: string;
+  competitionId: string;
+  name: string;
+  status: StageStatus;
+  formatKind?: StructureFormatKind | null;
+  cases: SchematicCase[];
+  connections: SchematicConnection[];
+  /** Planned Swiss rounds (structural K) when formatKind is Swiss. */
+  swissRoundCount?: number | null;
 }
 
 export function sideLabel(side: EntrySide): string {

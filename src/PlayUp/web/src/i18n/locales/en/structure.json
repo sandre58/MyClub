@@ -29,6 +29,8 @@
     "topologyStatMatches_other": "{{count}} matches",
     "topologyStatSlots_one": "{{count}} slot",
     "topologyStatSlots_other": "{{count}} slots",
+    "topologyStatPlaces_one": "{{count}} place",
+    "topologyStatPlaces_other": "{{count}} places",
     "topologyLegsReturn": "Home & away",
     "topologyLegsSingle": "Single match",
     "edgeProgression_one": "Progression · {{count}} path",
@@ -381,14 +383,9 @@
     "editStanding": "Edit standings",
     "entry": "entry",
     "occupantsUnavailable": "Composition unavailable for now.",
+    "schematicLoading": "Loading schematic…",
     "entriesEmptyTitle": "No entries",
     "entriesEmpty": "No inbound entries into this phase.",
-    "entriesRootLede": "This phase is not fed by qualification or progression from other phases. It is filled via competition teams, the draw, and/or direct assignments.",
-    "entriesRootCompetitionTeams": "Competition teams",
-    "entriesRootDirectAssignments": "Direct assignments",
-    "entriesRootDrawConfigured": "Draw configured",
-    "entriesRootDrawRequired": "Draw required",
-    "entriesRootOpenTeams": "View teams",
     "exitsEmptyTitle": "No exits",
     "exitsEmpty": "No outbound from this phase.",
     "attributionEmptyTitle": "No place awards",
@@ -397,15 +394,6 @@
     "placesCount_other": "{{count}} places",
     "teamsCount_one": "{{count}} team",
     "teamsCount_other": "{{count}} teams",
-    "assemblyAria": "Entries / places assembly",
-    "assembly": {
-      "entries": "Entries",
-      "places": "Places",
-      "shortfall_one": "{{count}} place missing",
-      "shortfall_other": "{{count}} places missing",
-      "surplus_one": "{{count}} place surplus",
-      "surplus_other": "{{count}} places surplus"
-    },
     "statsAria": "Phase facts",
     "openDrawWorkflow": "Open draw",
     "drawWorkflow": {
@@ -432,7 +420,9 @@
       "matchdays_one": "matchday",
       "matchdays_other": "matchdays",
       "teams_one": "team",
-      "teams_other": "teams"
+      "teams_other": "teams",
+      "places_one": "place",
+      "places_other": "places"
     },
     "cadre": {
       "matchBound": "Frame matches",
@@ -496,5 +486,54 @@
       "selectionWorst": "Worst {{value}}",
       "minimumPoints": "≥ {{n}} pts"
     }
+  },
+  "entries": {
+    "counterTeams": "{{k}} / {{n}} teams",
+    "counterUnknown_one": "{{count}} team",
+    "counterUnknown_other": "{{count}} teams",
+    "counterPlaces": "{{k}} / {{n}} places",
+    "counterPlacesUnknown_one": "{{count}} place",
+    "counterPlacesUnknown_other": "{{count}} places",
+    "originAffectation": "Assignment",
+    "statusRequired": "Assignment required",
+    "statusIncomplete": "Incomplete",
+    "statusSurplus": "Too many teams",
+    "ctaConstitute": "Set up entries",
+    "ctaComplete": "Complete entries",
+    "ctaAdjust": "Adjust entries",
+    "ctaEdit": "Edit entries",
+    "previewMore": "+{{count}}",
+    "ineligibleOverlay_one": "{{count}} team no longer eligible",
+    "ineligibleOverlay_other": "{{count}} teams no longer eligible",
+    "editSources": "Edit sources",
+    "editComposition": "Edit entries",
+    "avalSourcesRequired": "Sources to define",
+    "avalIncomplete": "Incomplete configuration",
+    "emptyTitle": "No teams",
+    "emptyBody": "Set up the entries for this phase.",
+    "emptySourcesTitle": "No sources",
+    "emptySourcesBody": "Define the inbound sources.",
+    "meterAria": "Teams / places assembly",
+    "meter": {
+      "teams": "Teams",
+      "places": "Places",
+      "shortfall_one": "{{count}} place missing",
+      "shortfall_other": "{{count}} places missing",
+      "surplus_one": "{{count}} place surplus",
+      "surplus_other": "{{count}} places surplus"
+    }
+  },
+  "composition": {
+    "title": "Entries — {{phase}}",
+    "counter": "{{k}} / {{n}} teams",
+    "counterUnknown_one": "{{count}} team",
+    "counterUnknown_other": "{{count}} teams",
+    "search": "Search teams",
+    "searchPlaceholder": "Search…",
+    "emptyEligible": "No eligible teams",
+    "openTeams": "View teams",
+    "noLongerEligible": "No longer eligible",
+    "save": "Save",
+    "saving": "Saving…"
   }
 }

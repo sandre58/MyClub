@@ -833,6 +833,24 @@ try
         });
 
     app.MapPut(
+        "/stages/{stageId:guid}/composition",
+        async (
+            Guid stageId,
+            EntryIdsRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            var entryIds = (request.EntryIds ?? [])
+                .Select(id => new EntryId(id))
+                .ToArray();
+            await executor
+                .ReplaceStageCompositionEntriesAsync(new StageId(stageId), entryIds, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapPut(
         "/stages/{stageId:guid}/tie-format",
         async (
             Guid stageId,
@@ -887,6 +905,16 @@ try
                 .GetStageOverviewAsync(new StageId(stageId), cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(overview);
+        });
+
+    app.MapGet(
+        "/stages/{stageId:guid}/schematic",
+        async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+        {
+            var schematic = await executor
+                .GetStageSchematicAsync(new StageId(stageId), cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(schematic);
         });
 
     app.MapGet(
@@ -1436,8 +1464,10 @@ try
 
     await app.RunAsync().ConfigureAwait(false);
 }
-catch (Exception exception)
+catch (Exception exception) when (exception is not HostAbortedException)
 {
+    // HostAbortedException is thrown by EF Core design-time tools after resolving the host —
+    // do not treat it as a fatal startup failure.
     Log.Fatal(exception, "Play'Up Host terminated unexpectedly");
     throw;
 }
@@ -1466,6 +1496,7 @@ static async Task<IResult> ConfigureStructureHttpAsync(
             result.RebuildImpact.ClearedRounds,
             result.RebuildImpact.ClearedSlots,
             result.RebuildImpact.ClearedDirectAssignments,
+            result.RebuildImpact.ClearedCompositionEntries,
             result.RebuildImpact.ClearedDrawRules,
             result.RebuildImpact.ClearedSwissSettings);
     return Results.Ok(new ConfigureStructureResponse(result.StageCreated, impact, view));

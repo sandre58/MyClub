@@ -14,6 +14,7 @@ namespace MyClub.PlayUp.Application.Competitions;
 /// <param name="ClearedRounds">Rounds removed.</param>
 /// <param name="ClearedSlots">Slots removed.</param>
 /// <param name="ClearedDirectAssignments">Direct slot assignments cleared.</param>
+/// <param name="ClearedCompositionEntries">Root composition entry set cleared.</param>
 /// <param name="ClearedDrawRules">Whether DrawRules were cleared.</param>
 /// <param name="ClearedSwissSettings">Whether Swiss settings were cleared.</param>
 public sealed record StructureRebuildImpact(
@@ -22,5 +23,6 @@ public sealed record StructureRebuildImpact(
     int ClearedRounds,
     int ClearedSlots,
     int ClearedDirectAssignments,
+    int ClearedCompositionEntries,
     bool ClearedDrawRules,
     bool ClearedSwissSettings);

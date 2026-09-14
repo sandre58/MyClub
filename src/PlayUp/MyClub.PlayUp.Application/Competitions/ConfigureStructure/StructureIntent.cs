@@ -48,7 +48,7 @@ public sealed class StructureIntent
     /// <summary>Gets group count (Groups only).</summary>
     public int GroupCount { get; }
 
-    /// <summary>Gets participants per group / pot count (Groups only).</summary>
+    /// <summary>Gets places per group (Groups only) — maps to Stage.PlacesPerGroup.</summary>
     public int ParticipantsPerGroup { get; }
 
     /// <summary>Gets cup bracket size — power of two (Cup only).</summary>
@@ -92,10 +92,12 @@ public sealed class StructureIntent
                 swissRoundCount: 0);
 
     /// <summary>
-    /// Builds a groups intent (empty groups + matchday + PotRules for future Group Draw).
+    /// Builds a groups intent (empty groups + matchday + PlacesPerGroup form fact + Draw PotRules derived from it).
     /// </summary>
     /// <param name="groupCount">Number of groups (≥ 2).</param>
-    /// <param name="participantsPerGroup">Capacity per group (≥ 2); becomes PotRules.NumberOfPots.</param>
+    /// <param name="participantsPerGroup">
+    /// Places per group (≥ 2) — stored as <c>Stage.PlacesPerGroup</c>; also seeds PotRules (one-way).
+    /// </param>
     /// <param name="stageName">Optional stage name.</param>
     /// <param name="matchGenerationFormat">Single or double round-robin (default single).</param>
     /// <returns>Validated intent.</returns>
@@ -110,7 +112,7 @@ public sealed class StructureIntent
                 ApplicationErrorCodes.InvalidStructureIntent)
             : participantsPerGroup < 2
                 ? throw new ApplicationFailureException(
-                    "Groups format requires at least two participants per group (PotRules).",
+                    "Groups format requires at least two places per group.",
                     ApplicationErrorCodes.InvalidStructureIntent)
                 : !Enum.IsDefined(matchGenerationFormat)
                 ? throw new ApplicationFailureException(

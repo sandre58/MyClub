@@ -47,12 +47,12 @@ public static class CompetitionRecipeValidator
     {
         var groups = recipe.GroupCount
             ?? throw new InvalidOperationException("Groups recipe requires GroupCount.");
-        var perGroup = recipe.ParticipantsPerGroup
-            ?? throw new InvalidOperationException("Groups recipe requires ParticipantsPerGroup.");
+        var perGroup = recipe.PlacesPerGroup
+            ?? throw new InvalidOperationException("Groups recipe requires PlacesPerGroup.");
 
         return groups * perGroup != recipe.TeamCount
             ? throw new InvalidOperationException(
-                $"Groups recipe requires GroupCount × ParticipantsPerGroup == TeamCount ({groups}×{perGroup}≠{recipe.TeamCount}).")
+                $"Groups recipe requires GroupCount × PlacesPerGroup == TeamCount ({groups}×{perGroup}≠{recipe.TeamCount}).")
             : StructureIntent.Groups(groups, perGroup, recipe.StageName, recipe.MatchGenerationFormat);
     }
 

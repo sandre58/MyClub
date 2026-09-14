@@ -23,7 +23,7 @@ import {
   StructureIcon,
   StructureIssueIcon,
   SwissFormatIcon,
-  TeamsIcon,
+  LayersIcon,
 } from '../design-system/icons/contentIcons';
 import {attentionSourceLabel, matchGenerationFormatLabel, structureFormatKindLabel,} from '../i18n/enumLabels';
 import {queryKeys} from '../queryKeys';
@@ -38,8 +38,10 @@ import {invalidateAfterStructureMutation} from './structureInvalidation';
 import {AddPhaseDialog} from './StructureGraphDialogs';
 import {StructurePhaseFiche} from './StructurePhaseFiche';
 import {type StructureSectionId} from './structureHubSections';
+import {resolvePlacesN, resolvePlacesPerGroup} from './structurePlaces';
 import {
   parseStructureDeepLink,
+  STRUCTURE_COMPOSE_PARAM,
   STRUCTURE_ROUND_PARAM,
   STRUCTURE_SECTION_PARAM,
   STRUCTURE_STAGE_PARAM,
@@ -93,12 +95,14 @@ function StructureHub({ data }: { data: StructureView }) {
   const [pendingEdit, setPendingEdit] = useState<StructureSectionId | null>(
     () => deepLink.section,
   );
+  const [pendingCompose, setPendingCompose] = useState(() => deepLink.compose);
 
   useEffect(() => {
     const parsed = parseStructureDeepLink(searchParams.toString());
     if (stages.length === 0) {
       setSelectedStageId(null);
       setPendingEdit(null);
+      setPendingCompose(false);
       return;
     }
     if (
@@ -107,6 +111,7 @@ function StructureHub({ data }: { data: StructureView }) {
     ) {
       setSelectedStageId(parsed.stageId);
       setPendingEdit(parsed.section);
+      setPendingCompose(parsed.compose);
       return;
     }
     setSelectedStageId((current) => {
@@ -123,12 +128,14 @@ function StructureHub({ data }: { data: StructureView }) {
   const selectStage = (stageId: string) => {
     setSelectedStageId(stageId);
     setPendingEdit(null);
+    setPendingCompose(false);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
         next.set(STRUCTURE_STAGE_PARAM, stageId);
         next.delete(STRUCTURE_SECTION_PARAM);
         next.delete(STRUCTURE_ROUND_PARAM);
+        next.delete(STRUCTURE_COMPOSE_PARAM);
         return next;
       },
       { replace: true },
@@ -147,6 +154,7 @@ function StructureHub({ data }: { data: StructureView }) {
         next.set(STRUCTURE_STAGE_PARAM, stageId);
         next.set(STRUCTURE_SECTION_PARAM, section);
         next.delete(STRUCTURE_ROUND_PARAM);
+        next.delete(STRUCTURE_COMPOSE_PARAM);
         return next;
       },
       { replace: true },
@@ -223,13 +231,16 @@ function StructureHub({ data }: { data: StructureView }) {
           onConfigure={() => setStructureEditorOpen(true)}
           onSelectStage={selectStage}
           initialEdit={pendingEdit}
+          initialCompose={pendingCompose}
           onInitialEditConsumed={() => {
             setPendingEdit(null);
+            setPendingCompose(false);
             setSearchParams(
               (prev) => {
                 const next = new URLSearchParams(prev);
                 next.delete(STRUCTURE_SECTION_PARAM);
                 next.delete(STRUCTURE_ROUND_PARAM);
+                next.delete(STRUCTURE_COMPOSE_PARAM);
                 return next;
               },
               { replace: true },
@@ -646,7 +657,15 @@ function topologyCardFacts(
   t: (key: string, options?: Record<string, unknown>) => string,
 ): { id: string; icon: ReactNode; value: string }[] {
   const kind = stage.formatKind;
-  const teams = t('hub.teamCount', { count: stage.teamCount });
+  const placesN = resolvePlacesN(stage);
+  const placesFact =
+    placesN != null
+      ? {
+          id: 'places',
+          icon: <LayersIcon size="md" aria-hidden="true" />,
+          value: t('hub.topologyStatPlaces', { count: placesN }),
+        }
+      : null;
   const matchdays = t('hub.topologyStatMatchdays', {
     count: stage.matchdayCount ?? 0,
   });
@@ -670,13 +689,7 @@ function topologyCardFacts(
               ? t('hub.topologyLegsReturn')
               : t('hub.topologyLegsSingle'),
         },
-        {
-          id: 'slots',
-          icon: <CupFormatIcon size="md" aria-hidden="true"/>,
-          value: t('hub.topologyStatSlots', {
-            count: stage.slotCount ?? 0,
-          }),
-        },
+        ...(placesFact ? [placesFact] : []),
       ];
     }
     case 'Championship':
@@ -691,22 +704,19 @@ function topologyCardFacts(
           icon: <MatchesStatIcon size="md" aria-hidden="true" />,
           value: matches,
         },
-        {
-          id: 'teams',
-          icon: <TeamsIcon size="md" aria-hidden="true" />,
-          value: teams,
-        },
+        ...(placesFact ? [placesFact] : []),
       ];
     case 'Groups': {
       const groups = stage.groupCount ?? 0;
+      const perGroup = resolvePlacesPerGroup(stage);
       const sizeFact =
-        groups > 0 && stage.teamCount % groups === 0
+        groups > 0 && perGroup != null
           ? {
               id: 'grid',
               icon: <GroupsFormatIcon size="md" aria-hidden="true" />,
               value: t('hub.topologyStatGroupGrid', {
                 groups,
-                size: stage.teamCount / groups,
+                size: perGroup,
               }),
             }
           : {
@@ -721,11 +731,7 @@ function topologyCardFacts(
           value: matchdays,
         },
         sizeFact,
-        {
-          id: 'teams',
-          icon: <TeamsIcon size="md" aria-hidden="true" />,
-          value: teams,
-        },
+        ...(placesFact ? [placesFact] : []),
       ];
     }
     case 'Swiss':
@@ -742,20 +748,10 @@ function topologyCardFacts(
           icon: <MatchesStatIcon size="md" aria-hidden="true" />,
           value: matches,
         },
-        {
-          id: 'teams',
-          icon: <TeamsIcon size="md" aria-hidden="true" />,
-          value: teams,
-        },
+        ...(placesFact ? [placesFact] : []),
       ];
     default:
-      return [
-        {
-          id: 'teams',
-          icon: <TeamsIcon size="md" aria-hidden="true" />,
-          value: teams,
-        },
-      ];
+      return placesFact ? [placesFact] : [];
   }
 }
 

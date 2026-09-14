@@ -1232,6 +1232,22 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Replaces the root composition entry set on a stage.
+    /// </summary>
+    public async Task ReplaceStageCompositionEntriesAsync(
+        StageId stageId,
+        IReadOnlyList<EntryId> entryIds,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+        ReplaceStageCompositionEntries.Execute(stage, competition, entryIds, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Replaces or clears the stage default TieFormat.
     /// </summary>
     public async Task ReplaceStageDefaultTieFormatAsync(
@@ -1745,6 +1761,60 @@ public sealed partial class UseCaseExecutor(
                               ApplicationErrorCodes.CompetitionNotFound);
 
         return StageOverviewAssembler.Assemble(stage, competition);
+    }
+
+    /// <summary>
+    /// Loads a stage schematic read model (form units + placed entries).
+    /// </summary>
+    /// <param name="stageId">Stage identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The stage schematic.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage or competition is missing.</exception>
+    public async Task<StageSchematicDto> GetStageSchematicAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Full, cancellationToken)
+                        .ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdReadOnlyAsync(stage.CompetitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{stage.CompetitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+
+        IReadOnlyList<Stage> competitionStages;
+        if (competition.StageIds.Count == 0)
+        {
+            competitionStages = [stage];
+        }
+        else
+        {
+            var loaded = await stages.GetByIdsReadOnlyAsync(
+                    competition.StageIds,
+                    StageLoadProfile.Full,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            if (loaded.Count != competition.StageIds.Count)
+            {
+                throw new ApplicationFailureException(
+                    "One or more competition stages were not found.",
+                    ApplicationErrorCodes.StageNotFound);
+            }
+
+            competitionStages = loaded.All(candidate => !candidate.Id.Equals(stage.Id))
+                ? [.. loaded, stage]
+                : loaded;
+        }
+
+        // Pairing-draw cups carry their placed sides on real matches, not on slots.
+        var matchRows = await matches.ListSummaryRowsByStageReadOnlyAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+
+        return StageSchematicAssembler.Assemble(stage, competition, competitionStages, matchRows);
     }
 
     /// <summary>

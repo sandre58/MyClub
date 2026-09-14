@@ -22,6 +22,7 @@ internal static class StageOrderedCollectionsAccessor
     private static readonly FieldInfo DrawsField = RequireField(typeof(Stage), "_draws");
     private static readonly FieldInfo PenaltiesField = RequireField(typeof(Stage), "_penalties");
     private static readonly FieldInfo DirectAssignmentsField = RequireField(typeof(Stage), "_directAssignments");
+    private static readonly FieldInfo CompositionEntriesField = RequireField(typeof(Stage), "_compositionEntries");
     private static readonly FieldInfo GroupEntryIdsField = RequireField(typeof(Group), "_entryIds");
     private static readonly FieldInfo RoundFixturesField = RequireField(typeof(Round), "_fixtures");
     private static readonly FieldInfo MatchdayFixturesField = RequireField(typeof(Matchday), "_fixtures");
@@ -41,6 +42,9 @@ internal static class StageOrderedCollectionsAccessor
 
     internal static List<DirectAssignment> GetDirectAssignments(Stage stage) =>
         GetList<DirectAssignment>(DirectAssignmentsField, stage);
+
+    internal static List<CompositionEntry> GetCompositionEntries(Stage stage) =>
+        GetList<CompositionEntry>(CompositionEntriesField, stage);
 
     internal static List<EntryId> GetEntryIds(Group group) => GetList<EntryId>(GroupEntryIdsField, group);
 

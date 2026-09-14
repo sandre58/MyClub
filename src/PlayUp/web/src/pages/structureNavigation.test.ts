@@ -32,7 +32,24 @@ describe('structureNavigation', () => {
       stageId: 'stage-1',
       section: 'tirage',
       roundId: 'round-9',
+      compose: false,
     });
+  });
+
+  it('parses compose deep-link', () => {
+    expect(parseStructureDeepLink('stage=stage-1&compose=1')).toEqual({
+      stageId: 'stage-1',
+      section: null,
+      roundId: null,
+      compose: true,
+    });
+    expect(
+      structureDeepLink({
+        competitionId: 'comp-1',
+        stageId: 'stage-1',
+        compose: true,
+      }),
+    ).toBe('/competitions/comp-1/structure?stage=stage-1&compose=1');
   });
 
   it('rejects unknown sections', () => {

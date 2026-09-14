@@ -28,5 +28,6 @@ public sealed record StructureRebuildImpactDto(
     int ClearedRounds,
     int ClearedSlots,
     int ClearedDirectAssignments,
+    int ClearedCompositionEntries,
     bool ClearedDrawRules,
     bool ClearedSwissSettings);

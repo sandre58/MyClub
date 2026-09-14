@@ -22,6 +22,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Matchday> _matchdays = [];
     private readonly List<Slot> _slots = [];
     private readonly List<DirectAssignment> _directAssignments = [];
+    private readonly List<CompositionEntry> _compositionEntries = [];
     private readonly List<Draw> _draws = [];
     private readonly List<Penalty> _penalties = [];
     private readonly List<MatchPlacement> _matchPlacements = [];
@@ -80,6 +81,12 @@ public sealed class Stage : AggregateRoot<StageId>
     public SwissSettings? SwissSettings { get; private set; }
 
     /// <summary>
+    /// Gets structural places per group for Groups form capacity (Places N = groupCount × this).
+    /// Independent of DrawRules — Clear Draw must not clear this.
+    /// </summary>
+    public int? PlacesPerGroup { get; private set; }
+
+    /// <summary>
     /// Gets a value indicating whether this stage is configured as Swiss Kind.
     /// </summary>
     public bool IsSwiss => SwissSettings is not null;
@@ -108,6 +115,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the direct slot assignments (configuration feeds).
     /// </summary>
     public IReadOnlyList<DirectAssignment> DirectAssignments => _directAssignments.AsReadOnly();
+
+    /// <summary>
+    /// Gets the root composition entry set (who constitutes the phase before Draw).
+    /// </summary>
+    public IReadOnlyList<CompositionEntry> CompositionEntries => _compositionEntries.AsReadOnly();
 
     /// <summary>
     /// Gets the draws owned by this stage.
@@ -1048,6 +1060,31 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Sets or clears structural places-per-group (Groups form capacity). Draft/Ready only.
+    /// Independent of <see cref="ReplaceDrawRules"/> — clearing Draw does not clear this value.
+    /// </summary>
+    /// <param name="placesPerGroup">Places per group (≥ 2), or <see langword="null"/> to clear.</param>
+    public void SetPlacesPerGroup(int? placesPerGroup)
+    {
+        EnsureDraftOrReady();
+
+        if (placesPerGroup is null)
+        {
+            PlacesPerGroup = null;
+            return;
+        }
+
+        if (placesPerGroup < 2)
+        {
+            throw new DomainException(
+                "Places per group must be at least 2.",
+                StageErrorCodes.InvalidConfiguration);
+        }
+
+        PlacesPerGroup = placesPerGroup;
+    }
+
+    /// <summary>
     /// Adds a group to the stage.
     /// </summary>
     /// <param name="name">The group name.</param>
@@ -1196,6 +1233,81 @@ public sealed class Stage : AggregateRoot<StageId>
 
         DemoteToDraftIfReady();
         _slots.Remove(slot);
+    }
+
+    /// <summary>
+    /// Replaces the root composition entry set. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Partial sets are allowed; duplicates are rejected. Order of first occurrence is preserved.
+    /// </summary>
+    /// <param name="entryIds">Entry identities (may be empty to clear).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceCompositionEntries(IReadOnlyList<EntryId> entryIds, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureDraftOrReady();
+
+        var distinct = new List<EntryId>(entryIds.Count);
+        var seen = new HashSet<EntryId>();
+        foreach (var entryId in entryIds)
+        {
+            if (!seen.Add(entryId))
+            {
+                throw new DomainException(
+                    $"Entry '{entryId}' is duplicated in the composition set.",
+                    StageErrorCodes.DuplicateEntry);
+            }
+
+            distinct.Add(entryId);
+        }
+
+        if (_compositionEntries.Count == distinct.Count
+            && _compositionEntries.Select(entry => entry.EntryId).SequenceEqual(distinct))
+        {
+            return;
+        }
+
+        DemoteToDraftIfReady();
+        _compositionEntries.Clear();
+        foreach (var entryId in distinct)
+        {
+            _compositionEntries.Add(new CompositionEntry(entryId));
+        }
+
+        Raise(new StageCompositionEntriesReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Clears the root composition entry set (Structure rebuild). Draft/Ready only.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ClearCompositionEntries(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (_compositionEntries.Count == 0)
+        {
+            return;
+        }
+
+        ReplaceCompositionEntries([], clock);
+    }
+
+    /// <summary>
+    /// Removes an entry from the composition set when present (e.g. hard-delete of a competition entry).
+    /// </summary>
+    /// <param name="entryId">Entry identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveCompositionEntryIfPresent(EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
+        {
+            return;
+        }
+
+        ReplaceCompositionEntries(
+            [.. _compositionEntries.Where(entry => !entry.EntryId.Equals(entryId)).Select(entry => entry.EntryId)],
+            clock);
     }
 
     /// <summary>

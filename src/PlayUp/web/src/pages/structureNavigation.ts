@@ -4,6 +4,7 @@ import type { StructureSectionId } from './structureHubSections';
 export const STRUCTURE_STAGE_PARAM = 'stage';
 export const STRUCTURE_SECTION_PARAM = 'section';
 export const STRUCTURE_ROUND_PARAM = 'round';
+export const STRUCTURE_COMPOSE_PARAM = 'compose';
 
 const STRUCTURE_SECTIONS: StructureSectionId[] = [
   'construction',
@@ -28,6 +29,7 @@ export function structureDeepLink(options: {
   stageId: string;
   section?: StructureSectionId | null;
   roundId?: string | null;
+  compose?: boolean;
 }): string {
   const params = new URLSearchParams();
   params.set(STRUCTURE_STAGE_PARAM, options.stageId);
@@ -37,6 +39,9 @@ export function structureDeepLink(options: {
   if (options.roundId) {
     params.set(STRUCTURE_ROUND_PARAM, options.roundId);
   }
+  if (options.compose) {
+    params.set(STRUCTURE_COMPOSE_PARAM, '1');
+  }
   return `/competitions/${options.competitionId}/structure?${params.toString()}`;
 }
 
@@ -44,15 +49,18 @@ export function parseStructureDeepLink(search: string): {
   stageId: string | null;
   section: StructureSectionId | null;
   roundId: string | null;
+  compose: boolean;
 } {
   const params = new URLSearchParams(search);
   const stageId = params.get(STRUCTURE_STAGE_PARAM);
   const sectionRaw = params.get(STRUCTURE_SECTION_PARAM);
   const section =
     sectionRaw && isStructureSectionId(sectionRaw) ? sectionRaw : null;
+  const composeRaw = params.get(STRUCTURE_COMPOSE_PARAM);
   return {
     stageId: stageId && stageId.length > 0 ? stageId : null,
     section,
     roundId: params.get(STRUCTURE_ROUND_PARAM),
+    compose: composeRaw === '1' || composeRaw === 'true',
   };
 }

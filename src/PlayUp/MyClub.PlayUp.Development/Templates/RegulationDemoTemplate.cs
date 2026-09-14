@@ -32,7 +32,7 @@ public sealed class RegulationDemoTemplate : ICompetitionTemplate
         Format = RecipeFormat.Groups,
         TeamCount = 8,
         GroupCount = 2,
-        ParticipantsPerGroup = 4,
+        PlacesPerGroup = 4,
         StageName = "Groupes",
         TeamNames = TeamNameSource.Generated
     };

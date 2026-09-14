@@ -158,7 +158,8 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .ThenInclude(round => round.Fixtures)
                 .Include(candidate => candidate.Matchdays)
                 .ThenInclude(matchday => matchday.Fixtures)
-                .Include(candidate => candidate.MatchPlacements),
+                .Include(candidate => candidate.MatchPlacements)
+                .Include(candidate => candidate.CompositionEntries),
             StageLoadProfile.Full => query
                 .Include(candidate => candidate.Groups)
                 .Include(candidate => candidate.Rounds.OrderBy(round => EF.Property<int>(round, "SortOrder")))
@@ -167,6 +168,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .ThenInclude(matchday => matchday.Fixtures)
                 .Include(candidate => candidate.Slots)
                 .Include(candidate => candidate.DirectAssignments)
+                .Include(candidate => candidate.CompositionEntries)
                 .Include(candidate => candidate.Draws)
                 .Include(candidate => candidate.Penalties)
                 .Include(candidate => candidate.MatchPlacements)

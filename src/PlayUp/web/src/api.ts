@@ -39,6 +39,7 @@ import type {
   BindStageRegulationRequest,
   SetCompetitionScheduleRequest,
   StageOverview,
+  StageSchematic,
   UpdateCompetitionPresentationRequest,
   UpdateEntryPresentationRequest,
   WorkspaceSummary,
@@ -510,6 +511,14 @@ export function replaceStageDrawRules(
   return sendNoContent('PUT', `/stages/${stageId}/draw-rules`, request);
 }
 
+/** PUT /stages/{id}/composition → 204 — replace root composition entry set */
+export function replaceStageCompositionEntries(
+  stageId: string,
+  entryIds: string[],
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/composition`, { entryIds });
+}
+
 /** PUT /stages/{id}/tie-format → 204 */
 export function replaceStageDefaultTieFormat(
   stageId: string,
@@ -521,6 +530,11 @@ export function replaceStageDefaultTieFormat(
 /** Relative URL → Vite proxy → Host GET /stages/{id} */
 export function fetchStageOverview(stageId: string): Promise<StageOverview> {
   return getJson(`/stages/${stageId}`);
+}
+
+/** Relative URL → Vite proxy → Host GET /stages/{id}/schematic */
+export function fetchStageSchematic(stageId: string): Promise<StageSchematic> {
+  return getJson(`/stages/${stageId}/schematic`);
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/matches-hub */

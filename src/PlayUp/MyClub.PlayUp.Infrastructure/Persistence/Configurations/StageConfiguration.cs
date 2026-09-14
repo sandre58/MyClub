@@ -63,6 +63,11 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .IsRequired(false)
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
+        builder.Property(stage => stage.PlacesPerGroup)
+            .HasColumnName("places_per_group")
+            .IsRequired(false)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Property(stage => stage.Regulation)
             .HasColumnName("stage_regulation")
             .HasColumnType("jsonb")
@@ -138,6 +143,11 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasField("_directAssignments")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.OwnsMany(stage => stage.CompositionEntries, ConfigureCompositionEntries);
+        builder.Navigation(stage => stage.CompositionEntries)
+            .HasField("_compositionEntries")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.OwnsMany(stage => stage.MatchPlacements, ConfigureMatchPlacements);
         builder.Navigation(stage => stage.MatchPlacements)
             .HasField("_matchPlacements")
@@ -161,6 +171,19 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .IsRequired();
 
         assignments.Property(assignment => assignment.EntryId)
+            .HasColumnName("entry_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<EntryId>());
+    }
+
+    private static void ConfigureCompositionEntries(OwnedNavigationBuilder<Stage, CompositionEntry> entries)
+    {
+        entries.ToTable("stage_composition_entries");
+        entries.WithOwner().HasForeignKey("stage_id");
+        entries.HasKey("stage_id", "EntryId");
+
+        entries.Property(entry => entry.EntryId)
             .HasColumnName("entry_id")
             .HasColumnType("uuid")
             .IsRequired()

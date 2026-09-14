@@ -49,6 +49,8 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, GroupsToKoMidScenario>();
         services.AddSingleton<IScenario, CupScenario>();
         services.AddSingleton<IScenario, CupDrawPendingScenario>();
+        services.AddSingleton<IScenario, CupCompositionPartialScenario>();
+        services.AddSingleton<IScenario, CupCompositionCompleteScenario>();
         services.AddSingleton<IScenario, CupQfSfScenario>();
         services.AddSingleton<IScenario, CupSfRunningScenario>();
         services.AddSingleton<IScenario, Swiss8X3Scenario>();

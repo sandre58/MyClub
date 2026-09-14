@@ -100,6 +100,9 @@ public static class StructureViewAssembler
     /// <summary>Replace or clear DrawRules.</summary>
     public const string ActionReplaceDrawRules = "ReplaceDrawRules";
 
+    /// <summary>Replace root composition entry set (Affectation).</summary>
+    public const string ActionReplaceCompositionEntries = "ReplaceCompositionEntries";
+
     /// <summary>Replace or clear stage default TieFormat.</summary>
     public const string ActionReplaceDefaultTieFormat = "ReplaceDefaultTieFormat";
 
@@ -253,6 +256,10 @@ public static class StructureViewAssembler
                 constraint.MaxPerGroup))
             .ToArray();
 
+        var isRootComposition = IsRootCompositionStage(stage, competitionStages);
+        var composition = BuildCompositionProjection(competition, stage);
+        var compositionCapacity = ResolvePlaces(competition, stage);
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -299,12 +306,119 @@ public static class StructureViewAssembler
             DrawConstraints: drawConstraints,
             DefaultsBinding: MapDefaultsBinding(stage),
             ConfrontationSegments: confrontationSegments,
-            Actions: BuildStageActions(competition, stage),
+            Actions: BuildStageActions(competition, stage, competitionStages),
             QualificationPaths: qualificationPaths,
             ProgressionPaths: progressionPaths,
             StructureIssues: BuildStructureIssues(stage, competitionStages),
             HalfTimeDuration: match.Duration.HalfTimeDuration,
-            DirectAssignmentCount: stage.DirectAssignments.Count);
+            DirectAssignmentCount: stage.DirectAssignments.Count,
+            CompositionEntryCount: composition.Count,
+            CompositionEntryIds: composition.EntryIds,
+            CompositionCapacity: compositionCapacity,
+            CompositionPreviewNames: composition.PreviewNames,
+            CompositionPreviewOverflow: composition.PreviewOverflow,
+            CompositionIneligibleCount: composition.IneligibleCount,
+            IsRootComposition: isRootComposition,
+            PlacesPerGroup: stage.PlacesPerGroup);
+    }
+
+    private const int CompositionPreviewLimit = 5;
+
+    private readonly record struct CompositionProjection(
+        int Count,
+        IReadOnlyList<Guid> EntryIds,
+        IReadOnlyList<string> PreviewNames,
+        int PreviewOverflow,
+        int IneligibleCount);
+
+    private static CompositionProjection BuildCompositionProjection(
+        Competition competition,
+        Stage stage)
+    {
+        var entriesById = competition.Entries.ToDictionary(entry => entry.Id);
+        var entryIds = stage.CompositionEntries.Select(entry => entry.EntryId.Value).ToArray();
+        var orderedNames = stage.CompositionEntries
+            .Select(entry => entry.EntryId)
+            .Select(id => entriesById.TryGetValue(id, out var entry) ? entry : null)
+            .Where(entry => entry is not null)
+            .Cast<CompetitionEntry>()
+            .OrderBy(entry => entry.DisplayName, DisplayNameComparer)
+            .Select(entry => entry.DisplayName)
+            .ToList();
+
+        var count = stage.CompositionEntries.Count;
+        var preview = orderedNames.Take(CompositionPreviewLimit).ToArray();
+        var overflow = Math.Max(0, count - preview.Length);
+        var ineligible = stage.CompositionEntries.Count(compositionEntry =>
+            !entriesById.TryGetValue(compositionEntry.EntryId, out var entry)
+            || entry.Status != EntryStatus.Active);
+
+        return new CompositionProjection(count, entryIds, preview, overflow, ineligible);
+    }
+
+    /// <summary>
+    /// Places N — target cardinality at T (form capacity, or Active for Championship/Swiss).
+    /// Never derived from Draw or composition set k. Null = indeterminable (E4), not zero.
+    /// DTO name compositionCapacity retained temporarily = target Places, not current k.
+    /// </summary>
+    private static int? ResolvePlaces(Competition competition, Stage stage)
+    {
+        return InferFormat(stage) switch
+        {
+            StructureFormatKind.Cup => stage.Slots.Count > 0 ? stage.Slots.Count : null,
+            StructureFormatKind.Championship or StructureFormatKind.Swiss
+                => CountActiveEntries(competition),
+            StructureFormatKind.Groups => ResolveGroupsPlaces(stage),
+            _ => stage.Slots.Count > 0 ? stage.Slots.Count : null,
+        };
+    }
+
+    private static int CountActiveEntries(Competition competition) =>
+        competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
+
+    /// <summary>
+    /// Groups N = groupCount × placesPerGroup (form fact). Legacy bridge: PotRules only if PlacesPerGroup unset.
+    /// </summary>
+    private static int? ResolveGroupsPlaces(Stage stage)
+    {
+        if (stage.Groups.Count == 0)
+        {
+            return null;
+        }
+
+        var perGroup = stage.PlacesPerGroup
+            ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
+        if (perGroup is null or < 1)
+        {
+            return null;
+        }
+
+        return stage.Groups.Count * perGroup.Value;
+    }
+
+    private static bool IsRootCompositionStage(Stage stage, IReadOnlyList<Stage> competitionStages)
+    {
+        foreach (var other in competitionStages)
+        {
+            if (other.Id.Equals(stage.Id))
+            {
+                continue;
+            }
+
+            var qualification = other.Regulation.QualificationRules;
+            if (qualification?.Paths.Any(path => path.Destination.StageId.Equals(stage.Id)) == true)
+            {
+                return false;
+            }
+
+            var progression = other.Regulation.ProgressionRules;
+            if (progression?.Paths.Any(path => path.Destination.StageId.Equals(stage.Id)) == true)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static IReadOnlyList<StructureQualificationPathDto>? MapQualificationPaths(
@@ -419,7 +533,10 @@ public static class StructureViewAssembler
         return $"{containerName} · #{order.ToString(CultureInfo.InvariantCulture)} · {left} vs {right}";
     }
 
-    private static IReadOnlyList<string> BuildStageActions(Competition competition, Stage stage)
+    private static IReadOnlyList<string> BuildStageActions(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
     {
         if (competition.Status is CompetitionStatus.Completed
             or CompetitionStatus.Archived
@@ -453,6 +570,11 @@ public static class StructureViewAssembler
         if (StageNeedsDrawRulesAction(stage))
         {
             actions.Add(ActionReplaceDrawRules);
+        }
+
+        if (IsRootCompositionStage(stage, competitionStages))
+        {
+            actions.Add(ActionReplaceCompositionEntries);
         }
 
         if (StageNeedsTieFormatAction(stage))
