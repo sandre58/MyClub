@@ -591,10 +591,13 @@ function FluxGroupList({
   groups,
   onOpenPeer,
   teamsLabel,
+  renderGroupAction,
 }: {
   groups: FeedGroup[];
   onOpenPeer?: (peerId: string) => void;
   teamsLabel: (count: number) => string;
+  /** Compact control in the group head (e.g. edit exits on source). */
+  renderGroupAction?: (group: FeedGroup) => ReactNode;
 }) {
   return (
     <ul className="structure-flux-groups">
@@ -612,7 +615,10 @@ function FluxGroupList({
             ) : (
               <span className="structure-flux-group__peer">{group.peerName}</span>
             )}
-            <Chip tone="neutral">{teamsLabel(group.volume)}</Chip>
+            <div className="structure-flux-group__head-trail">
+              <Chip tone="neutral">{teamsLabel(group.volume)}</Chip>
+              {renderGroupAction?.(group)}
+            </div>
           </div>
           <ul className="structure-flux-group__rules">
             {group.rules.map((rule) => (
@@ -747,13 +753,15 @@ function AvalEntriesRail({
   capacity,
   configuredVolume,
   onOpenPeer,
+  renderGroupAction,
   teamsLabel,
   stageStatus,
 }: {
   groups: FeedGroup[];
   capacity: number;
   configuredVolume: number;
-  onOpenPeer: (stageId: string) => void;
+  onOpenPeer?: (stageId: string) => void;
+  renderGroupAction?: (group: FeedGroup) => ReactNode;
   teamsLabel: (count: number) => string;
   stageStatus: string;
 }) {
@@ -793,6 +801,7 @@ function AvalEntriesRail({
             groups={groups}
             onOpenPeer={onOpenPeer}
             teamsLabel={teamsLabel}
+            renderGroupAction={renderGroupAction}
           />
         ) : (
           <EmptyState
@@ -874,21 +883,134 @@ function phaseCapacity(stage: StructureStageHubSummary): number {
 type OverflowItem = {
   id: string;
   label: string;
-  onSelect: () => void;
+  onSelect?: () => void;
+  submenu?: OverflowItem[];
   danger?: boolean;
   disabled?: boolean;
 };
 
+type ExitKind = 'qualification' | 'progression';
+
 function PhaseOverflowMenu({
   items,
   label,
+  backLabel,
 }: {
   items: OverflowItem[];
   label: string;
+  backLabel: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [submenuParent, setSubmenuParent] = useState<OverflowItem | null>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  if (items.length === 0) return null;
+
+  const visible = submenuParent?.submenu ?? items;
+  const menuLabel = submenuParent?.label ?? label;
+
+  return (
+    <>
+      <Tooltip content={label}>
+        <button
+          ref={anchorRef}
+          type="button"
+          className={compactIcon}
+          aria-label={label}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={() => {
+            setSubmenuParent(null);
+            setOpen((value) => !value);
+          }}
+        >
+          <LucideIcon icon={EllipsisVertical} size="sm" />
+        </button>
+      </Tooltip>
+      <Popover
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setSubmenuParent(null);
+        }}
+        anchorRef={anchorRef}
+        role="menu"
+        align="end"
+        width={240}
+        aria-label={menuLabel}
+      >
+        <ul className="structure-overflow-menu">
+          {submenuParent ? (
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="structure-overflow-menu__item structure-overflow-menu__item--back"
+                onClick={() => setSubmenuParent(null)}
+              >
+                {backLabel}
+              </button>
+            </li>
+          ) : null}
+          {visible.map((item) => (
+            <li key={item.id} role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className={[
+                  'structure-overflow-menu__item',
+                  item.danger ? 'structure-overflow-menu__item--danger' : null,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                disabled={item.disabled}
+                onClick={() => {
+                  if (item.disabled) return;
+                  if (item.submenu && item.submenu.length > 0) {
+                    setSubmenuParent(item);
+                    return;
+                  }
+                  setOpen(false);
+                  setSubmenuParent(null);
+                  item.onSelect?.();
+                }}
+              >
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </Popover>
+    </>
+  );
+}
+
+/** Compact pencil → single action, or Qualif | Prog menu when both apply. */
+function ExitKindMenu({
+  label,
+  options,
+}: {
+  label: string;
+  options: { kind: ExitKind; label: string; onSelect: () => void }[];
 }) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
-  if (items.length === 0) return null;
+  if (options.length === 0) return null;
+
+  if (options.length === 1) {
+    const only = options[0]!;
+    return (
+      <Tooltip content={label}>
+        <button
+          type="button"
+          className={compactIcon}
+          aria-label={label}
+          onClick={only.onSelect}
+        >
+          <PencilIcon size="sm" />
+        </button>
+      </Tooltip>
+    );
+  }
 
   return (
     <>
@@ -902,7 +1024,7 @@ function PhaseOverflowMenu({
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
-          <LucideIcon icon={EllipsisVertical} size="sm" />
+          <PencilIcon size="sm" />
         </button>
       </Tooltip>
       <Popover
@@ -915,24 +1037,18 @@ function PhaseOverflowMenu({
         aria-label={label}
       >
         <ul className="structure-overflow-menu">
-          {items.map((item) => (
-            <li key={item.id} role="none">
+          {options.map((option) => (
+            <li key={option.kind} role="none">
               <button
                 type="button"
                 role="menuitem"
-                className={[
-                  'structure-overflow-menu__item',
-                  item.danger ? 'structure-overflow-menu__item--danger' : null,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                disabled={item.disabled}
+                className="structure-overflow-menu__item"
                 onClick={() => {
                   setOpen(false);
-                  if (!item.disabled) item.onSelect();
+                  option.onSelect();
                 }}
               >
-                {item.label}
+                {option.label}
               </button>
             </li>
           ))}
@@ -940,6 +1056,14 @@ function PhaseOverflowMenu({
       </Popover>
     </>
   );
+}
+
+function exitKindsPresent(group: FeedGroup): Set<ExitKind> {
+  const kinds = new Set<ExitKind>();
+  for (const rule of group.rules) {
+    kinds.add(rule.family === 'place' ? 'qualification' : 'progression');
+  }
+  return kinds;
 }
 
 function DomainTile({
@@ -1021,16 +1145,14 @@ function FluxRail({
   id,
   title,
   icon,
-  editLabel,
-  onEdit,
+  editControl,
   children,
   side,
 }: {
   id: string;
   title: string;
   icon: ReactNode;
-  editLabel: string;
-  onEdit?: () => void;
+  editControl?: ReactNode;
   children: ReactNode;
   side: 'in' | 'out';
 }) {
@@ -1048,18 +1170,7 @@ function FluxRail({
         <h3 id={titleId} className="structure-phase-rail__title">
           {title}
         </h3>
-        {onEdit ? (
-          <Tooltip content={editLabel}>
-            <button
-              type="button"
-              className={compactIcon}
-              aria-label={editLabel}
-              onClick={onEdit}
-            >
-              <PencilIcon size="sm" />
-            </button>
-          </Tooltip>
-        ) : null}
+        {editControl}
       </header>
       <div className="structure-phase-rail__body">{children}</div>
     </aside>
@@ -1236,6 +1347,8 @@ export function StructurePhaseFiche({
 }) {
   const { t } = useTranslation('structure');
   const [edit, setEdit] = useState<EditTarget>(null);
+  const [rulesEditStage, setRulesEditStage] =
+    useState<StructureStageHubSummary | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
@@ -1243,6 +1356,7 @@ export function StructurePhaseFiche({
 
   useEffect(() => {
     setEdit(null);
+    setRulesEditStage(null);
     setRemoveOpen(false);
     setDrawWorkflowOpen(false);
     setComposeOpen(false);
@@ -1269,6 +1383,7 @@ export function StructurePhaseFiche({
     };
     const target = map[initialEdit];
     if (target) {
+      setRulesEditStage(stage);
       setEdit(target);
     } else if (initialEdit === 'construction') {
       onConfigure();
@@ -1352,9 +1467,90 @@ export function StructurePhaseFiche({
     setComposeOpen(true);
   };
 
-  const openAvalSources = () => {
-    if (canEditQualif) setEdit('qualification');
-    else if (canEditProg) setEdit('progression');
+  const closeRulesEdit = () => {
+    setEdit(null);
+    setRulesEditStage(null);
+  };
+
+  /** Open Qualif/Prog editor for a source stage without changing the selected fiche. */
+  const openExitEdit = (
+    kind: ExitKind,
+    sourceStage: StructureStageHubSummary = stage,
+  ) => {
+    setRulesEditStage(sourceStage);
+    setEdit(kind);
+  };
+
+  const canAddExit = data.stages.length >= 2;
+
+  const exitEditOptions = (
+    mode: 'add' | 'edit' = 'edit',
+  ): {
+    kind: ExitKind;
+    label: string;
+    onSelect: () => void;
+  }[] => {
+    if (mode === 'add' && !canAddExit) return [];
+    const options: {
+      kind: ExitKind;
+      label: string;
+      onSelect: () => void;
+    }[] = [];
+    if (canEditQualif) {
+      options.push({
+        kind: 'qualification',
+        label: t('fiche.exitKind.qualification'),
+        onSelect: () => openExitEdit('qualification'),
+      });
+    }
+    if (canEditProg) {
+      options.push({
+        kind: 'progression',
+        label: t('fiche.exitKind.progression'),
+        onSelect: () => openExitEdit('progression'),
+      });
+    }
+    return options;
+  };
+
+  const renderAvalSourceAction = (group: FeedGroup): ReactNode => {
+    const present = exitKindsPresent(group);
+    const peer = data.stages.find((s) => s.stageId === group.peerId);
+    if (!peer) return null;
+
+    const peerActions = peer.actions ?? [];
+    const options: {
+      kind: ExitKind;
+      label: string;
+      onSelect: () => void;
+    }[] = [];
+
+    if (
+      present.has('qualification') &&
+      peerActions.includes('ReplaceQualificationRules')
+    ) {
+      options.push({
+        kind: 'qualification',
+        label: t('fiche.exitKind.qualification'),
+        onSelect: () => openExitEdit('qualification', peer),
+      });
+    }
+    if (
+      present.has('progression') &&
+      peerActions.includes('ReplaceProgressionRules')
+    ) {
+      options.push({
+        kind: 'progression',
+        label: t('fiche.exitKind.progression'),
+        onSelect: () => openExitEdit('progression', peer),
+      });
+    }
+
+    if (options.length === 0) return null;
+
+    return (
+      <ExitKindMenu label={t('fiche.editExits')} options={options} />
+    );
   };
 
   const heroFacts: { icon: ReactNode; value: string | number; label: string }[] =
@@ -1408,12 +1604,26 @@ export function StructurePhaseFiche({
       onSelect: () => setEdit('tirage'),
     });
   }
-  if (canEditProg && !hasExits) {
-    overflowItems.push({
-      id: 'add-exit',
-      label: t('fiche.addExit'),
-      onSelect: () => setEdit('progression'),
-    });
+  {
+    const addExitOptions = exitEditOptions('add');
+    if (addExitOptions.length === 1) {
+      const only = addExitOptions[0]!;
+      overflowItems.push({
+        id: 'add-exit',
+        label: t('fiche.addExit'),
+        onSelect: only.onSelect,
+      });
+    } else if (addExitOptions.length > 1) {
+      overflowItems.push({
+        id: 'add-exit',
+        label: t('fiche.addExit'),
+        submenu: addExitOptions.map((option) => ({
+          id: `add-exit-${option.kind}`,
+          label: option.label,
+          onSelect: option.onSelect,
+        })),
+      });
+    }
   }
   if (canEditPlacement && !hasAttribution) {
     overflowItems.push({
@@ -1429,6 +1639,28 @@ export function StructurePhaseFiche({
     danger: true,
     disabled: !canRemove,
   });
+
+  const sortiesEditControl = (() => {
+    if (!hasExits) return undefined;
+    const options = exitEditOptions();
+    if (options.length === 0) return undefined;
+    return (
+      <ExitKindMenu label={t('fiche.editExits')} options={options} />
+    );
+  })();
+
+  const entriesEditControl = isRootEntries && canCompose ? (
+    <Tooltip content={t('entries.editComposition')}>
+      <button
+        type="button"
+        className={compactIcon}
+        aria-label={t('entries.editComposition')}
+        onClick={() => openCompose(false)}
+      >
+        <PencilIcon size="sm" />
+      </button>
+    </Tooltip>
+  ) : undefined;
 
   return (
     <section
@@ -1462,6 +1694,7 @@ export function StructurePhaseFiche({
         <div className="structure-fiche__actions">
           <PhaseOverflowMenu
             label={t('fiche.moreActions')}
+            backLabel={t('fiche.menuBack')}
             items={overflowItems}
           />
         </div>
@@ -1481,20 +1714,7 @@ export function StructurePhaseFiche({
             side="in"
             title={t('fiche.tiles.entries')}
             icon={<ArrowDownIcon size="md" />}
-            editLabel={
-              isRootEntries
-                ? t('entries.editComposition')
-                : t('entries.editSources')
-            }
-            onEdit={
-              isRootEntries
-                ? canCompose
-                  ? () => openCompose(false)
-                  : undefined
-                : canEditQualif || canEditProg
-                  ? openAvalSources
-                  : undefined
-            }
+            editControl={entriesEditControl}
           >
             {isRootEntries ? (
               <RootEntriesRail
@@ -1507,6 +1727,7 @@ export function StructurePhaseFiche({
                 capacity={capacity}
                 configuredVolume={feedSum}
                 onOpenPeer={onSelectStage}
+                renderGroupAction={renderAvalSourceAction}
                 teamsLabel={teamsLabel}
                 stageStatus={stage.status}
               />
@@ -1579,10 +1800,7 @@ export function StructurePhaseFiche({
                   side="out"
                   title={t('fiche.tiles.exits')}
                   icon={<ArrowRightIcon size="md" />}
-                  editLabel={t('fiche.edit')}
-                  onEdit={
-                    canEditProg ? () => setEdit('progression') : undefined
-                  }
+                  editControl={sortiesEditControl}
                 >
                   <FluxGroupList
                     groups={outboundGroups}
@@ -1597,9 +1815,19 @@ export function StructurePhaseFiche({
                   side="out"
                   title={t('fiche.tiles.attribution')}
                   icon={<AttributionIcon size="md" />}
-                  editLabel={t('fiche.edit')}
-                  onEdit={
-                    canEditPlacement ? () => setEdit('placement') : undefined
+                  editControl={
+                    canEditPlacement ? (
+                      <Tooltip content={t('fiche.edit')}>
+                        <button
+                          type="button"
+                          className={compactIcon}
+                          aria-label={t('fiche.edit')}
+                          onClick={() => setEdit('placement')}
+                        >
+                          <PencilIcon size="sm" />
+                        </button>
+                      </Tooltip>
+                    ) : undefined
                   }
                 >
                   <ul className="structure-flux-group__rules">
@@ -1755,15 +1983,15 @@ export function StructurePhaseFiche({
       )}
       <QualificationRulesDialog
         data={data}
-        stage={stage}
+        stage={rulesEditStage ?? stage}
         open={edit === 'qualification'}
-        onClose={() => setEdit(null)}
+        onClose={closeRulesEdit}
       />
       <ProgressionRulesDialog
         data={data}
-        stage={stage}
+        stage={rulesEditStage ?? stage}
         open={edit === 'progression'}
-        onClose={() => setEdit(null)}
+        onClose={closeRulesEdit}
       />
       <PlacementAwardRulesDialog
         data={data}

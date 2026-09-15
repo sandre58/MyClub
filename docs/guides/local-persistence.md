@@ -57,7 +57,7 @@ Applies to **templates** and most **structured scenarios** (`championship`, `gro
 
 Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`, `swiss-8x3:running`).
 
-Fixed UX / Structure scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
+Fixed UX / Structure scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `flux-qualif-draft`, `flux-prog-placement-draft`, `flux-empty-relations-draft`, `flux-full-graph-draft`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
 
 ### Aliases (compat — do not change silently)
 
@@ -105,6 +105,10 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `groups-suspended` | no | Groups mid-results then Suspended |
 | `groups-draw-pending` | no | Groups + pot DrawRules + full composition, empty groups — Draft awaiting draw (E4) |
 | `groups-to-ko-mid` | no | Groups 2×4 finished → Top2 in QF slots — KO Draft (healthy multi-phase mid) |
+| `flux-qualif-draft` | no | Structure flux: Groups Affectation + Qualif → QF — Draft (Sorties Qualif / Entrées aval) |
+| `flux-prog-placement-draft` | no | Structure flux: Demi Affectation → Finale/Bronze Prog + Attribution 1–4 — Draft |
+| `flux-empty-relations-draft` | no | Structure flux: Groups + QF sans arêtes — Draft (overflow Ajouter une sortie) |
+| `flux-full-graph-draft` | no | Structure flux: Groups → Demis (Qualif) → Finale/Bronze (Prog + Attribution) — Draft |
 | `cup-draw-pending` | no | Cup bracket + entries, **composition empty (E0)**, no pairing draw. Contrast: `cup-composition-complete` / `cup:prepared` |
 | `cup-composition-partial` | no | Cup 16, composition **10/16 (E1)** — Completer les entrées |
 | `cup-composition-complete` | no | Cup 16, composition **16/16 (E2)** — Modifier + tirage pending |
@@ -120,7 +124,7 @@ Multi-stage **templates** `coupe-de-france` and `world-cup` also ignore `:progre
 Each scenario runs in its own seed scope (deterministic ids). Seed the full Structure matrix:
 
 ```bash
-dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios championship-structure-draft,structure-graph-invalid,championship-ready,swiss-ready,groups-draw-pending,cup-draw-pending,cup-composition-partial,cup-composition-complete,registration-open,registration-withdrawn,groups-suspended,championship-archived,groups-to-ko-mid,cup-qf-sf,cup-sf-running,championship:running,groups:running,cup:prepared,swiss-8x3:running
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios championship-structure-draft,structure-graph-invalid,championship-ready,swiss-ready,groups-draw-pending,cup-draw-pending,cup-composition-partial,cup-composition-complete,registration-open,registration-withdrawn,groups-suspended,championship-archived,groups-to-ko-mid,flux-qualif-draft,flux-prog-placement-draft,flux-empty-relations-draft,flux-full-graph-draft,cup-qf-sf,cup-sf-running,championship:running,groups:running,cup:prepared,swiss-8x3:running
 ```
 
 **Composition / Entrées QA (minimal):**
@@ -129,6 +133,11 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios c
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios cup-draw-pending,cup-composition-partial,cup-composition-complete,championship-structure-draft,groups-draw-pending
 ```
 
+**Entrées / Sorties / Attribution QA (Structure flux):**
+
+```bash
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios flux-empty-relations-draft,flux-qualif-draft,flux-prog-placement-draft,flux-full-graph-draft,groups-to-ko-mid,cup-qf-sf
+```
 ## Three PostgreSQL usages (do not mix)
 
 | Usage | Purpose | Lifetime |

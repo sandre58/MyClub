@@ -47,6 +47,10 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, GroupsSuspendedScenario>();
         services.AddSingleton<IScenario, GroupsDrawPendingScenario>();
         services.AddSingleton<IScenario, GroupsToKoMidScenario>();
+        services.AddSingleton<IScenario, FluxQualifDraftScenario>();
+        services.AddSingleton<IScenario, FluxProgPlacementDraftScenario>();
+        services.AddSingleton<IScenario, FluxEmptyRelationsDraftScenario>();
+        services.AddSingleton<IScenario, FluxFullGraphDraftScenario>();
         services.AddSingleton<IScenario, CupScenario>();
         services.AddSingleton<IScenario, CupDrawPendingScenario>();
         services.AddSingleton<IScenario, CupCompositionPartialScenario>();

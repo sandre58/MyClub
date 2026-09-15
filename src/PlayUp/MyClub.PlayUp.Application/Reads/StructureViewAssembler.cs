@@ -622,12 +622,22 @@ public static class StructureViewAssembler
         var actions = new List<string>
         {
             ActionRenameStage,
-            ActionReplaceQualificationRules,
-            ActionReplaceProgressionRules,
             ActionReplacePlacementAwardRules,
             ActionReplaceMatchRules,
             ActionBindToCompetition
         };
+
+        // V1 exit capacity: classifying → Qualification ; Cup/KO non-classifying → Progression.
+        // Domain still allows both on StageRegulation; UI/actions filter by topology.
+        if (StageClassification.IsClassifyingPhase(stage))
+        {
+            actions.Add(ActionReplaceQualificationRules);
+        }
+
+        if (StageClassification.IsNonClassifyingPhase(stage))
+        {
+            actions.Add(ActionReplaceProgressionRules);
+        }
 
         if (stage.Regulation.StandingRules is not null
             && !StageClassification.IsNonClassifyingPhase(stage))

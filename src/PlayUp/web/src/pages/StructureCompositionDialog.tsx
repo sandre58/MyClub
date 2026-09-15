@@ -1,13 +1,22 @@
+// -----------------------------------------------------------------------
+// Composition dialog — root Affectation set (Entrées).
+// -----------------------------------------------------------------------
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ListChecks, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { replaceStageCompositionEntries } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { TextLink } from '../design-system/components/TextLink';
+import { Tooltip } from '../design-system/components/Tooltip';
+import { LucideIcon } from '../design-system/icons/Icon';
+import { TeamCrest } from '../design-system/TeamCrest';
+import { notify } from '../design-system/toastStore';
 import type { StructureEntry, StructureStageHubSummary } from '../types';
+import { MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { resolvePlacesN } from './structurePlaces';
-import { MutationError, PendingLabel } from '../ui';
 
 type StructureCompositionDialogProps = {
   open: boolean;
@@ -22,9 +31,19 @@ type StructureCompositionDialogProps = {
 type Row = {
   entryId: string;
   displayName: string;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
   eligible: boolean;
   selected: boolean;
 };
+
+function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const id of a) {
+    if (!b.has(id)) return false;
+  }
+  return true;
+}
 
 /**
  * Work dialog — edit the root composition entry set (Affectation).
@@ -45,6 +64,7 @@ export function StructureCompositionDialog({
 
   const capacity = resolvePlacesN(stage);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [baseline, setBaseline] = useState<Set<string>>(() => new Set());
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -52,7 +72,9 @@ export function StructureCompositionDialog({
       setSearch('');
       return;
     }
-    setSelected(new Set(stage.compositionEntryIds ?? []));
+    const initial = new Set(stage.compositionEntryIds ?? []);
+    setSelected(initial);
+    setBaseline(new Set(initial));
   }, [open, stage.compositionEntryIds, stage.stageId]);
 
   useEffect(() => {
@@ -61,11 +83,15 @@ export function StructureCompositionDialog({
     return () => window.clearTimeout(timer);
   }, [open, focusSearch]);
 
+  const byId = useMemo(
+    () => new Map(entries.map((entry) => [entry.entryId, entry])),
+    [entries],
+  );
+
   const rows: Row[] = useMemo(() => {
     const activeIds = new Set(
       entries.filter((e) => e.status === 'Active').map((e) => e.entryId),
     );
-    const byId = new Map(entries.map((e) => [e.entryId, e]));
 
     const allIds = new Set<string>([
       ...entries.filter((e) => e.status === 'Active').map((e) => e.entryId),
@@ -78,6 +104,8 @@ export function StructureCompositionDialog({
         return {
           entryId,
           displayName: entry?.displayName ?? entryId,
+          logoMediaId: entry?.logoMediaId,
+          primaryColor: entry?.primaryColor,
           eligible: activeIds.has(entryId),
           selected: selected.has(entryId),
         };
@@ -87,7 +115,7 @@ export function StructureCompositionDialog({
           sensitivity: 'base',
         }),
       );
-  }, [entries, selected]);
+  }, [entries, selected, byId]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -97,14 +125,32 @@ export function StructureCompositionDialog({
 
   const k = selected.size;
   const atCapacity = capacity != null && k >= capacity;
+  const remaining =
+    capacity != null && capacity > 0 ? Math.max(0, capacity - k) : null;
+  const complete = capacity != null && capacity > 0 && k === capacity;
+  const dirty = !sameIdSet(selected, baseline);
   const emptyEligible =
     entries.filter((e) => e.status === 'Active').length === 0 && k === 0;
+
+  const selectableFiltered = useMemo(
+    () => filtered.filter((r) => r.eligible && !r.selected),
+    [filtered],
+  );
+  const canSelectAll =
+    selectableFiltered.length > 0 &&
+    (capacity == null || k < capacity);
+
+  const ratio =
+    capacity != null && capacity > 0
+      ? Math.min(1, Math.max(0, k / capacity))
+      : 0;
 
   const saveMutation = useMutation({
     mutationFn: () =>
       replaceStageCompositionEntries(stage.stageId, [...selected]),
     onSuccess: async () => {
       await invalidateAfterStructureMutation(queryClient, competitionId);
+      notify.success(t('composition.toastUpdated'));
       onClose();
     },
   });
@@ -124,10 +170,37 @@ export function StructureCompositionDialog({
     });
   };
 
+  const selectAllFiltered = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const room =
+        capacity != null ? Math.max(0, capacity - next.size) : Number.POSITIVE_INFINITY;
+      if (room === 0) return prev;
+      let added = 0;
+      for (const row of selectableFiltered) {
+        if (added >= room) break;
+        if (!next.has(row.entryId)) {
+          next.add(row.entryId);
+          added += 1;
+        }
+      }
+      return added === 0 ? prev : next;
+    });
+  };
+
   const counterLabel =
     capacity == null
       ? t('composition.counterUnknown', { count: k })
       : t('composition.counter', { k, n: capacity });
+
+  const statusLabel =
+    capacity == null
+      ? null
+      : complete
+        ? t('composition.statusComplete')
+        : remaining != null
+          ? t('composition.statusRemaining', { count: remaining })
+          : null;
 
   const teamsHref = `/competitions/${competitionId}/teams`;
 
@@ -135,9 +208,9 @@ export function StructureCompositionDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      size="lg"
+      size="md"
       title={t('composition.title', { phase: stage.name })}
-      description={counterLabel}
+      description={t('composition.lede')}
       closeLabel={tCommon('close')}
       closeDisabled={saveMutation.isPending}
       footer={
@@ -153,7 +226,7 @@ export function StructureCompositionDialog({
           <button
             type="button"
             className="ds-btn ds-btn--primary"
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || !dirty}
             onClick={() => saveMutation.mutate()}
           >
             {saveMutation.isPending ? (
@@ -166,19 +239,76 @@ export function StructureCompositionDialog({
       }
     >
       <div className="structure-composition">
-        <MutationError error={saveMutation.error} />
-        <label className="structure-composition__search">
-          <span className="ds-visually-hidden">{t('composition.search')}</span>
-          <input
-            ref={searchRef}
-            type="search"
-            className="ds-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('composition.searchPlaceholder')}
-            autoComplete="off"
-          />
-        </label>
+        {saveMutation.isError ? (
+          <MutationError error={saveMutation.error} />
+        ) : null}
+
+        <div className="structure-composition__toolbar">
+          <div
+            className={[
+              'structure-composition__meter',
+              complete ? 'structure-composition__meter--complete' : null,
+              capacity != null && capacity > 0 && k < capacity
+                ? 'structure-composition__meter--short'
+                : null,
+              capacity != null && k > capacity
+                ? 'structure-composition__meter--over'
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <p className="structure-composition__counter" aria-live="polite">
+              {counterLabel}
+            </p>
+            {capacity != null && capacity > 0 ? (
+              <div
+                className="structure-composition__track"
+                aria-hidden="true"
+              >
+                <span
+                  className="structure-composition__fill"
+                  style={{ width: `${ratio * 100}%` }}
+                />
+              </div>
+            ) : null}
+            {statusLabel ? (
+              <p className="structure-composition__status" role="status">
+                {statusLabel}
+              </p>
+            ) : null}
+          </div>
+
+          <Tooltip content={t('composition.selectAll')}>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost ds-icon-button structure-composition__select-all"
+              disabled={!canSelectAll || saveMutation.isPending}
+              aria-label={t('composition.selectAll')}
+              onClick={selectAllFiltered}
+            >
+              <LucideIcon icon={ListChecks} size="sm" />
+            </button>
+          </Tooltip>
+
+          <label className="structure-composition__search">
+            <span className="ds-visually-hidden">{t('composition.search')}</span>
+            <span className="ds-input">
+              <span className="ds-input__leading" aria-hidden="true">
+                <LucideIcon icon={Search} size="sm" />
+              </span>
+              <input
+                ref={searchRef}
+                type="search"
+                className="ds-input__control"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('composition.searchPlaceholder')}
+                autoComplete="off"
+              />
+            </span>
+          </label>
+        </div>
 
         {emptyEligible ? (
           <div className="structure-composition__empty" role="status">
@@ -190,6 +320,7 @@ export function StructureCompositionDialog({
             className="structure-composition__list"
             role="listbox"
             aria-multiselectable="true"
+            aria-label={t('composition.listAria')}
           >
             {filtered.map((row) => {
               const disabledGrow =
@@ -208,12 +339,23 @@ export function StructureCompositionDialog({
                     ]
                       .filter(Boolean)
                       .join(' ')}
+                    title={
+                      disabledGrow
+                        ? t('composition.atCapacityHint', { n: capacity })
+                        : undefined
+                    }
                   >
                     <input
                       type="checkbox"
                       checked={row.selected}
                       disabled={disabledGrow}
                       onChange={() => toggle(row.entryId, row.selected)}
+                    />
+                    <TeamCrest
+                      name={row.displayName}
+                      logoMediaId={row.logoMediaId}
+                      primaryColor={row.primaryColor ?? null}
+                      size="sm"
                     />
                     <span className="structure-composition__name">
                       {row.displayName}

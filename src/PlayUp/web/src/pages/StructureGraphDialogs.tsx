@@ -648,8 +648,12 @@ export function QualificationRulesDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={t('graph.editQualificationTitle')}
-      description={t('graph.editQualificationLede')}
+      title={t('graph.editQualificationTitle', { phase: stage.name })}
+      description={
+        peerStages.length === 0
+          ? t('graph.editExitNeedsPeer')
+          : t('graph.editQualificationLede')
+      }
       closeLabel={tCommon('close')}
       closeDisabled={mutation.isPending}
       size="lg"
@@ -675,7 +679,11 @@ export function QualificationRulesDialog({
             type="submit"
             form={formId}
             className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending || rows.length === 0}
+            disabled={
+              mutation.isPending ||
+              rows.length === 0 ||
+              peerStages.length === 0
+            }
           >
             {mutation.isPending ? <PendingLabel /> : t('graph.saveRules')}
           </button>
@@ -810,6 +818,7 @@ export function QualificationRulesDialog({
         <button
           type="button"
           className="ds-btn ds-btn--secondary"
+          disabled={peerStages.length === 0}
           onClick={() =>
             setRows([
               ...rows,
@@ -887,8 +896,12 @@ export function ProgressionRulesDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={t('graph.editProgressionTitle')}
-      description={t('graph.editProgressionLede')}
+      title={t('graph.editProgressionTitle', { phase: stage.name })}
+      description={
+        peerStages.length === 0
+          ? t('graph.editExitNeedsPeer')
+          : t('graph.editProgressionLede')
+      }
       closeLabel={tCommon('close')}
       closeDisabled={mutation.isPending}
       size="lg"
@@ -914,7 +927,11 @@ export function ProgressionRulesDialog({
             type="submit"
             form={formId}
             className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending || rows.length === 0}
+            disabled={
+              mutation.isPending ||
+              rows.length === 0 ||
+              peerStages.length === 0
+            }
           >
             {mutation.isPending ? <PendingLabel /> : t('graph.saveRules')}
           </button>
@@ -1025,6 +1042,7 @@ export function ProgressionRulesDialog({
         <button
           type="button"
           className="ds-btn ds-btn--secondary"
+          disabled={peerStages.length === 0}
           onClick={() =>
             setRows([
               ...rows,

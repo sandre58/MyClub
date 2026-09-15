@@ -574,6 +574,8 @@ internal static class ScenarioOrchestration
 
     /// <summary>
     /// Healthy multi-phase mid-state: Groups 2×4 finished → Top2 filled into QF slots; KO stays Draft.
+    /// Structure UX case #9 — Affectation racine (groups composition) + inbound Qualif on QF
+    /// (Entrées aval = WhoFeeds lecture → jump / edit on source).
     /// </summary>
     public static async Task BuildGroupsToKoMidAsync(
         ScenarioContext context,
@@ -658,6 +660,244 @@ internal static class ScenarioOrchestration
             context.Clock);
 
         groups.Complete(context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Structure flux QA — Affectation racine + Sorties Qualification configurées, reste Draft.
+    /// Groups 2×4 → QF (Top1/Top2) ; pas de matchs joués. Entrées aval QF = WhoFeeds lecture.
+    /// </summary>
+    public static async Task BuildFluxQualifDraftAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Flux — Qualification Draft",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            PlacesPerGroup = 4,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        var qfSlotKeys = PairSlotKeys("QF", pairCount: 2);
+        var quarter = CreateKnockoutStage(
+            context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
+
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        if (orderedGroups.Length != 2)
+        {
+            throw new InvalidOperationException(
+                $"Expected 2 groups for flux-qualif-draft, found {orderedGroups.Length}.");
+        }
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(quarter.Id, qfSlotKeys[0])),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(quarter.Id, qfSlotKeys[1])),
+                new QualificationPath(
+                    3,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(quarter.Id, qfSlotKeys[2])),
+                new QualificationPath(
+                    4,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(quarter.Id, qfSlotKeys[3]))
+            ]),
+            context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Structure flux QA — Sorties Progression (Winner/Loser) + Attribution 1–4, reste Draft.
+    /// Demi (Affectation 4) → Finale + Bronze ; fixtures créées pour lier les chemins.
+    /// </summary>
+    public static async Task BuildFluxProgPlacementDraftAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Flux — Progression + Attribution Draft",
+            Format = RecipeFormat.Cup,
+            TeamCount = 4,
+            BracketSize = 4,
+            StageName = "Demi-finales",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        var sfSlotKeys = PairSlotKeys("SF", pairCount: 2);
+        var semi = CreateKnockoutStage(
+            context, competition, "sf", "Demi-finales", "Demi-finales", sfSlotKeys);
+        AssignRootComposition(semi, entries, context.Clock);
+        var sfFixtures = AddRoundFixtures(semi, count: 2, context.Clock);
+
+        var final = CreateKnockoutStage(
+            context, competition, "final", "Finale", "Finale", ["F-A", "F-B"]);
+        var bronze = CreateKnockoutStage(
+            context, competition, "bronze", "Match pour la 3e place", "Match pour la 3e place", ["B-A", "B-B"]);
+
+        WireSemiToFinalAndBronze(semi, final, bronze, sfFixtures, context.Clock);
+
+        var finalFixture = AddRoundFixtures(final, count: 1, context.Clock)[0];
+        var bronzeFixture = AddRoundFixtures(bronze, count: 1, context.Clock)[0];
+        WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Structure flux QA — multi-phases sans arêtes (Sorties / Attribution vides).
+    /// Overflow « Ajouter une sortie » / « Ajouter une attribution » depuis la fiche.
+    /// </summary>
+    public static async Task BuildFluxEmptyRelationsDraftAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Flux — Relations vides Draft",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            PlacesPerGroup = 4,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        _ = CreateKnockoutStage(
+            context,
+            competition,
+            "qf",
+            "Quarts de finale",
+            "Quarts de finale",
+            PairSlotKeys("QF", pairCount: 2));
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Structure flux QA — graphe complet Draft : Qualif + Progression + Attribution.
+    /// Groups → Demis (Top2) → Finale/Bronze ; Affectation racine ; aucun match joué.
+    /// </summary>
+    public static async Task BuildFluxFullGraphDraftAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Flux — Graphe complet Draft",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            PlacesPerGroup = 4,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        var sfSlotKeys = PairSlotKeys("SF", pairCount: 2);
+        var semi = CreateKnockoutStage(
+            context, competition, "sf", "Demi-finales", "Demi-finales", sfSlotKeys);
+        var sfFixtures = AddRoundFixtures(semi, count: 2, context.Clock);
+
+        var final = CreateKnockoutStage(
+            context, competition, "final", "Finale", "Finale", ["F-A", "F-B"]);
+        var bronze = CreateKnockoutStage(
+            context, competition, "bronze", "Match pour la 3e place", "Match pour la 3e place", ["B-A", "B-B"]);
+        var finalFixture = AddRoundFixtures(final, count: 1, context.Clock)[0];
+        var bronzeFixture = AddRoundFixtures(bronze, count: 1, context.Clock)[0];
+
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        if (orderedGroups.Length != 2)
+        {
+            throw new InvalidOperationException(
+                $"Expected 2 groups for flux-full-graph-draft, found {orderedGroups.Length}.");
+        }
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(semi.Id, sfSlotKeys[0])),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    new QualificationDestination(semi.Id, sfSlotKeys[1])),
+                new QualificationPath(
+                    3,
+                    QualificationSource.FromGroup(orderedGroups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(semi.Id, sfSlotKeys[2])),
+                new QualificationPath(
+                    4,
+                    QualificationSource.FromGroup(orderedGroups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    new QualificationDestination(semi.Id, sfSlotKeys[3]))
+            ]),
+            context.Clock);
+
+        WireSemiToFinalAndBronze(semi, final, bronze, sfFixtures, context.Clock);
+        WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1843,6 +2083,23 @@ internal static class ScenarioOrchestration
         new("F1", "E2"),
         new("H1", "G2")
     ];
+
+    private static Fixture[] AddRoundFixtures(Stage stage, int count, IClock clock)
+    {
+        if (stage.Rounds.Count == 0)
+        {
+            throw new InvalidOperationException($"Stage '{stage.Name.Value}' has no rounds for fixtures.");
+        }
+
+        var roundId = stage.Rounds[0].Id;
+        var fixtures = new Fixture[count];
+        for (var i = 0; i < count; i++)
+        {
+            fixtures[i] = stage.AddFixture(roundId, clock);
+        }
+
+        return fixtures;
+    }
 
     private static void WireWorldCupQualification(Stage groups, Stage roundOf16, IClock clock)
     {
