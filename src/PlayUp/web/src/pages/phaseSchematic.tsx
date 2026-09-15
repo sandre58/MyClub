@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trophy } from 'lucide-react';
 import type {
@@ -8,10 +9,16 @@ import type {
   SelectionMode,
   StageSchematic,
 } from '../types';
+import { TeamCrest } from '../design-system/TeamCrest';
 import { nextPowerOfTwo } from './structureFixtureLabels';
 import './phase-schematic.css';
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
+type SchematicDensity = 'full' | 'crest' | 'compact';
+
+type PairLabel =
+  | { kind: 'fixture'; matchNumber: number }
+  | { kind: 'pair'; ordinal: number };
 
 /**
  * Phase form schematic driven by StageSchematic DTO.
@@ -21,9 +28,12 @@ type Translate = (key: string, opts?: Record<string, unknown>) => string;
 export function PhaseSchematic({
   schematic,
   terminal = false,
+  /** Stage hub round count — used when schematic.cupRoundCount is absent (older Host). */
+  cupRoundCount,
 }: {
   schematic: StageSchematic;
   terminal?: boolean;
+  cupRoundCount?: number | null;
 }) {
   const { t } = useTranslation(['regulation', 'structure']);
   const format = schematic.formatKind;
@@ -33,7 +43,14 @@ export function PhaseSchematic({
   }
 
   if (format === 'Cup') {
-    return <CupSchematic schematic={schematic} t={t} terminal={terminal} />;
+    return (
+      <CupSchematic
+        schematic={schematic}
+        t={t}
+        terminal={terminal}
+        roundHint={cupRoundCount}
+      />
+    );
   }
 
   if (format === 'Championship') {
@@ -57,23 +74,58 @@ function SlotBox({
   c,
   t,
   ghost,
+  density = 'full',
   style,
 }: {
   c?: SchematicCase | null;
   t: Translate;
   ghost?: boolean;
+  density?: SchematicDensity;
   style?: CSSProperties;
 }) {
   const primary = c ? casePrimaryLabel(c, t) : null;
   const secondary = c ? caseSecondaryLabel(c) : null;
   const placed = !!c?.entry;
+  const name =
+    c?.assignment?.displayName ??
+    c?.assignment?.shortName ??
+    c?.entry?.displayName ??
+    primary ??
+    '';
   const className = [
     'schematic-slot',
+    `schematic-slot--${density}`,
     placed ? '' : 'schematic-slot--empty',
     ghost ? 'schematic-slot--ghost' : '',
   ]
     .filter(Boolean)
     .join(' ');
+
+  if (density === 'compact') {
+    return (
+      <span
+        className={className}
+        style={style}
+        aria-hidden={ghost || undefined}
+        title={(primary ?? name) || undefined}
+      />
+    );
+  }
+
+  if (density === 'crest') {
+    return (
+      <span className={className} style={style} aria-hidden={ghost || undefined}>
+        {name ? (
+          <TeamCrest
+            name={name}
+            logoMediaId={c?.assignment?.logoMediaId}
+            primaryColor={c?.assignment?.primaryColor}
+            size="sm"
+          />
+        ) : null}
+      </span>
+    );
+  }
 
   return (
     <span className={className} style={style} aria-hidden={ghost || undefined}>
@@ -212,29 +264,535 @@ function SwissSchematic({
   );
 }
 
-/* -- Cup: HTML slot column + SVG bracket wires, shared pixel geometry. -- */
+/* -- Cup: HTML slot columns + SVG bracket wires, shared pixel geometry. -- */
 
-const CUP_SLOT_H = 40;
-const CUP_PAIR_GAP = 6;
-const CUP_GROUP_GAP = 16;
-const CUP_COL_GAP = 76;
+type CupMetrics = {
+  slotH: number;
+  pairGap: number;
+  groupGap: number;
+  colGap: number;
+  slotColW: number;
+};
+
+function cupMetrics(density: SchematicDensity): CupMetrics {
+  if (density === 'compact') {
+    return { slotH: 28, pairGap: 4, groupGap: 10, colGap: 52, slotColW: 88 };
+  }
+  if (density === 'crest') {
+    return { slotH: 34, pairGap: 5, groupGap: 12, colGap: 64, slotColW: 112 };
+  }
+  return { slotH: 40, pairGap: 6, groupGap: 16, colGap: 76, slotColW: 148 };
+}
+
+const CUP_MIN_FIT_SCALE = 0.72;
 
 function CupSchematic({
   schematic,
   t,
   terminal,
+  roundHint,
 }: {
   schematic: StageSchematic;
   t: Translate;
   terminal: boolean;
+  roundHint?: number | null;
+}) {
+  const roundCount = resolveCupRoundCount(
+    schematic.cupRoundCount,
+    roundHint,
+    schematic.connections,
+    schematic.cases.length,
+  );
+
+  const multiColumns = partitionCupRoundCases(schematic.cases, roundCount);
+  const isMulti = multiColumns != null;
+  const multiRoundCount = multiColumns?.length ?? 0;
+  const multiLeafCount = multiColumns?.[0]?.length ?? 0;
+  const [density, setDensity] = useState<SchematicDensity>('full');
+  const [scale, setScale] = useState(1);
+  const [scroll, setScroll] = useState(false);
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  const metrics = cupMetrics(density);
+  const naturalSize = isMulti
+    ? measureCupMultiSize(multiRoundCount, multiLeafCount, metrics, terminal)
+    : measureCupSingleSize(
+        nextPowerOfTwo(Math.max(schematic.cases.length, 2)),
+        Math.max(roundCount, 1),
+        metrics,
+        terminal,
+      );
+
+  useLayoutEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+
+    const apply = () => {
+      const avail = el.clientWidth;
+      // jsdom / first paint: no real width yet — keep full density.
+      if (avail < 48) {
+        setDensity((prev) => (prev === 'full' ? prev : 'full'));
+        setScale((prev) => (prev === 1 ? prev : 1));
+        setScroll((prev) => (prev ? false : prev));
+        return;
+      }
+      const leafFallback = nextPowerOfTwo(Math.max(schematic.cases.length, 2));
+      const sizes: SchematicDensity[] = ['full', 'crest', 'compact'];
+      for (const d of sizes) {
+        const m = cupMetrics(d);
+        const size = isMulti
+          ? measureCupMultiSize(multiRoundCount, multiLeafCount, m, terminal)
+          : measureCupSingleSize(leafFallback, Math.max(roundCount, 1), m, terminal);
+        if (size.width <= avail + 1) {
+          setDensity((prev) => (prev === d ? prev : d));
+          setScale((prev) => (prev === 1 ? prev : 1));
+          setScroll((prev) => (prev ? false : prev));
+          return;
+        }
+      }
+
+      const compact = cupMetrics('compact');
+      const compactSize = isMulti
+        ? measureCupMultiSize(multiRoundCount, multiLeafCount, compact, terminal)
+        : measureCupSingleSize(
+            leafFallback,
+            Math.max(roundCount, 1),
+            compact,
+            terminal,
+          );
+      const raw = avail / compactSize.width;
+      setDensity((prev) => (prev === 'compact' ? prev : 'compact'));
+      if (raw >= CUP_MIN_FIT_SCALE) {
+        const nextScale = Math.min(1, raw);
+        setScale((prev) => (prev === nextScale ? prev : nextScale));
+        setScroll((prev) => (prev ? false : prev));
+      } else {
+        setScale((prev) => (prev === CUP_MIN_FIT_SCALE ? prev : CUP_MIN_FIT_SCALE));
+        setScroll((prev) => (prev ? prev : true));
+      }
+    };
+
+    apply();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [
+    isMulti,
+    multiRoundCount,
+    multiLeafCount,
+    roundCount,
+    schematic.cases.length,
+    terminal,
+  ]);
+
+  const body = multiColumns ? (
+    <CupMultiRoundSchematic
+      columns={multiColumns}
+      connections={schematic.connections}
+      t={t}
+      terminal={terminal}
+      density={density}
+      metrics={metrics}
+    />
+  ) : (
+    <CupSingleRoundSchematic
+      schematic={schematic}
+      t={t}
+      terminal={terminal}
+      wireRounds={roundCount}
+      density={density}
+      metrics={metrics}
+    />
+  );
+
+  return (
+    <div
+      ref={viewportRef}
+      className={
+        scroll
+          ? 'schematic-cup-fit schematic-cup-fit--scroll'
+          : 'schematic-cup-fit'
+      }
+    >
+      <div
+        className="schematic-cup-fit__scale"
+        style={{
+          width: naturalSize.width,
+          height: naturalSize.height,
+          transform: scale !== 1 ? `scale(${scale})` : undefined,
+          transformOrigin: 'top center',
+        }}
+      >
+        {body}
+      </div>
+    </div>
+  );
+}
+
+function measureCupMultiSize(
+  roundCount: number,
+  leafCount: number,
+  m: CupMetrics,
+  terminal: boolean,
+): { width: number; height: number } {
+  const pairCount = Math.max(leafCount / 2, 1);
+  const pairSpan = 2 * m.slotH + m.pairGap;
+  const height = pairCount * pairSpan + (pairCount - 1) * m.groupGap;
+  const lastWireEndX =
+    (roundCount - 1) * (m.slotColW + m.colGap) + m.slotColW + m.colGap;
+  const trophyW = terminal && leafCount >= 2 ? 20 + 12 : 0;
+  return { width: lastWireEndX + trophyW, height };
+}
+
+function measureCupSingleSize(
+  leafCount: number,
+  wireRounds: number,
+  m: CupMetrics,
+  terminal: boolean,
+): { width: number; height: number } {
+  const pairCount = leafCount / 2;
+  const pairSpan = 2 * m.slotH + m.pairGap;
+  const height = pairCount * pairSpan + Math.max(0, pairCount - 1) * m.groupGap;
+  const slotsW = m.slotColW;
+  const wiresW = wireRounds * m.colGap + 12;
+  const trophy = terminal && wireRounds >= Math.log2(leafCount) ? 36 : 0;
+  return { width: slotsW + wiresW + trophy, height };
+}
+
+/**
+ * Prefer authoritative round count (API / structure hub / fixtures).
+ * Only infer from slot total when it matches a full multi-round tree
+ * (14→3, 6→2) — never treat 8 first-round slots as 3 imaginary rounds.
+ */
+function resolveCupRoundCount(
+  cupRoundCount: number | null | undefined,
+  roundHint: number | null | undefined,
+  connections: SchematicConnection[],
+  slotTotal: number,
+): number {
+  if (cupRoundCount != null && cupRoundCount >= 1) {
+    return cupRoundCount;
+  }
+  if (roundHint != null && roundHint >= 1) {
+    return roundHint;
+  }
+  const fromConnections = new Set(connections.map((c) => c.roundOrder)).size;
+  if (fromConnections >= 1) {
+    return fromConnections;
+  }
+  return inferFullTreeCupRoundCount(slotTotal) ?? 1;
+}
+
+/** Full KO tree only: n = 2^(R+1) − 2 ⇒ R = log2(n+2) − 1. */
+function inferFullTreeCupRoundCount(slotTotal: number): number | null {
+  if (slotTotal < 2) {
+    return null;
+  }
+  const power = Math.log2(slotTotal + 2);
+  if (Number.isInteger(power) && power >= 2) {
+    return power - 1;
+  }
+  return null;
+}
+
+/**
+ * Classic KO: R rounds ⇒ first round has 2^R slots, then half each round
+ * (total slots = 2^(R+1) − 2 when every round has slots).
+ * Returns null when the case count does not match that structure.
+ */
+function partitionCupRoundCases(
+  cases: SchematicCase[],
+  roundCount: number,
+): (SchematicCase | null)[][] | null {
+  if (roundCount < 2 || cases.length === 0) {
+    return null;
+  }
+
+  const firstRoundSlots = 2 ** roundCount;
+  const allRoundsSlots = 2 * firstRoundSlots - 2;
+
+  if (cases.length === allRoundsSlots) {
+    const columns: (SchematicCase | null)[][] = [];
+    let offset = 0;
+    let size = firstRoundSlots;
+    for (let r = 0; r < roundCount; r += 1) {
+      columns.push(cases.slice(offset, offset + size));
+      offset += size;
+      size /= 2;
+    }
+    return columns;
+  }
+
+  if (cases.length === firstRoundSlots) {
+    const columns: (SchematicCase | null)[][] = [cases];
+    let size = firstRoundSlots / 2;
+    for (let r = 1; r < roundCount; r += 1) {
+      columns.push(Array.from({ length: size }, () => null));
+      size /= 2;
+    }
+    return columns;
+  }
+
+  return null;
+}
+
+function buildCupColumnYs(leafCount: number, m: CupMetrics): number[][] {
+  const pairCount = leafCount / 2;
+  const pairSpan = 2 * m.slotH + m.pairGap;
+  const leafYs: number[] = [];
+  for (let p = 0; p < pairCount; p += 1) {
+    const top = p * (pairSpan + m.groupGap);
+    leafYs.push(top + m.slotH / 2);
+    leafYs.push(top + m.slotH + m.pairGap + m.slotH / 2);
+  }
+
+  const columns: number[][] = [leafYs];
+  let prev = leafYs;
+  while (prev.length > 1) {
+    const next: number[] = [];
+    for (let i = 0; i < prev.length / 2; i += 1) {
+      next.push((prev[i * 2]! + prev[i * 2 + 1]!) / 2);
+    }
+    columns.push(next);
+    prev = next;
+  }
+  return columns;
+}
+
+/**
+ * Fixture Match # when a real connection exists; otherwise structural pair ordinal (S7).
+ */
+function pairLabelFor(
+  roundConns: SchematicConnection[],
+  caseA: SchematicCase | null,
+  caseB: SchematicCase | null,
+  pairIndex: number,
+): PairLabel {
+  const keyA = caseA?.formPosition.slotKey;
+  const keyB = caseB?.formPosition.slotKey;
+  if (keyA && keyB) {
+    const bySlots = roundConns.find(
+      (c) =>
+        (c.slotAKey === keyA && c.slotBKey === keyB) ||
+        (c.slotAKey === keyB && c.slotBKey === keyA),
+    );
+    if (bySlots) {
+      return { kind: 'fixture', matchNumber: bySlots.matchNumber };
+    }
+  }
+  const sorted = [...roundConns].sort((a, b) => a.matchNumber - b.matchNumber);
+  if (sorted[pairIndex]) {
+    return { kind: 'fixture', matchNumber: sorted[pairIndex]!.matchNumber };
+  }
+  return { kind: 'pair', ordinal: pairIndex + 1 };
+}
+
+function PairOrdinalText({
+  label,
+  x,
+  y,
+}: {
+  label: PairLabel;
+  x: number;
+  y: number;
+}) {
+  if (label.kind === 'fixture') {
+    return (
+      <text x={x} y={y} textAnchor="start" className="schematic-cup__match-n">
+        {`#${label.matchNumber}`}
+      </text>
+    );
+  }
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor="start"
+      className="schematic-cup__pair-ordinal"
+    >
+      {label.ordinal}
+    </text>
+  );
+}
+
+function CupMultiRoundSchematic({
+  columns,
+  connections,
+  t,
+  terminal,
+  density,
+  metrics: m,
+}: {
+  columns: (SchematicCase | null)[][];
+  connections: SchematicConnection[];
+  t: Translate;
+  terminal: boolean;
+  density: SchematicDensity;
+  metrics: CupMetrics;
+}) {
+  const leafCount = columns[0]?.length ?? 0;
+  if (leafCount < 2 || leafCount % 2 !== 0) {
+    return (
+      <div
+        className="regulation-schematic regulation-schematic--cup"
+        aria-label={t('regulation:schematic.bracket')}
+      />
+    );
+  }
+
+  const roundCount = columns.length;
+  const pairCount = leafCount / 2;
+  const pairSpan = 2 * m.slotH + m.pairGap;
+  const height = pairCount * pairSpan + (pairCount - 1) * m.groupGap;
+  const columnYs = buildCupColumnYs(leafCount, m);
+  const showTrophy = terminal;
+
+  const connectionsByRound = new Map<number, SchematicConnection[]>();
+  for (const conn of connections) {
+    const list = connectionsByRound.get(conn.roundOrder) ?? [];
+    list.push(conn);
+    connectionsByRound.set(conn.roundOrder, list);
+  }
+
+  const lastCol = roundCount - 1;
+  const lastYs = columnYs[lastCol] ?? [];
+  const lastWireEndX =
+    lastCol * (m.slotColW + m.colGap) + m.slotColW + m.colGap;
+  const trophySize = 20;
+  const trophyLeft = lastWireEndX + 6;
+  const trophyTop =
+    lastYs.length >= 2
+      ? (lastYs[0]! + lastYs[lastYs.length - 1]!) / 2 - trophySize / 2
+      : height / 2 - trophySize / 2;
+  const width =
+    lastWireEndX + (showTrophy ? trophySize + 12 : 0);
+
+  return (
+    <div
+      className="regulation-schematic regulation-schematic--cup"
+      aria-label={t('regulation:schematic.bracketRounds', { rounds: roundCount })}
+    >
+      <div className="schematic-cup schematic-cup--multi" style={{ height, width }}>
+        {columns.map((colCases, col) => {
+          const ys = columnYs[col] ?? [];
+          const left = col * (m.slotColW + m.colGap);
+          return (
+            <div
+              key={`col-${col}`}
+              className="schematic-cup__round"
+              style={{ left, width: m.slotColW, height }}
+            >
+              {colCases.map((c, i) => {
+                const y = ys[i];
+                if (y == null) {
+                  return null;
+                }
+                return (
+                  <SlotBox
+                    key={`c-${col}-${i}`}
+                    c={c}
+                    t={t}
+                    ghost={!c}
+                    density={density}
+                    style={{
+                      position: 'absolute',
+                      top: y - m.slotH / 2,
+                      left: 0,
+                      right: 0,
+                      height: m.slotH,
+                      minHeight: 0,
+                      marginBottom: 0,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
+
+        <svg
+          className="schematic-cup__wires schematic-cup__wires--overlay"
+          width={width}
+          height={height}
+          viewBox={`0 0 ${width} ${height}`}
+          aria-hidden="true"
+        >
+          {columns.map((colCases, col) => {
+            const ys = columnYs[col] ?? [];
+            const x0 = col * (m.slotColW + m.colGap) + m.slotColW;
+            const x1 = x0 + m.colGap;
+            const xMid = x0 + m.colGap / 2;
+            const roundConns = connectionsByRound.get(col) ?? [];
+            return (
+              <g key={`wire-col-${col}`}>
+                {Array.from({ length: ys.length / 2 }, (_, pair) => {
+                  const y1 = ys[pair * 2]!;
+                  const y2 = ys[pair * 2 + 1]!;
+                  const mid = (y1 + y2) / 2;
+                  const label = pairLabelFor(
+                    roundConns,
+                    colCases[pair * 2] ?? null,
+                    colCases[pair * 2 + 1] ?? null,
+                    pair,
+                  );
+                  return (
+                    <g key={`w-${col}-${pair}`}>
+                      <path
+                        d={`M ${x0} ${y1} H ${xMid} M ${x0} ${y2} H ${xMid} M ${xMid} ${y1} V ${y2} M ${xMid} ${mid} H ${x1}`}
+                        className="schematic-cup__wire-line"
+                      />
+                      <PairOrdinalText label={label} x={xMid + 6} y={mid - 5} />
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          })}
+        </svg>
+
+        {showTrophy ? (
+          <span
+            className="schematic-cup__trophy schematic-cup__trophy--absolute"
+            style={{
+              left: trophyLeft,
+              top: trophyTop,
+              width: trophySize,
+              height: trophySize,
+            }}
+            aria-hidden="true"
+          >
+            <Trophy size={trophySize} strokeWidth={1.75} />
+          </span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CupSingleRoundSchematic({
+  schematic,
+  t,
+  terminal,
+  wireRounds,
+  density,
+  metrics: m,
+}: {
+  schematic: StageSchematic;
+  t: Translate;
+  terminal: boolean;
+  wireRounds: number;
+  density: SchematicDensity;
+  metrics: CupMetrics;
 }) {
   const roundOrders = [
     ...new Set(schematic.connections.map((c) => c.roundOrder)),
   ].sort((a, b) => a - b);
-  const wireRounds = Math.max(roundOrders.length, 1);
   const firstRoundOrder = roundOrders[0] ?? 0;
+  const effectiveWires = Math.max(wireRounds, roundOrders.length, 1);
 
-  // Leaf order follows real first-round pairings (match number order) when known.
   const cases = orderLeafCases(
     schematic.cases,
     schematic.connections.filter((c) => c.roundOrder === firstRoundOrder),
@@ -242,32 +800,19 @@ function CupSchematic({
   const leafCount = nextPowerOfTwo(Math.max(cases.length, 2));
   const pairCount = leafCount / 2;
   const fullDepth = Math.log2(leafCount);
-  const showTrophy = terminal && wireRounds >= fullDepth;
+  const showTrophy = terminal && effectiveWires >= fullDepth;
 
-  const pairSpan = 2 * CUP_SLOT_H + CUP_PAIR_GAP;
-  const height = pairCount * pairSpan + (pairCount - 1) * CUP_GROUP_GAP;
-
-  const leafYs: number[] = [];
-  for (let p = 0; p < pairCount; p += 1) {
-    const top = p * (pairSpan + CUP_GROUP_GAP);
-    leafYs.push(top + CUP_SLOT_H / 2);
-    leafYs.push(top + CUP_SLOT_H + CUP_PAIR_GAP + CUP_SLOT_H / 2);
-  }
-
-  const columns: number[][] = [leafYs];
-  for (let col = 1; col <= wireRounds; col += 1) {
-    const prev = columns[col - 1]!;
-    const next: number[] = [];
-    for (let i = 0; i < prev.length / 2; i += 1) {
-      next.push((prev[i * 2]! + prev[i * 2 + 1]!) / 2);
-    }
-    columns.push(next);
-  }
+  const pairSpan = 2 * m.slotH + m.pairGap;
+  const height = pairCount * pairSpan + (pairCount - 1) * m.groupGap;
+  const columnYs = buildCupColumnYs(leafCount, m);
+  const leafYs = columnYs[0] ?? [];
 
   const bySlotPair = new Map<string, SchematicConnection>();
   const byFixture = new Map<string, SchematicConnection>();
-  for (const conn of schematic.connections) {
-    if (conn.roundOrder !== firstRoundOrder) continue;
+  const firstRoundConns = schematic.connections.filter(
+    (c) => c.roundOrder === firstRoundOrder,
+  );
+  for (const conn of firstRoundConns) {
     byFixture.set(conn.fixtureId, conn);
     if (conn.slotAKey && conn.slotBKey) {
       bySlotPair.set(`${conn.slotAKey}|${conn.slotBKey}`, conn);
@@ -287,33 +832,38 @@ function CupSchematic({
     return keyA && keyB ? bySlotPair.get(`${keyA}|${keyB}`) : undefined;
   };
 
-  const svgWidth = wireRounds * CUP_COL_GAP + 12;
+  const svgWidth = effectiveWires * m.colGap + 12;
 
   return (
     <div
       className="regulation-schematic regulation-schematic--cup"
       aria-label={
-        wireRounds > 1
-          ? t('regulation:schematic.bracketRounds', { rounds: wireRounds })
+        effectiveWires > 1
+          ? t('regulation:schematic.bracketRounds', { rounds: effectiveWires })
           : t('regulation:schematic.bracket')
       }
     >
       <div className="schematic-cup">
-        <div className="schematic-cup__slots" style={{ height }}>
+        <div
+          className="schematic-cup__slots"
+          style={{ height, width: m.slotColW }}
+        >
           {Array.from({ length: leafCount }, (_, i) => {
             const c = cases[i] ?? null;
             const pair = Math.floor(i / 2);
-            const inPairGap = i % 2 === 1 ? 0 : CUP_PAIR_GAP;
+            const inPairGap = i % 2 === 1 ? 0 : m.pairGap;
             const afterPairGap =
-              i % 2 === 1 && pair < pairCount - 1 ? CUP_GROUP_GAP : 0;
+              i % 2 === 1 && pair < pairCount - 1 ? m.groupGap : 0;
             return (
               <SlotBox
                 key={i}
                 c={c}
                 t={t}
                 ghost={!c && i >= cases.length}
+                density={density}
                 style={{
-                  height: CUP_SLOT_H,
+                  height: m.slotH,
+                  minHeight: 0,
                   marginBottom: inPairGap + afterPairGap,
                 }}
               />
@@ -327,10 +877,10 @@ function CupSchematic({
           viewBox={`0 0 ${svgWidth} ${height}`}
           aria-hidden="true"
         >
-          {columns.slice(0, wireRounds).map((ys, col) => {
-            const x = col * CUP_COL_GAP + 2;
-            const xNext = (col + 1) * CUP_COL_GAP + 2;
-            const xMid = x + CUP_COL_GAP / 2;
+          {columnYs.slice(0, effectiveWires).map((ys, col) => {
+            const x = col * m.colGap + 2;
+            const xNext = (col + 1) * m.colGap + 2;
+            const xMid = x + m.colGap / 2;
             return (
               <g key={`col-${col}`}>
                 {Array.from({ length: ys.length / 2 }, (_, pair) => {
@@ -359,30 +909,31 @@ function CupSchematic({
               </g>
             );
           })}
-          {columns[wireRounds]?.map((y, i) => (
+          {columnYs[effectiveWires]?.map((y, i) => (
             <circle
               key={`end-${i}`}
-              cx={wireRounds * CUP_COL_GAP + 2}
+              cx={effectiveWires * m.colGap + 2}
               cy={y}
               r={3}
               className="schematic-cup__wire-node"
             />
           ))}
           {Array.from({ length: pairCount }, (_, p) => {
+            const a = cases[p * 2] ?? null;
+            const b = cases[p * 2 + 1] ?? null;
             const conn = pairConnection(p);
-            if (!conn) return null;
+            const label: PairLabel = conn
+              ? { kind: 'fixture', matchNumber: conn.matchNumber }
+              : pairLabelFor(firstRoundConns, a, b, p);
             const y1 = leafYs[p * 2]!;
             const y2 = leafYs[p * 2 + 1]!;
             return (
-              <text
-                key={`match-${p}`}
-                x={2 + CUP_COL_GAP / 2 + 8}
+              <PairOrdinalText
+                key={`pair-${p}`}
+                label={label}
+                x={2 + m.colGap / 2 + 8}
                 y={(y1 + y2) / 2 - 5}
-                textAnchor="start"
-                className="schematic-cup__match-n"
-              >
-                {`#${conn.matchNumber}`}
-              </text>
+              />
             );
           })}
         </svg>

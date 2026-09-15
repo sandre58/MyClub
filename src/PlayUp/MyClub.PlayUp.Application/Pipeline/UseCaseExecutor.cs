@@ -1286,6 +1286,20 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Replaces or clears a Round's TieFormat.
+    /// </summary>
+    public async Task ReplaceRoundTieFormatAsync(
+        StageId stageId,
+        RoundId roundId,
+        TieFormat? tieFormat,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        ReplaceRoundTieFormat.Execute(stage, roundId, tieFormat, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Assembles <see cref="StructureViewDto"/> for the Structure hub.
     /// </summary>
     public async Task<StructureViewDto> GetStructureViewAsync(

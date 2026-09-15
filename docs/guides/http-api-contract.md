@@ -338,11 +338,29 @@ Removes a Draft/Ready stage (not the last stage; not when matches are attached).
 
 `numberOfLegs` / `aggregateScoring` optional. Omit legs to leave the Round without an explicit TieFormat (stage regulation default may still apply at Domain add). **Effective contract:** null `Round.TieFormat` means **OneLeg** for materialize / draw / prepare / progression; **TwoLegs** only when explicit (`numberOfLegs: 2`). `numberOfLegs` must be `1` or `2` when set.
 
-Structure hub (`StructureViewDto.stages[]`) projects `confrontationSegments` when `hasTieFormat` and the stage has rounds: consecutive rounds that share the same effective TieFormat (legs + aggregate / away goals / tie ET / TAB) are grouped. Flat `numberOfLegs` / tie flags remain the **first** segment (or stage default when there are no rounds). SPA Règlement uses multiple segments for an aggregate Confrontation line; a single segment keeps the token row.
+Structure hub (`StructureViewDto.stages[]`) projects `confrontationSegments` when `hasTieFormat` and the stage has rounds: consecutive rounds that share the same effective TieFormat (legs + aggregate / away goals / tie ET / TAB) are grouped. Flat `numberOfLegs` / tie flags remain the **first** segment (or stage default when there are no rounds). `defaultTieFormat` projects the stage regulation TieFormat (AddRound copy source), independent of segments. SPA Règlement uses multiple segments for an aggregate Confrontation line; a single segment keeps the token row.
 
 ```json
 { "roundId": "<guid>", "name": "SF" }
 ```
+
+#### `PUT /stages/{stageId}/tie-format` → 204 No Content
+
+Replaces or clears the **stage default** TieFormat (`clear: true` clears).
+
+```json
+{
+  "clear": false,
+  "numberOfLegs": 2,
+  "hasAwayGoalsRule": true,
+  "hasExtraTimeRule": true,
+  "hasPenaltyShootoutRule": true
+}
+```
+
+#### `PUT /stages/{stageId}/rounds/{roundId}/tie-format` → 204 No Content
+
+Replaces or clears a **Round** TieFormat (same body shape as stage default). Draft/Ready only; Ready is demoted to Draft.
 
 #### `POST /stages/{stageId}/slots` → 201 `AddStageSlotResponse`
 

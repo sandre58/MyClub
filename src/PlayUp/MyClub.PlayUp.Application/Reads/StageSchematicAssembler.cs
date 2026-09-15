@@ -63,7 +63,8 @@ public static class StageSchematicAssembler
             format,
             [],
             [],
-            SwissRoundCount: stage.SwissSettings?.RoundCount);
+            SwissRoundCount: stage.SwissSettings?.RoundCount,
+            CupRoundCount: format == StructureFormatKind.Cup ? stage.Rounds.Count : null);
 
     private static StageSchematicDto AssembleCup(
         Stage stage,
@@ -144,7 +145,8 @@ public static class StageSchematicAssembler
             stage.Status,
             StructureFormatKind.Cup,
             cases,
-            connections);
+            connections,
+            CupRoundCount: stage.Rounds.Count);
     }
 
     /// <summary>
@@ -417,7 +419,7 @@ public static class StageSchematicAssembler
         StructureFormatKind format) =>
         format switch
         {
-            StructureFormatKind.Cup => stage.Slots.Count > 0 ? stage.Slots.Count : null,
+            StructureFormatKind.Cup => ResolveCupEntryPlaces(stage),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
                 competition.Entries.Count(entry => entry.Status == EntryStatus.Active) is var n and > 0
                     ? n
@@ -425,6 +427,48 @@ public static class StageSchematicAssembler
             StructureFormatKind.Groups => ResolveGroupsPlaces(stage),
             _ => null,
         };
+
+    /// <summary>
+    /// Cup Places N = entry places (see StructureViewAssembler). Used only when Cup needs
+    /// a places figure; schematic cases remain all form units (<c>slotCount</c>).
+    /// </summary>
+    private static int? ResolveCupEntryPlaces(Stage stage)
+    {
+        var slotCount = stage.Slots.Count;
+        if (slotCount == 0)
+        {
+            return null;
+        }
+
+        var roundCount = stage.Rounds.Count;
+        if (roundCount <= 1)
+        {
+            return slotCount;
+        }
+
+        var fullTreeSlots = (1 << (roundCount + 1)) - 2;
+        if (slotCount == fullTreeSlots)
+        {
+            return 1 << roundCount;
+        }
+
+        var firstRoundSlots = 1 << roundCount;
+        if (slotCount == firstRoundSlots)
+        {
+            return firstRoundSlots;
+        }
+
+        if (slotCount >= 2 && (slotCount + 2) % 2 == 0)
+        {
+            var entryPlaces = (slotCount + 2) / 2;
+            if (entryPlaces >= 2 && (entryPlaces & (entryPlaces - 1)) == 0)
+            {
+                return entryPlaces;
+            }
+        }
+
+        return null;
+    }
 
     private static int? ResolveGroupsPlaces(Stage stage)
     {

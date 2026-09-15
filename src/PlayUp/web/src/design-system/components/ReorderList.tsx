@@ -23,6 +23,8 @@ export type ReorderListProps<T> = {
    * Use 1 to keep a pinned head slot (e.g. Points always #1).
    */
   minMoveIndex?: number;
+  /** When true, rows are not focusable and drag/remove are inert. */
+  disabled?: boolean;
   renderContent: (item: T, index: number) => ReactNode;
   removeLabel?: string;
   dragLabel?: string;
@@ -57,6 +59,7 @@ export function ReorderList<T>({
   canDrag = () => true,
   canRemove = () => true,
   minMoveIndex = 0,
+  disabled = false,
   renderContent,
   removeLabel = 'Retirer',
   dragLabel = 'Réordonner',
@@ -65,12 +68,20 @@ export function ReorderList<T>({
   const dragFrom = useRef<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
+  function isDraggable(item: T, index: number): boolean {
+    return !disabled && canDrag(item, index);
+  }
+
+  function isRemovable(item: T, index: number): boolean {
+    return !disabled && onRemove != null && canRemove(item, index);
+  }
+
   function clampTarget(index: number): number {
     return Math.max(minMoveIndex, Math.min(index, items.length - 1));
   }
 
   function tryMove(from: number, rawTo: number) {
-    if (!canDrag(items[from], from)) {
+    if (!isDraggable(items[from], from)) {
       return;
     }
     const to = clampTarget(rawTo);
@@ -81,7 +92,7 @@ export function ReorderList<T>({
   }
 
   function handleDragStart(index: number, event: DragEvent) {
-    if (!canDrag(items[index], index)) {
+    if (!isDraggable(items[index], index)) {
       event.preventDefault();
       return;
     }
@@ -103,7 +114,7 @@ export function ReorderList<T>({
     const from = dragFrom.current;
     dragFrom.current = null;
     setDropIndex(null);
-    if (from == null) {
+    if (from == null || disabled) {
       return;
     }
     tryMove(from, index);
@@ -115,7 +126,7 @@ export function ReorderList<T>({
   }
 
   function handleKeyDown(index: number, event: KeyboardEvent) {
-    if (!event.altKey || !canDrag(items[index], index)) {
+    if (disabled || !event.altKey || !isDraggable(items[index], index)) {
       return;
     }
     if (event.key === 'ArrowUp') {
@@ -128,11 +139,16 @@ export function ReorderList<T>({
   }
 
   return (
-    <ul className="ds-reorder" aria-label={ariaLabel}>
+    <ul
+      className="ds-reorder"
+      aria-label={ariaLabel}
+      aria-disabled={disabled || undefined}
+      {...(disabled ? { inert: true } : {})}
+    >
       {items.map((item, index) => {
         const key = getKey(item);
-        const draggable = canDrag(item, index);
-        const removable = onRemove != null && canRemove(item, index);
+        const draggable = isDraggable(item, index);
+        const removable = isRemovable(item, index);
         return (
           <li
             key={key}
@@ -145,7 +161,7 @@ export function ReorderList<T>({
             onDrop={(event) => handleDrop(index, event)}
             onDragEnd={handleDragEnd}
             onKeyDown={(event) => handleKeyDown(index, event)}
-            tabIndex={0}
+            tabIndex={disabled ? -1 : 0}
           >
             {draggable ? (
               <Tooltip content={dragLabel}>
@@ -178,7 +194,7 @@ export function ReorderList<T>({
                   type="button"
                   className="ds-reorder__remove"
                   aria-label={removeLabel}
-                  onClick={() => onRemove(item, index)}
+                  onClick={() => onRemove?.(item, index)}
                 >
                   <CloseIcon size="sm" aria-hidden="true" />
                 </button>

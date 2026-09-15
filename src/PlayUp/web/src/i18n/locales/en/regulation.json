@@ -41,6 +41,7 @@
     "subtitle": "These rules apply to the whole competition.",
     "save": "Save",
     "saving": "Saving…",
+    "savedToast": "Regulation saved.",
     "impactTitle": "Save regulation changes?",
     "impactConfirm": "Save",
     "impact": {
@@ -135,7 +136,7 @@
     "maxUnit": "min",
     "maxHint": "Regulation + extra time"
   },
-  "openInStructure": "Structure",
+  "openInStructure": "Go to phase",
   "phaseRegulationAria": "Stage regulations",
   "phaseStructureAria": "Stage structure",
   "phasesHeading": "Stages",

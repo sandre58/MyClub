@@ -44,6 +44,7 @@ import {
   RegulationNavIcon,
 } from '../design-system/icons/shellIcons';
 import { MutationError, PendingLabel } from '../ui';
+import { notify } from '../design-system/toastStore';
 import type {
   DisciplinaryType,
   StructureView,
@@ -336,6 +337,7 @@ export function RegulationEditorDialog({
       );
       setConfirmOpen(false);
       setPendingPreview(null);
+      notify.success(t('editor.savedToast'));
       onClose();
     },
   });

@@ -199,7 +199,7 @@ export function InputNumber({
     direction: 1 | -1,
     event: ReactPointerEvent<HTMLButtonElement>,
   ) {
-    if (event.button !== 0) {
+    if (disabled || event.button !== 0) {
       return;
     }
     event.preventDefault();
@@ -207,6 +207,9 @@ export function InputNumber({
   }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    if (disabled) {
+      return;
+    }
     const raw = event.target.value;
     setDraft(raw);
     const parsed = parseInput(raw);
@@ -228,11 +231,17 @@ export function InputNumber({
 
   function handleBlur(event: FocusEvent<HTMLInputElement>) {
     setFocused(false);
-    emit(parseInput(draft));
+    if (!disabled) {
+      emit(parseInput(draft));
+    }
     onBlur?.(event);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (disabled) {
+      onKeyDown?.(event);
+      return;
+    }
     if (event.key === 'ArrowUp') {
       event.preventDefault();
       stepBy(1);

@@ -36,6 +36,7 @@ import type {
   ReplaceQualificationRulesRequest,
   ReplaceRegulationRequest,
   ReplaceStageDefaultTieFormatRequest,
+  ReplaceRoundTieFormatRequest,
   ReplaceStageDrawRulesRequest,
   ReplaceStageMatchRulesRequest,
   ReplaceStageStandingRulesRequest,
@@ -536,6 +537,19 @@ export function replaceStageDefaultTieFormat(
   request: ReplaceStageDefaultTieFormatRequest,
 ): Promise<void> {
   return sendNoContent('PUT', `/stages/${stageId}/tie-format`, request);
+}
+
+/** PUT /stages/{id}/rounds/{roundId}/tie-format → 204 */
+export function replaceRoundTieFormat(
+  stageId: string,
+  roundId: string,
+  request: ReplaceRoundTieFormatRequest,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/stages/${stageId}/rounds/${roundId}/tie-format`,
+    request,
+  );
 }
 
 /** Relative URL → Vite proxy → Host GET /stages/{id} */

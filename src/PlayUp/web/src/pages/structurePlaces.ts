@@ -4,6 +4,8 @@ import type { StructureStageHubSummary } from '../types';
  * Places N (target cardinality at T) — topology, hero, Entrées rail.
  * Prefer server compositionCapacity (ResolvePlaces). Client fallbacks use form facts only.
  * Never invent N from k / occupants / Draw alone.
+ *
+ * Cup: entry places (1st-round). Multi-round total slotCount is form units, not Places.
  */
 export function resolvePlacesN(stage: StructureStageHubSummary): number | null {
   if (stage.compositionCapacity != null && stage.compositionCapacity > 0) {
@@ -12,8 +14,7 @@ export function resolvePlacesN(stage: StructureStageHubSummary): number | null {
 
   const kind = stage.formatKind;
   if (kind === 'Cup' || (kind == null && (stage.slotCount ?? 0) > 0)) {
-    const slots = stage.slotCount ?? 0;
-    return slots > 0 ? slots : null;
+    return resolveCupEntryPlacesFallback(stage.slotCount ?? 0, stage.roundCount ?? 0);
   }
 
   if (kind === 'Groups' || (stage.groupCount ?? 0) > 0) {
@@ -21,6 +22,38 @@ export function resolvePlacesN(stage: StructureStageHubSummary): number | null {
     const perGroup = stage.placesPerGroup ?? stage.numberOfPots;
     if (groups > 0 && perGroup != null && perGroup >= 2) {
       return groups * perGroup;
+    }
+  }
+
+  return null;
+}
+
+/** Mirror of Application ResolveCupEntryPlaces when compositionCapacity is absent. */
+export function resolveCupEntryPlacesFallback(
+  slotCount: number,
+  roundCount: number,
+): number | null {
+  if (slotCount <= 0) {
+    return null;
+  }
+  if (roundCount <= 1) {
+    return slotCount;
+  }
+
+  const fullTreeSlots = 2 ** (roundCount + 1) - 2;
+  if (slotCount === fullTreeSlots) {
+    return 2 ** roundCount;
+  }
+
+  const firstRoundSlots = 2 ** roundCount;
+  if (slotCount === firstRoundSlots) {
+    return firstRoundSlots;
+  }
+
+  if (slotCount >= 2 && (slotCount + 2) % 2 === 0) {
+    const entryPlaces = (slotCount + 2) / 2;
+    if (entryPlaces >= 2 && Number.isInteger(Math.log2(entryPlaces))) {
+      return entryPlaces;
     }
   }
 

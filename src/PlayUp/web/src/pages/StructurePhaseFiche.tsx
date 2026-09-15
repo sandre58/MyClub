@@ -64,7 +64,6 @@ import {
 import {
   DrawRulesDialog,
   MatchRulesDialog,
-  RebindDialog,
   StandingRulesDialog,
   TieFormatDialog,
 } from './StructureRegulationDialogs';
@@ -1330,7 +1329,9 @@ export function StructurePhaseFiche({
   const canEditProg = actions.includes('ReplaceProgressionRules');
   const canEditPlacement = actions.includes('ReplacePlacementAwardRules');
   const canEditDraw = actions.includes('ReplaceDrawRules');
-  const canEditTie = actions.includes('ReplaceDefaultTieFormat');
+  const canEditTie =
+    actions.includes('ReplaceDefaultTieFormat') ||
+    actions.includes('ReplaceRoundTieFormat');
   const canEditMatch = actions.includes('ReplaceMatchRules');
   const canEditStanding = actions.includes('ReplaceStandingRules');
   const canRebind = actions.includes('BindToCompetition');
@@ -1519,6 +1520,7 @@ export function StructurePhaseFiche({
                   <PhaseSchematic
                     schematic={schematicQuery.data}
                     terminal={!hasExits}
+                    cupRoundCount={stage.roundCount}
                   />
                 ) : schematicQuery.isError ? (
                   <p className="structure-panel__muted">
@@ -1799,22 +1801,15 @@ export function StructurePhaseFiche({
         onClose={() => setEdit(null)}
       />
       <MatchRulesDialog
-        competitionId={data.competitionId}
+        data={data}
         stage={stage}
-        open={edit === 'matchs'}
+        open={edit === 'matchs' || edit === 'rebind-match'}
         onClose={() => setEdit(null)}
       />
       <StandingRulesDialog
-        competitionId={data.competitionId}
+        data={data}
         stage={stage}
-        open={edit === 'classement'}
-        onClose={() => setEdit(null)}
-      />
-      <RebindDialog
-        competitionId={data.competitionId}
-        stage={stage}
-        scope={edit === 'rebind-standing' ? 'Standing' : 'Match'}
-        open={edit === 'rebind-match' || edit === 'rebind-standing'}
+        open={edit === 'classement' || edit === 'rebind-standing'}
         onClose={() => setEdit(null)}
       />
     </section>

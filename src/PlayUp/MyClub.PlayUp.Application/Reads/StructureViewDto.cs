@@ -216,7 +216,8 @@ public sealed record StructureReadinessDto(
 /// <param name="CompositionEntryCount">Root composition set size (k).</param>
 /// <param name="CompositionEntryIds">Root composition entry identities (stable order as stored).</param>
 /// <param name="CompositionCapacity">
-/// Target Places N at T (≠ composition set k). Cup = slots; Championship/Swiss = Active;
+/// Target Places N at T (≠ composition set k). Cup = entry places (1st-round cardinality;
+/// ≠ total slotCount when multi-round); Championship/Swiss = Active;
 /// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
 /// </param>
 /// <param name="CompositionPreviewNames">Short display-name preview for the composition set.</param>
@@ -224,6 +225,7 @@ public sealed record StructureReadinessDto(
 /// <param name="CompositionIneligibleCount">Composition entries that are no longer Active.</param>
 /// <param name="IsRootComposition">True when the phase has no inbound Qualif/Prog feeds (Affectation).</param>
 /// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N); independent of Draw.</param>
+/// <param name="DefaultTieFormat">Stage regulation TieFormat (AddRound copy source); null when unset.</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -283,7 +285,16 @@ public sealed record StructureStageHubSummaryDto(
     int CompositionPreviewOverflow = 0,
     int CompositionIneligibleCount = 0,
     bool IsRootComposition = true,
-    int? PlacesPerGroup = null);
+    int? PlacesPerGroup = null,
+    StructureTieFormatSummaryDto? DefaultTieFormat = null);
+
+/// <summary>Effective TieFormat flags for stage default or a confrontation segment.</summary>
+public sealed record StructureTieFormatSummaryDto(
+    int NumberOfLegs,
+    bool AggregateScoring,
+    bool HasAwayGoalsRule,
+    bool HasTieExtraTime,
+    bool HasTiePenaltyShootout);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>

@@ -671,6 +671,8 @@ export interface StructureStageHubSummary {
   compositionIneligibleCount?: number;
   /** True when the phase has no inbound Qualif/Prog feeds (Affectation). */
   isRootComposition?: boolean;
+  /** Stage regulation TieFormat (AddRound copy source); null/omitted when unset. */
+  defaultTieFormat?: StructureTieFormatSummary | null;
 }
 
 /** One qualification path for Structure authoring / impact preview. */
@@ -811,6 +813,24 @@ export interface ReplaceStageDefaultTieFormatRequest {
   hasAwayGoalsRule?: boolean;
   hasExtraTimeRule?: boolean;
   hasPenaltyShootoutRule?: boolean;
+}
+
+/** PUT /stages/{id}/rounds/{roundId}/tie-format */
+export interface ReplaceRoundTieFormatRequest {
+  clear?: boolean;
+  numberOfLegs?: number;
+  hasAwayGoalsRule?: boolean;
+  hasExtraTimeRule?: boolean;
+  hasPenaltyShootoutRule?: boolean;
+}
+
+/** Stage regulation or segment TieFormat summary. */
+export interface StructureTieFormatSummary {
+  numberOfLegs: number;
+  aggregateScoring: boolean;
+  hasAwayGoalsRule: boolean;
+  hasTieExtraTime: boolean;
+  hasTiePenaltyShootout: boolean;
 }
 
 /** Round identity + display name inside a confrontation segment. */
@@ -1334,6 +1354,8 @@ export interface StageSchematic {
   connections: SchematicConnection[];
   /** Planned Swiss rounds (structural K) when formatKind is Swiss. */
   swissRoundCount?: number | null;
+  /** Cup rounds in this phase when formatKind is Cup. */
+  cupRoundCount?: number | null;
 }
 
 export function sideLabel(side: EntrySide): string {

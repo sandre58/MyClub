@@ -257,6 +257,27 @@ public sealed class StructureUseCaseTests
         var cupHub = StructureViewAssembler.Assemble(cupCompetition, [cup.Stage]).Stages.Single();
         cupHub.CompositionCapacity.Should().Be(8);
 
+        // Multi-round Coupe: 14 form units (QF+SF+F) ⇒ Places N = 8 entry places.
+        var multiCompetition = CreateCompetition.Execute("Cup multi N", _clock);
+        var multi = ConfigureStructure.Execute(
+            multiCompetition,
+            null,
+            StructureIntent.Cup(8),
+            _clock);
+        multi.Stage.AddRound("Demis", _clock);
+        multi.Stage.AddRound("Finale", _clock);
+        foreach (var key in new[] { "SF-1-A", "SF-1-B", "SF-2-A", "SF-2-B", "F-A", "F-B" })
+        {
+            multi.Stage.AddSlot(key);
+        }
+
+        multi.Stage.Slots.Count.Should().Be(14);
+        multi.Stage.Rounds.Count.Should().Be(3);
+        StructureViewAssembler.Assemble(multiCompetition, [multi.Stage])
+            .Stages.Single()
+            .CompositionCapacity.Should()
+            .Be(8);
+
         var championshipCompetition = CreateCompetition.Execute("Champ N", _clock);
         AddEntry.Execute(championshipCompetition, "A", _clock);
         AddEntry.Execute(championshipCompetition, "B", _clock);

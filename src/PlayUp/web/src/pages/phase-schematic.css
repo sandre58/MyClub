@@ -188,6 +188,40 @@
   justify-content: center;
 }
 
+/* Fit shell owns chrome; inner bracket size must match geometry exactly. */
+.schematic-cup-fit {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: visible;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-16);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+  box-sizing: border-box;
+}
+
+.schematic-cup-fit--scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  justify-content: flex-start;
+}
+
+.schematic-cup-fit__scale {
+  flex: none;
+  overflow: visible;
+}
+
+.schematic-cup-fit .regulation-schematic--cup {
+  min-height: 0;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
 .schematic-cup {
   display: flex;
   align-items: center;
@@ -197,21 +231,47 @@
   min-width: 0;
 }
 
+.schematic-cup--multi {
+  position: relative;
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.schematic-cup__round {
+  position: absolute;
+  top: 0;
+  overflow: visible;
+}
+
 .schematic-cup__slots {
   display: flex;
   flex-direction: column;
   flex: none;
   width: clamp(9rem, 30vw, 13rem);
   min-width: 0;
+  overflow: visible;
 }
 
 .schematic-cup__slots .schematic-slot {
   width: 100%;
 }
 
+.schematic-cup .schematic-slot {
+  /* Geometry owns height — do not let the shared min-height inflate/clip slots. */
+  min-height: 0;
+}
+
 .schematic-cup__wires {
   display: block;
   flex: none;
+  overflow: visible;
+}
+
+.schematic-cup__wires--overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   overflow: visible;
 }
 
@@ -234,11 +294,37 @@
   font-variant-numeric: tabular-nums;
 }
 
+.schematic-cup__pair-ordinal {
+  fill: var(--color-text-muted, var(--color-text-secondary));
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.schematic-slot--crest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.schematic-slot--compact {
+  min-height: 0;
+}
+
 .schematic-cup__trophy {
   display: inline-flex;
   flex: none;
   align-self: center;
   color: var(--color-brand);
+}
+
+.schematic-cup__trophy--absolute {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 /* -- Regulation page rule columns (unrelated to schematic; kept here historically) -- */

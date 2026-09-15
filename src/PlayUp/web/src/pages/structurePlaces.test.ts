@@ -49,9 +49,30 @@ describe('resolvePlacesN', () => {
     ).toBe(16);
   });
 
-  it('Cup falls back to slotCount', () => {
+  it('Cup falls back to slotCount for mono-round', () => {
     expect(
-      resolvePlacesN(stage({ formatKind: 'Cup', slotCount: 8 })),
+      resolvePlacesN(stage({ formatKind: 'Cup', slotCount: 8, roundCount: 1 })),
+    ).toBe(8);
+  });
+
+  it('Cup multi-round derives entry places from full tree (14 → 8)', () => {
+    expect(
+      resolvePlacesN(
+        stage({ formatKind: 'Cup', slotCount: 14, roundCount: 3 }),
+      ),
+    ).toBe(8);
+  });
+
+  it('Cup prefers compositionCapacity over slotCount', () => {
+    expect(
+      resolvePlacesN(
+        stage({
+          formatKind: 'Cup',
+          compositionCapacity: 8,
+          slotCount: 14,
+          roundCount: 3,
+        }),
+      ),
     ).toBe(8);
   });
 

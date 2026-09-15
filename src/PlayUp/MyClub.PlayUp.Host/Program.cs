@@ -907,6 +907,38 @@ try
             return Results.NoContent();
         });
 
+    app.MapPut(
+        "/stages/{stageId:guid}/rounds/{roundId:guid}/tie-format",
+        async (
+            Guid stageId,
+            Guid roundId,
+            ReplaceRoundTieFormatRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            TieFormat? tieFormat = null;
+            if (!request.Clear)
+            {
+                var aggregate = request.NumberOfLegs == TieFormat.TwoLegs;
+                tieFormat = new TieFormat(
+                    request.NumberOfLegs,
+                    aggregate,
+                    request.HasAwayGoalsRule ? new AwayGoalsRule() : null,
+                    request.HasExtraTimeRule ? new ExtraTimeRule() : null,
+                    request.HasPenaltyShootoutRule ? new PenaltyShootoutRule() : null);
+            }
+
+            await executor
+                .ReplaceRoundTieFormatAsync(
+                    new StageId(stageId),
+                    new RoundId(roundId),
+                    tieFormat,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
     app.MapGet(
         "/competitions/{competitionId:guid}",
         async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>

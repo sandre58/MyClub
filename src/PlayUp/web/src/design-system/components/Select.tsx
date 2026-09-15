@@ -236,7 +236,11 @@ export function Select({
   }
 
   return (
-    <div className={classes} ref={rootRef}>
+    <div
+      className={classes}
+      ref={rootRef}
+      {...(disabled ? { inert: true } : {})}
+    >
       <div
         id={triggerId}
         className="ds-input ds-select__shell"

@@ -1459,6 +1459,78 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
+    /// Structure / Confrontation QA: one Cup phase Draft with three rounds, each a distinct TieFormat.
+    /// </summary>
+    public static async Task BuildConfrontationMultiRoundDemoAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Démo Confrontation multi-tours",
+            Format = RecipeFormat.Cup,
+            TeamCount = 8,
+            BracketSize = 8,
+            StageName = "Tableau",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(
+                context,
+                competition,
+                recipe,
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        // Default ≠ any round — makes the « format par défaut » section visibly distinct.
+        var defaultTie = new TieFormat(
+            TieFormat.TwoLegs,
+            aggregateScoring: true,
+            awayGoalsRule: new AwayGoalsRule());
+        var quarterTie = new TieFormat(TieFormat.SingleLeg, aggregateScoring: false);
+        var semiTie = new TieFormat(
+            TieFormat.TwoLegs,
+            aggregateScoring: true,
+            awayGoalsRule: new AwayGoalsRule(),
+            extraTimeRule: new ExtraTimeRule());
+        var finalTie = new TieFormat(
+            TieFormat.SingleLeg,
+            aggregateScoring: false,
+            extraTimeRule: new ExtraTimeRule(),
+            penaltyShootoutRule: new PenaltyShootoutRule());
+
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName("Tableau"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            context.Ids.Stage("tableau"),
+            context.Clock);
+        stage.ReplaceDefaultTieFormat(defaultTie, context.Clock);
+        var quarter = stage.AddRound("Quarts de finale", quarterTie, context.Clock);
+        var semi = stage.AddRound("Demis de finale", semiTie, context.Clock);
+        var final = stage.AddRound("Finale", finalTie, context.Clock);
+        stage.ArrangeRounds([quarter.Id, semi.Id, final.Id]);
+
+        foreach (var key in PairSlotKeys("QF", pairCount: 4)
+                     .Concat(PairSlotKeys("SF", pairCount: 2))
+                     .Concat(["F-A", "F-B"]))
+        {
+            stage.AddSlot(key);
+        }
+
+        AssignRootComposition(stage, entries, context.Clock);
+        competition.AddStage(stage.Id, context.Clock);
+        context.Stages.Add(stage);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Lightweight championship Draft seed for Règlement hub schematic QA.
     /// </summary>
     public static async Task BuildRegulationChampionshipDemoAsync(

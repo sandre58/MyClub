@@ -106,6 +106,9 @@ public static class StructureViewAssembler
     /// <summary>Replace or clear stage default TieFormat.</summary>
     public const string ActionReplaceDefaultTieFormat = "ReplaceDefaultTieFormat";
 
+    /// <summary>Replace or clear a Round TieFormat.</summary>
+    public const string ActionReplaceRoundTieFormat = "ReplaceRoundTieFormat";
+
     /// <summary>Replace or clear PlacementAwardRules (final competition ranks).</summary>
     public const string ActionReplacePlacementAwardRules = "ReplacePlacementAwardRules";
 
@@ -319,7 +322,23 @@ public static class StructureViewAssembler
             CompositionPreviewOverflow: composition.PreviewOverflow,
             CompositionIneligibleCount: composition.IneligibleCount,
             IsRootComposition: isRootComposition,
-            PlacesPerGroup: stage.PlacesPerGroup);
+            PlacesPerGroup: stage.PlacesPerGroup,
+            DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat));
+    }
+
+    private static StructureTieFormatSummaryDto? MapDefaultTieFormat(TieFormat? tie)
+    {
+        if (tie is null)
+        {
+            return null;
+        }
+
+        return new StructureTieFormatSummaryDto(
+            tie.NumberOfLegs,
+            tie.AggregateScoring,
+            HasAwayGoalsRule: tie.AwayGoalsRule is not null,
+            HasTieExtraTime: tie.ExtraTimeRule is not null,
+            HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null);
     }
 
     private const int CompositionPreviewLimit = 5;
@@ -360,17 +379,63 @@ public static class StructureViewAssembler
     /// Places N — target cardinality at T (form capacity, or Active for Championship/Swiss).
     /// Never derived from Draw or composition set k. Null = indeterminable (E4), not zero.
     /// DTO name compositionCapacity retained temporarily = target Places, not current k.
+    /// Cup: entry places (1st-round cardinality), not total <c>slotCount</c> when multi-round.
     /// </summary>
     private static int? ResolvePlaces(Competition competition, Stage stage)
     {
         return InferFormat(stage) switch
         {
-            StructureFormatKind.Cup => stage.Slots.Count > 0 ? stage.Slots.Count : null,
+            StructureFormatKind.Cup => ResolveCupEntryPlaces(stage),
             StructureFormatKind.Championship or StructureFormatKind.Swiss
                 => CountActiveEntries(competition),
             StructureFormatKind.Groups => ResolveGroupsPlaces(stage),
             _ => stage.Slots.Count > 0 ? stage.Slots.Count : null,
         };
+    }
+
+    /// <summary>
+    /// Cup Places N = teams to constitute (entry places). Mono-round: <c>slotCount</c>.
+    /// Multi-round classic KO: 1st-round size (e.g. 14 units → 8 places), never total slots.
+    /// </summary>
+    private static int? ResolveCupEntryPlaces(Stage stage)
+    {
+        var slotCount = stage.Slots.Count;
+        if (slotCount == 0)
+        {
+            return null;
+        }
+
+        var roundCount = stage.Rounds.Count;
+        if (roundCount <= 1)
+        {
+            return slotCount;
+        }
+
+        // Full tree for R rounds: slots = 2^(R+1) − 2 ⇒ entry = 2^R.
+        var fullTreeSlots = (1 << (roundCount + 1)) - 2;
+        if (slotCount == fullTreeSlots)
+        {
+            return 1 << roundCount;
+        }
+
+        // First round only materialized: slots = 2^R.
+        var firstRoundSlots = 1 << roundCount;
+        if (slotCount == firstRoundSlots)
+        {
+            return firstRoundSlots;
+        }
+
+        // Classic full tree independent of declared round count: slots = 2N − 2, N power of two.
+        if (slotCount >= 2 && (slotCount + 2) % 2 == 0)
+        {
+            var entryPlaces = (slotCount + 2) / 2;
+            if (IsPowerOfTwo(entryPlaces) && entryPlaces >= 2)
+            {
+                return entryPlaces;
+            }
+        }
+
+        return null;
     }
 
     private static int CountActiveEntries(Competition competition) =>
@@ -583,6 +648,10 @@ public static class StructureViewAssembler
         if (StageNeedsTieFormatAction(stage))
         {
             actions.Add(ActionReplaceDefaultTieFormat);
+            if (stage.Rounds.Count > 0)
+            {
+                actions.Add(ActionReplaceRoundTieFormat);
+            }
         }
 
         var format = InferFormat(stage);
@@ -977,17 +1046,19 @@ public static class StructureViewAssembler
 
                     break;
                 case StructureFormatKind.Cup:
-                    if (structure.SlotCount < 2 || !IsPowerOfTwo(structure.SlotCount))
+                    var cupEntryPlaces = ResolveCupEntryPlaces(primary);
+                    if (cupEntryPlaces is null or < 2 || !IsPowerOfTwo(cupEntryPlaces.Value))
                     {
                         blockers.Add(BlockerCupBracketInvalid);
                     }
                     else
                     {
-                        // Draw path = structure (rounds + valid bracket).
+                        // Draw path = structure (rounds + valid entry bracket).
                         // MaterializeMatches = empty Fixture skeleton for Pairing — distinct from
                         // Overview from-slots (occupied SlotA/B on a later stage).
+                        // Skeleton expectation = first-round fixtures (Places N / 2), not slotCount/2.
                         readyForDraw = structure.RoundCount >= 1;
-                        var expectedSkeletonFixtures = structure.SlotCount / 2;
+                        var expectedSkeletonFixtures = cupEntryPlaces.Value / 2;
                         var skeletonFixtures = primary.Rounds.Count > 0
                             ? primary.Rounds[0].Fixtures.Count
                             : 0;

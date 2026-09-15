@@ -41,6 +41,7 @@
     "subtitle": "Ces règles s’appliquent à toute la compétition.",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
+    "savedToast": "Règlement enregistré.",
     "impactTitle": "Enregistrer les modifications du règlement ?",
     "impactConfirm": "Enregistrer",
     "impact": {
@@ -135,7 +136,7 @@
     "maxUnit": "min",
     "maxHint": "Réglementaire + prolongations"
   },
-  "openInStructure": "Structure",
+  "openInStructure": "Aller à la phase",
   "phaseRegulationAria": "Règlement de la phase",
   "phaseStructureAria": "Structure de la phase",
   "phasesHeading": "Phases",

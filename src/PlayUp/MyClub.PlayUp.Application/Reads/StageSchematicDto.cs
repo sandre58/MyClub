@@ -23,6 +23,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Cases">Form units (possibly empty when form incomplete).</param>
 /// <param name="Connections">Cup bracket wires only; empty for other formats.</param>
 /// <param name="SwissRoundCount">Planned Swiss rounds (structural K) when Kind is Swiss.</param>
+/// <param name="CupRoundCount">Cup rounds in this phase when Kind is Cup.</param>
 public sealed record StageSchematicDto(
     Guid StageId,
     Guid CompetitionId,
@@ -31,7 +32,8 @@ public sealed record StageSchematicDto(
     StructureFormatKind? FormatKind,
     IReadOnlyList<SchematicCaseDto> Cases,
     IReadOnlyList<SchematicConnectionDto> Connections,
-    int? SwissRoundCount = null);
+    int? SwissRoundCount = null,
+    int? CupRoundCount = null);
 
 /// <summary>
 /// One form unit and its optional feed / placement / resolution.
