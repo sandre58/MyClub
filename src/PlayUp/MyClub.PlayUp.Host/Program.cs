@@ -714,6 +714,46 @@ try
             CancellationToken cancellationToken) =>
         {
             ArgumentNullException.ThrowIfNull(request);
+            if (request.Intents is { Count: > 0 })
+            {
+                IReadOnlyList<QualificationIntentSpec> intents =
+                [
+                    .. request.Intents.Select(intent =>
+                    {
+                        IReadOnlyList<QualificationSlotOverrideSpec>? overrides = null;
+                        if (intent.SlotOverrides is { Count: > 0 })
+                        {
+                            overrides =
+                            [
+                                .. intent.SlotOverrides.Select(o => new QualificationSlotOverrideSpec(
+                                    o.Scope,
+                                    o.Position,
+                                    o.SlotKey,
+                                    o.GroupId,
+                                    o.AcrossGroupsPosition))
+                            ];
+                        }
+
+                        return new QualificationIntentSpec(
+                            intent.IntentId,
+                            intent.Order,
+                            intent.SourceKind,
+                            intent.PositionFrom,
+                            intent.PositionTo,
+                            intent.DestinationStageId,
+                            intent.MappingMode,
+                            intent.GroupId,
+                            intent.AcrossGroupsPosition,
+                            intent.MinimumPoints,
+                            overrides);
+                    })
+                ];
+                await executor
+                    .ReplaceStageQualificationIntentsAsync(new StageId(stageId), intents, cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            }
+
             IReadOnlyList<QualificationPathSpec>? paths = null;
             if (request.Paths is { Count: > 0 })
             {

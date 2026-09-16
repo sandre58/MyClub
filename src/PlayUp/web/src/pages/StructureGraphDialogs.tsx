@@ -8,7 +8,6 @@ import {
   removeCompetitionStage,
   replaceStagePlacementAwardRules,
   replaceStageProgressionRules,
-  replaceStageQualificationRules,
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { Tooltip } from '../design-system/components/Tooltip';
@@ -19,29 +18,20 @@ import type {
   StructureFormatKind,
   StructurePlacementAward,
   StructureProgressionPath,
-  StructureQualificationPath,
   StructureStageHubSummary,
   StructureView,
   ProgressionOutcome,
-  SelectionMode,
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { listFixtureOptions } from './structureFixtureLabels';
 import { isPopulationDestination } from './structureProgression';
+import { StructureQualificationDialog } from './StructureQualificationDialog';
 import {
   defaultSkeletonForm,
   SkeletonFields,
   skeletonPayload,
   skeletonStepValid,
 } from './structureSkeletonForm';
-
-type QualDraft = {
-  order: string;
-  selectionMode: SelectionMode;
-  selectionValue: string;
-  destinationStageId: string;
-  destinationSlotKey: string;
-};
 
 type ProgDraft = {
   sourceFixtureId: string;
@@ -604,242 +594,13 @@ export function QualificationRulesDialog({
   open: boolean;
   onClose: () => void;
 }) {
-  const { t } = useTranslation('structure');
-  const { t: tCommon } = useTranslation('common');
-  const formId = useId();
-  const queryClient = useQueryClient();
-  const peerStages = data.stages.filter((peer) => peer.stageId !== stage.stageId);
-  const defaultDest = peerStages[0]?.stageId ?? '';
-  const [rows, setRows] = useState<QualDraft[]>([]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const existing = stage.qualificationPaths ?? [];
-    setRows(
-      existing.length > 0
-        ? existing.map((path) => ({
-            order: String(path.order),
-            selectionMode: path.selectionMode,
-            selectionValue: String(path.selectionValue),
-            destinationStageId: path.destinationStageId,
-            destinationSlotKey: path.destinationSlotKey,
-          }))
-        : [
-            {
-              order: '1',
-              selectionMode: 'Top',
-              selectionValue: '1',
-              destinationStageId: defaultDest,
-              destinationSlotKey: '',
-            },
-          ],
-    );
-  }, [open, stage.stageId, stage.qualificationPaths, defaultDest]);
-
-  const mutation = useMutation({
-    mutationFn: (paths: StructureQualificationPath[] | null) =>
-      replaceStageQualificationRules(stage.stageId, { paths }),
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
-      onClose();
-    },
-  });
-
   return (
-    <Dialog
+    <StructureQualificationDialog
+      data={data}
+      stage={stage}
       open={open}
       onClose={onClose}
-      title={t('graph.editQualificationTitle', { phase: stage.name })}
-      description={
-        peerStages.length === 0
-          ? t('graph.editExitNeedsPeer')
-          : t('graph.editQualificationLede')
-      }
-      closeLabel={tCommon('close')}
-      closeDisabled={mutation.isPending}
-      size="lg"
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            disabled={mutation.isPending}
-            onClick={onClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={mutation.isPending}
-            onClick={() => mutation.mutate(null)}
-          >
-            {t('graph.clearRules')}
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            className="ds-btn ds-btn--primary"
-            disabled={
-              mutation.isPending ||
-              rows.length === 0 ||
-              peerStages.length === 0
-            }
-          >
-            {mutation.isPending ? <PendingLabel /> : t('graph.saveRules')}
-          </button>
-        </>
-      }
-    >
-      <form
-        id={formId}
-        className="structure-graph-dialog"
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault();
-          if (mutation.isPending) {
-            return;
-          }
-          mutation.mutate(
-            rows.map((row) => ({
-              order: Number(row.order),
-              selectionMode: row.selectionMode,
-              selectionValue: Number(row.selectionValue),
-              destinationStageId: row.destinationStageId,
-              destinationSlotKey: row.destinationSlotKey.trim(),
-              rankingScope: 'Overall',
-            })),
-          );
-        }}
-      >
-        <ul className="structure-graph-rows">
-          {rows.map((row, index) => (
-            <li key={index} className="structure-graph-row">
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.order')}</span>
-                <input
-                  className="ds-input"
-                  type="number"
-                  min={1}
-                  value={row.order}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = { ...row, order: event.target.value };
-                    setRows(next);
-                  }}
-                  required
-                />
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.selectionMode')}</span>
-                <select
-                  className="ds-input"
-                  value={row.selectionMode}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = {
-                      ...row,
-                      selectionMode: event.target.value as SelectionMode,
-                    };
-                    setRows(next);
-                  }}
-                >
-                  {(['Position', 'Top', 'Bottom', 'Best', 'Worst'] as SelectionMode[]).map(
-                    (mode) => (
-                      <option key={mode} value={mode}>
-                        {mode}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.selectionValue')}</span>
-                <input
-                  className="ds-input"
-                  type="number"
-                  min={1}
-                  value={row.selectionValue}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = { ...row, selectionValue: event.target.value };
-                    setRows(next);
-                  }}
-                  required
-                />
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.destinationStage')}</span>
-                <select
-                  className="ds-input"
-                  value={row.destinationStageId}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = {
-                      ...row,
-                      destinationStageId: event.target.value,
-                    };
-                    setRows(next);
-                  }}
-                  required
-                >
-                  <option value="">{t('graph.chooseStage')}</option>
-                  {peerStages.map((peer) => (
-                    <option key={peer.stageId} value={peer.stageId}>
-                      {peer.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.destinationSlot')}</span>
-                <input
-                  className="ds-input"
-                  value={row.destinationSlotKey}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = {
-                      ...row,
-                      destinationSlotKey: event.target.value,
-                    };
-                    setRows(next);
-                  }}
-                  required
-                />
-              </label>
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost"
-                onClick={() => setRows(rows.filter((_, i) => i !== index))}
-              >
-                {t('graph.removeRow')}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          className="ds-btn ds-btn--secondary"
-          disabled={peerStages.length === 0}
-          onClick={() =>
-            setRows([
-              ...rows,
-              {
-                order: String(rows.length + 1),
-                selectionMode: 'Top',
-                selectionValue: '1',
-                destinationStageId: defaultDest,
-                destinationSlotKey: '',
-              },
-            ])
-          }
-        >
-          {t('graph.addRow')}
-        </button>
-        <MutationError error={mutation.error} />
-      </form>
-    </Dialog>
+    />
   );
 }
 

@@ -1177,7 +1177,7 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Replaces qualification rules on a stage (null/empty clears).
+    /// Replaces qualification rules on a stage from legacy path specs (null/empty clears).
     /// </summary>
     public async Task ReplaceStageQualificationRulesAsync(
         StageId stageId,
@@ -1186,6 +1186,23 @@ public sealed partial class UseCaseExecutor(
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         ReplaceStageQualificationRules.Execute(stage, paths, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Replaces qualification rules from authoring intents (null/empty clears).
+    /// </summary>
+    public async Task ReplaceStageQualificationIntentsAsync(
+        StageId stageId,
+        IReadOnlyList<QualificationIntentSpec>? intents,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var peers = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageQualificationRules.Execute(stage, peers, intents, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

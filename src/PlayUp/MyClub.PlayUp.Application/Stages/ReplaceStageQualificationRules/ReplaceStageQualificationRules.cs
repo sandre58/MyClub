@@ -12,11 +12,48 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: replace QualificationRules on a Stage (thin authoring).
+/// Prefers <see cref="QualificationIntentSpec"/> when provided; otherwise legacy path specs.
 /// </summary>
 public static class ReplaceStageQualificationRules
 {
     /// <summary>
-    /// Replaces qualification paths on the stage (null/empty clears rules).
+    /// Replaces qualification rules from authoring intents (null/empty clears).
+    /// </summary>
+    public static void Execute(
+        Stage sourceStage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<QualificationIntentSpec>? intents,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(sourceStage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureMutable(sourceStage);
+
+        if (intents is null || intents.Count == 0)
+        {
+            sourceStage.ReplaceQualificationRules(null, clock);
+            return;
+        }
+
+        var domainIntents = new List<QualificationIntent>(intents.Count);
+        foreach (var spec in intents)
+        {
+            ArgumentNullException.ThrowIfNull(spec);
+            domainIntents.Add(ToDomainIntent(spec));
+        }
+
+        var groupOrder = sourceStage.Groups.Select(g => g.Id).ToArray();
+        var slotOrderByStage = competitionStages.ToDictionary(
+            s => s.Id,
+            s => (IReadOnlyList<string>)[.. s.Slots.Select(slot => slot.SlotKey)]);
+
+        var rules = QualificationRules.FromIntents(domainIntents, groupOrder, slotOrderByStage);
+        sourceStage.ReplaceQualificationRules(rules, clock);
+    }
+
+    /// <summary>
+    /// Legacy: replaces qualification paths on the stage (null/empty clears rules).
     /// </summary>
     public static void Execute(
         Stage stage,
@@ -25,13 +62,7 @@ public static class ReplaceStageQualificationRules
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Qualification rules cannot be replaced while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        EnsureMutable(stage);
 
         if (paths is null || paths.Count == 0)
         {
@@ -73,21 +104,61 @@ public static class ReplaceStageQualificationRules
 
         stage.ReplaceQualificationRules(new QualificationRules(domainPaths), clock);
     }
+
+    private static void EnsureMutable(Stage stage)
+    {
+        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
+        {
+            throw new ApplicationFailureException(
+                $"Qualification rules cannot be replaced while stage status is '{stage.Status}'.",
+                ApplicationErrorCodes.StructureNotMutable);
+        }
+    }
+
+    private static QualificationIntent ToDomainIntent(QualificationIntentSpec spec)
+    {
+        if (!Enum.IsDefined(spec.SourceKind))
+        {
+            throw new ApplicationFailureException(
+                $"Unknown qualification intent source kind '{spec.SourceKind}'.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        if (!Enum.IsDefined(spec.MappingMode))
+        {
+            throw new ApplicationFailureException(
+                $"Unknown qualification mapping mode '{spec.MappingMode}'.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        var overrides = spec.SlotOverrides?
+            .Select(o => new QualificationSlotOverride(
+                new QualificationSourceOccurrence(
+                    o.Scope,
+                    o.Position,
+                    o.GroupId is { } gid ? new GroupId(gid) : null,
+                    o.AcrossGroupsPosition),
+                o.SlotKey))
+            .ToArray();
+
+        return new QualificationIntent(
+            new IntentId(spec.IntentId),
+            spec.Order,
+            spec.SourceKind,
+            spec.PositionFrom,
+            spec.PositionTo,
+            new StageId(spec.DestinationStageId),
+            spec.MappingMode,
+            spec.GroupId is { } g ? new GroupId(g) : null,
+            spec.AcrossGroupsPosition,
+            spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null,
+            overrides);
+    }
 }
 
 /// <summary>
 /// Application DTO for one qualification path (not a Domain VO).
 /// </summary>
-/// <param name="Order">Processing / display order (≥ 1).</param>
-/// <param name="SelectionMode">How participants are selected.</param>
-/// <param name="SelectionValue">Position, count, or range lower bound.</param>
-/// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">Destination slot key.</param>
-/// <param name="RankingScope">Optional ranking scope; null implies overall.</param>
-/// <param name="GroupId">Group when scope is Group.</param>
-/// <param name="AcrossGroupsPosition">Position when scope is AcrossGroups.</param>
-/// <param name="SelectionEndValue">Inclusive range upper bound when mode is Range.</param>
-/// <param name="MinimumPoints">Optional Points ≥ gate (Position selection only).</param>
 public sealed record QualificationPathSpec(
     int Order,
     SelectionMode SelectionMode,
@@ -99,3 +170,29 @@ public sealed record QualificationPathSpec(
     int? AcrossGroupsPosition = null,
     int? SelectionEndValue = null,
     int? MinimumPoints = null);
+
+/// <summary>
+/// Application DTO for one qualification authoring intent.
+/// </summary>
+public sealed record QualificationIntentSpec(
+    Guid IntentId,
+    int Order,
+    QualificationIntentSourceKind SourceKind,
+    int PositionFrom,
+    int PositionTo,
+    Guid DestinationStageId,
+    QualificationMappingMode MappingMode = QualificationMappingMode.Canonical,
+    Guid? GroupId = null,
+    int? AcrossGroupsPosition = null,
+    int? MinimumPoints = null,
+    IReadOnlyList<QualificationSlotOverrideSpec>? SlotOverrides = null);
+
+/// <summary>
+/// Application DTO for one slot override.
+/// </summary>
+public sealed record QualificationSlotOverrideSpec(
+    RankingScope Scope,
+    int Position,
+    string SlotKey,
+    Guid? GroupId = null,
+    int? AcrossGroupsPosition = null);

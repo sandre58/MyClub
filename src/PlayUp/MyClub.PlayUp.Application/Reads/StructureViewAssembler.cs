@@ -309,7 +309,7 @@ public static class StructureViewAssembler
             DrawConstraints: drawConstraints,
             DefaultsBinding: MapDefaultsBinding(stage),
             ConfrontationSegments: confrontationSegments,
-            Actions: BuildStageActions(competition, stage, competitionStages),
+            Actions: BuildStageActions(competition, stage),
             QualificationPaths: qualificationPaths,
             ProgressionPaths: progressionPaths,
             StructureIssues: BuildStructureIssues(stage, competitionStages),
@@ -570,8 +570,7 @@ public static class StructureViewAssembler
 
     private static List<string> BuildStageActions(
         Competition competition,
-        Stage stage,
-        IReadOnlyList<Stage> competitionStages)
+        Stage stage)
     {
         if (competition.Status is CompetitionStatus.Completed
                 or CompetitionStatus.Archived
