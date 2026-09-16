@@ -8,7 +8,6 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using Xunit;
 
@@ -25,13 +24,13 @@ public sealed class RemoveCompetitionStageTests
     public void Execute_scrubs_peer_progression_paths_targeting_removed_stage()
     {
         var competition = CreateCompetition.Execute("Cup-Remove", _clock);
-        var qf = AddCompetitionStage.Execute(competition, "Quarter-Finals", _clock);
+        var qf = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Quarter-Finals"), _clock);
         var qfRound = AddStageRound.Execute(qf, "QF", null, _clock);
         AddStageSlot.Execute(qf, "QF1-A");
         AddStageSlot.Execute(qf, "QF1-B");
         var fixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B");
 
-        var sf = AddCompetitionStage.Execute(competition, "Semi-Finals", _clock);
+        var sf = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Semi-Finals"), _clock);
         AddStageSlot.Execute(sf, "SF1-A");
 
         ReplaceStageProgressionRules.Execute(
@@ -56,8 +55,8 @@ public sealed class RemoveCompetitionStageTests
     public void Execute_scrubs_peer_qualification_paths_targeting_removed_stage()
     {
         var competition = CreateCompetition.Execute("Groups-Remove", _clock);
-        var groups = AddCompetitionStage.Execute(competition, "Groups", _clock);
-        var knockout = AddCompetitionStage.Execute(competition, "Knockout", _clock);
+        var groups = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2, "Groups"), _clock);
+        var knockout = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Knockout"), _clock);
         AddStageSlot.Execute(knockout, "QF1");
 
         ReplaceStageQualificationRules.Execute(
@@ -84,7 +83,7 @@ public sealed class RemoveCompetitionStageTests
     public void Execute_rejects_removing_last_stage()
     {
         var competition = CreateCompetition.Execute("Solo", _clock);
-        var only = AddCompetitionStage.Execute(competition, "Only", _clock);
+        var only = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Only"), _clock);
 
         var act = () => RemoveCompetitionStage.Execute(competition, only, [only], _clock);
 

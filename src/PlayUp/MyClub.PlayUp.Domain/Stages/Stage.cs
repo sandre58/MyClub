@@ -358,8 +358,8 @@ public sealed class Stage : AggregateRoot<StageId>
                 ? ClonePoints(competitionRegulation.StandingRules.Points)
                 : nextStanding.Points;
             var criteria = DefaultsBinding.IsBound(HeritableRegulationPart.RankingCriteria)
-                ? competitionRegulation.StandingRules.RankingCriteria.ToArray()
-                : nextStanding.RankingCriteria.ToArray();
+                ? competitionRegulation.StandingRules.RankingCriteria
+                : nextStanding.RankingCriteria;
             nextStanding = new StandingRules(points, criteria);
         }
 
@@ -694,7 +694,19 @@ public sealed class Stage : AggregateRoot<StageId>
                         StageErrorCodes.FixtureNotFound);
                 }
 
-                EnsureLocalPathDestination(path.Destination.StageId, path.Destination.SlotKey);
+                if (path.Destination.TargetsPopulation)
+                {
+                    if (path.Destination.StageId.Equals(Id))
+                    {
+                        throw new DomainException(
+                            "Progression population destination cannot target the source stage.",
+                            RulesErrorCodes.ProgressionRulesInvalid);
+                    }
+
+                    continue;
+                }
+
+                EnsureLocalPathDestination(path.Destination.StageId, path.Destination.SlotKey!);
             }
         }
 
@@ -1068,20 +1080,19 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         EnsureDraftOrReady();
 
-        if (placesPerGroup is null)
+        switch (placesPerGroup)
         {
-            PlacesPerGroup = null;
-            return;
+            case null:
+                PlacesPerGroup = null;
+                return;
+            case < 2:
+                throw new DomainException(
+                    "Places per group must be at least 2.",
+                    StageErrorCodes.InvalidConfiguration);
+            default:
+                PlacesPerGroup = placesPerGroup;
+                break;
         }
-
-        if (placesPerGroup < 2)
-        {
-            throw new DomainException(
-                "Places per group must be at least 2.",
-                StageErrorCodes.InvalidConfiguration);
-        }
-
-        PlacesPerGroup = placesPerGroup;
     }
 
     /// <summary>
@@ -1233,6 +1244,27 @@ public sealed class Stage : AggregateRoot<StageId>
 
         DemoteToDraftIfReady();
         _slots.Remove(slot);
+    }
+
+    /// <summary>
+    /// Adds a resolved entry to the phase population (B1-M2 / Progression inter → population).
+    /// Does not touch slots or <see cref="DirectAssignment"/>. Idempotent when already present.
+    /// Allowed under the same mutability as dynamic slot resolution (Draft/Ready/Running/Suspended).
+    /// </summary>
+    /// <param name="entryId">Resolved competition entry.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AddResolvedPopulationEntry(EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        if (_compositionEntries.Any(entry => entry.EntryId.Equals(entryId)))
+        {
+            return;
+        }
+
+        _compositionEntries.Add(new CompositionEntry(entryId));
+        Raise(new StageCompositionEntriesReplaced(Id, clock));
     }
 
     /// <summary>
@@ -2413,7 +2445,12 @@ public sealed class Stage : AggregateRoot<StageId>
                         StageErrorCodes.FixtureNotFound);
                 }
 
-                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey) is null)
+                if (path.Destination.TargetsPopulation)
+                {
+                    continue;
+                }
+
+                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey!) is null)
                 {
                     throw new DomainException(
                         $"Slot '{path.Destination.SlotKey}' was not found.",

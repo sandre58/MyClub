@@ -9,7 +9,9 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -26,7 +28,7 @@ public sealed class ThinAuthoringTests
     {
         var competition = CreateCompetition.Execute("Cup-D1", _clock);
 
-        var qf = AddCompetitionStage.Execute(competition, "Quarter-Finals", _clock);
+        var qf = AddEmptyStage(competition, "Quarter-Finals");
         var qfRound = AddStageRound.Execute(
             qf,
             "QF",
@@ -36,7 +38,7 @@ public sealed class ThinAuthoringTests
         AddStageSlot.Execute(qf, "QF1-B");
         var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B");
 
-        var sf = AddCompetitionStage.Execute(competition, "Semi-Finals", _clock);
+        var sf = AddEmptyStage(competition, "Semi-Finals");
         var sfRound = AddStageRound.Execute(
             sf,
             "SF",
@@ -78,8 +80,8 @@ public sealed class ThinAuthoringTests
     public void ReplaceStageQualificationRules_authors_path_and_clears()
     {
         var competition = CreateCompetition.Execute("Cup-Qualif", _clock);
-        var groups = AddCompetitionStage.Execute(competition, "Groups", _clock);
-        var ko = AddCompetitionStage.Execute(competition, "KO", _clock);
+        var groups = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2, "Groups"), _clock);
+        var ko = AddEmptyStage(competition, "KO");
         AddStageSlot.Execute(ko, "QF1");
 
         ReplaceStageQualificationRules.Execute(
@@ -107,12 +109,12 @@ public sealed class ThinAuthoringTests
     public void AddCompetitionStage_rejects_when_competition_running()
     {
         var competition = CreateCompetition.Execute("Cup-D1-Run", _clock);
-        AddCompetitionStage.Execute(competition, "Only", _clock);
+        AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Only"), _clock);
         competition.AddEntry(TeamId.New(), "Team A", _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
 
-        var act = () => AddCompetitionStage.Execute(competition, "TooLate", _clock);
+        var act = () => AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "TooLate"), _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
@@ -122,7 +124,7 @@ public sealed class ThinAuthoringTests
     public void AddStageRound_rejects_when_stage_running()
     {
         var competition = CreateCompetition.Execute("Cup-D1-Lock", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "Locked", _clock);
+        var stage = AddEmptyStage(competition, "Locked");
         AddStageRound.Execute(stage, "R1", null, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
@@ -137,7 +139,7 @@ public sealed class ThinAuthoringTests
     public void AddStageSlot_rejects_when_stage_running()
     {
         var competition = CreateCompetition.Execute("Cup-D1-SlotLock", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "Locked", _clock);
+        var stage = AddEmptyStage(competition, "Locked");
         AddStageRound.Execute(stage, "R1", null, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
@@ -152,7 +154,7 @@ public sealed class ThinAuthoringTests
     public void ReplacePlacementAwardRules_authors_final_ranks_without_slots()
     {
         var competition = CreateCompetition.Execute("Cup-Awards", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "Final", _clock);
+        var stage = AddEmptyStage(competition, "Final");
         var round = AddStageRound.Execute(stage, "Final", null, _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
 
@@ -177,7 +179,7 @@ public sealed class ThinAuthoringTests
     public void ReplacePlacementAwardRules_clears_when_paths_empty()
     {
         var competition = CreateCompetition.Execute("Cup-Awards-Clear", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "Final", _clock);
+        var stage = AddEmptyStage(competition, "Final");
         var round = AddStageRound.Execute(stage, "Final", null, _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
         ReplaceStagePlacementAwardRules.Execute(
@@ -196,7 +198,7 @@ public sealed class ThinAuthoringTests
     public void ReplacePlacementAwardRules_rejects_when_stage_running()
     {
         var competition = CreateCompetition.Execute("Cup-Awards-Lock", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "Final", _clock);
+        var stage = AddEmptyStage(competition, "Final");
         var round = AddStageRound.Execute(stage, "R1", null, _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
@@ -217,7 +219,7 @@ public sealed class ThinAuthoringTests
     public void ReplaceProgressionRules_rejects_when_stage_running()
     {
         var competition = CreateCompetition.Execute("Cup-D1-ProgLock", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "QF", _clock);
+        var stage = AddEmptyStage(competition, "QF");
         var round = AddStageRound.Execute(stage, "R1", null, _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
@@ -245,5 +247,20 @@ public sealed class ThinAuthoringTests
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.InvalidStructureIntent);
+    }
+
+    /// <summary>
+    /// Empty Draft stage (identity only) — thin authoring builds rounds/slots itself.
+    /// </summary>
+    private Stage AddEmptyStage(Competition competition, string name)
+    {
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName(name),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            DefaultsBinding.AllBound(isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(stage.Id, _clock);
+        return stage;
     }
 }

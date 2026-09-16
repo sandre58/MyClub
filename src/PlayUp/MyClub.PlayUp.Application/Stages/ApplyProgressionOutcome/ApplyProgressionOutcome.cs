@@ -13,27 +13,23 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: resolve fixture outcome and apply progression paths to destination slots.
+/// Application use case: resolve fixture outcome and apply progression paths
+/// to destination population (O2-a) or slots (legacy placement).
 /// </summary>
 /// <remarks>
-/// Preflights destination stages/slots before any mutation (known orchestration failures → zero writes).
-/// Mutations then call <see cref="Stage.ApplyResolvedEntry"/> successively.
+/// Preflights destinations before any mutation (known orchestration failures → zero writes).
+/// Population targets call <see cref="Stage.AddResolvedPopulationEntry"/>;
+/// slot targets call <see cref="Stage.ApplyResolvedEntry"/>.
 /// Persistence: caller loads source/destination Stages (and Matches) into one scope, invokes this
-/// use case, then calls <c>IUnitOfWork.SaveChangesAsync</c> once. A Domain rejection mid-loop
-/// before SaveChanges leaves nothing persisted; do not introduce Application transactions.
+/// use case, then calls <c>IUnitOfWork.SaveChangesAsync</c> once.
 /// </remarks>
 public static class ApplyProgressionOutcome
 {
     /// <summary>
     /// Applies progression for a fixture onto already-loaded competition stages.
     /// </summary>
-    /// <param name="sourceStage">Stage that owns the fixture (membership resolved via <paramref name="competitionStages"/>).</param>
-    /// <param name="fixtureId">Fixture whose outcome drives progression.</param>
-    /// <param name="matches">Already-loaded matches for all fixture legs.</param>
-    /// <param name="competitionStages">All competition stages (canonical instances for mutations).</param>
-    /// <param name="clock">Clock for domain events.</param>
     /// <returns>Applied progression instructions; empty when no path targets the fixture.</returns>
-    public static IReadOnlyList<SlotAssignmentInstruction> Execute(
+    public static IReadOnlyList<ProgressionInstruction> Execute(
         Stage sourceStage,
         FixtureId fixtureId,
         IReadOnlyList<Match> matches,
@@ -71,7 +67,8 @@ public static class ApplyProgressionOutcome
         {
             var instruction = instructions[i];
             var destination = ResolveCanonicalStage(instruction.StageId, competitionStages);
-            if (destination.FindSlot(instruction.SlotKey) is null)
+            if (!instruction.TargetsPopulation
+                && destination.FindSlot(instruction.SlotKey!) is null)
             {
                 throw new ApplicationFailureException(
                     $"Progression destination slot '{instruction.SlotKey}' was not found on stage '{destination.Id}'.",
@@ -83,13 +80,28 @@ public static class ApplyProgressionOutcome
 
         for (var i = 0; i < instructions.Length; i++)
         {
-            SlotOccupancyConflictGuard.EnsureCompatible(destinations[i], instructions[i]);
+            var instruction = instructions[i];
+            if (instruction.TargetsPopulation)
+            {
+                continue;
+            }
+
+            SlotOccupancyConflictGuard.EnsureCompatible(
+                destinations[i],
+                new SlotAssignmentInstruction(instruction.StageId, instruction.SlotKey!, instruction.EntryId));
         }
 
         for (var i = 0; i < instructions.Length; i++)
         {
             var instruction = instructions[i];
-            destinations[i].ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock);
+            if (instruction.TargetsPopulation)
+            {
+                destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock);
+            }
+            else
+            {
+                destinations[i].ApplyResolvedEntry(instruction.SlotKey!, instruction.EntryId, clock);
+            }
         }
 
         return instructions;

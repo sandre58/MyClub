@@ -50,11 +50,15 @@ public static class ReplaceStageProgressionRules
                     ApplicationErrorCodes.InvalidStructureIntent);
             }
 
+            var destination = string.IsNullOrWhiteSpace(spec.DestinationSlotKey)
+                ? ProgressionDestination.ForPopulation(spec.DestinationStageId)
+                : ProgressionDestination.ForSlot(spec.DestinationStageId, spec.DestinationSlotKey);
+
             domainPaths.Add(
                 new ProgressionPath(
                     spec.SourceFixtureId,
                     spec.Outcome,
-                    new ProgressionDestination(spec.DestinationStageId, spec.DestinationSlotKey)));
+                    destination));
         }
 
         stage.ReplaceProgressionRules(new ProgressionRules(domainPaths), clock);
@@ -67,9 +71,11 @@ public static class ReplaceStageProgressionRules
 /// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">Destination slot key.</param>
+/// <param name="DestinationSlotKey">
+/// Destination slot key for placement; null/whitespace for population target (O2-a).
+/// </param>
 public sealed record ProgressionPathSpec(
     FixtureId SourceFixtureId,
     ProgressionOutcome Outcome,
     StageId DestinationStageId,
-    string DestinationSlotKey);
+    string? DestinationSlotKey);

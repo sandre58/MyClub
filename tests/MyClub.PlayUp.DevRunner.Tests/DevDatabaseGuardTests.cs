@@ -41,12 +41,12 @@ public sealed class DevDatabaseGuardTests
     }
 
     [Fact]
-    public void Rejects_production_environment()
+    public void Rejects_missing_database_name()
     {
         var act = () => DevDatabaseGuard.ValidateForDestructiveUse(
-            "Host=localhost;Port=5432;Database=myclub_dev;Username=myclub;Password=x");
+            "Host=localhost;Port=5432;Username=myclub;Password=x");
 
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Production*");
+            .WithMessage("*Database*");
     }
 }

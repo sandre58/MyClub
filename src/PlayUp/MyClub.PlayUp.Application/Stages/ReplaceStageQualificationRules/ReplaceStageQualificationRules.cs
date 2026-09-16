@@ -63,7 +63,7 @@ public static class ReplaceStageQualificationRules
             var destination = new QualificationDestination(
                 new StageId(spec.DestinationStageId),
                 spec.DestinationSlotKey);
-            QualificationCondition? condition = spec.MinimumPoints is { } points
+            var condition = spec.MinimumPoints is { } points
                 ? QualificationCondition.PointsAtLeast(points)
                 : null;
 

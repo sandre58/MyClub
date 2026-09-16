@@ -21,9 +21,11 @@ public sealed record ReplaceStageProgressionRulesRequest(
 /// <param name="SourceFixtureId">Fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">Destination slot key.</param>
+/// <param name="DestinationSlotKey">
+/// Destination slot key for placement; omit or null for population target (O2-a).
+/// </param>
 public sealed record ProgressionPathRequest(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
-    string DestinationSlotKey);
+    string? DestinationSlotKey = null);

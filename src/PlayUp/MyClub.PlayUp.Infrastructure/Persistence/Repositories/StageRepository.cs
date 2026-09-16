@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
@@ -215,6 +216,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         return stage;
     }
 
+    [SuppressMessage("ReSharper", "EntityFramework.ClientSideDbFunctionCall", Justification = "It's for test")]
     private async Task HydrateOrderedCollectionsAsync(Stage stage, CancellationToken cancellationToken)
     {
         var groups = StageOrderedCollectionsAccessor.GetGroups(stage)

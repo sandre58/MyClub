@@ -8,6 +8,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using Xunit;
@@ -33,7 +34,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         structureResponse.EnsureSuccessStatusCode();
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;
-        var stageId = org!.Format.PrimaryStageId!.Value;
+        var stageId = org.Format.PrimaryStageId!.Value;
 
         using var materializeResponse = await client.PostAsync(
             $"/stages/{stageId}/matches/materialize",
@@ -85,7 +86,12 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;
-        var stageId = org!.Format.PrimaryStageId!.Value;
+        var stageId = org.Format.PrimaryStageId!.Value;
+
+        using var drawRules = await client.PutAsJsonAsync(
+            $"/stages/{stageId}/draw-rules",
+            new ReplaceStageDrawRulesRequest(Clear: false, Mode: DrawMode.Random, NumberOfPots: 2));
+        drawRules.EnsureSuccessStatusCode();
 
         using var createDraw = await client.PostAsJsonAsync(
             $"/stages/{stageId}/draws",
@@ -141,7 +147,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             new ConfigureStructureRequest("Cup", BracketSize: 4));
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;
-        var stageId = org!.Format.PrimaryStageId!.Value;
+        var stageId = org.Format.PrimaryStageId!.Value;
 
         using var createDraw = await client.PostAsJsonAsync(
             $"/stages/{stageId}/draws",

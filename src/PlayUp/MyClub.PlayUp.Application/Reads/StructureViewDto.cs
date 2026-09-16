@@ -325,13 +325,13 @@ public sealed record StructureQualificationPathDto(
 /// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">Destination slot key.</param>
+/// <param name="DestinationSlotKey">Destination slot key; null when targeting population (O2-a).</param>
 /// <param name="SourceLabel">Resolved fixture label (round · #order · slots) when the fixture exists.</param>
 public sealed record StructureProgressionPathDto(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
-    string DestinationSlotKey,
+    string? DestinationSlotKey,
     string? SourceLabel = null);
 
 /// <summary>Round identity + display name inside a confrontation segment.</summary>

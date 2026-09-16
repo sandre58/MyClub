@@ -56,7 +56,9 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(StageStatus.Completed);
-            loaded.Regulation.Should().Be(regulation);
+
+            // AddRound clears StandingRules when the stage becomes knockout (A5).
+            loaded.Regulation.Should().Be(regulation.WithStandingRules(null));
         }
     }
 

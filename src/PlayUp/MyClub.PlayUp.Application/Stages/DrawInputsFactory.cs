@@ -11,27 +11,27 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Builds default <see cref="DrawInputs"/> for V1 Structure → Draw flows.
+/// Builds default <see cref="DrawInputs"/> for Structure → Draw flows.
 /// </summary>
+/// <remarks>
+/// O4-a: when the stage has a non-empty phase population (<see cref="Stage.CompositionEntries"/>),
+/// that set is the draw pool. Otherwise falls back to competition Active entries (legacy stages).
+/// </remarks>
 public static class DrawInputsFactory
 {
     /// <summary>
-    /// Builds inputs for the draw kind from active competition entries and stage regulation.
+    /// Builds inputs for the draw kind from phase population or active competition entries.
     /// </summary>
     public static DrawInputs CreateDefault(Competition competition, Stage stage, DrawResolutionKind kind)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
 
-        var entries = competition.Entries
-            .Where(entry => entry.Status == EntryStatus.Active)
-            .Select(entry => entry.Id)
-            .OrderBy(id => id.Value)
-            .ToList();
+        var entries = ResolvePool(competition, stage);
 
         return entries.Count == 0
             ? throw new ApplicationFailureException(
-                "Draw inputs require at least one active entry.",
+                "Draw inputs require at least one entry in the phase population (or active competition entries when population is empty).",
                 ApplicationErrorCodes.DrawGenerationFailure)
             : kind switch
         {
@@ -44,6 +44,16 @@ public static class DrawInputsFactory
         };
     }
 
+    private static List<EntryId> ResolvePool(Competition competition, Stage stage) =>
+        stage.CompositionEntries.Count > 0
+            ? [.. stage.CompositionEntries.Select(entry => entry.EntryId)]
+            : [
+                .. competition.Entries
+                    .Where(entry => entry.Status == EntryStatus.Active)
+                    .Select(entry => entry.Id)
+                    .OrderBy(id => id.Value)
+            ];
+
     private static PotMembership BuildSequentialPots(List<EntryId> entries, Stage stage)
     {
         var numberOfPots = stage.Regulation.DrawRules?.PotRules?.NumberOfPots
@@ -54,7 +64,7 @@ public static class DrawInputsFactory
         if (entries.Count % numberOfPots != 0)
         {
             throw new ApplicationFailureException(
-                $"Active entry count ({entries.Count}) must be divisible by NumberOfPots ({numberOfPots}).",
+                $"Entry pool count ({entries.Count}) must be divisible by NumberOfPots ({numberOfPots}).",
                 ApplicationErrorCodes.DrawGenerationFailure);
         }
 

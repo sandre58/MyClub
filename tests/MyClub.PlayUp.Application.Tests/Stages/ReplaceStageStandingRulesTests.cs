@@ -37,7 +37,7 @@ public sealed class ReplaceStageStandingRulesTests
     public void Replace_rejects_non_classifying_cup()
     {
         var competition = CreateCompetition.Execute("Cup-Standing", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "KO", _clock);
+        var stage = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "KO"), _clock);
         stage.ClearStandingRules(_clock);
         stage.AddRound("Final", _clock);
 
@@ -66,7 +66,7 @@ public sealed class ReplaceStageStandingRulesTests
     private Stage CreateRunningChampionship()
     {
         var competition = CreateCompetition.Execute("League-Standing", _clock);
-        var stage = AddCompetitionStage.Execute(competition, "Championship", _clock);
+        var stage = AddCompetitionStage.Execute(competition, StructureIntent.Championship(stageName: "Championship"), _clock);
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);

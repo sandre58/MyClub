@@ -1329,7 +1329,7 @@ internal static class ScenarioOrchestration
         await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var roundOf32 = ConfigurePrimaryStage(context, competition, recipe);
-        AssignRootComposition(roundOf32, competition.Entries.ToList(), context.Clock);
+        AssignRootComposition(roundOf32, [.. competition.Entries], context.Clock);
         roundOf32.ReplaceRoundTieFormat(
             roundOf32.Rounds[0].Id,
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),

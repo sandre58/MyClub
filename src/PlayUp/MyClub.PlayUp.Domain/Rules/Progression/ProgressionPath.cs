@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Declarative routing from a Fixture/Tie outcome to a destination slot.
+/// Declarative routing from a Fixture/Tie outcome to a destination (population or slot).
 /// Value object — no technical identity and no Order (unlike <see cref="QualificationPath"/>).
 /// Does not embed TieFormat resolution.
 /// </summary>
@@ -59,9 +59,11 @@ public sealed record ProgressionPath
     /// Returns an independent copy (new nested value-object instances).
     /// </summary>
     /// <returns>A deep copy of this path.</returns>
-    public ProgressionPath Copy() =>
-        new(
-            SourceFixtureId,
-            Outcome,
-            new ProgressionDestination(Destination.StageId, Destination.SlotKey));
+    public ProgressionPath Copy()
+    {
+        var destination = Destination.TargetsPopulation
+            ? ProgressionDestination.ForPopulation(Destination.StageId)
+            : ProgressionDestination.ForSlot(Destination.StageId, Destination.SlotKey!);
+        return new ProgressionPath(SourceFixtureId, Outcome, destination);
+    }
 }

@@ -106,6 +106,24 @@ public sealed class ProgressionApplierTests
         result.EntryId.Should().Be(_winner);
     }
 
+    [Fact]
+    public void Apply_population_destination_omits_slot_key()
+    {
+        var remoteStageId = StageId.New();
+        var path = new ProgressionPath(
+            _fixtureId,
+            ProgressionOutcome.Winner,
+            ProgressionDestination.ForPopulation(remoteStageId));
+        var outcome = new FixtureOutcome(_winner, _loser);
+
+        var result = ProgressionApplier.Apply(path, _fixtureId, outcome);
+
+        result.StageId.Should().Be(remoteStageId);
+        result.SlotKey.Should().BeNull();
+        result.TargetsPopulation.Should().BeTrue();
+        result.EntryId.Should().Be(_winner);
+    }
+
     private ProgressionPath Path(ProgressionOutcome outcome, string slotKey) =>
         new(
             _fixtureId,

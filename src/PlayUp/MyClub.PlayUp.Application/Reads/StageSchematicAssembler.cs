@@ -9,7 +9,6 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -50,7 +49,7 @@ public static class StageSchematicAssembler
             StructureFormatKind.Groups => AssembleGroups(stage, entries),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
                 AssembleRosterCapacity(stage, competition, format.Value, entries),
-            _ => Empty(stage, format),
+            _ => Empty(stage, format)
         };
     }
 
@@ -124,19 +123,17 @@ public static class StageSchematicAssembler
                         SlotAKey: null,
                         SlotBKey: null,
                         fixtureIndex + 1));
-                if (roundOrder == 0)
-                {
-                    pairingCases.Add(PairingCase(fixture.Id, "A", row.HomeEntryId, entries));
-                    pairingCases.Add(PairingCase(fixture.Id, "B", row.AwayEntryId, entries));
-                }
+                if (roundOrder != 0) continue;
+                pairingCases.Add(PairingCase(fixture.Id, "A", row.HomeEntryId, entries));
+                pairingCases.Add(PairingCase(fixture.Id, "B", row.AwayEntryId, entries));
             }
         }
 
         // A published pairing draw fills the bracket without binding slots: the materialized
         // pairs are the truthful occupation; keeping the unbound empty slots would double capacity.
-        var cases = pairingCases.Count > 0 && stage.Slots.All(slot => slot.EntryId is null)
+        IReadOnlyList<SchematicCaseDto> cases = pairingCases.Count > 0 && stage.Slots.All(slot => slot.EntryId is null)
             ? pairingCases
-            : (IReadOnlyList<SchematicCaseDto>)slotCases;
+            : slotCases;
 
         return new StageSchematicDto(
             stage.Id.Value,
@@ -348,7 +345,7 @@ public static class StageSchematicAssembler
                 source.Qualification!,
                 slotKey,
                 competitionStages),
-            _ => null,
+            _ => null
         };
     }
 
@@ -425,7 +422,7 @@ public static class StageSchematicAssembler
                     ? n
                     : null,
             StructureFormatKind.Groups => ResolveGroupsPlaces(stage),
-            _ => null,
+            _ => null
         };
 
     /// <summary>
@@ -458,16 +455,9 @@ public static class StageSchematicAssembler
             return firstRoundSlots;
         }
 
-        if (slotCount >= 2 && (slotCount + 2) % 2 == 0)
-        {
-            var entryPlaces = (slotCount + 2) / 2;
-            if (entryPlaces >= 2 && (entryPlaces & (entryPlaces - 1)) == 0)
-            {
-                return entryPlaces;
-            }
-        }
-
-        return null;
+        if (slotCount < 2 || (slotCount + 2) % 2 != 0) return null;
+        var entryPlaces = (slotCount + 2) / 2;
+        return entryPlaces >= 2 && (entryPlaces & (entryPlaces - 1)) == 0 ? entryPlaces : null;
     }
 
     private static int? ResolveGroupsPlaces(Stage stage)

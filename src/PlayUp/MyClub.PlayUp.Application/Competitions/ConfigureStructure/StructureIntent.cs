@@ -97,7 +97,8 @@ public sealed class StructureIntent
     /// </summary>
     /// <param name="groupCount">Number of groups (≥ 2).</param>
     /// <param name="participantsPerGroup">
-    /// Places per group (≥ 2) — stored as <c>Stage.PlacesPerGroup</c>; also seeds PotRules (one-way).
+    /// Places per group (≥ 2) — stored as <c>Stage.PlacesPerGroup</c>.
+    /// Does not seed DrawRules / PotRules — tirage remains an optional post-birth mechanism.
     /// </param>
     /// <param name="stageName">Optional stage name.</param>
     /// <param name="matchGenerationFormat">Single or double round-robin (default single).</param>

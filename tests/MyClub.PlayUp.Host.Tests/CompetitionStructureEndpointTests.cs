@@ -77,28 +77,32 @@ public sealed class CompetitionStructureEndpointTests(HostPostgresFixture fixtur
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();
 
-        var competitionId = await CreateCompetitionAsync(client, "Groups");
+        var groupsCompetitionId = await CreateCompetitionAsync(client, "Groups");
 
-        await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("A"));
-        await client.PostAsJsonAsync($"/competitions/{competitionId}/entries", new AddEntryRequest("B"));
+        await client.PostAsJsonAsync($"/competitions/{groupsCompetitionId}/entries", new AddEntryRequest("A"));
+        await client.PostAsJsonAsync($"/competitions/{groupsCompetitionId}/entries", new AddEntryRequest("B"));
 
         using var groupsResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/structure",
+            $"/competitions/{groupsCompetitionId}/structure",
             new ConfigureStructureRequest("Groups", GroupCount: 2, ParticipantsPerGroup: 2));
         groupsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var groups = await groupsResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
         groups!.Structure.Structure.GroupCount.Should().Be(2);
-        groups.Structure.Structure.NumberOfPots.Should().Be(2);
-        groups.Structure.Readiness.ReadyForDraw.Should().BeTrue();
+        groups.Structure.Structure.NumberOfPots.Should().BeNull();
+        groups.Structure.Stages.Should().ContainSingle()
+            .Which.PlacesPerGroup.Should().Be(2);
+        groups.Structure.Readiness.ReadyForDraw.Should().BeFalse();
+
+        var cupCompetitionId = await CreateCompetitionAsync(client, "Cup");
+        await client.PostAsJsonAsync($"/competitions/{cupCompetitionId}/entries", new AddEntryRequest("A"));
+        await client.PostAsJsonAsync($"/competitions/{cupCompetitionId}/entries", new AddEntryRequest("B"));
 
         using var cupResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/structure",
+            $"/competitions/{cupCompetitionId}/structure",
             new ConfigureStructureRequest("Cup", BracketSize: 4));
         cupResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var cup = await cupResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
-        cup!.StageCreated.Should().BeFalse();
-        cup.RebuildImpact.Should().NotBeNull();
-        cup.RebuildImpact!.ClearedGroups.Should().Be(2);
+        cup!.StageCreated.Should().BeTrue();
         cup.Structure.Format.Kind.Should().Be(StructureFormatKind.Cup);
         cup.Structure.Structure.SlotCount.Should().Be(4);
         cup.Structure.Structure.RoundCount.Should().Be(1);

@@ -578,6 +578,10 @@ public sealed class OverviewAssemblerTests
             null,
             StructureIntent.Groups(2, 2),
             _clock);
+        ReplaceStageDrawRules.Execute(
+            configured.Stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
 
         var view = OverviewAssembler.Assemble(
             competition,

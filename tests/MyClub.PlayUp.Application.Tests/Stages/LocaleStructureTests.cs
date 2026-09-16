@@ -9,7 +9,6 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -22,7 +21,7 @@ public sealed class LocaleStructureTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 9, 10, 14, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Rebuild_reports_impact_and_replaces_skeleton()
+    public void Rebuild_reports_impact_and_replaces_skeleton_same_kind()
     {
         var competition = CreateCompetition.Execute("Rebuild", _clock);
         var first = ConfigureStructure.Execute(
@@ -35,14 +34,14 @@ public sealed class LocaleStructureTests
         var rebuilt = ConfigureStructure.Execute(
             competition,
             first.Stage,
-            StructureIntent.Groups(2, 2),
+            StructureIntent.Championship(3, "Saison"),
             _clock);
 
         rebuilt.StageCreated.Should().BeFalse();
         rebuilt.RebuildImpact.Should().NotBeNull();
         rebuilt.RebuildImpact!.ClearedMatchdays.Should().Be(2);
-        rebuilt.Stage.Groups.Should().HaveCount(2);
-        rebuilt.Stage.Matchdays.Should().HaveCount(1);
+        rebuilt.Stage.Matchdays.Should().HaveCount(3);
+        rebuilt.Stage.Name.Value.Should().Be("Saison");
     }
 
     [Fact]
@@ -52,7 +51,7 @@ public sealed class LocaleStructureTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(1),
+            StructureIntent.Championship(),
             _clock);
 
         RenameStage.Execute(configured.Stage, "Saison");

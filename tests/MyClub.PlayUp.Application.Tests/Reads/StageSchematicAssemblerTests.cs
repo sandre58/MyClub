@@ -8,7 +8,6 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -119,8 +118,8 @@ public sealed class StageSchematicAssemblerTests
 
         stage.ReplaceCompositionEntries(
             [
-                competition.Entries.ElementAt(0).Id,
-                competition.Entries.ElementAt(1).Id
+                competition.Entries[0].Id,
+                competition.Entries[1].Id
             ],
             _clock);
 
@@ -261,7 +260,7 @@ public sealed class StageSchematicAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("Suisse"), SampleRegulations.Standard(), _clock);
         stage.SetSwissSettings(new SwissSettings(roundCount: 5));
         stage.ReplaceCompositionEntries(
-            [competition.Entries.ElementAt(0).Id, competition.Entries.ElementAt(1).Id],
+            [competition.Entries[0].Id, competition.Entries[1].Id],
             _clock);
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage]);

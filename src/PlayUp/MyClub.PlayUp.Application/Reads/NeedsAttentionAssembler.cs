@@ -273,7 +273,7 @@ public static class NeedsAttentionAssembler
 
             foreach (var path in pathGroup)
             {
-                SlotAssignmentInstruction instruction;
+                ProgressionInstruction instruction;
                 try
                 {
                     instruction = ProgressionApplier.Apply(path, fixtureId, outcome);
@@ -284,8 +284,32 @@ public static class NeedsAttentionAssembler
                 }
 
                 var destination = stages.FirstOrDefault(stage => stage.Id.Equals(instruction.StageId));
-                var slot = destination?.FindSlot(instruction.SlotKey);
-                if (destination is null || slot is null)
+                if (destination is null)
+                {
+                    items.Add(new NeedsAttentionItemDto(
+                        SourceProgressionPending,
+                        SeverityBlocking,
+                        "Fixture",
+                        fixtureId.Value.ToString()));
+                    continue;
+                }
+
+                if (instruction.TargetsPopulation)
+                {
+                    if (destination.CompositionEntries.All(entry => !entry.EntryId.Equals(instruction.EntryId)))
+                    {
+                        items.Add(new NeedsAttentionItemDto(
+                            SourceProgressionPending,
+                            SeverityBlocking,
+                            "Fixture",
+                            fixtureId.Value.ToString()));
+                    }
+
+                    continue;
+                }
+
+                var slot = destination.FindSlot(instruction.SlotKey!);
+                if (slot is null)
                 {
                     items.Add(new NeedsAttentionItemDto(
                         SourceProgressionPending,

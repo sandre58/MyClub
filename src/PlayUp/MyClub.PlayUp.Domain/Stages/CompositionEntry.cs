@@ -18,10 +18,7 @@ public sealed record CompositionEntry
     /// Initializes a new instance of the <see cref="CompositionEntry"/> class.
     /// </summary>
     /// <param name="entryId">Competition entry identity.</param>
-    public CompositionEntry(EntryId entryId)
-    {
-        EntryId = entryId;
-    }
+    public CompositionEntry(EntryId entryId) => EntryId = entryId;
 
     /// <summary>
     /// Gets the competition entry identity.

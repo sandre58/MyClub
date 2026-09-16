@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Describes how confrontation outcomes route participants to slots.
+/// Describes how confrontation outcomes route participants to a population or slots.
 /// Immutable configuration only — no application or TieFormat resolution.
 /// </summary>
 public sealed record ProgressionRules
@@ -19,7 +19,7 @@ public sealed record ProgressionRules
     /// <summary>
     /// Initializes a new instance of the <see cref="ProgressionRules"/> class.
     /// </summary>
-    /// <param name="paths">Progression paths (non-empty; unique destinations).</param>
+    /// <param name="paths">Progression paths (non-empty; unique slot destinations; population may be shared).</param>
     public ProgressionRules(IReadOnlyList<ProgressionPath> paths)
     {
         ArgumentNullException.ThrowIfNull(paths);
@@ -41,13 +41,15 @@ public sealed record ProgressionRules
                 RulesErrorCodes.ProgressionRulesInvalid);
         }
 
-        var destinationKeys = paths
-            .Select(p => (p.Destination.StageId, p.Destination.SlotKey))
+        // Slot destinations must be unique; multiple paths may feed the same population StageId (B1-M2).
+        var slotDestinationKeys = paths
+            .Where(p => !p.Destination.TargetsPopulation)
+            .Select(p => (p.Destination.StageId, p.Destination.SlotKey!))
             .ToArray();
-        if (destinationKeys.Distinct().Count() != destinationKeys.Length)
+        if (slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length)
         {
             throw new DomainException(
-                "Progression paths must target unique destinations.",
+                "Progression paths must target unique slot destinations.",
                 RulesErrorCodes.ProgressionRulesInvalid);
         }
 
@@ -57,7 +59,7 @@ public sealed record ProgressionRules
             ..paths.OrderBy(p => p.SourceFixtureId.Value)
                 .ThenBy(p => p.Outcome)
                 .ThenBy(p => p.Destination.StageId.Value)
-                .ThenBy(p => p.Destination.SlotKey, StringComparer.Ordinal)
+                .ThenBy(p => p.Destination.SlotKey ?? string.Empty, StringComparer.Ordinal)
         ];
     }
 

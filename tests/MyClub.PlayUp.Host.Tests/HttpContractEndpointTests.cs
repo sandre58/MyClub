@@ -53,7 +53,7 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
         structureResponse.EnsureSuccessStatusCode();
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;
-        var stageId = org!.Format.PrimaryStageId!.Value;
+        var stageId = org.Format.PrimaryStageId!.Value;
 
         using var materializeResponse = await client.PostAsync(
             $"/stages/{stageId}/matches/materialize",

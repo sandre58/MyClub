@@ -48,7 +48,7 @@ public sealed class ReplaceStandingRulesEndpointTests(HostPostgresFixture fixtur
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
         stage.Should().NotBeNull();
-        stage!.Status.Should().Be(StageStatus.Running);
+        stage.Status.Should().Be(StageStatus.Running);
         stage.Regulation.StandingRules.Should().NotBeNull();
         stage.Regulation.StandingRules!.Points.WinPoints.Should().Be(2);
         stage.Regulation.StandingRules.RankingCriteria.Should().Equal(

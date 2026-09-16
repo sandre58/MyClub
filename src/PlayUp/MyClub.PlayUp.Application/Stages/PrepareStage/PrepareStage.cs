@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -107,13 +108,47 @@ public static class PrepareStage
 
         foreach (var path in progression.Paths)
         {
+            if (path.Destination.TargetsPopulation)
+            {
+                EnsureOutboundPopulationDestination(
+                    source,
+                    competitionStages,
+                    path.Destination.StageId,
+                    "Progression");
+                continue;
+            }
+
             EnsureOutboundDestination(
                 source,
                 competitionStages,
                 path.Destination.StageId,
-                path.Destination.SlotKey,
+                path.Destination.SlotKey!,
                 "Progression");
         }
+    }
+
+    [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local", Justification = "False positive")]
+    private static void EnsureOutboundPopulationDestination(
+        Stage source,
+        IReadOnlyList<Stage> competitionStages,
+        StageId destinationStageId,
+        string mechanism)
+    {
+        if (destinationStageId.Equals(source.Id))
+        {
+            throw new ApplicationFailureException(
+                $"{mechanism} population destination cannot target the source stage (use a slot destination for intra-phase placement).",
+                ApplicationErrorCodes.DanglingFeedTarget);
+        }
+
+        if (competitionStages.Any(s => s.Id.Equals(destinationStageId)))
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"{mechanism} destination stage '{destinationStageId}' is not part of the competition stages list.",
+            ApplicationErrorCodes.StageNotInCompetition);
     }
 
     private static void EnsureOutboundDestination(

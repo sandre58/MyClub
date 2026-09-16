@@ -212,17 +212,26 @@ public static class StructureRequestMapper
         }
 
         PenaltyShootoutPolicy? shootout = null;
-        if (request.HasPenaltyShootout)
+        if (!request.HasPenaltyShootout)
         {
-            if (request.PenaltyInitialKicksPerTeam is null)
-            {
-                throw new ApplicationFailureException(
-                    "HasPenaltyShootout requires PenaltyInitialKicksPerTeam.",
-                    ApplicationErrorCodes.InvalidStructureIntent);
-            }
-
-            shootout = new PenaltyShootoutPolicy(request.PenaltyInitialKicksPerTeam.Value);
+            return new MatchRules(
+                new MatchDuration(
+                    request.DurationPerPeriod,
+                    request.NumberOfPeriods,
+                    request.HalfTimeDuration),
+                new AdministrativeResultPolicy(request.ForfeitWinnerGoals, request.ForfeitLoserGoals),
+                extraTime,
+                shootout);
         }
+
+        if (request.PenaltyInitialKicksPerTeam is null)
+        {
+            throw new ApplicationFailureException(
+                "HasPenaltyShootout requires PenaltyInitialKicksPerTeam.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        shootout = new PenaltyShootoutPolicy(request.PenaltyInitialKicksPerTeam.Value);
 
         return new MatchRules(
             new MatchDuration(

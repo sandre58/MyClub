@@ -64,6 +64,7 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
         Directory.CreateDirectory(_mediaStorageRoot);
 
         var services = new ServiceCollection();
+        services.AddLogging();
         var sqlCommandCounter = new SqlCommandCounterInterceptor();
         services.AddSingleton(sqlCommandCounter);
         services.AddPlayUpInfrastructure(connectionString, options => options.AddInterceptors(sqlCommandCounter));

@@ -69,13 +69,19 @@ public static class SlotFeedSnapshotAssembler
                     continue;
                 }
 
-                EnsureSlotExists(target, path.Destination.SlotKey, stage.Id, "Progression");
+                // Population destinations (O2-a) do not feed slots — WhoFeeds stays slot-centric.
+                if (path.Destination.TargetsPopulation)
+                {
+                    continue;
+                }
+
+                EnsureSlotExists(target, path.Destination.SlotKey!, stage.Id, "Progression");
                 progressions.Add(
                     new ProgressionFeedSource(
                         stage.Id,
                         path.SourceFixtureId,
                         path.Outcome,
-                        path.Destination.SlotKey));
+                        path.Destination.SlotKey!));
             }
         }
 

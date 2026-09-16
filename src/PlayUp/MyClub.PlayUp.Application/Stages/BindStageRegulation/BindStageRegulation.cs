@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
@@ -48,30 +47,20 @@ public static class BindStageRegulation
         }
     }
 
-    private static IReadOnlyList<HeritableRegulationPart> ResolveParts(string scope)
-    {
-        if (string.Equals(scope, ScopeMatch, StringComparison.OrdinalIgnoreCase))
-        {
-            return
-            [
+    private static IReadOnlyList<HeritableRegulationPart> ResolveParts(string scope) =>
+        string.Equals(scope, ScopeMatch, StringComparison.OrdinalIgnoreCase)
+            ? [
                 HeritableRegulationPart.MatchDuration,
                 HeritableRegulationPart.ExtraTime,
                 HeritableRegulationPart.PenaltyShootout,
                 HeritableRegulationPart.AdministrativeResult
-            ];
-        }
-
-        if (string.Equals(scope, ScopeStanding, StringComparison.OrdinalIgnoreCase))
-        {
-            return
-            [
-                HeritableRegulationPart.Points,
-                HeritableRegulationPart.RankingCriteria
-            ];
-        }
-
-        throw new ApplicationFailureException(
-            $"Unknown bind scope '{scope}'. Expected '{ScopeMatch}' or '{ScopeStanding}'.",
-            ApplicationErrorCodes.InvalidStructureIntent);
-    }
+            ]
+            : string.Equals(scope, ScopeStanding, StringComparison.OrdinalIgnoreCase)
+                ? [
+                    HeritableRegulationPart.Points,
+                    HeritableRegulationPart.RankingCriteria
+                ]
+                : throw new ApplicationFailureException(
+                    $"Unknown bind scope '{scope}'. Expected '{ScopeMatch}' or '{ScopeStanding}'.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
 }

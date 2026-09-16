@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
@@ -98,7 +99,7 @@ public sealed class StructureUseCaseTests
     }
 
     [Fact]
-    public void ConfigureStructure_groups_builds_groups_matchday_and_pots()
+    public void ConfigureStructure_groups_builds_groups_matchday_and_places()
     {
         var competition = CreateCompetition.Execute("Groups", _clock);
         var result = ConfigureStructure.Execute(
@@ -109,8 +110,8 @@ public sealed class StructureUseCaseTests
 
         result.Stage.Groups.Should().HaveCount(4);
         result.Stage.Matchdays.Should().HaveCount(1);
-        result.Stage.Regulation.DrawRules.Should().NotBeNull();
-        result.Stage.Regulation.DrawRules!.PotRules!.NumberOfPots.Should().Be(4);
+        result.Stage.PlacesPerGroup.Should().Be(4);
+        result.Stage.Regulation.DrawRules.Should().BeNull();
     }
 
     [Fact]
@@ -211,6 +212,10 @@ public sealed class StructureUseCaseTests
             competition,
             null,
             StructureIntent.Groups(2, 2),
+            _clock);
+        ReplaceStageDrawRules.Execute(
+            configured.Stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
         var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
 

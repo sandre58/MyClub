@@ -71,13 +71,7 @@ try
         // Phase 12.8: HTTP enums as JSON strings (camelCase property names unchanged).
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
     builder.Services.AddProblemDetails(static options =>
-    {
-        // Framework-produced ProblemDetails only — manual handlers add correlationId themselves.
-        options.CustomizeProblemDetails = static context =>
-        {
-            context.ProblemDetails.Extensions["correlationId"] = context.HttpContext.GetCorrelationId();
-        };
-    });
+        options.CustomizeProblemDetails = static context => context.ProblemDetails.Extensions["correlationId"] = context.HttpContext.GetCorrelationId());
     builder.Services.AddExceptionHandler<MediaExceptionHandler>();
     builder.Services.AddExceptionHandler<PlayUpExceptionHandler>();
 
@@ -488,11 +482,8 @@ try
             Guid competitionId,
             ConfigureStructureRequest request,
             UseCaseExecutor executor,
-            CancellationToken cancellationToken) =>
-        {
-            return await ConfigureStructureHttpAsync(competitionId, request, executor, cancellationToken)
-                .ConfigureAwait(false);
-        });
+            CancellationToken cancellationToken) => await configureStructureHttpAsync(competitionId, request, executor, cancellationToken)
+            .ConfigureAwait(false));
 
     app.MapPost(
         "/competitions/{competitionId:guid}/stages",
@@ -847,10 +838,10 @@ try
                         ApplicationErrorCodes.InvalidStructureIntent);
                 }
 
-                SeedingRules? seeding = request.NumberOfSeeds is null
+                var seeding = request.NumberOfSeeds is null
                     ? null
                     : new SeedingRules(request.NumberOfSeeds.Value);
-                PotRules? pots = request.NumberOfPots is null
+                var pots = request.NumberOfPots is null
                     ? null
                     : new PotRules(request.NumberOfPots.Value);
                 drawRules = new DrawRules(request.Mode.Value, seeding, pots);
@@ -871,7 +862,7 @@ try
             CancellationToken cancellationToken) =>
         {
             ArgumentNullException.ThrowIfNull(request);
-            var entryIds = (request.EntryIds ?? [])
+            var entryIds = request.EntryIds
                 .Select(id => new EntryId(id))
                 .ToArray();
             await executor
@@ -1540,7 +1531,7 @@ finally
 
 return;
 
-static async Task<IResult> ConfigureStructureHttpAsync(
+static async Task<IResult> configureStructureHttpAsync(
     Guid competitionId,
     ConfigureStructureRequest request,
     UseCaseExecutor executor,
@@ -1550,7 +1541,7 @@ static async Task<IResult> ConfigureStructureHttpAsync(
     var (result, view) = await executor
         .ConfigureStructureAsync(new CompetitionId(competitionId), intent, cancellationToken)
         .ConfigureAwait(false);
-    StructureRebuildImpactDto? impact = result.RebuildImpact is null
+    var impact = result.RebuildImpact is null
         ? null
         : new StructureRebuildImpactDto(
             result.RebuildImpact.ClearedMatchdays,

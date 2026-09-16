@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,7 @@ namespace MyClub.PlayUp.Development.Tests;
 public sealed class RegulationDemoConfrontationOrderTests(DevelopmentPostgresFixture fixture)
 {
     [Fact]
+    [SuppressMessage("ReSharper", "EntityFramework.ClientSideDbFunctionCall", Justification = "It's for test")]
     public async Task Regulation_demo_confrontation_segments_follow_round_sort_orderAsync()
     {
         var templateRunner = fixture.Services.GetRequiredService<TemplateRunner>();
@@ -38,7 +40,7 @@ public sealed class RegulationDemoConfrontationOrderTests(DevelopmentPostgresFix
         competition.Should().NotBeNull();
 
         var loaded = await stages.GetByIdsReadOnlyAsync(
-            competition!.StageIds.ToArray(),
+            [.. competition.StageIds],
             StageLoadProfile.Structure);
 
         var knockout = loaded.Single(stage => stage.Name.Value == "Phase finale");

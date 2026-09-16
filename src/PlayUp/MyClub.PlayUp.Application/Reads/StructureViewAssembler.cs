@@ -207,7 +207,7 @@ public static class StructureViewAssembler
         var progressionPaths = MapProgressionPaths(stage, regulation.ProgressionRules);
         var placement = regulation.PlacementAwardRules;
         var storedTie = regulation.TieFormat
-            ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
+                        ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
         var hasTie = storedTie is not null;
         var confrontationSegments = hasTie && stage.Rounds.Count > 0
             ? BuildConfrontationSegments(stage)
@@ -326,20 +326,15 @@ public static class StructureViewAssembler
             DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat));
     }
 
-    private static StructureTieFormatSummaryDto? MapDefaultTieFormat(TieFormat? tie)
-    {
-        if (tie is null)
-        {
-            return null;
-        }
-
-        return new StructureTieFormatSummaryDto(
-            tie.NumberOfLegs,
-            tie.AggregateScoring,
-            HasAwayGoalsRule: tie.AwayGoalsRule is not null,
-            HasTieExtraTime: tie.ExtraTimeRule is not null,
-            HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null);
-    }
+    private static StructureTieFormatSummaryDto? MapDefaultTieFormat(TieFormat? tie) =>
+        tie is null
+            ? null
+            : new StructureTieFormatSummaryDto(
+                tie.NumberOfLegs,
+                tie.AggregateScoring,
+                HasAwayGoalsRule: tie.AwayGoalsRule is not null,
+                HasTieExtraTime: tie.ExtraTimeRule is not null,
+                HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null);
 
     private const int CompositionPreviewLimit = 5;
 
@@ -358,7 +353,7 @@ public static class StructureViewAssembler
         var entryIds = stage.CompositionEntries.Select(entry => entry.EntryId.Value).ToArray();
         var orderedNames = stage.CompositionEntries
             .Select(entry => entry.EntryId)
-            .Select(id => entriesById.TryGetValue(id, out var entry) ? entry : null)
+            .Select(entriesById.GetValueOrDefault)
             .Where(entry => entry is not null)
             .Cast<CompetitionEntry>()
             .OrderBy(entry => entry.DisplayName, DisplayNameComparer)
@@ -381,17 +376,15 @@ public static class StructureViewAssembler
     /// DTO name compositionCapacity retained temporarily = target Places, not current k.
     /// Cup: entry places (1st-round cardinality), not total <c>slotCount</c> when multi-round.
     /// </summary>
-    private static int? ResolvePlaces(Competition competition, Stage stage)
-    {
-        return InferFormat(stage) switch
+    private static int? ResolvePlaces(Competition competition, Stage stage) =>
+        InferFormat(stage) switch
         {
             StructureFormatKind.Cup => ResolveCupEntryPlaces(stage),
             StructureFormatKind.Championship or StructureFormatKind.Swiss
                 => CountActiveEntries(competition),
             StructureFormatKind.Groups => ResolveGroupsPlaces(stage),
-            _ => stage.Slots.Count > 0 ? stage.Slots.Count : null,
+            _ => stage.Slots.Count > 0 ? stage.Slots.Count : null
         };
-    }
 
     /// <summary>
     /// Cup Places N = teams to constitute (entry places). Mono-round: <c>slotCount</c>.
@@ -426,16 +419,9 @@ public static class StructureViewAssembler
         }
 
         // Classic full tree independent of declared round count: slots = 2N − 2, N power of two.
-        if (slotCount >= 2 && (slotCount + 2) % 2 == 0)
-        {
-            var entryPlaces = (slotCount + 2) / 2;
-            if (IsPowerOfTwo(entryPlaces) && entryPlaces >= 2)
-            {
-                return entryPlaces;
-            }
-        }
-
-        return null;
+        if (slotCount < 2 || (slotCount + 2) % 2 != 0) return null;
+        var entryPlaces = (slotCount + 2) / 2;
+        return IsPowerOfTwo(entryPlaces) && entryPlaces >= 2 ? entryPlaces : null;
     }
 
     private static int CountActiveEntries(Competition competition) =>
@@ -452,13 +438,8 @@ public static class StructureViewAssembler
         }
 
         var perGroup = stage.PlacesPerGroup
-            ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
-        if (perGroup is null or < 1)
-        {
-            return null;
-        }
-
-        return stage.Groups.Count * perGroup.Value;
+                       ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
+        return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
     }
 
     private static bool IsRootCompositionStage(Stage stage, IReadOnlyList<Stage> competitionStages)
@@ -488,61 +469,47 @@ public static class StructureViewAssembler
 
     private static IReadOnlyList<StructureQualificationPathDto>? MapQualificationPaths(
         Stage stage,
-        QualificationRules? rules)
-    {
-        if (rules is null)
-        {
-            return null;
-        }
-
-        return
-        [
-            .. rules.Paths.Select(path =>
-            {
-                string? groupName = null;
-                if (path.Source.GroupId is { } groupId)
+        QualificationRules? rules) =>
+        rules is null
+            ? null
+            : [
+                .. rules.Paths.Select(path =>
                 {
-                    groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
-                }
+                    string? groupName = null;
+                    if (path.Source.GroupId is { } groupId)
+                    {
+                        groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
+                    }
 
-                return new StructureQualificationPathDto(
-                    path.Order,
-                    path.Selection.Mode,
-                    path.Selection.Value,
-                    path.Destination.StageId.Value,
-                    path.Destination.SlotKey,
-                    path.Source.Scope,
-                    path.Source.GroupId?.Value,
-                    path.Source.AcrossGroupsPosition,
-                    path.Selection.EndValue,
-                    path.Condition?.MinimumPoints,
-                    groupName);
-            })
-        ];
-    }
+                    return new StructureQualificationPathDto(
+                        path.Order,
+                        path.Selection.Mode,
+                        path.Selection.Value,
+                        path.Destination.StageId.Value,
+                        path.Destination.SlotKey,
+                        path.Source.Scope,
+                        path.Source.GroupId?.Value,
+                        path.Source.AcrossGroupsPosition,
+                        path.Selection.EndValue,
+                        path.Condition?.MinimumPoints,
+                        groupName);
+                })
+            ];
 
     private static IReadOnlyList<StructureProgressionPathDto>? MapProgressionPaths(
         Stage stage,
-        ProgressionRules? rules)
-    {
-        if (rules is null)
-        {
-            return null;
-        }
-
-        return
-        [
-            .. rules.Paths.Select(path =>
-            {
-                return new StructureProgressionPathDto(
+        ProgressionRules? rules) =>
+        rules is null
+            ? null
+            :
+            [
+                .. rules.Paths.Select(path => new StructureProgressionPathDto(
                     path.SourceFixtureId.Value,
                     path.Outcome,
                     path.Destination.StageId.Value,
                     path.Destination.SlotKey,
-                    ResolveFixtureSourceLabel(stage, path.SourceFixtureId));
-            })
-        ];
-    }
+                    ResolveFixtureSourceLabel(stage, path.SourceFixtureId)))
+            ];
 
     /// <summary>
     /// Human fixture label: round/matchday · #order, optionally · slotA vs slotB when keys exist.
@@ -601,30 +568,23 @@ public static class StructureViewAssembler
         return $"{containerName} · #{order.ToString(CultureInfo.InvariantCulture)} · {left} vs {right}";
     }
 
-    private static IReadOnlyList<string> BuildStageActions(
+    private static List<string> BuildStageActions(
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages)
     {
         if (competition.Status is CompetitionStatus.Completed
-            or CompetitionStatus.Archived
-            or CompetitionStatus.Running
-            or CompetitionStatus.Suspended)
-        {
-            return [];
-        }
-
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
+                or CompetitionStatus.Archived
+                or CompetitionStatus.Running
+                or CompetitionStatus.Suspended ||
+            stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
             return [];
         }
 
         var actions = new List<string>
         {
-            ActionRenameStage,
-            ActionReplacePlacementAwardRules,
-            ActionReplaceMatchRules,
-            ActionBindToCompetition
+            ActionRenameStage, ActionReplacePlacementAwardRules, ActionReplaceMatchRules, ActionBindToCompetition
         };
 
         // V1 exit capacity: classifying → Qualification ; Cup/KO non-classifying → Progression.
@@ -682,20 +642,18 @@ public static class StructureViewAssembler
             actions.Add(ActionAddGroup);
         }
 
-        if (format is StructureFormatKind.Cup or null)
+        switch (format)
         {
-            actions.Add(ActionAddRound);
-            actions.Add(ActionAddSlot);
-        }
-
-        if (format is StructureFormatKind.Championship or StructureFormatKind.Groups)
-        {
-            actions.Add(ActionReplaceMatchGenerationFormat);
-        }
-
-        if (format is StructureFormatKind.Swiss)
-        {
-            actions.Add(ActionReplaceSwissSettings);
+            case StructureFormatKind.Cup or null:
+                actions.Add(ActionAddRound);
+                actions.Add(ActionAddSlot);
+                break;
+            case StructureFormatKind.Championship or StructureFormatKind.Groups:
+                actions.Add(ActionReplaceMatchGenerationFormat);
+                break;
+            case StructureFormatKind.Swiss:
+                actions.Add(ActionReplaceSwissSettings);
+                break;
         }
 
         if (competition.StageIds.Count > 1 && attachedMatches == 0)
@@ -717,15 +675,9 @@ public static class StructureViewAssembler
         return format is StructureFormatKind.Groups or StructureFormatKind.Cup;
     }
 
-    private static bool StageNeedsTieFormatAction(Stage stage)
-    {
-        if (stage.Regulation.TieFormat is not null || stage.Rounds.Any(round => round.TieFormat is not null))
-        {
-            return true;
-        }
-
-        return InferFormat(stage) is StructureFormatKind.Cup;
-    }
+    private static bool StageNeedsTieFormatAction(Stage stage) =>
+        stage.Regulation.TieFormat is not null || stage.Rounds.Any(round => round.TieFormat is not null) ||
+        InferFormat(stage) is StructureFormatKind.Cup;
 
     private static IReadOnlyList<string> BuildStructureIssues(
         Stage stage,
@@ -761,34 +713,50 @@ public static class StructureViewAssembler
             }
         }
 
-        if (stage.Regulation.ProgressionRules is { } progression)
+        if (stage.Regulation.ProgressionRules is not { } progression)
+            return [.. issues.Distinct(StringComparer.Ordinal)];
+
+        foreach (var path in progression.Paths)
         {
-            foreach (var path in progression.Paths)
+            if (path.Destination.TargetsPopulation)
             {
                 if (path.Destination.StageId.Equals(stage.Id))
-                {
-                    if (stage.FindSlot(path.Destination.SlotKey) is null)
-                    {
-                        issues.Add(IssueMissingProgressionDestinationSlot);
-                    }
-
-                    continue;
-                }
-
-                if (!byId.TryGetValue(path.Destination.StageId, out var destination))
                 {
                     issues.Add(IssueDanglingProgressionTarget);
                     continue;
                 }
 
-                if (destination.FindSlot(path.Destination.SlotKey) is null)
+                if (!byId.ContainsKey(path.Destination.StageId))
+                {
+                    issues.Add(IssueDanglingProgressionTarget);
+                }
+
+                continue;
+            }
+
+            if (path.Destination.StageId.Equals(stage.Id))
+            {
+                if (stage.FindSlot(path.Destination.SlotKey!) is null)
                 {
                     issues.Add(IssueMissingProgressionDestinationSlot);
                 }
+
+                continue;
+            }
+
+            if (!byId.TryGetValue(path.Destination.StageId, out var destination))
+            {
+                issues.Add(IssueDanglingProgressionTarget);
+                continue;
+            }
+
+            if (destination.FindSlot(path.Destination.SlotKey!) is null)
+            {
+                issues.Add(IssueMissingProgressionDestinationSlot);
             }
         }
 
-        return issues.Distinct(StringComparer.Ordinal).ToArray();
+        return [.. issues.Distinct(StringComparer.Ordinal)];
     }
 
     /// <summary>
@@ -806,10 +774,7 @@ public static class StructureViewAssembler
             var roundRef = new StructureConfrontationRoundRefDto(round.Id.Value, round.Name, index);
             if (current is not null && SameTieSignature(current, tie))
             {
-                current = current with
-                {
-                    Rounds = [.. current.Rounds, roundRef]
-                };
+                current = current with { Rounds = [.. current.Rounds, roundRef] };
                 segments[^1] = current;
                 continue;
             }
@@ -859,14 +824,16 @@ public static class StructureViewAssembler
     private static int CountStageTeams(Competition competition, Stage stage) =>
         stage.Groups.Count > 0
             ? stage.Groups.SelectMany(group => group.EntryIds).Distinct().Count()
-            : stage.Slots.Count > 0 ? stage.Slots.Count : competition.Entries.Count;
+            : stage.Slots.Count > 0
+                ? stage.Slots.Count
+                : competition.Entries.Count;
 
     private static int CountAttachedMatches(Stage? primary) =>
         primary?.Matchdays.SelectMany(matchday => matchday.Fixtures)
-                .Concat(primary.Rounds.SelectMany(round => round.Fixtures))
-                .SelectMany(fixture => fixture.MatchIds)
-                .Distinct()
-                .Count() ?? 0;
+            .Concat(primary.Rounds.SelectMany(round => round.Fixtures))
+            .SelectMany(fixture => fixture.MatchIds)
+            .Distinct()
+            .Count() ?? 0;
 
     private static Stage? ResolvePrimaryStage(Competition competition, IReadOnlyList<Stage> stages)
     {
@@ -963,12 +930,12 @@ public static class StructureViewAssembler
         stage.IsSwiss
             ? StructureFormatKind.Swiss
             : stage.Rounds.Count > 0
-            ? StructureFormatKind.Cup
-            : stage.Groups.Count > 0
-            ? StructureFormatKind.Groups
-            : stage.Matchdays.Count > 0
-            ? StructureFormatKind.Championship
-            : null;
+                ? StructureFormatKind.Cup
+                : stage.Groups.Count > 0
+                    ? StructureFormatKind.Groups
+                    : stage.Matchdays.Count > 0
+                        ? StructureFormatKind.Championship
+                        : null;
 
     private static StructureTopologySummaryDto BuildStructureSummary(Stage? primary)
     {
@@ -1032,9 +999,9 @@ public static class StructureViewAssembler
         var readyForMaterialization = false;
 
         if (primary is not null && formatKind is not null
-            && !blockers.Contains(BlockerInsufficientParticipants)
-            && !blockers.Contains(BlockerMissingStage)
-            && !blockers.Contains(BlockerMissingStructure))
+                                && !blockers.Contains(BlockerInsufficientParticipants)
+                                && !blockers.Contains(BlockerMissingStage)
+                                && !blockers.Contains(BlockerMissingStructure))
         {
             switch (formatKind)
             {
@@ -1051,7 +1018,8 @@ public static class StructureViewAssembler
                     {
                         readyForDraw = structure is { GroupCount: >= 2, MatchdayCount: >= 1 };
                         var assigned = primary.Groups.Sum(group => group.EntryIds.Count);
-                        readyForMaterialization = assigned >= 2 && primary.Groups.All(group => group.EntryIds.Count >= 2);
+                        readyForMaterialization =
+                            assigned >= 2 && primary.Groups.All(group => group.EntryIds.Count >= 2);
                     }
 
                     break;
@@ -1090,14 +1058,14 @@ public static class StructureViewAssembler
 
         var readyForSchedule = attachedMatchCount > 0;
         var readyForMatchOperation = attachedMatchCount > 0
-            && competition.Status is not CompetitionStatus.Completed
-            and not CompetitionStatus.Archived;
+                                     && competition.Status is not CompetitionStatus.Completed
+                                         and not CompetitionStatus.Archived;
         var constructionBlocked = blockers.Contains(BlockerInsufficientParticipants)
-            || blockers.Contains(BlockerMissingStage)
-            || blockers.Contains(BlockerMissingStructure)
-            || blockers.Contains(BlockerMissingPotRules)
-            || blockers.Contains(BlockerCupBracketInvalid)
-            || blockers.Contains(BlockerStructureGraphInvalid);
+                                  || blockers.Contains(BlockerMissingStage)
+                                  || blockers.Contains(BlockerMissingStructure)
+                                  || blockers.Contains(BlockerMissingPotRules)
+                                  || blockers.Contains(BlockerCupBracketInvalid)
+                                  || blockers.Contains(BlockerStructureGraphInvalid);
         var readyForNext = !constructionBlocked && (readyForDraw || readyForSchedulePath);
 
         return new StructureReadinessDto(

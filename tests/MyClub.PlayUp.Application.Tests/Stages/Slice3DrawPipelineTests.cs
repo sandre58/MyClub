@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -32,6 +33,10 @@ public sealed class Slice3DrawPipelineTests
             StructureIntent.Groups(2, 2),
             _clock);
         var stage = configured.Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
         var inputs = DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Group);

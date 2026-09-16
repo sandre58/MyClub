@@ -1302,15 +1302,12 @@ public static class OverviewAssembler
         if (item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants)
         {
             // Prefer wire params from Needs Attention when present; else Structure facts.
-            if (item.Params is { Count: > 0 })
-            {
-                return item.Params.ToDictionary(
+            return item.Params is { Count: > 0 }
+                ? item.Params.ToDictionary(
                     pair => pair.Key,
                     pair => pair.Value,
-                    StringComparer.Ordinal);
-            }
-
-            return new Dictionary<string, string>
+                    StringComparer.Ordinal)
+                : new Dictionary<string, string>
             {
                 ["minimumTeams"] = structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
                 ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),

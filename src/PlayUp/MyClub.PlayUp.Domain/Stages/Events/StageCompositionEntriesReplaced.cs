@@ -17,10 +17,8 @@ public sealed record StageCompositionEntriesReplaced : DomainEvent
     /// Initializes a new instance of the <see cref="StageCompositionEntriesReplaced"/> class.
     /// </summary>
     public StageCompositionEntriesReplaced(StageId stageId, IClock clock)
-        : base(clock)
-    {
+        : base(clock) =>
         StageId = stageId;
-    }
 
     /// <summary>
     /// Gets the stage identity.
