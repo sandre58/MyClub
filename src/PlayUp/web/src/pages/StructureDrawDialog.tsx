@@ -230,6 +230,13 @@ export function StructureDrawDialog({
           </div>
         }
       >
+        {(stage.compositionEntryCount ?? 0) > 0 ? (
+          <p className="structure-draw-pool" role="note">
+            {t('fiche.drawWorkflow.poolFromPopulation', {
+              count: stage.compositionEntryCount,
+            })}
+          </p>
+        ) : null}
         {overviewQuery.isLoading ? (
           <p className="structure-panel__muted" role="status">
             {t('fiche.drawWorkflow.loading')}

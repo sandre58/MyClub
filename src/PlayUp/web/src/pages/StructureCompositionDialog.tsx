@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Composition dialog — root Affectation set (Entrées).
+// Composition dialog — Affectation set (Population).
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,6 +24,11 @@ type StructureCompositionDialogProps = {
   competitionId: string;
   stage: StructureStageHubSummary;
   entries: StructureEntry[];
+  /**
+   * Inbound Qualif/Prog expected volume (Draft). Reserves Places N so Affectation
+   * cannot overfill the expected Population (U1/V2).
+   */
+  reservedFromFeeds?: number;
   /** Focus search when opened via deep-link. */
   focusSearch?: boolean;
 };
@@ -46,8 +51,9 @@ function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
 }
 
 /**
- * Work dialog — edit the root composition entry set (Affectation).
- * Partial Draft sets are allowed; k = N disables further growth.
+ * Work dialog — edit the phase Population via Affectation (CompositionEntries).
+ * Partial Draft sets are allowed. Selection cap accounts for inbound feed volume.
+ * B2: available on non-root phases alongside inbound Qualif/Prog.
  */
 export function StructureCompositionDialog({
   open,
@@ -55,6 +61,7 @@ export function StructureCompositionDialog({
   competitionId,
   stage,
   entries,
+  reservedFromFeeds = 0,
   focusSearch = false,
 }: StructureCompositionDialogProps) {
   const { t } = useTranslation('structure');
@@ -62,7 +69,16 @@ export function StructureCompositionDialog({
   const queryClient = useQueryClient();
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const capacity = resolvePlacesN(stage);
+  const placesN = resolvePlacesN(stage);
+  const isLive =
+    stage.status === 'Running' ||
+    stage.status === 'Suspended' ||
+    stage.status === 'Completed';
+  const reserved = isLive ? 0 : Math.max(0, reservedFromFeeds);
+  /** Max teams Affectation may hold without exceeding Places N given reserved feeds. */
+  const affectationCap =
+    placesN != null ? Math.max(0, placesN - reserved) : null;
+
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [baseline, setBaseline] = useState<Set<string>>(() => new Set());
   const [search, setSearch] = useState('');
@@ -124,10 +140,15 @@ export function StructureCompositionDialog({
   }, [rows, search]);
 
   const k = selected.size;
-  const atCapacity = capacity != null && k >= capacity;
+  const populationExpected = isLive ? k : k + reserved;
+  const atCapacity =
+    affectationCap != null && k >= affectationCap;
   const remaining =
-    capacity != null && capacity > 0 ? Math.max(0, capacity - k) : null;
-  const complete = capacity != null && capacity > 0 && k === capacity;
+    placesN != null && placesN > 0
+      ? Math.max(0, placesN - populationExpected)
+      : null;
+  const complete =
+    placesN != null && placesN > 0 && populationExpected === placesN;
   const dirty = !sameIdSet(selected, baseline);
   const emptyEligible =
     entries.filter((e) => e.status === 'Active').length === 0 && k === 0;
@@ -138,11 +159,11 @@ export function StructureCompositionDialog({
   );
   const canSelectAll =
     selectableFiltered.length > 0 &&
-    (capacity == null || k < capacity);
+    (affectationCap == null || k < affectationCap);
 
   const ratio =
-    capacity != null && capacity > 0
-      ? Math.min(1, Math.max(0, k / capacity))
+    placesN != null && placesN > 0
+      ? Math.min(1, Math.max(0, populationExpected / placesN))
       : 0;
 
   const saveMutation = useMutation({
@@ -162,7 +183,7 @@ export function StructureCompositionDialog({
         next.delete(entryId);
         return next;
       }
-      if (capacity != null && next.size >= capacity) {
+      if (affectationCap != null && next.size >= affectationCap) {
         return prev;
       }
       next.add(entryId);
@@ -174,7 +195,9 @@ export function StructureCompositionDialog({
     setSelected((prev) => {
       const next = new Set(prev);
       const room =
-        capacity != null ? Math.max(0, capacity - next.size) : Number.POSITIVE_INFINITY;
+        affectationCap != null
+          ? Math.max(0, affectationCap - next.size)
+          : Number.POSITIVE_INFINITY;
       if (room === 0) return prev;
       let added = 0;
       for (const row of selectableFiltered) {
@@ -189,12 +212,12 @@ export function StructureCompositionDialog({
   };
 
   const counterLabel =
-    capacity == null
-      ? t('composition.counterUnknown', { count: k })
-      : t('composition.counter', { k, n: capacity });
+    placesN == null
+      ? t('composition.counterUnknown', { count: populationExpected })
+      : t('composition.counter', { k: populationExpected, n: placesN });
 
   const statusLabel =
-    capacity == null
+    placesN == null
       ? null
       : complete
         ? t('composition.statusComplete')
@@ -248,10 +271,12 @@ export function StructureCompositionDialog({
             className={[
               'structure-composition__meter',
               complete ? 'structure-composition__meter--complete' : null,
-              capacity != null && capacity > 0 && k < capacity
+              placesN != null &&
+              placesN > 0 &&
+              populationExpected < placesN
                 ? 'structure-composition__meter--short'
                 : null,
-              capacity != null && k > capacity
+              placesN != null && populationExpected > placesN
                 ? 'structure-composition__meter--over'
                 : null,
             ]
@@ -261,7 +286,7 @@ export function StructureCompositionDialog({
             <p className="structure-composition__counter" aria-live="polite">
               {counterLabel}
             </p>
-            {capacity != null && capacity > 0 ? (
+            {placesN != null && placesN > 0 ? (
               <div
                 className="structure-composition__track"
                 aria-hidden="true"
@@ -311,20 +336,15 @@ export function StructureCompositionDialog({
         </div>
 
         {emptyEligible ? (
-          <div className="structure-composition__empty" role="status">
+          <div className="structure-composition__empty">
             <p>{t('composition.emptyEligible')}</p>
             <TextLink to={teamsHref}>{t('composition.openTeams')}</TextLink>
           </div>
         ) : (
-          <ul
-            className="structure-composition__list"
-            role="listbox"
-            aria-multiselectable="true"
-            aria-label={t('composition.listAria')}
-          >
+          <ul className="structure-composition__list" aria-label={t('composition.listAria')}>
             {filtered.map((row) => {
-              const disabledGrow =
-                !row.selected && atCapacity && capacity != null;
+              const locked =
+                !row.selected && atCapacity && affectationCap != null;
               return (
                 <li key={row.entryId}>
                   <label
@@ -333,28 +353,32 @@ export function StructureCompositionDialog({
                       !row.eligible
                         ? 'structure-composition__row--ineligible'
                         : null,
-                      disabledGrow
-                        ? 'structure-composition__row--locked'
-                        : null,
+                      locked ? 'structure-composition__row--locked' : null,
                     ]
                       .filter(Boolean)
                       .join(' ')}
                     title={
-                      disabledGrow
-                        ? t('composition.atCapacityHint', { n: capacity })
+                      locked
+                        ? t('composition.atCapacityHint', {
+                            n: affectationCap,
+                          })
                         : undefined
                     }
                   >
                     <input
                       type="checkbox"
                       checked={row.selected}
-                      disabled={disabledGrow}
+                      disabled={
+                        saveMutation.isPending ||
+                        (!row.eligible && !row.selected) ||
+                        locked
+                      }
                       onChange={() => toggle(row.entryId, row.selected)}
                     />
                     <TeamCrest
                       name={row.displayName}
                       logoMediaId={row.logoMediaId}
-                      primaryColor={row.primaryColor ?? null}
+                      primaryColor={row.primaryColor}
                       size="sm"
                     />
                     <span className="structure-composition__name">

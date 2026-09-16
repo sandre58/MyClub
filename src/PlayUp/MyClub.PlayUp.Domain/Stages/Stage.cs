@@ -1268,7 +1268,7 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Replaces the root composition entry set. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Replaces the composition entry set (Affectation → Population). Allowed in Draft or Ready; Ready is demoted to Draft.
     /// Partial sets are allowed; duplicates are rejected. Order of first occurrence is preserved.
     /// </summary>
     /// <param name="entryIds">Entry identities (may be empty to clear).</param>

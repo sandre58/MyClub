@@ -804,6 +804,12 @@ function readinessStatusNote(
     );
   }
 
+  if (readiness.readyForDraw) {
+    return (
+      <ReadinessReadyStatus titleKey="readiness.readyForDraw" />
+    );
+  }
+
   if (readyToMaterialize) {
     const isCup = formatKind === 'Cup';
     return (
@@ -864,7 +870,15 @@ function ReadinessNotReadyStatus({
   );
 }
 
-function ReadinessReadyStatus({ titleKey }: { titleKey: string }) {
+function ReadinessReadyStatus({
+  titleKey,
+  detailKey,
+  detailCount,
+}: {
+  titleKey: string;
+  detailKey?: string;
+  detailCount?: number;
+}) {
   const { t } = useTranslation('structure');
 
   return (
@@ -876,6 +890,11 @@ function ReadinessReadyStatus({ titleKey }: { titleKey: string }) {
         <CheckIcon size="sm" aria-hidden="true" />
         <span>{t(titleKey)}</span>
       </p>
+      {detailKey != null && detailCount != null && detailCount > 0 ? (
+        <p className="structure-status__detail">
+          {t(detailKey, { count: detailCount })}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -610,10 +610,9 @@ public static class StructureViewAssembler
             actions.Add(ActionReplaceDrawRules);
         }
 
-        if (IsRootCompositionStage(stage, competitionStages))
-        {
-            actions.Add(ActionReplaceCompositionEntries);
-        }
+        // B2 — Affectation may co-exist with inbound Qualif/Prog on the same phase
+        // (V2 I7 / scenario B2). Domain ReplaceCompositionEntries is not root-gated.
+        actions.Add(ActionReplaceCompositionEntries);
 
         if (StageNeedsTieFormatAction(stage))
         {

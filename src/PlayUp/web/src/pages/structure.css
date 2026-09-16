@@ -166,6 +166,12 @@
   color: color-mix(in srgb, var(--color-success) 60%, var(--color-ink));
 }
 
+.structure-status__detail {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
 .structure-status__actions {
   display: flex;
   flex-direction: column;
@@ -1119,6 +1125,42 @@
   overflow: hidden;
 }
 
+.structure-entries__sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-entries__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-entries__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-entries__section-title {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-secondary);
+}
+
+.structure-entries__feed-context,
+.structure-entries__preview {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
 .structure-entries__footer {
   display: flex;
   flex-direction: column;
@@ -1244,6 +1286,12 @@
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
   color: var(--color-error);
+}
+
+.structure-assembly__breakdown {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-muted);
 }
 
 .structure-assembly__gap-icon {
@@ -1736,6 +1784,12 @@
   color: var(--color-ink);
 }
 
+.structure-composition__breakdown {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-muted);
+}
+
 .structure-composition__track {
   height: 0.375rem;
   border-radius: 999px;
@@ -1864,7 +1918,16 @@
 
 .structure-phase-hero__draw {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.structure-phase-hero__draw-ready {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
 .structure-flux-groups {
@@ -1939,6 +2002,21 @@ button.structure-flux-group__peer {
   align-items: baseline;
   gap: var(--space-8);
   min-width: 0;
+}
+
+.structure-flux-rule__source {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-flux-rule__arrow {
+  flex: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
 }
 
 .structure-flux-rule__context {
@@ -2278,6 +2356,14 @@ button.structure-flux-group__peer {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
+}
+
+.structure-draw-pool {
+  margin: 0 0 var(--space-8);
+  padding: var(--space-8);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  font-size: var(--font-size-sm);
 }
 
 .draw-pairing-list,

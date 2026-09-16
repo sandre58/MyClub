@@ -345,7 +345,7 @@ describe('StructurePage Structure hub', () => {
     expect(await screen.findByRole('button', { name: /League/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'League' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /^Match$/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Entrées/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -386,7 +386,7 @@ describe('StructurePage Structure hub', () => {
 
     expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Tirage/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Entrées/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -750,7 +750,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows next-slice readiness for Groups when draw-ready without claiming draw required', async () => {
+  it('shows draw readiness for Groups when draw-ready without claiming draw required', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -776,7 +776,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Prêt pour la suite/i),
+      await screen.findByText(/Prêt pour le tirage/i),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Tirage requis/i)).not.toBeInTheDocument();
     expect(

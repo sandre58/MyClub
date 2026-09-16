@@ -31,6 +31,7 @@ import {
   LayersIcon,
   MatchRulesIcon,
   MatchdayStatIcon,
+  PlusIcon,
   PencilIcon,
   RandomIcon,
   RoundsStatIcon,
@@ -73,6 +74,9 @@ import {
   getDrawTilePrimarySummary,
   pickActiveDraw,
 } from './drawUi';
+import {
+  isPopulationDestination,
+} from './structureProgression';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -350,13 +354,24 @@ function progressionRuleParts(
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): Pick<
   FeedRow,
-  'badge' | 'badgeTone' | 'context' | 'family' | 'sortPrimary' | 'sortSecondary'
+  | 'badge'
+  | 'badgeTone'
+  | 'context'
+  | 'extra'
+  | 'family'
+  | 'sortPrimary'
+  | 'sortSecondary'
 > {
   const isWinner = path.outcome === 'Winner';
+  // Place destination chip deferred until schematic shows the same Place id (Notion task).
+  const destinationExtra = isPopulationDestination(path.destinationSlotKey)
+    ? t('fiche.rule.destinationPopulation')
+    : undefined;
   return {
     badge: isWinner ? t('fiche.rule.winner') : t('fiche.rule.loser'),
     badgeTone: isWinner ? 'win' : 'loss',
     context: matchNumberContext(path.sourceLabel, path.sourceFixtureId, t),
+    extra: destinationExtra,
     family: 'result',
     sortPrimary: isWinner ? 0 : 1,
     sortSecondary: matchSortKey(path.sourceLabel, path.sourceFixtureId),
@@ -549,9 +564,18 @@ function FluxRuleRow({
 }) {
   return (
     <span className="structure-flux-rule">
-      <Chip tone={badgeTone}>{badge}</Chip>
-      {extra ? <Chip tone="neutral">{extra}</Chip> : null}
-      <span className="structure-flux-rule__context">{context}</span>
+      <span className="structure-flux-rule__source">
+        <Chip tone={badgeTone}>{badge}</Chip>
+        <span className="structure-flux-rule__context">{context}</span>
+      </span>
+      {extra ? (
+        <>
+          <span className="structure-flux-rule__arrow" aria-hidden="true">
+            →
+          </span>
+          <Chip tone="neutral">{extra}</Chip>
+        </>
+      ) : null}
     </span>
   );
 }
@@ -641,15 +665,37 @@ function FluxGroupList({
 function RootEntriesRail({
   stage,
   entries,
+  sources,
+  sourcesConfiguredVolume = 0,
+  canCompose,
+  onEditCompose,
 }: {
   stage: StructureStageHubSummary;
   entries: StructureEntry[];
+  /** B2 — inbound Qualif/Prog rules (same rail as Affectation teams). */
+  sources?: ReactNode;
+  /** Expected volume from inbound rules (promised Entrées, not yet necessarily in CompositionEntries). */
+  sourcesConfiguredVolume?: number;
+  canCompose?: boolean;
+  onEditCompose?: () => void;
 }) {
   const { t } = useTranslation('structure');
-  const k = stage.compositionEntryCount ?? 0;
+  const fromAffectation = stage.compositionEntryCount ?? 0;
+  const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
   const ineligible = stage.compositionIneligibleCount ?? 0;
   const composedIds = stage.compositionEntryIds ?? [];
+  const previewNames = stage.compositionPreviewNames ?? [];
+  const previewOverflow = stage.compositionPreviewOverflow ?? 0;
+  const isLive =
+    stage.status === 'Running' ||
+    stage.status === 'Suspended' ||
+    stage.status === 'Completed';
+  // Draft/Ready: expected Population = Affectation + inbound rule volume.
+  // Live: CompositionEntries is the Draw/Apply truth (rules would double-count).
+  const meterEntries = isLive
+    ? fromAffectation
+    : fromAffectation + fromFeeds;
   const byId = useMemo(
     () => new Map(entries.map((entry) => [entry.entryId, entry])),
     [entries],
@@ -670,11 +716,11 @@ function RootEntriesRail({
   let state: 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
   if (n == null) {
     state = 'E4';
-  } else if (k === 0) {
+  } else if (meterEntries === 0) {
     state = 'E0';
-  } else if (k > n) {
+  } else if (meterEntries > n) {
     state = 'E3';
-  } else if (k < n) {
+  } else if (meterEntries < n) {
     state = 'E1';
   } else {
     state = 'E2';
@@ -683,6 +729,29 @@ function RootEntriesRail({
   const danger = state === 'E0' || state === 'E1';
   const warn = state === 'E3';
   const soft = state === 'E4';
+
+  const hasTeams =
+    composed.length > 0 ||
+    previewNames.length > 0 ||
+    ineligible > 0;
+  const showAffectationSection = Boolean(canCompose) || hasTeams;
+
+  const affectationActionLabel = hasTeams
+    ? t('entries.editComposition')
+    : t('entries.addAffectation');
+  const affectationEdit =
+    canCompose && onEditCompose ? (
+      <Tooltip content={affectationActionLabel}>
+        <button
+          type="button"
+          className={compactIcon}
+          aria-label={affectationActionLabel}
+          onClick={onEditCompose}
+        >
+          {hasTeams ? <PencilIcon size="sm" /> : <PlusIcon size="sm" />}
+        </button>
+      </Tooltip>
+    ) : null;
 
   return (
     <div
@@ -696,42 +765,75 @@ function RootEntriesRail({
         .join(' ')}
     >
       <div className="structure-entries__main">
-        {composed.length > 0 ? (
-          <ul className="structure-entries__teams">
-            {composed.map((entry) => (
-              <li
-                key={entry.entryId}
-                className={[
-                  'structure-entries__team',
-                  entry.status !== 'Active'
-                    ? 'structure-entries__team--ineligible'
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
+        {sources ? (
+          <section className="structure-entries__section" aria-labelledby="population-sources-title">
+            <header className="structure-entries__section-head">
+              <h4 id="population-sources-title" className="structure-entries__section-title">
+                {t('population.sectionSources')}
+              </h4>
+            </header>
+            <div className="structure-entries__sources">{sources}</div>
+          </section>
+        ) : null}
+        {showAffectationSection ? (
+          <section
+            className="structure-entries__section"
+            aria-labelledby="population-affectation-title"
+          >
+            <header className="structure-entries__section-head">
+              <h4
+                id="population-affectation-title"
+                className="structure-entries__section-title"
               >
-                <TeamCrest
-                  name={entry.displayName}
-                  logoMediaId={entry.logoMediaId}
-                  primaryColor={entry.primaryColor}
-                  size="sm"
-                />
-                <span className="structure-entries__team-name">
-                  {entry.displayName}
-                </span>
-                {entry.status !== 'Active' ? (
-                  <span className="structure-entries__team-warn">
-                    {t('composition.noLongerEligible')}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : ineligible > 0 ? (
-          <p className="structure-entries__anomaly" role="status">
-            {t('entries.ineligibleOverlay', { count: ineligible })}
-          </p>
-        ) : (
+                {t('population.sectionAffectation')}
+              </h4>
+              {affectationEdit}
+            </header>
+            {composed.length > 0 ? (
+              <ul className="structure-entries__teams">
+                {composed.map((entry) => (
+                  <li
+                    key={entry.entryId}
+                    className={[
+                      'structure-entries__team',
+                      entry.status !== 'Active'
+                        ? 'structure-entries__team--ineligible'
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    <TeamCrest
+                      name={entry.displayName}
+                      logoMediaId={entry.logoMediaId}
+                      primaryColor={entry.primaryColor}
+                      size="sm"
+                    />
+                    <span className="structure-entries__team-name">
+                      {entry.displayName}
+                    </span>
+                    {entry.status !== 'Active' ? (
+                      <span className="structure-entries__team-warn">
+                        {t('composition.noLongerEligible')}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : previewNames.length > 0 ? (
+              <p className="structure-entries__preview" role="status">
+                {previewNames.join(' · ')}
+                {previewOverflow > 0
+                  ? ` ${t('population.previewOverflow', { count: previewOverflow })}`
+                  : ''}
+              </p>
+            ) : ineligible > 0 ? (
+              <p className="structure-entries__anomaly" role="status">
+                {t('entries.ineligibleOverlay', { count: ineligible })}
+              </p>
+            ) : null}
+          </section>
+        ) : !sources ? (
           <EmptyState
             variant="idle"
             icon={<EmptySelectionIcon size="lg" />}
@@ -739,84 +841,14 @@ function RootEntriesRail({
           >
             {t('entries.emptyBody')}
           </EmptyState>
-        )}
-      </div>
-      <div className="structure-entries__footer">
-        <CompositionMeter entries={k} places={n} t={t} />
-      </div>
-    </div>
-  );
-}
-
-function AvalEntriesRail({
-  groups,
-  capacity,
-  configuredVolume,
-  onOpenPeer,
-  renderGroupAction,
-  teamsLabel,
-  stageStatus,
-}: {
-  groups: FeedGroup[];
-  capacity: number;
-  configuredVolume: number;
-  onOpenPeer?: (stageId: string) => void;
-  renderGroupAction?: (group: FeedGroup) => ReactNode;
-  teamsLabel: (count: number) => string;
-  stageStatus: string;
-}) {
-  const { t } = useTranslation('structure');
-  const n = capacity;
-  const k = configuredVolume;
-  const running =
-    stageStatus === 'Running' ||
-    stageStatus === 'Suspended' ||
-    stageStatus === 'Completed';
-
-  let state: 'A0' | 'A1' | 'A2' | 'A3';
-  if (running) {
-    state = 'A3';
-  } else if (groups.length === 0 || (n > 0 && k === 0)) {
-    state = 'A0';
-  } else if (n > 0 && k < n) {
-    state = 'A2';
-  } else {
-    state = 'A1';
-  }
-
-  const attention = state === 'A0' || state === 'A2';
-
-  return (
-    <div
-      className={[
-        'structure-entries',
-        attention ? 'structure-entries--warn' : null,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <div className="structure-entries__main">
-        {groups.length > 0 ? (
-          <FluxGroupList
-            groups={groups}
-            onOpenPeer={onOpenPeer}
-            teamsLabel={teamsLabel}
-            renderGroupAction={renderGroupAction}
-          />
-        ) : (
-          <EmptyState
-            variant="idle"
-            icon={<EmptySelectionIcon size="lg" />}
-            title={t('entries.emptySourcesTitle')}
-          >
-            {t('entries.emptySourcesBody')}
-          </EmptyState>
-        )}
+        ) : null}
       </div>
       <div className="structure-entries__footer">
         <CompositionMeter
-          entries={k}
-          places={n > 0 ? n : null}
+          entries={meterEntries}
+          places={n}
+          assigned={isLive ? undefined : fromAffectation}
+          expected={isLive ? undefined : fromFeeds}
           t={t}
         />
       </div>
@@ -824,14 +856,20 @@ function AvalEntriesRail({
   );
 }
 
-/** Cardinality gauge — shortfall = danger (empty places); surplus = warning. */
+/** Cardinality gauge — expected Population vs Places N; shortfall = danger. */
 function CompositionMeter({
   entries,
   places,
+  assigned,
+  expected,
   t,
 }: {
   entries: number;
   places: number | null;
+  /** Affectation count (Draft breakdown). */
+  assigned?: number;
+  /** Inbound rule volume (Draft breakdown). */
+  expected?: number;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const gap = places != null && places > 0 ? entries - places : null;
@@ -843,13 +881,14 @@ function CompositionMeter({
         : 0;
   const tone =
     gap == null || gap === 0 ? 'ok' : gap < 0 ? 'short' : 'over';
+
   return (
     <div
       className={`structure-assembly structure-assembly--${tone}`}
       aria-label={t('entries.meterAria')}
     >
       <div className="structure-assembly__row">
-        <span>{t('entries.meter.teams')}</span>
+        <span>{t('entries.meter.population')}</span>
         <strong>{entries}</strong>
       </div>
       <div className="structure-assembly__track" aria-hidden="true">
@@ -874,10 +913,6 @@ function CompositionMeter({
       ) : null}
     </div>
   );
-}
-
-function phaseCapacity(stage: StructureStageHubSummary): number {
-  return resolvePlacesN(stage) ?? 0;
 }
 
 type OverflowItem = {
@@ -1418,12 +1453,10 @@ export function StructurePhaseFiche({
     );
   }
 
-  const capacity = phaseCapacity(stage);
   const feeds = inboundFeeds(data, stage.stageId, t);
   const feedGroups = groupFeeds(feeds);
   const feedSum = feeds.reduce((acc, f) => acc + f.volume, 0);
-  const isRootEntries =
-    stage.isRootComposition !== false && feedGroups.length === 0;
+  const populationCount = stage.compositionEntryCount ?? 0;
   const outbounds = outboundFeeds(data, stage, t);
   const outboundGroups = groupFeeds(outbounds);
   const matchBound = isMatchFrameBound(stage.defaultsBinding);
@@ -1649,19 +1682,6 @@ export function StructurePhaseFiche({
     );
   })();
 
-  const entriesEditControl = isRootEntries && canCompose ? (
-    <Tooltip content={t('entries.editComposition')}>
-      <button
-        type="button"
-        className={compactIcon}
-        aria-label={t('entries.editComposition')}
-        onClick={() => openCompose(false)}
-      >
-        <PencilIcon size="sm" />
-      </button>
-    </Tooltip>
-  ) : undefined;
-
   return (
     <section
       className="structure-fiche structure-fiche--flat"
@@ -1712,26 +1732,26 @@ export function StructurePhaseFiche({
           <FluxRail
             id="rail-entries"
             side="in"
-            title={t('fiche.tiles.entries')}
+            title={t('fiche.tiles.population')}
             icon={<ArrowDownIcon size="md" />}
-            editControl={entriesEditControl}
           >
-            {isRootEntries ? (
-              <RootEntriesRail
-                stage={stage}
-                entries={data.participants.entries}
-              />
-            ) : (
-              <AvalEntriesRail
-                groups={feedGroups}
-                capacity={capacity}
-                configuredVolume={feedSum}
-                onOpenPeer={onSelectStage}
-                renderGroupAction={renderAvalSourceAction}
-                teamsLabel={teamsLabel}
-                stageStatus={stage.status}
-              />
-            )}
+            <RootEntriesRail
+              stage={stage}
+              entries={data.participants.entries}
+              sourcesConfiguredVolume={feedSum}
+              canCompose={canCompose}
+              onEditCompose={() => openCompose(false)}
+              sources={
+                feedGroups.length > 0 ? (
+                  <FluxGroupList
+                    groups={feedGroups}
+                    onOpenPeer={onSelectStage}
+                    teamsLabel={teamsLabel}
+                    renderGroupAction={renderAvalSourceAction}
+                  />
+                ) : undefined
+              }
+            />
           </FluxRail>
 
           <div className="structure-phase-hero__center">
@@ -1778,7 +1798,8 @@ export function StructurePhaseFiche({
                 </li>
               ))}
             </ul>
-            {showTirage ? (
+            {showTirage ||
+            (data.readiness.readyForDraw && populationCount > 0) ? (
               <div className="structure-phase-hero__draw">
                 <button
                   type="button"
@@ -1786,7 +1807,11 @@ export function StructurePhaseFiche({
                   onClick={() => setDrawWorkflowOpen(true)}
                 >
                   <DrawPendingIcon size="sm" />
-                  <span>{t('fiche.openDrawWorkflow')}</span>
+                  <span>
+                    {data.readiness.readyForDraw && populationCount > 0
+                      ? t('fiche.performDraw')
+                      : t('fiche.openDrawWorkflow')}
+                  </span>
                 </button>
               </div>
             ) : null}
@@ -2020,6 +2045,7 @@ export function StructurePhaseFiche({
         competitionId={data.competitionId}
         stage={stage}
         entries={data.participants.entries}
+        reservedFromFeeds={feedSum}
         focusSearch={composeFocusSearch}
       />
       <TieFormatDialog

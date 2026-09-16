@@ -696,7 +696,10 @@ export interface StructureProgressionPath {
   sourceFixtureId: string;
   outcome: ProgressionOutcome;
   destinationStageId: string;
-  destinationSlotKey: string;
+  /**
+   * Destination slot when targeting form Place; null/omitted when targeting phase Population (O2-a / A1).
+   */
+  destinationSlotKey?: string | null;
   /** Resolved fixture label (round · #order · slots) when available. */
   sourceLabel?: string | null;
 }

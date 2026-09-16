@@ -27,6 +27,7 @@ import type {
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { listFixtureOptions } from './structureFixtureLabels';
+import { isPopulationDestination } from './structureProgression';
 import {
   defaultSkeletonForm,
   SkeletonFields,
@@ -46,6 +47,8 @@ type ProgDraft = {
   sourceFixtureId: string;
   outcome: ProgressionOutcome;
   destinationStageId: string;
+  /** A3 — Population (B1-M2) or Place (compat / future intra). */
+  targetKind: 'population' | 'place';
   destinationSlotKey: string;
 };
 
@@ -870,13 +873,17 @@ export function ProgressionRulesDialog({
             sourceFixtureId: path.sourceFixtureId,
             outcome: path.outcome,
             destinationStageId: path.destinationStageId,
-            destinationSlotKey: path.destinationSlotKey,
+            targetKind: isPopulationDestination(path.destinationSlotKey)
+              ? 'population'
+              : 'place',
+            destinationSlotKey: path.destinationSlotKey?.trim() ?? '',
           }))
         : [
             {
               sourceFixtureId: '',
               outcome: 'Winner',
               destinationStageId: defaultDest,
+              targetKind: 'population',
               destinationSlotKey: '',
             },
           ],
@@ -951,7 +958,10 @@ export function ProgressionRulesDialog({
               sourceFixtureId: row.sourceFixtureId.trim(),
               outcome: row.outcome,
               destinationStageId: row.destinationStageId,
-              destinationSlotKey: row.destinationSlotKey.trim(),
+              destinationSlotKey:
+                row.targetKind === 'population'
+                  ? null
+                  : row.destinationSlotKey.trim(),
             })),
           );
         }}
@@ -1014,21 +1024,52 @@ export function ProgressionRulesDialog({
                 </select>
               </label>
               <label className="ds-field">
-                <span className="ds-field__label">{t('graph.destinationSlot')}</span>
-                <input
+                <span className="ds-field__label">{t('graph.destinationKind')}</span>
+                <select
                   className="ds-input"
-                  value={row.destinationSlotKey}
+                  value={row.targetKind}
                   onChange={(event) => {
+                    const targetKind = event.target.value as
+                      | 'population'
+                      | 'place';
                     const next = [...rows];
                     next[index] = {
                       ...row,
-                      destinationSlotKey: event.target.value,
+                      targetKind,
+                      destinationSlotKey:
+                        targetKind === 'population'
+                          ? ''
+                          : row.destinationSlotKey,
                     };
                     setRows(next);
                   }}
-                  required
-                />
+                >
+                  <option value="population">
+                    {t('graph.destinationKindPopulation')}
+                  </option>
+                  <option value="place">{t('graph.destinationKindPlace')}</option>
+                </select>
               </label>
+              {row.targetKind === 'place' ? (
+                <label className="ds-field">
+                  <span className="ds-field__label">
+                    {t('graph.destinationSlot')}
+                  </span>
+                  <input
+                    className="ds-input"
+                    value={row.destinationSlotKey}
+                    onChange={(event) => {
+                      const next = [...rows];
+                      next[index] = {
+                        ...row,
+                        destinationSlotKey: event.target.value,
+                      };
+                      setRows(next);
+                    }}
+                    required
+                  />
+                </label>
+              ) : null}
               <button
                 type="button"
                 className="ds-btn ds-btn--ghost"
@@ -1050,6 +1091,7 @@ export function ProgressionRulesDialog({
                 sourceFixtureId: '',
                 outcome: 'Winner',
                 destinationStageId: defaultDest,
+                targetKind: 'population',
                 destinationSlotKey: '',
               },
             ])
