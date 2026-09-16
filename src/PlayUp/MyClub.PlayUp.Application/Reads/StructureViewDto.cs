@@ -274,6 +274,7 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<StructureConfrontationSegmentDto>? ConfrontationSegments = null,
     IReadOnlyList<string>? Actions = null,
     IReadOnlyList<StructureQualificationPathDto>? QualificationPaths = null,
+    IReadOnlyList<StructureQualificationIntentDto>? QualificationIntents = null,
     IReadOnlyList<StructureProgressionPathDto>? ProgressionPaths = null,
     IReadOnlyList<string>? StructureIssues = null,
     int HalfTimeDuration = 0,
@@ -295,6 +296,30 @@ public sealed record StructureTieFormatSummaryDto(
     bool HasAwayGoalsRule,
     bool HasTieExtraTime,
     bool HasTiePenaltyShootout);
+
+/// <summary>One qualification authoring intent for Structure dialog.</summary>
+public sealed record StructureQualificationIntentDto(
+    Guid IntentId,
+    int Order,
+    QualificationIntentSourceKind SourceKind,
+    int PositionFrom,
+    int PositionTo,
+    Guid DestinationStageId,
+    QualificationMappingMode MappingMode,
+    Guid? GroupId = null,
+    string? GroupName = null,
+    int? AcrossGroupsPosition = null,
+    int? MinimumPoints = null,
+    IReadOnlyList<StructureQualificationSlotOverrideDto>? SlotOverrides = null,
+    int DestinationCount = 0);
+
+/// <summary>One Custom mapping override on an intent.</summary>
+public sealed record StructureQualificationSlotOverrideDto(
+    RankingScope Scope,
+    int Position,
+    string SlotKey,
+    Guid? GroupId = null,
+    int? AcrossGroupsPosition = null);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>

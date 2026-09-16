@@ -3,6 +3,8 @@ import { CheckIcon } from '../icons/contentIcons';
 
 export type ChoiceTileProps = {
   label: string;
+  /** Secondary line under the label (e.g. short scope hint). */
+  description?: string;
   selected: boolean;
   onChange: (selected: boolean) => void;
   /** Leading visual — swatch, icon, crest fragment. */
@@ -18,6 +20,7 @@ export type ChoiceTileProps = {
  */
 export function ChoiceTile({
   label,
+  description,
   selected,
   onChange,
   leading,
@@ -45,7 +48,12 @@ export function ChoiceTile({
           {leading}
         </span>
       ) : null}
-      <span className="ds-choice-tile__label">{label}</span>
+      <span className="ds-choice-tile__label">
+        <span className="ds-choice-tile__title">{label}</span>
+        {description ? (
+          <span className="ds-choice-tile__description">{description}</span>
+        ) : null}
+      </span>
       {selected ? (
         <span className="ds-choice-tile__check" aria-hidden="true">
           <CheckIcon size="sm" />

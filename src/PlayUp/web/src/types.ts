@@ -673,6 +673,41 @@ export interface StructureStageHubSummary {
   isRootComposition?: boolean;
   /** Stage regulation TieFormat (AddRound copy source); null/omitted when unset. */
   defaultTieFormat?: StructureTieFormatSummary | null;
+  /** Authoring intents (1 → N paths). Prefer over flat paths when present. */
+  qualificationIntents?: StructureQualificationIntent[] | null;
+}
+
+/** One qualification authoring intent. */
+export type QualificationIntentSourceKind =
+  | 'SingleGroup'
+  | 'EachGroup'
+  | 'Overall'
+  | 'AcrossGroups';
+
+export type QualificationMappingMode = 'Canonical' | 'Custom';
+
+export interface StructureQualificationSlotOverride {
+  scope: RankingScope;
+  position: number;
+  slotKey: string;
+  groupId?: string | null;
+  acrossGroupsPosition?: number | null;
+}
+
+export interface StructureQualificationIntent {
+  intentId: string;
+  order: number;
+  sourceKind: QualificationIntentSourceKind;
+  positionFrom: number;
+  positionTo: number;
+  destinationStageId: string;
+  mappingMode: QualificationMappingMode;
+  groupId?: string | null;
+  groupName?: string | null;
+  acrossGroupsPosition?: number | null;
+  minimumPoints?: number | null;
+  slotOverrides?: StructureQualificationSlotOverride[] | null;
+  destinationCount?: number;
 }
 
 /** One qualification path for Structure authoring / impact preview. */
@@ -761,7 +796,8 @@ export interface RebuildStageStructureResponse {
 
 /** PUT /stages/{id}/qualification-rules */
 export interface ReplaceQualificationRulesRequest {
-  paths: StructureQualificationPath[] | null;
+  intents?: StructureQualificationIntent[] | null;
+  paths?: StructureQualificationPath[] | null;
 }
 
 /** PUT /stages/{id}/progression-rules */

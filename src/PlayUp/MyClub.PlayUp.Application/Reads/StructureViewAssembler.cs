@@ -204,6 +204,7 @@ public static class StructureViewAssembler
         var standing = regulation.StandingRules;
         var draw = regulation.DrawRules;
         var qualificationPaths = MapQualificationPaths(stage, regulation.QualificationRules);
+        var qualificationIntents = MapQualificationIntents(stage, regulation.QualificationRules);
         var progressionPaths = MapProgressionPaths(stage, regulation.ProgressionRules);
         var placement = regulation.PlacementAwardRules;
         var storedTie = regulation.TieFormat
@@ -311,6 +312,7 @@ public static class StructureViewAssembler
             ConfrontationSegments: confrontationSegments,
             Actions: BuildStageActions(competition, stage),
             QualificationPaths: qualificationPaths,
+            QualificationIntents: qualificationIntents,
             ProgressionPaths: progressionPaths,
             StructureIssues: BuildStructureIssues(stage, competitionStages),
             HalfTimeDuration: match.Duration.HalfTimeDuration,
@@ -465,6 +467,64 @@ public static class StructureViewAssembler
         }
 
         return true;
+    }
+
+    private static IReadOnlyList<StructureQualificationIntentDto>? MapQualificationIntents(
+        Stage stage,
+        QualificationRules? rules)
+    {
+        if (rules is null || rules.Intents.Count == 0)
+        {
+            return null;
+        }
+
+        return
+        [
+            .. rules.Intents.Select(intent =>
+            {
+                string? groupName = null;
+                if (intent.GroupId is { } groupId)
+                {
+                    groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
+                }
+
+                var destinationCount = CountIntentDestinations(intent, stage.Groups.Count);
+                return new StructureQualificationIntentDto(
+                    intent.Id.Value,
+                    intent.Order,
+                    intent.SourceKind,
+                    intent.PositionFrom,
+                    intent.PositionTo,
+                    intent.DestinationStageId.Value,
+                    intent.MappingMode,
+                    intent.GroupId?.Value,
+                    groupName,
+                    intent.AcrossGroupsPosition,
+                    intent.Condition?.MinimumPoints,
+                    intent.SlotOverrides.Count == 0
+                        ? null
+                        :
+                        [
+                            .. intent.SlotOverrides.Select(o => new StructureQualificationSlotOverrideDto(
+                                o.Occurrence.Scope,
+                                o.Occurrence.Position,
+                                o.SlotKey,
+                                o.Occurrence.GroupId?.Value,
+                                o.Occurrence.AcrossGroupsPosition))
+                        ],
+                    destinationCount);
+            })
+        ];
+    }
+
+    private static int CountIntentDestinations(QualificationIntent intent, int groupCount)
+    {
+        var span = intent.PositionTo - intent.PositionFrom + 1;
+        return intent.SourceKind switch
+        {
+            QualificationIntentSourceKind.EachGroup => Math.Max(groupCount, 0) * span,
+            _ => span,
+        };
     }
 
     private static IReadOnlyList<StructureQualificationPathDto>? MapQualificationPaths(

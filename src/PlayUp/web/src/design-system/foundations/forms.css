@@ -632,12 +632,29 @@
 }
 
 .ds-choice-tile__label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
   min-width: 0;
+}
+
+.ds-choice-tile__title {
+  min-width: 0;
+}
+
+.ds-choice-tile__description {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-tight);
 }
 
 .ds-choice-tile__check {
   display: inline-flex;
   flex: none;
+  align-self: flex-start;
+  margin-block-start: 0.1em;
   margin-inline-start: auto;
   color: var(--color-brand);
 }
