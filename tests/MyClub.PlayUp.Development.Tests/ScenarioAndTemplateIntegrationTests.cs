@@ -204,7 +204,10 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var ko = await stages.GetByIdForUpdateAsync(groupsToKo.StageIds[1]);
         ko.Should().NotBeNull();
         ko.Status.Should().Be(StageStatus.Draft);
+        ko.CompositionEntries.Should().HaveCount(4);
         ko.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
+        ko.Draws.Should().Contain(draw =>
+            draw.Kind == DrawResolutionKind.Slot && draw.Status == DrawStatus.Published);
 
         var cupSfSummary = list.Single(c => c.Name.Value.Contains("SF (running)", StringComparison.Ordinal));
         var cupSf = await competitions.GetByIdForUpdateAsync(cupSfSummary.Id);

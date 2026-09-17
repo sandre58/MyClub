@@ -23,7 +23,7 @@ public sealed class FluxFullGraphDraftScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Groups → Demis (Qualif) → Finale/Bronze (Prog + Attribution 1–4) — Draft. Matrice Entrées/Sorties/Attribution.";
+        "Groups → Demis (Qualif → population) → Finale/Bronze (Prog slots + Attribution 1–4) — Draft. Matrice Entrées/Sorties/Attribution.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

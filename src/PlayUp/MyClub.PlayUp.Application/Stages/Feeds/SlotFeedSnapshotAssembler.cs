@@ -40,26 +40,12 @@ public static class SlotFeedSnapshotAssembler
             .Select(a => new DirectFeedSource(a.SlotKey, a.EntryId))
             .ToArray();
 
-        var qualifications = new List<QualificationFeedSource>();
+        var qualifications = Array.Empty<QualificationFeedSource>();
         var progressions = new List<ProgressionFeedSource>();
 
+        // Qualification targets population only (Qual V2) — WhoFeeds stays slot-centric.
         foreach (var stage in competitionStages)
         {
-            if (stage.Regulation.QualificationRules is { } qualificationRules)
-            {
-                foreach (var path in qualificationRules.Paths)
-                {
-                    if (!path.Destination.StageId.Equals(target.Id))
-                    {
-                        continue;
-                    }
-
-                    EnsureSlotExists(target, path.Destination.SlotKey, stage.Id, "Qualification");
-                    qualifications.Add(
-                        new QualificationFeedSource(stage.Id, path.Order, path.Destination.SlotKey));
-                }
-            }
-
             if (stage.Regulation.ProgressionRules is not { } progressionRules) continue;
 
             foreach (var path in progressionRules.Paths)

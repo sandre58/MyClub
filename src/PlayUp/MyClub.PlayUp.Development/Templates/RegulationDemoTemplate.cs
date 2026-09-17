@@ -23,7 +23,7 @@ public sealed class RegulationDemoTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Groupes 2×4 → Phase finale QF/SF A/R · Finale unique · ET+TAB · Draft. :progress ignored.";
+        "Groupes 2×4 → Qualif Top1 → Phase finale QF/SF A/R · Finale unique · ET+TAB · Draft. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()

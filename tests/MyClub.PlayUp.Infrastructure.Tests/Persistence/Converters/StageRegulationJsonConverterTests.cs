@@ -57,7 +57,7 @@ public sealed class StageRegulationJsonConverterTests
                         order: 1,
                         QualificationSource.FromGroup(groupId),
                         new QualificationSelection(SelectionMode.Position, 1),
-                        new QualificationDestination(destinationStageId, "QF1"),
+                        QualificationDestination.ForPopulation(destinationStageId),
                         QualificationCondition.PointsAtLeast(6))
                 ]))
             .WithProgressionRules(

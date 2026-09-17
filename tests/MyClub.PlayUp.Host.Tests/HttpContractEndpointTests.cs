@@ -94,13 +94,13 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
         assignments.GetArrayLength().Should().BeGreaterThan(0);
         var first = assignments[0];
         first.TryGetProperty("stageId", out _).Should().BeTrue();
-        first.TryGetProperty("slotKey", out _).Should().BeTrue();
         first.TryGetProperty("entryId", out _).Should().BeTrue();
+        first.TryGetProperty("slotKey", out _).Should().BeFalse();
 
         var typed = JsonSerializer.Deserialize<QualificationApplyResponse>(json, HostJson.Options);
         typed.Should().NotBeNull();
         typed.AppliedCount.Should().Be(typed.Assignments.Count);
-        typed.Assignments.Should().Contain(a => a.SlotKey == "Champ");
+        typed.Assignments.Should().Contain(a => a.EntryId != Guid.Empty);
     }
 
     private static async Task<Guid> CreateCompetitionAsync(HttpClient client, string prefix)

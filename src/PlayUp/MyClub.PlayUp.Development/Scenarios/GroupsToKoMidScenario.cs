@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Multi-phase mid: groups finished, qualification filled QF slots, KO Draft.
+/// Multi-phase mid: groups finished, Qual → QF population + Slot Draw, KO Draft.
 /// </summary>
 public sealed class GroupsToKoMidScenario : IScenario
 {
@@ -23,7 +23,7 @@ public sealed class GroupsToKoMidScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 2×4 finished → Top2 in QF slots — KO Draft (healthy cross-phase feed mid-state).";
+        "Groups 2×4 finished → Top2 → QF population → Slot Draw — KO Draft (Qual V2 mid-state).";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;

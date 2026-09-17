@@ -11,8 +11,8 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Draft multi-phase Structure with intentional graph validity issues (missing slots)
-/// and multi-destination progression — Topology / anomaly QA.
+/// Draft multi-phase Structure with intentional graph validity issues (dangling Qual population
+/// targets) and multi-destination progression — Topology / anomaly QA.
 /// </summary>
 public sealed class StructureGraphInvalidScenario : IScenario
 {
@@ -24,7 +24,7 @@ public sealed class StructureGraphInvalidScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Poules → Barrages → Finale/Bronze in Draft with missing qualification slots and multi-dest progression — Structure Topology QA.";
+        "Poules → Barrages → Finale/Bronze in Draft with dangling Qual population targets and multi-dest progression — Structure Topology QA.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

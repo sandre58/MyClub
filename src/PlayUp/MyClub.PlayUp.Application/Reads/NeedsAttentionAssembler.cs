@@ -175,7 +175,7 @@ public static class NeedsAttentionAssembler
                 continue;
             }
 
-            SlotAssignmentInstruction? instruction;
+            QualificationInstruction? instruction;
             try
             {
                 instruction = QualificationApplier.Apply(path, standing);
@@ -191,8 +191,7 @@ public static class NeedsAttentionAssembler
             }
 
             var destination = stages.FirstOrDefault(stage => stage.Id.Equals(path.Destination.StageId));
-            var slot = destination?.FindSlot(path.Destination.SlotKey);
-            if (destination is null || slot is null)
+            if (destination is null)
             {
                 items.Add(new NeedsAttentionItemDto(
                     SourceQualificationPending,
@@ -202,21 +201,13 @@ public static class NeedsAttentionAssembler
                 continue;
             }
 
-            if (slot.EntryId is null)
+            if (destination.CompositionEntries.All(entry => !entry.EntryId.Equals(instruction.EntryId)))
             {
                 items.Add(new NeedsAttentionItemDto(
                     SourceQualificationPending,
                     SeverityBlocking,
-                    "Slot",
-                    $"{destination.Id.Value}:{path.Destination.SlotKey}"));
-            }
-            else if (!slot.EntryId.Equals(instruction.EntryId))
-            {
-                items.Add(new NeedsAttentionItemDto(
-                    SourceQualificationConflict,
-                    SeverityBlocking,
-                    "Slot",
-                    $"{destination.Id.Value}:{path.Destination.SlotKey}"));
+                    "Stage",
+                    destination.Id.Value.ToString()));
             }
         }
     }

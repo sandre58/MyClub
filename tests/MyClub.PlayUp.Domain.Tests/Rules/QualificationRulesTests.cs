@@ -16,7 +16,7 @@ namespace MyClub.PlayUp.Domain.Tests.Rules;
 public sealed class QualificationRulesTests
 {
     [Fact]
-    public void Constructor_accepts_group_top_to_main_bracket()
+    public void Constructor_accepts_group_top_to_population()
     {
         // Arrange
         var groupId = GroupId.New();
@@ -25,7 +25,7 @@ public sealed class QualificationRulesTests
             order: 1,
             QualificationSource.FromGroup(groupId),
             new QualificationSelection(SelectionMode.Top, 2),
-            new QualificationDestination(destinationStageId, "QuarterFinal1"));
+            QualificationDestination.ForPopulation(destinationStageId));
 
         // Act
         var rules = new QualificationRules([path]);
@@ -35,7 +35,7 @@ public sealed class QualificationRulesTests
         rules.Paths[0].Source.GroupId.Should().Be(groupId);
         rules.Paths[0].Selection.Mode.Should().Be(SelectionMode.Top);
         rules.Paths[0].Selection.Value.Should().Be(2);
-        rules.Paths[0].Destination.SlotKey.Should().Be("QuarterFinal1");
+        rules.Paths[0].Destination.StageId.Should().Be(destinationStageId);
     }
 
     [Fact]
@@ -51,12 +51,12 @@ public sealed class QualificationRulesTests
                 1,
                 QualificationSource.FromGroup(groupId),
                 new QualificationSelection(SelectionMode.Top, 2),
-                new QualificationDestination(mainStage, "Main1")),
+                QualificationDestination.ForPopulation(mainStage)),
             new QualificationPath(
                 2,
                 QualificationSource.FromGroup(groupId),
                 new QualificationSelection(SelectionMode.Bottom, 2),
-                new QualificationDestination(consolanteStage, "Consolante1"))
+                QualificationDestination.ForPopulation(consolanteStage))
         };
 
         // Act
@@ -65,18 +65,20 @@ public sealed class QualificationRulesTests
         // Assert
         rules.Paths.Should().HaveCount(2);
         rules.Paths[0].Order.Should().Be(1);
-        rules.Paths[1].Destination.SlotKey.Should().Be("Consolante1");
+        rules.Paths[0].Destination.StageId.Should().Be(mainStage);
+        rules.Paths[1].Destination.StageId.Should().Be(consolanteStage);
     }
 
     [Fact]
     public void Constructor_accepts_selection_mode_best_as_top_alias_not_best_third()
     {
         // Arrange — Best is a Top alias on the supplied standing; not AcrossGroups / Best Third.
+        var destination = StageId.New();
         var path = new QualificationPath(
             1,
             QualificationSource.Overall(),
             new QualificationSelection(SelectionMode.Best, 4),
-            new QualificationDestination(StageId.New(), "RoundOf16Slot"));
+            QualificationDestination.ForPopulation(destination));
 
         // Act
         var rules = new QualificationRules([path]);
@@ -86,6 +88,7 @@ public sealed class QualificationRulesTests
         rules.Paths[0].Selection.Mode.Should().Be(SelectionMode.Best);
         rules.Paths[0].Selection.Value.Should().Be(4);
         rules.Paths[0].Source.AcrossGroupsPosition.Should().BeNull();
+        rules.Paths[0].Destination.StageId.Should().Be(destination);
     }
 
     [Fact]
@@ -98,7 +101,7 @@ public sealed class QualificationRulesTests
                 i,
                 QualificationSource.AcrossGroups(3),
                 new QualificationSelection(SelectionMode.Position, i),
-                new QualificationDestination(destination, $"R16-{i}")))
+                QualificationDestination.ForPopulation(destination)))
             .ToArray();
 
         // Act
@@ -109,7 +112,8 @@ public sealed class QualificationRulesTests
         rules.Paths.Should().OnlyContain(p =>
             p.Source.Scope == RankingScope.AcrossGroups
             && p.Source.AcrossGroupsPosition == 3
-            && p.Selection.Mode == SelectionMode.Position);
+            && p.Selection.Mode == SelectionMode.Position
+            && p.Destination.StageId.Equals(destination));
         rules.Paths.Select(p => p.Selection.Value).Should().Equal(1, 2, 3, 4);
     }
 
@@ -120,7 +124,7 @@ public sealed class QualificationRulesTests
             1,
             QualificationSource.AcrossGroups(3),
             new QualificationSelection(SelectionMode.Position, 1),
-            new QualificationDestination(StageId.New(), "Slot"));
+            QualificationDestination.ForPopulation(StageId.New()));
 
         var copy = original.Copy();
 
@@ -149,7 +153,7 @@ public sealed class QualificationRulesTests
             1,
             QualificationSource.FromGroup(groupId),
             new QualificationSelection(SelectionMode.Position, 1),
-            new QualificationDestination(stageId, "Semi1"));
+            QualificationDestination.ForPopulation(stageId));
     }
 
     [Fact]
@@ -159,8 +163,8 @@ public sealed class QualificationRulesTests
         var stageId = StageId.New();
         var paths = new[]
         {
-            new QualificationPath(1, QualificationSource.Overall(), new QualificationSelection(SelectionMode.Top, 1), new QualificationDestination(stageId, "A")),
-            new QualificationPath(1, QualificationSource.Overall(), new QualificationSelection(SelectionMode.Top, 2), new QualificationDestination(stageId, "B"))
+            new QualificationPath(1, QualificationSource.Overall(), new QualificationSelection(SelectionMode.Top, 1), QualificationDestination.ForPopulation(stageId)),
+            new QualificationPath(1, QualificationSource.Overall(), new QualificationSelection(SelectionMode.Top, 2), QualificationDestination.ForPopulation(stageId))
         };
 
         // Act
@@ -191,16 +195,6 @@ public sealed class QualificationRulesTests
     }
 
     [Fact]
-    public void Destination_rejects_empty_slot_key()
-    {
-        // Arrange & Act
-        var act = () => new QualificationDestination(StageId.New(), "   ");
-
-        // Assert
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
-    }
-
-    [Fact]
     public void Path_rejects_non_positive_order()
     {
         // Arrange & Act
@@ -208,7 +202,7 @@ public sealed class QualificationRulesTests
             0,
             QualificationSource.Overall(),
             new QualificationSelection(SelectionMode.Top, 1),
-            new QualificationDestination(StageId.New(), "Slot"));
+            QualificationDestination.ForPopulation(StageId.New()));
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
@@ -249,7 +243,7 @@ public sealed class QualificationRulesTests
                 1,
                 QualificationSource.Overall(),
                 new QualificationSelection(SelectionMode.Top, 4),
-                new QualificationDestination(StageId.New(), "QF1"))
+                QualificationDestination.ForPopulation(StageId.New()))
         ]);
         var regulation = new StageRegulation(
             SampleRegulations.Standard().MatchRules,
@@ -274,7 +268,7 @@ public sealed class QualificationRulesTests
                 1,
                 QualificationSource.Overall(),
                 new QualificationSelection(SelectionMode.Best, 4),
-                new QualificationDestination(StageId.New(), "Slot1"))
+                QualificationDestination.ForPopulation(StageId.New()))
         ]);
 
         // Act
@@ -287,7 +281,7 @@ public sealed class QualificationRulesTests
     }
 
     [Fact]
-    public void ReplaceQualificationRules_rejects_local_destination_when_slot_missing()
+    public void ReplaceQualificationRules_rejects_destination_targeting_source_stage()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
         var stage = Stage.Create(
@@ -295,8 +289,6 @@ public sealed class QualificationRulesTests
             new StageName("Cup"),
             SampleRegulations.Standard(),
             clock);
-        stage.AddRound("Final", clock);
-        stage.AddSlot("A1");
 
         var act = () => stage.ReplaceQualificationRules(
             new QualificationRules(
@@ -305,24 +297,23 @@ public sealed class QualificationRulesTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(stage.Id, "Missing"))
+                    QualificationDestination.ForPopulation(stage.Id))
             ]),
             clock);
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotNotFound);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
     }
 
     [Fact]
-    public void ReplaceQualificationRules_accepts_local_destination_when_slot_exists()
+    public void ReplaceQualificationRules_accepts_peer_stage_population_destination()
     {
         var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
         var stage = Stage.Create(
             CompetitionId.New(),
-            new StageName("Cup"),
+            new StageName("Poules"),
             SampleRegulations.Standard(),
             clock);
-        stage.AddRound("Final", clock);
-        stage.AddSlot("Champ");
+        var peerStageId = StageId.New();
 
         stage.ReplaceQualificationRules(
             new QualificationRules(
@@ -331,107 +322,11 @@ public sealed class QualificationRulesTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(stage.Id, "Champ"))
+                    QualificationDestination.ForPopulation(peerStageId))
             ]),
             clock);
 
         stage.Regulation.QualificationRules!.Paths.Should().ContainSingle();
-        stage.Prepare(clock);
-        stage.Status.Should().Be(StageStatus.Ready);
-    }
-
-    [Fact]
-    public void ReplaceQualificationRules_rejects_local_destination_when_direct_feeds_slot()
-    {
-        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = Stage.Create(
-            CompetitionId.New(),
-            new StageName("Cup"),
-            SampleRegulations.Standard(),
-            clock);
-        stage.AddRound("Final", clock);
-        stage.AddSlot("Champ");
-        stage.AssignEntryToSlot("Champ", EntryId.New());
-
-        var act = () => stage.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(stage.Id, "Champ"))
-            ]),
-            clock);
-
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
-    }
-
-    [Fact]
-    public void AssignEntryToSlot_rejects_when_local_qualification_feeds_slot()
-    {
-        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = Stage.Create(
-            CompetitionId.New(),
-            new StageName("Cup"),
-            SampleRegulations.Standard(),
-            clock);
-        stage.AddRound("Final", clock);
-        stage.AddSlot("Champ");
-        stage.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(stage.Id, "Champ"))
-            ]),
-            clock);
-
-        var act = () => stage.AssignEntryToSlot("Champ", EntryId.New());
-
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
-    }
-
-    [Fact]
-    public void Prepare_rejects_multiple_local_feeds_when_qualification_and_progression()
-    {
-        var clock = new FakeClock(new DateTimeOffset(2026, 8, 12, 12, 0, 0, TimeSpan.Zero));
-        var stage = Stage.Create(
-            CompetitionId.New(),
-            new StageName("Cup"),
-            SampleRegulations.Standard(),
-            clock);
-        var round = stage.AddRound("SF", clock);
-        var fixture = stage.AddFixture(round.Id, clock);
-        stage.AddSlot("Final-A");
-
-        // Progression first (write-time blocks Direct conflict only, not Qual vs Prog).
-        stage.ReplaceProgressionRules(
-            new ProgressionRules(
-            [
-                new ProgressionPath(
-                    fixture.Id,
-                    ProgressionOutcome.Winner,
-                    new ProgressionDestination(stage.Id, "Final-A"))
-            ]),
-            clock);
-
-        // Qualification write only checks Direct; Prog+Qual multi-feed is Prepare-time.
-        stage.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(stage.Id, "Final-A"))
-            ]),
-            clock);
-
-        var act = () => stage.Prepare(clock);
-
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.MultipleFeeds);
+        stage.Regulation.QualificationRules.Paths[0].Destination.StageId.Should().Be(peerStageId);
     }
 }

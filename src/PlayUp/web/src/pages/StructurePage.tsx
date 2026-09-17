@@ -1046,6 +1046,9 @@ function StructureEditorDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -1190,7 +1193,6 @@ function StructureEditorDialog({
           )}
         </fieldset>
         <p className="caption">{t('structure.configureHint')}</p>
-        {mutation.isError && <MutationError error={mutation.error} />}
       </form>
     </Dialog>
   );

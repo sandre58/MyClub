@@ -49,6 +49,8 @@
   transition:
     opacity var(--motion-duration) var(--motion-easing),
     transform var(--motion-duration) var(--motion-easing);
+  container-type: inline-size;
+  container-name: ds-dialog;
 }
 
 .ds-dialog[data-size='sm'] {
@@ -117,10 +119,57 @@
 .ds-dialog__footer {
   display: flex;
   flex: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.ds-dialog__footer-status {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.ds-dialog__footer-status .ds-notice,
+.ds-dialog__footer-status .ds-alert {
+  width: 100%;
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
+}
+
+.ds-dialog__footer-status .ds-notice__body,
+.ds-dialog__footer-status .ds-alert__body {
+  min-width: 0;
+}
+
+.ds-dialog__footer-actions {
+  display: flex;
+  flex: none;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-8);
+}
+
+/* Narrow panel: status full width above actions. */
+@container ds-dialog (max-width: 32rem) {
+  .ds-dialog__footer {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  .ds-dialog__footer-status {
+    flex: 1 1 100%;
+  }
+
+  .ds-dialog__footer-actions {
+    flex: 1 1 100%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

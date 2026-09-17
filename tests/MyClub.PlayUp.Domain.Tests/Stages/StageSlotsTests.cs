@@ -186,27 +186,6 @@ public sealed class StageSlotsTests
     }
 
     [Fact]
-    public void RemoveSlot_blocked_when_referenced_by_local_qualification()
-    {
-        var stage = CreateCup();
-        stage.AddSlot("Champ");
-        stage.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(stage.Id, "Champ"))
-            ]),
-            _clock);
-
-        var act = () => stage.RemoveSlot("Champ");
-
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotReferenced);
-    }
-
-    [Fact]
     public void AddSlot_demotes_ready_to_draft()
     {
         var stage = CreateCup();

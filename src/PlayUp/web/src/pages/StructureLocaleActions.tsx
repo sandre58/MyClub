@@ -254,6 +254,9 @@ function RenameStageDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -274,7 +277,6 @@ function RenameStageDialog({
             required
           />
         </label>
-        <MutationError error={mutation.error} />
       </form>
     </Dialog>
   );
@@ -334,6 +336,9 @@ function MatchGenerationDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -364,7 +369,6 @@ function MatchGenerationDialog({
             </option>
           </select>
         </label>
-        <MutationError error={mutation.error} />
       </form>
     </Dialog>
   );
@@ -424,6 +428,9 @@ function SwissSettingsDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -448,7 +455,6 @@ function SwissSettingsDialog({
             required
           />
         </label>
-        <MutationError error={mutation.error} />
       </form>
     </Dialog>
   );

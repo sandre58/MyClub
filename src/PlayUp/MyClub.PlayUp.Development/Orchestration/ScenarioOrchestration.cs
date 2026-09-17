@@ -573,9 +573,9 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Healthy multi-phase mid-state: Groups 2×4 finished → Top2 filled into QF slots; KO stays Draft.
+    /// Healthy multi-phase mid-state: Groups 2×4 finished → Top2 → QF population → Slot Draw; KO stays Draft.
     /// Structure UX case #9 — Affectation racine (groups composition) + inbound Qualif on QF
-    /// (Entrées aval = WhoFeeds lecture → jump / edit on source).
+    /// (Entrées aval = WhoFeeds lecture → jump / edit on source). Qual V2: no Qual→slot.
     /// </summary>
     public static async Task BuildGroupsToKoMidAsync(
         ScenarioContext context,
@@ -606,38 +606,8 @@ internal static class ScenarioOrchestration
             context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
         MatchEnrichment.SpecializeWithExtraTimeAndPenalties(quarter, context.Clock);
 
-        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
-        if (orderedGroups.Length != 2)
-        {
-            throw new InvalidOperationException(
-                $"Expected 2 groups for groups-to-ko-mid, found {orderedGroups.Length}.");
-        }
-
-        groups.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(quarter.Id, "QF-1-A")),
-                new QualificationPath(
-                    2,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(quarter.Id, "QF-1-B")),
-                new QualificationPath(
-                    3,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(quarter.Id, "QF-2-A")),
-                new QualificationPath(
-                    4,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(quarter.Id, "QF-2-B"))
-            ]),
-            context.Clock);
+        WireEachGroupQualificationToPopulation(
+            context.Ids, groups, quarter, positionFrom: 1, positionTo: 2, context.Clock);
 
         var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
         PrepareAndStart(context, competition, groups);
@@ -659,6 +629,8 @@ internal static class ScenarioOrchestration
             [groups, quarter],
             context.Clock);
 
+        PlacePopulationIntoSlotsViaDraw(context, competition, quarter, qfSlotKeys);
+
         groups.Complete(context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -666,7 +638,7 @@ internal static class ScenarioOrchestration
 
     /// <summary>
     /// Structure flux QA — Affectation racine + Sorties Qualification configurées, reste Draft.
-    /// Groups 2×4 → QF (Top1/Top2) ; pas de matchs joués. Entrées aval QF = WhoFeeds lecture.
+    /// Groups 2×4 → QF (Top1/Top2 → population) ; pas de matchs joués. Aval QF = population + Draw (pas Qual→slot).
     /// </summary>
     public static async Task BuildFluxQualifDraftAsync(
         ScenarioContext context,
@@ -698,38 +670,8 @@ internal static class ScenarioOrchestration
         var quarter = CreateKnockoutStage(
             context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
 
-        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
-        if (orderedGroups.Length != 2)
-        {
-            throw new InvalidOperationException(
-                $"Expected 2 groups for flux-qualif-draft, found {orderedGroups.Length}.");
-        }
-
-        groups.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(quarter.Id, qfSlotKeys[0])),
-                new QualificationPath(
-                    2,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(quarter.Id, qfSlotKeys[1])),
-                new QualificationPath(
-                    3,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(quarter.Id, qfSlotKeys[2])),
-                new QualificationPath(
-                    4,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(quarter.Id, qfSlotKeys[3]))
-            ]),
-            context.Clock);
+        WireEachGroupQualificationToPopulation(
+            context.Ids, groups, quarter, positionFrom: 1, positionTo: 2, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -863,38 +805,8 @@ internal static class ScenarioOrchestration
         var finalFixture = AddRoundFixtures(final, count: 1, context.Clock)[0];
         var bronzeFixture = AddRoundFixtures(bronze, count: 1, context.Clock)[0];
 
-        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
-        if (orderedGroups.Length != 2)
-        {
-            throw new InvalidOperationException(
-                $"Expected 2 groups for flux-full-graph-draft, found {orderedGroups.Length}.");
-        }
-
-        groups.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(semi.Id, sfSlotKeys[0])),
-                new QualificationPath(
-                    2,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(semi.Id, sfSlotKeys[1])),
-                new QualificationPath(
-                    3,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(semi.Id, sfSlotKeys[2])),
-                new QualificationPath(
-                    4,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(semi.Id, sfSlotKeys[3]))
-            ]),
-            context.Clock);
+        WireEachGroupQualificationToPopulation(
+            context.Ids, groups, semi, positionFrom: 1, positionTo: 2, context.Clock);
 
         WireSemiToFinalAndBronze(semi, final, bronze, sfFixtures, context.Clock);
         WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
@@ -966,7 +878,7 @@ internal static class ScenarioOrchestration
                 new ProgressionPath(
                     qfFixtures[i].Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(semi.Id, destinationKeys[i])));
+                    ProgressionDestination.ForSlot(semi.Id, destinationKeys[i])));
         }
 
         quarter.ReplaceProgressionRules(new ProgressionRules(paths), context.Clock);
@@ -1034,8 +946,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Draft multi-phase graph with intentional Structure validity issues (missing slots)
-    /// and a multi-destination progression — Topology / anomaly QA, stays Draft.
+    /// Draft multi-phase graph with intentional Structure validity issues (dangling Qual population
+    /// targets) and a multi-destination progression — Topology / anomaly QA, stays Draft.
     /// </summary>
     public static async Task BuildStructureGraphInvalidAsync(
         ScenarioContext context,
@@ -1084,6 +996,8 @@ internal static class ScenarioOrchestration
             "Match pour la 3e place",
             ["BRZ-A", "BRZ-B"]);
 
+        // Two valid population destinations + two dangling stage targets → DanglingQualificationTarget.
+        var ghostStageId = StageId.New();
         var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
         if (orderedGroups.Length != 2)
         {
@@ -1091,31 +1005,44 @@ internal static class ScenarioOrchestration
                 $"Expected 2 groups for structure-graph-invalid, found {orderedGroups.Length}.");
         }
 
-        // Two valid feeds + two missing destination slots → MissingQualificationDestinationSlot.
+        var groupOrder = orderedGroups.Select(group => group.Id).ToArray();
         groups.ReplaceQualificationRules(
-            new QualificationRules(
+            QualificationRules.FromIntents(
             [
-                new QualificationPath(
-                    1,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(barrages.Id, "BR-1-A")),
-                new QualificationPath(
-                    2,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(barrages.Id, "BR-1-B")),
-                new QualificationPath(
-                    3,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(barrages.Id, "BR-2-A")),
-                new QualificationPath(
-                    4,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(barrages.Id, "BR-2-B"))
-            ]),
+                new QualificationIntent(
+                    context.Ids.Intent("qual-br-g0-p1"),
+                    order: 1,
+                    QualificationIntentSourceKind.SingleGroup,
+                    positionFrom: 1,
+                    positionTo: 1,
+                    barrages.Id,
+                    groupId: orderedGroups[0].Id),
+                new QualificationIntent(
+                    context.Ids.Intent("qual-br-g1-p1"),
+                    order: 2,
+                    QualificationIntentSourceKind.SingleGroup,
+                    positionFrom: 1,
+                    positionTo: 1,
+                    barrages.Id,
+                    groupId: orderedGroups[1].Id),
+                new QualificationIntent(
+                    context.Ids.Intent("qual-ghost-g0-p2"),
+                    order: 3,
+                    QualificationIntentSourceKind.SingleGroup,
+                    positionFrom: 2,
+                    positionTo: 2,
+                    ghostStageId,
+                    groupId: orderedGroups[0].Id),
+                new QualificationIntent(
+                    context.Ids.Intent("qual-ghost-g1-p2"),
+                    order: 4,
+                    QualificationIntentSourceKind.SingleGroup,
+                    positionFrom: 2,
+                    positionTo: 2,
+                    ghostStageId,
+                    groupId: orderedGroups[1].Id)
+            ],
+            groupOrder),
             context.Clock);
 
         var barragesFixture = barrages.AddFixture(barrages.Rounds[0].Id, context.Clock);
@@ -1125,11 +1052,11 @@ internal static class ScenarioOrchestration
                 new ProgressionPath(
                     barragesFixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(finale.Id, "F-A")),
+                    ProgressionDestination.ForSlot(finale.Id, "F-A")),
                 new ProgressionPath(
                     barragesFixture.Id,
                     ProgressionOutcome.Loser,
-                    new ProgressionDestination(bronze.Id, "BRZ-A"))
+                    ProgressionDestination.ForSlot(bronze.Id, "BRZ-A"))
             ]),
             context.Clock);
 
@@ -1267,7 +1194,7 @@ internal static class ScenarioOrchestration
                 new ProgressionPath(
                     qfFixtures[i].Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(semi.Id, destinationKeys[i])));
+                    ProgressionDestination.ForSlot(semi.Id, destinationKeys[i])));
         }
 
         quarter.ReplaceProgressionRules(new ProgressionRules(paths), context.Clock);
@@ -1415,7 +1342,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// World Cup: Groups 8×4 → Top2 → R16→QF→SF → Final + Bronze played through;
+    /// World Cup: Groups 8×4 → Top2 → R16 population → Slot Draw → QF→SF → Final + Bronze;
     /// PlacementAwards ranks 1–4; competition Completed with derivable <c>CompetitionOutcome</c>.
     /// Ignores progress (fixed seed). Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
     /// </summary>
@@ -1473,7 +1400,7 @@ internal static class ScenarioOrchestration
         MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
         MatchEnrichment.SpecializeWithExtraTimeAndPenalties(bronze, context.Clock);
 
-        WireWorldCupQualification(groups, roundOf16, context.Clock);
+        WireWorldCupQualification(context.Ids, groups, roundOf16, context.Clock);
 
         var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
         PrepareAndStart(context, competition, groups);
@@ -1495,6 +1422,8 @@ internal static class ScenarioOrchestration
             groupStandings,
             allStages,
             context.Clock);
+
+        PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
 
         PlayKnockoutRound(
             context,
@@ -1623,28 +1552,8 @@ internal static class ScenarioOrchestration
         var finalFixture = knockout.AddFixture(finalRound.Id, context.Clock);
         WireFinalPlacementAwards(knockout, finalFixture, context.Clock);
 
-        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
-        if (orderedGroups.Length != 2)
-        {
-            throw new InvalidOperationException(
-                $"Expected 2 groups for regulation-demo, found {orderedGroups.Length}.");
-        }
-
-        groups.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.FromGroup(orderedGroups[0].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(knockout.Id, "QF-1-A")),
-                new QualificationPath(
-                    2,
-                    QualificationSource.FromGroup(orderedGroups[1].Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(knockout.Id, "QF-1-B"))
-            ]),
-            context.Clock);
+        WireEachGroupQualificationToPopulation(
+            context.Ids, groups, knockout, positionFrom: 1, positionTo: 1, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -2037,6 +1946,46 @@ internal static class ScenarioOrchestration
         return stage;
     }
 
+    /// <summary>
+    /// Qual V2: after ApplyQualification filled <see cref="Stage.CompositionEntries"/>,
+    /// place them into form slots via a deterministic Slot Draw (then Publish + Apply).
+    /// </summary>
+    private static void PlacePopulationIntoSlotsViaDraw(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        string[] slotKeys)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(slotKeys);
+
+        var pool = stage.CompositionEntries.Select(entry => entry.EntryId).ToArray();
+        if (pool.Length == 0)
+        {
+            throw new InvalidOperationException(
+                $"Stage '{stage.Name.Value}' has no population entries to place into slots.");
+        }
+
+        if (pool.Length != slotKeys.Length)
+        {
+            throw new InvalidOperationException(
+                $"Population count ({pool.Length}) must match slot count ({slotKeys.Length}) for stage '{stage.Name.Value}'.");
+        }
+
+        var inputs = DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Slot);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, context.Ids.Draw(), context.Clock);
+        stage.ConfigureDrawInputs(draw.Id, inputs);
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots(
+                [.. pool.Select((entryId, index) => new SlotDrawPlacement(entryId, slotKeys[index]))]),
+            context.Clock);
+        stage.PublishDraw(draw.Id, context.Clock);
+        ApplyDraw.Execute(stage, draw.Id, context.Clock);
+    }
+
     private static string[] PairSlotKeys(string prefix, int pairCount)
     {
         var keys = new string[pairCount * 2];
@@ -2101,35 +2050,54 @@ internal static class ScenarioOrchestration
         return fixtures;
     }
 
-    private static void WireWorldCupQualification(Stage groups, Stage roundOf16, IClock clock)
+    private static void WireWorldCupQualification(
+        DeterministicIdFactory ids,
+        Stage groups,
+        Stage roundOf16,
+        IClock clock) =>
+        WireEachGroupQualificationToPopulation(
+            ids, groups, roundOf16, positionFrom: 1, positionTo: 2, clock, intentKey: "qual-wc-top2");
+
+    /// <summary>
+    /// Qual V2 authoring: EachGroup positions → destination stage population (Intents SoT).
+    /// </summary>
+    private static void WireEachGroupQualificationToPopulation(
+        DeterministicIdFactory ids,
+        Stage source,
+        Stage destination,
+        int positionFrom,
+        int positionTo,
+        IClock clock,
+        string intentKey = "qual-each")
     {
-        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
-        if (orderedGroups.Length != 8)
+        ArgumentNullException.ThrowIfNull(ids);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var groupOrder = source.Groups
+            .OrderBy(group => group.Name, StringComparer.Ordinal)
+            .Select(group => group.Id)
+            .ToArray();
+        if (groupOrder.Length == 0)
         {
             throw new InvalidOperationException(
-                $"Expected 8 World Cup groups, found {orderedGroups.Length}.");
+                $"Stage '{source.Name.Value}' has no groups for EachGroup qualification.");
         }
 
-        var paths = new List<QualificationPath>(16);
-        var order = 1;
-        foreach (var group in orderedGroups)
-        {
-            var letter = group.Name;
-            paths.Add(
-                new QualificationPath(
-                    order++,
-                    QualificationSource.FromGroup(group.Id),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(roundOf16.Id, $"{letter}1")));
-            paths.Add(
-                new QualificationPath(
-                    order++,
-                    QualificationSource.FromGroup(group.Id),
-                    new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(roundOf16.Id, $"{letter}2")));
-        }
-
-        groups.ReplaceQualificationRules(new QualificationRules(paths), clock);
+        source.ReplaceQualificationRules(
+            QualificationRules.FromIntents(
+            [
+                new QualificationIntent(
+                    ids.Intent(intentKey),
+                    order: 1,
+                    QualificationIntentSourceKind.EachGroup,
+                    positionFrom,
+                    positionTo,
+                    destination.Id)
+            ],
+            groupOrder),
+            clock);
     }
 
     private static void WireWinnerProgression(
@@ -2146,7 +2114,10 @@ internal static class ScenarioOrchestration
         }
 
         var paths = new List<ProgressionPath>(fixtures.Length);
-        paths.AddRange(fixtures.Select((t, i) => new ProgressionPath(t.Id, ProgressionOutcome.Winner, new ProgressionDestination(destination.Id, destinationKeys[i]))));
+        paths.AddRange(fixtures.Select((t, i) => new ProgressionPath(
+            t.Id,
+            ProgressionOutcome.Winner,
+            ProgressionDestination.ForSlot(destination.Id, destinationKeys[i]))));
 
         source.ReplaceProgressionRules(new ProgressionRules(paths), clock);
     }
@@ -2166,10 +2137,10 @@ internal static class ScenarioOrchestration
 
         var paths = new ProgressionPath[]
         {
-            new(sfFixtures[0].Id, ProgressionOutcome.Winner, new ProgressionDestination(final.Id, "F-A")),
-            new(sfFixtures[1].Id, ProgressionOutcome.Winner, new ProgressionDestination(final.Id, "F-B")),
-            new(sfFixtures[0].Id, ProgressionOutcome.Loser, new ProgressionDestination(bronze.Id, "B-A")),
-            new(sfFixtures[1].Id, ProgressionOutcome.Loser, new ProgressionDestination(bronze.Id, "B-B"))
+            new(sfFixtures[0].Id, ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, "F-A")),
+            new(sfFixtures[1].Id, ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, "F-B")),
+            new(sfFixtures[0].Id, ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, "B-A")),
+            new(sfFixtures[1].Id, ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, "B-B"))
         };
         semi.ReplaceProgressionRules(new ProgressionRules(paths), clock);
     }

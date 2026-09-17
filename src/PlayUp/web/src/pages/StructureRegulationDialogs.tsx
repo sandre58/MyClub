@@ -244,6 +244,9 @@ export function DrawRulesDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -284,7 +287,6 @@ export function DrawRulesDialog({
             </Field>
           </>
         ) : null}
-        {mutation.isError ? <MutationError error={mutation.error} /> : null}
       </form>
     </Dialog>
   );

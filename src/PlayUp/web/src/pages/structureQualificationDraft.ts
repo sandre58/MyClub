@@ -1,19 +1,16 @@
 // -----------------------------------------------------------------------
-// Qualification Intent drafts — Expand/Map client preview (mirrors Domain).
+// Qualification Intent drafts — Expand client preview (Qual V2 population).
 // -----------------------------------------------------------------------
 
 import type {
   QualificationIntentSourceKind,
-  QualificationMappingMode,
   RankingScope,
   StructureQualificationIntent,
   StructureQualificationPath,
-  StructureQualificationSlotOverride,
 } from '../types';
 
 export type QualIntentDraft = {
   id: string;
-  validated: boolean;
   sourceKind: QualificationIntentSourceKind;
   groupId: string;
   groupName: string;
@@ -23,10 +20,6 @@ export type QualIntentDraft = {
   conditionKind: 'none' | 'points';
   minimumPoints: string;
   destinationStageId: string;
-  mappingMode: QualificationMappingMode;
-  slotOverrides: StructureQualificationSlotOverride[];
-  /** UI: destinations list expanded (Canonical starts collapsed). */
-  showDestinations: boolean;
 };
 
 export type SourceOccurrence = {
@@ -37,12 +30,6 @@ export type SourceOccurrence = {
   acrossGroupsPosition?: number | null;
 };
 
-export type MappedDestination = {
-  occurrence: SourceOccurrence;
-  slotKey: string;
-  label: string;
-};
-
 export function newIntentId(): string {
   return crypto.randomUUID();
 }
@@ -50,7 +37,6 @@ export function newIntentId(): string {
 export function emptyQualIntent(destinationStageId = ''): QualIntentDraft {
   return {
     id: newIntentId(),
-    validated: false,
     sourceKind: 'EachGroup',
     groupId: '',
     groupName: '',
@@ -60,9 +46,6 @@ export function emptyQualIntent(destinationStageId = ''): QualIntentDraft {
     conditionKind: 'none',
     minimumPoints: '',
     destinationStageId,
-    mappingMode: 'Canonical',
-    slotOverrides: [],
-    showDestinations: false,
   };
 }
 
@@ -71,7 +54,6 @@ export function intentFromApi(
 ): QualIntentDraft {
   return {
     id: intent.intentId,
-    validated: true,
     sourceKind: intent.sourceKind,
     groupId: intent.groupId ?? '',
     groupName: intent.groupName ?? '',
@@ -88,9 +70,6 @@ export function intentFromApi(
     minimumPoints:
       intent.minimumPoints != null ? String(intent.minimumPoints) : '',
     destinationStageId: intent.destinationStageId,
-    mappingMode: intent.mappingMode,
-    slotOverrides: intent.slotOverrides ? [...intent.slotOverrides] : [],
-    showDestinations: intent.mappingMode === 'Custom',
   };
 }
 
@@ -107,22 +86,8 @@ export function pathToSingletonIntent(
   }
 
   const k = path.selectionValue;
-  const occurrence: StructureQualificationSlotOverride = {
-    scope:
-      sourceKind === 'AcrossGroups'
-        ? 'AcrossGroups'
-        : sourceKind === 'SingleGroup'
-          ? 'Group'
-          : 'Overall',
-    position: k,
-    slotKey: path.destinationSlotKey,
-    groupId: path.groupId ?? null,
-    acrossGroupsPosition: path.acrossGroupsPosition ?? null,
-  };
-
   return {
     id: newIntentId(),
-    validated: true,
     sourceKind,
     groupId: path.groupId ?? '',
     groupName: path.groupName ?? '',
@@ -137,9 +102,6 @@ export function pathToSingletonIntent(
     minimumPoints:
       path.minimumPoints != null ? String(path.minimumPoints) : '',
     destinationStageId: path.destinationStageId,
-    mappingMode: 'Custom',
-    slotOverrides: [occurrence],
-    showDestinations: true,
   };
 }
 
@@ -195,51 +157,6 @@ export function expandOccurrences(
     }
   }
   return list;
-}
-
-function occurrenceKey(o: SourceOccurrence): string {
-  return [
-    o.scope,
-    o.position,
-    o.groupId ?? '',
-    o.acrossGroupsPosition ?? '',
-  ].join('\0');
-}
-
-export function mapDestinations(
-  draft: QualIntentDraft,
-  groups: { id: string; name: string }[],
-  slotKeys: string[],
-  ordinal: (n: number) => string,
-  t: (key: string, opts?: Record<string, unknown>) => string,
-): MappedDestination[] {
-  const occurrences = expandOccurrences(draft, groups);
-  if (occurrences.length === 0) return [];
-
-  const overrideMap = new Map(
-    draft.slotOverrides.map((o) => [
-      occurrenceKey({
-        scope: o.scope,
-        position: o.position,
-        groupId: o.groupId,
-        acrossGroupsPosition: o.acrossGroupsPosition,
-      }),
-      o.slotKey,
-    ]),
-  );
-
-  return occurrences.map((occurrence, index) => {
-    const canonical = slotKeys[index] ?? '';
-    const slotKey =
-      draft.mappingMode === 'Custom'
-        ? (overrideMap.get(occurrenceKey(occurrence)) ?? canonical)
-        : canonical;
-    return {
-      occurrence,
-      slotKey,
-      label: occurrenceLabel(occurrence, ordinal, t),
-    };
-  });
 }
 
 export function occurrenceLabel(
@@ -352,56 +269,33 @@ export function ordinalRank(n: number, locale: string): string {
 export function isIntentComplete(
   draft: QualIntentDraft,
   groups: { id: string; name: string }[],
-  slotKeys: string[],
 ): boolean {
-  const occurrences = expandOccurrences(draft, groups);
-  if (occurrences.length === 0) return false;
-  if (!draft.destinationStageId.trim()) return false;
-  if (draft.sourceKind === 'SingleGroup' && !draft.groupId.trim()) return false;
-  if (draft.conditionKind === 'points') {
-    const pts = Number(draft.minimumPoints);
-    if (!Number.isFinite(pts) || pts < 0) return false;
-  }
-  if (occurrences.length > slotKeys.length) return false;
-  const mapped = mapDestinations(
-    draft,
-    groups,
-    slotKeys,
-    (n) => String(n),
-    () => '',
-  );
-  if (mapped.some((m) => !m.slotKey.trim())) return false;
-  const slots = mapped.map((m) => m.slotKey);
-  if (new Set(slots).size !== slots.length) return false;
-  return true;
+  return incompleteIntentReason(draft, groups) == null;
 }
 
-export function findDuplicateSlotsAcrossIntents(
-  intents: QualIntentDraft[],
+/**
+ * Dominant incompleteness cause for collapsed-row hint (one message).
+ * Returns an i18n key suffix under `qualification.incompleteHint*`.
+ */
+export function incompleteIntentReason(
+  draft: QualIntentDraft,
   groups: { id: string; name: string }[],
-  slotKeysByStage: Map<string, string[]>,
-): Set<string> {
-  const seen = new Map<string, number>();
-  const dup = new Set<string>();
-  for (const intent of intents) {
-    if (!intent.validated) continue;
-    const slots = slotKeysByStage.get(intent.destinationStageId) ?? [];
-    const mapped = mapDestinations(
-      intent,
-      groups,
-      slots,
-      (n) => String(n),
-      () => '',
-    );
-    for (const m of mapped) {
-      if (!m.slotKey.trim()) continue;
-      const key = `${intent.destinationStageId}\0${m.slotKey}`;
-      const count = (seen.get(key) ?? 0) + 1;
-      seen.set(key, count);
-      if (count > 1) dup.add(key);
-    }
+):
+  | 'Destination'
+  | 'Group'
+  | 'Selection'
+  | 'Points'
+  | null {
+  if (!draft.destinationStageId.trim()) return 'Destination';
+  if (draft.sourceKind === 'SingleGroup' && !draft.groupId.trim()) {
+    return 'Group';
   }
-  return dup;
+  if (draft.conditionKind === 'points') {
+    const pts = Number(draft.minimumPoints);
+    if (!Number.isFinite(pts) || pts < 0) return 'Points';
+  }
+  if (expandOccurrences(draft, groups).length === 0) return 'Selection';
+  return null;
 }
 
 export function toApiIntent(draft: QualIntentDraft, order: number) {
@@ -412,7 +306,6 @@ export function toApiIntent(draft: QualIntentDraft, order: number) {
     positionFrom: parsePositiveInt(draft.positionFrom) ?? 1,
     positionTo: parsePositiveInt(draft.positionTo) ?? 1,
     destinationStageId: draft.destinationStageId,
-    mappingMode: draft.mappingMode,
     groupId:
       draft.sourceKind === 'SingleGroup' ? draft.groupId || null : null,
     acrossGroupsPosition:
@@ -421,51 +314,12 @@ export function toApiIntent(draft: QualIntentDraft, order: number) {
         : null,
     minimumPoints:
       draft.conditionKind === 'points' ? Number(draft.minimumPoints) : null,
-    slotOverrides:
-      draft.mappingMode === 'Custom' && draft.slotOverrides.length > 0
-        ? draft.slotOverrides
-        : null,
   };
 }
 
-export function applySlotOverride(
-  draft: QualIntentDraft,
-  occurrence: SourceOccurrence,
-  slotKey: string,
-  groups: { id: string; name: string }[],
-  slotKeys: string[],
-): QualIntentDraft {
-  const mapped = mapDestinations(
-    { ...draft, mappingMode: 'Canonical' },
-    groups,
-    slotKeys,
-    (n) => String(n),
-    () => '',
+/** Stable fingerprint of intents (save payload shape) for dirty detection. */
+export function serializeIntents(intents: QualIntentDraft[]): string {
+  return JSON.stringify(
+    intents.map((intent, index) => toApiIntent(intent, index + 1)),
   );
-  const overrides: StructureQualificationSlotOverride[] = mapped.map((m) => {
-    const isTarget =
-      occurrenceKey(m.occurrence) === occurrenceKey(occurrence);
-    return {
-      scope: m.occurrence.scope,
-      position: m.occurrence.position,
-      slotKey: isTarget ? slotKey : m.slotKey,
-      groupId: m.occurrence.groupId ?? null,
-      acrossGroupsPosition: m.occurrence.acrossGroupsPosition ?? null,
-    };
-  });
-  return {
-    ...draft,
-    mappingMode: 'Custom',
-    slotOverrides: overrides,
-    showDestinations: true,
-  };
-}
-
-export function resetToCanonical(draft: QualIntentDraft): QualIntentDraft {
-  return {
-    ...draft,
-    mappingMode: 'Canonical',
-    slotOverrides: [],
-    showDestinations: false,
-  };
 }

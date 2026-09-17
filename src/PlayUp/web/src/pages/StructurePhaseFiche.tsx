@@ -2011,12 +2011,22 @@ export function StructurePhaseFiche({
         stage={rulesEditStage ?? stage}
         open={edit === 'qualification'}
         onClose={closeRulesEdit}
+        openedFromDestinationStageId={
+          rulesEditStage != null && rulesEditStage.stageId !== stage.stageId
+            ? stage.stageId
+            : null
+        }
       />
       <ProgressionRulesDialog
         data={data}
         stage={rulesEditStage ?? stage}
         open={edit === 'progression'}
         onClose={closeRulesEdit}
+        openedFromDestinationStageId={
+          rulesEditStage != null && rulesEditStage.stageId !== stage.stageId
+            ? stage.stageId
+            : null
+        }
       />
       <PlacementAwardRulesDialog
         data={data}

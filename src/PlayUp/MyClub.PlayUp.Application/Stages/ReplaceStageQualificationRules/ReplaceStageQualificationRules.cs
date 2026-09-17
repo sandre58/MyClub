@@ -12,7 +12,7 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: replace QualificationRules on a Stage (thin authoring).
-/// Prefers <see cref="QualificationIntentSpec"/> when provided; otherwise legacy path specs.
+/// Prefers <see cref="QualificationIntentSpec"/> when provided; otherwise path specs.
 /// </summary>
 public static class ReplaceStageQualificationRules
 {
@@ -21,12 +21,10 @@ public static class ReplaceStageQualificationRules
     /// </summary>
     public static void Execute(
         Stage sourceStage,
-        IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<QualificationIntentSpec>? intents,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(sourceStage);
-        ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(clock);
         EnsureMutable(sourceStage);
 
@@ -44,16 +42,12 @@ public static class ReplaceStageQualificationRules
         }
 
         var groupOrder = sourceStage.Groups.Select(g => g.Id).ToArray();
-        var slotOrderByStage = competitionStages.ToDictionary(
-            s => s.Id,
-            s => (IReadOnlyList<string>)[.. s.Slots.Select(slot => slot.SlotKey)]);
-
-        var rules = QualificationRules.FromIntents(domainIntents, groupOrder, slotOrderByStage);
+        var rules = QualificationRules.FromIntents(domainIntents, groupOrder);
         sourceStage.ReplaceQualificationRules(rules, clock);
     }
 
     /// <summary>
-    /// Legacy: replaces qualification paths on the stage (null/empty clears rules).
+    /// Replaces qualification paths on the stage (null/empty clears rules).
     /// </summary>
     public static void Execute(
         Stage stage,
@@ -91,9 +85,7 @@ public static class ReplaceStageQualificationRules
             GroupId? groupId = spec.GroupId is { } gid ? new GroupId(gid) : null;
             var source = new QualificationSource(spec.RankingScope, groupId, spec.AcrossGroupsPosition);
             var selection = new QualificationSelection(spec.SelectionMode, spec.SelectionValue, spec.SelectionEndValue);
-            var destination = new QualificationDestination(
-                new StageId(spec.DestinationStageId),
-                spec.DestinationSlotKey);
+            var destination = QualificationDestination.ForPopulation(new StageId(spec.DestinationStageId));
             var condition = spec.MinimumPoints is { } points
                 ? QualificationCondition.PointsAtLeast(points)
                 : null;
@@ -115,45 +107,21 @@ public static class ReplaceStageQualificationRules
         }
     }
 
-    private static QualificationIntent ToDomainIntent(QualificationIntentSpec spec)
-    {
-        if (!Enum.IsDefined(spec.SourceKind))
-        {
-            throw new ApplicationFailureException(
+    private static QualificationIntent ToDomainIntent(QualificationIntentSpec spec) =>
+        !Enum.IsDefined(spec.SourceKind)
+            ? throw new ApplicationFailureException(
                 $"Unknown qualification intent source kind '{spec.SourceKind}'.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        if (!Enum.IsDefined(spec.MappingMode))
-        {
-            throw new ApplicationFailureException(
-                $"Unknown qualification mapping mode '{spec.MappingMode}'.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        var overrides = spec.SlotOverrides?
-            .Select(o => new QualificationSlotOverride(
-                new QualificationSourceOccurrence(
-                    o.Scope,
-                    o.Position,
-                    o.GroupId is { } gid ? new GroupId(gid) : null,
-                    o.AcrossGroupsPosition),
-                o.SlotKey))
-            .ToArray();
-
-        return new QualificationIntent(
-            new IntentId(spec.IntentId),
-            spec.Order,
-            spec.SourceKind,
-            spec.PositionFrom,
-            spec.PositionTo,
-            new StageId(spec.DestinationStageId),
-            spec.MappingMode,
-            spec.GroupId is { } g ? new GroupId(g) : null,
-            spec.AcrossGroupsPosition,
-            spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null,
-            overrides);
-    }
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : new QualificationIntent(
+                new IntentId(spec.IntentId),
+                spec.Order,
+                spec.SourceKind,
+                spec.PositionFrom,
+                spec.PositionTo,
+                new StageId(spec.DestinationStageId),
+                spec.GroupId is { } g ? new GroupId(g) : null,
+                spec.AcrossGroupsPosition,
+                spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null);
 }
 
 /// <summary>
@@ -164,7 +132,6 @@ public sealed record QualificationPathSpec(
     SelectionMode SelectionMode,
     int SelectionValue,
     Guid DestinationStageId,
-    string DestinationSlotKey,
     RankingScope? RankingScope = null,
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
@@ -181,18 +148,6 @@ public sealed record QualificationIntentSpec(
     int PositionFrom,
     int PositionTo,
     Guid DestinationStageId,
-    QualificationMappingMode MappingMode = QualificationMappingMode.Canonical,
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
-    int? MinimumPoints = null,
-    IReadOnlyList<QualificationSlotOverrideSpec>? SlotOverrides = null);
-
-/// <summary>
-/// Application DTO for one slot override.
-/// </summary>
-public sealed record QualificationSlotOverrideSpec(
-    RankingScope Scope,
-    int Position,
-    string SlotKey,
-    Guid? GroupId = null,
-    int? AcrossGroupsPosition = null);
+    int? MinimumPoints = null);

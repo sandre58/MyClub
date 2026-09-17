@@ -7,7 +7,6 @@ import {
   rebuildStageStructure,
   removeCompetitionStage,
   replaceStagePlacementAwardRules,
-  replaceStageProgressionRules,
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { Tooltip } from '../design-system/components/Tooltip';
@@ -17,14 +16,13 @@ import { MutationError, PendingLabel } from '../ui';
 import type {
   StructureFormatKind,
   StructurePlacementAward,
-  StructureProgressionPath,
   StructureStageHubSummary,
   StructureView,
   ProgressionOutcome,
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { listFixtureOptions } from './structureFixtureLabels';
-import { isPopulationDestination } from './structureProgression';
+import { StructureProgressionDialog } from './StructureProgressionDialog';
 import { StructureQualificationDialog } from './StructureQualificationDialog';
 import {
   defaultSkeletonForm,
@@ -32,15 +30,6 @@ import {
   skeletonPayload,
   skeletonStepValid,
 } from './structureSkeletonForm';
-
-type ProgDraft = {
-  sourceFixtureId: string;
-  outcome: ProgressionOutcome;
-  destinationStageId: string;
-  /** A3 — Population (B1-M2) or Place (compat / future intra). */
-  targetKind: 'population' | 'place';
-  destinationSlotKey: string;
-};
 
 type PlacementDraft = {
   sourceFixtureId: string;
@@ -191,6 +180,31 @@ export function RelationEditors({
   );
 }
 
+/** Thin wrapper — Prog V2 authoring lives in StructureProgressionDialog. */
+export function ProgressionRulesDialog({
+  data,
+  stage,
+  open,
+  onClose,
+  openedFromDestinationStageId = null,
+}: {
+  data: StructureView;
+  stage: StructureStageHubSummary;
+  open: boolean;
+  onClose: () => void;
+  openedFromDestinationStageId?: string | null;
+}) {
+  return (
+    <StructureProgressionDialog
+      data={data}
+      stage={stage}
+      open={open}
+      onClose={onClose}
+      openedFromDestinationStageId={openedFromDestinationStageId}
+    />
+  );
+}
+
 export function AddPhaseDialog({
   competitionId,
   open,
@@ -278,6 +292,9 @@ export function AddPhaseDialog({
           )}
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -335,7 +352,6 @@ export function AddPhaseDialog({
             formatLocked
           />
         )}
-        <MutationError error={mutation.error} />
       </form>
     </Dialog>
   );
@@ -444,6 +460,9 @@ export function EditSkeletonDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -485,7 +504,6 @@ export function EditSkeletonDialog({
             })}
           </span>
         </label>
-        <MutationError error={mutation.error} />
       </form>
     </Dialog>
   );
@@ -568,6 +586,9 @@ export function RemovePhaseDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <p>{t('graph.removePhaseBody', { name: stage.name })}</p>
       {(inboundQual > 0 || inboundProg > 0) && (
@@ -578,7 +599,6 @@ export function RemovePhaseDialog({
           })}
         </p>
       )}
-      <MutationError error={mutation.error} />
     </Dialog>
   );
 }
@@ -588,11 +608,14 @@ export function QualificationRulesDialog({
   stage,
   open,
   onClose,
+  openedFromDestinationStageId = null,
 }: {
   data: StructureView;
   stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
+  /** Fiche stage when the dialog was opened from destination Population. */
+  openedFromDestinationStageId?: string | null;
 }) {
   return (
     <StructureQualificationDialog
@@ -600,269 +623,8 @@ export function QualificationRulesDialog({
       stage={stage}
       open={open}
       onClose={onClose}
+      openedFromDestinationStageId={openedFromDestinationStageId}
     />
-  );
-}
-
-export function ProgressionRulesDialog({
-  data,
-  stage,
-  open,
-  onClose,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary;
-  open: boolean;
-  onClose: () => void;
-}) {
-  const { t } = useTranslation('structure');
-  const { t: tCommon } = useTranslation('common');
-  const formId = useId();
-  const queryClient = useQueryClient();
-  const peerStages = data.stages.filter((peer) => peer.stageId !== stage.stageId);
-  const defaultDest = peerStages[0]?.stageId ?? '';
-  const [rows, setRows] = useState<ProgDraft[]>([]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const existing = stage.progressionPaths ?? [];
-    setRows(
-      existing.length > 0
-        ? existing.map((path) => ({
-            sourceFixtureId: path.sourceFixtureId,
-            outcome: path.outcome,
-            destinationStageId: path.destinationStageId,
-            targetKind: isPopulationDestination(path.destinationSlotKey)
-              ? 'population'
-              : 'place',
-            destinationSlotKey: path.destinationSlotKey?.trim() ?? '',
-          }))
-        : [
-            {
-              sourceFixtureId: '',
-              outcome: 'Winner',
-              destinationStageId: defaultDest,
-              targetKind: 'population',
-              destinationSlotKey: '',
-            },
-          ],
-    );
-  }, [open, stage.stageId, stage.progressionPaths, defaultDest]);
-
-  const mutation = useMutation({
-    mutationFn: (paths: StructureProgressionPath[] | null) =>
-      replaceStageProgressionRules(stage.stageId, { paths }),
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
-      onClose();
-    },
-  });
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={t('graph.editProgressionTitle', { phase: stage.name })}
-      description={
-        peerStages.length === 0
-          ? t('graph.editExitNeedsPeer')
-          : t('graph.editProgressionLede')
-      }
-      closeLabel={tCommon('close')}
-      closeDisabled={mutation.isPending}
-      size="lg"
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            disabled={mutation.isPending}
-            onClick={onClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={mutation.isPending}
-            onClick={() => mutation.mutate(null)}
-          >
-            {t('graph.clearRules')}
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            className="ds-btn ds-btn--primary"
-            disabled={
-              mutation.isPending ||
-              rows.length === 0 ||
-              peerStages.length === 0
-            }
-          >
-            {mutation.isPending ? <PendingLabel /> : t('graph.saveRules')}
-          </button>
-        </>
-      }
-    >
-      <form
-        id={formId}
-        className="structure-graph-dialog"
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault();
-          if (mutation.isPending) {
-            return;
-          }
-          mutation.mutate(
-            rows.map((row) => ({
-              sourceFixtureId: row.sourceFixtureId.trim(),
-              outcome: row.outcome,
-              destinationStageId: row.destinationStageId,
-              destinationSlotKey:
-                row.targetKind === 'population'
-                  ? null
-                  : row.destinationSlotKey.trim(),
-            })),
-          );
-        }}
-      >
-        <ul className="structure-graph-rows">
-          {rows.map((row, index) => (
-            <li key={index} className="structure-graph-row">
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.sourceFixture')}</span>
-                <FixtureSourceSelect
-                  stageId={stage.stageId}
-                  value={row.sourceFixtureId}
-                  required
-                  onChange={(sourceFixtureId) => {
-                    const next = [...rows];
-                    next[index] = { ...row, sourceFixtureId };
-                    setRows(next);
-                  }}
-                />
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.outcome')}</span>
-                <select
-                  className="ds-input"
-                  value={row.outcome}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = {
-                      ...row,
-                      outcome: event.target.value as ProgressionOutcome,
-                    };
-                    setRows(next);
-                  }}
-                >
-                  <option value="Winner">Winner</option>
-                  <option value="Loser">Loser</option>
-                </select>
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.destinationStage')}</span>
-                <select
-                  className="ds-input"
-                  value={row.destinationStageId}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = {
-                      ...row,
-                      destinationStageId: event.target.value,
-                    };
-                    setRows(next);
-                  }}
-                  required
-                >
-                  <option value="">{t('graph.chooseStage')}</option>
-                  {peerStages.map((peer) => (
-                    <option key={peer.stageId} value={peer.stageId}>
-                      {peer.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.destinationKind')}</span>
-                <select
-                  className="ds-input"
-                  value={row.targetKind}
-                  onChange={(event) => {
-                    const targetKind = event.target.value as
-                      | 'population'
-                      | 'place';
-                    const next = [...rows];
-                    next[index] = {
-                      ...row,
-                      targetKind,
-                      destinationSlotKey:
-                        targetKind === 'population'
-                          ? ''
-                          : row.destinationSlotKey,
-                    };
-                    setRows(next);
-                  }}
-                >
-                  <option value="population">
-                    {t('graph.destinationKindPopulation')}
-                  </option>
-                  <option value="place">{t('graph.destinationKindPlace')}</option>
-                </select>
-              </label>
-              {row.targetKind === 'place' ? (
-                <label className="ds-field">
-                  <span className="ds-field__label">
-                    {t('graph.destinationSlot')}
-                  </span>
-                  <input
-                    className="ds-input"
-                    value={row.destinationSlotKey}
-                    onChange={(event) => {
-                      const next = [...rows];
-                      next[index] = {
-                        ...row,
-                        destinationSlotKey: event.target.value,
-                      };
-                      setRows(next);
-                    }}
-                    required
-                  />
-                </label>
-              ) : null}
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost"
-                onClick={() => setRows(rows.filter((_, i) => i !== index))}
-              >
-                {t('graph.removeRow')}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          className="ds-btn ds-btn--secondary"
-          disabled={peerStages.length === 0}
-          onClick={() =>
-            setRows([
-              ...rows,
-              {
-                sourceFixtureId: '',
-                outcome: 'Winner',
-                destinationStageId: defaultDest,
-                targetKind: 'population',
-                destinationSlotKey: '',
-              },
-            ])
-          }
-        >
-          {t('graph.addRow')}
-        </button>
-        <MutationError error={mutation.error} />
-      </form>
-    </Dialog>
   );
 }
 
@@ -950,6 +712,9 @@ export function PlacementAwardRulesDialog({
             {mutation.isPending ? <PendingLabel /> : t('graph.saveRules')}
           </button>
         </>
+      }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
       }
     >
       <form
@@ -1044,7 +809,6 @@ export function PlacementAwardRulesDialog({
         >
           {t('graph.addRow')}
         </button>
-        <MutationError error={mutation.error} />
       </form>
     </Dialog>
   );

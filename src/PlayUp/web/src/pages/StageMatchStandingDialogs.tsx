@@ -311,6 +311,9 @@ export function MatchRulesDialog({
             </button>
           </>
         }
+        footerStatus={
+          mutation.isError ? <MutationError error={mutation.error} /> : null
+        }
       >
         <form
           id={formId}
@@ -494,8 +497,6 @@ export function MatchRulesDialog({
               </FormGroup>
             </fieldset>
           </FormSection>
-
-          {mutation.isError ? <MutationError error={mutation.error} /> : null}
         </form>
       </Dialog>
 
@@ -664,6 +665,9 @@ export function StandingRulesDialog({
             </button>
           </>
         }
+        footerStatus={
+          mutation.isError ? <MutationError error={mutation.error} /> : null
+        }
       >
         <form
           id={formId}
@@ -825,8 +829,6 @@ export function StandingRulesDialog({
               </Field>
             </fieldset>
           </FormSection>
-
-          {mutation.isError ? <MutationError error={mutation.error} /> : null}
         </form>
       </Dialog>
 

@@ -229,6 +229,18 @@ export function StructureDrawDialog({
             </button>
           </div>
         }
+        footerStatus={
+          overviewQuery.isError || mutationError ? (
+            <>
+              {overviewQuery.isError ? (
+                <p className="ds-notice ds-notice--danger" role="alert">
+                  {t('fiche.drawWorkflow.loadError')}
+                </p>
+              ) : null}
+              {mutationError ? <MutationError error={mutationError} /> : null}
+            </>
+          ) : null
+        }
       >
         {(stage.compositionEntryCount ?? 0) > 0 ? (
           <p className="structure-draw-pool" role="note">
@@ -240,11 +252,6 @@ export function StructureDrawDialog({
         {overviewQuery.isLoading ? (
           <p className="structure-panel__muted" role="status">
             {t('fiche.drawWorkflow.loading')}
-          </p>
-        ) : null}
-        {overviewQuery.isError ? (
-          <p className="ds-notice ds-notice--danger" role="alert">
-            {t('fiche.drawWorkflow.loadError')}
           </p>
         ) : null}
 
@@ -321,8 +328,6 @@ export function StructureDrawDialog({
             ) : null}
           </div>
         ) : null}
-
-        {mutationError ? <MutationError error={mutationError} /> : null}
       </Dialog>
 
       <ConfirmDialog

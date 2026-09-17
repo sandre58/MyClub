@@ -85,7 +85,7 @@ public sealed class RegulationIntegrationTests
                 1,
                 QualificationSource.Overall(),
                 new QualificationSelection(SelectionMode.Top, 2),
-                new QualificationDestination(StageId.New(), "QF1"))
+                QualificationDestination.ForPopulation(StageId.New()))
         ]);
         var stageRegulation = new StageRegulation(
             competition.Regulation.MatchRules,

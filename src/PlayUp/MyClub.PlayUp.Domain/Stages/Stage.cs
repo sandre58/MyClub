@@ -648,8 +648,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces qualification rules. Allowed in Draft or Ready; Ready is demoted to Draft.
-    /// Local destinations (<see cref="QualificationDestination.StageId"/> equals this stage)
-    /// must reference an existing slot and must not conflict with a direct assignment.
+    /// Destinations target peer-stage population only (Qual V2) — cannot target this stage.
     /// </summary>
     /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -660,9 +659,11 @@ public sealed class Stage : AggregateRoot<StageId>
 
         if (qualificationRules is not null)
         {
-            foreach (var path in qualificationRules.Paths)
+            if (qualificationRules.Paths.Any(path => path.Destination.StageId.Equals(Id)))
             {
-                EnsureLocalPathDestination(path.Destination.StageId, path.Destination.SlotKey);
+                throw new DomainException(
+                    "Qualification population destination cannot target the source stage.",
+                    RulesErrorCodes.QualificationRulesInvalid);
             }
         }
 
@@ -1234,7 +1235,6 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         if (IsSlotReferencedByLocalProgression(key)
-            || IsSlotReferencedByLocalQualification(key)
             || IsSlotReferencedByFixture(key))
         {
             throw new DomainException(
@@ -1359,13 +1359,6 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Slot '{key}' already has a declarative progression feed.",
-                StageErrorCodes.SlotFeedConflict);
-        }
-
-        if (IsSlotFedByLocalQualification(key))
-        {
-            throw new DomainException(
-                $"Slot '{key}' already has a declarative qualification feed.",
                 StageErrorCodes.SlotFeedConflict);
         }
 
@@ -2364,17 +2357,8 @@ public sealed class Stage : AggregateRoot<StageId>
             && string.Equals(p.Destination.SlotKey, slotKey, StringComparison.Ordinal))
         == true;
 
-    private bool IsSlotFedByLocalQualification(string slotKey) =>
-        Regulation.QualificationRules?.Paths.Any(p =>
-            p.Destination.StageId.Equals(Id)
-            && string.Equals(p.Destination.SlotKey, slotKey, StringComparison.Ordinal))
-        == true;
-
     private bool IsSlotReferencedByLocalProgression(string slotKey) =>
         IsSlotFedByLocalProgression(slotKey);
-
-    private bool IsSlotReferencedByLocalQualification(string slotKey) =>
-        IsSlotFedByLocalQualification(slotKey);
 
     private bool IsSlotReferencedByFixture(string slotKey) =>
         EnumerateFixtures().Any(f =>
@@ -2461,14 +2445,11 @@ public sealed class Stage : AggregateRoot<StageId>
 
         if (Regulation.QualificationRules is { } qualification)
         {
-            foreach (var path in qualification.Paths)
+            if (qualification.Paths.Any(path => path.Destination.StageId.Equals(Id)))
             {
-                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey) is null)
-                {
-                    throw new DomainException(
-                        $"Slot '{path.Destination.SlotKey}' was not found.",
-                        StageErrorCodes.SlotNotFound);
-                }
+                throw new DomainException(
+                    "Qualification population destination cannot target the source stage.",
+                    RulesErrorCodes.QualificationRulesInvalid);
             }
         }
 
@@ -2519,11 +2500,6 @@ public sealed class Stage : AggregateRoot<StageId>
             }
 
             if (IsSlotFedByLocalProgression(slot.SlotKey))
-            {
-                localFeedCount++;
-            }
-
-            if (IsSlotFedByLocalQualification(slot.SlotKey))
             {
                 localFeedCount++;
             }

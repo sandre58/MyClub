@@ -92,16 +92,15 @@ public sealed class ThinAuthoringTests
                     SelectionMode.Top,
                     2,
                     ko.Id.Value,
-                    "QF1",
                     RankingScope.Overall)
             ],
             _clock);
 
         groups.Regulation.QualificationRules.Should().NotBeNull();
         groups.Regulation.QualificationRules!.Paths.Should().ContainSingle();
-        groups.Regulation.QualificationRules.Paths[0].Destination.SlotKey.Should().Be("QF1");
+        groups.Regulation.QualificationRules.Paths[0].Destination.StageId.Should().Be(ko.Id);
 
-        ReplaceStageQualificationRules.Execute(groups, null, _clock);
+        ReplaceStageQualificationRules.Execute(groups, (IReadOnlyList<QualificationPathSpec>?)null, _clock);
         groups.Regulation.QualificationRules.Should().BeNull();
     }
 

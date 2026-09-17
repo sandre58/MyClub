@@ -10,16 +10,16 @@ namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
 /// HTTP body for replacing qualification rules on a stage.
-/// Prefer <see cref="Intents"/>; <see cref="Paths"/> remains for legacy clients.
+/// Prefer <see cref="Intents"/>; <see cref="Paths"/> remains for path-list clients.
 /// </summary>
 /// <param name="Intents">Authoring intents (empty or null with empty paths clears rules).</param>
-/// <param name="Paths">Legacy atomic paths when intents are omitted.</param>
+/// <param name="Paths">Atomic paths when intents are omitted.</param>
 public sealed record ReplaceStageQualificationRulesRequest(
     IReadOnlyList<QualificationIntentRequest>? Intents = null,
     IReadOnlyList<QualificationPathRequest>? Paths = null);
 
 /// <summary>
-/// One HTTP qualification authoring intent.
+/// One HTTP qualification authoring intent (destination = peer-stage population).
 /// </summary>
 public sealed record QualificationIntentRequest(
     Guid IntentId,
@@ -28,31 +28,18 @@ public sealed record QualificationIntentRequest(
     int PositionFrom,
     int PositionTo,
     Guid DestinationStageId,
-    QualificationMappingMode MappingMode = QualificationMappingMode.Canonical,
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
-    int? MinimumPoints = null,
-    IReadOnlyList<QualificationSlotOverrideRequest>? SlotOverrides = null);
+    int? MinimumPoints = null);
 
 /// <summary>
-/// One HTTP slot override (Custom mapping).
-/// </summary>
-public sealed record QualificationSlotOverrideRequest(
-    RankingScope Scope,
-    int Position,
-    string SlotKey,
-    Guid? GroupId = null,
-    int? AcrossGroupsPosition = null);
-
-/// <summary>
-/// One HTTP qualification path.
+/// One HTTP qualification path (destination = peer-stage population).
 /// </summary>
 public sealed record QualificationPathRequest(
     int Order,
     SelectionMode SelectionMode,
     int SelectionValue,
     Guid DestinationStageId,
-    string DestinationSlotKey,
     RankingScope? RankingScope = null,
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,

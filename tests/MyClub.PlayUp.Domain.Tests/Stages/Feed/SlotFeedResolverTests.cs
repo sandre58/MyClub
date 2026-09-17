@@ -64,38 +64,6 @@ public sealed class SlotFeedResolverTests
     }
 
     [Fact]
-    public void Unique_qualification_resolves()
-    {
-        var snapshot = Snapshot(
-            ["SF1-A"],
-            qualifications: [new QualificationFeedSource(_source, 1, "SF1-A")]);
-
-        var result = SlotFeedResolver.Resolve(snapshot, "SF1-A");
-
-        result.Status.Should().Be(FeedResolutionStatus.Unique);
-        result.Source!.Kind.Should().Be(FeedKind.Qualification);
-        result.Source.Qualification!.SourceStageId.Should().Be(_source);
-        result.Source.Qualification.PathOrder.Should().Be(1);
-    }
-
-    [Fact]
-    public void Two_qualification_paths_are_invalid_feed()
-    {
-        var snapshot = Snapshot(
-            ["SF1-A"],
-            qualifications:
-            [
-                new QualificationFeedSource(_source, 1, "SF1-A"),
-                new QualificationFeedSource(_source, 2, "SF1-A")
-            ]);
-
-        var result = SlotFeedResolver.Resolve(snapshot, "SF1-A");
-
-        result.Status.Should().Be(FeedResolutionStatus.InvalidFeed);
-        result.ContributingKinds.Should().Equal(FeedKind.Qualification);
-    }
-
-    [Fact]
     public void Progression_winner_resolves_unique()
     {
         var fixtureId = FixtureId.New();
@@ -148,42 +116,6 @@ public sealed class SlotFeedResolverTests
     }
 
     [Fact]
-    public void Qualification_plus_progression_is_multiple_feeds()
-    {
-        var snapshot = Snapshot(
-            ["SF1-A"],
-            qualifications: [new QualificationFeedSource(_source, 1, "SF1-A")],
-            progressions:
-            [
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A")
-            ]);
-
-        SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
-    }
-
-    [Fact]
-    public void Qualification_plus_direct_is_multiple_feeds()
-    {
-        var snapshot = Snapshot(
-            ["SF1-A"],
-            directs: [new DirectFeedSource("SF1-A", EntryId.New())],
-            qualifications: [new QualificationFeedSource(_source, 1, "SF1-A")]);
-
-        SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
-    }
-
-    [Fact]
-    public void Qualification_plus_draw_is_multiple_feeds()
-    {
-        var snapshot = Snapshot(
-            ["SF1-A"],
-            qualifications: [new QualificationFeedSource(_source, 1, "SF1-A")],
-            draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
-
-        SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
-    }
-
-    [Fact]
     public void Progression_plus_draw_is_multiple_feeds()
     {
         var snapshot = Snapshot(
@@ -213,20 +145,17 @@ public sealed class SlotFeedResolverTests
     {
         var snapshot = Snapshot(
             ["SF1-A"],
-            qualifications:
-            [
-                new QualificationFeedSource(_source, 1, "SF1-A"),
-                new QualificationFeedSource(_source, 2, "SF1-A")
-            ],
             progressions:
             [
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A")
-            ]);
+                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A"),
+                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Loser, "SF1-A")
+            ],
+            draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
 
         var result = SlotFeedResolver.Resolve(snapshot, "SF1-A");
 
         result.Status.Should().Be(FeedResolutionStatus.InvalidFeed);
-        result.ContributingKinds.Should().BeEquivalentTo([FeedKind.Qualification, FeedKind.Progression]);
+        result.ContributingKinds.Should().BeEquivalentTo([FeedKind.Progression, FeedKind.Draw]);
     }
 
     [Fact]
@@ -260,8 +189,8 @@ public sealed class SlotFeedResolverTests
             _target,
             ["SF1-A"],
             [],
-            [new QualificationFeedSource(_source, 1, "Missing")],
             [],
+            [new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "Missing")],
             []);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FeedSnapshotInvalid);
@@ -270,14 +199,13 @@ public sealed class SlotFeedResolverTests
     private SlotFeedSnapshot Snapshot(
         string[] slotKeys,
         IReadOnlyList<DirectFeedSource>? directs = null,
-        IReadOnlyList<QualificationFeedSource>? qualifications = null,
         IReadOnlyList<ProgressionFeedSource>? progressions = null,
         IReadOnlyList<DrawFeedSource>? draws = null) =>
         new(
             _target,
             slotKeys,
             directs ?? [],
-            qualifications ?? [],
+            [],
             progressions ?? [],
             draws ?? []);
 }

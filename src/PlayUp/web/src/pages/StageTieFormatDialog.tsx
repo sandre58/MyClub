@@ -444,6 +444,9 @@ export function TieFormatDialog({
             </button>
           </>
         }
+        footerStatus={
+          mutation.isError ? <MutationError error={mutation.error} /> : null
+        }
       >
         <form
           id={formId}
@@ -603,8 +606,6 @@ export function TieFormatDialog({
               ) : null}
             </div>
           </div>
-
-          {mutation.isError ? <MutationError error={mutation.error} /> : null}
         </form>
       </Dialog>
 

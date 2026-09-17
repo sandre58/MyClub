@@ -236,6 +236,11 @@ export function StructureCompositionDialog({
       description={t('composition.lede')}
       closeLabel={tCommon('close')}
       closeDisabled={saveMutation.isPending}
+      footerStatus={
+        saveMutation.isError ? (
+          <MutationError error={saveMutation.error} />
+        ) : null
+      }
       footer={
         <>
           <button
@@ -262,10 +267,6 @@ export function StructureCompositionDialog({
       }
     >
       <div className="structure-composition">
-        {saveMutation.isError ? (
-          <MutationError error={saveMutation.error} />
-        ) : null}
-
         <div className="structure-composition__toolbar">
           <div
             className={[

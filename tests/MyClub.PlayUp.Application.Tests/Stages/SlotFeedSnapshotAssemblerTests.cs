@@ -19,7 +19,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 9, 19, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Assemble_maps_qualification_from_source_stage_to_target_slot()
+    public void Assemble_does_not_emit_qualification_population_as_slot_feeds()
     {
         var competitionId = CompetitionId.New();
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
@@ -34,20 +34,18 @@ public sealed class SlotFeedSnapshotAssemblerTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Top, 1),
-                    new QualificationDestination(target.Id, "SF1-A"))
+                    QualificationDestination.ForPopulation(target.Id))
             ]),
             _clock);
 
         var snapshot = SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
 
-        snapshot.InboundQualification.Should().ContainSingle();
-        snapshot.InboundQualification[0].SourceStageId.Should().Be(source.Id);
-        snapshot.InboundQualification[0].DestinationSlotKey.Should().Be("SF1-A");
+        snapshot.InboundQualification.Should().BeEmpty();
         snapshot.DrawTargets.Should().BeEmpty();
     }
 
     [Fact]
-    public void Assemble_maps_conditional_qualification_path_as_feed()
+    public void Assemble_ignores_conditional_qualification_population_paths()
     {
         var competitionId = CompetitionId.New();
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
@@ -62,16 +60,14 @@ public sealed class SlotFeedSnapshotAssemblerTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 3),
-                    new QualificationDestination(target.Id, "SF1-A"),
+                    QualificationDestination.ForPopulation(target.Id),
                     QualificationCondition.PointsAtLeast(40))
             ]),
             _clock);
 
         var snapshot = SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
 
-        snapshot.InboundQualification.Should().ContainSingle();
-        snapshot.InboundQualification[0].SourceStageId.Should().Be(source.Id);
-        snapshot.InboundQualification[0].DestinationSlotKey.Should().Be("SF1-A");
+        snapshot.InboundQualification.Should().BeEmpty();
     }
 
     [Fact]
@@ -103,22 +99,23 @@ public sealed class SlotFeedSnapshotAssemblerTests
     }
 
     [Fact]
-    public void Assemble_rejects_dangling_slot_target()
+    public void Assemble_rejects_dangling_progression_slot_target()
     {
         var competitionId = CompetitionId.New();
-        var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
-        var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
-        target.AddRound("QF", _clock);
+        var source = Stage.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var target = Stage.Create(competitionId, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        var round = source.AddRound("QF", _clock);
+        var fixture = source.AddFixture(round.Id, _clock);
+        target.AddRound("SF", _clock);
         target.AddSlot("SF1-A");
 
-        source.ReplaceQualificationRules(
-            new QualificationRules(
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
             [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Top, 1),
-                    new QualificationDestination(target.Id, "Missing"))
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(target.Id, "Missing"))
             ]),
             _clock);
 

@@ -29,7 +29,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 14, 0, 0, TimeSpan.Zero));
 
     [IntegrationFact]
-    public async Task Apply_qualification_fills_destination_slotsAsync()
+    public async Task Apply_qualification_fills_destination_populationAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var (leagueId, terminalId) = await SeedChampionshipQualificationAsync(factory);
@@ -44,7 +44,8 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var terminal = await stages.GetByIdForUpdateAsync(terminalId);
-        terminal!.FindSlot("Champ")!.EntryId.Should().NotBeNull();
+        terminal!.CompositionEntries.Should().NotBeEmpty();
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
     }
 
     [IntegrationFact]
@@ -63,7 +64,8 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         GetCode(problem!).Should().Be(ApplicationErrorCodes.SlotOccupancyConflict);
 
         using var scope = factory.Services.CreateScope();
-        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
+            .GetByIdForUpdateAsync(seed.StageId);
         stage!.FindSlot("SF1-A")!.EntryId.Should().Be(seed.ForeignEntryId);
     }
 
@@ -122,7 +124,8 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        var competition = Competition.Create(new CompetitionName("Slice5 Qualif"), SampleRegulations.Standard(), _clock);
+        var competition =
+            Competition.Create(new CompetitionName("Slice5 Qualif"), SampleRegulations.Standard(), _clock);
         var e1 = competition.AddEntry(TeamId.New(), "A", _clock);
         var e2 = competition.AddEntry(TeamId.New(), "B", _clock);
         var e3 = competition.AddEntry(TeamId.New(), "C", _clock);
@@ -143,7 +146,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(terminal.Id, "Champ"))
+                    QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);
 
@@ -224,7 +227,8 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-        var competition = Competition.Create(new CompetitionName("Slice5 Conflict"), SampleRegulations.Standard(), _clock);
+        var competition =
+            Competition.Create(new CompetitionName("Slice5 Conflict"), SampleRegulations.Standard(), _clock);
         var home = competition.AddEntry(TeamId.New(), "Home", _clock);
         var away = competition.AddEntry(TeamId.New(), "Away", _clock);
         var foreign = competition.AddEntry(TeamId.New(), "Foreign", _clock);

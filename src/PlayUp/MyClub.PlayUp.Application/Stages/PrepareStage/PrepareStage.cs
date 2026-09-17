@@ -92,11 +92,10 @@ public static class PrepareStage
         {
             foreach (var path in qualification.Paths)
             {
-                EnsureOutboundDestination(
+                EnsureOutboundPopulationDestination(
                     source,
                     competitionStages,
                     path.Destination.StageId,
-                    path.Destination.SlotKey,
                     "Qualification");
             }
         }

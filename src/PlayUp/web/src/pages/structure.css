@@ -2406,6 +2406,17 @@ button.structure-flux-group__peer {
   }
 }
 
+.structure-qualification__hint-line {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-label);
+  line-height: var(--leading-normal);
+}
+
+.structure-qualification__hint-line + .structure-qualification__hint-line {
+  margin-top: var(--space-4);
+}
+
 .structure-qualification {
   display: flex;
   flex-direction: column;
@@ -2415,21 +2426,32 @@ button.structure-flux-group__peer {
 }
 
 /* Fixed chrome while editing — only viewport resize changes dialog size. */
-.ds-dialog:has(.structure-qualification) .ds-dialog__panel {
+.ds-dialog:has(.structure-qualification) .ds-dialog__panel,
+.ds-dialog:has(.structure-progression) .ds-dialog__panel {
   height: min(92vh, 52rem);
   max-height: min(92vh, 52rem);
 }
 
-.ds-dialog:has(.structure-qualification) .ds-dialog__body {
+.ds-dialog:has(.structure-qualification) .ds-dialog__body,
+.ds-dialog:has(.structure-progression) .ds-dialog__body {
   overflow: hidden;
 }
 
 .structure-qualification__summary {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-8) var(--space-16);
   padding: 0;
+}
+
+.structure-qualification__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8) var(--space-16);
+  min-width: 0;
 }
 
 .structure-qualification__fact {
@@ -2496,6 +2518,11 @@ button.structure-flux-group__peer {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+}
+
+.structure-qualification .ds-empty--idle {
+  flex: 1 1 auto;
+  min-height: 8rem;
 }
 
 .structure-qualification__item {
@@ -2666,6 +2693,12 @@ button.structure-flux-group__peer {
   text-align: start;
 }
 
+.structure-qualification__scope-tiles .ds-choice-tile__check {
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-8);
+}
+
 .structure-qualification__scope-tiles .ds-choice-tile__leading {
   color: var(--color-brand);
   opacity: 0.85;
@@ -2674,10 +2707,69 @@ button.structure-flux-group__peer {
 .structure-qualification__scope-tiles .ds-choice-tile__title {
   white-space: pre-line;
   line-height: var(--leading-tight);
+  padding-inline-end: 1.25rem;
 }
 
 .structure-qualification__scope-tiles .ds-choice-tile__description {
-  white-space: pre-line;
+  white-space: normal;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-qualification__tile-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.structure-qualification__tile-meter-label {
+  font-size: 0.6875rem;
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.structure-qualification__tile-meter-track {
+  display: block;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-ink) 10%, var(--color-surface));
+  overflow: hidden;
+}
+
+.structure-qualification__tile-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-brand);
+  transition: width 160ms ease;
+}
+
+.structure-qualification__tile-meter--short .structure-qualification__tile-meter-label {
+  color: var(--color-error);
+}
+
+.structure-qualification__tile-meter--short .structure-qualification__tile-meter-fill {
+  background: var(--color-error);
+}
+
+.structure-qualification__tile-meter--exact .structure-qualification__tile-meter-label {
+  color: var(--color-success, var(--color-brand));
+}
+
+.structure-qualification__tile-meter--exact .structure-qualification__tile-meter-fill {
+  background: var(--color-success, var(--color-brand));
+}
+
+.structure-qualification__tile-meter--over .structure-qualification__tile-meter-label {
+  color: var(--color-attention);
+}
+
+.structure-qualification__tile-meter--over .structure-qualification__tile-meter-fill {
+  background: var(--color-attention);
 }
 
 .structure-qualification__positions {
@@ -2780,13 +2872,6 @@ button.structure-flux-group__peer {
 .structure-qualification__dest-label {
   font-size: var(--text-body);
   color: var(--color-ink);
-}
-
-.structure-qualification__editor-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-8);
 }
 
 .structure-qualification__orphan {

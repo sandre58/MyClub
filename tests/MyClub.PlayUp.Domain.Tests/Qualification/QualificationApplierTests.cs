@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
 using Xunit;
 
@@ -151,26 +152,19 @@ public sealed class QualificationApplierTests
     public void Apply_best_1_returns_instruction()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Best, 1),
-            new QualificationDestination(_stageId, "Champ"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Best, 1));
 
         var instruction = QualificationApplier.Apply(path, standing);
 
-        instruction!.EntryId.Should().Be(_a);
+        instruction!.StageId.Should().Be(_stageId);
+        instruction.EntryId.Should().Be(_a);
     }
 
     [Fact]
     public void Apply_best_n_rejects_path_multi_entry()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Best, 2),
-            new QualificationDestination(_stageId, "KO"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Best, 2));
 
         var act = () => QualificationApplier.Apply(path, standing);
 
@@ -181,26 +175,19 @@ public sealed class QualificationApplierTests
     public void Apply_worst_1_returns_instruction()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Worst, 1),
-            new QualificationDestination(_stageId, "Relegated"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Worst, 1));
 
         var instruction = QualificationApplier.Apply(path, standing);
 
-        instruction!.EntryId.Should().Be(_d);
+        instruction!.StageId.Should().Be(_stageId);
+        instruction.EntryId.Should().Be(_d);
     }
 
     [Fact]
     public void Apply_worst_n_rejects_path_multi_entry()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Worst, 2),
-            new QualificationDestination(_stageId, "KO"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Worst, 2));
 
         var act = () => QualificationApplier.Apply(path, standing);
 
@@ -224,46 +211,33 @@ public sealed class QualificationApplierTests
     }
 
     [Fact]
-    public void Apply_position_returns_instruction()
+    public void Apply_position_returns_qualification_instruction()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Position, 1),
-            new QualificationDestination(_stageId, "Champ"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Position, 1));
 
         var instruction = QualificationApplier.Apply(path, standing);
 
-        instruction!.StageId.Should().Be(_stageId);
-        instruction.SlotKey.Should().Be("Champ");
-        instruction.EntryId.Should().Be(_a);
+        instruction.Should().Be(new QualificationInstruction(_stageId, _a));
     }
 
     [Fact]
     public void Apply_range_from_equals_to_is_single_entry()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Range, 3, 3),
-            new QualificationDestination(_stageId, "P3"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Range, 3, 3));
 
         var instruction = QualificationApplier.Apply(path, standing);
 
-        instruction!.EntryId.Should().Be(_c);
+        instruction!.StageId.Should().Be(_stageId);
+        instruction.EntryId.Should().Be(_c);
     }
 
     [Fact]
     public void Apply_rejects_multi_entry_selection()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Top, 2),
-            new QualificationDestination(_stageId, "KO"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Top, 2));
 
         var act = () => QualificationApplier.Apply(path, standing);
 
@@ -274,11 +248,7 @@ public sealed class QualificationApplierTests
     public void Apply_rejects_unresolved_position()
     {
         var standing = BuildStanding();
-        var path = new QualificationPath(
-            1,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Position, 99),
-            new QualificationDestination(_stageId, "X"));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Position, 99));
 
         var act = () => QualificationApplier.Apply(path, standing);
 
@@ -289,31 +259,32 @@ public sealed class QualificationApplierTests
     public void Apply_condition_satisfied_returns_instruction()
     {
         var standing = ManualStanding([(_a, 1, 50), (_b, 2, 45), (_c, 3, 42)]);
-        var path = ConditionalPositionPath(3, minimumPoints: 40, "C");
+        var path = ConditionalPositionPath(3, minimumPoints: 40);
 
         var instruction = QualificationApplier.Apply(path, standing);
 
         instruction.Should().NotBeNull();
-        instruction.EntryId.Should().Be(_c);
+        instruction.Should().Be(new QualificationInstruction(_stageId, _c));
     }
 
     [Fact]
     public void Apply_condition_at_threshold_returns_instruction()
     {
         var standing = ManualStanding([(_a, 1, 50), (_b, 2, 45), (_c, 3, 40)]);
-        var path = ConditionalPositionPath(3, minimumPoints: 40, "C");
+        var path = ConditionalPositionPath(3, minimumPoints: 40);
 
         var instruction = QualificationApplier.Apply(path, standing);
 
         instruction.Should().NotBeNull();
         instruction.EntryId.Should().Be(_c);
+        instruction.StageId.Should().Be(_stageId);
     }
 
     [Fact]
     public void Apply_condition_not_satisfied_returns_null_skip()
     {
         var standing = ManualStanding([(_a, 1, 50), (_b, 2, 45), (_c, 3, 39)]);
-        var path = ConditionalPositionPath(3, minimumPoints: 40, "C");
+        var path = ConditionalPositionPath(3, minimumPoints: 40);
 
         var instruction = QualificationApplier.Apply(path, standing);
 
@@ -324,7 +295,7 @@ public sealed class QualificationApplierTests
     public void Apply_condition_with_missing_position_is_unresolved_not_skip()
     {
         var standing = ManualStanding([(_a, 1, 50), (_b, 2, 45)]);
-        var path = ConditionalPositionPath(3, minimumPoints: 40, "C");
+        var path = ConditionalPositionPath(3, minimumPoints: 40);
 
         var act = () => QualificationApplier.Apply(path, standing);
 
@@ -342,7 +313,7 @@ public sealed class QualificationApplierTests
             1,
             QualificationSource.Overall(),
             new QualificationSelection(mode, 1),
-            new QualificationDestination(_stageId, "C"),
+            QualificationDestination.ForPopulation(_stageId),
             QualificationCondition.PointsAtLeast(40));
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
@@ -355,7 +326,7 @@ public sealed class QualificationApplierTests
             1,
             QualificationSource.Overall(),
             new QualificationSelection(SelectionMode.Range, 1, 1),
-            new QualificationDestination(_stageId, "C"),
+            QualificationDestination.ForPopulation(_stageId),
             QualificationCondition.PointsAtLeast(40));
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
@@ -364,7 +335,7 @@ public sealed class QualificationApplierTests
     [Fact]
     public void Path_Copy_preserves_condition()
     {
-        var original = ConditionalPositionPath(3, 40, "C");
+        var original = ConditionalPositionPath(3, 40);
 
         var copy = original.Copy();
 
@@ -388,12 +359,19 @@ public sealed class QualificationApplierTests
                 points: r.Points))
         ]);
 
-    private QualificationPath ConditionalPositionPath(int position, int minimumPoints, string slotKey) =>
+    private QualificationPath PopulationPath(QualificationSelection selection) =>
+        new(
+            1,
+            QualificationSource.Overall(),
+            selection,
+            QualificationDestination.ForPopulation(_stageId));
+
+    private QualificationPath ConditionalPositionPath(int position, int minimumPoints) =>
         new(
             1,
             QualificationSource.Overall(),
             new QualificationSelection(SelectionMode.Position, position),
-            new QualificationDestination(_stageId, slotKey),
+            QualificationDestination.ForPopulation(_stageId),
             QualificationCondition.PointsAtLeast(minimumPoints));
 
     private Standing BuildStanding()

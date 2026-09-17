@@ -40,7 +40,7 @@ public sealed class MechanismBoundaryTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(terminal.Id, "Champ"))
+                    QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);
 
@@ -49,7 +49,8 @@ public sealed class MechanismBoundaryTests
         league.Draws.Should().BeEmpty();
         terminal.Draws.Should().BeEmpty();
         terminal.DirectAssignments.Should().BeEmpty();
-        terminal.FindSlot("Champ")!.EntryId.Should().Be(standing.EntryAt(1));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Equal(standing.EntryAt(1)!.Value);
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
     }
 
     [Fact]
@@ -98,7 +99,7 @@ public sealed class MechanismBoundaryTests
     }
 
     [Fact]
-    public void Qualification_and_Draw_remain_separate_when_both_target_slots()
+    public void Qualification_population_and_Draw_remain_separate()
     {
         var competitionId = CompetitionId.New();
         var league = CreateLeague(competitionId, "League");
@@ -114,21 +115,20 @@ public sealed class MechanismBoundaryTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(qualified.Id, "Q1")),
+                    QualificationDestination.ForPopulation(qualified.Id)),
                 new QualificationPath(
                     2,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(qualified.Id, "Q2"))
+                    QualificationDestination.ForPopulation(qualified.Id))
             ]),
             _clock);
 
         ApplyQualification.Execute(league, standing, [league, qualified], _clock);
-        EntryId[] pool =
-        [
-            qualified.FindSlot("Q1")!.EntryId!.Value,
-            qualified.FindSlot("Q2")!.EntryId!.Value
-        ];
+        var pool = qualified.CompositionEntries.Select(e => e.EntryId).ToArray();
+        pool.Should().HaveCount(2);
+        qualified.FindSlot("Q1")!.EntryId.Should().BeNull();
+        qualified.FindSlot("Q2")!.EntryId.Should().BeNull();
 
         var draw = knockout.CreateDraw(DrawResolutionKind.Slot, _clock);
         knockout.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool));
@@ -143,7 +143,7 @@ public sealed class MechanismBoundaryTests
         knockout.PublishDraw(draw.Id, _clock);
         ApplyDraw.Execute(knockout, draw.Id, _clock);
 
-        qualified.FindSlot("Q1")!.EntryId.Should().Be(pool[0]);
+        qualified.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo(pool);
         qualified.Draws.Should().BeEmpty();
         knockout.Draws.Should().ContainSingle();
         knockout.FindSlot("SF1-A")!.EntryId.Should().Be(pool[0]);

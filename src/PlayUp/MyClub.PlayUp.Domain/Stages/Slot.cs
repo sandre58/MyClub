@@ -6,7 +6,6 @@
 
 using System.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Rules;
 
 namespace MyClub.PlayUp.Domain.Stages;
 
@@ -20,7 +19,7 @@ public sealed class Slot : Entity<string>
     /// <summary>
     /// Maximum allowed length of a slot key after trim.
     /// </summary>
-    public const int SlotKeyMaxLength = QualificationDestination.SlotKeyMaxLength;
+    public const int SlotKeyMaxLength = 100;
 
     internal Slot(string slotKey)
         : base(NormalizeKey(slotKey))

@@ -118,9 +118,6 @@ public static class StructureViewAssembler
     /// <summary>Stage structure issue: progression destination stage missing from competition.</summary>
     public const string IssueDanglingProgressionTarget = "DanglingProgressionTarget";
 
-    /// <summary>Stage structure issue: qualification destination slot missing on target stage.</summary>
-    public const string IssueMissingQualificationDestinationSlot = "MissingQualificationDestinationSlot";
-
     /// <summary>Stage structure issue: progression destination slot missing on target stage.</summary>
     public const string IssueMissingProgressionDestinationSlot = "MissingProgressionDestinationSlot";
 
@@ -471,51 +468,34 @@ public static class StructureViewAssembler
 
     private static IReadOnlyList<StructureQualificationIntentDto>? MapQualificationIntents(
         Stage stage,
-        QualificationRules? rules)
-    {
-        if (rules is null || rules.Intents.Count == 0)
-        {
-            return null;
-        }
-
-        return
-        [
-            .. rules.Intents.Select(intent =>
-            {
-                string? groupName = null;
-                if (intent.GroupId is { } groupId)
+        QualificationRules? rules) =>
+        rules is null || rules.Intents.Count == 0
+            ? null
+            :
+            [
+                .. rules.Intents.Select(intent =>
                 {
-                    groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
-                }
+                    string? groupName = null;
+                    if (intent.GroupId is { } groupId)
+                    {
+                        groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
+                    }
 
-                var destinationCount = CountIntentDestinations(intent, stage.Groups.Count);
-                return new StructureQualificationIntentDto(
-                    intent.Id.Value,
-                    intent.Order,
-                    intent.SourceKind,
-                    intent.PositionFrom,
-                    intent.PositionTo,
-                    intent.DestinationStageId.Value,
-                    intent.MappingMode,
-                    intent.GroupId?.Value,
-                    groupName,
-                    intent.AcrossGroupsPosition,
-                    intent.Condition?.MinimumPoints,
-                    intent.SlotOverrides.Count == 0
-                        ? null
-                        :
-                        [
-                            .. intent.SlotOverrides.Select(o => new StructureQualificationSlotOverrideDto(
-                                o.Occurrence.Scope,
-                                o.Occurrence.Position,
-                                o.SlotKey,
-                                o.Occurrence.GroupId?.Value,
-                                o.Occurrence.AcrossGroupsPosition))
-                        ],
-                    destinationCount);
-            })
-        ];
-    }
+                    var destinationCount = CountIntentDestinations(intent, stage.Groups.Count);
+                    return new StructureQualificationIntentDto(
+                        intent.Id.Value,
+                        intent.Order,
+                        intent.SourceKind,
+                        intent.PositionFrom,
+                        intent.PositionTo,
+                        intent.DestinationStageId.Value,
+                        intent.GroupId?.Value,
+                        groupName,
+                        intent.AcrossGroupsPosition,
+                        intent.Condition?.MinimumPoints,
+                        destinationCount);
+                })
+            ];
 
     private static int CountIntentDestinations(QualificationIntent intent, int groupCount)
     {
@@ -523,7 +503,7 @@ public static class StructureViewAssembler
         return intent.SourceKind switch
         {
             QualificationIntentSourceKind.EachGroup => Math.Max(groupCount, 0) * span,
-            _ => span,
+            _ => span
         };
     }
 
@@ -546,7 +526,6 @@ public static class StructureViewAssembler
                         path.Selection.Mode,
                         path.Selection.Value,
                         path.Destination.StageId.Value,
-                        path.Destination.SlotKey,
                         path.Source.Scope,
                         path.Source.GroupId?.Value,
                         path.Source.AcrossGroupsPosition,
@@ -750,23 +729,13 @@ public static class StructureViewAssembler
             {
                 if (path.Destination.StageId.Equals(stage.Id))
                 {
-                    if (stage.FindSlot(path.Destination.SlotKey) is null)
-                    {
-                        issues.Add(IssueMissingQualificationDestinationSlot);
-                    }
-
-                    continue;
-                }
-
-                if (!byId.TryGetValue(path.Destination.StageId, out var destination))
-                {
                     issues.Add(IssueDanglingQualificationTarget);
                     continue;
                 }
 
-                if (destination.FindSlot(path.Destination.SlotKey) is null)
+                if (!byId.ContainsKey(path.Destination.StageId))
                 {
-                    issues.Add(IssueMissingQualificationDestinationSlot);
+                    issues.Add(IssueDanglingQualificationTarget);
                 }
             }
         }

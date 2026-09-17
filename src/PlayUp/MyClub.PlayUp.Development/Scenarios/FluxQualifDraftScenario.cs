@@ -23,7 +23,7 @@ public sealed class FluxQualifDraftScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 2×4 Affectation + Qualif Top1/Top2 → QF — Draft. Sorties Qualif + Entrées aval (WhoFeeds / jump source).";
+        "Groups 2×4 Affectation + Qualif Top1/Top2 → QF population — Draft. Sorties Qualif + Entrées aval (WhoFeeds / jump source).";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

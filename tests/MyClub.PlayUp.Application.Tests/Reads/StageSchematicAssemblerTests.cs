@@ -223,7 +223,7 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Cup_dangling_qualification_target_degrades_to_no_feed_instead_of_failing()
+    public void Cup_qualification_population_does_not_appear_as_slot_feed()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var source = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
@@ -232,7 +232,6 @@ public sealed class StageSchematicAssemblerTests
         target.AddRound("BR", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         target.AddSlot("BR-1-A");
 
-        // Qualification path towards a slot that no longer exists on the target stage.
         source.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -240,7 +239,7 @@ public sealed class StageSchematicAssemblerTests
                     1,
                     QualificationSource.FromGroup(group.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(target.Id, "BR-2-A"))
+                    QualificationDestination.ForPopulation(target.Id))
             ]),
             _clock);
 

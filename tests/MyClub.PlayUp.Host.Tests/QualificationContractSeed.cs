@@ -50,7 +50,7 @@ internal static class QualificationContractSeed
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(terminal.Id, "Champ"))
+                    QualificationDestination.ForPopulation(terminal.Id))
             ]),
             Clock);
 

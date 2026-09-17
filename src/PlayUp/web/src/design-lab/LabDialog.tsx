@@ -26,9 +26,10 @@ export function LabDialog() {
         <p className="ds-eyebrow">Design System</p>
         <h1 className="dlab-dialog__title">Dialog</h1>
         <p className="dlab-dialog__lede">
-          Chrome overlay centré — titre, corps, footer d’actions à droite,
-          Fermer = icône X (aria-label). Pas de filets. Motion 160 ms. Specimens
-          de champs = composants DS (Field / TextInput / Select).
+          Chrome overlay centré — titre, corps, footer = statut fenêtre (gauche,
+          largeur fluide) + actions (droite). Fermer = icône X (aria-label). Pas
+          de filets. Motion 160 ms. Les alertes de fenêtre (warning / erreur de
+          save) vont dans <code>footerStatus</code>, pas dans le corps.
         </p>
       </header>
 
@@ -70,7 +71,7 @@ export function LabDialog() {
           </li>
           <li>Focus initial dans le corps (premier champ)</li>
           <li>Trap Tab · retour de focus au déclencheur</li>
-          <li>Footer sticky sans filet quand le corps déborde</li>
+          <li>Footer sticky : statut (gauche) + actions (droite) ; stack en étroit</li>
           <li>
             Clavier propre au composant (ex. flèches Select) reste local — pas
             une commande applicative globale
@@ -128,6 +129,11 @@ export function LabDialog() {
         onClose={() => setMdOpen(false)}
         title="Configurer la structure"
         size="md"
+        footerStatus={
+          <p className="ds-notice ds-notice--warning" role="status">
+            Exemple : 4/2 places vers la Finale
+          </p>
+        }
         footer={
           <>
             <button

@@ -6,6 +6,7 @@
 
 using System.Text.Json.Serialization;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Domain.Rules;
 
@@ -19,7 +20,7 @@ public sealed record ProgressionDestination
     /// <summary>
     /// Maximum allowed length of a slot key after trim (aligned with qualification destinations).
     /// </summary>
-    public const int SlotKeyMaxLength = QualificationDestination.SlotKeyMaxLength;
+    public const int SlotKeyMaxLength = Slot.SlotKeyMaxLength;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProgressionDestination"/> class.

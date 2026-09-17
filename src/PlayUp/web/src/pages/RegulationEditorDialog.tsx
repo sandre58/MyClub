@@ -461,6 +461,9 @@ export function RegulationEditorDialog({
             </button>
           </>
         }
+        footerStatus={
+          mutation.isError ? <MutationError error={mutation.error} /> : null
+        }
       >
         <form
           id={formId}
@@ -794,8 +797,6 @@ export function RegulationEditorDialog({
               </FormSection>
             </div>
           </div>
-
-          {mutation.isError ? <MutationError error={mutation.error} /> : null}
         </form>
       </Dialog>
 

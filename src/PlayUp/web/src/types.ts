@@ -684,16 +684,6 @@ export type QualificationIntentSourceKind =
   | 'Overall'
   | 'AcrossGroups';
 
-export type QualificationMappingMode = 'Canonical' | 'Custom';
-
-export interface StructureQualificationSlotOverride {
-  scope: RankingScope;
-  position: number;
-  slotKey: string;
-  groupId?: string | null;
-  acrossGroupsPosition?: number | null;
-}
-
 export interface StructureQualificationIntent {
   intentId: string;
   order: number;
@@ -701,12 +691,11 @@ export interface StructureQualificationIntent {
   positionFrom: number;
   positionTo: number;
   destinationStageId: string;
-  mappingMode: QualificationMappingMode;
   groupId?: string | null;
   groupName?: string | null;
   acrossGroupsPosition?: number | null;
   minimumPoints?: number | null;
-  slotOverrides?: StructureQualificationSlotOverride[] | null;
+  /** Expanded entry count toward destination population. */
   destinationCount?: number;
 }
 
@@ -716,7 +705,6 @@ export interface StructureQualificationPath {
   selectionMode: SelectionMode;
   selectionValue: number;
   destinationStageId: string;
-  destinationSlotKey: string;
   rankingScope?: RankingScope | null;
   groupId?: string | null;
   /** Resolved group display name when groupId is set. */

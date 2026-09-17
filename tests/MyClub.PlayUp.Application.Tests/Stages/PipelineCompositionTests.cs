@@ -130,7 +130,7 @@ public sealed class PipelineCompositionTests
     }
 
     [Fact]
-    public void Qualification_then_Progression_without_Draw_composes()
+    public void Qualification_population_then_slot_place_then_Progression_composes()
     {
         var competitionId = CompetitionId.New();
         var league = Stage.Create(competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
@@ -151,18 +151,24 @@ public sealed class PipelineCompositionTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(qf.Id, "QF1-A")),
+                    QualificationDestination.ForPopulation(qf.Id)),
                 new QualificationPath(
                     2,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 2),
-                    new QualificationDestination(qf.Id, "QF1-B"))
+                    QualificationDestination.ForPopulation(qf.Id))
             ]),
             _clock);
         ApplyQualification.Execute(league, standing, [league, qf], _clock);
 
-        var home = qf.FindSlot("QF1-A")!.EntryId!.Value;
-        var away = qf.FindSlot("QF1-B")!.EntryId!.Value;
+        var pool = qf.CompositionEntries.Select(e => e.EntryId).ToArray();
+        pool.Should().HaveCount(2);
+        qf.FindSlot("QF1-A")!.EntryId.Should().BeNull();
+        qf.AssignEntryToSlot("QF1-A", pool[0]);
+        qf.AssignEntryToSlot("QF1-B", pool[1]);
+
+        var home = pool[0];
+        var away = pool[1];
         var (fixtureId, match) = AttachFinishedMatch(qf, home, away, 2, 1);
         qf.ReplaceProgressionRules(
             new ProgressionRules(
@@ -228,12 +234,13 @@ public sealed class PipelineCompositionTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(terminal.Id, "Champ"))
+                    QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);
         ApplyQualification.Execute(groups, standing, [groups, terminal], _clock);
 
-        terminal.FindSlot("Champ")!.EntryId.Should().NotBeNull();
+        terminal.CompositionEntries.Should().NotBeEmpty();
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
         draw.Status.Should().Be(DrawStatus.Published);
         draw.Kind.Should().Be(DrawResolutionKind.Group);
         groups.DirectAssignments.Should().BeEmpty();

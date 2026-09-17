@@ -239,7 +239,7 @@ export function ErrorState({ error }: { error: unknown }) {
   );
 }
 
-/** Inline failure of a write, next to the action that failed. */
+/** Dialog footer status failure of a write — next to the save actions. */
 export function MutationError({ error }: { error: unknown }) {
   const { t } = useTranslation('common');
 

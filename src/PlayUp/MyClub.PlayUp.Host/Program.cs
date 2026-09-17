@@ -718,35 +718,16 @@ try
             {
                 IReadOnlyList<QualificationIntentSpec> intents =
                 [
-                    .. request.Intents.Select(intent =>
-                    {
-                        IReadOnlyList<QualificationSlotOverrideSpec>? overrides = null;
-                        if (intent.SlotOverrides is { Count: > 0 })
-                        {
-                            overrides =
-                            [
-                                .. intent.SlotOverrides.Select(o => new QualificationSlotOverrideSpec(
-                                    o.Scope,
-                                    o.Position,
-                                    o.SlotKey,
-                                    o.GroupId,
-                                    o.AcrossGroupsPosition))
-                            ];
-                        }
-
-                        return new QualificationIntentSpec(
-                            intent.IntentId,
-                            intent.Order,
-                            intent.SourceKind,
-                            intent.PositionFrom,
-                            intent.PositionTo,
-                            intent.DestinationStageId,
-                            intent.MappingMode,
-                            intent.GroupId,
-                            intent.AcrossGroupsPosition,
-                            intent.MinimumPoints,
-                            overrides);
-                    })
+                    .. request.Intents.Select(intent => new QualificationIntentSpec(
+                        intent.IntentId,
+                        intent.Order,
+                        intent.SourceKind,
+                        intent.PositionFrom,
+                        intent.PositionTo,
+                        intent.DestinationStageId,
+                        intent.GroupId,
+                        intent.AcrossGroupsPosition,
+                        intent.MinimumPoints))
                 ];
                 await executor
                     .ReplaceStageQualificationIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -764,7 +745,6 @@ try
                         path.SelectionMode,
                         path.SelectionValue,
                         path.DestinationStageId,
-                        path.DestinationSlotKey,
                         path.RankingScope,
                         path.GroupId,
                         path.AcrossGroupsPosition,
@@ -1068,7 +1048,6 @@ try
                 [
                     .. applied.Select(instruction => new QualificationAssignmentDto(
                         instruction.StageId.Value,
-                        instruction.SlotKey,
                         instruction.EntryId.Value))
                 ]));
         });

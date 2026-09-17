@@ -11,10 +11,10 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// World Cup inspired Groups → KO + Bronze (Top2, no best thirds).
+/// World Cup inspired Groups → KO + Bronze (Top2 → R16 population → Slot Draw, no best thirds).
 /// </summary>
 /// <remarks>
-/// Seed plays Groups→R16→QF→SF→Final+Bronze with PlacementAwards (ranks 1–4) and Completes the
+/// Seed plays Groups→Qual population→Draw→R16→QF→SF→Final+Bronze with PlacementAwards (ranks 1–4) and Completes the
 /// competition so Overview Terminée can show <c>CompetitionOutcome</c>. Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
 /// <c>:progress</c> is ignored — fixed seed.
 /// </remarks>
@@ -28,7 +28,7 @@ public sealed class WorldCupTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 8×4 → Top2 → R16→QF→SF → Final + Bronze · PlacementAwards 1–4 · Completed + Outcome. :progress ignored.";
+        "Groups 8×4 → Top2 population → Slot Draw → R16→QF→SF → Final + Bronze · PlacementAwards 1–4 · Completed + Outcome. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()

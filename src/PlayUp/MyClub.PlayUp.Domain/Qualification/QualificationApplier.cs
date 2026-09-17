@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Standings;
 namespace MyClub.PlayUp.Domain.Qualification;
 
 /// <summary>
-/// Pure qualification helper: selects entries from a standing and maps a path to a slot instruction.
+/// Pure qualification helper: selects entries from a standing and maps a path to a population instruction.
 /// Does not mutate aggregates or calculate standings.
 /// <see cref="SelectionMode.Best"/> is an alias of <see cref="SelectionMode.Top"/>;
 /// <see cref="SelectionMode.Worst"/> is an alias of <see cref="SelectionMode.Bottom"/>.
@@ -47,17 +47,17 @@ public static class QualificationApplier
     }
 
     /// <summary>
-    /// Applies a qualification path to a standing, producing a slot assignment instruction or a skip.
+    /// Applies a qualification path to a standing, producing a population instruction or a skip.
     /// </summary>
     /// <param name="path">Declarative qualification path.</param>
     /// <param name="standing">Calculated standing view.</param>
     /// <returns>
-    /// A slot assignment instruction when resolved; <see langword="null"/> when a condition gate skips.
+    /// A population instruction when resolved; <see langword="null"/> when a condition gate skips.
     /// </returns>
     /// <exception cref="DomainException">
     /// Selection is unsupported, unresolved (0 entries), or yields more than one entry.
     /// </exception>
-    public static SlotAssignmentInstruction? Apply(QualificationPath path, Standing standing)
+    public static QualificationInstruction? Apply(QualificationPath path, Standing standing)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(standing);
@@ -69,20 +69,20 @@ public static class QualificationApplier
                 "Qualification selection did not resolve an entry from the standing.",
                 QualificationErrorCodes.SelectionUnresolved),
             > 1 => throw new DomainException(
-                "Qualification path must resolve to exactly one entry in V1 (use one path per slot).",
+                "Qualification path must resolve to exactly one entry.",
                 QualificationErrorCodes.PathMultiEntry),
             _ => ResolveInstruction(path, standing, selected[0])
         };
     }
 
-    private static SlotAssignmentInstruction? ResolveInstruction(
+    private static QualificationInstruction? ResolveInstruction(
         QualificationPath path,
         Standing standing,
         EntryId entryId)
     {
         if (path.Condition is null)
         {
-            return new SlotAssignmentInstruction(path.Destination.StageId, path.Destination.SlotKey, entryId);
+            return new QualificationInstruction(path.Destination.StageId, entryId);
         }
 
         var row = standing.Find(entryId)
@@ -91,7 +91,7 @@ public static class QualificationApplier
                       QualificationErrorCodes.SelectionUnresolved);
 
         return path.Condition.IsSatisfiedBy(row)
-            ? new SlotAssignmentInstruction(path.Destination.StageId, path.Destination.SlotKey, entryId)
+            ? new QualificationInstruction(path.Destination.StageId, entryId)
             : null;
     }
 
@@ -101,20 +101,17 @@ public static class QualificationApplier
         return row is null ? [] : [row.EntryId];
     }
 
-    private static EntryId[] SelectTop(IReadOnlyList<StandingRow> rows, int count) =>
-        [..rows.Where(r => r.Position <= count).OrderBy(r => r.Position).Select(r => r.EntryId)];
+    private static IReadOnlyList<EntryId> SelectTop(IReadOnlyList<StandingRow> rows, int count) =>
+        [.. rows.OrderBy(r => r.Position).Take(count).Select(r => r.EntryId)];
 
-    private static EntryId[] SelectBottom(IReadOnlyList<StandingRow> rows, int count)
-    {
-        if (rows.Count == 0)
-        {
-            return [];
-        }
+    private static IReadOnlyList<EntryId> SelectBottom(IReadOnlyList<StandingRow> rows, int count) =>
+        [.. rows.OrderByDescending(r => r.Position).Take(count).OrderBy(r => r.Position).Select(r => r.EntryId)];
 
-        var threshold = rows.Count - count + 1;
-        return [..rows.Where(r => r.Position >= threshold).OrderBy(r => r.Position).Select(r => r.EntryId)];
-    }
-
-    private static EntryId[] SelectRange(IReadOnlyList<StandingRow> rows, int from, int to) =>
-        [..rows.Where(r => r.Position >= from && r.Position <= to).OrderBy(r => r.Position).Select(r => r.EntryId)];
+    private static IReadOnlyList<EntryId> SelectRange(
+        IReadOnlyList<StandingRow> rows,
+        int from,
+        int to) =>
+        [.. rows.Where(r => r.Position >= from && r.Position <= to)
+            .OrderBy(r => r.Position)
+            .Select(r => r.EntryId)];
 }

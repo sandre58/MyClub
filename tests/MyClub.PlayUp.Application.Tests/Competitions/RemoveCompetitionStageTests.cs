@@ -67,7 +67,6 @@ public sealed class RemoveCompetitionStageTests
                     SelectionMode.Position,
                     SelectionValue: 1,
                     knockout.Id.Value,
-                    "QF1",
                     RankingScope.Overall)
             ],
             _clock);

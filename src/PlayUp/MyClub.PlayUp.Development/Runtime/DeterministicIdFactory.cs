@@ -76,6 +76,11 @@ public sealed class DeterministicIdFactory
     /// <returns>Typed identity.</returns>
     public DrawId Draw(string localKey = "draw") => new(Create("draw", localKey));
 
+    /// <summary>Creates a deterministic <see cref="IntentId"/> (Qual authoring).</summary>
+    /// <param name="localKey">Local key.</param>
+    /// <returns>Typed identity.</returns>
+    public IntentId Intent(string localKey) => new(Create("intent", localKey));
+
     /// <summary>Creates a deterministic <see cref="MemberId"/>.</summary>
     /// <param name="localKey">Local key.</param>
     /// <returns>Typed identity.</returns>

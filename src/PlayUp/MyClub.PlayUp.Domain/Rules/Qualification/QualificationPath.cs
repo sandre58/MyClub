@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// A single routing rule from a stage ranking source to a destination slot.
+/// A single routing rule from a stage ranking source to a destination stage population.
 /// Value object — no technical identity.
 /// </summary>
 public sealed record QualificationPath
@@ -20,7 +20,7 @@ public sealed record QualificationPath
     /// <param name="order">Processing / display order (≥ 1).</param>
     /// <param name="source">Where participants are taken from.</param>
     /// <param name="selection">Which participants are selected.</param>
-    /// <param name="destination">Where participants are routed.</param>
+    /// <param name="destination">Where participants are routed (population).</param>
     /// <param name="condition">
     /// Optional gate on the selected standing row (V1: Points ≥ threshold; Position selection only).
     /// </param>
@@ -77,7 +77,7 @@ public sealed record QualificationPath
     public QualificationCondition? Condition { get; }
 
     /// <summary>
-    /// Gets the destination.
+    /// Gets the destination (stage population).
     /// </summary>
     public QualificationDestination Destination { get; }
 
@@ -90,6 +90,6 @@ public sealed record QualificationPath
             Order,
             new QualificationSource(Source.Scope, Source.GroupId, Source.AcrossGroupsPosition),
             new QualificationSelection(Selection.Mode, Selection.Value, Selection.EndValue),
-            new QualificationDestination(Destination.StageId, Destination.SlotKey),
+            QualificationDestination.ForPopulation(Destination.StageId),
             Condition is null ? null : QualificationCondition.PointsAtLeast(Condition.MinimumPoints));
 }

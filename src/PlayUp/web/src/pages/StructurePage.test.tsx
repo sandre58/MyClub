@@ -517,7 +517,7 @@ describe('StructurePage Structure hub', () => {
         actions: [],
         stages: [
           groupesStage({
-            structureIssues: ['MissingQualificationDestinationSlot'],
+            structureIssues: ['DanglingQualificationTarget'],
             qualificationPathCount: 1,
             hasProgressionRules: false,
             progressionPathCount: 0,
@@ -528,7 +528,6 @@ describe('StructurePage Structure hub', () => {
                 selectionMode: 'Top',
                 selectionValue: 2,
                 destinationStageId: knockOutId,
-                destinationSlotKey: 'missing-slot',
               },
             ],
           }),
@@ -582,7 +581,7 @@ describe('StructurePage Structure hub', () => {
       within(topology).getByText(/^1 anomalie structurelle$/i),
     ).toBeInTheDocument();
     expect(
-      within(topology).getByText(/Emplacement de qualification manquant/i),
+      within(topology).getByText(/Destination de qualification absente/i),
     ).toBeInTheDocument();
     expect(
       within(topology).getByText(/^Anomalie structurelle$/i),
@@ -603,7 +602,7 @@ describe('StructurePage Structure hub', () => {
 
     expect(
       await screen.findByRole('dialog', {
-        name: /Règles de qualification/i,
+        name: /Qualifications/i,
       }),
     ).toBeInTheDocument();
   });

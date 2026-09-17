@@ -24,7 +24,7 @@ public sealed class ApplyQualificationTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 10, 15, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Championship_positions_fill_destination_slots()
+    public void Championship_positions_fill_destination_population()
     {
         var competitionId = CompetitionId.New();
         var league = CreateLeagueStage(competitionId, "League");
@@ -36,18 +36,18 @@ public sealed class ApplyQualificationTests
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
-                Path(1, SelectionMode.Position, 1, terminal.Id, "Champ"),
-                Path(2, SelectionMode.Position, 2, terminal.Id, "Europe1"),
-                Path(3, SelectionMode.Position, 3, terminal.Id, "Europe2")
+                Path(1, SelectionMode.Position, 1, terminal.Id),
+                Path(2, SelectionMode.Position, 2, terminal.Id),
+                Path(3, SelectionMode.Position, 3, terminal.Id)
             ]),
             _clock);
 
         var results = ApplyQualification.Execute(league, standing, [league, terminal], _clock);
 
         results.Should().HaveCount(3);
-        terminal.FindSlot("Champ")!.EntryId.Should().Be(standing.EntryAt(1));
-        terminal.FindSlot("Europe1")!.EntryId.Should().Be(standing.EntryAt(2));
-        terminal.FindSlot("Europe2")!.EntryId.Should().Be(standing.EntryAt(3));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(2)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(3)!.Value);
     }
 
     [Fact]
@@ -64,21 +64,21 @@ public sealed class ApplyQualificationTests
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
-                Path(1, SelectionMode.Position, 1, promo.Id, "P1"),
-                Path(2, SelectionMode.Position, 2, promo.Id, "P2"),
-                Path(3, SelectionMode.Position, 3, playoff.Id, "PO1"),
-                Path(4, SelectionMode.Position, 4, playoff.Id, "PO2"),
-                Path(5, SelectionMode.Position, 5, playoff.Id, "PO3")
+                Path(1, SelectionMode.Position, 1, promo.Id),
+                Path(2, SelectionMode.Position, 2, promo.Id),
+                Path(3, SelectionMode.Position, 3, playoff.Id),
+                Path(4, SelectionMode.Position, 4, playoff.Id),
+                Path(5, SelectionMode.Position, 5, playoff.Id)
             ]),
             _clock);
 
         ApplyQualification.Execute(league, standing, [league, promo, playoff], _clock);
 
-        promo.FindSlot("P1")!.EntryId.Should().Be(standing.EntryAt(1));
-        promo.FindSlot("P2")!.EntryId.Should().Be(standing.EntryAt(2));
-        playoff.FindSlot("PO1")!.EntryId.Should().Be(standing.EntryAt(3));
-        playoff.FindSlot("PO2")!.EntryId.Should().Be(standing.EntryAt(4));
-        playoff.FindSlot("PO3")!.EntryId.Should().Be(standing.EntryAt(5));
+        promo.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(1)!.Value);
+        promo.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(2)!.Value);
+        playoff.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(3)!.Value);
+        playoff.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(4)!.Value);
+        playoff.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(5)!.Value);
     }
 
     [Fact]
@@ -100,12 +100,12 @@ public sealed class ApplyQualificationTests
         var order = 1;
         for (var i = 1; i <= 8; i++)
         {
-            paths.Add(Path(order++, SelectionMode.Position, i, ko.Id, $"KO{i}"));
+            paths.Add(Path(order++, SelectionMode.Position, i, ko.Id));
         }
 
         for (var i = 9; i <= 24; i++)
         {
-            paths.Add(Path(order++, SelectionMode.Position, i, playoff.Id, $"PO{i}"));
+            paths.Add(Path(order++, SelectionMode.Position, i, playoff.Id));
         }
 
         league.ReplaceQualificationRules(new QualificationRules(paths), _clock);
@@ -114,12 +114,12 @@ public sealed class ApplyQualificationTests
 
         for (var i = 1; i <= 8; i++)
         {
-            ko.FindSlot($"KO{i}")!.EntryId.Should().Be(standing.EntryAt(i));
+            ko.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(i)!.Value);
         }
 
         for (var i = 9; i <= 24; i++)
         {
-            playoff.FindSlot($"PO{i}")!.EntryId.Should().Be(standing.EntryAt(i));
+            playoff.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(i)!.Value);
         }
     }
 
@@ -134,12 +134,12 @@ public sealed class ApplyQualificationTests
         var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
 
         league.ReplaceQualificationRules(
-            new QualificationRules([Path(1, SelectionMode.Position, 1, ko.Id, "KO1")]),
+            new QualificationRules([Path(1, SelectionMode.Position, 1, ko.Id)]),
             _clock);
 
         ApplyQualification.Execute(league, standing, [league, ko], _clock);
 
-        ko.FindSlot("KO1")!.EntryId.Should().Be(standing.EntryAt(1));
+        ko.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(1)!.Value);
         for (var i = 25; i <= 36; i++)
         {
             standing.EntryAt(i).Should().NotBeNull();
@@ -165,8 +165,8 @@ public sealed class ApplyQualificationTests
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
-                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id, "A2")
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id)
             ]),
             _clock);
 
@@ -177,8 +177,8 @@ public sealed class ApplyQualificationTests
             [groups, terminal],
             _clock);
 
-        terminal.FindSlot("A1")!.EntryId.Should().Be(standingA.EntryAt(1));
-        terminal.FindSlot("A2")!.EntryId.Should().Be(standingA.EntryAt(2));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(2)!.Value);
     }
 
     [Fact]
@@ -200,7 +200,7 @@ public sealed class ApplyQualificationTests
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, groupA.Id, SelectionMode.Top, 2, terminal.Id, "Pool")
+                GroupPath(1, groupA.Id, SelectionMode.Top, 2, terminal.Id)
             ]),
             _clock);
 
@@ -243,10 +243,10 @@ public sealed class ApplyQualificationTests
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
-                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id, "A2"),
-                GroupPath(3, groupB.Id, SelectionMode.Position, 1, terminal.Id, "B1"),
-                GroupPath(4, groupB.Id, SelectionMode.Position, 2, terminal.Id, "B2")
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id),
+                GroupPath(3, groupB.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(4, groupB.Id, SelectionMode.Position, 2, terminal.Id)
             ]),
             _clock);
 
@@ -261,17 +261,17 @@ public sealed class ApplyQualificationTests
             [groups, terminal],
             _clock);
 
-        terminal.FindSlot("A1")!.EntryId.Should().Be(standingA.EntryAt(1));
-        terminal.FindSlot("A2")!.EntryId.Should().Be(standingA.EntryAt(2));
-        terminal.FindSlot("B1")!.EntryId.Should().Be(standingB.EntryAt(1));
-        terminal.FindSlot("B2")!.EntryId.Should().Be(standingB.EntryAt(2));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(2)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingB.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingB.EntryAt(2)!.Value);
 
-        aEntries.Should().Contain(terminal.FindSlot("A1")!.EntryId!.Value);
-        aEntries.Should().Contain(terminal.FindSlot("A2")!.EntryId!.Value);
-        bEntries.Should().Contain(terminal.FindSlot("B1")!.EntryId!.Value);
-        bEntries.Should().Contain(terminal.FindSlot("B2")!.EntryId!.Value);
-        aEntries.Should().NotContain(terminal.FindSlot("B1")!.EntryId!.Value);
-        bEntries.Should().NotContain(terminal.FindSlot("A1")!.EntryId!.Value);
+        aEntries.Should().Contain(standingA.EntryAt(1)!.Value);
+        aEntries.Should().Contain(standingA.EntryAt(2)!.Value);
+        bEntries.Should().Contain(standingB.EntryAt(1)!.Value);
+        bEntries.Should().Contain(standingB.EntryAt(2)!.Value);
+        aEntries.Should().NotContain(standingB.EntryAt(1)!.Value);
+        bEntries.Should().NotContain(standingA.EntryAt(1)!.Value);
     }
 
     [Fact]
@@ -317,12 +317,12 @@ public sealed class ApplyQualificationTests
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
-                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id, "A2"),
-                GroupPath(3, groupB.Id, SelectionMode.Position, 1, terminal.Id, "B1"),
-                GroupPath(4, groupC.Id, SelectionMode.Position, 1, terminal.Id, "C1"),
-                GroupPath(5, groupC.Id, SelectionMode.Position, 2, terminal.Id, "C2"),
-                GroupPath(6, groupC.Id, SelectionMode.Position, 3, terminal.Id, "C3")
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 2, terminal.Id),
+                GroupPath(3, groupB.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(4, groupC.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(5, groupC.Id, SelectionMode.Position, 2, terminal.Id),
+                GroupPath(6, groupC.Id, SelectionMode.Position, 3, terminal.Id)
             ]),
             _clock);
 
@@ -339,12 +339,12 @@ public sealed class ApplyQualificationTests
             _clock);
 
         results.Should().HaveCount(6);
-        terminal.FindSlot("A1")!.EntryId.Should().Be(standingA.EntryAt(1));
-        terminal.FindSlot("A2")!.EntryId.Should().Be(standingA.EntryAt(2));
-        terminal.FindSlot("B1")!.EntryId.Should().Be(standingB.EntryAt(1));
-        terminal.FindSlot("C1")!.EntryId.Should().Be(standingC.EntryAt(1));
-        terminal.FindSlot("C2")!.EntryId.Should().Be(standingC.EntryAt(2));
-        terminal.FindSlot("C3")!.EntryId.Should().Be(standingC.EntryAt(3));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(2)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingB.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingC.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingC.EntryAt(2)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingC.EntryAt(3)!.Value);
     }
 
     [Fact]
@@ -368,9 +368,9 @@ public sealed class ApplyQualificationTests
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "X"),
-                GroupPath(2, groupA.Id, SelectionMode.Position, 3, terminal.Id, "Y"),
-                GroupPath(3, groupA.Id, SelectionMode.Position, 5, terminal.Id, "Z")
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(2, groupA.Id, SelectionMode.Position, 3, terminal.Id),
+                GroupPath(3, groupA.Id, SelectionMode.Position, 5, terminal.Id)
             ]),
             _clock);
 
@@ -381,9 +381,9 @@ public sealed class ApplyQualificationTests
             [groups, terminal],
             _clock);
 
-        terminal.FindSlot("X")!.EntryId.Should().Be(standingA.EntryAt(1));
-        terminal.FindSlot("Y")!.EntryId.Should().Be(standingA.EntryAt(3));
-        terminal.FindSlot("Z")!.EntryId.Should().Be(standingA.EntryAt(5));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(3)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standingA.EntryAt(5)!.Value);
     }
 
     [Fact]
@@ -402,7 +402,7 @@ public sealed class ApplyQualificationTests
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1")
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id)
             ]),
             _clock);
 
@@ -431,7 +431,7 @@ public sealed class ApplyQualificationTests
         groups.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, unknownGroupId, SelectionMode.Position, 1, terminal.Id, "A1")
+                GroupPath(1, unknownGroupId, SelectionMode.Position, 1, terminal.Id)
             ]),
             _clock);
 
@@ -454,7 +454,7 @@ public sealed class ApplyQualificationTests
         var terminal = CreateSlotStage(competitionId, "Terminal", ["Champ"]);
 
         league.ReplaceQualificationRules(
-            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
+            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id)]),
             _clock);
 
         var act = () => ApplyQualification.Execute(
@@ -498,11 +498,11 @@ public sealed class ApplyQualificationTests
         var matches = BuildRoundRobin(league, entries);
         var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
-            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
+            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id)]),
             _clock);
 
         ApplyQualification.Execute(league, standing, [league, terminal], _clock);
-        var first = terminal.FindSlot("Champ")!.EntryId;
+        var first = terminal.CompositionEntries.Select(e => e.EntryId).Single();
 
         var inverted = CalculateStanding.Execute(
             entries,
@@ -510,10 +510,11 @@ public sealed class ApplyQualificationTests
                 Finish(Match.Create(competitionId, league.Id, entries[1], entries[0], _clock), 5, 0)
             ],
             league.Regulation.StandingRules.OrThrow());
+        terminal.ClearCompositionEntries(_clock);
         ApplyQualification.Execute(league, inverted, [league, terminal], _clock);
 
-        terminal.FindSlot("Champ")!.EntryId.Should().Be(inverted.EntryAt(1));
-        terminal.FindSlot("Champ")!.EntryId.Should().NotBe(first);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Equal(inverted.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().NotContain(first);
     }
 
     [Fact]
@@ -527,7 +528,7 @@ public sealed class ApplyQualificationTests
         var matches = BuildRoundRobin(league, entries);
         var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
-            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
+            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id)]),
             _clock);
         terminal.Prepare(_clock);
         terminal.Start(_clock);
@@ -536,7 +537,7 @@ public sealed class ApplyQualificationTests
         ApplyQualification.Execute(league, standing, [league, terminal], _clock);
 
         terminal.Status.Should().Be(StageStatus.Suspended);
-        terminal.FindSlot("Champ")!.EntryId.Should().Be(standing.EntryAt(1));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(standing.EntryAt(1)!.Value);
         terminal.Draws.Should().BeEmpty();
     }
 
@@ -551,7 +552,7 @@ public sealed class ApplyQualificationTests
         var matches = BuildRoundRobin(league, entries);
         var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
         league.ReplaceQualificationRules(
-            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id, "Champ")]),
+            new QualificationRules([Path(1, SelectionMode.Position, 1, terminal.Id)]),
             _clock);
         terminal.Prepare(_clock);
         terminal.Start(_clock);
@@ -561,7 +562,7 @@ public sealed class ApplyQualificationTests
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
-        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+        terminal.CompositionEntries.Should().BeEmpty();
         terminal.Status.Should().Be(StageStatus.Completed);
     }
 
@@ -592,7 +593,7 @@ public sealed class ApplyQualificationTests
 
         for (var i = 1; i <= 4; i++)
         {
-            terminal.FindSlot($"R16-{i}")!.EntryId.Should().Be(derived.EntryAt(i));
+            terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(derived.EntryAt(i)!.Value);
         }
 
         foreach (var groupStanding in scenario.GroupStandings.Values)
@@ -631,7 +632,7 @@ public sealed class ApplyQualificationTests
 
         for (var i = 1; i <= 4; i++)
         {
-            terminal.FindSlot($"R16-{i}")!.EntryId.Should().Be(derived.EntryAt(i));
+            terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(derived.EntryAt(i)!.Value);
         }
 
         derived.Rows.Should().HaveCount(6);
@@ -662,9 +663,9 @@ public sealed class ApplyQualificationTests
             scenario.Matches,
             scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
-        terminal.FindSlot("Best1")!.EntryId.Should().Be(derived.EntryAt(1));
-        terminal.FindSlot("Best2")!.EntryId.Should().Be(derived.EntryAt(2));
-        terminal.FindSlot("Best1")!.EntryId.Should().NotBe(derived.EntryAt(3));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(derived.EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(derived.EntryAt(2)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().NotContain(derived.EntryAt(3)!.Value);
     }
 
     [Fact]
@@ -704,8 +705,8 @@ public sealed class ApplyQualificationTests
 
         for (var i = 1; i <= 4; i++)
         {
-            terminal.FindSlot($"S{i}")!.EntryId.Should().Be(thirdsTop4[i - 1]);
-            terminal.FindSlot($"S{i}")!.EntryId.Should().NotBe(overallTop4[i - 1]);
+            terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(thirdsTop4[i - 1]);
+            terminal.CompositionEntries.Select(e => e.EntryId).Should().NotContain(overallTop4[i - 1]);
         }
     }
 
@@ -750,8 +751,8 @@ public sealed class ApplyQualificationTests
             _clock);
 
         act.Should().NotThrow();
-        terminal.FindSlot("T1")!.EntryId.Should().NotBeNull();
-        terminal.FindSlot("T2")!.EntryId.Should().NotBeNull();
+        terminal.CompositionEntries.Should().NotBeEmpty();
+        terminal.CompositionEntries.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -814,8 +815,8 @@ public sealed class ApplyQualificationTests
             [groups, terminal],
             _clock);
 
-        terminal.FindSlot("W1")!.EntryId.Should().Be(a1);
-        terminal.FindSlot("W2")!.EntryId.Should().Be(b1);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(a1);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(b1);
     }
 
     [Fact]
@@ -828,9 +829,9 @@ public sealed class ApplyQualificationTests
         scenario.GroupsStage.ReplaceQualificationRules(
             new QualificationRules(
             [
-                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id, "A1"),
-                GroupPath(2, groupB.Id, SelectionMode.Position, 1, terminal.Id, "B1"),
-                AcrossGroupsPath(3, 3, 1, terminal.Id, "BestThird")
+                GroupPath(1, groupA.Id, SelectionMode.Position, 1, terminal.Id),
+                GroupPath(2, groupB.Id, SelectionMode.Position, 1, terminal.Id),
+                AcrossGroupsPath(3, 3, 1, terminal.Id)
             ]),
             _clock);
 
@@ -849,9 +850,9 @@ public sealed class ApplyQualificationTests
             scenario.Matches,
             scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
-        terminal.FindSlot("A1")!.EntryId.Should().Be(scenario.GroupStandings[groupA.Id].EntryAt(1));
-        terminal.FindSlot("B1")!.EntryId.Should().Be(scenario.GroupStandings[groupB.Id].EntryAt(1));
-        terminal.FindSlot("BestThird")!.EntryId.Should().Be(derived.EntryAt(1));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(scenario.GroupStandings[groupA.Id].EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(scenario.GroupStandings[groupB.Id].EntryAt(1)!.Value);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(derived.EntryAt(1)!.Value);
     }
 
     [Fact]
@@ -860,7 +861,7 @@ public sealed class ApplyQualificationTests
         var scenario = BuildGroupsScenario(groupCount: 2, teamsPerGroup: 4, strengthSpread: false);
         var terminal = CreateSlotStage(scenario.CompetitionId, "KO", ["T1"]);
         scenario.GroupsStage.ReplaceQualificationRules(
-            new QualificationRules([AcrossGroupsPath(1, 3, 1, terminal.Id, "T1")]),
+            new QualificationRules([AcrossGroupsPath(1, 3, 1, terminal.Id)]),
             _clock);
 
         var act = () => ApplyQualification.Execute(
@@ -887,18 +888,18 @@ public sealed class ApplyQualificationTests
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
-                PositionPath(1, 1, terminal.Id, "A"),
-                PositionPath(2, 2, terminal.Id, "B"),
-                ConditionalPositionPath(3, 3, 40, terminal.Id, "C")
+                PositionPath(1, 1, terminal.Id),
+                PositionPath(2, 2, terminal.Id),
+                ConditionalPositionPath(3, 3, 40, terminal.Id)
             ]),
             _clock);
 
         var results = ApplyQualification.Execute(league, standing, [league, terminal], _clock);
 
         results.Should().HaveCount(3);
-        terminal.FindSlot("A")!.EntryId.Should().Be(first);
-        terminal.FindSlot("B")!.EntryId.Should().Be(second);
-        terminal.FindSlot("C")!.EntryId.Should().Be(third);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(first);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(second);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(third);
     }
 
     [Fact]
@@ -914,29 +915,29 @@ public sealed class ApplyQualificationTests
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
-                PositionPath(1, 1, terminal.Id, "A"),
-                PositionPath(2, 2, terminal.Id, "B"),
-                ConditionalPositionPath(3, 3, 40, terminal.Id, "C")
+                PositionPath(1, 1, terminal.Id),
+                PositionPath(2, 2, terminal.Id),
+                ConditionalPositionPath(3, 3, 40, terminal.Id)
             ]),
             _clock);
 
         var results = ApplyQualification.Execute(league, standing, [league, terminal], _clock);
 
         results.Should().HaveCount(2);
-        terminal.FindSlot("A")!.EntryId.Should().Be(first);
-        terminal.FindSlot("B")!.EntryId.Should().Be(second);
-        terminal.FindSlot("C")!.EntryId.Should().BeNull();
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(first);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(second);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().NotContain(third);
     }
 
     [Fact]
-    public void Conditional_position_reapply_clears_slot_when_condition_fails()
+    public void Conditional_position_reapply_skips_when_condition_fails()
     {
         var competitionId = CompetitionId.New();
         var league = CreateLeagueStage(competitionId, "League");
         var terminal = CreateSlotStage(competitionId, "KO", ["C"]);
         var third = EntryId.New();
         league.ReplaceQualificationRules(
-            new QualificationRules([ConditionalPositionPath(1, 1, 40, terminal.Id, "C")]),
+            new QualificationRules([ConditionalPositionPath(1, 1, 40, terminal.Id)]),
             _clock);
 
         ApplyQualification.Execute(
@@ -944,8 +945,9 @@ public sealed class ApplyQualificationTests
             ManualStanding([(third, 1, 42)]),
             [league, terminal],
             _clock);
-        terminal.FindSlot("C")!.EntryId.Should().Be(third);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(third);
 
+        terminal.ClearCompositionEntries(_clock);
         var results = ApplyQualification.Execute(
             league,
             ManualStanding([(third, 1, 39)]),
@@ -953,7 +955,7 @@ public sealed class ApplyQualificationTests
             _clock);
 
         results.Should().BeEmpty();
-        terminal.FindSlot("C")!.EntryId.Should().BeNull();
+        terminal.CompositionEntries.Should().BeEmpty();
     }
 
     [Fact]
@@ -979,7 +981,7 @@ public sealed class ApplyQualificationTests
                     1,
                     QualificationSource.FromGroup(groupA.Id),
                     new QualificationSelection(SelectionMode.Position, 3),
-                    new QualificationDestination(terminal.Id, "C"),
+                    QualificationDestination.ForPopulation(terminal.Id),
                     QualificationCondition.PointsAtLeast(40))
             ]),
             _clock);
@@ -991,7 +993,7 @@ public sealed class ApplyQualificationTests
             [groups, terminal],
             _clock);
 
-        terminal.FindSlot("C")!.EntryId.Should().Be(third);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(third);
     }
 
     [Fact]
@@ -1013,7 +1015,7 @@ public sealed class ApplyQualificationTests
                     1,
                     QualificationSource.AcrossGroups(3),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(terminal.Id, "BestThird"),
+                    QualificationDestination.ForPopulation(terminal.Id),
                     QualificationCondition.PointsAtLeast(bestThird.Points))
             ]),
             _clock);
@@ -1026,8 +1028,9 @@ public sealed class ApplyQualificationTests
             [scenario.GroupsStage, terminal],
             _clock);
 
-        terminal.FindSlot("BestThird")!.EntryId.Should().Be(bestThird.EntryId);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(bestThird.EntryId);
 
+        terminal.ClearCompositionEntries(_clock);
         scenario.GroupsStage.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -1035,7 +1038,7 @@ public sealed class ApplyQualificationTests
                     1,
                     QualificationSource.AcrossGroups(3),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(terminal.Id, "BestThird"),
+                    QualificationDestination.ForPopulation(terminal.Id),
                     QualificationCondition.PointsAtLeast(bestThird.Points + 1))
             ]),
             _clock);
@@ -1048,11 +1051,11 @@ public sealed class ApplyQualificationTests
             [scenario.GroupsStage, terminal],
             _clock);
 
-        terminal.FindSlot("BestThird")!.EntryId.Should().BeNull();
+        terminal.CompositionEntries.Should().BeEmpty();
     }
 
     [Fact]
-    public void AcrossGroups_derived_then_Best_1_fills_slot()
+    public void AcrossGroups_derived_then_Best_1_fills_population()
     {
         var scenario = BuildGroupsScenario(groupCount: 3, teamsPerGroup: 4, strengthSpread: true);
         var terminal = CreateSlotStage(scenario.CompetitionId, "KO", ["BestThird"]);
@@ -1063,7 +1066,7 @@ public sealed class ApplyQualificationTests
                     1,
                     QualificationSource.AcrossGroups(3),
                     new QualificationSelection(SelectionMode.Best, 1),
-                    new QualificationDestination(terminal.Id, "BestThird"))
+                    QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);
 
@@ -1082,7 +1085,7 @@ public sealed class ApplyQualificationTests
             scenario.Matches,
             scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
-        terminal.FindSlot("BestThird")!.EntryId.Should().Be(derived.EntryAt(1));
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(derived.EntryAt(1)!.Value);
     }
 
     [Fact]
@@ -1119,7 +1122,7 @@ public sealed class ApplyQualificationTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Best, 1),
-                    new QualificationDestination(terminal.Id, "OverallBest"))
+                    QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);
 
@@ -1131,40 +1134,37 @@ public sealed class ApplyQualificationTests
             [scenario.GroupsStage, terminal],
             _clock);
 
-        terminal.FindSlot("OverallBest")!.EntryId.Should().Be(overallBest1);
-        terminal.FindSlot("OverallBest")!.EntryId.Should().NotBe(thirdsBest1);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Contain(overallBest1);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().NotContain(thirdsBest1);
     }
 
     private static QualificationPath Path(
         int order,
         SelectionMode mode,
         int value,
-        StageId stageId,
-        string slotKey) =>
+        StageId stageId) =>
         new(
             order,
             QualificationSource.Overall(),
             new QualificationSelection(mode, value),
-            new QualificationDestination(stageId, slotKey));
+            QualificationDestination.ForPopulation(stageId));
 
     private static QualificationPath PositionPath(
         int order,
         int position,
-        StageId stageId,
-        string slotKey) =>
-        Path(order, SelectionMode.Position, position, stageId, slotKey);
+        StageId stageId) =>
+        Path(order, SelectionMode.Position, position, stageId);
 
     private static QualificationPath ConditionalPositionPath(
         int order,
         int position,
         int minimumPoints,
-        StageId stageId,
-        string slotKey) =>
+        StageId stageId) =>
         new(
             order,
             QualificationSource.Overall(),
             new QualificationSelection(SelectionMode.Position, position),
-            new QualificationDestination(stageId, slotKey),
+            QualificationDestination.ForPopulation(stageId),
             QualificationCondition.PointsAtLeast(minimumPoints));
 
     private static Standing ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
@@ -1187,33 +1187,31 @@ public sealed class ApplyQualificationTests
         GroupId groupId,
         SelectionMode mode,
         int value,
-        StageId stageId,
-        string slotKey) =>
+        StageId stageId) =>
         new(
             order,
             QualificationSource.FromGroup(groupId),
             new QualificationSelection(mode, value),
-            new QualificationDestination(stageId, slotKey));
+            QualificationDestination.ForPopulation(stageId));
 
     private static QualificationPath AcrossGroupsPath(
         int order,
         int acrossGroupsPosition,
         int selectionPosition,
-        StageId stageId,
-        string slotKey) =>
+        StageId stageId) =>
         new(
             order,
             QualificationSource.AcrossGroups(acrossGroupsPosition),
             new QualificationSelection(SelectionMode.Position, selectionPosition),
-            new QualificationDestination(stageId, slotKey));
+            QualificationDestination.ForPopulation(stageId));
 
     private static QualificationPath[] AcrossGroupsPaths(
         int acrossGroupsPosition,
         StageId stageId,
         IReadOnlyList<string> slotKeys) =>
         [
-            ..slotKeys.Select((key, index) =>
-                AcrossGroupsPath(index + 1, acrossGroupsPosition, index + 1, stageId, key))
+            ..slotKeys.Select((_, index) =>
+                AcrossGroupsPath(index + 1, acrossGroupsPosition, index + 1, stageId))
         ];
 
     private GroupsScenario BuildGroupsScenario(int groupCount, int teamsPerGroup, bool strengthSpread)

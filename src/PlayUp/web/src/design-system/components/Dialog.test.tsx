@@ -119,4 +119,48 @@ describe('Dialog', () => {
       expect(within(dialog).getByRole('button', { name: 'OK' })).toHaveFocus();
     });
   });
+
+  it('renders footer status left of actions without putting it in the body', async () => {
+    const user = userEvent.setup();
+
+    function StatusHarness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div className="ds-root" data-font="plex" data-palette="slate">
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Édition"
+            footerStatus={
+              <p className="ds-notice ds-notice--warning" role="status">
+                Trop de places
+              </p>
+            }
+            footer={
+              <button type="button" className="ds-btn ds-btn--primary">
+                Enregistrer
+              </button>
+            }
+          >
+            <p>Corps</p>
+          </Dialog>
+        </div>
+      );
+    }
+
+    render(<StatusHarness />);
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    const dialog = await screen.findByRole('dialog');
+    const status = within(dialog).getByRole('status');
+    expect(status).toHaveTextContent('Trop de places');
+    const footer = status.closest('.ds-dialog__footer');
+    expect(footer).toBeTruthy();
+    expect(footer).toContainElement(
+      within(dialog).getByRole('button', { name: 'Enregistrer' }),
+    );
+    expect(status.closest('.ds-dialog__body')).toBeNull();
+  });
 });

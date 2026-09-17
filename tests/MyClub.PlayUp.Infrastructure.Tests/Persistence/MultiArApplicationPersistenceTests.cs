@@ -139,12 +139,12 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
                         1,
                         QualificationSource.Overall(),
                         new QualificationSelection(SelectionMode.Position, 1),
-                        new QualificationDestination(terminal.Id, "Champ")),
+                        QualificationDestination.ForPopulation(terminal.Id)),
                     new QualificationPath(
                         2,
                         QualificationSource.Overall(),
                         new QualificationSelection(SelectionMode.Position, 2),
-                        new QualificationDestination(terminal.Id, "Europe1"))
+                        QualificationDestination.ForPopulation(terminal.Id))
                 ]),
                 _clock);
 
@@ -179,8 +179,9 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
         {
             var terminal = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(terminalId);
             terminal.Should().NotBeNull();
-            terminal.FindSlot("Champ")!.EntryId.Should().Be(champ);
-            terminal.FindSlot("Europe1")!.EntryId.Should().Be(europe);
+            terminal.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo([champ, europe]);
+            terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+            terminal.FindSlot("Europe1")!.EntryId.Should().BeNull();
         }
     }
 

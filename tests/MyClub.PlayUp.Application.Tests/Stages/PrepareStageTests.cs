@@ -38,28 +38,14 @@ public sealed class PrepareStageTests
     public void Execute_prepares_when_all_slots_have_unique_feeds()
     {
         var competitionId = CompetitionId.New();
-        var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
         target.AddSlot("SF1-A");
         target.AddSlot("SF1-B");
-        source.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Top, 1),
-                    new QualificationDestination(target.Id, "SF1-A")),
-                new QualificationPath(
-                    2,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Top, 2),
-                    new QualificationDestination(target.Id, "SF1-B"))
-            ]),
-            _clock);
+        target.AssignEntryToSlot("SF1-A", EntryId.New());
+        target.AssignEntryToSlot("SF1-B", EntryId.New());
 
-        var resolutions = PrepareStage.Execute(target, [source, target], _clock);
+        var resolutions = PrepareStage.Execute(target, [target], _clock);
 
         resolutions.Should().HaveCount(2);
         resolutions.Should().OnlyContain(r => r.Status == FeedResolutionStatus.Unique);
@@ -88,23 +74,20 @@ public sealed class PrepareStageTests
     public void Execute_rejects_multiple_feeds()
     {
         var competitionId = CompetitionId.New();
-        var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
         target.AddSlot("SF1-A");
         target.AssignEntryToSlot("SF1-A", EntryId.New());
-        source.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Top, 1),
-                    new QualificationDestination(target.Id, "SF1-A"))
-            ]),
+        var drawEntry = EntryId.New();
+        var draw = target.CreateDraw(DrawResolutionKind.Slot, _clock);
+        target.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([drawEntry]));
+        target.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(drawEntry, "SF1-A")]),
             _clock);
+        target.PublishDraw(draw.Id, _clock);
 
-        var act = () => PrepareStage.Execute(target, [source, target], _clock);
+        var act = () => PrepareStage.Execute(target, [target], _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.SlotFeedsInvalid);
@@ -218,33 +201,26 @@ public sealed class PrepareStageTests
     }
 
     [Fact]
-    public void Execute_rejects_qualification_outbound_when_destination_slot_missing()
+    public void ReplaceQualificationRules_rejects_population_destination_targeting_self()
     {
         var competitionId = CompetitionId.New();
         var groups = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
-        var semi = Stage.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
         var group = groups.AddGroup("A", _clock);
         groups.AssignEntryToGroup(group.Id, EntryId.New());
         groups.AddMatchday(1, _clock);
-        semi.AddRound("SF", _clock);
-        semi.AddSlot("SF1-A");
-        semi.AddSlot("SF1B");
-        groups.ReplaceQualificationRules(
+
+        var act = () => groups.ReplaceQualificationRules(
             new QualificationRules(
             [
                 new QualificationPath(
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(semi.Id, "SF1-B"))
+                    QualificationDestination.ForPopulation(groups.Id))
             ]),
             _clock);
 
-        var act = () => PrepareStage.Execute(groups, [groups, semi], _clock);
-
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
-        groups.Status.Should().Be(StageStatus.Draft);
+        act.Should().Throw<DomainException>();
     }
 
     [Fact]
@@ -296,7 +272,7 @@ public sealed class PrepareStageTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(ghostId, "SF1-A"))
+                    QualificationDestination.ForPopulation(ghostId))
             ]),
             _clock);
 
@@ -353,7 +329,7 @@ public sealed class PrepareStageTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    new QualificationDestination(semi.Id, "SF1-A"))
+                    QualificationDestination.ForPopulation(semi.Id))
             ]),
             _clock);
 

@@ -131,7 +131,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
                         1,
                         QualificationSource.FromGroup(groupId),
                         new QualificationSelection(SelectionMode.Position, 1),
-                        new QualificationDestination(destinationStageId, "QF1"),
+                        QualificationDestination.ForPopulation(destinationStageId),
                         QualificationCondition.PointsAtLeast(4))
                 ]))
             .WithProgressionRules(

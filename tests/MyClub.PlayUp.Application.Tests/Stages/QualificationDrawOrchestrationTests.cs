@@ -18,14 +18,14 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// Orchestration boundaries: Qualification → SeedMap → Draw → ApplyDraw without fusing mechanisms.
+/// Orchestration boundaries: Qualification → Population → SeedMap → Draw → ApplyDraw.
 /// </summary>
 public sealed class QualificationDrawOrchestrationTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 11, 15, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Qualification_then_SeedMap_then_Draw_Apply_keeps_mechanisms_separate()
+    public void Qualification_population_then_SeedMap_then_Draw_Apply_keeps_mechanisms_separate()
     {
         var competitionId = CompetitionId.New();
         var league = CreateLeagueStage(competitionId, "League");
@@ -38,22 +38,22 @@ public sealed class QualificationDrawOrchestrationTests
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
-                Path(1, SelectionMode.Position, 1, qualified.Id, "Q1"),
-                Path(2, SelectionMode.Position, 2, qualified.Id, "Q2"),
-                Path(3, SelectionMode.Position, 3, qualified.Id, "Q3"),
-                Path(4, SelectionMode.Position, 4, qualified.Id, "Q4")
+                Path(1, SelectionMode.Position, 1, qualified.Id),
+                Path(2, SelectionMode.Position, 2, qualified.Id),
+                Path(3, SelectionMode.Position, 3, qualified.Id),
+                Path(4, SelectionMode.Position, 4, qualified.Id)
             ]),
             _clock);
 
         ApplyQualification.Execute(league, standing, [league, qualified], _clock);
 
-        var pool = new List<EntryId>
-        {
-            qualified.FindSlot("Q1")!.EntryId!.Value,
-            qualified.FindSlot("Q2")!.EntryId!.Value,
-            qualified.FindSlot("Q3")!.EntryId!.Value,
-            qualified.FindSlot("Q4")!.EntryId!.Value
-        };
+        qualified.CompositionEntries.Should().HaveCount(4);
+        qualified.FindSlot("Q1")!.EntryId.Should().BeNull();
+        qualified.FindSlot("Q2")!.EntryId.Should().BeNull();
+        qualified.FindSlot("Q3")!.EntryId.Should().BeNull();
+        qualified.FindSlot("Q4")!.EntryId.Should().BeNull();
+
+        var pool = qualified.CompositionEntries.Select(e => e.EntryId).ToList();
         var seedMap = new SeedMap(new Dictionary<EntryId, int>
         {
             [pool[0]] = 1, [pool[1]] = 2, [pool[2]] = 3, [pool[3]] = 4
@@ -81,8 +81,8 @@ public sealed class QualificationDrawOrchestrationTests
         knockout.FindSlot("SF2-A")!.EntryId.Should().Be(pool[1]);
         knockout.FindSlot("SF2-B")!.EntryId.Should().Be(pool[2]);
 
-        // Qualification population stage untouched by Draw apply.
-        qualified.FindSlot("Q1")!.EntryId.Should().Be(pool[0]);
+        // Qualification population stage untouched by Draw apply on knockout.
+        qualified.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo(pool);
         qualified.DirectAssignments.Should().BeEmpty();
         knockout.DirectAssignments.Should().BeEmpty();
 
@@ -96,13 +96,12 @@ public sealed class QualificationDrawOrchestrationTests
         int order,
         SelectionMode mode,
         int value,
-        StageId stageId,
-        string slotKey) =>
+        StageId stageId) =>
         new(
             order,
             QualificationSource.Overall(),
             new QualificationSelection(mode, value),
-            new QualificationDestination(stageId, slotKey));
+            QualificationDestination.ForPopulation(stageId));
 
     private static EntryId[] CreateEntries(int count) =>
         [..Enumerable.Range(0, count).Select(_ => EntryId.New())];

@@ -3,11 +3,11 @@ import { CheckIcon } from '../icons/contentIcons';
 
 export type ChoiceTileProps = {
   label: string;
-  /** Secondary line under the label (e.g. short scope hint). */
-  description?: string;
+  /** Secondary line under the label (e.g. short scope hint or compact meter). */
+  description?: ReactNode;
   selected: boolean;
   onChange: (selected: boolean) => void;
-  /** Leading visual — swatch, icon, crest fragment. */
+  /** Leading visual — swatch, icon, crest fragment (aligned with the title). */
   leading?: ReactNode;
   disabled?: boolean;
   /** Accessible name; defaults to label. */
@@ -43,13 +43,15 @@ export function ChoiceTile({
         }
       }}
     >
-      {leading ? (
-        <span className="ds-choice-tile__leading" aria-hidden="true">
-          {leading}
-        </span>
-      ) : null}
       <span className="ds-choice-tile__label">
-        <span className="ds-choice-tile__title">{label}</span>
+        <span className="ds-choice-tile__title-row">
+          {leading ? (
+            <span className="ds-choice-tile__leading" aria-hidden="true">
+              {leading}
+            </span>
+          ) : null}
+          <span className="ds-choice-tile__title">{label}</span>
+        </span>
         {description ? (
           <span className="ds-choice-tile__description">{description}</span>
         ) : null}

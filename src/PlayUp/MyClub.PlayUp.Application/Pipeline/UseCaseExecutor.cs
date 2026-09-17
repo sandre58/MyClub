@@ -190,7 +190,7 @@ public sealed partial class UseCaseExecutor(
     /// <param name="sourceStageId">Stage that owns qualification rules.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Applied slot assignment instructions.</returns>
-    public async Task<IReadOnlyList<SlotAssignmentInstruction>> ApplyQualificationAsync(
+    public async Task<IReadOnlyList<QualificationInstruction>> ApplyQualificationAsync(
         StageId sourceStageId,
         CancellationToken cancellationToken = default)
     {
@@ -1200,9 +1200,9 @@ public sealed partial class UseCaseExecutor(
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
-        var peers = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+        await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
             .ConfigureAwait(false);
-        ReplaceStageQualificationRules.Execute(stage, peers, intents, clock);
+        ReplaceStageQualificationRules.Execute(stage, intents, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

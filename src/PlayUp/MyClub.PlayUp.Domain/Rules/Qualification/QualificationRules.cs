@@ -9,9 +9,9 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// How participants leave a stage via ranking → slots.
+/// How participants leave a stage via ranking → destination stage population.
 /// Authoring SoT = <see cref="Intents"/>; <see cref="Paths"/> are the atomic Apply model
-/// (derived via <see cref="QualificationPathExpander"/>, or legacy path list).
+/// (derived via <see cref="QualificationPathExpander"/>, or path list).
 /// </summary>
 public sealed record QualificationRules
 {
@@ -20,7 +20,7 @@ public sealed record QualificationRules
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QualificationRules"/> class.
-    /// Legacy constructor: ordered atomic paths (migrates Position paths to singleton intents when possible).
+    /// Path-list constructor: ordered atomic paths (migrates Position paths to singleton intents when possible).
     /// </summary>
     /// <param name="paths">Ordered qualification paths (non-empty, unique orders).</param>
     public QualificationRules(IReadOnlyList<QualificationPath> paths)
@@ -81,29 +81,27 @@ public sealed record QualificationRules
     }
 
     /// <summary>
-    /// Builds rules from authoring intents by Expand + Map (paths derived at commit).
+    /// Builds rules from authoring intents by Expand (paths derived at commit).
     /// </summary>
     /// <param name="intents">Authoring intents.</param>
     /// <param name="groupOrder">Canonical group order of the source stage.</param>
-    /// <param name="slotOrderByStage">Canonical slot keys per destination stage.</param>
     /// <returns>Rules with intents + materialized paths.</returns>
     public static QualificationRules FromIntents(
         IReadOnlyList<QualificationIntent> intents,
-        IReadOnlyList<GroupId> groupOrder,
-        IReadOnlyDictionary<StageId, IReadOnlyList<string>> slotOrderByStage)
+        IReadOnlyList<GroupId> groupOrder)
     {
         ArgumentNullException.ThrowIfNull(intents);
-        var paths = QualificationPathExpander.Materialize(intents, groupOrder, slotOrderByStage);
+        var paths = QualificationPathExpander.Materialize(intents, groupOrder);
         return new QualificationRules(intents, paths);
     }
 
     /// <summary>
-    /// Gets authoring intents (empty for legacy non-Position path sets).
+    /// Gets authoring intents (empty for non-Position path sets that cannot migrate).
     /// </summary>
     public IReadOnlyList<QualificationIntent> Intents => _intents;
 
     /// <summary>
-    /// Gets atomic paths for Apply / WhoFeeds (derived when intents are the SoT).
+    /// Gets atomic paths for Apply (derived when intents are the SoT).
     /// </summary>
     public IReadOnlyList<QualificationPath> Paths => _paths;
 

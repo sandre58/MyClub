@@ -168,6 +168,8 @@ public sealed record StructureReadinessDto(
 /// <param name="MatchCount">Topology: attached matches in this phase.</param>
 /// <param name="GroupCount">Topology: groups in this phase.</param>
 /// <param name="RoundCount">Topology: cup rounds in this phase.</param>
+/// <param name="MatchdayCount">Topology: matchdays in this phase.</param>
+/// <param name="SlotCount">Slots.</param>
 /// <param name="NumberOfPeriods">MatchRules periods.</param>
 /// <param name="DurationPerPeriod">MatchRules duration.</param>
 /// <param name="HasExtraTime">Match ExtraTimePolicy present.</param>
@@ -209,6 +211,7 @@ public sealed record StructureReadinessDto(
 /// </param>
 /// <param name="Actions">Per-phase Structure mutation action codes (server-gated).</param>
 /// <param name="QualificationPaths">Authoring projection of qualification paths when present.</param>
+/// <param name="QualificationIntents">Authoring projection of qualification intents when present.</param>
 /// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
@@ -305,28 +308,17 @@ public sealed record StructureQualificationIntentDto(
     int PositionFrom,
     int PositionTo,
     Guid DestinationStageId,
-    QualificationMappingMode MappingMode,
     Guid? GroupId = null,
     string? GroupName = null,
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
-    IReadOnlyList<StructureQualificationSlotOverrideDto>? SlotOverrides = null,
     int DestinationCount = 0);
-
-/// <summary>One Custom mapping override on an intent.</summary>
-public sealed record StructureQualificationSlotOverrideDto(
-    RankingScope Scope,
-    int Position,
-    string SlotKey,
-    Guid? GroupId = null,
-    int? AcrossGroupsPosition = null);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>
 /// <param name="SelectionMode">Selection mode.</param>
 /// <param name="SelectionValue">Position, count, or range lower bound.</param>
-/// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">Destination slot key.</param>
+/// <param name="DestinationStageId">Destination stage (population).</param>
 /// <param name="RankingScope">Optional ranking scope.</param>
 /// <param name="GroupId">Group when scope is Group.</param>
 /// <param name="AcrossGroupsPosition">Across-groups position when applicable.</param>
@@ -338,7 +330,6 @@ public sealed record StructureQualificationPathDto(
     SelectionMode SelectionMode,
     int SelectionValue,
     Guid DestinationStageId,
-    string DestinationSlotKey,
     RankingScope? RankingScope = null,
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,

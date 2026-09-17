@@ -9,8 +9,9 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Pure Expand + Map: <see cref="QualificationIntent"/> → ordered <see cref="QualificationPath"/>.
-/// Consumes <c>GroupOrder</c> / <c>SlotOrder</c> from Structure — does not define them.
+/// Pure Expand: <see cref="QualificationIntent"/> → ordered <see cref="QualificationPath"/>
+/// targeting destination stage population (Qual V2 — no slot mapping).
+/// Consumes <c>GroupOrder</c> from Structure — does not define it.
 /// </summary>
 public static class QualificationPathExpander
 {
@@ -19,16 +20,13 @@ public static class QualificationPathExpander
     /// </summary>
     /// <param name="intents">Authoring intents (unique orders).</param>
     /// <param name="groupOrder">Canonical group order of the source stage.</param>
-    /// <param name="slotOrderByStage">Canonical slot keys per destination stage.</param>
-    /// <returns>Ordered qualification paths for Apply / WhoFeeds.</returns>
+    /// <returns>Ordered qualification paths for Apply.</returns>
     public static IReadOnlyList<QualificationPath> Materialize(
         IReadOnlyList<QualificationIntent> intents,
-        IReadOnlyList<GroupId> groupOrder,
-        IReadOnlyDictionary<StageId, IReadOnlyList<string>> slotOrderByStage)
+        IReadOnlyList<GroupId> groupOrder)
     {
         ArgumentNullException.ThrowIfNull(intents);
         ArgumentNullException.ThrowIfNull(groupOrder);
-        ArgumentNullException.ThrowIfNull(slotOrderByStage);
 
         if (intents.Count == 0)
         {
@@ -53,7 +51,6 @@ public static class QualificationPathExpander
 
         var paths = new List<QualificationPath>();
         var pathOrder = 1;
-        var usedSlots = new HashSet<(Guid Stage, string Slot)>();
 
         foreach (var intent in intents.OrderBy(i => i.Order))
         {
@@ -65,47 +62,15 @@ public static class QualificationPathExpander
                     RulesErrorCodes.QualificationRulesInvalid);
             }
 
-            if (!slotOrderByStage.TryGetValue(intent.DestinationStageId, out var slotOrder)
-                || slotOrder.Count == 0)
-            {
-                throw new DomainException(
-                    "Destination stage has no slots for qualification mapping.",
-                    RulesErrorCodes.QualificationRulesInvalid);
-            }
-
-            if (occurrences.Count > slotOrder.Count)
-            {
-                throw new DomainException(
-                    $"Qualification intent requires {occurrences.Count} destinations but only {slotOrder.Count} slots are available.",
-                    RulesErrorCodes.QualificationRulesInvalid);
-            }
-
-            var mapped = Map(intent, occurrences, slotOrder);
-            foreach (var (occurrence, slotKey) in mapped)
-            {
-                var key = (intent.DestinationStageId.Value, slotKey);
-                if (!usedSlots.Add(key))
-                {
-                    throw new DomainException(
-                        $"Destination slot '{slotKey}' is fed by more than one qualification path.",
-                        RulesErrorCodes.QualificationRulesInvalid);
-                }
-
-                paths.Add(
-                    new QualificationPath(
-                        pathOrder++,
-                        ToSource(occurrence),
-                        new QualificationSelection(SelectionMode.Position, occurrence.Position),
-                        new QualificationDestination(intent.DestinationStageId, slotKey),
-                        intent.Condition is null ? null : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints)));
-            }
+            var destination = QualificationDestination.ForPopulation(intent.DestinationStageId);
+            paths.AddRange(occurrences.Select(occurrence => new QualificationPath(pathOrder++, ToSource(occurrence), new QualificationSelection(SelectionMode.Position, occurrence.Position), destination, intent.Condition is null ? null : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints))));
         }
 
         return paths;
     }
 
     /// <summary>
-    /// Expands one intent into ordered source occurrences (no destinations yet).
+    /// Expands one intent into ordered source occurrences.
     /// </summary>
     public static IReadOnlyList<QualificationSourceOccurrence> Expand(
         QualificationIntent intent,
@@ -170,52 +135,7 @@ public static class QualificationPathExpander
     }
 
     /// <summary>
-    /// Maps occurrences to slot keys (canonical zip, then compatible Custom overrides).
-    /// Orphan overrides (occurrence no longer in Expand) are ignored here — caller must treat them explicitly in UX.
-    /// </summary>
-    public static IReadOnlyList<(QualificationSourceOccurrence Occurrence, string SlotKey)> Map(
-        QualificationIntent intent,
-        IReadOnlyList<QualificationSourceOccurrence> occurrences,
-        IReadOnlyList<string> slotOrder)
-    {
-        ArgumentNullException.ThrowIfNull(intent);
-        ArgumentNullException.ThrowIfNull(occurrences);
-        ArgumentNullException.ThrowIfNull(slotOrder);
-
-        if (occurrences.Count > slotOrder.Count)
-        {
-            throw new DomainException(
-                $"Qualification intent requires {occurrences.Count} destinations but only {slotOrder.Count} slots are available.",
-                RulesErrorCodes.QualificationRulesInvalid);
-        }
-
-        var result = new List<(QualificationSourceOccurrence, string)>(occurrences.Count);
-        for (var i = 0; i < occurrences.Count; i++)
-        {
-            var occurrence = occurrences[i];
-            var slotKey = slotOrder[i];
-            if (intent.MappingMode == QualificationMappingMode.Custom)
-            {
-                var match = intent.SlotOverrides.FirstOrDefault(o => o.Occurrence.Equals(occurrence));
-                if (match is not null)
-                {
-                    slotKey = match.SlotKey;
-                }
-            }
-
-            result.Add((occurrence, slotKey));
-        }
-
-        var distinct = result.Select(r => r.Item2).Distinct(StringComparer.Ordinal).Count();
-        return distinct != result.Count
-            ? throw new DomainException(
-                "Two source occurrences map to the same destination slot.",
-                RulesErrorCodes.QualificationRulesInvalid)
-            : (IReadOnlyList<(QualificationSourceOccurrence Occurrence, string SlotKey)>)result;
-    }
-
-    /// <summary>
-    /// Migrates a legacy atomic path into a singleton intent (Canonical).
+    /// Migrates a legacy atomic path into a singleton intent.
     /// </summary>
     public static QualificationIntent ToSingletonIntent(QualificationPath path, IntentId? id = null)
     {
@@ -223,11 +143,8 @@ public static class QualificationPathExpander
 
         if (path.Selection.Mode != SelectionMode.Position)
         {
-            // Legacy Top/Best/etc. kept as single-position intent only when Position;
-            // non-Position paths become Overall/Group singleton with From=To=Value as Position intent
-            // is the V1 authoring contract — preserve via Position(value) when possible.
             throw new DomainException(
-                "Legacy non-Position paths cannot migrate to QualificationIntent V1 without Position selection.",
+                "Legacy non-Position paths cannot migrate to QualificationIntent without Position selection.",
                 RulesErrorCodes.QualificationRulesInvalid);
         }
 
@@ -265,19 +182,9 @@ public static class QualificationPathExpander
             k,
             k,
             path.Destination.StageId,
-            QualificationMappingMode.Custom,
             groupId,
             across,
-            path.Condition,
-            [new QualificationSlotOverride(ToOccurrence(path), path.Destination.SlotKey)]);
-    }
-
-    private static QualificationSourceOccurrence ToOccurrence(QualificationPath path)
-    {
-        var k = path.Selection.Value;
-        return path.Source.AcrossGroupsPosition is { } p
-            ? QualificationSourceOccurrence.AcrossGroups(p, k)
-            : path.Source.GroupId is { } g ? QualificationSourceOccurrence.Group(g, k) : QualificationSourceOccurrence.Overall(k);
+            path.Condition);
     }
 
     private static QualificationSource ToSource(QualificationSourceOccurrence occurrence) =>

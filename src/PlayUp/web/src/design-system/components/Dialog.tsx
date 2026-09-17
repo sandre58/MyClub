@@ -21,7 +21,12 @@ export type DialogProps = {
   /** Optional subtitle under the title (e.g. regulation editor scope). */
   description?: string;
   children: ReactNode;
-  /** Right-aligned action row. Close lives in the header only. */
+  /**
+   * Non-blocking window status / notice — left of actions, fills remaining
+   * width. Prefer this over body notices so the scroll region does not shift.
+   */
+  footerStatus?: ReactNode;
+  /** Action controls — right-aligned (full row under status on narrow). */
   footer?: ReactNode;
   /** Blocks Escape, backdrop, and the header close control. */
   closeDisabled?: boolean;
@@ -50,6 +55,7 @@ function pickFooterInitialFocus(footer: HTMLElement): HTMLElement | null {
 
 /**
  * Centered overlay chrome — title, body, optional footer.
+ * Footer = optional status (left, fluid width) + actions (right).
  * Not a window manager; AttentionDrawer stays separate (Shell triage).
  */
 export function Dialog({
@@ -58,6 +64,7 @@ export function Dialog({
   title,
   description,
   children,
+  footerStatus,
   footer,
   closeDisabled = false,
   trapFocus = true,
@@ -178,6 +185,8 @@ export function Dialog({
     return null;
   }
 
+  const showFooter = footer != null || footerStatus != null;
+
   return (
     <div
       className="ds-dialog"
@@ -231,9 +240,14 @@ export function Dialog({
         <div ref={bodyRef} className="ds-dialog__body">
           {children}
         </div>
-        {footer != null ? (
+        {showFooter ? (
           <div ref={footerRef} className="ds-dialog__footer">
-            {footer}
+            {footerStatus != null ? (
+              <div className="ds-dialog__footer-status">{footerStatus}</div>
+            ) : null}
+            {footer != null ? (
+              <div className="ds-dialog__footer-actions">{footer}</div>
+            ) : null}
           </div>
         ) : null}
       </div>
