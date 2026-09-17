@@ -32,10 +32,8 @@ export type ProgIncompleteReason =
   | 'DuplicateRoundOutcome'
   | 'DuplicatePlace';
 
-/** Place ChoiceTile stays gated until schematic exposes labeled Places (Décision / U4). */
-export function areProgressionPlacesLabeled(): boolean {
-  return false;
-}
+/** Place ChoiceTile gate — Cup schematic must expose targetable labeled Places (U4). */
+export { areProgressionPlacesLabeled } from './structurePlaceLabel';
 
 export function newProgIntentId(): string {
   return crypto.randomUUID();

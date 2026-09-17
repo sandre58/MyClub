@@ -572,6 +572,11 @@
       "destinationPlace": "Place"
     }
   },
+  "place": {
+    "side": "side {{side}}",
+    "cup": "{{round}} · {{side}}",
+    "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}"
+  },
   "population": {
     "sectionSources": "From phases",
     "sectionAffectation": "Assignment",
@@ -681,6 +686,7 @@
     "kindPlaceUnavailable": "Available when this phase’s places are labeled",
     "placeGatedBody": "Places will be available once this phase’s structure exposes labeled places. No technical slot key is shown here.",
     "placeSelectPending": "Choose a labeled place for this phase.",
+    "placeEmpty": "No labeled place in this phase.",
     "destinationPhase": "Destination phase",
     "tileContribution": "{{count}}/{{capacity}} places",
     "tileContributionEntries": "{{count}} places",
@@ -697,7 +703,8 @@
     "summary": {
       "who": "{{outcome}} — {{match}}",
       "wherePopulation": "→ {{phase}} · Population",
-      "wherePlace": "→ Place (this phase)"
+      "wherePlace": "→ {{place}}",
+      "wherePlaceFallback": "→ Place (this phase)"
     }
   },
   "qualification": {

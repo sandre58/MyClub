@@ -1338,8 +1338,14 @@ export interface SchematicFormPosition {
   index?: number | null;
   /** Backing fixture when the unit is a pairing-draw bracket side (no slot binding). */
   fixtureId?: string | null;
-  /** Bracket side ('A' | 'B') when fixtureId is set. */
+  /** Bracket side ('A' | 'B') when known for Cup address. */
   side?: string | null;
+  /** 0-based Cup round order when the unit belongs to a fixture. */
+  roundOrder?: number | null;
+  /** Domain round display name (organizer-authored). */
+  roundName?: string | null;
+  /** 1-based pair ordinal within the round; null for a single-pair round. */
+  pairOrdinal?: number | null;
 }
 
 export interface SchematicFeedOrigin {

@@ -47,6 +47,7 @@ import { TeamCrest } from '../design-system/TeamCrest';
 import { EmptyState, LoadingState, StageStatusBadge, StatusBadge } from '../ui';
 import type {
   SelectionMode,
+  StageSchematic,
   StructureConfrontationSegment,
   StructureEntry,
   StructureFormatKind,
@@ -77,6 +78,7 @@ import {
 import {
   isPopulationDestination,
 } from './structureProgression';
+import { placeLabelForDestinationSlotKey } from './structurePlaceLabel';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -352,6 +354,7 @@ function matchSortKey(
 function progressionRuleParts(
   path: StructureProgressionPath,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  schematic?: StageSchematic | null,
 ): Pick<
   FeedRow,
   | 'badge'
@@ -363,10 +366,18 @@ function progressionRuleParts(
   | 'sortSecondary'
 > {
   const isWinner = path.outcome === 'Winner';
-  // Place destination chip deferred until schematic shows the same Place id (Notion task).
-  const destinationExtra = isPopulationDestination(path.destinationSlotKey)
-    ? t('fiche.rule.destinationPopulation')
-    : undefined;
+  let destinationExtra: string | undefined;
+  if (isPopulationDestination(path.destinationSlotKey)) {
+    destinationExtra = t('fiche.rule.destinationPopulation');
+  } else {
+    // U4: same Place label as schematic chrome — never raw SlotKey.
+    destinationExtra =
+      placeLabelForDestinationSlotKey(
+        schematic,
+        path.destinationSlotKey,
+        t,
+      ) ?? undefined;
+  }
   return {
     badge: isWinner ? t('fiche.rule.winner') : t('fiche.rule.loser'),
     badgeTone: isWinner ? 'win' : 'loss',
@@ -432,6 +443,7 @@ function inboundFeeds(
   data: StructureView,
   stageId: string,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  schematic?: StageSchematic | null,
 ) {
   const feeds: FeedRow[] = [];
 
@@ -450,7 +462,7 @@ function inboundFeeds(
     }
     for (const path of source.progressionPaths ?? []) {
       if (path.destinationStageId !== stageId) continue;
-      const parts = progressionRuleParts(path, t);
+      const parts = progressionRuleParts(path, t, schematic);
       feeds.push({
         key: `p-${source.stageId}-${path.sourceFixtureId}-${path.outcome}`,
         peerId: source.stageId,
@@ -468,6 +480,7 @@ function outboundFeeds(
   data: StructureView,
   stage: StructureStageHubSummary,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  schematic?: StageSchematic | null,
 ) {
   const feeds: FeedRow[] = [];
   const nameOf = (id: string) =>
@@ -485,7 +498,7 @@ function outboundFeeds(
     });
   }
   for (const path of stage.progressionPaths ?? []) {
-    const parts = progressionRuleParts(path, t);
+    const parts = progressionRuleParts(path, t, schematic);
     feeds.push({
       key: `p-out-${path.sourceFixtureId}-${path.outcome}-${path.destinationStageId}`,
       peerId: path.destinationStageId,
@@ -1453,11 +1466,11 @@ export function StructurePhaseFiche({
     );
   }
 
-  const feeds = inboundFeeds(data, stage.stageId, t);
+  const feeds = inboundFeeds(data, stage.stageId, t, schematicQuery.data);
   const feedGroups = groupFeeds(feeds);
   const feedSum = feeds.reduce((acc, f) => acc + f.volume, 0);
   const populationCount = stage.compositionEntryCount ?? 0;
-  const outbounds = outboundFeeds(data, stage, t);
+  const outbounds = outboundFeeds(data, stage, t, schematicQuery.data);
   const outboundGroups = groupFeeds(outbounds);
   const matchBound = isMatchFrameBound(stage.defaultsBinding);
   const standingBound = isStandingFrameBound(stage.defaultsBinding);

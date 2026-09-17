@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { StageSchematic } from '../types';
 import {
   areProgressionPlacesLabeled,
   emptyProgIntent,
@@ -9,8 +10,9 @@ import {
 } from './structureProgressionDraft';
 
 describe('structureProgressionDraft', () => {
-  it('gates Place labels until schematic U4', () => {
-    expect(areProgressionPlacesLabeled()).toBe(false);
+  it('gates Place labels without a Cup schematic', () => {
+    expect(areProgressionPlacesLabeled(null)).toBe(false);
+    expect(areProgressionPlacesLabeled(undefined)).toBe(false);
   });
 
   it('maps population API intents', () => {
@@ -92,5 +94,28 @@ describe('structureProgressionDraft', () => {
     b.roundId = 'r2';
     b.destinationSlotKey = 'SF-A';
     expect(incompleteIntentReason(a, [a, b], true)).toBe('DuplicatePlace');
+  });
+
+  it('unlocks Place when Cup schematic exposes targetable addresses', () => {
+    const schematic: StageSchematic = {
+      stageId: 's1',
+      competitionId: 'c1',
+      name: 'KO',
+      status: 'Draft',
+      formatKind: 'Cup',
+      cases: [
+        {
+          formPosition: {
+            kind: 'CupSlot',
+            slotKey: 'SF1-A',
+            roundName: 'Demi-finale',
+            pairOrdinal: 1,
+            side: 'A',
+          },
+        },
+      ],
+      connections: [],
+    };
+    expect(areProgressionPlacesLabeled(schematic)).toBe(true);
   });
 });

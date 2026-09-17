@@ -57,7 +57,10 @@ public sealed record SchematicCaseDto(
 /// <param name="GroupName">Group display name when Kind is GroupPlace.</param>
 /// <param name="Index">1-based place index (GroupPlace or RosterPlace).</param>
 /// <param name="FixtureId">Backing fixture when the unit is a pairing-draw bracket side (no slot binding).</param>
-/// <param name="Side">Bracket side (<c>A</c> | <c>B</c>) when <paramref name="FixtureId"/> is set.</param>
+/// <param name="Side">Bracket side (<c>A</c> | <c>B</c>) when known for Cup address.</param>
+/// <param name="RoundOrder">0-based Cup round order when the unit belongs to a fixture in that round.</param>
+/// <param name="RoundName">Domain round display name (organizer-authored; not localized by Host).</param>
+/// <param name="PairOrdinal">1-based pair ordinal within the round when the round has multiple fixtures; null for a single-pair round (e.g. Finale).</param>
 public sealed record SchematicFormPositionDto(
     string Kind,
     string? SlotKey = null,
@@ -65,7 +68,10 @@ public sealed record SchematicFormPositionDto(
     string? GroupName = null,
     int? Index = null,
     Guid? FixtureId = null,
-    string? Side = null);
+    string? Side = null,
+    int? RoundOrder = null,
+    string? RoundName = null,
+    int? PairOrdinal = null);
 
 /// <summary>
 /// Structured feed origin (no pre-baked display label).

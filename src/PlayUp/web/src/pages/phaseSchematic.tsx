@@ -11,6 +11,7 @@ import type {
 } from '../types';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { nextPowerOfTwo } from './structureFixtureLabels';
+import { placeChromeLabel } from './structurePlaceLabel';
 import './phase-schematic.css';
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
@@ -69,7 +70,7 @@ export function PhaseSchematic({
   );
 }
 
-/** Shared slot design: primary line (structural identity) + discreet resolution line. */
+/** Shared slot design: chrome (C2 SlotKey) + S3 primary; team only without feed (B1). */
 function SlotBox({
   c,
   t,
@@ -83,15 +84,18 @@ function SlotBox({
   density?: SchematicDensity;
   style?: CSSProperties;
 }) {
-  const primary = c ? casePrimaryLabel(c, t) : null;
-  const secondary = c ? caseSecondaryLabel(c) : null;
+  const address = c ? placeChromeLabel(c.formPosition) : null;
+  const feedPrimary = c?.feedOrigin ? casePrimaryLabel(c, t) : null;
+  const resolvedName =
+    c?.assignment?.displayName?.trim() ||
+    c?.assignment?.shortName?.trim() ||
+    c?.entry?.displayName?.trim() ||
+    null;
+  // B1: 2 lines — address + feed; team only when no feed (Affectation identity).
+  const primary = feedPrimary ?? (!c?.feedOrigin ? resolvedName : null);
+  const secondary = null;
   const placed = !!c?.entry;
-  const name =
-    c?.assignment?.displayName ??
-    c?.assignment?.shortName ??
-    c?.entry?.displayName ??
-    primary ??
-    '';
+  const name = resolvedName ?? primary ?? '';
   const className = [
     'schematic-slot',
     `schematic-slot--${density}`,
@@ -101,20 +105,32 @@ function SlotBox({
     .filter(Boolean)
     .join(' ');
 
+  const titleParts = [
+    address,
+    feedPrimary,
+    resolvedName && resolvedName !== feedPrimary ? resolvedName : null,
+  ].filter(Boolean);
+  const title = titleParts.length > 0 ? titleParts.join(' — ') : undefined;
+
   if (density === 'compact') {
     return (
       <span
         className={className}
         style={style}
         aria-hidden={ghost || undefined}
-        title={(primary ?? name) || undefined}
+        title={title}
       />
     );
   }
 
   if (density === 'crest') {
     return (
-      <span className={className} style={style} aria-hidden={ghost || undefined}>
+      <span
+        className={className}
+        style={style}
+        aria-hidden={ghost || undefined}
+        title={title}
+      >
         {name ? (
           <TeamCrest
             name={name}
@@ -129,6 +145,11 @@ function SlotBox({
 
   return (
     <span className={className} style={style} aria-hidden={ghost || undefined}>
+      {address ? (
+        <span className="schematic-slot__address" title={address}>
+          {address}
+        </span>
+      ) : null}
       {primary ? (
         <span className="schematic-slot__primary" title={primary}>
           {primary}

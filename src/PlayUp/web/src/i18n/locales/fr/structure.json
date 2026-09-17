@@ -572,6 +572,11 @@
       "destinationPlace": "Place"
     }
   },
+  "place": {
+    "side": "côté {{side}}",
+    "cup": "{{round}} · {{side}}",
+    "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}"
+  },
   "population": {
     "sectionSources": "Depuis les phases",
     "sectionAffectation": "Affectation",
@@ -681,6 +686,7 @@
     "kindPlaceUnavailable": "Disponible lorsque les places de cette phase sont libellées",
     "placeGatedBody": "Les places seront disponibles lorsque la structure de la phase exposera des places libellées. Aucune clé technique n’est affichée ici.",
     "placeSelectPending": "Choisissez une place libellée de cette phase.",
+    "placeEmpty": "Aucune place libellée dans cette phase.",
     "destinationPhase": "Phase de destination",
     "tileContribution": "{{count}}/{{capacity}} places",
     "tileContributionEntries": "{{count}} places",
@@ -697,7 +703,8 @@
     "summary": {
       "who": "{{outcome}} — {{match}}",
       "wherePopulation": "→ {{phase}} · Population",
-      "wherePlace": "→ Place (cette phase)"
+      "wherePlace": "→ {{place}}",
+      "wherePlaceFallback": "→ Place (cette phase)"
     }
   },
   "qualification": {
