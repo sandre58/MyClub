@@ -651,6 +651,8 @@ export interface StructureStageHubSummary {
   qualificationPaths?: StructureQualificationPath[] | null;
   /** Authoring projection of progression paths when present. */
   progressionPaths?: StructureProgressionPath[] | null;
+  /** Authoring intents (Round × Outcome → Destination). Prefer over flat paths when present. */
+  progressionIntents?: StructureProgressionIntent[] | null;
   /** Machine-readable graph validity codes (Draft-persistable). */
   structureIssues?: string[];
   /** Configured DirectAssignment count (slot → entry). */
@@ -712,6 +714,22 @@ export interface StructureQualificationPath {
   acrossGroupsPosition?: number | null;
   selectionEndValue?: number | null;
   minimumPoints?: number | null;
+}
+
+/** One progression authoring intent (V3). */
+export interface StructureProgressionIntent {
+  intentId: string;
+  order: number;
+  roundId: string;
+  roundName?: string | null;
+  outcome: ProgressionOutcome;
+  destinationStageId: string;
+  /**
+   * Destination slot when targeting form Place; null/omitted when targeting phase Population.
+   */
+  destinationSlotKey?: string | null;
+  /** Expand preview: fixture count on the round. */
+  expandedPathCount?: number;
 }
 
 /** One progression path for Structure authoring / impact preview. */
@@ -790,7 +808,8 @@ export interface ReplaceQualificationRulesRequest {
 
 /** PUT /stages/{id}/progression-rules */
 export interface ReplaceProgressionRulesRequest {
-  paths: StructureProgressionPath[] | null;
+  intents?: StructureProgressionIntent[] | null;
+  paths?: StructureProgressionPath[] | null;
 }
 
 /** PUT /stages/{id}/placement-award-rules */

@@ -68,7 +68,7 @@ public sealed class MechanismBoundaryTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(destination.Id))
             ]),
             _clock);
 
@@ -77,7 +77,8 @@ public sealed class MechanismBoundaryTests
         source.Draws.Should().BeEmpty();
         destination.Draws.Should().BeEmpty();
         destination.DirectAssignments.Should().BeEmpty();
-        destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+        destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
+        destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
     }
 
     [Fact]

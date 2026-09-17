@@ -140,7 +140,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
                     new ProgressionPath(
                         fixtureId,
                         ProgressionOutcome.Winner,
-                        new ProgressionDestination(progressionStageId, "SF1-A"))
+                        ProgressionDestination.ForPopulation(progressionStageId))
                 ]));
 
         using (var scope = fixture.CreateScope())

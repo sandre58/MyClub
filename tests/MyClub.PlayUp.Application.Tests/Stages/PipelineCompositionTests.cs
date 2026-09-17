@@ -43,20 +43,18 @@ public sealed class PipelineCompositionTests
         qf.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fx1, ProgressionOutcome.Winner, new ProgressionDestination(bridge.Id, "W1")),
-                new ProgressionPath(fx2, ProgressionOutcome.Winner, new ProgressionDestination(bridge.Id, "W2"))
+                new ProgressionPath(fx1, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
+                new ProgressionPath(fx2, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
             ]),
             _clock);
 
         ApplyProgressionOutcome.Execute(qf, fx1, [m1], [qf, bridge], _clock);
         ApplyProgressionOutcome.Execute(qf, fx2, [m2], [qf, bridge], _clock);
 
-        var pool = new[]
-        {
-            bridge.FindSlot("W1")!.EntryId!.Value,
-            bridge.FindSlot("W2")!.EntryId!.Value
-        };
+        var pool = bridge.CompositionEntries.Select(e => e.EntryId).ToArray();
         pool.Should().BeEquivalentTo([a, d]);
+        bridge.FindSlot("W1")!.EntryId.Should().BeNull();
+        bridge.FindSlot("W2")!.EntryId.Should().BeNull();
 
         var draw = sf.CreateDraw(DrawResolutionKind.Slot, _clock);
         sf.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool));
@@ -74,7 +72,7 @@ public sealed class PipelineCompositionTests
 
         sf.FindSlot("SF1-A")!.EntryId.Should().Be(pool[0]);
         sf.FindSlot("SF1-B")!.EntryId.Should().Be(pool[1]);
-        bridge.FindSlot("W1")!.EntryId.Should().Be(pool[0]);
+        bridge.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo(pool);
         draw.Inputs!.Entries.Should().BeEquivalentTo(pool);
         sf.DirectAssignments.Should().BeEmpty();
     }
@@ -176,12 +174,13 @@ public sealed class PipelineCompositionTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(sf.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(sf.Id))
             ]),
             _clock);
         ApplyProgressionOutcome.Execute(qf, fixtureId, [match], [qf, sf], _clock);
 
-        sf.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+        sf.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
+        sf.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         league.Draws.Should().BeEmpty();
         qf.Draws.Should().BeEmpty();
         sf.Draws.Should().BeEmpty();
@@ -274,19 +273,17 @@ public sealed class PipelineCompositionTests
         qf.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fxQf1.Id, ProgressionOutcome.Winner, new ProgressionDestination(bridge.Id, "W1")),
-                new ProgressionPath(fxQf2.Id, ProgressionOutcome.Winner, new ProgressionDestination(bridge.Id, "W2"))
+                new ProgressionPath(fxQf1.Id, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
+                new ProgressionPath(fxQf2.Id, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
             ]),
             _clock);
         ApplyProgressionOutcome.Execute(qf, fxQf1.Id, [m1], [qf, bridge], _clock);
         ApplyProgressionOutcome.Execute(qf, fxQf2.Id, [m2], [qf, bridge], _clock);
 
-        EntryId[] pool =
-        [
-            bridge.FindSlot("W1")!.EntryId!.Value,
-            bridge.FindSlot("W2")!.EntryId!.Value
-        ];
+        var pool = bridge.CompositionEntries.Select(e => e.EntryId).ToArray();
         pool.Should().BeEquivalentTo([a, d]);
+        bridge.FindSlot("W1")!.EntryId.Should().BeNull();
+        bridge.FindSlot("W2")!.EntryId.Should().BeNull();
 
         var drawSf = sf.CreateDraw(DrawResolutionKind.Slot, _clock);
         sf.ConfigureDrawInputs(drawSf.Id, DrawInputs.ForSlot(pool));

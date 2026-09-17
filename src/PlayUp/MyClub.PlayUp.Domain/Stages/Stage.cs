@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages.Events;
@@ -705,6 +706,14 @@ public sealed class Stage : AggregateRoot<StageId>
                     }
 
                     continue;
+                }
+
+                // V3: Place = forme-owner only (intra-phase). Cross-stage ForSlot is purged.
+                if (!path.Destination.StageId.Equals(Id))
+                {
+                    throw new DomainException(
+                        "Progression place destination must target the form-owning stage (source stage).",
+                        RulesErrorCodes.ProgressionRulesInvalid);
                 }
 
                 EnsureLocalPathDestination(path.Destination.StageId, path.Destination.SlotKey!);
@@ -2386,14 +2395,16 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Validates local destination for Qualification / Progression paths that target this stage.
-    /// Cross-stage destinations are validated by Application <c>PrepareStage</c>.
+    /// Validates Place destination on the form-owning stage (caller must ensure stageId == this.Id).
     /// </summary>
+    [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local", Justification = "False positive")]
     private void EnsureLocalPathDestination(StageId destinationStageId, string slotKey)
     {
         if (!destinationStageId.Equals(Id))
         {
-            return;
+            throw new DomainException(
+                "Progression place destination must target the form-owning stage (source stage).",
+                RulesErrorCodes.ProgressionRulesInvalid);
         }
 
         if (FindSlot(slotKey) is null)

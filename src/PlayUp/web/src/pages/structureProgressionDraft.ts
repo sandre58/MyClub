@@ -1,37 +1,35 @@
 // -----------------------------------------------------------------------
-// Progression path drafts — atomic ProgressionPath authoring (Prog V2).
+// Progression Intent drafts — Round × Outcome → Destination (Prog V3).
 // -----------------------------------------------------------------------
 
 import type {
   ProgressionOutcome,
+  StructureProgressionIntent,
   StructureProgressionPath,
 } from '../types';
 import { isPopulationDestination } from './structureProgression';
 
 export type ProgTargetKind = 'population' | 'place';
 
-export type ProgPathDraft = {
+export type ProgIntentDraft = {
   id: string;
-  sourceFixtureId: string;
-  sourceLabel: string;
+  order: number;
+  roundId: string;
+  roundName: string;
   outcome: ProgressionOutcome;
   targetKind: ProgTargetKind;
   destinationStageId: string;
-  /** Preserved for reload/save of existing Place paths; never shown as raw SlotKey. */
+  /** Preserved for Place when U4 unlocks; never shown as raw SlotKey while gated. */
   destinationSlotKey: string;
-  /**
-   * Loaded Place targeting another phase — Domain legacy, not V2 authoring.
-   * Blocks save until the user changes destination.
-   */
-  legacyInterPhasePlace: boolean;
+  /** Expand preview: fixture count for the selected round. */
+  expandedPathCount: number;
 };
 
 export type ProgIncompleteReason =
-  | 'Fixture'
+  | 'Round'
   | 'Destination'
   | 'PlaceUnavailable'
-  | 'LegacyPlace'
-  | 'DuplicateSource'
+  | 'DuplicateRoundOutcome'
   | 'DuplicatePlace';
 
 /** Place ChoiceTile stays gated until schematic exposes labeled Places (Décision / U4). */
@@ -39,105 +37,147 @@ export function areProgressionPlacesLabeled(): boolean {
   return false;
 }
 
-export function newProgPathId(): string {
+export function newProgIntentId(): string {
   return crypto.randomUUID();
 }
 
-export function emptyProgPath(
+export function emptyProgIntent(
   destinationStageId = '',
   targetKind: ProgTargetKind = 'population',
-): ProgPathDraft {
+  order = 1,
+): ProgIntentDraft {
   return {
-    id: newProgPathId(),
-    sourceFixtureId: '',
-    sourceLabel: '',
+    id: newProgIntentId(),
+    order,
+    roundId: '',
+    roundName: '',
     outcome: 'Winner',
     targetKind,
     destinationStageId,
     destinationSlotKey: '',
-    legacyInterPhasePlace: false,
+    expandedPathCount: 0,
   };
 }
 
-export function pathFromApi(
-  path: StructureProgressionPath,
+export function intentFromApi(
+  intent: StructureProgressionIntent,
   sourceStageId: string,
-): ProgPathDraft {
-  const population = isPopulationDestination(path.destinationSlotKey);
-  const destinationStageId = path.destinationStageId;
-  const legacyInterPhasePlace =
-    !population && destinationStageId !== sourceStageId;
+): ProgIntentDraft {
+  const population = isPopulationDestination(intent.destinationSlotKey);
+  // V3 purge: Place must be forme-owner. Cross-stage slot → coerce to Population.
+  const crossPlace =
+    !population && intent.destinationStageId !== sourceStageId;
 
   return {
-    id: newProgPathId(),
-    sourceFixtureId: path.sourceFixtureId,
-    sourceLabel: path.sourceLabel?.trim() ?? '',
-    outcome: path.outcome,
-    targetKind: population ? 'population' : 'place',
-    destinationStageId: population
-      ? destinationStageId
-      : legacyInterPhasePlace
-        ? destinationStageId
+    id: intent.intentId || newProgIntentId(),
+    order: intent.order,
+    roundId: intent.roundId,
+    roundName: intent.roundName?.trim() ?? '',
+    outcome: intent.outcome,
+    targetKind: population || crossPlace ? 'population' : 'place',
+    destinationStageId:
+      population || crossPlace
+        ? intent.destinationStageId
         : sourceStageId,
-    destinationSlotKey: population
-      ? ''
-      : (path.destinationSlotKey?.trim() ?? ''),
-    legacyInterPhasePlace,
+    destinationSlotKey:
+      population || crossPlace
+        ? ''
+        : (intent.destinationSlotKey?.trim() ?? ''),
+    expandedPathCount: intent.expandedPathCount ?? 0,
   };
 }
 
-export function serializePaths(paths: ProgPathDraft[]): string {
+/** Legacy fallback: one singleton intent per path (path-list authoring). */
+export function pathToSingletonIntent(
+  path: StructureProgressionPath,
+  sourceStageId: string,
+  roundId: string,
+  roundName: string,
+  order: number,
+): ProgIntentDraft {
+  const population = isPopulationDestination(path.destinationSlotKey);
+  const crossPlace =
+    !population && path.destinationStageId !== sourceStageId;
+
+  return {
+    id: newProgIntentId(),
+    order,
+    roundId,
+    roundName,
+    outcome: path.outcome,
+    targetKind: population || crossPlace ? 'population' : 'place',
+    destinationStageId:
+      population || crossPlace
+        ? path.destinationStageId
+        : sourceStageId,
+    destinationSlotKey:
+      population || crossPlace
+        ? ''
+        : (path.destinationSlotKey?.trim() ?? ''),
+    expandedPathCount: 1,
+  };
+}
+
+export function serializeIntents(intents: ProgIntentDraft[]): string {
   return JSON.stringify(
-    paths.map((p) => ({
-      sourceFixtureId: p.sourceFixtureId,
+    intents.map((p) => ({
+      order: p.order,
+      roundId: p.roundId,
       outcome: p.outcome,
       targetKind: p.targetKind,
       destinationStageId: p.destinationStageId,
       destinationSlotKey:
         p.targetKind === 'place' ? p.destinationSlotKey : '',
-      legacyInterPhasePlace: p.legacyInterPhasePlace,
     })),
   );
 }
 
-export function toApiPath(draft: ProgPathDraft): StructureProgressionPath {
+export function toApiIntent(
+  draft: ProgIntentDraft,
+  order: number,
+): StructureProgressionIntent {
   if (draft.targetKind === 'population') {
     return {
-      sourceFixtureId: draft.sourceFixtureId.trim(),
+      intentId: draft.id,
+      order,
+      roundId: draft.roundId.trim(),
+      roundName: draft.roundName || null,
       outcome: draft.outcome,
       destinationStageId: draft.destinationStageId,
       destinationSlotKey: null,
+      expandedPathCount: draft.expandedPathCount,
     };
   }
   return {
-    sourceFixtureId: draft.sourceFixtureId.trim(),
+    intentId: draft.id,
+    order,
+    roundId: draft.roundId.trim(),
+    roundName: draft.roundName || null,
     outcome: draft.outcome,
     destinationStageId: draft.destinationStageId,
     destinationSlotKey: draft.destinationSlotKey.trim(),
+    expandedPathCount: draft.expandedPathCount,
   };
 }
 
-function sourceKey(draft: ProgPathDraft): string {
-  return `${draft.sourceFixtureId.trim()}|${draft.outcome}`;
+function roundOutcomeKey(draft: ProgIntentDraft): string {
+  return `${draft.roundId.trim()}|${draft.outcome}`;
 }
 
-function placeKey(draft: ProgPathDraft): string | null {
+function placeKey(draft: ProgIntentDraft): string | null {
   if (draft.targetKind !== 'place') return null;
   const slot = draft.destinationSlotKey.trim();
   if (!slot) return null;
   return `${draft.destinationStageId}|${slot}`;
 }
 
-export function incompletePathReason(
-  draft: ProgPathDraft,
-  all: ProgPathDraft[],
+export function incompleteIntentReason(
+  draft: ProgIntentDraft,
+  all: ProgIntentDraft[],
   placesLabeled: boolean,
 ): ProgIncompleteReason | null {
-  if (draft.legacyInterPhasePlace) {
-    return 'LegacyPlace';
-  }
-  if (!draft.sourceFixtureId.trim()) {
-    return 'Fixture';
+  if (!draft.roundId.trim()) {
+    return 'Round';
   }
   if (draft.targetKind === 'place') {
     if (!placesLabeled) {
@@ -153,13 +193,13 @@ export function incompletePathReason(
     return 'Destination';
   }
 
-  const sk = sourceKey(draft);
+  const rk = roundOutcomeKey(draft);
   if (
     all.some(
-      (other) => other.id !== draft.id && sourceKey(other) === sk,
+      (other) => other.id !== draft.id && roundOutcomeKey(other) === rk,
     )
   ) {
-    return 'DuplicateSource';
+    return 'DuplicateRoundOutcome';
   }
 
   const pk = placeKey(draft);
@@ -173,31 +213,37 @@ export function incompletePathReason(
   return null;
 }
 
-export function isPathComplete(
-  draft: ProgPathDraft,
-  all: ProgPathDraft[],
+export function isIntentComplete(
+  draft: ProgIntentDraft,
+  all: ProgIntentDraft[],
   placesLabeled: boolean,
 ): boolean {
-  return incompletePathReason(draft, all, placesLabeled) == null;
+  return incompleteIntentReason(draft, all, placesLabeled) == null;
 }
 
-export function summarizePathWho(
-  draft: ProgPathDraft,
+export function summarizeIntentWho(
+  draft: ProgIntentDraft,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
   const outcome =
     draft.outcome === 'Winner'
       ? t('progression.outcomeWinner')
       : t('progression.outcomeLoser');
-  const match =
-    draft.sourceLabel.trim() ||
-    (draft.sourceFixtureId.trim()
-      ? t('fiche.rule.matchFallback', {
-          id: draft.sourceFixtureId.trim().slice(0, 8),
+  const round =
+    draft.roundName.trim() ||
+    (draft.roundId.trim()
+      ? t('progression.roundFallback', {
+          id: draft.roundId.trim().slice(0, 8),
         })
       : '');
-  if (!match) {
+  if (!round) {
     return outcome;
   }
-  return t('progression.summary.who', { outcome, match });
+  return t('progression.summary.who', { outcome, match: round });
+}
+
+/** Expand preview count for capacity soft-warnings (fixtures × intents to peer). */
+export function expandContribution(draft: ProgIntentDraft): number {
+  if (draft.targetKind !== 'population') return 0;
+  return Math.max(draft.expandedPathCount, draft.roundId ? 1 : 0);
 }

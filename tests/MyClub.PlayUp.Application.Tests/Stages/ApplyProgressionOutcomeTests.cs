@@ -38,7 +38,7 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void Execute_cross_stage_sets_destination_slot()
+    public void Execute_cross_stage_adds_destination_population()
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
@@ -52,7 +52,7 @@ public sealed class ApplyProgressionOutcomeTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(destination.Id))
             ]),
             _clock);
 
@@ -64,7 +64,9 @@ public sealed class ApplyProgressionOutcomeTests
             _clock);
 
         results.Should().ContainSingle();
-        destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+        results[0].TargetsPopulation.Should().BeTrue();
+        destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
+        destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         source.FindSlot("QF1-A")!.EntryId.Should().BeNull();
     }
 
@@ -307,7 +309,7 @@ public sealed class ApplyProgressionOutcomeTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(destination.Id))
             ]),
             _clock);
         destination.Prepare(_clock);
@@ -317,7 +319,8 @@ public sealed class ApplyProgressionOutcomeTests
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         destination.Status.Should().Be(StageStatus.Suspended);
-        destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+        destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
+        destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         destination.Draws.Should().BeEmpty();
     }
 
@@ -336,7 +339,7 @@ public sealed class ApplyProgressionOutcomeTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(destination.Id))
             ]),
             _clock);
         destination.Prepare(_clock);
@@ -352,6 +355,7 @@ public sealed class ApplyProgressionOutcomeTests
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        destination.CompositionEntries.Should().BeEmpty();
         destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         destination.Status.Should().Be(StageStatus.Completed);
     }
@@ -397,7 +401,7 @@ public sealed class ApplyProgressionOutcomeTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(missingDestinationId, "SF1-A"))
+                    ProgressionDestination.ForPopulation(missingDestinationId))
             ]),
             _clock);
 
@@ -409,34 +413,26 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void Execute_rejects_missing_destination_slot_without_mutation()
+    public void ReplaceProgressionRules_rejects_cross_stage_place()
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
         var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
-        var home = EntryId.New();
-        var away = EntryId.New();
-        var (fixtureId, match) = AttachFinishedMatch(source, home, away, 2, 0);
-        source.ReplaceProgressionRules(
+        var fixture = source.AddFixture(source.Rounds[0].Id, _clock);
+
+        var act = () => source.ReplaceProgressionRules(
             new ProgressionRules(
             [
                 new ProgressionPath(
-                    fixtureId,
+                    fixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "Missing-Slot"))
+                    new ProgressionDestination(destination.Id, "SF1-A"))
             ]),
             _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(
-            source,
-            fixtureId,
-            [match],
-            [source, destination],
-            _clock);
-
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
-        destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+        var ex = act.Should().Throw<DomainException>().Which;
+        ex.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
+        ex.Message.Should().Contain("form-owning");
     }
 
     [Fact]
@@ -494,7 +490,7 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void Execute_direct_conflict_bubbles_domain_error()
+    public void Execute_population_succeeds_alongside_destination_direct_slot_assignment()
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
@@ -510,27 +506,24 @@ public sealed class ApplyProgressionOutcomeTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(destination.Id))
             ]),
             _clock);
 
-        var act = () => ApplyProgressionOutcome.Execute(
-            source,
-            fixtureId,
-            [match],
-            [source, destination],
-            _clock);
+        ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
+        destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
         destination.FindSlot("SF1-A")!.EntryId.Should().Be(directEntry);
+        destination.DirectAssignments.Should().ContainSingle();
     }
 
     [Fact]
-    public void Execute_preflight_second_path_missing_slot_mutates_nothing()
+    public void Execute_preflight_second_path_missing_stage_mutates_nothing()
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
         var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var missingLoserDestinationId = StageId.New();
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(source, home, away, 2, 0);
@@ -540,11 +533,11 @@ public sealed class ApplyProgressionOutcomeTests
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "SF1-A")),
+                    ProgressionDestination.ForPopulation(destination.Id)),
                 new ProgressionPath(
                     fixtureId,
                     ProgressionOutcome.Loser,
-                    new ProgressionDestination(destination.Id, "Missing-Slot"))
+                    ProgressionDestination.ForPopulation(missingLoserDestinationId))
             ]),
             _clock);
 
@@ -556,7 +549,8 @@ public sealed class ApplyProgressionOutcomeTests
             _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StageNotInCompetition);
+        destination.CompositionEntries.Should().BeEmpty();
         destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
     }
 

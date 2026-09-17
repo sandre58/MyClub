@@ -28,7 +28,7 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 14, 18, 0, 0, TimeSpan.Zero));
 
     [IntegrationFact]
-    public async Task Apply_progression_returns_204_and_persists_destination_slotAsync()
+    public async Task Apply_progression_returns_204_and_persists_destination_populationAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedR2QuarterToSemiAsync(factory);
@@ -42,7 +42,8 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var destination = await stages.GetByIdForUpdateAsync(seed.DestinationStageId);
         destination.Should().NotBeNull();
-        destination.FindSlot("SF1-A")!.EntryId.Should().Be(seed.Home);
+        destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(seed.Home);
+        destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         destination.FindSlot("SF1-B")!.EntryId.Should().BeNull();
     }
 
@@ -130,7 +131,7 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
                 new ProgressionPath(
                     addFixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(semi.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(semi.Id))
             ]),
             _clock);
 

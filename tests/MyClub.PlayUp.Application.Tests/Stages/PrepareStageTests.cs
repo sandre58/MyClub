@@ -168,7 +168,7 @@ public sealed class PrepareStageTests
     }
 
     [Fact]
-    public void Execute_rejects_progression_outbound_when_destination_slot_missing()
+    public void ReplaceProgressionRules_rejects_cross_stage_place_destination()
     {
         var competitionId = CompetitionId.New();
         var source = Stage.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
@@ -181,7 +181,8 @@ public sealed class PrepareStageTests
         semi.AddRound("SF", _clock);
         semi.AddSlot("SF1-A");
         semi.AddSlot("SF1B");
-        source.ReplaceProgressionRules(
+
+        var act = () => source.ReplaceProgressionRules(
             new ProgressionRules(
             [
                 new ProgressionPath(
@@ -191,11 +192,9 @@ public sealed class PrepareStageTests
             ]),
             _clock);
 
-        var act = () => PrepareStage.Execute(source, [source, semi], _clock);
-
-        var ex = act.Should().Throw<ApplicationFailureException>().Which;
-        ex.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
-        ex.Message.Should().Contain("SF1-B");
+        var ex = act.Should().Throw<DomainException>().Which;
+        ex.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
+        ex.Message.Should().Contain("form-owning");
         source.Status.Should().Be(StageStatus.Draft);
         semi.Status.Should().Be(StageStatus.Draft);
     }
@@ -243,7 +242,7 @@ public sealed class PrepareStageTests
                 new ProgressionPath(
                     fixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(superFinalId, "Champ"))
+                    ProgressionDestination.ForPopulation(superFinalId))
             ]),
             _clock);
 
@@ -302,7 +301,7 @@ public sealed class PrepareStageTests
                 new ProgressionPath(
                     fixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(semi.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(semi.Id))
             ]),
             _clock);
 

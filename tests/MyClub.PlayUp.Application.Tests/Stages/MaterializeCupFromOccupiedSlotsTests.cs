@@ -252,17 +252,20 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
                 new ProgressionPath(
                     qfFixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(sf.Id, "SF1-A")),
+                    ProgressionDestination.ForPopulation(sf.Id)),
                 new ProgressionPath(
                     qfFixture.Id,
                     ProgressionOutcome.Loser,
-                    new ProgressionDestination(sf.Id, "SF1-B"))
+                    ProgressionDestination.ForPopulation(sf.Id))
             ]),
             _clock);
 
         ApplyProgressionOutcome.Execute(qf, qfFixture.Id, [qfMatch], [qf, sf], _clock);
-        sf.FindSlot("SF1-A")!.EntryId.Should().Be(home);
-        sf.FindSlot("SF1-B")!.EntryId.Should().Be(away);
+        sf.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo([home, away]);
+        sf.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+        sf.FindSlot("SF1-B")!.EntryId.Should().BeNull();
+        sf.ApplyResolvedEntry("SF1-A", home, _clock);
+        sf.ApplyResolvedEntry("SF1-B", away, _clock);
 
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,

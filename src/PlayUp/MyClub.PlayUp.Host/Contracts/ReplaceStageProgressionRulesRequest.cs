@@ -10,10 +10,24 @@ namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
 /// HTTP body for replacing progression rules on a stage.
+/// Prefer <see cref="Intents"/> (V3 authoring). Paths = atomic / legacy.
 /// </summary>
-/// <param name="Paths">Replacement paths (empty or null clears rules).</param>
+/// <param name="Intents">Authoring intents (Round × Outcome → Destination).</param>
+/// <param name="Paths">Replacement paths (empty or null clears when intents also empty).</param>
 public sealed record ReplaceStageProgressionRulesRequest(
-    IReadOnlyList<ProgressionPathRequest>? Paths);
+    IReadOnlyList<ProgressionIntentRequest>? Intents = null,
+    IReadOnlyList<ProgressionPathRequest>? Paths = null);
+
+/// <summary>
+/// One HTTP progression intent.
+/// </summary>
+public sealed record ProgressionIntentRequest(
+    Guid? IntentId,
+    int Order,
+    Guid RoundId,
+    ProgressionOutcome Outcome,
+    Guid DestinationStageId,
+    string? DestinationSlotKey = null);
 
 /// <summary>
 /// One HTTP progression path.

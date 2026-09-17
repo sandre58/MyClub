@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Progression dialog — atomic ProgressionPath authoring (chassis Qual / V2).
+// Progression dialog — Intent Round × Outcome → Destination (Prog V3).
 // -----------------------------------------------------------------------
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -38,17 +38,18 @@ import type {
 } from '../types';
 import { EmptyState, MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
-import { listFixtureOptions } from './structureFixtureLabels';
 import {
   areProgressionPlacesLabeled,
-  emptyProgPath,
-  incompletePathReason,
-  isPathComplete,
-  pathFromApi,
-  serializePaths,
-  summarizePathWho,
-  toApiPath,
-  type ProgPathDraft,
+  emptyProgIntent,
+  expandContribution,
+  incompleteIntentReason,
+  intentFromApi,
+  isIntentComplete,
+  pathToSingletonIntent,
+  serializeIntents,
+  summarizeIntentWho,
+  toApiIntent,
+  type ProgIntentDraft,
   type ProgTargetKind,
 } from './structureProgressionDraft';
 
@@ -77,6 +78,18 @@ function stageFormatIcon(kind?: StructureFormatKind | null) {
     default:
       return <StructureIcon size="sm" aria-hidden="true" />;
   }
+}
+
+function resolveRoundIdForFixture(
+  rounds: { id: string; name: string; fixtures: { id: string }[] }[],
+  fixtureId: string,
+): { roundId: string; roundName: string } | null {
+  for (const round of rounds) {
+    if (round.fixtures.some((f) => f.id === fixtureId)) {
+      return { roundId: round.id, roundName: round.name };
+    }
+  }
+  return null;
 }
 
 export function StructureProgressionDialog({
@@ -112,7 +125,7 @@ export function StructureProgressionDialog({
     [data.stages],
   );
 
-  const [paths, setPaths] = useState<ProgPathDraft[]>([]);
+  const [intents, setIntents] = useState<ProgIntentDraft[]>([]);
   const [baselineSerialized, setBaselineSerialized] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -121,51 +134,111 @@ export function StructureProgressionDialog({
     queryFn: () => fetchStageOverview(stage.stageId),
     enabled: open,
   });
-  const fixtureOptions = useMemo(
-    () => listFixtureOptions(overviewQuery.data?.rounds ?? []),
-    [overviewQuery.data?.rounds],
+  const rounds = overviewQuery.data?.rounds ?? [];
+  const roundOptions = useMemo(
+    () =>
+      rounds.map((r) => ({
+        id: r.id,
+        name: r.name,
+        fixtureCount: r.fixtures.length,
+      })),
+    [rounds],
   );
-  const fixtureLabelById = useMemo(
-    () => new Map(fixtureOptions.map((o) => [o.id, o.label])),
-    [fixtureOptions],
+  const roundById = useMemo(
+    () => new Map(roundOptions.map((r) => [r.id, r])),
+    [roundOptions],
   );
 
   useEffect(() => {
     if (!open) {
-      setPaths([]);
+      setIntents([]);
       setBaselineSerialized('');
       setExpandedId(null);
       return;
     }
-    const existing = stage.progressionPaths ?? [];
-    const next =
-      existing.length > 0
-        ? existing.map((path) => pathFromApi(path, stage.stageId))
-        : [];
-    setPaths(next);
-    setBaselineSerialized(serializePaths(next));
+
+    const fromIntents = stage.progressionIntents ?? [];
+    if (fromIntents.length > 0) {
+      const next = fromIntents.map((intent) =>
+        intentFromApi(intent, stage.stageId),
+      );
+      setIntents(next);
+      setBaselineSerialized(serializeIntents(next));
+      setExpandedId(null);
+      return;
+    }
+
+    // Wait for rounds when falling back from path-list projection.
+    if (overviewQuery.isLoading) {
+      return;
+    }
+
+    const existingPaths = stage.progressionPaths ?? [];
+    if (existingPaths.length === 0) {
+      setIntents([]);
+      setBaselineSerialized(serializeIntents([]));
+      setExpandedId(null);
+      return;
+    }
+
+    const next: ProgIntentDraft[] = [];
+    let order = 1;
+    for (const path of existingPaths) {
+      const resolved = resolveRoundIdForFixture(rounds, path.sourceFixtureId);
+      if (!resolved) continue;
+      const existing = next.find(
+        (intent) =>
+          intent.roundId === resolved.roundId &&
+          intent.outcome === path.outcome &&
+          intent.destinationStageId === path.destinationStageId &&
+          (intent.destinationSlotKey || null) ===
+            (path.destinationSlotKey ?? null),
+      );
+      if (existing) {
+        existing.expandedPathCount += 1;
+        continue;
+      }
+      next.push(
+        pathToSingletonIntent(
+          path,
+          stage.stageId,
+          resolved.roundId,
+          resolved.roundName,
+          order++,
+        ),
+      );
+    }
+    setIntents(next);
+    setBaselineSerialized(serializeIntents(next));
     setExpandedId(null);
-  }, [open, stage.stageId, stage.progressionPaths]);
+  }, [
+    open,
+    stage.stageId,
+    stage.progressionIntents,
+    stage.progressionPaths,
+    overviewQuery.isLoading,
+    rounds,
+  ]);
 
   const populationCount = useMemo(
-    () => paths.filter((p) => p.targetKind === 'population').length,
-    [paths],
+    () => intents.filter((p) => p.targetKind === 'population').length,
+    [intents],
   );
   const placeCount = useMemo(
-    () => paths.filter((p) => p.targetKind === 'place').length,
-    [paths],
+    () => intents.filter((p) => p.targetKind === 'place').length,
+    [intents],
   );
 
   const draftEntriesByDestination = useMemo(() => {
     const map = new Map<string, number>();
-    for (const path of paths) {
-      if (path.targetKind !== 'population') continue;
-      const destId = path.destinationStageId.trim();
+    for (const intent of intents) {
+      if (intent.targetKind !== 'population') continue;
+      const destId = intent.destinationStageId.trim();
       if (!destId) continue;
-      map.set(destId, (map.get(destId) ?? 0) + 1);
+      map.set(destId, (map.get(destId) ?? 0) + expandContribution(intent));
     }
     return map;
-  }, [paths]);
+  }, [intents]);
 
   const overCapacityWarnings = useMemo(() => {
     const warnings: {
@@ -188,16 +261,19 @@ export function StructureProgressionDialog({
     return warnings;
   }, [draftEntriesByDestination, stageById]);
 
-  const canAuthor =
-    peerStages.length > 0 || placesLabeled;
+  const canAuthor = peerStages.length > 0 || placesLabeled;
 
   const mutation = useMutation({
     mutationFn: () => {
-      if (paths.length === 0) {
-        return replaceStageProgressionRules(stage.stageId, { paths: null });
+      if (intents.length === 0) {
+        return replaceStageProgressionRules(stage.stageId, {
+          intents: null,
+          paths: null,
+        });
       }
       return replaceStageProgressionRules(stage.stageId, {
-        paths: paths.map(toApiPath),
+        intents: intents.map((draft, index) => toApiIntent(draft, index + 1)),
+        paths: null,
       });
     },
     onSuccess: async () => {
@@ -208,32 +284,33 @@ export function StructureProgressionDialog({
   });
 
   const dirty =
-    mutation.isPending || serializePaths(paths) !== baselineSerialized;
+    mutation.isPending || serializeIntents(intents) !== baselineSerialized;
 
   const canSave =
     !mutation.isPending &&
-    paths.every((path) => isPathComplete(path, paths, placesLabeled));
+    intents.every((intent) => isIntentComplete(intent, intents, placesLabeled));
 
-  function toggleRow(path: ProgPathDraft) {
-    setExpandedId((prev) => (prev === path.id ? null : path.id));
+  function toggleRow(intent: ProgIntentDraft) {
+    setExpandedId((prev) => (prev === intent.id ? null : intent.id));
   }
 
-  function addPath() {
-    const next = emptyProgPath(
+  function addIntent() {
+    const next = emptyProgIntent(
       peerStages.length > 0 ? defaultDest : stage.stageId,
       peerStages.length > 0 ? 'population' : 'place',
+      intents.length + 1,
     );
-    setPaths((prev) => [...prev, next]);
+    setIntents((prev) => [...prev, next]);
     setExpandedId(next.id);
   }
 
-  function removePath(id: string) {
-    setPaths((prev) => prev.filter((p) => p.id !== id));
+  function removeIntent(id: string) {
+    setIntents((prev) => prev.filter((p) => p.id !== id));
     setExpandedId((prev) => (prev === id ? null : prev));
   }
 
-  function updatePath(next: ProgPathDraft) {
-    setPaths((prev) => prev.map((p) => (p.id === next.id ? next : p)));
+  function updateIntent(next: ProgIntentDraft) {
+    setIntents((prev) => prev.map((p) => (p.id === next.id ? next : p)));
   }
 
   const contextDestinationName = contextDestinationId
@@ -309,10 +386,10 @@ export function StructureProgressionDialog({
           <div className="structure-qualification__facts">
             <div className="structure-qualification__fact structure-qualification__fact--primary">
               <span className="structure-qualification__fact-value">
-                {paths.length}
+                {intents.length}
               </span>
               <span className="structure-qualification__fact-label">
-                {t('progression.factRules', { count: paths.length })}
+                {t('progression.factRules', { count: intents.length })}
               </span>
             </div>
             {placesLabeled || placeCount > 0 ? (
@@ -350,7 +427,7 @@ export function StructureProgressionDialog({
             type="button"
             className="ds-btn ds-btn--primary"
             disabled={!canAuthor || mutation.isPending}
-            onClick={addPath}
+            onClick={addIntent}
           >
             <PlusIcon size="sm" />
             <span>{t('progression.add')}</span>
@@ -365,7 +442,7 @@ export function StructureProgressionDialog({
           >
             {t('progression.emptyNoPeerBody')}
           </EmptyState>
-        ) : paths.length === 0 ? (
+        ) : intents.length === 0 ? (
           <EmptyState
             variant="idle"
             icon={<EmptySelectionIcon size="lg" />}
@@ -375,36 +452,42 @@ export function StructureProgressionDialog({
           </EmptyState>
         ) : (
           <ul className="structure-qualification__list">
-            {paths.map((path) => {
-              const isExpanded = expandedId === path.id;
+            {intents.map((intent) => {
+              const isExpanded = expandedId === intent.id;
               const who =
-                summarizePathWho(path, t) || t('progression.newPath');
+                summarizeIntentWho(intent, t) || t('progression.newPath');
               const destName =
-                path.targetKind === 'place'
+                intent.targetKind === 'place'
                   ? stage.name
-                  : (stageNameById.get(path.destinationStageId) ??
-                    path.destinationStageId);
+                  : (stageNameById.get(intent.destinationStageId) ??
+                    intent.destinationStageId);
               const where =
-                path.targetKind === 'population' &&
-                path.destinationStageId.trim()
+                intent.targetKind === 'population' &&
+                intent.destinationStageId.trim()
                   ? t('progression.summary.wherePopulation', {
                       phase: destName,
                     })
-                  : path.targetKind === 'place'
+                  : intent.targetKind === 'place'
                     ? t('progression.summary.wherePlace')
                     : null;
-              const incompleteReason = incompletePathReason(
-                path,
-                paths,
+              const incompleteReason = incompleteIntentReason(
+                intent,
+                intents,
                 placesLabeled,
               );
               const statusMessage =
                 incompleteReason == null
                   ? null
                   : t(`progression.incompleteHint${incompleteReason}`);
+              const expandHint =
+                intent.expandedPathCount > 0
+                  ? t('progression.expandPreview', {
+                      count: intent.expandedPathCount,
+                    })
+                  : null;
 
               return (
-                <li key={path.id} className="structure-qualification__item">
+                <li key={intent.id} className="structure-qualification__item">
                   <div
                     className="structure-qualification__card ds-selectable-tile"
                     data-selected={isExpanded ? 'true' : 'false'}
@@ -413,14 +496,14 @@ export function StructureProgressionDialog({
                       <button
                         type="button"
                         className="structure-qualification__row"
-                        onClick={() => toggleRow(path)}
+                        onClick={() => toggleRow(intent)}
                         aria-expanded={isExpanded}
                       >
                         <span
                           className="structure-qualification__scope-icon"
                           aria-hidden="true"
                         >
-                          {path.outcome === 'Winner' ? (
+                          {intent.outcome === 'Winner' ? (
                             <TrophyIcon size="lg" />
                           ) : (
                             <CupFormatIcon size="lg" />
@@ -433,6 +516,11 @@ export function StructureProgressionDialog({
                           {where ? (
                             <span className="structure-qualification__where">
                               {where}
+                            </span>
+                          ) : null}
+                          {expandHint && !isExpanded ? (
+                            <span className="structure-qualification__where">
+                              {expandHint}
                             </span>
                           ) : null}
                           {statusMessage && !isExpanded ? (
@@ -471,7 +559,7 @@ export function StructureProgressionDialog({
                         disabled={mutation.isPending}
                         onClick={(event) => {
                           event.stopPropagation();
-                          removePath(path.id);
+                          removeIntent(intent.id);
                         }}
                       >
                         <LucideIcon icon={Trash2} size="sm" />
@@ -480,16 +568,23 @@ export function StructureProgressionDialog({
 
                     {isExpanded ? (
                       <div className="structure-qualification__panel">
-                        <ProgPathEditor
-                          draft={path}
+                        <ProgIntentEditor
+                          draft={intent}
                           sourceStage={stage}
                           peerStages={peerStages}
                           placesLabeled={placesLabeled}
-                          fixtureOptions={fixtureOptions}
-                          fixtureLabelById={fixtureLabelById}
-                          fixturesLoading={overviewQuery.isLoading}
+                          roundOptions={roundOptions}
+                          roundsLoading={overviewQuery.isLoading}
                           draftEntriesByDestination={draftEntriesByDestination}
-                          onChange={updatePath}
+                          onChange={(next) => {
+                            const round = roundById.get(next.roundId);
+                            updateIntent({
+                              ...next,
+                              roundName: round?.name ?? next.roundName,
+                              expandedPathCount:
+                                round?.fixtureCount ?? next.expandedPathCount,
+                            });
+                          }}
                         />
                       </div>
                     ) : null}
@@ -504,54 +599,56 @@ export function StructureProgressionDialog({
   );
 }
 
-function ProgPathEditor({
+function ProgIntentEditor({
   draft,
   sourceStage,
   peerStages,
   placesLabeled,
-  fixtureOptions,
-  fixtureLabelById,
-  fixturesLoading,
+  roundOptions,
+  roundsLoading,
   draftEntriesByDestination,
   onChange,
 }: {
-  draft: ProgPathDraft;
+  draft: ProgIntentDraft;
   sourceStage: StructureStageHubSummary;
   peerStages: StructureStageHubSummary[];
   placesLabeled: boolean;
-  fixtureOptions: { id: string; label: string }[];
-  fixtureLabelById: Map<string, string>;
-  fixturesLoading: boolean;
+  roundOptions: { id: string; name: string; fixtureCount: number }[];
+  roundsLoading: boolean;
   draftEntriesByDestination: Map<string, number>;
-  onChange: (next: ProgPathDraft) => void;
+  onChange: (next: ProgIntentDraft) => void;
 }) {
   const { t } = useTranslation('structure');
 
-  const fixtureSelectOptions = useMemo(() => {
+  const roundSelectOptions = useMemo(() => {
     const options = [
-      { value: '', label: t('graph.chooseFixture') },
-      ...fixtureOptions.map((o) => ({ value: o.id, label: o.label })),
+      { value: '', label: t('progression.chooseRound') },
+      ...roundOptions.map((o) => ({
+        value: o.id,
+        label:
+          o.fixtureCount > 0
+            ? t('progression.roundOption', {
+                name: o.name,
+                count: o.fixtureCount,
+              })
+            : o.name,
+      })),
     ];
     if (
-      draft.sourceFixtureId &&
-      !fixtureOptions.some((o) => o.id === draft.sourceFixtureId)
+      draft.roundId &&
+      !roundOptions.some((o) => o.id === draft.roundId)
     ) {
       options.push({
-        value: draft.sourceFixtureId,
+        value: draft.roundId,
         label:
-          draft.sourceLabel ||
-          t('graph.unknownFixture', {
-            id: draft.sourceFixtureId.slice(0, 8),
+          draft.roundName ||
+          t('progression.roundFallback', {
+            id: draft.roundId.slice(0, 8),
           }),
       });
     }
     return options;
-  }, [
-    draft.sourceFixtureId,
-    draft.sourceLabel,
-    fixtureOptions,
-    t,
-  ]);
+  }, [draft.roundId, draft.roundName, roundOptions, t]);
 
   function setTargetKind(kind: ProgTargetKind) {
     if (kind === 'place' && !placesLabeled) {
@@ -567,7 +664,6 @@ function ProgPathEditor({
             ? draft.destinationStageId
             : (peerStages[0]?.stageId ?? ''),
         destinationSlotKey: '',
-        legacyInterPhasePlace: false,
       });
       return;
     }
@@ -576,7 +672,6 @@ function ProgPathEditor({
       targetKind: 'place',
       destinationStageId: sourceStage.stageId,
       destinationSlotKey: draft.destinationSlotKey,
-      legacyInterPhasePlace: false,
     });
   }
 
@@ -586,22 +681,32 @@ function ProgPathEditor({
         {t('progression.source')}
       </p>
 
-      <Field label={t('progression.match')}>
+      <Field label={t('progression.round')}>
         <Select
-          options={fixtureSelectOptions}
-          value={draft.sourceFixtureId || null}
-          placeholder={t('graph.chooseFixture')}
-          disabled={fixturesLoading}
+          options={roundSelectOptions}
+          value={draft.roundId || null}
+          placeholder={t('progression.chooseRound')}
+          disabled={roundsLoading}
           onChange={(value) => {
             const id = value ?? '';
+            const round = roundOptions.find((r) => r.id === id);
             onChange({
               ...draft,
-              sourceFixtureId: id,
-              sourceLabel: id ? (fixtureLabelById.get(id) ?? '') : '',
+              roundId: id,
+              roundName: round?.name ?? '',
+              expandedPathCount: round?.fixtureCount ?? 0,
             });
           }}
         />
       </Field>
+
+      {draft.expandedPathCount > 0 ? (
+        <p className="structure-qualification__field-hint" role="status">
+          {t('progression.expandPreview', {
+            count: draft.expandedPathCount,
+          })}
+        </p>
+      ) : null}
 
       <div
         className="structure-qualification__scope-tiles"
@@ -677,12 +782,6 @@ function ProgPathEditor({
         </p>
       ) : null}
 
-      {draft.legacyInterPhasePlace ? (
-        <Alert tone="warning" role="status">
-          {t('progression.legacyInterPhasePlace')}
-        </Alert>
-      ) : null}
-
       {draft.targetKind === 'population' ? (
         peerStages.length === 0 ? (
           <p className="structure-qualification__field-hint" role="status">
@@ -723,7 +822,6 @@ function ProgPathEditor({
                       ...draft,
                       destinationStageId: peer.stageId,
                       destinationSlotKey: '',
-                      legacyInterPhasePlace: false,
                     });
                   }}
                 />

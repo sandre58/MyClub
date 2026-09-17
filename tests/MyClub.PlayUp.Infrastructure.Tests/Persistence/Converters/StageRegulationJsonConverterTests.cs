@@ -66,11 +66,11 @@ public sealed class StageRegulationJsonConverterTests
                     new ProgressionPath(
                         fixtureId,
                         ProgressionOutcome.Winner,
-                        new ProgressionDestination(progressionStageId, "SF1-A")),
+                        ProgressionDestination.ForPopulation(progressionStageId)),
                     new ProgressionPath(
                         fixtureId,
                         ProgressionOutcome.Loser,
-                        new ProgressionDestination(progressionStageId, "Consolante-1"))
+                        ProgressionDestination.ForPopulation(progressionStageId))
                 ]))
             .WithPlacementAwardRules(
                 new PlacementAwardRules(

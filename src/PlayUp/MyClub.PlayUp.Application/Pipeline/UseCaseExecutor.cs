@@ -1177,6 +1177,23 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Replaces progression rules from authoring intents (null/empty clears).
+    /// </summary>
+    public async Task ReplaceStageProgressionIntentsAsync(
+        StageId stageId,
+        IReadOnlyList<ProgressionIntentSpec>? intents,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageProgressionRules.Execute(stage, intents, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Replaces qualification rules on a stage from legacy path specs (null/empty clears).
     /// </summary>
     public async Task ReplaceStageQualificationRulesAsync(

@@ -213,6 +213,7 @@ public sealed record StructureReadinessDto(
 /// <param name="QualificationPaths">Authoring projection of qualification paths when present.</param>
 /// <param name="QualificationIntents">Authoring projection of qualification intents when present.</param>
 /// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
+/// <param name="ProgressionIntents">Authoring projection of progression intents when present (V3).</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 /// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
@@ -279,6 +280,7 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<StructureQualificationPathDto>? QualificationPaths = null,
     IReadOnlyList<StructureQualificationIntentDto>? QualificationIntents = null,
     IReadOnlyList<StructureProgressionPathDto>? ProgressionPaths = null,
+    IReadOnlyList<StructureProgressionIntentDto>? ProgressionIntents = null,
     IReadOnlyList<string>? StructureIssues = null,
     int HalfTimeDuration = 0,
     int DirectAssignmentCount = 0,
@@ -336,6 +338,17 @@ public sealed record StructureQualificationPathDto(
     int? SelectionEndValue = null,
     int? MinimumPoints = null,
     string? GroupName = null);
+
+/// <summary>One progression authoring intent for Structure dialog (V3).</summary>
+public sealed record StructureProgressionIntentDto(
+    Guid IntentId,
+    int Order,
+    Guid RoundId,
+    string? RoundName,
+    ProgressionOutcome Outcome,
+    Guid DestinationStageId,
+    string? DestinationSlotKey,
+    int ExpandedPathCount);
 
 /// <summary>One progression path for Structure authoring / impact preview.</summary>
 /// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>

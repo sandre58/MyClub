@@ -71,7 +71,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
     }
 
     [Fact]
-    public void Assemble_maps_cross_stage_progression()
+    public void Assemble_ignores_cross_stage_population_progression()
     {
         var competitionId = CompetitionId.New();
         var source = Stage.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
@@ -87,42 +87,37 @@ public sealed class SlotFeedSnapshotAssemblerTests
                 new ProgressionPath(
                     fixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(target.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(target.Id))
             ]),
             _clock);
 
         var snapshot = SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
 
-        snapshot.InboundProgression.Should().ContainSingle();
-        snapshot.InboundProgression[0].SourceFixtureId.Should().Be(fixture.Id);
-        snapshot.InboundProgression[0].SourceStageId.Should().Be(source.Id);
+        snapshot.InboundProgression.Should().BeEmpty();
+        snapshot.DrawTargets.Should().BeEmpty();
     }
 
     [Fact]
-    public void Assemble_rejects_dangling_progression_slot_target()
+    public void Assemble_rejects_dangling_same_stage_progression_slot_target()
     {
         var competitionId = CompetitionId.New();
-        var source = Stage.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        var target = Stage.Create(competitionId, new StageName("SF"), SampleRegulations.Standard(), _clock);
-        var round = source.AddRound("QF", _clock);
-        var fixture = source.AddFixture(round.Id, _clock);
-        target.AddRound("SF", _clock);
-        target.AddSlot("SF1-A");
+        var stage = Stage.Create(competitionId, new StageName("KO"), SampleRegulations.Standard(), _clock);
+        var round = stage.AddRound("R1", _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("SF1-A");
 
-        source.ReplaceProgressionRules(
+        var act = () => stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
                 new ProgressionPath(
                     fixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(target.Id, "Missing"))
+                    new ProgressionDestination(stage.Id, "Missing"))
             ]),
             _clock);
 
-        var act = () => SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
-
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DanglingFeedTarget);
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.SlotNotFound);
     }
 
     [Fact]

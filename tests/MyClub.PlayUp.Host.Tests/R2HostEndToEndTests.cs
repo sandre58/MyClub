@@ -94,7 +94,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             match.Result.Should().BeNull();
         }
 
-        // Before progression — destination slots empty (observable via Read Surface).
+        // Before progression — destination population and slots empty (observable via Read Surface).
         using (var stageBefore = await client.GetAsync($"/stages/{seed.SemiStageId.Value}"))
         {
             stageBefore.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -147,18 +147,18 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             var semi = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
                 .GetByIdForUpdateAsync(seed.SemiStageId);
             semi.Should().NotBeNull();
-            semi.FindSlot("SF1-A")!.EntryId.Should().Be(seed.Home);
+            semi.CompositionEntries.Select(e => e.EntryId).Should().Equal(seed.Home);
+            semi.FindSlot("SF1-A")!.EntryId.Should().BeNull();
             semi.FindSlot("SF1-B")!.EntryId.Should().BeNull();
         }
 
-        // After progression — slot SF1-A observable via GET Stage.
+        // After progression — slots remain empty; population holds the winner (domain assertion above).
         using (var stageAfter = await client.GetAsync($"/stages/{seed.SemiStageId.Value}"))
         {
             stageAfter.StatusCode.Should().Be(HttpStatusCode.OK);
             var semiOverview = await stageAfter.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
             semiOverview.Should().NotBeNull();
-            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().Be(seed.Home.Value);
-            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").DisplayName.Should().Be("Home FC");
+            semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().BeNull();
             semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-B").EntryId.Should().BeNull();
         }
 
@@ -217,7 +217,8 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var semi = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
             .GetByIdForUpdateAsync(seed.SemiStageId);
-        semi!.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+        semi!.CompositionEntries.Should().BeEmpty();
+        semi.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         semi.FindSlot("SF1-B")!.EntryId.Should().BeNull();
     }
 
@@ -324,7 +325,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
                 new ProgressionPath(
                     addFixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(semi.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(semi.Id))
             ]),
             _clock);
 

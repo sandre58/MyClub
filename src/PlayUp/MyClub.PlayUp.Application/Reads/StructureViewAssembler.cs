@@ -203,6 +203,7 @@ public static class StructureViewAssembler
         var qualificationPaths = MapQualificationPaths(stage, regulation.QualificationRules);
         var qualificationIntents = MapQualificationIntents(stage, regulation.QualificationRules);
         var progressionPaths = MapProgressionPaths(stage, regulation.ProgressionRules);
+        var progressionIntents = MapProgressionIntents(stage, regulation.ProgressionRules);
         var placement = regulation.PlacementAwardRules;
         var storedTie = regulation.TieFormat
                         ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
@@ -311,6 +312,7 @@ public static class StructureViewAssembler
             QualificationPaths: qualificationPaths,
             QualificationIntents: qualificationIntents,
             ProgressionPaths: progressionPaths,
+            ProgressionIntents: progressionIntents,
             StructureIssues: BuildStructureIssues(stage, competitionStages),
             HalfTimeDuration: match.Duration.HalfTimeDuration,
             DirectAssignmentCount: stage.DirectAssignments.Count,
@@ -549,6 +551,36 @@ public static class StructureViewAssembler
                     path.Destination.SlotKey,
                     ResolveFixtureSourceLabel(stage, path.SourceFixtureId)))
             ];
+
+    private static IReadOnlyList<StructureProgressionIntentDto>? MapProgressionIntents(
+        Stage stage,
+        ProgressionRules? rules)
+    {
+        if (rules is null || rules.Intents.Count == 0)
+        {
+            return null;
+        }
+
+        var roundNameById = stage.Rounds.ToDictionary(r => r.Id, r => r.Name);
+        return
+        [
+            .. rules.Intents.Select(intent =>
+            {
+                var fixtureCount = stage.Rounds
+                    .FirstOrDefault(r => r.Id.Equals(intent.RoundId))
+                    ?.Fixtures.Count ?? 0;
+                return new StructureProgressionIntentDto(
+                    intent.Id.Value,
+                    intent.Order,
+                    intent.RoundId.Value,
+                    roundNameById.GetValueOrDefault(intent.RoundId),
+                    intent.Outcome,
+                    intent.Destination.StageId.Value,
+                    intent.Destination.SlotKey,
+                    fixtureCount);
+            })
+        ];
+    }
 
     /// <summary>
     /// Human fixture label: round/matchday · #order, optionally · slotA vs slotB when keys exist.

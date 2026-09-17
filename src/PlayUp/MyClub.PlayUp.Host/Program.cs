@@ -685,6 +685,24 @@ try
             CancellationToken cancellationToken) =>
         {
             ArgumentNullException.ThrowIfNull(request);
+            if (request.Intents is { Count: > 0 })
+            {
+                IReadOnlyList<ProgressionIntentSpec> intents =
+                [
+                    .. request.Intents.Select(intent => new ProgressionIntentSpec(
+                        intent.IntentId,
+                        intent.Order,
+                        new RoundId(intent.RoundId),
+                        intent.Outcome,
+                        new StageId(intent.DestinationStageId),
+                        intent.DestinationSlotKey))
+                ];
+                await executor
+                    .ReplaceStageProgressionIntentsAsync(new StageId(stageId), intents, cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            }
+
             IReadOnlyList<ProgressionPathSpec>? paths = null;
             if (request.Paths is { Count: > 0 })
             {

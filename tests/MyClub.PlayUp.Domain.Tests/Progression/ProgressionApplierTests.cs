@@ -90,23 +90,6 @@ public sealed class ProgressionApplierTests
     }
 
     [Fact]
-    public void Apply_does_not_require_stage_or_slot_existence()
-    {
-        var remoteStageId = StageId.New();
-        var path = new ProgressionPath(
-            _fixtureId,
-            ProgressionOutcome.Winner,
-            new ProgressionDestination(remoteStageId, "Remote-Slot"));
-        var outcome = new FixtureOutcome(_winner, _loser);
-
-        var result = ProgressionApplier.Apply(path, _fixtureId, outcome);
-
-        result.StageId.Should().Be(remoteStageId);
-        result.SlotKey.Should().Be("Remote-Slot");
-        result.EntryId.Should().Be(_winner);
-    }
-
-    [Fact]
     public void Apply_population_destination_omits_slot_key()
     {
         var remoteStageId = StageId.New();

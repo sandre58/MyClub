@@ -207,6 +207,33 @@ public sealed class ProgressionRulesTests
     }
 
     [Fact]
+    public void ReplaceProgressionRules_rejects_cross_stage_place()
+    {
+        var stage = Stage.Create(
+            CompetitionId.New(),
+            new StageName("QF"),
+            SampleRegulations.Standard(),
+            _clock);
+        var round = stage.AddRound("QF", _clock);
+        var fixture = stage.AddFixture(round.Id, _clock);
+        var peerId = StageId.New();
+
+        var act = () => stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(peerId, "SF1-A"))
+            ]),
+            _clock);
+
+        var ex = act.Should().Throw<DomainException>().Which;
+        ex.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
+        ex.Message.Should().Contain("form-owning");
+    }
+
+    [Fact]
     public void ReplaceProgressionRules_rejects_fixture_from_another_stage()
     {
         // Arrange

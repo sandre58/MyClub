@@ -37,10 +37,12 @@ internal static class StageRegulationJson
         options.Converters.Add(new DrawConstraintJsonConverter());
         options.Converters.Add(new QualificationConditionJsonConverter());
         options.Converters.Add(new QualificationRulesJsonConverter());
+        options.Converters.Add(new ProgressionRulesJsonConverter());
         options.Converters.Add(new GuidTypedIdJsonConverter<FixtureId>(static value => new FixtureId(value), static id => id.Value));
         options.Converters.Add(new GuidTypedIdJsonConverter<StageId>(static value => new StageId(value), static id => id.Value));
         options.Converters.Add(new GuidTypedIdJsonConverter<GroupId>(static value => new GroupId(value), static id => id.Value));
         options.Converters.Add(new GuidTypedIdJsonConverter<IntentId>(static value => new IntentId(value), static id => id.Value));
+        options.Converters.Add(new GuidTypedIdJsonConverter<RoundId>(static value => new RoundId(value), static id => id.Value));
         return options;
     }
 }

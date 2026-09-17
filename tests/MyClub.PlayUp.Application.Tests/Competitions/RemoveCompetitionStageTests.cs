@@ -40,7 +40,7 @@ public sealed class RemoveCompetitionStageTests
                     fixture.Id,
                     ProgressionOutcome.Winner,
                     sf.Id,
-                    "SF1-A")
+                    DestinationSlotKey: null)
             ],
             _clock);
 

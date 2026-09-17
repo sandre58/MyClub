@@ -229,7 +229,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
                     new ProgressionPath(
                         fixtureId,
                         ProgressionOutcome.Winner,
-                        new ProgressionDestination(destination.Id, "SF1-A"))
+                        ProgressionDestination.ForPopulation(destination.Id))
                 ]),
                 _clock);
 
@@ -262,7 +262,8 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
         {
             var destination = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(destinationId);
             destination.Should().NotBeNull();
-            destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+            destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
+            destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
             destination.FindSlot("SF1-B")!.EntryId.Should().BeNull();
         }
     }

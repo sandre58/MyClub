@@ -199,7 +199,7 @@ public sealed class UseCaseExecutorTests
                 new ProgressionPath(
                     fixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(semi.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(semi.Id))
             ]),
             _clock);
 
@@ -254,7 +254,8 @@ public sealed class UseCaseExecutorTests
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         await executor.ApplyProgressionOutcomeAsync(scenario.Source.Id, scenario.FixtureId);
 
-        scenario.Destination.FindSlot("SF1-A")!.EntryId.Should().Be(scenario.Home);
+        scenario.Destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(scenario.Home);
+        scenario.Destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         matchRepo.Verify(repository => repository.GetByIdForUpdateAsync(scenario.Match.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -797,7 +798,7 @@ public sealed class UseCaseExecutorTests
                 new ProgressionPath(
                     fixture.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, "SF1-A"))
+                    ProgressionDestination.ForPopulation(destination.Id))
             ]),
             _clock);
 

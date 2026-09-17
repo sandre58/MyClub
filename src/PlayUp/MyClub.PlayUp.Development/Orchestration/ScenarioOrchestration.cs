@@ -878,7 +878,7 @@ internal static class ScenarioOrchestration
                 new ProgressionPath(
                     qfFixtures[i].Id,
                     ProgressionOutcome.Winner,
-                    ProgressionDestination.ForSlot(semi.Id, destinationKeys[i])));
+                    ProgressionDestination.ForPopulation(semi.Id)));
         }
 
         quarter.ReplaceProgressionRules(new ProgressionRules(paths), context.Clock);
@@ -903,6 +903,8 @@ internal static class ScenarioOrchestration
                 competitionStages,
                 context.Clock);
         }
+
+        PlacePopulationEntriesIntoSlots(semi, destinationKeys, context.Clock);
 
         quarter.Complete(context.Clock);
 
@@ -1052,11 +1054,11 @@ internal static class ScenarioOrchestration
                 new ProgressionPath(
                     barragesFixture.Id,
                     ProgressionOutcome.Winner,
-                    ProgressionDestination.ForSlot(finale.Id, "F-A")),
+                    ProgressionDestination.ForPopulation(finale.Id)),
                 new ProgressionPath(
                     barragesFixture.Id,
                     ProgressionOutcome.Loser,
-                    ProgressionDestination.ForSlot(bronze.Id, "BRZ-A"))
+                    ProgressionDestination.ForPopulation(bronze.Id))
             ]),
             context.Clock);
 
@@ -1194,7 +1196,7 @@ internal static class ScenarioOrchestration
                 new ProgressionPath(
                     qfFixtures[i].Id,
                     ProgressionOutcome.Winner,
-                    ProgressionDestination.ForSlot(semi.Id, destinationKeys[i])));
+                    ProgressionDestination.ForPopulation(semi.Id)));
         }
 
         quarter.ReplaceProgressionRules(new ProgressionRules(paths), context.Clock);
@@ -1220,6 +1222,8 @@ internal static class ScenarioOrchestration
                 competitionStages,
                 context.Clock);
         }
+
+        PlacePopulationEntriesIntoSlots(semi, destinationKeys, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1292,7 +1296,7 @@ internal static class ScenarioOrchestration
                 $"Expected 16 R32 fixtures for coupe-de-france, found {r32Fixtures.Length}.");
         }
 
-        WireWinnerProgression(roundOf32, roundOf16, r32Fixtures, r16SlotKeys, context.Clock);
+        WireWinnerProgression(roundOf32, roundOf16, r32Fixtures, context.Clock);
 
         roundOf32.Prepare(context.Clock);
         competition.Prepare(context.Clock);
@@ -1301,6 +1305,7 @@ internal static class ScenarioOrchestration
 
         PlayDecisiveMatches(context, competition, r32Matches);
         ApplyAllProgressions(context, roundOf32, r32Fixtures, r32Matches, allStages);
+        PlacePopulationEntriesIntoSlots(roundOf16, r16SlotKeys, context.Clock);
 
         PlayKnockoutRound(
             context,
@@ -1450,6 +1455,8 @@ internal static class ScenarioOrchestration
         PrepareAndStartStage(context, semi);
         PlayDecisiveMatches(context, competition, sfMatches);
         ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
+        PlacePopulationEntriesIntoSlots(final, finalSlotKeys, context.Clock);
+        PlacePopulationEntriesIntoSlots(bronze, bronzeSlotKeys, context.Clock);
 
         var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
         var bronzeMatches = MaterializeFromSlots(context, competition, bronze, AdjacentPairs(bronzeSlotKeys));
@@ -1755,10 +1762,11 @@ internal static class ScenarioOrchestration
     {
         var matches = MaterializeFromSlots(context, competition, stage, pairs);
         var fixtures = OrderedFixtures(stage, expectedFixtures);
-        WireWinnerProgression(stage, nextStage, fixtures, nextSlotKeys, context.Clock);
+        WireWinnerProgression(stage, nextStage, fixtures, context.Clock);
         PrepareAndStartStage(context, stage);
         PlayDecisiveMatches(context, competition, matches);
         ApplyAllProgressions(context, stage, fixtures, matches, allStages);
+        PlacePopulationEntriesIntoSlots(nextStage, nextSlotKeys, context.Clock);
     }
 
     private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock) =>
@@ -2104,22 +2112,39 @@ internal static class ScenarioOrchestration
         Stage source,
         Stage destination,
         Fixture[] fixtures,
-        string[] destinationKeys,
         IClock clock)
     {
-        if (fixtures.Length != destinationKeys.Length)
-        {
-            throw new InvalidOperationException(
-                $"Progression wiring expects {destinationKeys.Length} fixtures, found {fixtures.Length}.");
-        }
-
         var paths = new List<ProgressionPath>(fixtures.Length);
-        paths.AddRange(fixtures.Select((t, i) => new ProgressionPath(
+        paths.AddRange(fixtures.Select(t => new ProgressionPath(
             t.Id,
             ProgressionOutcome.Winner,
-            ProgressionDestination.ForSlot(destination.Id, destinationKeys[i]))));
+            ProgressionDestination.ForPopulation(destination.Id))));
 
         source.ReplaceProgressionRules(new ProgressionRules(paths), clock);
+    }
+
+    /// <summary>
+    /// After Prog → Population (V3), place resolved entries into form slots for MaterializeFromSlots.
+    /// Scenario orchestration only — not a Domain Progression destination.
+    /// </summary>
+    private static void PlacePopulationEntriesIntoSlots(
+        Stage stage,
+        string[] slotKeys,
+        IClock clock)
+    {
+        var entries = stage.CompositionEntries
+            .Select(e => e.EntryId)
+            .ToArray();
+        if (entries.Length < slotKeys.Length)
+        {
+            throw new InvalidOperationException(
+                $"Stage '{stage.Name.Value}' has {entries.Length} population entries but {slotKeys.Length} slots to fill.");
+        }
+
+        for (var i = 0; i < slotKeys.Length; i++)
+        {
+            stage.ApplyResolvedEntry(slotKeys[i], entries[i], clock);
+        }
     }
 
     private static void WireSemiToFinalAndBronze(
@@ -2135,12 +2160,13 @@ internal static class ScenarioOrchestration
                 $"Expected 2 SF fixtures for Final+Bronze wiring, found {sfFixtures.Length}.");
         }
 
+        // V3: inter-phase = Population only (no ForSlot other stage).
         var paths = new ProgressionPath[]
         {
-            new(sfFixtures[0].Id, ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, "F-A")),
-            new(sfFixtures[1].Id, ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, "F-B")),
-            new(sfFixtures[0].Id, ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, "B-A")),
-            new(sfFixtures[1].Id, ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, "B-B"))
+            new(sfFixtures[0].Id, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(final.Id)),
+            new(sfFixtures[1].Id, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(final.Id)),
+            new(sfFixtures[0].Id, ProgressionOutcome.Loser, ProgressionDestination.ForPopulation(bronze.Id)),
+            new(sfFixtures[1].Id, ProgressionOutcome.Loser, ProgressionDestination.ForPopulation(bronze.Id))
         };
         semi.ReplaceProgressionRules(new ProgressionRules(paths), clock);
     }

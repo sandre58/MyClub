@@ -66,6 +66,10 @@ public sealed record ProgressionDestination
     /// </summary>
     public bool TargetsPopulation => SlotKey is null;
 
+    /// <summary>Returns a copy of this destination.</summary>
+    public ProgressionDestination Copy() =>
+        TargetsPopulation ? ForPopulation(StageId) : ForSlot(StageId, SlotKey!);
+
     private static string NormalizeSlotKey(string slotKey)
     {
         ArgumentNullException.ThrowIfNull(slotKey);

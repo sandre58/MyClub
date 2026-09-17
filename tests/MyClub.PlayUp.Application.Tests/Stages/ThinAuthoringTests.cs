@@ -54,12 +54,12 @@ public sealed class ThinAuthoringTests
                     qfFixture.Id,
                     ProgressionOutcome.Winner,
                     sf.Id,
-                    "SF1-A"),
+                    DestinationSlotKey: null),
                 new ProgressionPathSpec(
                     qfFixture.Id,
                     ProgressionOutcome.Loser,
                     sf.Id,
-                    "SF1-B")
+                    DestinationSlotKey: null)
             ],
             _clock);
 
@@ -73,7 +73,8 @@ public sealed class ThinAuthoringTests
         qf.Regulation.ProgressionRules.Should().NotBeNull();
         qf.Regulation.ProgressionRules!.Paths.Should().HaveCount(2);
         qf.Regulation.ProgressionRules.Paths[0].Destination.StageId.Should().Be(sf.Id);
-        qf.Regulation.ProgressionRules.Paths[0].Destination.SlotKey.Should().Be("SF1-A");
+        qf.Regulation.ProgressionRules.Paths[0].Destination.SlotKey.Should().BeNull();
+        qf.Regulation.ProgressionRules.Paths.Should().OnlyContain(p => p.Destination.TargetsPopulation);
     }
 
     [Fact]

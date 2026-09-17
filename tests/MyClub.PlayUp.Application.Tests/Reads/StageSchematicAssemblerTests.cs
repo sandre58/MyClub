@@ -135,7 +135,7 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Cup_match_numbers_are_stable_across_fixture_collection_order()
+    public void Cup_cross_stage_population_progression_does_not_feed_slot_origins()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var source = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
@@ -157,23 +157,21 @@ public sealed class StageSchematicAssemblerTests
                 new ProgressionPath(
                     late.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(target.Id, "R16-A")),
+                    ProgressionDestination.ForPopulation(target.Id)),
                 new ProgressionPath(
                     early.Id,
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(target.Id, "R16-B"))
+                    ProgressionDestination.ForPopulation(target.Id))
             ]),
             _clock);
 
         var schematic = StageSchematicAssembler.Assemble(target, competition, [source, target]);
         var sourceSchematic = StageSchematicAssembler.Assemble(source, competition, [source, target]);
 
-        var lateNumber = sourceSchematic.Connections.Single(c => c.FixtureId == late.Id.Value).MatchNumber;
-        var earlyNumber = sourceSchematic.Connections.Single(c => c.FixtureId == early.Id.Value).MatchNumber;
-        schematic.Cases.Single(c => c.FormPosition.SlotKey == "R16-A")
-            .FeedOrigin!.SourceFixtureNumber.Should().Be(lateNumber);
-        schematic.Cases.Single(c => c.FormPosition.SlotKey == "R16-B")
-            .FeedOrigin!.SourceFixtureNumber.Should().Be(earlyNumber);
+        schematic.Cases.Should().OnlyContain(c => c.FeedOrigin == null);
+        source.Regulation.ProgressionRules!.Paths.Should().HaveCount(2);
+        source.Regulation.ProgressionRules.Paths.Should().OnlyContain(p => p.Destination.TargetsPopulation);
+        sourceSchematic.Connections.Should().HaveCount(2);
     }
 
     [Fact]
