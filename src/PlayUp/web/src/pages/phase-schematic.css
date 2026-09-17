@@ -54,6 +54,18 @@
   font-weight: var(--font-weight-regular);
 }
 
+/* U4 — Place address chrome (secondary; never replaces S3 primary). */
+.schematic-slot__address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  line-height: 1.15;
+  opacity: 0.9;
+}
+
 /* Résolution (équipe) = information secondaire discrète (S3). */
 .schematic-slot__secondary {
   overflow: hidden;
