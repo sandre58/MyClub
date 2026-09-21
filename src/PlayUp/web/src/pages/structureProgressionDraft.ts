@@ -50,7 +50,8 @@ export type ProgIncompleteReason =
   | 'MultiSlot'
   | 'DuplicateSlot'
   | 'DuplicateRoundOutcome'
-  | 'DuplicatePlace';
+  | 'DuplicatePlace'
+  | 'ChampionshipTerminalRound';
 
 /** Place ChoiceTile / map gate — Cup schematic must expose labeled Places (U4). */
 export { areProgressionPlacesLabeled } from './structurePlaceLabel';
@@ -225,9 +226,17 @@ export function incompleteIntentReason(
   draft: ProgIntentDraft,
   all: ProgIntentDraft[],
   placesLabeled: boolean,
+  championshipTerminalRoundId: string | null = null,
 ): ProgIncompleteReason | null {
   if (!draft.roundId.trim()) {
     return 'Round';
+  }
+  if (
+    draft.outcome === 'Winner' &&
+    (championshipTerminalRoundId == null ||
+      draft.roundId.trim() !== championshipTerminalRoundId)
+  ) {
+    return 'ChampionshipTerminalRound';
   }
   if (draft.targetKind === 'place') {
     if (!placesLabeled) {
@@ -277,8 +286,16 @@ export function isIntentComplete(
   draft: ProgIntentDraft,
   all: ProgIntentDraft[],
   placesLabeled: boolean,
+  championshipTerminalRoundId: string | null = null,
 ): boolean {
-  return incompleteIntentReason(draft, all, placesLabeled) == null;
+  return (
+    incompleteIntentReason(
+      draft,
+      all,
+      placesLabeled,
+      championshipTerminalRoundId,
+    ) == null
+  );
 }
 
 export function summarizeIntentWho(

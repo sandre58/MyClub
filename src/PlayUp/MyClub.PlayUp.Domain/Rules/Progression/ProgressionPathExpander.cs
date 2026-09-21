@@ -61,6 +61,14 @@ public static class ProgressionPathExpander
                     RulesErrorCodes.ProgressionRulesInvalid);
             }
 
+            if (intent.Outcome == ProgressionOutcome.Winner
+                && !ProgressionChampionshipPath.IsChampionshipTerminal(rounds, intent.RoundId))
+            {
+                throw new DomainException(
+                    "Progression Winner intent must use the championship-path terminal round.",
+                    RulesErrorCodes.ProgressionRulesInvalid);
+            }
+
             if (intent.TargetsPopulation)
             {
                 var destination = ProgressionDestination.ForPopulation(intent.DestinationStageId);

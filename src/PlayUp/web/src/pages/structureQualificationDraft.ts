@@ -59,7 +59,8 @@ export type QualIncompleteReason =
   | 'Points'
   | 'PlaceUnavailable'
   | 'MultiSlot'
-  | 'DuplicateSlot';
+  | 'DuplicateSlot'
+  | 'DuplicatePlace';
 
 export function newIntentId(): string {
   return crypto.randomUUID();
@@ -267,59 +268,7 @@ export function summarizeIntentWho(
   locale: string,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
-  const from = parsePositiveInt(draft.positionFrom) ?? 0;
-  const to = parsePositiveInt(draft.positionTo) ?? 0;
-  const ord = (n: number) => ordinalRank(Math.max(n, 1), locale);
-
-  let who: string;
-  if (draft.sourceKind === 'EachGroup') {
-    who =
-      from === to
-        ? t('qualification.summary.eachGroupOne', { rank: ord(from) })
-        : to === from + 1
-          ? t('qualification.summary.eachGroupRange', {
-              from: ord(from),
-              to: ord(to),
-            })
-          : t('qualification.summary.eachGroupSpan', {
-              from: ord(from),
-              to: ord(to),
-            });
-  } else if (draft.sourceKind === 'SingleGroup') {
-    const group =
-      draft.groupName.trim() || t('qualification.unnamedGroup');
-    who =
-      from === to
-        ? t('qualification.summary.group', { rank: ord(from), group })
-        : t('qualification.summary.groupRange', {
-            from: ord(from),
-            to: ord(to),
-            group,
-          });
-  } else if (draft.sourceKind === 'Overall') {
-    who =
-      from === to
-        ? t('qualification.summary.overall', { rank: ord(from) })
-        : t('qualification.summary.overallRange', {
-            from: ord(from),
-            to: ord(to),
-          });
-  } else {
-    const place = ord(parsePositiveInt(draft.acrossGroupsPosition) ?? 1);
-    who =
-      from === to && from <= 1
-        ? t('qualification.summary.acrossBest', { place })
-        : from === to
-          ? t('qualification.summary.acrossNth', {
-              rank: ord(from),
-              place,
-            })
-          : t('qualification.summary.acrossRange', {
-              from: ord(from),
-              to: ord(to),
-              place,
-            });
-  }
+  let who = summarizeIntentWhoLegacy(draft, locale, t);
 
   if (draft.conditionKind === 'points') {
     const pts = Number(draft.minimumPoints);
@@ -328,6 +277,121 @@ export function summarizeIntentWho(
     }
   }
   return who;
+}
+
+/**
+ * Rail-friendly split: selection chip + scope context
+ * (e.g. "1er et 2e" + "Chaque groupe").
+ */
+export function summarizeIntentWhoParts(
+  draft: QualIntentDraft,
+  locale: string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): { selection: string; scope: string } {
+  const from = parsePositiveInt(draft.positionFrom) ?? 0;
+  const to = parsePositiveInt(draft.positionTo) ?? 0;
+  const ord = (n: number) => ordinalRank(Math.max(n, 1), locale);
+  const selection = formatSelectionBadge(from, to, ord, t);
+
+  if (draft.sourceKind === 'EachGroup') {
+    return { selection, scope: t('qualification.summary.scopeEachGroup') };
+  }
+  if (draft.sourceKind === 'SingleGroup') {
+    const group =
+      draft.groupName.trim() || t('qualification.unnamedGroup');
+    return {
+      selection,
+      scope: t('qualification.summary.scopeGroup', { group }),
+    };
+  }
+  if (draft.sourceKind === 'Overall') {
+    return { selection, scope: t('qualification.summary.scopeOverall') };
+  }
+
+  const place = ord(parsePositiveInt(draft.acrossGroupsPosition) ?? 1);
+  return {
+    selection,
+    scope: t('qualification.summary.scopeAcrossPlace', { place }),
+  };
+}
+
+function formatSelectionBadge(
+  from: number,
+  to: number,
+  ord: (n: number) => string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
+  if (from === to) {
+    return ord(from);
+  }
+  if (to === from + 1) {
+    return t('qualification.summary.selectionPair', {
+      from: ord(from),
+      to: ord(to),
+    });
+  }
+  return t('qualification.summary.selectionRange', {
+    from: ord(from),
+    to: ord(to),
+  });
+}
+
+function summarizeIntentWhoLegacy(
+  draft: QualIntentDraft,
+  locale: string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
+  const from = parsePositiveInt(draft.positionFrom) ?? 0;
+  const to = parsePositiveInt(draft.positionTo) ?? 0;
+  const ord = (n: number) => ordinalRank(Math.max(n, 1), locale);
+
+  if (draft.sourceKind === 'EachGroup') {
+    return from === to
+      ? t('qualification.summary.eachGroupOne', { rank: ord(from) })
+      : to === from + 1
+        ? t('qualification.summary.eachGroupRange', {
+            from: ord(from),
+            to: ord(to),
+          })
+        : t('qualification.summary.eachGroupSpan', {
+            from: ord(from),
+            to: ord(to),
+          });
+  }
+  if (draft.sourceKind === 'SingleGroup') {
+    const group =
+      draft.groupName.trim() || t('qualification.unnamedGroup');
+    return from === to
+      ? t('qualification.summary.group', { rank: ord(from), group })
+      : t('qualification.summary.groupRange', {
+          from: ord(from),
+          to: ord(to),
+          group,
+        });
+  }
+  if (draft.sourceKind === 'Overall') {
+    return from === to
+      ? t('qualification.summary.overall', { rank: ord(from) })
+      : t('qualification.summary.overallRange', {
+          from: ord(from),
+          to: ord(to),
+        });
+  }
+  const place = ord(parsePositiveInt(draft.acrossGroupsPosition) ?? 1);
+  if (from === to && from <= 1) {
+    return t('qualification.summary.acrossBest', { place });
+  }
+  if (from === to) {
+    return t('qualification.summary.acrossNth', {
+      rank: ord(from),
+      place,
+    });
+  }
+  return t('qualification.summary.acrossRange', {
+    from: ord(from),
+    to: ord(to),
+    place,
+  });
 }
 
 export function ordinalRank(n: number, locale: string): string {
@@ -352,8 +416,9 @@ export function isIntentComplete(
   draft: QualIntentDraft,
   groups: { id: string; name: string }[],
   placesLabeled = true,
+  all: QualIntentDraft[] = [draft],
 ): boolean {
-  return incompleteIntentReason(draft, groups, placesLabeled) == null;
+  return incompleteIntentReason(draft, groups, placesLabeled, all) == null;
 }
 
 /**
@@ -364,6 +429,7 @@ export function incompleteIntentReason(
   draft: QualIntentDraft,
   groups: { id: string; name: string }[],
   placesLabeled = true,
+  all: QualIntentDraft[] = [draft],
 ): QualIncompleteReason | null {
   if (draft.targetKind === 'place') {
     if (!placesLabeled) return 'PlaceUnavailable';
@@ -391,9 +457,32 @@ export function incompleteIntentReason(
       occurrences.length,
     );
     if (gap) return gap;
+
+    const mine = new Set(placeOccupancyKeys(draft));
+    if (mine.size > 0) {
+      for (const other of all) {
+        if (other.id === draft.id) continue;
+        for (const pk of placeOccupancyKeys(other)) {
+          if (mine.has(pk)) {
+            return 'DuplicatePlace';
+          }
+        }
+      }
+    }
   }
 
   return null;
+}
+
+/** Cross-intent Place occupancy: stageId|slotKey for each filled key. */
+function placeOccupancyKeys(draft: QualIntentDraft): string[] {
+  if (draft.targetKind !== 'place') return [];
+  const dest = draft.destinationStageId.trim();
+  if (!dest) return [];
+  return draft.destinationSlotKeys
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0)
+    .map((k) => `${dest}|${k}`);
 }
 
 /** Stable key for one expanded source occurrence (points condition ignored). */

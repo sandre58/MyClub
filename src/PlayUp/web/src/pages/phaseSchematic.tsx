@@ -1059,8 +1059,8 @@ function feedOriginLabel(origin: SchematicFeedOrigin, t: Translate): string {
     case 'Progression': {
       const outcome =
         origin.outcome === 'Loser'
-          ? t('structure:fiche.rule.loser')
-          : t('structure:fiche.rule.winner');
+          ? t('structure:fiche.rule.loser', { count: 1 })
+          : t('structure:fiche.rule.winner', { count: 1 });
       return origin.sourceFixtureNumber != null
         ? `${outcome} · ${t('structure:fiche.rule.matchNumber', {
             n: origin.sourceFixtureNumber,

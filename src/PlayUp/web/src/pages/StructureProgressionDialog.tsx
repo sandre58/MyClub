@@ -43,10 +43,16 @@ import type {
   StructureStageHubSummary,
   StructureView,
 } from '../types';
-import { EmptyState, MutationError, PendingLabel } from '../ui';
+import { EmptyState, LoadingState, MutationError, PendingLabel } from '../ui';
 import { DestinationDraftMeter } from './DestinationDraftMeter';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { isPopulationDestination } from './structureProgression';
+import { sortiesAvalPeerStages } from './structureSortiesDestinations';
+import {
+  championshipTerminalRound,
+  roundsWithFixtures,
+} from './structureProgressionChampionshipPath';
+import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
   countUnmappedPlaceSlots,
@@ -148,19 +154,13 @@ export function StructureProgressionDialog({
     queryFn: () => fetchStageSchematic(stage.stageId),
     enabled: open,
   });
-  const sourcePlacesLabeled = areProgressionPlacesLabeled(
-    sourceSchematicQuery.data,
-  );
-
+  /** Inter-Stage aval only — self / amont excluded (Sorties ownership). */
   const peerStages = useMemo(
-    () => data.stages.filter((peer) => peer.stageId !== stage.stageId),
+    () => sortiesAvalPeerStages(data.stages, stage.stageId),
     [data.stages, stage.stageId],
   );
-  /** Place Auto may target peer stages (cross-phase) or same-stage forme-owner. */
-  const placeDestinationStages = useMemo(
-    () => [stage, ...peerStages],
-    [peerStages, stage],
-  );
+  /** Place Auto = same aval peers as Population (no self forme-owner in Sorties). */
+  const placeDestinationStages = peerStages;
   const contextDestinationId = openedFromDestinationStageId?.trim() || '';
   const defaultDest =
     (contextDestinationId &&
@@ -168,7 +168,7 @@ export function StructureProgressionDialog({
       ? contextDestinationId
       : null) ??
     peerStages[0]?.stageId ??
-    stage.stageId;
+    '';
   const stageNameById = useMemo(
     () => new Map(data.stages.map((s) => [s.stageId, s.name])),
     [data.stages],
@@ -242,6 +242,12 @@ export function StructureProgressionDialog({
       })),
     [overviewQuery.data?.rounds],
   );
+  const playableRounds = useMemo(() => roundsWithFixtures(rounds), [rounds]);
+  const championshipTerminal = useMemo(
+    () => championshipTerminalRound(rounds),
+    [rounds],
+  );
+  const championshipTerminalRoundId = championshipTerminal?.id ?? null;
   const roundById = useMemo(
     () => new Map(rounds.map((r) => [r.id, r])),
     [rounds],
@@ -446,9 +452,6 @@ export function StructureProgressionDialog({
     for (const peer of peerStages) {
       destinations.add(peer.stageId);
     }
-    for (const destStage of placeDestinationStages) {
-      destinations.add(destStage.stageId);
-    }
     for (const stageId of destinations) {
       const dest = stageById.get(stageId);
       if (!dest) continue;
@@ -475,17 +478,21 @@ export function StructureProgressionDialog({
     data,
     draftEntriesByDestination,
     peerStages,
-    placeDestinationStages,
     stage.stageId,
     stageById,
   ]);
 
-  const canAuthor = peerStages.length > 0 || sourcePlacesLabeled;
+  const canAuthor = peerStages.length > 0;
 
   const intentsComplete =
     sessionReady &&
     intents.every((intent) =>
-      isIntentComplete(intent, intents, placesLabeledFor(intent)),
+      isIntentComplete(
+        intent,
+        intents,
+        placesLabeledFor(intent),
+        championshipTerminalRoundId,
+      ),
     );
 
   const canSave = !mutation.isPending && intentsComplete;
@@ -495,6 +502,35 @@ export function StructureProgressionDialog({
     [intents, sessionReady],
   );
 
+  const hasDuplicatePlaceTarget = useMemo(
+    () =>
+      sessionReady &&
+      intents.some(
+        (intent) =>
+          incompleteIntentReason(
+            intent,
+            intents,
+            placesLabeledFor(intent),
+            championshipTerminalRoundId,
+          ) === 'DuplicatePlace',
+      ),
+    [championshipTerminalRoundId, intents, sessionReady],
+  );
+
+  const firstIncompleteReason = useMemo(() => {
+    if (!sessionReady) return null;
+    for (const intent of intents) {
+      const reason = incompleteIntentReason(
+        intent,
+        intents,
+        placesLabeledFor(intent),
+        championshipTerminalRoundId,
+      );
+      if (reason != null) return reason;
+    }
+    return null;
+  }, [championshipTerminalRoundId, intents, sessionReady]);
+
   const saveBlockedReason =
     !sessionReady || mutation.isPending || mutation.isSuccess
       ? null
@@ -502,9 +538,11 @@ export function StructureProgressionDialog({
         ? t('progression.saveBlockedUnmappedPlaces', {
             count: unmappedPlaceSlots,
           })
-        : !intentsComplete && intents.length > 0
-          ? t('progression.saveBlockedIncomplete')
-          : null;
+        : hasDuplicatePlaceTarget
+          ? t('progression.saveBlockedDuplicatePlace')
+          : firstIncompleteReason != null
+            ? t(`progression.incompleteHint${firstIncompleteReason}`)
+            : null;
 
   function requestClose() {
     requestDiscardClose(mutation.isPending);
@@ -515,11 +553,12 @@ export function StructureProgressionDialog({
   }
 
   function addIntent() {
-    const next = emptyProgIntent(
-      peerStages.length > 0 ? defaultDest : stage.stageId,
-      peerStages.length > 0 ? 'population' : 'place',
-      intents.length + 1,
-    );
+    const next = emptyProgIntent(defaultDest, 'population', intents.length + 1);
+    if (championshipTerminal) {
+      next.roundId = championshipTerminal.id;
+      next.roundName = championshipTerminal.name;
+      next.expandedPathCount = championshipTerminal.fixtures.length;
+    }
     setIntents((prev) => [...prev, next]);
     setExpandedId(next.id);
   }
@@ -637,7 +676,7 @@ export function StructureProgressionDialog({
                   {sessionReady ? pathTotal : '—'}
                 </span>
                 <span className="structure-qualification__fact-label">
-                  {t('progression.factPaths', { count: pathTotal })}
+                  {t('progression.factEntries', { count: pathTotal })}
                 </span>
               </div>
             </div>
@@ -653,9 +692,7 @@ export function StructureProgressionDialog({
           </div>
 
           {!sessionReady ? (
-            <p className="structure-qualification__field-hint" role="status">
-              <PendingLabel>{tCommon('loading')}</PendingLabel>
-            </p>
+            <LoadingState size="region" />
           ) : !canAuthor ? (
             <EmptyState
               variant="idle"
@@ -705,6 +742,7 @@ export function StructureProgressionDialog({
                   intent,
                   intents,
                   placesLabeledFor(intent),
+                  championshipTerminalRoundId,
                 );
                 const statusMessage =
                   incompleteReason == null
@@ -796,6 +834,8 @@ export function StructureProgressionDialog({
                             peerStages={peerStages}
                             placeDestinationStages={placeDestinationStages}
                             rounds={rounds}
+                            playableRounds={playableRounds}
+                            championshipTerminal={championshipTerminal}
                             roundsLoading={overviewQuery.isLoading}
                             draftEntriesByDestination={
                               draftEntriesByDestination
@@ -844,6 +884,8 @@ function ProgIntentEditor({
   peerStages,
   placeDestinationStages,
   rounds,
+  playableRounds,
+  championshipTerminal,
   roundsLoading,
   draftEntriesByDestination,
   onChange,
@@ -854,6 +896,8 @@ function ProgIntentEditor({
   peerStages: StructureStageHubSummary[];
   placeDestinationStages: StructureStageHubSummary[];
   rounds: ProgRoundOption[];
+  playableRounds: ProgRoundOption[];
+  championshipTerminal: ProgRoundOption | null;
   roundsLoading: boolean;
   draftEntriesByDestination: Map<string, number>;
   onChange: (next: ProgIntentDraft) => void;
@@ -888,10 +932,18 @@ function ProgIntentEditor({
     [draft.destinationSlotKeys, roundFixtures.length],
   );
 
+  const showRoundField = rounds.length > 1;
+  const roundSelectDisabled =
+    roundsLoading ||
+    draft.outcome === 'Winner' ||
+    playableRounds.length === 0;
+
   const roundSelectOptions = useMemo(() => {
+    const source =
+      playableRounds.length > 0 ? playableRounds : rounds;
     const options = [
       { value: '', label: t('progression.chooseRound') },
-      ...rounds.map((o) => ({
+      ...source.map((o) => ({
         value: o.id,
         label:
           o.fixtures.length > 0
@@ -899,10 +951,10 @@ function ProgIntentEditor({
                 name: o.name,
                 count: o.fixtures.length,
               })
-            : o.name,
+            : t('progression.roundOptionEmpty', { name: o.name }),
       })),
     ];
-    if (draft.roundId && !rounds.some((o) => o.id === draft.roundId)) {
+    if (draft.roundId && !source.some((o) => o.id === draft.roundId)) {
       options.push({
         value: draft.roundId,
         label:
@@ -913,7 +965,25 @@ function ProgIntentEditor({
       });
     }
     return options;
-  }, [draft.roundId, draft.roundName, rounds, t]);
+  }, [draft.roundId, draft.roundName, playableRounds, rounds, t]);
+
+  function applyOutcome(outcome: ProgressionOutcome) {
+    if (outcome === 'Winner') {
+      if (!championshipTerminal) {
+        onChange({ ...draft, outcome });
+        return;
+      }
+      onChange({
+        ...draft,
+        outcome,
+        roundId: championshipTerminal.id,
+        roundName: championshipTerminal.name,
+        expandedPathCount: championshipTerminal.fixtures.length,
+      });
+      return;
+    }
+    onChange({ ...draft, outcome });
+  }
 
   function setTargetKind(kind: ProgTargetKind) {
     if (kind === 'population') {
@@ -939,7 +1009,7 @@ function ProgIntentEditor({
       targetKind: 'place',
       destinationStageId: keepDest
         ? draft.destinationStageId
-        : (peerStages[0]?.stageId ?? sourceStage.stageId),
+        : (peerStages[0]?.stageId ?? ''),
       destinationSlotKeys:
         draft.targetKind === 'place' ? draft.destinationSlotKeys : [],
     });
@@ -993,37 +1063,12 @@ function ProgIntentEditor({
 
   return (
     <div className="structure-qualification__editor">
-      <p className="structure-qualification__section-title">
-        {t('progression.source')}
-      </p>
-
-      <Field label={t('progression.round')}>
-        <Select
-          options={roundSelectOptions}
-          value={draft.roundId || null}
-          placeholder={t('progression.chooseRound')}
-          disabled={roundsLoading}
-          onChange={(value) => {
-            const id = value ?? '';
-            const round = rounds.find((r) => r.id === id);
-            onChange({
-              ...draft,
-              roundId: id,
-              roundName: round?.name ?? '',
-              expandedPathCount: round?.fixtures.length ?? 0,
-            });
-          }}
-        />
-      </Field>
-
-      {draft.expandedPathCount > 0 ? (
-        <p className="structure-qualification__field-hint" role="status">
-          {t('progression.expandPreview', {
-            count: draft.expandedPathCount,
-          })}
-        </p>
-      ) : null}
-
+      <SortiesWhoWhereFlow
+        sourceLabel={t('progression.who')}
+        destinationLabel={t('progression.where')}
+        feedsLabel={t('progression.feeds')}
+        source={
+          <>
       <div
         className="structure-qualification__scope-tiles"
         data-count="2"
@@ -1037,7 +1082,7 @@ function ProgIntentEditor({
           selected={draft.outcome === 'Winner'}
           onChange={(selected) => {
             if (!selected) return;
-            onChange({ ...draft, outcome: 'Winner' as ProgressionOutcome });
+            applyOutcome('Winner');
           }}
         />
         <ChoiceTile
@@ -1047,17 +1092,49 @@ function ProgIntentEditor({
           selected={draft.outcome === 'Loser'}
           onChange={(selected) => {
             if (!selected) return;
-            onChange({ ...draft, outcome: 'Loser' as ProgressionOutcome });
+            applyOutcome('Loser');
           }}
         />
       </div>
 
-      <hr className="structure-qualification__rule" />
-
-      <p className="structure-qualification__section-title">
-        {t('progression.destination')}
-      </p>
-
+      {showRoundField ? (
+        <>
+          <Field label={t('progression.round')}>
+            <Select
+              options={roundSelectOptions}
+              value={draft.roundId || null}
+              placeholder={t('progression.chooseRound')}
+              disabled={roundSelectDisabled}
+              onChange={(value) => {
+                if (draft.outcome === 'Winner') return;
+                const id = value ?? '';
+                const round =
+                  playableRounds.find((r) => r.id === id) ??
+                  rounds.find((r) => r.id === id);
+                onChange({
+                  ...draft,
+                  roundId: id,
+                  roundName: round?.name ?? '',
+                  expandedPathCount: round?.fixtures.length ?? 0,
+                });
+              }}
+            />
+          </Field>
+          {playableRounds.length === 0 ? (
+            <p className="structure-qualification__field-hint" role="status">
+              {t('progression.roundNeedsFixturesHint')}
+            </p>
+          ) : draft.outcome === 'Winner' ? (
+            <p className="structure-qualification__field-hint" role="status">
+              {t('progression.roundWinnerLockedHint')}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+          </>
+        }
+        destination={
+          <>
       <div
         className="structure-qualification__scope-tiles"
         data-count="2"
@@ -1080,6 +1157,7 @@ function ProgIntentEditor({
           description={t('progression.kindPlaceHint')}
           leading={<CupFormatIcon size="sm" />}
           selected={draft.targetKind === 'place'}
+          disabled={peerStages.length === 0}
           onChange={(selected) => {
             if (!selected) return;
             setTargetKind('place');
@@ -1118,6 +1196,10 @@ function ProgIntentEditor({
             ))}
           </div>
         )
+      ) : placeDestinationStages.length === 0 ? (
+        <p className="structure-qualification__field-hint" role="status">
+          {t('progression.emptyNoPeerBody')}
+        </p>
       ) : (
         <>
           <div
@@ -1299,6 +1381,9 @@ function ProgIntentEditor({
           ) : null}
         </>
       )}
+          </>
+        }
+      />
     </div>
   );
 }

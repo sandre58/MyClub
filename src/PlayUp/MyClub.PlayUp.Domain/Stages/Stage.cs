@@ -696,6 +696,21 @@ public sealed class Stage : AggregateRoot<StageId>
                         StageErrorCodes.FixtureNotFound);
                 }
 
+                if (path.Outcome == ProgressionOutcome.Winner)
+                {
+                    var owningRound = _rounds.FirstOrDefault(r =>
+                        r.FindFixture(path.SourceFixtureId) is not null)
+                        ?? throw new DomainException(
+                            $"Fixture '{path.SourceFixtureId}' was not found on a round.",
+                            StageErrorCodes.FixtureNotFound);
+                    if (!ProgressionChampionshipPath.IsChampionshipTerminal(Rounds, owningRound.Id))
+                    {
+                        throw new DomainException(
+                            "Progression Winner path must use a fixture on the championship-path terminal round.",
+                            RulesErrorCodes.ProgressionRulesInvalid);
+                    }
+                }
+
                 if (path.Destination.TargetsPopulation)
                 {
                     if (path.Destination.StageId.Equals(Id))

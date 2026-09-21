@@ -961,13 +961,15 @@ internal static class ScenarioOrchestration
         groups.ReplaceDrawRules(null, context.Clock);
         AssignRootComposition(groups, entries, context.Clock);
 
-        _ = CreateKnockoutStage(
+        var qf = CreateKnockoutStage(
             context,
             competition,
             "qf",
             "Quarts de finale",
             "Quarts de finale",
             PairSlotKeys("QF", pairCount: 2));
+        // Fixtures so Progression Sorties can be authored on QF (empty rules).
+        AddRoundFixtures(qf, count: 2, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1890,9 +1892,23 @@ internal static class ScenarioOrchestration
             stage.AddSlot(key);
         }
 
+        // Fixtures required for Progression Expand / Tour × Outcome authoring.
+        AddFixturesToRound(stage, quarter.Id, count: 4, context.Clock);
+        AddFixturesToRound(stage, semi.Id, count: 2, context.Clock);
+        AddFixturesToRound(stage, final.Id, count: 1, context.Clock);
+
         AssignRootComposition(stage, entries, context.Clock);
         competition.AddStage(stage.Id, context.Clock);
         context.Stages.Add(stage);
+
+        // Aval peer — empty Sorties so the Progression dialog can be authored end-to-end.
+        _ = CreateKnockoutStage(
+            context,
+            competition,
+            "aval",
+            "Phase aval",
+            "Tour principal",
+            PairSlotKeys("A", pairCount: 2));
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -2310,7 +2326,17 @@ internal static class ScenarioOrchestration
             throw new InvalidOperationException($"Stage '{stage.Name.Value}' has no rounds for fixtures.");
         }
 
-        var roundId = stage.Rounds[0].Id;
+        return AddFixturesToRound(stage, stage.Rounds[0].Id, count, clock);
+    }
+
+    private static Fixture[] AddFixturesToRound(Stage stage, RoundId roundId, int count, IClock clock)
+    {
+        if (!stage.HasRound(roundId))
+        {
+            throw new InvalidOperationException(
+                $"Stage '{stage.Name.Value}' does not contain round '{roundId}'.");
+        }
+
         var fixtures = new Fixture[count];
         for (var i = 0; i < count; i++)
         {

@@ -190,6 +190,35 @@ describe('qualification Place destinationSlotKeys', () => {
     expect(incompleteIntentReason(draft, groups, true)).toBe('DuplicateSlot');
   });
 
+  it('flags duplicate Place destinations across intents', () => {
+    const a = emptyQualIntent('peer', 'place');
+    a.sourceKind = 'Overall';
+    a.positionFrom = '1';
+    a.positionTo = '1';
+    a.destinationSlotKeys = ['SF1-A'];
+    const b = emptyQualIntent('peer', 'place');
+    b.sourceKind = 'Overall';
+    b.positionFrom = '2';
+    b.positionTo = '2';
+    b.destinationSlotKeys = ['SF1-A'];
+    expect(incompleteIntentReason(a, groups, true, [a, b])).toBe(
+      'DuplicatePlace',
+    );
+    expect(isIntentComplete(a, groups, true, [a, b])).toBe(false);
+  });
+
+  it('allows two intents to the same Population destination', () => {
+    const a = emptyQualIntent('peer', 'population');
+    a.sourceKind = 'Overall';
+    a.positionFrom = '1';
+    a.positionTo = '1';
+    const b = emptyQualIntent('peer', 'population');
+    b.sourceKind = 'Overall';
+    b.positionFrom = '2';
+    b.positionTo = '2';
+    expect(incompleteIntentReason(a, groups, true, [a, b])).toBeNull();
+  });
+
   it('blocks Place while destination places are unlabeled', () => {
     const draft = emptyQualIntent('peer', 'place');
     draft.sourceKind = 'Overall';

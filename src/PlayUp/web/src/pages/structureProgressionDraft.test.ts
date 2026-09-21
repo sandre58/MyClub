@@ -123,10 +123,10 @@ describe('structureProgressionDraft', () => {
     draft.destinationStageId = 'source';
     draft.expandedPathCount = 1;
     draft.destinationSlotKeys = ['A'];
-    expect(incompleteIntentReason(draft, [draft], false)).toBe(
+    expect(incompleteIntentReason(draft, [draft], false, 'r1')).toBe(
       'PlaceUnavailable',
     );
-    expect(isIntentComplete(draft, [draft], false)).toBe(false);
+    expect(isIntentComplete(draft, [draft], false, 'r1')).toBe(false);
   });
 
   it('requires full Place mapping (MultiSlot)', () => {
@@ -134,9 +134,9 @@ describe('structureProgressionDraft', () => {
     draft.roundId = 'r1';
     draft.expandedPathCount = 2;
     draft.destinationSlotKeys = ['SF1-A'];
-    expect(incompleteIntentReason(syncPlaceSlotKeys(draft), [draft], true)).toBe(
-      'MultiSlot',
-    );
+    expect(
+      incompleteIntentReason(syncPlaceSlotKeys(draft), [draft], true, 'r1'),
+    ).toBe('MultiSlot');
   });
 
   it('detects duplicate slots within one intent', () => {
@@ -144,7 +144,9 @@ describe('structureProgressionDraft', () => {
     draft.roundId = 'r1';
     draft.expandedPathCount = 2;
     draft.destinationSlotKeys = ['SF1-A', 'SF1-A'];
-    expect(incompleteIntentReason(draft, [draft], true)).toBe('DuplicateSlot');
+    expect(incompleteIntentReason(draft, [draft], true, 'r1')).toBe(
+      'DuplicateSlot',
+    );
   });
 
   it('detects duplicate round+outcome', () => {
@@ -154,32 +156,45 @@ describe('structureProgressionDraft', () => {
     const b = emptyProgIntent('peer');
     b.roundId = 'r1';
     b.outcome = 'Winner';
-    expect(incompleteIntentReason(a, [a, b], false)).toBe(
+    expect(incompleteIntentReason(a, [a, b], false, 'r1')).toBe(
       'DuplicateRoundOutcome',
     );
   });
 
-  it('allows multiple intents to the same Population', () => {
+  it('allows Winner championship terminal + Loser intermediate to same Population', () => {
     const a = emptyProgIntent('peer');
-    a.roundId = 'r1';
+    a.roundId = 'final';
     a.outcome = 'Winner';
     const b = emptyProgIntent('peer');
-    b.roundId = 'r2';
-    b.outcome = 'Winner';
-    expect(isIntentComplete(a, [a, b], false)).toBe(true);
-    expect(isIntentComplete(b, [a, b], false)).toBe(true);
+    b.roundId = 'sf';
+    b.outcome = 'Loser';
+    expect(isIntentComplete(a, [a, b], false, 'final')).toBe(true);
+    expect(isIntentComplete(b, [a, b], false, 'final')).toBe(true);
+  });
+
+  it('rejects Winner on a non-championship-terminal round', () => {
+    const draft = emptyProgIntent('peer');
+    draft.roundId = 'sf';
+    draft.outcome = 'Winner';
+    expect(incompleteIntentReason(draft, [draft], false, 'final')).toBe(
+      'ChampionshipTerminalRound',
+    );
   });
 
   it('detects duplicate Place destinations across intents when labeled', () => {
     const a = emptyProgIntent('source', 'place');
     a.roundId = 'r1';
+    a.outcome = 'Loser';
     a.expandedPathCount = 1;
     a.destinationSlotKeys = ['SF-A'];
     const b = emptyProgIntent('source', 'place');
     b.roundId = 'r2';
+    b.outcome = 'Loser';
     b.expandedPathCount = 1;
     b.destinationSlotKeys = ['SF-A'];
-    expect(incompleteIntentReason(a, [a, b], true)).toBe('DuplicatePlace');
+    expect(incompleteIntentReason(a, [a, b], true, 'final')).toBe(
+      'DuplicatePlace',
+    );
   });
 
   it('resizeDestinationSlotKeys pads and truncates', () => {

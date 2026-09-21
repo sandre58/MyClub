@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="ConfrontationMultiRoundTemplate.cs" company="Stéphane ANDRE">
+// <copyright file="StructureFluxEmptyTemplate.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,32 +11,33 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// QA seed for Structure Confrontation: one phase, three rounds with distinct TieFormats.
+/// Structure QA — multi-phases without Sorties (author from empty dialogs).
 /// </summary>
-public sealed class ConfrontationMultiRoundTemplate : ICompetitionTemplate
+public sealed class StructureFluxEmptyTemplate : ICompetitionTemplate
 {
     /// <inheritdoc />
-    public string Id => "confrontation-multi-round";
+    public string Id => "structure-flux-empty";
 
     /// <inheritdoc />
-    public string Name => "Démo Confrontation multi-tours";
+    public string Name => "Structure — Sorties vides";
 
     /// <inheritdoc />
     public string Description =>
-        "Cup 8 · Tableau QF/SF/Finale (fixtures + TieFormats) · Phase aval vide · Draft — Sorties Progression authorables. :progress ignored.";
+        "Groups 2×4 + QF aval (fixtures, sans arêtes) · Draft. Authoring Qualif (groupes) et Progression (QF). :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()
     {
-        DisplayName = "Démo Confrontation multi-tours",
-        Format = RecipeFormat.Cup,
+        DisplayName = "Structure — Sorties vides",
+        Format = RecipeFormat.Groups,
         TeamCount = 8,
-        BracketSize = 8,
-        StageName = "Tableau",
+        GroupCount = 2,
+        PlacesPerGroup = 4,
+        StageName = "Phase de groupes",
         TeamNames = TeamNameSource.Generated
     };
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildConfrontationMultiRoundDemoAsync(context, cancellationToken);
+        ScenarioOrchestration.BuildFluxEmptyRelationsDraftAsync(context, cancellationToken);
 }

@@ -48,8 +48,10 @@ import type {
   StructureStageHubSummary,
   StructureView,
 } from '../types';
-import { EmptyState, MutationError, PendingLabel } from '../ui';
+import { EmptyState, LoadingState, MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { sortiesAvalPeerStages } from './structureSortiesDestinations';
+import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
   listLabeledCupPlaces,
@@ -153,8 +155,9 @@ export function StructureQualificationDialog({
   const queryClient = useQueryClient();
   const locale = i18n.language ?? 'fr';
 
+  /** Inter-Stage aval only — self / amont excluded (Sorties ownership). */
   const peerStages = useMemo(
-    () => data.stages.filter((peer) => peer.stageId !== stage.stageId),
+    () => sortiesAvalPeerStages(data.stages, stage.stageId),
     [data.stages, stage.stageId],
   );
   const contextDestinationId = openedFromDestinationStageId?.trim() || '';
@@ -371,7 +374,7 @@ export function StructureQualificationDialog({
   const intentsComplete =
     sessionReady &&
     intents.every((intent) =>
-      isIntentComplete(intent, groups, placesLabeledFor(intent)),
+      isIntentComplete(intent, groups, placesLabeledFor(intent), intents),
     );
 
   const canSave = !mutation.isPending && intentsComplete;
@@ -382,6 +385,35 @@ export function StructureQualificationDialog({
     [intents, groups, sessionReady],
   );
 
+  const hasDuplicatePlaceTarget = useMemo(
+    () =>
+      sessionReady &&
+      intents.some(
+        (intent) =>
+          incompleteIntentReason(
+            intent,
+            groups,
+            placesLabeledFor(intent),
+            intents,
+          ) === 'DuplicatePlace',
+      ),
+    [intents, groups, sessionReady],
+  );
+
+  const firstIncompleteReason = useMemo(() => {
+    if (!sessionReady) return null;
+    for (const intent of intents) {
+      const reason = incompleteIntentReason(
+        intent,
+        groups,
+        placesLabeledFor(intent),
+        intents,
+      );
+      if (reason != null) return reason;
+    }
+    return null;
+  }, [intents, groups, sessionReady]);
+
   const saveBlockedReason =
     !sessionReady || mutation.isPending || mutation.isSuccess
       ? null
@@ -389,9 +421,11 @@ export function StructureQualificationDialog({
         ? t('qualification.saveBlockedUnmappedPlaces', {
             count: unmappedPlaceSlots,
           })
-        : !intentsComplete && intents.length > 0
-          ? t('qualification.saveBlockedIncomplete')
-          : null;
+        : hasDuplicatePlaceTarget
+          ? t('qualification.saveBlockedDuplicatePlace')
+          : firstIncompleteReason != null
+            ? t(`qualification.incompleteHint${firstIncompleteReason}`)
+            : null;
 
   const hasDuplicateSources = useMemo(
     () => hasAnyDuplicateSourceOccurrence(intents, groups),
@@ -554,9 +588,7 @@ export function StructureQualificationDialog({
         </div>
 
         {!sessionReady ? (
-          <p className="structure-qualification__field-hint" role="status">
-            <PendingLabel>{tCommon('loading')}</PendingLabel>
-          </p>
+          <LoadingState size="region" />
         ) : peerStages.length === 0 ? (
           <EmptyState
             variant="idle"
@@ -607,6 +639,7 @@ export function StructureQualificationDialog({
               intent,
               groups,
               placesLabeledFor(intent),
+              intents,
             );
             const statusMessage =
               incompleteReason == null
@@ -968,10 +1001,12 @@ function QualIntentEditor({
 
   return (
     <div className="structure-qualification__editor">
-      <p className="structure-qualification__section-title">
-        {t('qualification.who')}
-      </p>
-
+      <SortiesWhoWhereFlow
+        sourceLabel={t('qualification.who')}
+        destinationLabel={t('qualification.where')}
+        feedsLabel={t('qualification.feeds')}
+        source={
+          <>
       <div
         className="structure-qualification__scope-tiles"
         data-count={String(scopeOptions.length)}
@@ -1161,13 +1196,10 @@ function QualIntentEditor({
           </Field>
         ) : null}
       </div>
-
-      <hr className="structure-qualification__rule" />
-
-      <p className="structure-qualification__section-title">
-        {t('qualification.where')}
-      </p>
-
+          </>
+        }
+        destination={
+          <>
       <div
         className="structure-qualification__scope-tiles"
         data-count="2"
@@ -1430,6 +1462,9 @@ function QualIntentEditor({
           </div>
         )
       ) : null}
+          </>
+        }
+      />
     </div>
   );
 }

@@ -47,7 +47,6 @@ import { TeamCrest } from '../design-system/TeamCrest';
 import { EmptyState, LoadingState, StageStatusBadge, StatusBadge } from '../ui';
 import type {
   SelectionMode,
-  StageSchematic,
   StructureConfrontationSegment,
   StructureEntry,
   StructureFormatKind,
@@ -78,6 +77,9 @@ import {
 import {
   compactPopulationFeedRules,
 } from './structurePopulationFeedCompact';
+import {
+  outboundSortiesFeeds,
+} from './structureSortiesIntentFeed';
 import {
   inboundPopulationConfiguredVolume,
   qualificationPathVolume,
@@ -151,6 +153,8 @@ type FeedRow = {
   badgeTone: 'win' | 'loss' | 'neutral' | 'accent';
   context: string;
   extra?: string;
+  /** When true, badge is plain text (Sorties Qual intention summaries). */
+  badgeAsText?: boolean;
   volume: number;
   family: FeedFamily;
   /** Place lower bound, or Winner=0 / Loser=1. */
@@ -172,6 +176,7 @@ type FeedGroup = {
     badgeTone: 'win' | 'loss' | 'neutral' | 'accent';
     context: string;
     extra?: string;
+    badgeAsText?: boolean;
     volume: number;
     family: FeedFamily;
     sortPrimary: number;
@@ -207,6 +212,16 @@ function selectionModeBadge(
   }
 }
 
+function acrossGroupsScopeLabel(
+  path: StructureQualificationPath,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
+  const placeRank = path.acrossGroupsPosition ?? 1;
+  return t('qualification.summary.scopeAcrossPlace', {
+    place: formatPlace(placeRank, t),
+  });
+}
+
 function qualificationRuleParts(
   path: StructureQualificationPath,
   t: (key: string, opts?: Record<string, unknown>) => string,
@@ -225,6 +240,8 @@ function qualificationRuleParts(
   const mode = path.selectionMode as SelectionMode;
   const sortPrimary = path.selectionValue;
   const sortSecondary = group;
+  const isAcross =
+    path.rankingScope === 'AcrossGroups' || path.acrossGroupsPosition != null;
   // R1: rails never show Place/Population chips — only non-form extras (points gate).
   const extra =
     path.minimumPoints != null
@@ -247,6 +264,17 @@ function qualificationRuleParts(
         family: 'place',
         sortPrimary,
         sortSecondary,
+      };
+    }
+    if (isAcross) {
+      return {
+        badge,
+        badgeTone: 'accent',
+        context: acrossGroupsScopeLabel(path, t),
+        extra,
+        family: 'place',
+        sortPrimary,
+        sortSecondary: String(path.acrossGroupsPosition ?? ''),
       };
     }
     return {
@@ -272,15 +300,15 @@ function qualificationRuleParts(
         sortSecondary,
       };
     }
-    if (path.rankingScope === 'AcrossGroups') {
+    if (isAcross) {
       return {
         badge: place,
         badgeTone: 'accent',
-        context: t('fiche.rule.contextAcross'),
+        context: acrossGroupsScopeLabel(path, t),
         extra,
         family: 'place',
         sortPrimary,
-        sortSecondary,
+        sortSecondary: String(path.acrossGroupsPosition ?? ''),
       };
     }
     return {
@@ -304,6 +332,17 @@ function qualificationRuleParts(
       family: 'place',
       sortPrimary,
       sortSecondary,
+    };
+  }
+  if (isAcross) {
+    return {
+      badge,
+      badgeTone: 'accent',
+      context: acrossGroupsScopeLabel(path, t),
+      extra,
+      family: 'place',
+      sortPrimary,
+      sortSecondary: String(path.acrossGroupsPosition ?? ''),
     };
   }
   return {
@@ -360,7 +399,9 @@ function progressionRuleParts(
   const isWinner = path.outcome === 'Winner';
   // R1: destination Place | Population lives on the schematic, not the rail.
   return {
-    badge: isWinner ? t('fiche.rule.winner') : t('fiche.rule.loser'),
+    badge: isWinner
+      ? t('fiche.rule.winner', { count: 1 })
+      : t('fiche.rule.loser', { count: 1 }),
     badgeTone: isWinner ? 'win' : 'loss',
     context: matchNumberContext(path.sourceLabel, path.sourceFixtureId, t),
     family: 'result',
@@ -390,7 +431,9 @@ function placementRuleParts(
           : award.rank === 3
             ? 'bronze'
             : null,
-    badge: isWinner ? t('fiche.rule.winner') : t('fiche.rule.loser'),
+    badge: isWinner
+      ? t('fiche.rule.winner', { count: 1 })
+      : t('fiche.rule.loser', { count: 1 }),
     badgeTone: isWinner ? 'win' : 'loss',
     context: matchNumberContext(
       award.sourceLabel,
@@ -501,6 +544,7 @@ function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
         badgeTone: feed.badgeTone,
         context: feed.context,
         extra: feed.extra,
+        badgeAsText: feed.badgeAsText,
         volume: feed.volume,
         family: feed.family,
         sortPrimary: feed.sortPrimary,
@@ -519,6 +563,7 @@ function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
             badgeTone: feed.badgeTone,
             context: feed.context,
             extra: feed.extra,
+            badgeAsText: feed.badgeAsText,
             volume: feed.volume,
             family: feed.family,
             sortPrimary: feed.sortPrimary,
@@ -542,22 +587,45 @@ function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
   return groups;
 }
 
+/** Population rail only — merge Expand siblings + soft truncate (not Intent grain). */
+function compactPopulationFeedGroups(
+  groups: FeedGroup[],
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): FeedGroup[] {
+  return groups.map((group) => {
+    const compacted = compactPopulationFeedRules(group.rules, t);
+    return {
+      ...group,
+      rules: compacted.rules,
+      hiddenCount: compacted.hiddenCount,
+    };
+  });
+}
+
 function FluxRuleRow({
   badge,
   badgeTone,
   context,
   extra,
+  badgeAsText = false,
 }: {
   badge: string;
   badgeTone: 'win' | 'loss' | 'neutral' | 'accent';
   context: string;
   extra?: string;
+  badgeAsText?: boolean;
 }) {
   return (
     <span className="structure-flux-rule">
       <span className="structure-flux-rule__source">
-        <Chip tone={badgeTone}>{badge}</Chip>
-        <span className="structure-flux-rule__context">{context}</span>
+        {badgeAsText ? (
+          <span className="structure-flux-rule__who">{badge}</span>
+        ) : (
+          <Chip tone={badgeTone}>{badge}</Chip>
+        )}
+        {context ? (
+          <span className="structure-flux-rule__context">{context}</span>
+        ) : null}
       </span>
       {extra ? (
         <>
@@ -607,12 +675,15 @@ function FluxGroupList({
   onOpenPeer,
   teamsLabel,
   renderGroupAction,
+  moreRulesLabel,
 }: {
   groups: FeedGroup[];
   onOpenPeer?: (peerId: string) => void;
   teamsLabel: (count: number) => string;
   /** Compact control in the group head (e.g. edit exits on source). */
   renderGroupAction?: (group: FeedGroup) => ReactNode;
+  /** Overflow caption when a group hides truncated paths (Population). */
+  moreRulesLabel?: (count: number) => string;
 }) {
   return (
     <ul className="structure-flux-groups">
@@ -643,9 +714,19 @@ function FluxGroupList({
                   badgeTone={rule.badgeTone}
                   context={rule.context}
                   extra={rule.extra}
+                  badgeAsText={rule.badgeAsText}
                 />
               </li>
             ))}
+            {group.hiddenCount != null &&
+            group.hiddenCount > 0 &&
+            moreRulesLabel ? (
+              <li className="structure-flux-group__rule structure-flux-group__rule--more">
+                <span className="structure-flux-rule__more">
+                  {moreRulesLabel(group.hiddenCount)}
+                </span>
+              </li>
+            ) : null}
           </ul>
         </li>
       ))}
@@ -1371,7 +1452,7 @@ export function StructurePhaseFiche({
   initialCompose?: boolean;
   onInitialEditConsumed?: () => void;
 }) {
-  const { t } = useTranslation('structure');
+  const { t, i18n } = useTranslation('structure');
   const [edit, setEdit] = useState<EditTarget>(null);
   const [rulesEditStage, setRulesEditStage] =
     useState<StructureStageHubSummary | null>(null);
@@ -1444,8 +1525,8 @@ export function StructurePhaseFiche({
     );
   }
 
-  const feeds = inboundFeeds(data, stage.stageId, t, schematicQuery.data);
-  const feedGroups = groupFeeds(feeds);
+  const feeds = inboundFeeds(data, stage.stageId, t);
+  const feedGroups = compactPopulationFeedGroups(groupFeeds(feeds), t);
   // Places N meter / Affectation reserve: Qual + Prog (Population and Place).
   // Place fills occupy capacity even though they skip the Population set.
   const populationFeedVolume = inboundPopulationConfiguredVolume(
@@ -1453,7 +1534,14 @@ export function StructurePhaseFiche({
     stage.stageId,
   );
   const populationCount = stage.compositionEntryCount ?? 0;
-  const outbounds = outboundFeeds(data, stage, t, schematicQuery.data);
+  const pathOutbounds = outboundFeeds(data, stage, t);
+  const outbounds = outboundSortiesFeeds(
+    data,
+    stage,
+    i18n.language,
+    t,
+    pathOutbounds,
+  );
   const outboundGroups = groupFeeds(outbounds);
   const matchBound = isMatchFrameBound(stage.defaultsBinding);
   const standingBound = isStandingFrameBound(stage.defaultsBinding);
@@ -1743,6 +1831,9 @@ export function StructurePhaseFiche({
                     groups={feedGroups}
                     onOpenPeer={onSelectStage}
                     teamsLabel={teamsLabel}
+                    moreRulesLabel={(count) =>
+                      t('population.feed.moreRules', { count })
+                    }
                     renderGroupAction={renderAvalSourceAction}
                   />
                 ) : undefined
