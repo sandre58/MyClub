@@ -28,7 +28,7 @@ public sealed class ProgressionPathExpanderTests
             order: 1,
             round.Id,
             ProgressionOutcome.Winner,
-            ProgressionDestination.ForPopulation(peer));
+            peer);
 
         var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds);
 
@@ -39,7 +39,29 @@ public sealed class ProgressionPathExpanderTests
     }
 
     [Fact]
-    public void Materialize_rejects_place_intent_when_round_has_multiple_fixtures()
+    public void Materialize_Place_zips_slot_keys_to_fixtures()
+    {
+        var stage = CreateCupWithFixtures(2);
+        stage.AddSlot("SF1-A");
+        stage.AddSlot("SF1-B");
+        var intent = new ProgressionIntent(
+            IntentId.New(),
+            1,
+            stage.Rounds[0].Id,
+            ProgressionOutcome.Winner,
+            stage.Id,
+            ["SF1-A", "SF1-B"]);
+
+        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds);
+
+        paths.Should().HaveCount(2);
+        paths[0].Destination.SlotKey.Should().Be("SF1-A");
+        paths[1].Destination.SlotKey.Should().Be("SF1-B");
+        paths.Select(p => p.SourceFixtureId).Should().Equal(stage.Rounds[0].Fixtures.Select(f => f.Id));
+    }
+
+    [Fact]
+    public void Materialize_rejects_Place_when_slot_key_count_mismatches_fixtures()
     {
         var stage = CreateCupWithFixtures(2);
         stage.AddSlot("SF1-A");
@@ -48,9 +70,25 @@ public sealed class ProgressionPathExpanderTests
             1,
             stage.Rounds[0].Id,
             ProgressionOutcome.Winner,
-            ProgressionDestination.ForSlot(stage.Id, "SF1-A"));
+            stage.Id,
+            ["SF1-A"]);
 
         var act = () => ProgressionPathExpander.Materialize([intent], stage.Rounds);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
+    }
+
+    [Fact]
+    public void Constructor_rejects_duplicate_Place_slot_keys()
+    {
+        var act = () => new ProgressionIntent(
+            IntentId.New(),
+            1,
+            RoundId.New(),
+            ProgressionOutcome.Winner,
+            StageId.New(),
+            ["SF1-A", "SF1-A"]);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
@@ -66,7 +104,7 @@ public sealed class ProgressionPathExpanderTests
             1,
             stage.Rounds[0].Id,
             ProgressionOutcome.Loser,
-            ProgressionDestination.ForPopulation(peer));
+            peer);
 
         var rules = ProgressionRules.FromIntents([intent], stage.Rounds);
 

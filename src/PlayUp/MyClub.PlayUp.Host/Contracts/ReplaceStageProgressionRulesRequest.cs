@@ -20,6 +20,7 @@ public sealed record ReplaceStageProgressionRulesRequest(
 
 /// <summary>
 /// One HTTP progression intent.
+/// Prefer <c>DestinationSlotKeys</c>; legacy <c>DestinationSlotKey</c> coerces to a one-element list.
 /// </summary>
 public sealed record ProgressionIntentRequest(
     Guid? IntentId,
@@ -27,6 +28,7 @@ public sealed record ProgressionIntentRequest(
     Guid RoundId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
+    IReadOnlyList<string>? DestinationSlotKeys = null,
     string? DestinationSlotKey = null);
 
 /// <summary>

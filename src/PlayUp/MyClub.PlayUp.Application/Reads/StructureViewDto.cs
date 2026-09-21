@@ -315,7 +315,7 @@ public sealed record StructureQualificationIntentDto(
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
     int DestinationCount = 0,
-    string? DestinationSlotKey = null);
+    IReadOnlyList<string>? DestinationSlotKeys = null);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>
@@ -350,7 +350,7 @@ public sealed record StructureProgressionIntentDto(
     string? RoundName,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
-    string? DestinationSlotKey,
+    IReadOnlyList<string>? DestinationSlotKeys,
     int ExpandedPathCount);
 
 /// <summary>One progression path for Structure authoring / impact preview.</summary>

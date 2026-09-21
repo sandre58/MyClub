@@ -115,20 +115,23 @@ public static class ReplaceStageProgressionRules
                 ApplicationErrorCodes.InvalidStructureIntent);
         }
 
-        var destination = string.IsNullOrWhiteSpace(spec.DestinationSlotKey)
-            ? ProgressionDestination.ForPopulation(spec.DestinationStageId)
-            : ProgressionDestination.ForSlot(spec.DestinationStageId, spec.DestinationSlotKey);
-
         var intentId = spec.IntentId is { } guid && guid != Guid.Empty
             ? new IntentId(guid)
             : IntentId.New();
+
+        var slotKeys = spec.DestinationSlotKeys is { Count: > 0 }
+            ? spec.DestinationSlotKeys
+            : string.IsNullOrWhiteSpace(spec.DestinationSlotKey)
+                ? null
+                : [spec.DestinationSlotKey];
 
         return new ProgressionIntent(
             intentId,
             spec.Order,
             spec.RoundId,
             spec.Outcome,
-            destination);
+            spec.DestinationStageId,
+            slotKeys);
     }
 }
 
@@ -150,4 +153,5 @@ public sealed record ProgressionIntentSpec(
     RoundId RoundId,
     ProgressionOutcome Outcome,
     StageId DestinationStageId,
+    IReadOnlyList<string>? DestinationSlotKeys = null,
     string? DestinationSlotKey = null);

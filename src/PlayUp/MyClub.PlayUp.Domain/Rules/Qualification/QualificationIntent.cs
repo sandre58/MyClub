@@ -13,6 +13,11 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// Paths are derived (Expand) — Intent is the authoring source of truth.
 /// Destination is peer Population or Place (Auto) on the destination stage form.
 /// </summary>
+/// <remarks>
+/// Place is a total function Expand → Place: <see cref="DestinationSlotKeys"/> count must equal
+/// Expand occurrence count, with index alignment. Empty/null keys = Population (same destination
+/// applied to every path). Partial Place mapping is invalid.
+/// </remarks>
 public sealed record QualificationIntent
 {
     /// <summary>
@@ -28,7 +33,7 @@ public sealed record QualificationIntent
         GroupId? groupId = null,
         int? acrossGroupsPosition = null,
         QualificationCondition? condition = null,
-        string? destinationSlotKey = null)
+        IReadOnlyList<string>? destinationSlotKeys = null)
     {
         if (!Enum.IsDefined(sourceKind))
         {
@@ -97,9 +102,7 @@ public sealed record QualificationIntent
         GroupId = groupId;
         AcrossGroupsPosition = acrossGroupsPosition;
         Condition = condition;
-        DestinationSlotKey = destinationSlotKey is null
-            ? null
-            : QualificationDestination.ForSlot(destinationStageId, destinationSlotKey).SlotKey;
+        DestinationSlotKeys = NormalizeDestinationSlotKeys(destinationStageId, destinationSlotKeys);
     }
 
     /// <summary>Gets the stable authoring identity (Guid v7).</summary>
@@ -121,9 +124,9 @@ public sealed record QualificationIntent
     public StageId DestinationStageId { get; }
 
     /// <summary>
-    /// Gets the destination slot key when targeting Place (Auto); otherwise <see langword="null"/> (Population).
+    /// Gets Place destination slot keys (Expand index ↔ key index). Empty = Population.
     /// </summary>
-    public string? DestinationSlotKey { get; }
+    public IReadOnlyList<string> DestinationSlotKeys { get; }
 
     /// <summary>Gets the group when <see cref="SourceKind"/> is <see cref="QualificationIntentSourceKind.SingleGroup"/>.</summary>
     public GroupId? GroupId { get; }
@@ -135,7 +138,7 @@ public sealed record QualificationIntent
     public QualificationCondition? Condition { get; }
 
     /// <summary>Gets a value indicating whether this intent targets population only.</summary>
-    public bool TargetsPopulation => DestinationSlotKey is null;
+    public bool TargetsPopulation => DestinationSlotKeys.Count == 0;
 
     /// <summary>Returns a deep copy.</summary>
     public QualificationIntent Copy() =>
@@ -149,5 +152,40 @@ public sealed record QualificationIntent
             GroupId,
             AcrossGroupsPosition,
             Condition is null ? null : QualificationCondition.PointsAtLeast(Condition.MinimumPoints),
-            DestinationSlotKey);
+            DestinationSlotKeys);
+
+    private static string[] NormalizeDestinationSlotKeys(
+        StageId destinationStageId,
+        IReadOnlyList<string>? destinationSlotKeys)
+    {
+        if (destinationSlotKeys is null || destinationSlotKeys.Count == 0)
+        {
+            return [];
+        }
+
+        var normalized = new string[destinationSlotKeys.Count];
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < destinationSlotKeys.Count; i++)
+        {
+            var key = destinationSlotKeys[i];
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new DomainException(
+                    "Qualification place destination slot keys cannot be empty.",
+                    RulesErrorCodes.QualificationRulesInvalid);
+            }
+
+            var slotKey = QualificationDestination.ForSlot(destinationStageId, key).SlotKey!;
+            if (!seen.Add(slotKey))
+            {
+                throw new DomainException(
+                    "Qualification place destination slot keys must be unique within an intent.",
+                    RulesErrorCodes.QualificationRulesInvalid);
+            }
+
+            normalized[i] = slotKey;
+        }
+
+        return normalized;
+    }
 }

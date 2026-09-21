@@ -209,6 +209,7 @@ function selectionModeBadge(
 function qualificationRuleParts(
   path: StructureQualificationPath,
   t: (key: string, opts?: Record<string, unknown>) => string,
+  schematic?: StageSchematic | null,
 ): Pick<
   FeedRow,
   | 'badge'
@@ -224,10 +225,15 @@ function qualificationRuleParts(
   const mode = path.selectionMode as SelectionMode;
   const sortPrimary = path.selectionValue;
   const sortSecondary = group;
-  const extra =
-    path.minimumPoints != null
-      ? t('fiche.rule.minimumPoints', { n: path.minimumPoints })
-      : undefined;
+  // Same as progression: Place → chrome chip; else optional Points ≥ gate.
+  let extra: string | undefined;
+  if (!isPopulationDestination(path.destinationSlotKey)) {
+    extra =
+      placeChromeForDestinationSlotKey(schematic, path.destinationSlotKey) ??
+      undefined;
+  } else if (path.minimumPoints != null) {
+    extra = t('fiche.rule.minimumPoints', { n: path.minimumPoints });
+  }
 
   if (mode === 'Range') {
     const from = formatPlace(path.selectionValue, t);
@@ -438,7 +444,7 @@ function inboundFeeds(
   for (const source of data.stages) {
     for (const path of source.qualificationPaths ?? []) {
       if (path.destinationStageId !== stageId) continue;
-      const parts = qualificationRuleParts(path, t);
+      const parts = qualificationRuleParts(path, t, schematic);
       feeds.push({
         key: `q-${source.stageId}-${path.order}`,
         peerId: source.stageId,
@@ -475,7 +481,7 @@ function outboundFeeds(
     data.stages.find((s) => s.stageId === id)?.name ?? id;
 
   for (const path of stage.qualificationPaths ?? []) {
-    const parts = qualificationRuleParts(path, t);
+    const parts = qualificationRuleParts(path, t, schematic);
     feeds.push({
       key: `q-out-${path.order}-${path.destinationStageId}`,
       peerId: path.destinationStageId,

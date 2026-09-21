@@ -695,7 +695,7 @@ try
                         new RoundId(intent.RoundId),
                         intent.Outcome,
                         new StageId(intent.DestinationStageId),
-                        intent.DestinationSlotKey))
+                        coerceDestinationSlotKeys(intent.DestinationSlotKeys, intent.DestinationSlotKey)))
                 ];
                 await executor
                     .ReplaceStageProgressionIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -746,7 +746,7 @@ try
                         intent.GroupId,
                         intent.AcrossGroupsPosition,
                         intent.MinimumPoints,
-                        intent.DestinationSlotKey))
+                        coerceDestinationSlotKeys(intent.DestinationSlotKeys, intent.DestinationSlotKey)))
                 ];
                 await executor
                     .ReplaceStageQualificationIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -1615,3 +1615,11 @@ static DrawResolutionKind parseDrawKind(string kind) => kind.Equals("Slot", Stri
             : throw new ApplicationFailureException(
                 $"Unknown draw kind '{kind}'. Expected Slot, Group, or Pairing.",
                 ApplicationErrorCodes.DrawKindNotSupported);
+
+// Prefers keys when present; otherwise coerces legacy singular key to a one-element list.
+static IReadOnlyList<string>? coerceDestinationSlotKeys(IReadOnlyList<string>? keys, string? singular) =>
+    keys is { Count: > 0 }
+        ? keys
+        : string.IsNullOrWhiteSpace(singular)
+            ? null
+            : [singular];

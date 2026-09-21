@@ -499,7 +499,7 @@ public static class StructureViewAssembler
                         intent.AcrossGroupsPosition,
                         intent.Condition?.MinimumPoints,
                         destinationCount,
-                        intent.DestinationSlotKey);
+                        intent.DestinationSlotKeys);
                 })
             ];
 
@@ -580,8 +580,8 @@ public static class StructureViewAssembler
                     intent.RoundId.Value,
                     roundNameById.GetValueOrDefault(intent.RoundId),
                     intent.Outcome,
-                    intent.Destination.StageId.Value,
-                    intent.Destination.SlotKey,
+                    intent.DestinationStageId.Value,
+                    intent.DestinationSlotKeys,
                     fixtureCount);
             })
         ];

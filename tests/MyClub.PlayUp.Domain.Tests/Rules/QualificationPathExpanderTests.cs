@@ -157,7 +157,7 @@ public sealed class QualificationPathExpanderTests
             1,
             1,
             dest,
-            destinationSlotKey: "R16-1");
+            destinationSlotKeys: ["R16-1"]);
 
         var paths = QualificationPathExpander.Materialize([intent], []);
 
@@ -167,7 +167,7 @@ public sealed class QualificationPathExpanderTests
     }
 
     [Fact]
-    public void Materialize_rejects_Place_intent_that_expands_to_multiple_occurrences()
+    public void Materialize_Place_EachGroup_zips_slot_keys_to_occurrences()
     {
         var gA = GroupId.New();
         var gB = GroupId.New();
@@ -179,9 +179,50 @@ public sealed class QualificationPathExpanderTests
             1,
             1,
             dest,
-            destinationSlotKey: "R16-1");
+            destinationSlotKeys: ["R16-1", "R16-2"]);
+
+        var paths = QualificationPathExpander.Materialize([intent], [gA, gB]);
+
+        paths.Should().HaveCount(2);
+        paths[0].Source.GroupId.Should().Be(gA);
+        paths[0].Destination.SlotKey.Should().Be("R16-1");
+        paths[1].Source.GroupId.Should().Be(gB);
+        paths[1].Destination.SlotKey.Should().Be("R16-2");
+    }
+
+    [Fact]
+    public void Materialize_rejects_Place_when_slot_key_count_mismatches_Expand()
+    {
+        var gA = GroupId.New();
+        var gB = GroupId.New();
+        var dest = StageId.New();
+        var intent = new QualificationIntent(
+            IntentId.New(),
+            1,
+            QualificationIntentSourceKind.EachGroup,
+            1,
+            1,
+            dest,
+            destinationSlotKeys: ["R16-1"]);
 
         var act = () => QualificationPathExpander.Materialize([intent], [gA, gB]);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
+    }
+
+    [Fact]
+    public void Constructor_rejects_duplicate_Place_slot_keys()
+    {
+        var dest = StageId.New();
+        var act = () => new QualificationIntent(
+            IntentId.New(),
+            1,
+            QualificationIntentSourceKind.Overall,
+            1,
+            2,
+            dest,
+            destinationSlotKeys: ["R16-1", "R16-1"]);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);

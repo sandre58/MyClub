@@ -62,23 +62,40 @@ public static class QualificationPathExpander
                     RulesErrorCodes.QualificationRulesInvalid);
             }
 
-            // Place intents with a single destination slot cannot expand to N sources.
-            if (!intent.TargetsPopulation && occurrences.Count > 1)
+            if (intent.TargetsPopulation)
+            {
+                var destination = QualificationDestination.ForPopulation(intent.DestinationStageId);
+                var condition = intent.Condition is null
+                    ? null
+                    : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints);
+                paths.AddRange(occurrences.Select(occurrence => new QualificationPath(pathOrder++, ToSource(occurrence), new QualificationSelection(SelectionMode.Position, occurrence.Position), destination, condition)));
+
+                continue;
+            }
+
+            if (intent.DestinationSlotKeys.Count != occurrences.Count)
             {
                 throw new DomainException(
-                    "Qualification place destination cannot expand to more than one source occurrence.",
+                    "Qualification place destination slot keys count must equal Expand occurrence count.",
                     RulesErrorCodes.QualificationRulesInvalid);
             }
 
-            var destination = intent.TargetsPopulation
-                ? QualificationDestination.ForPopulation(intent.DestinationStageId)
-                : QualificationDestination.ForSlot(intent.DestinationStageId, intent.DestinationSlotKey!);
-            paths.AddRange(occurrences.Select(occurrence => new QualificationPath(
-                pathOrder++,
-                ToSource(occurrence),
-                new QualificationSelection(SelectionMode.Position, occurrence.Position),
-                destination,
-                intent.Condition is null ? null : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints))));
+            var placeCondition = intent.Condition is null
+                ? null
+                : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints);
+            for (var i = 0; i < occurrences.Count; i++)
+            {
+                var occurrence = occurrences[i];
+                var destination = QualificationDestination.ForSlot(
+                    intent.DestinationStageId,
+                    intent.DestinationSlotKeys[i]);
+                paths.Add(new QualificationPath(
+                    pathOrder++,
+                    ToSource(occurrence),
+                    new QualificationSelection(SelectionMode.Position, occurrence.Position),
+                    destination,
+                    placeCondition));
+            }
         }
 
         return paths;
@@ -200,7 +217,7 @@ public static class QualificationPathExpander
             groupId,
             across,
             path.Condition,
-            path.Destination.SlotKey);
+            path.Destination.SlotKey is null ? [] : [path.Destination.SlotKey]);
     }
 
     private static QualificationSource ToSource(QualificationSourceOccurrence occurrence) =>

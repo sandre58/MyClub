@@ -36,6 +36,8 @@ internal static class StageRegulationJson
         };
         options.Converters.Add(new DrawConstraintJsonConverter());
         options.Converters.Add(new QualificationConditionJsonConverter());
+        options.Converters.Add(new QualificationIntentJsonConverter());
+        options.Converters.Add(new ProgressionIntentJsonConverter());
         options.Converters.Add(new QualificationRulesJsonConverter());
         options.Converters.Add(new ProgressionRulesJsonConverter());
         options.Converters.Add(new GuidTypedIdJsonConverter<FixtureId>(static value => new FixtureId(value), static id => id.Value));

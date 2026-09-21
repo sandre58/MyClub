@@ -31,7 +31,7 @@ describe('structureProgressionDraft', () => {
     );
     expect(draft.targetKind).toBe('population');
     expect(draft.expandedPathCount).toBe(4);
-    expect(toApiIntent(draft, 1).destinationSlotKey).toBeNull();
+    expect(toApiIntent(draft, 1).destinationSlotKeys).toBeNull();
   });
 
   it('keeps cross-stage Place (peer destination Auto)', () => {
@@ -50,7 +50,25 @@ describe('structureProgressionDraft', () => {
     expect(draft.targetKind).toBe('place');
     expect(draft.destinationStageId).toBe('other');
     expect(draft.destinationSlotKey).toBe('slot-7');
-    expect(toApiIntent(draft, 1).destinationSlotKey).toBe('slot-7');
+    expect(toApiIntent(draft, 1).destinationSlotKeys).toEqual(['slot-7']);
+  });
+
+  it('coerces destinationSlotKeys array from API into singular draft', () => {
+    const draft = intentFromApi(
+      {
+        intentId: 'i1',
+        order: 1,
+        roundId: 'r1',
+        outcome: 'Winner',
+        destinationStageId: 'other',
+        destinationSlotKeys: ['slot-a', 'slot-b'],
+        expandedPathCount: 2,
+      },
+      'source',
+    );
+    expect(draft.targetKind).toBe('place');
+    expect(draft.destinationSlotKey).toBe('slot-a');
+    expect(toApiIntent(draft, 1).destinationSlotKeys).toEqual(['slot-a']);
   });
 
   it('blocks Place intents while labels are unavailable', () => {

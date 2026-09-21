@@ -1,11 +1,14 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { CloseIcon, ChevronDownIcon } from '../icons/shellIcons';
 import { useDismissLayer } from '../useDismissLayer';
 import { usePresence } from '../usePresence';
@@ -87,11 +90,26 @@ function initialActiveIndex(options: SelectOption[], current: string | null) {
 }
 
 const EXIT_MS = 200;
+/** Match `--space-4` gap under the shell. */
+const GAP_PX = 4;
+const VIEWPORT_PAD_PX = 16;
+/** Prefer below when at least this many px remain (otherwise flip above). */
+const FLIP_THRESHOLD_PX = 160;
+/** Above Popover (50); below Tooltip (60). Nested Select-in-Popover must float over its host. */
+const Z_INDEX = 55;
+
+type SelectSide = 'below' | 'above';
+
+type Placement = {
+  style: CSSProperties;
+  side: SelectSide;
+};
 
 /**
  * Select — TextInput shell + Ant-like dropdown list.
  * Optional leading icon and clear affix. Whole shell opens (except clear).
  * Escape dismiss is coordinated via the shared dismiss stack (LIFO).
+ * Listbox portals to `document.body` so overflow:hidden ancestors cannot clip it.
  */
 export function Select({
   options,
@@ -111,13 +129,15 @@ export function Select({
   const autoId = useId();
   const triggerId = id ?? autoId;
   const listId = `${triggerId}-list`;
-  const rootRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const controlled = value !== undefined;
   const [uncontrolled, setUncontrolled] = useState<string | null>(
     defaultValue ?? null,
   );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [placement, setPlacement] = useState<Placement | undefined>();
   const { present, state } = usePresence(open, EXIT_MS);
   const current = controlled ? (value ?? null) : uncontrolled;
   const selected = options.find((option) => option.value === current) ?? null;
@@ -135,15 +155,77 @@ export function Select({
     setOpen(false);
   });
 
+  useLayoutEffect(() => {
+    if (!present) {
+      setPlacement(undefined);
+      return;
+    }
+
+    function placeList() {
+      const shell = shellRef.current;
+      if (!shell) {
+        return;
+      }
+
+      const rect = shell.getBoundingClientRect();
+      const width = rect.width;
+
+      let left = rect.left;
+      if (left + width > window.innerWidth - VIEWPORT_PAD_PX) {
+        left = Math.max(
+          VIEWPORT_PAD_PX,
+          window.innerWidth - VIEWPORT_PAD_PX - width,
+        );
+      }
+      left = Math.max(VIEWPORT_PAD_PX, left);
+
+      const spaceBelow = window.innerHeight - rect.bottom - GAP_PX;
+      const spaceAbove = rect.top - GAP_PX;
+      const preferBelow =
+        spaceBelow >= FLIP_THRESHOLD_PX || spaceBelow >= spaceAbove;
+      const side: SelectSide = preferBelow ? 'below' : 'above';
+      const available = preferBelow ? spaceBelow : spaceAbove;
+      const maxHeight = Math.max(0, available - VIEWPORT_PAD_PX);
+
+      setPlacement({
+        side,
+        style: {
+          position: 'fixed',
+          top: preferBelow ? rect.bottom + GAP_PX : undefined,
+          bottom: preferBelow
+            ? undefined
+            : window.innerHeight - rect.top + GAP_PX,
+          left,
+          width,
+          maxHeight,
+          zIndex: Z_INDEX,
+        },
+      });
+    }
+
+    placeList();
+    window.addEventListener('resize', placeList);
+    window.addEventListener('scroll', placeList, true);
+    return () => {
+      window.removeEventListener('resize', placeList);
+      window.removeEventListener('scroll', placeList, true);
+    };
+  }, [present]);
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
+      const target = event.target as Node;
+      if (
+        shellRef.current?.contains(target) ||
+        listRef.current?.contains(target)
+      ) {
+        return;
       }
+      setOpen(false);
     }
 
     document.addEventListener('mousedown', onPointerDown);
@@ -235,13 +317,61 @@ export function Select({
     }
   }
 
+  const listbox =
+    present && placement && typeof document !== 'undefined'
+      ? createPortal(
+          <ul
+            ref={listRef}
+            id={listId}
+            className="ds-select__dropdown"
+            role="listbox"
+            aria-labelledby={triggerId}
+            aria-hidden={open ? undefined : true}
+            data-state={state}
+            data-side={placement.side}
+            style={placement.style}
+          >
+            {options.map((option, index) => {
+              const isSelected = option.value === current;
+              const isActive = index === activeIndex;
+              return (
+                <li key={option.value} role="presentation">
+                  <button
+                    type="button"
+                    id={`${listId}-opt-${option.value}`}
+                    className="ds-select__option"
+                    role="option"
+                    tabIndex={-1}
+                    aria-selected={isSelected}
+                    disabled={option.disabled || disabled || !open}
+                    data-selected={isSelected ? 'true' : 'false'}
+                    data-active={isActive ? 'true' : 'false'}
+                    onClick={() => selectOption(option.value)}
+                  >
+                    {option.leading ? (
+                      <span
+                        className="ds-select__option-leading"
+                        aria-hidden="true"
+                      >
+                        {option.leading}
+                      </span>
+                    ) : null}
+                    <span className="ds-select__option-label">
+                      {option.label}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>,
+          document.body,
+        )
+      : null;
+
   return (
-    <div
-      className={classes}
-      ref={rootRef}
-      {...(disabled ? { inert: true } : {})}
-    >
+    <div className={classes} {...(disabled ? { inert: true } : {})}>
       <div
+        ref={shellRef}
         id={triggerId}
         className="ds-input ds-select__shell"
         role="combobox"
@@ -292,47 +422,7 @@ export function Select({
         </span>
       </div>
 
-      {present ? (
-        <ul
-          id={listId}
-          className="ds-select__dropdown"
-          role="listbox"
-          aria-labelledby={triggerId}
-          aria-hidden={open ? undefined : true}
-          data-state={state}
-        >
-          {options.map((option, index) => {
-            const isSelected = option.value === current;
-            const isActive = index === activeIndex;
-            return (
-              <li key={option.value} role="presentation">
-                <button
-                  type="button"
-                  id={`${listId}-opt-${option.value}`}
-                  className="ds-select__option"
-                  role="option"
-                  tabIndex={-1}
-                  aria-selected={isSelected}
-                  disabled={option.disabled || disabled || !open}
-                  data-selected={isSelected ? 'true' : 'false'}
-                  data-active={isActive ? 'true' : 'false'}
-                  onClick={() => selectOption(option.value)}
-                >
-                  {option.leading ? (
-                    <span
-                      className="ds-select__option-leading"
-                      aria-hidden="true"
-                    >
-                      {option.leading}
-                    </span>
-                  ) : null}
-                  <span className="ds-select__option-label">{option.label}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+      {listbox}
     </div>
   );
 }

@@ -733,6 +733,16 @@
     "placeGatedBody": "Les places seront disponibles lorsque la structure de la phase de destination exposera des places libellées. Aucune clé technique n’est affichée ici.",
     "placeSelectPending": "Choisissez une place libellée de la phase de destination.",
     "placeEmpty": "Aucune place libellée dans cette phase de destination.",
+    "placeMapAria": "Associer chaque sélection à une place",
+    "placeMapRowAria": "Place pour {{source}}",
+    "placeSlotPlaceholder": "Choisir une place…",
+    "placeMapEmptySelection": "Complétez la sélection ci-dessus pour associer les places.",
+    "placeMapHeading": "Emplacements",
+    "placeFillEmpties": "Remplir",
+    "placeFillHint": "Associe les chemins encore vides aux emplacements disponibles, dans l’ordre affiché. Les choix déjà faits sont conservés.",
+    "saveBlockedUnmappedPlaces_one": "{{count}} place à associer avant d’enregistrer",
+    "saveBlockedUnmappedPlaces_other": "{{count}} places à associer avant d’enregistrer",
+    "saveBlockedIncomplete": "Complétez les qualifications avant d’enregistrer",
     "scope": "Type de classement",
     "scopeGroupTile": "Groupe",
     "scopeGroupHint": "Sélection dans les groupes",
@@ -776,6 +786,8 @@
     "incompleteHintSelection": "Positions à préciser",
     "incompleteHintPoints": "Points minimum invalides",
     "incompleteHintPlaceUnavailable": "Édition Place indisponible — passez en Population ou changez de phase",
+    "incompleteHintMultiSlot": "Associez une place à chaque sélection",
+    "incompleteHintDuplicateSlot": "Même place utilisée plusieurs fois",
     "emptyTitle": "Aucune qualification",
     "emptyBody": "Ajoutez une qualification ou enregistrez pour retirer les règles existantes.",
     "emptyNoPeerTitle": "Aucune phase destination",
@@ -792,12 +804,13 @@
       "acrossNth": "{{rank}} meilleur {{place}} des groupes",
       "acrossRange": "{{from}} à {{to}} meilleurs {{place}} des groupes",
       "withPoints": "{{who}}, si ≥ {{points}} points",
-      "whereCount_one": "→ {{phase}} · Population · {{count}} qualifié",
-      "whereCount_other": "→ {{phase}} · Population · {{count}} qualifiés",
+      "whereCount_one": "→ {{phase}} · {{count}} qualifié",
+      "whereCount_other": "→ {{phase}} · {{count}} qualifiés",
       "wherePlace": "→ {{phase}} · {{place}}",
       "wherePlaceFallback": "→ Place",
       "wherePlaceCount_one": "→ {{phase}} · {{place}} · {{count}} qualifié",
-      "wherePlaceCount_other": "→ {{phase}} · {{place}} · {{count}} qualifiés"
+      "wherePlaceCount_other": "→ {{phase}} · {{place}} · {{count}} qualifiés",
+      "wherePlaceMapped": "→ {{phase}} · {{filled}}/{{count}} places"
     }
   }
 }

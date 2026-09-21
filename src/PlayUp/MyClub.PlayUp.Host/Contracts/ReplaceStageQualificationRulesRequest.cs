@@ -20,8 +20,8 @@ public sealed record ReplaceStageQualificationRulesRequest(
 
 /// <summary>
 /// One HTTP qualification authoring intent (destination = peer Population or Place).
+/// Prefer <c>DestinationSlotKeys</c>; legacy <c>DestinationSlotKey</c> coerces to a one-element list.
 /// </summary>
-/// <param name="DestinationSlotKey">Slot key for Place (Auto); omit or null for Population.</param>
 public sealed record QualificationIntentRequest(
     Guid IntentId,
     int Order,
@@ -32,6 +32,7 @@ public sealed record QualificationIntentRequest(
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
+    IReadOnlyList<string>? DestinationSlotKeys = null,
     string? DestinationSlotKey = null);
 
 /// <summary>

@@ -694,9 +694,11 @@ export interface StructureQualificationIntent {
   positionTo: number;
   destinationStageId: string;
   /**
-   * Destination slot when targeting form Place (Auto); null/omitted when
-   * targeting phase Population. Wire camelCase matches Domain SlotKey.
+   * Place slot keys (Expand index ↔ key). Empty/omitted = Population.
+   * Wire camelCase matches Domain DestinationSlotKeys.
    */
+  destinationSlotKeys?: string[] | null;
+  /** @deprecated Prefer destinationSlotKeys; Host still dual-accepts singular. */
   destinationSlotKey?: string | null;
   groupId?: string | null;
   groupName?: string | null;
@@ -735,8 +737,10 @@ export interface StructureProgressionIntent {
   outcome: ProgressionOutcome;
   destinationStageId: string;
   /**
-   * Destination slot when targeting form Place; null/omitted when targeting phase Population.
+   * Place slot keys (fixture index ↔ key). Empty/omitted = Population.
    */
+  destinationSlotKeys?: string[] | null;
+  /** @deprecated Prefer destinationSlotKeys; Host still dual-accepts singular. */
   destinationSlotKey?: string | null;
   /** Expand preview: fixture count on the round. */
   expandedPathCount?: number;

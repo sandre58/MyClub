@@ -124,7 +124,7 @@ public static class ReplaceStageQualificationRules
                 spec.GroupId is { } g ? new GroupId(g) : null,
                 spec.AcrossGroupsPosition,
                 spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null,
-                string.IsNullOrWhiteSpace(spec.DestinationSlotKey) ? null : spec.DestinationSlotKey);
+                spec.DestinationSlotKeys is { Count: > 0 } ? spec.DestinationSlotKeys : null);
 }
 
 /// <summary>
@@ -155,4 +155,4 @@ public sealed record QualificationIntentSpec(
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
-    string? DestinationSlotKey = null);
+    IReadOnlyList<string>? DestinationSlotKeys = null);

@@ -61,15 +61,22 @@ public static class ProgressionPathExpander
                     RulesErrorCodes.ProgressionRulesInvalid);
             }
 
-            // Place intents with a single destination slot cannot expand to N fixtures.
-            if (!intent.Destination.TargetsPopulation && round.Fixtures.Count > 1)
+            if (intent.TargetsPopulation)
+            {
+                var destination = ProgressionDestination.ForPopulation(intent.DestinationStageId);
+                paths.AddRange(round.Fixtures.Select(fixture =>
+                    new ProgressionPath(fixture.Id, intent.Outcome, destination.Copy())));
+                continue;
+            }
+
+            if (intent.DestinationSlotKeys.Count != round.Fixtures.Count)
             {
                 throw new DomainException(
-                    "Progression place destination cannot expand a multi-fixture round to one slot.",
+                    "Progression place destination slot keys count must equal round fixture count.",
                     RulesErrorCodes.ProgressionRulesInvalid);
             }
 
-            paths.AddRange(round.Fixtures.Select(fixture => new ProgressionPath(fixture.Id, intent.Outcome, intent.Destination.Copy())));
+            paths.AddRange(round.Fixtures.Select((t, i) => new ProgressionPath(t.Id, intent.Outcome, ProgressionDestination.ForSlot(intent.DestinationStageId, intent.DestinationSlotKeys[i]))));
         }
 
         return paths;
@@ -88,5 +95,6 @@ public static class ProgressionPathExpander
             order: 1,
             roundId,
             path.Outcome,
-            path.Destination.Copy());
+            path.Destination.StageId,
+            path.Destination.SlotKey is null ? [] : [path.Destination.SlotKey]);
 }

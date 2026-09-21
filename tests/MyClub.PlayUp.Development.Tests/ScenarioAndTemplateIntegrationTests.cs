@@ -299,8 +299,9 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         groups.Should().NotBeNull();
         quarter.Should().NotBeNull();
         groups.Regulation.QualificationRules.Should().NotBeNull();
-        groups.Regulation.QualificationRules!.Intents.Should().HaveCount(4);
+        groups.Regulation.QualificationRules!.Intents.Should().ContainSingle();
         groups.Regulation.QualificationRules.Intents.Should().OnlyContain(intent => !intent.TargetsPopulation);
+        groups.Regulation.QualificationRules.Intents[0].DestinationSlotKeys.Should().HaveCount(4);
         groups.Regulation.QualificationRules.Paths.Should().OnlyContain(path => !path.Destination.TargetsPopulation);
         quarter.Slots.Should().HaveCount(4);
     }

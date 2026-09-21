@@ -733,6 +733,16 @@
     "placeGatedBody": "Places will be available once the destination phase’s structure exposes labeled places. No technical slot key is shown here.",
     "placeSelectPending": "Choose a labeled place on the destination phase.",
     "placeEmpty": "No labeled place on this destination phase.",
+    "placeMapAria": "Map each selection to a place",
+    "placeMapRowAria": "Place for {{source}}",
+    "placeSlotPlaceholder": "Choose a place…",
+    "placeMapEmptySelection": "Complete the selection above to map places.",
+    "placeMapHeading": "Places",
+    "placeFillEmpties": "Fill",
+    "placeFillHint": "Maps remaining empty paths to available places, in the order shown. Existing choices are kept.",
+    "saveBlockedUnmappedPlaces_one": "{{count}} place to map before saving",
+    "saveBlockedUnmappedPlaces_other": "{{count}} places to map before saving",
+    "saveBlockedIncomplete": "Complete qualifications before saving",
     "scope": "Standing type",
     "scopeGroupTile": "Group",
     "scopeGroupHint": "Selection within groups",
@@ -776,6 +786,8 @@
     "incompleteHintSelection": "Positions to complete",
     "incompleteHintPoints": "Invalid minimum points",
     "incompleteHintPlaceUnavailable": "Place editing unavailable — switch to Population or change phase",
+    "incompleteHintMultiSlot": "Map a place for each selection",
+    "incompleteHintDuplicateSlot": "Same place used more than once",
     "emptyTitle": "No qualifications",
     "emptyBody": "Add a qualification, or save to clear any existing rules.",
     "emptyNoPeerTitle": "No destination phase",
@@ -792,12 +804,13 @@
       "acrossNth": "{{rank}} best {{place}} across groups",
       "acrossRange": "{{from}} to {{to}} best {{place}}s across groups",
       "withPoints": "{{who}}, if ≥ {{points}} points",
-      "whereCount_one": "→ {{phase}} · Population · {{count}} qualified",
-      "whereCount_other": "→ {{phase}} · Population · {{count}} qualified",
+      "whereCount_one": "→ {{phase}} · {{count}} qualified",
+      "whereCount_other": "→ {{phase}} · {{count}} qualified",
       "wherePlace": "→ {{phase}} · {{place}}",
       "wherePlaceFallback": "→ Place",
       "wherePlaceCount_one": "→ {{phase}} · {{place}} · {{count}} qualified",
-      "wherePlaceCount_other": "→ {{phase}} · {{place}} · {{count}} qualified"
+      "wherePlaceCount_other": "→ {{phase}} · {{place}} · {{count}} qualified",
+      "wherePlaceMapped": "→ {{phase}} · {{filled}}/{{count}} places"
     }
   }
 }

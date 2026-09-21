@@ -825,7 +825,7 @@ internal static class ScenarioOrchestration
                 $"Expected 4 QF fixtures for prog-auto-place-mid, found {qfFixtures.Length}.");
         }
 
-        WireWinnerProgressionToSlots(quarter, semi, qfFixtures, destinationKeys, context.Clock);
+        WireWinnerProgressionToSlots(context.Ids, quarter, semi, qfFixtures, destinationKeys, context.Clock);
 
         quarter.Prepare(context.Clock);
         competition.Prepare(context.Clock);
@@ -2371,8 +2371,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Qual Auto Place: one SingleGroup Position → one destination Place (dual-write on Apply).
-    /// Slot keys ordered by group name then position.
+    /// Qual Auto Place: EachGroup positions → destination Places (N→N zip via DestinationSlotKeys).
+    /// Slot keys ordered by group name then position (matches Expand order).
     /// </summary>
     private static void WireEachGroupQualificationToSlots(
         DeterministicIdFactory ids,
@@ -2406,34 +2406,24 @@ internal static class ScenarioOrchestration
                 $"Expected {expected} slot keys for Auto Place wiring, found {slotKeys.Length}.");
         }
 
-        var intents = new List<QualificationIntent>(expected);
-        var order = 1;
-        var slotIndex = 0;
-        foreach (var group in groups)
-        {
-            for (var position = positionFrom; position <= positionTo; position++)
-            {
-                intents.Add(
-                    new QualificationIntent(
-                        ids.Intent($"{intentKeyPrefix}-{order}"),
-                        order,
-                        QualificationIntentSourceKind.SingleGroup,
-                        position,
-                        position,
-                        destination.Id,
-                        groupId: group.Id,
-                        destinationSlotKey: slotKeys[slotIndex++]));
-                order++;
-            }
-        }
-
         source.ReplaceQualificationRules(
-            QualificationRules.FromIntents(intents, groups.Select(group => group.Id).ToArray()),
+            QualificationRules.FromIntents(
+            [
+                new QualificationIntent(
+                    ids.Intent(intentKeyPrefix),
+                    order: 1,
+                    QualificationIntentSourceKind.EachGroup,
+                    positionFrom,
+                    positionTo,
+                    destination.Id,
+                    destinationSlotKeys: slotKeys)
+            ],
+            [.. groups.Select(group => group.Id)]),
             clock);
     }
 
     /// <summary>
-    /// Case 7 authoring: Top1 each group → Auto Place; Top2 EachGroup → Population (Draw fills rest).
+    /// Case 7 authoring: Top1 EachGroup → Auto Place (N→N); Top2 EachGroup → Population (Draw fills rest).
     /// </summary>
     private static void WireHybridQualificationTop1PlaceTop2Population(
         DeterministicIdFactory ids,
@@ -2463,34 +2453,26 @@ internal static class ScenarioOrchestration
                 $"Hybrid Auto Place requires one slot per group ({groups.Length}), found {autoSlotKeys.Length}.");
         }
 
-        var intents = new List<QualificationIntent>(groups.Length + 1);
-        var order = 1;
-        for (var i = 0; i < groups.Length; i++)
-        {
-            intents.Add(
+        source.ReplaceQualificationRules(
+            QualificationRules.FromIntents(
+            [
                 new QualificationIntent(
-                    ids.Intent($"qual-hybrid-p1-{order}"),
-                    order,
-                    QualificationIntentSourceKind.SingleGroup,
+                    ids.Intent("qual-hybrid-p1-place"),
+                    order: 1,
+                    QualificationIntentSourceKind.EachGroup,
                     positionFrom: 1,
                     positionTo: 1,
                     destination.Id,
-                    groupId: groups[i].Id,
-                    destinationSlotKey: autoSlotKeys[i]));
-            order++;
-        }
-
-        intents.Add(
-            new QualificationIntent(
-                ids.Intent("qual-hybrid-p2-pop"),
-                order,
-                QualificationIntentSourceKind.EachGroup,
-                positionFrom: 2,
-                positionTo: 2,
-                destination.Id));
-
-        source.ReplaceQualificationRules(
-            QualificationRules.FromIntents(intents, groups.Select(group => group.Id).ToArray()),
+                    destinationSlotKeys: autoSlotKeys),
+                new QualificationIntent(
+                    ids.Intent("qual-hybrid-p2-pop"),
+                    order: 2,
+                    QualificationIntentSourceKind.EachGroup,
+                    positionFrom: 2,
+                    positionTo: 2,
+                    destination.Id)
+            ],
+            [.. groups.Select(group => group.Id)]),
             clock);
     }
 
@@ -2511,16 +2493,21 @@ internal static class ScenarioOrchestration
 
     /// <summary>
     /// Prog Auto Place: Winner of each fixture → destination Place (dual-write on Apply).
+    /// Authoring SoT = one intent with N DestinationSlotKeys (fixture order ↔ keys).
     /// </summary>
     private static void WireWinnerProgressionToSlots(
+        DeterministicIdFactory ids,
         Stage source,
         Stage destination,
         Fixture[] fixtures,
         string[] slotKeys,
-        IClock clock)
+        IClock clock,
+        string intentKey = "prog-place")
     {
+        ArgumentNullException.ThrowIfNull(ids);
         ArgumentNullException.ThrowIfNull(fixtures);
         ArgumentNullException.ThrowIfNull(slotKeys);
+        ArgumentNullException.ThrowIfNull(clock);
 
         if (fixtures.Length != slotKeys.Length)
         {
@@ -2528,17 +2515,38 @@ internal static class ScenarioOrchestration
                 $"Prog Auto Place requires fixture count ({fixtures.Length}) to match slot count ({slotKeys.Length}).");
         }
 
-        var paths = new List<ProgressionPath>(fixtures.Length);
-        for (var i = 0; i < fixtures.Length; i++)
+        if (fixtures.Length == 0)
         {
-            paths.Add(
-                new ProgressionPath(
-                    fixtures[i].Id,
-                    ProgressionOutcome.Winner,
-                    ProgressionDestination.ForSlot(destination.Id, slotKeys[i])));
+            throw new InvalidOperationException("Prog Auto Place requires at least one fixture.");
         }
 
-        source.ReplaceProgressionRules(new ProgressionRules(paths), clock);
+        var round = source.Rounds.FirstOrDefault(candidate =>
+            fixtures.All(fixture => candidate.Fixtures.Any(rf => rf.Id.Equals(fixture.Id))));
+        if (round is null || round.Fixtures.Count != fixtures.Length)
+        {
+            throw new InvalidOperationException(
+                "Prog Auto Place fixtures must be exactly the fixtures of one source round.");
+        }
+
+        // Align slot keys to Expand fixture order (round storage), not caller array order.
+        var keyByFixture = fixtures
+            .Zip(slotKeys, (fixture, key) => (fixture.Id, key))
+            .ToDictionary(pair => pair.Id, pair => pair.key);
+        var orderedKeys = round.Fixtures.Select(fixture => keyByFixture[fixture.Id]).ToArray();
+
+        source.ReplaceProgressionRules(
+            ProgressionRules.FromIntents(
+            [
+                new ProgressionIntent(
+                    ids.Intent(intentKey),
+                    order: 1,
+                    round.Id,
+                    ProgressionOutcome.Winner,
+                    destination.Id,
+                    orderedKeys)
+            ],
+            source.Rounds),
+            clock);
     }
 
     /// <summary>

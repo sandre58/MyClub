@@ -57,11 +57,21 @@ export function emptyProgIntent(
   };
 }
 
+/** Prefer destinationSlotKeys[0]; coerce legacy singular. Draft stays 0|1 Place. */
+function coerceProgSlotKey(intent: StructureProgressionIntent): string {
+  const keys = intent.destinationSlotKeys;
+  if (keys != null && keys.length > 0) {
+    return keys[0]?.trim() ?? '';
+  }
+  return intent.destinationSlotKey?.trim() ?? '';
+}
+
 export function intentFromApi(
   intent: StructureProgressionIntent,
   _sourceStageId?: string,
 ): ProgIntentDraft {
-  const population = isPopulationDestination(intent.destinationSlotKey);
+  const slot = coerceProgSlotKey(intent);
+  const population = isPopulationDestination(slot);
 
   return {
     id: intent.intentId || newProgIntentId(),
@@ -71,9 +81,7 @@ export function intentFromApi(
     outcome: intent.outcome,
     targetKind: population ? 'population' : 'place',
     destinationStageId: intent.destinationStageId,
-    destinationSlotKey: population
-      ? ''
-      : (intent.destinationSlotKey?.trim() ?? ''),
+    destinationSlotKey: population ? '' : slot,
     expandedPathCount: intent.expandedPathCount ?? 0,
   };
 }
@@ -129,10 +137,12 @@ export function toApiIntent(
       roundName: draft.roundName || null,
       outcome: draft.outcome,
       destinationStageId: draft.destinationStageId,
+      destinationSlotKeys: null,
       destinationSlotKey: null,
       expandedPathCount: draft.expandedPathCount,
     };
   }
+  const slot = draft.destinationSlotKey.trim();
   return {
     intentId: draft.id,
     order,
@@ -140,7 +150,9 @@ export function toApiIntent(
     roundName: draft.roundName || null,
     outcome: draft.outcome,
     destinationStageId: draft.destinationStageId,
-    destinationSlotKey: draft.destinationSlotKey.trim(),
+    /** Minimal Prog Place: singular draft ↔ 0|1 array (full N→N UI later). */
+    destinationSlotKeys: slot ? [slot] : null,
+    destinationSlotKey: slot || null,
     expandedPathCount: draft.expandedPathCount,
   };
 }
