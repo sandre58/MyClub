@@ -2581,6 +2581,21 @@ button.structure-flux-group__peer {
   gap: var(--space-4);
 }
 
+.structure-qualification__who-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-qualification__dup-mark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  line-height: 0;
+  color: var(--color-attention);
+}
+
 .structure-qualification__who {
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
@@ -2730,6 +2745,17 @@ button.structure-flux-group__peer {
   line-height: var(--leading-tight);
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
+}
+
+.structure-qualification__tile-meter-draft {
+  font-size: 0.6875rem;
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.structure-qualification__tile-meter-draft--active {
+  color: var(--color-brand);
 }
 
 .structure-qualification__tile-meter-track {

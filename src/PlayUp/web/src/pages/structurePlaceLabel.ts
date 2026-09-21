@@ -92,10 +92,13 @@ export function areProgressionPlacesLabeled(
 
 export type LabeledCupPlace = {
   apiIdentity: string;
+  /** Same as schematic chrome (SlotKey). */
   label: string;
+  /** Long topology label for dialog description when distinct from chrome. */
+  description: string | null;
 };
 
-/** Targetable Cup places for Progression dialog (SlotKey + long label when possible). */
+/** Targetable Cup places for Progression dialog (chrome = SlotKey; long = description). */
 export function listLabeledCupPlaces(
   schematic: StageSchematic | null | undefined,
   t: PlaceTranslate,
@@ -108,9 +111,13 @@ export function listLabeledCupPlaces(
     const id = cupPlaceApiIdentity(c.formPosition)!;
     if (seen.has(id)) continue;
     seen.add(id);
-    const label = placeDisplayLabel(c.formPosition, t);
-    if (!label) continue;
-    out.push({ apiIdentity: id, label });
+    const chrome = placeChromeLabel(c.formPosition) ?? id;
+    const long = placeDisplayLabel(c.formPosition, t);
+    out.push({
+      apiIdentity: id,
+      label: chrome,
+      description: long && long !== chrome ? long : null,
+    });
   }
   return out;
 }
@@ -127,6 +134,16 @@ export function findCaseByPlaceIdentity(
   );
 }
 
+/** Rail / summary chip — same id as schematic chrome (C2), not the long topology string. */
+export function placeChromeForDestinationSlotKey(
+  schematic: StageSchematic | null | undefined,
+  destinationSlotKey: string | null | undefined,
+): string | null {
+  const c = findCaseByPlaceIdentity(schematic, destinationSlotKey);
+  return c ? placeChromeLabel(c.formPosition) : null;
+}
+
+/** Long topology label (dialog description / title tooltip). */
 export function placeLabelForDestinationSlotKey(
   schematic: StageSchematic | null | undefined,
   destinationSlotKey: string | null | undefined,

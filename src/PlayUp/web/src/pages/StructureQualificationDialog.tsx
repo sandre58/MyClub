@@ -12,6 +12,7 @@ import {
 } from '../api';
 import { Alert } from '../design-system/components/Alert';
 import { ChoiceTile } from '../design-system/components/ChoiceTile';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { InputNumber } from '../design-system/components/InputNumber';
@@ -31,6 +32,7 @@ import {
 } from '../design-system/icons/contentIcons';
 import { ChevronDownIcon } from '../design-system/icons/shellIcons';
 import { notify } from '../design-system/toastStore';
+import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
 import type {
   QualificationIntentSourceKind,
@@ -41,9 +43,12 @@ import type {
 } from '../types';
 import { EmptyState, MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
 import {
   emptyQualIntent,
   expandOccurrences,
+  hasAnyDuplicateSourceOccurrence,
+  hasDuplicateSourceOccurrence,
   incompleteIntentReason,
   intentFromApi,
   isIntentComplete,
@@ -126,6 +131,7 @@ export function StructureQualificationDialog({
 }: StructureQualificationDialogProps) {
   const { t, i18n } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
+  const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
   const locale = i18n.language ?? 'fr';
 
@@ -154,6 +160,17 @@ export function StructureQualificationDialog({
   const [baselineSerialized, setBaselineSerialized] = useState('');
   const [needsIntentMigration, setNeedsIntentMigration] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const dirty =
+    needsIntentMigration ||
+    serializeIntents(intents) !== baselineSerialized;
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(dirty, onClose);
 
   const sourceSchematicQuery = useQuery({
     queryKey: queryKeys.stages.schematic(stage.stageId),
@@ -186,7 +203,14 @@ export function StructureQualificationDialog({
       apiIntents.length === 0 && (stage.qualificationPaths?.length ?? 0) > 0,
     );
     setExpandedId(null);
-  }, [open, stage.stageId, stage.qualificationIntents, stage.qualificationPaths]);
+    resetDiscard();
+  }, [
+    open,
+    stage.stageId,
+    stage.qualificationIntents,
+    stage.qualificationPaths,
+    resetDiscard,
+  ]);
 
   const entryTotal = useMemo(() => {
     return intents.reduce(
@@ -195,7 +219,7 @@ export function StructureQualificationDialog({
     );
   }, [intents, groups]);
 
-  /** Live draft contribution per destination (this dialog — not real Population). */
+  /** Live draft contribution (Z) per destination — separate from expected Population X. */
   const draftEntriesByDestination = useMemo(() => {
     const map = new Map<string, number>();
     for (const intent of intents) {
@@ -214,20 +238,35 @@ export function StructureQualificationDialog({
       phase: string;
       count: number;
       capacity: number;
+      draft: number;
     }[] = [];
-    for (const [stageId, count] of draftEntriesByDestination) {
+    const destinations = new Set(draftEntriesByDestination.keys());
+    for (const peer of peerStages) {
+      destinations.add(peer.stageId);
+    }
+    for (const stageId of destinations) {
       const dest = stageById.get(stageId);
-      const capacity = dest?.compositionCapacity;
-      if (capacity == null || capacity <= 0 || count <= capacity) continue;
+      if (!dest) continue;
+      const capacity = dest.compositionCapacity;
+      if (capacity == null || capacity <= 0) continue;
+      const draft = draftEntriesByDestination.get(stageId) ?? 0;
+      const expected = expectedPopulationWithQualDraft({
+        data,
+        destination: dest,
+        sourceStageId: stage.stageId,
+        draftQualVolume: draft,
+      });
+      if (expected <= capacity) continue;
       warnings.push({
         stageId,
-        phase: dest?.name ?? stageId,
-        count,
+        phase: dest.name,
+        count: expected,
         capacity,
+        draft,
       });
     }
     return warnings;
-  }, [draftEntriesByDestination, stageById]);
+  }, [data, draftEntriesByDestination, peerStages, stage.stageId, stageById]);
 
   const intentCount = intents.length;
 
@@ -248,14 +287,18 @@ export function StructureQualificationDialog({
     },
   });
 
-  const dirty =
-    mutation.isPending ||
-    needsIntentMigration ||
-    serializeIntents(intents) !== baselineSerialized;
-
   const canSave =
     !mutation.isPending &&
     intents.every((intent) => isIntentComplete(intent, groups));
+
+  const hasDuplicateSources = useMemo(
+    () => hasAnyDuplicateSourceOccurrence(intents, groups),
+    [intents, groups],
+  );
+
+  function requestClose() {
+    requestDiscardClose(mutation.isPending);
+  }
 
   function toggleRow(intent: QualIntentDraft) {
     setExpandedId((prev) => (prev === intent.id ? null : intent.id));
@@ -282,66 +325,80 @@ export function StructureQualificationDialog({
     : null;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={t('qualification.title', { phase: stage.name })}
-      description={
-        contextDestinationName
-          ? t('qualification.hintFromDestination', { source: stage.name })
-          : t('qualification.hint')
-      }
-      size="lg"
-      footerStatus={
-        mutation.isError || overCapacityWarnings.length > 0 ? (
-          <>
-            {mutation.isError ? (
-              <MutationError error={mutation.error} />
-            ) : null}
-            {overCapacityWarnings.length > 0 ? (
-              <Alert tone="warning" role="status">
-                {overCapacityWarnings.map((warning) => (
-                  <p
-                    key={warning.stageId}
-                    className="structure-qualification__hint-line"
-                  >
-                    {t('qualification.overCapacityWarning', {
-                      count: warning.count,
-                      capacity: warning.capacity,
-                      phase: warning.phase,
-                    })}
+    <>
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={t('qualification.title', { phase: stage.name })}
+        description={
+          contextDestinationName
+            ? t('qualification.hintFromDestination', { source: stage.name })
+            : t('qualification.hint')
+        }
+        size="lg"
+        closeLabel={tCommon('close')}
+        closeDisabled={mutation.isPending || discardOpen}
+        trapFocus={!discardOpen}
+        footerStatus={
+          mutation.isError ||
+          overCapacityWarnings.length > 0 ||
+          hasDuplicateSources ? (
+            <>
+              {mutation.isError ? (
+                <MutationError error={mutation.error} />
+              ) : null}
+              {hasDuplicateSources ? (
+                <Alert tone="warning" role="status">
+                  <p className="structure-qualification__hint-line">
+                    {t('qualification.duplicateWarning')}
                   </p>
-                ))}
-              </Alert>
-            ) : null}
+                </Alert>
+              ) : null}
+              {overCapacityWarnings.length > 0 ? (
+                <Alert tone="warning" role="status">
+                  {overCapacityWarnings.map((warning) => (
+                    <p
+                      key={warning.stageId}
+                      className="structure-qualification__hint-line"
+                    >
+                      {t('qualification.overCapacityWarning', {
+                        count: warning.count,
+                        capacity: warning.capacity,
+                        phase: warning.phase,
+                        draft: warning.draft,
+                      })}
+                    </p>
+                  ))}
+                </Alert>
+              ) : null}
+            </>
+          ) : null
+        }
+        footer={
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--secondary"
+              disabled={mutation.isPending || discardOpen}
+              onClick={requestClose}
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="button"
+              className="ds-btn ds-btn--primary"
+              disabled={!canSave || !dirty}
+              onClick={() => mutation.mutate()}
+            >
+              {mutation.isPending ? (
+                <PendingLabel>{t('qualification.saving')}</PendingLabel>
+              ) : (
+                t('qualification.save')
+              )}
+            </button>
           </>
-        ) : null
-      }
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={mutation.isPending}
-            onClick={onClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            className="ds-btn ds-btn--primary"
-            disabled={!canSave || !dirty}
-            onClick={() => mutation.mutate()}
-          >
-            {mutation.isPending ? (
-              <PendingLabel>{t('qualification.saving')}</PendingLabel>
-            ) : (
-              t('qualification.save')
-            )}
-          </button>
-        </>
-      }
-    >
+        }
+      >
       <div className="structure-qualification">
         <div
           className="structure-qualification__summary"
@@ -419,6 +476,11 @@ export function StructureQualificationDialog({
               incompleteReason == null
                 ? null
                 : t(`qualification.incompleteHint${incompleteReason}`);
+            const sourceDuplicate = hasDuplicateSourceOccurrence(
+              intent,
+              intents,
+              groups,
+            );
 
             return (
               <li key={intent.id} className="structure-qualification__item">
@@ -440,8 +502,22 @@ export function StructureQualificationDialog({
                         {scopeKindIcon(intent.sourceKind, 'lg')}
                       </span>
                       <span className="structure-qualification__copy">
-                        <span className="structure-qualification__who">
-                          {who}
+                        <span className="structure-qualification__who-row">
+                          {sourceDuplicate ? (
+                            <Tooltip
+                              content={t('qualification.duplicateTooltip')}
+                            >
+                              <span
+                                className="structure-qualification__dup-mark"
+                                aria-hidden="true"
+                              >
+                                <OverviewAttentionIcon size="sm" />
+                              </span>
+                            </Tooltip>
+                          ) : null}
+                          <span className="structure-qualification__who">
+                            {who}
+                          </span>
                         </span>
                         {where ? (
                           <span className="structure-qualification__where">
@@ -495,6 +571,8 @@ export function StructureQualificationDialog({
                     <div className="structure-qualification__panel">
                       <QualIntentEditor
                         draft={intent}
+                        data={data}
+                        sourceStageId={stage.stageId}
                         groups={groups}
                         hasGroups={hasGroups}
                         peerStages={peerStages}
@@ -512,6 +590,19 @@ export function StructureQualificationDialog({
         )}
       </div>
     </Dialog>
+
+      <ConfirmDialog
+        open={discardOpen}
+        title={tReg('editor.discardTitle')}
+        message={tReg('editor.discardMessage')}
+        confirmLabel={tReg('editor.discardConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
+    </>
   );
 }
 
@@ -626,6 +717,8 @@ function PositionFields({
 
 function QualIntentEditor({
   draft,
+  data,
+  sourceStageId,
   groups,
   hasGroups,
   peerStages,
@@ -634,6 +727,8 @@ function QualIntentEditor({
   onChange,
 }: {
   draft: QualIntentDraft;
+  data: StructureView;
+  sourceStageId: string;
   groups: { id: string; name: string }[];
   hasGroups: boolean;
   peerStages: StructureStageHubSummary[];
@@ -898,26 +993,46 @@ function QualIntentEditor({
           aria-label={t('qualification.destinationPhase')}
         >
           {peerStages.map((peer) => {
-            const contribution = draftEntriesByDestination.get(peer.stageId) ?? 0;
+            const draftTotal =
+              draftEntriesByDestination.get(peer.stageId) ?? 0;
+            // B: +Z = this intent only; X still substitutes the full dialog draft.
+            const draftThisIntent =
+              draft.destinationStageId.trim() === peer.stageId
+                ? expandOccurrences(draft, groups).length
+                : 0;
             const capacity = peer.compositionCapacity;
+            const expected =
+              capacity != null && capacity > 0
+                ? expectedPopulationWithQualDraft({
+                    data,
+                    destination: peer,
+                    sourceStageId,
+                    draftQualVolume: draftTotal,
+                  })
+                : null;
             const description =
-              capacity != null && capacity > 0 ? (
+              expected != null && capacity != null && capacity > 0 ? (
                 <DestinationDraftMeter
-                  count={contribution}
+                  count={expected}
                   capacity={capacity}
+                  draft={draftThisIntent}
                   label={t('qualification.tileContribution', {
-                    count: contribution,
+                    count: expected,
                     capacity,
+                  })}
+                  draftLabel={t('qualification.tileContributionDraft', {
+                    count: draftThisIntent,
                   })}
                   ariaLabel={t('qualification.tileContributionAria', {
                     phase: peer.name,
-                    count: contribution,
+                    count: expected,
                     capacity,
+                    draft: draftThisIntent,
                   })}
                 />
-              ) : contribution > 0 ? (
+              ) : draftThisIntent > 0 ? (
                 t('qualification.tileContributionEntries', {
-                  count: contribution,
+                  count: draftThisIntent,
                 })
               ) : undefined;
             return (
@@ -943,16 +1058,20 @@ function QualIntentEditor({
   );
 }
 
-/** Compact draft contribution vs Places N — not real Population coverage. */
+/** Expected destination occupancy (X) vs Places N (Y); +Z = current intent only. */
 function DestinationDraftMeter({
   count,
   capacity,
+  draft,
   label,
+  draftLabel,
   ariaLabel,
 }: {
   count: number;
   capacity: number;
+  draft: number;
   label: string;
+  draftLabel: string;
   ariaLabel: string;
 }) {
   const tone = count === capacity ? 'exact' : count < capacity ? 'short' : 'over';
@@ -973,6 +1092,17 @@ function DestinationDraftMeter({
           className="structure-qualification__tile-meter-fill"
           style={{ width: `${ratio * 100}%` }}
         />
+      </span>
+      <span
+        className={[
+          'structure-qualification__tile-meter-draft',
+          draft > 0 ? 'structure-qualification__tile-meter-draft--active' : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        aria-hidden="true"
+      >
+        {draftLabel}
       </span>
     </span>
   );

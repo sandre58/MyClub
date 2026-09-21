@@ -13,6 +13,7 @@ import {
 } from '../api';
 import { Alert } from '../design-system/components/Alert';
 import { ChoiceTile } from '../design-system/components/ChoiceTile';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { Select } from '../design-system/components/Select';
@@ -30,6 +31,7 @@ import {
 } from '../design-system/icons/contentIcons';
 import { ChevronDownIcon } from '../design-system/icons/shellIcons';
 import { notify } from '../design-system/toastStore';
+import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
 import type {
   ProgressionOutcome,
@@ -55,7 +57,7 @@ import {
 } from './structureProgressionDraft';
 import {
   listLabeledCupPlaces,
-  placeLabelForDestinationSlotKey,
+  placeChromeForDestinationSlotKey,
 } from './structurePlaceLabel';
 
 type StructureProgressionDialogProps = {
@@ -106,6 +108,7 @@ export function StructureProgressionDialog({
 }: StructureProgressionDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
+  const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
 
   const overviewQuery = useQuery({
@@ -156,6 +159,15 @@ export function StructureProgressionDialog({
   const [baselineSerialized, setBaselineSerialized] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const dirty = serializeIntents(intents) !== baselineSerialized;
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(dirty, onClose);
+
   const rounds = overviewQuery.data?.rounds ?? [];
   const roundOptions = useMemo(
     () =>
@@ -178,6 +190,8 @@ export function StructureProgressionDialog({
       setExpandedId(null);
       return;
     }
+
+    resetDiscard();
 
     const fromIntents = stage.progressionIntents ?? [];
     if (fromIntents.length > 0) {
@@ -240,6 +254,7 @@ export function StructureProgressionDialog({
     stage.progressionPaths,
     overviewQuery.isLoading,
     rounds,
+    resetDiscard,
   ]);
 
   const populationCount = useMemo(
@@ -305,12 +320,13 @@ export function StructureProgressionDialog({
     },
   });
 
-  const dirty =
-    mutation.isPending || serializeIntents(intents) !== baselineSerialized;
-
   const canSave =
     !mutation.isPending &&
     intents.every((intent) => isIntentComplete(intent, intents, placesLabeled));
+
+  function requestClose() {
+    requestDiscardClose(mutation.isPending);
+  }
 
   function toggleRow(intent: ProgIntentDraft) {
     setExpandedId((prev) => (prev === intent.id ? null : intent.id));
@@ -340,66 +356,70 @@ export function StructureProgressionDialog({
     : null;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={t('progression.title', { phase: stage.name })}
-      description={
-        contextDestinationName
-          ? t('progression.hintFromDestination', { source: stage.name })
-          : t('progression.hint')
-      }
-      size="lg"
-      footerStatus={
-        mutation.isError || overCapacityWarnings.length > 0 ? (
+    <>
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={t('progression.title', { phase: stage.name })}
+        description={
+          contextDestinationName
+            ? t('progression.hintFromDestination', { source: stage.name })
+            : t('progression.hint')
+        }
+        size="lg"
+        closeLabel={tCommon('close')}
+        closeDisabled={mutation.isPending || discardOpen}
+        trapFocus={!discardOpen}
+        footerStatus={
+          mutation.isError || overCapacityWarnings.length > 0 ? (
+            <>
+              {mutation.isError ? (
+                <MutationError error={mutation.error} />
+              ) : null}
+              {overCapacityWarnings.length > 0 ? (
+                <Alert tone="warning" role="status">
+                  {overCapacityWarnings.map((warning) => (
+                    <p
+                      key={warning.stageId}
+                      className="structure-qualification__hint-line"
+                    >
+                      {t('progression.overCapacityWarning', {
+                        count: warning.count,
+                        capacity: warning.capacity,
+                        phase: warning.phase,
+                      })}
+                    </p>
+                  ))}
+                </Alert>
+              ) : null}
+            </>
+          ) : null
+        }
+        footer={
           <>
-            {mutation.isError ? (
-              <MutationError error={mutation.error} />
-            ) : null}
-            {overCapacityWarnings.length > 0 ? (
-              <Alert tone="warning" role="status">
-                {overCapacityWarnings.map((warning) => (
-                  <p
-                    key={warning.stageId}
-                    className="structure-qualification__hint-line"
-                  >
-                    {t('progression.overCapacityWarning', {
-                      count: warning.count,
-                      capacity: warning.capacity,
-                      phase: warning.phase,
-                    })}
-                  </p>
-                ))}
-              </Alert>
-            ) : null}
+            <button
+              type="button"
+              className="ds-btn ds-btn--secondary"
+              disabled={mutation.isPending || discardOpen}
+              onClick={requestClose}
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="button"
+              className="ds-btn ds-btn--primary"
+              disabled={!canSave || !dirty}
+              onClick={() => mutation.mutate()}
+            >
+              {mutation.isPending ? (
+                <PendingLabel>{t('progression.saving')}</PendingLabel>
+              ) : (
+                t('progression.save')
+              )}
+            </button>
           </>
-        ) : null
-      }
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={mutation.isPending}
-            onClick={onClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            className="ds-btn ds-btn--primary"
-            disabled={!canSave || !dirty}
-            onClick={() => mutation.mutate()}
-          >
-            {mutation.isPending ? (
-              <PendingLabel>{t('progression.saving')}</PendingLabel>
-            ) : (
-              t('progression.save')
-            )}
-          </button>
-        </>
-      }
-    >
+        }
+      >
       <div className="structure-qualification structure-progression">
         <div
           className="structure-qualification__summary"
@@ -495,10 +515,9 @@ export function StructureProgressionDialog({
                           placeLabelByIdentity.get(
                             intent.destinationSlotKey.trim(),
                           ) ??
-                          placeLabelForDestinationSlotKey(
+                          placeChromeForDestinationSlotKey(
                             schematicQuery.data,
                             intent.destinationSlotKey,
-                            t,
                           );
                         return placeLabel
                           ? t('progression.summary.wherePlace', {
@@ -634,6 +653,19 @@ export function StructureProgressionDialog({
         )}
       </div>
     </Dialog>
+
+      <ConfirmDialog
+        open={discardOpen}
+        title={tReg('editor.discardTitle')}
+        message={tReg('editor.discardMessage')}
+        confirmLabel={tReg('editor.discardConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
+    </>
   );
 }
 
@@ -885,6 +917,7 @@ function ProgIntentEditor({
               <ChoiceTile
                 key={place.apiIdentity}
                 label={place.label}
+                description={place.description ?? undefined}
                 leading={<CupFormatIcon size="sm" />}
                 selected={draft.destinationSlotKey === place.apiIdentity}
                 onChange={(selected) => {

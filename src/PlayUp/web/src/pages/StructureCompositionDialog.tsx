@@ -7,12 +7,14 @@ import { ListChecks, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { replaceStageCompositionEntries } from '../api';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { TextLink } from '../design-system/components/TextLink';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { LucideIcon } from '../design-system/icons/Icon';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { notify } from '../design-system/toastStore';
+import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../types';
 import { MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
@@ -66,6 +68,7 @@ export function StructureCompositionDialog({
 }: StructureCompositionDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
+  const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -83,6 +86,15 @@ export function StructureCompositionDialog({
   const [baseline, setBaseline] = useState<Set<string>>(() => new Set());
   const [search, setSearch] = useState('');
 
+  const dirty = !sameIdSet(selected, baseline);
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(dirty, onClose);
+
   useEffect(() => {
     if (!open) {
       setSearch('');
@@ -91,7 +103,8 @@ export function StructureCompositionDialog({
     const initial = new Set(stage.compositionEntryIds ?? []);
     setSelected(initial);
     setBaseline(new Set(initial));
-  }, [open, stage.compositionEntryIds, stage.stageId]);
+    resetDiscard();
+  }, [open, stage.compositionEntryIds, stage.stageId, resetDiscard]);
 
   useEffect(() => {
     if (!open || !focusSearch) return;
@@ -149,7 +162,6 @@ export function StructureCompositionDialog({
       : null;
   const complete =
     placesN != null && placesN > 0 && populationExpected === placesN;
-  const dirty = !sameIdSet(selected, baseline);
   const emptyEligible =
     entries.filter((e) => e.status === 'Active').length === 0 && k === 0;
 
@@ -227,45 +239,51 @@ export function StructureCompositionDialog({
 
   const teamsHref = `/competitions/${competitionId}/teams`;
 
+  function requestClose() {
+    requestDiscardClose(saveMutation.isPending);
+  }
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      size="md"
-      title={t('composition.title', { phase: stage.name })}
-      description={t('composition.lede')}
-      closeLabel={tCommon('close')}
-      closeDisabled={saveMutation.isPending}
-      footerStatus={
-        saveMutation.isError ? (
-          <MutationError error={saveMutation.error} />
-        ) : null
-      }
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={saveMutation.isPending}
-            onClick={onClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            className="ds-btn ds-btn--primary"
-            disabled={saveMutation.isPending || !dirty}
-            onClick={() => saveMutation.mutate()}
-          >
-            {saveMutation.isPending ? (
-              <PendingLabel>{t('composition.saving')}</PendingLabel>
-            ) : (
-              t('composition.save')
-            )}
-          </button>
-        </>
-      }
-    >
+    <>
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        size="md"
+        title={t('composition.title', { phase: stage.name })}
+        description={t('composition.lede')}
+        closeLabel={tCommon('close')}
+        closeDisabled={saveMutation.isPending || discardOpen}
+        trapFocus={!discardOpen}
+        footerStatus={
+          saveMutation.isError ? (
+            <MutationError error={saveMutation.error} />
+          ) : null
+        }
+        footer={
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--secondary"
+              disabled={saveMutation.isPending || discardOpen}
+              onClick={requestClose}
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="button"
+              className="ds-btn ds-btn--primary"
+              disabled={saveMutation.isPending || !dirty}
+              onClick={() => saveMutation.mutate()}
+            >
+              {saveMutation.isPending ? (
+                <PendingLabel>{t('composition.saving')}</PendingLabel>
+              ) : (
+                t('composition.save')
+              )}
+            </button>
+          </>
+        }
+      >
       <div className="structure-composition">
         <div className="structure-composition__toolbar">
           <div
@@ -398,5 +416,18 @@ export function StructureCompositionDialog({
         )}
       </div>
     </Dialog>
+
+      <ConfirmDialog
+        open={discardOpen}
+        title={tReg('editor.discardTitle')}
+        message={tReg('editor.discardMessage')}
+        confirmLabel={tReg('editor.discardConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
+    </>
   );
 }

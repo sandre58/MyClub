@@ -298,6 +298,50 @@ export function incompleteIntentReason(
   return null;
 }
 
+/** Stable key for one expanded source occurrence (points condition ignored). */
+function occurrenceKey(o: SourceOccurrence): string {
+  if (o.scope === 'Group') {
+    return `g:${o.groupId ?? ''}:${o.position}`;
+  }
+  if (o.scope === 'AcrossGroups') {
+    return `a:${o.acrossGroupsPosition ?? 0}:${o.position}`;
+  }
+  return `o:${o.position}`;
+}
+
+/**
+ * Soft warning: another intent expands at least one shared source occurrence
+ * (any destination). Points gates are ignored.
+ */
+export function hasDuplicateSourceOccurrence(
+  draft: QualIntentDraft,
+  all: QualIntentDraft[],
+  groups: { id: string; name: string }[],
+): boolean {
+  const mine = new Set(
+    expandOccurrences(draft, groups).map(occurrenceKey),
+  );
+  if (mine.size === 0) return false;
+
+  for (const other of all) {
+    if (other.id === draft.id) continue;
+    for (const occ of expandOccurrences(other, groups)) {
+      if (mine.has(occurrenceKey(occ))) return true;
+    }
+  }
+  return false;
+}
+
+/** True when any pair of intents shares a source occurrence. */
+export function hasAnyDuplicateSourceOccurrence(
+  all: QualIntentDraft[],
+  groups: { id: string; name: string }[],
+): boolean {
+  return all.some((intent) =>
+    hasDuplicateSourceOccurrence(intent, all, groups),
+  );
+}
+
 export function toApiIntent(draft: QualIntentDraft, order: number) {
   return {
     intentId: draft.id,

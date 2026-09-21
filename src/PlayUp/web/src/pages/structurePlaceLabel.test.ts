@@ -6,6 +6,7 @@ import {
   isCupPlaceTargetable,
   listLabeledCupPlaces,
   placeChromeLabel,
+  placeChromeForDestinationSlotKey,
   placeDisplayLabel,
   placeLabelForDestinationSlotKey,
 } from './structurePlaceLabel';
@@ -99,8 +100,15 @@ describe('structurePlaceLabel', () => {
     };
     expect(areProgressionPlacesLabeled(schematic)).toBe(true);
     expect(listLabeledCupPlaces(schematic, t)).toEqual([
-      { apiIdentity: 'SF-1-A', label: 'Demi-finale 1 · côté A' },
+      {
+        apiIdentity: 'SF-1-A',
+        label: 'SF-1-A',
+        description: 'Demi-finale 1 · côté A',
+      },
     ]);
+    expect(placeChromeForDestinationSlotKey(schematic, 'SF-1-A')).toBe(
+      'SF-1-A',
+    );
     expect(placeLabelForDestinationSlotKey(schematic, 'SF-1-A', t)).toBe(
       'Demi-finale 1 · côté A',
     );

@@ -78,7 +78,11 @@ import {
 import {
   isPopulationDestination,
 } from './structureProgression';
-import { placeLabelForDestinationSlotKey } from './structurePlaceLabel';
+import { placeChromeForDestinationSlotKey } from './structurePlaceLabel';
+import {
+  inboundPopulationConfiguredVolume,
+  qualificationPathVolume,
+} from './structurePopulationVolume';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -134,20 +138,7 @@ function FormatGlyph({
 }
 
 function selectionVolume(path: StructureQualificationPath): number {
-  switch (path.selectionMode as SelectionMode) {
-    case 'Position':
-      return 1;
-    case 'Range': {
-      const end = path.selectionEndValue ?? path.selectionValue;
-      return Math.max(1, end - path.selectionValue + 1);
-    }
-    case 'Top':
-    case 'Bottom':
-    case 'Best':
-    case 'Worst':
-    default:
-      return Math.max(1, path.selectionValue || 1);
-  }
+  return qualificationPathVolume(path);
 }
 
 type FeedFamily = 'place' | 'result';
@@ -370,13 +361,10 @@ function progressionRuleParts(
   if (isPopulationDestination(path.destinationSlotKey)) {
     destinationExtra = t('fiche.rule.destinationPopulation');
   } else {
-    // U4: same Place label as schematic chrome — never raw SlotKey.
+    // U4/C2: same Place id as schematic chrome (SlotKey) — fits the rail chip.
     destinationExtra =
-      placeLabelForDestinationSlotKey(
-        schematic,
-        path.destinationSlotKey,
-        t,
-      ) ?? undefined;
+      placeChromeForDestinationSlotKey(schematic, path.destinationSlotKey) ??
+      undefined;
   }
   return {
     badge: isWinner ? t('fiche.rule.winner') : t('fiche.rule.loser'),
@@ -704,7 +692,7 @@ function RootEntriesRail({
     stage.status === 'Running' ||
     stage.status === 'Suspended' ||
     stage.status === 'Completed';
-  // Draft/Ready: expected Population = Affectation + inbound rule volume.
+  // Draft/Ready: expected Places N occupancy = Affectation + inbound Qual/Prog.
   // Live: CompositionEntries is the Draw/Apply truth (rules would double-count).
   const meterEntries = isLive
     ? fromAffectation
@@ -1468,7 +1456,12 @@ export function StructurePhaseFiche({
 
   const feeds = inboundFeeds(data, stage.stageId, t, schematicQuery.data);
   const feedGroups = groupFeeds(feeds);
-  const feedSum = feeds.reduce((acc, f) => acc + f.volume, 0);
+  // Places N meter / Affectation reserve: Qual + Prog (Population and Place).
+  // Place fills occupy capacity even though they skip the Population set.
+  const populationFeedVolume = inboundPopulationConfiguredVolume(
+    data,
+    stage.stageId,
+  );
   const populationCount = stage.compositionEntryCount ?? 0;
   const outbounds = outboundFeeds(data, stage, t, schematicQuery.data);
   const outboundGroups = groupFeeds(outbounds);
@@ -1751,7 +1744,7 @@ export function StructurePhaseFiche({
             <RootEntriesRail
               stage={stage}
               entries={data.participants.entries}
-              sourcesConfiguredVolume={feedSum}
+              sourcesConfiguredVolume={populationFeedVolume}
               canCompose={canCompose}
               onEditCompose={() => openCompose(false)}
               sources={
@@ -2068,7 +2061,7 @@ export function StructurePhaseFiche({
         competitionId={data.competitionId}
         stage={stage}
         entries={data.participants.entries}
-        reservedFromFeeds={feedSum}
+        reservedFromFeeds={populationFeedVolume}
         focusSearch={composeFocusSearch}
       />
       <TieFormatDialog
