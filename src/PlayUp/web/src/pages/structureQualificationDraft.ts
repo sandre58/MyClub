@@ -9,6 +9,19 @@ import type {
   StructureQualificationPath,
 } from '../types';
 import { isPopulationDestination } from './structureProgression';
+import {
+  coerceDestinationSlotKeys,
+  countEmptyPlaceSlots,
+  fillEmptyPlaceSlotKeys,
+  placeMappingGap,
+  resizeDestinationSlotKeys,
+} from './structurePlaceMapping';
+
+export {
+  coerceDestinationSlotKeys,
+  fillEmptyPlaceSlotKeys,
+  resizeDestinationSlotKeys,
+} from './structurePlaceMapping';
 
 export type QualTargetKind = 'population' | 'place';
 
@@ -52,57 +65,6 @@ export function newIntentId(): string {
   return crypto.randomUUID();
 }
 
-/** Prefer destinationSlotKeys; coerce legacy singular to a one-element list. */
-export function coerceDestinationSlotKeys(
-  keys?: string[] | null,
-  singular?: string | null,
-): string[] {
-  if (keys != null && keys.length > 0) {
-    return keys.map((k) => (typeof k === 'string' ? k.trim() : ''));
-  }
-  const one = singular?.trim();
-  return one ? [one] : [];
-}
-
-/**
- * Resize slot keys to `count`, keeping existing keys by index where possible
- * and padding with empty strings (or truncating extras).
- */
-export function resizeDestinationSlotKeys(
-  keys: string[],
-  count: number,
-): string[] {
-  if (count <= 0) return [];
-  if (keys.length === count) return keys;
-  if (keys.length > count) return keys.slice(0, count);
-  const next = keys.slice();
-  while (next.length < count) next.push('');
-  return next;
-}
-
-/**
- * SPA authoring aid: fill empty Place slots from `availablePlaceIds` in view
- * order, skipping ids already used by filled rows. Never overwrites manual picks.
- * Domain still receives the resulting Expand[i] ↔ SlotKey[i] mapping only.
- */
-export function fillEmptyPlaceSlotKeys(
-  keys: string[],
-  availablePlaceIds: string[],
-): string[] {
-  const used = new Set(
-    keys.map((k) => k.trim()).filter((k) => k.length > 0),
-  );
-  const pool = availablePlaceIds
-    .map((id) => id.trim())
-    .filter((id) => id.length > 0 && !used.has(id));
-  let poolIndex = 0;
-  return keys.map((raw) => {
-    if (raw.trim()) return raw;
-    if (poolIndex >= pool.length) return '';
-    return pool[poolIndex++];
-  });
-}
-
 /** Count empty Place slots across intents (after Expand-aligned resize). */
 export function countUnmappedPlaceSlots(
   intents: QualIntentDraft[],
@@ -112,14 +74,7 @@ export function countUnmappedPlaceSlots(
   for (const intent of intents) {
     if (intent.targetKind !== 'place') continue;
     const occ = expandOccurrences(intent, groups);
-    if (occ.length === 0) continue;
-    const keys = resizeDestinationSlotKeys(
-      intent.destinationSlotKeys,
-      occ.length,
-    );
-    for (const key of keys) {
-      if (!key.trim()) n += 1;
-    }
+    n += countEmptyPlaceSlots(intent.destinationSlotKeys, occ.length);
   }
   return n;
 }
@@ -142,17 +97,6 @@ export function syncPlaceSlotKeys(
     return draft;
   }
   return { ...draft, destinationSlotKeys: next };
-}
-
-function hasDuplicateSlotKeys(keys: string[]): boolean {
-  const seen = new Set<string>();
-  for (const raw of keys) {
-    const k = raw.trim();
-    if (!k) continue;
-    if (seen.has(k)) return true;
-    seen.add(k);
-  }
-  return false;
 }
 
 export function emptyQualIntent(
@@ -442,19 +386,11 @@ export function incompleteIntentReason(
   if (occurrences.length === 0) return 'Selection';
 
   if (draft.targetKind === 'place') {
-    const keys = resizeDestinationSlotKeys(
+    const gap = placeMappingGap(
       draft.destinationSlotKeys,
       occurrences.length,
     );
-    if (
-      keys.length !== occurrences.length ||
-      keys.some((k) => !k.trim())
-    ) {
-      return 'MultiSlot';
-    }
-    if (hasDuplicateSlotKeys(keys)) {
-      return 'DuplicateSlot';
-    }
+    if (gap) return gap;
   }
 
   return null;

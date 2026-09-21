@@ -89,3 +89,40 @@ export function expectedPopulationWithQualDraft(args: {
     progInbound
   );
 }
+
+/**
+ * Expected Places N occupancy of `destination` while authoring Prog from `sourceStageId`.
+ * Persisted Prog from the current source is replaced by `draftProgVolume` (Z).
+ *
+ * X = Affectation + Qual→dest (all) + Prog(others) + Z
+ */
+export function expectedPopulationWithProgDraft(args: {
+  data: StructureView;
+  destination: StructureStageHubSummary;
+  sourceStageId: string;
+  draftProgVolume: number;
+}): number {
+  const { data, destination, sourceStageId, draftProgVolume } = args;
+  const affectation = destination.compositionEntryCount ?? 0;
+  let qualInbound = 0;
+  let progFromOthers = 0;
+
+  for (const source of data.stages) {
+    for (const path of source.qualificationPaths ?? []) {
+      if (path.destinationStageId !== destination.stageId) continue;
+      qualInbound += qualificationPathVolume(path);
+    }
+    for (const path of source.progressionPaths ?? []) {
+      if (path.destinationStageId !== destination.stageId) continue;
+      if (source.stageId === sourceStageId) continue;
+      progFromOthers += 1;
+    }
+  }
+
+  return (
+    affectation +
+    qualInbound +
+    progFromOthers +
+    Math.max(0, draftProgVolume)
+  );
+}

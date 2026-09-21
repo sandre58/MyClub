@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary, StructureView } from '../types';
 import {
   expectedPopulationWithQualDraft,
+  expectedPopulationWithProgDraft,
   inboundPopulationConfiguredVolume,
   qualificationPathVolume,
 } from './structurePopulationVolume';
@@ -187,6 +188,52 @@ describe('structurePopulationVolume', () => {
         destination: finale,
         sourceStageId: groups.stageId,
         draftQualVolume: 1,
+      }),
+    ).toBe(3);
+  });
+
+  it('expectedPopulationWithProgDraft substitutes Prog from authoring source', () => {
+    const groups = stage({
+      stageId: 'groups',
+      name: 'Groupes',
+      progressionPaths: [
+        {
+          sourceFixtureId: 'f1',
+          outcome: 'Winner',
+          destinationStageId: 'demis',
+          destinationSlotKey: null,
+        },
+        {
+          sourceFixtureId: 'f2',
+          outcome: 'Winner',
+          destinationStageId: 'demis',
+          destinationSlotKey: null,
+        },
+      ],
+    });
+    const demis = stage({
+      stageId: 'demis',
+      name: 'Demis',
+      compositionCapacity: 4,
+      compositionEntryCount: 0,
+    });
+    const data = view([groups, demis]);
+
+    expect(
+      expectedPopulationWithProgDraft({
+        data,
+        destination: demis,
+        sourceStageId: 'other',
+        draftProgVolume: 0,
+      }),
+    ).toBe(2);
+
+    expect(
+      expectedPopulationWithProgDraft({
+        data,
+        destination: demis,
+        sourceStageId: groups.stageId,
+        draftProgVolume: 3,
       }),
     ).toBe(3);
   });

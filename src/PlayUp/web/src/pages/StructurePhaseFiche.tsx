@@ -76,9 +76,8 @@ import {
   pickActiveDraw,
 } from './drawUi';
 import {
-  isPopulationDestination,
-} from './structureProgression';
-import { placeChromeForDestinationSlotKey } from './structurePlaceLabel';
+  compactPopulationFeedRules,
+} from './structurePopulationFeedCompact';
 import {
   inboundPopulationConfiguredVolume,
   qualificationPathVolume,
@@ -165,6 +164,8 @@ type FeedGroup = {
   peerName: string;
   peerOrder: number;
   volume: number;
+  /** Paths not listed after Population compaction (merge + truncate). */
+  hiddenCount?: number;
   rules: {
     key: string;
     badge: string;
@@ -209,7 +210,6 @@ function selectionModeBadge(
 function qualificationRuleParts(
   path: StructureQualificationPath,
   t: (key: string, opts?: Record<string, unknown>) => string,
-  schematic?: StageSchematic | null,
 ): Pick<
   FeedRow,
   | 'badge'
@@ -225,15 +225,11 @@ function qualificationRuleParts(
   const mode = path.selectionMode as SelectionMode;
   const sortPrimary = path.selectionValue;
   const sortSecondary = group;
-  // Same as progression: Place → chrome chip; else optional Points ≥ gate.
-  let extra: string | undefined;
-  if (!isPopulationDestination(path.destinationSlotKey)) {
-    extra =
-      placeChromeForDestinationSlotKey(schematic, path.destinationSlotKey) ??
-      undefined;
-  } else if (path.minimumPoints != null) {
-    extra = t('fiche.rule.minimumPoints', { n: path.minimumPoints });
-  }
+  // R1: rails never show Place/Population chips — only non-form extras (points gate).
+  const extra =
+    path.minimumPoints != null
+      ? t('fiche.rule.minimumPoints', { n: path.minimumPoints })
+      : undefined;
 
   if (mode === 'Range') {
     const from = formatPlace(path.selectionValue, t);
@@ -351,7 +347,6 @@ function matchSortKey(
 function progressionRuleParts(
   path: StructureProgressionPath,
   t: (key: string, opts?: Record<string, unknown>) => string,
-  schematic?: StageSchematic | null,
 ): Pick<
   FeedRow,
   | 'badge'
@@ -363,20 +358,11 @@ function progressionRuleParts(
   | 'sortSecondary'
 > {
   const isWinner = path.outcome === 'Winner';
-  let destinationExtra: string | undefined;
-  if (isPopulationDestination(path.destinationSlotKey)) {
-    destinationExtra = t('fiche.rule.destinationPopulation');
-  } else {
-    // U4/C2: same Place id as schematic chrome (SlotKey) — fits the rail chip.
-    destinationExtra =
-      placeChromeForDestinationSlotKey(schematic, path.destinationSlotKey) ??
-      undefined;
-  }
+  // R1: destination Place | Population lives on the schematic, not the rail.
   return {
     badge: isWinner ? t('fiche.rule.winner') : t('fiche.rule.loser'),
     badgeTone: isWinner ? 'win' : 'loss',
     context: matchNumberContext(path.sourceLabel, path.sourceFixtureId, t),
-    extra: destinationExtra,
     family: 'result',
     sortPrimary: isWinner ? 0 : 1,
     sortSecondary: matchSortKey(path.sourceLabel, path.sourceFixtureId),
@@ -437,14 +423,13 @@ function inboundFeeds(
   data: StructureView,
   stageId: string,
   t: (key: string, opts?: Record<string, unknown>) => string,
-  schematic?: StageSchematic | null,
 ) {
   const feeds: FeedRow[] = [];
 
   for (const source of data.stages) {
     for (const path of source.qualificationPaths ?? []) {
       if (path.destinationStageId !== stageId) continue;
-      const parts = qualificationRuleParts(path, t, schematic);
+      const parts = qualificationRuleParts(path, t);
       feeds.push({
         key: `q-${source.stageId}-${path.order}`,
         peerId: source.stageId,
@@ -456,7 +441,7 @@ function inboundFeeds(
     }
     for (const path of source.progressionPaths ?? []) {
       if (path.destinationStageId !== stageId) continue;
-      const parts = progressionRuleParts(path, t, schematic);
+      const parts = progressionRuleParts(path, t);
       feeds.push({
         key: `p-${source.stageId}-${path.sourceFixtureId}-${path.outcome}`,
         peerId: source.stageId,
@@ -474,14 +459,13 @@ function outboundFeeds(
   data: StructureView,
   stage: StructureStageHubSummary,
   t: (key: string, opts?: Record<string, unknown>) => string,
-  schematic?: StageSchematic | null,
 ) {
   const feeds: FeedRow[] = [];
   const nameOf = (id: string) =>
     data.stages.find((s) => s.stageId === id)?.name ?? id;
 
   for (const path of stage.qualificationPaths ?? []) {
-    const parts = qualificationRuleParts(path, t, schematic);
+    const parts = qualificationRuleParts(path, t);
     feeds.push({
       key: `q-out-${path.order}-${path.destinationStageId}`,
       peerId: path.destinationStageId,
@@ -492,7 +476,7 @@ function outboundFeeds(
     });
   }
   for (const path of stage.progressionPaths ?? []) {
-    const parts = progressionRuleParts(path, t, schematic);
+    const parts = progressionRuleParts(path, t);
     feeds.push({
       key: `p-out-${path.sourceFixtureId}-${path.outcome}-${path.destinationStageId}`,
       peerId: path.destinationStageId,

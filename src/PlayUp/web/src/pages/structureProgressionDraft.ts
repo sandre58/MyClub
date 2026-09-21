@@ -1,5 +1,6 @@
 // -----------------------------------------------------------------------
 // Progression Intent drafts — Round × Outcome → Destination (Prog V3).
+// Place D1: Expand[i] ↔ destinationSlotKeys[i] (N fixtures on the round).
 // -----------------------------------------------------------------------
 
 import type {
@@ -8,6 +9,19 @@ import type {
   StructureProgressionPath,
 } from '../types';
 import { isPopulationDestination } from './structureProgression';
+import {
+  coerceDestinationSlotKeys,
+  countEmptyPlaceSlots,
+  fillEmptyPlaceSlotKeys,
+  placeMappingGap,
+  resizeDestinationSlotKeys,
+} from './structurePlaceMapping';
+
+export {
+  coerceDestinationSlotKeys,
+  fillEmptyPlaceSlotKeys,
+  resizeDestinationSlotKeys,
+} from './structurePlaceMapping';
 
 export type ProgTargetKind = 'population' | 'place';
 
@@ -19,8 +33,12 @@ export type ProgIntentDraft = {
   outcome: ProgressionOutcome;
   targetKind: ProgTargetKind;
   destinationStageId: string;
-  /** SlotKey when targeting Place (Auto); empty for Population. */
-  destinationSlotKey: string;
+  /**
+   * Place D1 — Expand index ↔ SlotKey (fixture order on the round).
+   * Empty array for Population. For Place, length must equal expandCount (N).
+   * Remplir is only an authoring aid for this array; it does not define semantics.
+   */
+  destinationSlotKeys: string[];
   /** Expand preview: fixture count for the selected round. */
   expandedPathCount: number;
 };
@@ -29,14 +47,48 @@ export type ProgIncompleteReason =
   | 'Round'
   | 'Destination'
   | 'PlaceUnavailable'
+  | 'MultiSlot'
+  | 'DuplicateSlot'
   | 'DuplicateRoundOutcome'
   | 'DuplicatePlace';
 
-/** Place ChoiceTile gate — Cup schematic must expose targetable labeled Places (U4). */
+/** Place ChoiceTile / map gate — Cup schematic must expose labeled Places (U4). */
 export { areProgressionPlacesLabeled } from './structurePlaceLabel';
 
 export function newProgIntentId(): string {
   return crypto.randomUUID();
+}
+
+/** Expand count for Place D1 (fixtures on the selected round). */
+export function expandCount(draft: ProgIntentDraft): number {
+  return Math.max(draft.expandedPathCount, 0);
+}
+
+/** Keep Place keys aligned with current Expand fixture count. */
+export function syncPlaceSlotKeys(draft: ProgIntentDraft): ProgIntentDraft {
+  if (draft.targetKind !== 'place') {
+    if (draft.destinationSlotKeys.length === 0) return draft;
+    return { ...draft, destinationSlotKeys: [] };
+  }
+  const n = expandCount(draft);
+  const next = resizeDestinationSlotKeys(draft.destinationSlotKeys, n);
+  if (
+    next.length === draft.destinationSlotKeys.length &&
+    next.every((k, i) => k === draft.destinationSlotKeys[i])
+  ) {
+    return draft;
+  }
+  return { ...draft, destinationSlotKeys: next };
+}
+
+/** Count empty Place slots across intents (after Expand-aligned resize). */
+export function countUnmappedPlaceSlots(intents: ProgIntentDraft[]): number {
+  let n = 0;
+  for (const intent of intents) {
+    if (intent.targetKind !== 'place') continue;
+    n += countEmptyPlaceSlots(intent.destinationSlotKeys, expandCount(intent));
+  }
+  return n;
 }
 
 export function emptyProgIntent(
@@ -52,28 +104,22 @@ export function emptyProgIntent(
     outcome: 'Winner',
     targetKind,
     destinationStageId,
-    destinationSlotKey: '',
+    destinationSlotKeys: [],
     expandedPathCount: 0,
   };
-}
-
-/** Prefer destinationSlotKeys[0]; coerce legacy singular. Draft stays 0|1 Place. */
-function coerceProgSlotKey(intent: StructureProgressionIntent): string {
-  const keys = intent.destinationSlotKeys;
-  if (keys != null && keys.length > 0) {
-    return keys[0]?.trim() ?? '';
-  }
-  return intent.destinationSlotKey?.trim() ?? '';
 }
 
 export function intentFromApi(
   intent: StructureProgressionIntent,
   _sourceStageId?: string,
 ): ProgIntentDraft {
-  const slot = coerceProgSlotKey(intent);
-  const population = isPopulationDestination(slot);
+  const keys = coerceDestinationSlotKeys(
+    intent.destinationSlotKeys,
+    intent.destinationSlotKey,
+  );
+  const population = keys.length === 0;
 
-  return {
+  const draft: ProgIntentDraft = {
     id: intent.intentId || newProgIntentId(),
     order: intent.order,
     roundId: intent.roundId,
@@ -81,9 +127,10 @@ export function intentFromApi(
     outcome: intent.outcome,
     targetKind: population ? 'population' : 'place',
     destinationStageId: intent.destinationStageId,
-    destinationSlotKey: population ? '' : slot,
+    destinationSlotKeys: population ? [] : keys,
     expandedPathCount: intent.expandedPathCount ?? 0,
   };
+  return syncPlaceSlotKeys(draft);
 }
 
 /** Legacy fallback: one singleton intent per path (path-list authoring). */
@@ -96,7 +143,7 @@ export function pathToSingletonIntent(
 ): ProgIntentDraft {
   const population = isPopulationDestination(path.destinationSlotKey);
 
-  return {
+  return syncPlaceSlotKeys({
     id: newProgIntentId(),
     order,
     roundId,
@@ -104,11 +151,11 @@ export function pathToSingletonIntent(
     outcome: path.outcome,
     targetKind: population ? 'population' : 'place',
     destinationStageId: path.destinationStageId,
-    destinationSlotKey: population
-      ? ''
-      : (path.destinationSlotKey?.trim() ?? ''),
+    destinationSlotKeys: population
+      ? []
+      : coerceDestinationSlotKeys(null, path.destinationSlotKey),
     expandedPathCount: 1,
-  };
+  });
 }
 
 export function serializeIntents(intents: ProgIntentDraft[]): string {
@@ -119,8 +166,8 @@ export function serializeIntents(intents: ProgIntentDraft[]): string {
       outcome: p.outcome,
       targetKind: p.targetKind,
       destinationStageId: p.destinationStageId,
-      destinationSlotKey:
-        p.targetKind === 'place' ? p.destinationSlotKey : '',
+      destinationSlotKeys:
+        p.targetKind === 'place' ? p.destinationSlotKeys : [],
     })),
   );
 }
@@ -142,7 +189,10 @@ export function toApiIntent(
       expandedPathCount: draft.expandedPathCount,
     };
   }
-  const slot = draft.destinationSlotKey.trim();
+  const n = expandCount(draft);
+  const keys = resizeDestinationSlotKeys(draft.destinationSlotKeys, n).map(
+    (k) => k.trim(),
+  );
   return {
     intentId: draft.id,
     order,
@@ -150,9 +200,8 @@ export function toApiIntent(
     roundName: draft.roundName || null,
     outcome: draft.outcome,
     destinationStageId: draft.destinationStageId,
-    /** Minimal Prog Place: singular draft ↔ 0|1 array (full N→N UI later). */
-    destinationSlotKeys: slot ? [slot] : null,
-    destinationSlotKey: slot || null,
+    destinationSlotKeys: keys.length > 0 ? keys : null,
+    destinationSlotKey: keys[0] || null,
     expandedPathCount: draft.expandedPathCount,
   };
 }
@@ -161,11 +210,15 @@ function roundOutcomeKey(draft: ProgIntentDraft): string {
   return `${draft.roundId.trim()}|${draft.outcome}`;
 }
 
-function placeKey(draft: ProgIntentDraft): string | null {
-  if (draft.targetKind !== 'place') return null;
-  const slot = draft.destinationSlotKey.trim();
-  if (!slot) return null;
-  return `${draft.destinationStageId}|${slot}`;
+/** Cross-intent Place occupancy: stageId|slotKey for each filled key. */
+function placeKeys(draft: ProgIntentDraft): string[] {
+  if (draft.targetKind !== 'place') return [];
+  const dest = draft.destinationStageId.trim();
+  if (!dest) return [];
+  return draft.destinationSlotKeys
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0)
+    .map((k) => `${dest}|${k}`);
 }
 
 export function incompleteIntentReason(
@@ -180,14 +233,20 @@ export function incompleteIntentReason(
     if (!placesLabeled) {
       return 'PlaceUnavailable';
     }
-    if (
-      !draft.destinationStageId.trim() ||
-      !draft.destinationSlotKey.trim()
-    ) {
+    if (!draft.destinationStageId.trim()) {
       return 'Destination';
     }
   } else if (!draft.destinationStageId.trim()) {
     return 'Destination';
+  }
+
+  if (draft.targetKind === 'place') {
+    const n = expandCount(draft);
+    if (n <= 0) {
+      return 'Destination';
+    }
+    const gap = placeMappingGap(draft.destinationSlotKeys, n);
+    if (gap) return gap;
   }
 
   const rk = roundOutcomeKey(draft);
@@ -199,12 +258,16 @@ export function incompleteIntentReason(
     return 'DuplicateRoundOutcome';
   }
 
-  const pk = placeKey(draft);
-  if (
-    pk &&
-    all.some((other) => other.id !== draft.id && placeKey(other) === pk)
-  ) {
-    return 'DuplicatePlace';
+  const mine = new Set(placeKeys(draft));
+  if (mine.size > 0) {
+    for (const other of all) {
+      if (other.id === draft.id) continue;
+      for (const pk of placeKeys(other)) {
+        if (mine.has(pk)) {
+          return 'DuplicatePlace';
+        }
+      }
+    }
   }
 
   return null;
