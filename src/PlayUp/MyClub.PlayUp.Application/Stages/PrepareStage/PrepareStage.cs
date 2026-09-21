@@ -92,10 +92,21 @@ public static class PrepareStage
         {
             foreach (var path in qualification.Paths)
             {
-                EnsureOutboundPopulationDestination(
+                if (path.Destination.TargetsPopulation)
+                {
+                    EnsureOutboundPopulationDestination(
+                        source,
+                        competitionStages,
+                        path.Destination.StageId,
+                        "Qualification");
+                    continue;
+                }
+
+                EnsureOutboundDestination(
                     source,
                     competitionStages,
                     path.Destination.StageId,
+                    path.Destination.SlotKey!,
                     "Qualification");
             }
         }

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Qualification Intent drafts — Expand client preview (Qual V2 population).
+// Qualification Intent drafts — Expand client preview (Qual population|place).
 // -----------------------------------------------------------------------
 
 import type {
@@ -8,6 +8,9 @@ import type {
   StructureQualificationIntent,
   StructureQualificationPath,
 } from '../types';
+import { isPopulationDestination } from './structureProgression';
+
+export type QualTargetKind = 'population' | 'place';
 
 export type QualIntentDraft = {
   id: string;
@@ -19,7 +22,10 @@ export type QualIntentDraft = {
   acrossGroupsPosition: string;
   conditionKind: 'none' | 'points';
   minimumPoints: string;
+  targetKind: QualTargetKind;
   destinationStageId: string;
+  /** SlotKey when targeting Place (Auto); empty for Population. */
+  destinationSlotKey: string;
 };
 
 export type SourceOccurrence = {
@@ -30,11 +36,21 @@ export type SourceOccurrence = {
   acrossGroupsPosition?: number | null;
 };
 
+export type QualIncompleteReason =
+  | 'Destination'
+  | 'Group'
+  | 'Selection'
+  | 'Points'
+  | 'PlaceUnavailable';
+
 export function newIntentId(): string {
   return crypto.randomUUID();
 }
 
-export function emptyQualIntent(destinationStageId = ''): QualIntentDraft {
+export function emptyQualIntent(
+  destinationStageId = '',
+  targetKind: QualTargetKind = 'population',
+): QualIntentDraft {
   return {
     id: newIntentId(),
     sourceKind: 'EachGroup',
@@ -45,13 +61,16 @@ export function emptyQualIntent(destinationStageId = ''): QualIntentDraft {
     acrossGroupsPosition: '1',
     conditionKind: 'none',
     minimumPoints: '',
+    targetKind,
     destinationStageId,
+    destinationSlotKey: '',
   };
 }
 
 export function intentFromApi(
   intent: StructureQualificationIntent,
 ): QualIntentDraft {
+  const population = isPopulationDestination(intent.destinationSlotKey);
   return {
     id: intent.intentId,
     sourceKind: intent.sourceKind,
@@ -69,7 +88,11 @@ export function intentFromApi(
         : 'none',
     minimumPoints:
       intent.minimumPoints != null ? String(intent.minimumPoints) : '',
+    targetKind: population ? 'population' : 'place',
     destinationStageId: intent.destinationStageId,
+    destinationSlotKey: population
+      ? ''
+      : (intent.destinationSlotKey?.trim() ?? ''),
   };
 }
 
@@ -86,6 +109,7 @@ export function pathToSingletonIntent(
   }
 
   const k = path.selectionValue;
+  const population = isPopulationDestination(path.destinationSlotKey);
   return {
     id: newIntentId(),
     sourceKind,
@@ -101,7 +125,11 @@ export function pathToSingletonIntent(
       path.minimumPoints != null && path.minimumPoints >= 0 ? 'points' : 'none',
     minimumPoints:
       path.minimumPoints != null ? String(path.minimumPoints) : '',
+    targetKind: population ? 'population' : 'place',
     destinationStageId: path.destinationStageId,
+    destinationSlotKey: population
+      ? ''
+      : (path.destinationSlotKey?.trim() ?? ''),
   };
 }
 
@@ -269,8 +297,9 @@ export function ordinalRank(n: number, locale: string): string {
 export function isIntentComplete(
   draft: QualIntentDraft,
   groups: { id: string; name: string }[],
+  placesLabeled = true,
 ): boolean {
-  return incompleteIntentReason(draft, groups) == null;
+  return incompleteIntentReason(draft, groups, placesLabeled) == null;
 }
 
 /**
@@ -280,13 +309,20 @@ export function isIntentComplete(
 export function incompleteIntentReason(
   draft: QualIntentDraft,
   groups: { id: string; name: string }[],
-):
-  | 'Destination'
-  | 'Group'
-  | 'Selection'
-  | 'Points'
-  | null {
-  if (!draft.destinationStageId.trim()) return 'Destination';
+  placesLabeled = true,
+): QualIncompleteReason | null {
+  if (draft.targetKind === 'place') {
+    if (!placesLabeled) return 'PlaceUnavailable';
+    if (
+      !draft.destinationStageId.trim() ||
+      !draft.destinationSlotKey.trim()
+    ) {
+      return 'Destination';
+    }
+  } else if (!draft.destinationStageId.trim()) {
+    return 'Destination';
+  }
+
   if (draft.sourceKind === 'SingleGroup' && !draft.groupId.trim()) {
     return 'Group';
   }
@@ -311,7 +347,8 @@ function occurrenceKey(o: SourceOccurrence): string {
 
 /**
  * Soft warning: another intent expands at least one shared source occurrence
- * (any destination). Points gates are ignored.
+ * (any destination). Points gates are ignored. Duplicate detection stays
+ * source-occurrence based (destination / Place ignored).
  */
 export function hasDuplicateSourceOccurrence(
   draft: QualIntentDraft,
@@ -350,6 +387,10 @@ export function toApiIntent(draft: QualIntentDraft, order: number) {
     positionFrom: parsePositiveInt(draft.positionFrom) ?? 1,
     positionTo: parsePositiveInt(draft.positionTo) ?? 1,
     destinationStageId: draft.destinationStageId,
+    destinationSlotKey:
+      draft.targetKind === 'place'
+        ? draft.destinationSlotKey.trim() || null
+        : null,
     groupId:
       draft.sourceKind === 'SingleGroup' ? draft.groupId || null : null,
     acrossGroupsPosition:

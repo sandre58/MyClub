@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// <summary>
 /// Persisted authoring unit: one selection intention that expands to N <see cref="QualificationPath"/>.
 /// Paths are derived (Expand) — Intent is the authoring source of truth.
-/// Destination is always a peer-stage population (Qual V2).
+/// Destination is peer Population or Place (Auto) on the destination stage form.
 /// </summary>
 public sealed record QualificationIntent
 {
@@ -27,7 +27,8 @@ public sealed record QualificationIntent
         StageId destinationStageId,
         GroupId? groupId = null,
         int? acrossGroupsPosition = null,
-        QualificationCondition? condition = null)
+        QualificationCondition? condition = null,
+        string? destinationSlotKey = null)
     {
         if (!Enum.IsDefined(sourceKind))
         {
@@ -96,6 +97,9 @@ public sealed record QualificationIntent
         GroupId = groupId;
         AcrossGroupsPosition = acrossGroupsPosition;
         Condition = condition;
+        DestinationSlotKey = destinationSlotKey is null
+            ? null
+            : QualificationDestination.ForSlot(destinationStageId, destinationSlotKey).SlotKey;
     }
 
     /// <summary>Gets the stable authoring identity (Guid v7).</summary>
@@ -113,8 +117,13 @@ public sealed record QualificationIntent
     /// <summary>Gets the inclusive upper bound of selection positions.</summary>
     public int PositionTo { get; }
 
-    /// <summary>Gets the single destination stage (population).</summary>
+    /// <summary>Gets the destination stage.</summary>
     public StageId DestinationStageId { get; }
+
+    /// <summary>
+    /// Gets the destination slot key when targeting Place (Auto); otherwise <see langword="null"/> (Population).
+    /// </summary>
+    public string? DestinationSlotKey { get; }
 
     /// <summary>Gets the group when <see cref="SourceKind"/> is <see cref="QualificationIntentSourceKind.SingleGroup"/>.</summary>
     public GroupId? GroupId { get; }
@@ -124,6 +133,9 @@ public sealed record QualificationIntent
 
     /// <summary>Gets the optional Points gate applied to each generated Position path.</summary>
     public QualificationCondition? Condition { get; }
+
+    /// <summary>Gets a value indicating whether this intent targets population only.</summary>
+    public bool TargetsPopulation => DestinationSlotKey is null;
 
     /// <summary>Returns a deep copy.</summary>
     public QualificationIntent Copy() =>
@@ -136,5 +148,6 @@ public sealed record QualificationIntent
             DestinationStageId,
             GroupId,
             AcrossGroupsPosition,
-            Condition is null ? null : QualificationCondition.PointsAtLeast(Condition.MinimumPoints));
+            Condition is null ? null : QualificationCondition.PointsAtLeast(Condition.MinimumPoints),
+            DestinationSlotKey);
 }

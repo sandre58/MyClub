@@ -19,8 +19,9 @@ public sealed record ReplaceStageQualificationRulesRequest(
     IReadOnlyList<QualificationPathRequest>? Paths = null);
 
 /// <summary>
-/// One HTTP qualification authoring intent (destination = peer-stage population).
+/// One HTTP qualification authoring intent (destination = peer Population or Place).
 /// </summary>
+/// <param name="DestinationSlotKey">Slot key for Place (Auto); omit or null for Population.</param>
 public sealed record QualificationIntentRequest(
     Guid IntentId,
     int Order,
@@ -30,11 +31,13 @@ public sealed record QualificationIntentRequest(
     Guid DestinationStageId,
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
-    int? MinimumPoints = null);
+    int? MinimumPoints = null,
+    string? DestinationSlotKey = null);
 
 /// <summary>
-/// One HTTP qualification path (destination = peer-stage population).
+/// One HTTP qualification path (destination = peer Population or Place).
 /// </summary>
+/// <param name="DestinationSlotKey">Slot key for Place (Auto); omit or null for Population.</param>
 public sealed record QualificationPathRequest(
     int Order,
     SelectionMode SelectionMode,
@@ -44,4 +47,5 @@ public sealed record QualificationPathRequest(
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
     int? SelectionEndValue = null,
-    int? MinimumPoints = null);
+    int? MinimumPoints = null,
+    string? DestinationSlotKey = null);

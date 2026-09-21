@@ -102,7 +102,7 @@ public sealed class ProgressionRulesTests
         var round = stage.AddRound("QF", _clock);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.AddSlot("SF1-A");
-        stage.AssignEntryToSlot("SF1-A", EntryId.New());
+        stage.AssignEntryToSlot("SF1-A", Admit(stage, EntryId.New()));
 
         var rules = new ProgressionRules(
         [
@@ -207,7 +207,7 @@ public sealed class ProgressionRulesTests
     }
 
     [Fact]
-    public void ReplaceProgressionRules_rejects_cross_stage_place()
+    public void ReplaceProgressionRules_allows_cross_stage_place_when_slot_on_destination()
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -228,9 +228,9 @@ public sealed class ProgressionRulesTests
             ]),
             _clock);
 
-        var ex = act.Should().Throw<DomainException>().Which;
-        ex.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
-        ex.Message.Should().Contain("form-owning");
+        act.Should().NotThrow();
+        stage.Regulation.ProgressionRules!.Paths.Should().ContainSingle()
+            .Which.Destination.SlotKey.Should().Be("SF1-A");
     }
 
     [Fact]
@@ -257,5 +257,13 @@ public sealed class ProgressionRulesTests
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureNotFound);
+    }
+
+    private EntryId Admit(Stage stage, EntryId entryId)
+    {
+        var existing = stage.CompositionEntries.Select(e => e.EntryId).ToList();
+        existing.Add(entryId);
+        stage.ReplaceCompositionEntries(existing, _clock);
+        return entryId;
     }
 }

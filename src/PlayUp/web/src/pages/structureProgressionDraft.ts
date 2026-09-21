@@ -19,7 +19,7 @@ export type ProgIntentDraft = {
   outcome: ProgressionOutcome;
   targetKind: ProgTargetKind;
   destinationStageId: string;
-  /** Preserved for Place when U4 unlocks; never shown as raw SlotKey while gated. */
+  /** SlotKey when targeting Place (Auto); empty for Population. */
   destinationSlotKey: string;
   /** Expand preview: fixture count for the selected round. */
   expandedPathCount: number;
@@ -59,12 +59,9 @@ export function emptyProgIntent(
 
 export function intentFromApi(
   intent: StructureProgressionIntent,
-  sourceStageId: string,
+  _sourceStageId?: string,
 ): ProgIntentDraft {
   const population = isPopulationDestination(intent.destinationSlotKey);
-  // V3 purge: Place must be forme-owner. Cross-stage slot → coerce to Population.
-  const crossPlace =
-    !population && intent.destinationStageId !== sourceStageId;
 
   return {
     id: intent.intentId || newProgIntentId(),
@@ -72,15 +69,11 @@ export function intentFromApi(
     roundId: intent.roundId,
     roundName: intent.roundName?.trim() ?? '',
     outcome: intent.outcome,
-    targetKind: population || crossPlace ? 'population' : 'place',
-    destinationStageId:
-      population || crossPlace
-        ? intent.destinationStageId
-        : sourceStageId,
-    destinationSlotKey:
-      population || crossPlace
-        ? ''
-        : (intent.destinationSlotKey?.trim() ?? ''),
+    targetKind: population ? 'population' : 'place',
+    destinationStageId: intent.destinationStageId,
+    destinationSlotKey: population
+      ? ''
+      : (intent.destinationSlotKey?.trim() ?? ''),
     expandedPathCount: intent.expandedPathCount ?? 0,
   };
 }
@@ -88,14 +81,12 @@ export function intentFromApi(
 /** Legacy fallback: one singleton intent per path (path-list authoring). */
 export function pathToSingletonIntent(
   path: StructureProgressionPath,
-  sourceStageId: string,
+  _sourceStageId: string,
   roundId: string,
   roundName: string,
   order: number,
 ): ProgIntentDraft {
   const population = isPopulationDestination(path.destinationSlotKey);
-  const crossPlace =
-    !population && path.destinationStageId !== sourceStageId;
 
   return {
     id: newProgIntentId(),
@@ -103,15 +94,11 @@ export function pathToSingletonIntent(
     roundId,
     roundName,
     outcome: path.outcome,
-    targetKind: population || crossPlace ? 'population' : 'place',
-    destinationStageId:
-      population || crossPlace
-        ? path.destinationStageId
-        : sourceStageId,
-    destinationSlotKey:
-      population || crossPlace
-        ? ''
-        : (path.destinationSlotKey?.trim() ?? ''),
+    targetKind: population ? 'population' : 'place',
+    destinationStageId: path.destinationStageId,
+    destinationSlotKey: population
+      ? ''
+      : (path.destinationSlotKey?.trim() ?? ''),
     expandedPathCount: 1,
   };
 }
@@ -240,8 +227,8 @@ export function summarizeIntentWho(
   return t('progression.summary.who', { outcome, match: round });
 }
 
-/** Expand preview count for capacity soft-warnings (fixtures × intents to peer). */
+/** Expand preview count for capacity soft-warnings (fixtures × intents to dest). */
 export function expandContribution(draft: ProgIntentDraft): number {
-  if (draft.targetKind !== 'population') return 0;
+  // Place Auto dual-writes Population+Place on Apply — both kinds occupy capacity.
   return Math.max(draft.expandedPathCount, draft.roundId ? 1 : 0);
 }

@@ -35,6 +35,40 @@ public sealed class ApplyProgressionOutcomeTests
         results.Should().ContainSingle();
         results[0].EntryId.Should().Be(ctx.Home);
         ctx.Source.FindSlot("SF1-A")!.EntryId.Should().Be(ctx.Home);
+        ctx.Source.CompositionEntries.Select(e => e.EntryId).Should().Contain(ctx.Home);
+    }
+
+    [Fact]
+    public void Execute_cross_stage_place_dual_writes_population_and_slot()
+    {
+        var competitionId = CompetitionId.New();
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A", "SF1-B"]);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var (fixtureId, match) = AttachFinishedMatch(source, home, away, homeGoals: 1, awayGoals: 0);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixtureId,
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(destination.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var results = ApplyProgressionOutcome.Execute(
+            source,
+            fixtureId,
+            [match],
+            [source, destination],
+            _clock);
+
+        results.Should().ContainSingle();
+        results[0].TargetsPopulation.Should().BeFalse();
+        results[0].EntryId.Should().Be(home);
+        destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
+        destination.FindSlot("SF1-A")!.EntryId.Should().Be(home);
     }
 
     [Fact]
@@ -413,7 +447,7 @@ public sealed class ApplyProgressionOutcomeTests
     }
 
     [Fact]
-    public void ReplaceProgressionRules_rejects_cross_stage_place()
+    public void ReplaceProgressionRules_allows_cross_stage_place()
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
@@ -430,9 +464,9 @@ public sealed class ApplyProgressionOutcomeTests
             ]),
             _clock);
 
-        var ex = act.Should().Throw<DomainException>().Which;
-        ex.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
-        ex.Message.Should().Contain("form-owning");
+        act.Should().NotThrow();
+        source.Regulation.ProgressionRules!.Paths.Should().ContainSingle()
+            .Which.Destination.StageId.Should().Be(destination.Id);
     }
 
     [Fact]
@@ -496,6 +530,7 @@ public sealed class ApplyProgressionOutcomeTests
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
         var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
         var directEntry = EntryId.New();
+        destination.ReplaceCompositionEntries([directEntry], _clock);
         destination.AssignEntryToSlot("SF1-A", directEntry);
         var home = EntryId.New();
         var away = EntryId.New();
@@ -512,7 +547,7 @@ public sealed class ApplyProgressionOutcomeTests
 
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
-        destination.CompositionEntries.Select(e => e.EntryId).Should().Equal(home);
+        destination.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo([directEntry, home]);
         destination.FindSlot("SF1-A")!.EntryId.Should().Be(directEntry);
         destination.DirectAssignments.Should().ContainSingle();
     }

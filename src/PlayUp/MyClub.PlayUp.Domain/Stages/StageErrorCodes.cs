@@ -92,6 +92,11 @@ public static class StageErrorCodes
     public const string MatchNotAttached = "Stage.MatchNotAttached";
 
     /// <summary>
+    /// Gets the code when a direct assignment entry is not in the stage population.
+    /// </summary>
+    public const string EntryNotInPopulation = "Stage.EntryNotInPopulation";
+
+    /// <summary>
     /// Gets the code when a slot key is empty or too long.
     /// </summary>
     public const string SlotKeyInvalid = "Stage.SlotKeyInvalid";

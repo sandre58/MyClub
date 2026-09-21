@@ -314,19 +314,21 @@ public sealed record StructureQualificationIntentDto(
     string? GroupName = null,
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
-    int DestinationCount = 0);
+    int DestinationCount = 0,
+    string? DestinationSlotKey = null);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>
 /// <param name="SelectionMode">Selection mode.</param>
 /// <param name="SelectionValue">Position, count, or range lower bound.</param>
-/// <param name="DestinationStageId">Destination stage (population).</param>
+/// <param name="DestinationStageId">Destination stage.</param>
 /// <param name="RankingScope">Optional ranking scope.</param>
 /// <param name="GroupId">Group when scope is Group.</param>
 /// <param name="AcrossGroupsPosition">Across-groups position when applicable.</param>
 /// <param name="SelectionEndValue">Range upper bound when mode is Range.</param>
 /// <param name="MinimumPoints">Optional Points ≥ gate.</param>
 /// <param name="GroupName">Resolved group display name when <paramref name="GroupId"/> is set.</param>
+/// <param name="DestinationSlotKey">Destination slot key; null when targeting population.</param>
 public sealed record StructureQualificationPathDto(
     int Order,
     SelectionMode SelectionMode,
@@ -337,7 +339,8 @@ public sealed record StructureQualificationPathDto(
     int? AcrossGroupsPosition = null,
     int? SelectionEndValue = null,
     int? MinimumPoints = null,
-    string? GroupName = null);
+    string? GroupName = null,
+    string? DestinationSlotKey = null);
 
 /// <summary>One progression authoring intent for Structure dialog (V3).</summary>
 public sealed record StructureProgressionIntentDto(

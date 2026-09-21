@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Structure flux QA: Affectation + outbound Qualification configured, Draft (no play).
+/// Structure flux QA: Affectation + outbound Qualification Auto Place, Draft (no play).
 /// </summary>
 public sealed class FluxQualifDraftScenario : IScenario
 {
@@ -23,7 +23,7 @@ public sealed class FluxQualifDraftScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 2×4 Affectation + Qualif Top1/Top2 → QF population — Draft. Sorties Qualif + Entrées aval (WhoFeeds / jump source).";
+        "Groups 2×4 Affectation + Qualif Top1/Top2 → QF Places (Auto) — Draft. Sorties Qualif + Entrées aval (WhoFeeds = Qual).";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

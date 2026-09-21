@@ -53,6 +53,7 @@ public sealed class StageSchematicAssemblerTests
         stage.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         stage.AddSlot("SF1-A");
         stage.AddSlot("SF1-B");
+        stage.ReplaceCompositionEntries([alpha.Id], _clock);
         stage.AssignEntryToSlot("SF1-A", alpha.Id);
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", "SF1-B");
 

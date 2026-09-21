@@ -3,7 +3,9 @@ import {
   emptyQualIntent,
   hasDuplicateSourceOccurrence,
   incompleteIntentReason,
+  intentFromApi,
   isIntentComplete,
+  toApiIntent,
 } from './structureQualificationDraft';
 
 const groups = [
@@ -96,5 +98,69 @@ describe('qualification duplicate source detection', () => {
     b.positionTo = '2';
 
     expect(hasDuplicateSourceOccurrence(a, [a, b], groups)).toBe(false);
+  });
+
+  it('ignores destination / Place when detecting duplicates', () => {
+    const a = emptyQualIntent('sf', 'place');
+    a.sourceKind = 'EachGroup';
+    a.destinationSlotKey = 'SF1-A';
+    a.positionFrom = '1';
+    a.positionTo = '1';
+
+    const b = emptyQualIntent('final', 'population');
+    b.sourceKind = 'EachGroup';
+    b.positionFrom = '1';
+    b.positionTo = '1';
+
+    expect(hasDuplicateSourceOccurrence(a, [a, b], groups)).toBe(true);
+  });
+});
+
+describe('qualification Place destination', () => {
+  it('maps Place API intents with destinationSlotKey', () => {
+    const draft = intentFromApi({
+      intentId: 'i1',
+      order: 1,
+      sourceKind: 'Overall',
+      positionFrom: 1,
+      positionTo: 2,
+      destinationStageId: 'peer',
+      destinationSlotKey: 'SF1-A',
+    });
+    expect(draft.targetKind).toBe('place');
+    expect(draft.destinationSlotKey).toBe('SF1-A');
+    expect(toApiIntent(draft, 1).destinationSlotKey).toBe('SF1-A');
+  });
+
+  it('maps Population API intents to null slot', () => {
+    const draft = intentFromApi({
+      intentId: 'i1',
+      order: 1,
+      sourceKind: 'Overall',
+      positionFrom: 1,
+      positionTo: 1,
+      destinationStageId: 'peer',
+      destinationSlotKey: null,
+    });
+    expect(draft.targetKind).toBe('population');
+    expect(toApiIntent(draft, 1).destinationSlotKey).toBeNull();
+  });
+
+  it('requires destination stage and slot for Place', () => {
+    const draft = emptyQualIntent('peer', 'place');
+    draft.sourceKind = 'Overall';
+    expect(incompleteIntentReason(draft, groups, true)).toBe('Destination');
+    draft.destinationSlotKey = 'SF1-A';
+    expect(incompleteIntentReason(draft, groups, true)).toBeNull();
+  });
+
+  it('blocks Place while destination places are unlabeled', () => {
+    const draft = emptyQualIntent('peer', 'place');
+    draft.sourceKind = 'Overall';
+    draft.destinationSlotKey = 'SF1-A';
+    expect(incompleteIntentReason(draft, groups, false)).toBe(
+      'PlaceUnavailable',
+    );
+    expect(isIntentComplete(draft, groups, false)).toBe(false);
   });
 });

@@ -15,11 +15,13 @@ using MyClub.PlayUp.Domain.Standings;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: apply qualification paths from standings onto destination stage population.
+/// Application use case: apply qualification paths from standings onto destination population
+/// and optionally Place (Auto dual-write).
 /// </summary>
 /// <remarks>
 /// Prefights destination stages before any mutation.
-/// Replace local only — no cascade. One path → one entry → population (Qual V2).
+/// Replace local only — no cascade. One path → one entry → population;
+/// when destination has SlotKey, also ApplyResolvedEntry on that slot.
 /// Resolves each <see cref="QualificationPath.Source"/> to a standing:
 /// Overall uses <c>overallStanding</c>; Group uses <c>groupStandings</c>;
 /// AcrossGroups builds a derived standing via <see cref="CrossGroupStandingAssembler"/>
@@ -106,7 +108,7 @@ public static class ApplyQualification
             if (destination.Id.Equals(canonicalSource.Id))
             {
                 throw new ApplicationFailureException(
-                    "Qualification population destination cannot target the source stage.",
+                    "Qualification destination cannot target the source stage.",
                     ApplicationErrorCodes.DanglingFeedTarget);
             }
 
@@ -115,7 +117,36 @@ public static class ApplyQualification
                 continue;
             }
 
+            if (path.Destination.TargetsPopulation) continue;
+            if (destination.FindSlot(path.Destination.SlotKey!) is null)
+            {
+                throw new ApplicationFailureException(
+                    $"Qualification destination slot '{path.Destination.SlotKey}' was not found on stage '{destination.Id}'.",
+                    ApplicationErrorCodes.DanglingFeedTarget);
+            }
+
+            SlotOccupancyConflictGuard.EnsureCompatible(
+                destination,
+                new SlotAssignmentInstruction(
+                    destination.Id,
+                    path.Destination.SlotKey!,
+                    instruction.EntryId));
+        }
+
+        foreach (var (path, instruction) in outcomes)
+        {
+            if (instruction is null)
+            {
+                continue;
+            }
+
+            var destination = ResolveCanonicalStage(path.Destination.StageId, competitionStages);
             destination.AddResolvedPopulationEntry(instruction.EntryId, clock);
+            if (!path.Destination.TargetsPopulation)
+            {
+                destination.ApplyResolvedEntry(path.Destination.SlotKey!, instruction.EntryId, clock);
+            }
+
             applied.Add(instruction);
         }
 

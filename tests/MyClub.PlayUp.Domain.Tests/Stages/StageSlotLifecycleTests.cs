@@ -69,8 +69,11 @@ public sealed class StageSlotLifecycleTests
     {
         var stage = CreatePositionalKnockout();
         stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
-        stage.AssignEntryToSlot("QF1-A", EntryId.New());
-        stage.AssignEntryToSlot("QF1-B", EntryId.New());
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ReplaceCompositionEntries([a, b], _clock);
+        stage.AssignEntryToSlot("QF1-A", a);
+        stage.AssignEntryToSlot("QF1-B", b);
         stage.Prepare(_clock);
 
         stage.Start(_clock);
@@ -87,8 +90,11 @@ public sealed class StageSlotLifecycleTests
         stage.AddSlot("SF1-A");
         stage.AddSlot("SF1-B");
         stage.AddFixture(sf.Id, _clock, "SF1-A", "SF1-B");
-        stage.AssignEntryToSlot("SF1-A", EntryId.New());
-        stage.AssignEntryToSlot("SF1-B", EntryId.New());
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ReplaceCompositionEntries([a, b], _clock);
+        stage.AssignEntryToSlot("SF1-A", a);
+        stage.AssignEntryToSlot("SF1-B", b);
         stage.Prepare(_clock);
 
         var act = () => stage.Start(_clock);

@@ -89,6 +89,7 @@ public sealed class StageApplyResolvedEntryTests
     {
         var stage = CreateCupWithSlots("A");
         var directEntry = EntryId.New();
+        stage.ReplaceCompositionEntries([directEntry], _clock);
         stage.AssignEntryToSlot("A", directEntry);
         var directSnapshot = stage.DirectAssignments.ToArray();
 

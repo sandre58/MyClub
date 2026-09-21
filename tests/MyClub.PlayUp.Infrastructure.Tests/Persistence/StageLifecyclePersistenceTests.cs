@@ -240,6 +240,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
 
             _ = stage.AddFixture(matchday1.Id, _clock);
             stage.AddSlot("W1");
+            stage.ReplaceCompositionEntries([entryA], _clock);
             stage.AssignEntryToSlot("W1", entryA);
 
             stageId = stage.Id;

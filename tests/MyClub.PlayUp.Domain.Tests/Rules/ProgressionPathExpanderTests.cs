@@ -75,7 +75,7 @@ public sealed class ProgressionPathExpanderTests
     }
 
     [Fact]
-    public void ReplaceProgressionRules_rejects_cross_stage_place()
+    public void ReplaceProgressionRules_allows_cross_stage_place()
     {
         var source = CreateCupWithFixtures(1);
         var peer = Stage.Create(
@@ -96,8 +96,9 @@ public sealed class ProgressionPathExpanderTests
             ]),
             _clock);
 
-        act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
+        act.Should().NotThrow();
+        source.Regulation.ProgressionRules!.Paths.Should().ContainSingle()
+            .Which.Destination.Should().Be(ProgressionDestination.ForSlot(peer.Id, "SF1-A"));
     }
 
     private Stage CreateCupWithFixtures(int fixtureCount)

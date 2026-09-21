@@ -14,12 +14,12 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: resolve fixture outcome and apply progression paths
-/// to destination population (O2-a) or slots (legacy placement).
+/// to destination population and/or Place (Auto dual-write).
 /// </summary>
 /// <remarks>
 /// Preflights destinations before any mutation (known orchestration failures → zero writes).
 /// Population targets call <see cref="Stage.AddResolvedPopulationEntry"/>;
-/// slot targets call <see cref="Stage.ApplyResolvedEntry"/>.
+/// Place targets dual-write population membership then <see cref="Stage.ApplyResolvedEntry"/>.
 /// Persistence: caller loads source/destination Stages (and Matches) into one scope, invokes this
 /// use case, then calls <c>IUnitOfWork.SaveChangesAsync</c> once.
 /// </remarks>
@@ -94,11 +94,8 @@ public static class ApplyProgressionOutcome
         for (var i = 0; i < instructions.Length; i++)
         {
             var instruction = instructions[i];
-            if (instruction.TargetsPopulation)
-            {
-                destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock);
-            }
-            else
+            destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock);
+            if (!instruction.TargetsPopulation)
             {
                 destinations[i].ApplyResolvedEntry(instruction.SlotKey!, instruction.EntryId, clock);
             }

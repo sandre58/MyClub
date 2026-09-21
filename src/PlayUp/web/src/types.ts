@@ -693,6 +693,11 @@ export interface StructureQualificationIntent {
   positionFrom: number;
   positionTo: number;
   destinationStageId: string;
+  /**
+   * Destination slot when targeting form Place (Auto); null/omitted when
+   * targeting phase Population. Wire camelCase matches Domain SlotKey.
+   */
+  destinationSlotKey?: string | null;
   groupId?: string | null;
   groupName?: string | null;
   acrossGroupsPosition?: number | null;
@@ -707,6 +712,11 @@ export interface StructureQualificationPath {
   selectionMode: SelectionMode;
   selectionValue: number;
   destinationStageId: string;
+  /**
+   * Destination slot when targeting form Place (Auto); null/omitted when
+   * targeting phase Population.
+   */
+  destinationSlotKey?: string | null;
   rankingScope?: RankingScope | null;
   groupId?: string | null;
   /** Resolved group display name when groupId is set. */

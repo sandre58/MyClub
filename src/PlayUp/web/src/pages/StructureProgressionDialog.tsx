@@ -2,7 +2,7 @@
 // Progression dialog — Intent Round × Outcome → Destination (Prog V3).
 // -----------------------------------------------------------------------
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -35,6 +35,7 @@ import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
 import type {
   ProgressionOutcome,
+  StageSchematic,
   StructureFormatKind,
   StructureStageHubSummary,
   StructureView,
@@ -116,27 +117,23 @@ export function StructureProgressionDialog({
     queryFn: () => fetchStageOverview(stage.stageId),
     enabled: open,
   });
-  const schematicQuery = useQuery({
+  const sourceSchematicQuery = useQuery({
     queryKey: queryKeys.stages.schematic(stage.stageId),
     queryFn: () => fetchStageSchematic(stage.stageId),
     enabled: open,
   });
-  const placesLabeled = areProgressionPlacesLabeled(schematicQuery.data);
-  const labeledPlaces = useMemo(
-    () => listLabeledCupPlaces(schematicQuery.data, t),
-    [schematicQuery.data, t],
+  const sourcePlacesLabeled = areProgressionPlacesLabeled(
+    sourceSchematicQuery.data,
   );
-  const placeLabelByIdentity = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const place of labeledPlaces) {
-      map.set(place.apiIdentity, place.label);
-    }
-    return map;
-  }, [labeledPlaces]);
 
   const peerStages = useMemo(
     () => data.stages.filter((peer) => peer.stageId !== stage.stageId),
     [data.stages, stage.stageId],
+  );
+  /** Place Auto may target peer stages (cross-phase) or same-stage forme-owner. */
+  const placeDestinationStages = useMemo(
+    () => [stage, ...peerStages],
+    [peerStages, stage],
   );
   const contextDestinationId = openedFromDestinationStageId?.trim() || '';
   const defaultDest =
@@ -145,7 +142,7 @@ export function StructureProgressionDialog({
       ? contextDestinationId
       : null) ??
     peerStages[0]?.stageId ??
-    '';
+    stage.stageId;
   const stageNameById = useMemo(
     () => new Map(data.stages.map((s) => [s.stageId, s.name])),
     [data.stages],
@@ -158,6 +155,43 @@ export function StructureProgressionDialog({
   const [intents, setIntents] = useState<ProgIntentDraft[]>([]);
   const [baselineSerialized, setBaselineSerialized] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const placeDestinationIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const intent of intents) {
+      if (intent.targetKind !== 'place') continue;
+      const id = intent.destinationStageId.trim();
+      if (id) ids.add(id);
+    }
+    // Always include source for same-stage Place listing fallback.
+    ids.add(stage.stageId);
+    return [...ids];
+  }, [intents, stage.stageId]);
+
+  const destinationSchematicQueries = useQueries({
+    queries: placeDestinationIds.map((stageId) => ({
+      queryKey: queryKeys.stages.schematic(stageId),
+      queryFn: () => fetchStageSchematic(stageId),
+      enabled: open && !!stageId,
+    })),
+  });
+
+  const destinationSchematicById = useMemo(() => {
+    const map = new Map<string, StageSchematic | undefined>();
+    placeDestinationIds.forEach((stageId, index) => {
+      map.set(stageId, destinationSchematicQueries[index]?.data);
+    });
+    return map;
+  }, [destinationSchematicQueries, placeDestinationIds]);
+
+  function placesLabeledFor(intent: ProgIntentDraft): boolean {
+    if (intent.targetKind !== 'place') return true;
+    const destId = intent.destinationStageId.trim();
+    if (!destId) return true;
+    const schematic = destinationSchematicById.get(destId);
+    if (schematic === undefined) return true;
+    return areProgressionPlacesLabeled(schematic);
+  }
 
   const dirty = serializeIntents(intents) !== baselineSerialized;
   const {
@@ -269,7 +303,6 @@ export function StructureProgressionDialog({
   const draftEntriesByDestination = useMemo(() => {
     const map = new Map<string, number>();
     for (const intent of intents) {
-      if (intent.targetKind !== 'population') continue;
       const destId = intent.destinationStageId.trim();
       if (!destId) continue;
       map.set(destId, (map.get(destId) ?? 0) + expandContribution(intent));
@@ -298,7 +331,7 @@ export function StructureProgressionDialog({
     return warnings;
   }, [draftEntriesByDestination, stageById]);
 
-  const canAuthor = peerStages.length > 0 || placesLabeled;
+  const canAuthor = peerStages.length > 0 || sourcePlacesLabeled;
 
   const mutation = useMutation({
     mutationFn: () => {
@@ -322,7 +355,9 @@ export function StructureProgressionDialog({
 
   const canSave =
     !mutation.isPending &&
-    intents.every((intent) => isIntentComplete(intent, intents, placesLabeled));
+    intents.every((intent) =>
+      isIntentComplete(intent, intents, placesLabeledFor(intent)),
+    );
 
   function requestClose() {
     requestDiscardClose(mutation.isPending);
@@ -434,7 +469,9 @@ export function StructureProgressionDialog({
                 {t('progression.factRules', { count: intents.length })}
               </span>
             </div>
-            {placesLabeled || placeCount > 0 ? (
+            {sourcePlacesLabeled ||
+            peerStages.length > 0 ||
+            placeCount > 0 ? (
               <>
                 <span
                   className="structure-qualification__fact-rule"
@@ -499,10 +536,11 @@ export function StructureProgressionDialog({
               const who =
                 summarizeIntentWho(intent, t) || t('progression.newPath');
               const destName =
-                intent.targetKind === 'place'
-                  ? stage.name
-                  : (stageNameById.get(intent.destinationStageId) ??
-                    intent.destinationStageId);
+                stageNameById.get(intent.destinationStageId) ??
+                intent.destinationStageId;
+              const destSchematic = destinationSchematicById.get(
+                intent.destinationStageId.trim(),
+              );
               const where =
                 intent.targetKind === 'population' &&
                 intent.destinationStageId.trim()
@@ -511,16 +549,13 @@ export function StructureProgressionDialog({
                     })
                   : intent.targetKind === 'place'
                     ? (() => {
-                        const placeLabel =
-                          placeLabelByIdentity.get(
-                            intent.destinationSlotKey.trim(),
-                          ) ??
-                          placeChromeForDestinationSlotKey(
-                            schematicQuery.data,
-                            intent.destinationSlotKey,
-                          );
+                        const placeLabel = placeChromeForDestinationSlotKey(
+                          destSchematic,
+                          intent.destinationSlotKey,
+                        );
                         return placeLabel
                           ? t('progression.summary.wherePlace', {
+                              phase: destName,
                               place: placeLabel,
                             })
                           : t('progression.summary.wherePlaceFallback');
@@ -529,7 +564,7 @@ export function StructureProgressionDialog({
               const incompleteReason = incompleteIntentReason(
                 intent,
                 intents,
-                placesLabeled,
+                placesLabeledFor(intent),
               );
               const statusMessage =
                 incompleteReason == null
@@ -628,8 +663,7 @@ export function StructureProgressionDialog({
                           draft={intent}
                           sourceStage={stage}
                           peerStages={peerStages}
-                          placesLabeled={placesLabeled}
-                          labeledPlaces={labeledPlaces}
+                          placeDestinationStages={placeDestinationStages}
                           roundOptions={roundOptions}
                           roundsLoading={overviewQuery.isLoading}
                           draftEntriesByDestination={draftEntriesByDestination}
@@ -673,8 +707,7 @@ function ProgIntentEditor({
   draft,
   sourceStage,
   peerStages,
-  placesLabeled,
-  labeledPlaces,
+  placeDestinationStages,
   roundOptions,
   roundsLoading,
   draftEntriesByDestination,
@@ -683,14 +716,26 @@ function ProgIntentEditor({
   draft: ProgIntentDraft;
   sourceStage: StructureStageHubSummary;
   peerStages: StructureStageHubSummary[];
-  placesLabeled: boolean;
-  labeledPlaces: { apiIdentity: string; label: string }[];
+  placeDestinationStages: StructureStageHubSummary[];
   roundOptions: { id: string; name: string; fixtureCount: number }[];
   roundsLoading: boolean;
   draftEntriesByDestination: Map<string, number>;
   onChange: (next: ProgIntentDraft) => void;
 }) {
   const { t } = useTranslation('structure');
+  const { t: tCommon } = useTranslation('common');
+
+  const destStageId = draft.destinationStageId.trim();
+  const destSchematicQuery = useQuery({
+    queryKey: queryKeys.stages.schematic(destStageId),
+    queryFn: () => fetchStageSchematic(destStageId),
+    enabled: draft.targetKind === 'place' && !!destStageId,
+  });
+  const placesLabeled = areProgressionPlacesLabeled(destSchematicQuery.data);
+  const labeledPlaces = useMemo(
+    () => listLabeledCupPlaces(destSchematicQuery.data, t),
+    [destSchematicQuery.data, t],
+  );
 
   const roundSelectOptions = useMemo(() => {
     const options = [
@@ -723,9 +768,6 @@ function ProgIntentEditor({
   }, [draft.roundId, draft.roundName, roundOptions, t]);
 
   function setTargetKind(kind: ProgTargetKind) {
-    if (kind === 'place' && !placesLabeled) {
-      return;
-    }
     if (kind === 'population') {
       onChange({
         ...draft,
@@ -739,11 +781,19 @@ function ProgIntentEditor({
       });
       return;
     }
+    const keepDest =
+      draft.destinationStageId.trim() &&
+      placeDestinationStages.some(
+        (s) => s.stageId === draft.destinationStageId,
+      );
     onChange({
       ...draft,
       targetKind: 'place',
-      destinationStageId: sourceStage.stageId,
-      destinationSlotKey: draft.destinationSlotKey,
+      destinationStageId: keepDest
+        ? draft.destinationStageId
+        : (peerStages[0]?.stageId ?? sourceStage.stageId),
+      destinationSlotKey:
+        draft.targetKind === 'place' ? draft.destinationSlotKey : '',
     });
   }
 
@@ -833,26 +883,15 @@ function ProgIntentEditor({
         />
         <ChoiceTile
           label={t('progression.kindPlace')}
-          description={
-            placesLabeled
-              ? t('progression.kindPlaceHint')
-              : t('progression.kindPlaceUnavailable')
-          }
+          description={t('progression.kindPlaceHint')}
           leading={<CupFormatIcon size="sm" />}
           selected={draft.targetKind === 'place'}
-          disabled={!placesLabeled}
           onChange={(selected) => {
             if (!selected) return;
             setTargetKind('place');
           }}
         />
       </div>
-
-      {draft.targetKind === 'place' && !placesLabeled ? (
-        <p className="structure-qualification__field-hint" role="status">
-          {t('progression.placeGatedBody')}
-        </p>
-      ) : null}
 
       {draft.targetKind === 'population' ? (
         peerStages.length === 0 ? (
@@ -901,39 +940,76 @@ function ProgIntentEditor({
             })}
           </div>
         )
-      ) : placesLabeled ? (
-        labeledPlaces.length === 0 ? (
-          <p className="structure-qualification__field-hint" role="status">
-            {t('progression.placeEmpty')}
-          </p>
-        ) : (
+      ) : (
+        <>
           <div
             className="structure-qualification__scope-tiles"
-            data-count={String(Math.min(labeledPlaces.length, 3))}
+            data-count={String(Math.min(placeDestinationStages.length, 3))}
             role="radiogroup"
-            aria-label={t('progression.placeSelectPending')}
+            aria-label={t('progression.destinationPhase')}
           >
-            {labeledPlaces.map((place) => (
+            {placeDestinationStages.map((dest) => (
               <ChoiceTile
-                key={place.apiIdentity}
-                label={place.label}
-                description={place.description ?? undefined}
-                leading={<CupFormatIcon size="sm" />}
-                selected={draft.destinationSlotKey === place.apiIdentity}
+                key={dest.stageId}
+                label={dest.name}
+                leading={stageFormatIcon(dest.formatKind)}
+                selected={draft.destinationStageId === dest.stageId}
                 onChange={(selected) => {
                   if (!selected) return;
                   onChange({
                     ...draft,
                     targetKind: 'place',
-                    destinationStageId: sourceStage.stageId,
-                    destinationSlotKey: place.apiIdentity,
+                    destinationStageId: dest.stageId,
+                    destinationSlotKey:
+                      draft.destinationStageId === dest.stageId
+                        ? draft.destinationSlotKey
+                        : '',
                   });
                 }}
               />
             ))}
           </div>
-        )
-      ) : null}
+
+          {!destStageId ? null : destSchematicQuery.isLoading ? (
+            <p className="structure-qualification__field-hint" role="status">
+              <PendingLabel>{tCommon('loading')}</PendingLabel>
+            </p>
+          ) : !placesLabeled ? (
+            <p className="structure-qualification__field-hint" role="status">
+              {t('progression.placeGatedBody')}
+            </p>
+          ) : labeledPlaces.length === 0 ? (
+            <p className="structure-qualification__field-hint" role="status">
+              {t('progression.placeEmpty')}
+            </p>
+          ) : (
+            <div
+              className="structure-qualification__scope-tiles"
+              data-count={String(Math.min(labeledPlaces.length, 3))}
+              role="radiogroup"
+              aria-label={t('progression.placeSelectPending')}
+            >
+              {labeledPlaces.map((place) => (
+                <ChoiceTile
+                  key={place.apiIdentity}
+                  label={place.label}
+                  description={place.description ?? undefined}
+                  leading={<CupFormatIcon size="sm" />}
+                  selected={draft.destinationSlotKey === place.apiIdentity}
+                  onChange={(selected) => {
+                    if (!selected) return;
+                    onChange({
+                      ...draft,
+                      targetKind: 'place',
+                      destinationSlotKey: place.apiIdentity,
+                    });
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

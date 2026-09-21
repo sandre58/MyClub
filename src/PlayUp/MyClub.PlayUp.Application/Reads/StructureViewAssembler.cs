@@ -115,6 +115,9 @@ public static class StructureViewAssembler
     /// <summary>Stage structure issue: qualification destination stage missing from competition.</summary>
     public const string IssueDanglingQualificationTarget = "DanglingQualificationTarget";
 
+    /// <summary>Stage structure issue: qualification Place destination slot missing on target stage.</summary>
+    public const string IssueMissingQualificationDestinationSlot = "MissingQualificationDestinationSlot";
+
     /// <summary>Stage structure issue: progression destination stage missing from competition.</summary>
     public const string IssueDanglingProgressionTarget = "DanglingProgressionTarget";
 
@@ -495,7 +498,8 @@ public static class StructureViewAssembler
                         groupName,
                         intent.AcrossGroupsPosition,
                         intent.Condition?.MinimumPoints,
-                        destinationCount);
+                        destinationCount,
+                        intent.DestinationSlotKey);
                 })
             ];
 
@@ -533,7 +537,8 @@ public static class StructureViewAssembler
                         path.Source.AcrossGroupsPosition,
                         path.Selection.EndValue,
                         path.Condition?.MinimumPoints,
-                        groupName);
+                        groupName,
+                        path.Destination.SlotKey);
                 })
             ];
 
@@ -759,15 +764,16 @@ public static class StructureViewAssembler
         {
             foreach (var path in qualification.Paths)
             {
-                if (path.Destination.StageId.Equals(stage.Id))
+                if (path.Destination.StageId.Equals(stage.Id) || !byId.TryGetValue(path.Destination.StageId, out var destination))
                 {
                     issues.Add(IssueDanglingQualificationTarget);
                     continue;
                 }
 
-                if (!byId.ContainsKey(path.Destination.StageId))
+                if (!path.Destination.TargetsPopulation
+                    && destination.FindSlot(path.Destination.SlotKey!) is null)
                 {
-                    issues.Add(IssueDanglingQualificationTarget);
+                    issues.Add(IssueMissingQualificationDestinationSlot);
                 }
             }
         }

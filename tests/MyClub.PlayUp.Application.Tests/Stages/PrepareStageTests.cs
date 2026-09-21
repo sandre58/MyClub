@@ -42,8 +42,11 @@ public sealed class PrepareStageTests
         target.AddRound("QF", _clock);
         target.AddSlot("SF1-A");
         target.AddSlot("SF1-B");
-        target.AssignEntryToSlot("SF1-A", EntryId.New());
-        target.AssignEntryToSlot("SF1-B", EntryId.New());
+        var a = EntryId.New();
+        var b = EntryId.New();
+        target.ReplaceCompositionEntries([a, b], _clock);
+        target.AssignEntryToSlot("SF1-A", a);
+        target.AssignEntryToSlot("SF1-B", b);
 
         var resolutions = PrepareStage.Execute(target, [target], _clock);
 
@@ -77,7 +80,9 @@ public sealed class PrepareStageTests
         var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         target.AddRound("QF", _clock);
         target.AddSlot("SF1-A");
-        target.AssignEntryToSlot("SF1-A", EntryId.New());
+        var directEntry = EntryId.New();
+        target.ReplaceCompositionEntries([directEntry], _clock);
+        target.AssignEntryToSlot("SF1-A", directEntry);
         var drawEntry = EntryId.New();
         var draw = target.CreateDraw(DrawResolutionKind.Slot, _clock);
         target.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([drawEntry]));
@@ -168,7 +173,7 @@ public sealed class PrepareStageTests
     }
 
     [Fact]
-    public void ReplaceProgressionRules_rejects_cross_stage_place_destination()
+    public void ReplaceProgressionRules_allows_cross_stage_place_destination()
     {
         var competitionId = CompetitionId.New();
         var source = Stage.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
@@ -192,11 +197,9 @@ public sealed class PrepareStageTests
             ]),
             _clock);
 
-        var ex = act.Should().Throw<DomainException>().Which;
-        ex.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
-        ex.Message.Should().Contain("form-owning");
-        source.Status.Should().Be(StageStatus.Draft);
-        semi.Status.Should().Be(StageStatus.Draft);
+        act.Should().NotThrow();
+        source.Regulation.ProgressionRules!.Paths.Should().ContainSingle()
+            .Which.Destination.Should().Be(new ProgressionDestination(semi.Id, "SF1-B"));
     }
 
     [Fact]

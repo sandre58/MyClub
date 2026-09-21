@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Multi-phase mid: groups finished, Qual → QF population + Slot Draw, KO Draft.
+/// Multi-phase mid: groups finished, Qual → QF population + Slot Draw (Case 1), KO Draft.
 /// </summary>
 public sealed class GroupsToKoMidScenario : IScenario
 {
@@ -23,7 +23,7 @@ public sealed class GroupsToKoMidScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 2×4 finished → Top2 → QF population → Slot Draw — KO Draft (Qual V2 mid-state).";
+        "Groups 2×4 finished → Top2 → QF population → Slot Draw — KO Draft (Case 1). WhoFeeds = Draw.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;

@@ -66,7 +66,7 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
         stage.AddSlot("QF1-A");
-        var entryId = EntryId.New();
+        var entryId = Admit(stage, EntryId.New());
 
         stage.AssignEntryToSlot("QF1-A", entryId);
 
@@ -80,8 +80,8 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
         stage.AddSlot("QF1-A");
-        var first = EntryId.New();
-        var second = EntryId.New();
+        var first = Admit(stage, EntryId.New());
+        var second = Admit(stage, EntryId.New());
         stage.AssignEntryToSlot("QF1-A", first);
 
         stage.AssignEntryToSlot("QF1-A", second);
@@ -91,12 +91,23 @@ public sealed class StageSlotsTests
     }
 
     [Fact]
+    public void AssignEntryToSlot_rejects_entry_not_in_population()
+    {
+        var stage = CreateCup();
+        stage.AddSlot("QF1-A");
+
+        var act = () => stage.AssignEntryToSlot("QF1-A", EntryId.New());
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.EntryNotInPopulation);
+    }
+
+    [Fact]
     public void AssignEntryToSlot_rejects_duplicate_entry_on_another_slot()
     {
         var stage = CreateCup();
         stage.AddSlot("A");
         stage.AddSlot("B");
-        var entryId = EntryId.New();
+        var entryId = Admit(stage, EntryId.New());
         stage.AssignEntryToSlot("A", entryId);
 
         var act = () => stage.AssignEntryToSlot("B", entryId);
@@ -120,8 +131,9 @@ public sealed class StageSlotsTests
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
             _clock);
+        var entryId = Admit(stage, EntryId.New());
 
-        var act = () => stage.AssignEntryToSlot("SF1-A", EntryId.New());
+        var act = () => stage.AssignEntryToSlot("SF1-A", entryId);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.SlotFeedConflict);
     }
@@ -131,7 +143,8 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
         stage.AddSlot("QF1-A");
-        stage.AssignEntryToSlot("QF1-A", EntryId.New());
+        var entryId = Admit(stage, EntryId.New());
+        stage.AssignEntryToSlot("QF1-A", entryId);
 
         stage.ClearSlotAssignment("QF1-A");
 
@@ -156,7 +169,8 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
         stage.AddSlot("QF1-A");
-        stage.AssignEntryToSlot("QF1-A", EntryId.New());
+        var entryId = Admit(stage, EntryId.New());
+        stage.AssignEntryToSlot("QF1-A", entryId);
 
         var act = () => stage.RemoveSlot("QF1-A");
 
@@ -209,6 +223,14 @@ public sealed class StageSlotsTests
         var act = () => stage.AddSlot("QF1-A");
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+    }
+
+    private EntryId Admit(Stage stage, EntryId entryId)
+    {
+        var existing = stage.CompositionEntries.Select(e => e.EntryId).ToList();
+        existing.Add(entryId);
+        stage.ReplaceCompositionEntries(existing, _clock);
+        return entryId;
     }
 
     private Stage CreateCup() =>

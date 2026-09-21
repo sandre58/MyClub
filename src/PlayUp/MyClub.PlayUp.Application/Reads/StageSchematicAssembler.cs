@@ -85,10 +85,6 @@ public static class StageSchematicAssembler
             var round = stage.Rounds[roundOrder];
             var fixtures = OrderedFixtures(round);
 
-            // U4: omit pair ordinal when the round has a single fixture (e.g. Finale).
-            int? pairOrdinalOrNull(int fixtureIndex) =>
-                fixtures.Count > 1 ? fixtureIndex + 1 : null;
-
             // Stable Match #n: EF collection order is not deterministic across loads.
             for (var fixtureIndex = 0; fixtureIndex < fixtures.Count; fixtureIndex++)
             {
@@ -156,6 +152,12 @@ public static class StageSchematicAssembler
                         round.Name,
                         pairOrdinal));
             }
+
+            continue;
+
+            // U4: omit pair ordinal when the round has a single fixture (e.g. Finale).
+            int? pairOrdinalOrNull(int fixtureIndex) =>
+                fixtures.Count > 1 ? fixtureIndex + 1 : null;
         }
 
         var slotCases = stage.Slots
@@ -205,10 +207,8 @@ public static class StageSchematicAssembler
     private static void RememberCupAddress(
         Dictionary<string, CupPlaceAddress> addressBySlot,
         string slotKey,
-        CupPlaceAddress address)
-    {
+        CupPlaceAddress address) =>
         addressBySlot.TryAdd(slotKey, address);
-    }
 
     private static void AttachFixtureToCupAddress(
         Dictionary<string, CupPlaceAddress> addressBySlot,
@@ -286,7 +286,7 @@ public static class StageSchematicAssembler
     private static void FillAdjacentPairsInRound(
         Stage stage,
         int roundOrder,
-        IReadOnlyList<string> keys,
+        string[] keys,
         int offset,
         int length,
         Dictionary<string, CupPlaceAddress> addressBySlot)

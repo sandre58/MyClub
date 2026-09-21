@@ -85,7 +85,9 @@ public static class ReplaceStageQualificationRules
             GroupId? groupId = spec.GroupId is { } gid ? new GroupId(gid) : null;
             var source = new QualificationSource(spec.RankingScope, groupId, spec.AcrossGroupsPosition);
             var selection = new QualificationSelection(spec.SelectionMode, spec.SelectionValue, spec.SelectionEndValue);
-            var destination = QualificationDestination.ForPopulation(new StageId(spec.DestinationStageId));
+            var destination = string.IsNullOrWhiteSpace(spec.DestinationSlotKey)
+                ? QualificationDestination.ForPopulation(new StageId(spec.DestinationStageId))
+                : QualificationDestination.ForSlot(new StageId(spec.DestinationStageId), spec.DestinationSlotKey);
             var condition = spec.MinimumPoints is { } points
                 ? QualificationCondition.PointsAtLeast(points)
                 : null;
@@ -121,7 +123,8 @@ public static class ReplaceStageQualificationRules
                 new StageId(spec.DestinationStageId),
                 spec.GroupId is { } g ? new GroupId(g) : null,
                 spec.AcrossGroupsPosition,
-                spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null);
+                spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null,
+                string.IsNullOrWhiteSpace(spec.DestinationSlotKey) ? null : spec.DestinationSlotKey);
 }
 
 /// <summary>
@@ -136,7 +139,8 @@ public sealed record QualificationPathSpec(
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
     int? SelectionEndValue = null,
-    int? MinimumPoints = null);
+    int? MinimumPoints = null,
+    string? DestinationSlotKey = null);
 
 /// <summary>
 /// Application DTO for one qualification authoring intent.
@@ -150,4 +154,5 @@ public sealed record QualificationIntentSpec(
     Guid DestinationStageId,
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
-    int? MinimumPoints = null);
+    int? MinimumPoints = null,
+    string? DestinationSlotKey = null);

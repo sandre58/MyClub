@@ -262,6 +262,7 @@ public sealed class ApplyDrawTests
         var stage = CreateStage();
         var (draw, entry) = PublishSlotDraw(stage, "A");
         var direct = EntryId.New();
+        stage.ReplaceCompositionEntries([direct], _clock);
         stage.AssignEntryToSlot("A", direct);
         stage.ClearDomainEvents();
 

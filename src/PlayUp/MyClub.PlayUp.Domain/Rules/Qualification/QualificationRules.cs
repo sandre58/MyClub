@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// How participants leave a stage via ranking → destination stage population.
+/// How participants leave a stage via ranking → destination population or Place.
 /// Authoring SoT = <see cref="Intents"/>; <see cref="Paths"/> are the atomic Apply model
 /// (derived via <see cref="QualificationPathExpander"/>, or path list).
 /// </summary>
@@ -22,7 +22,7 @@ public sealed record QualificationRules
     /// Initializes a new instance of the <see cref="QualificationRules"/> class.
     /// Path-list constructor: ordered atomic paths (migrates Position paths to singleton intents when possible).
     /// </summary>
-    /// <param name="paths">Ordered qualification paths (non-empty, unique orders).</param>
+    /// <param name="paths">Ordered qualification paths (non-empty, unique orders; unique slot destinations).</param>
     public QualificationRules(IReadOnlyList<QualificationPath> paths)
     {
         ArgumentNullException.ThrowIfNull(paths);
@@ -41,6 +41,7 @@ public sealed record QualificationRules
                 RulesErrorCodes.QualificationRulesInvalid);
         }
 
+        EnsureUniqueSlotDestinations(paths);
         _paths = [.. paths.OrderBy(p => p.Order)];
         _intents = TryMigrateSingletons(_paths);
     }
@@ -49,6 +50,7 @@ public sealed record QualificationRules
         IReadOnlyList<QualificationIntent> intents,
         IReadOnlyList<QualificationPath> paths)
     {
+        EnsureUniqueSlotDestinations(paths);
         _intents = [.. intents.OrderBy(i => i.Order)];
         _paths = [.. paths.OrderBy(p => p.Order)];
     }
@@ -127,4 +129,18 @@ public sealed record QualificationRules
         paths.Any(p => p.Selection.Mode != SelectionMode.Position)
             ? []
             : [.. paths.Select(p => QualificationPathExpander.ToSingletonIntent(p))];
+
+    private static void EnsureUniqueSlotDestinations(IReadOnlyList<QualificationPath> paths)
+    {
+        var slotDestinationKeys = paths
+            .Where(p => !p.Destination.TargetsPopulation)
+            .Select(p => (p.Destination.StageId, p.Destination.SlotKey!))
+            .ToArray();
+        if (slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length)
+        {
+            throw new DomainException(
+                "Qualification paths must target unique slot destinations.",
+                RulesErrorCodes.QualificationRulesInvalid);
+        }
+    }
 }

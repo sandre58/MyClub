@@ -745,7 +745,8 @@ try
                         intent.DestinationStageId,
                         intent.GroupId,
                         intent.AcrossGroupsPosition,
-                        intent.MinimumPoints))
+                        intent.MinimumPoints,
+                        intent.DestinationSlotKey))
                 ];
                 await executor
                     .ReplaceStageQualificationIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -767,7 +768,8 @@ try
                         path.GroupId,
                         path.AcrossGroupsPosition,
                         path.SelectionEndValue,
-                        path.MinimumPoints))
+                        path.MinimumPoints,
+                        path.DestinationSlotKey))
                 ];
             }
 

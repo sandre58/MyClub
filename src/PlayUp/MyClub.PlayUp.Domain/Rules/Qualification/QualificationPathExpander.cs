@@ -10,7 +10,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Pure Expand: <see cref="QualificationIntent"/> → ordered <see cref="QualificationPath"/>
-/// targeting destination stage population (Qual V2 — no slot mapping).
+/// targeting destination stage population or Place (Auto).
 /// Consumes <c>GroupOrder</c> from Structure — does not define it.
 /// </summary>
 public static class QualificationPathExpander
@@ -62,8 +62,23 @@ public static class QualificationPathExpander
                     RulesErrorCodes.QualificationRulesInvalid);
             }
 
-            var destination = QualificationDestination.ForPopulation(intent.DestinationStageId);
-            paths.AddRange(occurrences.Select(occurrence => new QualificationPath(pathOrder++, ToSource(occurrence), new QualificationSelection(SelectionMode.Position, occurrence.Position), destination, intent.Condition is null ? null : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints))));
+            // Place intents with a single destination slot cannot expand to N sources.
+            if (!intent.TargetsPopulation && occurrences.Count > 1)
+            {
+                throw new DomainException(
+                    "Qualification place destination cannot expand to more than one source occurrence.",
+                    RulesErrorCodes.QualificationRulesInvalid);
+            }
+
+            var destination = intent.TargetsPopulation
+                ? QualificationDestination.ForPopulation(intent.DestinationStageId)
+                : QualificationDestination.ForSlot(intent.DestinationStageId, intent.DestinationSlotKey!);
+            paths.AddRange(occurrences.Select(occurrence => new QualificationPath(
+                pathOrder++,
+                ToSource(occurrence),
+                new QualificationSelection(SelectionMode.Position, occurrence.Position),
+                destination,
+                intent.Condition is null ? null : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints))));
         }
 
         return paths;
@@ -184,7 +199,8 @@ public static class QualificationPathExpander
             path.Destination.StageId,
             groupId,
             across,
-            path.Condition);
+            path.Condition,
+            path.Destination.SlotKey);
     }
 
     private static QualificationSource ToSource(QualificationSourceOccurrence occurrence) =>

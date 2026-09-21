@@ -1,8 +1,13 @@
 // -----------------------------------------------------------------------
-// Qualifications dialog — authoring Intentions (population destinations).
+// Qualifications dialog — authoring Intentions (Population | Place Auto).
 // -----------------------------------------------------------------------
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { ListPlus, ListMinus, Trash2 } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,12 +42,18 @@ import { queryKeys } from '../queryKeys';
 import type {
   QualificationIntentSourceKind,
   SchematicCase,
+  StageSchematic,
   StructureFormatKind,
   StructureStageHubSummary,
   StructureView,
 } from '../types';
 import { EmptyState, MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
+import {
+  areProgressionPlacesLabeled,
+  listLabeledCupPlaces,
+  placeChromeForDestinationSlotKey,
+} from './structurePlaceLabel';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
 import {
   emptyQualIntent,
@@ -59,6 +70,7 @@ import {
   summarizeIntentWho,
   toApiIntent,
   type QualIntentDraft,
+  type QualTargetKind,
 } from './structureQualificationDraft';
 
 type StructureQualificationDialogProps = {
@@ -184,6 +196,44 @@ export function StructureQualificationDialog({
   );
   const hasGroups = groups.length > 0;
 
+  const placeDestinationIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const intent of intents) {
+      if (intent.targetKind !== 'place') continue;
+      const id = intent.destinationStageId.trim();
+      if (id) ids.add(id);
+    }
+    return [...ids];
+  }, [intents]);
+
+  const destinationSchematicQueries = useQueries({
+    queries: placeDestinationIds.map((stageId) => ({
+      queryKey: queryKeys.stages.schematic(stageId),
+      queryFn: () => fetchStageSchematic(stageId),
+      enabled: open && !!stageId,
+    })),
+  });
+
+  const destinationSchematicById = useMemo(() => {
+    const map = new Map<string, StageSchematic | undefined>();
+    placeDestinationIds.forEach((stageId, index) => {
+      map.set(stageId, destinationSchematicQueries[index]?.data);
+    });
+    return map;
+  }, [destinationSchematicQueries, placeDestinationIds]);
+
+  function placesLabeledFor(intent: QualIntentDraft): boolean {
+    if (intent.targetKind !== 'place') return true;
+    const destId = intent.destinationStageId.trim();
+    if (!destId) return true;
+    const schematic = destinationSchematicById.get(destId);
+    if (schematic === undefined) {
+      // Still loading — do not block as PlaceUnavailable yet.
+      return true;
+    }
+    return areProgressionPlacesLabeled(schematic);
+  }
+
   useEffect(() => {
     if (!open) {
       setIntents([]);
@@ -289,7 +339,9 @@ export function StructureQualificationDialog({
 
   const canSave =
     !mutation.isPending &&
-    intents.every((intent) => isIntentComplete(intent, groups));
+    intents.every((intent) =>
+      isIntentComplete(intent, groups, placesLabeledFor(intent)),
+    );
 
   const hasDuplicateSources = useMemo(
     () => hasAnyDuplicateSourceOccurrence(intents, groups),
@@ -464,14 +516,42 @@ export function StructureQualificationDialog({
               stageNameById.get(intent.destinationStageId) ??
               intent.destinationStageId;
             const occCount = expandOccurrences(intent, groups).length;
-            const where =
-              intent.destinationStageId.trim() && occCount > 0
-                ? t('qualification.summary.whereCount', {
-                    phase: destName,
-                    count: occCount,
-                  })
+            const destSchematic = destinationSchematicById.get(
+              intent.destinationStageId.trim(),
+            );
+            const placeLabel =
+              intent.targetKind === 'place'
+                ? placeChromeForDestinationSlotKey(
+                    destSchematic,
+                    intent.destinationSlotKey,
+                  )
                 : null;
-            const incompleteReason = incompleteIntentReason(intent, groups);
+            const where =
+              intent.targetKind === 'place' &&
+              intent.destinationStageId.trim()
+                ? placeLabel && occCount > 0
+                  ? t('qualification.summary.wherePlaceCount', {
+                      phase: destName,
+                      place: placeLabel,
+                      count: occCount,
+                    })
+                  : placeLabel
+                    ? t('qualification.summary.wherePlace', {
+                        phase: destName,
+                        place: placeLabel,
+                      })
+                    : t('qualification.summary.wherePlaceFallback')
+                : intent.destinationStageId.trim() && occCount > 0
+                  ? t('qualification.summary.whereCount', {
+                      phase: destName,
+                      count: occCount,
+                    })
+                  : null;
+            const incompleteReason = incompleteIntentReason(
+              intent,
+              groups,
+              placesLabeledFor(intent),
+            );
             const statusMessage =
               incompleteReason == null
                 ? null
@@ -737,10 +817,50 @@ function QualIntentEditor({
   onChange: (next: QualIntentDraft) => void;
 }) {
   const { t } = useTranslation('structure');
+  const { t: tCommon } = useTranslation('common');
   const fromId = useId();
   const toId = useId();
   const acrossId = useId();
   const pointsId = useId();
+
+  const destStageId = draft.destinationStageId.trim();
+  const destSchematicQuery = useQuery({
+    queryKey: queryKeys.stages.schematic(destStageId),
+    queryFn: () => fetchStageSchematic(destStageId),
+    enabled: draft.targetKind === 'place' && !!destStageId,
+  });
+  const placesLabeled = areProgressionPlacesLabeled(destSchematicQuery.data);
+  const labeledPlaces = useMemo(
+    () => listLabeledCupPlaces(destSchematicQuery.data, t),
+    [destSchematicQuery.data, t],
+  );
+
+  function setTargetKind(kind: QualTargetKind) {
+    if (kind === 'population') {
+      onChange({
+        ...draft,
+        targetKind: 'population',
+        destinationStageId:
+          draft.targetKind === 'population' &&
+          peerStages.some((p) => p.stageId === draft.destinationStageId)
+            ? draft.destinationStageId
+            : (peerStages[0]?.stageId ?? ''),
+        destinationSlotKey: '',
+      });
+      return;
+    }
+    onChange({
+      ...draft,
+      targetKind: 'place',
+      destinationStageId:
+        draft.destinationStageId.trim() &&
+        peerStages.some((p) => p.stageId === draft.destinationStageId)
+          ? draft.destinationStageId
+          : (peerStages[0]?.stageId ?? ''),
+      destinationSlotKey:
+        draft.targetKind === 'place' ? draft.destinationSlotKey : '',
+    });
+  }
 
   const scopeOptions: {
     value: QualificationIntentSourceKind;
@@ -981,6 +1101,36 @@ function QualIntentEditor({
         {t('qualification.where')}
       </p>
 
+      <div
+        className="structure-qualification__scope-tiles"
+        data-count="2"
+        role="radiogroup"
+        aria-label={t('qualification.destinationKind')}
+      >
+        <ChoiceTile
+          label={t('qualification.kindPopulation')}
+          description={t('qualification.kindPopulationHint')}
+          leading={<StructureIcon size="sm" />}
+          selected={draft.targetKind === 'population'}
+          disabled={peerStages.length === 0}
+          onChange={(selected) => {
+            if (!selected) return;
+            setTargetKind('population');
+          }}
+        />
+        <ChoiceTile
+          label={t('qualification.kindPlace')}
+          description={t('qualification.kindPlaceHint')}
+          leading={<CupFormatIcon size="sm" />}
+          selected={draft.targetKind === 'place'}
+          disabled={peerStages.length === 0}
+          onChange={(selected) => {
+            if (!selected) return;
+            setTargetKind('place');
+          }}
+        />
+      </div>
+
       {peerStages.length === 0 ? (
         <p className="structure-qualification__field-hint" role="status">
           {t('qualification.emptyNoPeerBody')}
@@ -1002,7 +1152,9 @@ function QualIntentEditor({
                 : 0;
             const capacity = peer.compositionCapacity;
             const expected =
-              capacity != null && capacity > 0
+              draft.targetKind === 'population' &&
+              capacity != null &&
+              capacity > 0
                 ? expectedPopulationWithQualDraft({
                     data,
                     destination: peer,
@@ -1011,7 +1163,10 @@ function QualIntentEditor({
                   })
                 : null;
             const description =
-              expected != null && capacity != null && capacity > 0 ? (
+              draft.targetKind === 'population' &&
+              expected != null &&
+              capacity != null &&
+              capacity > 0 ? (
                 <DestinationDraftMeter
                   count={expected}
                   capacity={capacity}
@@ -1047,6 +1202,11 @@ function QualIntentEditor({
                   onChange({
                     ...draft,
                     destinationStageId: peer.stageId,
+                    destinationSlotKey:
+                      draft.targetKind === 'place' &&
+                      draft.destinationStageId === peer.stageId
+                        ? draft.destinationSlotKey
+                        : '',
                   });
                 }}
               />
@@ -1054,6 +1214,47 @@ function QualIntentEditor({
           })}
         </div>
       )}
+
+      {draft.targetKind === 'place' && draft.destinationStageId.trim() ? (
+        destSchematicQuery.isLoading ? (
+          <p className="structure-qualification__field-hint" role="status">
+            <PendingLabel>{tCommon('loading')}</PendingLabel>
+          </p>
+        ) : !placesLabeled ? (
+          <p className="structure-qualification__field-hint" role="status">
+            {t('qualification.placeGatedBody')}
+          </p>
+        ) : labeledPlaces.length === 0 ? (
+          <p className="structure-qualification__field-hint" role="status">
+            {t('qualification.placeEmpty')}
+          </p>
+        ) : (
+          <div
+            className="structure-qualification__scope-tiles"
+            data-count={String(Math.min(labeledPlaces.length, 3))}
+            role="radiogroup"
+            aria-label={t('qualification.placeSelectPending')}
+          >
+            {labeledPlaces.map((place) => (
+              <ChoiceTile
+                key={place.apiIdentity}
+                label={place.label}
+                description={place.description ?? undefined}
+                leading={<CupFormatIcon size="sm" />}
+                selected={draft.destinationSlotKey === place.apiIdentity}
+                onChange={(selected) => {
+                  if (!selected) return;
+                  onChange({
+                    ...draft,
+                    targetKind: 'place',
+                    destinationSlotKey: place.apiIdentity,
+                  });
+                }}
+              />
+            ))}
+          </div>
+        )
+      ) : null}
     </div>
   );
 }

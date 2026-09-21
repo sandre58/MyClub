@@ -34,7 +34,7 @@ describe('structureProgressionDraft', () => {
     expect(toApiIntent(draft, 1).destinationSlotKey).toBeNull();
   });
 
-  it('coerces cross-stage Place to Population (V3 purge)', () => {
+  it('keeps cross-stage Place (peer destination Auto)', () => {
     const draft = intentFromApi(
       {
         intentId: 'i1',
@@ -47,9 +47,10 @@ describe('structureProgressionDraft', () => {
       },
       'source',
     );
-    expect(draft.targetKind).toBe('population');
-    expect(draft.destinationSlotKey).toBe('');
-    expect(incompleteIntentReason(draft, [draft], false)).toBeNull();
+    expect(draft.targetKind).toBe('place');
+    expect(draft.destinationStageId).toBe('other');
+    expect(draft.destinationSlotKey).toBe('slot-7');
+    expect(toApiIntent(draft, 1).destinationSlotKey).toBe('slot-7');
   });
 
   it('blocks Place intents while labels are unavailable', () => {

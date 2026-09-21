@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages.Events;
@@ -649,7 +648,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces qualification rules. Allowed in Draft or Ready; Ready is demoted to Draft.
-    /// Destinations target peer-stage population only (Qual V2) — cannot target this stage.
+    /// Destinations target peer-stage population or Place — cannot target this stage.
     /// </summary>
     /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -663,7 +662,7 @@ public sealed class Stage : AggregateRoot<StageId>
             if (qualificationRules.Paths.Any(path => path.Destination.StageId.Equals(Id)))
             {
                 throw new DomainException(
-                    "Qualification population destination cannot target the source stage.",
+                    "Qualification destination cannot target the source stage.",
                     RulesErrorCodes.QualificationRulesInvalid);
             }
         }
@@ -676,7 +675,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Replaces progression rules. Allowed in Draft or Ready; Ready is demoted to Draft.
     /// Each path fixture must belong to this stage.
-    /// Local destinations must reference an existing slot and must not conflict with a direct assignment.
+    /// Local Place destinations must reference an existing slot and must not conflict with a direct assignment.
+    /// Cross-stage Place is allowed when SlotKey exists on the destination stage form (validated at Prepare/Apply).
     /// </summary>
     /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -708,15 +708,12 @@ public sealed class Stage : AggregateRoot<StageId>
                     continue;
                 }
 
-                // V3: Place = forme-owner only (intra-phase). Cross-stage ForSlot is purged.
-                if (!path.Destination.StageId.Equals(Id))
+                // Place on this stage: slot must exist and must not conflict with Direct.
+                // Cross-stage Place: destination form ownership is validated at Prepare/Apply.
+                if (path.Destination.StageId.Equals(Id))
                 {
-                    throw new DomainException(
-                        "Progression place destination must target the form-owning stage (source stage).",
-                        RulesErrorCodes.ProgressionRulesInvalid);
+                    EnsureLocalPathDestination(path.Destination.SlotKey!);
                 }
-
-                EnsureLocalPathDestination(path.Destination.StageId, path.Destination.SlotKey!);
             }
         }
 
@@ -1353,6 +1350,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Assigns an entry directly to a slot (configuration + synchronized resolution).
+    /// Requires the entry to already belong to the stage population (no auto-admit).
     /// </summary>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="entryId">Entry identity.</param>
@@ -1363,6 +1361,13 @@ public sealed class Stage : AggregateRoot<StageId>
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
             ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' is not in the stage population.",
+                StageErrorCodes.EntryNotInPopulation);
+        }
 
         if (IsSlotFedByLocalProgression(key))
         {
@@ -2395,18 +2400,10 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Validates Place destination on the form-owning stage (caller must ensure stageId == this.Id).
+    /// Validates Place destination on this form-owning stage.
     /// </summary>
-    [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local", Justification = "False positive")]
-    private void EnsureLocalPathDestination(StageId destinationStageId, string slotKey)
+    private void EnsureLocalPathDestination(string slotKey)
     {
-        if (!destinationStageId.Equals(Id))
-        {
-            throw new DomainException(
-                "Progression place destination must target the form-owning stage (source stage).",
-                RulesErrorCodes.ProgressionRulesInvalid);
-        }
-
         if (FindSlot(slotKey) is null)
         {
             throw new DomainException(
@@ -2459,7 +2456,7 @@ public sealed class Stage : AggregateRoot<StageId>
             if (qualification.Paths.Any(path => path.Destination.StageId.Equals(Id)))
             {
                 throw new DomainException(
-                    "Qualification population destination cannot target the source stage.",
+                    "Qualification destination cannot target the source stage.",
                     RulesErrorCodes.QualificationRulesInvalid);
             }
         }

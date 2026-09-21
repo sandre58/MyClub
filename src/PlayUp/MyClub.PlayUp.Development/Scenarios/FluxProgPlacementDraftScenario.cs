@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Structure flux QA: Progression Winner/Loser + Placement awards 1–4, Draft.
+/// Structure flux QA: Progression Winner/Loser Auto Place + Placement awards 1–4, Draft.
 /// </summary>
 public sealed class FluxProgPlacementDraftScenario : IScenario
 {
@@ -23,7 +23,7 @@ public sealed class FluxProgPlacementDraftScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Demi 4 (Affectation) → Finale/Bronze : Prog Winner/Loser + Attribution 1–4 — Draft. Sorties Prog + Attribution + Entrées aval.";
+        "Demi 4 (Affectation) → Finale/Bronze Places : Prog Auto Winner/Loser + Attribution 1–4 — Draft. WhoFeeds = Prog.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

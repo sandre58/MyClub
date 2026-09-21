@@ -145,4 +145,45 @@ public sealed class QualificationPathExpanderTests
         rules.Paths.Select(p => p.Selection.Value).Should().Equal(1, 2, 3);
         rules.Paths.Should().OnlyContain(p => p.Destination.StageId.Equals(dest));
     }
+
+    [Fact]
+    public void Materialize_Place_intent_uses_ForSlot()
+    {
+        var dest = StageId.New();
+        var intent = new QualificationIntent(
+            IntentId.New(),
+            1,
+            QualificationIntentSourceKind.Overall,
+            1,
+            1,
+            dest,
+            destinationSlotKey: "R16-1");
+
+        var paths = QualificationPathExpander.Materialize([intent], []);
+
+        paths.Should().ContainSingle();
+        paths[0].Destination.TargetsPopulation.Should().BeFalse();
+        paths[0].Destination.SlotKey.Should().Be("R16-1");
+    }
+
+    [Fact]
+    public void Materialize_rejects_Place_intent_that_expands_to_multiple_occurrences()
+    {
+        var gA = GroupId.New();
+        var gB = GroupId.New();
+        var dest = StageId.New();
+        var intent = new QualificationIntent(
+            IntentId.New(),
+            1,
+            QualificationIntentSourceKind.EachGroup,
+            1,
+            1,
+            dest,
+            destinationSlotKey: "R16-1");
+
+        var act = () => QualificationPathExpander.Materialize([intent], [gA, gB]);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
+    }
 }

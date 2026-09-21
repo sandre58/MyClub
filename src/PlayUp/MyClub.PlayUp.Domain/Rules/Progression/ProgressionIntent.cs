@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// <summary>
 /// Persisted authoring unit: one round × outcome intention that expands to N <see cref="ProgressionPath"/>.
 /// Paths are derived (Expand) — Intent is the authoring source of truth (Qual/Prog V3).
-/// Destination is peer Population or Place on the form-owning (source) stage.
+/// Destination is peer Population or Place on the destination stage form.
 /// </summary>
 public sealed record ProgressionIntent
 {
@@ -61,7 +61,7 @@ public sealed record ProgressionIntent
     public ProgressionOutcome Outcome { get; }
 
     /// <summary>
-    /// Gets the destination effect: Population (peer) or Place (forme-owner).
+    /// Gets the destination effect: Population (peer) or Place (destination form).
     /// Same destination is applied to every expanded path.
     /// </summary>
     public ProgressionDestination Destination { get; }

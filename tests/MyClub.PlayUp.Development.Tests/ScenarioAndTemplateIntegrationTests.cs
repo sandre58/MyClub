@@ -223,6 +223,89 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
+    public async Task Qual_auto_place_and_hybrid_draw_mid_scenariosAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync(
+        [
+            SeedSpec.Parse("qual-auto-place-mid"),
+            SeedSpec.Parse("qual-hybrid-auto-draw-mid"),
+            SeedSpec.Parse("prog-auto-place-mid")
+        ]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var list = await competitions.ListAsync();
+        list.Should().HaveCount(3);
+
+        var autoSummary = list.Single(c => c.Name.Value.Contains("Qual Auto Place", StringComparison.Ordinal));
+        var autoComp = await competitions.GetByIdForUpdateAsync(autoSummary.Id);
+        autoComp.Should().NotBeNull();
+        var autoQf = await stages.GetByIdForUpdateAsync(autoComp.StageIds[1]);
+        autoQf.Should().NotBeNull();
+        autoQf.Status.Should().Be(StageStatus.Draft);
+        autoQf.CompositionEntries.Should().HaveCount(4);
+        autoQf.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
+        autoQf.Draws.Should().BeEmpty();
+        var autoOccupants = autoQf.Slots
+            .SelectMany(slot => slot.EntryId is { } entryId ? new[] { entryId } : [])
+            .ToArray();
+        autoOccupants.Should().OnlyHaveUniqueItems();
+        autoOccupants.Should().BeSubsetOf(autoQf.CompositionEntries.Select(entry => entry.EntryId));
+
+        var hybridSummary = list.Single(c => c.Name.Value.Contains("hybride", StringComparison.Ordinal));
+        var hybridComp = await competitions.GetByIdForUpdateAsync(hybridSummary.Id);
+        hybridComp.Should().NotBeNull();
+        var hybridQf = await stages.GetByIdForUpdateAsync(hybridComp.StageIds[1]);
+        hybridQf.Should().NotBeNull();
+        hybridQf.CompositionEntries.Should().HaveCount(4);
+        hybridQf.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
+        hybridQf.Draws.Should().ContainSingle(draw =>
+            draw.Kind == DrawResolutionKind.Slot && draw.Status == DrawStatus.Published);
+        hybridQf.Draws.Single().Inputs!.Entries.Should().HaveCount(2);
+        hybridQf.Slots
+            .SelectMany(slot => slot.EntryId is { } entryId ? new[] { entryId } : [])
+            .Should().BeSubsetOf(hybridQf.CompositionEntries.Select(entry => entry.EntryId));
+
+        var progSummary = list.Single(c => c.Name.Value.Contains("Prog Auto Place", StringComparison.Ordinal));
+        var progComp = await competitions.GetByIdForUpdateAsync(progSummary.Id);
+        progComp.Should().NotBeNull();
+        var progSf = await stages.GetByIdForUpdateAsync(progComp.StageIds[1]);
+        progSf.Should().NotBeNull();
+        progSf.Status.Should().Be(StageStatus.Draft);
+        progSf.CompositionEntries.Should().HaveCount(4);
+        progSf.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
+        progSf.Draws.Should().BeEmpty();
+        progSf.Slots
+            .SelectMany(slot => slot.EntryId is { } entryId ? new[] { entryId } : [])
+            .Should().BeSubsetOf(progSf.CompositionEntries.Select(entry => entry.EntryId));
+    }
+
+    [Fact]
+    public async Task Flux_qualif_draft_wires_auto_place_intentsAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("flux-qualif-draft")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        competition.Should().NotBeNull();
+        var groups = await stages.GetByIdForUpdateAsync(competition.StageIds[0]);
+        var quarter = await stages.GetByIdForUpdateAsync(competition.StageIds[1]);
+        groups.Should().NotBeNull();
+        quarter.Should().NotBeNull();
+        groups.Regulation.QualificationRules.Should().NotBeNull();
+        groups.Regulation.QualificationRules!.Intents.Should().HaveCount(4);
+        groups.Regulation.QualificationRules.Intents.Should().OnlyContain(intent => !intent.TargetsPopulation);
+        groups.Regulation.QualificationRules.Paths.Should().OnlyContain(path => !path.Destination.TargetsPopulation);
+        quarter.Slots.Should().HaveCount(4);
+    }
+
+    [Fact]
     public async Task Structure_qa_scenario_matrix_seeds_statusesAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();

@@ -1284,4 +1284,33 @@ public sealed class ApplyQualificationTests
         match.Finish(new MatchResult(ResultType.Played, new Score(homeGoals, awayGoals)), _clock);
         return match;
     }
+
+    [Fact]
+    public void Place_destination_dual_writes_population_and_slot()
+    {
+        var competitionId = CompetitionId.New();
+        var league = CreateLeagueStage(competitionId, "League");
+        var terminal = CreateSlotStage(competitionId, "Terminal", ["Champ"]);
+        var entries = CreateEntries(2);
+        var matches = BuildRoundRobin(league, entries);
+        var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
+
+        league.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(terminal.Id, "Champ"))
+            ]),
+            _clock);
+
+        var results = ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+
+        var champ = standing.EntryAt(1)!.Value;
+        results.Should().ContainSingle().Which.EntryId.Should().Be(champ);
+        terminal.CompositionEntries.Select(e => e.EntryId).Should().Equal(champ);
+        terminal.FindSlot("Champ")!.EntryId.Should().Be(champ);
+    }
 }

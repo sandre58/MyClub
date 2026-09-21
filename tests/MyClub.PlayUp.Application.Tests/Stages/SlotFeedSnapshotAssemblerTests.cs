@@ -19,6 +19,61 @@ public sealed class SlotFeedSnapshotAssemblerTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 9, 19, 0, 0, TimeSpan.Zero));
 
     [Fact]
+    public void Assemble_emits_qualification_place_as_slot_feed()
+    {
+        var competitionId = CompetitionId.New();
+        var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
+        target.AddRound("QF", _clock);
+        target.AddSlot("SF1-A");
+
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(target.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
+
+        snapshot.InboundQualification.Should().ContainSingle();
+        snapshot.InboundQualification[0].SourceStageId.Should().Be(source.Id);
+        snapshot.InboundQualification[0].DestinationSlotKey.Should().Be("SF1-A");
+        SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.Unique);
+    }
+
+    [Fact]
+    public void Assemble_Qual_place_plus_Direct_is_MultipleFeeds()
+    {
+        var competitionId = CompetitionId.New();
+        var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var target = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
+        target.AddRound("QF", _clock);
+        target.AddSlot("SF1-A");
+        var directEntry = EntryId.New();
+        target.ReplaceCompositionEntries([directEntry], _clock);
+        target.AssignEntryToSlot("SF1-A", directEntry);
+
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(target.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
+        SlotFeedResolver.Resolve(snapshot, "SF1-A").Status.Should().Be(FeedResolutionStatus.MultipleFeeds);
+    }
+
+    [Fact]
     public void Assemble_does_not_emit_qualification_population_as_slot_feeds()
     {
         var competitionId = CompetitionId.New();
@@ -166,6 +221,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var stage = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         stage.AddSlot("SF1-A");
         var directEntry = EntryId.New();
+        stage.ReplaceCompositionEntries([directEntry], _clock);
         stage.AssignEntryToSlot("SF1-A", directEntry);
         var drawEntry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);

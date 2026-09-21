@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="FluxFullGraphDraftScenario.cs" company="Stéphane ANDRE">
+// <copyright file="ProgAutoPlaceMidScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,22 +11,22 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Structure flux QA: Qualif Auto Place + Progression Auto Place + Placement on one Draft competition.
+/// Case 3: QF winners Prog Auto Place into SF slots (dual-write), no orchestration Place helper.
 /// </summary>
-public sealed class FluxFullGraphDraftScenario : IScenario
+public sealed class ProgAutoPlaceMidScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "flux-full-graph-draft";
+    public string Id => "prog-auto-place-mid";
 
     /// <inheritdoc />
-    public string Name => "Flux — Graphe complet Draft";
+    public string Name => "Prog Auto Place mid";
 
     /// <inheritdoc />
     public string Description =>
-        "Groups → Demis Places (Qual Auto) → Finale/Bronze Places (Prog Auto) + Attribution 1–4 — Draft. WhoFeeds = Qual | Prog.";
+        "8 teams · QF played · winners Prog Auto Place → SF slots (dual-write) — SF Draft. WhoFeeds = Prog.";
 
     /// <inheritdoc />
-    public ScenarioCategory Category => ScenarioCategory.Construction;
+    public ScenarioCategory Category => ScenarioCategory.Operational;
 
     /// <inheritdoc />
     public bool AcceptsProgress => false;
@@ -36,5 +36,5 @@ public sealed class FluxFullGraphDraftScenario : IScenario
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildFluxFullGraphDraftAsync(context, cancellationToken);
+        ScenarioOrchestration.BuildProgAutoPlaceMidAsync(context, cancellationToken);
 }
