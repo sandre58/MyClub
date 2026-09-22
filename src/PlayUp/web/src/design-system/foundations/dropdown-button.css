@@ -1,0 +1,101 @@
+/*
+ * DropDownButton — ds-btn trigger + menu panel (Select-like options).
+ */
+
+.ds-dropdown-button {
+  display: inline-flex;
+  position: relative;
+}
+
+.ds-dropdown-button__trigger {
+  gap: var(--space-8);
+}
+
+.ds-dropdown-button__label {
+  min-width: 0;
+}
+
+.ds-dropdown-button__chevron {
+  display: inline-flex;
+  flex: none;
+  line-height: 0;
+  transition: transform var(--motion-duration) var(--motion-easing);
+}
+
+.ds-dropdown-button__chevron[data-open='true'] {
+  transform: rotate(180deg);
+}
+
+.ds-dropdown-button__menu.ds-popover {
+  padding: var(--space-4);
+  gap: 0;
+  min-width: 12rem;
+  max-width: min(22rem, calc(100vw - 2rem));
+}
+
+/* Action menus follow Select list chrome — no Preferences caret. */
+.ds-dropdown-button__menu.ds-popover::before {
+  content: none;
+}
+
+.ds-dropdown-button__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: min(18rem, 50vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.ds-dropdown-button__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  min-height: calc(var(--control-height) - 0.25rem);
+  margin: 0;
+  padding: var(--space-4) var(--space-8);
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.ds-dropdown-button__item-leading {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.ds-dropdown-button__item-label {
+  min-width: 0;
+  flex: 1;
+}
+
+.ds-dropdown-button__item:hover:not(:disabled),
+.ds-dropdown-button__item[data-active='true']:not(:disabled) {
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+}
+
+.ds-dropdown-button__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ds-dropdown-button__item:focus-visible {
+  box-shadow: var(--focus-halo);
+}
+
+.ds-dropdown-button__empty {
+  margin: 0;
+  padding: var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-normal);
+}

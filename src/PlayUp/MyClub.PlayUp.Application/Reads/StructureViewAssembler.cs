@@ -659,11 +659,12 @@ public static class StructureViewAssembler
 
         var actions = new List<string>
         {
-            ActionRenameStage, ActionReplacePlacementAwardRules, ActionReplaceMatchRules, ActionBindToCompetition
+            ActionRenameStage, ActionReplaceMatchRules, ActionBindToCompetition
         };
 
         // V1 exit capacity: classifying → Qualification ; Cup/KO non-classifying → Progression.
-        // Domain still allows both on StageRegulation; UI/actions filter by topology.
+        // Attribution (PlacementAwardRules) = KO/Cup only — Championship/Groups use Standing.
+        // Domain still allows both Qual/Prog on StageRegulation; UI/actions filter by topology.
         if (StageClassification.IsClassifyingPhase(stage))
         {
             actions.Add(ActionReplaceQualificationRules);
@@ -672,6 +673,7 @@ public static class StructureViewAssembler
         if (StageClassification.IsNonClassifyingPhase(stage))
         {
             actions.Add(ActionReplaceProgressionRules);
+            actions.Add(ActionReplacePlacementAwardRules);
         }
 
         if (stage.Regulation.StandingRules is not null

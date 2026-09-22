@@ -90,6 +90,19 @@ export function areProgressionPlacesLabeled(
   return schematic.cases.some((c) => isCupPlaceTargetable(c.formPosition));
 }
 
+/**
+ * Aval peers whose form currently exposes addressable Cup places (U4 / P1).
+ * Gate on real capacity — not formatKind alone (Cup skeleton without SlotKey = ineligible).
+ */
+export function filterPlaceEligiblePeers<T extends { stageId: string }>(
+  peers: readonly T[],
+  schematicById: ReadonlyMap<string, StageSchematic | undefined>,
+): T[] {
+  return peers.filter((peer) =>
+    areProgressionPlacesLabeled(schematicById.get(peer.stageId)),
+  );
+}
+
 export type LabeledCupPlace = {
   apiIdentity: string;
   /** Same as schematic chrome (SlotKey). */

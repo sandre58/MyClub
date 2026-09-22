@@ -37,6 +37,7 @@ vi.mock('../api', async (importOriginal) => {
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const entryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+const avalStageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 
 function championshipStage(
   overrides: Partial<StructureStageHubSummary> = {},
@@ -97,6 +98,41 @@ function groupesStage(
     progressionPathCount: 4,
     hasTieFormat: false,
     formatKind: 'Groups',
+    defaultsBinding: {
+      matchDuration: { isBound: true },
+      extraTime: { isBound: true },
+      penaltyShootout: { isBound: true },
+      administrativeResult: { isBound: true },
+      points: { isBound: true },
+      rankingCriteria: { isBound: true },
+    },
+    ...overrides,
+  };
+}
+
+function cupStage(
+  overrides: Partial<StructureStageHubSummary> = {},
+): StructureStageHubSummary {
+  return {
+    stageId,
+    name: 'Finale',
+    status: 'Draft',
+    teamCount: 2,
+    matchCount: 1,
+    groupCount: 0,
+    roundCount: 1,
+    numberOfPeriods: 2,
+    durationPerPeriod: 45,
+    hasExtraTime: false,
+    hasPenaltyShootout: false,
+    hasStandingRules: false,
+    hasDrawRules: false,
+    hasQualificationRules: false,
+    qualificationPathCount: 0,
+    hasProgressionRules: false,
+    progressionPathCount: 0,
+    hasTieFormat: false,
+    formatKind: 'Cup',
     defaultsBinding: {
       matchDuration: { isBound: true },
       extraTime: { isBound: true },
@@ -812,5 +848,177 @@ describe('StructurePage Structure hub', () => {
       screen.getByRole('button', { name: /Structure manquante/i }),
     );
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('shows empty Sorties and Attribution rails with + when editable; omits kebab add items', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Cup',
+          primaryStageId: stageId,
+          primaryStageName: 'Demi-finales',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [
+          cupStage({
+            stageId,
+            name: 'Demi-finales',
+            actions: [
+              'ReplaceProgressionRules',
+              'ReplacePlacementAwardRules',
+              'RemoveStage',
+            ],
+            hasProgressionRules: false,
+            progressionPathCount: 0,
+            hasPlacementAwardRules: false,
+            placementAwardCount: 0,
+          }),
+          cupStage({
+            stageId: avalStageId,
+            name: 'Finale',
+            actions: [],
+          }),
+        ],
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Demi-finales' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Sorties$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Attribution des places/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Ajouter une sortie/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Ajouter une attribution/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Autres actions/i }));
+    const menu = await screen.findByRole('menu', { name: /Autres actions/i });
+    expect(
+      within(menu).queryByRole('menuitem', { name: /Ajouter une sortie/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(menu).queryByRole('menuitem', {
+        name: /Ajouter une attribution/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(menu).getByRole('menuitem', { name: /Supprimer la phase/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides empty Sorties without aval peer; hides Attribution on Championship', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [
+          championshipStage({
+            actions: ['ReplaceQualificationRules'],
+          }),
+        ],
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(await screen.findByRole('heading', { name: 'League' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /^Sorties$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /Attribution des places/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows Sorties and Attribution with content and edit controls when editable', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Cup',
+          primaryStageId: stageId,
+          primaryStageName: 'Finale',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [
+          cupStage({
+            stageId,
+            name: 'Finale',
+            actions: [
+              'ReplaceProgressionRules',
+              'ReplacePlacementAwardRules',
+            ],
+            progressionIntents: [
+              {
+                intentId: 'pi-1',
+                order: 0,
+                roundId: 'round-1',
+                roundName: 'Finale',
+                outcome: 'Winner',
+                destinationStageId: avalStageId,
+                expandedPathCount: 1,
+              },
+            ],
+            hasProgressionRules: true,
+            progressionPathCount: 1,
+            placementAwards: [
+              {
+                rank: 1,
+                outcome: 'Winner',
+                sourceFixtureId: 'fix-final',
+                sourceLabel: 'Finale · #1',
+              },
+              {
+                rank: 2,
+                outcome: 'Loser',
+                sourceFixtureId: 'fix-final',
+                sourceLabel: 'Finale · #1',
+              },
+            ],
+            hasPlacementAwardRules: true,
+            placementAwardCount: 2,
+          }),
+          cupStage({
+            stageId: avalStageId,
+            name: 'Hors tableau',
+            actions: [],
+          }),
+        ],
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(await screen.findByRole('heading', { name: 'Finale' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Sorties$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Attribution des places/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Ajouter une sortie/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Ajouter une attribution/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Modifier les sorties/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^Modifier$/i }),
+    ).toBeInTheDocument();
   });
 });

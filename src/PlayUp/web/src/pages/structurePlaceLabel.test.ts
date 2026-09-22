@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { SchematicFormPosition, StageSchematic } from '../types';
 import {
   areProgressionPlacesLabeled,
+  filterPlaceEligiblePeers,
   hasCupPlaceAddressFacts,
   isCupPlaceTargetable,
   listLabeledCupPlaces,
@@ -113,5 +114,57 @@ describe('structurePlaceLabel', () => {
       'Demi-finale 1 · côté A',
     );
     expect(placeLabelForDestinationSlotKey(schematic, 'missing', t)).toBeNull();
+  });
+
+  it('filters Place-eligible peers by addressable Cup capacity, not formatKind alone', () => {
+    const labeledCup: StageSchematic = {
+      stageId: 'cup',
+      competitionId: 'c1',
+      name: 'Cup',
+      status: 'Draft',
+      formatKind: 'Cup',
+      cases: [{ formPosition: { kind: 'CupSlot', slotKey: 'R16-1-A' } }],
+      connections: [],
+    };
+    const bareCup: StageSchematic = {
+      stageId: 'cup-bare',
+      competitionId: 'c1',
+      name: 'Cup bare',
+      status: 'Draft',
+      formatKind: 'Cup',
+      cases: [
+        {
+          formPosition: {
+            kind: 'CupSlot',
+            fixtureId: 'fx',
+            side: 'A',
+            roundName: 'Finale',
+          },
+        },
+      ],
+      connections: [],
+    };
+    const championship: StageSchematic = {
+      stageId: 'champ',
+      competitionId: 'c1',
+      name: 'Champ',
+      status: 'Draft',
+      formatKind: 'Championship',
+      cases: [{ formPosition: { kind: 'RosterPlace', index: 1 } }],
+      connections: [],
+    };
+    const peers = [
+      { stageId: 'cup' },
+      { stageId: 'cup-bare' },
+      { stageId: 'champ' },
+      { stageId: 'missing' },
+    ];
+    const byId = new Map<string, StageSchematic | undefined>([
+      ['cup', labeledCup],
+      ['cup-bare', bareCup],
+      ['champ', championship],
+      ['missing', undefined],
+    ]);
+    expect(filterPlaceEligiblePeers(peers, byId)).toEqual([{ stageId: 'cup' }]);
   });
 });

@@ -394,22 +394,26 @@ function summarizeIntentWhoLegacy(
   });
 }
 
-export function ordinalRank(n: number, locale: string): string {
+export function ordinalRankSuffix(n: number, locale: string): string {
   if (locale.startsWith('fr')) {
-    return n === 1 ? '1er' : `${n}e`;
+    return n === 1 ? 'er' : 'e';
   }
   const mod100 = n % 100;
-  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  if (mod100 >= 11 && mod100 <= 13) return 'th';
   switch (n % 10) {
     case 1:
-      return `${n}st`;
+      return 'st';
     case 2:
-      return `${n}nd`;
+      return 'nd';
     case 3:
-      return `${n}rd`;
+      return 'rd';
     default:
-      return `${n}th`;
+      return 'th';
   }
+}
+
+export function ordinalRank(n: number, locale: string): string {
+  return `${n}${ordinalRankSuffix(n, locale)}`;
 }
 
 export function isIntentComplete(

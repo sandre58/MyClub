@@ -1,12 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   addCompetitionStage,
-  fetchStageOverview,
   rebuildStageStructure,
   removeCompetitionStage,
-  replaceStagePlacementAwardRules,
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { Tooltip } from '../design-system/components/Tooltip';
@@ -15,13 +13,10 @@ import { queryKeys } from '../queryKeys';
 import { MutationError, PendingLabel } from '../ui';
 import type {
   StructureFormatKind,
-  StructurePlacementAward,
   StructureStageHubSummary,
   StructureView,
-  ProgressionOutcome,
 } from '../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
-import { listFixtureOptions } from './structureFixtureLabels';
 import { StructureProgressionDialog } from './StructureProgressionDialog';
 import { StructureQualificationDialog } from './StructureQualificationDialog';
 import {
@@ -31,59 +26,8 @@ import {
   skeletonStepValid,
 } from './structureSkeletonForm';
 
-type PlacementDraft = {
-  sourceFixtureId: string;
-  outcome: ProgressionOutcome;
-  rank: string;
-};
-
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
-}
-
-function FixtureSourceSelect({
-  stageId,
-  value,
-  onChange,
-  required,
-}: {
-  stageId: string;
-  value: string;
-  onChange: (fixtureId: string) => void;
-  required?: boolean;
-}) {
-  const { t } = useTranslation('structure');
-  const overviewQuery = useQuery({
-    queryKey: queryKeys.stages.detail(stageId),
-    queryFn: () => fetchStageOverview(stageId),
-  });
-  const options = useMemo(
-    () => listFixtureOptions(overviewQuery.data?.rounds ?? []),
-    [overviewQuery.data?.rounds],
-  );
-  const known = options.some((o) => o.id === value);
-
-  return (
-    <select
-      className="ds-input"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      required={required}
-      disabled={overviewQuery.isLoading}
-    >
-      <option value="">{t('graph.chooseFixture')}</option>
-      {options.map((option) => (
-        <option key={option.id} value={option.id}>
-          {option.label}
-        </option>
-      ))}
-      {value && !known ? (
-        <option value={value}>
-          {t('graph.unknownFixture', { id: value.slice(0, 8) })}
-        </option>
-      ) : null}
-    </select>
-  );
 }
 
 /** Remove-phase control for the phase fiche (N2) — not page-level chrome. */
@@ -625,191 +569,5 @@ export function QualificationRulesDialog({
       onClose={onClose}
       openedFromDestinationStageId={openedFromDestinationStageId}
     />
-  );
-}
-
-export function PlacementAwardRulesDialog({
-  data,
-  stage,
-  open,
-  onClose,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary;
-  open: boolean;
-  onClose: () => void;
-}) {
-  const { t } = useTranslation('structure');
-  const { t: tCommon } = useTranslation('common');
-  const formId = useId();
-  const queryClient = useQueryClient();
-  const [rows, setRows] = useState<PlacementDraft[]>([]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const existing = stage.placementAwards ?? [];
-    setRows(
-      existing.length > 0
-        ? existing.map((path) => ({
-            sourceFixtureId: path.sourceFixtureId ?? '',
-            outcome: path.outcome,
-            rank: String(path.rank),
-          }))
-        : [
-            {
-              sourceFixtureId: '',
-              outcome: 'Winner',
-              rank: '1',
-            },
-          ],
-    );
-  }, [open, stage.stageId, stage.placementAwards]);
-
-  const mutation = useMutation({
-    mutationFn: (paths: StructurePlacementAward[] | null) =>
-      replaceStagePlacementAwardRules(stage.stageId, { paths }),
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
-      onClose();
-    },
-  });
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={t('graph.editPlacementTitle')}
-      description={t('graph.editPlacementLede')}
-      closeLabel={tCommon('close')}
-      closeDisabled={mutation.isPending}
-      size="lg"
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            disabled={mutation.isPending}
-            onClick={onClose}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={mutation.isPending}
-            onClick={() => mutation.mutate(null)}
-          >
-            {t('graph.clearRules')}
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending || rows.length === 0}
-          >
-            {mutation.isPending ? <PendingLabel /> : t('graph.saveRules')}
-          </button>
-        </>
-      }
-      footerStatus={
-        mutation.isError ? <MutationError error={mutation.error} /> : null
-      }
-    >
-      <form
-        id={formId}
-        className="structure-graph-dialog"
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault();
-          if (mutation.isPending) {
-            return;
-          }
-          mutation.mutate(
-            rows.map((row) => ({
-              sourceFixtureId: row.sourceFixtureId.trim(),
-              outcome: row.outcome,
-              rank: Number(row.rank),
-            })),
-          );
-        }}
-      >
-        <ul className="structure-graph-rows">
-          {rows.map((row, index) => (
-            <li key={index} className="structure-graph-row">
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.sourceFixture')}</span>
-                <FixtureSourceSelect
-                  stageId={stage.stageId}
-                  value={row.sourceFixtureId}
-                  required
-                  onChange={(sourceFixtureId) => {
-                    const next = [...rows];
-                    next[index] = { ...row, sourceFixtureId };
-                    setRows(next);
-                  }}
-                />
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.outcome')}</span>
-                <select
-                  className="ds-input"
-                  value={row.outcome}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = {
-                      ...row,
-                      outcome: event.target.value as ProgressionOutcome,
-                    };
-                    setRows(next);
-                  }}
-                >
-                  <option value="Winner">Winner</option>
-                  <option value="Loser">Loser</option>
-                </select>
-              </label>
-              <label className="ds-field">
-                <span className="ds-field__label">{t('graph.rank')}</span>
-                <input
-                  className="ds-input"
-                  type="number"
-                  min={1}
-                  value={row.rank}
-                  onChange={(event) => {
-                    const next = [...rows];
-                    next[index] = { ...row, rank: event.target.value };
-                    setRows(next);
-                  }}
-                  required
-                />
-              </label>
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost"
-                onClick={() => setRows(rows.filter((_, i) => i !== index))}
-              >
-                {t('graph.removeRow')}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          className="ds-btn ds-btn--secondary"
-          onClick={() =>
-            setRows([
-              ...rows,
-              {
-                sourceFixtureId: '',
-                outcome: 'Loser',
-                rank: String(rows.length + 1),
-              },
-            ])
-          }
-        >
-          {t('graph.addRow')}
-        </button>
-      </form>
-    </Dialog>
   );
 }

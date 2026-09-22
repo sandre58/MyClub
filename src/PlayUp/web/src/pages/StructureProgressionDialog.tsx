@@ -54,7 +54,6 @@ import {
 } from './structureProgressionChampionshipPath';
 import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
-  areProgressionPlacesLabeled,
   countUnmappedPlaceSlots,
   emptyProgIntent,
   expandContribution,
@@ -72,7 +71,11 @@ import {
   type ProgIntentDraft,
   type ProgTargetKind,
 } from './structureProgressionDraft';
-import { listLabeledCupPlaces } from './structurePlaceLabel';
+import {
+  areProgressionPlacesLabeled,
+  filterPlaceEligiblePeers,
+  listLabeledCupPlaces,
+} from './structurePlaceLabel';
 import { expectedPopulationWithProgDraft } from './structurePopulationVolume';
 
 type StructureProgressionDialogProps = {
@@ -159,8 +162,6 @@ export function StructureProgressionDialog({
     () => sortiesAvalPeerStages(data.stages, stage.stageId),
     [data.stages, stage.stageId],
   );
-  /** Place Auto = same aval peers as Population (no self forme-owner in Sorties). */
-  const placeDestinationStages = peerStages;
   const contextDestinationId = openedFromDestinationStageId?.trim() || '';
   const defaultDest =
     (contextDestinationId &&
@@ -184,44 +185,38 @@ export function StructureProgressionDialog({
   /** False until overview + source schematic have settled for this open session. */
   const [sessionReady, setSessionReady] = useState(false);
 
-  const placeDestinationIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const intent of intents) {
-      if (intent.targetKind !== 'place') continue;
-      const id = intent.destinationStageId.trim();
-      if (id) ids.add(id);
-    }
-    // Always include source for same-stage Place listing fallback.
-    ids.add(stage.stageId);
-    return [...ids];
-  }, [intents, stage.stageId]);
-
-  const destinationSchematicQueries = useQueries({
-    queries: placeDestinationIds.map((stageId) => ({
-      queryKey: queryKeys.stages.schematic(stageId),
-      queryFn: () => fetchStageSchematic(stageId),
-      enabled: open && !!stageId,
+  const peerSchematicQueries = useQueries({
+    queries: peerStages.map((peer) => ({
+      queryKey: queryKeys.stages.schematic(peer.stageId),
+      queryFn: () => fetchStageSchematic(peer.stageId),
+      enabled: open && peerStages.length > 0,
     })),
   });
 
   const destinationSchematicById = useMemo(() => {
     const map = new Map<string, StageSchematic | undefined>();
-    placeDestinationIds.forEach((stageId, index) => {
-      map.set(stageId, destinationSchematicQueries[index]?.data);
+    peerStages.forEach((peer, index) => {
+      map.set(peer.stageId, peerSchematicQueries[index]?.data);
     });
     return map;
-  }, [destinationSchematicQueries, placeDestinationIds]);
+  }, [peerSchematicQueries, peerStages]);
+
+  /** P1 — Place destinations with addressable Cup places (not formatKind alone). */
+  const placeEligiblePeers = useMemo(
+    () => filterPlaceEligiblePeers(peerStages, destinationSchematicById),
+    [peerStages, destinationSchematicById],
+  );
 
   function placesLabeledFor(intent: ProgIntentDraft): boolean {
     if (intent.targetKind !== 'place') return true;
     const destId = intent.destinationStageId.trim();
     if (!destId) return true;
-    const schematic = destinationSchematicById.get(destId);
-    if (schematic === undefined) {
+    const peerIndex = peerStages.findIndex((peer) => peer.stageId === destId);
+    if (peerIndex >= 0 && peerSchematicQueries[peerIndex]?.isPending) {
       // Still loading — do not block as PlaceUnavailable yet.
       return true;
     }
-    return areProgressionPlacesLabeled(schematic);
+    return areProgressionPlacesLabeled(destinationSchematicById.get(destId));
   }
 
   const dirty = sessionReady && serializeIntents(intents) !== baselineSerialized;
@@ -832,7 +827,7 @@ export function StructureProgressionDialog({
                             data={data}
                             sourceStage={stage}
                             peerStages={peerStages}
-                            placeDestinationStages={placeDestinationStages}
+                            placeEligiblePeers={placeEligiblePeers}
                             rounds={rounds}
                             playableRounds={playableRounds}
                             championshipTerminal={championshipTerminal}
@@ -882,7 +877,7 @@ function ProgIntentEditor({
   data,
   sourceStage,
   peerStages,
-  placeDestinationStages,
+  placeEligiblePeers,
   rounds,
   playableRounds,
   championshipTerminal,
@@ -894,7 +889,7 @@ function ProgIntentEditor({
   data: StructureView;
   sourceStage: StructureStageHubSummary;
   peerStages: StructureStageHubSummary[];
-  placeDestinationStages: StructureStageHubSummary[];
+  placeEligiblePeers: StructureStageHubSummary[];
   rounds: ProgRoundOption[];
   playableRounds: ProgRoundOption[];
   championshipTerminal: ProgRoundOption | null;
@@ -905,6 +900,10 @@ function ProgIntentEditor({
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
   const placeFillHintId = useId();
+
+  const placeUnavailable = placeEligiblePeers.length === 0;
+  const placeModeUnavailable =
+    draft.targetKind === 'place' && placeEligiblePeers.length === 0;
 
   const destStageId = draft.destinationStageId.trim();
   const destSchematicQuery = useQuery({
@@ -1001,7 +1000,7 @@ function ProgIntentEditor({
     }
     const keepDest =
       draft.destinationStageId.trim() &&
-      placeDestinationStages.some(
+      placeEligiblePeers.some(
         (s) => s.stageId === draft.destinationStageId,
       );
     onChange({
@@ -1009,7 +1008,7 @@ function ProgIntentEditor({
       targetKind: 'place',
       destinationStageId: keepDest
         ? draft.destinationStageId
-        : (peerStages[0]?.stageId ?? ''),
+        : (placeEligiblePeers[0]?.stageId ?? ''),
       destinationSlotKeys:
         draft.targetKind === 'place' ? draft.destinationSlotKeys : [],
     });
@@ -1152,17 +1151,30 @@ function ProgIntentEditor({
             setTargetKind('population');
           }}
         />
-        <ChoiceTile
-          label={t('progression.kindPlace')}
-          description={t('progression.kindPlaceHint')}
-          leading={<CupFormatIcon size="sm" />}
-          selected={draft.targetKind === 'place'}
-          disabled={peerStages.length === 0}
-          onChange={(selected) => {
-            if (!selected) return;
-            setTargetKind('place');
-          }}
-        />
+        {placeUnavailable ? (
+          <Tooltip content={t('progression.kindPlaceUnavailable')}>
+            <ChoiceTile
+              label={t('progression.kindPlace')}
+              description={t('progression.kindPlaceHint')}
+              leading={<CupFormatIcon size="sm" />}
+              selected={draft.targetKind === 'place'}
+              disabled
+              onChange={() => {}}
+            />
+          </Tooltip>
+        ) : (
+          <ChoiceTile
+            label={t('progression.kindPlace')}
+            description={t('progression.kindPlaceHint')}
+            leading={<CupFormatIcon size="sm" />}
+            selected={draft.targetKind === 'place'}
+            disabled={peerStages.length === 0}
+            onChange={(selected) => {
+              if (!selected) return;
+              setTargetKind('place');
+            }}
+          />
+        )}
       </div>
 
       {draft.targetKind === 'population' ? (
@@ -1196,19 +1208,19 @@ function ProgIntentEditor({
             ))}
           </div>
         )
-      ) : placeDestinationStages.length === 0 ? (
+      ) : placeModeUnavailable ? (
         <p className="structure-qualification__field-hint" role="status">
-          {t('progression.emptyNoPeerBody')}
+          {t('progression.emptyNoPlacePeerBody')}
         </p>
       ) : (
         <>
           <div
             className="structure-qualification__scope-tiles"
-            data-count={String(Math.min(placeDestinationStages.length, 3))}
+            data-count={String(Math.min(placeEligiblePeers.length, 3))}
             role="radiogroup"
             aria-label={t('progression.destinationPhase')}
           >
-            {placeDestinationStages.map((dest) => (
+            {placeEligiblePeers.map((dest) => (
               <ChoiceTile
                 key={dest.stageId}
                 label={dest.name}
@@ -1249,7 +1261,7 @@ function ProgIntentEditor({
               </ul>
             ) : !placesLabeled ? (
               <p className="structure-qualification__field-hint" role="status">
-                {t('progression.placeGatedBody')}
+                {t('progression.emptyNoPlacePeerBody')}
               </p>
             ) : labeledPlaces.length === 0 ? (
               <p className="structure-qualification__field-hint" role="status">
@@ -1262,7 +1274,7 @@ function ProgIntentEditor({
             ) : (
               <div className="structure-qualification__place-map-block">
                 <div className="structure-qualification__place-map-toolbar">
-                  {placeDestinationStages.length > 0 ? (
+                  {placeEligiblePeers.length > 0 ? (
                     <p className="structure-qualification__place-map-heading">
                       {t('progression.placeMapHeading')}
                     </p>

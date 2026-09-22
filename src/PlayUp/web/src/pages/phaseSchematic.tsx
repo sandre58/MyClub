@@ -213,6 +213,10 @@ function GroupsSchematic({
   );
 }
 
+/**
+ * Championship = participant pool (same as Swiss on ranks): index is roster
+ * order only, not standing — do not render 1…N as league ranks.
+ */
 function ChampionshipSchematic({
   schematic,
   t,
@@ -232,18 +236,12 @@ function ChampionshipSchematic({
     >
       <div className="regulation-schematic__league">
         {rows.map((c, i) => (
-          <span
+          <SlotBox
             key={c.formPosition.index ?? i}
-            className="regulation-schematic__league-row"
-          >
-            <span
-              className="regulation-schematic__league-rank"
-              aria-hidden="true"
-            >
-              {c.formPosition.index ?? i + 1}
-            </span>
-            <SlotBox c={c} t={t} style={{ flex: '1 1 auto' }} />
-          </span>
+            c={c}
+            t={t}
+            style={{ width: '100%' }}
+          />
         ))}
       </div>
     </div>

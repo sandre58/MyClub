@@ -100,7 +100,7 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText('Beta')).toBeInTheDocument();
   });
 
-  it('championship roster shows composition entries in places', () => {
+  it('championship roster shows composition entries without league ranks', () => {
     const schematic: StageSchematic = {
       stageId: 's1',
       competitionId: 'c1',
@@ -121,6 +121,9 @@ describe('PhaseSchematic', () => {
     expect(container.querySelectorAll('.schematic-slot')).toHaveLength(2);
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(container.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
+    expect(
+      container.querySelector('.regulation-schematic__league-rank'),
+    ).toBeNull();
   });
 
   it('swiss shows planned round count, distinct from championship', () => {

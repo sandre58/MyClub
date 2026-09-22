@@ -54,6 +54,7 @@ import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
+  filterPlaceEligiblePeers,
   listLabeledCupPlaces,
 } from './structurePlaceLabel';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
@@ -208,42 +209,38 @@ export function StructureQualificationDialog({
     resetDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
-  const placeDestinationIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const intent of intents) {
-      if (intent.targetKind !== 'place') continue;
-      const id = intent.destinationStageId.trim();
-      if (id) ids.add(id);
-    }
-    return [...ids];
-  }, [intents]);
-
-  const destinationSchematicQueries = useQueries({
-    queries: placeDestinationIds.map((stageId) => ({
-      queryKey: queryKeys.stages.schematic(stageId),
-      queryFn: () => fetchStageSchematic(stageId),
-      enabled: open && !!stageId,
+  const peerSchematicQueries = useQueries({
+    queries: peerStages.map((peer) => ({
+      queryKey: queryKeys.stages.schematic(peer.stageId),
+      queryFn: () => fetchStageSchematic(peer.stageId),
+      enabled: open && peerStages.length > 0,
     })),
   });
 
   const destinationSchematicById = useMemo(() => {
     const map = new Map<string, StageSchematic | undefined>();
-    placeDestinationIds.forEach((stageId, index) => {
-      map.set(stageId, destinationSchematicQueries[index]?.data);
+    peerStages.forEach((peer, index) => {
+      map.set(peer.stageId, peerSchematicQueries[index]?.data);
     });
     return map;
-  }, [destinationSchematicQueries, placeDestinationIds]);
+  }, [peerSchematicQueries, peerStages]);
+
+  /** P1 — Place destinations with addressable Cup places (not formatKind alone). */
+  const placeEligiblePeers = useMemo(
+    () => filterPlaceEligiblePeers(peerStages, destinationSchematicById),
+    [peerStages, destinationSchematicById],
+  );
 
   function placesLabeledFor(intent: QualIntentDraft): boolean {
     if (intent.targetKind !== 'place') return true;
     const destId = intent.destinationStageId.trim();
     if (!destId) return true;
-    const schematic = destinationSchematicById.get(destId);
-    if (schematic === undefined) {
+    const peerIndex = peerStages.findIndex((peer) => peer.stageId === destId);
+    if (peerIndex >= 0 && peerSchematicQueries[peerIndex]?.isPending) {
       // Still loading — do not block as PlaceUnavailable yet.
       return true;
     }
-    return areProgressionPlacesLabeled(schematic);
+    return areProgressionPlacesLabeled(destinationSchematicById.get(destId));
   }
 
   const mutation = useMutation({
@@ -741,6 +738,7 @@ export function StructureQualificationDialog({
                         groups={groups}
                         hasGroups={hasGroups}
                         peerStages={peerStages}
+                        placeEligiblePeers={placeEligiblePeers}
                         draftEntriesByDestination={draftEntriesByDestination}
                         locale={locale}
                         onChange={updateIntent}
@@ -887,6 +885,7 @@ function QualIntentEditor({
   groups,
   hasGroups,
   peerStages,
+  placeEligiblePeers,
   draftEntriesByDestination,
   locale,
   onChange,
@@ -897,6 +896,7 @@ function QualIntentEditor({
   groups: { id: string; name: string }[];
   hasGroups: boolean;
   peerStages: StructureStageHubSummary[];
+  placeEligiblePeers: StructureStageHubSummary[];
   draftEntriesByDestination: Map<string, number>;
   locale: string;
   onChange: (next: QualIntentDraft) => void;
@@ -908,6 +908,11 @@ function QualIntentEditor({
   const acrossId = useId();
   const pointsId = useId();
   const placeFillHintId = useId();
+
+  const destinationPeers =
+    draft.targetKind === 'place' ? placeEligiblePeers : peerStages;
+  const placeModeUnavailable =
+    draft.targetKind === 'place' && placeEligiblePeers.length === 0;
 
   const destStageId = draft.destinationStageId.trim();
   const destSchematicQuery = useQuery({
@@ -935,19 +940,21 @@ function QualIntentEditor({
       });
       return;
     }
+    const keepDest =
+      draft.destinationStageId.trim() &&
+      placeEligiblePeers.some((p) => p.stageId === draft.destinationStageId);
     onChange({
       ...draft,
       targetKind: 'place',
-      destinationStageId:
-        draft.destinationStageId.trim() &&
-        peerStages.some((p) => p.stageId === draft.destinationStageId)
-          ? draft.destinationStageId
-          : (peerStages[0]?.stageId ?? ''),
+      destinationStageId: keepDest
+        ? draft.destinationStageId
+        : (placeEligiblePeers[0]?.stageId ?? ''),
       destinationSlotKeys:
         draft.targetKind === 'place' ? draft.destinationSlotKeys : [],
     });
   }
 
+  const placeUnavailable = placeEligiblePeers.length === 0;
   const placeOccurrences = useMemo(
     () =>
       draft.targetKind === 'place' ? expandOccurrences(draft, groups) : [],
@@ -1217,31 +1224,48 @@ function QualIntentEditor({
             setTargetKind('population');
           }}
         />
-        <ChoiceTile
-          label={t('qualification.kindPlace')}
-          description={t('qualification.kindPlaceHint')}
-          leading={<CupFormatIcon size="sm" />}
-          selected={draft.targetKind === 'place'}
-          disabled={peerStages.length === 0}
-          onChange={(selected) => {
-            if (!selected) return;
-            setTargetKind('place');
-          }}
-        />
+        {placeUnavailable ? (
+          <Tooltip content={t('qualification.kindPlaceUnavailable')}>
+            <ChoiceTile
+              label={t('qualification.kindPlace')}
+              description={t('qualification.kindPlaceHint')}
+              leading={<CupFormatIcon size="sm" />}
+              selected={draft.targetKind === 'place'}
+              disabled
+              onChange={() => {}}
+            />
+          </Tooltip>
+        ) : (
+          <ChoiceTile
+            label={t('qualification.kindPlace')}
+            description={t('qualification.kindPlaceHint')}
+            leading={<CupFormatIcon size="sm" />}
+            selected={draft.targetKind === 'place'}
+            disabled={peerStages.length === 0}
+            onChange={(selected) => {
+              if (!selected) return;
+              setTargetKind('place');
+            }}
+          />
+        )}
       </div>
 
       {peerStages.length === 0 ? (
         <p className="structure-qualification__field-hint" role="status">
           {t('qualification.emptyNoPeerBody')}
         </p>
+      ) : placeModeUnavailable ? (
+        <p className="structure-qualification__field-hint" role="status">
+          {t('qualification.emptyNoPlacePeerBody')}
+        </p>
       ) : (
         <div
           className="structure-qualification__scope-tiles"
-          data-count={String(Math.min(peerStages.length, 3))}
+          data-count={String(Math.min(destinationPeers.length, 3))}
           role="radiogroup"
           aria-label={t('qualification.destinationPhase')}
         >
-          {peerStages.map((peer) => {
+          {destinationPeers.map((peer) => {
             const draftTotal =
               draftEntriesByDestination.get(peer.stageId) ?? 0;
             // B: +Z = this intent only; X still substitutes the full dialog draft.
@@ -1310,7 +1334,9 @@ function QualIntentEditor({
         </div>
       )}
 
-      {draft.targetKind === 'place' && draft.destinationStageId.trim() ? (
+      {draft.targetKind === 'place' &&
+      !placeModeUnavailable &&
+      draft.destinationStageId.trim() ? (
         destSchematicQuery.isLoading ? (
           <ul
             className="structure-qualification__place-map structure-qualification__place-map--skeleton"
@@ -1328,7 +1354,7 @@ function QualIntentEditor({
           </ul>
         ) : !placesLabeled ? (
           <p className="structure-qualification__field-hint" role="status">
-            {t('qualification.placeGatedBody')}
+            {t('qualification.emptyNoPlacePeerBody')}
           </p>
         ) : labeledPlaces.length === 0 ? (
           <p className="structure-qualification__field-hint" role="status">
@@ -1341,7 +1367,7 @@ function QualIntentEditor({
         ) : (
           <div className="structure-qualification__place-map-block">
             <div className="structure-qualification__place-map-toolbar">
-              {peerStages.length > 0 ? (
+              {destinationPeers.length > 0 ? (
                 <p className="structure-qualification__place-map-heading">
                   {t('qualification.placeMapHeading')}
                 </p>

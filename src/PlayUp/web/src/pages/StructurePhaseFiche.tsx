@@ -57,11 +57,11 @@ import type {
   StructureView,
 } from '../types';
 import {
-  PlacementAwardRulesDialog,
   QualificationRulesDialog,
   ProgressionRulesDialog,
   RemovePhaseDialog,
 } from './StructureGraphDialogs';
+import { StructurePlacementAwardDialog } from './StructurePlacementAwardDialog';
 import {
   DrawRulesDialog,
   MatchRulesDialog,
@@ -1255,19 +1255,28 @@ function FluxRail({
   editControl,
   children,
   side,
+  empty = false,
 }: {
   id: string;
   title: string;
   icon: ReactNode;
   editControl?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   side: 'in' | 'out';
+  /** When true: header only — body omitted so it consumes no vertical space. */
+  empty?: boolean;
 }) {
   const titleId = `${id}-title`;
   return (
     <aside
       id={id}
-      className={`structure-phase-rail structure-phase-rail--${side}`}
+      className={[
+        'structure-phase-rail',
+        `structure-phase-rail--${side}`,
+        empty ? 'structure-phase-rail--empty' : null,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       aria-labelledby={titleId}
     >
       <header className="structure-phase-rail__head">
@@ -1279,7 +1288,9 @@ function FluxRail({
         </h3>
         {editControl}
       </header>
-      <div className="structure-phase-rail__body">{children}</div>
+      {empty ? null : (
+        <div className="structure-phase-rail__body">{children}</div>
+      )}
     </aside>
   );
 }
@@ -1573,7 +1584,15 @@ export function StructurePhaseFiche({
   const placementAwards = stage.placementAwards ?? [];
   const hasExits = outboundGroups.length > 0;
   const hasAttribution = placementAwards.length > 0;
-  const showOutRail = hasExits || hasAttribution;
+  /** Inter-Stage only — no Sorties create without an aval peer. */
+  const canAddExit = data.stages.length >= 2;
+  const canCreateExit =
+    canAddExit && (canEditQualif || canEditProg);
+  const canCreateAttribution = canEditPlacement;
+  const showSortiesRail = hasExits || canCreateExit;
+  /** Attribution = KO/Cup only (gated by ReplacePlacementAwardRules). */
+  const showAttributionRail = canEditPlacement;
+  const showOutRail = showSortiesRail || showAttributionRail;
   const teamsLabel = (count: number) => t('fiche.teamsCount', { count });
   const formatLabel = stage.formatKind
     ? structureFormatKindLabel(stage.formatKind)
@@ -1598,16 +1617,11 @@ export function StructurePhaseFiche({
     setEdit(kind);
   };
 
-  const canAddExit = data.stages.length >= 2;
-
-  const exitEditOptions = (
-    mode: 'add' | 'edit' = 'edit',
-  ): {
+  const exitEditOptions = (): {
     kind: ExitKind;
     label: string;
     onSelect: () => void;
   }[] => {
-    if (mode === 'add' && !canAddExit) return [];
     const options: {
       kind: ExitKind;
       label: string;
@@ -1721,34 +1735,6 @@ export function StructurePhaseFiche({
       onSelect: () => setEdit('tirage'),
     });
   }
-  {
-    const addExitOptions = exitEditOptions('add');
-    if (addExitOptions.length === 1) {
-      const only = addExitOptions[0]!;
-      overflowItems.push({
-        id: 'add-exit',
-        label: t('fiche.addExit'),
-        onSelect: only.onSelect,
-      });
-    } else if (addExitOptions.length > 1) {
-      overflowItems.push({
-        id: 'add-exit',
-        label: t('fiche.addExit'),
-        submenu: addExitOptions.map((option) => ({
-          id: `add-exit-${option.kind}`,
-          label: option.label,
-          onSelect: option.onSelect,
-        })),
-      });
-    }
-  }
-  if (canEditPlacement && !hasAttribution) {
-    overflowItems.push({
-      id: 'add-attribution',
-      label: t('fiche.addAttribution'),
-      onSelect: () => setEdit('placement'),
-    });
-  }
   overflowItems.push({
     id: 'remove',
     label: t('graph.removePhase'),
@@ -1758,11 +1744,58 @@ export function StructurePhaseFiche({
   });
 
   const sortiesEditControl = (() => {
-    if (!hasExits) return undefined;
-    const options = exitEditOptions();
-    if (options.length === 0) return undefined;
+    if (hasExits) {
+      const options = exitEditOptions();
+      if (options.length === 0) return undefined;
+      return (
+        <ExitKindMenu label={t('fiche.editExits')} options={options} />
+      );
+    }
+    if (!canCreateExit) return undefined;
+    // V1 topology: Qual XOR Prog — open the single available editor.
+    const kind: ExitKind = canEditQualif ? 'qualification' : 'progression';
     return (
-      <ExitKindMenu label={t('fiche.editExits')} options={options} />
+      <Tooltip content={t('fiche.addExit')}>
+        <button
+          type="button"
+          className={compactIcon}
+          aria-label={t('fiche.addExit')}
+          onClick={() => openExitEdit(kind)}
+        >
+          <PlusIcon size="sm" />
+        </button>
+      </Tooltip>
+    );
+  })();
+
+  const attributionEditControl = (() => {
+    if (hasAttribution) {
+      if (!canEditPlacement) return undefined;
+      return (
+        <Tooltip content={t('fiche.edit')}>
+          <button
+            type="button"
+            className={compactIcon}
+            aria-label={t('fiche.edit')}
+            onClick={() => setEdit('placement')}
+          >
+            <PencilIcon size="sm" />
+          </button>
+        </Tooltip>
+      );
+    }
+    if (!canCreateAttribution) return undefined;
+    return (
+      <Tooltip content={t('fiche.addAttribution')}>
+        <button
+          type="button"
+          className={compactIcon}
+          aria-label={t('fiche.addAttribution')}
+          onClick={() => setEdit('placement')}
+        >
+          <PlusIcon size="sm" />
+        </button>
+      </Tooltip>
     );
   })();
 
@@ -1906,63 +1939,56 @@ export function StructurePhaseFiche({
 
           {showOutRail ? (
             <div className="structure-phase-hero__out">
-              {hasExits ? (
+              {showSortiesRail ? (
                 <FluxRail
                   id="rail-exits"
                   side="out"
                   title={t('fiche.tiles.exits')}
                   icon={<ArrowRightIcon size="md" />}
                   editControl={sortiesEditControl}
+                  empty={!hasExits}
                 >
-                  <FluxGroupList
-                    groups={outboundGroups}
-                    onOpenPeer={onSelectStage}
-                    teamsLabel={teamsLabel}
-                  />
+                  {hasExits ? (
+                    <FluxGroupList
+                      groups={outboundGroups}
+                      onOpenPeer={onSelectStage}
+                      teamsLabel={teamsLabel}
+                    />
+                  ) : null}
                 </FluxRail>
               ) : null}
-              {hasAttribution ? (
+              {showAttributionRail ? (
                 <FluxRail
                   id="rail-attribution"
                   side="out"
                   title={t('fiche.tiles.attribution')}
                   icon={<AttributionIcon size="md" />}
-                  editControl={
-                    canEditPlacement ? (
-                      <Tooltip content={t('fiche.edit')}>
-                        <button
-                          type="button"
-                          className={compactIcon}
-                          aria-label={t('fiche.edit')}
-                          onClick={() => setEdit('placement')}
-                        >
-                          <PencilIcon size="sm" />
-                        </button>
-                      </Tooltip>
-                    ) : undefined
-                  }
+                  editControl={attributionEditControl}
+                  empty={!hasAttribution}
                 >
-                  <ul className="structure-flux-group__rules">
-                    {[...placementAwards]
-                      .sort((a, b) => a.rank - b.rank)
-                      .map((award) => {
-                      const parts = placementRuleParts(award, t);
-                      return (
-                        <li
-                          key={`${award.rank}-${award.outcome}-${award.sourceFixtureId ?? ''}`}
-                          className="structure-flux-group__rule"
-                        >
-                          <PlacementAwardRow
-                            rank={parts.rank}
-                            medal={parts.medal}
-                            badge={parts.badge}
-                            badgeTone={parts.badgeTone}
-                            context={parts.context}
-                          />
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  {hasAttribution ? (
+                    <ul className="structure-flux-group__rules">
+                      {[...placementAwards]
+                        .sort((a, b) => a.rank - b.rank)
+                        .map((award) => {
+                          const parts = placementRuleParts(award, t);
+                          return (
+                            <li
+                              key={`${award.rank}-${award.outcome}-${award.sourceFixtureId ?? ''}`}
+                              className="structure-flux-group__rule"
+                            >
+                              <PlacementAwardRow
+                                rank={parts.rank}
+                                medal={parts.medal}
+                                badge={parts.badge}
+                                badgeTone={parts.badgeTone}
+                                context={parts.context}
+                              />
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  ) : null}
                 </FluxRail>
               ) : null}
             </div>
@@ -2115,7 +2141,7 @@ export function StructurePhaseFiche({
             : null
         }
       />
-      <PlacementAwardRulesDialog
+      <StructurePlacementAwardDialog
         data={data}
         stage={stage}
         open={edit === 'placement'}

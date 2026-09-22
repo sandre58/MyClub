@@ -34,8 +34,12 @@ export type InputNumberProps = Omit<
    */
   controlsLayout?: InputNumberControlsLayout;
   leadingIcon?: ReactNode;
+  /** Static leading mark inside the value cluster (e.g. « V »). */
+  prefix?: ReactNode;
   /** Static trailing unit (e.g. « min ») — not an action affix. */
   suffix?: ReactNode;
+  /** Optional semantic tint (e.g. win / loss rank controls). */
+  tone?: 'success' | 'danger';
   invalid?: boolean;
   allowClear?: boolean;
   clearLabel?: string;
@@ -91,7 +95,9 @@ export function InputNumber({
   controls = true,
   controlsLayout = 'end',
   leadingIcon,
+  prefix,
   suffix,
+  tone,
   invalid = false,
   allowClear = false,
   clearLabel = 'Vider',
@@ -284,6 +290,7 @@ export function InputNumber({
         className="ds-input ds-input-number ds-input-number--split"
         data-disabled={disabled ? 'true' : 'false'}
         data-invalid={invalid ? 'true' : 'false'}
+        data-tone={tone}
         data-controls="true"
         data-controls-layout="split"
       >
@@ -303,12 +310,23 @@ export function InputNumber({
         >
           <MinusIcon size="sm" aria-hidden="true" />
         </button>
-        {input}
-        {suffix ? (
-          <span className="ds-input-number__suffix" aria-hidden="true">
-            {suffix}
+        {prefix || suffix ? (
+          <span className="ds-input-number__value">
+            {prefix ? (
+              <span className="ds-input-number__prefix" aria-hidden="true">
+                {prefix}
+              </span>
+            ) : null}
+            {input}
+            {suffix ? (
+              <span className="ds-input-number__suffix" aria-hidden="true">
+                {suffix}
+              </span>
+            ) : null}
           </span>
-        ) : null}
+        ) : (
+          input
+        )}
         <button
           type="button"
           className="ds-input__affix ds-input-number__step"
@@ -329,12 +347,18 @@ export function InputNumber({
       className="ds-input ds-input-number"
       data-disabled={disabled ? 'true' : 'false'}
       data-invalid={invalid ? 'true' : 'false'}
+      data-tone={tone}
       data-controls={controls ? 'true' : 'false'}
       data-controls-layout="end"
     >
       {leadingIcon ? (
         <span className="ds-input__leading" aria-hidden="true">
           {leadingIcon}
+        </span>
+      ) : null}
+      {prefix ? (
+        <span className="ds-input-number__prefix" aria-hidden="true">
+          {prefix}
         </span>
       ) : null}
       {input}
