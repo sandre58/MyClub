@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import i18n from '../i18n';
 import type { StageSchematic } from '../types';
-import { PhaseSchematic } from './phaseSchematic';
+import { buildSchematicCaseTooltipModel, PhaseSchematic } from './phaseSchematic';
 
 await i18n.changeLanguage('fr');
 
@@ -177,7 +177,7 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText(/Vainqueur · Match #4/)).toBeInTheDocument();
   });
 
-  it('cup Qual/Prog feed stays primary with occupant as secondary', () => {
+  it('cup Qual/Prog feed stays primary; resolved team is not shown (U4 B1)', () => {
     const { container } = render(
       <PhaseSchematic
         schematic={cupSchematic({
@@ -188,6 +188,7 @@ describe('PhaseSchematic', () => {
                 kind: 'Progression',
                 outcome: 'Winner',
                 sourceFixtureNumber: 2,
+                sourceStageName: 'Demi-finales',
               },
               entry: { entryId: 'e1', displayName: 'FC Nice' },
               assignment: { entryId: 'e1', displayName: 'FC Nice' },
@@ -197,10 +198,33 @@ describe('PhaseSchematic', () => {
       />,
     );
     expect(screen.getByText(/Vainqueur · Match #2/)).toBeInTheDocument();
-    expect(screen.getByText('FC Nice')).toBeInTheDocument();
+    expect(screen.queryByText('FC Nice')).toBeNull();
     expect(
-      container.querySelector('.schematic-slot__secondary')?.textContent,
-    ).toBe('FC Nice');
+      container.querySelector('.schematic-slot__secondary'),
+    ).toBeNull();
+    expect(container.querySelector('.schematic-slot-tip')).toBeTruthy();
+    expect(container.querySelector('.ds-tooltip-trigger')).toBeTruthy();
+  });
+
+  it('cup Draw with occupant shows occupant primary (Published resolution provenance)', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'A' },
+              feedOrigin: { kind: 'Draw', drawId: 'd1' },
+              entry: { entryId: 'e1', displayName: 'Alpha' },
+              assignment: { entryId: 'e1', displayName: 'Alpha' },
+            },
+          ],
+        })}
+      />,
+    );
+    expect(
+      container.querySelector('.schematic-slot__primary')?.textContent,
+    ).toBe('Alpha');
+    expect(container.querySelector('.schematic-slot-tip')).toBeTruthy();
   });
 
   it('cup Direct feed does not show Affectation over the occupant', () => {
@@ -225,24 +249,71 @@ describe('PhaseSchematic', () => {
     expect(screen.queryByText(/Affectation|affectation/i)).toBeNull();
   });
 
-  it('cup Draw with occupant shows occupant primary (Published resolution provenance)', () => {
-    const { container } = render(
-      <PhaseSchematic
-        schematic={cupSchematic({
-          cases: [
-            {
-              formPosition: { kind: 'CupSlot', slotKey: 'A' },
-              feedOrigin: { kind: 'Draw', drawId: 'd1' },
-              entry: { entryId: 'e1', displayName: 'Alpha' },
-              assignment: { entryId: 'e1', displayName: 'Alpha' },
-            },
-          ],
-        })}
-      />,
-    );
+  it('buildSchematicCaseTooltipModel omits duplicate identity for Affectation', () => {
+    const model = buildSchematicCaseTooltipModel({
+      address: '1·A',
+      primary: 'FC Nice',
+      resolvedName: 'FC Nice',
+      feed: { kind: 'Direct', configuredEntryId: 'e1' },
+      t: (key, opts) => {
+        if (key === 'structure:fiche.schematicTooltipFrom') return 'Vient de';
+        if (key === 'structure:fiche.schematicTooltipTeam')
+          return `Équipe : ${(opts as { name: string }).name}`;
+        if (key === 'structure:fiche.schematicTooltipByDraw')
+          return 'Placé par tirage';
+        return key;
+      },
+    });
+    expect(model).toEqual({
+      address: '1·A',
+      fromLabel: null,
+      fromPhase: null,
+      origin: 'FC Nice',
+      team: null,
+      byDraw: null,
+    });
+  });
+
+  it('buildSchematicCaseTooltipModel skips address-only empty chrome', () => {
     expect(
-      container.querySelector('.schematic-slot__primary')?.textContent,
-    ).toBe('Alpha');
+      buildSchematicCaseTooltipModel({
+        address: '1·A',
+        primary: null,
+        resolvedName: null,
+        feed: null,
+        t: (key) => key,
+      }),
+    ).toBeNull();
+  });
+
+  it('buildSchematicCaseTooltipModel stacks from / origin / team / draw', () => {
+    const model = buildSchematicCaseTooltipModel({
+      address: '1·A',
+      primary: 'Vainqueur · Match #2',
+      resolvedName: 'FC Nice',
+      feed: {
+        kind: 'Progression',
+        sourceStageName: 'Demi-finales',
+        outcome: 'Winner',
+        sourceFixtureNumber: 2,
+      },
+      t: (key, opts) => {
+        if (key === 'structure:fiche.schematicTooltipFrom') return 'Vient de';
+        if (key === 'structure:fiche.schematicTooltipTeam')
+          return `Équipe : ${(opts as { name: string }).name}`;
+        if (key === 'structure:fiche.schematicTooltipByDraw')
+          return 'Placé par tirage';
+        return key;
+      },
+    });
+    expect(model).toEqual({
+      address: '1·A',
+      fromLabel: 'Vient de',
+      fromPhase: 'Demi-finales',
+      origin: 'Vainqueur · Match #2',
+      team: 'Équipe : FC Nice',
+      byDraw: null,
+    });
   });
 
   it('championship bag projects resolved occupant and pending ForForm into cases', () => {
@@ -338,6 +409,67 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText(/1er du groupe A/i)).toBeInTheDocument();
     expect(screen.getByText(/1er du groupe B/i)).toBeInTheDocument();
     expect(screen.getByText('Alpha')).toBeInTheDocument();
+    // WhoFeeds pending = solid chrome; only the blank cell is dashed empty.
+    expect(root!.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
+  });
+
+  it('groups ForGroup WhoFeeds fills seats — no title chrome under poule name', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={{
+          stageId: 'groups',
+          competitionId: 'c1',
+          name: 'Poules',
+          status: 'Draft',
+          formatKind: 'Groups',
+          cases: [
+            {
+              formPosition: {
+                kind: 'GroupPlace',
+                groupId: 'ga',
+                groupName: 'A',
+                index: 1,
+              },
+              entry: null,
+              assignment: null,
+              feedOrigin: {
+                kind: 'Progression',
+                outcome: 'Winner',
+                sourceFixtureNumber: 1,
+                destinationGroupId: 'ga',
+              },
+            },
+            {
+              formPosition: {
+                kind: 'GroupPlace',
+                groupId: 'ga',
+                groupName: 'A',
+                index: 2,
+              },
+              entry: null,
+              assignment: null,
+            },
+          ],
+          connections: [],
+          groupFeeds: [
+            {
+              groupId: 'ga',
+              feedOrigin: {
+                kind: 'Progression',
+                outcome: 'Winner',
+                sourceFixtureNumber: 1,
+                destinationGroupId: 'ga',
+              },
+            },
+          ],
+        }}
+      />,
+    );
+    const card = container.querySelector('.regulation-schematic__card');
+    expect(card).not.toBeNull();
+    expect(card!.querySelector('.regulation-schematic__card-feed')).toBeNull();
+    expect(screen.getByText(/Vainqueur · Match #1/)).toBeInTheDocument();
+    expect(card!.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
   });
 
   it('cup multi-round shows one slot column per round (8+4+2)', () => {

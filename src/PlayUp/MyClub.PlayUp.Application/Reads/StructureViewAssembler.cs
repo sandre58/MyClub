@@ -346,8 +346,6 @@ public static class StructureViewAssembler
                 HasTieExtraTime: tie.ExtraTimeRule is not null,
                 HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null);
 
-    private const int CompositionPreviewLimit = 5;
-
     private readonly record struct CompositionProjection(
         int Count,
         IReadOnlyList<Guid> EntryIds,
@@ -371,13 +369,14 @@ public static class StructureViewAssembler
             .ToList();
 
         var count = stage.CompositionEntries.Count;
-        var preview = orderedNames.Take(CompositionPreviewLimit).ToArray();
-        var overflow = Math.Max(0, count - preview.Length);
+
+        // Full name list — rails show every affectation (no soft truncate).
+        var preview = orderedNames.ToArray();
         var ineligible = stage.CompositionEntries.Count(compositionEntry =>
             !entriesById.TryGetValue(compositionEntry.EntryId, out var entry)
             || entry.Status != EntryStatus.Active);
 
-        return new CompositionProjection(count, entryIds, preview, overflow, ineligible);
+        return new CompositionProjection(count, entryIds, preview, PreviewOverflow: 0, ineligible);
     }
 
     /// <summary>

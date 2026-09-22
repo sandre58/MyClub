@@ -34,6 +34,12 @@
     transform var(--motion-duration) var(--motion-easing);
 }
 
+/* Structured tips (e.g. schematic case) need a bit more room. */
+.ds-tooltip:has(.schematic-case-tip) {
+  max-width: 20rem;
+  padding: var(--space-8) var(--space-12);
+}
+
 .ds-tooltip[data-side='bottom'] {
   --ds-tooltip-enter-y: -4px;
 }

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="SwissReadyScenario.cs" company="Stéphane ANDRE">
+// <copyright file="FluxProgGroupDraftScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,19 +11,19 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Swiss 8×3 Prepared only — Ready, 0 rounds yet (also Règlement Swiss schematic).
+/// Structure flux QA: Prog Place → Groups poule (ForGroup), Draft.
 /// </summary>
-public sealed class SwissReadyScenario : IScenario
+public sealed class FluxProgGroupDraftScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "swiss-ready";
+    public string Id => "flux-prog-group-draft";
 
     /// <inheritdoc />
-    public string Name => "Swiss Ready";
+    public string Name => "Flux — Prog Groupe Draft";
 
     /// <inheritdoc />
     public string Description =>
-        "Swiss 8×3 — Ready (no GenerateNextRound yet). Règlement Swiss: ReplaceRegulation via Ready→Draft confirm.";
+        "Demi 4 (Affectation) → Winner Prog ForGroup → 2 poules aval — Draft. WhoFeeds grain Groupe.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;
@@ -32,20 +32,9 @@ public sealed class SwissReadyScenario : IScenario
     public bool AcceptsProgress => false;
 
     /// <inheritdoc />
-    public CompetitionRecipe? Recipe { get; } = new()
-    {
-        DisplayName = "Suisse Ready",
-        Format = RecipeFormat.Swiss,
-        TeamCount = 8,
-        SwissRoundCount = 3,
-        StageName = "Suisse"
-    };
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(
-            context,
-            Recipe!,
-            StructuredSeedLifecycle.Ready,
-            cancellationToken);
+        ScenarioOrchestration.BuildFluxProgGroupDraftAsync(context, cancellationToken);
 }

@@ -75,9 +75,6 @@ import {
   pickActiveDraw,
 } from './drawUi';
 import {
-  compactPopulationFeedRules,
-} from './structurePopulationFeedCompact';
-import {
   outboundSortiesFeeds,
 } from './structureSortiesIntentFeed';
 import {
@@ -168,8 +165,6 @@ type FeedGroup = {
   peerName: string;
   peerOrder: number;
   volume: number;
-  /** Paths not listed after Population compaction (merge + truncate). */
-  hiddenCount?: number;
   rules: {
     key: string;
     badge: string;
@@ -587,21 +582,6 @@ function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
   return groups;
 }
 
-/** Population rail only — merge Expand siblings + soft truncate (not Intent grain). */
-function compactPopulationFeedGroups(
-  groups: FeedGroup[],
-  t: (key: string, opts?: Record<string, unknown>) => string,
-): FeedGroup[] {
-  return groups.map((group) => {
-    const compacted = compactPopulationFeedRules(group.rules, t);
-    return {
-      ...group,
-      rules: compacted.rules,
-      hiddenCount: compacted.hiddenCount,
-    };
-  });
-}
-
 function FluxRuleRow({
   badge,
   badgeTone,
@@ -675,15 +655,12 @@ function FluxGroupList({
   onOpenPeer,
   teamsLabel,
   renderGroupAction,
-  moreRulesLabel,
 }: {
   groups: FeedGroup[];
   onOpenPeer?: (peerId: string) => void;
   teamsLabel: (count: number) => string;
   /** Compact control in the group head (e.g. edit exits on source). */
   renderGroupAction?: (group: FeedGroup) => ReactNode;
-  /** Overflow caption when a group hides truncated paths (Population). */
-  moreRulesLabel?: (count: number) => string;
 }) {
   return (
     <ul className="structure-flux-groups">
@@ -718,15 +695,6 @@ function FluxGroupList({
                 />
               </li>
             ))}
-            {group.hiddenCount != null &&
-            group.hiddenCount > 0 &&
-            moreRulesLabel ? (
-              <li className="structure-flux-group__rule structure-flux-group__rule--more">
-                <span className="structure-flux-rule__more">
-                  {moreRulesLabel(group.hiddenCount)}
-                </span>
-              </li>
-            ) : null}
           </ul>
         </li>
       ))}
@@ -758,7 +726,6 @@ function RootEntriesRail({
   const ineligible = stage.compositionIneligibleCount ?? 0;
   const composedIds = stage.compositionEntryIds ?? [];
   const previewNames = stage.compositionPreviewNames ?? [];
-  const previewOverflow = stage.compositionPreviewOverflow ?? 0;
   const isLive =
     stage.status === 'Running' ||
     stage.status === 'Suspended' ||
@@ -895,9 +862,6 @@ function RootEntriesRail({
             ) : previewNames.length > 0 ? (
               <p className="structure-entries__preview" role="status">
                 {previewNames.join(' · ')}
-                {previewOverflow > 0
-                  ? ` ${t('population.previewOverflow', { count: previewOverflow })}`
-                  : ''}
               </p>
             ) : ineligible > 0 ? (
               <p className="structure-entries__anomaly" role="status">
@@ -1537,7 +1501,7 @@ export function StructurePhaseFiche({
   }
 
   const feeds = inboundFeeds(data, stage.stageId, t);
-  const feedGroups = compactPopulationFeedGroups(groupFeeds(feeds), t);
+  const feedGroups = groupFeeds(feeds);
   // Places N meter / Affectation reserve: Qual + Prog (Population and Place).
   // Place fills occupy capacity even though they skip the Population set.
   const populationFeedVolume = inboundPopulationConfiguredVolume(
@@ -1864,9 +1828,6 @@ export function StructurePhaseFiche({
                     groups={feedGroups}
                     onOpenPeer={onSelectStage}
                     teamsLabel={teamsLabel}
-                    moreRulesLabel={(count) =>
-                      t('population.feed.moreRules', { count })
-                    }
                     renderGroupAction={renderAvalSourceAction}
                   />
                 ) : undefined

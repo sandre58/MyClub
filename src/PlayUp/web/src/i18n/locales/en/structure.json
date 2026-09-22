@@ -450,6 +450,9 @@
     "entry": "entry",
     "occupantsUnavailable": "Composition unavailable for now.",
     "schematicLoading": "Loading schematic…",
+    "schematicTooltipFrom": "From",
+    "schematicTooltipTeam": "Team: {{name}}",
+    "schematicTooltipByDraw": "Placed by draw",
     "entriesEmptyTitle": "No entries",
     "entriesEmpty": "No inbound entries into this phase.",
     "exitsEmptyTitle": "No exits",
@@ -583,12 +586,7 @@
   },
   "population": {
     "sectionSources": "From phases",
-    "sectionAffectation": "Assignment",
-    "previewOverflow": "+{{count}}",
-    "feed": {
-      "moreRules_one": "+{{count}} more path",
-      "moreRules_other": "+{{count}} more paths"
-    }
+    "sectionAffectation": "Assignment"
   },
   "entries": {
     "counterTeams": "{{k}} / {{n}} teams",
@@ -683,7 +681,7 @@
     "roundNeedsFixturesHint": "Rounds exist, but no fixtures have been created yet — exits cannot expand until fixtures exist.",
     "expandPreview_one": "Expands to {{count}} path",
     "expandPreview_other": "Expands to {{count}} paths",
-    "matchOrdinal": "Match {{n}}",
+    "matchOrdinal": "Match #{{n}}",
     "outcome": "Outcome",
     "outcomeWinner": "Winner",
     "outcomeWinnerHint": "Winners of the confrontations in the phase’s last round",

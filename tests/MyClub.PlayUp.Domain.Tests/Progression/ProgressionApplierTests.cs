@@ -104,6 +104,26 @@ public sealed class ProgressionApplierTests
         result.StageId.Should().Be(remoteStageId);
         result.SlotKey.Should().BeNull();
         result.TargetsPopulation.Should().BeTrue();
+        result.TargetsForm.Should().BeFalse();
+        result.EntryId.Should().Be(_winner);
+    }
+
+    [Fact]
+    public void Apply_form_destination_sets_targets_form_not_population()
+    {
+        var remoteStageId = StageId.New();
+        var path = new ProgressionPath(
+            _fixtureId,
+            ProgressionOutcome.Winner,
+            ProgressionDestination.ForForm(remoteStageId));
+        var outcome = new FixtureOutcome(_winner, _loser);
+
+        var result = ProgressionApplier.Apply(path, _fixtureId, outcome);
+
+        result.TargetsForm.Should().BeTrue();
+        result.TargetsPopulation.Should().BeFalse();
+        result.SlotKey.Should().BeNull();
+        result.GroupId.Should().BeNull();
         result.EntryId.Should().Be(_winner);
     }
 

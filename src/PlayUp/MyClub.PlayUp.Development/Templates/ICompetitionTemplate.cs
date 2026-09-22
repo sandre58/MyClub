@@ -10,7 +10,8 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// Inspired competition template (names + V1 single-stage structure). Domain approximation only.
+/// Inspired competition seed (real-world names / logos when a dataset exists).
+/// Approximates structure modulo Domain capacity — not a UX mid-state catalog (see <see cref="IScenario"/>).
 /// </summary>
 public interface ICompetitionTemplate
 {
@@ -20,10 +21,10 @@ public interface ICompetitionTemplate
     /// <summary>Gets the display name.</summary>
     string Name { get; }
 
-    /// <summary>Gets a short description including Domain V1 limits.</summary>
+    /// <summary>Gets a short description including Domain approximation limits.</summary>
     string Description { get; }
 
-    /// <summary>Gets the structure recipe (dataset-backed).</summary>
+    /// <summary>Gets the structure recipe (often dataset-backed).</summary>
     CompetitionRecipe Recipe { get; }
 
     /// <summary>

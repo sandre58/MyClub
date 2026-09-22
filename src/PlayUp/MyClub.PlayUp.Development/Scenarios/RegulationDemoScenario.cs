@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="RegulationDemoTemplate.cs" company="Stéphane ANDRE">
+// <copyright file="RegulationDemoScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -8,12 +8,12 @@ using MyClub.PlayUp.Development.Orchestration;
 using MyClub.PlayUp.Development.Recipes;
 using MyClub.PlayUp.Development.Runtime;
 
-namespace MyClub.PlayUp.Development.Templates;
+namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// QA seed for the Règlement hub: classifying groupes + KO finale, ET+TAB, stays Draft.
+/// Règlement hub QA: classifying groupes + KO finale, ET+TAB, stays Draft.
 /// </summary>
-public sealed class RegulationDemoTemplate : ICompetitionTemplate
+public sealed class RegulationDemoScenario : IScenario
 {
     /// <inheritdoc />
     public string Id => "regulation-demo";
@@ -23,19 +23,16 @@ public sealed class RegulationDemoTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Groupes 2×4 → Qualif Top1 → Phase finale QF/SF A/R · Finale unique · ET+TAB · Draft. :progress ignored.";
+        "Groupes 2×4 → Qualif Top1 → Phase finale QF/SF A/R · Finale unique · ET+TAB · Draft.";
 
     /// <inheritdoc />
-    public CompetitionRecipe Recipe { get; } = new()
-    {
-        DisplayName = "Démo Règlement",
-        Format = RecipeFormat.Groups,
-        TeamCount = 8,
-        GroupCount = 2,
-        PlacesPerGroup = 4,
-        StageName = "Groupes",
-        TeamNames = TeamNameSource.Generated
-    };
+    public ScenarioCategory Category => ScenarioCategory.Construction;
+
+    /// <inheritdoc />
+    public bool AcceptsProgress => false;
+
+    /// <inheritdoc />
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>

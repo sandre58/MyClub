@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Development.Runtime;
-using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.Persistence;
@@ -27,8 +26,8 @@ public sealed class RegulationDemoConfrontationOrderTests(DevelopmentPostgresFix
     [SuppressMessage("ReSharper", "EntityFramework.ClientSideDbFunctionCall", Justification = "It's for test")]
     public async Task Regulation_demo_confrontation_segments_follow_round_sort_orderAsync()
     {
-        var templateRunner = fixture.Services.GetRequiredService<TemplateRunner>();
-        await templateRunner.ResetAndRunAsync([SeedSpec.Parse("regulation-demo")]);
+        var scenarioRunner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await scenarioRunner.ResetAndRunAsync([SeedSpec.Parse("regulation-demo")]);
 
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();

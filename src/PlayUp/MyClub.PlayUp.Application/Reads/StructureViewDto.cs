@@ -224,8 +224,8 @@ public sealed record StructureReadinessDto(
 /// ≠ total slotCount when multi-round); Championship/Swiss = Active;
 /// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
 /// </param>
-/// <param name="CompositionPreviewNames">Short display-name preview for the composition set.</param>
-/// <param name="CompositionPreviewOverflow">Count of composition entries beyond the preview.</param>
+/// <param name="CompositionPreviewNames">Display names for the composition set (full list).</param>
+/// <param name="CompositionPreviewOverflow">Always 0 — retained for API shape; rails no longer truncate.</param>
 /// <param name="CompositionIneligibleCount">Composition entries that are no longer Active.</param>
 /// <param name="IsRootComposition">True when the phase has no inbound Qualif/Prog feeds (Affectation).</param>
 /// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N); independent of Draw.</param>

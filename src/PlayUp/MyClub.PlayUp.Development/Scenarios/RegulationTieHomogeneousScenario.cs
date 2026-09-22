@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="RegulationTieHomogeneousTemplate.cs" company="Stéphane ANDRE">
+// <copyright file="RegulationTieHomogeneousScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -8,12 +8,12 @@ using MyClub.PlayUp.Development.Orchestration;
 using MyClub.PlayUp.Development.Recipes;
 using MyClub.PlayUp.Development.Runtime;
 
-namespace MyClub.PlayUp.Development.Templates;
+namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// QA seed for Règlement Confrontation tokens: one KO round with a rich TwoLegs TieFormat.
+/// Règlement Confrontation tokens QA: one KO round with a rich TwoLegs TieFormat.
 /// </summary>
-public sealed class RegulationTieHomogeneousTemplate : ICompetitionTemplate
+public sealed class RegulationTieHomogeneousScenario : IScenario
 {
     /// <inheritdoc />
     public string Id => "regulation-tie-homogeneous";
@@ -23,18 +23,16 @@ public sealed class RegulationTieHomogeneousTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Finale 1 round · A/R riche (agregat, buts ext., ET/TAB) · Draft — jetons Confrontation. :progress ignored.";
+        "Finale 1 round · A/R riche (agregat, buts ext., ET/TAB) · Draft — jetons Confrontation.";
 
     /// <inheritdoc />
-    public CompetitionRecipe Recipe { get; } = new()
-    {
-        DisplayName = "Démo Confrontation homogène",
-        Format = RecipeFormat.Cup,
-        TeamCount = 2,
-        BracketSize = 2,
-        StageName = "Finale",
-        TeamNames = TeamNameSource.Generated
-    };
+    public ScenarioCategory Category => ScenarioCategory.Construction;
+
+    /// <inheritdoc />
+    public bool AcceptsProgress => false;
+
+    /// <inheritdoc />
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>

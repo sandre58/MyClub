@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="ChampionshipStructureDraftScenario.cs" company="Stéphane ANDRE">
+// <copyright file="QualFormToChampMidScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,22 +11,22 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Championship structure + matches materialized, stays Draft (Structure edit + Règlement schematic).
+/// Groups finished → Qual ForForm applied into Championship (Composition + provenance).
 /// </summary>
-public sealed class ChampionshipStructureDraftScenario : IScenario
+public sealed class QualFormToChampMidScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "championship-structure-draft";
+    public string Id => "qual-form-to-champ-mid";
 
     /// <inheritdoc />
-    public string Name => "Championship structure Draft";
+    public string Name => "Qual Forme → Champ mid";
 
     /// <inheritdoc />
     public string Description =>
-        "8-team championship materialized + full composition, stays Draft (Structure E4 + Règlement championnat).";
+        "Groups 2×2 finished → Top1 Qual ForForm → Championnat (2 directs + 2 apply) — provenance FormPathResolutions. Champ Draft.";
 
     /// <inheritdoc />
-    public ScenarioCategory Category => ScenarioCategory.Construction;
+    public ScenarioCategory Category => ScenarioCategory.Operational;
 
     /// <inheritdoc />
     public bool AcceptsProgress => false;
@@ -36,5 +36,5 @@ public sealed class ChampionshipStructureDraftScenario : IScenario
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildChampionshipStructureDraftAsync(context, cancellationToken);
+        ScenarioOrchestration.BuildQualFormToChampMidAsync(context, cancellationToken);
 }

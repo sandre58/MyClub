@@ -377,17 +377,26 @@ public static class StageSchematicAssembler
             return Empty(stage, StructureFormatKind.Groups);
         }
 
-        var groupFeeds = ResolveGroupFeeds(stage, competitionStages);
+        var pendingByGroup = CollectGroupPendingFeeds(stage, competitionStages);
         var cases = new List<SchematicCaseDto>(stage.Groups.Count * perGroup.Value);
         foreach (var group in stage.Groups)
         {
+            var pending = pendingByGroup.GetValueOrDefault(group.Id.Value) ?? [];
+            var pendingIndex = 0;
             for (var index = 1; index <= perGroup.Value; index++)
             {
                 EntryId? placed = index <= group.EntryIds.Count
                     ? group.EntryIds[index - 1]
                     : null;
 
-                // Seats = occupancy only — group-level origins live in GroupFeeds.
+                // Empty seats absorb pending ForGroup WhoFeeds (same bag idea as Champ/Swiss).
+                // Occupied seats stay occupancy-only — no Path→Place k address.
+                SchematicFeedOriginDto? feedOrigin = null;
+                if (placed is null && pendingIndex < pending.Count)
+                {
+                    feedOrigin = pending[pendingIndex++];
+                }
+
                 cases.Add(
                     new SchematicCaseDto(
                         new SchematicFormPositionDto(
@@ -395,11 +404,14 @@ public static class StageSchematicAssembler
                             GroupId: group.Id.Value,
                             GroupName: group.Name,
                             Index: index),
-                        FeedOrigin: null,
+                        FeedOrigin: feedOrigin,
                         MapEntry(placed, entries),
                         MapAssignment(placed, entries)));
             }
         }
+
+        // GroupFeeds kept for API compat; Structure SPA paints WhoFeeds on cases only.
+        var groupFeeds = ResolveGroupFeeds(pendingByGroup);
 
         return new StageSchematicDto(
             stage.Id.Value,
@@ -413,10 +425,9 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// Inbound Qual/Prog ForGroup destinations → one origin per group when unambiguous.
-    /// Same feed concept as slot WhoFeeds; grain is Groupe (A1), not Place k.
+    /// Inbound Qual/Prog ForGroup destinations, ordered per group (all paths — one seat each when pending).
     /// </summary>
-    private static List<SchematicGroupFeedDto> ResolveGroupFeeds(
+    private static Dictionary<Guid, List<SchematicFeedOriginDto>> CollectGroupPendingFeeds(
         Stage target,
         IReadOnlyList<Stage> competitionStages)
     {
@@ -455,6 +466,7 @@ public static class StageSchematicAssembler
                 var origin = new SchematicFeedOriginDto(
                     FeedKind.Progression,
                     SourceStageId: stage.Id.Value,
+                    SourceStageName: stage.Name.Value,
                     SourceFixtureId: path.SourceFixtureId.Value,
                     SourceFixtureNumber: FindFixtureNumber(stage.Id, path.SourceFixtureId, competitionStages),
                     Outcome: path.Outcome,
@@ -463,21 +475,38 @@ public static class StageSchematicAssembler
             }
         }
 
-        var result = new List<SchematicGroupFeedDto>();
+        var result = new Dictionary<Guid, List<SchematicFeedOriginDto>>();
         foreach (var (groupId, origins) in candidates)
         {
-            // Same source stage + feed kind → Unique (duplicates to one poule are intentional A1).
-            // Distinct Kind/SourceStageId pairs → ambiguous (omit origin).
+            var ordered = origins
+                .OrderBy(o => o.PathOrder ?? int.MaxValue)
+                .ThenBy(o => o.SourceFixtureId ?? Guid.Empty)
+                .ThenBy(o => o.SourceStageId ?? Guid.Empty)
+                .ToList();
+            result[groupId] = ordered;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// One representative origin per group when a single Qual/Prog mechanism feeds that poule.
+    /// </summary>
+    private static List<SchematicGroupFeedDto> ResolveGroupFeeds(
+        Dictionary<Guid, List<SchematicFeedOriginDto>> pendingByGroup)
+    {
+        var result = new List<SchematicGroupFeedDto>();
+        foreach (var (groupId, origins) in pendingByGroup)
+        {
             var byMechanism = origins
                 .GroupBy(o => (o.Kind, o.SourceStageId))
                 .ToArray();
-            if (byMechanism.Length != 1) continue;
+            if (byMechanism.Length != 1)
+            {
+                continue;
+            }
 
-            var representative = byMechanism[0]
-                .OrderBy(o => o.PathOrder ?? int.MaxValue)
-                .ThenBy(o => o.SourceFixtureId)
-                .First();
-            result.Add(new SchematicGroupFeedDto(groupId, representative));
+            result.Add(new SchematicGroupFeedDto(groupId, byMechanism[0].First()));
         }
 
         return result;
@@ -511,6 +540,7 @@ public static class StageSchematicAssembler
         return new SchematicFeedOriginDto(
             FeedKind.Qualification,
             SourceStageId: sourceStage.Id.Value,
+            SourceStageName: sourceStage.Name.Value,
             PathOrder: path.Order,
             SelectionMode: path.Selection.Mode,
             SelectionValue: path.Selection.Value,
@@ -653,6 +683,7 @@ public static class StageSchematicAssembler
                 pending.Add(new SchematicFeedOriginDto(
                     FeedKind.Progression,
                     SourceStageId: source.Id.Value,
+                    SourceStageName: source.Name.Value,
                     SourceFixtureId: path.SourceFixtureId.Value,
                     SourceFixtureNumber: FindFixtureNumber(source.Id, path.SourceFixtureId, competitionStages),
                     Outcome: path.Outcome));
@@ -727,6 +758,9 @@ public static class StageSchematicAssembler
             FeedKind.Progression => new SchematicFeedOriginDto(
                 FeedKind.Progression,
                 SourceStageId: source.Progression!.SourceStageId.Value,
+                SourceStageName: FindStageName(
+                    source.Progression.SourceStageId,
+                    competitionStages),
                 SourceFixtureId: source.Progression.SourceFixtureId.Value,
                 SourceFixtureNumber: FindFixtureNumber(
                     source.Progression.SourceStageId,
@@ -741,6 +775,11 @@ public static class StageSchematicAssembler
             _ => null
         };
     }
+
+    private static string? FindStageName(
+        StageId stageId,
+        IReadOnlyList<Stage> competitionStages) =>
+        competitionStages.FirstOrDefault(s => s.Id.Equals(stageId))?.Name.Value;
 
     private static SchematicFeedOriginDto MapQualificationOrigin(
         QualificationFeedRef qualification,
@@ -760,6 +799,7 @@ public static class StageSchematicAssembler
         return new SchematicFeedOriginDto(
             FeedKind.Qualification,
             SourceStageId: qualification.SourceStageId.Value,
+            SourceStageName: sourceStage?.Name.Value,
             PathOrder: qualification.PathOrder,
             SelectionMode: path?.Selection.Mode,
             SelectionValue: path?.Selection.Value,

@@ -13,6 +13,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactElement,
+  type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePresence } from '../usePresence';
@@ -40,8 +41,12 @@ const LONG_PRESS_MOVE_PX = 10;
 const MAX_WIDTH_PX = 280;
 
 export type TooltipProps = {
-  /** Plain-text tip. Empty / whitespace → render children only. */
-  content: string;
+  /**
+   * Tip body. Plain string or non-interactive structured markup.
+   * Empty / whitespace string (or nullish) → render children only.
+   * Interactive content → use Popover.
+   */
+  content: ReactNode;
   children: ReactElement;
   /** Preferred side; flips if not enough space. Default `top`. */
   side?: TooltipSide;
@@ -53,6 +58,16 @@ export type TooltipProps = {
    */
   activation?: TooltipActivation;
 };
+
+function isBlankTooltipContent(content: ReactNode): boolean {
+  if (content == null || content === false || content === true) {
+    return true;
+  }
+  if (typeof content === 'string') {
+    return content.trim().length === 0;
+  }
+  return false;
+}
 
 type Placement = {
   style: CSSProperties;
@@ -123,7 +138,7 @@ function clearTimer(ref: { current: number | null }) {
 /**
  * Contextual tip for Hint / DisabledReason / short Labels (icon-only).
  * Desktop: hover (delayed) + focus. Mobile: long-press or tap-toggle.
- * Text only; interactive content → use Popover.
+ * Non-interactive structured markup allowed; interactive content → use Popover.
  *
  * Always wraps the child in `.ds-tooltip-trigger` so disabled controls and
  * non-forwardRef hosts (Chip, Status) still receive pointer / a11y wiring.
@@ -136,14 +151,13 @@ export function Tooltip({
   delayClose = TOOLTIP_DELAY_CLOSE_MS,
   activation = 'auto',
 }: TooltipProps) {
-  const tip = content.trim();
-  if (!tip || !isValidElement(children)) {
+  if (isBlankTooltipContent(content) || !isValidElement(children)) {
     return children;
   }
 
   return (
     <TooltipActive
-      content={tip}
+      content={content}
       child={Children.only(children)}
       preferredSide={preferredSide}
       delayOpen={delayOpen}
@@ -161,7 +175,7 @@ function TooltipActive({
   delayClose,
   activation,
 }: {
-  content: string;
+  content: ReactNode;
   child: ReactElement;
   preferredSide: TooltipSide;
   delayOpen: number;

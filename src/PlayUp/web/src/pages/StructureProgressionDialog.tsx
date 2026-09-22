@@ -71,12 +71,16 @@ import {
   summarizeIntentWho,
   syncPlaceSlotKeys,
   toApiIntent,
+  applyDestinationToDraft,
+  applyTargetKindToDraft,
+  isFormOnlyDestination,
+  normalizeFormOnlyDestinationDraft,
+  showsPopulationPlaceChoice,
   type ProgIntentDraft,
   type ProgTargetKind,
 } from './structureProgressionDraft';
 import {
   areProgressionPlacesLabeled,
-  filterPlaceEligiblePeers,
   listLabeledPlaces,
   placeGrainForFormat,
 } from './structurePlaceLabel';
@@ -205,17 +209,14 @@ export function StructureProgressionDialog({
     return map;
   }, [peerSchematicQueries, peerStages]);
 
-  /** P1 — Place destinations with addressable Cup places (not formatKind alone). */
-  const placeEligiblePeers = useMemo(
-    () => filterPlaceEligiblePeers(peerStages, destinationSchematicById),
-    [peerStages, destinationSchematicById],
-  );
-
   function placesLabeledFor(intent: ProgIntentDraft): boolean {
     if (intent.targetKind !== 'place') return true;
+    if (intent.destinationForm) return true;
     const destId = intent.destinationStageId.trim();
     if (!destId) return true;
-    const peerIndex = peerStages.findIndex((peer) => peer.stageId === destId);
+    const peer = stageById.get(destId);
+    if (isFormOnlyDestination(peer?.formatKind)) return true;
+    const peerIndex = peerStages.findIndex((p) => p.stageId === destId);
     if (peerIndex >= 0 && peerSchematicQueries[peerIndex]?.isPending) {
       // Still loading — do not block as PlaceUnavailable yet.
       return true;
@@ -297,9 +298,11 @@ export function StructureProgressionDialog({
 
     const fromIntents = stage.progressionIntents ?? [];
     if (fromIntents.length > 0) {
-      const next = fromIntents.map((intent) =>
-        syncPlaceSlotKeys(intentFromApi(intent, stage.stageId)),
-      );
+      const next = fromIntents.map((intent) => {
+        const synced = syncPlaceSlotKeys(intentFromApi(intent, stage.stageId));
+        const peer = stageById.get(synced.destinationStageId.trim());
+        return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
+      });
       setIntents(next);
       setBaselineSerialized(serializeIntents(next));
       setExpandedId(null);
@@ -439,8 +442,12 @@ export function StructureProgressionDialog({
       );
     }
 
-    setIntents(next);
-    setBaselineSerialized(serializeIntents(next));
+    const normalized = next.map((intent) => {
+      const peer = stageById.get(intent.destinationStageId.trim());
+      return normalizeFormOnlyDestinationDraft(intent, peer?.formatKind);
+    });
+    setIntents(normalized);
+    setBaselineSerialized(serializeIntents(normalized));
     setExpandedId(null);
     setSessionReady(true);
     resetDiscard();
@@ -456,6 +463,7 @@ export function StructureProgressionDialog({
     mutation.isPending,
     mutation.isSuccess,
     resetDiscard,
+    stageById,
   ]);
 
   const pathTotal = useMemo(
@@ -587,7 +595,12 @@ export function StructureProgressionDialog({
   }
 
   function addIntent() {
-    const next = emptyProgIntent(defaultDest, 'population', intents.length + 1);
+    const peer = stageById.get(defaultDest);
+    const next = applyDestinationToDraft(
+      emptyProgIntent(defaultDest, 'population', intents.length + 1),
+      defaultDest,
+      peer?.formatKind,
+    );
     if (championshipTerminal) {
       next.roundId = championshipTerminal.id;
       next.roundName = championshipTerminal.name;
@@ -866,7 +879,6 @@ export function StructureProgressionDialog({
                             data={data}
                             sourceStage={stage}
                             peerStages={peerStages}
-                            placeEligiblePeers={placeEligiblePeers}
                             rounds={rounds}
                             playableRounds={playableRounds}
                             championshipTerminal={championshipTerminal}
@@ -916,7 +928,6 @@ function ProgIntentEditor({
   data,
   sourceStage,
   peerStages,
-  placeEligiblePeers,
   rounds,
   playableRounds,
   championshipTerminal,
@@ -928,7 +939,6 @@ function ProgIntentEditor({
   data: StructureView;
   sourceStage: StructureStageHubSummary;
   peerStages: StructureStageHubSummary[];
-  placeEligiblePeers: StructureStageHubSummary[];
   rounds: ProgRoundOption[];
   playableRounds: ProgRoundOption[];
   championshipTerminal: ProgRoundOption | null;
@@ -940,26 +950,45 @@ function ProgIntentEditor({
   const { t: tCommon } = useTranslation('common');
   const placeFillHintId = useId();
 
-  const placeUnavailable = placeEligiblePeers.length === 0;
-  const placeModeUnavailable =
-    draft.targetKind === 'place' && placeEligiblePeers.length === 0;
-
   const destStageId = draft.destinationStageId.trim();
+  const destPeer = peerStages.find((p) => p.stageId === destStageId);
+  const destFormat = destPeer?.formatKind;
+  const formOnly = isFormOnlyDestination(destFormat);
+  const showKindChoice = showsPopulationPlaceChoice(destFormat);
+
   const destSchematicQuery = useQuery({
     queryKey: queryKeys.stages.schematic(destStageId),
     queryFn: () => fetchStageSchematic(destStageId),
-    enabled: draft.targetKind === 'place' && !!destStageId,
+    enabled: draft.targetKind === 'place' && !formOnly && !!destStageId,
   });
-  const placesLabeled = areProgressionPlacesLabeled(destSchematicQuery.data);
+  const placesLabeled =
+    formOnly || areProgressionPlacesLabeled(destSchematicQuery.data);
   const labeledPlaces = useMemo(
     () => listLabeledPlaces(destSchematicQuery.data, t),
     [destSchematicQuery.data, t],
   );
   /** UX Place grain from dest schematic (Groups A1 vs Cup slots). */
-  const placeGrain =
-    labeledPlaces[0]?.grain ??
-    placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
-    'slot';
+  const placeGrain = formOnly
+    ? 'form'
+    : (labeledPlaces[0]?.grain ??
+      placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
+      placeGrainForFormat(destFormat) ??
+      'slot');
+
+  function setDestination(peer: StructureStageHubSummary) {
+    onChange(applyDestinationToDraft(draft, peer.stageId, peer.formatKind));
+  }
+
+  function setTargetKind(kind: ProgTargetKind) {
+    if (formOnly) return;
+    onChange(applyTargetKindToDraft(draft, kind));
+  }
+
+  const placeUnavailable =
+    showKindChoice &&
+    draft.targetKind === 'place' &&
+    !placesLabeled &&
+    !destSchematicQuery.isLoading;
 
   const selectedRound = useMemo(
     () => rounds.find((r) => r.id === draft.roundId) ?? null,
@@ -1041,50 +1070,6 @@ function ProgIntentEditor({
       return;
     }
     onChange({ ...draft, outcome });
-  }
-
-  function setTargetKind(kind: ProgTargetKind) {
-    if (kind === 'population') {
-      onChange({
-        ...draft,
-        targetKind: 'population',
-        destinationStageId:
-          draft.targetKind === 'population' &&
-          peerStages.some((p) => p.stageId === draft.destinationStageId)
-            ? draft.destinationStageId
-            : (peerStages[0]?.stageId ?? ''),
-        destinationSlotKeys: [],
-        destinationGroupIds: [],
-        destinationForm: false,
-      });
-      return;
-    }
-    const keepDest =
-      draft.destinationStageId.trim() &&
-      placeEligiblePeers.some(
-        (s) => s.stageId === draft.destinationStageId,
-      );
-    const nextDest = keepDest
-      ? draft.destinationStageId
-      : (placeEligiblePeers[0]?.stageId ?? '');
-    const nextPeer = placeEligiblePeers.find((p) => p.stageId === nextDest);
-    const grain = placeGrainForFormat(nextPeer?.formatKind) ?? 'slot';
-    onChange({
-      ...draft,
-      targetKind: 'place',
-      destinationStageId: nextDest,
-      destinationForm: grain === 'form',
-      destinationSlotKeys:
-        grain === 'slot' && draft.targetKind === 'place'
-          ? draft.destinationSlotKeys
-          : [],
-      destinationGroupIds:
-        grain === 'group' && draft.targetKind === 'place'
-          ? draft.destinationGroupIds
-          : grain === 'group'
-            ? resizeDestinationSlotKeys([], expandCount(draft))
-            : [],
-    });
   }
 
   function destinationTileDescription(dest: StructureStageHubSummary) {
@@ -1207,280 +1192,213 @@ function ProgIntentEditor({
         }
         destination={
           <>
-      <div
-        className="structure-qualification__scope-tiles"
-        data-count="2"
-        role="radiogroup"
-        aria-label={t('progression.destinationKind')}
-      >
-        <ChoiceTile
-          label={t('progression.kindPopulation')}
-          description={t('progression.kindPopulationHint')}
-          leading={<StructureIcon size="sm" />}
-          selected={draft.targetKind === 'population'}
-          disabled={peerStages.length === 0}
-          onChange={(selected) => {
-            if (!selected) return;
-            setTargetKind('population');
-          }}
-        />
-        {placeUnavailable ? (
-          <Tooltip content={t('progression.kindPlaceUnavailable')}>
+      {peerStages.length === 0 ? (
+        <p className="structure-qualification__field-hint" role="status">
+          {t('progression.emptyNoPeerBody')}
+        </p>
+      ) : (
+        <div
+          className="structure-qualification__scope-tiles"
+          data-count={String(Math.min(peerStages.length, 3))}
+          role="radiogroup"
+          aria-label={t('progression.destinationPhase')}
+        >
+          {peerStages.map((peer) => (
             <ChoiceTile
-              label={t('progression.kindPlace')}
-              description={t('progression.kindPlaceHint')}
-              leading={<CupFormatIcon size="sm" />}
-              selected={draft.targetKind === 'place'}
-              disabled
-              onChange={() => {}}
+              key={peer.stageId}
+              label={peer.name}
+              description={destinationTileDescription(peer)}
+              leading={stageFormatIcon(peer.formatKind)}
+              selected={draft.destinationStageId === peer.stageId}
+              onChange={(selected) => {
+                if (!selected) return;
+                setDestination(peer);
+              }}
             />
-          </Tooltip>
-        ) : (
+          ))}
+        </div>
+      )}
+
+      {showKindChoice && destStageId ? (
+        <div
+          className="structure-qualification__scope-tiles"
+          data-count="2"
+          role="radiogroup"
+          aria-label={t('progression.destinationKind')}
+        >
+          <ChoiceTile
+            label={t('progression.kindPopulation')}
+            description={t('progression.kindPopulationHint')}
+            leading={<StructureIcon size="sm" />}
+            selected={draft.targetKind === 'population'}
+            onChange={(selected) => {
+              if (!selected) return;
+              setTargetKind('population');
+            }}
+          />
           <ChoiceTile
             label={t('progression.kindPlace')}
             description={t('progression.kindPlaceHint')}
             leading={<CupFormatIcon size="sm" />}
             selected={draft.targetKind === 'place'}
-            disabled={peerStages.length === 0}
             onChange={(selected) => {
               if (!selected) return;
               setTargetKind('place');
             }}
           />
-        )}
-      </div>
+        </div>
+      ) : null}
 
-      {draft.targetKind === 'population' ? (
-        peerStages.length === 0 ? (
+      {draft.targetKind === 'place' &&
+      !formOnly &&
+      destStageId &&
+      placeGrain !== 'form' ? (
+        destSchematicQuery.isLoading ? (
+          <ul
+            className="structure-qualification__place-map structure-qualification__place-map--skeleton"
+            aria-busy="true"
+            aria-label={tCommon('loading')}
+          >
+            {Array.from({
+              length: Math.max(roundFixtures.length, 3),
+            }).map((_, index) => (
+              <li key={`skel-${index}`} aria-hidden="true">
+                <span className="structure-qualification__place-map-skel-label" />
+                <span className="structure-qualification__place-map-skel-control" />
+              </li>
+            ))}
+          </ul>
+        ) : placeUnavailable || !placesLabeled ? (
           <p className="structure-qualification__field-hint" role="status">
-            {t('progression.emptyNoPeerBody')}
+            {t('progression.emptyNoPlacePeerBody')}
+          </p>
+        ) : labeledPlaces.length === 0 ? (
+          <p className="structure-qualification__field-hint" role="status">
+            {t('progression.placeEmpty')}
+          </p>
+        ) : roundFixtures.length === 0 ? (
+          <p className="structure-qualification__field-hint" role="status">
+            {t('progression.placeMapEmptySelection')}
           </p>
         ) : (
-          <div
-            className="structure-qualification__scope-tiles"
-            data-count={String(Math.min(peerStages.length, 3))}
-            role="radiogroup"
-            aria-label={t('progression.destinationPhase')}
-          >
-            {peerStages.map((peer) => (
-              <ChoiceTile
-                key={peer.stageId}
-                label={peer.name}
-                description={destinationTileDescription(peer)}
-                leading={stageFormatIcon(peer.formatKind)}
-                selected={draft.destinationStageId === peer.stageId}
-                onChange={(selected) => {
-                  if (!selected) return;
-                  onChange({
-                    ...draft,
-                    destinationStageId: peer.stageId,
-                    destinationSlotKeys: [],
-                    destinationGroupIds: [],
-                    destinationForm: false,
-                  });
-                }}
-              />
-            ))}
-          </div>
-        )
-      ) : placeModeUnavailable ? (
-        <p className="structure-qualification__field-hint" role="status">
-          {t('progression.emptyNoPlacePeerBody')}
-        </p>
-      ) : (
-        <>
-          <div
-            className="structure-qualification__scope-tiles"
-            data-count={String(Math.min(placeEligiblePeers.length, 3))}
-            role="radiogroup"
-            aria-label={t('progression.destinationPhase')}
-          >
-            {placeEligiblePeers.map((dest) => (
-              <ChoiceTile
-                key={dest.stageId}
-                label={dest.name}
-                description={destinationTileDescription(dest)}
-                leading={stageFormatIcon(dest.formatKind)}
-                selected={draft.destinationStageId === dest.stageId}
-                onChange={(selected) => {
-                  if (!selected) return;
-                  const grain = placeGrainForFormat(dest.formatKind) ?? 'slot';
-                  const keep = draft.destinationStageId === dest.stageId;
-                  onChange({
-                    ...draft,
-                    targetKind: 'place',
-                    destinationStageId: dest.stageId,
-                    destinationForm: grain === 'form',
-                    destinationSlotKeys:
-                      grain === 'slot'
-                        ? keep
-                          ? draft.destinationSlotKeys
-                          : []
-                        : [],
-                    destinationGroupIds:
-                      grain === 'group'
-                        ? keep
-                          ? draft.destinationGroupIds
-                          : resizeDestinationSlotKeys(
-                              [],
-                              expandCount(draft),
+          <div className="structure-qualification__place-map-block">
+            <div className="structure-qualification__place-map-toolbar">
+              {peerStages.length > 0 ? (
+                <p className="structure-qualification__place-map-heading">
+                  {t('progression.placeMapHeading')}
+                </p>
+              ) : null}
+              <span className="structure-qualification__place-fill">
+                <span
+                  id={placeFillHintId}
+                  className="ds-visually-hidden"
+                >
+                  {t('progression.placeFillHint')}
+                </span>
+                <Tooltip content={t('progression.placeFillHint')}>
+                  <button
+                    type="button"
+                    className="ds-btn ds-btn--ghost"
+                    aria-describedby={placeFillHintId}
+                    disabled={(() => {
+                      const emptyCount = placeSlotKeys.filter(
+                        (k) => !k.trim(),
+                      ).length;
+                      if (emptyCount === 0) return true;
+                      if (labeledPlaces.length === 0) return true;
+                      if (placeGrain === 'group') return false;
+                      const used = new Set(
+                        placeSlotKeys
+                          .map((k) => k.trim())
+                          .filter((k) => k.length > 0),
+                      );
+                      return !labeledPlaces.some(
+                        (place) => !used.has(place.apiIdentity),
+                      );
+                    })()}
+                    onClick={() => {
+                      const ids = labeledPlaces.map(
+                        (place) => place.apiIdentity,
+                      );
+                      const next =
+                        placeGrain === 'group'
+                          ? fillEmptyPlaceKeysAllowingReuse(
+                              placeSlotKeys,
+                              ids,
                             )
-                        : [],
-                  });
-                }}
-              />
-            ))}
-          </div>
-
-          {draft.targetKind === 'place' && destStageId && placeGrain !== 'form' ? (
-            destSchematicQuery.isLoading ? (
-              <ul
-                className="structure-qualification__place-map structure-qualification__place-map--skeleton"
-                aria-busy="true"
-                aria-label={tCommon('loading')}
-              >
-                {Array.from({
-                  length: Math.max(roundFixtures.length, 3),
-                }).map((_, index) => (
-                  <li key={`skel-${index}`} aria-hidden="true">
-                    <span className="structure-qualification__place-map-skel-label" />
-                    <span className="structure-qualification__place-map-skel-control" />
-                  </li>
-                ))}
-              </ul>
-            ) : !placesLabeled ? (
-              <p className="structure-qualification__field-hint" role="status">
-                {t('progression.emptyNoPlacePeerBody')}
-              </p>
-            ) : labeledPlaces.length === 0 ? (
-              <p className="structure-qualification__field-hint" role="status">
-                {t('progression.placeEmpty')}
-              </p>
-            ) : roundFixtures.length === 0 ? (
-              <p className="structure-qualification__field-hint" role="status">
-                {t('progression.placeMapEmptySelection')}
-              </p>
-            ) : (
-              <div className="structure-qualification__place-map-block">
-                <div className="structure-qualification__place-map-toolbar">
-                  {placeEligiblePeers.length > 0 ? (
-                    <p className="structure-qualification__place-map-heading">
-                      {t('progression.placeMapHeading')}
-                    </p>
-                  ) : null}
-                  <span className="structure-qualification__place-fill">
-                    <span
-                      id={placeFillHintId}
-                      className="ds-visually-hidden"
+                          : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
+                      applyPlaceKeys(next);
+                    }}
+                  >
+                    <LucideIcon icon={ListPlus} size="sm" />
+                    {t('progression.placeFillEmpties')}
+                  </button>
+                </Tooltip>
+              </span>
+            </div>
+            <ul
+              className="structure-qualification__place-map"
+              aria-label={t('progression.placeMapAria')}
+            >
+              {roundFixtures.map((fixture, index) => {
+                const selected = placeSlotKeys[index]?.trim() || null;
+                const rowId = `prog-place-${draft.id}-${index}`;
+                const rowInvalid = !selected;
+                const sourceLabel = fixturePlaceMapLabel(fixture, index, t);
+                return (
+                  <li
+                    key={fixture.id}
+                    data-invalid={rowInvalid ? 'true' : 'false'}
+                  >
+                    <label
+                      className="structure-qualification__place-map-label"
+                      htmlFor={rowId}
                     >
-                      {t('progression.placeFillHint')}
-                    </span>
-                    <Tooltip content={t('progression.placeFillHint')}>
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--ghost"
-                        aria-describedby={placeFillHintId}
-                        disabled={(() => {
-                          const emptyCount = placeSlotKeys.filter(
-                            (k) => !k.trim(),
-                          ).length;
-                          if (emptyCount === 0) return true;
-                          if (labeledPlaces.length === 0) return true;
-                          if (placeGrain === 'group') return false;
-                          const used = new Set(
-                            placeSlotKeys
-                              .map((k) => k.trim())
-                              .filter((k) => k.length > 0),
-                          );
-                          return !labeledPlaces.some(
-                            (place) => !used.has(place.apiIdentity),
-                          );
-                        })()}
-                        onClick={() => {
-                          const ids = labeledPlaces.map(
-                            (place) => place.apiIdentity,
-                          );
-                          const next =
-                            placeGrain === 'group'
-                              ? fillEmptyPlaceKeysAllowingReuse(
-                                  placeSlotKeys,
-                                  ids,
-                                )
-                              : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
+                      {sourceLabel}
+                    </label>
+                    <div className="structure-qualification__place-map-control">
+                      <Select
+                        id={rowId}
+                        options={labeledPlaces.map((place) => ({
+                          value: place.apiIdentity,
+                          label: place.label,
+                          disabled:
+                            placeGrain === 'slot' &&
+                            placeSlotKeys.some(
+                              (key, j) =>
+                                j !== index &&
+                                key.trim() === place.apiIdentity,
+                            ),
+                        }))}
+                        value={selected}
+                        invalid={rowInvalid}
+                        placeholder={t('progression.placeSlotPlaceholder')}
+                        allowClear
+                        aria-label={t('progression.placeMapRowAria', {
+                          source: sourceLabel,
+                        })}
+                        onChange={(value) => {
+                          const next = placeSlotKeys.slice();
+                          next[index] = value?.trim() ?? '';
                           applyPlaceKeys(next);
                         }}
-                      >
-                        <LucideIcon icon={ListPlus} size="sm" />
-                        {t('progression.placeFillEmpties')}
-                      </button>
-                    </Tooltip>
-                  </span>
-                </div>
-                <ul
-                  className="structure-qualification__place-map"
-                  aria-label={t('progression.placeMapAria')}
-                >
-                  {roundFixtures.map((fixture, index) => {
-                    const selected = placeSlotKeys[index]?.trim() || null;
-                    const rowId = `prog-place-${draft.id}-${index}`;
-                    const rowInvalid = !selected;
-                    const sourceLabel = fixturePlaceMapLabel(fixture, index, t);
-                    return (
-                      <li
-                        key={fixture.id}
-                        data-invalid={rowInvalid ? 'true' : 'false'}
-                      >
-                        <label
-                          className="structure-qualification__place-map-label"
-                          htmlFor={rowId}
+                      />
+                      {rowInvalid ? (
+                        <span
+                          className="structure-qualification__place-map-error"
+                          aria-hidden="true"
                         >
-                          {sourceLabel}
-                        </label>
-                        <div className="structure-qualification__place-map-control">
-                          <Select
-                            id={rowId}
-                            options={labeledPlaces.map((place) => ({
-                              value: place.apiIdentity,
-                              label: place.label,
-                              disabled:
-                                placeGrain === 'slot' &&
-                                placeSlotKeys.some(
-                                  (key, j) =>
-                                    j !== index &&
-                                    key.trim() === place.apiIdentity,
-                                ),
-                            }))}
-                            value={selected}
-                            invalid={rowInvalid}
-                            placeholder={t('progression.placeSlotPlaceholder')}
-                            allowClear
-                            aria-label={t('progression.placeMapRowAria', {
-                              source: sourceLabel,
-                            })}
-                            onChange={(value) => {
-                              const next = placeSlotKeys.slice();
-                              next[index] = value?.trim() ?? '';
-                              applyPlaceKeys(next);
-                            }}
-                          />
-                          {rowInvalid ? (
-                            <span
-                              className="structure-qualification__place-map-error"
-                              aria-hidden="true"
-                            >
-                              <ToastToneIcon tone="error" size="sm" />
-                            </span>
-                          ) : null}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )
-          ) : null}
-        </>
-      )}
+                          <ToastToneIcon tone="error" size="sm" />
+                        </span>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )
+      ) : null}
           </>
         }
       />

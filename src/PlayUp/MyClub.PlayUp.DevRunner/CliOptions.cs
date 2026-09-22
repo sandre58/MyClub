@@ -107,17 +107,18 @@ public sealed class CliOptions
             MyClub.PlayUp.DevRunner — prepare the Development Workspace database.
 
               --reset                              Wipe + migrate (DB name must end with _dev)
-              --templates <id[:progress][,…]>      Inspired competitions (Domain V1 approximations)
-              --scenarios <id[:progress][,…]>      UX / structure scenarios
+              --templates <id[:progress][,…]>      Inspired competitions (datasets / capacity demos)
+              --scenarios <id[:progress][,…]>      UX / métier / QA situations
               --seed <int>                         Determinism seed (default 42; clock seed if omitted with random)
               --list                               List scenarios
               --list-templates                     List templates
               --help                               This help
 
-            Progress (structured templates/scenarios): prepared | running | finished
+            Progress (progressive seeds): prepared | running | finished
             Default progress when omitted: running
 
-            Templates are capacity demos (e.g. ligue-1 = Double RR), not full real multi-phase calendars.
+            Templates = inspired competitions only (ligue-1, champions-league, world-cup, coupe-de-france, euro-across-groups).
+            Scenarios = situations (lifecycle, Structure, Règlement, Confrontation, Flux).
             Scenario cup-qf-sf: QF played → SF slots filled (Overview materialize-from-slots demo).
             ConnectionStrings:PlayUpDev is required.
             """);

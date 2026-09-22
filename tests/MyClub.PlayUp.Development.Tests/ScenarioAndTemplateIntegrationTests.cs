@@ -307,6 +307,102 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
+    public async Task Flux_qual_form_draft_wires_for_form_intentsAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("flux-qual-form-draft")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        competition.Should().NotBeNull();
+        competition.Entries.Should().HaveCount(6);
+        competition.StageIds.Should().HaveCount(2);
+
+        var groups = await stages.GetByIdForUpdateAsync(competition.StageIds[0]);
+        var champ = await stages.GetByIdForUpdateAsync(competition.StageIds[1]);
+        groups.Should().NotBeNull();
+        champ.Should().NotBeNull();
+        groups.Groups.Should().HaveCount(2);
+        groups.Regulation.QualificationRules.Should().NotBeNull();
+        groups.Regulation.QualificationRules!.Intents.Should().ContainSingle(intent => intent.TargetsForm);
+        groups.Regulation.QualificationRules.Paths.Should().HaveCount(2);
+        groups.Regulation.QualificationRules.Paths.Should().OnlyContain(path => path.Destination.TargetsForm);
+        champ.CompositionEntries.Should().HaveCount(2);
+        champ.FormPathResolutions.Should().BeEmpty();
+        champ.Slots.Should().BeEmpty();
+        champ.Groups.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Flux_prog_group_draft_wires_for_group_progressionAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("flux-prog-group-draft")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        competition.Should().NotBeNull();
+        competition.StageIds.Should().HaveCount(2);
+
+        var semi = await stages.GetByIdForUpdateAsync(competition.StageIds[0]);
+        var groups = await stages.GetByIdForUpdateAsync(competition.StageIds[1]);
+        semi.Should().NotBeNull();
+        groups.Should().NotBeNull();
+        groups.Groups.Should().HaveCount(2);
+        semi.Regulation.ProgressionRules.Should().NotBeNull();
+        semi.Regulation.ProgressionRules!.Paths.Should().HaveCount(2);
+        semi.Regulation.ProgressionRules.Paths.Should().OnlyContain(path =>
+            path.Destination.TargetsGroup && path.Outcome == ProgressionOutcome.Winner);
+        groups.CompositionEntries.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Qual_form_to_champ_mid_records_form_path_resolutionsAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("qual-form-to-champ-mid")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        competition.Should().NotBeNull();
+
+        var groups = await stages.GetByIdForUpdateAsync(competition.StageIds[0]);
+        var champ = await stages.GetByIdForUpdateAsync(competition.StageIds[1]);
+        groups.Should().NotBeNull();
+        champ.Should().NotBeNull();
+        groups.Status.Should().Be(StageStatus.Completed);
+        champ.Status.Should().Be(StageStatus.Draft);
+        champ.CompositionEntries.Should().HaveCount(4);
+        champ.FormPathResolutions.Should().HaveCount(2);
+        groups.Regulation.QualificationRules!.Paths.Should().OnlyContain(path => path.Destination.TargetsForm);
+    }
+
+    [Fact]
+    public async Task Flux_form_and_group_draft_scenarios_seed_draftAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync(
+        [
+            SeedSpec.Parse("flux-qual-form-draft"),
+            SeedSpec.Parse("flux-prog-group-draft")
+        ]);
+
+        using var scope = fixture.Services.CreateScope();
+        var list = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().ListAsync();
+        list.Should().HaveCount(2);
+        list.Should().OnlyContain(c => c.Status == CompetitionStatus.Draft);
+    }
+
+    [Fact]
     public async Task Structure_qa_scenario_matrix_seeds_statusesAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
@@ -397,6 +493,17 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             loaded.Add(stage);
         }
 
+        var roundOf32 = loaded[0];
+        roundOf32.Regulation.DrawRules.Should().NotBeNull();
+        roundOf32.Regulation.ProgressionRules.Should().NotBeNull();
+        roundOf32.Regulation.ProgressionRules!.Intents.Should().ContainSingle();
+        roundOf32.Regulation.ProgressionRules.Intents[0].TargetsPopulation.Should().BeTrue();
+        roundOf32.Draws.Should().Contain(draw => draw.Kind == DrawResolutionKind.Pairing);
+
+        var roundOf16 = loaded[1];
+        roundOf16.Regulation.DrawRules.Should().NotBeNull();
+        roundOf16.Draws.Should().Contain(draw => draw.Kind == DrawResolutionKind.Slot);
+
         var final = loaded[^1];
         final.Status.Should().Be(StageStatus.Completed);
         final.Regulation.PlacementAwardRules.Should().NotBeNull();
@@ -422,6 +529,69 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         overview.CompetitionOutcome.Places.Should().HaveCount(2);
         overview.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2]);
+    }
+
+    [Fact]
+    public async Task Euro_across_groups_completes_with_across_groups_qualification_and_outcomeAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<TemplateRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("euro-across-groups")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        competition.Should().NotBeNull();
+        competition.Status.Should().Be(CompetitionStatus.Completed);
+        competition.Entries.Should().HaveCount(24);
+        competition.StageIds.Should().HaveCount(5);
+
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var loaded = new List<Stage>(5);
+        foreach (var stageId in competition.StageIds)
+        {
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
+            stage.Should().NotBeNull();
+            loaded.Add(stage);
+        }
+
+        var groups = loaded[0];
+        groups.Groups.Should().HaveCount(6);
+        groups.Regulation.QualificationRules.Should().NotBeNull();
+        groups.Regulation.QualificationRules!.Intents.Should().HaveCount(2);
+        groups.Regulation.QualificationRules.Intents.Should().Contain(intent =>
+            intent.SourceKind == QualificationIntentSourceKind.EachGroup
+            && intent.PositionFrom == 1
+            && intent.PositionTo == 2);
+        groups.Regulation.QualificationRules.Intents.Should().Contain(intent =>
+            intent.SourceKind == QualificationIntentSourceKind.AcrossGroups
+            && intent.AcrossGroupsPosition == 3
+            && intent.PositionFrom == 1
+            && intent.PositionTo == 4);
+        groups.Regulation.QualificationRules.Paths.Should().HaveCount(16);
+
+        var roundOf16 = loaded[1];
+        roundOf16.Regulation.DrawRules.Should().NotBeNull();
+        roundOf16.Draws.Should().Contain(draw => draw.Kind == DrawResolutionKind.Slot);
+        roundOf16.Slots.Should().OnlyContain(slot => slot.EntryId != null);
+
+        var final = loaded[^1];
+        final.Status.Should().Be(StageStatus.Completed);
+        final.Regulation.PlacementAwardRules.Should().NotBeNull();
+        final.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
+
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
+        foreach (var stage in loaded)
+        {
+            matchesByStage[stage.Id] = await scope.ServiceProvider
+                .GetRequiredService<IMatchRepository>()
+                .ListByStageForUpdateAsync(stage.Id);
+        }
+
+        var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
+        overview.CompetitionOutcome.Should().NotBeNull();
+        overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
+        overview.CompetitionOutcome.Places.Should().HaveCount(2);
     }
 
     [Fact]

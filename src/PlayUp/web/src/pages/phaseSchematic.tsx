@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trophy } from 'lucide-react';
@@ -10,6 +10,7 @@ import type {
   StageSchematic,
 } from '../types';
 import { TeamCrest } from '../design-system/TeamCrest';
+import { Tooltip } from '../design-system/components/Tooltip';
 import { nextPowerOfTwo } from './structureFixtureLabels';
 import { placeChromeLabel } from './structurePlaceLabel';
 import './phase-schematic.css';
@@ -35,7 +36,7 @@ export function PhaseSchematic({
   schematic: StageSchematic;
   terminal?: boolean;
   cupRoundCount?: number | null;
-}) {
+}): ReactElement {
   const { t } = useTranslation(['regulation', 'structure']);
   const format = schematic.formatKind;
 
@@ -93,69 +94,168 @@ function SlotBox({
     c?.assignment?.shortName?.trim() ||
     c?.entry?.displayName?.trim() ||
     null;
-  const placed = !!c?.entry;
+  // Solid chrome when the case shows a label (occupant or structural WhoFeeds).
+  // Dashed `--empty` = blank cell only — not "no EntryId".
+  const hasSurface = !!(primary || secondary);
   const name = resolvedName ?? primary ?? '';
   const className = [
     'schematic-slot',
     `schematic-slot--${density}`,
-    placed ? '' : 'schematic-slot--empty',
+    hasSurface ? '' : 'schematic-slot--empty',
     ghost ? 'schematic-slot--ghost' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
-  const titleParts = [address, primary, secondary].filter(Boolean);
-  const title = titleParts.length > 0 ? titleParts.join(' — ') : undefined;
+  const tip =
+    !ghost && c
+      ? buildSchematicCaseTooltip({
+          address,
+          primary,
+          resolvedName,
+          feed: c.feedOrigin,
+          t,
+        })
+      : null;
 
-  if (density === 'compact') {
-    return (
-      <span
-        className={className}
-        style={style}
-        aria-hidden={ghost || undefined}
-        title={title}
-      />
-    );
-  }
+  // Cup absolute hosts need the slot to fill the tip wrapper; flow formats
+  // (Champ width:100%, Groups) must keep CSS min-height: 2rem.
+  const cupAbsolute = style?.position === 'absolute';
+  const slotStyle: CSSProperties | undefined = tip
+    ? cupAbsolute
+      ? { width: '100%', height: '100%', minHeight: 0 }
+      : undefined
+    : style;
 
-  if (density === 'crest') {
-    return (
-      <span
-        className={className}
-        style={style}
-        aria-hidden={ghost || undefined}
-        title={title}
-      >
-        {name ? (
-          <TeamCrest
-            name={name}
-            logoMediaId={c?.assignment?.logoMediaId}
-            primaryColor={c?.assignment?.primaryColor}
-            size="sm"
-          />
-        ) : null}
-      </span>
-    );
+  const slot = (
+    <span
+      className={className}
+      style={slotStyle}
+      aria-hidden={ghost || undefined}
+    >
+      {density === 'crest' && name ? (
+        <TeamCrest
+          name={name}
+          logoMediaId={c?.assignment?.logoMediaId}
+          primaryColor={c?.assignment?.primaryColor}
+          size="sm"
+        />
+      ) : null}
+      {density === 'full' && address ? (
+        <span className="schematic-slot__address">{address}</span>
+      ) : null}
+      {density === 'full' && primary ? (
+        <span className="schematic-slot__primary">{primary}</span>
+      ) : null}
+      {density === 'full' && secondary && secondary !== primary ? (
+        <span className="schematic-slot__secondary">{secondary}</span>
+      ) : null}
+    </span>
+  );
+
+  if (!tip) {
+    return slot;
   }
 
   return (
-    <span className={className} style={style} aria-hidden={ghost || undefined}>
-      {address ? (
-        <span className="schematic-slot__address" title={address}>
-          {address}
-        </span>
+    <Tooltip content={tip} side="top">
+      <span className="schematic-slot-tip" style={style}>
+        {slot}
+      </span>
+    </Tooltip>
+  );
+}
+
+export type SchematicCaseTooltipModel = {
+  address: string | null;
+  fromLabel: string | null;
+  fromPhase: string | null;
+  origin: string | null;
+  team: string | null;
+  byDraw: string | null;
+};
+
+/**
+ * Case tooltip model (S3 / U4) — construction read, not execution history.
+ * Draw indicator only when WhoFeeds Unique = Draw.
+ */
+export function buildSchematicCaseTooltipModel({
+  address,
+  primary,
+  resolvedName,
+  feed,
+  t,
+}: {
+  address: string | null;
+  primary: string | null;
+  resolvedName: string | null;
+  feed?: SchematicFeedOrigin | null;
+  t: Translate;
+}): SchematicCaseTooltipModel | null {
+  const sourceName = feed?.sourceStageName?.trim() || null;
+  const showFrom =
+    !!sourceName &&
+    (feed?.kind === 'Qualification' || feed?.kind === 'Progression');
+  const showTeam =
+    !!resolvedName &&
+    !!primary &&
+    resolvedName !== primary &&
+    feed?.kind !== 'Direct' &&
+    feed?.kind !== 'Draw';
+
+  const model: SchematicCaseTooltipModel = {
+    address: address || null,
+    fromLabel: showFrom ? t('structure:fiche.schematicTooltipFrom') : null,
+    fromPhase: showFrom ? sourceName : null,
+    origin: primary || null,
+    team: showTeam
+      ? t('structure:fiche.schematicTooltipTeam', { name: resolvedName })
+      : null,
+    byDraw:
+      feed?.kind === 'Draw'
+        ? t('structure:fiche.schematicTooltipByDraw')
+        : null,
+  };
+
+  if (
+    !model.fromPhase &&
+    !model.origin &&
+    !model.team &&
+    !model.byDraw
+  ) {
+    // Address-only empty chrome — no construction story to tip.
+    return null;
+  }
+  return model;
+}
+
+/** Structured DS Tooltip body for a schematic case. */
+export function buildSchematicCaseTooltip(
+  args: Parameters<typeof buildSchematicCaseTooltipModel>[0],
+): ReactNode {
+  const model = buildSchematicCaseTooltipModel(args);
+  if (!model) return null;
+  return (
+    <div className="schematic-case-tip">
+      {model.address ? (
+        <p className="schematic-case-tip__address">{model.address}</p>
       ) : null}
-      {primary ? (
-        <span className="schematic-slot__primary" title={primary}>
-          {primary}
-        </span>
+      {model.fromPhase ? (
+        <p className="schematic-case-tip__from">
+          <span className="schematic-case-tip__eyebrow">{model.fromLabel}</span>
+          <span className="schematic-case-tip__phase">{model.fromPhase}</span>
+        </p>
       ) : null}
-      {secondary && secondary !== primary ? (
-        <span className="schematic-slot__secondary" title={secondary}>
-          {secondary}
-        </span>
+      {model.origin ? (
+        <p className="schematic-case-tip__origin">{model.origin}</p>
       ) : null}
-    </span>
+      {model.team ? (
+        <p className="schematic-case-tip__team">{model.team}</p>
+      ) : null}
+      {model.byDraw ? (
+        <p className="schematic-case-tip__draw">{model.byDraw}</p>
+      ) : null}
+    </div>
   );
 }
 
@@ -174,14 +274,9 @@ function GroupsSchematic({
     byGroup.set(id, list);
   }
 
-  const feedByGroup = new Map(
-    (schematic.groupFeeds ?? []).map((f) => [f.groupId, f.feedOrigin]),
-  );
-
   const groups = [...byGroup.entries()].map(([id, cases]) => ({
     id,
     name: cases[0]?.formPosition.groupName ?? id,
-    feedOrigin: feedByGroup.get(id) ?? null,
     cases: [...cases].sort(
       (a, b) => (a.formPosition.index ?? 0) - (b.formPosition.index ?? 0),
     ),
@@ -201,11 +296,6 @@ function GroupsSchematic({
             <span className="regulation-schematic__card-label">
               {group.name}
             </span>
-            {group.feedOrigin ? (
-              <span className="regulation-schematic__card-feed">
-                {feedOriginLabel(group.feedOrigin, t)}
-              </span>
-            ) : null}
             <div className="regulation-schematic__card-slots">
               {group.cases.map((c, j) => (
                 <SlotBox key={`${group.id}-${j}`} c={c} t={t} />
@@ -1021,11 +1111,12 @@ function orderLeafCases(
 }
 
 /**
- * Structure projection (S-B): construction intention first when structural;
+ * Structure projection (S-B / U4 B1): construction intention first when structural;
  * Direct is the occupant itself; Draw WhoFeeds today = Published SlotResolution
  * provenance (materialized) — occupant wins when known.
+ * Qual/Prog: feed label only — resolved team is not shown (U4 B1).
  *
- * Grain: Cup Slot can carry feed on the case; Groups feeds stay on chrome.
+ * Grain: Cup Slot and Groups seats can carry feed on the case;
  * Championship/Swiss: FeedOrigin on a RosterPlace case is a pending expected
  * participant (bag projection), not a Path→index address.
  */
@@ -1058,11 +1149,10 @@ function structureCaseLabels(
     return { primary: feedOriginLabel(feed, t), secondary: null };
   }
 
-  // Qualification / Progression — structural construction feeds.
-  const feedLabel = feedOriginLabel(feed, t);
+  // Qualification / Progression — structural construction feeds (U4 B1: no resolved team).
   return {
-    primary: feedLabel,
-    secondary: occupant && occupant !== feedLabel ? occupant : null,
+    primary: feedOriginLabel(feed, t),
+    secondary: null,
   };
 }
 

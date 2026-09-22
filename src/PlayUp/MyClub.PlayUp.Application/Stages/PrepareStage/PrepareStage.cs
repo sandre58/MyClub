@@ -92,9 +92,19 @@ public static class PrepareStage
         {
             foreach (var path in qualification.Paths)
             {
-                if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
+                if (path.Destination.TargetsPopulation)
                 {
                     EnsureOutboundPopulationDestination(
+                        source,
+                        competitionStages,
+                        path.Destination.StageId,
+                        "Qualification");
+                    continue;
+                }
+
+                if (path.Destination.TargetsForm)
+                {
+                    EnsureOutboundFormDestination(
                         source,
                         competitionStages,
                         path.Destination.StageId,
@@ -129,9 +139,19 @@ public static class PrepareStage
 
         foreach (var path in progression.Paths)
         {
-            if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
+            if (path.Destination.TargetsPopulation)
             {
                 EnsureOutboundPopulationDestination(
+                    source,
+                    competitionStages,
+                    path.Destination.StageId,
+                    "Progression");
+                continue;
+            }
+
+            if (path.Destination.TargetsForm)
+            {
+                EnsureOutboundFormDestination(
                     source,
                     competitionStages,
                     path.Destination.StageId,
@@ -182,6 +202,42 @@ public static class PrepareStage
             $"{mechanism} destination stage '{destinationStageId}' is not part of the competition stages list.",
             ApplicationErrorCodes.StageNotInCompetition);
     }
+
+    /// <summary>
+    /// ForForm is allowed only toward Championship / Swiss-shaped stages (authoring matrix).
+    /// Not a Domain invariant — Prepare/API gate only.
+    /// </summary>
+    private static void EnsureOutboundFormDestination(
+        Stage source,
+        IReadOnlyList<Stage> competitionStages,
+        StageId destinationStageId,
+        string mechanism)
+    {
+        if (destinationStageId.Equals(source.Id))
+        {
+            throw new ApplicationFailureException(
+                $"{mechanism} form destination cannot target the source stage.",
+                ApplicationErrorCodes.DanglingFeedTarget);
+        }
+
+        var destination = competitionStages.FirstOrDefault(s => s.Id.Equals(destinationStageId))
+            ?? throw new ApplicationFailureException(
+                $"{mechanism} destination stage '{destinationStageId}' is not part of the competition stages list.",
+                ApplicationErrorCodes.StageNotInCompetition);
+
+        if (IsFormPlacementEligible(destination))
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"{mechanism} form destination requires a Championship or Swiss stage structure.",
+            ApplicationErrorCodes.DanglingFeedTarget);
+    }
+
+    private static bool IsFormPlacementEligible(Stage destination) =>
+        destination.IsSwiss
+        || (destination.Matchdays.Count > 0 && destination.Groups.Count == 0);
 
     private static void EnsureOutboundDestination(
         Stage source,

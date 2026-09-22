@@ -146,6 +146,90 @@ public sealed class NeedsAttentionAssemblerTests
             item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
     }
 
+    [Fact]
+    public void Assemble_qual_form_pending_until_provenance_recorded()
+    {
+        var competition = Competition.Create(new CompetitionName("FormAtt"), SampleRegulations.Standard(), _clock);
+        var (source, groupA, groupB, tops, champ) = CreateGroupsToChampForm(competition);
+
+        var matches = BuildGroupMatches(competition, source, groupA, groupB);
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [source, champ],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [source.Id] = matches });
+
+        attention.Items.Should().HaveCount(2);
+        attention.Items.Should().OnlyContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceQualificationPending
+            && item.TargetType == "Form");
+
+        champ.AddResolvedPopulationEntry(tops[0], _clock);
+        champ.RecordFormPathResolution(
+            FormPathResolutionKey.FromQualification(
+                source.Id,
+                source.Regulation.QualificationRules!.Paths.Single(p => p.Source.GroupId!.Equals(groupA.Id))),
+            tops[0],
+            _clock);
+
+        attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [source, champ],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [source.Id] = matches });
+
+        attention.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceQualificationPending
+            && item.TargetType == "Form");
+    }
+
+    [Fact]
+    public void Assemble_prog_group_pending_until_group_membership()
+    {
+        var competition = Competition.Create(new CompetitionName("ProgGroup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        var cup = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        cup.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        competition.AddStage(cup.Id, _clock);
+        var groups = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var groupA = groups.AddGroup("A", _clock);
+        competition.AddStage(groups.Id, _clock);
+
+        var fixture = cup.AddFixture(cup.Rounds[0].Id, _clock);
+        var match = Match.Create(competition.Id, cup.Id, home.Id, away.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);
+        cup.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        cup.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    fixture.Id,
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForGroup(groups.Id, groupA.Id))
+            ]),
+            _clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [cup, groups],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [cup.Id] = [match] });
+
+        attention.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceProgressionPending
+            && item.TargetType == "Group");
+
+        groups.AddResolvedPopulationEntry(home.Id, _clock);
+        groups.ApplyResolvedGroupEntry(groupA.Id, home.Id);
+
+        attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [cup, groups],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [cup.Id] = [match] });
+
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceProgressionPending);
+    }
+
     private (Competition Competition, Stage Stage, Match Match) CreateFinishedKnockoutWithProgression()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
@@ -172,5 +256,60 @@ public sealed class NeedsAttentionAssemblerTests
             _clock);
 
         return (competition, stage, match);
+    }
+
+    private (Stage Source, Group GroupA, Group GroupB, EntryId[] Tops, Stage Champ)
+        CreateGroupsToChampForm(Competition competition)
+    {
+        var source = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var groupA = source.AddGroup("A", _clock);
+        var groupB = source.AddGroup("B", _clock);
+        var eA1 = competition.AddEntry(TeamId.New(), "A1", _clock).Id;
+        var eA2 = competition.AddEntry(TeamId.New(), "A2", _clock).Id;
+        var eB1 = competition.AddEntry(TeamId.New(), "B1", _clock).Id;
+        var eB2 = competition.AddEntry(TeamId.New(), "B2", _clock).Id;
+        source.AssignEntryToGroup(groupA.Id, eA1);
+        source.AssignEntryToGroup(groupA.Id, eA2);
+        source.AssignEntryToGroup(groupB.Id, eB1);
+        source.AssignEntryToGroup(groupB.Id, eB2);
+        source.AddMatchday(1, _clock);
+        competition.AddStage(source.Id, _clock);
+
+        var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);
+        champ.AddMatchday(1, _clock);
+        competition.AddStage(champ.Id, _clock);
+
+        var intent = new QualificationIntent(
+            IntentId.New(),
+            order: 1,
+            QualificationIntentSourceKind.EachGroup,
+            positionFrom: 1,
+            positionTo: 1,
+            champ.Id,
+            destinationForm: true);
+        source.ReplaceQualificationRules(
+            QualificationRules.FromIntents([intent], [groupA.Id, groupB.Id]),
+            _clock);
+
+        return (source, groupA, groupB, [eA1, eB1], champ);
+    }
+
+    private IReadOnlyList<Match> BuildGroupMatches(
+        Competition competition,
+        Stage source,
+        Group groupA,
+        Group groupB)
+    {
+        var a1 = groupA.EntryIds[0];
+        var a2 = groupA.EntryIds[1];
+        var b1 = groupB.EntryIds[0];
+        var b2 = groupB.EntryIds[1];
+        var mA = Match.Create(competition.Id, source.Id, a1, a2, _clock);
+        mA.Start(_clock);
+        mA.Finish(new MatchResult(ResultType.Played, new Score(3, 0)), _clock);
+        var mB = Match.Create(competition.Id, source.Id, b1, b2, _clock);
+        mB.Start(_clock);
+        mB.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        return [mA, mB];
     }
 }

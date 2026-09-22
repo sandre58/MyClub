@@ -665,9 +665,9 @@ export interface StructureStageHubSummary {
   compositionCapacity?: number | null;
   /** Groups form fact: places per group (SoT for Places N); independent of Draw. */
   placesPerGroup?: number | null;
-  /** Short display-name preview for the composition set. */
+  /** Display names for the composition set (full list). */
   compositionPreviewNames?: string[] | null;
-  /** Count of composition entries beyond the preview. */
+  /** Always 0 — retained for API shape; rails no longer truncate. */
   compositionPreviewOverflow?: number;
   /** Composition entries that are no longer Active. */
   compositionIneligibleCount?: number;
@@ -1396,6 +1396,8 @@ export interface SchematicFormPosition {
 export interface SchematicFeedOrigin {
   kind: SchematicFeedKind;
   sourceStageId?: string | null;
+  /** Source phase display name when Qual/Prog (read-model chrome / tooltip). */
+  sourceStageName?: string | null;
   pathOrder?: number | null;
   selectionMode?: SelectionMode | null;
   selectionValue?: number | null;

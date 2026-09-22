@@ -276,7 +276,10 @@ internal static class ScenarioOrchestration
             throw new InvalidOperationException("Cup pairing requires a power-of-two entry count.");
         }
 
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, context.Ids.Draw(), context.Clock);
+        var draw = stage.CreateDraw(
+            DrawResolutionKind.Pairing,
+            context.Ids.Draw($"pairing-{stage.Id.Value:N}"),
+            context.Clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries));
 
         var pairings = new List<PairingDrawResult>();
@@ -698,6 +701,75 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
+    /// Groups 2×2 finished → Top1 Qual ForForm → Championship Composition + provenance.
+    /// Directs stay on Champ; FormPathResolutions recorded. Champ stays Draft.
+    /// </summary>
+    public static async Task BuildQualFormToChampMidAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Qual Forme → Championnat",
+            Format = RecipeFormat.Groups,
+            TeamCount = 4,
+            GroupCount = 2,
+            PlacesPerGroup = 2,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+
+        // 4 in groups + 2 directs on Championship (recipe TeamCount stays 4 for Groups skeleton).
+        var entries = await RegisterTeamsAsync(
+                context, competition, recipe, countOverride: 6, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+
+        var ordered = entries.OrderBy(entry => entry.Id.Value).ToList();
+        var groupPool = ordered.Take(4).ToList();
+        var directs = ordered.Skip(4).Take(2).ToList();
+        AssignGroupsRoundRobin(groups, groupPool);
+        AssignRootComposition(groups, groupPool, context.Clock);
+
+        var champ = CreateChampionshipStage(context, competition, "champ", "Championnat");
+        AssignRootComposition(champ, directs, context.Clock);
+
+        WireEachGroupQualificationToForm(
+            context.Ids, groups, champ, positionFrom: 1, positionTo: 1, context.Clock);
+
+        var groupMatches = MaterializeGroupsMatches(context, competition, groups);
+        PrepareAndStart(context, competition, groups);
+        PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
+
+        var groupStandings = new Dictionary<GroupId, Standing>();
+        foreach (var group in groups.Groups)
+        {
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                groupMatches,
+                groups.Regulation.StandingRules ?? BootstrapRegulation.Standard().StandingRules);
+        }
+
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            groupStandings,
+            [groups, champ],
+            context.Clock);
+
+        groups.Complete(context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Case 7 hybrid mid-state: Groups 2×4 finished → Top1 Auto Place + Top2 Population;
     /// remaining QF Places filled by Slot Draw from leftover Population pool. KO Draft.
     /// WhoFeeds: Auto slots = Qual; drawn slots = Draw.
@@ -879,6 +951,125 @@ internal static class ScenarioOrchestration
 
         WireEachGroupQualificationToSlots(
             context.Ids, groups, quarter, positionFrom: 1, positionTo: 2, qfSlotKeys, context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Structure flux QA — Qual Place → Championship Forme (ForForm), reste Draft.
+    /// Groups 2×2 (4) + 2 directs sur Championnat ; Top1 EachGroup → ForForm.
+    /// Schematic Champ = sac ExpectedFormParticipants (2 resolved + 2 pending).
+    /// </summary>
+    public static async Task BuildFluxQualFormDraftAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Flux — Qual Forme Championnat",
+            Format = RecipeFormat.Groups,
+            TeamCount = 4,
+            GroupCount = 2,
+            PlacesPerGroup = 2,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+
+        // 4 in groups + 2 directs on Championship (recipe TeamCount stays 4 for Groups skeleton).
+        var entries = await RegisterTeamsAsync(
+                context, competition, recipe, countOverride: 6, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+
+        var ordered = entries.OrderBy(entry => entry.Id.Value).ToList();
+        var groupPool = ordered.Take(4).ToList();
+        var directs = ordered.Skip(4).Take(2).ToList();
+        AssignGroupsRoundRobin(groups, groupPool);
+        AssignRootComposition(groups, groupPool, context.Clock);
+
+        var champ = CreateChampionshipStage(context, competition, "champ", "Championnat");
+        AssignRootComposition(champ, directs, context.Clock);
+
+        WireEachGroupQualificationToForm(
+            context.Ids, groups, champ, positionFrom: 1, positionTo: 1, context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Structure flux QA — Prog Place → Groups poules (ForGroup), reste Draft.
+    /// Coupe 4 (Affectation) → Winner Prog ForGroup vers 2 poules aval.
+    /// </summary>
+    public static async Task BuildFluxProgGroupDraftAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Flux — Prog Groupe",
+            Format = RecipeFormat.Cup,
+            TeamCount = 4,
+            BracketSize = 4,
+            StageName = "Demi-finales",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var semi = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(semi, entries, context.Clock);
+        var sfFixtures = AddRoundFixtures(semi, count: 2, context.Clock);
+
+        // Secondary Groups stage — ConfigureStructure is primary-only; seed skeleton via Domain APIs.
+        var groups = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            competition.Regulation,
+            context.Ids.Stage("groups-aval"),
+            context.Clock);
+        competition.AddStage(groups.Id, context.Clock);
+        groups.AddGroup("A", context.Clock);
+        groups.AddGroup("B", context.Clock);
+        groups.AddMatchday(1, context.Clock);
+        groups.SetPlacesPerGroup(2);
+        groups.SeedStandingRules(
+            competition.Regulation.StandingRules ?? BootstrapRegulation.Standard().StandingRules,
+            context.Clock);
+        groups.SetMatchGenerationFormat(MatchGenerationFormat.SingleRoundRobin);
+        groups.ReplaceDrawRules(null, context.Clock);
+        context.Stages.Add(groups);
+
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        if (orderedGroups.Length != 2 || sfFixtures.Length != 2)
+        {
+            throw new InvalidOperationException("Prog → Group draft expects 2 SF fixtures and 2 destination groups.");
+        }
+
+        semi.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    sfFixtures[0].Id,
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForGroup(groups.Id, orderedGroups[0].Id)),
+                new ProgressionPath(
+                    sfFixtures[1].Id,
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForGroup(groups.Id, orderedGroups[1].Id))
+            ]),
+            context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1442,8 +1633,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Coupe de France multi-stage: R32→R16→QF→SF→Final played through; Final PlacementAwards (1–2);
-    /// competition Completed with derivable <c>CompetitionOutcome</c>.
+    /// Coupe de France multi-stage: R32 pairing draw → Winner→Population intents → Slot Draw placement
+    /// through Final; PlacementAwards 1–2; Completed + Outcome.
     /// Ignores <see cref="ScenarioContext.Progress"/> (fixed seed). Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
     /// </summary>
     public static async Task BuildCoupeDeFranceMultiStageAsync(
@@ -1478,6 +1669,7 @@ internal static class ScenarioOrchestration
             roundOf32.Rounds[0].Id,
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
+        roundOf32.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
         var r32Matches = ApplyCupPairingDeterministic(context, competition, roundOf32);
 
         var r16SlotKeys = PairSlotKeys("R16", pairCount: 8);
@@ -1494,6 +1686,11 @@ internal static class ScenarioOrchestration
         var final = CreateKnockoutStage(
             context, competition, "final", "Finale", "Finale", finalSlotKeys);
 
+        roundOf16.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        quarter.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        semi.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        final.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+
         MatchEnrichment.SpecializeWithExtraTimeAndPenalties(semi, context.Clock);
         MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
 
@@ -1509,7 +1706,8 @@ internal static class ScenarioOrchestration
                 $"Expected 16 R32 fixtures for coupe-de-france, found {r32Fixtures.Length}.");
         }
 
-        WireWinnerProgression(roundOf32, roundOf16, r32Fixtures, context.Clock);
+        WireWinnerProgressionToPopulation(
+            context.Ids, roundOf32, roundOf16, r32Fixtures, context.Clock, intentKey: "prog-cdf-r32");
 
         roundOf32.Prepare(context.Clock);
         competition.Prepare(context.Clock);
@@ -1518,7 +1716,7 @@ internal static class ScenarioOrchestration
 
         PlayDecisiveMatches(context, competition, r32Matches);
         ApplyAllProgressions(context, roundOf32, r32Fixtures, r32Matches, allStages);
-        PlacePopulationEntriesIntoSlots(roundOf16, r16SlotKeys, context.Clock);
+        PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
 
         PlayKnockoutRound(
             context,
@@ -1528,7 +1726,9 @@ internal static class ScenarioOrchestration
             expectedFixtures: 8,
             nextStage: quarter,
             nextSlotKeys: qfSlotKeys,
-            allStages);
+            allStages,
+            placeViaSlotDraw: true,
+            intentKey: "prog-cdf-r16");
         PlayKnockoutRound(
             context,
             competition,
@@ -1537,7 +1737,9 @@ internal static class ScenarioOrchestration
             expectedFixtures: 4,
             nextStage: semi,
             nextSlotKeys: sfSlotKeys,
-            allStages);
+            allStages,
+            placeViaSlotDraw: true,
+            intentKey: "prog-cdf-qf");
         PlayKnockoutRound(
             context,
             competition,
@@ -1546,7 +1748,138 @@ internal static class ScenarioOrchestration
             expectedFixtures: 2,
             nextStage: final,
             nextSlotKeys: finalSlotKeys,
-            allStages);
+            allStages,
+            placeViaSlotDraw: true,
+            intentKey: "prog-cdf-sf");
+
+        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
+        var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
+        WireFinalPlacementAwards(final, finalFixture, context.Clock);
+        PrepareAndStartStage(context, final);
+        PlayDecisiveMatches(context, competition, finalMatches);
+
+        CompleteAllRunning(context, competition, allStages);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Euro: Groups 6×4 → EachGroup Top2 + AcrossGroups best 4 thirds → R16 population → Slot Draw
+    /// → QF→SF→Final; PlacementAwards 1–2; Completed + Outcome. No bronze. Ignores progress.
+    /// </summary>
+    public static async Task BuildEuroAcrossGroupsAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "UEFA European Championship",
+            Format = RecipeFormat.Groups,
+            TeamCount = 24,
+            GroupCount = 6,
+            PlacesPerGroup = 4,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Dataset,
+            DatasetCompetitionKey = "euro"
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(
+                context,
+                recipe,
+                cancellationToken,
+                BootstrapRegulation.Standard())
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        var r16SlotKeys = PairSlotKeys("R16", pairCount: 8);
+        var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
+        var sfSlotKeys = PairSlotKeys("SF", pairCount: 2);
+        var finalSlotKeys = new[] { "F-A", "F-B" };
+
+        var roundOf16 = CreateKnockoutStage(
+            context, competition, "r16", "Huitièmes de finale", "Huitièmes de finale", r16SlotKeys);
+        var quarter = CreateKnockoutStage(
+            context, competition, "qf", "Quarts de finale", "Quarts de finale", qfSlotKeys);
+        var semi = CreateKnockoutStage(
+            context, competition, "sf", "Demis de finale", "Demis de finale", sfSlotKeys);
+        var final = CreateKnockoutStage(
+            context, competition, "final", "Finale", "Finale", finalSlotKeys);
+
+        roundOf16.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        quarter.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        semi.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        final.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(roundOf16, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(quarter, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(semi, context.Clock);
+        MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
+
+        WireEuroQualification(context.Ids, groups, roundOf16, context.Clock);
+
+        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
+        PrepareAndStart(context, competition, groups);
+        PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
+
+        var groupStandings = new Dictionary<GroupId, Standing>();
+        foreach (var group in groups.Groups)
+        {
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                groupMatches,
+                groups.Regulation.StandingRules ?? BootstrapRegulation.Standard().StandingRules);
+        }
+
+        Stage[] allStages = [groups, roundOf16, quarter, semi, final];
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            groupStandings,
+            groupMatches,
+            allStages,
+            context.Clock);
+
+        PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
+
+        PlayKnockoutRound(
+            context,
+            competition,
+            roundOf16,
+            AdjacentPairs(r16SlotKeys),
+            expectedFixtures: 8,
+            nextStage: quarter,
+            nextSlotKeys: qfSlotKeys,
+            allStages,
+            placeViaSlotDraw: true,
+            intentKey: "prog-euro-r16");
+        PlayKnockoutRound(
+            context,
+            competition,
+            quarter,
+            AdjacentPairs(qfSlotKeys),
+            expectedFixtures: 4,
+            nextStage: semi,
+            nextSlotKeys: sfSlotKeys,
+            allStages,
+            placeViaSlotDraw: true,
+            intentKey: "prog-euro-qf");
+        PlayKnockoutRound(
+            context,
+            competition,
+            semi,
+            AdjacentPairs(sfSlotKeys),
+            expectedFixtures: 2,
+            nextStage: final,
+            nextSlotKeys: finalSlotKeys,
+            allStages,
+            placeViaSlotDraw: true,
+            intentKey: "prog-euro-sf");
 
         var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
@@ -1915,68 +2248,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Lightweight championship Draft seed for Règlement hub schematic QA.
-    /// </summary>
-    public static async Task BuildRegulationChampionshipDemoAsync(
-        ScenarioContext context,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var recipe = new CompetitionRecipe
-        {
-            DisplayName = "Démo Championnat",
-            Format = RecipeFormat.Championship,
-            TeamCount = 8,
-            MatchdayCount = 14,
-            MatchGenerationFormat = MatchGenerationFormat.DoubleRoundRobin,
-            StageName = "Championnat",
-            TeamNames = TeamNameSource.Generated
-        };
-
-        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
-            .ConfigureAwait(false);
-        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
-        var stage = ConfigurePrimaryStage(context, competition, recipe);
-        _ = MaterializeChampionshipMatches(context, competition, stage);
-        _ = entries;
-
-        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Lightweight Swiss Draft seed for Règlement hub schematic QA (structure only, no rounds played).
-    /// </summary>
-    public static async Task BuildRegulationSwissDemoAsync(
-        ScenarioContext context,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var recipe = new CompetitionRecipe
-        {
-            DisplayName = "Démo Suisse",
-            Format = RecipeFormat.Swiss,
-            TeamCount = 8,
-            SwissRoundCount = 3,
-            StageName = "Suisse",
-            TeamNames = TeamNameSource.Generated
-        };
-
-        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
-            .ConfigureAwait(false);
-        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
-        _ = ConfigurePrimaryStage(context, competition, recipe);
-
-        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Materialize → wire Winner progression to next → start → play → apply progression.
+    /// Materialize → wire Winner→Population progression intent → start → play → apply → place next slots.
     /// </summary>
     private static void PlayKnockoutRound(
         ScenarioContext context,
@@ -1986,15 +2258,25 @@ internal static class ScenarioOrchestration
         int expectedFixtures,
         Stage nextStage,
         string[] nextSlotKeys,
-        IReadOnlyList<Stage> allStages)
+        IReadOnlyList<Stage> allStages,
+        bool placeViaSlotDraw = false,
+        string intentKey = "prog-winner")
     {
         var matches = MaterializeFromSlots(context, competition, stage, pairs);
         var fixtures = OrderedFixtures(stage, expectedFixtures);
-        WireWinnerProgression(stage, nextStage, fixtures, context.Clock);
+        WireWinnerProgressionToPopulation(
+            context.Ids, stage, nextStage, fixtures, context.Clock, intentKey);
         PrepareAndStartStage(context, stage);
         PlayDecisiveMatches(context, competition, matches);
         ApplyAllProgressions(context, stage, fixtures, matches, allStages);
-        PlacePopulationEntriesIntoSlots(nextStage, nextSlotKeys, context.Clock);
+        if (placeViaSlotDraw)
+        {
+            PlacePopulationIntoSlotsViaDraw(context, competition, nextStage, nextSlotKeys);
+        }
+        else
+        {
+            PlacePopulationEntriesIntoSlots(nextStage, nextSlotKeys, context.Clock);
+        }
     }
 
     private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock) =>
@@ -2182,6 +2464,24 @@ internal static class ScenarioOrchestration
         return stage;
     }
 
+    private static Stage CreateChampionshipStage(
+        ScenarioContext context,
+        Competition competition,
+        string stageKey,
+        string stageName)
+    {
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName(stageName),
+            competition.Regulation,
+            context.Ids.Stage(stageKey),
+            context.Clock);
+        stage.AddMatchday(1, context.Clock);
+        competition.AddStage(stage.Id, context.Clock);
+        context.Stages.Add(stage);
+        return stage;
+    }
+
     /// <summary>
     /// Case 1: after ApplyQualification filled <see cref="Stage.CompositionEntries"/>,
     /// place them into form slots via a deterministic Slot Draw (then Publish + Apply).
@@ -2262,7 +2562,10 @@ internal static class ScenarioOrchestration
         string[] slotKeys)
     {
         var inputs = DrawInputs.ForSlot(pool);
-        var draw = stage.CreateDraw(DrawResolutionKind.Slot, context.Ids.Draw(), context.Clock);
+        var draw = stage.CreateDraw(
+            DrawResolutionKind.Slot,
+            context.Ids.Draw($"slot-{stage.Id.Value:N}-{slotKeys.Length}"),
+            context.Clock);
         stage.ConfigureDrawInputs(draw.Id, inputs);
         stage.RecordDrawResolution(
             draw.Id,
@@ -2348,6 +2651,53 @@ internal static class ScenarioOrchestration
             ids, groups, roundOf16, positionFrom: 1, positionTo: 2, clock, intentKey: "qual-wc-top2");
 
     /// <summary>
+    /// Euro Qual: EachGroup Top1–2 + AcrossGroups(P=3) ranks 1–4 → R16 population (12 + 4 = 16).
+    /// </summary>
+    private static void WireEuroQualification(
+        DeterministicIdFactory ids,
+        Stage groups,
+        Stage roundOf16,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        ArgumentNullException.ThrowIfNull(groups);
+        ArgumentNullException.ThrowIfNull(roundOf16);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var groupOrder = groups.Groups
+            .OrderBy(group => group.Name, StringComparer.Ordinal)
+            .Select(group => group.Id)
+            .ToArray();
+        if (groupOrder.Length != 6)
+        {
+            throw new InvalidOperationException(
+                $"Euro qualification expects 6 groups, found {groupOrder.Length}.");
+        }
+
+        groups.ReplaceQualificationRules(
+            QualificationRules.FromIntents(
+            [
+                new QualificationIntent(
+                    ids.Intent("qual-euro-top2"),
+                    order: 1,
+                    QualificationIntentSourceKind.EachGroup,
+                    positionFrom: 1,
+                    positionTo: 2,
+                    roundOf16.Id),
+                new QualificationIntent(
+                    ids.Intent("qual-euro-best-thirds"),
+                    order: 2,
+                    QualificationIntentSourceKind.AcrossGroups,
+                    positionFrom: 1,
+                    positionTo: 4,
+                    roundOf16.Id,
+                    acrossGroupsPosition: 3)
+            ],
+            groupOrder),
+            clock);
+    }
+
+    /// <summary>
     /// Qual authoring: EachGroup positions → destination stage population (Intents SoT). Case 1 / Case 4-style.
     /// </summary>
     private static void WireEachGroupQualificationToPopulation(
@@ -2384,6 +2734,49 @@ internal static class ScenarioOrchestration
                     positionFrom,
                     positionTo,
                     destination.Id)
+            ],
+            groupOrder),
+            clock);
+    }
+
+    /// <summary>
+    /// Qual Place → Championship / Swiss Forme (ForForm). Expand → ForForm(DestinationStageId) per path.
+    /// </summary>
+    private static void WireEachGroupQualificationToForm(
+        DeterministicIdFactory ids,
+        Stage source,
+        Stage destination,
+        int positionFrom,
+        int positionTo,
+        IClock clock,
+        string intentKey = "qual-form")
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var groupOrder = source.Groups
+            .OrderBy(group => group.Name, StringComparer.Ordinal)
+            .Select(group => group.Id)
+            .ToArray();
+        if (groupOrder.Length == 0)
+        {
+            throw new InvalidOperationException(
+                $"Stage '{source.Name.Value}' has no groups for Form Place qualification.");
+        }
+
+        source.ReplaceQualificationRules(
+            QualificationRules.FromIntents(
+            [
+                new QualificationIntent(
+                    ids.Intent(intentKey),
+                    order: 1,
+                    QualificationIntentSourceKind.EachGroup,
+                    positionFrom,
+                    positionTo,
+                    destination.Id,
+                    destinationForm: true)
             ],
             groupOrder),
             clock);
@@ -2495,19 +2888,48 @@ internal static class ScenarioOrchestration
             clock);
     }
 
-    private static void WireWinnerProgression(
+    /// <summary>
+    /// Prog Sorties: Winner of each fixture in one round → destination Population (Intents SoT).
+    /// </summary>
+    private static void WireWinnerProgressionToPopulation(
+        DeterministicIdFactory ids,
         Stage source,
         Stage destination,
         Fixture[] fixtures,
-        IClock clock)
+        IClock clock,
+        string intentKey = "prog-winner")
     {
-        var paths = new List<ProgressionPath>(fixtures.Length);
-        paths.AddRange(fixtures.Select(t => new ProgressionPath(
-            t.Id,
-            ProgressionOutcome.Winner,
-            ProgressionDestination.ForPopulation(destination.Id))));
+        ArgumentNullException.ThrowIfNull(ids);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(fixtures);
+        ArgumentNullException.ThrowIfNull(clock);
 
-        source.ReplaceProgressionRules(new ProgressionRules(paths), clock);
+        if (fixtures.Length == 0)
+        {
+            throw new InvalidOperationException("Winner→Population progression requires at least one fixture.");
+        }
+
+        var round = source.Rounds.FirstOrDefault(candidate =>
+            fixtures.All(fixture => candidate.Fixtures.Any(rf => rf.Id.Equals(fixture.Id))));
+        if (round is null || round.Fixtures.Count != fixtures.Length)
+        {
+            throw new InvalidOperationException(
+                "Winner→Population fixtures must be exactly the fixtures of one source round.");
+        }
+
+        source.ReplaceProgressionRules(
+            ProgressionRules.FromIntents(
+            [
+                new ProgressionIntent(
+                    ids.Intent(intentKey),
+                    order: 1,
+                    round.Id,
+                    ProgressionOutcome.Winner,
+                    destination.Id)
+            ],
+            source.Rounds),
+            clock);
     }
 
     /// <summary>

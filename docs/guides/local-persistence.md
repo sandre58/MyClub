@@ -57,7 +57,7 @@ Applies to **templates** and most **structured scenarios** (`championship`, `gro
 
 Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`, `swiss-8x3:running`).
 
-Fixed UX / Structure scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `flux-qualif-draft`, `flux-prog-placement-draft`, `flux-empty-relations-draft`, `flux-full-graph-draft`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
+Fixed UX / Structure / Règlement scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `qual-auto-place-mid`, `qual-hybrid-auto-draw-mid`, `prog-auto-place-mid`, `qual-form-to-champ-mid`, `flux-qualif-draft`, `flux-qual-form-draft`, `flux-prog-placement-draft`, `flux-prog-group-draft`, `flux-empty-relations-draft`, `flux-full-graph-draft`, `regulation-demo`, `regulation-tie-homogeneous`, `confrontation-multi-round`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
 
 ### Aliases (compat — do not change silently)
 
@@ -67,18 +67,26 @@ Fixed UX / Structure scenarios (`empty-workspace`, `draft-empty`, `registration-
 | `finished` | `groups:finished` | Means that scenario, not “any finished seed” |
 | `knockout-qf` | `cup:running` | **Historical only** — single-round cup (~16 teams, ~50% played). **Not** QF→SF. Multi-stage / from-slots demo = `cup-qf-sf` (no redirect). |
 
+## Catalog taxonomy
+
+| Catalog | CLI | Intention |
+| :--- | :--- | :-------- |
+| **Templates** | `--templates` | Inspired competitions (real-world names / logos). Approximation modulo Domain — not UX mid-states. |
+| **Scenarios** | `--scenarios` | UX / métier / QA situations (lifecycle, Structure, Règlement, Confrontation, Flux). |
+
+No third catalog. Règlement / Confrontation / Flux seeds are **scenarios**.
+
 ## Templates (inspired competitions)
 
-Templates are **capacity demos**, not full real multi-phase calendars:
+Five templates today. Capacity demos — not full real calendars:
 
 | Id | Approximation |
 | :--- | :------------ |
 | `ligue-1` | Championship, 18 clubs (JSON) — **`DoubleRoundRobin`**, 34 matchdays, PairMirror (`N×(N−1)` = 306). Capacity demo, not a real L1 calendar. Use `:finished` for Standing → `CompetitionOutcome`. |
-| `champions-league` | Groups 8×4 only. **Not** UEFA League Phase (future distinct track). **Not** Swiss classique. Groups-only → **no** competition Outcome (aligned Domain). |
+| `champions-league` | Groups 8×4 · 32 clubs — **Groups capacity** demo (classic CL group-stage shape). **Not** UEFA League Phase; **not** Swiss; no KO. No competition Outcome (aligned Domain). |
 | `world-cup` | Groups 8×4 → Top2 → R16→QF→SF → Final + Bronze played · PlacementAwards ranks 1–4 · **Completed** + `CompetitionOutcome`. `:progress` ignored. |
-| `coupe-de-france` | Cup multi-stage R32→R16→QF→SF→Final played · PlacementAwards ranks 1–2 · **Completed** + `CompetitionOutcome`. `:progress` ignored. Mid-bracket from-slots demo = `cup-qf-sf`. |
-| `regulation-demo` | Draft Groups + KO structure for Règlement hub QA (DrawRules + qualification wired; stays Draft). |
-| `regulation-championship` / `regulation-swiss` / `regulation-tie-homogeneous` | Draft schematic seeds for Règlement / confrontation tokens. |
+| `coupe-de-france` | Cup 32 · R32 **pairing draw** · Winner→Population **intents** · **Slot draws** R16→…→Final · PlacementAwards 1–2 · **Completed** + Outcome. `:progress` ignored. |
+| `euro-across-groups` | Groups 6×4 → Top2 + **best 4 thirds** (`AcrossGroups` P=3) → R16 population → Slot Draw → QF→SF→Final · PlacementAwards 1–2 · **Completed** + Outcome. `:progress` ignored. |
 
 Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (display name, short name, colors, `logoAsset`). Inspired templates also seed:
 
@@ -97,7 +105,7 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `draft-empty` | no | Draft, 0 entries |
 | `registration-open` | no | Partial registration (3/16) — construction problem |
 | `registration-withdrawn` | no | Championship Running then 1 forfait (Withdraw) — operational problem |
-| `championship-structure-draft` | no | Championship materialized + full composition, stays Draft (E4) |
+| `championship-structure-draft` | no | Championship materialized + full composition, stays Draft (Structure E4 + Règlement championnat schematic) |
 | `structure-graph-invalid` | no | Poules → Barrages → Finale/Bronze Draft with missing qual slots + multi-dest progression — Structure Topology / anomaly QA |
 | `championship-ready` | no | Championship Ready (not started) |
 | `championship-archived` | no | Championship Completed then Archived |
@@ -105,17 +113,26 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `groups-suspended` | no | Groups mid-results then Suspended |
 | `groups-draw-pending` | no | Groups + pot DrawRules + full composition, empty groups — Draft awaiting draw (E4) |
 | `groups-to-ko-mid` | no | Groups 2×4 finished → Top2 in QF slots — KO Draft (healthy multi-phase mid) |
-| `flux-qualif-draft` | no | Structure flux: Groups Affectation + Qualif → QF — Draft (Sorties Qualif / Entrées aval) |
+| `qual-auto-place-mid` | no | Qual Auto Place into QF mid — WhoFeeds = Qual |
+| `qual-hybrid-auto-draw-mid` | no | Qual Top1 Auto + Top2 population + Draw mid |
+| `prog-auto-place-mid` | no | Prog Auto Place into SF mid |
+| `qual-form-to-champ-mid` | no | Qual ForForm → Championship FormPathResolutions mid |
+| `flux-qualif-draft` | no | Structure flux: Groups Affectation + Qualif → QF Places — Draft |
+| `flux-qual-form-draft` | no | Structure flux: Groups + directs → Champ ForForm — Draft |
 | `flux-prog-placement-draft` | no | Structure flux: Demi Affectation → Finale/Bronze Prog + Attribution 1–4 — Draft |
-| `flux-empty-relations-draft` | no | Structure flux: Groups + QF sans arêtes — Draft (overflow Ajouter une sortie) |
+| `flux-prog-group-draft` | no | Structure flux: Semi Winner → Groups ForGroup — Draft |
+| `flux-empty-relations-draft` | no | Structure flux: Groups + QF sans arêtes — Draft |
 | `flux-full-graph-draft` | no | Structure flux: Groups → Demis (Qualif) → Finale/Bronze (Prog + Attribution) — Draft |
+| `regulation-demo` | no | Règlement hub: Groupes → Qual → KO A/R · Finale · ET+TAB · Draft |
+| `regulation-tie-homogeneous` | no | Confrontation tokens: Finale A/R riche · Draft |
+| `confrontation-multi-round` | no | Confrontation multi-tours + phase aval vide · Draft |
 | `cup-draw-pending` | no | Cup bracket + entries, **composition empty (E0)**, no pairing draw. Contrast: `cup-composition-complete` / `cup:prepared` |
 | `cup-composition-partial` | no | Cup 16, composition **10/16 (E1)** — Completer les entrées |
 | `cup-composition-complete` | no | Cup 16, composition **16/16 (E2)** — Modifier + tirage pending |
 | `cup-qf-sf` | no | Multi-stage QF→SF: QF played, SF slots occupied, **stops before** `materialize-from-slots` |
 | `cup-sf-running` | no | QF done + SF materialized ~50% played — multi-phase Running |
 | `swiss-8x3` | yes | Swiss 8×3; Matchdays via `GenerateNextRound` |
-| `swiss-ready` | no | Swiss Ready (0 rounds yet) |
+| `swiss-ready` | no | Swiss Ready (0 rounds yet) — also Règlement Swiss schematic |
 
 Multi-stage **templates** `coupe-de-france` and `world-cup` also ignore `:progress` (fixed seed contracts).
 
@@ -124,7 +141,7 @@ Multi-stage **templates** `coupe-de-france` and `world-cup` also ignore `:progre
 Each scenario runs in its own seed scope (deterministic ids). Seed the full Structure matrix:
 
 ```bash
-dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios championship-structure-draft,structure-graph-invalid,championship-ready,swiss-ready,groups-draw-pending,cup-draw-pending,cup-composition-partial,cup-composition-complete,registration-open,registration-withdrawn,groups-suspended,championship-archived,groups-to-ko-mid,flux-qualif-draft,flux-prog-placement-draft,flux-empty-relations-draft,flux-full-graph-draft,cup-qf-sf,cup-sf-running,championship:running,groups:running,cup:prepared,swiss-8x3:running
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios championship-structure-draft,structure-graph-invalid,championship-ready,swiss-ready,groups-draw-pending,cup-draw-pending,cup-composition-partial,cup-composition-complete,registration-open,registration-withdrawn,groups-suspended,championship-archived,groups-to-ko-mid,flux-qualif-draft,flux-qual-form-draft,flux-prog-placement-draft,flux-prog-group-draft,flux-empty-relations-draft,flux-full-graph-draft,cup-qf-sf,cup-sf-running,championship:running,groups:running,cup:prepared,swiss-8x3:running
 ```
 
 **Composition / Entrées QA (minimal):**
@@ -136,7 +153,13 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios c
 **Entrées / Sorties / Attribution QA (Structure flux):**
 
 ```bash
-dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios flux-empty-relations-draft,flux-qualif-draft,flux-prog-placement-draft,flux-full-graph-draft,groups-to-ko-mid,cup-qf-sf
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios flux-empty-relations-draft,flux-qualif-draft,flux-qual-form-draft,flux-prog-placement-draft,flux-prog-group-draft,flux-full-graph-draft,groups-to-ko-mid,cup-qf-sf
+```
+
+**Règlement / Confrontation QA:**
+
+```bash
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios regulation-demo,regulation-tie-homogeneous,confrontation-multi-round,championship-structure-draft,swiss-ready
 ```
 ## Three PostgreSQL usages (do not mix)
 
@@ -185,7 +208,7 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios champions
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --scenarios random:prepared --seed 7
 ```
 
-Generation demos (Lot 1–3): `--templates ligue-1:finished` (Championship Outcome) · `--templates coupe-de-france` (full cup + Outcome) · `--templates world-cup` (Groups→KO+Bronze + Outcome) · `--scenarios cup-qf-sf` (mid-bracket from-slots) · `--scenarios swiss-8x3:running` (Swiss progressive rounds). See **Structure QA quick start** above for the full Structure matrix.
+Generation demos: `--templates ligue-1:finished` (Championship Outcome) · `--templates coupe-de-france` (cup + intents + draws + Outcome) · `--templates world-cup` (Groups→KO+Bronze + Outcome) · `--templates euro-across-groups` (AcrossGroups best thirds + Outcome) · `--scenarios cup-qf-sf` (mid-bracket from-slots) · `--scenarios swiss-8x3:running` (Swiss progressive rounds). See **Structure QA quick start** above for the full Structure matrix.
 
 Reset is refused unless the DB name ends with `_dev`, the host is localhost/loopback, and the environment is not Production. Host has **no** reset/seed capability.
 

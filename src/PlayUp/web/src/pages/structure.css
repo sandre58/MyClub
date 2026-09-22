@@ -2004,12 +2004,6 @@ button.structure-flux-group__peer {
   min-width: 0;
 }
 
-.structure-flux-rule__more {
-  color: var(--color-text-muted);
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-medium);
-}
-
 .structure-overflow-menu__item--back {
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-semibold);

@@ -47,6 +47,7 @@ public static class ProgressionApplier
             path.Destination.StageId,
             entryId,
             path.Destination.SlotKey,
-            path.Destination.GroupId);
+            path.Destination.GroupId,
+            path.Destination.Form);
     }
 }

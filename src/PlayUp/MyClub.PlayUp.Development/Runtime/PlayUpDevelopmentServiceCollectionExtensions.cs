@@ -51,9 +51,15 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, QualHybridAutoDrawMidScenario>();
         services.AddSingleton<IScenario, ProgAutoPlaceMidScenario>();
         services.AddSingleton<IScenario, FluxQualifDraftScenario>();
+        services.AddSingleton<IScenario, FluxQualFormDraftScenario>();
+        services.AddSingleton<IScenario, FluxProgGroupDraftScenario>();
         services.AddSingleton<IScenario, FluxProgPlacementDraftScenario>();
         services.AddSingleton<IScenario, FluxEmptyRelationsDraftScenario>();
         services.AddSingleton<IScenario, FluxFullGraphDraftScenario>();
+        services.AddSingleton<IScenario, QualFormToChampMidScenario>();
+        services.AddSingleton<IScenario, RegulationDemoScenario>();
+        services.AddSingleton<IScenario, RegulationTieHomogeneousScenario>();
+        services.AddSingleton<IScenario, ConfrontationMultiRoundScenario>();
         services.AddSingleton<IScenario, CupScenario>();
         services.AddSingleton<IScenario, CupDrawPendingScenario>();
         services.AddSingleton<IScenario, CupCompositionPartialScenario>();
@@ -65,19 +71,12 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, RandomScenario>();
         services.AddSingleton(static sp => new ScenarioCatalog(sp.GetServices<IScenario>()));
 
+        // Templates = inspired competitions only (datasets / capacity demos). Situations → IScenario.
         services.AddSingleton<ICompetitionTemplate, Ligue1Template>();
         services.AddSingleton<ICompetitionTemplate, ChampionsLeagueTemplate>();
         services.AddSingleton<ICompetitionTemplate, WorldCupTemplate>();
         services.AddSingleton<ICompetitionTemplate, CoupeDeFranceTemplate>();
-        services.AddSingleton<ICompetitionTemplate, RegulationDemoTemplate>();
-        services.AddSingleton<ICompetitionTemplate, RegulationTieHomogeneousTemplate>();
-        services.AddSingleton<ICompetitionTemplate, ConfrontationMultiRoundTemplate>();
-        services.AddSingleton<ICompetitionTemplate, StructureFluxQualifTemplate>();
-        services.AddSingleton<ICompetitionTemplate, StructureFluxProgTemplate>();
-        services.AddSingleton<ICompetitionTemplate, StructureFluxFullTemplate>();
-        services.AddSingleton<ICompetitionTemplate, StructureFluxEmptyTemplate>();
-        services.AddSingleton<ICompetitionTemplate, RegulationChampionshipTemplate>();
-        services.AddSingleton<ICompetitionTemplate, RegulationSwissTemplate>();
+        services.AddSingleton<ICompetitionTemplate, EuroAcrossGroupsTemplate>();
         services.AddSingleton(static sp => new TemplateCatalog(sp.GetServices<ICompetitionTemplate>()));
 
         services.AddSingleton(sp => new ScenarioRunner(

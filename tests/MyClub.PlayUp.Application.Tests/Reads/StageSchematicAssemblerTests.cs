@@ -173,7 +173,7 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Groups_inbound_ForGroup_qual_exposes_group_level_feed_not_place_k()
+    public void Groups_inbound_ForGroup_qual_fills_empty_seats_not_title_chrome()
     {
         var competition = Competition.Create(new CompetitionName("A1"), SampleRegulations.Standard(), _clock);
         var source = Stage.Create(competition.Id, new StageName("Poules 1"), SampleRegulations.Standard(), _clock);
@@ -200,11 +200,16 @@ public sealed class StageSchematicAssemblerTests
 
         var schematic = StageSchematicAssembler.Assemble(dest, competition, [source, dest]);
 
-        schematic.Cases.Should().OnlyContain(c => c.FeedOrigin == null);
-        schematic.GroupFeeds.Should().ContainSingle();
-        schematic.GroupFeeds![0].GroupId.Should().Be(destA.Id.Value);
-        schematic.GroupFeeds[0].FeedOrigin.Kind.Should().Be(FeedKind.Qualification);
-        schematic.GroupFeeds[0].FeedOrigin.DestinationGroupId.Should().Be(destA.Id.Value);
+        var destACases = schematic.Cases.Where(c => c.FormPosition.GroupId == destA.Id.Value).ToArray();
+        destACases.Should().HaveCount(4);
+        destACases.Count(c => c.FeedOrigin is not null).Should().Be(2);
+        destACases.Take(2).Should().OnlyContain(c =>
+            c.Entry == null
+            && c.FeedOrigin != null
+            && c.FeedOrigin.Kind == FeedKind.Qualification
+            && c.FeedOrigin.SourceStageName == source.Name.Value);
+        destACases.Skip(2).Should().OnlyContain(c => c.FeedOrigin == null);
+        schematic.GroupFeeds.Should().ContainSingle(f => f.GroupId == destA.Id.Value);
     }
 
     [Fact]

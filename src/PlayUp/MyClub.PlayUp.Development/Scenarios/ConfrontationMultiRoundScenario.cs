@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="ConfrontationMultiRoundTemplate.cs" company="Stéphane ANDRE">
+// <copyright file="ConfrontationMultiRoundScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -8,12 +8,12 @@ using MyClub.PlayUp.Development.Orchestration;
 using MyClub.PlayUp.Development.Recipes;
 using MyClub.PlayUp.Development.Runtime;
 
-namespace MyClub.PlayUp.Development.Templates;
+namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// QA seed for Structure Confrontation: one phase, three rounds with distinct TieFormats.
+/// Structure Confrontation QA: one phase, three rounds with distinct TieFormats.
 /// </summary>
-public sealed class ConfrontationMultiRoundTemplate : ICompetitionTemplate
+public sealed class ConfrontationMultiRoundScenario : IScenario
 {
     /// <inheritdoc />
     public string Id => "confrontation-multi-round";
@@ -23,18 +23,16 @@ public sealed class ConfrontationMultiRoundTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Cup 8 · Tableau QF/SF/Finale (fixtures + TieFormats) · Phase aval vide · Draft — Sorties Progression authorables. :progress ignored.";
+        "Cup 8 · Tableau QF/SF/Finale (fixtures + TieFormats) · Phase aval vide · Draft — Sorties Progression authorables.";
 
     /// <inheritdoc />
-    public CompetitionRecipe Recipe { get; } = new()
-    {
-        DisplayName = "Démo Confrontation multi-tours",
-        Format = RecipeFormat.Cup,
-        TeamCount = 8,
-        BracketSize = 8,
-        StageName = "Tableau",
-        TeamNames = TeamNameSource.Generated
-    };
+    public ScenarioCategory Category => ScenarioCategory.Construction;
+
+    /// <inheritdoc />
+    public bool AcceptsProgress => false;
+
+    /// <inheritdoc />
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>

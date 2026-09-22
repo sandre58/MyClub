@@ -28,6 +28,14 @@ export {
   resizeDestinationSlotKeys,
 } from './structurePlaceMapping';
 
+export {
+  applyDestinationToDraft,
+  applyTargetKindToDraft,
+  isFormOnlyDestination,
+  normalizeFormOnlyDestinationDraft,
+  showsPopulationPlaceChoice,
+} from './structureSortiesDestination';
+
 export type ProgTargetKind = 'population' | 'place';
 
 export type ProgIntentDraft = {

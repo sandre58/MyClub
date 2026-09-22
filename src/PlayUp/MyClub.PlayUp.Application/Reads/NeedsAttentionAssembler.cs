@@ -201,13 +201,26 @@ public static class NeedsAttentionAssembler
                 continue;
             }
 
-            if (destination.CompositionEntries.All(entry => !entry.EntryId.Equals(instruction.EntryId)))
+            switch (DestinationSatisfaction.EvaluateQualification(
+                        destination,
+                        source.Id,
+                        path,
+                        instruction.EntryId))
             {
-                items.Add(new NeedsAttentionItemDto(
-                    SourceQualificationPending,
-                    SeverityBlocking,
-                    "Stage",
-                    destination.Id.Value.ToString()));
+                case DestinationSatisfaction.Kind.Pending:
+                    items.Add(new NeedsAttentionItemDto(
+                        SourceQualificationPending,
+                        SeverityBlocking,
+                        ResolveAttentionTargetType(path.Destination),
+                        ResolveAttentionTargetId(destination, path.Destination)));
+                    break;
+                case DestinationSatisfaction.Kind.Conflict:
+                    items.Add(new NeedsAttentionItemDto(
+                        SourceQualificationConflict,
+                        SeverityBlocking,
+                        ResolveAttentionTargetType(path.Destination),
+                        ResolveAttentionTargetId(destination, path.Destination)));
+                    break;
             }
         }
     }
@@ -274,7 +287,7 @@ public static class NeedsAttentionAssembler
                     continue;
                 }
 
-                var destination = stages.FirstOrDefault(stage => stage.Id.Equals(instruction.StageId));
+                var destination = stages.FirstOrDefault(stage => stage.Id.Equals(path.Destination.StageId));
                 if (destination is null)
                 {
                     items.Add(new NeedsAttentionItemDto(
@@ -285,50 +298,69 @@ public static class NeedsAttentionAssembler
                     continue;
                 }
 
-                if (instruction.TargetsPopulation)
+                switch (DestinationSatisfaction.EvaluateProgression(
+                            destination,
+                            source.Id,
+                            path,
+                            instruction.EntryId))
                 {
-                    if (destination.CompositionEntries.All(entry => !entry.EntryId.Equals(instruction.EntryId)))
-                    {
+                    case DestinationSatisfaction.Kind.Pending:
                         items.Add(new NeedsAttentionItemDto(
                             SourceProgressionPending,
                             SeverityBlocking,
-                            "Fixture",
-                            fixtureId.Value.ToString()));
-                    }
-
-                    continue;
-                }
-
-                var slot = destination.FindSlot(instruction.SlotKey!);
-                if (slot is null)
-                {
-                    items.Add(new NeedsAttentionItemDto(
-                        SourceProgressionPending,
-                        SeverityBlocking,
-                        "Fixture",
-                        fixtureId.Value.ToString()));
-                    continue;
-                }
-
-                if (slot.EntryId is null)
-                {
-                    items.Add(new NeedsAttentionItemDto(
-                        SourceProgressionPending,
-                        SeverityBlocking,
-                        "Slot",
-                        $"{destination.Id.Value}:{instruction.SlotKey}"));
-                }
-                else if (!slot.EntryId.Equals(instruction.EntryId))
-                {
-                    items.Add(new NeedsAttentionItemDto(
-                        SourceProgressionConflict,
-                        SeverityBlocking,
-                        "Slot",
-                        $"{destination.Id.Value}:{instruction.SlotKey}"));
+                            ResolveAttentionTargetType(path.Destination),
+                            ResolveAttentionTargetId(destination, path.Destination, fixtureId)));
+                        break;
+                    case DestinationSatisfaction.Kind.Conflict:
+                        items.Add(new NeedsAttentionItemDto(
+                            SourceProgressionConflict,
+                            SeverityBlocking,
+                            ResolveAttentionTargetType(path.Destination),
+                            ResolveAttentionTargetId(destination, path.Destination, fixtureId)));
+                        break;
                 }
             }
         }
     }
+
+    private static string ResolveAttentionTargetType(QualificationDestination destination) =>
+        destination.TargetsSlot
+            ? "Slot"
+            : destination.TargetsGroup
+                ? "Group"
+                : destination.TargetsForm
+                    ? "Form"
+                    : "Stage";
+
+    private static string ResolveAttentionTargetType(ProgressionDestination destination) =>
+        destination.TargetsSlot
+            ? "Slot"
+            : destination.TargetsGroup
+                ? "Group"
+                : destination.TargetsForm
+                    ? "Form"
+                    : "Stage";
+
+    private static string ResolveAttentionTargetId(
+        Stage destination,
+        QualificationDestination dest) =>
+        dest.TargetsSlot
+            ? $"{destination.Id.Value}:{dest.SlotKey}"
+            : dest.TargetsGroup
+                ? $"{destination.Id.Value}:{dest.GroupId!.Value.Value}"
+                : destination.Id.Value.ToString();
+
+    private static string ResolveAttentionTargetId(
+        Stage destination,
+        ProgressionDestination dest,
+        FixtureId fixtureId) =>
+        dest.TargetsSlot
+            ? $"{destination.Id.Value}:{dest.SlotKey}"
+            : dest.TargetsGroup
+                ? $"{destination.Id.Value}:{dest.GroupId!.Value.Value}"
+                : dest.TargetsForm
+                    ? destination.Id.Value.ToString()
+                    : fixtureId.Value.ToString();
 
     private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<MatchAttentionSlice> matches)
     {

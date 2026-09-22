@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="SwissReadyScenario.cs" company="Stéphane ANDRE">
+// <copyright file="FluxQualFormDraftScenario.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,19 +11,19 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Swiss 8×3 Prepared only — Ready, 0 rounds yet (also Règlement Swiss schematic).
+/// Structure flux QA: Qual Place → Championship Forme (ForForm), Draft.
 /// </summary>
-public sealed class SwissReadyScenario : IScenario
+public sealed class FluxQualFormDraftScenario : IScenario
 {
     /// <inheritdoc />
-    public string Id => "swiss-ready";
+    public string Id => "flux-qual-form-draft";
 
     /// <inheritdoc />
-    public string Name => "Swiss Ready";
+    public string Name => "Flux — Qual Forme Draft";
 
     /// <inheritdoc />
     public string Description =>
-        "Swiss 8×3 — Ready (no GenerateNextRound yet). Règlement Swiss: ReplaceRegulation via Ready→Draft confirm.";
+        "Groups 2×2 (+ 2 directs Champ) → Championnat ForForm (Top1) — Draft. Sac ExpectedFormParticipants (resolved + pending).";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;
@@ -32,20 +32,9 @@ public sealed class SwissReadyScenario : IScenario
     public bool AcceptsProgress => false;
 
     /// <inheritdoc />
-    public CompetitionRecipe? Recipe { get; } = new()
-    {
-        DisplayName = "Suisse Ready",
-        Format = RecipeFormat.Swiss,
-        TeamCount = 8,
-        SwissRoundCount = 3,
-        StageName = "Suisse"
-    };
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>
-        ScenarioOrchestration.BuildStructuredAsync(
-            context,
-            Recipe!,
-            StructuredSeedLifecycle.Ready,
-            cancellationToken);
+        ScenarioOrchestration.BuildFluxQualFormDraftAsync(context, cancellationToken);
 }

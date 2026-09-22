@@ -11,11 +11,10 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// Champions League inspired group stage only (8×4) — no knockout / no Swiss / no League Phase.
+/// Inspired Groups capacity demo (8×4, 32 clubs) — approximates a classic CL group stage, not today's UEFA League Phase.
 /// </summary>
 /// <remarks>
-/// Swiss classique is a separate Domain Kind (Lot 2). UEFA League Phase is a future product track —
-/// do not wire <c>champions-league</c> to Swiss; that would be misleading.
+/// Lot 3: Groups-only on purpose. Do not wire Swiss (≠ League Phase). Knockout / League Phase = future or other seeds.
 /// </remarks>
 public sealed class ChampionsLeagueTemplate : ICompetitionTemplate
 {
@@ -27,7 +26,7 @@ public sealed class ChampionsLeagueTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 8×4 · 32 clubs (JSON). Groups-only capacity demo — UEFA League Phase is a future distinct track (not Swiss classique).";
+        "Groups 8×4 · 32 clubs (JSON) — capacity demo for Groups (classic CL group-stage shape). Not UEFA League Phase; not Swiss; no KO.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()

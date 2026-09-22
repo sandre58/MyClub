@@ -24,7 +24,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Connections">Cup bracket wires only; empty for other formats.</param>
 /// <param name="SwissRoundCount">Planned Swiss rounds (structural K) when Kind is Swiss.</param>
 /// <param name="CupRoundCount">Cup rounds in this phase when Kind is Cup.</param>
-/// <param name="GroupFeeds">Groups A1 inbound feeds at Groupe grain (not Place k).</param>
+/// <param name="GroupFeeds">Optional Groups A1 summary (compat); Structure SPA paints ForGroup WhoFeeds on empty seats in <see cref="Cases"/>.</param>
 /// <param name="ExpectedFormParticipants">
 /// Championship/Swiss expected form bag: Composition occupants + pending ForForm intentions.
 /// Projected into <see cref="Cases"/> (N cells, non-addressing order).
@@ -110,6 +110,7 @@ public sealed record SchematicFormPositionDto(
 /// </summary>
 /// <param name="Kind">Domain feed kind (Qualification, Progression, Direct, Draw config).</param>
 /// <param name="SourceStageId">Source stage when Qualif/Prog.</param>
+/// <param name="SourceStageName">Source stage display name when Qualif/Prog (Structure chrome / tooltip).</param>
 /// <param name="PathOrder">Qualification path order when Kind is Qualification.</param>
 /// <param name="SelectionMode">Qualification selection mode.</param>
 /// <param name="SelectionValue">Qualification selection value.</param>
@@ -128,6 +129,7 @@ public sealed record SchematicFormPositionDto(
 public sealed record SchematicFeedOriginDto(
     FeedKind Kind,
     Guid? SourceStageId = null,
+    string? SourceStageName = null,
     int? PathOrder = null,
     SelectionMode? SelectionMode = null,
     int? SelectionValue = null,

@@ -450,6 +450,9 @@
     "entry": "entrée",
     "occupantsUnavailable": "Composition indisponible pour le moment.",
     "schematicLoading": "Chargement de la schématique…",
+    "schematicTooltipFrom": "Vient de",
+    "schematicTooltipTeam": "Équipe : {{name}}",
+    "schematicTooltipByDraw": "Placé par tirage",
     "entriesEmptyTitle": "Pas d’entrée",
     "entriesEmpty": "Aucune entrée vers cette phase.",
     "exitsEmptyTitle": "Pas de sortie",
@@ -583,12 +586,7 @@
   },
   "population": {
     "sectionSources": "Depuis les phases",
-    "sectionAffectation": "Affectation",
-    "previewOverflow": "+{{count}}",
-    "feed": {
-      "moreRules_one": "+{{count}} chemin",
-      "moreRules_other": "+{{count}} chemins"
-    }
+    "sectionAffectation": "Affectation"
   },
   "entries": {
     "counterTeams": "{{k}} / {{n}} équipes",
@@ -683,7 +681,7 @@
     "roundNeedsFixturesHint": "Les tours existent, mais aucune confrontation n’est encore créée — les Sorties ne peuvent pas s’étendre tant que les fixtures manquent.",
     "expandPreview_one": "S’étend en {{count}} chemin",
     "expandPreview_other": "S’étend en {{count}} chemins",
-    "matchOrdinal": "Match {{n}}",
+    "matchOrdinal": "Match #{{n}}",
     "outcome": "Résultat",
     "outcomeWinner": "Vainqueur",
     "outcomeWinnerHint": "Vainqueurs des confrontations lors du dernier tour de la phase",
