@@ -155,7 +155,8 @@
     "championship": "League · {{teams}} teams",
     "swiss": "Swiss system · {{rounds}} rounds",
     "swissGeneric": "Swiss system",
-    "swissRound": "Round {{n}}"
+    "swissRound": "Round {{n}}",
+    "alimentation": "Feeds"
   },
   "title": "Regulations",
   "tokens": {

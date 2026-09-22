@@ -25,7 +25,10 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="SwissRoundCount">Planned Swiss rounds (structural K) when Kind is Swiss.</param>
 /// <param name="CupRoundCount">Cup rounds in this phase when Kind is Cup.</param>
 /// <param name="GroupFeeds">Groups A1 inbound feeds at Groupe grain (not Place k).</param>
-/// <param name="FormFeed">Championship/Swiss inbound feed at Forme grain (not RosterPlace k).</param>
+/// <param name="ExpectedFormParticipants">
+/// Championship/Swiss expected form bag: Composition occupants + pending ForForm intentions.
+/// Projected into <see cref="Cases"/> (N cells, non-addressing order).
+/// </param>
 public sealed record StageSchematicDto(
     Guid StageId,
     Guid CompetitionId,
@@ -37,7 +40,23 @@ public sealed record StageSchematicDto(
     int? SwissRoundCount = null,
     int? CupRoundCount = null,
     IReadOnlyList<SchematicGroupFeedDto>? GroupFeeds = null,
-    SchematicFeedOriginDto? FormFeed = null);
+    ExpectedFormParticipantsDto? ExpectedFormParticipants = null);
+
+/// <summary>
+/// Championship / Swiss — form participant bag for Structure (no RosterPlace addressing).
+/// </summary>
+/// <param name="Resolved">Entries actually present in Composition.</param>
+/// <param name="Pending">ForForm paths without resolution provenance.</param>
+public sealed record ExpectedFormParticipantsDto(
+    IReadOnlyList<ExpectedResolvedFormParticipantDto> Resolved,
+    IReadOnlyList<SchematicFeedOriginDto> Pending);
+
+/// <summary>
+/// One resolved form occupant (Composition entry).
+/// </summary>
+public sealed record ExpectedResolvedFormParticipantDto(
+    SchematicEntryRefDto Entry,
+    SchematicParticipantRefDto? Assignment);
 
 /// <summary>
 /// Groups A1 — feed origin at Groupe grain (never bound to Place k / GroupPlace index).

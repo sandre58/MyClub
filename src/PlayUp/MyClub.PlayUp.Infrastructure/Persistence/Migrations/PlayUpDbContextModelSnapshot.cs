@@ -811,6 +811,28 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                                 .HasForeignKey("stage_id");
                         });
 
+                    b.OwnsMany("MyClub.PlayUp.Domain.Stages.FormPathResolution", "FormPathResolutions", b1 =>
+                        {
+                            b1.Property<Guid>("stage_id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("PathFingerprint")
+                                .HasMaxLength(256)
+                                .HasColumnType("character varying(256)")
+                                .HasColumnName("path_fingerprint");
+
+                            b1.Property<Guid>("EntryId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("entry_id");
+
+                            b1.HasKey("stage_id", "PathFingerprint");
+
+                            b1.ToTable("stage_form_path_resolutions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("stage_id");
+                        });
+
                     b.OwnsMany("MyClub.PlayUp.Domain.Stages.MatchPlacement", "MatchPlacements", b1 =>
                         {
                             b1.Property<Guid>("stage_id")
@@ -868,6 +890,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                     b.Navigation("CompositionEntries");
 
                     b.Navigation("DirectAssignments");
+
+                    b.Navigation("FormPathResolutions");
 
                     b.Navigation("MatchPlacements");
 

@@ -1449,6 +1449,17 @@ export interface SchematicGroupFeed {
   feedOrigin: SchematicFeedOrigin;
 }
 
+export interface ExpectedResolvedFormParticipant {
+  entry: SchematicEntryRef;
+  assignment?: SchematicParticipantRef | null;
+}
+
+/** Championship/Swiss expected form bag (Structure) — not RosterPlace addressing. */
+export interface ExpectedFormParticipants {
+  resolved: ExpectedResolvedFormParticipant[];
+  pending: SchematicFeedOrigin[];
+}
+
 export interface StageSchematic {
   stageId: string;
   competitionId: string;
@@ -1462,8 +1473,11 @@ export interface StageSchematic {
   /** Cup rounds in this phase when formatKind is Cup. */
   cupRoundCount?: number | null;
   groupFeeds?: SchematicGroupFeed[] | null;
-  /** Championship/Swiss inbound feed at Forme grain (never on RosterPlace k). */
-  formFeed?: SchematicFeedOrigin | null;
+  /**
+   * Championship/Swiss expected participants (Composition + pending ForForm).
+   * Cases are the N-cell bag projection; no separate alimentation zone.
+   */
+  expectedFormParticipants?: ExpectedFormParticipants | null;
 }
 
 export function sideLabel(side: EntrySide): string {

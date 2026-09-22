@@ -523,8 +523,10 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// Championship / Swiss: RosterPlace 1..N with Composition entries placed in order.
-    /// Form-level inbound feeds live on <see cref="StageSchematicDto.FormFeed"/> — never on RosterPlace k.
+    /// Championship / Swiss: RosterPlace 1..N as a bag projection of
+    /// <see cref="StageSchematicDto.ExpectedFormParticipants"/> (non-addressing order).
+    /// Pending ForForm intentions carry FeedOrigin on the case for Structure chrome only —
+    /// never a Path→RosterPlace address.
     /// </summary>
     private static StageSchematicDto AssembleRosterCapacity(
         Stage stage,
@@ -533,24 +535,42 @@ public static class StageSchematicAssembler
         StructureFormatKind format,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
+        var expected = ResolveExpectedFormParticipants(stage, competitionStages, entries);
         var places = ResolvePlaces(competition, stage, format);
         if (places is null or < 1)
         {
-            return Empty(stage, format) with { FormFeed = ResolveFormFeed(stage, competitionStages) };
+            return Empty(stage, format) with { ExpectedFormParticipants = expected };
         }
 
-        var placed = stage.CompositionEntries
-            .Select(compositionEntry => compositionEntry.EntryId)
-            .ToArray();
+        var bag = new List<(EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin)>(
+            expected.Resolved.Count + expected.Pending.Count);
+        foreach (var compositionEntry in stage.CompositionEntries)
+        {
+            bag.Add((compositionEntry.EntryId, null));
+        }
+
+        foreach (var pending in expected.Pending)
+        {
+            bag.Add((null, pending));
+        }
 
         var cases = Enumerable
             .Range(1, places.Value)
             .Select(index =>
             {
-                EntryId? entryId = index <= placed.Length ? placed[index - 1] : null;
+                if (index > bag.Count)
+                {
+                    return new SchematicCaseDto(
+                        new SchematicFormPositionDto(FormKindRosterPlace, Index: index),
+                        FeedOrigin: null,
+                        Entry: null,
+                        Assignment: null);
+                }
+
+                var (entryId, pendingOrigin) = bag[index - 1];
                 return new SchematicCaseDto(
                     new SchematicFormPositionDto(FormKindRosterPlace, Index: index),
-                    FeedOrigin: null,
+                    FeedOrigin: pendingOrigin,
                     MapEntry(entryId, entries),
                     MapAssignment(entryId, entries));
             })
@@ -565,48 +585,88 @@ public static class StageSchematicAssembler
             cases,
             [],
             SwissRoundCount: stage.SwissSettings?.RoundCount,
-            FormFeed: ResolveFormFeed(stage, competitionStages));
+            ExpectedFormParticipants: expected);
     }
 
     /// <summary>
-    /// Inbound Qual/Prog ForForm destinations → Form grain origin when unambiguous.
-    /// Never projected onto RosterPlace k.
+    /// Resolved = Composition; Pending = inbound ForForm paths without resolution provenance.
     /// </summary>
-    private static SchematicFeedOriginDto? ResolveFormFeed(
-        Stage target,
-        IReadOnlyList<Stage> competitionStages)
+    private static ExpectedFormParticipantsDto ResolveExpectedFormParticipants(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
-        var origins = new List<SchematicFeedOriginDto>();
-
-        foreach (var stage in competitionStages)
-        {
-            if (stage.Regulation.QualificationRules is { } qualification)
+        var resolved = stage.CompositionEntries
+            .Select(compositionEntry =>
             {
-                origins.AddRange(from path in qualification.Paths where path.Destination.StageId.Equals(target.Id) && path.Destination.TargetsForm select MapQualificationPathOrigin(path, stage, destinationGroupId: null));
+                var entryId = compositionEntry.EntryId;
+                return new ExpectedResolvedFormParticipantDto(
+                    MapEntry(entryId, entries)!,
+                    MapAssignment(entryId, entries));
+            })
+            .ToArray();
+
+        var applied = stage.FormPathResolutions
+            .Select(resolution => resolution.PathFingerprint)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var pending = new List<SchematicFeedOriginDto>();
+        foreach (var source in competitionStages)
+        {
+            if (source.Regulation.QualificationRules is { } qualification)
+            {
+                foreach (var path in qualification.Paths)
+                {
+                    if (!path.Destination.StageId.Equals(stage.Id) || !path.Destination.TargetsForm)
+                    {
+                        continue;
+                    }
+
+                    var fingerprint = FormPathResolutionKey.FromQualification(source.Id, path);
+                    if (applied.Contains(fingerprint))
+                    {
+                        continue;
+                    }
+
+                    pending.Add(MapQualificationPathOrigin(path, source, destinationGroupId: null));
+                }
             }
 
-            if (stage.Regulation.ProgressionRules is not { } progression)
+            if (source.Regulation.ProgressionRules is not { } progression)
             {
                 continue;
             }
 
-            origins.AddRange(from path in progression.Paths where path.Destination.StageId.Equals(target.Id) && path.Destination.TargetsForm select new SchematicFeedOriginDto(FeedKind.Progression, SourceStageId: stage.Id.Value, SourceFixtureId: path.SourceFixtureId.Value, SourceFixtureNumber: FindFixtureNumber(stage.Id, path.SourceFixtureId, competitionStages), Outcome: path.Outcome));
+            foreach (var path in progression.Paths)
+            {
+                if (!path.Destination.StageId.Equals(stage.Id) || !path.Destination.TargetsForm)
+                {
+                    continue;
+                }
+
+                var fingerprint = FormPathResolutionKey.FromProgression(source.Id, path);
+                if (applied.Contains(fingerprint))
+                {
+                    continue;
+                }
+
+                pending.Add(new SchematicFeedOriginDto(
+                    FeedKind.Progression,
+                    SourceStageId: source.Id.Value,
+                    SourceFixtureId: path.SourceFixtureId.Value,
+                    SourceFixtureNumber: FindFixtureNumber(source.Id, path.SourceFixtureId, competitionStages),
+                    Outcome: path.Outcome));
+            }
         }
 
-        if (origins.Count == 0)
-        {
-            return null;
-        }
-
-        var byMechanism = origins
-            .GroupBy(o => (o.Kind, o.SourceStageId))
-            .ToArray();
-        return byMechanism.Length != 1
-            ? null
-            : byMechanism[0]
+        var orderedPending =
+            pending
                 .OrderBy(o => o.PathOrder ?? int.MaxValue)
-                .ThenBy(o => o.SourceFixtureId)
-                .First();
+                .ThenBy(o => o.SourceFixtureId ?? Guid.Empty)
+                .ThenBy(o => o.SourceStageId ?? Guid.Empty)
+                .ToArray();
+
+        return new ExpectedFormParticipantsDto(resolved, orderedPending);
     }
 
     /// <summary>

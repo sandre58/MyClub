@@ -149,7 +149,46 @@
 
 /* -- Championship -- */
 .regulation-schematic--championship {
+  flex-direction: column;
   align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-8);
+}
+
+.regulation-schematic__form-feeds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.regulation-schematic__form-feeds-title {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.regulation-schematic__form-feeds-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.regulation-schematic__form-feeds-list li {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .regulation-schematic__league {

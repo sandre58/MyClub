@@ -161,6 +161,14 @@ public static class ApplyQualification
             // Population + Form: AddResolvedPopulationEntry materializes Composition once.
             // Form retains Placement intent on Path for WhoFeeds — no second Composition write.
             destination.AddResolvedPopulationEntry(instruction.EntryId, clock);
+            if (path.Destination.TargetsForm)
+            {
+                destination.RecordFormPathResolution(
+                    FormPathResolutionKey.FromQualification(canonicalSource.Id, path),
+                    instruction.EntryId,
+                    clock);
+            }
+
             if (path.Destination.TargetsGroup)
             {
                 destination.ApplyResolvedGroupEntry(

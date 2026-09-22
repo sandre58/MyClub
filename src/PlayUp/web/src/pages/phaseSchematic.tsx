@@ -85,15 +85,14 @@ function SlotBox({
   style?: CSSProperties;
 }) {
   const address = c ? placeChromeLabel(c.formPosition) : null;
-  const feedPrimary = c?.feedOrigin ? casePrimaryLabel(c, t) : null;
+  const { primary, secondary } = c
+    ? structureCaseLabels(c, t)
+    : { primary: null, secondary: null };
   const resolvedName =
     c?.assignment?.displayName?.trim() ||
     c?.assignment?.shortName?.trim() ||
     c?.entry?.displayName?.trim() ||
     null;
-  // B1: 2 lines — address + feed; team only when no feed (Affectation identity).
-  const primary = feedPrimary ?? (!c?.feedOrigin ? resolvedName : null);
-  const secondary = null;
   const placed = !!c?.entry;
   const name = resolvedName ?? primary ?? '';
   const className = [
@@ -105,11 +104,7 @@ function SlotBox({
     .filter(Boolean)
     .join(' ');
 
-  const titleParts = [
-    address,
-    feedPrimary,
-    resolvedName && resolvedName !== feedPrimary ? resolvedName : null,
-  ].filter(Boolean);
+  const titleParts = [address, primary, secondary].filter(Boolean);
   const title = titleParts.length > 0 ? titleParts.join(' — ') : undefined;
 
   if (density === 'compact') {
@@ -237,6 +232,7 @@ function ChampionshipSchematic({
   const rows = [...schematic.cases].sort(
     (a, b) => (a.formPosition.index ?? 0) - (b.formPosition.index ?? 0),
   );
+  // Cases = ExpectedFormParticipants bag projected into N cells (no alimentation zone).
   return (
     <div
       className="regulation-schematic regulation-schematic--championship"
@@ -244,11 +240,6 @@ function ChampionshipSchematic({
         teams: rows.length,
       })}
     >
-      {schematic.formFeed ? (
-        <span className="regulation-schematic__form-feed">
-          {feedOriginLabel(schematic.formFeed, t)}
-        </span>
-      ) : null}
       <div className="regulation-schematic__league">
         {rows.map((c, i) => (
           <SlotBox
@@ -275,6 +266,7 @@ function SwissSchematic({
   t: Translate;
 }) {
   const rounds = schematic.swissRoundCount ?? null;
+  // Cases = ExpectedFormParticipants bag projected into N cells (no alimentation zone).
   return (
     <div
       className="regulation-schematic regulation-schematic--swiss"
@@ -289,11 +281,6 @@ function SwissSchematic({
           ? t('regulation:schematic.swiss', { rounds })
           : t('regulation:schematic.swissGeneric')}
       </p>
-      {schematic.formFeed ? (
-        <span className="regulation-schematic__form-feed">
-          {feedOriginLabel(schematic.formFeed, t)}
-        </span>
-      ) : null}
       <div className="regulation-schematic__swiss-places">
         {schematic.cases.map((c, i) => (
           <SlotBox key={c.formPosition.index ?? i} c={c} t={t} />
@@ -1033,22 +1020,50 @@ function orderLeafCases(
   return ordered;
 }
 
-/** Primary: feed origin when present; else assignment/entry name. */
-function casePrimaryLabel(c: SchematicCase, t: Translate): string | null {
-  if (c.feedOrigin) {
-    return feedOriginLabel(c.feedOrigin, t);
-  }
-  return (
-    c.assignment?.displayName?.trim() || c.entry?.displayName?.trim() || null
-  );
-}
+/**
+ * Structure projection (S-B): construction intention first when structural;
+ * Direct is the occupant itself; Draw WhoFeeds today = Published SlotResolution
+ * provenance (materialized) — occupant wins when known.
+ *
+ * Grain: Cup Slot can carry feed on the case; Groups feeds stay on chrome.
+ * Championship/Swiss: FeedOrigin on a RosterPlace case is a pending expected
+ * participant (bag projection), not a Path→index address.
+ */
+function structureCaseLabels(
+  c: SchematicCase,
+  t: Translate,
+): { primary: string | null; secondary: string | null } {
+  const occupant =
+    c.assignment?.displayName?.trim() ||
+    c.assignment?.shortName?.trim() ||
+    c.entry?.displayName?.trim() ||
+    null;
+  const feed = c.feedOrigin;
 
-/** Secondary: resolved participant when feed origin is primary (S3: resolution stays discreet). */
-function caseSecondaryLabel(c: SchematicCase): string | null {
-  if (!c.feedOrigin) return null;
-  return (
-    c.assignment?.displayName?.trim() || c.entry?.displayName?.trim() || null
-  );
+  if (!feed) {
+    return { primary: occupant, secondary: null };
+  }
+
+  // Direct = occupant identity, not a concurrent construction rule.
+  if (feed.kind === 'Direct') {
+    return { primary: occupant, secondary: null };
+  }
+
+  // Draw: WhoFeeds only after Published SlotResolution (see SlotFeedSnapshotAssembler).
+  // That is post-materialization provenance, not a future draw config — occupant primary.
+  if (feed.kind === 'Draw') {
+    if (occupant) {
+      return { primary: occupant, secondary: null };
+    }
+    return { primary: feedOriginLabel(feed, t), secondary: null };
+  }
+
+  // Qualification / Progression — structural construction feeds.
+  const feedLabel = feedOriginLabel(feed, t);
+  return {
+    primary: feedLabel,
+    secondary: occupant && occupant !== feedLabel ? occupant : null,
+  };
 }
 
 function feedOriginLabel(origin: SchematicFeedOrigin, t: Translate): string {

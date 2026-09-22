@@ -20,14 +20,37 @@ namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
 /// Place → Championship / Swiss = ForForm (Population materialization + Form-grain feed).
-/// RosterPlace k never carries FeedOrigin.
+/// ExpectedFormParticipants: Resolved = Composition; Pending = ForForm without provenance.
 /// </summary>
 public sealed class QualificationForFormDestinationTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 9, 22, 14, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Place_to_championship_fills_population_and_exposes_form_feed()
+    public void Place_to_championship_before_apply_exposes_pending_form_participants()
+    {
+        var competition = Competition.Create(new CompetitionName("FormChamp"), SampleRegulations.Standard(), _clock);
+        var (source, groupA, groupB, _, _) = CreateGroupsSource(competition);
+        var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);
+        champ.AddMatchday(1, _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "E1", _clock).Id;
+        var e2 = competition.AddEntry(TeamId.New(), "E2", _clock).Id;
+        champ.ReplaceCompositionEntries([e1, e2], _clock);
+
+        ReplaceEachGroupTop1Form(source, groupA.Id, groupB.Id, champ.Id);
+
+        var schematic = StageSchematicAssembler.Assemble(champ, competition, [source, champ]);
+        schematic.ExpectedFormParticipants.Should().NotBeNull();
+        schematic.ExpectedFormParticipants!.Resolved.Should().HaveCount(2);
+        schematic.ExpectedFormParticipants.Pending.Should().HaveCount(2);
+        schematic.ExpectedFormParticipants.Pending.Should().OnlyContain(f => f.Kind == FeedKind.Qualification);
+        schematic.Cases.Count(c => c.Entry != null).Should().Be(2);
+        schematic.Cases.Count(c => c.FeedOrigin != null).Should().Be(2);
+        champ.FormPathResolutions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Place_to_championship_fills_population_and_clears_pending_after_apply()
     {
         var competition = Competition.Create(new CompetitionName("FormChamp"), SampleRegulations.Standard(), _clock);
         var (source, groupA, groupB, tops, standings) = CreateGroupsSource(competition);
@@ -45,23 +68,65 @@ public sealed class QualificationForFormDestinationTests
 
         applied.Should().HaveCount(2);
         champ.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo(tops);
+        champ.FormPathResolutions.Should().HaveCount(2);
         champ.Slots.Should().BeEmpty();
         champ.Groups.Should().BeEmpty();
         source.Regulation.QualificationRules!.Paths.Should().OnlyContain(p => p.Destination.TargetsForm);
 
         var schematic = StageSchematicAssembler.Assemble(champ, competition, [source, champ]);
         schematic.FormatKind.Should().Be(StructureFormatKind.Championship);
-        schematic.FormFeed.Should().NotBeNull();
-        schematic.FormFeed!.Kind.Should().Be(FeedKind.Qualification);
-        schematic.FormFeed.SourceStageId.Should().Be(source.Id.Value);
+        schematic.ExpectedFormParticipants.Should().NotBeNull();
+        schematic.ExpectedFormParticipants!.Resolved.Should().HaveCount(2);
+        schematic.ExpectedFormParticipants.Pending.Should().BeEmpty();
         schematic.Cases.Should().OnlyContain(c =>
-            c.FormPosition.Kind == StageSchematicAssembler.FormKindRosterPlace
-            && c.FeedOrigin == null);
+            c.FormPosition.Kind == StageSchematicAssembler.FormKindRosterPlace);
         schematic.Cases.Count(c => c.Entry != null).Should().Be(2);
+        schematic.Cases.Should().OnlyContain(c => c.FeedOrigin == null);
     }
 
     [Fact]
-    public void Place_to_swiss_fills_population_and_exposes_form_feed()
+    public void Place_to_championship_partial_provenance_keeps_other_path_pending()
+    {
+        var competition = Competition.Create(new CompetitionName("FormPartial"), SampleRegulations.Standard(), _clock);
+        var (source, groupA, groupB, tops, _) = CreateGroupsSource(competition);
+        var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);
+        champ.AddMatchday(1, _clock);
+        ReplaceEachGroupTop1Form(source, groupA.Id, groupB.Id, champ.Id);
+
+        var pathA = source.Regulation.QualificationRules!.Paths
+            .Single(p => p.Source.GroupId!.Equals(groupA.Id));
+        champ.AddResolvedPopulationEntry(tops[0], _clock);
+        champ.RecordFormPathResolution(
+            FormPathResolutionKey.FromQualification(source.Id, pathA),
+            tops[0],
+            _clock);
+
+        var schematic = StageSchematicAssembler.Assemble(champ, competition, [source, champ]);
+        schematic.ExpectedFormParticipants!.Resolved.Should().HaveCount(1);
+        schematic.ExpectedFormParticipants.Pending.Should().HaveCount(1);
+        schematic.ExpectedFormParticipants.Pending.Single().GroupId.Should().Be(groupB.Id.Value);
+        schematic.Cases.Count(c => c.Entry != null).Should().Be(1);
+        schematic.Cases.Count(c => c.FeedOrigin != null).Should().Be(1);
+    }
+
+    [Fact]
+    public void Place_to_championship_reapply_is_idempotent_on_provenance()
+    {
+        var competition = Competition.Create(new CompetitionName("FormIdem"), SampleRegulations.Standard(), _clock);
+        var (source, groupA, groupB, tops, standings) = CreateGroupsSource(competition);
+        var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);
+        champ.AddMatchday(1, _clock);
+        ReplaceEachGroupTop1Form(source, groupA.Id, groupB.Id, champ.Id);
+
+        ApplyQualification.Execute(source, null, standings, [source, champ], _clock);
+        ApplyQualification.Execute(source, null, standings, [source, champ], _clock);
+
+        champ.FormPathResolutions.Should().HaveCount(2);
+        champ.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo(tops);
+    }
+
+    [Fact]
+    public void Place_to_swiss_fills_population_and_clears_pending_after_apply()
     {
         var competition = Competition.Create(new CompetitionName("FormSwiss"), SampleRegulations.Standard(), _clock);
         var (source, groupA, groupB, tops, standings) = CreateGroupsSource(competition);
@@ -79,16 +144,17 @@ public sealed class QualificationForFormDestinationTests
 
         applied.Should().HaveCount(2);
         swiss.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo(tops);
+        swiss.FormPathResolutions.Should().HaveCount(2);
 
         var schematic = StageSchematicAssembler.Assemble(swiss, competition, [source, swiss]);
         schematic.FormatKind.Should().Be(StructureFormatKind.Swiss);
-        schematic.FormFeed.Should().NotBeNull();
-        schematic.FormFeed!.Kind.Should().Be(FeedKind.Qualification);
+        schematic.ExpectedFormParticipants!.Pending.Should().BeEmpty();
+        schematic.ExpectedFormParticipants.Resolved.Should().HaveCount(2);
         schematic.Cases.Should().OnlyContain(c => c.FeedOrigin == null);
     }
 
     [Fact]
-    public void Population_only_still_has_no_form_feed()
+    public void Population_only_still_has_no_pending_form_participants()
     {
         var competition = Competition.Create(new CompetitionName("PopOnly"), SampleRegulations.Standard(), _clock);
         var (source, groupA, groupB, _, standings) = CreateGroupsSource(competition);
@@ -109,7 +175,9 @@ public sealed class QualificationForFormDestinationTests
         ApplyQualification.Execute(source, null, standings, [source, champ], _clock);
 
         var schematic = StageSchematicAssembler.Assemble(champ, competition, [source, champ]);
-        schematic.FormFeed.Should().BeNull();
+        schematic.ExpectedFormParticipants!.Pending.Should().BeEmpty();
+        schematic.ExpectedFormParticipants.Resolved.Should().HaveCount(2);
+        champ.FormPathResolutions.Should().BeEmpty();
         schematic.Cases.Should().OnlyContain(c => c.FeedOrigin == null);
     }
 

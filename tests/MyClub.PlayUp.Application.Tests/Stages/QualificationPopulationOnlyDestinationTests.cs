@@ -54,7 +54,7 @@ public sealed class QualificationPopulationOnlyDestinationTests
             c.FormPosition.Kind == StageSchematicAssembler.FormKindRosterPlace
             && c.FeedOrigin == null);
         schematic.GroupFeeds.Should().BeNullOrEmpty();
-        schematic.FormFeed.Should().BeNull();
+        schematic.ExpectedFormParticipants!.Pending.Should().BeEmpty();
         schematic.Cases.Count(c => c.Entry != null).Should().Be(2);
     }
 
@@ -86,7 +86,7 @@ public sealed class QualificationPopulationOnlyDestinationTests
             c.FormPosition.Kind == StageSchematicAssembler.FormKindRosterPlace
             && c.FeedOrigin == null);
         schematic.GroupFeeds.Should().BeNullOrEmpty();
-        schematic.FormFeed.Should().BeNull();
+        schematic.ExpectedFormParticipants!.Pending.Should().BeEmpty();
         schematic.Cases.Count(c => c.Entry != null).Should().Be(2);
     }
 

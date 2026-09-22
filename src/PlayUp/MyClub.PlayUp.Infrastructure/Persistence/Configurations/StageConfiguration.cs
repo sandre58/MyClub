@@ -148,6 +148,11 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasField("_compositionEntries")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.OwnsMany(stage => stage.FormPathResolutions, ConfigureFormPathResolutions);
+        builder.Navigation(stage => stage.FormPathResolutions)
+            .HasField("_formPathResolutions")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.OwnsMany(stage => stage.MatchPlacements, ConfigureMatchPlacements);
         builder.Navigation(stage => stage.MatchPlacements)
             .HasField("_matchPlacements")
@@ -184,6 +189,24 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
         entries.HasKey("stage_id", "EntryId");
 
         entries.Property(entry => entry.EntryId)
+            .HasColumnName("entry_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<EntryId>());
+    }
+
+    private static void ConfigureFormPathResolutions(OwnedNavigationBuilder<Stage, FormPathResolution> resolutions)
+    {
+        resolutions.ToTable("stage_form_path_resolutions");
+        resolutions.WithOwner().HasForeignKey("stage_id");
+        resolutions.HasKey("stage_id", "PathFingerprint");
+
+        resolutions.Property(resolution => resolution.PathFingerprint)
+            .HasColumnName("path_fingerprint")
+            .HasMaxLength(256)
+            .IsRequired();
+
+        resolutions.Property(resolution => resolution.EntryId)
             .HasColumnName("entry_id")
             .HasColumnType("uuid")
             .IsRequired()

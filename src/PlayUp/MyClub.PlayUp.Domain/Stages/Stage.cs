@@ -23,6 +23,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Slot> _slots = [];
     private readonly List<DirectAssignment> _directAssignments = [];
     private readonly List<CompositionEntry> _compositionEntries = [];
+    private readonly List<FormPathResolution> _formPathResolutions = [];
     private readonly List<Draw> _draws = [];
     private readonly List<Penalty> _penalties = [];
     private readonly List<MatchPlacement> _matchPlacements = [];
@@ -120,6 +121,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the root composition entry set (who constitutes the phase before Draw).
     /// </summary>
     public IReadOnlyList<CompositionEntry> CompositionEntries => _compositionEntries.AsReadOnly();
+
+    /// <summary>
+    /// Gets ForForm Apply provenances (path fingerprint → entry). Execution detail for Structure reads.
+    /// </summary>
+    public IReadOnlyList<FormPathResolution> FormPathResolutions => _formPathResolutions.AsReadOnly();
 
     /// <summary>
     /// Gets the draws owned by this stage.
@@ -1294,8 +1300,36 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Records ForForm Apply provenance (path → entry). Upserts by fingerprint — idempotent rejeu.
+    /// Does not address RosterPlace. Allowed under the same mutability as population resolution.
+    /// </summary>
+    /// <param name="pathFingerprint">Stable ForForm path key (<see cref="FormPathResolutionKey"/>).</param>
+    /// <param name="entryId">Materialised entry.</param>
+    /// <param name="clock">Clock (reserved for future events; no event today).</param>
+    public void RecordFormPathResolution(string pathFingerprint, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        var existingIndex = _formPathResolutions.FindIndex(r => r.PathFingerprint == pathFingerprint);
+        if (existingIndex >= 0)
+        {
+            if (_formPathResolutions[existingIndex].EntryId.Equals(entryId))
+            {
+                return;
+            }
+
+            _formPathResolutions[existingIndex] = new FormPathResolution(pathFingerprint, entryId);
+            return;
+        }
+
+        _formPathResolutions.Add(new FormPathResolution(pathFingerprint, entryId));
+    }
+
+    /// <summary>
     /// Replaces the composition entry set (Affectation → Population). Allowed in Draft or Ready; Ready is demoted to Draft.
     /// Partial sets are allowed; duplicates are rejected. Order of first occurrence is preserved.
+    /// Clears ForForm resolution provenances (affectation rewrite invalidates Apply traces).
     /// </summary>
     /// <param name="entryIds">Entry identities (may be empty to clear).</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -1320,13 +1354,15 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         if (_compositionEntries.Count == distinct.Count
-            && _compositionEntries.Select(entry => entry.EntryId).SequenceEqual(distinct))
+            && _compositionEntries.Select(entry => entry.EntryId).SequenceEqual(distinct)
+            && _formPathResolutions.Count == 0)
         {
             return;
         }
 
         DemoteToDraftIfReady();
         _compositionEntries.Clear();
+        _formPathResolutions.Clear();
         foreach (var entryId in distinct)
         {
             _compositionEntries.Add(new CompositionEntry(entryId));
@@ -1337,12 +1373,13 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Clears the root composition entry set (Structure rebuild). Draft/Ready only.
+    /// Also clears ForForm resolution provenances.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
     public void ClearCompositionEntries(IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        if (_compositionEntries.Count == 0)
+        if (_compositionEntries.Count == 0 && _formPathResolutions.Count == 0)
         {
             return;
         }
@@ -1352,20 +1389,28 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Removes an entry from the composition set when present (e.g. hard-delete of a competition entry).
+    /// Drops provenances that pointed at that entry; leaves other ForForm traces intact.
     /// </summary>
     /// <param name="entryId">Entry identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
     public void RemoveCompositionEntryIfPresent(EntryId entryId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
+        var hadEntry = _compositionEntries.Any(entry => entry.EntryId.Equals(entryId));
+        var hadResolution = _formPathResolutions.Any(resolution => resolution.EntryId.Equals(entryId));
+        if (!hadEntry && !hadResolution)
         {
             return;
         }
 
-        ReplaceCompositionEntries(
-            [.. _compositionEntries.Where(entry => !entry.EntryId.Equals(entryId)).Select(entry => entry.EntryId)],
-            clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+        _formPathResolutions.RemoveAll(resolution => resolution.EntryId.Equals(entryId));
+        if (hadEntry)
+        {
+            _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));
+            Raise(new StageCompositionEntriesReplaced(Id, clock));
+        }
     }
 
     /// <summary>

@@ -100,10 +100,19 @@ public static class ApplyProgressionOutcome
         for (var i = 0; i < instructions.Length; i++)
         {
             var instruction = instructions[i];
+            var path = paths[i];
             destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock);
 
             // Form: Path.Destination.TargetsForm retains Placement intent; materialization is
             // AddResolvedPopulationEntry only (no second Composition write).
+            if (path.Destination.TargetsForm)
+            {
+                destinations[i].RecordFormPathResolution(
+                    FormPathResolutionKey.FromProgression(canonicalSource.Id, path),
+                    instruction.EntryId,
+                    clock);
+            }
+
             if (instruction.TargetsGroup)
             {
                 destinations[i].ApplyResolvedGroupEntry(

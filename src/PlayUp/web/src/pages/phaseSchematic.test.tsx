@@ -177,6 +177,169 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText(/Vainqueur · Match #4/)).toBeInTheDocument();
   });
 
+  it('cup Qual/Prog feed stays primary with occupant as secondary', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'A' },
+              feedOrigin: {
+                kind: 'Progression',
+                outcome: 'Winner',
+                sourceFixtureNumber: 2,
+              },
+              entry: { entryId: 'e1', displayName: 'FC Nice' },
+              assignment: { entryId: 'e1', displayName: 'FC Nice' },
+            },
+          ],
+        })}
+      />,
+    );
+    expect(screen.getByText(/Vainqueur · Match #2/)).toBeInTheDocument();
+    expect(screen.getByText('FC Nice')).toBeInTheDocument();
+    expect(
+      container.querySelector('.schematic-slot__secondary')?.textContent,
+    ).toBe('FC Nice');
+  });
+
+  it('cup Direct feed does not show Affectation over the occupant', () => {
+    render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'A' },
+              feedOrigin: {
+                kind: 'Direct',
+                configuredEntryId: 'e1',
+              },
+              entry: { entryId: 'e1', displayName: 'FC Nice' },
+              assignment: { entryId: 'e1', displayName: 'FC Nice' },
+            },
+          ],
+        })}
+      />,
+    );
+    expect(screen.getByText('FC Nice')).toBeInTheDocument();
+    expect(screen.queryByText(/Affectation|affectation/i)).toBeNull();
+  });
+
+  it('cup Draw with occupant shows occupant primary (Published resolution provenance)', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'A' },
+              feedOrigin: { kind: 'Draw', drawId: 'd1' },
+              entry: { entryId: 'e1', displayName: 'Alpha' },
+              assignment: { entryId: 'e1', displayName: 'Alpha' },
+            },
+          ],
+        })}
+      />,
+    );
+    expect(
+      container.querySelector('.schematic-slot__primary')?.textContent,
+    ).toBe('Alpha');
+  });
+
+  it('championship bag projects resolved occupant and pending ForForm into cases', () => {
+    render(
+      <PhaseSchematic
+        schematic={{
+          stageId: 'champ',
+          competitionId: 'c1',
+          name: 'Ligue',
+          status: 'Draft',
+          formatKind: 'Championship',
+          cases: [
+            {
+              formPosition: { kind: 'RosterPlace', index: 1 },
+              entry: { entryId: 'e1', displayName: 'Alpha' },
+              assignment: { entryId: 'e1', displayName: 'Alpha' },
+            },
+            {
+              formPosition: { kind: 'RosterPlace', index: 2 },
+              entry: null,
+              assignment: null,
+              feedOrigin: {
+                kind: 'Qualification',
+                selectionMode: 'Position',
+                selectionValue: 1,
+                rankingScope: 'Overall',
+              },
+            },
+          ],
+          connections: [],
+        }}
+      />,
+    );
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText(/classement|général|1/i)).toBeInTheDocument();
+  });
+
+  it('championship has no separate alimentation zone — pending lives on cases', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={{
+          stageId: 'champ',
+          competitionId: 'c1',
+          name: 'Ligue',
+          status: 'Draft',
+          formatKind: 'Championship',
+          cases: [
+            {
+              formPosition: { kind: 'RosterPlace', index: 1 },
+              entry: { entryId: 'e1', displayName: 'Alpha' },
+              assignment: { entryId: 'e1', displayName: 'Alpha' },
+            },
+            {
+              formPosition: { kind: 'RosterPlace', index: 2 },
+              entry: null,
+              assignment: null,
+              feedOrigin: {
+                kind: 'Qualification',
+                selectionMode: 'Position',
+                selectionValue: 1,
+                rankingScope: 'Group',
+                groupName: 'A',
+                pathOrder: 1,
+              },
+            },
+            {
+              formPosition: { kind: 'RosterPlace', index: 3 },
+              entry: null,
+              assignment: null,
+              feedOrigin: {
+                kind: 'Qualification',
+                selectionMode: 'Position',
+                selectionValue: 1,
+                rankingScope: 'Group',
+                groupName: 'B',
+                pathOrder: 2,
+              },
+            },
+            {
+              formPosition: { kind: 'RosterPlace', index: 4 },
+              entry: null,
+              assignment: null,
+            },
+          ],
+          connections: [],
+        }}
+      />,
+    );
+    const root = container.querySelector('.regulation-schematic--championship');
+    expect(root).not.toBeNull();
+    expect(root!.querySelector('.regulation-schematic__form-feeds')).toBeNull();
+    expect(root!.querySelector('.regulation-schematic__league')).not.toBeNull();
+    expect(screen.getByText(/1er du groupe A/i)).toBeInTheDocument();
+    expect(screen.getByText(/1er du groupe B/i)).toBeInTheDocument();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+  });
+
   it('cup multi-round shows one slot column per round (8+4+2)', () => {
     const cases = Array.from({ length: 14 }, (_, i) => ({
       formPosition: { kind: 'CupSlot' as const, slotKey: `S${i + 1}` },
