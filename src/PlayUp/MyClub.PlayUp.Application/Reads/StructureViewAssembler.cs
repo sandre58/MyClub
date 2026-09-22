@@ -101,7 +101,7 @@ public static class StructureViewAssembler
     public const string ActionReplaceDrawRules = "ReplaceDrawRules";
 
     /// <summary>Replace root composition entry set (Affectation).</summary>
-    public const string ActionReplaceCompositionEntries = "ReplaceCompositionEntries";
+    public const string ActionReplaceAffectationAuthoring = "ReplaceAffectationAuthoring";
 
     /// <summary>Replace or clear stage default TieFormat.</summary>
     public const string ActionReplaceDefaultTieFormat = "ReplaceDefaultTieFormat";
@@ -268,7 +268,8 @@ public static class StructureViewAssembler
             .ToArray();
 
         var isRootComposition = IsRootCompositionStage(stage, competitionStages);
-        var composition = BuildCompositionProjection(competition, stage);
+        var composition = BuildEntrySetProjection(competition, stage.CompositionEntries);
+        var affectation = BuildEntrySetProjection(competition, stage.AffectationAuthoring);
         var compositionCapacity = ResolvePlaces(competition, stage);
 
         return new StructureStageHubSummaryDto(
@@ -331,6 +332,10 @@ public static class StructureViewAssembler
             CompositionPreviewNames: composition.PreviewNames,
             CompositionPreviewOverflow: composition.PreviewOverflow,
             CompositionIneligibleCount: composition.IneligibleCount,
+            AffectationEntryCount: affectation.Count,
+            AffectationEntryIds: affectation.EntryIds,
+            AffectationPreviewNames: affectation.PreviewNames,
+            AffectationIneligibleCount: affectation.IneligibleCount,
             IsRootComposition: isRootComposition,
             PlacesPerGroup: stage.PlacesPerGroup,
             DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat));
@@ -346,20 +351,20 @@ public static class StructureViewAssembler
                 HasTieExtraTime: tie.ExtraTimeRule is not null,
                 HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null);
 
-    private readonly record struct CompositionProjection(
+    private readonly record struct EntrySetProjection(
         int Count,
         IReadOnlyList<Guid> EntryIds,
         IReadOnlyList<string> PreviewNames,
         int PreviewOverflow,
         int IneligibleCount);
 
-    private static CompositionProjection BuildCompositionProjection(
+    private static EntrySetProjection BuildEntrySetProjection(
         Competition competition,
-        Stage stage)
+        IReadOnlyList<CompositionEntry> entries)
     {
         var entriesById = competition.Entries.ToDictionary(entry => entry.Id);
-        var entryIds = stage.CompositionEntries.Select(entry => entry.EntryId.Value).ToArray();
-        var orderedNames = stage.CompositionEntries
+        var entryIds = entries.Select(entry => entry.EntryId.Value).ToArray();
+        var orderedNames = entries
             .Select(entry => entry.EntryId)
             .Select(entriesById.GetValueOrDefault)
             .Where(entry => entry is not null)
@@ -368,15 +373,13 @@ public static class StructureViewAssembler
             .Select(entry => entry.DisplayName)
             .ToList();
 
-        var count = stage.CompositionEntries.Count;
-
-        // Full name list — rails show every affectation (no soft truncate).
+        var count = entries.Count;
         var preview = orderedNames.ToArray();
-        var ineligible = stage.CompositionEntries.Count(compositionEntry =>
+        var ineligible = entries.Count(compositionEntry =>
             !entriesById.TryGetValue(compositionEntry.EntryId, out var entry)
             || entry.Status != EntryStatus.Active);
 
-        return new CompositionProjection(count, entryIds, preview, PreviewOverflow: 0, ineligible);
+        return new EntrySetProjection(count, entryIds, preview, PreviewOverflow: 0, ineligible);
     }
 
     /// <summary>
@@ -701,8 +704,8 @@ public static class StructureViewAssembler
         }
 
         // B2 — Affectation may co-exist with inbound Qualif/Prog on the same phase
-        // (V2 I7 / scenario B2). Domain ReplaceCompositionEntries is not root-gated.
-        actions.Add(ActionReplaceCompositionEntries);
+        // (V2 I7 / scenario B2). Domain ReplaceAffectationAuthoring is not root-gated.
+        actions.Add(ActionReplaceAffectationAuthoring);
 
         if (StageNeedsTieFormatAction(stage))
         {

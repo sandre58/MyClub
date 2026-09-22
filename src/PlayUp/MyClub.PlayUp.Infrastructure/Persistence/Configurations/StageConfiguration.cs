@@ -143,6 +143,11 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasField("_directAssignments")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.OwnsMany(stage => stage.AffectationAuthoring, ConfigureAffectationAuthoring);
+        builder.Navigation(stage => stage.AffectationAuthoring)
+            .HasField("_affectationAuthoring")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.OwnsMany(stage => stage.CompositionEntries, ConfigureCompositionEntries);
         builder.Navigation(stage => stage.CompositionEntries)
             .HasField("_compositionEntries")
@@ -176,6 +181,19 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .IsRequired();
 
         assignments.Property(assignment => assignment.EntryId)
+            .HasColumnName("entry_id")
+            .HasColumnType("uuid")
+            .IsRequired()
+            .HasConversion(new GuidTypedIdConverter<EntryId>());
+    }
+
+    private static void ConfigureAffectationAuthoring(OwnedNavigationBuilder<Stage, CompositionEntry> entries)
+    {
+        entries.ToTable("stage_affectation_entries");
+        entries.WithOwner().HasForeignKey("stage_id");
+        entries.HasKey("stage_id", "EntryId");
+
+        entries.Property(entry => entry.EntryId)
             .HasColumnName("entry_id")
             .HasColumnType("uuid")
             .IsRequired()

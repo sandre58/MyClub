@@ -255,6 +255,8 @@ public sealed class StagePersistenceTests
             loaded.Slots[0].EntryId.Should().Be(entryA);
             loaded.DirectAssignments.Should().ContainSingle()
                 .Which.Should().Be(new DirectAssignment("W1", entryA));
+            loaded.AffectationAuthoring.Should().ContainSingle().Which.EntryId.Should().Be(entryA);
+            loaded.CompositionEntries.Should().ContainSingle().Which.EntryId.Should().Be(entryA);
             loaded.Draws.Should().BeEmpty();
             loaded.Penalties.Should().BeEmpty();
             loaded.MatchPlacements.Should().BeEmpty();

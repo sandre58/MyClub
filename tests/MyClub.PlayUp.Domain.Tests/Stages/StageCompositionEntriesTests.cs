@@ -19,42 +19,116 @@ public sealed class StageCompositionEntriesTests
     private readonly CompetitionId _competitionId = CompetitionId.New();
 
     [Fact]
-    public void ReplaceCompositionEntries_stores_distinct_set_and_raises_event()
+    public void ReplaceAffectationAuthoring_stores_authoring_and_syncs_composition()
     {
         var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
         stage.ClearDomainEvents();
         var a = EntryId.New();
         var b = EntryId.New();
 
-        stage.ReplaceCompositionEntries([a, b], _clock);
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
 
+        stage.AffectationAuthoring.Select(e => e.EntryId).Should().Equal(a, b);
         stage.CompositionEntries.Select(e => e.EntryId).Should().Equal(a, b);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageCompositionEntriesReplaced>();
+        stage.DomainEvents.Should().Contain(e => e is StageAffectationAuthoringReplaced);
+        stage.DomainEvents.Should().Contain(e => e is StageCompositionEntriesReplaced);
     }
 
     [Fact]
-    public void ReplaceCompositionEntries_rejects_duplicates()
+    public void ReplaceAffectationAuthoring_rejects_duplicates()
     {
         var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
         var a = EntryId.New();
 
-        var act = () => stage.ReplaceCompositionEntries([a, a], _clock);
+        var act = () => stage.ReplaceAffectationAuthoring([a, a], _clock);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DuplicateEntry);
     }
 
     [Fact]
-    public void ReplaceCompositionEntries_allows_partial_and_clear()
+    public void ReplaceAffectationAuthoring_allows_partial_and_clear_authoring()
     {
         var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
         var a = EntryId.New();
-        stage.ReplaceCompositionEntries([a], _clock);
+        stage.ReplaceAffectationAuthoring([a], _clock);
         stage.ClearDomainEvents();
 
-        stage.ReplaceCompositionEntries([], _clock);
+        stage.ReplaceAffectationAuthoring([], _clock);
 
+        stage.AffectationAuthoring.Should().BeEmpty();
         stage.CompositionEntries.Should().BeEmpty();
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageCompositionEntriesReplaced>();
+        stage.DomainEvents.Should().Contain(e => e is StageAffectationAuthoringReplaced);
+        stage.DomainEvents.Should().Contain(e => e is StageCompositionEntriesReplaced);
+    }
+
+    [Fact]
+    public void ReplaceAffectationAuthoring_preserves_apply_resolved_entries()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
+        var affectation = EntryId.New();
+        var resolved = EntryId.New();
+        stage.ReplaceAffectationAuthoring([affectation], _clock);
+        stage.AddResolvedPopulationEntry(resolved, _clock);
+        stage.ClearDomainEvents();
+
+        stage.ReplaceAffectationAuthoring([affectation], _clock);
+
+        stage.AffectationAuthoring.Select(e => e.EntryId).Should().Equal(affectation);
+        stage.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo([affectation, resolved]);
+        stage.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ReplaceAffectationAuthoring_removing_authoring_keeps_apply_only_membership()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
+        var affectation = EntryId.New();
+        var resolved = EntryId.New();
+        stage.ReplaceAffectationAuthoring([affectation], _clock);
+        stage.AddResolvedPopulationEntry(resolved, _clock);
+        stage.ClearDomainEvents();
+
+        stage.ReplaceAffectationAuthoring([], _clock);
+
+        stage.AffectationAuthoring.Should().BeEmpty();
+        stage.CompositionEntries.Select(e => e.EntryId).Should().Equal(resolved);
+        stage.DomainEvents.Should().Contain(e => e is StageAffectationAuthoringReplaced);
+        stage.DomainEvents.Should().Contain(e => e is StageCompositionEntriesReplaced);
+    }
+
+    [Fact]
+    public void ReplaceAffectationAuthoring_never_wipes_composition_wholesale()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        var resolved = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
+        stage.AddResolvedPopulationEntry(resolved, _clock);
+
+        stage.ReplaceAffectationAuthoring([a], _clock);
+
+        stage.AffectationAuthoring.Select(e => e.EntryId).Should().Equal(a);
+        stage.CompositionEntries.Select(e => e.EntryId).Should().BeEquivalentTo([a, resolved]);
+        stage.CompositionEntries.Should().NotContain(e => e.EntryId.Equals(b));
+    }
+
+    [Fact]
+    public void ClearCompositionEntries_clears_authoring_membership_and_form_resolutions()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
+        var a = EntryId.New();
+        var resolved = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a], _clock);
+        stage.AddResolvedPopulationEntry(resolved, _clock);
+        stage.ClearDomainEvents();
+
+        stage.ClearCompositionEntries(_clock);
+
+        stage.AffectationAuthoring.Should().BeEmpty();
+        stage.CompositionEntries.Should().BeEmpty();
+        stage.DomainEvents.Should().Contain(e => e is StageAffectationAuthoringReplaced);
+        stage.DomainEvents.Should().Contain(e => e is StageCompositionEntriesReplaced);
     }
 
     [Fact]
@@ -66,5 +140,21 @@ public sealed class StageCompositionEntriesTests
         stage.RemoveCompositionEntryIfPresent(EntryId.New(), _clock);
 
         stage.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RemoveCompositionEntryIfPresent_removes_from_authoring_and_membership()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Root"), SampleRegulations.Standard(), _clock);
+        var a = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a], _clock);
+        stage.ClearDomainEvents();
+
+        stage.RemoveCompositionEntryIfPresent(a, _clock);
+
+        stage.AffectationAuthoring.Should().BeEmpty();
+        stage.CompositionEntries.Should().BeEmpty();
+        stage.DomainEvents.Should().Contain(e => e is StageAffectationAuthoringReplaced);
+        stage.DomainEvents.Should().Contain(e => e is StageCompositionEntriesReplaced);
     }
 }

@@ -9,8 +9,8 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// One entry in the stage root composition set (who constitutes the phase before Draw).
-/// Distinct from <see cref="DirectAssignment"/> (slot feed) and from slot/group resolution.
+/// One entry in the stage runtime population membership (<see cref="Stage.CompositionEntries"/>).
+/// Distinct from Affectation authoring, <see cref="DirectAssignment"/> (slot feed), and slot/group resolution.
 /// </summary>
 public sealed record CompositionEntry
 {

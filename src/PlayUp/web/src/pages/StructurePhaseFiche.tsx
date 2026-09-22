@@ -720,21 +720,14 @@ function RootEntriesRail({
   onEditCompose?: () => void;
 }) {
   const { t } = useTranslation('structure');
-  const fromAffectation = stage.compositionEntryCount ?? 0;
+  const fromAffectation = stage.affectationEntryCount ?? 0;
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
-  const ineligible = stage.compositionIneligibleCount ?? 0;
-  const composedIds = stage.compositionEntryIds ?? [];
-  const previewNames = stage.compositionPreviewNames ?? [];
-  const isLive =
-    stage.status === 'Running' ||
-    stage.status === 'Suspended' ||
-    stage.status === 'Completed';
-  // Draft/Ready: expected Places N occupancy = Affectation + inbound Qual/Prog.
-  // Live: CompositionEntries is the Draw/Apply truth (rules would double-count).
-  const meterEntries = isLive
-    ? fromAffectation
-    : fromAffectation + fromFeeds;
+  const ineligible = stage.affectationIneligibleCount ?? 0;
+  const composedIds = stage.affectationEntryIds ?? [];
+  const previewNames = stage.affectationPreviewNames ?? [];
+  // U1 — Population gauge always covers authoring alimentations (never runtime membership).
+  const meterEntries = fromAffectation + fromFeeds;
   const byId = useMemo(
     () => new Map(entries.map((entry) => [entry.entryId, entry])),
     [entries],
@@ -773,7 +766,8 @@ function RootEntriesRail({
     composed.length > 0 ||
     previewNames.length > 0 ||
     ineligible > 0;
-  const showAffectationSection = Boolean(canCompose) || hasTeams;
+  // Hide empty Affectation when not editable (e.g. Coupe 16es: feeds only, no authoring).
+  const showAffectationSection = hasTeams || Boolean(canCompose);
 
   const affectationActionLabel = hasTeams
     ? t('entries.editComposition')
@@ -867,7 +861,11 @@ function RootEntriesRail({
               <p className="structure-entries__anomaly" role="status">
                 {t('entries.ineligibleOverlay', { count: ineligible })}
               </p>
-            ) : null}
+            ) : (
+              <p className="structure-entries__preview" role="status">
+                {t('population.affectationEmpty')}
+              </p>
+            )}
           </section>
         ) : !sources ? (
           <EmptyState
@@ -883,8 +881,8 @@ function RootEntriesRail({
         <CompositionMeter
           entries={meterEntries}
           places={n}
-          assigned={isLive ? undefined : fromAffectation}
-          expected={isLive ? undefined : fromFeeds}
+          assigned={fromAffectation}
+          expected={fromFeeds}
           t={t}
         />
       </div>
@@ -1543,7 +1541,7 @@ export function StructurePhaseFiche({
   const canEditStanding = actions.includes('ReplaceStandingRules');
   const canRebind = actions.includes('BindToCompetition');
   const canRemove = actions.includes('RemoveStage');
-  const canCompose = actions.includes('ReplaceCompositionEntries');
+  const canCompose = actions.includes('ReplaceAffectationAuthoring');
   const canEditQualif = actions.includes('ReplaceQualificationRules');
   const placementAwards = stage.placementAwards ?? [];
   const hasExits = outboundGroups.length > 0;

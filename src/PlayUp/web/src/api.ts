@@ -523,12 +523,12 @@ export function replaceStageDrawRules(
   return sendNoContent('PUT', `/stages/${stageId}/draw-rules`, request);
 }
 
-/** PUT /stages/{id}/composition → 204 — replace root composition entry set */
-export function replaceStageCompositionEntries(
+/** PUT /stages/{id}/affectation → 204 — replace Affectation authoring set */
+export function replaceStageAffectationAuthoring(
   stageId: string,
   entryIds: string[],
 ): Promise<void> {
-  return sendNoContent('PUT', `/stages/${stageId}/composition`, { entryIds });
+  return sendNoContent('PUT', `/stages/${stageId}/affectation`, { entryIds });
 }
 
 /** PUT /stages/{id}/tie-format → 204 */

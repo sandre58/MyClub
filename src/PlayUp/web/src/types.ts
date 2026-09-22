@@ -657,21 +657,29 @@ export interface StructureStageHubSummary {
   structureIssues?: string[];
   /** Configured DirectAssignment count (slot → entry). */
   directAssignmentCount?: number;
-  /** Root composition set size (k). */
+  /** Runtime population membership size (Draw / Live pool). */
   compositionEntryCount?: number;
-  /** Root composition entry identities. */
+  /** Runtime composition entry identities. */
   compositionEntryIds?: string[] | null;
   /** Target Places N at T (≠ composition set k). Null = E4 indeterminable. */
   compositionCapacity?: number | null;
   /** Groups form fact: places per group (SoT for Places N); independent of Draw. */
   placesPerGroup?: number | null;
-  /** Display names for the composition set (full list). */
+  /** Display names for runtime composition (Tirage / Live). */
   compositionPreviewNames?: string[] | null;
   /** Always 0 — retained for API shape; rails no longer truncate. */
   compositionPreviewOverflow?: number;
-  /** Composition entries that are no longer Active. */
+  /** Runtime composition entries that are no longer Active. */
   compositionIneligibleCount?: number;
-  /** True when the phase has no inbound Qualif/Prog feeds (Affectation). */
+  /** Affectation authoring set size (Population tile). */
+  affectationEntryCount?: number;
+  /** Affectation authoring entry identities. */
+  affectationEntryIds?: string[] | null;
+  /** Display names for Affectation authoring. */
+  affectationPreviewNames?: string[] | null;
+  /** Affectation authoring entries that are no longer Active. */
+  affectationIneligibleCount?: number;
+  /** True when the phase has no inbound Qualif/Prog feeds. */
   isRootComposition?: boolean;
   /** Stage regulation TieFormat (AddRound copy source); null/omitted when unset. */
   defaultTieFormat?: StructureTieFormatSummary | null;

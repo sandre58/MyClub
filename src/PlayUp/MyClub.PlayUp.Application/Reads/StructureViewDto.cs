@@ -217,17 +217,21 @@ public sealed record StructureReadinessDto(
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 /// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
-/// <param name="CompositionEntryCount">Root composition set size (k).</param>
-/// <param name="CompositionEntryIds">Root composition entry identities (stable order as stored).</param>
+/// <param name="CompositionEntryCount">Runtime population membership size (Draw / Live pool).</param>
+/// <param name="CompositionEntryIds">Runtime composition entry identities (stable order as stored).</param>
 /// <param name="CompositionCapacity">
 /// Target Places N at T (≠ composition set k). Cup = entry places (1st-round cardinality;
 /// ≠ total slotCount when multi-round); Championship/Swiss = Active;
 /// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
 /// </param>
-/// <param name="CompositionPreviewNames">Display names for the composition set (full list).</param>
+/// <param name="CompositionPreviewNames">Display names for runtime composition (Tirage / Live).</param>
 /// <param name="CompositionPreviewOverflow">Always 0 — retained for API shape; rails no longer truncate.</param>
-/// <param name="CompositionIneligibleCount">Composition entries that are no longer Active.</param>
-/// <param name="IsRootComposition">True when the phase has no inbound Qualif/Prog feeds (Affectation).</param>
+/// <param name="CompositionIneligibleCount">Runtime composition entries that are no longer Active.</param>
+/// <param name="AffectationEntryCount">Affectation authoring set size (Population tile).</param>
+/// <param name="AffectationEntryIds">Affectation authoring entry identities.</param>
+/// <param name="AffectationPreviewNames">Display names for Affectation authoring.</param>
+/// <param name="AffectationIneligibleCount">Affectation authoring entries that are no longer Active.</param>
+/// <param name="IsRootComposition">True when the phase has no inbound Qualif/Prog feeds.</param>
 /// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N); independent of Draw.</param>
 /// <param name="DefaultTieFormat">Stage regulation TieFormat (AddRound copy source); null when unset.</param>
 public sealed record StructureStageHubSummaryDto(
@@ -290,6 +294,10 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<string>? CompositionPreviewNames = null,
     int CompositionPreviewOverflow = 0,
     int CompositionIneligibleCount = 0,
+    int AffectationEntryCount = 0,
+    IReadOnlyList<Guid>? AffectationEntryIds = null,
+    IReadOnlyList<string>? AffectationPreviewNames = null,
+    int AffectationIneligibleCount = 0,
     bool IsRootComposition = true,
     int? PlacesPerGroup = null,
     StructureTieFormatSummaryDto? DefaultTieFormat = null);

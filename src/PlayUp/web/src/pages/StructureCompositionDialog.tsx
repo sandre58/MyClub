@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListChecks, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { replaceStageCompositionEntries } from '../api';
+import { replaceStageAffectationAuthoring } from '../api';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { TextLink } from '../design-system/components/TextLink';
@@ -73,11 +73,7 @@ export function StructureCompositionDialog({
   const searchRef = useRef<HTMLInputElement>(null);
 
   const placesN = resolvePlacesN(stage);
-  const isLive =
-    stage.status === 'Running' ||
-    stage.status === 'Suspended' ||
-    stage.status === 'Completed';
-  const reserved = isLive ? 0 : Math.max(0, reservedFromFeeds);
+  const reserved = Math.max(0, reservedFromFeeds);
   /** Max teams Affectation may hold without exceeding Places N given reserved feeds. */
   const affectationCap =
     placesN != null ? Math.max(0, placesN - reserved) : null;
@@ -100,11 +96,11 @@ export function StructureCompositionDialog({
       setSearch('');
       return;
     }
-    const initial = new Set(stage.compositionEntryIds ?? []);
+    const initial = new Set(stage.affectationEntryIds ?? []);
     setSelected(initial);
     setBaseline(new Set(initial));
     resetDiscard();
-  }, [open, stage.compositionEntryIds, stage.stageId, resetDiscard]);
+  }, [open, stage.affectationEntryIds, stage.stageId, resetDiscard]);
 
   useEffect(() => {
     if (!open || !focusSearch) return;
@@ -153,7 +149,7 @@ export function StructureCompositionDialog({
   }, [rows, search]);
 
   const k = selected.size;
-  const populationExpected = isLive ? k : k + reserved;
+  const populationExpected = k + reserved;
   const atCapacity =
     affectationCap != null && k >= affectationCap;
   const remaining =
@@ -180,7 +176,7 @@ export function StructureCompositionDialog({
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      replaceStageCompositionEntries(stage.stageId, [...selected]),
+      replaceStageAffectationAuthoring(stage.stageId, [...selected]),
     onSuccess: async () => {
       await invalidateAfterStructureMutation(queryClient, competitionId);
       notify.success(t('composition.toastUpdated'));

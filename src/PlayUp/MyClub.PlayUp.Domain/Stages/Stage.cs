@@ -22,6 +22,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Matchday> _matchdays = [];
     private readonly List<Slot> _slots = [];
     private readonly List<DirectAssignment> _directAssignments = [];
+    private readonly List<CompositionEntry> _affectationAuthoring = [];
     private readonly List<CompositionEntry> _compositionEntries = [];
     private readonly List<FormPathResolution> _formPathResolutions = [];
     private readonly List<Draw> _draws = [];
@@ -118,7 +119,12 @@ public sealed class Stage : AggregateRoot<StageId>
     public IReadOnlyList<DirectAssignment> DirectAssignments => _directAssignments.AsReadOnly();
 
     /// <summary>
-    /// Gets the root composition entry set (who constitutes the phase before Draw).
+    /// Gets the Affectation authoring set (manual population producers). Not runtime membership.
+    /// </summary>
+    public IReadOnlyList<CompositionEntry> AffectationAuthoring => _affectationAuthoring.AsReadOnly();
+
+    /// <summary>
+    /// Gets the runtime population membership (Draw / Live pool). Union of Affectation authoring and Apply resolutions.
     /// </summary>
     public IReadOnlyList<CompositionEntry> CompositionEntries => _compositionEntries.AsReadOnly();
 
@@ -1327,13 +1333,13 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Replaces the composition entry set (Affectation → Population). Allowed in Draft or Ready; Ready is demoted to Draft.
-    /// Partial sets are allowed; duplicates are rejected. Order of first occurrence is preserved.
-    /// Clears ForForm resolution provenances (affectation rewrite invalidates Apply traces).
+    /// Replaces the Affectation authoring set and syncs runtime membership by diff.
+    /// Never replaces <see cref="CompositionEntries"/> wholesale — Apply-resolved entries remain.
+    /// Allowed in Draft or Ready; Ready is demoted to Draft. Duplicates rejected; order preserved.
     /// </summary>
-    /// <param name="entryIds">Entry identities (may be empty to clear).</param>
+    /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void ReplaceCompositionEntries(IReadOnlyList<EntryId> entryIds, IClock clock)
+    public void ReplaceAffectationAuthoring(IReadOnlyList<EntryId> entryIds, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(entryIds);
         ArgumentNullException.ThrowIfNull(clock);
@@ -1346,59 +1352,112 @@ public sealed class Stage : AggregateRoot<StageId>
             if (!seen.Add(entryId))
             {
                 throw new DomainException(
-                    $"Entry '{entryId}' is duplicated in the composition set.",
+                    $"Entry '{entryId}' is duplicated in the Affectation authoring set.",
                     StageErrorCodes.DuplicateEntry);
             }
 
             distinct.Add(entryId);
         }
 
-        if (_compositionEntries.Count == distinct.Count
-            && _compositionEntries.Select(entry => entry.EntryId).SequenceEqual(distinct)
-            && _formPathResolutions.Count == 0)
+        if (_affectationAuthoring.Count == distinct.Count
+            && _affectationAuthoring.Select(entry => entry.EntryId).SequenceEqual(distinct))
         {
             return;
         }
 
         DemoteToDraftIfReady();
-        _compositionEntries.Clear();
-        _formPathResolutions.Clear();
+
+        var previous = _affectationAuthoring.Select(entry => entry.EntryId).ToHashSet();
+        var next = distinct.ToHashSet();
+
+        _affectationAuthoring.Clear();
         foreach (var entryId in distinct)
         {
-            _compositionEntries.Add(new CompositionEntry(entryId));
+            _affectationAuthoring.Add(new CompositionEntry(entryId));
         }
 
-        Raise(new StageCompositionEntriesReplaced(Id, clock));
+        Raise(new StageAffectationAuthoringReplaced(Id, clock));
+
+        var compositionChanged = false;
+        foreach (var removed in previous.Where(id => !next.Contains(id)))
+        {
+            if (_compositionEntries.RemoveAll(entry => entry.EntryId.Equals(removed)) > 0)
+            {
+                compositionChanged = true;
+            }
+        }
+
+        foreach (var added in next.Where(id => !previous.Contains(id)))
+        {
+            if (_compositionEntries.Any(entry => entry.EntryId.Equals(added)))
+            {
+                continue;
+            }
+
+            _compositionEntries.Add(new CompositionEntry(added));
+            compositionChanged = true;
+        }
+
+        if (compositionChanged)
+        {
+            Raise(new StageCompositionEntriesReplaced(Id, clock));
+        }
     }
 
     /// <summary>
-    /// Clears the root composition entry set (Structure rebuild). Draft/Ready only.
-    /// Also clears ForForm resolution provenances.
+    /// Alias for <see cref="ReplaceAffectationAuthoring"/> (historical name). Prefer Affectation authoring API.
+    /// </summary>
+    public void ReplaceCompositionEntries(IReadOnlyList<EntryId> entryIds, IClock clock) =>
+        ReplaceAffectationAuthoring(entryIds, clock);
+
+    /// <summary>
+    /// Clears Affectation authoring, runtime membership, and ForForm provenances (Structure rebuild).
+    /// Draft/Ready only.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
     public void ClearCompositionEntries(IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        if (_compositionEntries.Count == 0 && _formPathResolutions.Count == 0)
+        if (_affectationAuthoring.Count == 0
+            && _compositionEntries.Count == 0
+            && _formPathResolutions.Count == 0)
         {
             return;
         }
 
-        ReplaceCompositionEntries([], clock);
+        EnsureDraftOrReady();
+        DemoteToDraftIfReady();
+
+        var hadAffectation = _affectationAuthoring.Count > 0;
+        var hadComposition = _compositionEntries.Count > 0;
+        _affectationAuthoring.Clear();
+        _compositionEntries.Clear();
+        _formPathResolutions.Clear();
+
+        if (hadAffectation)
+        {
+            Raise(new StageAffectationAuthoringReplaced(Id, clock));
+        }
+
+        if (hadComposition)
+        {
+            Raise(new StageCompositionEntriesReplaced(Id, clock));
+        }
     }
 
     /// <summary>
-    /// Removes an entry from the composition set when present (e.g. hard-delete of a competition entry).
-    /// Drops provenances that pointed at that entry; leaves other ForForm traces intact.
+    /// Removes an entry from Affectation authoring and runtime membership when present
+    /// (e.g. hard-delete of a competition entry). Drops provenances that pointed at that entry.
     /// </summary>
     /// <param name="entryId">Entry identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
     public void RemoveCompositionEntryIfPresent(EntryId entryId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
+        var hadAffectation = _affectationAuthoring.Any(entry => entry.EntryId.Equals(entryId));
         var hadEntry = _compositionEntries.Any(entry => entry.EntryId.Equals(entryId));
         var hadResolution = _formPathResolutions.Any(resolution => resolution.EntryId.Equals(entryId));
-        if (!hadEntry && !hadResolution)
+        if (!hadAffectation && !hadEntry && !hadResolution)
         {
             return;
         }
@@ -1406,6 +1465,12 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureDraftOrReady();
         DemoteToDraftIfReady();
         _formPathResolutions.RemoveAll(resolution => resolution.EntryId.Equals(entryId));
+        if (hadAffectation)
+        {
+            _affectationAuthoring.RemoveAll(entry => entry.EntryId.Equals(entryId));
+            Raise(new StageAffectationAuthoringReplaced(Id, clock));
+        }
+
         if (hadEntry)
         {
             _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));

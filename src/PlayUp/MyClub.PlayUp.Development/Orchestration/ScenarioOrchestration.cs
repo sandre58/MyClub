@@ -117,12 +117,13 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Seeds the root composition entry set (Affectation) from registered teams.
+    /// Seeds Affectation authoring on a root (or B2) stage from registered teams.
+    /// Syncs runtime <see cref="Stage.CompositionEntries"/> by diff — never seeds mid-round Apply membership as Affectation.
     /// </summary>
-    /// <param name="stage">Root stage.</param>
+    /// <param name="stage">Stage receiving Affectation authoring.</param>
     /// <param name="entries">Competition entries (Active preferred).</param>
     /// <param name="clock">Clock for domain events.</param>
-    /// <param name="take">Optional partial take (first N Active) for incomplete composition QA.</param>
+    /// <param name="take">Optional partial take (first N Active) for incomplete Affectation QA.</param>
     public static void AssignRootComposition(
         Stage stage,
         IReadOnlyList<CompetitionEntry> entries,
@@ -135,7 +136,7 @@ internal static class ScenarioOrchestration
 
         var active = entries.Where(entry => entry.Status == EntryStatus.Active);
         var selected = take is { } limit ? active.Take(limit) : active;
-        stage.ReplaceCompositionEntries([.. selected.Select(entry => entry.Id)], clock);
+        stage.ReplaceAffectationAuthoring([.. selected.Select(entry => entry.Id)], clock);
     }
 
     public static Stage ConfigurePrimaryStage(

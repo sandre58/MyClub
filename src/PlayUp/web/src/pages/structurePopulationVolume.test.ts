@@ -31,6 +31,7 @@ function stage(
     progressionPathCount: 0,
     hasTieFormat: false,
     compositionEntryCount: 0,
+    affectationEntryCount: 0,
     compositionCapacity: 2,
     ...partial,
   };
@@ -109,6 +110,7 @@ describe('structurePopulationVolume', () => {
       name: 'Finale',
       compositionCapacity: 2,
       compositionEntryCount: 0,
+    affectationEntryCount: 0,
     });
     const data = view([demis, finale]);
 
@@ -168,6 +170,7 @@ describe('structurePopulationVolume', () => {
       name: 'Finale',
       compositionCapacity: 2,
       compositionEntryCount: 0,
+    affectationEntryCount: 0,
     });
     const data = view([groups, demis, finale]);
 
@@ -216,6 +219,7 @@ describe('structurePopulationVolume', () => {
       name: 'Demis',
       compositionCapacity: 4,
       compositionEntryCount: 0,
+    affectationEntryCount: 0,
     });
     const data = view([groups, demis]);
 

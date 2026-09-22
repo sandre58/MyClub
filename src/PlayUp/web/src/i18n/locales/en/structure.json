@@ -586,7 +586,8 @@
   },
   "population": {
     "sectionSources": "From phases",
-    "sectionAffectation": "Assignment"
+    "sectionAffectation": "Assignment",
+    "affectationEmpty": "None"
   },
   "entries": {
     "counterTeams": "{{k}} / {{n}} teams",

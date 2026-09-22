@@ -66,7 +66,7 @@ export function expectedPopulationWithQualDraft(args: {
   draftQualVolume: number;
 }): number {
   const { data, destination, sourceStageId, draftQualVolume } = args;
-  const affectation = destination.compositionEntryCount ?? 0;
+  const affectation = destination.affectationEntryCount ?? 0;
   let qualFromOthers = 0;
   let progInbound = 0;
 
@@ -103,7 +103,7 @@ export function expectedPopulationWithProgDraft(args: {
   draftProgVolume: number;
 }): number {
   const { data, destination, sourceStageId, draftProgVolume } = args;
-  const affectation = destination.compositionEntryCount ?? 0;
+  const affectation = destination.affectationEntryCount ?? 0;
   let qualInbound = 0;
   let progFromOthers = 0;
 

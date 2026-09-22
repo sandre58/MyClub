@@ -586,7 +586,8 @@
   },
   "population": {
     "sectionSources": "Depuis les phases",
-    "sectionAffectation": "Affectation"
+    "sectionAffectation": "Affectation",
+    "affectationEmpty": "Aucune"
   },
   "entries": {
     "counterTeams": "{{k}} / {{n}} équipes",

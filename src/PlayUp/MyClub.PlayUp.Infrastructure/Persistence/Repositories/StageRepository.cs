@@ -160,6 +160,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .Include(candidate => candidate.Matchdays)
                 .ThenInclude(matchday => matchday.Fixtures)
                 .Include(candidate => candidate.MatchPlacements)
+                .Include(candidate => candidate.AffectationAuthoring)
                 .Include(candidate => candidate.CompositionEntries)
                 .Include(candidate => candidate.FormPathResolutions),
             StageLoadProfile.Full => query
@@ -170,6 +171,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .ThenInclude(matchday => matchday.Fixtures)
                 .Include(candidate => candidate.Slots)
                 .Include(candidate => candidate.DirectAssignments)
+                .Include(candidate => candidate.AffectationAuthoring)
                 .Include(candidate => candidate.CompositionEntries)
                 .Include(candidate => candidate.FormPathResolutions)
                 .Include(candidate => candidate.Draws)

@@ -15,7 +15,8 @@ namespace MyClub.PlayUp.Development.Templates;
 /// </summary>
 /// <remarks>
 /// Progression Sorties = Winner → Population intents; each downstream Place fill = Slot Draw
-/// (plus R32 pairing draw). PlacementAwards ranks 1–2; Completed + Outcome.
+/// (plus R32 pairing draw). Affectation authoring only on R32; R16+ membership via Apply + Draw.
+/// PlacementAwards ranks 1–2; Completed + Outcome.
 /// Mid-bracket from-slots demo = <c>cup-qf-sf</c>. <c>:progress</c> ignored.
 /// </remarks>
 public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
@@ -28,7 +29,7 @@ public sealed class CoupeDeFranceTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Cup 32 (JSON) · R32 pairing draw · Winner→Population intents · Slot draws R16→…→Final · PlacementAwards 1–2 · Completed + Outcome. :progress ignored.";
+        "Cup 32 (JSON) · Affectation R32 only · Winner→Population · Slot draws R16→Final · PlacementAwards 1–2 · Completed. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()

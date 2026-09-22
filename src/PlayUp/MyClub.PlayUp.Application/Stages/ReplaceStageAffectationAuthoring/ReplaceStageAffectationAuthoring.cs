@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="ReplaceStageCompositionEntries.cs" company="Stéphane ANDRE">
+// <copyright file="ReplaceStageAffectationAuthoring.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
@@ -11,12 +11,13 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: replace the root composition entry set on a stage.
+/// Application use case: replace stage Affectation authoring (manual population producers).
+/// Syncs runtime <see cref="Stage.CompositionEntries"/> by diff — does not wipe Apply resolutions.
 /// </summary>
-public static class ReplaceStageCompositionEntries
+public static class ReplaceStageAffectationAuthoring
 {
     /// <summary>
-    /// Replaces composition entries. Each identity must belong to the competition.
+    /// Replaces Affectation authoring. Each identity must belong to the competition.
     /// Partial sets are allowed (Draft-persistable).
     /// </summary>
     public static void Execute(
@@ -35,6 +36,6 @@ public static class ReplaceStageCompositionEntries
             _ = competition.GetEntry(entryId);
         }
 
-        stage.ReplaceCompositionEntries(entryIds, clock);
+        stage.ReplaceAffectationAuthoring(entryIds, clock);
     }
 }

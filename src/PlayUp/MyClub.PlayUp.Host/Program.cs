@@ -904,7 +904,7 @@ try
         });
 
     app.MapPut(
-        "/stages/{stageId:guid}/composition",
+        "/stages/{stageId:guid}/affectation",
         async (
             Guid stageId,
             EntryIdsRequest request,
@@ -916,7 +916,7 @@ try
                 .Select(id => new EntryId(id))
                 .ToArray();
             await executor
-                .ReplaceStageCompositionEntriesAsync(new StageId(stageId), entryIds, cancellationToken)
+                .ReplaceStageAffectationAuthoringAsync(new StageId(stageId), entryIds, cancellationToken)
                 .ConfigureAwait(false);
             return Results.NoContent();
         });

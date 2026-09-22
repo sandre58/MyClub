@@ -794,6 +794,23 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                                 .HasForeignKey("stage_id");
                         });
 
+                    b.OwnsMany("MyClub.PlayUp.Domain.Stages.CompositionEntry", "AffectationAuthoring", b1 =>
+                        {
+                            b1.Property<Guid>("stage_id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("EntryId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("entry_id");
+
+                            b1.HasKey("stage_id", "EntryId");
+
+                            b1.ToTable("stage_affectation_entries", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("stage_id");
+                        });
+
                     b.OwnsMany("MyClub.PlayUp.Domain.Stages.CompositionEntry", "CompositionEntries", b1 =>
                         {
                             b1.Property<Guid>("stage_id")
@@ -886,6 +903,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("stage_id");
                         });
+
+                    b.Navigation("AffectationAuthoring");
 
                     b.Navigation("CompositionEntries");
 

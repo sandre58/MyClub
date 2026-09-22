@@ -1291,9 +1291,9 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Replaces the root composition entry set on a stage.
+    /// Replaces Affectation authoring on a stage (syncs runtime CompositionEntries by diff).
     /// </summary>
-    public async Task ReplaceStageCompositionEntriesAsync(
+    public async Task ReplaceStageAffectationAuthoringAsync(
         StageId stageId,
         IReadOnlyList<EntryId> entryIds,
         CancellationToken cancellationToken = default)
@@ -1302,7 +1302,7 @@ public sealed partial class UseCaseExecutor(
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         EnsureCompetitionAllowsLifecycleMutation(competition);
-        ReplaceStageCompositionEntries.Execute(stage, competition, entryIds, clock);
+        ReplaceStageAffectationAuthoring.Execute(stage, competition, entryIds, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
