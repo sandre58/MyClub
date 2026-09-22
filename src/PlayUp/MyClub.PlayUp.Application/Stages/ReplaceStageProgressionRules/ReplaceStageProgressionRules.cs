@@ -75,9 +75,10 @@ public static class ReplaceStageProgressionRules
                     ApplicationErrorCodes.InvalidStructureIntent);
             }
 
-            var destination = string.IsNullOrWhiteSpace(spec.DestinationSlotKey)
-                ? ProgressionDestination.ForPopulation(spec.DestinationStageId)
-                : ProgressionDestination.ForSlot(spec.DestinationStageId, spec.DestinationSlotKey);
+            var destination = ResolvePathDestination(
+                spec.DestinationStageId,
+                spec.DestinationSlotKey,
+                spec.DestinationGroupId);
 
             domainPaths.Add(
                 new ProgressionPath(
@@ -87,6 +88,30 @@ public static class ReplaceStageProgressionRules
         }
 
         stage.ReplaceProgressionRules(new ProgressionRules(domainPaths), clock);
+    }
+
+    private static ProgressionDestination ResolvePathDestination(
+        StageId stageId,
+        string? slotKey,
+        GroupId? destinationGroupId)
+    {
+        var hasSlot = !string.IsNullOrWhiteSpace(slotKey);
+        var hasGroup = destinationGroupId is not null;
+        if (hasSlot && hasGroup)
+        {
+            throw new ApplicationFailureException(
+                "Progression path cannot target both a slot and a group.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        if (hasGroup)
+        {
+            return ProgressionDestination.ForGroup(stageId, destinationGroupId!.Value);
+        }
+
+        return hasSlot
+            ? ProgressionDestination.ForSlot(stageId, slotKey!)
+            : ProgressionDestination.ForPopulation(stageId);
     }
 
     private static void EnsureMutable(Stage stage)
@@ -125,13 +150,18 @@ public static class ReplaceStageProgressionRules
                 ? null
                 : [spec.DestinationSlotKey];
 
+        var groupIds = spec.DestinationGroupIds is { Count: > 0 }
+            ? spec.DestinationGroupIds
+            : null;
+
         return new ProgressionIntent(
             intentId,
             spec.Order,
             spec.RoundId,
             spec.Outcome,
             spec.DestinationStageId,
-            slotKeys);
+            slotKeys,
+            groupIds);
     }
 }
 
@@ -142,7 +172,8 @@ public sealed record ProgressionPathSpec(
     FixtureId SourceFixtureId,
     ProgressionOutcome Outcome,
     StageId DestinationStageId,
-    string? DestinationSlotKey);
+    string? DestinationSlotKey = null,
+    GroupId? DestinationGroupId = null);
 
 /// <summary>
 /// Application DTO for one progression intent (Round × Outcome → Destination).
@@ -154,4 +185,5 @@ public sealed record ProgressionIntentSpec(
     ProgressionOutcome Outcome,
     StageId DestinationStageId,
     IReadOnlyList<string>? DestinationSlotKeys = null,
-    string? DestinationSlotKey = null);
+    string? DestinationSlotKey = null,
+    IReadOnlyList<GroupId>? DestinationGroupIds = null);

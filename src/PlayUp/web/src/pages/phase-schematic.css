@@ -130,6 +130,16 @@
   line-height: 1;
 }
 
+.regulation-schematic__card-feed {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .regulation-schematic__card-slots {
   display: flex;
   flex-direction: column;

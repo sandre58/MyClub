@@ -29,7 +29,8 @@ public sealed record ProgressionIntentRequest(
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
     IReadOnlyList<string>? DestinationSlotKeys = null,
-    string? DestinationSlotKey = null);
+    string? DestinationSlotKey = null,
+    IReadOnlyList<Guid>? DestinationGroupIds = null);
 
 /// <summary>
 /// One HTTP progression path.
@@ -37,11 +38,11 @@ public sealed record ProgressionIntentRequest(
 /// <param name="SourceFixtureId">Fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">
-/// Destination slot key for placement; omit or null for population target (O2-a).
-/// </param>
+/// <param name="DestinationSlotKey">Cup Place slot key; omit or null when not slot-targeting.</param>
+/// <param name="DestinationGroupId">Groups Place group id; omit or null when not group-targeting.</param>
 public sealed record ProgressionPathRequest(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
-    string? DestinationSlotKey = null);
+    string? DestinationSlotKey = null,
+    Guid? DestinationGroupId = null);

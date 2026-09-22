@@ -11,12 +11,13 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// <summary>
 /// Persisted authoring unit: one selection intention that expands to N <see cref="QualificationPath"/>.
 /// Paths are derived (Expand) — Intent is the authoring source of truth.
-/// Destination is peer Population or Place (Auto) on the destination stage form.
+/// Destination is Population, Cup Place (slots), or Groups Place (group ids) on the peer stage.
 /// </summary>
 /// <remarks>
-/// Place is a total function Expand → Place: <see cref="DestinationSlotKeys"/> count must equal
-/// Expand occurrence count, with index alignment. Empty/null keys = Population (same destination
-/// applied to every path). Partial Place mapping is invalid.
+/// Placement maps are total functions Expand → destination grain: <see cref="DestinationSlotKeys"/>
+/// or <see cref="DestinationGroupIds"/> count must equal Expand occurrence count, index-aligned.
+/// Both empty = Population. Mutually exclusive non-empty maps. After Expand, Apply / WhoFeeds
+/// consume <c>path.Destination</c> only — never re-read these maps.
 /// </remarks>
 public sealed record QualificationIntent
 {
@@ -33,7 +34,8 @@ public sealed record QualificationIntent
         GroupId? groupId = null,
         int? acrossGroupsPosition = null,
         QualificationCondition? condition = null,
-        IReadOnlyList<string>? destinationSlotKeys = null)
+        IReadOnlyList<string>? destinationSlotKeys = null,
+        IReadOnlyList<GroupId>? destinationGroupIds = null)
     {
         if (!Enum.IsDefined(sourceKind))
         {
@@ -93,6 +95,15 @@ public sealed record QualificationIntent
                 break;
         }
 
+        var slotKeys = destinationSlotKeys is { Count: > 0 } ? destinationSlotKeys : null;
+        var groupIds = destinationGroupIds is { Count: > 0 } ? destinationGroupIds : null;
+        if (slotKeys is not null && groupIds is not null)
+        {
+            throw new DomainException(
+                "Qualification intent cannot specify both destination slot keys and destination group identities.",
+                RulesErrorCodes.QualificationRulesInvalid);
+        }
+
         Id = id;
         Order = order;
         SourceKind = sourceKind;
@@ -102,7 +113,8 @@ public sealed record QualificationIntent
         GroupId = groupId;
         AcrossGroupsPosition = acrossGroupsPosition;
         Condition = condition;
-        DestinationSlotKeys = NormalizeDestinationSlotKeys(destinationStageId, destinationSlotKeys);
+        DestinationSlotKeys = NormalizeDestinationSlotKeys(destinationStageId, slotKeys);
+        DestinationGroupIds = groupIds is null ? [] : [.. groupIds];
     }
 
     /// <summary>Gets the stable authoring identity (Guid v7).</summary>
@@ -124,9 +136,15 @@ public sealed record QualificationIntent
     public StageId DestinationStageId { get; }
 
     /// <summary>
-    /// Gets Place destination slot keys (Expand index ↔ key index). Empty = Population.
+    /// Gets Cup Place destination slot keys (Expand index ↔ key index). Empty when not slot-targeting.
     /// </summary>
     public IReadOnlyList<string> DestinationSlotKeys { get; }
+
+    /// <summary>
+    /// Gets Groups Place destination group ids (Expand index ↔ group index). Empty when not group-targeting.
+    /// Duplicates allowed (several Expand rows may feed the same poule).
+    /// </summary>
+    public IReadOnlyList<GroupId> DestinationGroupIds { get; }
 
     /// <summary>Gets the group when <see cref="SourceKind"/> is <see cref="QualificationIntentSourceKind.SingleGroup"/>.</summary>
     public GroupId? GroupId { get; }
@@ -138,7 +156,14 @@ public sealed record QualificationIntent
     public QualificationCondition? Condition { get; }
 
     /// <summary>Gets a value indicating whether this intent targets population only.</summary>
-    public bool TargetsPopulation => DestinationSlotKeys.Count == 0;
+    public bool TargetsPopulation =>
+        DestinationSlotKeys.Count == 0 && DestinationGroupIds.Count == 0;
+
+    /// <summary>Gets a value indicating whether this intent targets Cup slots.</summary>
+    public bool TargetsSlot => DestinationSlotKeys.Count > 0;
+
+    /// <summary>Gets a value indicating whether this intent targets Groups poules.</summary>
+    public bool TargetsGroup => DestinationGroupIds.Count > 0;
 
     /// <summary>Returns a deep copy.</summary>
     public QualificationIntent Copy() =>
@@ -152,7 +177,8 @@ public sealed record QualificationIntent
             GroupId,
             AcrossGroupsPosition,
             Condition is null ? null : QualificationCondition.PointsAtLeast(Condition.MinimumPoints),
-            DestinationSlotKeys);
+            DestinationSlotKeys.Count == 0 ? null : DestinationSlotKeys,
+            DestinationGroupIds.Count == 0 ? null : DestinationGroupIds);
 
     private static string[] NormalizeDestinationSlotKeys(
         StageId destinationStageId,

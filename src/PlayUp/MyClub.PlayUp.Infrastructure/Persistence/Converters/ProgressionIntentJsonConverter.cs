@@ -32,11 +32,13 @@ internal sealed class ProgressionIntentJsonConverter : JsonConverter<Progression
 
         StageId destinationStageId;
         IReadOnlyList<string>? slotKeys;
+        IReadOnlyList<GroupId>? groupIds = null;
 
         if (root.TryGetProperty("DestinationStageId", out var stageElement))
         {
             destinationStageId = JsonSerializer.Deserialize<StageId>(stageElement.GetRawText(), options);
             slotKeys = QualificationIntentJsonConverter.ReadDestinationSlotKeys(root);
+            groupIds = QualificationIntentJsonConverter.ReadDestinationGroupIds(root, options);
         }
         else if (root.TryGetProperty("Destination", out var destinationElement)
                  && destinationElement.ValueKind == JsonValueKind.Object)
@@ -48,7 +50,7 @@ internal sealed class ProgressionIntentJsonConverter : JsonConverter<Progression
             if (!destinationElement.TryGetProperty("SlotKey", out var slotElement)
                 || slotElement.ValueKind != JsonValueKind.String)
             {
-                return new ProgressionIntent(id, order, roundId, outcome, destinationStageId, slotKeys);
+                return new ProgressionIntent(id, order, roundId, outcome, destinationStageId, slotKeys, groupIds);
             }
 
             var key = slotElement.GetString();
@@ -62,7 +64,7 @@ internal sealed class ProgressionIntentJsonConverter : JsonConverter<Progression
             throw new JsonException("ProgressionIntent JSON requires DestinationStageId or Destination.");
         }
 
-        return new ProgressionIntent(id, order, roundId, outcome, destinationStageId, slotKeys);
+        return new ProgressionIntent(id, order, roundId, outcome, destinationStageId, slotKeys, groupIds);
     }
 
     /// <inheritdoc />
@@ -80,6 +82,8 @@ internal sealed class ProgressionIntentJsonConverter : JsonConverter<Progression
         JsonSerializer.Serialize(writer, value.DestinationStageId, options);
         writer.WritePropertyName("DestinationSlotKeys");
         JsonSerializer.Serialize(writer, value.DestinationSlotKeys, options);
+        writer.WritePropertyName("DestinationGroupIds");
+        JsonSerializer.Serialize(writer, value.DestinationGroupIds, options);
         writer.WriteEndObject();
     }
 }

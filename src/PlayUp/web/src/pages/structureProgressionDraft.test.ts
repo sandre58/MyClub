@@ -202,6 +202,65 @@ describe('structureProgressionDraft', () => {
     expect(resizeDestinationSlotKeys(['a', 'b', 'c'], 1)).toEqual(['a']);
   });
 
+  it('maps Place API intents with destinationGroupIds (Groups A1)', () => {
+    const draft = intentFromApi(
+      {
+        intentId: 'i1',
+        order: 1,
+        roundId: 'r1',
+        outcome: 'Loser',
+        destinationStageId: 'other',
+        destinationGroupIds: ['grp-a', 'grp-b'],
+        expandedPathCount: 2,
+      },
+      'source',
+    );
+    expect(draft.targetKind).toBe('place');
+    expect(draft.destinationGroupIds).toEqual(['grp-a', 'grp-b']);
+    expect(draft.destinationSlotKeys).toEqual([]);
+    expect(toApiIntent(draft, 1).destinationGroupIds).toEqual([
+      'grp-a',
+      'grp-b',
+    ]);
+    expect(toApiIntent(draft, 1).destinationSlotKeys).toBeNull();
+  });
+
+  it('allows duplicate group ids within an intent (no DuplicateSlot)', () => {
+    const draft = emptyProgIntent('peer', 'place');
+    draft.roundId = 'r1';
+    draft.expandedPathCount = 2;
+    draft.destinationGroupIds = ['grp-a', 'grp-a'];
+    draft.destinationSlotKeys = [];
+    expect(incompleteIntentReason(draft, [draft], true, 'r1')).toBeNull();
+  });
+
+  it('allows two intents to map to the same group', () => {
+    const a = emptyProgIntent('source', 'place');
+    a.roundId = 'r1';
+    a.outcome = 'Loser';
+    a.expandedPathCount = 1;
+    a.destinationGroupIds = ['grp-a'];
+    a.destinationSlotKeys = [];
+    const b = emptyProgIntent('source', 'place');
+    b.roundId = 'r2';
+    b.outcome = 'Loser';
+    b.expandedPathCount = 1;
+    b.destinationGroupIds = ['grp-a'];
+    b.destinationSlotKeys = [];
+    expect(incompleteIntentReason(a, [a, b], true, 'final')).toBeNull();
+  });
+
+  it('resizes destinationGroupIds when Expand count changes', () => {
+    const draft = emptyProgIntent('peer', 'place');
+    draft.roundId = 'r1';
+    draft.expandedPathCount = 3;
+    draft.destinationGroupIds = ['grp-a', 'grp-b'];
+    draft.destinationSlotKeys = [];
+    const grown = syncPlaceSlotKeys(draft);
+    expect(grown.destinationGroupIds).toEqual(['grp-a', 'grp-b', '']);
+    expect(grown.destinationSlotKeys).toEqual([]);
+  });
+
   it('unlocks Place when Cup schematic exposes targetable addresses', () => {
     const schematic: StageSchematic = {
       stageId: 's1',
@@ -217,6 +276,28 @@ describe('structureProgressionDraft', () => {
             roundName: 'Demi-finale',
             pairOrdinal: 1,
             side: 'A',
+          },
+        },
+      ],
+      connections: [],
+    };
+    expect(areProgressionPlacesLabeled(schematic)).toBe(true);
+  });
+
+  it('unlocks Place when Groups schematic exposes stable group ids', () => {
+    const schematic: StageSchematic = {
+      stageId: 's1',
+      competitionId: 'c1',
+      name: 'Poules',
+      status: 'Draft',
+      formatKind: 'Groups',
+      cases: [
+        {
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'g1',
+            groupName: 'A',
+            index: 1,
           },
         },
       ],

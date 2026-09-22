@@ -173,6 +173,41 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
+    public void Groups_inbound_ForGroup_qual_exposes_group_level_feed_not_place_k()
+    {
+        var competition = Competition.Create(new CompetitionName("A1"), SampleRegulations.Standard(), _clock);
+        var source = Stage.Create(competition.Id, new StageName("Poules 1"), SampleRegulations.Standard(), _clock);
+        var g1 = source.AddGroup("A", _clock);
+        var g2 = source.AddGroup("B", _clock);
+        source.AddMatchday(1, _clock);
+
+        var dest = Stage.Create(competition.Id, new StageName("Poules 2"), SampleRegulations.Standard(), _clock);
+        dest.SetPlacesPerGroup(4);
+        var destA = dest.AddGroup("Poule A", _clock);
+        dest.AddGroup("Poule B", _clock);
+
+        var intent = new QualificationIntent(
+            IntentId.New(),
+            order: 1,
+            QualificationIntentSourceKind.EachGroup,
+            positionFrom: 1,
+            positionTo: 1,
+            dest.Id,
+            destinationGroupIds: [destA.Id, destA.Id]);
+        source.ReplaceQualificationRules(
+            QualificationRules.FromIntents([intent], [g1.Id, g2.Id]),
+            _clock);
+
+        var schematic = StageSchematicAssembler.Assemble(dest, competition, [source, dest]);
+
+        schematic.Cases.Should().OnlyContain(c => c.FeedOrigin == null);
+        schematic.GroupFeeds.Should().ContainSingle();
+        schematic.GroupFeeds![0].GroupId.Should().Be(destA.Id.Value);
+        schematic.GroupFeeds[0].FeedOrigin.Kind.Should().Be(FeedKind.Qualification);
+        schematic.GroupFeeds[0].FeedOrigin.DestinationGroupId.Should().Be(destA.Id.Value);
+    }
+
+    [Fact]
     public void Championship_places_composition_entries_into_roster_places()
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);

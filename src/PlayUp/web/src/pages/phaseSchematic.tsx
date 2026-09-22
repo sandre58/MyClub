@@ -179,9 +179,14 @@ function GroupsSchematic({
     byGroup.set(id, list);
   }
 
+  const feedByGroup = new Map(
+    (schematic.groupFeeds ?? []).map((f) => [f.groupId, f.feedOrigin]),
+  );
+
   const groups = [...byGroup.entries()].map(([id, cases]) => ({
     id,
     name: cases[0]?.formPosition.groupName ?? id,
+    feedOrigin: feedByGroup.get(id) ?? null,
     cases: [...cases].sort(
       (a, b) => (a.formPosition.index ?? 0) - (b.formPosition.index ?? 0),
     ),
@@ -201,6 +206,11 @@ function GroupsSchematic({
             <span className="regulation-schematic__card-label">
               {group.name}
             </span>
+            {group.feedOrigin ? (
+              <span className="regulation-schematic__card-feed">
+                {feedOriginLabel(group.feedOrigin, t)}
+              </span>
+            ) : null}
             <div className="regulation-schematic__card-slots">
               {group.cases.map((c, j) => (
                 <SlotBox key={`${group.id}-${j}`} c={c} t={t} />

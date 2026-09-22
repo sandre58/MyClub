@@ -577,7 +577,8 @@
   "place": {
     "side": "côté {{side}}",
     "cup": "{{round}} · {{side}}",
-    "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}"
+    "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
+    "group": "Groupe {{name}}"
   },
   "population": {
     "sectionSources": "Depuis les phases",

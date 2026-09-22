@@ -315,7 +315,8 @@ public sealed record StructureQualificationIntentDto(
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
     int DestinationCount = 0,
-    IReadOnlyList<string>? DestinationSlotKeys = null);
+    IReadOnlyList<string>? DestinationSlotKeys = null,
+    IReadOnlyList<Guid>? DestinationGroupIds = null);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>
@@ -328,7 +329,8 @@ public sealed record StructureQualificationIntentDto(
 /// <param name="SelectionEndValue">Range upper bound when mode is Range.</param>
 /// <param name="MinimumPoints">Optional Points ≥ gate.</param>
 /// <param name="GroupName">Resolved group display name when <paramref name="GroupId"/> is set.</param>
-/// <param name="DestinationSlotKey">Destination slot key; null when targeting population.</param>
+/// <param name="DestinationSlotKey">Cup Place slot key; null when not slot-targeting.</param>
+/// <param name="DestinationGroupId">Groups Place group id; null when not group-targeting.</param>
 public sealed record StructureQualificationPathDto(
     int Order,
     SelectionMode SelectionMode,
@@ -340,7 +342,8 @@ public sealed record StructureQualificationPathDto(
     int? SelectionEndValue = null,
     int? MinimumPoints = null,
     string? GroupName = null,
-    string? DestinationSlotKey = null);
+    string? DestinationSlotKey = null,
+    Guid? DestinationGroupId = null);
 
 /// <summary>One progression authoring intent for Structure dialog (V3).</summary>
 public sealed record StructureProgressionIntentDto(
@@ -351,20 +354,23 @@ public sealed record StructureProgressionIntentDto(
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
     IReadOnlyList<string>? DestinationSlotKeys,
-    int ExpandedPathCount);
+    int ExpandedPathCount,
+    IReadOnlyList<Guid>? DestinationGroupIds = null);
 
 /// <summary>One progression path for Structure authoring / impact preview.</summary>
 /// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">Destination slot key; null when targeting population (O2-a).</param>
+/// <param name="DestinationSlotKey">Cup Place slot key; null when not slot-targeting.</param>
 /// <param name="SourceLabel">Resolved fixture label (round · #order · slots) when the fixture exists.</param>
+/// <param name="DestinationGroupId">Groups Place group id; null when not group-targeting.</param>
 public sealed record StructureProgressionPathDto(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
     string? DestinationSlotKey,
-    string? SourceLabel = null);
+    string? SourceLabel = null,
+    Guid? DestinationGroupId = null);
 
 /// <summary>Round identity + display name inside a confrontation segment.</summary>
 /// <param name="RoundId">Round identity.</param>

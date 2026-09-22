@@ -85,9 +85,11 @@ public static class ReplaceStageQualificationRules
             GroupId? groupId = spec.GroupId is { } gid ? new GroupId(gid) : null;
             var source = new QualificationSource(spec.RankingScope, groupId, spec.AcrossGroupsPosition);
             var selection = new QualificationSelection(spec.SelectionMode, spec.SelectionValue, spec.SelectionEndValue);
-            var destination = string.IsNullOrWhiteSpace(spec.DestinationSlotKey)
-                ? QualificationDestination.ForPopulation(new StageId(spec.DestinationStageId))
-                : QualificationDestination.ForSlot(new StageId(spec.DestinationStageId), spec.DestinationSlotKey);
+            var destStageId = new StageId(spec.DestinationStageId);
+            var destination = ResolvePathDestination(
+                destStageId,
+                spec.DestinationSlotKey,
+                spec.DestinationGroupId);
             var condition = spec.MinimumPoints is { } points
                 ? QualificationCondition.PointsAtLeast(points)
                 : null;
@@ -97,6 +99,30 @@ public static class ReplaceStageQualificationRules
         }
 
         stage.ReplaceQualificationRules(new QualificationRules(domainPaths), clock);
+    }
+
+    private static QualificationDestination ResolvePathDestination(
+        StageId stageId,
+        string? slotKey,
+        Guid? destinationGroupId)
+    {
+        var hasSlot = !string.IsNullOrWhiteSpace(slotKey);
+        var hasGroup = destinationGroupId is not null;
+        if (hasSlot && hasGroup)
+        {
+            throw new ApplicationFailureException(
+                "Qualification path cannot target both a slot and a group.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        if (hasGroup)
+        {
+            return QualificationDestination.ForGroup(stageId, new GroupId(destinationGroupId!.Value));
+        }
+
+        return hasSlot
+            ? QualificationDestination.ForSlot(stageId, slotKey!)
+            : QualificationDestination.ForPopulation(stageId);
     }
 
     private static void EnsureMutable(Stage stage)
@@ -124,7 +150,10 @@ public static class ReplaceStageQualificationRules
                 spec.GroupId is { } g ? new GroupId(g) : null,
                 spec.AcrossGroupsPosition,
                 spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null,
-                spec.DestinationSlotKeys is { Count: > 0 } ? spec.DestinationSlotKeys : null);
+                spec.DestinationSlotKeys is { Count: > 0 } ? spec.DestinationSlotKeys : null,
+                spec.DestinationGroupIds is { Count: > 0 }
+                    ? spec.DestinationGroupIds.Select(id => new GroupId(id)).ToArray()
+                    : null);
 }
 
 /// <summary>
@@ -140,7 +169,8 @@ public sealed record QualificationPathSpec(
     int? AcrossGroupsPosition = null,
     int? SelectionEndValue = null,
     int? MinimumPoints = null,
-    string? DestinationSlotKey = null);
+    string? DestinationSlotKey = null,
+    Guid? DestinationGroupId = null);
 
 /// <summary>
 /// Application DTO for one qualification authoring intent.
@@ -155,4 +185,5 @@ public sealed record QualificationIntentSpec(
     Guid? GroupId = null,
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
-    IReadOnlyList<string>? DestinationSlotKeys = null);
+    IReadOnlyList<string>? DestinationSlotKeys = null,
+    IReadOnlyList<Guid>? DestinationGroupIds = null);

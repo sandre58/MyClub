@@ -6,6 +6,8 @@ import {
   hasCupPlaceAddressFacts,
   isCupPlaceTargetable,
   listLabeledCupPlaces,
+  listLabeledGroupPlaces,
+  listLabeledPlaces,
   placeChromeLabel,
   placeChromeForDestinationSlotKey,
   placeDisplayLabel,
@@ -18,6 +20,7 @@ const t = (key: string, opts?: Record<string, unknown>) => {
   if (key === 'place.cupWithOrdinal') {
     return `${opts?.round} ${opts?.ordinal} · ${opts?.side}`;
   }
+  if (key === 'place.group') return `Groupe ${opts?.name}`;
   return key;
 };
 
@@ -105,6 +108,7 @@ describe('structurePlaceLabel', () => {
         apiIdentity: 'SF-1-A',
         label: 'SF-1-A',
         description: 'Demi-finale 1 · côté A',
+        grain: 'slot',
       },
     ]);
     expect(placeChromeForDestinationSlotKey(schematic, 'SF-1-A')).toBe(
@@ -116,7 +120,76 @@ describe('structurePlaceLabel', () => {
     expect(placeLabelForDestinationSlotKey(schematic, 'missing', t)).toBeNull();
   });
 
-  it('filters Place-eligible peers by addressable Cup capacity, not formatKind alone', () => {
+  it('lists Groups A1 places by stable groupId (label = localized Groupe A)', () => {
+    const schematic: StageSchematic = {
+      stageId: 'g1',
+      competitionId: 'c1',
+      name: 'Poules',
+      status: 'Draft',
+      formatKind: 'Groups',
+      cases: [
+        {
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'grp-a',
+            groupName: 'A',
+            index: 1,
+          },
+        },
+        {
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'grp-a',
+            groupName: 'A',
+            index: 2,
+          },
+        },
+        {
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'grp-b',
+            groupName: 'B',
+            index: 1,
+          },
+        },
+      ],
+      connections: [],
+    };
+    expect(areProgressionPlacesLabeled(schematic)).toBe(true);
+    expect(listLabeledGroupPlaces(schematic, t)).toEqual([
+      {
+        apiIdentity: 'grp-a',
+        label: 'Groupe A',
+        description: null,
+        grain: 'group',
+      },
+      {
+        apiIdentity: 'grp-b',
+        label: 'Groupe B',
+        description: null,
+        grain: 'group',
+      },
+    ]);
+    expect(listLabeledPlaces(schematic, t)).toEqual(
+      listLabeledGroupPlaces(schematic, t),
+    );
+  });
+
+  it('Groups without stable groupId are Place-ineligible', () => {
+    const bare: StageSchematic = {
+      stageId: 'g-bare',
+      competitionId: 'c1',
+      name: 'Poules bare',
+      status: 'Draft',
+      formatKind: 'Groups',
+      cases: [{ formPosition: { kind: 'GroupPlace', index: 1 } }],
+      connections: [],
+    };
+    expect(areProgressionPlacesLabeled(bare)).toBe(false);
+    expect(listLabeledPlaces(bare, t)).toEqual([]);
+  });
+
+  it('filters Place-eligible peers by Cup slots or Groups capacity; Champ/Swiss stay out', () => {
     const labeledCup: StageSchematic = {
       stageId: 'cup',
       competitionId: 'c1',
@@ -144,6 +217,24 @@ describe('structurePlaceLabel', () => {
       ],
       connections: [],
     };
+    const groups: StageSchematic = {
+      stageId: 'groups',
+      competitionId: 'c1',
+      name: 'Groups',
+      status: 'Draft',
+      formatKind: 'Groups',
+      cases: [
+        {
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'g1',
+            groupName: 'A',
+            index: 1,
+          },
+        },
+      ],
+      connections: [],
+    };
     const championship: StageSchematic = {
       stageId: 'champ',
       competitionId: 'c1',
@@ -153,18 +244,34 @@ describe('structurePlaceLabel', () => {
       cases: [{ formPosition: { kind: 'RosterPlace', index: 1 } }],
       connections: [],
     };
+    const swiss: StageSchematic = {
+      stageId: 'swiss',
+      competitionId: 'c1',
+      name: 'Swiss',
+      status: 'Draft',
+      formatKind: 'Swiss',
+      cases: [{ formPosition: { kind: 'RosterPlace', index: 1 } }],
+      connections: [],
+    };
     const peers = [
       { stageId: 'cup' },
       { stageId: 'cup-bare' },
+      { stageId: 'groups' },
       { stageId: 'champ' },
+      { stageId: 'swiss' },
       { stageId: 'missing' },
     ];
     const byId = new Map<string, StageSchematic | undefined>([
       ['cup', labeledCup],
       ['cup-bare', bareCup],
+      ['groups', groups],
       ['champ', championship],
+      ['swiss', swiss],
       ['missing', undefined],
     ]);
-    expect(filterPlaceEligiblePeers(peers, byId)).toEqual([{ stageId: 'cup' }]);
+    expect(filterPlaceEligiblePeers(peers, byId)).toEqual([
+      { stageId: 'cup' },
+      { stageId: 'groups' },
+    ]);
   });
 });

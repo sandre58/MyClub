@@ -54,6 +54,12 @@ public static class SlotFeedSnapshotAssembler
                         continue;
                     }
 
+                    // Groups Placement (A1): same feed concept, keyed by GroupId — not a Cup slot.
+                    if (path.Destination.TargetsGroup)
+                    {
+                        continue;
+                    }
+
                     EnsureSlotExists(target, path.Destination.SlotKey!, stage.Id, "Qualification");
                     qualifications.Add(
                         new QualificationFeedSource(
@@ -75,8 +81,8 @@ public static class SlotFeedSnapshotAssembler
                     continue;
                 }
 
-                // Population destinations do not feed slots — WhoFeeds stays slot-centric.
-                if (path.Destination.TargetsPopulation)
+                // Population / Groups destinations do not feed Cup slots — WhoFeeds slot graph stays slot-centric.
+                if (path.Destination.TargetsPopulation || path.Destination.TargetsGroup)
                 {
                     continue;
                 }

@@ -117,7 +117,23 @@ public static class ApplyQualification
                 continue;
             }
 
-            if (path.Destination.TargetsPopulation) continue;
+            if (path.Destination.TargetsPopulation)
+            {
+                continue;
+            }
+
+            if (path.Destination.TargetsGroup)
+            {
+                if (destination.FindGroup(path.Destination.GroupId!.Value) is null)
+                {
+                    throw new ApplicationFailureException(
+                        $"Qualification destination group '{path.Destination.GroupId}' was not found on stage '{destination.Id}'.",
+                        ApplicationErrorCodes.DanglingFeedTarget);
+                }
+
+                continue;
+            }
+
             if (destination.FindSlot(path.Destination.SlotKey!) is null)
             {
                 throw new ApplicationFailureException(
@@ -142,7 +158,14 @@ public static class ApplyQualification
 
             var destination = ResolveCanonicalStage(path.Destination.StageId, competitionStages);
             destination.AddResolvedPopulationEntry(instruction.EntryId, clock);
-            if (!path.Destination.TargetsPopulation)
+            if (path.Destination.TargetsGroup)
+            {
+                destination.ApplyResolvedGroupEntry(
+                    path.Destination.GroupId!.Value,
+                    instruction.EntryId,
+                    clock);
+            }
+            else if (path.Destination.TargetsSlot)
             {
                 destination.ApplyResolvedEntry(path.Destination.SlotKey!, instruction.EntryId, clock);
             }

@@ -1,6 +1,7 @@
 // -----------------------------------------------------------------------
 // Progression dialog — Intent Round × Outcome → Destination (Prog V3).
-// Place D1: Expand[i] ↔ destinationSlotKeys[i] (N fixtures on the round).
+// UX Place = Placement destination picker (Slot | Group).
+// Place D1: Expand[i] ↔ destinationSlotKeys[i] XOR destinationGroupIds[i].
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -58,11 +59,13 @@ import {
   emptyProgIntent,
   expandContribution,
   expandCount,
+  fillEmptyPlaceKeysAllowingReuse,
   fillEmptyPlaceSlotKeys,
   incompleteIntentReason,
   intentFromApi,
   isIntentComplete,
   pathToSingletonIntent,
+  placeMapKeys,
   resizeDestinationSlotKeys,
   serializeIntents,
   summarizeIntentWho,
@@ -74,7 +77,7 @@ import {
 import {
   areProgressionPlacesLabeled,
   filterPlaceEligiblePeers,
-  listLabeledCupPlaces,
+  listLabeledPlaces,
 } from './structurePlaceLabel';
 import { expectedPopulationWithProgDraft } from './structurePopulationVolume';
 
@@ -331,11 +334,11 @@ export function StructureProgressionDialog({
     for (const path of existingPaths) {
       const resolved = resolveRoundIdForFixture(rounds, path.sourceFixtureId);
       if (!resolved) continue;
-      const targetKind: ProgTargetKind = isPopulationDestination(
-        path.destinationSlotKey,
-      )
-        ? 'population'
-        : 'place';
+      const targetKind: ProgTargetKind =
+        isPopulationDestination(path.destinationSlotKey) &&
+        !path.destinationGroupId?.trim()
+          ? 'population'
+          : 'place';
       const key = `${resolved.roundId}|${path.outcome}|${path.destinationStageId}|${targetKind}`;
       const existing = groups.get(key);
       if (existing) {
@@ -370,19 +373,25 @@ export function StructureProgressionDialog({
             ...seed,
             targetKind: 'population',
             destinationSlotKeys: [],
+            destinationGroupIds: [],
             expandedPathCount: fixtureCount,
           }),
         );
         continue;
       }
 
+      const isGroupPlace = group.paths.some((p) =>
+        Boolean(p.destinationGroupId?.trim()),
+      );
       const keys = resizeDestinationSlotKeys([], fixtureCount);
       for (const path of group.paths) {
         const idx =
           round?.fixtures.findIndex((f) => f.id === path.sourceFixtureId) ?? -1;
-        const slot = path.destinationSlotKey?.trim() ?? '';
-        if (idx >= 0 && slot) {
-          keys[idx] = slot;
+        const identity = isGroupPlace
+          ? (path.destinationGroupId?.trim() ?? '')
+          : (path.destinationSlotKey?.trim() ?? '');
+        if (idx >= 0 && identity) {
+          keys[idx] = identity;
         }
       }
       next.push(
@@ -394,7 +403,8 @@ export function StructureProgressionDialog({
           outcome: group.outcome,
           targetKind: 'place',
           destinationStageId: group.destinationStageId,
-          destinationSlotKeys: keys,
+          destinationSlotKeys: isGroupPlace ? [] : keys,
+          destinationGroupIds: isGroupPlace ? keys : [],
           expandedPathCount: fixtureCount,
         }),
       );
@@ -713,9 +723,9 @@ export function StructureProgressionDialog({
                 const destName =
                   stageNameById.get(intent.destinationStageId) ??
                   intent.destinationStageId;
-                const filledSlots = intent.destinationSlotKeys.filter((k) =>
-                  k.trim(),
-                );
+                const filledSlots = (
+                  placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
+                ).filter((k) => k.trim());
                 const where =
                   intent.targetKind === 'population' &&
                   intent.destinationStageId.trim()
@@ -913,23 +923,41 @@ function ProgIntentEditor({
   });
   const placesLabeled = areProgressionPlacesLabeled(destSchematicQuery.data);
   const labeledPlaces = useMemo(
-    () => listLabeledCupPlaces(destSchematicQuery.data, t),
+    () => listLabeledPlaces(destSchematicQuery.data, t),
     [destSchematicQuery.data, t],
   );
+  /** UX Place grain from dest schematic (Groups A1 vs Cup slots). */
+  const placeGrain =
+    labeledPlaces[0]?.grain ??
+    (destSchematicQuery.data?.formatKind === 'Groups' ? 'group' : 'slot');
 
   const selectedRound = useMemo(
     () => rounds.find((r) => r.id === draft.roundId) ?? null,
     [draft.roundId, rounds],
   );
   const roundFixtures = selectedRound?.fixtures ?? [];
-  const placeSlotKeys = useMemo(
-    () =>
-      resizeDestinationSlotKeys(
-        draft.destinationSlotKeys,
-        roundFixtures.length,
-      ),
-    [draft.destinationSlotKeys, roundFixtures.length],
-  );
+  const placeSlotKeys = useMemo(() => {
+    const source =
+      placeGrain === 'group'
+        ? draft.destinationGroupIds
+        : draft.destinationSlotKeys;
+    return resizeDestinationSlotKeys(source, roundFixtures.length);
+  }, [
+    draft.destinationGroupIds,
+    draft.destinationSlotKeys,
+    placeGrain,
+    roundFixtures.length,
+  ]);
+
+  function applyPlaceKeys(next: string[]) {
+    const aligned = resizeDestinationSlotKeys(next, roundFixtures.length);
+    onChange({
+      ...draft,
+      targetKind: 'place',
+      destinationSlotKeys: placeGrain === 'slot' ? aligned : [],
+      destinationGroupIds: placeGrain === 'group' ? aligned : [],
+    });
+  }
 
   const showRoundField = rounds.length > 1;
   const roundSelectDisabled =
@@ -995,6 +1023,7 @@ function ProgIntentEditor({
             ? draft.destinationStageId
             : (peerStages[0]?.stageId ?? ''),
         destinationSlotKeys: [],
+        destinationGroupIds: [],
       });
       return;
     }
@@ -1003,14 +1032,25 @@ function ProgIntentEditor({
       placeEligiblePeers.some(
         (s) => s.stageId === draft.destinationStageId,
       );
+    const nextDest = keepDest
+      ? draft.destinationStageId
+      : (placeEligiblePeers[0]?.stageId ?? '');
+    const nextPeer = placeEligiblePeers.find((p) => p.stageId === nextDest);
+    const grain = nextPeer?.formatKind === 'Groups' ? 'group' : 'slot';
     onChange({
       ...draft,
       targetKind: 'place',
-      destinationStageId: keepDest
-        ? draft.destinationStageId
-        : (placeEligiblePeers[0]?.stageId ?? ''),
+      destinationStageId: nextDest,
       destinationSlotKeys:
-        draft.targetKind === 'place' ? draft.destinationSlotKeys : [],
+        grain === 'slot' && draft.targetKind === 'place'
+          ? draft.destinationSlotKeys
+          : [],
+      destinationGroupIds:
+        grain === 'group' && draft.targetKind === 'place'
+          ? draft.destinationGroupIds
+          : grain === 'group'
+            ? resizeDestinationSlotKeys([], expandCount(draft))
+            : [],
     });
   }
 
@@ -1202,6 +1242,7 @@ function ProgIntentEditor({
                     ...draft,
                     destinationStageId: peer.stageId,
                     destinationSlotKeys: [],
+                    destinationGroupIds: [],
                   });
                 }}
               />
@@ -1229,13 +1270,27 @@ function ProgIntentEditor({
                 selected={draft.destinationStageId === dest.stageId}
                 onChange={(selected) => {
                   if (!selected) return;
+                  const grain =
+                    dest.formatKind === 'Groups' ? 'group' : 'slot';
+                  const keep = draft.destinationStageId === dest.stageId;
                   onChange({
                     ...draft,
                     targetKind: 'place',
                     destinationStageId: dest.stageId,
                     destinationSlotKeys:
-                      draft.destinationStageId === dest.stageId
-                        ? draft.destinationSlotKeys
+                      grain === 'slot'
+                        ? keep
+                          ? draft.destinationSlotKeys
+                          : []
+                        : [],
+                    destinationGroupIds:
+                      grain === 'group'
+                        ? keep
+                          ? draft.destinationGroupIds
+                          : resizeDestinationSlotKeys(
+                              [],
+                              expandCount(draft),
+                            )
                         : [],
                   });
                 }}
@@ -1296,6 +1351,8 @@ function ProgIntentEditor({
                             (k) => !k.trim(),
                           ).length;
                           if (emptyCount === 0) return true;
+                          if (labeledPlaces.length === 0) return true;
+                          if (placeGrain === 'group') return false;
                           const used = new Set(
                             placeSlotKeys
                               .map((k) => k.trim())
@@ -1306,15 +1363,17 @@ function ProgIntentEditor({
                           );
                         })()}
                         onClick={() => {
-                          const next = fillEmptyPlaceSlotKeys(
-                            placeSlotKeys,
-                            labeledPlaces.map((place) => place.apiIdentity),
+                          const ids = labeledPlaces.map(
+                            (place) => place.apiIdentity,
                           );
-                          onChange({
-                            ...draft,
-                            targetKind: 'place',
-                            destinationSlotKeys: next,
-                          });
+                          const next =
+                            placeGrain === 'group'
+                              ? fillEmptyPlaceKeysAllowingReuse(
+                                  placeSlotKeys,
+                                  ids,
+                                )
+                              : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
+                          applyPlaceKeys(next);
                         }}
                       >
                         <LucideIcon icon={ListPlus} size="sm" />
@@ -1349,11 +1408,13 @@ function ProgIntentEditor({
                             options={labeledPlaces.map((place) => ({
                               value: place.apiIdentity,
                               label: place.label,
-                              disabled: placeSlotKeys.some(
-                                (key, j) =>
-                                  j !== index &&
-                                  key.trim() === place.apiIdentity,
-                              ),
+                              disabled:
+                                placeGrain === 'slot' &&
+                                placeSlotKeys.some(
+                                  (key, j) =>
+                                    j !== index &&
+                                    key.trim() === place.apiIdentity,
+                                ),
                             }))}
                             value={selected}
                             invalid={rowInvalid}
@@ -1365,14 +1426,7 @@ function ProgIntentEditor({
                             onChange={(value) => {
                               const next = placeSlotKeys.slice();
                               next[index] = value?.trim() ?? '';
-                              onChange({
-                                ...draft,
-                                targetKind: 'place',
-                                destinationSlotKeys: resizeDestinationSlotKeys(
-                                  next,
-                                  roundFixtures.length,
-                                ),
-                              });
+                              applyPlaceKeys(next);
                             }}
                           />
                           {rowInvalid ? (

@@ -272,4 +272,71 @@ describe('qualification Place destinationSlotKeys', () => {
     a.destinationSlotKeys = ['SF1-A', ''];
     expect(countUnmappedPlaceSlots([a], groups)).toBe(1);
   });
+
+  it('maps Place API intents with destinationGroupIds (Groups A1)', () => {
+    const draft = intentFromApi({
+      intentId: 'i1',
+      order: 1,
+      sourceKind: 'Overall',
+      positionFrom: 1,
+      positionTo: 2,
+      destinationStageId: 'peer',
+      destinationGroupIds: ['grp-a', 'grp-b'],
+    });
+    expect(draft.targetKind).toBe('place');
+    expect(draft.destinationGroupIds).toEqual(['grp-a', 'grp-b']);
+    expect(draft.destinationSlotKeys).toEqual([]);
+    expect(toApiIntent(draft, 1).destinationGroupIds).toEqual([
+      'grp-a',
+      'grp-b',
+    ]);
+    expect(toApiIntent(draft, 1).destinationSlotKeys).toBeNull();
+  });
+
+  it('allows duplicate group ids within an intent (no DuplicateSlot)', () => {
+    const draft = emptyQualIntent('peer', 'place');
+    draft.sourceKind = 'Overall';
+    draft.positionFrom = '1';
+    draft.positionTo = '2';
+    draft.destinationGroupIds = ['grp-a', 'grp-a'];
+    draft.destinationSlotKeys = [];
+    expect(incompleteIntentReason(draft, groups, true)).toBeNull();
+  });
+
+  it('allows two intents to map Expand rows to the same group', () => {
+    const a = emptyQualIntent('peer', 'place');
+    a.sourceKind = 'Overall';
+    a.positionFrom = '1';
+    a.positionTo = '1';
+    a.destinationGroupIds = ['grp-a'];
+    a.destinationSlotKeys = [];
+    const b = emptyQualIntent('peer', 'place');
+    b.sourceKind = 'Overall';
+    b.positionFrom = '2';
+    b.positionTo = '2';
+    b.destinationGroupIds = ['grp-a'];
+    b.destinationSlotKeys = [];
+    expect(incompleteIntentReason(a, groups, true, [a, b])).toBeNull();
+    expect(isIntentComplete(a, groups, true, [a, b])).toBe(true);
+  });
+
+  it('resizes destinationGroupIds when Expand count changes', () => {
+    const draft = emptyQualIntent('peer', 'place');
+    draft.sourceKind = 'Overall';
+    draft.positionFrom = '1';
+    draft.positionTo = '2';
+    draft.destinationGroupIds = ['grp-a', 'grp-b'];
+    draft.destinationSlotKeys = [];
+    draft.positionTo = '3';
+    const grown = syncPlaceSlotKeys(draft, groups);
+    expect(grown.destinationGroupIds).toEqual(['grp-a', 'grp-b', '']);
+    expect(grown.destinationSlotKeys).toEqual([]);
+  });
+
+  it('clears group ids when switching to Population via sync', () => {
+    const draft = emptyQualIntent('peer', 'place');
+    draft.destinationGroupIds = ['grp-a'];
+    draft.targetKind = 'population';
+    expect(syncPlaceSlotKeys(draft, groups).destinationGroupIds).toEqual([]);
+  });
 });

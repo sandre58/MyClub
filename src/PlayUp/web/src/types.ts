@@ -694,12 +694,18 @@ export interface StructureQualificationIntent {
   positionTo: number;
   destinationStageId: string;
   /**
-   * Place slot keys (Expand index ↔ key). Empty/omitted = Population.
+   * Cup Place slot keys (Expand index ↔ key). Empty/omitted when not slot-targeting.
+   * Mutually exclusive with destinationGroupIds. Both empty = Population.
    * Wire camelCase matches Domain DestinationSlotKeys.
    */
   destinationSlotKeys?: string[] | null;
   /** @deprecated Prefer destinationSlotKeys; Host still dual-accepts singular. */
   destinationSlotKey?: string | null;
+  /**
+   * Groups A1 Place group ids (Expand index ↔ group). Duplicates allowed.
+   * Mutually exclusive with destinationSlotKeys.
+   */
+  destinationGroupIds?: string[] | null;
   groupId?: string | null;
   groupName?: string | null;
   acrossGroupsPosition?: number | null;
@@ -715,10 +721,12 @@ export interface StructureQualificationPath {
   selectionValue: number;
   destinationStageId: string;
   /**
-   * Destination slot when targeting form Place (Auto); null/omitted when
-   * targeting phase Population.
+   * Destination slot when targeting Cup Place (Auto); null/omitted when
+   * targeting phase Population or Groups Place.
    */
   destinationSlotKey?: string | null;
+  /** Groups A1 destination group when targeting a poule; null otherwise. */
+  destinationGroupId?: string | null;
   rankingScope?: RankingScope | null;
   groupId?: string | null;
   /** Resolved group display name when groupId is set. */
@@ -737,11 +745,17 @@ export interface StructureProgressionIntent {
   outcome: ProgressionOutcome;
   destinationStageId: string;
   /**
-   * Place slot keys (fixture index ↔ key). Empty/omitted = Population.
+   * Cup Place slot keys (fixture index ↔ key). Empty/omitted when not slot-targeting.
+   * Mutually exclusive with destinationGroupIds. Both empty = Population.
    */
   destinationSlotKeys?: string[] | null;
   /** @deprecated Prefer destinationSlotKeys; Host still dual-accepts singular. */
   destinationSlotKey?: string | null;
+  /**
+   * Groups A1 Place group ids (fixture index ↔ group). Duplicates allowed.
+   * Mutually exclusive with destinationSlotKeys.
+   */
+  destinationGroupIds?: string[] | null;
   /** Expand preview: fixture count on the round. */
   expandedPathCount?: number;
 }
@@ -752,9 +766,12 @@ export interface StructureProgressionPath {
   outcome: ProgressionOutcome;
   destinationStageId: string;
   /**
-   * Destination slot when targeting form Place; null/omitted when targeting phase Population (O2-a / A1).
+   * Destination slot when targeting Cup Place; null/omitted when targeting
+   * phase Population or Groups Place.
    */
   destinationSlotKey?: string | null;
+  /** Groups A1 destination group when targeting a poule; null otherwise. */
+  destinationGroupId?: string | null;
   /** Resolved fixture label (round · #order · slots) when available. */
   sourceLabel?: string | null;
 }
@@ -1379,6 +1396,8 @@ export interface SchematicFeedOrigin {
   drawId?: string | null;
   configuredEntryId?: string | null;
   slotKey?: string | null;
+  /** Groups A1 destination group when the feed targets a poule (not a Cup slot). */
+  destinationGroupId?: string | null;
 }
 
 export interface SchematicEntryRef {
@@ -1410,6 +1429,12 @@ export interface SchematicConnection {
   matchNumber: number;
 }
 
+/** Groups A1 — feed at Groupe grain (under group title), never Place k. */
+export interface SchematicGroupFeed {
+  groupId: string;
+  feedOrigin: SchematicFeedOrigin;
+}
+
 export interface StageSchematic {
   stageId: string;
   competitionId: string;
@@ -1422,6 +1447,7 @@ export interface StageSchematic {
   swissRoundCount?: number | null;
   /** Cup rounds in this phase when formatKind is Cup. */
   cupRoundCount?: number | null;
+  groupFeeds?: SchematicGroupFeed[] | null;
 }
 
 export function sideLabel(side: EntrySide): string {

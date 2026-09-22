@@ -102,6 +102,17 @@ public static class PrepareStage
                     continue;
                 }
 
+                if (path.Destination.TargetsGroup)
+                {
+                    EnsureOutboundGroupDestination(
+                        source,
+                        competitionStages,
+                        path.Destination.StageId,
+                        path.Destination.GroupId!.Value,
+                        "Qualification");
+                    continue;
+                }
+
                 EnsureOutboundDestination(
                     source,
                     competitionStages,
@@ -124,6 +135,17 @@ public static class PrepareStage
                     source,
                     competitionStages,
                     path.Destination.StageId,
+                    "Progression");
+                continue;
+            }
+
+            if (path.Destination.TargetsGroup)
+            {
+                EnsureOutboundGroupDestination(
+                    source,
+                    competitionStages,
+                    path.Destination.StageId,
+                    path.Destination.GroupId!.Value,
                     "Progression");
                 continue;
             }
@@ -185,6 +207,33 @@ public static class PrepareStage
 
         throw new ApplicationFailureException(
             $"{mechanism} destination slot '{slotKey}' was not found on stage '{destination.Id}'.",
+            ApplicationErrorCodes.DanglingFeedTarget);
+    }
+
+    private static void EnsureOutboundGroupDestination(
+        Stage source,
+        IReadOnlyList<Stage> competitionStages,
+        StageId destinationStageId,
+        GroupId groupId,
+        string mechanism)
+    {
+        if (destinationStageId.Equals(source.Id))
+        {
+            return;
+        }
+
+        var destination = competitionStages.FirstOrDefault(s => s.Id.Equals(destinationStageId))
+            ?? throw new ApplicationFailureException(
+                $"{mechanism} destination stage '{destinationStageId}' is not part of the competition stages list.",
+                ApplicationErrorCodes.StageNotInCompetition);
+
+        if (destination.FindGroup(groupId) is not null)
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"{mechanism} destination group '{groupId}' was not found on stage '{destination.Id}'.",
             ApplicationErrorCodes.DanglingFeedTarget);
     }
 }

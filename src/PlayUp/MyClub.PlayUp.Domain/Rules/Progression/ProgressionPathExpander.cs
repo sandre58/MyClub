@@ -77,6 +77,24 @@ public static class ProgressionPathExpander
                 continue;
             }
 
+            if (intent.TargetsGroup)
+            {
+                if (intent.DestinationGroupIds.Count != round.Fixtures.Count)
+                {
+                    throw new DomainException(
+                        "Progression place destination group ids count must equal round fixture count.",
+                        RulesErrorCodes.ProgressionRulesInvalid);
+                }
+
+                paths.AddRange(round.Fixtures.Select((fixture, i) => new ProgressionPath(
+                    fixture.Id,
+                    intent.Outcome,
+                    ProgressionDestination.ForGroup(
+                        intent.DestinationStageId,
+                        intent.DestinationGroupIds[i]))));
+                continue;
+            }
+
             if (intent.DestinationSlotKeys.Count != round.Fixtures.Count)
             {
                 throw new DomainException(
@@ -84,7 +102,10 @@ public static class ProgressionPathExpander
                     RulesErrorCodes.ProgressionRulesInvalid);
             }
 
-            paths.AddRange(round.Fixtures.Select((t, i) => new ProgressionPath(t.Id, intent.Outcome, ProgressionDestination.ForSlot(intent.DestinationStageId, intent.DestinationSlotKeys[i]))));
+            paths.AddRange(round.Fixtures.Select((t, i) => new ProgressionPath(
+                t.Id,
+                intent.Outcome,
+                ProgressionDestination.ForSlot(intent.DestinationStageId, intent.DestinationSlotKeys[i]))));
         }
 
         return paths;
@@ -104,5 +125,6 @@ public static class ProgressionPathExpander
             roundId,
             path.Outcome,
             path.Destination.StageId,
-            path.Destination.SlotKey is null ? [] : [path.Destination.SlotKey]);
+            path.Destination.TargetsSlot ? [path.Destination.SlotKey!] : null,
+            path.Destination.TargetsGroup ? [path.Destination.GroupId!.Value] : null);
 }

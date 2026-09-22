@@ -1,5 +1,6 @@
 // -----------------------------------------------------------------------
 // Qualifications dialog — authoring Intentions (Population | Place Auto).
+// UX Place = Placement destination picker (Slot | Group).
 // -----------------------------------------------------------------------
 
 import {
@@ -55,7 +56,7 @@ import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
   filterPlaceEligiblePeers,
-  listLabeledCupPlaces,
+  listLabeledPlaces,
 } from './structurePlaceLabel';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
 import { DestinationDraftMeter } from './DestinationDraftMeter';
@@ -63,6 +64,7 @@ import {
   countUnmappedPlaceSlots,
   emptyQualIntent,
   expandOccurrences,
+  fillEmptyPlaceKeysAllowingReuse,
   fillEmptyPlaceSlotKeys,
   hasAnyDuplicateSourceOccurrence,
   hasDuplicateSourceOccurrence,
@@ -73,6 +75,7 @@ import {
   ordinalRank,
   parsePositiveInt,
   pathToSingletonIntent,
+  placeMapKeys,
   resizeDestinationSlotKeys,
   serializeIntents,
   summarizeIntentWho,
@@ -613,9 +616,9 @@ export function StructureQualificationDialog({
               stageNameById.get(intent.destinationStageId) ??
               intent.destinationStageId;
             const occCount = expandOccurrences(intent, groups).length;
-            const filledSlots = (intent.destinationSlotKeys ?? []).filter((k) =>
-              k.trim(),
-            );
+            const filledSlots = (
+              placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
+            ).filter((k) => k.trim());
             const where =
               intent.targetKind === 'place' &&
               intent.destinationStageId.trim()
@@ -922,9 +925,13 @@ function QualIntentEditor({
   });
   const placesLabeled = areProgressionPlacesLabeled(destSchematicQuery.data);
   const labeledPlaces = useMemo(
-    () => listLabeledCupPlaces(destSchematicQuery.data, t),
+    () => listLabeledPlaces(destSchematicQuery.data, t),
     [destSchematicQuery.data, t],
   );
+  /** UX Place grain from dest schematic (Groups A1 vs Cup slots). */
+  const placeGrain =
+    labeledPlaces[0]?.grain ??
+    (destSchematicQuery.data?.formatKind === 'Groups' ? 'group' : 'slot');
 
   function setTargetKind(kind: QualTargetKind) {
     if (kind === 'population') {
@@ -937,20 +944,32 @@ function QualIntentEditor({
             ? draft.destinationStageId
             : (peerStages[0]?.stageId ?? ''),
         destinationSlotKeys: [],
+        destinationGroupIds: [],
       });
       return;
     }
     const keepDest =
       draft.destinationStageId.trim() &&
       placeEligiblePeers.some((p) => p.stageId === draft.destinationStageId);
+    const nextDest = keepDest
+      ? draft.destinationStageId
+      : (placeEligiblePeers[0]?.stageId ?? '');
+    const nextPeer = placeEligiblePeers.find((p) => p.stageId === nextDest);
+    const grain = nextPeer?.formatKind === 'Groups' ? 'group' : 'slot';
     onChange({
       ...draft,
       targetKind: 'place',
-      destinationStageId: keepDest
-        ? draft.destinationStageId
-        : (placeEligiblePeers[0]?.stageId ?? ''),
+      destinationStageId: nextDest,
       destinationSlotKeys:
-        draft.targetKind === 'place' ? draft.destinationSlotKeys : [],
+        grain === 'slot' && draft.targetKind === 'place'
+          ? draft.destinationSlotKeys
+          : [],
+      destinationGroupIds:
+        grain === 'group' && draft.targetKind === 'place'
+          ? draft.destinationGroupIds
+          : grain === 'group'
+            ? resizeDestinationSlotKeys([], expandOccurrences(draft, groups).length)
+            : [],
     });
   }
 
@@ -960,14 +979,27 @@ function QualIntentEditor({
       draft.targetKind === 'place' ? expandOccurrences(draft, groups) : [],
     [draft, groups],
   );
-  const placeSlotKeys = useMemo(
-    () =>
-      resizeDestinationSlotKeys(
-        draft.destinationSlotKeys,
-        placeOccurrences.length,
-      ),
-    [draft.destinationSlotKeys, placeOccurrences.length],
-  );
+  const placeSlotKeys = useMemo(() => {
+    const source =
+      placeGrain === 'group'
+        ? draft.destinationGroupIds
+        : draft.destinationSlotKeys;
+    return resizeDestinationSlotKeys(source, placeOccurrences.length);
+  }, [
+    draft.destinationGroupIds,
+    draft.destinationSlotKeys,
+    placeGrain,
+    placeOccurrences.length,
+  ]);
+
+  function applyPlaceKeys(next: string[]) {
+    onChange({
+      ...draft,
+      targetKind: 'place',
+      destinationSlotKeys: placeGrain === 'slot' ? next : [],
+      destinationGroupIds: placeGrain === 'group' ? next : [],
+    });
+  }
 
   const scopeOptions: {
     value: QualificationIntentSourceKind;
@@ -1318,13 +1350,26 @@ function QualIntentEditor({
                 selected={draft.destinationStageId === peer.stageId}
                 onChange={(selected) => {
                   if (!selected) return;
+                  const grain =
+                    peer.formatKind === 'Groups' ? 'group' : 'slot';
+                  const keep =
+                    draft.targetKind === 'place' &&
+                    draft.destinationStageId === peer.stageId;
+                  const n = expandOccurrences(draft, groups).length;
                   onChange({
                     ...draft,
                     destinationStageId: peer.stageId,
                     destinationSlotKeys:
-                      draft.targetKind === 'place' &&
-                      draft.destinationStageId === peer.stageId
-                        ? draft.destinationSlotKeys
+                      grain === 'slot'
+                        ? keep
+                          ? draft.destinationSlotKeys
+                          : []
+                        : [],
+                    destinationGroupIds:
+                      grain === 'group'
+                        ? keep
+                          ? draft.destinationGroupIds
+                          : resizeDestinationSlotKeys([], n)
                         : [],
                   });
                 }}
@@ -1389,6 +1434,8 @@ function QualIntentEditor({
                         (k) => !k.trim(),
                       ).length;
                       if (emptyCount === 0) return true;
+                      if (labeledPlaces.length === 0) return true;
+                      if (placeGrain === 'group') return false;
                       const used = new Set(
                         placeSlotKeys
                           .map((k) => k.trim())
@@ -1399,15 +1446,14 @@ function QualIntentEditor({
                       );
                     })()}
                     onClick={() => {
-                      const next = fillEmptyPlaceSlotKeys(
-                        placeSlotKeys,
-                        labeledPlaces.map((place) => place.apiIdentity),
+                      const ids = labeledPlaces.map(
+                        (place) => place.apiIdentity,
                       );
-                      onChange({
-                        ...draft,
-                        targetKind: 'place',
-                        destinationSlotKeys: next,
-                      });
+                      const next =
+                        placeGrain === 'group'
+                          ? fillEmptyPlaceKeysAllowingReuse(placeSlotKeys, ids)
+                          : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
+                      applyPlaceKeys(next);
                     }}
                   >
                     <LucideIcon icon={ListPlus} size="sm" />
@@ -1445,11 +1491,13 @@ function QualIntentEditor({
                         options={labeledPlaces.map((place) => ({
                           value: place.apiIdentity,
                           label: place.label,
-                          disabled: placeSlotKeys.some(
-                            (key, j) =>
-                              j !== index &&
-                              key.trim() === place.apiIdentity,
-                          ),
+                          disabled:
+                            placeGrain === 'slot' &&
+                            placeSlotKeys.some(
+                              (key, j) =>
+                                j !== index &&
+                                key.trim() === place.apiIdentity,
+                            ),
                         }))}
                         value={selected}
                         invalid={rowInvalid}
@@ -1465,11 +1513,7 @@ function QualIntentEditor({
                         onChange={(value) => {
                           const next = placeSlotKeys.slice();
                           next[index] = value?.trim() ?? '';
-                          onChange({
-                            ...draft,
-                            targetKind: 'place',
-                            destinationSlotKeys: next,
-                          });
+                          applyPlaceKeys(next);
                         }}
                       />
                       {rowInvalid ? (

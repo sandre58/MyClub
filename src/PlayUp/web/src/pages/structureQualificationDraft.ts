@@ -1,5 +1,7 @@
 // -----------------------------------------------------------------------
 // Qualification Intent drafts — Expand client preview (Qual population|place).
+// UX Place = Placement destination picker (Slot | Group).
+// Intent maps: destinationSlotKeys XOR destinationGroupIds (duplicates OK for groups).
 // -----------------------------------------------------------------------
 
 import type {
@@ -10,15 +12,19 @@ import type {
 } from '../types';
 import { isPopulationDestination } from './structureProgression';
 import {
+  coerceDestinationGroupIds,
   coerceDestinationSlotKeys,
   countEmptyPlaceSlots,
+  fillEmptyPlaceKeysAllowingReuse,
   fillEmptyPlaceSlotKeys,
   placeMappingGap,
   resizeDestinationSlotKeys,
 } from './structurePlaceMapping';
 
 export {
+  coerceDestinationGroupIds,
   coerceDestinationSlotKeys,
+  fillEmptyPlaceKeysAllowingReuse,
   fillEmptyPlaceSlotKeys,
   resizeDestinationSlotKeys,
 } from './structurePlaceMapping';
@@ -38,10 +44,15 @@ export type QualIntentDraft = {
   targetKind: QualTargetKind;
   destinationStageId: string;
   /**
-   * Place slot keys aligned with expandOccurrences order (index ↔ key).
-   * Empty array for Population. Length should match Expand count for Place.
+   * Cup Place slot keys aligned with expandOccurrences order (index ↔ key).
+   * Empty when Population or Groups Place. Length should match Expand for Cup Place.
    */
   destinationSlotKeys: string[];
+  /**
+   * Groups A1 Place group ids aligned with Expand (index ↔ groupId).
+   * Empty when Population or Cup Place. Duplicates allowed.
+   */
+  destinationGroupIds: string[];
 };
 
 export type SourceOccurrence = {
@@ -66,6 +77,18 @@ export function newIntentId(): string {
   return crypto.randomUUID();
 }
 
+/** Active Place map for this draft (slot XOR group). */
+export function placeMapKeys(draft: QualIntentDraft): {
+  grain: 'slot' | 'group';
+  keys: string[];
+} | null {
+  if (draft.targetKind !== 'place') return null;
+  if (draft.destinationGroupIds.length > 0) {
+    return { grain: 'group', keys: draft.destinationGroupIds };
+  }
+  return { grain: 'slot', keys: draft.destinationSlotKeys };
+}
+
 /** Count empty Place slots across intents (after Expand-aligned resize). */
 export function countUnmappedPlaceSlots(
   intents: QualIntentDraft[],
@@ -75,7 +98,8 @@ export function countUnmappedPlaceSlots(
   for (const intent of intents) {
     if (intent.targetKind !== 'place') continue;
     const occ = expandOccurrences(intent, groups);
-    n += countEmptyPlaceSlots(intent.destinationSlotKeys, occ.length);
+    const map = placeMapKeys(intent);
+    n += countEmptyPlaceSlots(map?.keys ?? [], occ.length);
   }
   return n;
 }
@@ -86,18 +110,35 @@ export function syncPlaceSlotKeys(
   groups: { id: string; name: string }[],
 ): QualIntentDraft {
   if (draft.targetKind !== 'place') {
-    if (draft.destinationSlotKeys.length === 0) return draft;
-    return { ...draft, destinationSlotKeys: [] };
+    if (
+      draft.destinationSlotKeys.length === 0 &&
+      draft.destinationGroupIds.length === 0
+    ) {
+      return draft;
+    }
+    return { ...draft, destinationSlotKeys: [], destinationGroupIds: [] };
   }
   const n = expandOccurrences(draft, groups).length;
+  if (draft.destinationGroupIds.length > 0) {
+    const next = resizeDestinationSlotKeys(draft.destinationGroupIds, n);
+    if (
+      next.length === draft.destinationGroupIds.length &&
+      next.every((k, i) => k === draft.destinationGroupIds[i]) &&
+      draft.destinationSlotKeys.length === 0
+    ) {
+      return draft;
+    }
+    return { ...draft, destinationGroupIds: next, destinationSlotKeys: [] };
+  }
   const next = resizeDestinationSlotKeys(draft.destinationSlotKeys, n);
   if (
     next.length === draft.destinationSlotKeys.length &&
-    next.every((k, i) => k === draft.destinationSlotKeys[i])
+    next.every((k, i) => k === draft.destinationSlotKeys[i]) &&
+    draft.destinationGroupIds.length === 0
   ) {
     return draft;
   }
-  return { ...draft, destinationSlotKeys: next };
+  return { ...draft, destinationSlotKeys: next, destinationGroupIds: [] };
 }
 
 export function emptyQualIntent(
@@ -117,17 +158,20 @@ export function emptyQualIntent(
     targetKind,
     destinationStageId,
     destinationSlotKeys: [],
+    destinationGroupIds: [],
   };
 }
 
 export function intentFromApi(
   intent: StructureQualificationIntent,
 ): QualIntentDraft {
+  const groupIds = coerceDestinationGroupIds(intent.destinationGroupIds);
   const keys = coerceDestinationSlotKeys(
     intent.destinationSlotKeys,
     intent.destinationSlotKey,
   );
-  const population = keys.length === 0;
+  const population = groupIds.length === 0 && keys.length === 0;
+  const isGroupPlace = !population && groupIds.length > 0;
   return {
     id: intent.intentId,
     sourceKind: intent.sourceKind,
@@ -147,7 +191,8 @@ export function intentFromApi(
       intent.minimumPoints != null ? String(intent.minimumPoints) : '',
     targetKind: population ? 'population' : 'place',
     destinationStageId: intent.destinationStageId,
-    destinationSlotKeys: population ? [] : keys,
+    destinationSlotKeys: population || isGroupPlace ? [] : keys,
+    destinationGroupIds: population || !isGroupPlace ? [] : groupIds,
   };
 }
 
@@ -164,7 +209,9 @@ export function pathToSingletonIntent(
   }
 
   const k = path.selectionValue;
-  const population = isPopulationDestination(path.destinationSlotKey);
+  const groupId = path.destinationGroupId?.trim() ?? '';
+  const population =
+    isPopulationDestination(path.destinationSlotKey) && !groupId;
   return {
     id: newIntentId(),
     sourceKind,
@@ -182,9 +229,11 @@ export function pathToSingletonIntent(
       path.minimumPoints != null ? String(path.minimumPoints) : '',
     targetKind: population ? 'population' : 'place',
     destinationStageId: path.destinationStageId,
-    destinationSlotKeys: population
-      ? []
-      : coerceDestinationSlotKeys(null, path.destinationSlotKey),
+    destinationSlotKeys:
+      population || groupId
+        ? []
+        : coerceDestinationSlotKeys(null, path.destinationSlotKey),
+    destinationGroupIds: population || !groupId ? [] : [groupId],
   };
 }
 
@@ -456,19 +505,24 @@ export function incompleteIntentReason(
   if (occurrences.length === 0) return 'Selection';
 
   if (draft.targetKind === 'place') {
-    const gap = placeMappingGap(
-      draft.destinationSlotKeys,
-      occurrences.length,
-    );
+    const map = placeMapKeys(draft);
+    const grain = map?.grain ?? 'slot';
+    const keys = map?.keys ?? [];
+    const gap = placeMappingGap(keys, occurrences.length, {
+      allowDuplicates: grain === 'group',
+    });
     if (gap) return gap;
 
-    const mine = new Set(placeOccupancyKeys(draft));
-    if (mine.size > 0) {
-      for (const other of all) {
-        if (other.id === draft.id) continue;
-        for (const pk of placeOccupancyKeys(other)) {
-          if (mine.has(pk)) {
-            return 'DuplicatePlace';
+    // DuplicatePlace only for Cup slots — Groups allow shared poules.
+    if (grain === 'slot') {
+      const mine = new Set(placeOccupancyKeys(draft));
+      if (mine.size > 0) {
+        for (const other of all) {
+          if (other.id === draft.id) continue;
+          for (const pk of placeOccupancyKeys(other)) {
+            if (mine.has(pk)) {
+              return 'DuplicatePlace';
+            }
           }
         }
       }
@@ -478,9 +532,10 @@ export function incompleteIntentReason(
   return null;
 }
 
-/** Cross-intent Place occupancy: stageId|slotKey for each filled key. */
+/** Cross-intent Place occupancy: stageId|slotKey for Cup Place only. */
 function placeOccupancyKeys(draft: QualIntentDraft): string[] {
   if (draft.targetKind !== 'place') return [];
+  if (draft.destinationGroupIds.length > 0) return [];
   const dest = draft.destinationStageId.trim();
   if (!dest) return [];
   return draft.destinationSlotKeys
@@ -539,13 +594,20 @@ export function toApiIntent(
   order: number,
   groups: { id: string; name: string }[] = [],
 ) {
+  const expandN = expandOccurrences(draft, groups).length;
+  const isGroupPlace =
+    draft.targetKind === 'place' && draft.destinationGroupIds.length > 0;
   const placeKeys =
-    draft.targetKind === 'place'
-      ? resizeDestinationSlotKeys(
-          draft.destinationSlotKeys,
-          expandOccurrences(draft, groups).length,
-        ).map((k) => k.trim())
+    draft.targetKind === 'place' && !isGroupPlace
+      ? resizeDestinationSlotKeys(draft.destinationSlotKeys, expandN).map(
+          (k) => k.trim(),
+        )
       : [];
+  const groupIds = isGroupPlace
+    ? resizeDestinationSlotKeys(draft.destinationGroupIds, expandN).map((k) =>
+        k.trim(),
+      )
+    : [];
 
   return {
     intentId: draft.id,
@@ -556,6 +618,8 @@ export function toApiIntent(
     destinationStageId: draft.destinationStageId,
     destinationSlotKeys:
       draft.targetKind === 'place' && placeKeys.length > 0 ? placeKeys : null,
+    destinationGroupIds:
+      draft.targetKind === 'place' && groupIds.length > 0 ? groupIds : null,
     groupId:
       draft.sourceKind === 'SingleGroup' ? draft.groupId || null : null,
     acrossGroupsPosition:

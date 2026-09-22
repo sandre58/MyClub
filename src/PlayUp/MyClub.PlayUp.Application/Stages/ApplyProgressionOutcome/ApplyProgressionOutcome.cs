@@ -67,11 +67,17 @@ public static class ApplyProgressionOutcome
         {
             var instruction = instructions[i];
             var destination = ResolveCanonicalStage(instruction.StageId, competitionStages);
-            if (!instruction.TargetsPopulation
-                && destination.FindSlot(instruction.SlotKey!) is null)
+            if (instruction.TargetsSlot && destination.FindSlot(instruction.SlotKey!) is null)
             {
                 throw new ApplicationFailureException(
                     $"Progression destination slot '{instruction.SlotKey}' was not found on stage '{destination.Id}'.",
+                    ApplicationErrorCodes.DanglingFeedTarget);
+            }
+
+            if (instruction.TargetsGroup && destination.FindGroup(instruction.GroupId!.Value) is null)
+            {
+                throw new ApplicationFailureException(
+                    $"Progression destination group '{instruction.GroupId}' was not found on stage '{destination.Id}'.",
                     ApplicationErrorCodes.DanglingFeedTarget);
             }
 
@@ -81,7 +87,7 @@ public static class ApplyProgressionOutcome
         for (var i = 0; i < instructions.Length; i++)
         {
             var instruction = instructions[i];
-            if (instruction.TargetsPopulation)
+            if (!instruction.TargetsSlot)
             {
                 continue;
             }
@@ -95,7 +101,14 @@ public static class ApplyProgressionOutcome
         {
             var instruction = instructions[i];
             destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock);
-            if (!instruction.TargetsPopulation)
+            if (instruction.TargetsGroup)
+            {
+                destinations[i].ApplyResolvedGroupEntry(
+                    instruction.GroupId!.Value,
+                    instruction.EntryId,
+                    clock);
+            }
+            else if (instruction.TargetsSlot)
             {
                 destinations[i].ApplyResolvedEntry(instruction.SlotKey!, instruction.EntryId, clock);
             }

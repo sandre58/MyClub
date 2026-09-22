@@ -133,7 +133,7 @@ public sealed record QualificationRules
     private static void EnsureUniqueSlotDestinations(IReadOnlyList<QualificationPath> paths)
     {
         var slotDestinationKeys = paths
-            .Where(p => !p.Destination.TargetsPopulation)
+            .Where(p => p.Destination.TargetsSlot)
             .Select(p => (p.Destination.StageId, p.Destination.SlotKey!))
             .ToArray();
         if (slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length)

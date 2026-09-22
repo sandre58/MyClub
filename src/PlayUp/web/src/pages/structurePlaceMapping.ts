@@ -1,7 +1,9 @@
 // -----------------------------------------------------------------------
-// Shared Place D1 mapping primitives (Qual + Prog).
-// Contract: Expand[i] ↔ destinationSlotKeys[i]; Remplir is authoring aid only.
-// Domain-specific Expand / incomplete rules stay in each draft module.
+// Shared Place mapping primitives (Qual + Prog).
+// UX Place = Placement destination picker (Slot | Group).
+// Contract: Expand[i] ↔ destinationSlotKeys[i] XOR destinationGroupIds[i];
+// Remplir is authoring aid only. Domain-specific Expand / incomplete rules
+// stay in each draft module.
 // -----------------------------------------------------------------------
 
 /** Prefer destinationSlotKeys; coerce legacy singular to a one-element list. */
@@ -11,6 +13,18 @@ export function coerceDestinationSlotKeys(
 ): string[] {
   if (keys != null && keys.length > 0) {
     return keys.map((k) => (typeof k === 'string' ? k.trim() : ''));
+  }
+  const one = singular?.trim();
+  return one ? [one] : [];
+}
+
+/** Coerce destinationGroupIds (Guid strings on the wire). */
+export function coerceDestinationGroupIds(
+  ids?: string[] | null,
+  singular?: string | null,
+): string[] {
+  if (ids != null && ids.length > 0) {
+    return ids.map((id) => (typeof id === 'string' ? id.trim() : ''));
   }
   const one = singular?.trim();
   return one ? [one] : [];
@@ -32,9 +46,13 @@ export function resizeDestinationSlotKeys(
   return next;
 }
 
+/** Alias — same resize semantics for group id maps. */
+export const resizeDestinationGroupIds = resizeDestinationSlotKeys;
+
 /**
  * SPA authoring aid: fill empty Place slots from `availablePlaceIds` in view
  * order, skipping ids already used by filled rows. Never overwrites manual picks.
+ * Cup Place — unique slot keys.
  */
 export function fillEmptyPlaceSlotKeys(
   keys: string[],
@@ -54,6 +72,26 @@ export function fillEmptyPlaceSlotKeys(
   });
 }
 
+/**
+ * Groups A1 Remplir — duplicates allowed; cycle available group ids into empties.
+ */
+export function fillEmptyPlaceKeysAllowingReuse(
+  keys: string[],
+  availablePlaceIds: string[],
+): string[] {
+  const pool = availablePlaceIds
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+  if (pool.length === 0) return keys;
+  let poolIndex = 0;
+  return keys.map((raw) => {
+    if (raw.trim()) return raw;
+    const next = pool[poolIndex % pool.length]!;
+    poolIndex += 1;
+    return next;
+  });
+}
+
 export function hasDuplicateSlotKeys(keys: string[]): boolean {
   const seen = new Set<string>();
   for (const raw of keys) {
@@ -68,10 +106,12 @@ export function hasDuplicateSlotKeys(keys: string[]): boolean {
 /**
  * D1 completeness for a Place mapping of size `expandCount`.
  * Returns MultiSlot | DuplicateSlot | null (complete).
+ * Groups A1: pass `allowDuplicates: true` (DuplicateSlot never returned).
  */
 export function placeMappingGap(
   keys: string[],
   expandCount: number,
+  options?: { allowDuplicates?: boolean },
 ): 'MultiSlot' | 'DuplicateSlot' | null {
   if (expandCount <= 0) return 'MultiSlot';
   const aligned = resizeDestinationSlotKeys(keys, expandCount);
@@ -81,7 +121,7 @@ export function placeMappingGap(
   ) {
     return 'MultiSlot';
   }
-  if (hasDuplicateSlotKeys(aligned)) {
+  if (!options?.allowDuplicates && hasDuplicateSlotKeys(aligned)) {
     return 'DuplicateSlot';
   }
   return null;

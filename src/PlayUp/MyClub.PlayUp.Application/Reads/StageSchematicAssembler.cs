@@ -46,7 +46,7 @@ public static class StageSchematicAssembler
         return format switch
         {
             StructureFormatKind.Cup => AssembleCup(stage, competitionStages, entries, matchRows ?? []),
-            StructureFormatKind.Groups => AssembleGroups(stage, entries),
+            StructureFormatKind.Groups => AssembleGroups(stage, competitionStages, entries),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
                 AssembleRosterCapacity(stage, competition, format.Value, entries),
             _ => Empty(stage, format)
@@ -367,6 +367,7 @@ public static class StageSchematicAssembler
 
     private static StageSchematicDto AssembleGroups(
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
         var perGroup = stage.PlacesPerGroup
@@ -376,6 +377,7 @@ public static class StageSchematicAssembler
             return Empty(stage, StructureFormatKind.Groups);
         }
 
+        var groupFeeds = ResolveGroupFeeds(stage, competitionStages);
         var cases = new List<SchematicCaseDto>(stage.Groups.Count * perGroup.Value);
         foreach (var group in stage.Groups)
         {
@@ -384,6 +386,8 @@ public static class StageSchematicAssembler
                 EntryId? placed = index <= group.EntryIds.Count
                     ? group.EntryIds[index - 1]
                     : null;
+
+                // Seats = occupancy only — group-level origins live in GroupFeeds.
                 cases.Add(
                     new SchematicCaseDto(
                         new SchematicFormPositionDto(
@@ -404,7 +408,119 @@ public static class StageSchematicAssembler
             stage.Status,
             StructureFormatKind.Groups,
             cases,
-            []);
+            [],
+            GroupFeeds: groupFeeds);
+    }
+
+    /// <summary>
+    /// Inbound Qual/Prog ForGroup destinations → one origin per group when unambiguous.
+    /// Same feed concept as slot WhoFeeds; grain is Groupe (A1), not Place k.
+    /// </summary>
+    private static IReadOnlyList<SchematicGroupFeedDto> ResolveGroupFeeds(
+        Stage target,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        var candidates = new Dictionary<Guid, List<SchematicFeedOriginDto>>();
+
+        foreach (var stage in competitionStages)
+        {
+            if (stage.Regulation.QualificationRules is { } qualification)
+            {
+                foreach (var path in qualification.Paths)
+                {
+                    if (!path.Destination.StageId.Equals(target.Id) || !path.Destination.TargetsGroup)
+                    {
+                        continue;
+                    }
+
+                    var groupId = path.Destination.GroupId!.Value.Value;
+                    var origin = MapQualificationPathOrigin(path, stage, groupId);
+                    AddGroupFeedCandidate(candidates, groupId, origin);
+                }
+            }
+
+            if (stage.Regulation.ProgressionRules is not { } progression)
+            {
+                continue;
+            }
+
+            foreach (var path in progression.Paths)
+            {
+                if (!path.Destination.StageId.Equals(target.Id) || !path.Destination.TargetsGroup)
+                {
+                    continue;
+                }
+
+                var groupId = path.Destination.GroupId!.Value.Value;
+                var origin = new SchematicFeedOriginDto(
+                    FeedKind.Progression,
+                    SourceStageId: stage.Id.Value,
+                    SourceFixtureId: path.SourceFixtureId.Value,
+                    SourceFixtureNumber: FindFixtureNumber(stage.Id, path.SourceFixtureId, competitionStages),
+                    Outcome: path.Outcome,
+                    DestinationGroupId: groupId);
+                AddGroupFeedCandidate(candidates, groupId, origin);
+            }
+        }
+
+        var result = new List<SchematicGroupFeedDto>();
+        foreach (var (groupId, origins) in candidates)
+        {
+            // Same source stage + feed kind → Unique (duplicates to one poule are intentional A1).
+            // Distinct Kind/SourceStageId pairs → ambiguous (omit origin).
+            var byMechanism = origins
+                .GroupBy(o => (o.Kind, o.SourceStageId))
+                .ToArray();
+            if (byMechanism.Length == 1)
+            {
+                var representative = byMechanism[0]
+                    .OrderBy(o => o.PathOrder ?? int.MaxValue)
+                    .ThenBy(o => o.SourceFixtureId)
+                    .First();
+                result.Add(new SchematicGroupFeedDto(groupId, representative));
+            }
+        }
+
+        return result;
+    }
+
+    private static void AddGroupFeedCandidate(
+        Dictionary<Guid, List<SchematicFeedOriginDto>> candidates,
+        Guid groupId,
+        SchematicFeedOriginDto origin)
+    {
+        if (!candidates.TryGetValue(groupId, out var list))
+        {
+            list = [];
+            candidates[groupId] = list;
+        }
+
+        list.Add(origin);
+    }
+
+    private static SchematicFeedOriginDto MapQualificationPathOrigin(
+        Domain.Rules.QualificationPath path,
+        Stage sourceStage,
+        Guid destinationGroupId)
+    {
+        string? groupName = null;
+        if (path.Source.GroupId is { } sourceGroupId)
+        {
+            groupName = sourceStage.Groups.FirstOrDefault(g => g.Id.Equals(sourceGroupId))?.Name;
+        }
+
+        return new SchematicFeedOriginDto(
+            FeedKind.Qualification,
+            SourceStageId: sourceStage.Id.Value,
+            PathOrder: path.Order,
+            SelectionMode: path.Selection.Mode,
+            SelectionValue: path.Selection.Value,
+            SelectionEndValue: path.Selection.EndValue,
+            RankingScope: path.Source.Scope,
+            GroupId: path.Source.GroupId?.Value,
+            GroupName: groupName,
+            AcrossGroupsPosition: path.Source.AcrossGroupsPosition,
+            DestinationGroupId: destinationGroupId);
     }
 
     /// <summary>

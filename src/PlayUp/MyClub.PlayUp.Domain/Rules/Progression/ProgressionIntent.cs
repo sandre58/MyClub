@@ -11,14 +11,13 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// <summary>
 /// Persisted authoring unit: one round × outcome intention that expands to N <see cref="ProgressionPath"/>.
 /// Paths are derived (Expand) — Intent is the authoring source of truth (Qual/Prog V3).
-/// Destination is peer Population or Place on the destination stage form.
+/// Destination is Population, Cup Place (slots), or Groups Place (group ids).
 /// </summary>
 /// <remarks>
-/// Flattened like <see cref="QualificationIntent"/>: one destination stage + optional Place slot keys.
-/// Place is a total function Expand → Place: <see cref="DestinationSlotKeys"/> count must equal
-/// fixture count, with index alignment (fixture storage order ↔ key index). Empty/null = Population
-/// (same destination stage applied to every path). Partial Place mapping is invalid.
-/// Path-level <see cref="ProgressionDestination"/> remains single-slot (ForSlot / ForPopulation).
+/// Placement maps are total functions Expand → destination grain: <see cref="DestinationSlotKeys"/>
+/// or <see cref="DestinationGroupIds"/> count must equal fixture count, index-aligned.
+/// Both empty = Population. Mutually exclusive non-empty maps. After Expand, Apply / WhoFeeds
+/// consume <c>path.Destination</c> only.
 /// </remarks>
 public sealed record ProgressionIntent
 {
@@ -31,7 +30,8 @@ public sealed record ProgressionIntent
         RoundId roundId,
         ProgressionOutcome outcome,
         StageId destinationStageId,
-        IReadOnlyList<string>? destinationSlotKeys = null)
+        IReadOnlyList<string>? destinationSlotKeys = null,
+        IReadOnlyList<GroupId>? destinationGroupIds = null)
     {
         if (order < 1)
         {
@@ -47,12 +47,22 @@ public sealed record ProgressionIntent
                 RulesErrorCodes.ProgressionRulesInvalid);
         }
 
+        var slotKeys = destinationSlotKeys is { Count: > 0 } ? destinationSlotKeys : null;
+        var groupIds = destinationGroupIds is { Count: > 0 } ? destinationGroupIds : null;
+        if (slotKeys is not null && groupIds is not null)
+        {
+            throw new DomainException(
+                "Progression intent cannot specify both destination slot keys and destination group identities.",
+                RulesErrorCodes.ProgressionRulesInvalid);
+        }
+
         Id = id;
         Order = order;
         RoundId = roundId;
         Outcome = outcome;
         DestinationStageId = destinationStageId;
-        DestinationSlotKeys = NormalizeDestinationSlotKeys(destinationStageId, destinationSlotKeys);
+        DestinationSlotKeys = NormalizeDestinationSlotKeys(destinationStageId, slotKeys);
+        DestinationGroupIds = groupIds is null ? [] : [.. groupIds];
     }
 
     /// <summary>Gets the stable authoring identity (Guid v7).</summary>
@@ -71,16 +81,36 @@ public sealed record ProgressionIntent
     public StageId DestinationStageId { get; }
 
     /// <summary>
-    /// Gets Place destination slot keys (fixture index ↔ key index). Empty = Population.
+    /// Gets Cup Place destination slot keys (fixture index ↔ key index). Empty when not slot-targeting.
     /// </summary>
     public IReadOnlyList<string> DestinationSlotKeys { get; }
 
+    /// <summary>
+    /// Gets Groups Place destination group ids (fixture index ↔ group index). Empty when not group-targeting.
+    /// Duplicates allowed.
+    /// </summary>
+    public IReadOnlyList<GroupId> DestinationGroupIds { get; }
+
     /// <summary>Gets a value indicating whether this intent targets population only.</summary>
-    public bool TargetsPopulation => DestinationSlotKeys.Count == 0;
+    public bool TargetsPopulation =>
+        DestinationSlotKeys.Count == 0 && DestinationGroupIds.Count == 0;
+
+    /// <summary>Gets a value indicating whether this intent targets Cup slots.</summary>
+    public bool TargetsSlot => DestinationSlotKeys.Count > 0;
+
+    /// <summary>Gets a value indicating whether this intent targets Groups poules.</summary>
+    public bool TargetsGroup => DestinationGroupIds.Count > 0;
 
     /// <summary>Returns a deep copy.</summary>
     public ProgressionIntent Copy() =>
-        new(Id, Order, RoundId, Outcome, DestinationStageId, DestinationSlotKeys);
+        new(
+            Id,
+            Order,
+            RoundId,
+            Outcome,
+            DestinationStageId,
+            DestinationSlotKeys.Count == 0 ? null : DestinationSlotKeys,
+            DestinationGroupIds.Count == 0 ? null : DestinationGroupIds);
 
     private static string[] NormalizeDestinationSlotKeys(
         StageId destinationStageId,

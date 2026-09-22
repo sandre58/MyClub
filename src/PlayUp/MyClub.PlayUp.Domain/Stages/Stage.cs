@@ -723,11 +723,18 @@ public sealed class Stage : AggregateRoot<StageId>
                     continue;
                 }
 
-                // Place on this stage: slot must exist and must not conflict with Direct.
+                // Place on this stage: slot or group must exist (slot must not conflict with Direct).
                 // Cross-stage Place: destination form ownership is validated at Prepare/Apply.
                 if (path.Destination.StageId.Equals(Id))
                 {
-                    EnsureLocalPathDestination(path.Destination.SlotKey!);
+                    if (path.Destination.TargetsGroup)
+                    {
+                        EnsureLocalGroupDestination(path.Destination.GroupId!.Value);
+                    }
+                    else
+                    {
+                        EnsureLocalPathDestination(path.Destination.SlotKey!);
+                    }
                 }
             }
         }
@@ -1482,6 +1489,42 @@ public sealed class Stage : AggregateRoot<StageId>
         var previousEntryId = slot.EntryId;
         slot.SetEntry(entryId);
         Raise(new StageSlotOccupantChanged(Id, key, previousEntryId, entryId, clock));
+    }
+
+    /// <summary>
+    /// Resolves group membership dynamically (Groups A1 Placement) under resolution mutability.
+    /// </summary>
+    /// <remarks>
+    /// Mirrors <see cref="AssignEntryToGroup"/> membership invariants (at most one group per entry;
+    /// same-group is a no-op; other-group throws <see cref="StageErrorCodes.DuplicateEntry"/>)
+    /// but does <strong>not</strong> require structure mutability and does not demote Ready.
+    /// Do not call <see cref="AssignEntryToGroup"/> from Qual/Prog Apply — that path is Draw/structure only.
+    /// </remarks>
+    /// <param name="groupId">Target group identity.</param>
+    /// <param name="entryId">Resolved entry identity.</param>
+    /// <param name="clock">The clock used for domain events (reserved for future events; mutability gate).</param>
+    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        var group = FindGroup(groupId)
+            ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
+
+        var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
+        if (owningGroup is not null)
+        {
+            if (owningGroup.Id.Equals(groupId))
+            {
+                return;
+            }
+
+            throw new DomainException(
+                $"Entry '{entryId}' is already assigned to another group.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        group.Assign(entryId);
     }
 
     /// <summary>
@@ -2435,6 +2478,19 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Validates Groups Place destination on this form-owning stage.
+    /// </summary>
+    private void EnsureLocalGroupDestination(GroupId groupId)
+    {
+        if (FindGroup(groupId) is null)
+        {
+            throw new DomainException(
+                $"Group '{groupId}' was not found.",
+                StageErrorCodes.GroupNotFound);
+        }
+    }
+
+    /// <summary>
     /// Validates local slot/fixture/direct/progression/qualification consistency for Prepare.
     /// Does not require a global feed (inbound Qualification may exist outside this aggregate).
     /// Rejects multiple local feeds on the same slot.
@@ -2457,7 +2513,21 @@ public sealed class Stage : AggregateRoot<StageId>
                     continue;
                 }
 
-                if (path.Destination.StageId.Equals(Id) && FindSlot(path.Destination.SlotKey!) is null)
+                if (!path.Destination.StageId.Equals(Id))
+                {
+                    continue;
+                }
+
+                if (path.Destination.TargetsGroup)
+                {
+                    if (FindGroup(path.Destination.GroupId!.Value) is null)
+                    {
+                        throw new DomainException(
+                            $"Group '{path.Destination.GroupId}' was not found.",
+                            StageErrorCodes.GroupNotFound);
+                    }
+                }
+                else if (FindSlot(path.Destination.SlotKey!) is null)
                 {
                     throw new DomainException(
                         $"Slot '{path.Destination.SlotKey}' was not found.",

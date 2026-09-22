@@ -56,6 +56,7 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
         }
 
         var slotKeys = ReadDestinationSlotKeys(root);
+        var groupIds = ReadDestinationGroupIds(root, options);
 
         return new QualificationIntent(
             id,
@@ -67,7 +68,8 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
             groupId,
             acrossGroupsPosition,
             condition,
-            slotKeys);
+            slotKeys,
+            groupIds);
     }
 
     /// <inheritdoc />
@@ -103,6 +105,8 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
 
         writer.WritePropertyName("DestinationSlotKeys");
         JsonSerializer.Serialize(writer, value.DestinationSlotKeys, options);
+        writer.WritePropertyName("DestinationGroupIds");
+        JsonSerializer.Serialize(writer, value.DestinationGroupIds, options);
         writer.WriteEndObject();
     }
 
@@ -125,5 +129,31 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
 
         var key = singular.GetString();
         return string.IsNullOrWhiteSpace(key) ? null : [key];
+    }
+
+    internal static IReadOnlyList<GroupId>? ReadDestinationGroupIds(
+        JsonElement root,
+        JsonSerializerOptions options)
+    {
+        if (!root.TryGetProperty("DestinationGroupIds", out var keysElement)
+            || keysElement.ValueKind != JsonValueKind.Array
+            || keysElement.GetArrayLength() == 0)
+        {
+            return null;
+        }
+
+        var list = new List<GroupId>(keysElement.GetArrayLength());
+        foreach (var item in keysElement.EnumerateArray())
+        {
+            if (item.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+            {
+                continue;
+            }
+
+            var id = JsonSerializer.Deserialize<GroupId>(item.GetRawText(), options);
+            list.Add(id);
+        }
+
+        return list.Count == 0 ? null : list;
     }
 }

@@ -61,9 +61,6 @@ public sealed record ProgressionPath
     /// <returns>A deep copy of this path.</returns>
     public ProgressionPath Copy()
     {
-        var destination = Destination.TargetsPopulation
-            ? ProgressionDestination.ForPopulation(Destination.StageId)
-            : ProgressionDestination.ForSlot(Destination.StageId, Destination.SlotKey!);
-        return new ProgressionPath(SourceFixtureId, Outcome, destination);
+        return new ProgressionPath(SourceFixtureId, Outcome, Destination.Copy());
     }
 }

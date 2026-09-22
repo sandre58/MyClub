@@ -707,8 +707,8 @@ public sealed class ApplyProgressionOutcomeTests
             [
                 new ProgressionPath(
                     fixture.Id,
-                    ProgressionOutcome.Winner,
-                    new ProgressionDestination(stage.Id, "SF1-A"))
+                    ProgressionOutcome.Loser,
+                    ProgressionDestination.ForSlot(stage.Id, "SF1-A"))
             ]),
             _clock);
 

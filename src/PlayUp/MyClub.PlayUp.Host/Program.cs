@@ -695,7 +695,12 @@ try
                         new RoundId(intent.RoundId),
                         intent.Outcome,
                         new StageId(intent.DestinationStageId),
-                        coerceDestinationSlotKeys(intent.DestinationSlotKeys, intent.DestinationSlotKey)))
+                        DestinationSlotKeys: coerceDestinationSlotKeys(
+                            intent.DestinationSlotKeys,
+                            intent.DestinationSlotKey),
+                        DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 }
+                            ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray()
+                            : null))
                 ];
                 await executor
                     .ReplaceStageProgressionIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -713,7 +718,8 @@ try
                             new FixtureId(path.SourceFixtureId),
                             path.Outcome,
                             new StageId(path.DestinationStageId),
-                            path.DestinationSlotKey))
+                            path.DestinationSlotKey,
+                            path.DestinationGroupId is { } gid ? new GroupId(gid) : null))
                 ];
             }
 
@@ -746,7 +752,8 @@ try
                         intent.GroupId,
                         intent.AcrossGroupsPosition,
                         intent.MinimumPoints,
-                        coerceDestinationSlotKeys(intent.DestinationSlotKeys, intent.DestinationSlotKey)))
+                        coerceDestinationSlotKeys(intent.DestinationSlotKeys, intent.DestinationSlotKey),
+                        intent.DestinationGroupIds))
                 ];
                 await executor
                     .ReplaceStageQualificationIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -769,7 +776,8 @@ try
                         path.AcrossGroupsPosition,
                         path.SelectionEndValue,
                         path.MinimumPoints,
-                        path.DestinationSlotKey))
+                        path.DestinationSlotKey,
+                        path.DestinationGroupId))
                 ];
             }
 

@@ -1,7 +1,9 @@
 // -----------------------------------------------------------------------
-// U4 — Place address labels (Cup).
+// Place address labels — Cup (Slot) and Groups A1 (Group).
+// UX Place = Placement destination picker (Slot | Group).
 // Long label (rail/dialog) = topology; chrome (schematic) = SlotKey (C2).
 // Backend supplies structural facts; SPA localizes side only (not RoundName).
+// Championship / Swiss remain ineligible for Place.
 // -----------------------------------------------------------------------
 
 import type {
@@ -14,6 +16,9 @@ export type PlaceTranslate = (
   key: string,
   opts?: Record<string, unknown>,
 ) => string;
+
+/** Place destination grain: Cup SlotKey or Groups poule id. */
+export type PlaceGrain = 'slot' | 'group';
 
 /** Stable API identity for Progression Place (Domain ForSlot). */
 export function cupPlaceApiIdentity(
@@ -83,16 +88,24 @@ export function placeDisplayLabel(
   return t('place.cup', { round: roundName, side: sideText });
 }
 
+/** True when the schematic exposes at least one Place-targetable address. */
 export function areProgressionPlacesLabeled(
   schematic: StageSchematic | null | undefined,
 ): boolean {
-  if (!schematic || schematic.formatKind !== 'Cup') return false;
-  return schematic.cases.some((c) => isCupPlaceTargetable(c.formPosition));
+  if (!schematic) return false;
+  if (schematic.formatKind === 'Cup') {
+    return schematic.cases.some((c) => isCupPlaceTargetable(c.formPosition));
+  }
+  if (schematic.formatKind === 'Groups') {
+    return schematic.cases.some((c) => !!c.formPosition.groupId?.trim());
+  }
+  return false;
 }
 
 /**
- * Aval peers whose form currently exposes addressable Cup places (U4 / P1).
+ * Aval peers whose form currently exposes addressable Places (Cup slots or Groups).
  * Gate on real capacity — not formatKind alone (Cup skeleton without SlotKey = ineligible).
+ * Championship / Swiss stay ineligible.
  */
 export function filterPlaceEligiblePeers<T extends { stageId: string }>(
   peers: readonly T[],
@@ -103,21 +116,27 @@ export function filterPlaceEligiblePeers<T extends { stageId: string }>(
   );
 }
 
-export type LabeledCupPlace = {
+export type LabeledPlace = {
   apiIdentity: string;
-  /** Same as schematic chrome (SlotKey). */
+  /** Chrome / select label (SlotKey or localized group title). */
   label: string;
   /** Long topology label for dialog description when distinct from chrome. */
   description: string | null;
+  grain: PlaceGrain;
+};
+
+/** @deprecated Prefer LabeledPlace; Cup-only alias. */
+export type LabeledCupPlace = Omit<LabeledPlace, 'grain'> & {
+  grain?: PlaceGrain;
 };
 
 /** Targetable Cup places for Progression dialog (chrome = SlotKey; long = description). */
 export function listLabeledCupPlaces(
   schematic: StageSchematic | null | undefined,
   t: PlaceTranslate,
-): LabeledCupPlace[] {
+): LabeledPlace[] {
   if (!schematic || schematic.formatKind !== 'Cup') return [];
-  const out: LabeledCupPlace[] = [];
+  const out: LabeledPlace[] = [];
   const seen = new Set<string>();
   for (const c of schematic.cases) {
     if (!isCupPlaceTargetable(c.formPosition)) continue;
@@ -130,6 +149,48 @@ export function listLabeledCupPlaces(
       apiIdentity: id,
       label: chrome,
       description: long && long !== chrome ? long : null,
+      grain: 'slot',
+    });
+  }
+  return out;
+}
+
+/**
+ * Place picker options for the destination schematic.
+ * Cup → SlotKeys; Groups → stable groupId (label = localized “Groupe A”). Champ/Swiss → [].
+ */
+export function listLabeledPlaces(
+  schematic: StageSchematic | null | undefined,
+  t: PlaceTranslate,
+): LabeledPlace[] {
+  if (!schematic) return [];
+  if (schematic.formatKind === 'Cup') {
+    return listLabeledCupPlaces(schematic, t);
+  }
+  if (schematic.formatKind === 'Groups') {
+    return listLabeledGroupPlaces(schematic, t);
+  }
+  return [];
+}
+
+/** Groups A1 — one Place option per stable groupId (duplicates allowed at map time). */
+export function listLabeledGroupPlaces(
+  schematic: StageSchematic | null | undefined,
+  t: PlaceTranslate,
+): LabeledPlace[] {
+  if (!schematic || schematic.formatKind !== 'Groups') return [];
+  const out: LabeledPlace[] = [];
+  const seen = new Set<string>();
+  for (const c of schematic.cases) {
+    const id = c.formPosition.groupId?.trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const name = c.formPosition.groupName?.trim() || id;
+    out.push({
+      apiIdentity: id,
+      label: t('place.group', { name }),
+      description: null,
+      grain: 'group',
     });
   }
   return out;

@@ -62,13 +62,44 @@ public static class QualificationPathExpander
                     RulesErrorCodes.QualificationRulesInvalid);
             }
 
+            var condition = intent.Condition is null
+                ? null
+                : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints);
+
             if (intent.TargetsPopulation)
             {
                 var destination = QualificationDestination.ForPopulation(intent.DestinationStageId);
-                var condition = intent.Condition is null
-                    ? null
-                    : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints);
-                paths.AddRange(occurrences.Select(occurrence => new QualificationPath(pathOrder++, ToSource(occurrence), new QualificationSelection(SelectionMode.Position, occurrence.Position), destination, condition)));
+                paths.AddRange(occurrences.Select(occurrence => new QualificationPath(
+                    pathOrder++,
+                    ToSource(occurrence),
+                    new QualificationSelection(SelectionMode.Position, occurrence.Position),
+                    destination,
+                    condition)));
+                continue;
+            }
+
+            if (intent.TargetsGroup)
+            {
+                if (intent.DestinationGroupIds.Count != occurrences.Count)
+                {
+                    throw new DomainException(
+                        "Qualification place destination group ids count must equal Expand occurrence count.",
+                        RulesErrorCodes.QualificationRulesInvalid);
+                }
+
+                for (var i = 0; i < occurrences.Count; i++)
+                {
+                    var occurrence = occurrences[i];
+                    var destination = QualificationDestination.ForGroup(
+                        intent.DestinationStageId,
+                        intent.DestinationGroupIds[i]);
+                    paths.Add(new QualificationPath(
+                        pathOrder++,
+                        ToSource(occurrence),
+                        new QualificationSelection(SelectionMode.Position, occurrence.Position),
+                        destination,
+                        condition));
+                }
 
                 continue;
             }
@@ -80,9 +111,6 @@ public static class QualificationPathExpander
                     RulesErrorCodes.QualificationRulesInvalid);
             }
 
-            var placeCondition = intent.Condition is null
-                ? null
-                : QualificationCondition.PointsAtLeast(intent.Condition.MinimumPoints);
             for (var i = 0; i < occurrences.Count; i++)
             {
                 var occurrence = occurrences[i];
@@ -94,7 +122,7 @@ public static class QualificationPathExpander
                     ToSource(occurrence),
                     new QualificationSelection(SelectionMode.Position, occurrence.Position),
                     destination,
-                    placeCondition));
+                    condition));
             }
         }
 
@@ -207,6 +235,13 @@ public static class QualificationPathExpander
             kind = QualificationIntentSourceKind.Overall;
         }
 
+        IReadOnlyList<string>? slotKeys = path.Destination.TargetsSlot
+            ? [path.Destination.SlotKey!]
+            : null;
+        IReadOnlyList<GroupId>? destGroupIds = path.Destination.TargetsGroup
+            ? [path.Destination.GroupId!.Value]
+            : null;
+
         return new QualificationIntent(
             id ?? IntentId.New(),
             path.Order,
@@ -217,7 +252,8 @@ public static class QualificationPathExpander
             groupId,
             across,
             path.Condition,
-            path.Destination.SlotKey is null ? [] : [path.Destination.SlotKey]);
+            slotKeys,
+            destGroupIds);
     }
 
     private static QualificationSource ToSource(QualificationSourceOccurrence occurrence) =>

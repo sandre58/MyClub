@@ -118,7 +118,7 @@ public sealed record ProgressionRules
         }
 
         var slotDestinationKeys = paths
-            .Where(p => !p.Destination.TargetsPopulation)
+            .Where(p => p.Destination.TargetsSlot)
             .Select(p => (p.Destination.StageId, p.Destination.SlotKey!))
             .ToArray();
         return slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length
@@ -130,6 +130,7 @@ public sealed record ProgressionRules
                 .ThenBy(p => p.Outcome)
                 .ThenBy(p => p.Destination.StageId.Value)
                 .ThenBy(p => p.Destination.SlotKey ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(p => p.Destination.GroupId?.Value ?? Guid.Empty)
         ];
     }
 }

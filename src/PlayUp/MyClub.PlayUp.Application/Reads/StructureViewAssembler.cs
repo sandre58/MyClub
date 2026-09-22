@@ -118,11 +118,17 @@ public static class StructureViewAssembler
     /// <summary>Stage structure issue: qualification Place destination slot missing on target stage.</summary>
     public const string IssueMissingQualificationDestinationSlot = "MissingQualificationDestinationSlot";
 
+    /// <summary>Stage structure issue: qualification Place destination group missing on target stage.</summary>
+    public const string IssueMissingQualificationDestinationGroup = "MissingQualificationDestinationGroup";
+
     /// <summary>Stage structure issue: progression destination stage missing from competition.</summary>
     public const string IssueDanglingProgressionTarget = "DanglingProgressionTarget";
 
     /// <summary>Stage structure issue: progression destination slot missing on target stage.</summary>
     public const string IssueMissingProgressionDestinationSlot = "MissingProgressionDestinationSlot";
+
+    /// <summary>Stage structure issue: progression destination group missing on target stage.</summary>
+    public const string IssueMissingProgressionDestinationGroup = "MissingProgressionDestinationGroup";
 
     /// <summary>
     /// Builds the Structure view.
@@ -499,7 +505,10 @@ public static class StructureViewAssembler
                         intent.AcrossGroupsPosition,
                         intent.Condition?.MinimumPoints,
                         destinationCount,
-                        intent.DestinationSlotKeys);
+                        intent.DestinationSlotKeys,
+                        intent.DestinationGroupIds.Count == 0
+                            ? null
+                            : intent.DestinationGroupIds.Select(g => g.Value).ToArray());
                 })
             ];
 
@@ -538,7 +547,8 @@ public static class StructureViewAssembler
                         path.Selection.EndValue,
                         path.Condition?.MinimumPoints,
                         groupName,
-                        path.Destination.SlotKey);
+                        path.Destination.SlotKey,
+                        path.Destination.GroupId?.Value);
                 })
             ];
 
@@ -554,7 +564,8 @@ public static class StructureViewAssembler
                     path.Outcome,
                     path.Destination.StageId.Value,
                     path.Destination.SlotKey,
-                    ResolveFixtureSourceLabel(stage, path.SourceFixtureId)))
+                    ResolveFixtureSourceLabel(stage, path.SourceFixtureId),
+                    path.Destination.GroupId?.Value))
             ];
 
     private static IReadOnlyList<StructureProgressionIntentDto>? MapProgressionIntents(
@@ -582,7 +593,10 @@ public static class StructureViewAssembler
                     intent.Outcome,
                     intent.DestinationStageId.Value,
                     intent.DestinationSlotKeys,
-                    fixtureCount);
+                    fixtureCount,
+                    intent.DestinationGroupIds.Count == 0
+                        ? null
+                        : intent.DestinationGroupIds.Select(g => g.Value).ToArray());
             })
         ];
     }
@@ -772,8 +786,22 @@ public static class StructureViewAssembler
                     continue;
                 }
 
-                if (!path.Destination.TargetsPopulation
-                    && destination.FindSlot(path.Destination.SlotKey!) is null)
+                if (path.Destination.TargetsPopulation)
+                {
+                    continue;
+                }
+
+                if (path.Destination.TargetsGroup)
+                {
+                    if (destination.FindGroup(path.Destination.GroupId!.Value) is null)
+                    {
+                        issues.Add(IssueMissingQualificationDestinationGroup);
+                    }
+
+                    continue;
+                }
+
+                if (destination.FindSlot(path.Destination.SlotKey!) is null)
                 {
                     issues.Add(IssueMissingQualificationDestinationSlot);
                 }
@@ -803,7 +831,14 @@ public static class StructureViewAssembler
 
             if (path.Destination.StageId.Equals(stage.Id))
             {
-                if (stage.FindSlot(path.Destination.SlotKey!) is null)
+                if (path.Destination.TargetsGroup)
+                {
+                    if (stage.FindGroup(path.Destination.GroupId!.Value) is null)
+                    {
+                        issues.Add(IssueMissingProgressionDestinationGroup);
+                    }
+                }
+                else if (stage.FindSlot(path.Destination.SlotKey!) is null)
                 {
                     issues.Add(IssueMissingProgressionDestinationSlot);
                 }
@@ -817,7 +852,14 @@ public static class StructureViewAssembler
                 continue;
             }
 
-            if (destination.FindSlot(path.Destination.SlotKey!) is null)
+            if (path.Destination.TargetsGroup)
+            {
+                if (destination.FindGroup(path.Destination.GroupId!.Value) is null)
+                {
+                    issues.Add(IssueMissingProgressionDestinationGroup);
+                }
+            }
+            else if (destination.FindSlot(path.Destination.SlotKey!) is null)
             {
                 issues.Add(IssueMissingProgressionDestinationSlot);
             }

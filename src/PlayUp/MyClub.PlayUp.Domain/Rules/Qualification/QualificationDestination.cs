@@ -12,8 +12,9 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Where selected participants are routed.
-/// Slot target: destination stage + opaque slot key (Auto Place — dual-write with population).
-/// Population target: destination stage only.
+/// Population: stage only.
+/// Slot: stage + SlotKey (Cup Auto Place — dual-write with population).
+/// Group: stage + GroupId (Groups A1 Placement — dual-write with population).
 /// </summary>
 public sealed record QualificationDestination
 {
@@ -24,51 +25,69 @@ public sealed record QualificationDestination
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QualificationDestination"/> class.
-    /// Pass a non-empty <paramref name="slotKey"/> for form placement;
-    /// pass <see langword="null"/> for population target.
+    /// Exactly one of: population (both null), slot, or group.
     /// </summary>
     /// <param name="stageId">The destination stage identity.</param>
-    /// <param name="slotKey">Slot key when targeting form; <see langword="null"/> when targeting population.</param>
+    /// <param name="slotKey">Slot key when targeting Cup form; otherwise <see langword="null"/>.</param>
+    /// <param name="groupId">Group when targeting Groups Placement; otherwise <see langword="null"/>.</param>
     [JsonConstructor]
-    public QualificationDestination(StageId stageId, string? slotKey)
+    public QualificationDestination(StageId stageId, string? slotKey = null, GroupId? groupId = null)
     {
+        if (slotKey is not null && groupId is not null)
+        {
+            throw new DomainException(
+                "Qualification destination cannot target both a slot and a group.",
+                RulesErrorCodes.QualificationRulesInvalid);
+        }
+
         StageId = stageId;
         SlotKey = slotKey is null ? null : NormalizeSlotKey(slotKey);
+        GroupId = groupId;
     }
 
     /// <summary>
     /// Creates a population-targeting destination (StageId only).
     /// </summary>
-    /// <param name="stageId">Destination stage whose population receives the entry.</param>
-    /// <returns>A population destination.</returns>
-    public static QualificationDestination ForPopulation(StageId stageId) => new(stageId, slotKey: null);
+    public static QualificationDestination ForPopulation(StageId stageId) =>
+        new(stageId, slotKey: null, groupId: null);
 
     /// <summary>
-    /// Creates a slot-targeting destination (Auto Place into form).
+    /// Creates a slot-targeting destination (Auto Place into Cup form).
     /// </summary>
-    /// <param name="stageId">Destination stage.</param>
-    /// <param name="slotKey">Destination slot key.</param>
-    /// <returns>A slot destination.</returns>
-    public static QualificationDestination ForSlot(StageId stageId, string slotKey) => new(stageId, slotKey);
+    public static QualificationDestination ForSlot(StageId stageId, string slotKey) =>
+        new(stageId, slotKey, groupId: null);
 
     /// <summary>
-    /// Gets the destination stage identity.
+    /// Creates a group-targeting destination (Groups A1 Placement).
     /// </summary>
+    public static QualificationDestination ForGroup(StageId stageId, GroupId groupId) =>
+        new(stageId, slotKey: null, groupId);
+
+    /// <summary>Gets the destination stage identity.</summary>
     public StageId StageId { get; }
 
-    /// <summary>
-    /// Gets the opaque destination slot key when targeting form; otherwise <see langword="null"/>.
-    /// </summary>
+    /// <summary>Gets the opaque destination slot key when targeting Cup form; otherwise <see langword="null"/>.</summary>
     public string? SlotKey { get; }
 
-    /// <summary>
-    /// Gets a value indicating whether this destination targets the phase population (no slot).
-    /// </summary>
-    public bool TargetsPopulation => SlotKey is null;
+    /// <summary>Gets the destination group when targeting Groups Placement; otherwise <see langword="null"/>.</summary>
+    public GroupId? GroupId { get; }
+
+    /// <summary>Gets a value indicating whether this destination targets phase population only.</summary>
+    public bool TargetsPopulation => SlotKey is null && GroupId is null;
+
+    /// <summary>Gets a value indicating whether this destination targets a Cup slot.</summary>
+    public bool TargetsSlot => SlotKey is not null;
+
+    /// <summary>Gets a value indicating whether this destination targets a Groups poule.</summary>
+    public bool TargetsGroup => GroupId is not null;
 
     /// <summary>Returns a copy of this destination.</summary>
     public QualificationDestination Copy() =>
-        TargetsPopulation ? ForPopulation(StageId) : ForSlot(StageId, SlotKey!);
+        TargetsPopulation
+            ? ForPopulation(StageId)
+            : TargetsGroup
+                ? ForGroup(StageId, GroupId!.Value)
+                : ForSlot(StageId, SlotKey!);
 
     private static string NormalizeSlotKey(string slotKey)
     {

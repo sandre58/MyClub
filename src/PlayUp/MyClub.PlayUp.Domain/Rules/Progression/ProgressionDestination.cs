@@ -12,8 +12,9 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Where a progression outcome is routed.
-/// Slot target: destination stage + opaque slot key (placement into form).
-/// Population target: destination stage only (B1-M2 / O2-a — write-target is phase population).
+/// Population: stage only.
+/// Slot: stage + SlotKey (Cup form).
+/// Group: stage + GroupId (Groups A1 Placement).
 /// </summary>
 public sealed record ProgressionDestination
 {
@@ -24,51 +25,60 @@ public sealed record ProgressionDestination
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProgressionDestination"/> class.
-    /// Pass a non-empty <paramref name="slotKey"/> for form placement;
-    /// pass <see langword="null"/> for population target (O2-a).
+    /// Exactly one of: population (both null), slot, or group.
     /// </summary>
-    /// <param name="stageId">The destination stage identity.</param>
-    /// <param name="slotKey">Slot key when targeting form; <see langword="null"/> when targeting population.</param>
     [JsonConstructor]
-    public ProgressionDestination(StageId stageId, string? slotKey)
+    public ProgressionDestination(StageId stageId, string? slotKey = null, GroupId? groupId = null)
     {
+        if (slotKey is not null && groupId is not null)
+        {
+            throw new DomainException(
+                "Progression destination cannot target both a slot and a group.",
+                RulesErrorCodes.ProgressionRulesInvalid);
+        }
+
         StageId = stageId;
         SlotKey = slotKey is null ? null : NormalizeSlotKey(slotKey);
+        GroupId = groupId;
     }
 
-    /// <summary>
-    /// Creates a population-targeting destination (O2-a — StageId only).
-    /// </summary>
-    /// <param name="stageId">Destination stage whose population receives the entry.</param>
-    /// <returns>A population destination.</returns>
-    public static ProgressionDestination ForPopulation(StageId stageId) => new(stageId, slotKey: null);
+    /// <summary>Creates a population-targeting destination.</summary>
+    public static ProgressionDestination ForPopulation(StageId stageId) =>
+        new(stageId, slotKey: null, groupId: null);
 
-    /// <summary>
-    /// Creates a slot-targeting destination (placement into form).
-    /// </summary>
-    /// <param name="stageId">Destination stage.</param>
-    /// <param name="slotKey">Destination slot key.</param>
-    /// <returns>A slot destination.</returns>
-    public static ProgressionDestination ForSlot(StageId stageId, string slotKey) => new(stageId, slotKey);
+    /// <summary>Creates a slot-targeting destination.</summary>
+    public static ProgressionDestination ForSlot(StageId stageId, string slotKey) =>
+        new(stageId, slotKey, groupId: null);
 
-    /// <summary>
-    /// Gets the destination stage identity.
-    /// </summary>
+    /// <summary>Creates a group-targeting destination (Groups A1).</summary>
+    public static ProgressionDestination ForGroup(StageId stageId, GroupId groupId) =>
+        new(stageId, slotKey: null, groupId);
+
+    /// <summary>Gets the destination stage identity.</summary>
     public StageId StageId { get; }
 
-    /// <summary>
-    /// Gets the opaque destination slot key when targeting form; otherwise <see langword="null"/>.
-    /// </summary>
+    /// <summary>Gets the opaque destination slot key when targeting Cup form; otherwise <see langword="null"/>.</summary>
     public string? SlotKey { get; }
 
-    /// <summary>
-    /// Gets a value indicating whether this destination targets the phase population (no slot).
-    /// </summary>
-    public bool TargetsPopulation => SlotKey is null;
+    /// <summary>Gets the destination group when targeting Groups Placement; otherwise <see langword="null"/>.</summary>
+    public GroupId? GroupId { get; }
+
+    /// <summary>Gets a value indicating whether this destination targets phase population only.</summary>
+    public bool TargetsPopulation => SlotKey is null && GroupId is null;
+
+    /// <summary>Gets a value indicating whether this destination targets a Cup slot.</summary>
+    public bool TargetsSlot => SlotKey is not null;
+
+    /// <summary>Gets a value indicating whether this destination targets a Groups poule.</summary>
+    public bool TargetsGroup => GroupId is not null;
 
     /// <summary>Returns a copy of this destination.</summary>
     public ProgressionDestination Copy() =>
-        TargetsPopulation ? ForPopulation(StageId) : ForSlot(StageId, SlotKey!);
+        TargetsPopulation
+            ? ForPopulation(StageId)
+            : TargetsGroup
+                ? ForGroup(StageId, GroupId!.Value)
+                : ForSlot(StageId, SlotKey!);
 
     private static string NormalizeSlotKey(string slotKey)
     {
