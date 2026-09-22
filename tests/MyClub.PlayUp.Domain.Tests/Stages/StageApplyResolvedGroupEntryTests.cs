@@ -29,7 +29,7 @@ public sealed class StageApplyResolvedGroupEntryTests
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
 
-        stage.ApplyResolvedGroupEntry(group.Id, entryId, _clock);
+        stage.ApplyResolvedGroupEntry(group.Id, entryId);
 
         group.EntryIds.Should().ContainSingle().Which.Should().Be(entryId);
     }
@@ -40,9 +40,9 @@ public sealed class StageApplyResolvedGroupEntryTests
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
-        stage.ApplyResolvedGroupEntry(group.Id, entryId, _clock);
+        stage.ApplyResolvedGroupEntry(group.Id, entryId);
 
-        stage.ApplyResolvedGroupEntry(group.Id, entryId, _clock);
+        stage.ApplyResolvedGroupEntry(group.Id, entryId);
 
         group.EntryIds.Should().ContainSingle().Which.Should().Be(entryId);
     }
@@ -54,9 +54,9 @@ public sealed class StageApplyResolvedGroupEntryTests
         var groupA = stage.AddGroup("A", _clock);
         var groupB = stage.AddGroup("B", _clock);
         var entryId = EntryId.New();
-        stage.ApplyResolvedGroupEntry(groupA.Id, entryId, _clock);
+        stage.ApplyResolvedGroupEntry(groupA.Id, entryId);
 
-        var act = () => stage.ApplyResolvedGroupEntry(groupB.Id, entryId, _clock);
+        var act = () => stage.ApplyResolvedGroupEntry(groupB.Id, entryId);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DuplicateEntry);
         groupA.EntryIds.Should().ContainSingle().Which.Should().Be(entryId);
@@ -73,7 +73,7 @@ public sealed class StageApplyResolvedGroupEntryTests
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
 
-        stage.ApplyResolvedGroupEntry(group.Id, EntryId.New(), _clock);
+        stage.ApplyResolvedGroupEntry(group.Id, EntryId.New());
 
         stage.Status.Should().Be(StageStatus.Ready);
     }
@@ -83,7 +83,7 @@ public sealed class StageApplyResolvedGroupEntryTests
     {
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
 
-        var act = () => stage.ApplyResolvedGroupEntry(GroupId.New(), EntryId.New(), _clock);
+        var act = () => stage.ApplyResolvedGroupEntry(GroupId.New(), EntryId.New());
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupNotFound);
     }

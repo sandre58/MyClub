@@ -117,7 +117,7 @@ public static class ApplyQualification
                 continue;
             }
 
-            if (path.Destination.TargetsPopulation)
+            if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
             {
                 continue;
             }
@@ -157,13 +157,15 @@ public static class ApplyQualification
             }
 
             var destination = ResolveCanonicalStage(path.Destination.StageId, competitionStages);
+
+            // Population + Form: AddResolvedPopulationEntry materializes Composition once.
+            // Form retains Placement intent on Path for WhoFeeds — no second Composition write.
             destination.AddResolvedPopulationEntry(instruction.EntryId, clock);
             if (path.Destination.TargetsGroup)
             {
                 destination.ApplyResolvedGroupEntry(
                     path.Destination.GroupId!.Value,
-                    instruction.EntryId,
-                    clock);
+                    instruction.EntryId);
             }
             else if (path.Destination.TargetsSlot)
             {

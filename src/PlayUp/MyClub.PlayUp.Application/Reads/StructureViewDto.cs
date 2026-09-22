@@ -316,7 +316,8 @@ public sealed record StructureQualificationIntentDto(
     int? MinimumPoints = null,
     int DestinationCount = 0,
     IReadOnlyList<string>? DestinationSlotKeys = null,
-    IReadOnlyList<Guid>? DestinationGroupIds = null);
+    IReadOnlyList<Guid>? DestinationGroupIds = null,
+    bool DestinationForm = false);
 
 /// <summary>One qualification path for Structure authoring / impact preview.</summary>
 /// <param name="Order">Path order (≥ 1).</param>
@@ -331,6 +332,7 @@ public sealed record StructureQualificationIntentDto(
 /// <param name="GroupName">Resolved group display name when <paramref name="GroupId"/> is set.</param>
 /// <param name="DestinationSlotKey">Cup Place slot key; null when not slot-targeting.</param>
 /// <param name="DestinationGroupId">Groups Place group id; null when not group-targeting.</param>
+/// <param name="DestinationForm">True when path targets Form Placement (Championship/Swiss).</param>
 public sealed record StructureQualificationPathDto(
     int Order,
     SelectionMode SelectionMode,
@@ -343,7 +345,8 @@ public sealed record StructureQualificationPathDto(
     int? MinimumPoints = null,
     string? GroupName = null,
     string? DestinationSlotKey = null,
-    Guid? DestinationGroupId = null);
+    Guid? DestinationGroupId = null,
+    bool DestinationForm = false);
 
 /// <summary>One progression authoring intent for Structure dialog (V3).</summary>
 public sealed record StructureProgressionIntentDto(
@@ -355,7 +358,8 @@ public sealed record StructureProgressionIntentDto(
     Guid DestinationStageId,
     IReadOnlyList<string>? DestinationSlotKeys,
     int ExpandedPathCount,
-    IReadOnlyList<Guid>? DestinationGroupIds = null);
+    IReadOnlyList<Guid>? DestinationGroupIds = null,
+    bool DestinationForm = false);
 
 /// <summary>One progression path for Structure authoring / impact preview.</summary>
 /// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
@@ -364,13 +368,15 @@ public sealed record StructureProgressionIntentDto(
 /// <param name="DestinationSlotKey">Cup Place slot key; null when not slot-targeting.</param>
 /// <param name="SourceLabel">Resolved fixture label (round · #order · slots) when the fixture exists.</param>
 /// <param name="DestinationGroupId">Groups Place group id; null when not group-targeting.</param>
+/// <param name="DestinationForm">True when path targets Form Placement.</param>
 public sealed record StructureProgressionPathDto(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
     string? DestinationSlotKey,
     string? SourceLabel = null,
-    Guid? DestinationGroupId = null);
+    Guid? DestinationGroupId = null,
+    bool DestinationForm = false);
 
 /// <summary>Round identity + display name inside a confrontation segment.</summary>
 /// <param name="RoundId">Round identity.</param>

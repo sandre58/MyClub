@@ -65,7 +65,7 @@ public sealed class ApplyQualificationForGroupTests
             new Dictionary<GroupId, Standing>
             {
                 [groupA.Id] = standingA,
-                [groupB.Id] = standingB,
+                [groupB.Id] = standingB
             },
             [source, dest],
             _clock);

@@ -725,16 +725,14 @@ public sealed class Stage : AggregateRoot<StageId>
 
                 // Place on this stage: slot or group must exist (slot must not conflict with Direct).
                 // Cross-stage Place: destination form ownership is validated at Prepare/Apply.
-                if (path.Destination.StageId.Equals(Id))
+                if (!path.Destination.StageId.Equals(Id)) continue;
+                if (path.Destination.TargetsGroup)
                 {
-                    if (path.Destination.TargetsGroup)
-                    {
-                        EnsureLocalGroupDestination(path.Destination.GroupId!.Value);
-                    }
-                    else
-                    {
-                        EnsureLocalPathDestination(path.Destination.SlotKey!);
-                    }
+                    EnsureLocalGroupDestination(path.Destination.GroupId!.Value);
+                }
+                else
+                {
+                    EnsureLocalPathDestination(path.Destination.SlotKey!);
                 }
             }
         }
@@ -1502,10 +1500,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </remarks>
     /// <param name="groupId">Target group identity.</param>
     /// <param name="entryId">Resolved entry identity.</param>
-    /// <param name="clock">The clock used for domain events (reserved for future events; mutability gate).</param>
-    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId, IClock clock)
+    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureResolutionMutable();
 
         var group = FindGroup(groupId)

@@ -92,7 +92,7 @@ public static class PrepareStage
         {
             foreach (var path in qualification.Paths)
             {
-                if (path.Destination.TargetsPopulation)
+                if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
                 {
                     EnsureOutboundPopulationDestination(
                         source,
@@ -129,7 +129,7 @@ public static class PrepareStage
 
         foreach (var path in progression.Paths)
         {
-            if (path.Destination.TargetsPopulation)
+            if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
             {
                 EnsureOutboundPopulationDestination(
                     source,

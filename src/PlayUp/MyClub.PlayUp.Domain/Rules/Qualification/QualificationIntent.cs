@@ -11,12 +11,13 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// <summary>
 /// Persisted authoring unit: one selection intention that expands to N <see cref="QualificationPath"/>.
 /// Paths are derived (Expand) — Intent is the authoring source of truth.
-/// Destination is Population, Cup Place (slots), or Groups Place (group ids) on the peer stage.
+/// Destination is Population, Form (Championship/Swiss), Cup Place (slots), or Groups Place (group ids).
 /// </summary>
 /// <remarks>
 /// Placement maps are total functions Expand → destination grain: <see cref="DestinationSlotKeys"/>
 /// or <see cref="DestinationGroupIds"/> count must equal Expand occurrence count, index-aligned.
-/// Both empty = Population. Mutually exclusive non-empty maps. After Expand, Apply / WhoFeeds
+/// <see cref="DestinationForm"/> applies <c>ForForm(DestinationStageId)</c> to every expanded Path.
+/// Exactly one of: Population | Form | Slot keys | Group ids. After Expand, Apply / WhoFeeds
 /// consume <c>path.Destination</c> only — never re-read these maps.
 /// </remarks>
 public sealed record QualificationIntent
@@ -35,7 +36,8 @@ public sealed record QualificationIntent
         int? acrossGroupsPosition = null,
         QualificationCondition? condition = null,
         IReadOnlyList<string>? destinationSlotKeys = null,
-        IReadOnlyList<GroupId>? destinationGroupIds = null)
+        IReadOnlyList<GroupId>? destinationGroupIds = null,
+        bool destinationForm = false)
     {
         if (!Enum.IsDefined(sourceKind))
         {
@@ -97,10 +99,11 @@ public sealed record QualificationIntent
 
         var slotKeys = destinationSlotKeys is { Count: > 0 } ? destinationSlotKeys : null;
         var groupIds = destinationGroupIds is { Count: > 0 } ? destinationGroupIds : null;
-        if (slotKeys is not null && groupIds is not null)
+        var modes = (destinationForm ? 1 : 0) + (slotKeys is not null ? 1 : 0) + (groupIds is not null ? 1 : 0);
+        if (modes > 1)
         {
             throw new DomainException(
-                "Qualification intent cannot specify both destination slot keys and destination group identities.",
+                "Qualification intent destination must be exactly one of: population, form, slot keys, or group ids.",
                 RulesErrorCodes.QualificationRulesInvalid);
         }
 
@@ -115,6 +118,7 @@ public sealed record QualificationIntent
         Condition = condition;
         DestinationSlotKeys = NormalizeDestinationSlotKeys(destinationStageId, slotKeys);
         DestinationGroupIds = groupIds is null ? [] : [.. groupIds];
+        DestinationForm = destinationForm;
     }
 
     /// <summary>Gets the stable authoring identity (Guid v7).</summary>
@@ -146,6 +150,11 @@ public sealed record QualificationIntent
     /// </summary>
     public IReadOnlyList<GroupId> DestinationGroupIds { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether Expand emits <c>ForForm(DestinationStageId)</c> on every Path.
+    /// </summary>
+    public bool DestinationForm { get; }
+
     /// <summary>Gets the group when <see cref="SourceKind"/> is <see cref="QualificationIntentSourceKind.SingleGroup"/>.</summary>
     public GroupId? GroupId { get; }
 
@@ -157,7 +166,10 @@ public sealed record QualificationIntent
 
     /// <summary>Gets a value indicating whether this intent targets population only.</summary>
     public bool TargetsPopulation =>
-        DestinationSlotKeys.Count == 0 && DestinationGroupIds.Count == 0;
+        !DestinationForm && DestinationSlotKeys.Count == 0 && DestinationGroupIds.Count == 0;
+
+    /// <summary>Gets a value indicating whether this intent targets Form Placement.</summary>
+    public bool TargetsForm => DestinationForm;
 
     /// <summary>Gets a value indicating whether this intent targets Cup slots.</summary>
     public bool TargetsSlot => DestinationSlotKeys.Count > 0;
@@ -178,7 +190,8 @@ public sealed record QualificationIntent
             AcrossGroupsPosition,
             Condition is null ? null : QualificationCondition.PointsAtLeast(Condition.MinimumPoints),
             DestinationSlotKeys.Count == 0 ? null : DestinationSlotKeys,
-            DestinationGroupIds.Count == 0 ? null : DestinationGroupIds);
+            DestinationGroupIds.Count == 0 ? null : DestinationGroupIds,
+            DestinationForm);
 
     private static string[] NormalizeDestinationSlotKeys(
         StageId destinationStageId,

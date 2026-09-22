@@ -244,6 +244,11 @@ function ChampionshipSchematic({
         teams: rows.length,
       })}
     >
+      {schematic.formFeed ? (
+        <span className="regulation-schematic__form-feed">
+          {feedOriginLabel(schematic.formFeed, t)}
+        </span>
+      ) : null}
       <div className="regulation-schematic__league">
         {rows.map((c, i) => (
           <SlotBox
@@ -284,6 +289,11 @@ function SwissSchematic({
           ? t('regulation:schematic.swiss', { rounds })
           : t('regulation:schematic.swissGeneric')}
       </p>
+      {schematic.formFeed ? (
+        <span className="regulation-schematic__form-feed">
+          {feedOriginLabel(schematic.formFeed, t)}
+        </span>
+      ) : null}
       <div className="regulation-schematic__swiss-places">
         {schematic.cases.map((c, i) => (
           <SlotBox key={c.formPosition.index ?? i} c={c} t={t} />

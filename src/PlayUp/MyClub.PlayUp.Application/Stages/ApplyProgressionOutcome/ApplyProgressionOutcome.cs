@@ -101,12 +101,14 @@ public static class ApplyProgressionOutcome
         {
             var instruction = instructions[i];
             destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock);
+
+            // Form: Path.Destination.TargetsForm retains Placement intent; materialization is
+            // AddResolvedPopulationEntry only (no second Composition write).
             if (instruction.TargetsGroup)
             {
                 destinations[i].ApplyResolvedGroupEntry(
                     instruction.GroupId!.Value,
-                    instruction.EntryId,
-                    clock);
+                    instruction.EntryId);
             }
             else if (instruction.TargetsSlot)
             {

@@ -189,7 +189,7 @@ describe('structurePlaceLabel', () => {
     expect(listLabeledPlaces(bare, t)).toEqual([]);
   });
 
-  it('filters Place-eligible peers by Cup slots or Groups capacity; Champ/Swiss stay out', () => {
+  it('filters Place-eligible peers: Cup slots, Groups, Champ/Swiss Forme', () => {
     const labeledCup: StageSchematic = {
       stageId: 'cup',
       competitionId: 'c1',
@@ -272,6 +272,8 @@ describe('structurePlaceLabel', () => {
     expect(filterPlaceEligiblePeers(peers, byId)).toEqual([
       { stageId: 'cup' },
       { stageId: 'groups' },
+      { stageId: 'champ' },
+      { stageId: 'swiss' },
     ]);
   });
 });

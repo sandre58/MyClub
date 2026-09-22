@@ -48,7 +48,7 @@ public static class StageSchematicAssembler
             StructureFormatKind.Cup => AssembleCup(stage, competitionStages, entries, matchRows ?? []),
             StructureFormatKind.Groups => AssembleGroups(stage, competitionStages, entries),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
-                AssembleRosterCapacity(stage, competition, format.Value, entries),
+                AssembleRosterCapacity(stage, competition, competitionStages, format.Value, entries),
             _ => Empty(stage, format)
         };
     }
@@ -371,7 +371,7 @@ public static class StageSchematicAssembler
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
         var perGroup = stage.PlacesPerGroup
-            ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
+                       ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
         if (stage.Groups.Count == 0 || perGroup is null or < 1)
         {
             return Empty(stage, StructureFormatKind.Groups);
@@ -416,7 +416,7 @@ public static class StageSchematicAssembler
     /// Inbound Qual/Prog ForGroup destinations → one origin per group when unambiguous.
     /// Same feed concept as slot WhoFeeds; grain is Groupe (A1), not Place k.
     /// </summary>
-    private static IReadOnlyList<SchematicGroupFeedDto> ResolveGroupFeeds(
+    private static List<SchematicGroupFeedDto> ResolveGroupFeeds(
         Stage target,
         IReadOnlyList<Stage> competitionStages)
     {
@@ -471,14 +471,13 @@ public static class StageSchematicAssembler
             var byMechanism = origins
                 .GroupBy(o => (o.Kind, o.SourceStageId))
                 .ToArray();
-            if (byMechanism.Length == 1)
-            {
-                var representative = byMechanism[0]
-                    .OrderBy(o => o.PathOrder ?? int.MaxValue)
-                    .ThenBy(o => o.SourceFixtureId)
-                    .First();
-                result.Add(new SchematicGroupFeedDto(groupId, representative));
-            }
+            if (byMechanism.Length != 1) continue;
+
+            var representative = byMechanism[0]
+                .OrderBy(o => o.PathOrder ?? int.MaxValue)
+                .ThenBy(o => o.SourceFixtureId)
+                .First();
+            result.Add(new SchematicGroupFeedDto(groupId, representative));
         }
 
         return result;
@@ -501,7 +500,7 @@ public static class StageSchematicAssembler
     private static SchematicFeedOriginDto MapQualificationPathOrigin(
         Domain.Rules.QualificationPath path,
         Stage sourceStage,
-        Guid destinationGroupId)
+        Guid? destinationGroupId)
     {
         string? groupName = null;
         if (path.Source.GroupId is { } sourceGroupId)
@@ -525,19 +524,19 @@ public static class StageSchematicAssembler
 
     /// <summary>
     /// Championship / Swiss: RosterPlace 1..N with Composition entries placed in order.
-    /// These formats have no separate placement mechanism — the constituted set is the roster.
-    /// Surplus k beyond N stays in the Entrées rail only.
+    /// Form-level inbound feeds live on <see cref="StageSchematicDto.FormFeed"/> — never on RosterPlace k.
     /// </summary>
     private static StageSchematicDto AssembleRosterCapacity(
         Stage stage,
         Competition competition,
+        IReadOnlyList<Stage> competitionStages,
         StructureFormatKind format,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
         var places = ResolvePlaces(competition, stage, format);
         if (places is null or < 1)
         {
-            return Empty(stage, format);
+            return Empty(stage, format) with { FormFeed = ResolveFormFeed(stage, competitionStages) };
         }
 
         var placed = stage.CompositionEntries
@@ -565,7 +564,49 @@ public static class StageSchematicAssembler
             format,
             cases,
             [],
-            SwissRoundCount: stage.SwissSettings?.RoundCount);
+            SwissRoundCount: stage.SwissSettings?.RoundCount,
+            FormFeed: ResolveFormFeed(stage, competitionStages));
+    }
+
+    /// <summary>
+    /// Inbound Qual/Prog ForForm destinations → Form grain origin when unambiguous.
+    /// Never projected onto RosterPlace k.
+    /// </summary>
+    private static SchematicFeedOriginDto? ResolveFormFeed(
+        Stage target,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        var origins = new List<SchematicFeedOriginDto>();
+
+        foreach (var stage in competitionStages)
+        {
+            if (stage.Regulation.QualificationRules is { } qualification)
+            {
+                origins.AddRange(from path in qualification.Paths where path.Destination.StageId.Equals(target.Id) && path.Destination.TargetsForm select MapQualificationPathOrigin(path, stage, destinationGroupId: null));
+            }
+
+            if (stage.Regulation.ProgressionRules is not { } progression)
+            {
+                continue;
+            }
+
+            origins.AddRange(from path in progression.Paths where path.Destination.StageId.Equals(target.Id) && path.Destination.TargetsForm select new SchematicFeedOriginDto(FeedKind.Progression, SourceStageId: stage.Id.Value, SourceFixtureId: path.SourceFixtureId.Value, SourceFixtureNumber: FindFixtureNumber(stage.Id, path.SourceFixtureId, competitionStages), Outcome: path.Outcome));
+        }
+
+        if (origins.Count == 0)
+        {
+            return null;
+        }
+
+        var byMechanism = origins
+            .GroupBy(o => (o.Kind, o.SourceStageId))
+            .ToArray();
+        return byMechanism.Length != 1
+            ? null
+            : byMechanism[0]
+                .OrderBy(o => o.PathOrder ?? int.MaxValue)
+                .ThenBy(o => o.SourceFixtureId)
+                .First();
     }
 
     /// <summary>
@@ -760,7 +801,7 @@ public static class StageSchematicAssembler
         }
 
         var perGroup = stage.PlacesPerGroup
-            ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
+                       ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
         return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
     }
 

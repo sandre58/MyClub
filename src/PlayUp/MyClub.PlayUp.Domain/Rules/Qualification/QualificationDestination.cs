@@ -11,10 +11,8 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Where selected participants are routed.
-/// Population: stage only.
-/// Slot: stage + SlotKey (Cup Auto Place — dual-write with population).
-/// Group: stage + GroupId (Groups A1 Placement — dual-write with population).
+/// Placement / population destination (one-of).
+/// Population | Form (Championship/Swiss) | Group (Groups A1) | Slot (Cup).
 /// </summary>
 public sealed record QualificationDestination
 {
@@ -25,55 +23,66 @@ public sealed record QualificationDestination
 
     /// <summary>
     /// Initializes a new instance of the <see cref="QualificationDestination"/> class.
-    /// Exactly one of: population (both null), slot, or group.
+    /// One-of: population (defaults), form, slot, or group.
     /// </summary>
-    /// <param name="stageId">The destination stage identity.</param>
-    /// <param name="slotKey">Slot key when targeting Cup form; otherwise <see langword="null"/>.</param>
-    /// <param name="groupId">Group when targeting Groups Placement; otherwise <see langword="null"/>.</param>
     [JsonConstructor]
-    public QualificationDestination(StageId stageId, string? slotKey = null, GroupId? groupId = null)
+    public QualificationDestination(
+        StageId stageId,
+        string? slotKey = null,
+        GroupId? groupId = null,
+        bool form = false)
     {
-        if (slotKey is not null && groupId is not null)
+        var hasSlot = slotKey is not null;
+        var hasGroup = groupId is not null;
+        var modes = (form ? 1 : 0) + (hasSlot ? 1 : 0) + (hasGroup ? 1 : 0);
+        if (modes > 1)
         {
             throw new DomainException(
-                "Qualification destination cannot target both a slot and a group.",
+                "Qualification destination must be exactly one of: population, form, slot, or group.",
                 RulesErrorCodes.QualificationRulesInvalid);
         }
 
         StageId = stageId;
-        SlotKey = slotKey is null ? null : NormalizeSlotKey(slotKey);
+        SlotKey = hasSlot ? NormalizeSlotKey(slotKey!) : null;
         GroupId = groupId;
+        Form = form;
     }
 
-    /// <summary>
-    /// Creates a population-targeting destination (StageId only).
-    /// </summary>
+    /// <summary>Creates a population-only destination (no form feed).</summary>
     public static QualificationDestination ForPopulation(StageId stageId) =>
-        new(stageId, slotKey: null, groupId: null);
+        new(stageId, slotKey: null, groupId: null, form: false);
 
-    /// <summary>
-    /// Creates a slot-targeting destination (Auto Place into Cup form).
-    /// </summary>
+    /// <summary>Creates a form Placement destination (Championship / Swiss — WhoFeeds at Form grain).</summary>
+    public static QualificationDestination ForForm(StageId stageId) =>
+        new(stageId, slotKey: null, groupId: null, form: true);
+
+    /// <summary>Creates a slot Placement destination (Cup).</summary>
     public static QualificationDestination ForSlot(StageId stageId, string slotKey) =>
-        new(stageId, slotKey, groupId: null);
+        new(stageId, slotKey, groupId: null, form: false);
 
-    /// <summary>
-    /// Creates a group-targeting destination (Groups A1 Placement).
-    /// </summary>
+    /// <summary>Creates a group Placement destination (Groups A1).</summary>
     public static QualificationDestination ForGroup(StageId stageId, GroupId groupId) =>
-        new(stageId, slotKey: null, groupId);
+        new(stageId, slotKey: null, groupId, form: false);
 
     /// <summary>Gets the destination stage identity.</summary>
     public StageId StageId { get; }
 
-    /// <summary>Gets the opaque destination slot key when targeting Cup form; otherwise <see langword="null"/>.</summary>
+    /// <summary>Gets the Cup slot key when <see cref="TargetsSlot"/>; otherwise <see langword="null"/>.</summary>
     public string? SlotKey { get; }
 
-    /// <summary>Gets the destination group when targeting Groups Placement; otherwise <see langword="null"/>.</summary>
+    /// <summary>Gets the Groups poule when <see cref="TargetsGroup"/>; otherwise <see langword="null"/>.</summary>
     public GroupId? GroupId { get; }
 
-    /// <summary>Gets a value indicating whether this destination targets phase population only.</summary>
-    public bool TargetsPopulation => SlotKey is null && GroupId is null;
+    /// <summary>
+    /// Gets a value indicating whether this destination is Form Placement (persisted discriminator vs Population).
+    /// </summary>
+    public bool Form { get; }
+
+    /// <summary>Gets a value indicating whether this destination is population only (no Placement).</summary>
+    public bool TargetsPopulation => !Form && SlotKey is null && GroupId is null;
+
+    /// <summary>Gets a value indicating whether this destination is Form Placement.</summary>
+    public bool TargetsForm => Form;
 
     /// <summary>Gets a value indicating whether this destination targets a Cup slot.</summary>
     public bool TargetsSlot => SlotKey is not null;
@@ -85,9 +94,11 @@ public sealed record QualificationDestination
     public QualificationDestination Copy() =>
         TargetsPopulation
             ? ForPopulation(StageId)
-            : TargetsGroup
-                ? ForGroup(StageId, GroupId!.Value)
-                : ForSlot(StageId, SlotKey!);
+            : TargetsForm
+                ? ForForm(StageId)
+                : TargetsGroup
+                    ? ForGroup(StageId, GroupId!.Value)
+                    : ForSlot(StageId, SlotKey!);
 
     private static string NormalizeSlotKey(string slotKey)
     {

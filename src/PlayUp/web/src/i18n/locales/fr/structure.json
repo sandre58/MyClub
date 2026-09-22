@@ -578,7 +578,8 @@
     "side": "côté {{side}}",
     "cup": "{{round}} · {{side}}",
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
-    "group": "Groupe {{name}}"
+    "group": "Groupe {{name}}",
+    "form": "Forme"
   },
   "population": {
     "sectionSources": "Depuis les phases",
@@ -694,7 +695,7 @@
     "kindPopulationHint": "Alimente les entrées d’une autre phase",
     "kindPlace": "Place",
     "kindPlaceHint": "Emplacement précis dans la phase",
-    "kindPlaceUnavailable": "Aucune phase aval n’expose de places Coupe adressables. Utilisez Population, ou générez un tableau Coupe.",
+    "kindPlaceUnavailable": "Aucune phase aval n’expose de places adressables (Coupe, Groupes, Championnat ou Suisse). Utilisez Population, ou générez une forme aval.",
     "placeEmpty": "Aucune place libellée dans cette phase de destination.",
     "placeMapAria": "Associer chaque match à une place",
     "placeMapRowAria": "Place pour {{source}}",
@@ -758,7 +759,7 @@
     "kindPopulationHint": "Alimente les entrées d’une autre phase",
     "kindPlace": "Place",
     "kindPlaceHint": "Emplacement précis dans la phase",
-    "kindPlaceUnavailable": "Aucune phase aval n’expose de places Coupe adressables. Utilisez Population, ou générez un tableau Coupe.",
+    "kindPlaceUnavailable": "Aucune phase aval n’expose de places adressables (Coupe, Groupes, Championnat ou Suisse). Utilisez Population, ou générez une forme aval.",
     "placeSelectPending": "Choisissez une place libellée de la phase de destination.",
     "placeEmpty": "Aucune place libellée dans cette phase de destination.",
     "placeMapAria": "Associer chaque sélection à une place",

@@ -1,15 +1,15 @@
 // -----------------------------------------------------------------------
-// Place address labels — Cup (Slot) and Groups A1 (Group).
-// UX Place = Placement destination picker (Slot | Group).
+// Place address labels — Cup (Slot), Groups A1 (Group), Champ/Swiss (Form).
+// UX Place = Placement destination picker (Slot | Group | Form).
 // Long label (rail/dialog) = topology; chrome (schematic) = SlotKey (C2).
 // Backend supplies structural facts; SPA localizes side only (not RoundName).
-// Championship / Swiss remain ineligible for Place.
 // -----------------------------------------------------------------------
 
 import type {
   SchematicCase,
   SchematicFormPosition,
   StageSchematic,
+  StructureFormatKind,
 } from '../types';
 
 export type PlaceTranslate = (
@@ -17,8 +17,25 @@ export type PlaceTranslate = (
   opts?: Record<string, unknown>,
 ) => string;
 
-/** Place destination grain: Cup SlotKey or Groups poule id. */
-export type PlaceGrain = 'slot' | 'group';
+/** Place destination grain: Cup SlotKey, Groups poule, or Forme. */
+export type PlaceGrain = 'slot' | 'group' | 'form';
+
+/** Maps structure format to Place grain (null when not Place-eligible). */
+export function placeGrainForFormat(
+  formatKind: StructureFormatKind | string | null | undefined,
+): PlaceGrain | null {
+  switch (formatKind) {
+    case 'Cup':
+      return 'slot';
+    case 'Groups':
+      return 'group';
+    case 'Championship':
+    case 'Swiss':
+      return 'form';
+    default:
+      return null;
+  }
+}
 
 /** Stable API identity for Progression Place (Domain ForSlot). */
 export function cupPlaceApiIdentity(
@@ -99,13 +116,19 @@ export function areProgressionPlacesLabeled(
   if (schematic.formatKind === 'Groups') {
     return schematic.cases.some((c) => !!c.formPosition.groupId?.trim());
   }
+  if (
+    schematic.formatKind === 'Championship' ||
+    schematic.formatKind === 'Swiss'
+  ) {
+    // Form grain — the Forme itself is the Place; no RosterPlace invented.
+    return true;
+  }
   return false;
 }
 
 /**
- * Aval peers whose form currently exposes addressable Places (Cup slots or Groups).
- * Gate on real capacity — not formatKind alone (Cup skeleton without SlotKey = ineligible).
- * Championship / Swiss stay ineligible.
+ * Aval peers whose form currently exposes addressable Places
+ * (Cup slots, Groups poules, or Champ/Swiss Forme).
  */
 export function filterPlaceEligiblePeers<T extends { stageId: string }>(
   peers: readonly T[],
@@ -157,7 +180,7 @@ export function listLabeledCupPlaces(
 
 /**
  * Place picker options for the destination schematic.
- * Cup → SlotKeys; Groups → stable groupId (label = localized “Groupe A”). Champ/Swiss → [].
+ * Cup → SlotKeys; Groups → groupId; Champ/Swiss → single Form option.
  */
 export function listLabeledPlaces(
   schematic: StageSchematic | null | undefined,
@@ -169,6 +192,12 @@ export function listLabeledPlaces(
   }
   if (schematic.formatKind === 'Groups') {
     return listLabeledGroupPlaces(schematic, t);
+  }
+  if (
+    schematic.formatKind === 'Championship' ||
+    schematic.formatKind === 'Swiss'
+  ) {
+    return listLabeledFormPlaces(schematic, t);
   }
   return [];
 }
@@ -194,6 +223,28 @@ export function listLabeledGroupPlaces(
     });
   }
   return out;
+}
+
+/** Champ/Swiss — one Form Place (Domain ForForm); never invents RosterPlace addresses. */
+export function listLabeledFormPlaces(
+  schematic: StageSchematic | null | undefined,
+  t: PlaceTranslate,
+): LabeledPlace[] {
+  if (
+    !schematic ||
+    (schematic.formatKind !== 'Championship' &&
+      schematic.formatKind !== 'Swiss')
+  ) {
+    return [];
+  }
+  return [
+    {
+      apiIdentity: schematic.stageId,
+      label: t('place.form'),
+      description: null,
+      grain: 'form',
+    },
+  ];
 }
 
 export function findCaseByPlaceIdentity(

@@ -32,14 +32,12 @@ public static class ProgressionChampionshipPath
         ArgumentNullException.ThrowIfNull(rounds);
 
         var withFixtures = rounds.Where(static r => r.Fixtures.Count > 0).ToList();
-        if (withFixtures.Count == 0)
+        switch (withFixtures.Count)
         {
-            return null;
-        }
-
-        if (withFixtures.Count == 1)
-        {
-            return withFixtures[0];
+            case 0:
+                return null;
+            case 1:
+                return withFixtures[0];
         }
 
         var prefix = new List<Round> { withFixtures[0] };
@@ -67,6 +65,6 @@ public static class ProgressionChampionshipPath
         RoundId roundId)
     {
         var terminal = TerminalRound(rounds);
-        return terminal is not null && terminal.Id.Equals(roundId);
+        return terminal?.Id.Equals(roundId) == true;
     }
 }

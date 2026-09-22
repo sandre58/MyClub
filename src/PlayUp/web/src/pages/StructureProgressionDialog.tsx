@@ -78,6 +78,7 @@ import {
   areProgressionPlacesLabeled,
   filterPlaceEligiblePeers,
   listLabeledPlaces,
+  placeGrainForFormat,
 } from './structurePlaceLabel';
 import { expectedPopulationWithProgDraft } from './structurePopulationVolume';
 
@@ -335,11 +336,17 @@ export function StructureProgressionDialog({
       const resolved = resolveRoundIdForFixture(rounds, path.sourceFixtureId);
       if (!resolved) continue;
       const targetKind: ProgTargetKind =
+        !path.destinationForm &&
         isPopulationDestination(path.destinationSlotKey) &&
         !path.destinationGroupId?.trim()
           ? 'population'
           : 'place';
-      const key = `${resolved.roundId}|${path.outcome}|${path.destinationStageId}|${targetKind}`;
+      const placeMode = path.destinationForm
+        ? 'form'
+        : path.destinationGroupId?.trim()
+          ? 'group'
+          : 'slot';
+      const key = `${resolved.roundId}|${path.outcome}|${path.destinationStageId}|${targetKind}|${placeMode}`;
       const existing = groups.get(key);
       if (existing) {
         existing.paths.push(path);
@@ -374,6 +381,27 @@ export function StructureProgressionDialog({
             targetKind: 'population',
             destinationSlotKeys: [],
             destinationGroupIds: [],
+            destinationForm: false,
+            expandedPathCount: fixtureCount,
+          }),
+        );
+        continue;
+      }
+
+      const isFormPlace = group.paths.some((p) => !!p.destinationForm);
+      if (isFormPlace) {
+        next.push(
+          syncPlaceSlotKeys({
+            id: crypto.randomUUID(),
+            order: order++,
+            roundId: group.roundId,
+            roundName: group.roundName,
+            outcome: group.outcome,
+            targetKind: 'place',
+            destinationStageId: group.destinationStageId,
+            destinationSlotKeys: [],
+            destinationGroupIds: [],
+            destinationForm: true,
             expandedPathCount: fixtureCount,
           }),
         );
@@ -405,6 +433,7 @@ export function StructureProgressionDialog({
           destinationStageId: group.destinationStageId,
           destinationSlotKeys: isGroupPlace ? [] : keys,
           destinationGroupIds: isGroupPlace ? keys : [],
+          destinationForm: false,
           expandedPathCount: fixtureCount,
         }),
       );
@@ -929,7 +958,8 @@ function ProgIntentEditor({
   /** UX Place grain from dest schematic (Groups A1 vs Cup slots). */
   const placeGrain =
     labeledPlaces[0]?.grain ??
-    (destSchematicQuery.data?.formatKind === 'Groups' ? 'group' : 'slot');
+    placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
+    'slot';
 
   const selectedRound = useMemo(
     () => rounds.find((r) => r.id === draft.roundId) ?? null,
@@ -954,6 +984,7 @@ function ProgIntentEditor({
     onChange({
       ...draft,
       targetKind: 'place',
+      destinationForm: false,
       destinationSlotKeys: placeGrain === 'slot' ? aligned : [],
       destinationGroupIds: placeGrain === 'group' ? aligned : [],
     });
@@ -1024,6 +1055,7 @@ function ProgIntentEditor({
             : (peerStages[0]?.stageId ?? ''),
         destinationSlotKeys: [],
         destinationGroupIds: [],
+        destinationForm: false,
       });
       return;
     }
@@ -1036,11 +1068,12 @@ function ProgIntentEditor({
       ? draft.destinationStageId
       : (placeEligiblePeers[0]?.stageId ?? '');
     const nextPeer = placeEligiblePeers.find((p) => p.stageId === nextDest);
-    const grain = nextPeer?.formatKind === 'Groups' ? 'group' : 'slot';
+    const grain = placeGrainForFormat(nextPeer?.formatKind) ?? 'slot';
     onChange({
       ...draft,
       targetKind: 'place',
       destinationStageId: nextDest,
+      destinationForm: grain === 'form',
       destinationSlotKeys:
         grain === 'slot' && draft.targetKind === 'place'
           ? draft.destinationSlotKeys
@@ -1243,6 +1276,7 @@ function ProgIntentEditor({
                     destinationStageId: peer.stageId,
                     destinationSlotKeys: [],
                     destinationGroupIds: [],
+                    destinationForm: false,
                   });
                 }}
               />
@@ -1270,13 +1304,13 @@ function ProgIntentEditor({
                 selected={draft.destinationStageId === dest.stageId}
                 onChange={(selected) => {
                   if (!selected) return;
-                  const grain =
-                    dest.formatKind === 'Groups' ? 'group' : 'slot';
+                  const grain = placeGrainForFormat(dest.formatKind) ?? 'slot';
                   const keep = draft.destinationStageId === dest.stageId;
                   onChange({
                     ...draft,
                     targetKind: 'place',
                     destinationStageId: dest.stageId,
+                    destinationForm: grain === 'form',
                     destinationSlotKeys:
                       grain === 'slot'
                         ? keep
@@ -1298,7 +1332,7 @@ function ProgIntentEditor({
             ))}
           </div>
 
-          {draft.targetKind === 'place' && destStageId ? (
+          {draft.targetKind === 'place' && destStageId && placeGrain !== 'form' ? (
             destSchematicQuery.isLoading ? (
               <ul
                 className="structure-qualification__place-map structure-qualification__place-map--skeleton"

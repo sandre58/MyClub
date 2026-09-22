@@ -50,9 +50,11 @@ export type QualIntentDraft = {
   destinationSlotKeys: string[];
   /**
    * Groups A1 Place group ids aligned with Expand (index ↔ groupId).
-   * Empty when Population or Cup Place. Duplicates allowed.
+   * Empty when Population, Cup Place, or Form Place. Duplicates allowed.
    */
   destinationGroupIds: string[];
+  /** Champ/Swiss Form Placement (Domain DestinationForm / ForForm). */
+  destinationForm: boolean;
 };
 
 export type SourceOccurrence = {
@@ -77,12 +79,15 @@ export function newIntentId(): string {
   return crypto.randomUUID();
 }
 
-/** Active Place map for this draft (slot XOR group). */
+/** Active Place map for this draft (slot XOR group XOR form). */
 export function placeMapKeys(draft: QualIntentDraft): {
-  grain: 'slot' | 'group';
+  grain: 'slot' | 'group' | 'form';
   keys: string[];
 } | null {
   if (draft.targetKind !== 'place') return null;
+  if (draft.destinationForm) {
+    return { grain: 'form', keys: [] };
+  }
   if (draft.destinationGroupIds.length > 0) {
     return { grain: 'group', keys: draft.destinationGroupIds };
   }
@@ -96,7 +101,7 @@ export function countUnmappedPlaceSlots(
 ): number {
   let n = 0;
   for (const intent of intents) {
-    if (intent.targetKind !== 'place') continue;
+    if (intent.targetKind !== 'place' || intent.destinationForm) continue;
     const occ = expandOccurrences(intent, groups);
     const map = placeMapKeys(intent);
     n += countEmptyPlaceSlots(map?.keys ?? [], occ.length);
@@ -110,6 +115,21 @@ export function syncPlaceSlotKeys(
   groups: { id: string; name: string }[],
 ): QualIntentDraft {
   if (draft.targetKind !== 'place') {
+    if (
+      draft.destinationSlotKeys.length === 0 &&
+      draft.destinationGroupIds.length === 0 &&
+      !draft.destinationForm
+    ) {
+      return draft;
+    }
+    return {
+      ...draft,
+      destinationSlotKeys: [],
+      destinationGroupIds: [],
+      destinationForm: false,
+    };
+  }
+  if (draft.destinationForm) {
     if (
       draft.destinationSlotKeys.length === 0 &&
       draft.destinationGroupIds.length === 0
@@ -128,7 +148,12 @@ export function syncPlaceSlotKeys(
     ) {
       return draft;
     }
-    return { ...draft, destinationGroupIds: next, destinationSlotKeys: [] };
+    return {
+      ...draft,
+      destinationGroupIds: next,
+      destinationSlotKeys: [],
+      destinationForm: false,
+    };
   }
   const next = resizeDestinationSlotKeys(draft.destinationSlotKeys, n);
   if (
@@ -138,7 +163,12 @@ export function syncPlaceSlotKeys(
   ) {
     return draft;
   }
-  return { ...draft, destinationSlotKeys: next, destinationGroupIds: [] };
+  return {
+    ...draft,
+    destinationSlotKeys: next,
+    destinationGroupIds: [],
+    destinationForm: false,
+  };
 }
 
 export function emptyQualIntent(
@@ -159,6 +189,7 @@ export function emptyQualIntent(
     destinationStageId,
     destinationSlotKeys: [],
     destinationGroupIds: [],
+    destinationForm: false,
   };
 }
 
@@ -170,8 +201,9 @@ export function intentFromApi(
     intent.destinationSlotKeys,
     intent.destinationSlotKey,
   );
-  const population = groupIds.length === 0 && keys.length === 0;
-  const isGroupPlace = !population && groupIds.length > 0;
+  const form = !!intent.destinationForm;
+  const population = !form && groupIds.length === 0 && keys.length === 0;
+  const isGroupPlace = !population && !form && groupIds.length > 0;
   return {
     id: intent.intentId,
     sourceKind: intent.sourceKind,
@@ -191,8 +223,9 @@ export function intentFromApi(
       intent.minimumPoints != null ? String(intent.minimumPoints) : '',
     targetKind: population ? 'population' : 'place',
     destinationStageId: intent.destinationStageId,
-    destinationSlotKeys: population || isGroupPlace ? [] : keys,
-    destinationGroupIds: population || !isGroupPlace ? [] : groupIds,
+    destinationSlotKeys: population || form || isGroupPlace ? [] : keys,
+    destinationGroupIds: population || form || !isGroupPlace ? [] : groupIds,
+    destinationForm: form,
   };
 }
 
@@ -210,8 +243,9 @@ export function pathToSingletonIntent(
 
   const k = path.selectionValue;
   const groupId = path.destinationGroupId?.trim() ?? '';
+  const form = !!path.destinationForm;
   const population =
-    isPopulationDestination(path.destinationSlotKey) && !groupId;
+    !form && isPopulationDestination(path.destinationSlotKey) && !groupId;
   return {
     id: newIntentId(),
     sourceKind,
@@ -230,10 +264,11 @@ export function pathToSingletonIntent(
     targetKind: population ? 'population' : 'place',
     destinationStageId: path.destinationStageId,
     destinationSlotKeys:
-      population || groupId
+      population || form || groupId
         ? []
         : coerceDestinationSlotKeys(null, path.destinationSlotKey),
-    destinationGroupIds: population || !groupId ? [] : [groupId],
+    destinationGroupIds: population || form || !groupId ? [] : [groupId],
+    destinationForm: form,
   };
 }
 
@@ -505,6 +540,9 @@ export function incompleteIntentReason(
   if (occurrences.length === 0) return 'Selection';
 
   if (draft.targetKind === 'place') {
+    if (draft.destinationForm) {
+      return null;
+    }
     const map = placeMapKeys(draft);
     const grain = map?.grain ?? 'slot';
     const keys = map?.keys ?? [];
@@ -595,10 +633,13 @@ export function toApiIntent(
   groups: { id: string; name: string }[] = [],
 ) {
   const expandN = expandOccurrences(draft, groups).length;
+  const isFormPlace = draft.targetKind === 'place' && draft.destinationForm;
   const isGroupPlace =
-    draft.targetKind === 'place' && draft.destinationGroupIds.length > 0;
+    draft.targetKind === 'place' &&
+    !isFormPlace &&
+    draft.destinationGroupIds.length > 0;
   const placeKeys =
-    draft.targetKind === 'place' && !isGroupPlace
+    draft.targetKind === 'place' && !isGroupPlace && !isFormPlace
       ? resizeDestinationSlotKeys(draft.destinationSlotKeys, expandN).map(
           (k) => k.trim(),
         )
@@ -620,6 +661,7 @@ export function toApiIntent(
       draft.targetKind === 'place' && placeKeys.length > 0 ? placeKeys : null,
     destinationGroupIds:
       draft.targetKind === 'place' && groupIds.length > 0 ? groupIds : null,
+    destinationForm: isFormPlace ? true : false,
     groupId:
       draft.sourceKind === 'SingleGroup' ? draft.groupId || null : null,
     acrossGroupsPosition:

@@ -78,6 +78,19 @@ public static class QualificationPathExpander
                 continue;
             }
 
+            if (intent.TargetsForm)
+            {
+                // Expand zip: each Path i gets ForForm(DestinationStageId) — Form grain has no sub-id list.
+                var destination = QualificationDestination.ForForm(intent.DestinationStageId);
+                paths.AddRange(occurrences.Select(occurrence => new QualificationPath(
+                    pathOrder++,
+                    ToSource(occurrence),
+                    new QualificationSelection(SelectionMode.Position, occurrence.Position),
+                    destination,
+                    condition)));
+                continue;
+            }
+
             if (intent.TargetsGroup)
             {
                 if (intent.DestinationGroupIds.Count != occurrences.Count)
@@ -253,7 +266,8 @@ public static class QualificationPathExpander
             across,
             path.Condition,
             slotKeys,
-            destGroupIds);
+            destGroupIds,
+            destinationForm: path.Destination.TargetsForm);
     }
 
     private static QualificationSource ToSource(QualificationSourceOccurrence occurrence) =>

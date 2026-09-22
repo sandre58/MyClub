@@ -45,9 +45,11 @@ export type ProgIntentDraft = {
   destinationSlotKeys: string[];
   /**
    * Groups A1 Place — Expand index ↔ groupId. Duplicates allowed.
-   * Empty for Population or Cup Place.
+   * Empty for Population, Cup Place, or Form Place.
    */
   destinationGroupIds: string[];
+  /** Champ/Swiss Form Placement (Domain DestinationForm / ForForm). */
+  destinationForm: boolean;
   /** Expand preview: fixture count for the selected round. */
   expandedPathCount: number;
 };
@@ -62,7 +64,7 @@ export type ProgIncompleteReason =
   | 'DuplicatePlace'
   | 'ChampionshipTerminalRound';
 
-/** Place ChoiceTile / map gate — Cup slots or Groups poules (U4 / A1). */
+/** Place ChoiceTile / map gate — Cup slots, Groups poules, or Champ/Swiss Forme. */
 export { areProgressionPlacesLabeled } from './structurePlaceLabel';
 
 export function newProgIntentId(): string {
@@ -74,12 +76,15 @@ export function expandCount(draft: ProgIntentDraft): number {
   return Math.max(draft.expandedPathCount, 0);
 }
 
-/** Active Place map for this draft (slot XOR group). */
+/** Active Place map for this draft (slot XOR group XOR form). */
 export function placeMapKeys(draft: ProgIntentDraft): {
-  grain: 'slot' | 'group';
+  grain: 'slot' | 'group' | 'form';
   keys: string[];
 } | null {
   if (draft.targetKind !== 'place') return null;
+  if (draft.destinationForm) {
+    return { grain: 'form', keys: [] };
+  }
   if (draft.destinationGroupIds.length > 0) {
     return { grain: 'group', keys: draft.destinationGroupIds };
   }
@@ -89,6 +94,21 @@ export function placeMapKeys(draft: ProgIntentDraft): {
 /** Keep Place keys aligned with current Expand fixture count. */
 export function syncPlaceSlotKeys(draft: ProgIntentDraft): ProgIntentDraft {
   if (draft.targetKind !== 'place') {
+    if (
+      draft.destinationSlotKeys.length === 0 &&
+      draft.destinationGroupIds.length === 0 &&
+      !draft.destinationForm
+    ) {
+      return draft;
+    }
+    return {
+      ...draft,
+      destinationSlotKeys: [],
+      destinationGroupIds: [],
+      destinationForm: false,
+    };
+  }
+  if (draft.destinationForm) {
     if (
       draft.destinationSlotKeys.length === 0 &&
       draft.destinationGroupIds.length === 0
@@ -107,7 +127,12 @@ export function syncPlaceSlotKeys(draft: ProgIntentDraft): ProgIntentDraft {
     ) {
       return draft;
     }
-    return { ...draft, destinationGroupIds: next, destinationSlotKeys: [] };
+    return {
+      ...draft,
+      destinationGroupIds: next,
+      destinationSlotKeys: [],
+      destinationForm: false,
+    };
   }
   const next = resizeDestinationSlotKeys(draft.destinationSlotKeys, n);
   if (
@@ -117,14 +142,19 @@ export function syncPlaceSlotKeys(draft: ProgIntentDraft): ProgIntentDraft {
   ) {
     return draft;
   }
-  return { ...draft, destinationSlotKeys: next, destinationGroupIds: [] };
+  return {
+    ...draft,
+    destinationSlotKeys: next,
+    destinationGroupIds: [],
+    destinationForm: false,
+  };
 }
 
 /** Count empty Place slots across intents (after Expand-aligned resize). */
 export function countUnmappedPlaceSlots(intents: ProgIntentDraft[]): number {
   let n = 0;
   for (const intent of intents) {
-    if (intent.targetKind !== 'place') continue;
+    if (intent.targetKind !== 'place' || intent.destinationForm) continue;
     const map = placeMapKeys(intent);
     n += countEmptyPlaceSlots(map?.keys ?? [], expandCount(intent));
   }
@@ -146,6 +176,7 @@ export function emptyProgIntent(
     destinationStageId,
     destinationSlotKeys: [],
     destinationGroupIds: [],
+    destinationForm: false,
     expandedPathCount: 0,
   };
 }
@@ -159,8 +190,9 @@ export function intentFromApi(
     intent.destinationSlotKeys,
     intent.destinationSlotKey,
   );
-  const population = groupIds.length === 0 && keys.length === 0;
-  const isGroupPlace = !population && groupIds.length > 0;
+  const form = !!intent.destinationForm;
+  const population = !form && groupIds.length === 0 && keys.length === 0;
+  const isGroupPlace = !population && !form && groupIds.length > 0;
 
   const draft: ProgIntentDraft = {
     id: intent.intentId || newProgIntentId(),
@@ -170,8 +202,9 @@ export function intentFromApi(
     outcome: intent.outcome,
     targetKind: population ? 'population' : 'place',
     destinationStageId: intent.destinationStageId,
-    destinationSlotKeys: population || isGroupPlace ? [] : keys,
-    destinationGroupIds: population || !isGroupPlace ? [] : groupIds,
+    destinationSlotKeys: population || form || isGroupPlace ? [] : keys,
+    destinationGroupIds: population || form || !isGroupPlace ? [] : groupIds,
+    destinationForm: form,
     expandedPathCount: intent.expandedPathCount ?? 0,
   };
   return syncPlaceSlotKeys(draft);
@@ -186,8 +219,9 @@ export function pathToSingletonIntent(
   order: number,
 ): ProgIntentDraft {
   const groupId = path.destinationGroupId?.trim() ?? '';
+  const form = !!path.destinationForm;
   const population =
-    isPopulationDestination(path.destinationSlotKey) && !groupId;
+    !form && isPopulationDestination(path.destinationSlotKey) && !groupId;
 
   return syncPlaceSlotKeys({
     id: newProgIntentId(),
@@ -198,10 +232,11 @@ export function pathToSingletonIntent(
     targetKind: population ? 'population' : 'place',
     destinationStageId: path.destinationStageId,
     destinationSlotKeys:
-      population || groupId
+      population || form || groupId
         ? []
         : coerceDestinationSlotKeys(null, path.destinationSlotKey),
-    destinationGroupIds: population || !groupId ? [] : [groupId],
+    destinationGroupIds: population || form || !groupId ? [] : [groupId],
+    destinationForm: form,
     expandedPathCount: 1,
   });
 }
@@ -215,9 +250,14 @@ export function serializeIntents(intents: ProgIntentDraft[]): string {
       targetKind: p.targetKind,
       destinationStageId: p.destinationStageId,
       destinationSlotKeys:
-        p.targetKind === 'place' ? p.destinationSlotKeys : [],
+        p.targetKind === 'place' && !p.destinationForm
+          ? p.destinationSlotKeys
+          : [],
       destinationGroupIds:
-        p.targetKind === 'place' ? p.destinationGroupIds : [],
+        p.targetKind === 'place' && !p.destinationForm
+          ? p.destinationGroupIds
+          : [],
+      destinationForm: p.targetKind === 'place' && p.destinationForm,
     })),
   );
 }
@@ -237,6 +277,22 @@ export function toApiIntent(
       destinationSlotKeys: null,
       destinationSlotKey: null,
       destinationGroupIds: null,
+      destinationForm: false,
+      expandedPathCount: draft.expandedPathCount,
+    };
+  }
+  if (draft.destinationForm) {
+    return {
+      intentId: draft.id,
+      order,
+      roundId: draft.roundId.trim(),
+      roundName: draft.roundName || null,
+      outcome: draft.outcome,
+      destinationStageId: draft.destinationStageId,
+      destinationSlotKeys: null,
+      destinationSlotKey: null,
+      destinationGroupIds: null,
+      destinationForm: true,
       expandedPathCount: draft.expandedPathCount,
     };
   }
@@ -256,6 +312,7 @@ export function toApiIntent(
       destinationSlotKeys: null,
       destinationSlotKey: null,
       destinationGroupIds: ids.length > 0 ? ids : null,
+      destinationForm: false,
       expandedPathCount: draft.expandedPathCount,
     };
   }
@@ -272,6 +329,7 @@ export function toApiIntent(
     destinationSlotKeys: keys.length > 0 ? keys : null,
     destinationSlotKey: keys[0] || null,
     destinationGroupIds: null,
+    destinationForm: false,
     expandedPathCount: draft.expandedPathCount,
   };
 }
@@ -282,7 +340,7 @@ function roundOutcomeKey(draft: ProgIntentDraft): string {
 
 /** Cross-intent Place occupancy: stageId|slotKey for Cup Place only. */
 function placeKeys(draft: ProgIntentDraft): string[] {
-  if (draft.targetKind !== 'place') return [];
+  if (draft.targetKind !== 'place' || draft.destinationForm) return [];
   if (draft.destinationGroupIds.length > 0) return [];
   const dest = draft.destinationStageId.trim();
   if (!dest) return [];
@@ -319,7 +377,7 @@ export function incompleteIntentReason(
     return 'Destination';
   }
 
-  if (draft.targetKind === 'place') {
+  if (draft.targetKind === 'place' && !draft.destinationForm) {
     const n = expandCount(draft);
     if (n <= 0) {
       return 'Destination';

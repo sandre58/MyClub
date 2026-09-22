@@ -89,7 +89,8 @@ public static class ReplaceStageQualificationRules
             var destination = ResolvePathDestination(
                 destStageId,
                 spec.DestinationSlotKey,
-                spec.DestinationGroupId);
+                spec.DestinationGroupId,
+                spec.DestinationForm);
             var condition = spec.MinimumPoints is { } points
                 ? QualificationCondition.PointsAtLeast(points)
                 : null;
@@ -104,23 +105,21 @@ public static class ReplaceStageQualificationRules
     private static QualificationDestination ResolvePathDestination(
         StageId stageId,
         string? slotKey,
-        Guid? destinationGroupId)
+        Guid? destinationGroupId,
+        bool destinationForm)
     {
         var hasSlot = !string.IsNullOrWhiteSpace(slotKey);
         var hasGroup = destinationGroupId is not null;
-        if (hasSlot && hasGroup)
-        {
-            throw new ApplicationFailureException(
-                "Qualification path cannot target both a slot and a group.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        if (hasGroup)
-        {
-            return QualificationDestination.ForGroup(stageId, new GroupId(destinationGroupId!.Value));
-        }
-
-        return hasSlot
+        var modes = (destinationForm ? 1 : 0) + (hasSlot ? 1 : 0) + (hasGroup ? 1 : 0);
+        return modes > 1
+            ? throw new ApplicationFailureException(
+                "Qualification path destination must be exactly one of: population, form, slot, or group.",
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : destinationForm
+            ? QualificationDestination.ForForm(stageId)
+            : hasGroup
+            ? QualificationDestination.ForGroup(stageId, new GroupId(destinationGroupId!.Value))
+            : hasSlot
             ? QualificationDestination.ForSlot(stageId, slotKey!)
             : QualificationDestination.ForPopulation(stageId);
     }
@@ -151,9 +150,8 @@ public static class ReplaceStageQualificationRules
                 spec.AcrossGroupsPosition,
                 spec.MinimumPoints is { } pts ? QualificationCondition.PointsAtLeast(pts) : null,
                 spec.DestinationSlotKeys is { Count: > 0 } ? spec.DestinationSlotKeys : null,
-                spec.DestinationGroupIds is { Count: > 0 }
-                    ? spec.DestinationGroupIds.Select(id => new GroupId(id)).ToArray()
-                    : null);
+                spec.DestinationGroupIds is { Count: > 0 } ? spec.DestinationGroupIds.Select(id => new GroupId(id)).ToArray() : null,
+                spec.DestinationForm);
 }
 
 /// <summary>
@@ -170,7 +168,8 @@ public sealed record QualificationPathSpec(
     int? SelectionEndValue = null,
     int? MinimumPoints = null,
     string? DestinationSlotKey = null,
-    Guid? DestinationGroupId = null);
+    Guid? DestinationGroupId = null,
+    bool DestinationForm = false);
 
 /// <summary>
 /// Application DTO for one qualification authoring intent.
@@ -186,4 +185,5 @@ public sealed record QualificationIntentSpec(
     int? AcrossGroupsPosition = null,
     int? MinimumPoints = null,
     IReadOnlyList<string>? DestinationSlotKeys = null,
-    IReadOnlyList<Guid>? DestinationGroupIds = null);
+    IReadOnlyList<Guid>? DestinationGroupIds = null,
+    bool DestinationForm = false);

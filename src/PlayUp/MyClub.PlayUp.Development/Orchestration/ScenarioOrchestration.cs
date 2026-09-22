@@ -968,6 +968,7 @@ internal static class ScenarioOrchestration
             "Quarts de finale",
             "Quarts de finale",
             PairSlotKeys("QF", pairCount: 2));
+
         // Fixtures so Progression Sorties can be authored on QF (empty rules).
         AddRoundFixtures(qf, count: 2, context.Clock);
 
@@ -2319,15 +2320,7 @@ internal static class ScenarioOrchestration
         new("H1", "G2")
     ];
 
-    private static Fixture[] AddRoundFixtures(Stage stage, int count, IClock clock)
-    {
-        if (stage.Rounds.Count == 0)
-        {
-            throw new InvalidOperationException($"Stage '{stage.Name.Value}' has no rounds for fixtures.");
-        }
-
-        return AddFixturesToRound(stage, stage.Rounds[0].Id, count, clock);
-    }
+    private static Fixture[] AddRoundFixtures(Stage stage, int count, IClock clock) => stage.Rounds.Count == 0 ? throw new InvalidOperationException($"Stage '{stage.Name.Value}' has no rounds for fixtures.") : AddFixturesToRound(stage, stage.Rounds[0].Id, count, clock);
 
     private static Fixture[] AddFixturesToRound(Stage stage, RoundId roundId, int count, IClock clock)
     {

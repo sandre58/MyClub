@@ -34,13 +34,15 @@ public sealed record QualificationIntentRequest(
     int? MinimumPoints = null,
     IReadOnlyList<string>? DestinationSlotKeys = null,
     string? DestinationSlotKey = null,
-    IReadOnlyList<Guid>? DestinationGroupIds = null);
+    IReadOnlyList<Guid>? DestinationGroupIds = null,
+    bool DestinationForm = false);
 
 /// <summary>
-/// One HTTP qualification path (destination = peer Population, Cup Place, or Groups Place).
+/// One HTTP qualification path (destination = peer Population, Form, Cup Place, or Groups Place).
 /// </summary>
 /// <param name="DestinationSlotKey">Slot key for Cup Place; omit or null when not slot-targeting.</param>
 /// <param name="DestinationGroupId">Group id for Groups Place; omit or null when not group-targeting.</param>
+/// <param name="DestinationForm">True for Form Placement (Championship/Swiss).</param>
 public sealed record QualificationPathRequest(
     int Order,
     SelectionMode SelectionMode,
@@ -52,4 +54,5 @@ public sealed record QualificationPathRequest(
     int? SelectionEndValue = null,
     int? MinimumPoints = null,
     string? DestinationSlotKey = null,
-    Guid? DestinationGroupId = null);
+    Guid? DestinationGroupId = null,
+    bool DestinationForm = false);

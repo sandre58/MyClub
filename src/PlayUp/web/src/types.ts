@@ -703,9 +703,14 @@ export interface StructureQualificationIntent {
   destinationSlotKey?: string | null;
   /**
    * Groups A1 Place group ids (Expand index ↔ group). Duplicates allowed.
-   * Mutually exclusive with destinationSlotKeys.
+   * Mutually exclusive with destinationSlotKeys and destinationForm.
    */
   destinationGroupIds?: string[] | null;
+  /**
+   * Champ/Swiss Form Placement (Domain ForForm).
+   * Mutually exclusive with destinationSlotKeys and destinationGroupIds.
+   */
+  destinationForm?: boolean | null;
   groupId?: string | null;
   groupName?: string | null;
   acrossGroupsPosition?: number | null;
@@ -727,6 +732,8 @@ export interface StructureQualificationPath {
   destinationSlotKey?: string | null;
   /** Groups A1 destination group when targeting a poule; null otherwise. */
   destinationGroupId?: string | null;
+  /** Champ/Swiss Form Placement when true. */
+  destinationForm?: boolean | null;
   rankingScope?: RankingScope | null;
   groupId?: string | null;
   /** Resolved group display name when groupId is set. */
@@ -753,9 +760,14 @@ export interface StructureProgressionIntent {
   destinationSlotKey?: string | null;
   /**
    * Groups A1 Place group ids (fixture index ↔ group). Duplicates allowed.
-   * Mutually exclusive with destinationSlotKeys.
+   * Mutually exclusive with destinationSlotKeys and destinationForm.
    */
   destinationGroupIds?: string[] | null;
+  /**
+   * Champ/Swiss Form Placement (Domain ForForm).
+   * Mutually exclusive with destinationSlotKeys and destinationGroupIds.
+   */
+  destinationForm?: boolean | null;
   /** Expand preview: fixture count on the round. */
   expandedPathCount?: number;
 }
@@ -767,11 +779,13 @@ export interface StructureProgressionPath {
   destinationStageId: string;
   /**
    * Destination slot when targeting Cup Place; null/omitted when targeting
-   * phase Population or Groups Place.
+   * phase Population, Form, or Groups Place.
    */
   destinationSlotKey?: string | null;
   /** Groups A1 destination group when targeting a poule; null otherwise. */
   destinationGroupId?: string | null;
+  /** Champ/Swiss Form Placement when true. */
+  destinationForm?: boolean | null;
   /** Resolved fixture label (round · #order · slots) when available. */
   sourceLabel?: string | null;
 }
@@ -1448,6 +1462,8 @@ export interface StageSchematic {
   /** Cup rounds in this phase when formatKind is Cup. */
   cupRoundCount?: number | null;
   groupFeeds?: SchematicGroupFeed[] | null;
+  /** Championship/Swiss inbound feed at Forme grain (never on RosterPlace k). */
+  formFeed?: SchematicFeedOrigin | null;
 }
 
 export function sideLabel(side: EntrySide): string {

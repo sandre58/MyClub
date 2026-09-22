@@ -57,6 +57,7 @@ import {
   areProgressionPlacesLabeled,
   filterPlaceEligiblePeers,
   listLabeledPlaces,
+  placeGrainForFormat,
 } from './structurePlaceLabel';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
 import { DestinationDraftMeter } from './DestinationDraftMeter';
@@ -928,10 +929,11 @@ function QualIntentEditor({
     () => listLabeledPlaces(destSchematicQuery.data, t),
     [destSchematicQuery.data, t],
   );
-  /** UX Place grain from dest schematic (Groups A1 vs Cup slots). */
+  /** UX Place grain from dest schematic (Groups / Cup / Form). */
   const placeGrain =
     labeledPlaces[0]?.grain ??
-    (destSchematicQuery.data?.formatKind === 'Groups' ? 'group' : 'slot');
+    placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
+    'slot';
 
   function setTargetKind(kind: QualTargetKind) {
     if (kind === 'population') {
@@ -945,6 +947,7 @@ function QualIntentEditor({
             : (peerStages[0]?.stageId ?? ''),
         destinationSlotKeys: [],
         destinationGroupIds: [],
+        destinationForm: false,
       });
       return;
     }
@@ -955,11 +958,12 @@ function QualIntentEditor({
       ? draft.destinationStageId
       : (placeEligiblePeers[0]?.stageId ?? '');
     const nextPeer = placeEligiblePeers.find((p) => p.stageId === nextDest);
-    const grain = nextPeer?.formatKind === 'Groups' ? 'group' : 'slot';
+    const grain = placeGrainForFormat(nextPeer?.formatKind) ?? 'slot';
     onChange({
       ...draft,
       targetKind: 'place',
       destinationStageId: nextDest,
+      destinationForm: grain === 'form',
       destinationSlotKeys:
         grain === 'slot' && draft.targetKind === 'place'
           ? draft.destinationSlotKeys
@@ -996,6 +1000,7 @@ function QualIntentEditor({
     onChange({
       ...draft,
       targetKind: 'place',
+      destinationForm: false,
       destinationSlotKeys: placeGrain === 'slot' ? next : [],
       destinationGroupIds: placeGrain === 'group' ? next : [],
     });
@@ -1350,8 +1355,7 @@ function QualIntentEditor({
                 selected={draft.destinationStageId === peer.stageId}
                 onChange={(selected) => {
                   if (!selected) return;
-                  const grain =
-                    peer.formatKind === 'Groups' ? 'group' : 'slot';
+                  const grain = placeGrainForFormat(peer.formatKind) ?? 'slot';
                   const keep =
                     draft.targetKind === 'place' &&
                     draft.destinationStageId === peer.stageId;
@@ -1359,6 +1363,7 @@ function QualIntentEditor({
                   onChange({
                     ...draft,
                     destinationStageId: peer.stageId,
+                    destinationForm: grain === 'form',
                     destinationSlotKeys:
                       grain === 'slot'
                         ? keep
@@ -1381,7 +1386,8 @@ function QualIntentEditor({
 
       {draft.targetKind === 'place' &&
       !placeModeUnavailable &&
-      draft.destinationStageId.trim() ? (
+      draft.destinationStageId.trim() &&
+      placeGrain !== 'form' ? (
         destSchematicQuery.isLoading ? (
           <ul
             className="structure-qualification__place-map structure-qualification__place-map--skeleton"

@@ -57,6 +57,7 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
 
         var slotKeys = ReadDestinationSlotKeys(root);
         var groupIds = ReadDestinationGroupIds(root, options);
+        var destinationForm = ReadDestinationForm(root);
 
         return new QualificationIntent(
             id,
@@ -69,7 +70,8 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
             acrossGroupsPosition,
             condition,
             slotKeys,
-            groupIds);
+            groupIds,
+            destinationForm);
     }
 
     /// <inheritdoc />
@@ -107,6 +109,7 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
         JsonSerializer.Serialize(writer, value.DestinationSlotKeys, options);
         writer.WritePropertyName("DestinationGroupIds");
         JsonSerializer.Serialize(writer, value.DestinationGroupIds, options);
+        writer.WriteBoolean("DestinationForm", value.DestinationForm);
         writer.WriteEndObject();
     }
 
@@ -143,17 +146,12 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
         }
 
         var list = new List<GroupId>(keysElement.GetArrayLength());
-        foreach (var item in keysElement.EnumerateArray())
-        {
-            if (item.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-            {
-                continue;
-            }
-
-            var id = JsonSerializer.Deserialize<GroupId>(item.GetRawText(), options);
-            list.Add(id);
-        }
+        list.AddRange(from item in keysElement.EnumerateArray() where item.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined) select JsonSerializer.Deserialize<GroupId>(item.GetRawText(), options));
 
         return list.Count == 0 ? null : list;
     }
+
+    internal static bool ReadDestinationForm(JsonElement root) =>
+        root.TryGetProperty("DestinationForm", out var formElement)
+        && formElement.ValueKind is JsonValueKind.True;
 }

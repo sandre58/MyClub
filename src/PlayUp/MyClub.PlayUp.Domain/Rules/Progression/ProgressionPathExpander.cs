@@ -77,6 +77,15 @@ public static class ProgressionPathExpander
                 continue;
             }
 
+            if (intent.TargetsForm)
+            {
+                // Expand zip: each Path i gets ForForm(DestinationStageId).
+                var destination = ProgressionDestination.ForForm(intent.DestinationStageId);
+                paths.AddRange(round.Fixtures.Select(fixture =>
+                    new ProgressionPath(fixture.Id, intent.Outcome, destination.Copy())));
+                continue;
+            }
+
             if (intent.TargetsGroup)
             {
                 if (intent.DestinationGroupIds.Count != round.Fixtures.Count)
@@ -126,5 +135,6 @@ public static class ProgressionPathExpander
             path.Outcome,
             path.Destination.StageId,
             path.Destination.TargetsSlot ? [path.Destination.SlotKey!] : null,
-            path.Destination.TargetsGroup ? [path.Destination.GroupId!.Value] : null);
+            path.Destination.TargetsGroup ? [path.Destination.GroupId!.Value] : null,
+            destinationForm: path.Destination.TargetsForm);
 }

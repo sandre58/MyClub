@@ -25,6 +25,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="SwissRoundCount">Planned Swiss rounds (structural K) when Kind is Swiss.</param>
 /// <param name="CupRoundCount">Cup rounds in this phase when Kind is Cup.</param>
 /// <param name="GroupFeeds">Groups A1 inbound feeds at Groupe grain (not Place k).</param>
+/// <param name="FormFeed">Championship/Swiss inbound feed at Forme grain (not RosterPlace k).</param>
 public sealed record StageSchematicDto(
     Guid StageId,
     Guid CompetitionId,
@@ -35,7 +36,8 @@ public sealed record StageSchematicDto(
     IReadOnlyList<SchematicConnectionDto> Connections,
     int? SwissRoundCount = null,
     int? CupRoundCount = null,
-    IReadOnlyList<SchematicGroupFeedDto>? GroupFeeds = null);
+    IReadOnlyList<SchematicGroupFeedDto>? GroupFeeds = null,
+    SchematicFeedOriginDto? FormFeed = null);
 
 /// <summary>
 /// Groups A1 — feed origin at Groupe grain (never bound to Place k / GroupPlace index).

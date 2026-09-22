@@ -59,8 +59,5 @@ public sealed record ProgressionPath
     /// Returns an independent copy (new nested value-object instances).
     /// </summary>
     /// <returns>A deep copy of this path.</returns>
-    public ProgressionPath Copy()
-    {
-        return new ProgressionPath(SourceFixtureId, Outcome, Destination.Copy());
-    }
+    public ProgressionPath Copy() => new(SourceFixtureId, Outcome, Destination.Copy());
 }

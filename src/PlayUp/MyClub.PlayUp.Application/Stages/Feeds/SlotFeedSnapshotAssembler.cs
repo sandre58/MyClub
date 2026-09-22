@@ -49,13 +49,10 @@ public static class SlotFeedSnapshotAssembler
             {
                 foreach (var path in qualificationRules.Paths)
                 {
-                    if (!path.Destination.StageId.Equals(target.Id) || path.Destination.TargetsPopulation)
-                    {
-                        continue;
-                    }
-
-                    // Groups Placement (A1): same feed concept, keyed by GroupId — not a Cup slot.
-                    if (path.Destination.TargetsGroup)
+                    if (!path.Destination.StageId.Equals(target.Id)
+                        || path.Destination.TargetsPopulation
+                        || path.Destination.TargetsForm
+                        || path.Destination.TargetsGroup)
                     {
                         continue;
                     }
@@ -81,8 +78,10 @@ public static class SlotFeedSnapshotAssembler
                     continue;
                 }
 
-                // Population / Groups destinations do not feed Cup slots — WhoFeeds slot graph stays slot-centric.
-                if (path.Destination.TargetsPopulation || path.Destination.TargetsGroup)
+                // Population / Form / Groups destinations do not feed Cup slots.
+                if (path.Destination.TargetsPopulation
+                    || path.Destination.TargetsForm
+                    || path.Destination.TargetsGroup)
                 {
                     continue;
                 }

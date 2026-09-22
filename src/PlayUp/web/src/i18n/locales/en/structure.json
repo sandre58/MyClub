@@ -578,7 +578,8 @@
     "side": "side {{side}}",
     "cup": "{{round}} · {{side}}",
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
-    "group": "Group {{name}}"
+    "group": "Group {{name}}",
+    "form": "Form"
   },
   "population": {
     "sectionSources": "From phases",
@@ -694,7 +695,7 @@
     "kindPopulationHint": "Feed another phase’s entries",
     "kindPlace": "Place",
     "kindPlaceHint": "A specific place in the phase",
-    "kindPlaceUnavailable": "No downstream phase exposes addressable Cup places. Use Population, or generate a Cup bracket.",
+    "kindPlaceUnavailable": "No downstream phase exposes addressable places (Cup, Groups, Championship, or Swiss). Use Population, or generate a downstream form.",
     "placeEmpty": "No labeled place on this destination phase.",
     "placeMapAria": "Map each match to a place",
     "placeMapRowAria": "Place for {{source}}",
@@ -758,7 +759,7 @@
     "kindPopulationHint": "Feed another phase’s entries",
     "kindPlace": "Place",
     "kindPlaceHint": "A specific place in the phase",
-    "kindPlaceUnavailable": "No downstream phase exposes addressable Cup places. Use Population, or generate a Cup bracket.",
+    "kindPlaceUnavailable": "No downstream phase exposes addressable places (Cup, Groups, Championship, or Swiss). Use Population, or generate a downstream form.",
     "placeSelectPending": "Choose a labeled place on the destination phase.",
     "placeEmpty": "No labeled place on this destination phase.",
     "placeMapAria": "Map each selection to a place",

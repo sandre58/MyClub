@@ -698,9 +698,8 @@ try
                         DestinationSlotKeys: coerceDestinationSlotKeys(
                             intent.DestinationSlotKeys,
                             intent.DestinationSlotKey),
-                        DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 }
-                            ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray()
-                            : null))
+                        DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 } ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray() : null,
+                        DestinationForm: intent.DestinationForm))
                 ];
                 await executor
                     .ReplaceStageProgressionIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -719,7 +718,8 @@ try
                             path.Outcome,
                             new StageId(path.DestinationStageId),
                             path.DestinationSlotKey,
-                            path.DestinationGroupId is { } gid ? new GroupId(gid) : null))
+                            path.DestinationGroupId is { } gid ? new GroupId(gid) : null,
+                            path.DestinationForm))
                 ];
             }
 
@@ -753,7 +753,8 @@ try
                         intent.AcrossGroupsPosition,
                         intent.MinimumPoints,
                         coerceDestinationSlotKeys(intent.DestinationSlotKeys, intent.DestinationSlotKey),
-                        intent.DestinationGroupIds))
+                        intent.DestinationGroupIds,
+                        intent.DestinationForm))
                 ];
                 await executor
                     .ReplaceStageQualificationIntentsAsync(new StageId(stageId), intents, cancellationToken)
@@ -777,7 +778,8 @@ try
                         path.SelectionEndValue,
                         path.MinimumPoints,
                         path.DestinationSlotKey,
-                        path.DestinationGroupId))
+                        path.DestinationGroupId,
+                        path.DestinationForm))
                 ];
             }
 

@@ -30,7 +30,8 @@ public sealed record ProgressionIntentRequest(
     Guid DestinationStageId,
     IReadOnlyList<string>? DestinationSlotKeys = null,
     string? DestinationSlotKey = null,
-    IReadOnlyList<Guid>? DestinationGroupIds = null);
+    IReadOnlyList<Guid>? DestinationGroupIds = null,
+    bool DestinationForm = false);
 
 /// <summary>
 /// One HTTP progression path.
@@ -40,9 +41,11 @@ public sealed record ProgressionIntentRequest(
 /// <param name="DestinationStageId">Destination stage.</param>
 /// <param name="DestinationSlotKey">Cup Place slot key; omit or null when not slot-targeting.</param>
 /// <param name="DestinationGroupId">Groups Place group id; omit or null when not group-targeting.</param>
+/// <param name="DestinationForm">True for Form Placement.</param>
 public sealed record ProgressionPathRequest(
     Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
     string? DestinationSlotKey = null,
-    Guid? DestinationGroupId = null);
+    Guid? DestinationGroupId = null,
+    bool DestinationForm = false);

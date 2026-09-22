@@ -506,9 +506,8 @@ public static class StructureViewAssembler
                         intent.Condition?.MinimumPoints,
                         destinationCount,
                         intent.DestinationSlotKeys,
-                        intent.DestinationGroupIds.Count == 0
-                            ? null
-                            : intent.DestinationGroupIds.Select(g => g.Value).ToArray());
+                        intent.DestinationGroupIds.Count == 0 ? null : intent.DestinationGroupIds.Select(g => g.Value).ToArray(),
+                        intent.DestinationForm);
                 })
             ];
 
@@ -548,7 +547,8 @@ public static class StructureViewAssembler
                         path.Condition?.MinimumPoints,
                         groupName,
                         path.Destination.SlotKey,
-                        path.Destination.GroupId?.Value);
+                        path.Destination.GroupId?.Value,
+                        path.Destination.TargetsForm);
                 })
             ];
 
@@ -565,7 +565,8 @@ public static class StructureViewAssembler
                     path.Destination.StageId.Value,
                     path.Destination.SlotKey,
                     ResolveFixtureSourceLabel(stage, path.SourceFixtureId),
-                    path.Destination.GroupId?.Value))
+                    path.Destination.GroupId?.Value,
+                    path.Destination.TargetsForm))
             ];
 
     private static IReadOnlyList<StructureProgressionIntentDto>? MapProgressionIntents(
@@ -594,9 +595,8 @@ public static class StructureViewAssembler
                     intent.DestinationStageId.Value,
                     intent.DestinationSlotKeys,
                     fixtureCount,
-                    intent.DestinationGroupIds.Count == 0
-                        ? null
-                        : intent.DestinationGroupIds.Select(g => g.Value).ToArray());
+                    intent.DestinationGroupIds.Count == 0 ? null : intent.DestinationGroupIds.Select(g => g.Value).ToArray(),
+                    intent.DestinationForm);
             })
         ];
     }
@@ -786,7 +786,7 @@ public static class StructureViewAssembler
                     continue;
                 }
 
-                if (path.Destination.TargetsPopulation)
+                if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
                 {
                     continue;
                 }
@@ -813,7 +813,7 @@ public static class StructureViewAssembler
 
         foreach (var path in progression.Paths)
         {
-            if (path.Destination.TargetsPopulation)
+            if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
             {
                 if (path.Destination.StageId.Equals(stage.Id))
                 {
