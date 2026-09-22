@@ -585,8 +585,8 @@
     "form": "Form"
   },
   "population": {
-    "sectionSources": "From phases",
-    "sectionAffectation": "Assignment",
+    "sectionSources": "Qualified",
+    "sectionAffectation": "Teams",
     "affectationEmpty": "None"
   },
   "entries": {
@@ -596,8 +596,8 @@
     "counterPlaces": "{{k}} / {{n}} places",
     "counterPlacesUnknown_one": "{{count}} place",
     "counterPlacesUnknown_other": "{{count}} places",
-    "originAffectation": "Assignment",
-    "statusRequired": "Assignment required",
+    "originAffectation": "Teams",
+    "statusRequired": "Teams required",
     "statusIncomplete": "Incomplete",
     "statusSurplus": "Too many teams",
     "ctaConstitute": "Set up entries",
@@ -610,11 +610,11 @@
     "editSources": "Edit sources",
     "viewEditOnSource": "View / edit on {{phase}}",
     "viewOnSource": "View {{phase}}",
-    "editComposition": "Edit assignment",
+    "editComposition": "Edit teams",
     "avalSourcesRequired": "Sources to define",
     "avalIncomplete": "Incomplete configuration",
     "emptyTitle": "No teams",
-    "emptyBody": "Add teams via Assignment.",
+    "emptyBody": "Add teams.",
     "addAffectation": "Add teams",
     "emptySourcesTitle": "No sources",
     "emptySourcesBody": "This phase’s entries come from upstream exits. Define them on the source phase.",
@@ -633,7 +633,7 @@
     }
   },
   "composition": {
-    "title": "Assignment — {{phase}}",
+    "title": "Teams — {{phase}}",
     "lede": "Add teams to this phase’s Population. Places already expected from Qualification / Progression are reserved.",
     "counter": "{{k}}/{{n}} places",
     "counterUnknown_one": "{{count}} team",
@@ -648,7 +648,7 @@
     "searchPlaceholder": "Search for a team…",
     "selectAll": "Select all",
     "listAria": "Available teams",
-    "atCapacityHint": "No room left for Assignment ({{n}} max).",
+    "atCapacityHint": "No room left for teams ({{n}} max).",
     "emptyEligible": "No eligible teams",
     "openTeams": "View teams",
     "noLongerEligible": "No longer eligible",

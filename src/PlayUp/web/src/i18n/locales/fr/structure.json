@@ -585,8 +585,8 @@
     "form": "Forme"
   },
   "population": {
-    "sectionSources": "Depuis les phases",
-    "sectionAffectation": "Affectation",
+    "sectionSources": "Qualifiés",
+    "sectionAffectation": "Équipes",
     "affectationEmpty": "Aucune"
   },
   "entries": {
@@ -596,8 +596,8 @@
     "counterPlaces": "{{k}} / {{n}} places",
     "counterPlacesUnknown_one": "{{count}} place",
     "counterPlacesUnknown_other": "{{count}} places",
-    "originAffectation": "Affectation",
-    "statusRequired": "Affectation requise",
+    "originAffectation": "Équipes",
+    "statusRequired": "Équipes requises",
     "statusIncomplete": "Incomplet",
     "statusSurplus": "Trop d’équipes",
     "ctaConstitute": "Constituer les entrées",
@@ -610,11 +610,11 @@
     "editSources": "Modifier les sources",
     "viewEditOnSource": "Voir / modifier sur {{phase}}",
     "viewOnSource": "Voir {{phase}}",
-    "editComposition": "Modifier l’affectation",
+    "editComposition": "Modifier les équipes",
     "avalSourcesRequired": "Sources à définir",
     "avalIncomplete": "Configuration incomplète",
     "emptyTitle": "Aucune équipe",
-    "emptyBody": "Ajoutez des équipes via Affectation.",
+    "emptyBody": "Ajoutez des équipes.",
     "addAffectation": "Ajouter des équipes",
     "emptySourcesTitle": "Aucune source",
     "emptySourcesBody": "Les entrées de cette phase viennent des sorties d’une phase amont. Définissez-les depuis la phase source.",
@@ -633,7 +633,7 @@
     }
   },
   "composition": {
-    "title": "Affectation — {{phase}}",
+    "title": "Équipes — {{phase}}",
     "lede": "Ajoutez des équipes à la Population de cette phase. Les places déjà attendues via Qualification / Progression sont réservées.",
     "counter": "{{k}}/{{n}} places",
     "counterUnknown_one": "{{count}} équipe",
@@ -648,7 +648,7 @@
     "searchPlaceholder": "Rechercher une équipe…",
     "selectAll": "Sélectionner tout",
     "listAria": "Équipes disponibles",
-    "atCapacityHint": "Plus de place pour l’Affectation ({{n}} max).",
+    "atCapacityHint": "Plus de place pour des équipes ({{n}} max).",
     "emptyEligible": "Aucune équipe éligible",
     "openTeams": "Voir les équipes",
     "noLongerEligible": "Plus éligible",
