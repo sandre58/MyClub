@@ -101,6 +101,42 @@ public sealed class Slice3DrawPipelineTests
     }
 
     [Fact]
+    public void Cup_slot_pipeline_occupies_places_via_apply()
+    {
+        var competition = CreateCompetition.Execute("CupSlot", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            AddEntry.Execute(competition, $"S{i}", _clock);
+        }
+
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(4),
+            _clock);
+        var stage = configured.Stage;
+        stage.Slots.Should().HaveCount(4);
+
+        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot));
+        var slotTargets = stage.Slots.Select(slot => slot.SlotKey).ToArray();
+        GenerateDrawResolution.Execute(stage, draw.Id, _clock, slotTargets)
+            .IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        stage.Slots.Should().OnlyContain(slot => slot.EntryId != null);
+        draw.Resolution.SlotResults.Select(r => r.SlotKey)
+            .Should().BeEquivalentTo(slotTargets);
+    }
+
+    [Fact]
     public void Generate_after_publish_is_rejected()
     {
         var competition = CreateCompetition.Execute("Pub", _clock);

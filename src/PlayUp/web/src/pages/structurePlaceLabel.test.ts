@@ -58,7 +58,7 @@ describe('structurePlaceLabel', () => {
     expect(placeDisplayLabel(raw, t)).toBe('SF-1-A');
   });
 
-  it('pairing-draw chrome falls back to ordinal·side; not Domain-targetable', () => {
+  it('pairing-draw chrome has no Place address; not Domain-targetable (I2)', () => {
     const pairing: SchematicFormPosition = {
       kind: 'CupSlot',
       fixtureId: 'fx1',
@@ -66,7 +66,7 @@ describe('structurePlaceLabel', () => {
       roundName: 'Quart de finale',
       pairOrdinal: 2,
     };
-    expect(placeChromeLabel(pairing)).toBe('2·A');
+    expect(placeChromeLabel(pairing)).toBeNull();
     expect(placeDisplayLabel(pairing, t)).toBe(
       'Quart de finale 2 · côté A',
     );

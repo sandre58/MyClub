@@ -183,11 +183,11 @@ public static class StageSchematicAssembler
             })
             .ToArray();
 
-        // A published pairing draw fills the bracket without binding slots: the materialized
-        // pairs are the truthful occupation; keeping the unbound empty slots would double capacity.
-        IReadOnlyList<SchematicCaseDto> cases = pairingCases.Count > 0 && stage.Slots.All(slot => slot.EntryId is null)
-            ? pairingCases
-            : slotCases;
+        // Places-first (I3): existing SlotKeys are never replaced by unbound Pairing sides.
+        // PairingCase fallback only when the stage has no Places at all.
+        IReadOnlyList<SchematicCaseDto> cases = stage.Slots.Count > 0
+            ? slotCases
+            : pairingCases;
 
         return new StageSchematicDto(
             stage.Id.Value,

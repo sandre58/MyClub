@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  applyDraw,
   createAndGenerateDraw,
   fetchStageOverview,
   publishAndApplyDraw,
@@ -243,6 +244,114 @@ describe('StructureDrawDialog', () => {
       expect(getToastsSnapshot().map((t) => t.message)).toContain(
         'Nouvelle exécution créée.',
       );
+    });
+  });
+
+  it('creates Slot draws for Cup Nouveau (not Pairing)', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    vi.mocked(createAndGenerateDraw).mockResolvedValue({
+      drawId: 'draw-slot-new',
+      isResolved: true,
+      isNoSolution: false,
+    });
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 4,
+        slotCount: 4,
+      }),
+    );
+
+    await screen.findByRole('button', { name: 'Nouveau tirage' });
+    await user.click(screen.getByRole('button', { name: 'Nouveau tirage' }));
+
+    await waitFor(() => {
+      expect(createAndGenerateDraw).toHaveBeenCalledWith(stageId, 'Slot');
+    });
+    expect(createAndGenerateDraw).not.toHaveBeenCalledWith(
+      stageId,
+      'Pairing',
+    );
+  });
+
+  it('keeps historical Pairing executions readable', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        {
+          id: 'draw-pair-1',
+          kind: 'Pairing',
+          status: 'Published',
+          resolutionState: 'Resolved',
+          pairings: [
+            {
+              entryAId: 'e1',
+              entryADisplayName: 'Alpha',
+              entryBId: 'e2',
+              entryBDisplayName: 'Beta',
+            },
+          ],
+          slotPlacements: [],
+          isApplied: true,
+        },
+      ]),
+    );
+
+    renderDialog(cupStage({ compositionEntryCount: 2, slotCount: 2 }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Tirage Appariement' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+    expect(screen.getByText('vs')).toBeInTheDocument();
+  });
+
+  it('applies a historical published Pairing that is not yet applied', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        {
+          id: 'draw-pair-hist',
+          kind: 'Pairing',
+          status: 'Published',
+          resolutionState: 'Resolved',
+          pairings: [
+            {
+              entryAId: 'e1',
+              entryADisplayName: 'Alpha',
+              entryBId: 'e2',
+              entryBDisplayName: 'Beta',
+            },
+          ],
+          slotPlacements: [],
+          isApplied: false,
+        },
+      ]),
+    );
+    vi.mocked(applyDraw).mockResolvedValue(undefined);
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 2,
+        slotCount: 2,
+      }),
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Tirage Appariement' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Appliquer' }));
+
+    const dialog = await screen.findByRole('dialog', {
+      name: /Appliquer/,
+    });
+    await user.click(within(dialog).getByRole('button', { name: 'Appliquer' }));
+
+    await waitFor(() => {
+      expect(applyDraw).toHaveBeenCalledWith(stageId, 'draw-pair-hist', {
+        fixtureIds: [],
+      });
     });
   });
 

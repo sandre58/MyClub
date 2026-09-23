@@ -139,12 +139,12 @@ function confrontationSideFromSlot(
 }
 function resolveDrawKindForFormat(
   format: StructureFormatKind | null | undefined,
-): 'Group' | 'Pairing' | null {
+): 'Group' | 'Slot' | null {
   if (format === 'Groups') {
     return 'Group';
   }
   if (format === 'Cup') {
-    return 'Pairing';
+    return 'Slot';
   }
   return null;
 }

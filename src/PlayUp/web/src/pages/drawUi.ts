@@ -241,7 +241,7 @@ export function resolveDrawCreateGate(input: {
     return { ok: true };
   }
 
-  // Slot — Structural V1 Cup uses Pairing; keep pool non-empty only.
+  // Slot (Cup Nouveau): Encoding F — pool non-empty; destinations = stage slots (Host).
   return { ok: true };
 }
 

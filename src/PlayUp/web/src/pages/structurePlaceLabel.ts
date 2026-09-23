@@ -46,22 +46,14 @@ export function cupPlaceApiIdentity(
 }
 
 /**
- * Chrome schématique (C2) — SlotKey Domain when present; else compact topology.
- * Never invents tour abbreviations (8e / DF).
+ * Chrome schématique Place — SlotKey Domain only (I2).
+ * Never invents `ordinal·side` as a Place address (that is confrontation identity).
  */
 export function placeChromeLabel(
   formPosition: SchematicFormPosition,
 ): string | null {
   if (formPosition.kind !== 'CupSlot') return null;
-  const slot = cupPlaceApiIdentity(formPosition);
-  if (slot) return slot;
-  const side = normalizeSide(formPosition.side);
-  if (!side) return null;
-  const ordinal = formPosition.pairOrdinal;
-  if (ordinal != null && ordinal >= 1) {
-    return `${ordinal}·${side}`;
-  }
-  return side;
+  return cupPlaceApiIdentity(formPosition);
 }
 
 /** Long-label facts: RoundName + side (topology or fixture-linked). */

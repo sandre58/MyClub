@@ -486,6 +486,7 @@
     "teamsCount_one": "{{count}} team",
     "teamsCount_other": "{{count}} teams",
     "statsAria": "Phase facts",
+    "cupPlacesTableau": "Place bracket · {{count}} positions",
     "openDrawWorkflow": "Open draw",
     "performDraw": "Run the draw",
     "configureDraw": "Configure draw",

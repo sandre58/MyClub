@@ -1825,6 +1825,11 @@ export function StructurePhaseFiche({
 
           <div className="structure-phase-hero__center">
             <div className="structure-schematic-viewport">
+              {kind === 'Cup' && (stage.slotCount ?? 0) > 0 ? (
+                <p className="structure-phase-hero__places-caption">
+                  {t('fiche.cupPlacesTableau', { count: stage.slotCount })}
+                </p>
+              ) : null}
               <div className="structure-schematic-viewport__scale">
                 {schematicQuery.data ? (
                   <PhaseSchematic

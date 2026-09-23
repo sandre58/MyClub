@@ -486,6 +486,7 @@
     "teamsCount_one": "{{count}} équipe",
     "teamsCount_other": "{{count}} équipes",
     "statsAria": "Faits de la phase",
+    "cupPlacesTableau": "Tableau de Places · {{count}} positions",
     "openDrawWorkflow": "Ouvrir le tirage",
     "performDraw": "Lancer le tirage",
     "configureDraw": "Configurer le tirage",
