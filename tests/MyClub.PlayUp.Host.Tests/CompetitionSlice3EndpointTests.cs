@@ -149,9 +149,15 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             .Structure;
         var stageId = org.Format.PrimaryStageId!.Value;
 
+        using var drawRules = await client.PutAsJsonAsync(
+            $"/stages/{stageId}/draw-rules",
+            new ReplaceStageDrawRulesRequest(Clear: false, Mode: DrawMode.Random));
+        drawRules.EnsureSuccessStatusCode();
+
         using var createDraw = await client.PostAsJsonAsync(
             $"/stages/{stageId}/draws",
             new CreateDrawRequest("Pairing"));
+        createDraw.EnsureSuccessStatusCode();
         var draw = await createDraw.Content.ReadFromJsonAsync<DrawSummaryDto>(HostJson.Options);
 
         await client.PostAsync($"/stages/{stageId}/draws/{draw!.DrawId}/inputs", null);

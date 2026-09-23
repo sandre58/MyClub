@@ -11,13 +11,14 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Templates;
 
 /// <summary>
-/// World Cup inspired Groups → KO + Bronze (Case 1: Top2 → R16 population → Slot Draw, no best thirds).
+/// World Cup inspired Groups → KO + Bronze (Case 1: Top2 → R16 Draw; then Prog Auto Place).
 /// </summary>
 /// <remarks>
-/// Seed plays Groups→Qual population→Draw→R16→QF→SF→Final+Bronze with PlacementAwards (ranks 1–4) and Completes the
-/// competition so Overview Terminée can show <c>CompetitionOutcome</c>. Product choice = Draw placement (not Auto
-/// bracket). Auto Place / hybrid Case 7 = <c>qual-auto-place-mid</c> / <c>qual-hybrid-auto-draw-mid</c>.
-/// Mid-bracket from-slots demo = <c>cup-qf-sf</c>. <c>:progress</c> is ignored — fixed seed.
+/// Seed plays Groups→Qual population→Draw→R16, then Prog Auto Place QF→SF→Final+Bronze with PlacementAwards
+/// (ranks 1–4) and Completes so Overview Terminée can show <c>CompetitionOutcome</c>.
+/// Groups→R16 product choice = Draw placement (not Auto bracket). KO Auto Place / hybrid Case 7 =
+/// <c>qual-auto-place-mid</c> / <c>qual-hybrid-auto-draw-mid</c>. Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
+/// <c>:progress</c> is ignored — fixed seed.
 /// </remarks>
 public sealed class WorldCupTemplate : ICompetitionTemplate
 {
@@ -29,7 +30,7 @@ public sealed class WorldCupTemplate : ICompetitionTemplate
 
     /// <inheritdoc />
     public string Description =>
-        "Groups 8×4 → Top2 population → Slot Draw → R16→QF→SF → Final + Bronze · PlacementAwards 1–4 · Completed + Outcome (Case 1). :progress ignored.";
+        "Groups 8×4 → Top2 → R16 Slot Draw → Prog Auto Place QF→SF→Final+Bronze · PlacementAwards 1–4 · Completed + Outcome. :progress ignored.";
 
     /// <inheritdoc />
     public CompetitionRecipe Recipe { get; } = new()

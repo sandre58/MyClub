@@ -449,9 +449,23 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var semi = await stages.GetByIdForUpdateAsync(competition.StageIds[1]);
         quarter.Should().NotBeNull();
         semi.Should().NotBeNull();
+        quarter!.Regulation.DrawRules.Should().NotBeNull(
+            "QF seed must engage DrawRules when a Pairing Draw is applied");
+        quarter.CompositionEntries.Should().HaveCount(8);
+        quarter.Draws.Should().NotBeEmpty();
+        quarter.Draws.Should().OnlyContain(draw => draw.Status != DrawStatus.Cancelled);
         semi.Status.Should().Be(StageStatus.Draft);
         semi.Slots.Count(slot => slot.EntryId is not null).Should().Be(4);
         semi.Rounds[0].Fixtures.Should().BeEmpty();
+        quarter.Regulation.ProgressionRules!.Paths.Should().OnlyContain(path =>
+            path.Destination.TargetsSlot && path.Destination.StageId.Equals(semi.Id));
+
+        var schematic = StageSchematicAssembler.Assemble(semi, competition, [quarter, semi]);
+        schematic.Cases.Should().HaveCount(4);
+        schematic.Cases.Should().OnlyContain(c =>
+            c.FeedOrigin != null
+            && c.FeedOrigin.Kind == FeedKind.Progression
+            && c.FeedOrigin.SourceStageName == quarter.Name.Value);
 
         var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
         foreach (var stageId in competition.StageIds)
@@ -524,6 +538,14 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         matchesByStage[final.Id].Should().HaveCount(1);
         matchesByStage[final.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
 
+        // Downstream Places filled via Slot Draw after Winner→Population (WhoFeeds = Draw).
+        foreach (var knockout in loaded.Skip(1))
+        {
+            StageSchematicAssembler.Assemble(knockout, competition, loaded).Cases
+                .Should().OnlyContain(c =>
+                    c.FeedOrigin != null && c.FeedOrigin.Kind == FeedKind.Draw);
+        }
+
         var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
         overview.CompetitionOutcome.Should().NotBeNull();
         overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
@@ -592,6 +614,13 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         overview.CompetitionOutcome.Should().NotBeNull();
         overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         overview.CompetitionOutcome.Places.Should().HaveCount(2);
+
+        foreach (var knockout in loaded.Skip(1))
+        {
+            StageSchematicAssembler.Assemble(knockout, competition, loaded).Cases
+                .Should().OnlyContain(c =>
+                    c.FeedOrigin != null && c.FeedOrigin.Kind == FeedKind.Draw);
+        }
     }
 
     [Fact]
@@ -644,6 +673,17 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         matchesByStage[bronze.Id].Should().HaveCount(1);
         matchesByStage[final.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
         matchesByStage[bronze.Id].Should().OnlyContain(m => m.Status == MatchStatus.Finished);
+
+        // R16 = Qual→Population→Draw; QF+ = Prog Auto Place (WhoFeeds = Progression).
+        StageSchematicAssembler.Assemble(roundOf16, competition, loaded).Cases
+            .Should().OnlyContain(c =>
+                c.FeedOrigin != null && c.FeedOrigin.Kind == FeedKind.Draw);
+        foreach (var knockout in new[] { quarter, semi, final, bronze })
+        {
+            StageSchematicAssembler.Assemble(knockout, competition, loaded).Cases
+                .Should().OnlyContain(c =>
+                    c.FeedOrigin != null && c.FeedOrigin.Kind == FeedKind.Progression);
+        }
 
         var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
         overview.CompetitionOutcome.Should().NotBeNull();

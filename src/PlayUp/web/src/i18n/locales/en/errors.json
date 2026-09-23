@@ -10,6 +10,7 @@
     "CompetitionClosed": "The competition is completed or archived.",
     "EntryCapacityExceeded": "Entry capacity exceeded.",
     "StructureNotMutable": "Structure can no longer be edited in this state.",
+    "DrawRulesRequired": "Configure draw rules before creating a draw execution.",
     "InvalidStructureIntent": "Invalid structure parameters.",
     "CupBracketNotPowerOfTwo": "The cup bracket size must be a power of 2.",
     "DrawApplyFailure": "Unable to apply the draw.",

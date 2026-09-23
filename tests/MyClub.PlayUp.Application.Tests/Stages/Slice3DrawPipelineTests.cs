@@ -76,6 +76,7 @@ public sealed class Slice3DrawPipelineTests
         var stage = configured.Stage;
 
         stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
         ConfigureDrawInputs.Execute(
@@ -112,6 +113,7 @@ public sealed class Slice3DrawPipelineTests
             _clock);
         var stage = configured.Stage;
         stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
         ConfigureDrawInputs.Execute(
             stage,

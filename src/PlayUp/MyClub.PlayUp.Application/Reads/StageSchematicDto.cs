@@ -71,7 +71,7 @@ public sealed record SchematicGroupFeedDto(
 /// One form unit and its optional feed / placement / resolution.
 /// </summary>
 /// <param name="FormPosition">Where the case exists in the form.</param>
-/// <param name="FeedOrigin">Configured feed origin when Unique WhoFeeds; never a placement synonym.</param>
+/// <param name="FeedOrigin">Unique WhoFeeds (Cup slot / Groups) or published Pairing-draw provenance on pairing sides.</param>
 /// <param name="Entry">Entry actually placed in this unit; null = empty.</param>
 /// <param name="Assignment">Resolved participant of that entry when known.</param>
 public sealed record SchematicCaseDto(

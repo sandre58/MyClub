@@ -198,7 +198,10 @@ describe('PhaseSchematic', () => {
       />,
     );
     expect(screen.getByText(/Vainqueur · Match #2/)).toBeInTheDocument();
-    expect(screen.queryByText('FC Nice')).toBeNull();
+    expect(
+      container.querySelector('.schematic-slot__primary')?.textContent,
+    ).toBe('Vainqueur · Match #2');
+    expect(container.querySelector('.schematic-slot__crest')).toBeNull();
     expect(
       container.querySelector('.schematic-slot__secondary'),
     ).toBeNull();
@@ -267,6 +270,7 @@ describe('PhaseSchematic', () => {
     expect(model).toEqual({
       address: '1·A',
       subject: { kind: 'team', name: 'FC Nice' },
+      resolvedTeam: null,
       origin: { kind: 'affectation', text: 'Affectation manuelle' },
     });
   });
@@ -283,7 +287,7 @@ describe('PhaseSchematic', () => {
     ).toBeNull();
   });
 
-  it('buildSchematicCaseTooltipModel stacks address / team / from-phase', () => {
+  it('buildSchematicCaseTooltipModel stacks path primary / team secondary / from-phase', () => {
     const model = buildSchematicCaseTooltipModel({
       address: '1·A',
       primary: 'Vainqueur · Match #2',
@@ -306,8 +310,8 @@ describe('PhaseSchematic', () => {
     });
     expect(model).toEqual({
       address: '1·A',
-      subject: {
-        kind: 'team',
+      subject: { kind: 'label', name: 'Vainqueur · Match #2' },
+      resolvedTeam: {
         name: 'FC Nice',
         logoMediaId: 'logo-1',
         primaryColor: '#123',
@@ -339,6 +343,7 @@ describe('PhaseSchematic', () => {
     expect(model).toEqual({
       address: 'B-A',
       subject: { kind: 'label', name: 'Perdant · Match #1' },
+      resolvedTeam: null,
       origin: { kind: 'from', lead: 'Vient de', text: 'Tour 1' },
     });
   });
@@ -358,6 +363,7 @@ describe('PhaseSchematic', () => {
     expect(model).toEqual({
       address: 'R16-1-A',
       subject: { kind: 'team', name: 'OGC Nice' },
+      resolvedTeam: null,
       origin: { kind: 'draw', text: 'Placé par tirage' },
     });
   });

@@ -102,6 +102,11 @@ public static class ApplicationErrorCodes
     public const string DrawGenerationFailure = "Application.DrawGenerationFailure";
 
     /// <summary>
+    /// Gets the code when CreateDraw is refused because DrawRules are not engaged on the stage.
+    /// </summary>
+    public const string DrawRulesRequired = "Application.DrawRulesRequired";
+
+    /// <summary>
     /// Gets the code when GenerateSchedule cannot run (e.g. target match not attached to the Stage).
     /// Distinct from Domain <c>SchedulingResult.InvalidRequest</c> / <c>NoSolution</c>.
     /// </summary>

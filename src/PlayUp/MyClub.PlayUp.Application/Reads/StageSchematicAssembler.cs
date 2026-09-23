@@ -72,6 +72,7 @@ public static class StageSchematicAssembler
         IReadOnlyList<MatchSummaryRow> matchRows)
     {
         var feedBySlot = ResolveFeedsTolerant(stage, competitionStages);
+        var pairingDrawOrigin = ResolvePublishedPairingDrawOrigin(stage);
         var addressBySlot = new Dictionary<string, CupPlaceAddress>(StringComparer.Ordinal);
 
         // A1: topology first (stable Place ordinals). Fixture binding only attaches FixtureId.
@@ -141,7 +142,8 @@ public static class StageSchematicAssembler
                         entries,
                         roundOrder,
                         round.Name,
-                        pairOrdinal));
+                        pairOrdinal,
+                        pairingDrawOrigin));
                 pairingCases.Add(
                     PairingCase(
                         fixture.Id,
@@ -150,7 +152,8 @@ public static class StageSchematicAssembler
                         entries,
                         roundOrder,
                         round.Name,
-                        pairOrdinal));
+                        pairOrdinal,
+                        pairingDrawOrigin));
             }
 
             continue;
@@ -344,7 +347,8 @@ public static class StageSchematicAssembler
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
         int roundOrder,
         string roundName,
-        int? pairOrdinal) =>
+        int? pairOrdinal,
+        SchematicFeedOriginDto? drawOrigin) =>
         new(
             new SchematicFormPositionDto(
                 FormKindCupSlot,
@@ -353,9 +357,31 @@ public static class StageSchematicAssembler
                 RoundOrder: roundOrder,
                 RoundName: roundName,
                 PairOrdinal: pairOrdinal),
-            FeedOrigin: null,
+            drawOrigin,
             MapEntry(entryId, entries),
             MapAssignment(entryId, entries));
+
+    /// <summary>
+    /// Pairing occupation is not a Slot WhoFeeds target — annotate cases from the published Pairing draw.
+    /// </summary>
+    private static SchematicFeedOriginDto? ResolvePublishedPairingDrawOrigin(Stage stage)
+    {
+        for (var i = stage.Draws.Count - 1; i >= 0; i--)
+        {
+            var draw = stage.Draws[i];
+            if (draw is
+                {
+                    Status: DrawStatus.Published,
+                    Kind: DrawResolutionKind.Pairing,
+                    Resolution.State: DrawResolutionState.Resolved
+                })
+            {
+                return new SchematicFeedOriginDto(FeedKind.Draw, DrawId: draw.Id.Value);
+            }
+        }
+
+        return null;
+    }
 
     private static MatchSummaryRow? FirstLegRow(
         Fixture fixture,

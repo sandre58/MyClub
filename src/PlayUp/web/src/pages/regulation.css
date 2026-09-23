@@ -701,7 +701,7 @@
 
 .regulation-phases {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 25rem), 1fr));
   align-items: stretch;
   gap: var(--space-24);
   width: 100%;

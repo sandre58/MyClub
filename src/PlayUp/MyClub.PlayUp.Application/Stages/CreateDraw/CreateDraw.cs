@@ -26,7 +26,20 @@ public static class CreateDraw
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable(stage);
+        EnsureDrawRulesEngaged(stage);
         return stage.CreateDraw(kind, clock);
+    }
+
+    private static void EnsureDrawRulesEngaged(Stage stage)
+    {
+        if (stage.Regulation.DrawRules is not null)
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"Draw cannot be created on stage '{stage.Name.Value}' without DrawRules.",
+            ApplicationErrorCodes.DrawRulesRequired);
     }
 
     private static void EnsureStructureMutable(Stage stage)

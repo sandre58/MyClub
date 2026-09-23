@@ -325,6 +325,37 @@ public sealed class StageSchematicAssemblerTests
         schematic.Connections[0].SlotAKey.Should().BeNull();
         schematic.Connections[0].SlotBKey.Should().BeNull();
         schematic.Connections[0].MatchNumber.Should().Be(1);
+        schematic.Cases.Should().OnlyContain(c => c.FeedOrigin == null);
+    }
+
+    [Fact]
+    public void Cup_pairing_fixture_exposes_draw_feed_origin_when_pairing_draw_is_published()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var alpha = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var beta = competition.AddEntry(TeamId.New(), "Beta", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("R32", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var matchId = MatchId.New();
+        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([alpha.Id, beta.Id]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedPairings([new PairingDrawResult(alpha.Id, beta.Id)]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+
+        var row = new MatchSummaryRow(matchId, stage.Id, MatchStatus.Finished, alpha.Id, beta.Id, null);
+        var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage], [row]);
+
+        schematic.Cases.Should().HaveCount(2);
+        schematic.Cases.Should().OnlyContain(c =>
+            c.FeedOrigin != null
+            && c.FeedOrigin.Kind == FeedKind.Draw
+            && c.FeedOrigin.DrawId == draw.Id.Value);
     }
 
     [Fact]

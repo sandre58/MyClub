@@ -23,7 +23,7 @@ public sealed class CupSfRunningScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "QF done + SF materialized ~50% played — multi-phase Running. Contrast: cup-qf-sf stops before from-slots.";
+        "QF Prog Auto Place → SF slots · SF materialized ~50% played — multi-phase Running. Contrast: cup-qf-sf stops before from-slots.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;

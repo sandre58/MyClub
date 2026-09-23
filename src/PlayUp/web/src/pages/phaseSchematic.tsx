@@ -102,7 +102,6 @@ function SlotBox({
   // Solid chrome when the case shows a label (occupant or structural WhoFeeds).
   // Dashed `--empty` = blank cell only — not "no EntryId".
   const hasSurface = !!(primary || secondary);
-  const name = resolvedName ?? primary ?? '';
   const className = [
     'schematic-slot',
     `schematic-slot--${density}`,
@@ -138,16 +137,19 @@ function SlotBox({
       : undefined
     : style;
 
-  const showSlotCrest = density === 'full' && !!resolvedName;
+  // Crest only with a real team name — never beside a Qual/Prog path label.
+  const showTeamCrest =
+    !!resolvedName && !!primary && primary === resolvedName;
+  const showSlotCrest = density === 'full' && showTeamCrest;
   const slot = (
     <span
       className={className}
       style={slotStyle}
       aria-hidden={ghost || undefined}
     >
-      {density === 'crest' && name ? (
+      {density === 'crest' && showTeamCrest ? (
         <TeamCrest
-          name={name}
+          name={resolvedName!}
           logoMediaId={c?.assignment?.logoMediaId}
           primaryColor={c?.assignment?.primaryColor}
           size="sm"
@@ -200,9 +202,19 @@ export type SchematicCaseTooltipOriginKind =
 
 export type SchematicCaseTooltipModel = {
   address: string | null;
-  /** Hero row: real team (crest + name) or Qual/Prog path label. */
+  /**
+   * Primary tip content — construction path (Qual/Prog) or team (Draw / Direct).
+   */
   subject: {
     kind: 'team' | 'label';
+    name: string;
+    logoMediaId?: string | null;
+    primaryColor?: string | null;
+  } | null;
+  /**
+   * Qual/Prog only: resolved occupant when known (secondary — tip-only, never case).
+   */
+  resolvedTeam: {
     name: string;
     logoMediaId?: string | null;
     primaryColor?: string | null;
@@ -218,8 +230,8 @@ export type SchematicCaseTooltipModel = {
 };
 
 /**
- * Case tooltip model — identity first, then construction provenance.
- * Shared by Cup / Groups / Championship / Swiss SlotBox.
+ * Case tooltip model — Structure decision A:
+ * case = address + construction; tip adds resolution + provenance when useful.
  */
 export function buildSchematicCaseTooltipModel({
   address,
@@ -242,9 +254,29 @@ export function buildSchematicCaseTooltipModel({
   const teamName = resolvedName?.trim() || null;
   const label = primary?.trim() || null;
   const sourceName = feed?.sourceStageName?.trim() || null;
+  const isStructuralFeed =
+    feed?.kind === 'Qualification' || feed?.kind === 'Progression';
 
   let subject: SchematicCaseTooltipModel['subject'] = null;
-  if (teamName) {
+  let resolvedTeam: SchematicCaseTooltipModel['resolvedTeam'] = null;
+
+  if (isStructuralFeed) {
+    // Path is primary; resolved team is tip-only secondary when distinct.
+    if (label) {
+      subject = { kind: 'label', name: label };
+    }
+    if (teamName && teamName !== label) {
+      resolvedTeam = {
+        name: teamName,
+        ...(crest
+          ? {
+              logoMediaId: crest.logoMediaId,
+              primaryColor: crest.primaryColor,
+            }
+          : {}),
+      };
+    }
+  } else if (teamName) {
     subject = {
       kind: 'team',
       name: teamName,
@@ -260,7 +292,7 @@ export function buildSchematicCaseTooltipModel({
   }
 
   let origin: SchematicCaseTooltipModel['origin'] = null;
-  if (feed?.kind === 'Qualification' || feed?.kind === 'Progression') {
+  if (isStructuralFeed) {
     if (sourceName) {
       origin = {
         kind: 'from',
@@ -280,7 +312,7 @@ export function buildSchematicCaseTooltipModel({
     };
   }
 
-  if (!subject && !origin) {
+  if (!subject && !resolvedTeam && !origin) {
     // Address-only empty chrome — no construction story to tip.
     return null;
   }
@@ -288,6 +320,7 @@ export function buildSchematicCaseTooltipModel({
   return {
     address: address || null,
     subject,
+    resolvedTeam,
     origin,
   };
 }
@@ -322,7 +355,29 @@ export function buildSchematicCaseTooltip(
               className="schematic-case-tip__crest"
             />
           ) : null}
-          <p className="schematic-case-tip__subject-name">{model.subject.name}</p>
+          <p
+            className={
+              model.subject.kind === 'label'
+                ? 'schematic-case-tip__primary'
+                : 'schematic-case-tip__subject-name'
+            }
+          >
+            {model.subject.name}
+          </p>
+        </div>
+      ) : null}
+      {model.resolvedTeam ? (
+        <div className="schematic-case-tip__resolved">
+          <TeamCrest
+            name={model.resolvedTeam.name}
+            logoMediaId={model.resolvedTeam.logoMediaId}
+            primaryColor={model.resolvedTeam.primaryColor}
+            size="sm"
+            className="schematic-case-tip__crest"
+          />
+          <p className="schematic-case-tip__resolved-name">
+            {model.resolvedTeam.name}
+          </p>
         </div>
       ) : null}
       {model.origin ? (
@@ -1207,14 +1262,9 @@ function orderLeafCases(
 }
 
 /**
- * Structure projection (S-B / U4 B1): construction intention first when structural;
- * Direct is the occupant itself; Draw WhoFeeds today = Published SlotResolution
- * provenance (materialized) — occupant wins when known.
- * Qual/Prog: feed label only — resolved team is not shown (U4 B1).
- *
- * Grain: Cup Slot and Groups seats can carry feed on the case;
- * Championship/Swiss: FeedOrigin on a RosterPlace case is a pending expected
- * participant (bag projection), not a Path→index address.
+ * Structure projection (decision A / U4 B1 amended):
+ * case = address + construction only (2 lines). Qual/Prog → path primary;
+ * resolved team is tip-only. Draw / Direct → occupant is the case primary.
  */
 function structureCaseLabels(
   c: SchematicCase,
@@ -1236,8 +1286,8 @@ function structureCaseLabels(
     return { primary: occupant, secondary: null };
   }
 
-  // Draw: WhoFeeds only after Published SlotResolution (see SlotFeedSnapshotAssembler).
-  // That is post-materialization provenance, not a future draw config — occupant primary.
+  // Draw: Published Slot WhoFeeds *or* published Pairing draw on pairing sides.
+  // Provenance after materialization — occupant primary; tip = "Placé par tirage".
   if (feed.kind === 'Draw') {
     if (occupant) {
       return { primary: occupant, secondary: null };

@@ -10,6 +10,7 @@
     "CompetitionClosed": "La compétition est clôturée ou archivée.",
     "EntryCapacityExceeded": "Capacité d’inscriptions dépassée.",
     "StructureNotMutable": "La structure n’est plus modifiable dans cet état.",
+    "DrawRulesRequired": "Configurez les règles de tirage avant de créer une exécution.",
     "InvalidStructureIntent": "Paramètres de structure invalides.",
     "CupBracketNotPowerOfTwo": "Le tableau de coupe doit avoir une taille puissance de 2.",
     "DrawApplyFailure": "Impossible d’appliquer le tirage.",
