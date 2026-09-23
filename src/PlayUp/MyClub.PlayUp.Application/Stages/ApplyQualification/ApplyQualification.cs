@@ -165,8 +165,7 @@ public static class ApplyQualification
             {
                 destination.RecordFormPathResolution(
                     FormPathResolutionKey.FromQualification(canonicalSource.Id, path),
-                    instruction.EntryId,
-                    clock);
+                    instruction.EntryId);
             }
 
             if (path.Destination.TargetsGroup)

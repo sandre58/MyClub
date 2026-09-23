@@ -40,6 +40,15 @@ public sealed record QualificationIntentRequest(
 /// <summary>
 /// One HTTP qualification path (destination = peer Population, Form, Cup Place, or Groups Place).
 /// </summary>
+/// <param name="Order">Processing / display order (≥ 1).</param>
+/// <param name="SelectionMode">How participants are selected from the ranking (Position, Top/Best, Bottom/Worst, Range).</param>
+/// <param name="SelectionValue">Position, count, or range lower bound (depends on <paramref name="SelectionMode"/>).</param>
+/// <param name="DestinationStageId">Destination stage.</param>
+/// <param name="RankingScope">Optional ranking scope (Overall, Group, AcrossGroups); omit when not applicable.</param>
+/// <param name="GroupId">Source group when scope is Group; omit or null otherwise.</param>
+/// <param name="AcrossGroupsPosition">Across-groups position when scope is AcrossGroups; omit or null otherwise.</param>
+/// <param name="SelectionEndValue">Inclusive range upper bound when mode is Range; omit or null otherwise.</param>
+/// <param name="MinimumPoints">Optional Points ≥ gate (Position selection only in V1); omit or null when none.</param>
 /// <param name="DestinationSlotKey">Slot key for Cup Place; omit or null when not slot-targeting.</param>
 /// <param name="DestinationGroupId">Group id for Groups Place; omit or null when not group-targeting.</param>
 /// <param name="DestinationForm">True for Form Placement (Championship/Swiss).</param>

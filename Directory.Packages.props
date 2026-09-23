@@ -33,10 +33,10 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
     <!-- Tests -->
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
-    <PackageVersion Include="FluentAssertions" Version="8.10.0" />
+    <PackageVersion Include="FluentAssertions" Version="8.11.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
     <PackageVersion Include="AutoFixture" Version="5.0.0-rc.1" />
     <PackageVersion Include="AutoFixture.AutoMoq" Version="5.0.0-rc.1" />

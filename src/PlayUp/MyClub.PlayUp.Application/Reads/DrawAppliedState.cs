@@ -48,16 +48,7 @@ public static class DrawAppliedState
             return false;
         }
 
-        foreach (var placement in placements)
-        {
-            var group = stage.FindGroup(placement.GroupId);
-            if (group is null || !group.EntryIds.Contains(placement.EntryId))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return !(from placement in placements let @group = stage.FindGroup(placement.GroupId) where @group?.EntryIds.Contains(placement.EntryId) != true select placement).Any();
     }
 
     private static bool IsSlotApplied(Draw draw, Stage stage)

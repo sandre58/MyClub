@@ -1311,10 +1311,8 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="pathFingerprint">Stable ForForm path key (<see cref="FormPathResolutionKey"/>).</param>
     /// <param name="entryId">Materialised entry.</param>
-    /// <param name="clock">Clock (reserved for future events; no event today).</param>
-    public void RecordFormPathResolution(string pathFingerprint, EntryId entryId, IClock clock)
+    public void RecordFormPathResolution(string pathFingerprint, EntryId entryId)
     {
-        ArgumentNullException.ThrowIfNull(clock);
         EnsureResolutionMutable();
 
         var existingIndex = _formPathResolutions.FindIndex(r => r.PathFingerprint == pathFingerprint);
@@ -1471,11 +1469,9 @@ public sealed class Stage : AggregateRoot<StageId>
             Raise(new StageAffectationAuthoringReplaced(Id, clock));
         }
 
-        if (hadEntry)
-        {
-            _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));
-            Raise(new StageCompositionEntriesReplaced(Id, clock));
-        }
+        if (!hadEntry) return;
+        _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));
+        Raise(new StageCompositionEntriesReplaced(Id, clock));
     }
 
     /// <summary>

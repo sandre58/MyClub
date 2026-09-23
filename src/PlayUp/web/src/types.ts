@@ -605,6 +605,13 @@ export interface StructureStageHubSummary {
   drawPoints?: number | null;
   lossPoints?: number | null;
   hasDrawRules: boolean;
+  /** Topology execution badge when DrawRules engaged (SoT Structure × Tirage chrome). */
+  drawExecutionBadge?:
+    | 'ToLaunch'
+    | 'InProgress'
+    | 'ToApply'
+    | 'Applied'
+    | null;
   drawMode?: DrawMode | null;
   numberOfPots?: number | null;
   hasQualificationRules: boolean;

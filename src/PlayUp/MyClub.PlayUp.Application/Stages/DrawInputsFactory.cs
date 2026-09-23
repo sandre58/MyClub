@@ -46,29 +46,12 @@ public static class DrawInputsFactory
         };
     }
 
-    /// <summary>
-    /// Compatibility overload — competition is ignored; pool is composition-only (fail closed).
-    /// </summary>
-    public static DrawInputs CreateDefault(
-        Domain.Competitions.Competition competition,
-        Stage stage,
-        DrawResolutionKind kind)
-    {
-        ArgumentNullException.ThrowIfNull(competition);
-        return CreateDefault(stage, kind);
-    }
-
-    private static List<EntryId> ResolveComposition(Stage stage)
-    {
-        if (stage.CompositionEntries.Count == 0)
-        {
-            throw new ApplicationFailureException(
+    private static List<EntryId> ResolveComposition(Stage stage) =>
+        stage.CompositionEntries.Count == 0
+            ? throw new ApplicationFailureException(
                 "Draw inputs require a non-empty phase population (CompositionEntries). Active competition entries are not a fallback.",
-                ApplicationErrorCodes.DrawGenerationFailure);
-        }
-
-        return [.. stage.CompositionEntries.Select(entry => entry.EntryId)];
-    }
+                ApplicationErrorCodes.DrawGenerationFailure)
+            : [.. stage.CompositionEntries.Select(entry => entry.EntryId)];
 
     private static List<GroupDrawPlacement> CollectFixedGroups(
         Stage stage,
@@ -78,13 +61,7 @@ public static class DrawInputsFactory
         var fixedPlacements = new List<GroupDrawPlacement>();
         foreach (var group in stage.Groups)
         {
-            foreach (var entryId in group.EntryIds)
-            {
-                if (pool.Contains(entryId))
-                {
-                    fixedPlacements.Add(new GroupDrawPlacement(entryId, group.Id));
-                }
-            }
+            fixedPlacements.AddRange(from entryId in @group.EntryIds where pool.Contains(entryId) select new GroupDrawPlacement(entryId, @group.Id));
         }
 
         return fixedPlacements;

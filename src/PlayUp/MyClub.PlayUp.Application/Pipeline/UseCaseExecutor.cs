@@ -1376,7 +1376,7 @@ public sealed partial class UseCaseExecutor(
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
         EnsureCompetitionAllowsLifecycleMutation(competition);
         var draw = stage.GetDraw(drawId);
-        var inputs = DrawInputsFactory.CreateDefault(competition, stage, draw.Kind);
+        var inputs = DrawInputsFactory.CreateDefault(stage, draw.Kind);
         ConfigureDrawInputs.Execute(stage, drawId, inputs);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDrawSummary(stage.Id, stage.GetDraw(drawId));

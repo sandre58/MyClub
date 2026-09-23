@@ -24,8 +24,6 @@ import {
   ChampionshipFormatIcon,
   ConfrontationIcon,
   CupFormatIcon,
-  DrawConfigIcon,
-  DrawConstraintIcon,
   DrawPendingIcon,
   GroupsFormatIcon,
   LayersIcon,
@@ -33,9 +31,7 @@ import {
   MatchdayStatIcon,
   PlusIcon,
   PencilIcon,
-  RandomIcon,
   RoundsStatIcon,
-  SeedsIcon,
   StandingRulesIcon,
   StructureIcon,
   SwissFormatIcon,
@@ -70,10 +66,7 @@ import {
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
-import {
-  getDrawTilePrimarySummary,
-  pickActiveDraw,
-} from './drawUi';
+import { pickActiveDraw } from './drawUi';
 import {
   outboundSortiesFeeds,
 } from './structureSortiesIntentFeed';
@@ -1358,50 +1351,6 @@ function ConfrontationPanel({
   );
 }
 
-function DrawConfigPanel({ stage }: { stage: StructureStageHubSummary }) {
-  const { t } = useTranslation('structure');
-  if (!stage.hasDrawRules) {
-    return null;
-  }
-  const pots = Math.max(stage.numberOfPots ?? 0, 0);
-  const modeLabel =
-    stage.drawMode === 'Random'
-      ? t('fiche.tirage.random')
-      : stage.drawMode ?? null;
-  return (
-    <ul className="structure-draw-facts">
-      {modeLabel ? (
-        <li>
-          <RandomIcon size="sm" />
-          <span>{modeLabel}</span>
-        </li>
-      ) : null}
-      {pots > 0 ? (
-        <li>
-          <LayersIcon size="sm" />
-          <span>{t('fiche.tirage.pots', { pots })}</span>
-        </li>
-      ) : null}
-      {(stage.numberOfSeeds ?? 0) > 0 ? (
-        <li>
-          <SeedsIcon size="sm" />
-          <span>{t('fiche.tirage.seeds', { count: stage.numberOfSeeds })}</span>
-        </li>
-      ) : null}
-      {(stage.drawConstraints?.length ?? 0) > 0 ? (
-        <li>
-          <DrawConstraintIcon size="sm" />
-          <span>
-            {t('fiche.tirage.constraints', {
-              count: stage.drawConstraints!.length,
-            })}
-          </span>
-        </li>
-      ) : null}
-    </ul>
-  );
-}
-
 export function StructurePhaseFiche({
   data,
   stage,
@@ -1502,7 +1451,6 @@ export function StructurePhaseFiche({
     data,
     stage.stageId,
   );
-  const populationCount = stage.compositionEntryCount ?? 0;
   const pathOutbounds = outboundFeeds(data, stage, t);
   const outbounds = outboundSortiesFeeds(
     data,
@@ -1518,15 +1466,13 @@ export function StructurePhaseFiche({
   const actions = stageActions(stage);
   const regulationHref = `/competitions/${data.competitionId}/regulation`;
   const activeDraw = pickActiveDraw(drawOverviewQuery.data?.draws ?? []);
-  const showTirage = stage.hasDrawRules || Boolean(activeDraw);
+  /** CTA only when DrawRules engage the mechanism (not merely because a seed Draw exists). */
+  const showDrawCta = stage.hasDrawRules;
+  const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
+  const poolFilled = stage.compositionEntryCount ?? 0;
+  const showPoolHint =
+    showDrawCta && placesN != null && placesN > 0;
   const showConfrontation = sections.includes('confrontation');
-  const tiragePrimary = activeDraw
-    ? getDrawTilePrimarySummary(
-        activeDraw,
-        drawOverviewQuery.data?.slots ?? [],
-        drawOverviewQuery.data?.rounds ?? [],
-      )
-    : null;
   const canEditProg = actions.includes('ReplaceProgressionRules');
   const canEditPlacement = actions.includes('ReplacePlacementAwardRules');
   const canEditDraw = actions.includes('ReplaceDrawRules');
@@ -1686,7 +1632,7 @@ export function StructurePhaseFiche({
   }
 
   const overflowItems: OverflowItem[] = [];
-  if (canEditDraw && !showTirage) {
+  if (canEditDraw) {
     overflowItems.push({
       id: 'configure-draw',
       label: t('fiche.configureDraw'),
@@ -1873,8 +1819,7 @@ export function StructurePhaseFiche({
                 </li>
               ))}
             </ul>
-            {showTirage ||
-            (data.readiness.readyForDraw && populationCount > 0) ? (
+            {showDrawCta ? (
               <div className="structure-phase-hero__draw">
                 <button
                   type="button"
@@ -1883,11 +1828,19 @@ export function StructurePhaseFiche({
                 >
                   <DrawPendingIcon size="sm" />
                   <span>
-                    {data.readiness.readyForDraw && populationCount > 0
-                      ? t('fiche.performDraw')
-                      : t('fiche.openDrawWorkflow')}
+                    {activeDraw
+                      ? t('fiche.openDrawWorkflow')
+                      : t('fiche.performDraw')}
                   </span>
                 </button>
+                {showPoolHint ? (
+                  <p className="structure-phase-hero__draw-ready">
+                    {t('fiche.drawPoolHint', {
+                      filled: poolFilled,
+                      capacity: placesN,
+                    })}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -2030,25 +1983,6 @@ export function StructurePhaseFiche({
                 forfeitLoserGoals={stage.forfeitLoserGoals}
               />
             </div>
-          </DomainTile>
-        ) : null}
-
-        {showTirage ? (
-          <DomainTile
-            id="tile-tirage"
-            title={t('fiche.tiles.tirage')}
-            icon={<DrawConfigIcon size="md" />}
-            editLabel={t('fiche.edit')}
-            onEdit={canEditDraw ? () => setEdit('tirage') : undefined}
-            compact
-          >
-            {tiragePrimary ? (
-              <p className="structure-panel__muted">
-                {t(`fiche.tirage.summary.${tiragePrimary}`)}
-              </p>
-            ) : (
-              <DrawConfigPanel stage={stage} />
-            )}
           </DomainTile>
         ) : null}
 

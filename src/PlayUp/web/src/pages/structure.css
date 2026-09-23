@@ -903,6 +903,22 @@
   line-height: var(--leading-tight);
 }
 
+.structure-topology__signal--info {
+  color: var(--color-info);
+}
+
+.structure-topology__signal--live {
+  color: var(--color-live);
+}
+
+.structure-topology__signal--attention {
+  color: var(--color-attention);
+}
+
+.structure-topology__signal--done {
+  color: var(--color-success);
+}
+
 .structure-topology__signal--warning {
   color: var(--color-attention);
 }

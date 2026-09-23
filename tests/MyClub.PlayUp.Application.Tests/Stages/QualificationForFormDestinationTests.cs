@@ -98,8 +98,7 @@ public sealed class QualificationForFormDestinationTests
         champ.AddResolvedPopulationEntry(tops[0], _clock);
         champ.RecordFormPathResolution(
             FormPathResolutionKey.FromQualification(source.Id, pathA),
-            tops[0],
-            _clock);
+            tops[0]);
 
         var schematic = StageSchematicAssembler.Assemble(champ, competition, [source, champ]);
         schematic.ExpectedFormParticipants!.Resolved.Should().HaveCount(1);

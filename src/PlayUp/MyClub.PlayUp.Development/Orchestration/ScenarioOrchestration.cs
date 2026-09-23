@@ -1046,7 +1046,7 @@ internal static class ScenarioOrchestration
         groups.AddMatchday(1, context.Clock);
         groups.SetPlacesPerGroup(2);
         groups.SeedStandingRules(
-            competition.Regulation.StandingRules ?? BootstrapRegulation.Standard().StandingRules,
+            competition.Regulation.StandingRules,
             context.Clock);
         groups.SetMatchGenerationFormat(MatchGenerationFormat.SingleRoundRobin);
         groups.ReplaceDrawRules(null, context.Clock);
@@ -1559,13 +1559,16 @@ internal static class ScenarioOrchestration
 
         var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
             .ConfigureAwait(false);
-        await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var quarter = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(quarter, entries, context.Clock);
         quarter.ReplaceRoundTieFormat(
             quarter.Rounds[0].Id,
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
+        // Engage DrawRules so Structure chrome (badge + CTA) matches the seeded Pairing execution.
+        quarter.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
         var qfMatches = ApplyCupPairingDeterministic(context, competition, quarter);
 
         var semi = Stage.Create(

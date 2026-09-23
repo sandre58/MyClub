@@ -19,7 +19,7 @@ public sealed class AffectationAuthoringHistoricalBackfillTests
         var peerId = Guid.NewGuid();
         var others = new List<(Guid, string)>
         {
-            (peerId, """{"ProgressionRules":null}"""),
+            (peerId, """{"ProgressionRules":null}""")
         };
 
         AffectationAuthoringHistoricalBackfill
@@ -37,7 +37,7 @@ public sealed class AffectationAuthoringHistoricalBackfillTests
             "{\"ProgressionRules\":{\"Intents\":[{\"DestinationStageId\":\"" + targetId + "\"}]}}";
         var others = new List<(Guid, string)>
         {
-            (sourceId, regulationJson),
+            (sourceId, regulationJson)
         };
 
         AffectationAuthoringHistoricalBackfill

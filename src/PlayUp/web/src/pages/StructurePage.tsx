@@ -598,17 +598,29 @@ function TopologyDrawHint({ stage }: { stage: StructureStageHubSummary }) {
   if (!stage.hasDrawRules) {
     return null;
   }
+  const badge = stage.drawExecutionBadge ?? 'ToLaunch';
 
-  const pots = stage.numberOfPots;
-  const label =
-    pots != null && pots > 0
-      ? t('hub.drawPots', { count: pots })
-      : t('hub.drawConfigured');
+  const key =
+    badge === 'ToLaunch'
+      ? 'toLaunch'
+      : badge === 'InProgress'
+        ? 'inProgress'
+        : badge === 'ToApply'
+          ? 'toApply'
+          : 'applied';
+  const tone =
+    badge === 'ToLaunch'
+      ? 'info'
+      : badge === 'InProgress'
+        ? 'live'
+        : badge === 'ToApply'
+          ? 'attention'
+          : 'done';
   return (
-    <Tooltip content={t('hub.drawConfiguredTooltip')}>
-      <span className="structure-topology__signal">
+    <Tooltip content={t(`hub.drawExecution.${key}Tooltip`)}>
+      <span className={`structure-topology__signal structure-topology__signal--${tone}`}>
         <DrawPendingIcon size="sm" aria-hidden="true" />
-        <span>{label}</span>
+        <span>{t(`hub.drawExecution.${key}`)}</span>
       </span>
     </Tooltip>
   );
@@ -804,11 +816,8 @@ function readinessStatusNote(
     );
   }
 
-  if (readiness.readyForDraw) {
-    return (
-      <ReadinessReadyStatus titleKey="readiness.readyForDraw" />
-    );
-  }
+  // Draw readiness is not a Structure-global status (tirage optional).
+  // CTA + topology badge carry execution; Hub stays construction-focused.
 
   if (readyToMaterialize) {
     const isCup = formatKind === 'Cup';

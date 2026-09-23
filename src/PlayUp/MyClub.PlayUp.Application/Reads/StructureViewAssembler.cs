@@ -338,7 +338,40 @@ public static class StructureViewAssembler
             AffectationIneligibleCount: affectation.IneligibleCount,
             IsRootComposition: isRootComposition,
             PlacesPerGroup: stage.PlacesPerGroup,
-            DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat));
+            DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat),
+            DrawExecutionBadge: ResolveDrawExecutionBadge(stage, draw is not null));
+    }
+
+    /// <summary>
+    /// Topology signal only: DrawRules engaged → four execution states (not pots / « configuré »).
+    /// </summary>
+    private static StructureDrawExecutionBadge? ResolveDrawExecutionBadge(
+        Stage stage,
+        bool hasDrawRules)
+    {
+        if (!hasDrawRules)
+        {
+            return null;
+        }
+
+        Draw? active = null;
+        for (var i = stage.Draws.Count - 1; i >= 0; i--)
+        {
+            var candidate = stage.Draws[i];
+            if (candidate.Status == DrawStatus.Cancelled) continue;
+            active = candidate;
+            break;
+        }
+
+        return active is null
+            ? StructureDrawExecutionBadge.ToLaunch
+            : active.Status == DrawStatus.Draft
+            ? StructureDrawExecutionBadge.InProgress
+            : active.Status == DrawStatus.Published
+            ? DrawAppliedState.IsApplied(active, stage)
+                ? StructureDrawExecutionBadge.Applied
+                : StructureDrawExecutionBadge.ToApply
+            : StructureDrawExecutionBadge.ToLaunch;
     }
 
     private static StructureTieFormatSummaryDto? MapDefaultTieFormat(TieFormat? tie) =>

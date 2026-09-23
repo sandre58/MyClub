@@ -48,8 +48,16 @@
     "fixRelation": "Fix the relation",
     "drawPots_one": "{{count}} pot",
     "drawPots_other": "{{count}} pots",
-    "drawConfigured": "Draw configured",
-    "drawConfiguredTooltip": "Draw rules are set for this stage",
+    "drawExecution": {
+      "toLaunch": "Draw to run",
+      "toLaunchTooltip": "Mechanism engaged — no active execution",
+      "inProgress": "Draw in progress",
+      "inProgressTooltip": "Open execution — details in the dialog",
+      "toApply": "Draw to apply",
+      "toApplyTooltip": "Published — waiting to apply",
+      "applied": "Draw applied",
+      "appliedTooltip": "Execution applied to the stage"
+    },
     "drawCapability": "Draw placement",
     "drawCapabilityTooltip": "Optional draw capability — places Population into Form; does not create entries",
     "outboundTo": "→ {{name}}",
@@ -469,6 +477,7 @@
     "openDrawWorkflow": "Open draw",
     "performDraw": "Run the draw",
     "configureDraw": "Configure draw",
+    "drawPoolHint": "Pool {{filled}}/{{capacity}}",
     "drawWorkflow": {
       "title": "Draw executions",
       "description": "Phase “{{phase}}” — multiple executions ≠ multiple rounds.",

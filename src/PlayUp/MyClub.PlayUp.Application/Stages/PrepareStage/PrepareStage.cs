@@ -207,6 +207,7 @@ public static class PrepareStage
     /// ForForm is allowed only toward Championship / Swiss-shaped stages (authoring matrix).
     /// Not a Domain invariant — Prepare/API gate only.
     /// </summary>
+    [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local", Justification = "False positive")]
     private static void EnsureOutboundFormDestination(
         Stage source,
         IReadOnlyList<Stage> competitionStages,

@@ -234,6 +234,7 @@ public sealed record StructureReadinessDto(
 /// <param name="IsRootComposition">True when the phase has no inbound Qualif/Prog feeds.</param>
 /// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N); independent of Draw.</param>
 /// <param name="DefaultTieFormat">Stage regulation TieFormat (AddRound copy source); null when unset.</param>
+/// <param name="DrawExecutionBadge">Topology execution badge when DrawRules engaged; null otherwise.</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -300,7 +301,8 @@ public sealed record StructureStageHubSummaryDto(
     int AffectationIneligibleCount = 0,
     bool IsRootComposition = true,
     int? PlacesPerGroup = null,
-    StructureTieFormatSummaryDto? DefaultTieFormat = null);
+    StructureTieFormatSummaryDto? DefaultTieFormat = null,
+    StructureDrawExecutionBadge? DrawExecutionBadge = null);
 
 /// <summary>Effective TieFormat flags for stage default or a confrontation segment.</summary>
 public sealed record StructureTieFormatSummaryDto(

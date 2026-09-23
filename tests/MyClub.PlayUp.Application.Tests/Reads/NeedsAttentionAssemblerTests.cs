@@ -168,8 +168,7 @@ public sealed class NeedsAttentionAssemblerTests
             FormPathResolutionKey.FromQualification(
                 source.Id,
                 source.Regulation.QualificationRules!.Paths.Single(p => p.Source.GroupId!.Equals(groupA.Id))),
-            tops[0],
-            _clock);
+            tops[0]);
 
         attention = NeedsAttentionAssembler.Assemble(
             competition,

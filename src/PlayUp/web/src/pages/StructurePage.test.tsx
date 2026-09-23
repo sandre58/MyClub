@@ -91,6 +91,7 @@ function groupesStage(
     hasPenaltyShootout: false,
     hasStandingRules: true,
     hasDrawRules: true,
+    drawExecutionBadge: 'ToLaunch',
     numberOfPots: 4,
     hasQualificationRules: true,
     qualificationPathCount: 2,
@@ -421,7 +422,12 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Tirage/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /Tirage/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Lancer le tirage/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
@@ -470,7 +476,7 @@ describe('StructurePage Structure hub', () => {
 
     expect(
       await screen.findByRole('dialog', {
-        name: /Règles de match de la phase/i,
+        name: /Règles de match/i,
       }),
     ).toBeInTheDocument();
   });
@@ -624,6 +630,9 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
     expect(
       within(topology).queryByText(/Affectation par tirage/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(topology).queryByText(/Tirage (à lancer|en cours|à appliquer|appliqué)/i),
     ).not.toBeInTheDocument();
     expect(
       within(topology).queryByText(/Tirage (à définir|requis|configuré)/i),
@@ -785,7 +794,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows draw readiness for Groups when draw-ready without claiming draw required', async () => {
+  it('does not promote draw readiness as Structure-global Hub status', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -811,9 +820,12 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Prêt pour le tirage/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/Prêt pour le tirage/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Tirage requis/i)).not.toBeInTheDocument();
+    expect(
+      await screen.findByText(/Tirage à lancer/i),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();

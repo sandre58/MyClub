@@ -35,30 +35,14 @@ internal static class DestinationSatisfaction
         bool targetsSlot,
         string? slotKey,
         GroupId? groupId,
-        string? formPathFingerprint)
-    {
-        if (targetsPopulation)
-        {
-            return InComposition(destination, expectedEntry) ? Kind.Satisfied : Kind.Pending;
-        }
-
-        if (targetsForm)
-        {
-            return EvaluateForm(destination, expectedEntry, formPathFingerprint);
-        }
-
-        if (targetsGroup)
-        {
-            return EvaluateGroup(destination, expectedEntry, groupId);
-        }
-
-        if (targetsSlot)
-        {
-            return EvaluateSlot(destination, expectedEntry, slotKey);
-        }
-
-        return Kind.Pending;
-    }
+        string? formPathFingerprint) =>
+        targetsPopulation
+            ? InComposition(destination, expectedEntry) ? Kind.Satisfied : Kind.Pending
+            : targetsForm
+                ? EvaluateForm(destination, expectedEntry, formPathFingerprint)
+                : targetsGroup
+                    ? EvaluateGroup(destination, expectedEntry, groupId)
+                    : targetsSlot ? EvaluateSlot(destination, expectedEntry, slotKey) : Kind.Pending;
 
     internal static Kind EvaluateQualification(
         Stage destination,
@@ -111,17 +95,11 @@ internal static class DestinationSatisfaction
 
         var resolution = destination.FormPathResolutions
             .FirstOrDefault(r => r.PathFingerprint == fingerprint);
-        if (resolution is null)
-        {
-            return Kind.Pending;
-        }
-
-        if (!resolution.EntryId.Equals(expectedEntry))
-        {
-            return Kind.Conflict;
-        }
-
-        return InComposition(destination, expectedEntry) ? Kind.Satisfied : Kind.Pending;
+        return resolution is null
+            ? Kind.Pending
+            : !resolution.EntryId.Equals(expectedEntry)
+            ? Kind.Conflict
+            : InComposition(destination, expectedEntry) ? Kind.Satisfied : Kind.Pending;
     }
 
     private static Kind EvaluateGroup(Stage destination, EntryId expectedEntry, GroupId? groupId)
@@ -132,17 +110,9 @@ internal static class DestinationSatisfaction
         }
 
         var group = destination.FindGroup(groupId.Value);
-        if (group is null)
-        {
-            return Kind.Pending;
-        }
-
-        if (!InComposition(destination, expectedEntry))
-        {
-            return Kind.Pending;
-        }
-
-        return group.EntryIds.Contains(expectedEntry) ? Kind.Satisfied : Kind.Pending;
+        return group is null || !InComposition(destination, expectedEntry)
+            ? Kind.Pending
+            : group.EntryIds.Contains(expectedEntry) ? Kind.Satisfied : Kind.Pending;
     }
 
     private static Kind EvaluateSlot(Stage destination, EntryId expectedEntry, string? slotKey)
@@ -153,22 +123,11 @@ internal static class DestinationSatisfaction
         }
 
         var slot = destination.FindSlot(slotKey);
-        if (slot is null)
-        {
-            return Kind.Pending;
-        }
-
-        if (slot.EntryId is { } occupant && !occupant.Equals(expectedEntry))
-        {
-            return Kind.Conflict;
-        }
-
-        if (!InComposition(destination, expectedEntry) || slot.EntryId is null)
-        {
-            return Kind.Pending;
-        }
-
-        return Kind.Satisfied;
+        return slot is null
+            ? Kind.Pending
+            : slot.EntryId is { } occupant && !occupant.Equals(expectedEntry)
+            ? Kind.Conflict
+            : !InComposition(destination, expectedEntry) || slot.EntryId is null ? Kind.Pending : Kind.Satisfied;
     }
 
     private static bool InComposition(Stage destination, EntryId entryId) =>

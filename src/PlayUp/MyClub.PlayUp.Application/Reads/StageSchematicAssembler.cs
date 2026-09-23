@@ -574,15 +574,9 @@ public static class StageSchematicAssembler
 
         var bag = new List<(EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin)>(
             expected.Resolved.Count + expected.Pending.Count);
-        foreach (var compositionEntry in stage.CompositionEntries)
-        {
-            bag.Add((compositionEntry.EntryId, null));
-        }
+        bag.AddRange(stage.CompositionEntries.Select(compositionEntry => ((EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin))(compositionEntry.EntryId, null)));
 
-        foreach (var pending in expected.Pending)
-        {
-            bag.Add((null, pending));
-        }
+        bag.AddRange(expected.Pending.Select(pending => ((EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin))(null, pending)));
 
         var cases = Enumerable
             .Range(1, places.Value)
@@ -645,21 +639,7 @@ public static class StageSchematicAssembler
         {
             if (source.Regulation.QualificationRules is { } qualification)
             {
-                foreach (var path in qualification.Paths)
-                {
-                    if (!path.Destination.StageId.Equals(stage.Id) || !path.Destination.TargetsForm)
-                    {
-                        continue;
-                    }
-
-                    var fingerprint = FormPathResolutionKey.FromQualification(source.Id, path);
-                    if (applied.Contains(fingerprint))
-                    {
-                        continue;
-                    }
-
-                    pending.Add(MapQualificationPathOrigin(path, source, destinationGroupId: null));
-                }
+                pending.AddRange(from path in qualification.Paths where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm let fingerprint = FormPathResolutionKey.FromQualification(source.Id, path) where !applied.Contains(fingerprint) select MapQualificationPathOrigin(path, source, destinationGroupId: null));
             }
 
             if (source.Regulation.ProgressionRules is not { } progression)
@@ -667,27 +647,7 @@ public static class StageSchematicAssembler
                 continue;
             }
 
-            foreach (var path in progression.Paths)
-            {
-                if (!path.Destination.StageId.Equals(stage.Id) || !path.Destination.TargetsForm)
-                {
-                    continue;
-                }
-
-                var fingerprint = FormPathResolutionKey.FromProgression(source.Id, path);
-                if (applied.Contains(fingerprint))
-                {
-                    continue;
-                }
-
-                pending.Add(new SchematicFeedOriginDto(
-                    FeedKind.Progression,
-                    SourceStageId: source.Id.Value,
-                    SourceStageName: source.Name.Value,
-                    SourceFixtureId: path.SourceFixtureId.Value,
-                    SourceFixtureNumber: FindFixtureNumber(source.Id, path.SourceFixtureId, competitionStages),
-                    Outcome: path.Outcome));
-            }
+            pending.AddRange(from path in progression.Paths where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm let fingerprint = FormPathResolutionKey.FromProgression(source.Id, path) where !applied.Contains(fingerprint) select new SchematicFeedOriginDto(FeedKind.Progression, SourceStageId: source.Id.Value, SourceStageName: source.Name.Value, SourceFixtureId: path.SourceFixtureId.Value, SourceFixtureNumber: FindFixtureNumber(source.Id, path.SourceFixtureId, competitionStages), Outcome: path.Outcome));
         }
 
         var orderedPending =

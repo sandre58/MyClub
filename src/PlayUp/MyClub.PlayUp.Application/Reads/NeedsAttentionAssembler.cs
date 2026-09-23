@@ -221,6 +221,9 @@ public static class NeedsAttentionAssembler
                         ResolveAttentionTargetType(path.Destination),
                         ResolveAttentionTargetId(destination, path.Destination)));
                     break;
+                case DestinationSatisfaction.Kind.Satisfied:
+                default:
+                    break;
             }
         }
     }
@@ -317,6 +320,9 @@ public static class NeedsAttentionAssembler
                             SeverityBlocking,
                             ResolveAttentionTargetType(path.Destination),
                             ResolveAttentionTargetId(destination, path.Destination, fixtureId)));
+                        break;
+                    case DestinationSatisfaction.Kind.Satisfied:
+                    default:
                         break;
                 }
             }

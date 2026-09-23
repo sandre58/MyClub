@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { StageDraw, StageRound, StageSlot } from '../types';
 import {
-  getDrawTilePrimarySummary,
   pickActiveDraw,
   pickDefaultDrawId,
+  resolveTopologyDrawExecutionBadge,
 } from './drawUi';
 
 function draw(partial: Partial<StageDraw> & Pick<StageDraw, 'id'>): StageDraw {
@@ -43,7 +43,7 @@ describe('pickDefaultDrawId', () => {
   });
 });
 
-describe('getDrawTilePrimarySummary', () => {
+describe('resolveTopologyDrawExecutionBadge', () => {
   const slots: StageSlot[] = [
     {
       slotKey: 'S1',
@@ -54,22 +54,29 @@ describe('getDrawTilePrimarySummary', () => {
   ];
   const rounds: StageRound[] = [];
 
-  it('orders Applied > Published > Resolved > Draft', () => {
+  it('is null without DrawRules', () => {
     expect(
-      getDrawTilePrimarySummary(
-        draw({
-          id: '1',
-          status: 'Published',
-          resolutionState: 'Resolved',
-          slotPlacements: [{ slotKey: 'S1', entryId: 'e1', displayName: 'A' }],
-        }),
+      resolveTopologyDrawExecutionBadge(false, draw({ id: '1' }), slots, rounds),
+    ).toBeNull();
+  });
+
+  it('maps ToLaunch / InProgress / ToApply / Applied', () => {
+    expect(
+      resolveTopologyDrawExecutionBadge(true, null, slots, rounds),
+    ).toBe('ToLaunch');
+
+    expect(
+      resolveTopologyDrawExecutionBadge(
+        true,
+        draw({ id: '1', status: 'Draft' }),
         slots,
         rounds,
       ),
-    ).toBe('applied');
+    ).toBe('InProgress');
 
     expect(
-      getDrawTilePrimarySummary(
+      resolveTopologyDrawExecutionBadge(
+        true,
         draw({
           id: '2',
           status: 'Published',
@@ -79,30 +86,20 @@ describe('getDrawTilePrimarySummary', () => {
         slots,
         rounds,
       ),
-    ).toBe('published');
+    ).toBe('ToApply');
 
     expect(
-      getDrawTilePrimarySummary(
-        draw({ id: '3', status: 'Draft', resolutionState: 'Resolved' }),
+      resolveTopologyDrawExecutionBadge(
+        true,
+        draw({
+          id: '3',
+          status: 'Published',
+          resolutionState: 'Resolved',
+          slotPlacements: [{ slotKey: 'S1', entryId: 'e1', displayName: 'A' }],
+        }),
         slots,
         rounds,
       ),
-    ).toBe('resolved');
-
-    expect(
-      getDrawTilePrimarySummary(
-        draw({ id: '4', status: 'Draft', resolutionState: 'NotResolved' }),
-        slots,
-        rounds,
-      ),
-    ).toBe('draft');
-
-    expect(
-      getDrawTilePrimarySummary(
-        draw({ id: '5', status: 'Draft', resolutionState: 'NoSolution' }),
-        slots,
-        rounds,
-      ),
-    ).toBe('noSolution');
+    ).toBe('Applied');
   });
 });

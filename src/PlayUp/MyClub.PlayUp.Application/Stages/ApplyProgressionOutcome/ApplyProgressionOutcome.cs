@@ -109,8 +109,7 @@ public static class ApplyProgressionOutcome
             {
                 destinations[i].RecordFormPathResolution(
                     FormPathResolutionKey.FromProgression(canonicalSource.Id, path),
-                    instruction.EntryId,
-                    clock);
+                    instruction.EntryId);
             }
 
             if (instruction.TargetsGroup)

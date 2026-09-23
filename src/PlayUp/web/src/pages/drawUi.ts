@@ -11,16 +11,12 @@ export type DrawUiProjection = {
   isApplied: boolean;
 };
 
-/**
- * Single primary summary for the Structure Tirage tile (not a lifecycle strip).
- * Priority: Applied > Published > Resolved > Draft (NoSolution stays distinct).
- */
-export type DrawTilePrimarySummary =
-  | 'applied'
-  | 'published'
-  | 'resolved'
-  | 'draft'
-  | 'noSolution';
+/** Topology badge states — mirrors server StructureDrawExecutionBadge. */
+export type TopologyDrawExecutionBadge =
+  | 'ToLaunch'
+  | 'InProgress'
+  | 'ToApply'
+  | 'Applied';
 
 /**
  * Current non-cancelled draw for Structure chrome (newest first).
@@ -45,27 +41,29 @@ export function pickDefaultDrawId(draws: StageDraw[]): string | null {
 }
 
 /**
- * One product-facing summary for the Tirage tile — never “effectué”.
+ * Client mirror of StructureViewAssembler.ResolveDrawExecutionBadge.
+ * Prefer server `stage.drawExecutionBadge` on the hub; use this for unit tests / SPA-only paths.
  */
-export function getDrawTilePrimarySummary(
-  draw: StageDraw,
+export function resolveTopologyDrawExecutionBadge(
+  hasDrawRules: boolean,
+  draw: StageDraw | null,
   slots: StageSlot[],
   rounds: StageRound[] = [],
-): DrawTilePrimarySummary {
-  const projection = getDrawUiProjection(draw, slots, rounds);
-  if (projection.isApplied) {
-    return 'applied';
+): TopologyDrawExecutionBadge | null {
+  if (!hasDrawRules) {
+    return null;
+  }
+  if (!draw) {
+    return 'ToLaunch';
+  }
+  if (draw.status === 'Draft') {
+    return 'InProgress';
   }
   if (draw.status === 'Published') {
-    return 'published';
+    const applied = getDrawUiProjection(draw, slots, rounds).isApplied;
+    return applied ? 'Applied' : 'ToApply';
   }
-  if (draw.resolutionState === 'Resolved') {
-    return 'resolved';
-  }
-  if (draw.resolutionState === 'NoSolution') {
-    return 'noSolution';
-  }
-  return 'draft';
+  return 'ToLaunch';
 }
 
 /**
