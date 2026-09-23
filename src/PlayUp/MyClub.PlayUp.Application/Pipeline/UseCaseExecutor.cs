@@ -1365,7 +1365,7 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Configures default draw inputs from active competition entries.
+    /// Configures default draw inputs from phase CompositionEntries (encoding F).
     /// </summary>
     public async Task<DrawSummaryDto> ConfigureDrawInputsAsync(
         StageId stageId,

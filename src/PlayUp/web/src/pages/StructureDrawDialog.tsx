@@ -148,7 +148,7 @@ export function StructureDrawDialog({
 
   const applyMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
-      if (draw.kind === 'Slot') {
+      if (draw.kind === 'Slot' || draw.kind === 'Group') {
         return applyDraw(stageId, draw.id, { fixtureIds: [] });
       }
       if (draw.kind === 'Pairing') {
@@ -414,7 +414,7 @@ function DrawExecutionDetail({
     draw.status === 'Published' &&
     draw.resolutionState === 'Resolved' &&
     !ui.isApplied &&
-    (draw.kind === 'Slot' || draw.kind === 'Pairing');
+    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
   const canCancel =
     draw.status === 'Draft' || draw.status === 'Published';
 

@@ -34,9 +34,30 @@ public static class DrawAppliedState
         return draw.Resolution.State == DrawResolutionState.Resolved && draw.Kind switch
         {
             DrawResolutionKind.Slot => IsSlotApplied(draw, stage),
+            DrawResolutionKind.Group => IsGroupApplied(draw, stage),
             DrawResolutionKind.Pairing => IsPairingApplied(draw, stage),
             _ => false
         };
+    }
+
+    private static bool IsGroupApplied(Draw draw, Stage stage)
+    {
+        var placements = draw.Resolution.GroupResults;
+        if (placements.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (var placement in placements)
+        {
+            var group = stage.FindGroup(placement.GroupId);
+            if (group is null || !group.EntryIds.Contains(placement.EntryId))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static bool IsSlotApplied(Draw draw, Stage stage)

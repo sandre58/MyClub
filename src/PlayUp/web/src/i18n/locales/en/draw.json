@@ -5,6 +5,7 @@
   "noSolution": "No admissible solution was found for this draw.",
   "published": "Draw published.",
   "publishedSlotApplied": "Draw published. Placements match the stage slots.",
+  "publishedGroupApplied": "Draw published. Teams are already assigned to the stage groups.",
   "publishedPairingApplied": "Draw published. Target fixtures already have matches attached.",
   "fallback": "The draw state is available below.",
   "title": "Draw {{kind}}",

@@ -69,12 +69,13 @@
   vertical-align: top;
 }
 
-/* Structured case tip — construction read (S3 / U4). */
+/* Structured case tip — identity first, provenance under rule (all formats). */
 .schematic-case-tip {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  min-width: 10rem;
+  gap: 0.4rem;
+  min-width: 11rem;
+  max-width: 18rem;
   text-align: start;
 }
 
@@ -84,42 +85,52 @@
   font-weight: var(--font-weight-regular);
   color: var(--color-text-tertiary, var(--color-text-secondary));
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
 }
 
-.schematic-case-tip__from {
+.schematic-case-tip__subject {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem;
-  margin: 0;
-  line-height: 1.25;
-}
-
-.schematic-case-tip__eyebrow {
-  flex: none;
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-regular);
-  color: var(--color-text-tertiary, var(--color-text-secondary));
-}
-
-.schematic-case-tip__phase {
+  align-items: center;
+  gap: 0.4rem;
   min-width: 0;
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
 }
 
-.schematic-case-tip__origin {
+/* Compact crest in tip — smaller than TeamCrest sm. */
+.schematic-case-tip__crest.team-crest--sm {
+  width: 1.05rem;
+  height: 1.2rem;
+}
+
+.schematic-case-tip__crest.team-crest--sm .team-crest__initial {
+  font-size: 0.45rem;
+}
+
+.schematic-case-tip__subject-name {
   margin: 0;
+  min-width: 0;
   font-size: var(--text-label);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   line-height: 1.3;
+  overflow-wrap: anywhere;
 }
 
-.schematic-case-tip__team {
+.schematic-case-tip__rule {
+  height: 0;
+  margin: 0.05rem 0 0;
+  border: 0;
+  border-top: var(--border-width) solid
+    color-mix(in srgb, var(--color-border) 85%, transparent);
+}
+
+.schematic-case-tip__origin {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
   margin: 0;
   font-size: var(--text-meta);
   font-weight: var(--font-weight-regular);
@@ -127,15 +138,49 @@
   line-height: 1.25;
 }
 
-.schematic-case-tip__draw {
-  margin: 0.15rem 0 0;
-  padding-top: 0.35rem;
-  border-top: var(--border-width) solid
-    color-mix(in srgb, var(--color-border) 80%, transparent);
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-regular);
+.schematic-case-tip__origin-icon.ds-icon {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+.schematic-case-tip__origin-copy {
+  min-width: 0;
+}
+
+.schematic-case-tip__origin-lead {
   color: var(--color-text-secondary);
-  line-height: 1.25;
+}
+
+.schematic-case-tip__origin-emphasis {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-primary);
+}
+
+/* Slot body: optional crest + copy when a real team is resolved. */
+.schematic-slot__body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.schematic-slot__crest.team-crest--sm {
+  width: 0.85rem;
+  height: 0.95rem;
+}
+
+.schematic-slot__crest.team-crest--sm .team-crest__initial {
+  font-size: 0.38rem;
+}
+
+.schematic-slot__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
 }
 
 /* U4 — Place address chrome (secondary; never replaces S3 primary). */

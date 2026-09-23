@@ -255,22 +255,19 @@ describe('PhaseSchematic', () => {
       primary: 'FC Nice',
       resolvedName: 'FC Nice',
       feed: { kind: 'Direct', configuredEntryId: 'e1' },
-      t: (key, opts) => {
+      t: (key) => {
         if (key === 'structure:fiche.schematicTooltipFrom') return 'Vient de';
-        if (key === 'structure:fiche.schematicTooltipTeam')
-          return `Équipe : ${(opts as { name: string }).name}`;
         if (key === 'structure:fiche.schematicTooltipByDraw')
           return 'Placé par tirage';
+        if (key === 'structure:fiche.schematicTooltipByAffectation')
+          return 'Affectation manuelle';
         return key;
       },
     });
     expect(model).toEqual({
       address: '1·A',
-      fromLabel: null,
-      fromPhase: null,
-      origin: 'FC Nice',
-      team: null,
-      byDraw: null,
+      subject: { kind: 'team', name: 'FC Nice' },
+      origin: { kind: 'affectation', text: 'Affectation manuelle' },
     });
   });
 
@@ -286,7 +283,7 @@ describe('PhaseSchematic', () => {
     ).toBeNull();
   });
 
-  it('buildSchematicCaseTooltipModel stacks from / origin / team / draw', () => {
+  it('buildSchematicCaseTooltipModel stacks address / team / from-phase', () => {
     const model = buildSchematicCaseTooltipModel({
       address: '1·A',
       primary: 'Vainqueur · Match #2',
@@ -297,22 +294,71 @@ describe('PhaseSchematic', () => {
         outcome: 'Winner',
         sourceFixtureNumber: 2,
       },
-      t: (key, opts) => {
+      crest: { logoMediaId: 'logo-1', primaryColor: '#123' },
+      t: (key) => {
         if (key === 'structure:fiche.schematicTooltipFrom') return 'Vient de';
-        if (key === 'structure:fiche.schematicTooltipTeam')
-          return `Équipe : ${(opts as { name: string }).name}`;
+        if (key === 'structure:fiche.schematicTooltipByDraw')
+          return 'Placé par tirage';
+        if (key === 'structure:fiche.schematicTooltipByAffectation')
+          return 'Affectation manuelle';
+        return key;
+      },
+    });
+    expect(model).toEqual({
+      address: '1·A',
+      subject: {
+        kind: 'team',
+        name: 'FC Nice',
+        logoMediaId: 'logo-1',
+        primaryColor: '#123',
+      },
+      origin: {
+        kind: 'from',
+        lead: 'Vient de',
+        text: 'Demi-finales',
+      },
+    });
+  });
+
+  it('buildSchematicCaseTooltipModel uses path label when team unresolved', () => {
+    const model = buildSchematicCaseTooltipModel({
+      address: 'B-A',
+      primary: 'Perdant · Match #1',
+      resolvedName: null,
+      feed: {
+        kind: 'Progression',
+        sourceStageName: 'Tour 1',
+        outcome: 'Loser',
+        sourceFixtureNumber: 1,
+      },
+      t: (key) => {
+        if (key === 'structure:fiche.schematicTooltipFrom') return 'Vient de';
+        return key;
+      },
+    });
+    expect(model).toEqual({
+      address: 'B-A',
+      subject: { kind: 'label', name: 'Perdant · Match #1' },
+      origin: { kind: 'from', lead: 'Vient de', text: 'Tour 1' },
+    });
+  });
+
+  it('buildSchematicCaseTooltipModel marks draw placement', () => {
+    const model = buildSchematicCaseTooltipModel({
+      address: 'R16-1-A',
+      primary: 'OGC Nice',
+      resolvedName: 'OGC Nice',
+      feed: { kind: 'Draw', drawId: 'd1' },
+      t: (key) => {
         if (key === 'structure:fiche.schematicTooltipByDraw')
           return 'Placé par tirage';
         return key;
       },
     });
     expect(model).toEqual({
-      address: '1·A',
-      fromLabel: 'Vient de',
-      fromPhase: 'Demi-finales',
-      origin: 'Vainqueur · Match #2',
-      team: 'Équipe : FC Nice',
-      byDraw: null,
+      address: 'R16-1-A',
+      subject: { kind: 'team', name: 'OGC Nice' },
+      origin: { kind: 'draw', text: 'Placé par tirage' },
     });
   });
 

@@ -78,13 +78,17 @@ public sealed record StageSlotDto(
 /// <param name="ResolutionState">Resolution state.</param>
 /// <param name="Pairings">Pairing results when resolved as Pairing; otherwise empty.</param>
 /// <param name="SlotPlacements">Slot placements when resolved as Slot; otherwise empty.</param>
+/// <param name="GroupPlacements">Group placements when resolved as Group; otherwise empty.</param>
+/// <param name="IsApplied">Derived occupancy (Publish ≠ Apply) via <c>DrawAppliedState</c>.</param>
 public sealed record StageDrawDto(
     Guid Id,
     DrawResolutionKind Kind,
     DrawStatus Status,
     DrawResolutionState ResolutionState,
     IReadOnlyList<StageDrawPairingDto> Pairings,
-    IReadOnlyList<StageDrawSlotPlacementDto> SlotPlacements);
+    IReadOnlyList<StageDrawSlotPlacementDto> SlotPlacements,
+    IReadOnlyList<StageDrawGroupPlacementDto> GroupPlacements,
+    bool IsApplied);
 
 /// <summary>
 /// Pairing result summary.
@@ -106,3 +110,11 @@ public sealed record StageDrawPairingDto(
 /// <param name="EntryId">Placed entry.</param>
 /// <param name="DisplayName">Display name when known.</param>
 public sealed record StageDrawSlotPlacementDto(string SlotKey, Guid EntryId, string? DisplayName);
+
+/// <summary>
+/// Group placement result summary.
+/// </summary>
+/// <param name="GroupId">Destination group.</param>
+/// <param name="EntryId">Placed entry.</param>
+/// <param name="DisplayName">Display name when known.</param>
+public sealed record StageDrawGroupPlacementDto(Guid GroupId, Guid EntryId, string? DisplayName);

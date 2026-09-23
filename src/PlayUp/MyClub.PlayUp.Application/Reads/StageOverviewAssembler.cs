@@ -45,7 +45,7 @@ public static class StageOverviewAssembler
                 covered.Contains(slot.SlotKey)))
             .ToArray();
 
-        var draws = stage.Draws.Select(draw => MapDraw(draw, names)).ToArray();
+        var draws = stage.Draws.Select(draw => MapDraw(draw, stage, names)).ToArray();
 
         return new StageOverviewDto(
             stage.Id.Value,
@@ -68,11 +68,12 @@ public static class StageOverviewAssembler
                     .Select(attachment => new StageFixtureAttachmentDto(attachment.MatchId.Value, attachment.LegIndex))
             ]);
 
-    private static StageDrawDto MapDraw(Draw draw, IReadOnlyDictionary<EntryId, string> names)
+    private static StageDrawDto MapDraw(Draw draw, Stage stage, IReadOnlyDictionary<EntryId, string> names)
     {
         var resolution = draw.Resolution;
         IReadOnlyList<StageDrawPairingDto> pairings = [];
         IReadOnlyList<StageDrawSlotPlacementDto> slotPlacements = [];
+        IReadOnlyList<StageDrawGroupPlacementDto> groupPlacements = [];
 
         if (resolution.State != DrawResolutionState.Resolved)
         {
@@ -82,7 +83,9 @@ public static class StageOverviewAssembler
                 draw.Status,
                 resolution.State,
                 pairings,
-                slotPlacements);
+                slotPlacements,
+                groupPlacements,
+                IsApplied: false);
         }
 
         pairings =
@@ -104,12 +107,23 @@ public static class StageOverviewAssembler
                     EntryDisplayNames.Resolve(names, placement.EntryId)))
         ];
 
+        groupPlacements =
+        [
+            .. resolution.GroupResults
+                .Select(placement => new StageDrawGroupPlacementDto(
+                    placement.GroupId.Value,
+                    placement.EntryId.Value,
+                    EntryDisplayNames.Resolve(names, placement.EntryId)))
+        ];
+
         return new StageDrawDto(
             draw.Id.Value,
             draw.Kind,
             draw.Status,
             resolution.State,
             pairings,
-            slotPlacements);
+            slotPlacements,
+            groupPlacements,
+            DrawAppliedState.IsApplied(draw, stage));
     }
 }

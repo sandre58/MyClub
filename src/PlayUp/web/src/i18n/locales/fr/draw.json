@@ -5,6 +5,7 @@
   "noSolution": "Aucune solution admissible n’a été trouvée pour ce tirage.",
   "published": "Tirage publié.",
   "publishedSlotApplied": "Tirage publié. Les placements correspondent aux emplacements de la phase.",
+  "publishedGroupApplied": "Tirage publié. Les équipes sont déjà affectées aux groupes de la phase.",
   "publishedPairingApplied": "Tirage publié. Les rencontres cibles ont déjà des matchs attachés.",
   "fallback": "L’état du tirage est disponible ci-dessous.",
   "title": "Tirage {{kind}}",

@@ -5,54 +5,107 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Builds default <see cref="DrawInputs"/> for Structure → Draw flows.
+/// Builds default <see cref="DrawInputs"/> for Structure → Draw flows (encoding F).
 /// </summary>
 /// <remarks>
-/// O4-a: when the stage has a non-empty phase population (<see cref="Stage.CompositionEntries"/>),
-/// that set is the draw pool. Otherwise falls back to competition Active entries (legacy stages).
+/// Entries = phase <see cref="Stage.CompositionEntries"/> only (fail closed — no Active[] fallback).
+/// Placements already present on the form become Fixed* ( ⊆ Entries ). The generator free pool is
+/// Entries \ Fixed* — not a shrink responsibility of this factory.
 /// </remarks>
 public static class DrawInputsFactory
 {
     /// <summary>
-    /// Builds inputs for the draw kind from phase population or active competition entries.
+    /// Builds inputs for the draw kind from the stage composition (encoding F).
     /// </summary>
-    public static DrawInputs CreateDefault(Competition competition, Stage stage, DrawResolutionKind kind)
+    /// <param name="stage">Stage that owns the draw.</param>
+    /// <param name="kind">Draw resolution kind.</param>
+    public static DrawInputs CreateDefault(Stage stage, DrawResolutionKind kind)
     {
-        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
 
-        var entries = ResolvePool(competition, stage);
+        var entries = ResolveComposition(stage);
 
-        return entries.Count == 0
-            ? throw new ApplicationFailureException(
-                "Draw inputs require at least one entry in the phase population (or active competition entries when population is empty).",
-                ApplicationErrorCodes.DrawGenerationFailure)
-            : kind switch
+        return kind switch
         {
-            DrawResolutionKind.Group => DrawInputs.ForGroup(entries, potMembership: BuildSequentialPots(entries, stage)),
+            DrawResolutionKind.Group => DrawInputs.ForGroup(
+                entries,
+                potMembership: BuildSequentialPots(entries, stage),
+                fixedPlacements: CollectFixedGroups(stage, entries)),
             DrawResolutionKind.Pairing => DrawInputs.ForPairing(entries),
-            DrawResolutionKind.Slot => DrawInputs.ForSlot(entries),
+            DrawResolutionKind.Slot => DrawInputs.ForSlot(
+                entries,
+                fixedPlacements: CollectFixedSlots(stage, entries)),
             _ => throw new ApplicationFailureException(
                 $"Unsupported draw kind '{kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
         };
     }
 
-    private static List<EntryId> ResolvePool(Competition competition, Stage stage) =>
-        stage.CompositionEntries.Count > 0
-            ? [.. stage.CompositionEntries.Select(entry => entry.EntryId)]
-            : [
-                .. competition.Entries
-                    .Where(entry => entry.Status == EntryStatus.Active)
-                    .Select(entry => entry.Id)
-                    .OrderBy(id => id.Value)
-            ];
+    /// <summary>
+    /// Compatibility overload — competition is ignored; pool is composition-only (fail closed).
+    /// </summary>
+    public static DrawInputs CreateDefault(
+        Domain.Competitions.Competition competition,
+        Stage stage,
+        DrawResolutionKind kind)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        return CreateDefault(stage, kind);
+    }
+
+    private static List<EntryId> ResolveComposition(Stage stage)
+    {
+        if (stage.CompositionEntries.Count == 0)
+        {
+            throw new ApplicationFailureException(
+                "Draw inputs require a non-empty phase population (CompositionEntries). Active competition entries are not a fallback.",
+                ApplicationErrorCodes.DrawGenerationFailure);
+        }
+
+        return [.. stage.CompositionEntries.Select(entry => entry.EntryId)];
+    }
+
+    private static List<GroupDrawPlacement> CollectFixedGroups(
+        Stage stage,
+        IReadOnlyList<EntryId> entries)
+    {
+        var pool = entries.ToHashSet();
+        var fixedPlacements = new List<GroupDrawPlacement>();
+        foreach (var group in stage.Groups)
+        {
+            foreach (var entryId in group.EntryIds)
+            {
+                if (pool.Contains(entryId))
+                {
+                    fixedPlacements.Add(new GroupDrawPlacement(entryId, group.Id));
+                }
+            }
+        }
+
+        return fixedPlacements;
+    }
+
+    private static List<SlotDrawPlacement> CollectFixedSlots(
+        Stage stage,
+        IReadOnlyList<EntryId> entries)
+    {
+        var pool = entries.ToHashSet();
+        var fixedPlacements = new List<SlotDrawPlacement>();
+        foreach (var slot in stage.Slots)
+        {
+            if (slot.EntryId is { } entryId && pool.Contains(entryId))
+            {
+                fixedPlacements.Add(new SlotDrawPlacement(entryId, slot.SlotKey));
+            }
+        }
+
+        return fixedPlacements;
+    }
 
     private static PotMembership BuildSequentialPots(List<EntryId> entries, Stage stage)
     {

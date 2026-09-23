@@ -451,8 +451,10 @@
     "occupantsUnavailable": "Composition unavailable for now.",
     "schematicLoading": "Loading schematic…",
     "schematicTooltipFrom": "From",
+    "schematicTooltipFromPhase": "From {{phase}}",
     "schematicTooltipTeam": "Team: {{name}}",
     "schematicTooltipByDraw": "Placed by draw",
+    "schematicTooltipByAffectation": "Manual assignment",
     "entriesEmptyTitle": "No entries",
     "entriesEmpty": "No inbound entries into this phase.",
     "exitsEmptyTitle": "No exits",
@@ -586,8 +588,7 @@
   },
   "population": {
     "sectionSources": "Qualified",
-    "sectionAffectation": "Teams",
-    "affectationEmpty": "None"
+    "sectionAffectation": "Teams"
   },
   "entries": {
     "counterTeams": "{{k}} / {{n}} teams",

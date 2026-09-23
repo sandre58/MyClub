@@ -1425,7 +1425,7 @@ public static class OverviewAssembler
                         draw.Id.Value));
                 }
 
-                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Pairing }
+                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group or DrawResolutionKind.Pairing }
                     && !DrawAppliedState.IsApplied(draw, stage))
                 {
                     actions.Add(new OverviewActionDto(

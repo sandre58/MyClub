@@ -11,6 +11,11 @@ import type {
 } from '../types';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { Tooltip } from '../design-system/components/Tooltip';
+import {
+  ArrowRightIcon,
+  DrawPendingIcon,
+  PersonIcon,
+} from '../design-system/icons/contentIcons';
 import { nextPowerOfTwo } from './structureFixtureLabels';
 import { placeChromeLabel } from './structurePlaceLabel';
 import './phase-schematic.css';
@@ -114,6 +119,12 @@ function SlotBox({
           primary,
           resolvedName,
           feed: c.feedOrigin,
+          crest: c.assignment
+            ? {
+                logoMediaId: c.assignment.logoMediaId,
+                primaryColor: c.assignment.primaryColor,
+              }
+            : null,
           t,
         })
       : null;
@@ -127,6 +138,7 @@ function SlotBox({
       : undefined
     : style;
 
+  const showSlotCrest = density === 'full' && !!resolvedName;
   const slot = (
     <span
       className={className}
@@ -144,11 +156,26 @@ function SlotBox({
       {density === 'full' && address ? (
         <span className="schematic-slot__address">{address}</span>
       ) : null}
-      {density === 'full' && primary ? (
-        <span className="schematic-slot__primary">{primary}</span>
-      ) : null}
-      {density === 'full' && secondary && secondary !== primary ? (
-        <span className="schematic-slot__secondary">{secondary}</span>
+      {density === 'full' && (primary || showSlotCrest) ? (
+        <span className="schematic-slot__body">
+          {showSlotCrest ? (
+            <TeamCrest
+              name={resolvedName!}
+              logoMediaId={c?.assignment?.logoMediaId}
+              primaryColor={c?.assignment?.primaryColor}
+              size="sm"
+              className="schematic-slot__crest"
+            />
+          ) : null}
+          <span className="schematic-slot__copy">
+            {primary ? (
+              <span className="schematic-slot__primary">{primary}</span>
+            ) : null}
+            {secondary && secondary !== primary ? (
+              <span className="schematic-slot__secondary">{secondary}</span>
+            ) : null}
+          </span>
+        </span>
       ) : null}
     </span>
   );
@@ -166,94 +193,163 @@ function SlotBox({
   );
 }
 
+export type SchematicCaseTooltipOriginKind =
+  | 'from'
+  | 'draw'
+  | 'affectation';
+
 export type SchematicCaseTooltipModel = {
   address: string | null;
-  fromLabel: string | null;
-  fromPhase: string | null;
-  origin: string | null;
-  team: string | null;
-  byDraw: string | null;
+  /** Hero row: real team (crest + name) or Qual/Prog path label. */
+  subject: {
+    kind: 'team' | 'label';
+    name: string;
+    logoMediaId?: string | null;
+    primaryColor?: string | null;
+  } | null;
+  /** Footer provenance under the separator. */
+  origin: {
+    kind: SchematicCaseTooltipOriginKind;
+    /** Lead copy when kind=from (e.g. "Vient de"). */
+    lead?: string | null;
+    /** Emphasized span (phase name) or full line for draw / affectation. */
+    text: string;
+  } | null;
 };
 
 /**
- * Case tooltip model (S3 / U4) — construction read, not execution history.
- * Draw indicator only when WhoFeeds Unique = Draw.
+ * Case tooltip model — identity first, then construction provenance.
+ * Shared by Cup / Groups / Championship / Swiss SlotBox.
  */
 export function buildSchematicCaseTooltipModel({
   address,
   primary,
   resolvedName,
   feed,
+  crest,
   t,
 }: {
   address: string | null;
   primary: string | null;
   resolvedName: string | null;
   feed?: SchematicFeedOrigin | null;
+  crest?: {
+    logoMediaId?: string | null;
+    primaryColor?: string | null;
+  } | null;
   t: Translate;
 }): SchematicCaseTooltipModel | null {
+  const teamName = resolvedName?.trim() || null;
+  const label = primary?.trim() || null;
   const sourceName = feed?.sourceStageName?.trim() || null;
-  const showFrom =
-    !!sourceName &&
-    (feed?.kind === 'Qualification' || feed?.kind === 'Progression');
-  const showTeam =
-    !!resolvedName &&
-    !!primary &&
-    resolvedName !== primary &&
-    feed?.kind !== 'Direct' &&
-    feed?.kind !== 'Draw';
 
-  const model: SchematicCaseTooltipModel = {
-    address: address || null,
-    fromLabel: showFrom ? t('structure:fiche.schematicTooltipFrom') : null,
-    fromPhase: showFrom ? sourceName : null,
-    origin: primary || null,
-    team: showTeam
-      ? t('structure:fiche.schematicTooltipTeam', { name: resolvedName })
-      : null,
-    byDraw:
-      feed?.kind === 'Draw'
-        ? t('structure:fiche.schematicTooltipByDraw')
-        : null,
-  };
+  let subject: SchematicCaseTooltipModel['subject'] = null;
+  if (teamName) {
+    subject = {
+      kind: 'team',
+      name: teamName,
+      ...(crest
+        ? {
+            logoMediaId: crest.logoMediaId,
+            primaryColor: crest.primaryColor,
+          }
+        : {}),
+    };
+  } else if (label) {
+    subject = { kind: 'label', name: label };
+  }
 
-  if (
-    !model.fromPhase &&
-    !model.origin &&
-    !model.team &&
-    !model.byDraw
-  ) {
+  let origin: SchematicCaseTooltipModel['origin'] = null;
+  if (feed?.kind === 'Qualification' || feed?.kind === 'Progression') {
+    if (sourceName) {
+      origin = {
+        kind: 'from',
+        lead: t('structure:fiche.schematicTooltipFrom'),
+        text: sourceName,
+      };
+    }
+  } else if (feed?.kind === 'Draw') {
+    origin = {
+      kind: 'draw',
+      text: t('structure:fiche.schematicTooltipByDraw'),
+    };
+  } else if (feed?.kind === 'Direct') {
+    origin = {
+      kind: 'affectation',
+      text: t('structure:fiche.schematicTooltipByAffectation'),
+    };
+  }
+
+  if (!subject && !origin) {
     // Address-only empty chrome — no construction story to tip.
     return null;
   }
-  return model;
+
+  return {
+    address: address || null,
+    subject,
+    origin,
+  };
 }
 
-/** Structured DS Tooltip body for a schematic case. */
+/** Structured DS Tooltip body for a schematic case (all formats). */
 export function buildSchematicCaseTooltip(
   args: Parameters<typeof buildSchematicCaseTooltipModel>[0],
 ): ReactNode {
   const model = buildSchematicCaseTooltipModel(args);
   if (!model) return null;
+
+  const OriginIcon =
+    model.origin?.kind === 'draw'
+      ? DrawPendingIcon
+      : model.origin?.kind === 'affectation'
+        ? PersonIcon
+        : ArrowRightIcon;
+
   return (
     <div className="schematic-case-tip">
       {model.address ? (
         <p className="schematic-case-tip__address">{model.address}</p>
       ) : null}
-      {model.fromPhase ? (
-        <p className="schematic-case-tip__from">
-          <span className="schematic-case-tip__eyebrow">{model.fromLabel}</span>
-          <span className="schematic-case-tip__phase">{model.fromPhase}</span>
-        </p>
+      {model.subject ? (
+        <div className="schematic-case-tip__subject">
+          {model.subject.kind === 'team' ? (
+            <TeamCrest
+              name={model.subject.name}
+              logoMediaId={model.subject.logoMediaId}
+              primaryColor={model.subject.primaryColor}
+              size="sm"
+              className="schematic-case-tip__crest"
+            />
+          ) : null}
+          <p className="schematic-case-tip__subject-name">{model.subject.name}</p>
+        </div>
       ) : null}
       {model.origin ? (
-        <p className="schematic-case-tip__origin">{model.origin}</p>
-      ) : null}
-      {model.team ? (
-        <p className="schematic-case-tip__team">{model.team}</p>
-      ) : null}
-      {model.byDraw ? (
-        <p className="schematic-case-tip__draw">{model.byDraw}</p>
+        <>
+          <div className="schematic-case-tip__rule" aria-hidden="true" />
+          <p className="schematic-case-tip__origin">
+            <OriginIcon
+              size="sm"
+              className="schematic-case-tip__origin-icon"
+              aria-hidden
+            />
+            {model.origin.kind === 'from' && model.origin.lead ? (
+              <span className="schematic-case-tip__origin-copy">
+                <span className="schematic-case-tip__origin-lead">
+                  {model.origin.lead}
+                </span>{' '}
+                <span className="schematic-case-tip__origin-emphasis">
+                  {model.origin.text}
+                </span>
+              </span>
+            ) : (
+              <span className="schematic-case-tip__origin-copy">
+                {model.origin.text}
+              </span>
+            )}
+          </p>
+        </>
       ) : null}
     </div>
   );

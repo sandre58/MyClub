@@ -1355,6 +1355,12 @@ export interface StageDrawSlotPlacement {
   displayName: string | null;
 }
 
+export interface StageDrawGroupPlacement {
+  groupId: string;
+  entryId: string;
+  displayName: string | null;
+}
+
 export interface StageDraw {
   id: string;
   kind: DrawResolutionKind;
@@ -1362,6 +1368,10 @@ export interface StageDraw {
   resolutionState: DrawResolutionState;
   pairings: StageDrawPairing[];
   slotPlacements: StageDrawSlotPlacement[];
+  /** Present when resolved as Group; may be empty on older payloads. */
+  groupPlacements?: StageDrawGroupPlacement[];
+  /** Server-derived occupancy (DrawAppliedState). Prefer over local heuristics. */
+  isApplied?: boolean;
 }
 
 export interface StageOverview {

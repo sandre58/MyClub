@@ -451,8 +451,10 @@
     "occupantsUnavailable": "Composition indisponible pour le moment.",
     "schematicLoading": "Chargement de la schématique…",
     "schematicTooltipFrom": "Vient de",
+    "schematicTooltipFromPhase": "Vient de {{phase}}",
     "schematicTooltipTeam": "Équipe : {{name}}",
     "schematicTooltipByDraw": "Placé par tirage",
+    "schematicTooltipByAffectation": "Affectation manuelle",
     "entriesEmptyTitle": "Pas d’entrée",
     "entriesEmpty": "Aucune entrée vers cette phase.",
     "exitsEmptyTitle": "Pas de sortie",
@@ -586,8 +588,7 @@
   },
   "population": {
     "sectionSources": "Qualifiés",
-    "sectionAffectation": "Équipes",
-    "affectationEmpty": "Aucune"
+    "sectionAffectation": "Équipes"
   },
   "entries": {
     "counterTeams": "{{k}} / {{n}} équipes",

@@ -861,11 +861,7 @@ function RootEntriesRail({
               <p className="structure-entries__anomaly" role="status">
                 {t('entries.ineligibleOverlay', { count: ineligible })}
               </p>
-            ) : (
-              <p className="structure-entries__preview" role="status">
-                {t('population.affectationEmpty')}
-              </p>
-            )}
+            ) : null}
           </section>
         ) : !sources ? (
           <EmptyState

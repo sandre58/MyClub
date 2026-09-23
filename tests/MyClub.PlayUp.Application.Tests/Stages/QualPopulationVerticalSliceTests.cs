@@ -111,7 +111,7 @@ public sealed class QualPopulationVerticalSliceTests
         competition.AddEntry(TeamId.New(), "A2", a2, _clock);
         competition.AddEntry(TeamId.New(), "B2", b2, _clock);
 
-        var inputs = DrawInputsFactory.CreateDefault(competition, phaseB, DrawResolutionKind.Slot);
+        var inputs = DrawInputsFactory.CreateDefault(phaseB, DrawResolutionKind.Slot);
         inputs.Entries.Should().BeEquivalentTo([a1, b1, a2, b2]);
         inputs.Entries.Should().NotContain(competition.Entries[0].Id);
 

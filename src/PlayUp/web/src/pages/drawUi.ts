@@ -72,9 +72,7 @@ export function getDrawTilePrimarySummary(
  * Pure projection: server enums → message key + flags for conditional rendering.
  * Not a Domain state machine — only helps the component avoid nested if spaghetti.
  *
- * Domain state = authoritative rules in .NET.
- * Server state = StageOverview in TanStack Query.
- * Derived UI = values computed during render from that snapshot.
+ * Prefer server `draw.isApplied` (DrawAppliedState) when present; else Slot/Pairing heuristics.
  */
 export function getDrawUiProjection(
   draw: StageDraw,
@@ -83,8 +81,10 @@ export function getDrawUiProjection(
 ): DrawUiProjection {
   const isApplied =
     draw.resolutionState === 'Resolved' &&
-    ((draw.kind === 'Slot' && isSlotDrawApplied(draw, slots)) ||
-      (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)));
+    (typeof draw.isApplied === 'boolean'
+      ? draw.isApplied
+      : (draw.kind === 'Slot' && isSlotDrawApplied(draw, slots)) ||
+        (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)));
 
   if (draw.status === 'Cancelled') {
     return {
@@ -122,6 +122,8 @@ export function getDrawUiProjection(
     let messageKey = 'published';
     if (isApplied && draw.kind === 'Slot') {
       messageKey = 'publishedSlotApplied';
+    } else if (isApplied && draw.kind === 'Group') {
+      messageKey = 'publishedGroupApplied';
     } else if (isApplied && draw.kind === 'Pairing') {
       messageKey = 'publishedPairingApplied';
     }

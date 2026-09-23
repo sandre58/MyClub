@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -38,8 +39,10 @@ public sealed class Slice3DrawPipelineTests
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
 
+        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
-        var inputs = DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Group);
+        var inputs = DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group);
         ConfigureDrawInputs.Execute(stage, draw.Id, inputs);
 
         var generated = GenerateDrawResolution.Execute(
@@ -73,11 +76,13 @@ public sealed class Slice3DrawPipelineTests
             _clock);
         var stage = configured.Stage;
 
+        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
         ConfigureDrawInputs.Execute(
             stage,
             draw.Id,
-            DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Pairing));
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Pairing));
         GenerateDrawResolution.Execute(stage, draw.Id, _clock).IsResolved.Should().BeTrue();
         PublishDraw.Execute(stage, draw.Id, _clock);
 
@@ -107,11 +112,12 @@ public sealed class Slice3DrawPipelineTests
             StructureIntent.Cup(2),
             _clock);
         var stage = configured.Stage;
+        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
         ConfigureDrawInputs.Execute(
             stage,
             draw.Id,
-            DrawInputsFactory.CreateDefault(competition, stage, DrawResolutionKind.Pairing));
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Pairing));
         GenerateDrawResolution.Execute(stage, draw.Id, _clock);
         PublishDraw.Execute(stage, draw.Id, _clock);
 

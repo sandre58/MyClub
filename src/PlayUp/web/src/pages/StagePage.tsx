@@ -662,7 +662,7 @@ function DrawActions({
     draw.status === 'Published' &&
     draw.resolutionState === 'Resolved' &&
     !isApplied &&
-    (draw.kind === 'Slot' || draw.kind === 'Pairing');
+    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
 
   const pairingFixtureIds =
     draw.kind === 'Pairing' ? resolvePairingFixtureIds(draw, rounds) : null;
@@ -683,7 +683,7 @@ function DrawActions({
 
   const applyMutation = useMutation({
     mutationFn: () => {
-      if (draw.kind === 'Slot') {
+      if (draw.kind === 'Slot' || draw.kind === 'Group') {
         return applyDraw(stageId, draw.id, { fixtureIds: [] });
       }
 
