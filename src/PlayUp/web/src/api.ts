@@ -791,6 +791,20 @@ export function cancelDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/cancel`);
 }
 
+/**
+ * Decision D — release Places still exactly matching this Slot draw's resolution.
+ * POST /stages/{stageId}/draws/{drawId}/release-aligned-placements → 200
+ */
+export function releaseDrawAlignedPlacements(
+  stageId: string,
+  drawId: string,
+): Promise<{ releasedCount: number; skippedCount: number }> {
+  return sendJson(
+    'POST',
+    `/stages/${stageId}/draws/${drawId}/release-aligned-placements`,
+  );
+}
+
 /** POST /stages/{stageId}/draws → 201 DrawSummary */
 export function createDraw(
   stageId: string,

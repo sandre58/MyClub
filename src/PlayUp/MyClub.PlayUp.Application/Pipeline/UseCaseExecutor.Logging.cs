@@ -57,6 +57,18 @@ public sealed partial class UseCaseExecutor
     private static partial void LogDrawCancelled(ILogger logger, Guid stageId, Guid drawId, Guid competitionId);
 
     [LoggerMessage(
+        EventId = 1023,
+        Level = LogLevel.Information,
+        Message = "Draw aligned placements released {StageId} {DrawId} {CompetitionId} {ReleasedCount} {SkippedCount}")]
+    private static partial void LogDrawAlignedPlacementsReleased(
+        ILogger logger,
+        Guid stageId,
+        Guid drawId,
+        Guid competitionId,
+        int releasedCount,
+        int skippedCount);
+
+    [LoggerMessage(
         EventId = 1021,
         Level = LogLevel.Information,
         Message = "Draw applied {StageId} {DrawId} {CompetitionId} {CreatedMatchCount}")]

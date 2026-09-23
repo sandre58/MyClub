@@ -32,5 +32,11 @@
   "toastPublished": "Draw published.",
   "toastPublishedAndApplied": "Draw published and applied.",
   "toastApplied": "Draw applied to the stage.",
-  "toastCancelled": "Execution cancelled."
+  "toastCancelled": "Execution cancelled.",
+  "releasePlacements": "Release draw placements",
+  "releasingPlacements": "Releasing…",
+  "alignedPlacementsRemaining": "{{aligned}} / {{total}} placements still present",
+  "confirmReleaseTitle": "Release draw placements?",
+  "confirmRelease": "Places still populated according to this draw will be cleared. Direct assignments and other feeds will not be modified.",
+  "toastReleased": "Placements released ({{count}})."
 }

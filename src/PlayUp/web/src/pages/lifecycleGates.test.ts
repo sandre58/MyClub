@@ -3,6 +3,7 @@ import {
   allowsCompetitionLifecycleMutation,
   allowsStageDraftOrReadyMutation,
   canCancelDrawExecution,
+  canReleaseDrawAlignedPlacements,
   isDrawExecutionCancellable,
 } from './lifecycleGates';
 
@@ -60,6 +61,68 @@ describe('lifecycleGates', () => {
         competitionStatus: 'Running',
         stageStatus: 'Draft',
         drawStatus: 'Cancelled',
+      }),
+    ).toBe(false);
+  });
+
+  it('canReleaseDrawAlignedPlacements requires Cancelled Slot with aligned count (D)', () => {
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Draft',
+        drawStatus: 'Cancelled',
+        drawKind: 'Slot',
+        alignedPlacementCount: 2,
+      }),
+    ).toBe(true);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Draft',
+        drawStatus: 'Cancelled',
+        drawKind: 'Slot',
+        alignedPlacementCount: 0,
+      }),
+    ).toBe(false);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Draft',
+        drawStatus: 'Published',
+        drawKind: 'Slot',
+        alignedPlacementCount: 2,
+      }),
+    ).toBe(false);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Draft',
+        drawStatus: 'Cancelled',
+        drawKind: 'Group',
+        alignedPlacementCount: 2,
+      }),
+    ).toBe(false);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Completed',
+        stageStatus: 'Draft',
+        drawStatus: 'Cancelled',
+        drawKind: 'Slot',
+        alignedPlacementCount: 1,
+      }),
+    ).toBe(false);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Running',
+        drawStatus: 'Cancelled',
+        drawKind: 'Slot',
+        alignedPlacementCount: 1,
       }),
     ).toBe(false);
   });

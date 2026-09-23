@@ -174,7 +174,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(entryA, "S1"),
-                new SlotDrawPlacement(entryB, "S2"),
+                new SlotDrawPlacement(entryB, "S2")
             ]),
             _clock);
         if (publish)

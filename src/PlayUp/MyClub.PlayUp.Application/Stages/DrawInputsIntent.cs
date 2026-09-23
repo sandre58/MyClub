@@ -20,5 +20,5 @@ public enum DrawInputsIntent
     Default = 0,
 
     /// <summary>Full re-draw — ignore occupancy-derived Fixed*; reshuffle the free pool.</summary>
-    Rerun = 1,
+    Rerun = 1
 }

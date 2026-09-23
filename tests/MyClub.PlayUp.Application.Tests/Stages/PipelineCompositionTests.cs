@@ -7,9 +7,9 @@
 using FluentAssertions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Standings;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -93,7 +93,7 @@ public sealed class PipelineCompositionTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(home, "KO-A"),
-                new SlotDrawPlacement(away, "KO-B"),
+                new SlotDrawPlacement(away, "KO-B")
             ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);
@@ -272,7 +272,7 @@ public sealed class PipelineCompositionTests
                 new SlotDrawPlacement(a, "QF1-A"),
                 new SlotDrawPlacement(b, "QF1-B"),
                 new SlotDrawPlacement(c, "QF2-A"),
-                new SlotDrawPlacement(d, "QF2-B"),
+                new SlotDrawPlacement(d, "QF2-B")
             ]);
         ApplyDraw.Execute(qf, drawQf.Id, _clock);
 

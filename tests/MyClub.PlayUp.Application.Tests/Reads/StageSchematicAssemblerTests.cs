@@ -315,7 +315,7 @@ public sealed class StageSchematicAssemblerTests
 
         // I3 — Places-first: fixture sides must not replace existing SlotKeys.
         schematic.Cases.Should().HaveCount(2);
-        schematic.Cases.Select(c => c.FormPosition.SlotKey).Should().BeEquivalentTo(["S1", "S2"]);
+        schematic.Cases.Select(c => c.FormPosition.SlotKey).Should().BeEquivalentTo("S1", "S2");
         schematic.Cases.Should().OnlyContain(c => c.Entry == null && c.Assignment == null);
 
         schematic.Connections.Should().ContainSingle();
@@ -344,7 +344,7 @@ public sealed class StageSchematicAssemblerTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(alpha.Id, "S1"),
-                new SlotDrawPlacement(beta.Id, "S2"),
+                new SlotDrawPlacement(beta.Id, "S2")
             ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);
@@ -378,7 +378,7 @@ public sealed class StageSchematicAssemblerTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(alpha.Id, "S1"),
-                new SlotDrawPlacement(beta.Id, "S2"),
+                new SlotDrawPlacement(beta.Id, "S2")
             ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);

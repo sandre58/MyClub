@@ -107,6 +107,12 @@ public static class ApplicationErrorCodes
     public const string DrawRulesRequired = "Application.DrawRulesRequired";
 
     /// <summary>
+    /// Gets the code when ReleaseDrawAlignedPlacements cannot run (e.g. not Resolved Slot).
+    /// Distinct from Domain <c>SlotFeedConflict</c> (DirectAssignment on a target slot).
+    /// </summary>
+    public const string DrawReleaseFailure = "Application.DrawReleaseFailure";
+
+    /// <summary>
     /// Gets the code when GenerateSchedule cannot run (e.g. target match not attached to the Stage).
     /// Distinct from Domain <c>SchedulingResult.InvalidRequest</c> / <c>NoSolution</c>.
     /// </summary>

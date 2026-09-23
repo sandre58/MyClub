@@ -511,6 +511,23 @@ Overview (MaterializeFromOccupiedSlots)
 
 These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no Domain aggregates.
 
+### `POST /stages/{stageId}/draws/{drawId}/release-aligned-placements` → `ReleaseDrawAlignedPlacementsDto`
+
+Decision D — explicit liberate: clears Place occupants that still exactly match this **Slot** draw’s `SlotResults` (`EntryId` match, no DirectAssignment). Does **not** cancel the draw and does **not** replace divergent occupants. Group draws → `DrawKindNotSupported`. Not Resolved → `DrawReleaseFailure`.
+
+```json
+{
+  "releasedCount": 2,
+  "skippedCount": 1
+}
+```
+
+| Gate | Allowed |
+| :--- | :--- |
+| Competition | Not `Completed` \| `Archived` (same lifecycle mutation gate as Cancel) |
+| Draw | Slot + Resolved |
+| Per placement | Skip when DA, vacant, or divergent occupant |
+
 ## Error contract (`ProblemDetails`)
 
 | HTTP | When |
@@ -548,7 +565,7 @@ ProblemDetails extensions:
 
 ### Other Application codes (400 by default)
 
-Including (non-exhaustive; see `ApplicationErrorCodes`): `DanglingFeedTarget`, `StageNotInCompetition`, `SlotFeedsInvalid`, `FixtureInvalid`, `TieFormatRequired`, qualification standing codes, `DrawApplyFailure`, `DrawKindNotSupported`, `DrawGenerationFailure`, `ScheduleGenerationFailure`, `ScheduleApplyFailure`, `EntryCapacityExceeded`, `InvalidStructureIntent`, `CupBracketNotPowerOfTwo`, `StructureNotMutable`, `MaterializationFailure`, `SwissRoundGenerationFailure`, `InvalidCompletionMode`.
+Including (non-exhaustive; see `ApplicationErrorCodes`): `DanglingFeedTarget`, `StageNotInCompetition`, `SlotFeedsInvalid`, `FixtureInvalid`, `TieFormatRequired`, qualification standing codes, `DrawApplyFailure`, `DrawKindNotSupported`, `DrawGenerationFailure`, `DrawReleaseFailure`, `ScheduleGenerationFailure`, `ScheduleApplyFailure`, `EntryCapacityExceeded`, `InvalidStructureIntent`, `CupBracketNotPowerOfTwo`, `StructureNotMutable`, `MaterializationFailure`, `SwissRoundGenerationFailure`, `InvalidCompletionMode`.
 
 Overview from-slots readiness is projected only when an opportunity exists (occupied uncovered slots). It does **not** leave a standing regulation blocker `InsufficientOccupiedSlots` when slots are still empty during early Cup construction.
 

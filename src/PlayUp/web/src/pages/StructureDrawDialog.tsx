@@ -7,6 +7,7 @@ import {
   createAndGenerateDraw,
   fetchStageOverview,
   publishAndApplyDraw,
+  releaseDrawAlignedPlacements,
 } from '../api';
 import { Alert } from '../design-system/components/Alert';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
@@ -40,13 +41,17 @@ import {
   resolveDrawCreateGate,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
-  slotConfrontationRows,
+  countAlignedSlotPlacements,
+  projectSlotDrawResult,
   sortDrawsNewestFirst,
   type DrawDetailHeaderChip,
   type DrawMasterChip,
   type SlotConfrontationSide,
 } from './drawUi';
-import { canCancelDrawExecution } from './lifecycleGates';
+import {
+  canCancelDrawExecution,
+  canReleaseDrawAlignedPlacements,
+} from './lifecycleGates';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import {
   DrawResolutionBadge,
@@ -201,6 +206,7 @@ export function StructureDrawDialog({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
   /** After « Nouveau tirage », prefer this id once it appears in overview. */
   const pendingSelectIdRef = useRef<string | null>(null);
 
@@ -210,6 +216,7 @@ export function StructureDrawDialog({
       setSelectedId(null);
       setApplyConfirmOpen(false);
       setCancelConfirmOpen(false);
+      setReleaseConfirmOpen(false);
       return;
     }
     if (!draws || draws.length === 0) {
@@ -302,6 +309,18 @@ export function StructureDrawDialog({
     },
   });
 
+  const releaseMutation = useMutation({
+    mutationFn: (drawId: string) =>
+      releaseDrawAlignedPlacements(stageId, drawId),
+    onSuccess: async (result) => {
+      setReleaseConfirmOpen(false);
+      await invalidateDrawQueries();
+      notify.success(
+        tDraw('toastReleased', { count: result.releasedCount }),
+      );
+    },
+  });
+
   const applyMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
       return applyDraw(stageId, draw.id, { fixtureIds: [] });
@@ -317,12 +336,14 @@ export function StructureDrawDialog({
     createMutation.isPending ||
     publishAndApplyMutation.isPending ||
     cancelMutation.isPending ||
+    releaseMutation.isPending ||
     applyMutation.isPending;
 
   const mutationError =
     createMutation.error ??
     publishAndApplyMutation.error ??
     cancelMutation.error ??
+    releaseMutation.error ??
     applyMutation.error;
 
   const newestFirst = useMemo(
@@ -344,7 +365,9 @@ export function StructureDrawDialog({
         size="lg"
         closeLabel={tCommon('close')}
         closeDisabled={busy}
-        trapFocus={!applyConfirmOpen && !cancelConfirmOpen}
+        trapFocus={
+          !applyConfirmOpen && !cancelConfirmOpen && !releaseConfirmOpen
+        }
         footer={
           <div className="button-row">
             {showCreate ? (
@@ -512,9 +535,11 @@ export function StructureDrawDialog({
                   }
                   onApply={() => setApplyConfirmOpen(true)}
                   onCancel={() => setCancelConfirmOpen(true)}
+                  onRelease={() => setReleaseConfirmOpen(true)}
                   publishAndApplyPending={publishAndApplyMutation.isPending}
                   applyPending={applyMutation.isPending}
                   cancelPending={cancelMutation.isPending}
+                  releasePending={releaseMutation.isPending}
                 />
               ) : null}
             </div>
@@ -573,6 +598,31 @@ export function StructureDrawDialog({
             return;
           }
           cancelMutation.mutate(selected.id);
+        }}
+      />
+
+      <ConfirmDialog
+        open={releaseConfirmOpen}
+        title={tDraw('confirmReleaseTitle')}
+        message={tDraw('confirmRelease')}
+        confirmLabel={tDraw('releasePlacements')}
+        cancelLabel={tCommon('close')}
+        closeLabel={tCommon('close')}
+        danger
+        confirmDisabled={releaseMutation.isPending}
+        confirmPending={releaseMutation.isPending}
+        confirmPendingLabel={tDraw('releasingPlacements')}
+        onCancel={() => {
+          if (releaseMutation.isPending) {
+            return;
+          }
+          setReleaseConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          if (!selected || releaseMutation.isPending) {
+            return;
+          }
+          releaseMutation.mutate(selected.id);
         }}
       />
     </>
@@ -688,9 +738,11 @@ function DrawExecutionDetail({
   onPublishAndApply,
   onApply,
   onCancel,
+  onRelease,
   publishAndApplyPending,
   applyPending,
   cancelPending,
+  releasePending,
 }: {
   draw: StageDraw;
   slots: StageSlot[];
@@ -701,15 +753,18 @@ function DrawExecutionDetail({
   onPublishAndApply: () => void;
   onApply: () => void;
   onCancel: () => void;
+  onRelease: () => void;
   publishAndApplyPending: boolean;
   applyPending: boolean;
   cancelPending: boolean;
+  releasePending: boolean;
 }) {
   const { t } = useTranslation('draw');
   const { t: tCommon } = useTranslation('common');
   const { t: tStructure } = useTranslation('structure');
   const ui = getDrawUiProjection(draw, slots, rounds);
 
+  const alignedCount = countAlignedSlotPlacements(draw, slots);
   const canPublishAndApply =
     draw.status === 'Draft' &&
     draw.resolutionState === 'Resolved' &&
@@ -724,6 +779,13 @@ function DrawExecutionDetail({
     stageStatus,
     drawStatus: draw.status,
   });
+  const canRelease = canReleaseDrawAlignedPlacements({
+    competitionStatus,
+    stageStatus,
+    drawStatus: draw.status,
+    drawKind: draw.kind,
+    alignedPlacementCount: alignedCount,
+  });
 
   const groupRows =
     draw.kind === 'Group' && (draw.groupPlacements?.length ?? 0) > 0
@@ -734,21 +796,27 @@ function DrawExecutionDetail({
         )
       : [];
 
-  const slotRows =
+  const slotResult =
     draw.kind === 'Slot' && draw.slotPlacements.length > 0
-      ? slotConfrontationRows(
+      ? projectSlotDrawResult(
           draw.slotPlacements,
           rounds,
           tCommon('unknownEntry'),
         )
-      : [];
+      : { confrontations: [], unpaired: [] };
 
-  const hasSlots = ui.showResults && draw.kind === 'Slot' && slotRows.length > 0;
+  const hasSlotConfrontations =
+    ui.showResults &&
+    draw.kind === 'Slot' &&
+    slotResult.confrontations.length > 0;
+  const hasSlotUnpaired =
+    ui.showResults && draw.kind === 'Slot' && slotResult.unpaired.length > 0;
+  const hasSlots = hasSlotConfrontations || hasSlotUnpaired;
   const hasGroups = ui.showResults && draw.kind === 'Group' && groupRows.length > 0;
   const showResults = hasSlots || hasGroups;
 
   const stateActions =
-    canPublishAndApply || canApply || canCancel ? (
+    canPublishAndApply || canApply || canCancel || canRelease ? (
       <div className="button-row" aria-busy={busy}>
         {canPublishAndApply ? (
           <button
@@ -784,6 +852,20 @@ function DrawExecutionDetail({
             )}
           </button>
         ) : null}
+        {canRelease ? (
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost ds-btn--destructive"
+            disabled={busy}
+            onClick={onRelease}
+          >
+            {releasePending ? (
+              <PendingLabel>{t('releasingPlacements')}</PendingLabel>
+            ) : (
+              t('releasePlacements')
+            )}
+          </button>
+        ) : null}
         {canCancel ? (
           <button
             type="button"
@@ -806,6 +888,11 @@ function DrawExecutionDetail({
 
   const headerChips = resolveDrawDetailHeaderChips(draw, ui.isApplied);
   const guidance = resolveDrawDetailGuidance(ui);
+  const showAlignedRemaining =
+    draw.status === 'Cancelled' &&
+    draw.kind === 'Slot' &&
+    draw.resolutionState === 'Resolved' &&
+    draw.slotPlacements.length > 0;
 
   return (
     <DrawSectionTile
@@ -835,6 +922,14 @@ function DrawExecutionDetail({
       }
       footer={stateActions}
     >
+      {showAlignedRemaining ? (
+        <p className="structure-draw-detail__phrase" role="status">
+          {t('alignedPlacementsRemaining', {
+            aligned: alignedCount,
+            total: draw.slotPlacements.length,
+          })}
+        </p>
+      ) : null}
       {guidance?.kind === 'phrase' ? (
         <p className="structure-draw-detail__phrase" role="status">
           {t(guidance.messageKey)}
@@ -848,9 +943,9 @@ function DrawExecutionDetail({
 
       {showResults ? (
         <div className="structure-draw-result">
-          {hasSlots ? (
+          {hasSlotConfrontations ? (
             <ul className="draw-pairing-list" aria-label={t('result')}>
-              {slotRows.map((row) => (
+              {slotResult.confrontations.map((row) => (
                 <li key={row.key} className="draw-pairing">
                   <DrawConfrontationSide
                     side={confrontationSideFromSlot(row.sideA)}
@@ -860,6 +955,31 @@ function DrawExecutionDetail({
                     side={confrontationSideFromSlot(row.sideB)}
                     away
                   />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {hasSlotUnpaired ? (
+            <ul
+              className="draw-placement-list"
+              aria-label={hasSlotConfrontations ? t('placements') : t('result')}
+            >
+              {slotResult.unpaired.map((side) => (
+                <li key={side.slotKey} className="draw-placement">
+                  <code className="draw-placement__key">{side.slotKey}</code>
+                  <span className="draw-placement__arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="draw-placement__entry">
+                    <TeamCrest
+                      name={side.displayName}
+                      logoMediaId={side.logoMediaId}
+                      primaryColor={side.primaryColor}
+                      size="sm"
+                      className="draw-pairing__crest"
+                    />
+                    {side.displayName}
+                  </span>
                 </li>
               ))}
             </ul>

@@ -371,7 +371,7 @@ public sealed class UseCaseExecutorTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(entryA, "A"),
-                new SlotDrawPlacement(entryB, "Missing"),
+                new SlotDrawPlacement(entryB, "Missing")
             ]),
             _clock);
 

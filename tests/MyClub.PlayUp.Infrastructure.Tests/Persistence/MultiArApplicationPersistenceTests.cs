@@ -58,7 +58,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
                 DrawResolution.ResolvedSlots(
                 [
                     new SlotDrawPlacement(entryA, "S1"),
-                    new SlotDrawPlacement(entryB, "S2"),
+                    new SlotDrawPlacement(entryB, "S2")
                 ]),
                 _clock);
             stage.PublishDraw(draw.Id, _clock);

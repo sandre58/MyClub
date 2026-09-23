@@ -171,7 +171,7 @@ public static class ApplyDraw
         foreach (var placement in placements)
         {
             var owningGroup = stage.Groups.FirstOrDefault(g => g.EntryIds.Contains(placement.EntryId));
-            if (owningGroup is not null && !owningGroup.Id.Equals(placement.GroupId))
+            if (owningGroup?.Id.Equals(placement.GroupId) == false)
             {
                 stage.RemoveEntryFromGroup(owningGroup.Id, placement.EntryId);
             }

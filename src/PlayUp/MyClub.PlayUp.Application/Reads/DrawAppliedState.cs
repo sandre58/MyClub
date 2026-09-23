@@ -31,13 +31,7 @@ public static class DrawAppliedState
         ArgumentNullException.ThrowIfNull(draw);
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (draw.Status != DrawStatus.Published
-            || draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            return false;
-        }
-
-        return draw.Kind switch
+        return draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved } && draw.Kind switch
         {
             DrawResolutionKind.Slot => IsSlotApplied(draw, stage),
             DrawResolutionKind.Group => IsGroupApplied(draw, stage),

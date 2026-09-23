@@ -264,19 +264,18 @@ public static class DrawResolutionGenerator
 
         foreach (var constraint in constraints)
         {
-            switch (constraint.ConstraintType)
+            throw constraint.ConstraintType switch
             {
-                case DrawConstraintType.SameAssociationAvoidance:
-                    throw Invalid("SameAssociationAvoidance is not supported in V1.");
-                case DrawConstraintType.SameGroupAvoidance:
-                    throw Invalid("SameGroupAvoidance is not supported for Slot generation in V1.");
-                case DrawConstraintType.SameTeamAvoidance:
-                    throw Invalid("SameTeamAvoidance is not supported for Slot generation in V1.");
-                case DrawConstraintType.MaxSameAssociationPerGroup:
-                    throw Invalid("MaxSameAssociationPerGroup is only supported for Group generation.");
-                default:
-                    throw Invalid($"Draw constraint type '{constraint.ConstraintType}' is unknown.");
-            }
+                DrawConstraintType.SameAssociationAvoidance => Invalid(
+                    "SameAssociationAvoidance is not supported in V1."),
+                DrawConstraintType.SameGroupAvoidance => Invalid(
+                    "SameGroupAvoidance is not supported for Slot generation in V1."),
+                DrawConstraintType.SameTeamAvoidance => Invalid(
+                    "SameTeamAvoidance is not supported for Slot generation in V1."),
+                DrawConstraintType.MaxSameAssociationPerGroup => Invalid(
+                    "MaxSameAssociationPerGroup is only supported for Group generation."),
+                _ => Invalid($"Draw constraint type '{constraint.ConstraintType}' is unknown.")
+            };
         }
     }
 

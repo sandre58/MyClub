@@ -353,7 +353,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(home, "S1"),
-                new SlotDrawPlacement(away, "S2"),
+                new SlotDrawPlacement(away, "S2")
             ]),
             _clock);
 

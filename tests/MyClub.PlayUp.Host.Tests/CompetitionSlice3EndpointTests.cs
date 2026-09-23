@@ -185,7 +185,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             new MaterializeCupFromOccupiedSlotsRequest(
             [
                 new CupSlotPairRequest("S1", "S2"),
-                new CupSlotPairRequest("S3", "S4"),
+                new CupSlotPairRequest("S3", "S4")
             ]));
         materialize.StatusCode.Should().Be(HttpStatusCode.OK);
 

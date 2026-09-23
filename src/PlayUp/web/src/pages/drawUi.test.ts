@@ -6,6 +6,7 @@ import {
   groupPlacementRows,
   pickActiveDraw,
   pickDefaultDrawId,
+  projectSlotDrawResult,
   resolveDrawCreateGate,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
@@ -119,6 +120,50 @@ describe('slotConfrontationRows', () => {
       'R16-1-A|R16-1-B',
       'R16-2-A|R16-2-B',
     ]);
+  });
+
+  it('keeps Cup S{n} placements as unpaired flat rows (no *-A/*-B)', () => {
+    const cupPlacements = [
+      { slotKey: 'S2', entryId: 'e2', displayName: 'Poland' },
+      { slotKey: 'S1', entryId: 'e1', displayName: 'Belgium' },
+      { slotKey: 'S3', entryId: 'e3', displayName: 'Turkey' },
+    ];
+
+    const result = projectSlotDrawResult(cupPlacements, [], '?');
+
+    expect(result.confrontations).toEqual([]);
+    expect(result.unpaired.map((side) => side.slotKey)).toEqual([
+      'S1',
+      'S2',
+      'S3',
+    ]);
+    expect(result.unpaired[0]?.displayName).toBe('Belgium');
+  });
+
+  it('mixes fixture confrontations with leftover unpaired keys', () => {
+    const mixed = [
+      ...placements,
+      { slotKey: 'S1', entryId: 'e9', displayName: 'Solo' },
+    ];
+    const rounds: StageRound[] = [
+      {
+        id: 'r1',
+        name: 'R16',
+        fixtures: [
+          {
+            id: 'f1',
+            slotAKey: 'R16-1-A',
+            slotBKey: 'R16-1-B',
+            attachments: [],
+          },
+        ],
+      },
+    ];
+
+    const result = projectSlotDrawResult(mixed, rounds, '?');
+
+    expect(result.confrontations).toHaveLength(2); // fixture + leftover R16-2 stem
+    expect(result.unpaired.map((s) => s.slotKey)).toEqual(['S1']);
   });
 });
 

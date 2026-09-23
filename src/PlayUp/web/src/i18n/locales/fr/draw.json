@@ -32,5 +32,11 @@
   "toastPublished": "Tirage publié.",
   "toastPublishedAndApplied": "Tirage publié et appliqué.",
   "toastApplied": "Tirage appliqué à la phase.",
-  "toastCancelled": "Exécution annulée."
+  "toastCancelled": "Exécution annulée.",
+  "releasePlacements": "Libérer les placements du tirage",
+  "releasingPlacements": "Libération…",
+  "alignedPlacementsRemaining": "{{aligned}} / {{total}} placements encore présents",
+  "confirmReleaseTitle": "Libérer les placements du tirage ?",
+  "confirmRelease": "Les Places encore peuplées selon ce tirage seront vidées. Les affectations directes et les autres alimentations ne seront pas modifiées.",
+  "toastReleased": "Placements libérés ({{count}})."
 }

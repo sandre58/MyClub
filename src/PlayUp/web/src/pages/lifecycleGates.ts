@@ -41,3 +41,23 @@ export function canCancelDrawExecution(input: {
     isDrawExecutionCancellable(input.drawStatus)
   );
 }
+
+/**
+ * Decision D — release CTA: Cancelled Slot draw still aligning with stage occupancy,
+ * under the same competition × stage gates as Cancel.
+ */
+export function canReleaseDrawAlignedPlacements(input: {
+  competitionStatus: CompetitionStatus;
+  stageStatus: StageStatus;
+  drawStatus: DrawStatus;
+  drawKind: 'Slot' | 'Group';
+  alignedPlacementCount: number;
+}): boolean {
+  return (
+    allowsCompetitionLifecycleMutation(input.competitionStatus) &&
+    allowsStageDraftOrReadyMutation(input.stageStatus) &&
+    input.drawStatus === 'Cancelled' &&
+    input.drawKind === 'Slot' &&
+    input.alignedPlacementCount > 0
+  );
+}

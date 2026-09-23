@@ -700,9 +700,7 @@ try
                         DestinationSlotKeys: coerceDestinationSlotKeys(
                             intent.DestinationSlotKeys,
                             intent.DestinationSlotKey),
-                        DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 }
-                            ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray()
-                            : null,
+                        DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 } ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray() : null,
                         DestinationForm: intent.DestinationForm))
                 ];
                 await executor
@@ -1165,8 +1163,7 @@ try
 
     app.MapPost(
         "/matches/{matchId:guid}/finish",
-        async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor,
-            CancellationToken cancellationToken) =>
+        async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
         {
             var result = request.ToDomain();
             await executor.FinishMatchAsync(new MatchId(matchId), result, cancellationToken).ConfigureAwait(false);
@@ -1454,6 +1451,19 @@ try
         });
 
     app.MapPost(
+        "/stages/{stageId:guid}/draws/{drawId:guid}/release-aligned-placements",
+        async (Guid stageId, Guid drawId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+        {
+            var result = await executor
+                .ReleaseDrawAlignedPlacementsAsync(
+                    new StageId(stageId),
+                    new DrawId(drawId),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.Ok(result);
+        });
+
+    app.MapPost(
         "/stages/{stageId:guid}/draws/{drawId:guid}/apply",
         async (
             Guid stageId,
@@ -1470,8 +1480,7 @@ try
 
     app.MapPost(
         "/stages/{stageId:guid}/draws",
-        async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor,
-            CancellationToken cancellationToken) =>
+        async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
         {
             var kind = parseDrawKind(request.Kind);
             _ = parseDrawInputsIntent(request.Intent); // validate early; inputs step applies intent
@@ -1660,21 +1669,9 @@ static DrawResolutionKind parseDrawKind(string kind) => kind.Equals("Slot", Stri
             $"Unknown draw kind '{kind}'. Expected Slot or Group.",
             ApplicationErrorCodes.DrawKindNotSupported);
 
-static DrawInputsIntent parseDrawInputsIntent(string? intent)
-{
-    if (string.IsNullOrWhiteSpace(intent)
-        || intent.Equals("Default", StringComparison.OrdinalIgnoreCase))
-    {
-        return DrawInputsIntent.Default;
-    }
-
-    if (intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase))
-    {
-        return DrawInputsIntent.Rerun;
-    }
-
-    throw new BadHttpRequestException($"Unknown draw inputs intent '{intent}'. Expected Default or Rerun.");
-}
+static DrawInputsIntent parseDrawInputsIntent(string? intent) => string.IsNullOrWhiteSpace(intent) || intent.Equals("Default", StringComparison.OrdinalIgnoreCase)
+    ? DrawInputsIntent.Default
+    : intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase) ? DrawInputsIntent.Rerun : throw new BadHttpRequestException($"Unknown draw inputs intent '{intent}'. Expected Default or Rerun.");
 
 // Prefers keys when present; otherwise coerces legacy singular key to a one-element list.
 static IReadOnlyList<string>? coerceDestinationSlotKeys(IReadOnlyList<string>? keys, string? singular) =>

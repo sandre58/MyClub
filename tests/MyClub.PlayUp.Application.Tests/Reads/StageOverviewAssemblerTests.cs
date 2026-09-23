@@ -73,7 +73,7 @@ public sealed class StageOverviewAssemblerTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(home.Id, "SF1-A"),
-                new SlotDrawPlacement(away.Id, "SF1-B"),
+                new SlotDrawPlacement(away.Id, "SF1-B")
             ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);

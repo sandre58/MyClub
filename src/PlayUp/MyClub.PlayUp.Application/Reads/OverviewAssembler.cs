@@ -1419,8 +1419,7 @@ public static class OverviewAssembler
 
             foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
             {
-                if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved }
-                    && draw.Kind is DrawResolutionKind.Slot or DrawResolutionKind.Group)
+                if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group })
                 {
                     actions.Add(new OverviewActionDto(
                         ActionPublishAndApplyDraw,

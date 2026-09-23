@@ -325,7 +325,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(home.Id, "S1"),
-                new SlotDrawPlacement(away.Id, "S2"),
+                new SlotDrawPlacement(away.Id, "S2")
             ]),
             _clock);
 

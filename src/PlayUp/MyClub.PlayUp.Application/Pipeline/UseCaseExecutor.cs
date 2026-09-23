@@ -307,6 +307,38 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Loads a stage, runs <see cref="ReleaseDrawAlignedPlacements"/>, and saves once.
+    /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="drawId">Draw whose SlotResults define aligned pairs.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Released vs skipped counts.</returns>
+    public async Task<ReleaseDrawAlignedPlacementsDto> ReleaseDrawAlignedPlacementsAsync(
+        StageId stageId,
+        DrawId drawId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+
+        var result = ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogDrawAlignedPlacementsReleased(
+            logger,
+            stageId.Value,
+            drawId.Value,
+            stage.CompetitionId.Value,
+            result.ReleasedCount,
+            result.SkippedCount);
+        return new ReleaseDrawAlignedPlacementsDto(result.ReleasedCount, result.SkippedCount);
+    }
+
+    /// <summary>
     /// Loads a stage, runs <see cref="ApplyDraw"/>, and saves once.
     /// </summary>
     /// <param name="stageId">Stage that owns the draw.</param>

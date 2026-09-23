@@ -106,19 +106,24 @@ export function listStageFixturesInOrder(rounds: StageRound[]): StageFixture[] {
 }
 
 /**
- * Slot draw product for Exécutions: dense A vs B confrontations (no Match #).
- * Prefer fixture slot pairs from StageOverview; fallback to `*-A`/`*-B` stems.
+ * Slot draw product for Exécutions: dense A vs B when pairable (fixtures or *-A/*-B).
+ * Leftovers (Cup `S{n}`, incomplete pairs, …) stay as flat Place → Entry — never drop Resolved placements.
  */
-export function slotConfrontationRows(
+export type SlotDrawResultProjection = {
+  confrontations: SlotConfrontationRow[];
+  unpaired: SlotConfrontationSide[];
+};
+
+export function projectSlotDrawResult(
   placements: StageDrawSlotPlacement[],
   rounds: StageRound[],
   unknownEntry: string,
-): SlotConfrontationRow[] {
+): SlotDrawResultProjection {
   const byKey = new Map(
     placements.map((p) => [p.slotKey.trim(), p] as const),
   );
   const used = new Set<string>();
-  const rows: SlotConfrontationRow[] = [];
+  const confrontations: SlotConfrontationRow[] = [];
 
   for (const fixture of listStageFixturesInOrder(rounds)) {
     const aKey = fixture.slotAKey?.trim() || '';
@@ -133,14 +138,17 @@ export function slotConfrontationRows(
     }
     used.add(aKey);
     used.add(bKey);
-    rows.push({
+    confrontations.push({
       key: `${aKey}|${bKey}`,
       sideA: toSlotConfrontationSide(placementA, unknownEntry),
       sideB: toSlotConfrontationSide(placementB, unknownEntry),
     });
   }
 
-  const byStem = new Map<string, { a?: StageDrawSlotPlacement; b?: StageDrawSlotPlacement }>();
+  const byStem = new Map<
+    string,
+    { a?: StageDrawSlotPlacement; b?: StageDrawSlotPlacement }
+  >();
   for (const placement of placements) {
     const key = placement.slotKey.trim();
     if (used.has(key)) {
@@ -174,14 +182,34 @@ export function slotConfrontationRows(
     const bKey = pair.b.slotKey.trim();
     used.add(aKey);
     used.add(bKey);
-    rows.push({
+    confrontations.push({
       key: `${aKey}|${bKey}`,
       sideA: toSlotConfrontationSide(pair.a, unknownEntry),
       sideB: toSlotConfrontationSide(pair.b, unknownEntry),
     });
   }
 
-  return rows;
+  // Incomplete *-A/*-B stems (only one side) fall through with other leftovers.
+  const unpaired = placements
+    .filter((placement) => !used.has(placement.slotKey.trim()))
+    .map((placement) => toSlotConfrontationSide(placement, unknownEntry))
+    .sort((a, b) =>
+      a.slotKey.localeCompare(b.slotKey, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      }),
+    );
+
+  return { confrontations, unpaired };
+}
+
+/** Confrontations only — prefer {@link projectSlotDrawResult} when unpaired matter. */
+export function slotConfrontationRows(
+  placements: StageDrawSlotPlacement[],
+  rounds: StageRound[],
+  unknownEntry: string,
+): SlotConfrontationRow[] {
+  return projectSlotDrawResult(placements, rounds, unknownEntry).confrontations;
 }
 
 /**
@@ -579,4 +607,27 @@ export function isSlotDrawApplied(
     const slot = byKey.get(placement.slotKey);
     return slot?.entryId != null && slot.entryId === placement.entryId;
   });
+}
+
+/**
+ * Decision D — how many Places still carry exactly this draw's SlotResults.
+ * Does not inspect DirectAssignment (server skips DA); SPA uses this for CTA visibility.
+ */
+export function countAlignedSlotPlacements(
+  draw: StageDraw,
+  slots: StageSlot[],
+): number {
+  if (draw.kind !== 'Slot' || draw.resolutionState !== 'Resolved') {
+    return 0;
+  }
+
+  const byKey = new Map(slots.map((slot) => [slot.slotKey, slot]));
+  let count = 0;
+  for (const placement of draw.slotPlacements) {
+    const slot = byKey.get(placement.slotKey);
+    if (slot?.entryId != null && slot.entryId === placement.entryId) {
+      count += 1;
+    }
+  }
+  return count;
 }

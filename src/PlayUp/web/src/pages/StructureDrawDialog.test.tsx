@@ -7,6 +7,7 @@ import {
   createAndGenerateDraw,
   fetchStageOverview,
   publishAndApplyDraw,
+  releaseDrawAlignedPlacements,
 } from '../api';
 import { clearToasts, getToastsSnapshot } from '../design-system/toastStore';
 import type {
@@ -26,6 +27,7 @@ vi.mock('../api', async (importOriginal) => {
     publishAndApplyDraw: vi.fn(),
     cancelDraw: vi.fn(),
     applyDraw: vi.fn(),
+    releaseDrawAlignedPlacements: vi.fn(),
   };
 });
 
@@ -466,6 +468,30 @@ describe('StructureDrawDialog', () => {
     ).toBeNull();
   });
 
+  it('renders Cup S{n} Slot placements as flat Place → Entry (no pair stems)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        slotDraw({
+          slotPlacements: [
+            { slotKey: 'S1', entryId: 'e1', displayName: 'Belgium' },
+            { slotKey: 'S2', entryId: 'e2', displayName: 'Poland' },
+          ],
+        }),
+      ]),
+    );
+
+    renderDialog(cupStage());
+
+    expect(
+      await screen.findByRole('heading', { name: 'Tirage Emplacement' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('S1')).toBeInTheDocument();
+    expect(screen.getByText('Belgium')).toBeInTheDocument();
+    expect(screen.getByText('S2')).toBeInTheDocument();
+    expect(screen.getByText('Poland')).toBeInTheDocument();
+    expect(screen.queryByText('vs')).not.toBeInTheDocument();
+  });
+
   it('shows master-detail with selectable tiles when more than one draw exists', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -583,6 +609,122 @@ describe('StructureDrawDialog', () => {
     await screen.findByRole('heading', { name: 'Tirage Groupe' });
     expect(
       screen.queryByRole('button', { name: 'Annuler l’exécution' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows Libérer CTA and remaining count for Cancelled Slot with aligned places (D)', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            status: 'Cancelled',
+            resolutionState: 'Resolved',
+            slotPlacements: [
+              {
+                slotKey: 'R16-1-A',
+                entryId: 'e1',
+                displayName: 'Belgium',
+              },
+              {
+                slotKey: 'R16-1-B',
+                entryId: 'e2',
+                displayName: 'Poland',
+              },
+            ],
+          }),
+        ],
+        {
+          slots: [
+            {
+              slotKey: 'R16-1-A',
+              entryId: 'e1',
+              displayName: 'Belgium',
+              coveredByCompleteFixture: false,
+            },
+            {
+              slotKey: 'R16-1-B',
+              entryId: 'e9',
+              displayName: 'Other',
+              coveredByCompleteFixture: false,
+            },
+          ],
+        },
+      ),
+    );
+    vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
+      releasedCount: 1,
+      skippedCount: 1,
+    });
+
+    renderDialog(cupStage());
+
+    expect(
+      await screen.findByText('1 / 2 placements encore présents'),
+    ).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Libérer les placements du tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(releaseDrawAlignedPlacements).toHaveBeenCalledWith(
+        stageId,
+        'draw-slot-1',
+      );
+    });
+    await waitFor(() => {
+      expect(getToastsSnapshot().map((t) => t.message)).toContain(
+        'Placements libérés (1).',
+      );
+    });
+  });
+
+  it('hides Libérer when Cancelled Slot has no aligned places (D)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            status: 'Cancelled',
+            resolutionState: 'Resolved',
+            slotPlacements: [
+              {
+                slotKey: 'R16-1-A',
+                entryId: 'e1',
+                displayName: 'Belgium',
+              },
+            ],
+          }),
+        ],
+        {
+          slots: [
+            {
+              slotKey: 'R16-1-A',
+              entryId: 'e9',
+              displayName: 'Other',
+              coveredByCompleteFixture: false,
+            },
+          ],
+        },
+      ),
+    );
+
+    renderDialog(cupStage());
+
+    await screen.findByText('0 / 1 placements encore présents');
+    expect(
+      screen.queryByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
     ).not.toBeInTheDocument();
   });
 });
