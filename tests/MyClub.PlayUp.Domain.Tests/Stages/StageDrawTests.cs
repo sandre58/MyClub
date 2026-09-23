@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Stages.Events;
 using MyClub.PlayUp.Domain.Tests.Common;
@@ -137,6 +138,50 @@ public sealed class StageDrawTests
         var (draw2, _) = PublishSlotDraw(stage);
         draw2.Id.Should().NotBe(draw1.Id);
         draw2.Status.Should().Be(DrawStatus.Published);
+    }
+
+    [Fact]
+    public void ReplaceDrawRules_clear_rejected_while_non_cancelled_draw_exists()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        _ = PublishSlotDraw(stage);
+
+        var clear = () => stage.ReplaceDrawRules(null, _clock);
+
+        clear.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.DrawRulesClearBlockedByActiveDraw);
+        stage.Regulation.DrawRules.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void ReplaceDrawRules_clear_allowed_after_draw_cancelled()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        var (draw, _) = PublishSlotDraw(stage);
+        stage.CancelDraw(draw.Id, _clock);
+
+        stage.ReplaceDrawRules(null, _clock);
+
+        stage.Regulation.DrawRules.Should().BeNull();
+    }
+
+    [Fact]
+    public void ReplaceDrawRules_clear_allowed_when_only_draft_draw_was_cancelled()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        var draft = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        var clearWhileDraft = () => stage.ReplaceDrawRules(null, _clock);
+        clearWhileDraft.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.DrawRulesClearBlockedByActiveDraw);
+
+        stage.CancelDraw(draft.Id, _clock);
+        stage.ReplaceDrawRules(null, _clock);
+
+        stage.Regulation.DrawRules.Should().BeNull();
     }
 
     [Fact]

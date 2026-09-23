@@ -94,6 +94,19 @@
   background: color-mix(in srgb, var(--color-ink) 6%, transparent);
 }
 
+/* Dense tertiary actions (toolbar rows, under-card groups). */
+.ds-btn--sm {
+  min-height: var(--control-height-compact);
+  padding: 0 var(--space-12);
+  font-size: var(--text-label);
+  gap: var(--space-8);
+}
+
+.ds-btn--sm svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
 .ds-btn--destructive {
   color: var(--color-error);
   border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));

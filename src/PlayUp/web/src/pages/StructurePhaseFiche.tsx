@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeftRight,
   ArrowRight,
@@ -6,13 +6,19 @@ import {
   EllipsisVertical,
   Goal,
   MapPin,
+  Settings,
   Sigma,
   Timer,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchStageOverview, fetchStageSchematic } from '../api';
+import {
+  fetchStageOverview,
+  fetchStageSchematic,
+  replaceStageDrawRules,
+} from '../api';
 import { Chip } from '../design-system/components/Chip';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Popover } from '../design-system/components/Popover';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { TextLink } from '../design-system/components/TextLink';
@@ -24,7 +30,6 @@ import {
   ChampionshipFormatIcon,
   ConfrontationIcon,
   CupFormatIcon,
-  DrawPendingIcon,
   GroupsFormatIcon,
   LayersIcon,
   MatchRulesIcon,
@@ -36,11 +41,19 @@ import {
   StructureIcon,
   SwissFormatIcon,
   EmptySelectionIcon,
+  TrashIcon,
 } from '../design-system/icons/contentIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { TeamCrest } from '../design-system/TeamCrest';
-import { EmptyState, LoadingState, StageStatusBadge, StatusBadge } from '../ui';
+import {
+  EmptyState,
+  LoadingState,
+  MutationError,
+  StageStatusBadge,
+  StatusBadge,
+} from '../ui';
+import { invalidateAfterStructureMutation } from './structureInvalidation';
 import type {
   SelectionMode,
   StructureConfrontationSegment,
@@ -68,6 +81,11 @@ import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { pickActiveDraw } from './drawUi';
 import {
+  DrawCtaActionBody,
+  resolveDrawCtaPoolTone,
+  StructureDrawCta,
+} from './StructureDrawCta';
+import {
   outboundSortiesFeeds,
 } from './structureSortiesIntentFeed';
 import {
@@ -92,7 +110,8 @@ type EditTarget =
   | 'qualification'
   | 'progression'
   | 'placement'
-  | 'tirage'
+  | 'tirage-activate'
+  | 'tirage-params'
   | 'confrontation'
   | 'matchs'
   | 'classement'
@@ -1371,11 +1390,14 @@ export function StructurePhaseFiche({
   onInitialEditConsumed?: () => void;
 }) {
   const { t, i18n } = useTranslation('structure');
+  const { t: tCommon } = useTranslation('common');
+  const queryClient = useQueryClient();
   const [edit, setEdit] = useState<EditTarget>(null);
   const [rulesEditStage, setRulesEditStage] =
     useState<StructureStageHubSummary | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
+  const [deactivateDrawOpen, setDeactivateDrawOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeFocusSearch, setComposeFocusSearch] = useState(false);
 
@@ -1384,9 +1406,19 @@ export function StructurePhaseFiche({
     setRulesEditStage(null);
     setRemoveOpen(false);
     setDrawWorkflowOpen(false);
+    setDeactivateDrawOpen(false);
     setComposeOpen(false);
     setComposeFocusSearch(false);
   }, [stage?.stageId]);
+
+  const deactivateDrawMutation = useMutation({
+    mutationFn: () =>
+      replaceStageDrawRules(stage!.stageId, { clear: true }),
+    onSuccess: async () => {
+      await invalidateAfterStructureMutation(queryClient, data.competitionId);
+      setDeactivateDrawOpen(false);
+    },
+  });
 
   useEffect(() => {
     if (!stage) return;
@@ -1400,12 +1432,17 @@ export function StructurePhaseFiche({
     const map: Partial<Record<StructureSectionId, EditTarget>> = {
       qualification: 'qualification',
       progression: 'progression',
-      tirage: 'tirage',
       confrontation: 'confrontation',
       matchs: 'matchs',
       classement: 'classement',
       construction: null,
     };
+    if (initialEdit === 'tirage') {
+      setRulesEditStage(stage);
+      setEdit(stage.hasDrawRules ? 'tirage-params' : 'tirage-activate');
+      onInitialEditConsumed?.();
+      return;
+    }
     const target = map[initialEdit];
     if (target) {
       setRulesEditStage(stage);
@@ -1466,16 +1503,35 @@ export function StructurePhaseFiche({
   const actions = stageActions(stage);
   const regulationHref = `/competitions/${data.competitionId}/regulation`;
   const activeDraw = pickActiveDraw(drawOverviewQuery.data?.draws ?? []);
-  /** CTA only when DrawRules engage the mechanism (not merely because a seed Draw exists). */
+  const canEditDraw = actions.includes('ReplaceDrawRules');
+  /** CTA exécution only when DrawRules engage the mechanism. */
   const showDrawCta = stage.hasDrawRules;
+  /**
+   * CTA secondaire découverte — Groups/Cup, mécanisme non engagé.
+   * Visibilité = format + !DrawRules + ReplaceDrawRules seulement.
+   * Pas de prédicat occupation / Qual / Composition / Places N (décision Activer ≠ couverture).
+   */
+  const showActivateDrawCta =
+    !stage.hasDrawRules &&
+    canEditDraw &&
+    (stage.formatKind === 'Cup' || stage.formatKind === 'Groups');
+  const hasNonCancelledDraw = (drawOverviewQuery.data?.draws ?? []).some(
+    (draw) => draw.status !== 'Cancelled',
+  );
   const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
   const poolFilled = stage.compositionEntryCount ?? 0;
   const showPoolHint =
     showDrawCta && placesN != null && placesN > 0;
+  const drawCtaPoolTone =
+    showPoolHint && placesN != null
+      ? resolveDrawCtaPoolTone(poolFilled, placesN)
+      : 'neutral';
+  const drawCtaModeLabel = stage.hasDrawRules
+    ? t('fiche.drawModeRandom')
+    : null;
   const showConfrontation = sections.includes('confrontation');
   const canEditProg = actions.includes('ReplaceProgressionRules');
   const canEditPlacement = actions.includes('ReplacePlacementAwardRules');
-  const canEditDraw = actions.includes('ReplaceDrawRules');
   const canEditTie =
     actions.includes('ReplaceDefaultTieFormat') ||
     actions.includes('ReplaceRoundTieFormat');
@@ -1631,21 +1687,16 @@ export function StructurePhaseFiche({
     }
   }
 
-  const overflowItems: OverflowItem[] = [];
-  if (canEditDraw) {
-    overflowItems.push({
-      id: 'configure-draw',
-      label: t('fiche.configureDraw'),
-      onSelect: () => setEdit('tirage'),
-    });
-  }
-  overflowItems.push({
-    id: 'remove',
-    label: t('graph.removePhase'),
-    onSelect: () => setRemoveOpen(true),
-    danger: true,
-    disabled: !canRemove,
-  });
+  // Overflow = phase-level only. Draw mechanism actions live under the CTA.
+  const overflowItems: OverflowItem[] = [
+    {
+      id: 'remove',
+      label: t('graph.removePhase'),
+      onSelect: () => setRemoveOpen(true),
+      danger: true,
+      disabled: !canRemove,
+    },
+  ];
 
   const sortiesEditControl = (() => {
     if (hasExits) {
@@ -1821,26 +1872,73 @@ export function StructurePhaseFiche({
             </ul>
             {showDrawCta ? (
               <div className="structure-phase-hero__draw">
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--primary"
-                  onClick={() => setDrawWorkflowOpen(true)}
-                >
-                  <DrawPendingIcon size="sm" />
-                  <span>
-                    {activeDraw
-                      ? t('fiche.openDrawWorkflow')
-                      : t('fiche.performDraw')}
-                  </span>
-                </button>
-                {showPoolHint ? (
-                  <p className="structure-phase-hero__draw-ready">
-                    {t('fiche.drawPoolHint', {
-                      filled: poolFilled,
-                      capacity: placesN,
-                    })}
-                  </p>
-                ) : null}
+                <div className="structure-draw-block">
+                  <StructureDrawCta
+                    tone="emphasis"
+                    title={
+                      activeDraw
+                        ? t('fiche.openDrawWorkflow')
+                        : t('fiche.performDraw')
+                    }
+                    body={
+                      showPoolHint && placesN != null && drawCtaModeLabel ? (
+                        <DrawCtaActionBody
+                          filled={poolFilled}
+                          capacity={placesN}
+                          teamsCaption={t('fiche.drawCtaTeamsCaption')}
+                          poolTone={drawCtaPoolTone}
+                          modeLabel={drawCtaModeLabel}
+                        />
+                      ) : drawCtaModeLabel
+                    }
+                    onClick={() => setDrawWorkflowOpen(true)}
+                  />
+                  {canEditDraw ? (
+                    <div className="structure-draw-actions">
+                      <button
+                        type="button"
+                        className="ds-btn ds-btn--ghost ds-btn--sm"
+                        onClick={() => setEdit('tirage-params')}
+                      >
+                        <LucideIcon icon={Settings} size="sm" />
+                        {t('fiche.drawParams')}
+                      </button>
+                      <button
+                        type="button"
+                        className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm"
+                        disabled={
+                          hasNonCancelledDraw ||
+                          deactivateDrawMutation.isPending
+                        }
+                        title={
+                          hasNonCancelledDraw
+                            ? t('regulation.deactivateDrawBlockedHint')
+                            : undefined
+                        }
+                        onClick={() => setDeactivateDrawOpen(true)}
+                      >
+                        <TrashIcon size="sm" />
+                        {t('fiche.deactivateDraw')}
+                      </button>
+                      {hasNonCancelledDraw ? (
+                        <p className="structure-draw-actions__hint">
+                          {t('regulation.deactivateDrawBlockedHint')}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : showActivateDrawCta ? (
+              <div className="structure-phase-hero__draw">
+                <div className="structure-draw-block">
+                  <StructureDrawCta
+                    tone="ghost"
+                    title={t('fiche.activateDraw')}
+                    body={t('fiche.activateDrawBody')}
+                    onClick={() => setEdit('tirage-activate')}
+                  />
+                </div>
               </div>
             ) : null}
           </div>
@@ -2039,8 +2137,32 @@ export function StructurePhaseFiche({
       <DrawRulesDialog
         competitionId={data.competitionId}
         stage={stage}
-        open={edit === 'tirage'}
+        open={edit === 'tirage-activate' || edit === 'tirage-params'}
         onClose={() => setEdit(null)}
+        intent={edit === 'tirage-activate' ? 'activate' : 'params'}
+      />
+      <ConfirmDialog
+        open={deactivateDrawOpen}
+        title={t('regulation.deactivateDrawConfirmTitle')}
+        message={
+          deactivateDrawMutation.isError ? (
+            <>
+              <p className="ds-body">
+                {t('regulation.deactivateDrawConfirmBody')}
+              </p>
+              <MutationError error={deactivateDrawMutation.error} />
+            </>
+          ) : (
+            t('regulation.deactivateDrawConfirmBody')
+          )
+        }
+        confirmLabel={t('fiche.deactivateDraw')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        confirmPending={deactivateDrawMutation.isPending}
+        onConfirm={() => deactivateDrawMutation.mutate()}
+        onCancel={() => setDeactivateDrawOpen(false)}
       />
       <StructureDrawDialog
         competitionId={data.competitionId}

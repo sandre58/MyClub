@@ -238,6 +238,11 @@ public static class StageErrorCodes
     public const string SwissPairingInvalid = "Stage.SwissPairingInvalid";
 
     /// <summary>
+    /// Gets the code when clearing DrawRules is blocked by a non-cancelled Draw execution.
+    /// </summary>
+    public const string DrawRulesClearBlockedByActiveDraw = "Stage.DrawRulesClearBlockedByActiveDraw";
+
+    /// <summary>
     /// Gets the code when standing rules presence violates A5 (classifying vs non-classifying topology).
     /// </summary>
     public const string StandingRulesInvariant = "Stage.StandingRulesInvariant";

@@ -510,6 +510,13 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureDraftOrReady();
         DemoteToDraftIfReady();
 
+        if (drawRules is null && _draws.Any(draw => draw.Status != DrawStatus.Cancelled))
+        {
+            throw new DomainException(
+                "Cannot clear draw rules while a non-cancelled draw exists.",
+                StageErrorCodes.DrawRulesClearBlockedByActiveDraw);
+        }
+
         Regulation = Regulation.WithDrawRules(drawRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }

@@ -73,6 +73,7 @@
     "NotReady": "La phase n’est pas prête.",
     "StructureLocked": "La structure est verrouillée.",
     "DrawNotFound": "Tirage introuvable.",
-    "DrawInvalidTransition": "Transition de tirage interdite."
+    "DrawInvalidTransition": "Transition de tirage interdite.",
+    "DrawRulesClearBlockedByActiveDraw": "Annulez d’abord le tirage en cours."
   }
 }

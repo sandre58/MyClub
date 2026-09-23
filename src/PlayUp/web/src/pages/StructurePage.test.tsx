@@ -99,6 +99,7 @@ function groupesStage(
     progressionPathCount: 4,
     hasTieFormat: false,
     formatKind: 'Groups',
+    actions: ['ReplaceDrawRules'],
     defaultsBinding: {
       matchDuration: { isBound: true },
       extraTime: { isBound: true },
@@ -428,6 +429,17 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();
+    const launch = screen.getByRole('button', { name: /Lancer le tirage/i });
+    expect(launch).toHaveAttribute('data-tone', 'emphasis');
+    expect(launch).toHaveTextContent(/Tirage aléatoire/i);
+    expect(launch).toHaveTextContent(/équipes résolues/i);
+    expect(launch.querySelector('.structure-draw-cta__chevron')).not.toBeNull();
+    expect(
+      screen.getByRole('button', { name: /Paramètres du tirage/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Désactiver le tirage/i }),
+    ).toBeEnabled();
     expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
@@ -435,6 +447,104 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByRole('tablist', { name: /Sections de la phase/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows secondary activate-draw CTA when DrawRules are absent', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: groupesStage().stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [
+          groupesStage({
+            hasDrawRules: false,
+            drawExecutionBadge: undefined,
+            numberOfPots: null,
+            actions: ['ReplaceDrawRules'],
+          }),
+        ],
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('button', { name: /Activer le tirage/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Lancer le tirage/i }),
+    ).not.toBeInTheDocument();
+    const activate = screen.getByRole('button', {
+      name: /Activer le tirage/i,
+    });
+    expect(activate).toHaveAttribute('data-tone', 'ghost');
+    expect(activate).toHaveTextContent(/remplir la forme/i);
+    expect(
+      screen.queryByRole('button', { name: /Paramètres du tirage/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Désactiver le tirage/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps draw params out of phase overflow and blocks deactivate when a draw is alive', async () => {
+    const groupsId = groupesStage().stageId;
+    vi.mocked(fetchStageOverview).mockResolvedValue({
+      id: groupsId,
+      competitionId,
+      name: 'Groupes',
+      status: 'Draft',
+      rounds: [],
+      slots: [],
+      draws: [
+        {
+          id: 'draw-1',
+          kind: 'Group',
+          status: 'Draft',
+          resolutionState: 'NotResolved',
+          pairings: [],
+          slotPlacements: [],
+        },
+      ],
+    });
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: groupsId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [groupesStage()],
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('button', { name: /Ouvrir le tirage/i }),
+    ).toBeInTheDocument();
+    const deactivate = screen.getByRole('button', {
+      name: /Désactiver le tirage/i,
+    });
+    expect(deactivate).toBeDisabled();
+    expect(
+      screen.getByText(/Annulez d’abord le tirage en cours/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: /Autres actions/i }),
+    );
+    expect(
+      screen.queryByRole('menuitem', { name: /Paramètres du tirage/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: /Supprimer la phase/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows an error when structure read fails', async () => {

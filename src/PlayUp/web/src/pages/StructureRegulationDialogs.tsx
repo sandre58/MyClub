@@ -22,6 +22,8 @@ import { TieFormatDialog } from './StageTieFormatDialog';
 
 export { MatchRulesDialog, StandingRulesDialog, TieFormatDialog };
 
+export type DrawRulesDialogIntent = 'activate' | 'params';
+
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
 }
@@ -108,7 +110,7 @@ export function TirageEditors({
         className="structure-action"
         onClick={() => setOpen(true)}
       >
-        {t('regulation.editDraw')}
+        {stage.hasDrawRules ? t('fiche.drawParams') : t('fiche.activateDraw')}
         <span aria-hidden="true">→</span>
       </button>
       <DrawRulesDialog
@@ -116,6 +118,7 @@ export function TirageEditors({
         stage={stage}
         open={open}
         onClose={() => setOpen(false)}
+        intent={stage.hasDrawRules ? 'params' : 'activate'}
       />
     </>
   );
@@ -157,22 +160,27 @@ export function ConfrontationEditors({
   );
 }
 
+/**
+ * Activate (`DrawRules` null → Random min) or edit DrawRules params.
+ * Deactivate lives under the fiche CTA group (not in this dialog).
+ */
 export function DrawRulesDialog({
   competitionId,
   stage,
   open,
   onClose,
+  intent = 'params',
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
+  intent?: DrawRulesDialogIntent;
 }) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
   const formId = useId();
   const queryClient = useQueryClient();
-  const [clear, setClear] = useState(false);
   const [numberOfPots, setNumberOfPots] = useState<number | null>(
     stage.numberOfPots ?? null,
   );
@@ -182,28 +190,25 @@ export function DrawRulesDialog({
 
   useEffect(() => {
     if (open) {
-      setClear(false);
       setNumberOfPots(stage.numberOfPots ?? null);
       setNumberOfSeeds(stage.numberOfSeeds ?? null);
     }
   }, [open, stage]);
 
-  const mutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: () => {
-      const body: ReplaceStageDrawRulesRequest = clear
-        ? { clear: true }
-        : {
-            clear: false,
-            mode: 'Random',
-            numberOfPots:
-              numberOfPots != null && numberOfPots >= 2
-                ? numberOfPots
-                : undefined,
-            numberOfSeeds:
-              numberOfSeeds != null && numberOfSeeds > 0
-                ? numberOfSeeds
-                : undefined,
-          };
+      const body: ReplaceStageDrawRulesRequest = {
+        clear: false,
+        mode: 'Random',
+        numberOfPots:
+          numberOfPots != null && numberOfPots >= 2
+            ? numberOfPots
+            : undefined,
+        numberOfSeeds:
+          numberOfSeeds != null && numberOfSeeds > 0
+            ? numberOfSeeds
+            : undefined,
+      };
       return replaceStageDrawRules(stage.stageId, body);
     },
     onSuccess: async () => {
@@ -212,21 +217,29 @@ export function DrawRulesDialog({
     },
   });
 
+  const isActivate = intent === 'activate';
+  const title = isActivate ? t('fiche.activateDraw') : t('fiche.drawParams');
+  const saveLabel = isActivate
+    ? t('fiche.activateDraw')
+    : t('regulation.save');
+  const busy = saveMutation.isPending;
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      title={t('regulation.drawTitle')}
+      title={title}
       description={stage.name}
       size="sm"
       closeLabel={tCommon('close')}
+      closeDisabled={busy}
       footer={
         <>
           <button
             type="button"
             className="ds-btn ds-btn--secondary"
             onClick={onClose}
-            disabled={mutation.isPending}
+            disabled={busy}
           >
             {tCommon('cancel')}
           </button>
@@ -234,18 +247,20 @@ export function DrawRulesDialog({
             type="submit"
             form={formId}
             className="ds-btn ds-btn--primary"
-            disabled={mutation.isPending}
+            disabled={busy}
           >
-            {mutation.isPending ? (
+            {saveMutation.isPending ? (
               <PendingLabel>{t('regulation.saving')}</PendingLabel>
             ) : (
-              t('regulation.save')
+              saveLabel
             )}
           </button>
         </>
       }
       footerStatus={
-        mutation.isError ? <MutationError error={mutation.error} /> : null
+        saveMutation.isError ? (
+          <MutationError error={saveMutation.error} />
+        ) : null
       }
     >
       <form
@@ -253,40 +268,32 @@ export function DrawRulesDialog({
         className="structure-form"
         onSubmit={(event: FormEvent) => {
           event.preventDefault();
-          mutation.mutate();
+          saveMutation.mutate();
         }}
       >
-        <label className="structure-check">
-          <input
-            type="checkbox"
-            checked={clear}
-            onChange={(event) => setClear(event.target.checked)}
+        <p className="structure-detail__hint">
+          {isActivate
+            ? t('regulation.activateDrawHint')
+            : t('regulation.drawModeHint')}
+        </p>
+        <Field label={t('regulation.numberOfPots')}>
+          <InputNumber
+            value={numberOfPots}
+            min={2}
+            max={16}
+            controlsLayout="split"
+            onChange={(value) => setNumberOfPots(value)}
           />
-          {t('regulation.clearDraw')}
-        </label>
-        {!clear ? (
-          <>
-            <p className="structure-detail__hint">{t('regulation.drawModeHint')}</p>
-            <Field label={t('regulation.numberOfPots')}>
-              <InputNumber
-                value={numberOfPots ?? 2}
-                min={2}
-                max={16}
-                controlsLayout="split"
-                onChange={(value) => setNumberOfPots(value)}
-              />
-            </Field>
-            <Field label={t('regulation.numberOfSeeds')}>
-              <InputNumber
-                value={numberOfSeeds ?? 0}
-                min={0}
-                max={64}
-                controlsLayout="split"
-                onChange={(value) => setNumberOfSeeds(value)}
-              />
-            </Field>
-          </>
-        ) : null}
+        </Field>
+        <Field label={t('regulation.numberOfSeeds')}>
+          <InputNumber
+            value={numberOfSeeds}
+            min={0}
+            max={64}
+            controlsLayout="split"
+            onChange={(value) => setNumberOfSeeds(value)}
+          />
+        </Field>
       </form>
     </Dialog>
   );

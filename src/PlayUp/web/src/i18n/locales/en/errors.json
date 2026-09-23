@@ -73,6 +73,7 @@
     "NotReady": "The stage is not ready.",
     "StructureLocked": "The structure is locked.",
     "DrawNotFound": "Draw not found.",
-    "DrawInvalidTransition": "Forbidden draw transition."
+    "DrawInvalidTransition": "Forbidden draw transition.",
+    "DrawRulesClearBlockedByActiveDraw": "Cancel the current draw first."
   }
 }
