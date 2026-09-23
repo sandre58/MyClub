@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   applyDraw,
@@ -11,8 +11,15 @@ import {
 import { Alert } from '../design-system/components/Alert';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
-import { RandomIcon } from '../design-system/icons/contentIcons';
+import { Tooltip } from '../design-system/components/Tooltip';
+import {
+  CheckIcon,
+  PlusIcon,
+  RandomIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { TeamCrest } from '../design-system/TeamCrest';
+import { notify } from '../design-system/toastStore';
 import { drawResolutionKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import type {
@@ -22,11 +29,20 @@ import type {
   StructureFormatKind,
   StructureStageHubSummary,
 } from '../types';
+import { deriveShortName } from './deriveShortName';
 import {
+  drawExecutionNumber,
   getDrawUiProjection,
   groupPlacementRows,
   pickDefaultDrawId,
   resolveDrawCreateGate,
+  resolveDrawDetailGuidance,
+  resolveDrawDetailHeaderChips,
+  slotConfrontationRows,
+  sortDrawsNewestFirst,
+  type DrawDetailHeaderChip,
+  type DrawMasterChip,
+  type SlotConfrontationSide,
 } from './drawUi';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import {
@@ -40,6 +56,87 @@ import {
 } from '../ui';
 import './phase-schematic.css';
 
+function pairingSideLabels(
+  displayName: string | null | undefined,
+  shortName: string | null | undefined,
+  fallback: string,
+): { full: string; short: string } {
+  const full = displayName?.trim() || fallback;
+  const short = shortName?.trim() || deriveShortName(full) || full;
+  return { full, short };
+}
+
+function DrawConfrontationSide({
+  side,
+  away = false,
+}: {
+  side: {
+    full: string;
+    short: string;
+    logoMediaId?: string | null;
+    primaryColor?: string | null;
+    /** Place address (Slot) — secondary chrome; never Match #. */
+    address?: string | null;
+  };
+  away?: boolean;
+}): ReactElement {
+  const address = side.address?.trim() || null;
+  const identity = (
+    <span className="draw-pairing__identity">
+      <TeamCrest
+        name={side.full}
+        logoMediaId={side.logoMediaId}
+        primaryColor={side.primaryColor}
+        size="sm"
+        className="draw-pairing__crest"
+      />
+      <span className="draw-pairing__name">
+        <span className="draw-pairing__name-full">{side.full}</span>
+        <span className="draw-pairing__name-short" aria-hidden="true">
+          {side.short}
+        </span>
+      </span>
+    </span>
+  );
+  const ariaLabel = address ? `${side.full} · ${address}` : side.full;
+  return (
+    <span
+      className={
+        away
+          ? 'draw-pairing__side draw-pairing__side--away'
+          : 'draw-pairing__side'
+      }
+      aria-label={ariaLabel}
+    >
+      {address ? (
+        <span className="draw-pairing__address">{address}</span>
+      ) : null}
+      {identity}
+    </span>
+  );
+}
+
+function confrontationSideFromSlot(
+  side: SlotConfrontationSide,
+): {
+  full: string;
+  short: string;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
+  address: string;
+} {
+  const labels = pairingSideLabels(
+    side.displayName,
+    side.shortName,
+    side.displayName,
+  );
+  return {
+    ...labels,
+    logoMediaId: side.logoMediaId,
+    primaryColor: side.primaryColor,
+    address: side.slotKey,
+  };
+}
 function resolveDrawKindForFormat(
   format: StructureFormatKind | null | undefined,
 ): 'Group' | 'Pairing' | null {
@@ -98,9 +195,12 @@ export function StructureDrawDialog({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  /** After « Nouveau tirage », prefer this id once it appears in overview. */
+  const pendingSelectIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!open) {
+      pendingSelectIdRef.current = null;
       setSelectedId(null);
       setApplyConfirmOpen(false);
       setCancelConfirmOpen(false);
@@ -108,6 +208,14 @@ export function StructureDrawDialog({
     }
     if (!draws || draws.length === 0) {
       setSelectedId(null);
+      return;
+    }
+    const pending = pendingSelectIdRef.current;
+    if (pending) {
+      if (draws.some((d) => d.id === pending)) {
+        pendingSelectIdRef.current = null;
+      }
+      setSelectedId(pending);
       return;
     }
     setSelectedId((current) => {
@@ -156,8 +264,13 @@ export function StructureDrawDialog({
       return createAndGenerateDraw(stageId, drawKind);
     },
     onSuccess: async (result) => {
+      pendingSelectIdRef.current = result.drawId;
       await invalidateDrawQueries();
       setSelectedId(result.drawId);
+      notify.success(tDraw('toastCreated'));
+    },
+    onError: () => {
+      pendingSelectIdRef.current = null;
     },
   });
 
@@ -165,6 +278,9 @@ export function StructureDrawDialog({
     mutationFn: async (draw: StageDraw) => {
       // Pairing: Host EnsurePairingFixtures when fixtureIds empty — no client 1:1 gate.
       return publishAndApplyDraw(stageId, draw.id, { fixtureIds: [] });
+    },
+    onSuccess: () => {
+      notify.success(tDraw('toastPublishedAndApplied'));
     },
     // Always refresh: Apply may fail after a durable Publish (recovery state).
     onSettled: async (_data, _error, draw) => {
@@ -182,6 +298,7 @@ export function StructureDrawDialog({
     onSuccess: async () => {
       setCancelConfirmOpen(false);
       await invalidateDrawQueries();
+      notify.success(tDraw('toastCancelled'));
     },
   });
 
@@ -198,6 +315,7 @@ export function StructureDrawDialog({
           queryKey: queryKeys.matches.byStage(stageId),
         });
       }
+      notify.success(tDraw('toastApplied'));
     },
   });
 
@@ -214,7 +332,7 @@ export function StructureDrawDialog({
     applyMutation.error;
 
   const newestFirst = useMemo(
-    () => [...drawList].reverse(),
+    () => sortDrawsNewestFirst(drawList),
     [drawList],
   );
 
@@ -236,23 +354,37 @@ export function StructureDrawDialog({
         footer={
           <div className="button-row">
             {showCreate ? (
-              <button
-                type="button"
-                className="ds-btn ds-btn--primary"
-                disabled={busy || !canCreate}
-                aria-describedby={
-                  createBlockedMessage != null
-                    ? 'structure-draw-create-blocked'
-                    : undefined
-                }
-                onClick={() => createMutation.mutate()}
-              >
-                {createMutation.isPending ? (
-                  <PendingLabel>{t('fiche.drawWorkflow.creating')}</PendingLabel>
-                ) : (
-                  t('fiche.drawWorkflow.create')
-                )}
-              </button>
+              createBlockedMessage != null ? (
+                <Tooltip content={createBlockedMessage}>
+                  <button
+                    type="button"
+                    className="ds-btn ds-btn--primary"
+                    disabled
+                    aria-label={t('fiche.drawWorkflow.create')}
+                  >
+                    <PlusIcon size="sm" />
+                    {t('fiche.drawWorkflow.create')}
+                  </button>
+                </Tooltip>
+              ) : (
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--primary"
+                  disabled={busy}
+                  onClick={() => createMutation.mutate()}
+                >
+                  {createMutation.isPending ? (
+                    <PendingLabel>
+                      {t('fiche.drawWorkflow.creating')}
+                    </PendingLabel>
+                  ) : (
+                    <>
+                      <PlusIcon size="sm" />
+                      {t('fiche.drawWorkflow.create')}
+                    </>
+                  )}
+                </button>
+              )
             ) : null}
             <button
               type="button"
@@ -260,24 +392,14 @@ export function StructureDrawDialog({
               disabled={busy}
               onClick={onClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('close')}
             </button>
           </div>
         }
         footerStatus={
-          overviewQuery.isError ||
-          mutationError ||
-          createBlockedMessage != null ? (
+          overviewQuery.isError || mutationError ? (
             <>
-              {createBlockedMessage != null ? (
-                <Alert
-                  id="structure-draw-create-blocked"
-                  tone="warning"
-                  role="status"
-                >
-                  {createBlockedMessage}
-                </Alert>
-              ) : null}
               {overviewQuery.isError ? (
                 <Alert tone="danger" role="alert">
                   {t('fiche.drawWorkflow.loadError')}
@@ -344,12 +466,16 @@ export function StructureDrawDialog({
                 aria-label={t('fiche.drawWorkflow.historyAria')}
               >
                 <ul className="structure-draw-master__list">
-                  {newestFirst.map((draw, index) => {
+                  {newestFirst.map((draw) => {
                     const execLabel = t('fiche.drawWorkflow.execution', {
-                      n: drawList.length - index,
+                      n: drawExecutionNumber(drawList, draw.id),
                     });
                     const isCurrent = draw.id === selected?.id;
-                    const chrome = getDrawUiProjection(draw, slots, rounds).chrome;
+                    const { masterChip } = getDrawUiProjection(
+                      draw,
+                      slots,
+                      rounds,
+                    );
                     return (
                       <li key={draw.id}>
                         <button
@@ -368,27 +494,9 @@ export function StructureDrawDialog({
                                 {execLabel}
                               </span>
                             </span>
-                            {chrome.showStatus ? (
-                              <span className="structure-draw-master__card-status">
-                                <DrawStatusBadge
-                                  status={draw.status}
-                                  density="compact"
-                                />
-                              </span>
-                            ) : null}
-                          </span>
-                          <span className="structure-draw-master__card-facts">
-                            {chrome.showResolution ? (
-                              <DrawResolutionBadge
-                                state={draw.resolutionState}
-                                density="compact"
-                              />
-                            ) : null}
-                            {chrome.showApplied ? (
-                              <StatusBadge tone="ok" density="compact">
-                                {tDraw('applied')}
-                              </StatusBadge>
-                            ) : null}
+                            <span className="structure-draw-master__card-status">
+                              <DrawMasterChipBadge chip={masterChip} />
+                            </span>
                           </span>
                         </button>
                       </li>
@@ -451,6 +559,7 @@ export function StructureDrawDialog({
             : tDraw('confirmCancel')
         }
         confirmLabel={tDraw('cancel')}
+        confirmIcon={<CloseIcon size="sm" />}
         cancelLabel={tCommon('close')}
         closeLabel={tCommon('close')}
         danger
@@ -474,26 +583,77 @@ export function StructureDrawDialog({
   );
 }
 
+function DrawMasterChipBadge({ chip }: { chip: DrawMasterChip }) {
+  const { t } = useTranslation('draw');
+  if (chip == null) {
+    return null;
+  }
+  if (chip.kind === 'lifecycle') {
+    return <DrawStatusBadge status={chip.status} density="compact" />;
+  }
+  if (chip.kind === 'resolution') {
+    return <DrawResolutionBadge state={chip.state} density="compact" />;
+  }
+  return (
+    <StatusBadge tone="ok" density="compact">
+      {t('applied')}
+    </StatusBadge>
+  );
+}
+
+function DrawDetailHeaderChipBadge({
+  chip,
+  tooltip,
+}: {
+  chip: DrawDetailHeaderChip;
+  tooltip?: string;
+}) {
+  const { t } = useTranslation('draw');
+  let badge: ReactElement;
+  if (chip.kind === 'lifecycle') {
+    badge = <DrawStatusBadge status={chip.status} density="compact" />;
+  } else if (chip.kind === 'resolution') {
+    badge = <DrawResolutionBadge state={chip.state} density="compact" />;
+  } else {
+    badge = (
+      <StatusBadge tone="ok" density="compact">
+        {t('applied')}
+      </StatusBadge>
+    );
+  }
+  if (!tooltip) {
+    return badge;
+  }
+  return <Tooltip content={tooltip}>{badge}</Tooltip>;
+}
+
 function DrawSectionTile({
   id,
   title,
   description,
   icon,
+  statusChip,
   footer,
+  muted = false,
   children,
 }: {
   id: string;
   title: string;
   description?: string;
   icon: ReactNode;
+  statusChip?: ReactNode;
   footer?: ReactNode;
+  /** Light attenuation for Cancelled history — not an error treatment. */
+  muted?: boolean;
   children: ReactNode;
 }) {
   const titleId = `${id}-title`;
   return (
     <section
       id={id}
-      className="ds-form-section structure-domain-tile structure-draw-tile"
+      className={`ds-form-section structure-domain-tile structure-draw-tile${
+        muted ? ' structure-draw-tile--muted' : ''
+      }`}
       aria-labelledby={titleId}
     >
       <header className="ds-form-section__head structure-domain-tile__head">
@@ -508,6 +668,9 @@ function DrawSectionTile({
             <p className="ds-form-section__description">{description}</p>
           ) : null}
         </div>
+        {statusChip ? (
+          <div className="structure-domain-tile__toolbar">{statusChip}</div>
+        ) : null}
       </header>
       <div className="ds-form-section__body structure-domain-tile__content">
         {children}
@@ -568,12 +731,18 @@ function DrawExecutionDetail({
         )
       : [];
 
+  const slotRows =
+    draw.kind === 'Slot' && draw.slotPlacements.length > 0
+      ? slotConfrontationRows(
+          draw.slotPlacements,
+          rounds,
+          tCommon('unknownEntry'),
+        )
+      : [];
+
   const hasPairings =
     ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0;
-  const hasSlots =
-    ui.showResults &&
-    draw.kind === 'Slot' &&
-    draw.slotPlacements.length > 0;
+  const hasSlots = ui.showResults && draw.kind === 'Slot' && slotRows.length > 0;
   const hasGroups = ui.showResults && draw.kind === 'Group' && groupRows.length > 0;
   const showResults = hasPairings || hasSlots || hasGroups;
 
@@ -590,7 +759,10 @@ function DrawExecutionDetail({
             {publishAndApplyPending ? (
               <PendingLabel>{t('publishingAndApplying')}</PendingLabel>
             ) : (
-              t('publishAndApply')
+              <>
+                <CheckIcon size="sm" />
+                {t('publishAndApply')}
+              </>
             )}
           </button>
         ) : null}
@@ -604,7 +776,10 @@ function DrawExecutionDetail({
             {applyPending ? (
               <PendingLabel>{t('applying')}</PendingLabel>
             ) : (
-              t('apply')
+              <>
+                <CheckIcon size="sm" />
+                {t('apply')}
+              </>
             )}
           </button>
         ) : null}
@@ -618,73 +793,112 @@ function DrawExecutionDetail({
             {cancelPending ? (
               <PendingLabel>{t('cancelling')}</PendingLabel>
             ) : (
-              t('cancel')
+              <>
+                <CloseIcon size="sm" />
+                {t('cancel')}
+              </>
             )}
           </button>
         ) : null}
       </div>
     ) : null;
 
+  const headerChips = resolveDrawDetailHeaderChips(draw, ui.isApplied);
+  const guidance = resolveDrawDetailGuidance(ui);
+
   return (
     <DrawSectionTile
       id={`draw-detail-${draw.id}`}
       title={t('title', { kind: drawResolutionKindLabel(draw.kind) })}
       icon={<RandomIcon size="sm" />}
+      muted={draw.status === 'Cancelled'}
+      statusChip={
+        headerChips.length > 0 ? (
+          <div className="structure-draw-detail__chips">
+            {headerChips.map((chip, index) => (
+              <DrawDetailHeaderChipBadge
+                key={`${chip.kind}-${index}`}
+                chip={chip}
+                tooltip={
+                  chip.kind === 'applied' ||
+                  (chip.kind === 'resolution' &&
+                    chip.state === 'Resolved' &&
+                    ui.messageKey === 'draftResolved')
+                    ? t(ui.messageKey)
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        ) : undefined
+      }
       footer={stateActions}
     >
-      <p className="badge-row">
-        {ui.chrome.showStatus ? (
-          <DrawStatusBadge status={draw.status} />
-        ) : null}
-        {ui.chrome.showResolution ? (
-          <DrawResolutionBadge state={draw.resolutionState} />
-        ) : null}
-        {ui.chrome.showApplied ? (
-          <StatusBadge tone="ok">{t('applied')}</StatusBadge>
-        ) : null}
-      </p>
-      <p className="structure-draw-detail__message" role="status">
-        {t(ui.messageKey)}
-      </p>
+      {guidance?.kind === 'phrase' ? (
+        <p className="structure-draw-detail__phrase" role="status">
+          {t(guidance.messageKey)}
+        </p>
+      ) : null}
+      {guidance?.kind === 'alert' ? (
+        <Alert tone={guidance.tone} role="status">
+          {t(guidance.messageKey)}
+        </Alert>
+      ) : null}
 
       {showResults ? (
         <div className="structure-draw-result">
-          <h4 className="structure-draw-result__title">{t('result')}</h4>
           {hasPairings ? (
             <ul className="draw-pairing-list">
-              {draw.pairings.map((pairing) => (
-                <li
-                  key={`${pairing.entryAId}-${pairing.entryBId}`}
-                  className="draw-pairing"
-                >
-                  <span className="draw-pairing__side">
-                    {pairing.entryADisplayName?.trim() ||
-                      tCommon('unknownEntry')}
-                  </span>
-                  <span className="draw-pairing__vs">{t('vs')}</span>
-                  <span className="draw-pairing__side">
-                    {pairing.entryBDisplayName?.trim() ||
-                      tCommon('unknownEntry')}
-                  </span>
-                </li>
-              ))}
+              {draw.pairings.map((pairing) => {
+                const sideA = pairingSideLabels(
+                  pairing.entryADisplayName,
+                  pairing.entryAShortName,
+                  tCommon('unknownEntry'),
+                );
+                const sideB = pairingSideLabels(
+                  pairing.entryBDisplayName,
+                  pairing.entryBShortName,
+                  tCommon('unknownEntry'),
+                );
+                return (
+                  <li
+                    key={`${pairing.entryAId}-${pairing.entryBId}`}
+                    className="draw-pairing"
+                  >
+                    <DrawConfrontationSide
+                      side={{
+                        ...sideA,
+                        logoMediaId: pairing.entryALogoMediaId,
+                        primaryColor: pairing.entryAPrimaryColor,
+                      }}
+                    />
+                    <span className="draw-pairing__vs">{t('vs')}</span>
+                    <DrawConfrontationSide
+                      side={{
+                        ...sideB,
+                        logoMediaId: pairing.entryBLogoMediaId,
+                        primaryColor: pairing.entryBPrimaryColor,
+                      }}
+                      away
+                    />
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
 
           {hasSlots ? (
-            <ul className="draw-placement-list">
-              {draw.slotPlacements.map((placement) => (
-                <li
-                  key={`${placement.slotKey}-${placement.entryId}`}
-                  className="draw-placement"
-                >
-                  <code className="draw-placement__key">{placement.slotKey}</code>
-                  <span className="draw-placement__arrow" aria-hidden="true">
-                    →
-                  </span>
-                  <span className="draw-placement__entry">
-                    {placement.displayName?.trim() || tCommon('unknownEntry')}
-                  </span>
+            <ul className="draw-pairing-list" aria-label={t('result')}>
+              {slotRows.map((row) => (
+                <li key={row.key} className="draw-pairing">
+                  <DrawConfrontationSide
+                    side={confrontationSideFromSlot(row.sideA)}
+                  />
+                  <span className="draw-pairing__vs">{t('vs')}</span>
+                  <DrawConfrontationSide
+                    side={confrontationSideFromSlot(row.sideB)}
+                    away
+                  />
                 </li>
               ))}
             </ul>
@@ -713,6 +927,8 @@ function DrawExecutionDetail({
                           <span className="schematic-slot__body">
                             <TeamCrest
                               name={entry.displayName}
+                              logoMediaId={entry.logoMediaId}
+                              primaryColor={entry.primaryColor}
                               size="sm"
                               className="schematic-slot__crest"
                             />

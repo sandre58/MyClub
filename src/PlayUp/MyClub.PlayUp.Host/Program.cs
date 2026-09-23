@@ -1481,6 +1481,7 @@ try
             CancellationToken cancellationToken) =>
         {
             var kind = parseDrawKind(request.Kind);
+            _ = parseDrawInputsIntent(request.Intent); // validate early; inputs step applies intent
             var summary = await executor
                 .CreateDrawAsync(new StageId(stageId), kind, cancellationToken)
                 .ConfigureAwait(false);
@@ -1489,10 +1490,20 @@ try
 
     app.MapPost(
         "/stages/{stageId:guid}/draws/{drawId:guid}/inputs",
-        async (Guid stageId, Guid drawId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+        async (
+            Guid stageId,
+            Guid drawId,
+            ConfigureDrawInputsRequest? request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
         {
+            var intent = parseDrawInputsIntent(request?.Intent);
             var summary = await executor
-                .ConfigureDrawInputsAsync(new StageId(stageId), new DrawId(drawId), cancellationToken)
+                .ConfigureDrawInputsAsync(
+                    new StageId(stageId),
+                    new DrawId(drawId),
+                    intent,
+                    cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(summary);
         });
@@ -1658,6 +1669,22 @@ static DrawResolutionKind parseDrawKind(string kind) => kind.Equals("Slot", Stri
             : throw new ApplicationFailureException(
                 $"Unknown draw kind '{kind}'. Expected Slot, Group, or Pairing.",
                 ApplicationErrorCodes.DrawKindNotSupported);
+
+static DrawInputsIntent parseDrawInputsIntent(string? intent)
+{
+    if (string.IsNullOrWhiteSpace(intent)
+        || intent.Equals("Default", StringComparison.OrdinalIgnoreCase))
+    {
+        return DrawInputsIntent.Default;
+    }
+
+    if (intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase))
+    {
+        return DrawInputsIntent.Rerun;
+    }
+
+    throw new BadHttpRequestException($"Unknown draw inputs intent '{intent}'. Expected Default or Rerun.");
+}
 
 // Prefers keys when present; otherwise coerces legacy singular key to a one-element list.
 static IReadOnlyList<string>? coerceDestinationSlotKeys(IReadOnlyList<string>? keys, string? singular) =>

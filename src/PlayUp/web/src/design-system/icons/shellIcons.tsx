@@ -116,6 +116,11 @@ export function CloseIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={X} size={size} {...props} />;
 }
 
+/** Back / previous step — chevron left. */
+export function ChevronLeftIcon({ size, ...props }: ShellIconProps) {
+  return <LucideIcon icon={ChevronLeft} size={size} {...props} />;
+}
+
 /** Navigate / open — chevron right. */
 export function ChevronRightIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={ChevronRight} size={size} {...props} />;

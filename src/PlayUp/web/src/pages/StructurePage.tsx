@@ -25,6 +25,7 @@ import {
   SwissFormatIcon,
   LayersIcon,
 } from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import {attentionSourceLabel, matchGenerationFormatLabel, structureFormatKindLabel,} from '../i18n/enumLabels';
 import {queryKeys} from '../queryKeys';
 import {EmptyState, ErrorState, LoadingState, MutationError, PendingLabel, StageStatusBadge,} from '../ui';
@@ -1039,6 +1040,7 @@ function StructureEditorDialog({
             disabled={mutation.isPending}
             onClick={onClose}
           >
+            <CloseIcon size="sm" />
             {tCommon('cancel')}
           </button>
           <button
@@ -1050,7 +1052,10 @@ function StructureEditorDialog({
             {mutation.isPending ? (
               <PendingLabel>{t('structure.configuring')}</PendingLabel>
             ) : (
-              t('structure.configure')
+              <>
+                <CheckIcon size="sm" />
+                {t('structure.configure')}
+              </>
             )}
           </button>
         </>

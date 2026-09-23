@@ -1388,18 +1388,26 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Configures default draw inputs from phase CompositionEntries (encoding F).
+    /// Configures default draw inputs from phase CompositionEntries.
     /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="drawId">Draw to configure.</param>
+    /// <param name="intent">
+    /// <see cref="DrawInputsIntent.Default"/> = Encoding F (Fixed* from occupancy).
+    /// <see cref="DrawInputsIntent.Rerun"/> = full redraw, Fixed* empty.
+    /// </param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<DrawSummaryDto> ConfigureDrawInputsAsync(
         StageId stageId,
         DrawId drawId,
+        DrawInputsIntent intent = DrawInputsIntent.Default,
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
         EnsureCompetitionAllowsLifecycleMutation(competition);
         var draw = stage.GetDraw(drawId);
-        var inputs = DrawInputsFactory.CreateDefault(stage, draw.Kind);
+        var inputs = DrawInputsFactory.CreateDefault(stage, draw.Kind, intent);
         ConfigureDrawInputs.Execute(stage, drawId, inputs);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDrawSummary(stage.Id, stage.GetDraw(drawId));

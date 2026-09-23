@@ -17,6 +17,7 @@ import '../design-system/index.css';
 import {
   AttentionBellIcon,
   AttentionIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   ClassementsNavIcon,
   CloseIcon,
@@ -602,12 +603,15 @@ export function FoundationsPlayground() {
             <p className="ds-label">Une région · une primaire</p>
             <div className="ds-row">
               <button type="button" className="ds-btn ds-btn--primary">
+                <CheckIcon size="sm" />
                 Saisir le résultat
               </button>
               <button type="button" className="ds-btn ds-btn--secondary">
+                <CloseIcon size="sm" />
                 Plus tard
               </button>
               <button type="button" className="ds-btn ds-btn--ghost">
+                <ChevronLeftIcon size="sm" />
                 Retour
               </button>
               <Tooltip content="Fermer">
@@ -669,9 +673,11 @@ export function FoundationsPlayground() {
             <p className="ds-label">Destructive · pas un primaire rouge</p>
             <div className="ds-row">
               <button type="button" className="ds-btn ds-btn--destructive">
+                <TrashIcon size="sm" />
                 Retirer l’équipe
               </button>
               <button type="button" className="ds-btn ds-btn--ghost">
+                <CloseIcon size="sm" />
                 Annuler
               </button>
             </div>

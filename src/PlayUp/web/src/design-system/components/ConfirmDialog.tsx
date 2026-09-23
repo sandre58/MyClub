@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { CheckIcon, TrashIcon } from '../icons/contentIcons';
+import { CloseIcon } from '../icons/shellIcons';
 import { Dialog } from './Dialog';
 
 export type ConfirmDialogProps = {
@@ -11,6 +13,11 @@ export type ConfirmDialogProps = {
   closeLabel?: string;
   /** Primary confirm uses danger styling when true (destructive). Default false. */
   danger?: boolean;
+  /**
+   * Leading icon on the confirm button. Defaults to Trash when `danger`, else Check.
+   * Use Close (or another icon) when the action is not a deletion.
+   */
+  confirmIcon?: ReactNode;
   confirmDisabled?: boolean;
   /**
    * API / mutation in flight on the confirm action.
@@ -27,6 +34,8 @@ export type ConfirmDialogProps = {
  * Stacked confirmation over another Dialog or page — branded replace for
  * `window.confirm`. Parent Dialog should set `trapFocus={false}` and typically
  * `closeDisabled` while this is open.
+ *
+ * Labels carry leading icons (DS action pattern: icon + text children).
  */
 export function ConfirmDialog({
   open,
@@ -36,6 +45,7 @@ export function ConfirmDialog({
   cancelLabel,
   closeLabel = 'Fermer',
   danger = false,
+  confirmIcon,
   confirmDisabled = false,
   confirmPending = false,
   confirmPendingLabel,
@@ -44,6 +54,9 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const busy = confirmPending;
   const confirmLocked = confirmDisabled || busy;
+  const leadingIcon =
+    confirmIcon ??
+    (danger ? <TrashIcon size="sm" /> : <CheckIcon size="sm" />);
 
   return (
     <Dialog
@@ -61,6 +74,7 @@ export function ConfirmDialog({
             disabled={busy}
             onClick={onCancel}
           >
+            <CloseIcon size="sm" />
             {cancelLabel}
           </button>
           <button
@@ -77,7 +91,10 @@ export function ConfirmDialog({
                 {confirmPendingLabel ?? confirmLabel}
               </>
             ) : (
-              confirmLabel
+              <>
+                {leadingIcon}
+                {confirmLabel}
+              </>
             )}
           </button>
         </>

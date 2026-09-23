@@ -545,7 +545,7 @@ describe('StagePage draws', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Résultat prêt à être appliqué.'),
+        screen.getByText('Résultat généré, prêt à être publié.'),
       ).toBeInTheDocument();
     });
     expect(
@@ -608,7 +608,7 @@ describe('StagePage draws', () => {
 
     expect(
       await screen.findByText(
-        'Aucune solution admissible n’a été trouvée pour ce tirage.',
+        'Aucune résolution valide n’a pu être générée.',
       ),
     ).toBeInTheDocument();
     expect(screen.getByText('Aucune solution')).toBeInTheDocument();

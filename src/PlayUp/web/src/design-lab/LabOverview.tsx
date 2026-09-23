@@ -6,7 +6,9 @@ import {
 } from './labData';
 import {
   CalendarIcon,
+  CheckIcon,
   OverviewAttentionIcon,
+  PlusIcon,
   RegulationIcon,
   TeamsIcon,
 } from '../design-system/icons/contentIcons';
@@ -58,6 +60,7 @@ function OverviewPreparation() {
           why="2 places restantes dans le championnat à 6."
           action={
             <button type="button" className="ds-btn ds-btn--primary">
+              <PlusIcon size="sm" />
               Ajouter une équipe
             </button>
           }
@@ -138,6 +141,7 @@ function OverviewLive() {
           why="Racing Sablons — US Verneuil (J2) est terminé sans score."
           action={
             <button type="button" className="ds-btn ds-btn--primary">
+              <CheckIcon size="sm" />
               Saisir le résultat
             </button>
           }
@@ -161,6 +165,11 @@ function OverviewLive() {
             detail={item.detail}
             action={
               <button type="button" className="ds-btn ds-btn--secondary">
+                {item.id === 'postponed' ? (
+                  <CalendarIcon size="sm" />
+                ) : (
+                  <CheckIcon size="sm" />
+                )}
                 {item.action}
               </button>
             }

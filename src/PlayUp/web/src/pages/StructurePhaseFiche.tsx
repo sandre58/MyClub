@@ -1899,23 +1899,31 @@ export function StructurePhaseFiche({
                         <LucideIcon icon={Settings} size="sm" />
                         {t('fiche.drawParams')}
                       </button>
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm"
-                        disabled={
-                          hasNonCancelledDraw ||
-                          deactivateDrawMutation.isPending
-                        }
-                        title={
-                          hasNonCancelledDraw
-                            ? t('regulation.deactivateDrawBlockedHint')
-                            : undefined
-                        }
-                        onClick={() => setDeactivateDrawOpen(true)}
-                      >
-                        <TrashIcon size="sm" />
-                        {t('fiche.deactivateDraw')}
-                      </button>
+                      {hasNonCancelledDraw ? (
+                        <Tooltip
+                          content={t('regulation.deactivateDrawBlockedHint')}
+                        >
+                          <button
+                            type="button"
+                            className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm"
+                            disabled
+                            aria-label={t('fiche.deactivateDraw')}
+                          >
+                            <TrashIcon size="sm" />
+                            {t('fiche.deactivateDraw')}
+                          </button>
+                        </Tooltip>
+                      ) : (
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm"
+                          disabled={deactivateDrawMutation.isPending}
+                          onClick={() => setDeactivateDrawOpen(true)}
+                        >
+                          <TrashIcon size="sm" />
+                          {t('fiche.deactivateDraw')}
+                        </button>
+                      )}
                     </div>
                   ) : null}
                 </div>

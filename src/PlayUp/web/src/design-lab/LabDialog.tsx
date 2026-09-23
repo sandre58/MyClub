@@ -3,6 +3,11 @@ import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { TextInput } from '../design-system/components/TextInput';
 import { Select } from '../design-system/components/Select';
+import {
+  CheckIcon,
+  PlusIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 
 /**
  * Design Lab — interactive Dialog chrome (sm / md / closeDisabled / scroll).
@@ -40,6 +45,7 @@ export function LabDialog() {
             className="ds-btn ds-btn--primary"
             onClick={() => setSmOpen(true)}
           >
+            <PlusIcon size="sm" />
             Ouvrir sm (28 rem)
           </button>
           <button
@@ -47,6 +53,7 @@ export function LabDialog() {
             className="ds-btn ds-btn--secondary"
             onClick={() => setMdOpen(true)}
           >
+            <CheckIcon size="sm" />
             Ouvrir md (36 rem)
           </button>
           <button
@@ -54,6 +61,7 @@ export function LabDialog() {
             className="ds-btn ds-btn--secondary"
             onClick={() => setLockedOpen(true)}
           >
+            <CloseIcon size="sm" />
             closeDisabled
           </button>
           <button
@@ -61,6 +69,7 @@ export function LabDialog() {
             className="ds-btn ds-btn--secondary"
             onClick={() => setScrollOpen(true)}
           >
+            <CheckIcon size="sm" />
             Corps scrollable
           </button>
         </div>
@@ -91,6 +100,7 @@ export function LabDialog() {
               className="ds-btn ds-btn--ghost"
               onClick={() => setSmOpen(false)}
             >
+              <CloseIcon size="sm" />
               Annuler
             </button>
             <button
@@ -98,6 +108,7 @@ export function LabDialog() {
               form={smFormId}
               className="ds-btn ds-btn--primary"
             >
+              <PlusIcon size="sm" />
               Créer
             </button>
           </>
@@ -141,6 +152,7 @@ export function LabDialog() {
               className="ds-btn ds-btn--ghost"
               onClick={() => setMdOpen(false)}
             >
+              <CloseIcon size="sm" />
               Annuler
             </button>
             <button
@@ -148,6 +160,7 @@ export function LabDialog() {
               form={mdFormId}
               className="ds-btn ds-btn--primary"
             >
+              <CheckIcon size="sm" />
               Enregistrer
             </button>
           </>
@@ -192,6 +205,7 @@ export function LabDialog() {
         closeDisabled
         footer={
           <button type="button" className="ds-btn ds-btn--primary" disabled>
+            <CheckIcon size="sm" />
             Traitement…
           </button>
         }
@@ -206,6 +220,7 @@ export function LabDialog() {
           className="ds-btn ds-btn--secondary"
           onClick={() => setLockedOpen(false)}
         >
+          <CheckIcon size="sm" />
           Simuler la fin (corps)
         </button>
       </Dialog>
@@ -221,6 +236,7 @@ export function LabDialog() {
             className="ds-btn ds-btn--primary"
             onClick={() => setScrollOpen(false)}
           >
+            <CheckIcon size="sm" />
             OK
           </button>
         }

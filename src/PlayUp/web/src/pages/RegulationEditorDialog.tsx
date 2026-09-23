@@ -40,6 +40,7 @@ import {
 } from '../design-system/icons/contentIcons';
 import {
   ClassementsNavIcon,
+  CloseIcon,
   MatchesNavIcon,
   RegulationNavIcon,
 } from '../design-system/icons/shellIcons';
@@ -445,6 +446,7 @@ export function RegulationEditorDialog({
               disabled={mutation.isPending || confirmOpen || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -456,7 +458,10 @@ export function RegulationEditorDialog({
               {mutation.isPending ? (
                 <PendingLabel>{t('editor.saving')}</PendingLabel>
               ) : (
-                t('editor.save')
+                <>
+                  <CheckIcon size="sm" />
+                  {t('editor.save')}
+                </>
               )}
             </button>
           </>

@@ -68,6 +68,39 @@ public sealed class DrawInputsFactoryTests
     }
 
     [Fact]
+    public void CreateDefault_group_rerun_ignores_occupancy_fixed_groups()
+    {
+        var competition = CreateCompetition.Execute("Rerun", _clock);
+        var ids = new List<Domain.Common.EntryId>();
+        for (var i = 0; i < 4; i++)
+        {
+            ids.Add(AddEntry.Execute(competition, $"T{i}", _clock).Id);
+        }
+
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceCompositionEntries(ids, _clock);
+
+        var fixedGroup = stage.Groups[0];
+        stage.AssignEntryToGroup(fixedGroup.Id, ids[0]);
+
+        var inputs = DrawInputsFactory.CreateDefault(
+            stage,
+            DrawResolutionKind.Group,
+            DrawInputsIntent.Rerun);
+
+        inputs.Entries.Should().BeEquivalentTo(ids);
+        inputs.FixedGroups.Should().BeEmpty();
+    }
+
+    [Fact]
     public void CreateDefault_slot_encoding_F_includes_fixed_slot_placements()
     {
         var competition = CreateCompetition.Execute("SlotF", _clock);

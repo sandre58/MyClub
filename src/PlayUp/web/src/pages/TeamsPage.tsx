@@ -43,6 +43,7 @@ import { deriveShortName, SHORT_NAME_MAX_LENGTH } from './deriveShortName';
 import { LogoMediaField } from './LogoMediaField';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 import {
+  CheckIcon,
   EmptySelectionIcon,
   LayersIcon,
   PersonIcon,
@@ -782,6 +783,7 @@ function AddEntryDialog({
               disabled={addMutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -793,7 +795,10 @@ function AddEntryDialog({
               {addMutation.isPending ? (
                 <PendingLabel>{t('adding')}</PendingLabel>
               ) : (
-                t('add')
+                <>
+                  <PlusIcon size="sm" />
+                  {t('add')}
+                </>
               )}
             </button>
           </>
@@ -987,6 +992,7 @@ function IdentityDialog({
               disabled={saveMutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -998,7 +1004,10 @@ function IdentityDialog({
               {saveMutation.isPending ? (
                 <PendingLabel>{t('saving')}</PendingLabel>
               ) : (
-                t('saveIdentity')
+                <>
+                  <CheckIcon size="sm" />
+                  {t('saveIdentity')}
+                </>
               )}
             </button>
           </>

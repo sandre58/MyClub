@@ -23,7 +23,7 @@ import {
 import { PageHead } from '../design-system/components/PageHead';
 import { Status } from '../design-system/components/Status';
 import { TeamCrest } from '../design-system/TeamCrest';
-import { CalendarIcon } from '../design-system/icons/contentIcons';
+import { CalendarIcon, CheckIcon } from '../design-system/icons/contentIcons';
 import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons';
 import { matchStatusLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
@@ -443,7 +443,10 @@ function MatchHeroCenter({
           {startPending ? (
             <PendingLabel>{t('detail.starting')}</PendingLabel>
           ) : (
-            t('detail.start')
+            <>
+              <CheckIcon size="sm" />
+              {t('detail.start')}
+            </>
           )}
         </button>
       </>
@@ -597,7 +600,14 @@ function OfficialScoreForm({
           className="ds-btn ds-btn--primary"
           disabled={pending}
         >
-          {pending ? <PendingLabel>{pendingLabel}</PendingLabel> : submitLabel}
+          {pending ? (
+            <PendingLabel>{pendingLabel}</PendingLabel>
+          ) : (
+            <>
+              <CheckIcon size="sm" />
+              {submitLabel}
+            </>
+          )}
         </button>
         <span className="caption">{hint}</span>
       </div>
@@ -685,7 +695,10 @@ function RunningScoreForm({
           {pending ? (
             <PendingLabel>{t('detail.updatingScore')}</PendingLabel>
           ) : (
-            t('detail.updateRunningScore')
+            <>
+              <CheckIcon size="sm" />
+              {t('detail.updateRunningScore')}
+            </>
           )}
         </button>
       </div>

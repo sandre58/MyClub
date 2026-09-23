@@ -11,6 +11,12 @@ import {
   replaceStageSwissSettings,
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
+import {
+  CheckIcon,
+  PencilIcon,
+  PlusIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { matchGenerationFormatLabel } from '../i18n/enumLabels';
 import { MutationError, PendingLabel } from '../ui';
 import type {
@@ -94,6 +100,7 @@ export function ConstructionLocaleActions({
             className="ds-btn ds-btn--secondary"
             onClick={() => setSkeletonOpen(true)}
           >
+            <PencilIcon size="sm" />
             {t('skeleton.editAction')}
           </button>
         )}
@@ -103,6 +110,7 @@ export function ConstructionLocaleActions({
             className="ds-btn ds-btn--secondary"
             onClick={() => setRenameOpen(true)}
           >
+            <PencilIcon size="sm" />
             {t('locale.rename')}
           </button>
         )}
@@ -113,7 +121,14 @@ export function ConstructionLocaleActions({
             disabled={addMatchday.isPending}
             onClick={() => addMatchday.mutate()}
           >
-            {addMatchday.isPending ? <PendingLabel /> : t('locale.addMatchday')}
+            {addMatchday.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <PlusIcon size="sm" />
+                {t('locale.addMatchday')}
+              </>
+            )}
           </button>
         )}
         {actions.includes('AddGroup') && (
@@ -123,7 +138,14 @@ export function ConstructionLocaleActions({
             disabled={addGroup.isPending}
             onClick={() => addGroup.mutate()}
           >
-            {addGroup.isPending ? <PendingLabel /> : t('locale.addGroup')}
+            {addGroup.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <PlusIcon size="sm" />
+                {t('locale.addGroup')}
+              </>
+            )}
           </button>
         )}
         {actions.includes('AddRound') && (
@@ -133,7 +155,14 @@ export function ConstructionLocaleActions({
             disabled={addRound.isPending}
             onClick={() => addRound.mutate()}
           >
-            {addRound.isPending ? <PendingLabel /> : t('locale.addRound')}
+            {addRound.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <PlusIcon size="sm" />
+                {t('locale.addRound')}
+              </>
+            )}
           </button>
         )}
         {actions.includes('AddSlot') && (
@@ -143,7 +172,14 @@ export function ConstructionLocaleActions({
             disabled={addSlot.isPending}
             onClick={() => addSlot.mutate()}
           >
-            {addSlot.isPending ? <PendingLabel /> : t('locale.addSlot')}
+            {addSlot.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <PlusIcon size="sm" />
+                {t('locale.addSlot')}
+              </>
+            )}
           </button>
         )}
         {actions.includes('ReplaceMatchGenerationFormat') && (
@@ -152,6 +188,7 @@ export function ConstructionLocaleActions({
             className="ds-btn ds-btn--secondary"
             onClick={() => setRrOpen(true)}
           >
+            <PencilIcon size="sm" />
             {t('locale.editMatchGeneration')}
           </button>
         )}
@@ -161,6 +198,7 @@ export function ConstructionLocaleActions({
             className="ds-btn ds-btn--secondary"
             onClick={() => setSwissOpen(true)}
           >
+            <PencilIcon size="sm" />
             {t('locale.editSwiss')}
           </button>
         )}
@@ -242,6 +280,7 @@ function RenameStageDialog({
             onClick={onClose}
             disabled={mutation.isPending}
           >
+            <CloseIcon size="sm" />
             {tCommon('cancel')}
           </button>
           <button
@@ -250,7 +289,14 @@ function RenameStageDialog({
             className="ds-btn ds-btn--primary"
             disabled={!name.trim() || mutation.isPending}
           >
-            {mutation.isPending ? <PendingLabel /> : t('locale.save')}
+            {mutation.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <CheckIcon size="sm" />
+                {t('locale.save')}
+              </>
+            )}
           </button>
         </>
       }
@@ -324,6 +370,7 @@ function MatchGenerationDialog({
             onClick={onClose}
             disabled={mutation.isPending}
           >
+            <CloseIcon size="sm" />
             {tCommon('cancel')}
           </button>
           <button
@@ -332,7 +379,14 @@ function MatchGenerationDialog({
             className="ds-btn ds-btn--primary"
             disabled={mutation.isPending}
           >
-            {mutation.isPending ? <PendingLabel /> : t('locale.save')}
+            {mutation.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <CheckIcon size="sm" />
+                {t('locale.save')}
+              </>
+            )}
           </button>
         </>
       }
@@ -416,6 +470,7 @@ function SwissSettingsDialog({
             onClick={onClose}
             disabled={mutation.isPending}
           >
+            <CloseIcon size="sm" />
             {tCommon('cancel')}
           </button>
           <button
@@ -424,7 +479,14 @@ function SwissSettingsDialog({
             className="ds-btn ds-btn--primary"
             disabled={mutation.isPending || roundCount < 1}
           >
-            {mutation.isPending ? <PendingLabel /> : t('locale.save')}
+            {mutation.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <CheckIcon size="sm" />
+                {t('locale.save')}
+              </>
+            )}
           </button>
         </>
       }

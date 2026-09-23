@@ -18,8 +18,8 @@ export type ToasterProps = {
 };
 
 /**
- * Canvas-local toast host — mount inside a `position: relative` workspace
- * (shell-main / Design Lab board). Bottom-end stack; does not steal focus.
+ * Canvas-local toast host — mount inside the product workspace (or Design Lab board).
+ * Bottom-end stack; viewport-fixed so it paints above Dialog (z-40). Does not steal focus.
  * Soft fill (~16% tone), no border; tone icon + 2px progress (pauses on hover; shrinks left).
  */
 export function Toaster({ closeLabel = 'Fermer' }: ToasterProps) {

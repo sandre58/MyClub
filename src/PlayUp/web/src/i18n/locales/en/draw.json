@@ -1,8 +1,8 @@
 {
   "cancelled": "This draw has been cancelled. A new draw is required to start again.",
   "draftNotResolved": "Draw in preparation — no result yet.",
-  "draftResolved": "Result ready to be applied.",
-  "noSolution": "No admissible solution was found for this draw.",
+  "draftResolved": "Result generated, ready to publish.",
+  "noSolution": "No valid resolution could be generated.",
   "published": "Result published, waiting for application.",
   "publishedSlotApplied": "Result applied to the stage.",
   "publishedGroupApplied": "Result applied to the stage.",
@@ -29,5 +29,10 @@
   "cancelling": "Cancelling…",
   "confirmCancelTitle": "Cancel this execution?",
   "confirmCancel": "The execution will be cancelled. A new draw will then be available.",
-  "confirmCancelApplied": "The execution will be cancelled. This does not undo the application already made on the stage — only a new draw and a new apply can populate again. A new draw will then be available."
+  "confirmCancelApplied": "The execution will be cancelled. This does not undo the application already made on the stage — only a new draw and a new apply can populate again. A new draw will then be available.",
+  "toastCreated": "New execution created.",
+  "toastPublished": "Draw published.",
+  "toastPublishedAndApplied": "Draw published and applied.",
+  "toastApplied": "Draw applied to the stage.",
+  "toastCancelled": "Draw cancelled."
 }

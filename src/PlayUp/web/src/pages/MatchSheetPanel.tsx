@@ -16,6 +16,12 @@ import {
 } from '../api';
 import { queryKeys } from '../queryKeys';
 import {
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
+import {
   EmptyState,
   ErrorState,
   LoadingState,
@@ -370,7 +376,10 @@ function SheetSideColumn({
                         {jerseyMutation.isPending ? (
                           <PendingLabel>{t('sheet.saving')}</PendingLabel>
                         ) : (
-                          t('sheet.saveJersey')
+                          <>
+                            <CheckIcon size="sm" />
+                            {t('sheet.saveJersey')}
+                          </>
                         )}
                       </button>
                       <button
@@ -382,6 +391,7 @@ function SheetSideColumn({
                           setJerseyEditValue('');
                         }}
                       >
+                        <CloseIcon size="sm" />
                         {tc('cancel')}
                       </button>
                     </div>
@@ -411,7 +421,10 @@ function SheetSideColumn({
                         {removeMutation.isPending ? (
                           <PendingLabel>{t('sheet.removing')}</PendingLabel>
                         ) : (
-                          t('sheet.confirmRemove')
+                          <>
+                            <TrashIcon size="sm" />
+                            {t('sheet.confirmRemove')}
+                          </>
                         )}
                       </button>
                       <button
@@ -420,6 +433,7 @@ function SheetSideColumn({
                         disabled={removeMutation.isPending}
                         onClick={() => setPendingRemoveId(null)}
                       >
+                        <CloseIcon size="sm" />
                         {tc('cancel')}
                       </button>
                     </div>
@@ -518,7 +532,10 @@ function SheetSideColumn({
                 {addMutation.isPending ? (
                   <PendingLabel>{t('sheet.adding')}</PendingLabel>
                 ) : (
-                  t('sheet.addAction')
+                  <>
+                    <PlusIcon size="sm" />
+                    {t('sheet.addAction')}
+                  </>
                 )}
               </button>
             </>

@@ -13,6 +13,13 @@ import {
 } from '../api';
 import { queryKeys } from '../queryKeys';
 import { PanelHead } from '../design-system/components/PanelHead';
+import {
+  CheckIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { EmptyState, MutationError, PendingLabel } from '../ui';
 import type {
   DeclaredParticipation,
@@ -215,6 +222,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                         setAssisterId(goal.assisterMemberId ?? '');
                       }}
                     >
+                      <PencilIcon size="sm" />
                       {t('goals.correct')}
                     </button>
                     <button
@@ -226,6 +234,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                         setPendingRemoveId(goal.goalId);
                       }}
                     >
+                      <TrashIcon size="sm" />
                       {t('goals.remove')}
                     </button>
                   </div>
@@ -273,7 +282,10 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                       {removeMutation.isPending ? (
                         <PendingLabel>{t('goals.removing')}</PendingLabel>
                       ) : (
-                        t('goals.confirmRemove')
+                        <>
+                          <TrashIcon size="sm" />
+                          {t('goals.confirmRemove')}
+                        </>
                       )}
                     </button>
                     <button
@@ -282,6 +294,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
                       disabled={removeMutation.isPending}
                       onClick={() => setPendingRemoveId(null)}
                     >
+                      <CloseIcon size="sm" />
                       {tc('cancel')}
                     </button>
                   </div>
@@ -464,7 +477,14 @@ function GoalForm({
           className="ds-btn ds-btn--primary"
           disabled={pending || scorerId.length === 0}
         >
-          {pending ? <PendingLabel>{pendingLabel}</PendingLabel> : submitLabel}
+          {pending ? (
+            <PendingLabel>{pendingLabel}</PendingLabel>
+          ) : (
+            <>
+              {onCancel ? <CheckIcon size="sm" /> : <PlusIcon size="sm" />}
+              {submitLabel}
+            </>
+          )}
         </button>
         {onCancel && (
           <button
@@ -473,6 +493,7 @@ function GoalForm({
             disabled={pending}
             onClick={onCancel}
           >
+            <CloseIcon size="sm" />
             {tc('cancel')}
           </button>
         )}

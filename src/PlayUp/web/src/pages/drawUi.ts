@@ -1,6 +1,9 @@
 import type {
+  DrawResolutionState,
+  DrawStatus,
   StageDraw,
   StageDrawGroupPlacement,
+  StageDrawSlotPlacement,
   StageFixture,
   StageRound,
   StageSlot,
@@ -9,12 +12,30 @@ import type {
 export type GroupPlacementEntry = {
   entryId: string;
   displayName: string;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
 };
 
 export type GroupPlacementRow = {
   groupId: string;
   groupLabel: string;
   entries: GroupPlacementEntry[];
+};
+
+export type SlotConfrontationSide = {
+  slotKey: string;
+  entryId: string;
+  displayName: string;
+  shortName?: string | null;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
+};
+
+/** Dense Slot result row — confrontation product, not fixture / Match #. */
+export type SlotConfrontationRow = {
+  key: string;
+  sideA: SlotConfrontationSide;
+  sideB: SlotConfrontationSide;
 };
 
 /** Collapse flat groupPlacements into one row per group (list density, not nested cards). */
@@ -37,9 +58,123 @@ export function groupPlacementRows(
     row.entries.push({
       entryId: placement.entryId,
       displayName: placement.displayName?.trim() || unknownEntry,
+      logoMediaId: placement.logoMediaId,
+      primaryColor: placement.primaryColor,
     });
   }
-  return [...byGroup.values()];
+  return [...byGroup.values()].sort((a, b) =>
+    a.groupLabel.localeCompare(b.groupLabel, undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    }),
+  );
+}
+
+function toSlotConfrontationSide(
+  placement: StageDrawSlotPlacement,
+  unknownEntry: string,
+): SlotConfrontationSide {
+  return {
+    slotKey: placement.slotKey.trim(),
+    entryId: placement.entryId,
+    displayName: placement.displayName?.trim() || unknownEntry,
+    shortName: placement.shortName,
+    logoMediaId: placement.logoMediaId,
+    primaryColor: placement.primaryColor,
+  };
+}
+
+/** `R16-1-A` → stem `R16-1`, side A — Cup slot pairing convention. */
+function slotPairParts(
+  slotKey: string,
+): { stem: string; side: 'A' | 'B' } | null {
+  const match = /^(.+)-([ABab])$/.exec(slotKey.trim());
+  if (!match) {
+    return null;
+  }
+  return {
+    stem: match[1]!,
+    side: match[2]!.toUpperCase() as 'A' | 'B',
+  };
+}
+
+/**
+ * Slot draw product for Exécutions: dense A vs B confrontations (no Match #).
+ * Prefer fixture slot pairs from StageOverview; fallback to `*-A`/`*-B` stems.
+ */
+export function slotConfrontationRows(
+  placements: StageDrawSlotPlacement[],
+  rounds: StageRound[],
+  unknownEntry: string,
+): SlotConfrontationRow[] {
+  const byKey = new Map(
+    placements.map((p) => [p.slotKey.trim(), p] as const),
+  );
+  const used = new Set<string>();
+  const rows: SlotConfrontationRow[] = [];
+
+  for (const fixture of listStageFixturesInOrder(rounds)) {
+    const aKey = fixture.slotAKey?.trim() || '';
+    const bKey = fixture.slotBKey?.trim() || '';
+    if (!aKey || !bKey) {
+      continue;
+    }
+    const placementA = byKey.get(aKey);
+    const placementB = byKey.get(bKey);
+    if (!placementA || !placementB) {
+      continue;
+    }
+    used.add(aKey);
+    used.add(bKey);
+    rows.push({
+      key: `${aKey}|${bKey}`,
+      sideA: toSlotConfrontationSide(placementA, unknownEntry),
+      sideB: toSlotConfrontationSide(placementB, unknownEntry),
+    });
+  }
+
+  const byStem = new Map<string, { a?: StageDrawSlotPlacement; b?: StageDrawSlotPlacement }>();
+  for (const placement of placements) {
+    const key = placement.slotKey.trim();
+    if (used.has(key)) {
+      continue;
+    }
+    const parts = slotPairParts(key);
+    if (!parts) {
+      continue;
+    }
+    let pair = byStem.get(parts.stem);
+    if (!pair) {
+      pair = {};
+      byStem.set(parts.stem, pair);
+    }
+    if (parts.side === 'A') {
+      pair.a = placement;
+    } else {
+      pair.b = placement;
+    }
+  }
+
+  const stemKeys = [...byStem.keys()].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
+  );
+  for (const stem of stemKeys) {
+    const pair = byStem.get(stem)!;
+    if (!pair.a || !pair.b) {
+      continue;
+    }
+    const aKey = pair.a.slotKey.trim();
+    const bKey = pair.b.slotKey.trim();
+    used.add(aKey);
+    used.add(bKey);
+    rows.push({
+      key: `${aKey}|${bKey}`,
+      sideA: toSlotConfrontationSide(pair.a, unknownEntry),
+      sideB: toSlotConfrontationSide(pair.b, unknownEntry),
+    });
+  }
+
+  return rows;
 }
 
 /**
@@ -120,6 +255,13 @@ export type DrawChromeFlags = {
   showApplied: boolean;
 };
 
+/** Single master-rail chip — principal observable status only (or none). */
+export type DrawMasterChip =
+  | { kind: 'lifecycle'; status: Extract<DrawStatus, 'Cancelled' | 'Published'> }
+  | { kind: 'resolution'; state: Extract<DrawResolutionState, 'Resolved' | 'NoSolution'> }
+  | { kind: 'applied' }
+  | null;
+
 /**
  * UI-only projection of DrawStatus × DrawResolutionState (+ derived Applied).
  * Status colours come from the shared badge tones (see ui.tsx).
@@ -130,6 +272,11 @@ export type DrawUiProjection = {
   showResults: boolean;
   isApplied: boolean;
   chrome: DrawChromeFlags;
+  /**
+   * One optional chip for history tiles (rail V1).
+   * Never teaches the full 3-axis matrix — detail carries phrase + chrome.
+   */
+  masterChip: DrawMasterChip;
 };
 
 /** Topology badge states — mirrors server StructureDrawExecutionBadge. */
@@ -140,6 +287,42 @@ export type TopologyDrawExecutionBadge =
   | 'Applied';
 
 /**
+ * Draw ids are UUID v7 in production — lexicographic order ≈ creation order.
+ * Do not trust API array order alone (Include without OrderBy can invert / scramble).
+ */
+function compareDrawCreationOrder(a: StageDraw, b: StageDraw): number {
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/** Oldest execution first (stable chronological identity). */
+export function sortDrawsOldestFirst(draws: StageDraw[]): StageDraw[] {
+  if (draws.length <= 1) {
+    return draws;
+  }
+  return [...draws].sort(compareDrawCreationOrder);
+}
+
+/**
+ * Newest execution first — rail / default selection.
+ * Sorted by draw id (UUID v7), not by a blind reverse of the payload order.
+ */
+export function sortDrawsNewestFirst(draws: StageDraw[]): StageDraw[] {
+  if (draws.length <= 1) {
+    return draws;
+  }
+  return [...draws].sort((a, b) => compareDrawCreationOrder(b, a));
+}
+
+/** Chronological label #1…#N (oldest = 1), independent of rail display order. */
+export function drawExecutionNumber(
+  draws: StageDraw[],
+  drawId: string,
+): number {
+  const index = sortDrawsOldestFirst(draws).findIndex((d) => d.id === drawId);
+  return index < 0 ? 0 : index + 1;
+}
+
+/**
  * Current non-cancelled draw for Structure chrome (newest first).
  * Cancelled-only history → null (capacity / config, not engagement).
  */
@@ -147,8 +330,9 @@ export function pickActiveDraw(draws: StageDraw[]): StageDraw | null {
   if (draws.length === 0) {
     return null;
   }
-  const newestFirst = [...draws].reverse();
-  return newestFirst.find((d) => d.status !== 'Cancelled') ?? null;
+  return (
+    sortDrawsNewestFirst(draws).find((d) => d.status !== 'Cancelled') ?? null
+  );
 }
 
 /** Default selection id for the Tirage dialog (prefers active, else newest). */
@@ -156,9 +340,102 @@ export function pickDefaultDrawId(draws: StageDraw[]): string | null {
   if (draws.length === 0) {
     return null;
   }
-  const newestFirst = [...draws].reverse();
+  const newestFirst = sortDrawsNewestFirst(draws);
   const active = newestFirst.find((d) => d.status !== 'Cancelled');
   return (active ?? newestFirst[0])?.id ?? null;
+}
+
+/**
+ * Rail V1 identity chip — observable principal status only.
+ * Priority: Cancelled > NoSolution > Applied > Published > Resolved.
+ * Draft / NotResolved → no chip (G2 makes that state rare; detail can still show it).
+ */
+export function resolveDrawMasterChip(
+  draw: StageDraw,
+  isApplied: boolean,
+): DrawMasterChip {
+  if (draw.status === 'Cancelled') {
+    return { kind: 'lifecycle', status: 'Cancelled' };
+  }
+  if (draw.resolutionState === 'NoSolution') {
+    return { kind: 'resolution', state: 'NoSolution' };
+  }
+  if (isApplied) {
+    return { kind: 'applied' };
+  }
+  if (draw.status === 'Published') {
+    return { kind: 'lifecycle', status: 'Published' };
+  }
+  if (draw.resolutionState === 'Resolved') {
+    return { kind: 'resolution', state: 'Resolved' };
+  }
+  return null;
+}
+
+/**
+ * Detail header chips — synthetic business state (not the rail’s single principal chip).
+ * Applied keeps Publié · Appliqué so Publish ≠ Apply stays readable in the detail.
+ */
+export type DrawDetailHeaderChip =
+  | { kind: 'lifecycle'; status: Extract<DrawStatus, 'Published' | 'Cancelled'> }
+  | { kind: 'resolution'; state: Extract<DrawResolutionState, 'Resolved' | 'NoSolution'> }
+  | { kind: 'applied' };
+
+export function resolveDrawDetailHeaderChips(
+  draw: StageDraw,
+  isApplied: boolean,
+): DrawDetailHeaderChip[] {
+  if (draw.status === 'Cancelled') {
+    return [{ kind: 'lifecycle', status: 'Cancelled' }];
+  }
+  if (draw.resolutionState === 'NoSolution') {
+    return [{ kind: 'resolution', state: 'NoSolution' }];
+  }
+  if (draw.status === 'Published' && isApplied) {
+    return [
+      { kind: 'lifecycle', status: 'Published' },
+      { kind: 'applied' },
+    ];
+  }
+  if (draw.status === 'Published') {
+    return [{ kind: 'lifecycle', status: 'Published' }];
+  }
+  if (draw.resolutionState === 'Resolved') {
+    return [{ kind: 'resolution', state: 'Resolved' }];
+  }
+  return [];
+}
+
+/**
+ * Detail guidance under the header — phrase (calm) or Alert (needs attention).
+ * Never Alert success for Applied.
+ */
+export type DrawDetailGuidance =
+  | { kind: 'phrase'; messageKey: string }
+  | { kind: 'alert'; tone: 'warning' | 'danger'; messageKey: string }
+  | null;
+
+export function resolveDrawDetailGuidance(
+  ui: DrawUiProjection,
+): DrawDetailGuidance {
+  if (
+    ui.messageKey === 'cancelled' ||
+    ui.messageKey === 'draftNotResolved' ||
+    ui.messageKey === 'fallback'
+  ) {
+    return null;
+  }
+  if (ui.messageKey === 'noSolution') {
+    return { kind: 'alert', tone: 'danger', messageKey: ui.messageKey };
+  }
+  if (ui.messageKey === 'published') {
+    return { kind: 'alert', tone: 'warning', messageKey: ui.messageKey };
+  }
+  if (ui.isApplied || ui.messageKey === 'draftResolved') {
+    // Calm phrases live on the matching chip tooltip — chips already carry the status.
+    return null;
+  }
+  return { kind: 'phrase', messageKey: ui.messageKey };
 }
 
 /**
@@ -192,18 +469,21 @@ export function resolveTopologyDrawExecutionBadge(
  * Not a Domain state machine — only helps the component avoid nested if spaghetti.
  *
  * Prefer server `draw.isApplied` (DrawAppliedState) when present; else Slot/Pairing heuristics.
+ * Applied is only meaningful for Published draws (Cancel does not clear stage occupancy).
  */
 export function getDrawUiProjection(
   draw: StageDraw,
   slots: StageSlot[],
   rounds: StageRound[] = [],
 ): DrawUiProjection {
-  const isApplied =
+  const occupancyApplied =
     draw.resolutionState === 'Resolved' &&
     (typeof draw.isApplied === 'boolean'
       ? draw.isApplied
       : (draw.kind === 'Slot' && isSlotDrawApplied(draw, slots)) ||
         (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)));
+  const isApplied = draw.status === 'Published' && occupancyApplied;
+  const masterChip = resolveDrawMasterChip(draw, isApplied);
 
   if (draw.status === 'Cancelled') {
     return {
@@ -211,6 +491,7 @@ export function getDrawUiProjection(
       showResults: draw.resolutionState === 'Resolved',
       isApplied: false,
       chrome: { showStatus: true, showResolution: false, showApplied: false },
+      masterChip,
     };
   }
 
@@ -220,6 +501,7 @@ export function getDrawUiProjection(
       showResults: false,
       isApplied: false,
       chrome: { showStatus: true, showResolution: true, showApplied: false },
+      masterChip,
     };
   }
 
@@ -230,6 +512,7 @@ export function getDrawUiProjection(
       isApplied: false,
       // Brouillon · Résolu — phrase carries “ready to apply”
       chrome: { showStatus: true, showResolution: true, showApplied: false },
+      masterChip,
     };
   }
 
@@ -239,6 +522,7 @@ export function getDrawUiProjection(
       showResults: false,
       isApplied: false,
       chrome: { showStatus: true, showResolution: true, showApplied: false },
+      masterChip,
     };
   }
 
@@ -262,6 +546,7 @@ export function getDrawUiProjection(
         showResolution: false,
         showApplied: isApplied,
       },
+      masterChip,
     };
   }
 
@@ -270,6 +555,7 @@ export function getDrawUiProjection(
     showResults: draw.resolutionState === 'Resolved',
     isApplied: false,
     chrome: { showStatus: true, showResolution: true, showApplied: false },
+    masterChip,
   };
 }
 

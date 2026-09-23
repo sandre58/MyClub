@@ -83,7 +83,11 @@ public sealed class StageOverviewAssemblerTests
         overview.Draws[0].ResolutionState.Should().Be(DrawResolutionState.Resolved);
         overview.Draws[0].Pairings.Should().ContainSingle();
         overview.Draws[0].Pairings[0].EntryADisplayName.Should().Be("Alpha");
+        overview.Draws[0].Pairings[0].EntryAShortName.Should().NotBeNullOrWhiteSpace();
         overview.Draws[0].Pairings[0].EntryBDisplayName.Should().Be("Beta");
+        overview.Draws[0].Pairings[0].EntryBShortName.Should().NotBeNullOrWhiteSpace();
+        overview.Draws[0].Pairings[0].EntryALogoMediaId.Should().BeNull();
+        overview.Draws[0].Pairings[0].EntryBLogoMediaId.Should().BeNull();
     }
 
     [Fact]
@@ -91,6 +95,14 @@ public sealed class StageOverviewAssemblerTests
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var entry = competition.AddEntry(TeamId.New(), "Seeded", _clock);
+        var logoId = Guid.CreateVersion7();
+        competition.UpdateEntryPresentation(
+            entry.Id,
+            new EntryPresentation(
+                ShortName.CreateRequired("SEE"),
+                new LogoMediaId(logoId),
+                TeamColor.Create("#112233")),
+            _clock);
         var stage = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
         stage.AddSlot("A");
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -105,6 +117,9 @@ public sealed class StageOverviewAssemblerTests
         overview.Draws[0].SlotPlacements.Should().ContainSingle();
         overview.Draws[0].SlotPlacements[0].SlotKey.Should().Be("A");
         overview.Draws[0].SlotPlacements[0].DisplayName.Should().Be("Seeded");
+        overview.Draws[0].SlotPlacements[0].ShortName.Should().Be("SEE");
+        overview.Draws[0].SlotPlacements[0].LogoMediaId.Should().Be(logoId);
+        overview.Draws[0].SlotPlacements[0].PrimaryColor.Should().Be("#112233");
         overview.Draws[0].Pairings.Should().BeEmpty();
     }
 

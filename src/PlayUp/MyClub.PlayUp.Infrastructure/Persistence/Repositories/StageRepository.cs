@@ -133,7 +133,8 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
 
         if (capabilities.IncludeDraws)
         {
-            query = query.Include(candidate => candidate.Draws);
+            query = query.Include(candidate =>
+                candidate.Draws.OrderBy(draw => EF.Property<int>(draw, "SortOrder")));
         }
 
         if (capabilities.IncludeSlots)
@@ -174,7 +175,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .Include(candidate => candidate.AffectationAuthoring)
                 .Include(candidate => candidate.CompositionEntries)
                 .Include(candidate => candidate.FormPathResolutions)
-                .Include(candidate => candidate.Draws)
+                .Include(candidate => candidate.Draws.OrderBy(draw => EF.Property<int>(draw, "SortOrder")))
                 .Include(candidate => candidate.Penalties)
                 .Include(candidate => candidate.MatchPlacements)
                 .Include(candidate => candidate.SwissByeHistory),

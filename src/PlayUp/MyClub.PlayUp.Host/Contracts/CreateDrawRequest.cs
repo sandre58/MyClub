@@ -10,4 +10,8 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// HTTP body for creating a Draw.
 /// </summary>
 /// <param name="Kind">Slot | Group | Pairing (case-insensitive).</param>
-public sealed record CreateDrawRequest(string Kind);
+/// <param name="Intent">
+/// Default | Rerun (case-insensitive). Product intent for the following inputs step;
+/// Rerun = full redraw (Fixed* empty). Omitted → Default.
+/// </param>
+public sealed record CreateDrawRequest(string Kind, string? Intent = null);

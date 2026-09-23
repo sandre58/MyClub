@@ -1,5 +1,11 @@
 import { useEffect } from 'react';
 import { clearToasts, notify } from '../design-system/toastStore';
+import {
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 
 /**
  * Design Lab — interactive Toast demos (tones, stack, sticky-ish error).
@@ -31,6 +37,7 @@ export function LabToast() {
             className="ds-btn ds-btn--primary"
             onClick={() => notify.success('Compétition publiée')}
           >
+            <CheckIcon size="sm" />
             Success
           </button>
           <button
@@ -38,6 +45,7 @@ export function LabToast() {
             className="ds-btn ds-btn--secondary"
             onClick={() => notify.error('Impossible d’enregistrer le score')}
           >
+            <CloseIcon size="sm" />
             Error (sticky-ish)
           </button>
           <button
@@ -45,6 +53,7 @@ export function LabToast() {
             className="ds-btn ds-btn--secondary"
             onClick={() => notify.info('Classement recalculé — déjà visible')}
           >
+            <CheckIcon size="sm" />
             Info
           </button>
           <button
@@ -54,6 +63,7 @@ export function LabToast() {
               notify.attention('Deux matchs sans terrain pour la journée')
             }
           >
+            <CheckIcon size="sm" />
             Attention
           </button>
           <button
@@ -66,6 +76,7 @@ export function LabToast() {
               notify.error('Synchronisation différée');
             }}
           >
+            <PlusIcon size="sm" />
             Empiler (max 3)
           </button>
           <button
@@ -73,6 +84,7 @@ export function LabToast() {
             className="ds-btn ds-btn--ghost"
             onClick={() => clearToasts()}
           >
+            <TrashIcon size="sm" />
             Vider
           </button>
         </div>

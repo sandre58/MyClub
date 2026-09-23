@@ -2658,49 +2658,66 @@ button.structure-flux-group__peer {
   align-items: center;
 }
 
-.structure-draw-master__card-facts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-8);
-  width: 100%;
-}
-
 .structure-draw-tile {
+  display: flex;
+  flex-direction: column;
   padding: var(--space-16);
   gap: var(--space-12);
   box-shadow: none;
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: draw-detail;
+}
+
+.structure-draw-tile > .ds-form-section__head,
+.structure-draw-tile > .structure-domain-tile__footer {
+  flex: none;
+}
+
+.structure-draw-tile > .structure-domain-tile__content {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
+}
+
+.structure-draw-tile > .structure-domain-tile__footer {
+  margin-top: 0;
+}
+
+/* Cancelled = historical, not error — keep chips/header crisp; soften result only. */
+.structure-draw-tile--muted .structure-domain-tile__content {
+  opacity: 0.72;
+  filter: saturate(0.7);
 }
 
 .structure-draw-tile .ds-form-section__body {
   gap: var(--space-12);
 }
 
-.structure-draw-detail__message {
+.structure-draw-detail__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  justify-content: flex-end;
+}
+
+.structure-draw-detail__phrase {
   margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  line-height: var(--line-height-body);
 }
 
 .structure-draw-result {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
-  margin-top: var(--space-4);
-  padding-top: var(--space-12);
-  border-top: var(--border-width) solid var(--color-border);
 }
 
-.structure-draw-result__title {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.structure-draw-result-schematic.regulation-schematic {
+.structure-draw-result-schematic.regulation-schematic,
+.structure-draw-result-schematic .regulation-schematic {
   min-height: 0;
   padding: 0;
   background: transparent;
@@ -2714,37 +2731,101 @@ button.structure-flux-group__peer {
   padding: 0;
   display: flex;
   flex-direction: column;
+}
+
+.draw-placement-list {
   gap: var(--space-8);
 }
 
-.draw-pairing,
-.draw-placement {
+.structure-draw-dialog .draw-pairing-list {
+  gap: 0;
+}
+
+.structure-draw-dialog .draw-pairing {
   display: grid;
-  align-items: center;
-  gap: var(--space-12);
-  margin: 0;
-  padding: var(--space-12);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--color-surface-secondary) 55%, transparent);
-}
-
-.draw-pairing {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  justify-items: stretch;
+  gap: var(--space-32);
+  margin: 0;
+  padding: var(--space-12) 0;
+  border: none;
+  border-bottom: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
 }
 
-.draw-pairing__side {
+.structure-draw-dialog .draw-pairing:last-child {
+  border-bottom: none;
+}
+
+/*
+ * Face the confrontation: home → toward vs (end + crest right),
+ * away → toward vs (start + crest left). Overrides StagePage.css.
+ */
+.structure-draw-dialog .draw-pairing__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 0.15rem;
   min-width: 0;
+  width: 100%;
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
-}
-
-.draw-pairing__side:last-child {
   text-align: end;
 }
 
-.draw-pairing__vs {
+.structure-draw-dialog .draw-pairing__side--away {
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: start;
+}
+
+.structure-draw-dialog .draw-pairing__identity {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-draw-dialog .draw-pairing__side--away .draw-pairing__identity {
+  flex-direction: row;
+}
+
+.structure-draw-dialog .draw-pairing__crest {
   flex: none;
+}
+
+.structure-draw-dialog .draw-pairing__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-draw-dialog .draw-pairing__address {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.structure-draw-dialog .draw-pairing__name-short {
+  display: none;
+}
+
+.structure-draw-dialog .draw-pairing__vs {
+  flex: none;
+  margin-inline: var(--space-4);
   color: var(--color-text-secondary);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-bold);
@@ -2752,8 +2833,27 @@ button.structure-flux-group__peer {
   text-transform: uppercase;
 }
 
+/* Narrow detail column: ShortName instead of full display name. */
+@container draw-detail (max-width: 28rem) {
+  .structure-draw-dialog .draw-pairing__name-full {
+    display: none;
+  }
+
+  .structure-draw-dialog .draw-pairing__name-short {
+    display: inline;
+  }
+}
+
 .draw-placement {
+  display: grid;
   grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-12);
+  margin: 0;
+  padding: var(--space-12);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-secondary) 55%, transparent);
 }
 
 .draw-placement__key {

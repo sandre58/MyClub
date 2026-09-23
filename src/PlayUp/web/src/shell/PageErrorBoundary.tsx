@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { CheckIcon } from '../design-system/icons/contentIcons';
 import i18n from '../i18n';
 
 type PageErrorBoundaryProps = {
@@ -51,6 +52,7 @@ export class PageErrorBoundary extends Component<
             className="ds-btn ds-btn--primary"
             onClick={this.handleRetry}
           >
+            <CheckIcon size="sm" />
             {t('unexpectedError.retry')}
           </button>
           <Link className="ds-btn ds-btn--ghost" to="/">

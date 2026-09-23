@@ -95,13 +95,25 @@ public sealed record StageDrawDto(
 /// </summary>
 /// <param name="EntryAId">First pairing entry.</param>
 /// <param name="EntryADisplayName">Display name of entry A when known.</param>
+/// <param name="EntryAShortName">Short name of entry A when known.</param>
 /// <param name="EntryBId">Second pairing entry.</param>
 /// <param name="EntryBDisplayName">Display name of entry B when known.</param>
+/// <param name="EntryBShortName">Short name of entry B when known.</param>
+/// <param name="EntryALogoMediaId">Optional Media Guid for entry A logo.</param>
+/// <param name="EntryAPrimaryColor">Optional primary kit color for entry A.</param>
+/// <param name="EntryBLogoMediaId">Optional Media Guid for entry B logo.</param>
+/// <param name="EntryBPrimaryColor">Optional primary kit color for entry B.</param>
 public sealed record StageDrawPairingDto(
     Guid EntryAId,
     string? EntryADisplayName,
+    string? EntryAShortName,
     Guid EntryBId,
-    string? EntryBDisplayName);
+    string? EntryBDisplayName,
+    string? EntryBShortName,
+    Guid? EntryALogoMediaId = null,
+    string? EntryAPrimaryColor = null,
+    Guid? EntryBLogoMediaId = null,
+    string? EntryBPrimaryColor = null);
 
 /// <summary>
 /// Slot placement result summary.
@@ -109,7 +121,16 @@ public sealed record StageDrawPairingDto(
 /// <param name="SlotKey">Destination slot.</param>
 /// <param name="EntryId">Placed entry.</param>
 /// <param name="DisplayName">Display name when known.</param>
-public sealed record StageDrawSlotPlacementDto(string SlotKey, Guid EntryId, string? DisplayName);
+/// <param name="ShortName">Short name when known.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
+/// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
+public sealed record StageDrawSlotPlacementDto(
+    string SlotKey,
+    Guid EntryId,
+    string? DisplayName,
+    string? ShortName = null,
+    Guid? LogoMediaId = null,
+    string? PrimaryColor = null);
 
 /// <summary>
 /// Group placement result summary.
@@ -118,8 +139,14 @@ public sealed record StageDrawSlotPlacementDto(string SlotKey, Guid EntryId, str
 /// <param name="GroupDisplayName">Group display name when known.</param>
 /// <param name="EntryId">Placed entry.</param>
 /// <param name="DisplayName">Entry display name when known.</param>
+/// <param name="ShortName">Short name when known.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
+/// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
 public sealed record StageDrawGroupPlacementDto(
     Guid GroupId,
     string? GroupDisplayName,
     Guid EntryId,
-    string? DisplayName);
+    string? DisplayName,
+    string? ShortName = null,
+    Guid? LogoMediaId = null,
+    string? PrimaryColor = null);

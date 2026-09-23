@@ -23,6 +23,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// LegIndex 2 is created on the same Fixture with Home/Away mirrored (B→A). Null TieFormat ⇒ one leg.
 /// Fixture targets are Application orchestration input (one Fixture per pairing).
 /// Does not recalculate WhoFeeds and never creates DirectAssignment.
+/// Group: Apply rematerializes only entries present in the resolution (move from other group if needed);
+/// same-group is idempotent; entries outside the resolution are left untouched.
 /// Host supplies Pairing fixture context and Draw entry pools (typically ⊆ qualified/progressed Entries).
 /// </remarks>
 public static class ApplyDraw
@@ -160,6 +162,7 @@ public static class ApplyDraw
         var placements = draw.Resolution.GroupResults;
         var pool = draw.Inputs!.Entries;
 
+        // Validate first — no mutation until every placement is applicable.
         foreach (var placement in placements)
         {
             _ = stage.FindGroup(placement.GroupId)
@@ -173,18 +176,18 @@ public static class ApplyDraw
                     $"Entry '{placement.EntryId}' is outside the draw pool.",
                     ApplicationErrorCodes.DrawApplyFailure);
             }
-
-            if (stage.Groups.FirstOrDefault(g => g.EntryIds.Contains(placement.EntryId)) is { } owningGroup
-                && !owningGroup.Id.Equals(placement.GroupId))
-            {
-                throw new ApplicationFailureException(
-                    $"Entry '{placement.EntryId}' is already assigned to group '{owningGroup.Id}'.",
-                    ApplicationErrorCodes.DrawApplyFailure);
-            }
         }
 
+        // Targeted rematerialization: only entries in this resolution move.
+        // Same-group → no-op; other-group → remove then assign; unassigned → assign.
         foreach (var placement in placements)
         {
+            var owningGroup = stage.Groups.FirstOrDefault(g => g.EntryIds.Contains(placement.EntryId));
+            if (owningGroup is not null && !owningGroup.Id.Equals(placement.GroupId))
+            {
+                stage.RemoveEntryFromGroup(owningGroup.Id, placement.EntryId);
+            }
+
             stage.AssignEntryToGroup(placement.GroupId, placement.EntryId);
         }
 

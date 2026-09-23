@@ -24,6 +24,7 @@ import { LucideIcon } from '../design-system/icons/Icon';
 import { ToastToneIcon } from '../design-system/icons/toastIcons';
 import {
   ChampionshipFormatIcon,
+  CheckIcon,
   CupFormatIcon,
   EmptySelectionIcon,
   GroupsFormatIcon,
@@ -32,7 +33,10 @@ import {
   SwissFormatIcon,
   TrophyIcon,
 } from '../design-system/icons/contentIcons';
-import { ChevronDownIcon } from '../design-system/icons/shellIcons';
+import {
+  ChevronDownIcon,
+  CloseIcon,
+} from '../design-system/icons/shellIcons';
 import { notify } from '../design-system/toastStore';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
@@ -683,6 +687,7 @@ export function StructureProgressionDialog({
               disabled={mutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -694,7 +699,10 @@ export function StructureProgressionDialog({
               {mutation.isPending ? (
                 <PendingLabel>{t('progression.saving')}</PendingLabel>
               ) : (
-                t('progression.save')
+                <>
+                  <CheckIcon size="sm" />
+                  {t('progression.save')}
+                </>
               )}
             </button>
           </>

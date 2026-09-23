@@ -19,10 +19,12 @@ import { InputNumber } from '../design-system/components/InputNumber';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { LucideIcon } from '../design-system/icons/Icon';
 import {
+  CheckIcon,
   EmptySelectionIcon,
   PlusIcon,
   StructureIcon,
 } from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { ToastToneIcon } from '../design-system/icons/toastIcons';
 import { notify } from '../design-system/toastStore';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
@@ -248,6 +250,7 @@ export function StructurePlacementAwardDialog({
               disabled={mutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -259,7 +262,10 @@ export function StructurePlacementAwardDialog({
               {mutation.isPending ? (
                 <PendingLabel>{t('attribution.saving')}</PendingLabel>
               ) : (
-                t('attribution.save')
+                <>
+                  <CheckIcon size="sm" />
+                  {t('attribution.save')}
+                </>
               )}
             </button>
           </>

@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -13,25 +14,33 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Application-derived draw “Applied” state (Publish ≠ Apply).
 /// </summary>
 /// <remarks>
-/// Domain has no Applied status. Applied means resolution occupancy/attachments already match
-/// the published resolution — same heuristic previously reconstructed in the SPA.
+/// Domain has no Applied status. Applied means a <see cref="DrawStatus.Published"/> draw's
+/// resolution occupancy/attachments already match the stage — Publish ≠ Apply.
+/// Draft/Cancelled draws never report Applied even if stage occupancy still matches a prior Apply
+/// (Cancel does not unwind materialization).
 /// Pairing: each fixture must have attachments equal to the hosting Round's TieFormat legs
 /// (null TieFormat ⇒ OneLeg).
 /// </remarks>
 public static class DrawAppliedState
 {
     /// <summary>
-    /// Returns whether a resolved draw appears already applied on the stage.
+    /// Returns whether a published resolved draw appears already applied on the stage.
     /// </summary>
     /// <param name="draw">Draw entity.</param>
     /// <param name="stage">Owning stage.</param>
-    /// <returns><see langword="true"/> when placements/attachments match the resolution.</returns>
+    /// <returns><see langword="true"/> when the draw is Published and placements/attachments match.</returns>
     public static bool IsApplied(Draw draw, Stage stage)
     {
         ArgumentNullException.ThrowIfNull(draw);
         ArgumentNullException.ThrowIfNull(stage);
 
-        return draw.Resolution.State == DrawResolutionState.Resolved && draw.Kind switch
+        if (draw.Status != DrawStatus.Published
+            || draw.Resolution.State != DrawResolutionState.Resolved)
+        {
+            return false;
+        }
+
+        return draw.Kind switch
         {
             DrawResolutionKind.Slot => IsSlotApplied(draw, stage),
             DrawResolutionKind.Group => IsGroupApplied(draw, stage),

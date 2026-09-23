@@ -28,6 +28,12 @@ import type {
   RecordDisciplinaryEventRequest,
   RecordedDisciplinaryEvent,
 } from '../types';
+import {
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { canMutateRecordedDisciplinaryEvents } from './matchDisciplinaryHelpers';
 
 /**
@@ -212,6 +218,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                         allowedTypes={allowedTypes}
                         pending={correctMutation.isPending}
                         submitLabel={t('discipline.saveCorrect')}
+                        submitIcon="check"
                         pendingLabel={t('discipline.saving')}
                         onMemberChange={setMemberId}
                         onTypeChange={setType}
@@ -253,7 +260,10 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                               {t('discipline.removing')}
                             </PendingLabel>
                           ) : (
-                            t('discipline.confirmRemove')
+                            <>
+                              <TrashIcon size="sm" />
+                              {t('discipline.confirmRemove')}
+                            </>
                           )}
                         </button>
                         <button
@@ -262,6 +272,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
                           disabled={removeMutation.isPending}
                           onClick={() => setPendingRemoveId(null)}
                         >
+                          <CloseIcon size="sm" />
                           {tc('cancel')}
                         </button>
                       </div>
@@ -284,6 +295,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
           allowedTypes={allowedTypes}
           pending={createMutation.isPending}
           submitLabel={t('discipline.addAction')}
+          submitIcon="plus"
           pendingLabel={t('discipline.adding')}
           onMemberChange={setMemberId}
           onTypeChange={setType}
@@ -321,6 +333,7 @@ function DisciplinaryForm({
   allowedTypes,
   pending,
   submitLabel,
+  submitIcon,
   pendingLabel,
   onMemberChange,
   onTypeChange,
@@ -333,6 +346,7 @@ function DisciplinaryForm({
   allowedTypes: DisciplinaryType[];
   pending: boolean;
   submitLabel: string;
+  submitIcon: 'plus' | 'check';
   pendingLabel: string;
   onMemberChange: (id: string) => void;
   onTypeChange: (type: DisciplinaryType | '') => void;
@@ -341,6 +355,7 @@ function DisciplinaryForm({
 }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
+  const SubmitIcon = submitIcon === 'plus' ? PlusIcon : CheckIcon;
 
   function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
@@ -399,7 +414,14 @@ function DisciplinaryForm({
           className="ds-btn ds-btn--primary"
           disabled={pending || !memberId || !type}
         >
-          {pending ? <PendingLabel>{pendingLabel}</PendingLabel> : submitLabel}
+          {pending ? (
+            <PendingLabel>{pendingLabel}</PendingLabel>
+          ) : (
+            <>
+              <SubmitIcon size="sm" />
+              {submitLabel}
+            </>
+          )}
         </button>
         {onCancel && (
           <button
@@ -408,6 +430,7 @@ function DisciplinaryForm({
             disabled={pending}
             onClick={onCancel}
           >
+            <CloseIcon size="sm" />
             {tc('cancel')}
           </button>
         )}

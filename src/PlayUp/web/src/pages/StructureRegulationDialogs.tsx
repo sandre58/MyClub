@@ -12,7 +12,8 @@ import { InputNumber } from '../design-system/components/InputNumber';
 import { SwitchPanel } from '../design-system/components/SwitchPanel';
 import { notify } from '../design-system/toastStore';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
-import { RandomIcon } from '../design-system/icons/contentIcons';
+import { RandomIcon, CheckIcon } from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { MutationError, PendingLabel } from '../ui';
 import type {
   StructureStageHubSummary,
@@ -294,6 +295,7 @@ export function DrawRulesDialog({
               onClick={requestClose}
               disabled={busy || discardOpen}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -305,7 +307,10 @@ export function DrawRulesDialog({
               {saveMutation.isPending ? (
                 <PendingLabel>{t('regulation.saving')}</PendingLabel>
               ) : (
-                saveLabel
+                <>
+                  <CheckIcon size="sm" />
+                  {saveLabel}
+                </>
               )}
             </button>
           </>

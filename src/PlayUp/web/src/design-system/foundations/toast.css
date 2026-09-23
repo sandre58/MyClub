@@ -1,14 +1,15 @@
 /*
- * Toast — ephemeral event feedback (canvas host).
+ * Toast — ephemeral event feedback (canvas / viewport host).
  * Soft fill: ~16% tone wash, no border; tone via icon + 2px progress bar.
- * Progress shrinks toward the left. Below Dialog (z-index 40).
+ * Progress shrinks toward the left.
+ * Above Dialog overlay (z-index 40); below Tooltip (z-index 50).
  */
 
 .ds-toaster {
-  position: absolute;
+  position: fixed;
   inset-inline-end: max(var(--space-16), env(safe-area-inset-right, 0px));
   inset-block-end: max(var(--space-16), env(safe-area-inset-bottom, 0px));
-  z-index: 30;
+  z-index: 45;
   display: flex;
   flex-direction: column;
   gap: var(--space-8);

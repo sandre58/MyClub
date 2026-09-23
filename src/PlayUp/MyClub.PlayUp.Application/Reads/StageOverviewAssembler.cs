@@ -27,6 +27,7 @@ public static class StageOverviewAssembler
         ArgumentNullException.ThrowIfNull(competition);
 
         var names = EntryDisplayNames.ToMap(competition);
+        var entries = EntryDisplayNames.ToEntries(competition);
 
         var rounds = stage.Rounds
             .Select(round => new StageRoundDto(
@@ -45,7 +46,7 @@ public static class StageOverviewAssembler
                 covered.Contains(slot.SlotKey)))
             .ToArray();
 
-        var draws = stage.Draws.Select(draw => MapDraw(draw, stage, names)).ToArray();
+        var draws = stage.Draws.Select(draw => MapDraw(draw, stage, entries)).ToArray();
 
         return new StageOverviewDto(
             stage.Id.Value,
@@ -68,7 +69,10 @@ public static class StageOverviewAssembler
                     .Select(attachment => new StageFixtureAttachmentDto(attachment.MatchId.Value, attachment.LegIndex))
             ]);
 
-    private static StageDrawDto MapDraw(Draw draw, Stage stage, IReadOnlyDictionary<EntryId, string> names)
+    private static StageDrawDto MapDraw(
+        Draw draw,
+        Stage stage,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
         var resolution = draw.Resolution;
         IReadOnlyList<StageDrawPairingDto> pairings = [];
@@ -91,20 +95,38 @@ public static class StageOverviewAssembler
         pairings =
         [
             .. resolution.PairingResults
-                .Select(pairing => new StageDrawPairingDto(
-                    pairing.EntryA.Value,
-                    EntryDisplayNames.Resolve(names, pairing.EntryA),
-                    pairing.EntryB.Value,
-                    EntryDisplayNames.Resolve(names, pairing.EntryB)))
+                .Select(pairing =>
+                {
+                    var sideA = EntryDisplayNames.ToSide(entries, pairing.EntryA);
+                    var sideB = EntryDisplayNames.ToSide(entries, pairing.EntryB);
+                    return new StageDrawPairingDto(
+                        pairing.EntryA.Value,
+                        sideA.DisplayName,
+                        sideA.ShortName,
+                        pairing.EntryB.Value,
+                        sideB.DisplayName,
+                        sideB.ShortName,
+                        sideA.LogoMediaId,
+                        sideA.PrimaryColor,
+                        sideB.LogoMediaId,
+                        sideB.PrimaryColor);
+                })
         ];
 
         slotPlacements =
         [
             .. resolution.SlotResults
-                .Select(placement => new StageDrawSlotPlacementDto(
-                    placement.SlotKey,
-                    placement.EntryId.Value,
-                    EntryDisplayNames.Resolve(names, placement.EntryId)))
+                .Select(placement =>
+                {
+                    var side = EntryDisplayNames.ToSide(entries, placement.EntryId);
+                    return new StageDrawSlotPlacementDto(
+                        placement.SlotKey,
+                        placement.EntryId.Value,
+                        side.DisplayName,
+                        side.ShortName,
+                        side.LogoMediaId,
+                        side.PrimaryColor);
+                })
         ];
 
         var groupNames = stage.Groups.ToDictionary(
@@ -114,11 +136,18 @@ public static class StageOverviewAssembler
         groupPlacements =
         [
             .. resolution.GroupResults
-                .Select(placement => new StageDrawGroupPlacementDto(
-                    placement.GroupId.Value,
-                    groupNames.GetValueOrDefault(placement.GroupId),
-                    placement.EntryId.Value,
-                    EntryDisplayNames.Resolve(names, placement.EntryId)))
+                .Select(placement =>
+                {
+                    var side = EntryDisplayNames.ToSide(entries, placement.EntryId);
+                    return new StageDrawGroupPlacementDto(
+                        placement.GroupId.Value,
+                        groupNames.GetValueOrDefault(placement.GroupId),
+                        placement.EntryId.Value,
+                        side.DisplayName,
+                        side.ShortName,
+                        side.LogoMediaId,
+                        side.PrimaryColor);
+                })
         ];
 
         return new StageDrawDto(

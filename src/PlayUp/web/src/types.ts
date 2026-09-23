@@ -1352,14 +1352,25 @@ export interface StageSlot {
 export interface StageDrawPairing {
   entryAId: string;
   entryADisplayName: string | null;
+  /** Optional abbreviated name for compact layouts. */
+  entryAShortName?: string | null;
+  entryALogoMediaId?: string | null;
+  entryAPrimaryColor?: string | null;
   entryBId: string;
   entryBDisplayName: string | null;
+  /** Optional abbreviated name for compact layouts. */
+  entryBShortName?: string | null;
+  entryBLogoMediaId?: string | null;
+  entryBPrimaryColor?: string | null;
 }
 
 export interface StageDrawSlotPlacement {
   slotKey: string;
   entryId: string;
   displayName: string | null;
+  shortName?: string | null;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
 }
 
 export interface StageDrawGroupPlacement {
@@ -1368,6 +1379,9 @@ export interface StageDrawGroupPlacement {
   groupDisplayName?: string | null;
   entryId: string;
   displayName: string | null;
+  shortName?: string | null;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
 }
 
 export interface StageDraw {

@@ -8,6 +8,16 @@ import {
 } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { Tooltip } from '../design-system/components/Tooltip';
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+} from '../design-system/icons/contentIcons';
+import {
+  ChevronLeftIcon,
+  CloseIcon,
+} from '../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { MutationError, PendingLabel } from '../ui';
@@ -56,6 +66,7 @@ export function RemovePhaseAction({
             disabled={!canRemove}
             onClick={() => setRemoveOpen(true)}
           >
+            <TrashIcon size="sm" />
             {t('graph.removePhase')}
           </button>
         </span>
@@ -213,7 +224,17 @@ export function AddPhaseDialog({
             disabled={mutation.isPending}
             onClick={step === 1 ? onClose : () => setStep(1)}
           >
-            {step === 1 ? tCommon('cancel') : t('skeleton.back')}
+            {step === 1 ? (
+              <>
+                <CloseIcon size="sm" />
+                {tCommon('cancel')}
+              </>
+            ) : (
+              <>
+                <ChevronLeftIcon size="sm" />
+                {t('skeleton.back')}
+              </>
+            )}
           </button>
           {step === 1 ? (
             <button
@@ -222,6 +243,7 @@ export function AddPhaseDialog({
               disabled={!identityOk}
               onClick={() => setStep(2)}
             >
+              <ArrowRightIcon size="sm" />
               {t('skeleton.next')}
             </button>
           ) : (
@@ -231,7 +253,14 @@ export function AddPhaseDialog({
               className="ds-btn ds-btn--primary"
               disabled={!skeletonOk || mutation.isPending}
             >
-              {mutation.isPending ? <PendingLabel /> : t('graph.addPhaseSubmit')}
+              {mutation.isPending ? (
+                <PendingLabel />
+              ) : (
+                <>
+                  <PlusIcon size="sm" />
+                  {t('graph.addPhaseSubmit')}
+                </>
+              )}
             </button>
           )}
         </>
@@ -388,6 +417,7 @@ export function EditSkeletonDialog({
             disabled={mutation.isPending}
             onClick={onClose}
           >
+            <CloseIcon size="sm" />
             {tCommon('cancel')}
           </button>
           <button
@@ -399,7 +429,10 @@ export function EditSkeletonDialog({
             {mutation.isPending ? (
               <PendingLabel>{t('structure.configuring')}</PendingLabel>
             ) : (
-              t('structure.rebuildSubmit')
+              <>
+                <CheckIcon size="sm" />
+                {t('structure.rebuildSubmit')}
+              </>
             )}
           </button>
         </>
@@ -518,6 +551,7 @@ export function RemovePhaseDialog({
             disabled={mutation.isPending}
             onClick={onClose}
           >
+            <CloseIcon size="sm" />
             {tCommon('cancel')}
           </button>
           <button
@@ -526,7 +560,14 @@ export function RemovePhaseDialog({
             disabled={mutation.isPending}
             onClick={() => mutation.mutate()}
           >
-            {mutation.isPending ? <PendingLabel /> : t('graph.removePhaseSubmit')}
+            {mutation.isPending ? (
+              <PendingLabel />
+            ) : (
+              <>
+                <TrashIcon size="sm" />
+                {t('graph.removePhaseSubmit')}
+              </>
+            )}
           </button>
         </>
       }

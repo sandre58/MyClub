@@ -11,13 +11,18 @@ import { PanelHead } from '../design-system/components/PanelHead';
 import { Status } from '../design-system/components/Status';
 import { Tooltip } from '../design-system/components/Tooltip';
 import {
+  CheckIcon,
+  CalendarIcon,
+  TrashIcon,
+} from '../design-system/icons/contentIcons';
+import {
   ChevronRightIcon,
   ClassementsNavIcon,
+  CloseIcon,
   MatchesNavIcon,
 } from '../design-system/icons/shellIcons';
 import { AttentionSituationRow } from '../shell/AttentionSituationRow';
 import { TextLink } from '../design-system/components/TextLink';
-import { CalendarIcon } from '../design-system/icons/contentIcons';
 import { actionLabel } from '../i18n/actionLabels';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { toIntlLocale } from '../i18n/intlLocale';
@@ -565,6 +570,7 @@ function MaterializeFollowUpBanner({
             className="ds-btn ds-btn--secondary"
             onClick={onDismiss}
           >
+            <CloseIcon size="sm" />
             {t('materializeFollowUp.dismiss')}
           </button>
         </p>
@@ -1618,7 +1624,18 @@ function ActionButtons({
             disabled={actionRunner.mutation.isPending}
             onClick={() => actionRunner.onActionClick(action)}
           >
-            {busy ? <PendingLabel>{t('actions.busy')}</PendingLabel> : label}
+            {busy ? (
+              <PendingLabel>{t('actions.busy')}</PendingLabel>
+            ) : (
+              <>
+                {action.code.includes('Archive') ? (
+                  <TrashIcon size="sm" />
+                ) : (
+                  <CheckIcon size="sm" />
+                )}
+                {label}
+              </>
+            )}
           </button>
         );
       })}

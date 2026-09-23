@@ -28,6 +28,7 @@ import { LucideIcon } from '../design-system/icons/Icon';
 import { ToastToneIcon } from '../design-system/icons/toastIcons';
 import {
   ChampionshipFormatIcon,
+  CheckIcon,
   CupFormatIcon,
   EmptySelectionIcon,
   GroupsFormatIcon,
@@ -37,7 +38,10 @@ import {
   StructureIcon,
   SwissFormatIcon,
 } from '../design-system/icons/contentIcons';
-import { ChevronDownIcon } from '../design-system/icons/shellIcons';
+import {
+  ChevronDownIcon,
+  CloseIcon,
+} from '../design-system/icons/shellIcons';
 import { notify } from '../design-system/toastStore';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
@@ -542,6 +546,7 @@ export function StructureQualificationDialog({
               disabled={mutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -553,7 +558,10 @@ export function StructureQualificationDialog({
               {mutation.isPending ? (
                 <PendingLabel>{t('qualification.saving')}</PendingLabel>
               ) : (
-                t('qualification.save')
+                <>
+                  <CheckIcon size="sm" />
+                  {t('qualification.save')}
+                </>
               )}
             </button>
           </>

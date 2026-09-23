@@ -11,9 +11,10 @@ import { Field } from '../design-system/components/Field';
 import { SwitchPanel } from '../design-system/components/SwitchPanel';
 import { ToggleButtonGroup } from '../design-system/components/ToggleButtonGroup';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { ConfrontationIcon } from '../design-system/icons/contentIcons';
+import { CheckIcon, ConfrontationIcon } from '../design-system/icons/contentIcons';
 import {
   AttentionIcon,
+  CloseIcon,
   RegulationNavIcon,
 } from '../design-system/icons/shellIcons';
 import { notify } from '../design-system/toastStore';
@@ -428,6 +429,7 @@ export function TieFormatDialog({
               disabled={mutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -439,7 +441,10 @@ export function TieFormatDialog({
               {mutation.isPending ? (
                 <PendingLabel>{t('regulation.saving')}</PendingLabel>
               ) : (
-                tReg('editor.save')
+                <>
+                  <CheckIcon size="sm" />
+                  {tReg('editor.save')}
+                </>
               )}
             </button>
           </>

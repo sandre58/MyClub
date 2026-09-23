@@ -7,7 +7,12 @@ import {
   fetchStageOverview,
   publishAndApplyDraw,
 } from '../api';
-import type { StageDraw, StageOverview, StructureStageHubSummary } from '../types';
+import { clearToasts, getToastsSnapshot } from '../design-system/toastStore';
+import type {
+  StageDraw,
+  StageOverview,
+  StructureStageHubSummary,
+} from '../types';
 import { StructureDrawDialog } from './StructureDrawDialog';
 
 vi.mock('../api', async (importOriginal) => {
@@ -87,6 +92,53 @@ function groupDraw(overrides: Partial<StageDraw> = {}): StageDraw {
   };
 }
 
+function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
+  return {
+    id: 'draw-slot-1',
+    kind: 'Slot',
+    status: 'Draft',
+    resolutionState: 'Resolved',
+    pairings: [],
+    slotPlacements: [
+      {
+        slotKey: 'R16-1-A',
+        entryId: 'e1',
+        displayName: 'Belgium',
+      },
+      {
+        slotKey: 'R16-1-B',
+        entryId: 'e2',
+        displayName: 'Poland',
+      },
+      {
+        slotKey: 'R16-2-A',
+        entryId: 'e3',
+        displayName: 'Turkey',
+      },
+      {
+        slotKey: 'R16-2-B',
+        entryId: 'e4',
+        displayName: 'Denmark',
+      },
+    ],
+    ...overrides,
+  };
+}
+
+function cupStage(
+  overrides: Partial<StructureStageHubSummary> = {},
+): StructureStageHubSummary {
+  return groupsStage({
+    name: 'Éliminatoires',
+    formatKind: 'Cup',
+    groupCount: 0,
+    roundCount: 4,
+    numberOfPots: null,
+    hasStandingRules: false,
+    ...overrides,
+  });
+}
+
 function renderDialog(
   stage = groupsStage(),
   open = true,
@@ -111,6 +163,7 @@ function renderDialog(
 describe('StructureDrawDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearToasts();
   });
 
   it('shows empty state and Create when there are no draws', async () => {
@@ -186,6 +239,55 @@ describe('StructureDrawDialog', () => {
     await waitFor(() => {
       expect(createAndGenerateDraw).toHaveBeenCalledWith(stageId, 'Group');
     });
+    await waitFor(() => {
+      expect(getToastsSnapshot().map((t) => t.message)).toContain(
+        'Nouvelle exécution créée.',
+      );
+    });
+  });
+
+  it('selects the new draw after Nouveau when history had a cancelled execution', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          id: 'draw-01',
+          status: 'Cancelled',
+        }),
+      ]),
+    );
+    vi.mocked(createAndGenerateDraw).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview([
+          groupDraw({
+            id: 'draw-01',
+            status: 'Cancelled',
+          }),
+          groupDraw({
+            id: 'draw-02',
+            status: 'Draft',
+            resolutionState: 'Resolved',
+          }),
+        ]),
+      );
+      return {
+        drawId: 'draw-02',
+        isResolved: true,
+        isNoSolution: false,
+      };
+    });
+
+    renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    );
+
+    await waitFor(() => {
+      const history = screen.getByLabelText('Historique des exécutions');
+      expect(
+        within(history).getByRole('button', { current: true }),
+      ).toHaveTextContent('Exécution #2');
+    });
   });
 
   it('disables Nouveau when a non-Cancelled draw exists (Draft)', async () => {
@@ -242,16 +344,18 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByText('Résultat prêt à être appliqué.'),
+      await screen.findByRole('heading', { name: 'Tirage Groupe' }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Résultat généré, prêt à être publié.'),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText('Résolu').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText('Brouillon')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Historique' }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByLabelText('Historique des exécutions'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Tirage Groupe' }),
     ).toBeInTheDocument();
     const publishAndApply = screen.getByRole('button', {
       name: 'Publier et appliquer',
@@ -296,13 +400,36 @@ describe('StructureDrawDialog', () => {
 
     renderDialog();
 
-    expect(await screen.findByText('Résultat')).toBeInTheDocument();
-    expect(screen.getByText('Groupe A')).toBeInTheDocument();
+    expect(await screen.findByText('Groupe A')).toBeInTheDocument();
+    expect(screen.queryByText('Résultat')).not.toBeInTheDocument();
     expect(screen.getByText('Équipe 1')).toBeInTheDocument();
     expect(screen.getByText('Équipe 4')).toBeInTheDocument();
     expect(screen.getByText('Groupe B')).toBeInTheDocument();
     expect(screen.getByText('Équipe 2')).toBeInTheDocument();
     expect(screen.getByText('Équipe 3')).toBeInTheDocument();
+  });
+
+  it('renders Slot placements as dense A vs B confrontations without match numbers', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([slotDraw()]));
+
+    renderDialog(cupStage());
+
+    expect(
+      await screen.findByRole('heading', { name: 'Tirage Emplacement' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Belgium')).toBeInTheDocument();
+    expect(screen.getByText('Poland')).toBeInTheDocument();
+    expect(screen.getByText('Turkey')).toBeInTheDocument();
+    expect(screen.getByText('Denmark')).toBeInTheDocument();
+    expect(screen.getByText('R16-1-A')).toBeInTheDocument();
+    expect(screen.getByText('R16-1-B')).toBeInTheDocument();
+    expect(screen.getByText('R16-2-A')).toBeInTheDocument();
+    expect(screen.getByText('R16-2-B')).toBeInTheDocument();
+    expect(screen.getAllByText('vs').length).toBe(2);
+    expect(screen.queryByText('#1')).not.toBeInTheDocument();
+    expect(
+      document.querySelector('.regulation-schematic--cup'),
+    ).toBeNull();
   });
 
   it('shows master-detail with selectable tiles when more than one draw exists', async () => {
@@ -323,15 +450,27 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     const history = await screen.findByLabelText('Historique des exécutions');
-    expect(within(history).getByText('Exécution #2')).toBeInTheDocument();
-    expect(within(history).getByText('Exécution #1')).toBeInTheDocument();
+    const tiles = within(history).getAllByRole('button');
+    // Newest first: #2 (Draft) above #1 (Cancelled)
+    expect(tiles[0]).toHaveTextContent('Exécution #2');
+    expect(tiles[1]).toHaveTextContent('Exécution #1');
+    // One chip only (Résolu for draft resolved) — not the full matrix
+    expect(within(tiles[0]).getByText('Résolu')).toBeInTheDocument();
+    expect(within(tiles[0]).queryByText('Brouillon')).not.toBeInTheDocument();
+    expect(within(tiles[0]).queryByText('Non appliqué')).not.toBeInTheDocument();
 
     await user.click(within(history).getByText('Exécution #1'));
+    const detail = await screen.findByRole('heading', { name: 'Tirage Groupe' });
+    const detailSection = detail.closest('section');
     expect(
-      await screen.findByText(
+      detailSection?.querySelector('.structure-domain-tile__toolbar'),
+    ).toHaveTextContent('Annulé');
+    expect(detailSection).toHaveClass('structure-draw-tile--muted');
+    expect(
+      screen.queryByText(
         'Ce tirage a été annulé. Un nouveau tirage est nécessaire pour recommencer.',
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
   });
 
   it('publishes and applies the selected draft draw', async () => {
@@ -350,6 +489,11 @@ describe('StructureDrawDialog', () => {
       expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, 'draw-1', {
         fixtureIds: [],
       });
+    });
+    await waitFor(() => {
+      expect(getToastsSnapshot().map((t) => t.message)).toContain(
+        'Tirage publié et appliqué.',
+      );
     });
   });
 });

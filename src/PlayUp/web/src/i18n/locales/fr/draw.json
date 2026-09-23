@@ -1,8 +1,8 @@
 {
   "cancelled": "Ce tirage a été annulé. Un nouveau tirage est nécessaire pour recommencer.",
   "draftNotResolved": "Tirage en préparation — pas encore de résultat.",
-  "draftResolved": "Résultat prêt à être appliqué.",
-  "noSolution": "Aucune solution admissible n’a été trouvée pour ce tirage.",
+  "draftResolved": "Résultat généré, prêt à être publié.",
+  "noSolution": "Aucune résolution valide n’a pu être générée.",
   "published": "Résultat publié, en attente d’application.",
   "publishedSlotApplied": "Résultat appliqué à la phase.",
   "publishedGroupApplied": "Résultat appliqué à la phase.",
@@ -29,5 +29,10 @@
   "cancelling": "Annulation…",
   "confirmCancelTitle": "Annuler cette exécution ?",
   "confirmCancel": "L’exécution passera en annulée. Un nouveau tirage sera alors possible.",
-  "confirmCancelApplied": "L’exécution passera en annulée. Cela n’annule pas l’application déjà faite sur la phase — seuls un nouveau tirage puis une nouvelle application peuvent peupler à nouveau. Un nouveau tirage sera alors possible."
+  "confirmCancelApplied": "L’exécution passera en annulée. Cela n’annule pas l’application déjà faite sur la phase — seuls un nouveau tirage puis une nouvelle application peuvent peupler à nouveau. Un nouveau tirage sera alors possible.",
+  "toastCreated": "Nouvelle exécution créée.",
+  "toastPublished": "Tirage publié.",
+  "toastPublishedAndApplied": "Tirage publié et appliqué.",
+  "toastApplied": "Tirage appliqué à la phase.",
+  "toastCancelled": "Tirage annulé."
 }

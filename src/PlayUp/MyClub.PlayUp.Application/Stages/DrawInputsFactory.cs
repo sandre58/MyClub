@@ -14,32 +14,39 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 /// <remarks>
 /// Entries = phase <see cref="Stage.CompositionEntries"/> only (fail closed — no Active[] fallback).
-/// Placements already present on the form become Fixed* ( ⊆ Entries ). The generator free pool is
-/// Entries \ Fixed* — not a shrink responsibility of this factory.
+/// <see cref="DrawInputsIntent.Default"/>: placements already present on the form become Fixed*
+/// ( ⊆ Entries ). The generator free pool is Entries \ Fixed*.
+/// <see cref="DrawInputsIntent.Rerun"/>: Fixed* empty — full reshuffle from CompositionEntries
+/// without promoting current occupancy (Cancel does not clear the phase).
 /// </remarks>
 public static class DrawInputsFactory
 {
     /// <summary>
-    /// Builds inputs for the draw kind from the stage composition (encoding F).
+    /// Builds inputs for the draw kind from the stage composition.
     /// </summary>
     /// <param name="stage">Stage that owns the draw.</param>
     /// <param name="kind">Draw resolution kind.</param>
-    public static DrawInputs CreateDefault(Stage stage, DrawResolutionKind kind)
+    /// <param name="intent">Default = Encoding F; Rerun = full redraw without occupancy Fixed*.</param>
+    public static DrawInputs CreateDefault(
+        Stage stage,
+        DrawResolutionKind kind,
+        DrawInputsIntent intent = DrawInputsIntent.Default)
     {
         ArgumentNullException.ThrowIfNull(stage);
 
         var entries = ResolveComposition(stage);
+        var promoteFixed = intent == DrawInputsIntent.Default;
 
         return kind switch
         {
             DrawResolutionKind.Group => DrawInputs.ForGroup(
                 entries,
                 potMembership: BuildSequentialPots(entries, stage),
-                fixedPlacements: CollectFixedGroups(stage, entries)),
+                fixedPlacements: promoteFixed ? CollectFixedGroups(stage, entries) : []),
             DrawResolutionKind.Pairing => DrawInputs.ForPairing(entries),
             DrawResolutionKind.Slot => DrawInputs.ForSlot(
                 entries,
-                fixedPlacements: CollectFixedSlots(stage, entries)),
+                fixedPlacements: promoteFixed ? CollectFixedSlots(stage, entries) : []),
             _ => throw new ApplicationFailureException(
                 $"Unsupported draw kind '{kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)

@@ -12,6 +12,7 @@ import {
   startStage,
 } from '../api';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
+import { CheckIcon, PlusIcon, TrashIcon } from '../design-system/icons/contentIcons';
 import { queryKeys } from '../queryKeys';
 import {
   DrawResolutionBadge,
@@ -157,7 +158,10 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                   {prepareMutation.isPending ? (
                     <PendingLabel>{t('operations.preparing')}</PendingLabel>
                   ) : (
-                    t('operations.prepare')
+                    <>
+                      <CheckIcon size="sm" />
+                      {t('operations.prepare')}
+                    </>
                   )}
                 </button>
               )}
@@ -171,7 +175,10 @@ function StageOverviewView({ data }: { data: StageOverview }) {
                   {startMutation.isPending ? (
                     <PendingLabel>{t('operations.starting')}</PendingLabel>
                   ) : (
-                    t('operations.start')
+                    <>
+                      <CheckIcon size="sm" />
+                      {t('operations.start')}
+                    </>
                   )}
                 </button>
               )}
@@ -395,6 +402,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
                       )
                     }
                   >
+                    <TrashIcon size="sm" />
                     {t('confrontations.removePair')}
                   </button>
                 </li>
@@ -458,6 +466,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
                   setSlotB('');
                 }}
               >
+                <PlusIcon size="sm" />
                 {t('confrontations.addPair')}
               </button>
             </div>
@@ -473,7 +482,10 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
               {materializeMutation.isPending ? (
                 <PendingLabel>{t('confrontations.submitting')}</PendingLabel>
               ) : (
-                t('confrontations.submit')
+                <>
+                  <CheckIcon size="sm" />
+                  {t('confrontations.submit')}
+                </>
               )}
             </button>
           </div>
@@ -749,7 +761,10 @@ function DrawActions({
             {publishAndApplyMutation.isPending ? (
               <PendingLabel>{t('publishingAndApplying')}</PendingLabel>
             ) : (
-              t('publishAndApply')
+              <>
+                <CheckIcon size="sm" />
+                {t('publishAndApply')}
+              </>
             )}
           </button>
         )}
@@ -764,7 +779,10 @@ function DrawActions({
             {applyMutation.isPending ? (
               <PendingLabel>{t('applying')}</PendingLabel>
             ) : (
-              t('apply')
+              <>
+                <CheckIcon size="sm" />
+                {t('apply')}
+              </>
             )}
           </button>
         )}

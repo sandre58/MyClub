@@ -338,7 +338,7 @@ public sealed class ApplyDrawTests
     }
 
     [Fact]
-    public void Execute_group_rejects_entry_in_other_group()
+    public void Execute_group_rematerializes_entry_from_other_group()
     {
         var stage = CreateStage();
         var groupA = stage.AddGroup("A", _clock);
@@ -346,15 +346,30 @@ public sealed class ApplyDrawTests
         var entry = EntryId.New();
         var draw = PublishGroupDraw(stage, entry, groupA.Id);
         stage.AssignEntryToGroup(groupB.Id, entry);
-        stage.ClearDomainEvents();
 
-        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
+        var result = ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DrawApplyFailure);
-        groupA.EntryIds.Should().BeEmpty();
-        groupB.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
-        stage.DomainEvents.Should().BeEmpty();
+        result.SlotInstructions.Should().BeEmpty();
+        groupA.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
+        groupB.EntryIds.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_group_rematerialize_leaves_unrelated_entries()
+    {
+        var stage = CreateStage();
+        var groupA = stage.AddGroup("A", _clock);
+        var groupB = stage.AddGroup("B", _clock);
+        var drawn = EntryId.New();
+        var outsider = EntryId.New();
+        stage.AssignEntryToGroup(groupB.Id, outsider);
+        var draw = PublishGroupDraw(stage, drawn, groupA.Id);
+        stage.AssignEntryToGroup(groupB.Id, drawn);
+
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        groupA.EntryIds.Should().ContainSingle().Which.Should().Be(drawn);
+        groupB.EntryIds.Should().ContainSingle().Which.Should().Be(outsider);
     }
 
     [Fact]

@@ -11,6 +11,12 @@ import {
   removeRecordedSubstitution,
 } from '../api';
 import { queryKeys } from '../queryKeys';
+import {
+  CheckIcon,
+  PlusIcon,
+  TrashIcon,
+} from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { EmptyState, MutationError, PendingLabel } from '../ui';
 import type {
   DeclaredParticipation,
@@ -243,7 +249,10 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
                         {removeMutation.isPending ? (
                           <PendingLabel>{t('subs.removing')}</PendingLabel>
                         ) : (
-                          t('subs.confirmRemove')
+                          <>
+                            <TrashIcon size="sm" />
+                            {t('subs.confirmRemove')}
+                          </>
                         )}
                       </button>
                       <button
@@ -252,6 +261,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
                         disabled={removeMutation.isPending}
                         onClick={() => setPendingRemoveId(null)}
                       >
+                        <CloseIcon size="sm" />
                         {tc('cancel')}
                       </button>
                     </div>
@@ -434,7 +444,14 @@ function SubstitutionForm({
             pending || outMemberId.length === 0 || inMemberId.length === 0
           }
         >
-          {pending ? <PendingLabel>{pendingLabel}</PendingLabel> : submitLabel}
+          {pending ? (
+            <PendingLabel>{pendingLabel}</PendingLabel>
+          ) : (
+            <>
+              {onCancel ? <CheckIcon size="sm" /> : <PlusIcon size="sm" />}
+              {submitLabel}
+            </>
+          )}
         </button>
         {onCancel && (
           <button
@@ -443,6 +460,7 @@ function SubstitutionForm({
             disabled={pending}
             onClick={onCancel}
           >
+            <CloseIcon size="sm" />
             {tc('cancel')}
           </button>
         )}

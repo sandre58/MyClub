@@ -29,6 +29,7 @@ import { SwitchPanel } from '../design-system/components/SwitchPanel';
 import { notify } from '../design-system/toastStore';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import {
+  CheckIcon,
   CrossIcon,
   EqualIcon,
   PlusIcon,
@@ -36,6 +37,7 @@ import {
 } from '../design-system/icons/contentIcons';
 import {
   ClassementsNavIcon,
+  CloseIcon,
   MatchesNavIcon,
 } from '../design-system/icons/shellIcons';
 import { MutationError, PendingLabel } from '../ui';
@@ -295,6 +297,7 @@ export function MatchRulesDialog({
               disabled={mutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -306,7 +309,10 @@ export function MatchRulesDialog({
               {mutation.isPending ? (
                 <PendingLabel>{t('regulation.saving')}</PendingLabel>
               ) : (
-                tReg('editor.save')
+                <>
+                  <CheckIcon size="sm" />
+                  {tReg('editor.save')}
+                </>
               )}
             </button>
           </>
@@ -649,6 +655,7 @@ export function StandingRulesDialog({
               disabled={mutation.isPending || discardOpen}
               onClick={requestClose}
             >
+              <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
             <button
@@ -660,7 +667,10 @@ export function StandingRulesDialog({
               {mutation.isPending ? (
                 <PendingLabel>{t('regulation.saving')}</PendingLabel>
               ) : (
-                tReg('editor.save')
+                <>
+                  <CheckIcon size="sm" />
+                  {tReg('editor.save')}
+                </>
               )}
             </button>
           </>
