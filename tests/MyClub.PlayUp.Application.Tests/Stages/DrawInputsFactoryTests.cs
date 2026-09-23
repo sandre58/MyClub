@@ -30,7 +30,7 @@ public sealed class DrawInputsFactoryTests
             StructureIntent.Cup(2),
             _clock).Stage;
 
-        var act = () => DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Pairing);
+        var act = () => DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.DrawGenerationFailure);

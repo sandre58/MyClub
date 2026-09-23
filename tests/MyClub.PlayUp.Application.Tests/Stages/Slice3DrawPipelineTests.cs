@@ -60,47 +60,6 @@ public sealed class Slice3DrawPipelineTests
     }
 
     [Fact]
-    public void Cup_pairing_pipeline_creates_matches_via_apply()
-    {
-        var competition = CreateCompetition.Execute("Cup", _clock);
-        for (var i = 0; i < 4; i++)
-        {
-            AddEntry.Execute(competition, $"C{i}", _clock);
-        }
-
-        var configured = ConfigureStructure.Execute(
-            competition,
-            null,
-            StructureIntent.Cup(4),
-            _clock);
-        var stage = configured.Stage;
-
-        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
-        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
-
-        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
-        ConfigureDrawInputs.Execute(
-            stage,
-            draw.Id,
-            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Pairing));
-        GenerateDrawResolution.Execute(stage, draw.Id, _clock).IsResolved.Should().BeTrue();
-        PublishDraw.Execute(stage, draw.Id, _clock);
-
-        while (stage.Rounds[0].Fixtures.Count < 2)
-        {
-            stage.AddFixture(stage.Rounds[0].Id, _clock);
-        }
-
-        var fixtures = stage.Rounds[0].Fixtures.Select(fixture => fixture.Id).ToArray();
-        var apply = ApplyDraw.Execute(
-            stage,
-            draw.Id,
-            _clock,
-            new PairingApplicationContext(fixtures));
-        apply.CreatedMatches.Should().HaveCount(2);
-    }
-
-    [Fact]
     public void Cup_slot_pipeline_occupies_places_via_apply()
     {
         var competition = CreateCompetition.Execute("CupSlot", _clock);
@@ -150,15 +109,23 @@ public sealed class Slice3DrawPipelineTests
         var stage = configured.Stage;
         stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
-        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
         ConfigureDrawInputs.Execute(
             stage,
             draw.Id,
-            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Pairing));
-        GenerateDrawResolution.Execute(stage, draw.Id, _clock);
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            slotTargets: [.. stage.Slots.Select(slot => slot.SlotKey)]);
         PublishDraw.Execute(stage, draw.Id, _clock);
 
-        var act = () => GenerateDrawResolution.Execute(stage, draw.Id, _clock);
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            slotTargets: [.. stage.Slots.Select(slot => slot.SlotKey)]);
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.DrawGenerationFailure);
     }

@@ -1286,7 +1286,7 @@ function structureCaseLabels(
     return { primary: occupant, secondary: null };
   }
 
-  // Draw: Published Slot WhoFeeds *or* published Pairing draw on pairing sides.
+  // Draw: Published Slot WhoFeeds on Cup places.
   // Provenance after materialization — occupant primary; tip = "Placé par tirage".
   if (feed.kind === 'Draw') {
     if (occupant) {

@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Development.Templates;
 /// </summary>
 /// <remarks>
 /// Progression Sorties = Winner → Population intents; each downstream Place fill = Slot Draw
-/// (plus R32 pairing draw). Affectation authoring only on R32; R16+ membership via Apply + Draw.
+/// (plus R32 Slot draw). Affectation authoring only on R32; R16+ membership via Apply + Draw.
 /// PlacementAwards ranks 1–2; Completed + Outcome.
 /// Mid-bracket from-slots demo = <c>cup-qf-sf</c>. <c>:progress</c> ignored.
 /// </remarks>

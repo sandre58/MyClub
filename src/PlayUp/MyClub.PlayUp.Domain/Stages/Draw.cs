@@ -200,15 +200,6 @@ public sealed class Draw : Entity<DrawId>
                 }
 
                 break;
-            case DrawResolutionKind.Pairing:
-                if (resolution.PairingResults.Any(result => !pool.Contains(result.EntryA) || !pool.Contains(result.EntryB)))
-                {
-                    throw new DomainException(
-                        "Pairing resolution references an entry outside the draw pool.",
-                        StageErrorCodes.DrawResolutionInvalid);
-                }
-
-                break;
             default:
                 throw new InvalidOperationException();
         }
@@ -243,23 +234,8 @@ public sealed class Draw : Entity<DrawId>
                 }
 
                 break;
-            case DrawResolutionKind.Pairing:
-                if (inputs.FixedPairings.Any(fixedPairing => !resolution.PairingResults.Any(r => sameUnorderedPair(r, fixedPairing))))
-                {
-                    throw new DomainException(
-                        "Pairing resolution must include all configured fixed pairings.",
-                        StageErrorCodes.DrawFixedPlacementViolation);
-                }
-
-                break;
             default:
                 throw new InvalidOperationException();
         }
-
-        return;
-
-        static bool sameUnorderedPair(PairingDrawResult left, PairingDrawResult right) =>
-            (left.EntryA.Equals(right.EntryA) && left.EntryB.Equals(right.EntryB))
-            || (left.EntryA.Equals(right.EntryB) && left.EntryB.Equals(right.EntryA));
     }
 }

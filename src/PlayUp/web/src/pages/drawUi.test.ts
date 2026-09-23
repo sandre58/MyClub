@@ -19,7 +19,6 @@ function draw(partial: Partial<StageDraw> & Pick<StageDraw, 'id'>): StageDraw {
     kind: 'Slot',
     status: 'Draft',
     resolutionState: 'NotResolved',
-    pairings: [],
     slotPlacements: [],
     ...partial,
   };
@@ -323,10 +322,10 @@ describe('resolveDrawDetailGuidance', () => {
 });
 
 describe('resolveDrawCreateGate', () => {
-  it('blocks empty pool and odd pairing pools', () => {
+  it('blocks empty Slot pools', () => {
     expect(
       resolveDrawCreateGate({
-        kind: 'Pairing',
+        kind: 'Slot',
         hasActiveDraw: false,
         compositionEntryCount: 0,
         isRootComposition: true,
@@ -337,7 +336,7 @@ describe('resolveDrawCreateGate', () => {
 
     expect(
       resolveDrawCreateGate({
-        kind: 'Pairing',
+        kind: 'Slot',
         hasActiveDraw: false,
         compositionEntryCount: 0,
         isRootComposition: false,
@@ -348,17 +347,7 @@ describe('resolveDrawCreateGate', () => {
 
     expect(
       resolveDrawCreateGate({
-        kind: 'Pairing',
-        hasActiveDraw: false,
-        compositionEntryCount: 3,
-        numberOfPots: null,
-        groupCount: 0,
-      }),
-    ).toEqual({ ok: false, reason: 'oddPool' });
-
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Pairing',
+        kind: 'Slot',
         hasActiveDraw: false,
         compositionEntryCount: 4,
         numberOfPots: null,
@@ -402,7 +391,7 @@ describe('resolveDrawCreateGate', () => {
   it('blocks when an active draw already exists', () => {
     expect(
       resolveDrawCreateGate({
-        kind: 'Pairing',
+        kind: 'Slot',
         hasActiveDraw: true,
         compositionEntryCount: 4,
         numberOfPots: null,

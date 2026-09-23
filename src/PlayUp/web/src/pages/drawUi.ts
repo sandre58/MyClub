@@ -99,6 +99,13 @@ function slotPairParts(
 }
 
 /**
+ * Fixtures in StageOverview order: rounds then fixtures within each round.
+ */
+export function listStageFixturesInOrder(rounds: StageRound[]): StageFixture[] {
+  return rounds.flatMap((round) => round.fixtures);
+}
+
+/**
  * Slot draw product for Exécutions: dense A vs B confrontations (no Match #).
  * Prefer fixture slot pairs from StageOverview; fallback to `*-A`/`*-B` stems.
  */
@@ -186,7 +193,6 @@ export type DrawCreateBlockReason =
   | 'active'
   | 'emptyPool'
   | 'emptyPoolUpstream'
-  | 'oddPool'
   | 'missingPots'
   | 'groupShape';
 
@@ -196,10 +202,11 @@ export type DrawCreateGate =
 
 /**
  * Client gate for Create+Generate. Encoding F: pool = CompositionEntries only.
- * Pairing: even pool. Group: pots ≥ 2 and entries = pots × groupCount.
+ * Group: pots ≥ 2 and entries = pots × groupCount.
+ * Slot: pool non-empty; destinations = stage slots (Host).
  */
 export function resolveDrawCreateGate(input: {
-  kind: 'Group' | 'Pairing' | 'Slot' | null;
+  kind: 'Group' | 'Slot' | null;
   hasActiveDraw: boolean;
   compositionEntryCount: number;
   /** False / undefined when the phase is fed by Qual/Prog (teams arrive from upstream). */
@@ -223,12 +230,6 @@ export function resolveDrawCreateGate(input: {
     };
   }
 
-  if (input.kind === 'Pairing') {
-    return pool % 2 === 0
-      ? { ok: true }
-      : { ok: false, reason: 'oddPool' };
-  }
-
   if (input.kind === 'Group') {
     const pots = input.numberOfPots ?? null;
     const groups = input.groupCount ?? 0;
@@ -241,7 +242,7 @@ export function resolveDrawCreateGate(input: {
     return { ok: true };
   }
 
-  // Slot (Cup Nouveau): Encoding F — pool non-empty; destinations = stage slots (Host).
+  // Slot (Cup): Encoding F — pool non-empty; destinations = stage slots (Host).
   return { ok: true };
 }
 
@@ -468,7 +469,7 @@ export function resolveTopologyDrawExecutionBadge(
  * Pure projection: server enums → message key + flags for conditional rendering.
  * Not a Domain state machine — only helps the component avoid nested if spaghetti.
  *
- * Prefer server `draw.isApplied` (DrawAppliedState) when present; else Slot/Pairing heuristics.
+ * Prefer server `draw.isApplied` (DrawAppliedState) when present; else Slot/Group heuristics.
  * Applied is only meaningful for Published draws (Cancel does not clear stage occupancy).
  */
 export function getDrawUiProjection(
@@ -480,8 +481,7 @@ export function getDrawUiProjection(
     draw.resolutionState === 'Resolved' &&
     (typeof draw.isApplied === 'boolean'
       ? draw.isApplied
-      : (draw.kind === 'Slot' && isSlotDrawApplied(draw, slots)) ||
-        (draw.kind === 'Pairing' && isPairingDrawApplied(draw, rounds)));
+      : draw.kind === 'Slot' && isSlotDrawApplied(draw, slots));
   const isApplied = draw.status === 'Published' && occupancyApplied;
   const masterChip = resolveDrawMasterChip(draw, isApplied);
 
@@ -532,8 +532,6 @@ export function getDrawUiProjection(
       messageKey = 'publishedSlotApplied';
     } else if (isApplied && draw.kind === 'Group') {
       messageKey = 'publishedGroupApplied';
-    } else if (isApplied && draw.kind === 'Pairing') {
-      messageKey = 'publishedPairingApplied';
     }
 
     return {
@@ -581,54 +579,4 @@ export function isSlotDrawApplied(
     const slot = byKey.get(placement.slotKey);
     return slot?.entryId != null && slot.entryId === placement.entryId;
   });
-}
-
-/**
- * Fixtures in StageOverview order: rounds then fixtures within each round.
- * Host/repository reorder by SortOrder on load — this is the stable 1:1 source for Pairing Apply.
- */
-export function listStageFixturesInOrder(rounds: StageRound[]): StageFixture[] {
-  return rounds.flatMap((round) => round.fixtures);
-}
-
-/**
- * Strict automap: pairing[i] → fixture[i] only when counts match and both > 0.
- * Returns null when the UI must block Apply (ambiguous / incomplete mapping).
- */
-export function resolvePairingFixtureIds(
-  draw: StageDraw,
-  rounds: StageRound[],
-): string[] | null {
-  if (draw.kind !== 'Pairing' || draw.resolutionState !== 'Resolved') {
-    return null;
-  }
-
-  const fixtures = listStageFixturesInOrder(rounds);
-  if (
-    draw.pairings.length === 0 ||
-    fixtures.length === 0 ||
-    draw.pairings.length !== fixtures.length
-  ) {
-    return null;
-  }
-
-  return fixtures.map((fixture) => fixture.id);
-}
-
-/**
- * Lightweight Pairing “applied” heuristic from StageOverview only:
- * same count as automap + every target fixture already has at least one attachment.
- * Does not verify entry identities (would need the matches query).
- */
-export function isPairingDrawApplied(
-  draw: StageDraw,
-  rounds: StageRound[],
-): boolean {
-  const fixtureIds = resolvePairingFixtureIds(draw, rounds);
-  if (fixtureIds === null) {
-    return false;
-  }
-
-  const fixtures = listStageFixturesInOrder(rounds);
-  return fixtures.every((fixture) => fixture.attachments.length > 0);
 }

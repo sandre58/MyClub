@@ -7,6 +7,7 @@
 using FluentAssertions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Standings;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
@@ -78,30 +79,35 @@ public sealed class PipelineCompositionTests
     }
 
     [Fact]
-    public void Pairing_Draw_Match_Outcome_then_Progression_keeps_boundaries()
+    public void Slot_Draw_Materialize_Match_Outcome_then_Progression_keeps_boundaries()
     {
-        var competitionId = CompetitionId.New();
-        var stage = CreateKnockout(competitionId, "KO", ["SF1-A", "Consolante"]);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var stage = CreateKnockout(competition.Id, "KO", ["KO-A", "KO-B", "SF1-A", "Consolante"]);
         var home = EntryId.New();
         var away = EntryId.New();
 
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home, away]));
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([home, away]));
         stage.RecordDrawResolution(
             draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(home, away)]),
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(home, "KO-A"),
+                new SlotDrawPlacement(away, "KO-B"),
+            ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        var created = ApplyDraw.Execute(
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
             stage,
-            draw.Id,
-            _clock,
-            new PairingApplicationContext(fixture.Id),
-            []);
-        created.CreatedMatches.Should().ContainSingle();
-        var match = created.CreatedMatches[0];
+            [new CupSlotPair("KO-A", "KO-B")],
+            [],
+            _clock);
+        materialized.CreatedMatches.Should().ContainSingle();
+        var match = materialized.CreatedMatches[0];
+        var fixture = stage.Rounds[0].Fixtures.Should().ContainSingle().Subject;
         Finish(match, homeGoals: 3, awayGoals: 1);
 
         stage.ReplaceProgressionRules(
@@ -249,24 +255,37 @@ public sealed class PipelineCompositionTests
     [Fact]
     public void Two_phase_Draw_then_Progression_then_Draw_composes()
     {
-        var competitionId = CompetitionId.New();
-        var qf = CreateKnockout(competitionId, "QF", ["X"]);
-        var bridge = CreateKnockout(competitionId, "Bridge", ["W1", "W2"]);
-        var sf = CreateKnockout(competitionId, "SF", ["SF1-A", "SF1-B"]);
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var qf = CreateKnockout(competition.Id, "QF", ["QF1-A", "QF1-B", "QF2-A", "QF2-B"]);
+        var bridge = CreateKnockout(competition.Id, "Bridge", ["W1", "W2"]);
+        var sf = CreateKnockout(competition.Id, "SF", ["SF1-A", "SF1-B"]);
 
         var a = EntryId.New();
         var b = EntryId.New();
         var c = EntryId.New();
         var d = EntryId.New();
-        var fxQf1 = qf.AddFixture(qf.Rounds[0].Id, _clock);
-        var fxQf2 = qf.AddFixture(qf.Rounds[0].Id, _clock);
 
-        var drawQf1 = PublishPairing(qf, [a, b], new PairingDrawResult(a, b));
-        var drawQf2 = PublishPairing(qf, [c, d], new PairingDrawResult(c, d));
-        var created1 = ApplyDraw.Execute(qf, drawQf1.Id, _clock, new PairingApplicationContext(fxQf1.Id), []);
-        var created2 = ApplyDraw.Execute(qf, drawQf2.Id, _clock, new PairingApplicationContext(fxQf2.Id), []);
-        var m1 = created1.CreatedMatches[0];
-        var m2 = created2.CreatedMatches[0];
+        var drawQf = PublishSlotDraw(
+            qf,
+            [a, b, c, d],
+            [
+                new SlotDrawPlacement(a, "QF1-A"),
+                new SlotDrawPlacement(b, "QF1-B"),
+                new SlotDrawPlacement(c, "QF2-A"),
+                new SlotDrawPlacement(d, "QF2-B"),
+            ]);
+        ApplyDraw.Execute(qf, drawQf.Id, _clock);
+
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            qf,
+            [new CupSlotPair("QF1-A", "QF1-B"), new CupSlotPair("QF2-A", "QF2-B")],
+            [],
+            _clock);
+        var m1 = materialized.CreatedMatches[0];
+        var m2 = materialized.CreatedMatches[1];
+        var fxQf1 = qf.Rounds[0].Fixtures[0];
+        var fxQf2 = qf.Rounds[0].Fixtures[1];
         Finish(m1, 2, 0);
         Finish(m2, 0, 1);
 
@@ -300,21 +319,21 @@ public sealed class PipelineCompositionTests
 
         sf.FindSlot("SF1-A")!.EntryId.Should().Be(pool[0]);
         sf.FindSlot("SF1-B")!.EntryId.Should().Be(pool[1]);
-        drawQf1.Id.Should().NotBe(drawSf.Id);
-        drawQf1.Status.Should().Be(DrawStatus.Published);
+        drawQf.Id.Should().NotBe(drawSf.Id);
+        drawQf.Status.Should().Be(DrawStatus.Published);
         drawSf.Status.Should().Be(DrawStatus.Published);
-        drawQf1.Resolution.PairingResults.Should().ContainSingle();
+        drawQf.Resolution.SlotResults.Should().HaveCount(4);
         drawSf.Resolution.SlotResults.Should().HaveCount(2);
     }
 
-    private Draw PublishPairing(Stage stage, EntryId[] pool, PairingDrawResult pairing)
+    private Draw PublishSlotDraw(
+        Stage stage,
+        EntryId[] pool,
+        IReadOnlyList<SlotDrawPlacement> placements)
     {
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(pool));
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedPairings([pairing]),
-            _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool));
+        stage.RecordDrawResolution(draw.Id, DrawResolution.ResolvedSlots(placements), _clock);
         stage.PublishDraw(draw.Id, _clock);
         return draw;
     }

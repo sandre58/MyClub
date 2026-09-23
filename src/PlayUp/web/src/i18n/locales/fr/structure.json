@@ -486,7 +486,6 @@
     "teamsCount_one": "{{count}} équipe",
     "teamsCount_other": "{{count}} équipes",
     "statsAria": "Faits de la phase",
-    "cupPlacesTableau": "Tableau de Places · {{count}} positions",
     "openDrawWorkflow": "Ouvrir le tirage",
     "performDraw": "Lancer le tirage",
     "configureDraw": "Configurer le tirage",
@@ -514,7 +513,6 @@
         "active": "Annulez d’abord l’exécution active pour en lancer une nouvelle.",
         "emptyPool": "Ajoutez des équipes à cette phase avant de lancer le tirage.",
         "emptyPoolUpstream": "Les confrontations qui déterminent les équipes de cette phase ne sont pas encore terminées. Le tirage ne peut pas encore être effectué.",
-        "oddPool": "Le tirage Coupe nécessite un nombre pair d’équipes.",
         "missingPots": "Configurez les pots du tirage (Paramètres) avant de générer.",
         "groupShape": "Le nombre d’équipes doit égaler pots × groupes."
       },

@@ -117,7 +117,7 @@ public sealed class CompletionAnalyzerTests
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.MarkDrawNoSolution(draw.Id, _clock);
 
         var analysis = CompletionAnalyzer.Analyze(

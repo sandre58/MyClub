@@ -37,8 +37,7 @@
   },
   "drawResolutionKind": {
     "Slot": "Emplacement",
-    "Group": "Groupe",
-    "Pairing": "Appariement"
+    "Group": "Groupe"
   },
   "structureFormatKind": {
     "Championship": "Championnat",

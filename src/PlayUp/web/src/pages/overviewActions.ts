@@ -14,7 +14,7 @@ import {
   startMatch,
   startStage,
 } from '../api';
-import type { OverviewAction, OverviewDrawFocus, OverviewView } from '../types';
+import type { OverviewAction, OverviewView } from '../types';
 
 /**
  * Outcome of a Overview action click.
@@ -65,7 +65,6 @@ export function resolveOverviewActionIntent(
           ? { kind: 'navigate', to: `/stages/${stageId}` }
           : { kind: 'unsupported' };
       }
-      // Host EnsurePairingFixtures covers Pairing when fixtureIds are empty.
       return {
         kind: 'execute',
         run: () => publishAndApplyDraw(stageId, drawId, { fixtureIds: [] }),
@@ -77,11 +76,6 @@ export function resolveOverviewActionIntent(
         return stageId
           ? { kind: 'navigate', to: `/stages/${stageId}` }
           : { kind: 'unsupported' };
-      }
-      const draw = findDraw(view, stageId, drawId);
-      // Pairing Apply needs ordered fixture ids — Stage page owns that mapping.
-      if (draw?.kind === 'Pairing') {
-        return { kind: 'navigate', to: `/stages/${stageId}` };
       }
       return {
         kind: 'execute',
@@ -193,16 +187,6 @@ export function resolveOverviewActionIntent(
     default:
       return { kind: 'unsupported' };
   }
-}
-
-function findDraw(
-  view: OverviewView,
-  stageId: string,
-  drawId: string,
-): OverviewDrawFocus | undefined {
-  return view.operationalFocus.draws.find(
-    (draw) => draw.stageId === stageId && draw.drawId === drawId,
-  );
 }
 
 /** Stable React key for an action row (code + optional ids). */

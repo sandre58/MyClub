@@ -71,7 +71,7 @@ public sealed record SchematicGroupFeedDto(
 /// One form unit and its optional feed / placement / resolution.
 /// </summary>
 /// <param name="FormPosition">Where the case exists in the form.</param>
-/// <param name="FeedOrigin">Unique WhoFeeds (Cup slot / Groups) or published Pairing-draw provenance on pairing sides.</param>
+/// <param name="FeedOrigin">Unique WhoFeeds (Cup slot / Groups) when known.</param>
 /// <param name="Entry">Entry actually placed in this unit; null = empty.</param>
 /// <param name="Assignment">Resolved participant of that entry when known.</param>
 public sealed record SchematicCaseDto(
@@ -88,7 +88,7 @@ public sealed record SchematicCaseDto(
 /// <param name="GroupId">Group identity when Kind is GroupPlace.</param>
 /// <param name="GroupName">Group display name when Kind is GroupPlace.</param>
 /// <param name="Index">1-based place index (GroupPlace or RosterPlace).</param>
-/// <param name="FixtureId">Backing fixture when the unit is a pairing-draw bracket side (no slot binding).</param>
+/// <param name="FixtureId">Backing fixture when the unit is bound to a cup confrontation.</param>
 /// <param name="Side">Bracket side (<c>A</c> | <c>B</c>) when known for Cup address.</param>
 /// <param name="RoundOrder">0-based Cup round order when the unit belongs to a fixture in that round.</param>
 /// <param name="RoundName">Domain round display name (organizer-authored; not localized by Host).</param>
@@ -172,7 +172,7 @@ public sealed record SchematicParticipantRefDto(
 
 /// <summary>
 /// Cup bracket connection backed by a real fixture.
-/// Slot keys are null for pairing-draw fixtures (sides carried by <see cref="SchematicFormPositionDto.FixtureId"/>).
+/// Slot keys are null for unbound fixtures (no SlotA/B keys yet).
 /// </summary>
 /// <param name="FixtureId">Fixture identity.</param>
 /// <param name="RoundOrder">0-based round index in the stage.</param>

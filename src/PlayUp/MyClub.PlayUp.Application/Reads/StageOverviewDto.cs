@@ -76,7 +76,6 @@ public sealed record StageSlotDto(
 /// <param name="Kind">Resolution kind.</param>
 /// <param name="Status">Lifecycle status.</param>
 /// <param name="ResolutionState">Resolution state.</param>
-/// <param name="Pairings">Pairing results when resolved as Pairing; otherwise empty.</param>
 /// <param name="SlotPlacements">Slot placements when resolved as Slot; otherwise empty.</param>
 /// <param name="GroupPlacements">Group placements when resolved as Group; otherwise empty.</param>
 /// <param name="IsApplied">Derived occupancy (Publish ≠ Apply) via <c>DrawAppliedState</c>.</param>
@@ -85,35 +84,9 @@ public sealed record StageDrawDto(
     DrawResolutionKind Kind,
     DrawStatus Status,
     DrawResolutionState ResolutionState,
-    IReadOnlyList<StageDrawPairingDto> Pairings,
     IReadOnlyList<StageDrawSlotPlacementDto> SlotPlacements,
     IReadOnlyList<StageDrawGroupPlacementDto> GroupPlacements,
     bool IsApplied);
-
-/// <summary>
-/// Pairing result summary.
-/// </summary>
-/// <param name="EntryAId">First pairing entry.</param>
-/// <param name="EntryADisplayName">Display name of entry A when known.</param>
-/// <param name="EntryAShortName">Short name of entry A when known.</param>
-/// <param name="EntryBId">Second pairing entry.</param>
-/// <param name="EntryBDisplayName">Display name of entry B when known.</param>
-/// <param name="EntryBShortName">Short name of entry B when known.</param>
-/// <param name="EntryALogoMediaId">Optional Media Guid for entry A logo.</param>
-/// <param name="EntryAPrimaryColor">Optional primary kit color for entry A.</param>
-/// <param name="EntryBLogoMediaId">Optional Media Guid for entry B logo.</param>
-/// <param name="EntryBPrimaryColor">Optional primary kit color for entry B.</param>
-public sealed record StageDrawPairingDto(
-    Guid EntryAId,
-    string? EntryADisplayName,
-    string? EntryAShortName,
-    Guid EntryBId,
-    string? EntryBDisplayName,
-    string? EntryBShortName,
-    Guid? EntryALogoMediaId = null,
-    string? EntryAPrimaryColor = null,
-    Guid? EntryBLogoMediaId = null,
-    string? EntryBPrimaryColor = null);
 
 /// <summary>
 /// Slot placement result summary.

@@ -86,7 +86,6 @@ function groupDraw(overrides: Partial<StageDraw> = {}): StageDraw {
     kind: 'Group',
     status: 'Draft',
     resolutionState: 'Resolved',
-    pairings: [],
     slotPlacements: [],
     groupPlacements: [],
     ...overrides,
@@ -99,7 +98,6 @@ function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
     kind: 'Slot',
     status: 'Draft',
     resolutionState: 'Resolved',
-    pairings: [],
     slotPlacements: [
       {
         slotKey: 'R16-1-A',
@@ -273,86 +271,6 @@ describe('StructureDrawDialog', () => {
       stageId,
       'Pairing',
     );
-  });
-
-  it('keeps historical Pairing executions readable', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([
-        {
-          id: 'draw-pair-1',
-          kind: 'Pairing',
-          status: 'Published',
-          resolutionState: 'Resolved',
-          pairings: [
-            {
-              entryAId: 'e1',
-              entryADisplayName: 'Alpha',
-              entryBId: 'e2',
-              entryBDisplayName: 'Beta',
-            },
-          ],
-          slotPlacements: [],
-          isApplied: true,
-        },
-      ]),
-    );
-
-    renderDialog(cupStage({ compositionEntryCount: 2, slotCount: 2 }));
-
-    expect(
-      await screen.findByRole('heading', { name: 'Tirage Appariement' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Alpha')).toBeInTheDocument();
-    expect(screen.getByText('Beta')).toBeInTheDocument();
-    expect(screen.getByText('vs')).toBeInTheDocument();
-  });
-
-  it('applies a historical published Pairing that is not yet applied', async () => {
-    const user = userEvent.setup();
-    vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([
-        {
-          id: 'draw-pair-hist',
-          kind: 'Pairing',
-          status: 'Published',
-          resolutionState: 'Resolved',
-          pairings: [
-            {
-              entryAId: 'e1',
-              entryADisplayName: 'Alpha',
-              entryBId: 'e2',
-              entryBDisplayName: 'Beta',
-            },
-          ],
-          slotPlacements: [],
-          isApplied: false,
-        },
-      ]),
-    );
-    vi.mocked(applyDraw).mockResolvedValue(undefined);
-
-    renderDialog(
-      cupStage({
-        compositionEntryCount: 2,
-        slotCount: 2,
-      }),
-    );
-
-    expect(
-      await screen.findByRole('heading', { name: 'Tirage Appariement' }),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Appliquer' }));
-
-    const dialog = await screen.findByRole('dialog', {
-      name: /Appliquer/,
-    });
-    await user.click(within(dialog).getByRole('button', { name: 'Appliquer' }));
-
-    await waitFor(() => {
-      expect(applyDraw).toHaveBeenCalledWith(stageId, 'draw-pair-hist', {
-        fixtureIds: [],
-      });
-    });
   });
 
   it('selects the new draw after Nouveau when history had a cancelled execution', async () => {

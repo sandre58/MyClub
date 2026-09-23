@@ -11,13 +11,8 @@ import {
   publishAndApplyDraw,
   startStage,
 } from '../api';
-import type { StageDraw, StageOverview, StageRound, StageSlot } from '../types';
-import {
-  getDrawUiProjection,
-  isPairingDrawApplied,
-  isSlotDrawApplied,
-  resolvePairingFixtureIds,
-} from './drawUi';
+import type { StageDraw, StageOverview, StageSlot } from '../types';
+import { getDrawUiProjection, isSlotDrawApplied } from './drawUi';
 import { StagePage } from './StagePage';
 
 vi.mock('../api', async (importOriginal) => {
@@ -36,7 +31,6 @@ vi.mock('../api', async (importOriginal) => {
 
 const stageId = '22222222-2222-2222-2222-222222222222';
 const competitionId = '33333333-3333-3333-3333-333333333333';
-const drawId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 const slotDrawId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 const entryA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -55,32 +49,12 @@ function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
   };
 }
 
-function pairingDraw(overrides: Partial<StageDraw> = {}): StageDraw {
-  return {
-    id: drawId,
-    kind: 'Pairing',
-    status: 'Draft',
-    resolutionState: 'Resolved',
-    pairings: [
-      {
-        entryAId: entryA,
-        entryADisplayName: 'Alpha',
-        entryBId: entryB,
-        entryBDisplayName: 'Beta',
-      },
-    ],
-    slotPlacements: [],
-    ...overrides,
-  };
-}
-
 function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
   return {
     id: slotDrawId,
     kind: 'Slot',
     status: 'Published',
     resolutionState: 'Resolved',
-    pairings: [],
     slotPlacements: [
       {
         slotKey: 'SF1-A',
@@ -99,23 +73,6 @@ async function confirmApplyInDialog(user: ReturnType<typeof userEvent.setup>) {
   await user.click(
     within(dialog).getByRole('button', { name: 'Appliquer' }),
   );
-}
-
-function oneEmptyFixtureRound(): StageRound[] {
-  return [
-    {
-      id: 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr',
-      name: 'R1',
-      fixtures: [
-        {
-          id: fixtureId,
-          slotAKey: null,
-          slotBKey: null,
-          attachments: [],
-        },
-      ],
-    },
-  ];
 }
 
 function renderStagePage() {
@@ -176,53 +133,14 @@ describe('isSlotDrawApplied', () => {
   });
 });
 
-describe('resolvePairingFixtureIds', () => {
-  it('maps pairing[i] to fixture[i] when counts match', () => {
-    expect(
-      resolvePairingFixtureIds(pairingDraw(), oneEmptyFixtureRound()),
-    ).toEqual([fixtureId]);
-  });
-
-  it('returns null when counts differ', () => {
-    expect(resolvePairingFixtureIds(pairingDraw(), [])).toBeNull();
-  });
-});
-
-describe('isPairingDrawApplied', () => {
-  it('is true when each mapped fixture already has an attachment', () => {
-    const rounds: StageRound[] = [
-      {
-        id: 'r1',
-        name: 'R1',
-        fixtures: [
-          {
-            id: fixtureId,
-            slotAKey: null,
-            slotBKey: null,
-            attachments: [{ matchId: 'm1', legIndex: 1 }],
-          },
-        ],
-      },
-    ];
-    expect(
-      isPairingDrawApplied(pairingDraw({ status: 'Published' }), rounds),
-    ).toBe(true);
-  });
-
-  it('is false when a target fixture has no attachment', () => {
-    expect(
-      isPairingDrawApplied(
-        pairingDraw({ status: 'Published' }),
-        oneEmptyFixtureRound(),
-      ),
-    ).toBe(false);
-  });
-});
-
 describe('getDrawUiProjection', () => {
   it('describes draft + not resolved without results', () => {
     const ui = getDrawUiProjection(
-      pairingDraw({ resolutionState: 'NotResolved', pairings: [] }),
+      slotDraw({
+        status: 'Draft',
+        resolutionState: 'NotResolved',
+        slotPlacements: [],
+      }),
       [],
     );
     expect(ui.messageKey).toBe('draftNotResolved');
@@ -230,7 +148,7 @@ describe('getDrawUiProjection', () => {
   });
 
   it('describes draft + resolved as not published', () => {
-    const ui = getDrawUiProjection(pairingDraw(), []);
+    const ui = getDrawUiProjection(slotDraw({ status: 'Draft' }), []);
     expect(ui.messageKey).toBe('draftResolved');
     expect(ui.showResults).toBe(true);
   });
@@ -536,9 +454,9 @@ describe('StagePage draws', () => {
     vi.mocked(applyDraw).mockResolvedValue(undefined);
   });
 
-  it('shows pairing result for draft + resolved without Apply', async () => {
+  it('shows Slot result for draft + resolved without Apply', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({ draws: [pairingDraw()] }),
+      baseOverview({ draws: [slotDraw({ status: 'Draft' })] }),
     );
 
     renderStagePage();
@@ -549,12 +467,12 @@ describe('StagePage draws', () => {
       ).toBeInTheDocument();
     });
     expect(
-      screen.getByRole('heading', { name: /Tirage Appariement/i }),
+      screen.getByRole('heading', { name: /Tirage Emplacement/i }),
     ).toBeInTheDocument();
     expect(screen.getByText('Résolu')).toBeInTheDocument();
-    expect(screen.getByText('Alpha')).toBeInTheDocument();
-    expect(screen.getByText('Beta')).toBeInTheDocument();
-    expect(screen.getByText('vs')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Placements' })).toBeInTheDocument();
+    expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getByRole('button', { name: 'Publier et appliquer' }),
     ).toBeInTheDocument();
@@ -567,9 +485,10 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [
-          pairingDraw({
+          slotDraw({
+            status: 'Draft',
             resolutionState: 'NotResolved',
-            pairings: [],
+            slotPlacements: [],
           }),
         ],
       }),
@@ -582,7 +501,7 @@ describe('StagePage draws', () => {
         screen.getByText('Tirage en préparation — pas encore de résultat.'),
       ).toBeInTheDocument();
     });
-    expect(screen.queryByText('Résultat')).not.toBeInTheDocument();
+    expect(screen.queryByText('Placements')).not.toBeInTheDocument();
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Publier et appliquer/i }),
@@ -596,9 +515,10 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [
-          pairingDraw({
+          slotDraw({
+            status: 'Draft',
             resolutionState: 'NoSolution',
-            pairings: [],
+            slotPlacements: [],
           }),
         ],
       }),
@@ -624,7 +544,7 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [
-          pairingDraw({
+          slotDraw({
             status: 'Cancelled',
             resolutionState: 'Resolved',
           }),
@@ -640,7 +560,7 @@ describe('StagePage draws', () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText('Annulé')).toBeInTheDocument();
-    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
     expect(
       screen.queryByRole('button', { name: /Publier et appliquer/i }),
     ).not.toBeInTheDocument();
@@ -652,8 +572,15 @@ describe('StagePage draws', () => {
   it('shows Published with Apply when not yet applied', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
-        draws: [pairingDraw({ status: 'Published' })],
-        rounds: oneEmptyFixtureRound(),
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
+        draws: [slotDraw()],
       }),
     );
 
@@ -738,8 +665,17 @@ describe('StagePage draws', () => {
 
     vi.mocked(fetchStageOverview).mockImplementation(async () =>
       baseOverview({
-        draws: [pairingDraw({ status: published ? 'Published' : 'Draft' })],
-        rounds: oneEmptyFixtureRound(),
+        slots: [
+          {
+            slotKey: 'SF1-A',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
+        draws: [
+          slotDraw({ status: published ? 'Published' : 'Draft' }),
+        ],
       }),
     );
     vi.mocked(publishAndApplyDraw).mockImplementation(async () => {
@@ -753,7 +689,9 @@ describe('StagePage draws', () => {
     await user.click(publishButton);
 
     await waitFor(() => {
-      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, drawId, { fixtureIds: [] });
+      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, slotDrawId, {
+        fixtureIds: [],
+      });
       expect(screen.getByText('Publié')).toBeInTheDocument();
       expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
     });
@@ -763,7 +701,7 @@ describe('StagePage draws', () => {
     const user = userEvent.setup();
     let resolvePublish!: () => void;
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({ draws: [pairingDraw()] }),
+      baseOverview({ draws: [slotDraw({ status: 'Draft' })] }),
     );
     vi.mocked(publishAndApplyDraw).mockImplementation(
       () =>
@@ -791,7 +729,7 @@ describe('StagePage draws', () => {
   it('shows Publish error message', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({ draws: [pairingDraw()] }),
+      baseOverview({ draws: [slotDraw({ status: 'Draft' })] }),
     );
     vi.mocked(publishAndApplyDraw).mockRejectedValue(new Error('Publish blocked'));
 
@@ -938,63 +876,6 @@ describe('StagePage draws', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Annuler' }));
 
     expect(applyDraw).not.toHaveBeenCalled();
-  });
-
-  it('Apply Pairing posts empty fixtureIds after confirmation', async () => {
-    const user = userEvent.setup();
-
-    vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({
-        draws: [pairingDraw({ status: 'Published' })],
-        rounds: oneEmptyFixtureRound(),
-      }),
-    );
-
-    renderStagePage();
-    await user.click(
-      await screen.findByRole('button', { name: 'Appliquer' }),
-    );
-    await confirmApplyInDialog(user);
-
-    await waitFor(() => {
-      expect(applyDraw).toHaveBeenCalledWith(stageId, drawId, {
-        fixtureIds: [],
-      });
-    });
-  });
-
-  it('hides Apply for published Pairing when fixtures already have attachments', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({
-        draws: [pairingDraw({ status: 'Published' })],
-        rounds: [
-          {
-            id: 'r1',
-            name: 'R1',
-            fixtures: [
-              {
-                id: fixtureId,
-                slotAKey: null,
-                slotBKey: null,
-                attachments: [{ matchId: 'm1', legIndex: 1 }],
-              },
-            ],
-          },
-        ],
-      }),
-    );
-
-    renderStagePage();
-
-    expect(
-      await screen.findByText(
-        'Résultat appliqué à la phase.',
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Appliqué')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Appliquer' }),
-    ).not.toBeInTheDocument();
   });
 
   it('Confrontations excludes slots covered by a complete fixture', async () => {

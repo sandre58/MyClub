@@ -486,7 +486,6 @@
     "teamsCount_one": "{{count}} team",
     "teamsCount_other": "{{count}} teams",
     "statsAria": "Phase facts",
-    "cupPlacesTableau": "Place bracket · {{count}} positions",
     "openDrawWorkflow": "Open draw",
     "performDraw": "Run the draw",
     "configureDraw": "Configure draw",
@@ -514,7 +513,6 @@
         "active": "Cancel the active execution before starting a new one.",
         "emptyPool": "Add teams to this phase before starting the draw.",
         "emptyPoolUpstream": "The matches that decide which teams enter this phase are not finished yet. The draw cannot run yet.",
-        "oddPool": "A Cup draw needs an even number of teams.",
         "missingPots": "Configure draw pots (Settings) before generating.",
         "groupShape": "The number of teams must equal pots × groups."
       },

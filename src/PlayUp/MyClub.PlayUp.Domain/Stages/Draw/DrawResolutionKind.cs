@@ -8,6 +8,7 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Principal result kind produced by a Draw (V1: one kind per Draw).
+/// Cup uses Slot only; Swiss pairing is a separate Domain concern.
 /// </summary>
 public enum DrawResolutionKind
 {
@@ -19,10 +20,5 @@ public enum DrawResolutionKind
     /// <summary>
     /// Entry → Group placements.
     /// </summary>
-    Group = 1,
-
-    /// <summary>
-    /// Entry ↔ Entry pairing proposals (does not create Match).
-    /// </summary>
-    Pairing = 2
+    Group = 1
 }

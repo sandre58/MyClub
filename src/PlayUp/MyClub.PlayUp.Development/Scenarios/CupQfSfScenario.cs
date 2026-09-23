@@ -23,7 +23,7 @@ public sealed class CupQfSfScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "8 teams · QF DrawRules + Pairing applied · Prog Auto Place winners → SF slots (WhoFeeds) — materialize-from-slots left for Overview/Stage UI.";
+        "8 teams · QF DrawRules + Slot draw applied · Prog Auto Place winners → SF slots (WhoFeeds) — materialize-from-slots left for Overview/Stage UI.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;

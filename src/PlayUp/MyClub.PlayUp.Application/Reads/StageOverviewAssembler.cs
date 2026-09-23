@@ -75,7 +75,6 @@ public static class StageOverviewAssembler
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
         var resolution = draw.Resolution;
-        IReadOnlyList<StageDrawPairingDto> pairings = [];
         IReadOnlyList<StageDrawSlotPlacementDto> slotPlacements = [];
         IReadOnlyList<StageDrawGroupPlacementDto> groupPlacements = [];
 
@@ -86,32 +85,10 @@ public static class StageOverviewAssembler
                 draw.Kind,
                 draw.Status,
                 resolution.State,
-                pairings,
                 slotPlacements,
                 groupPlacements,
                 IsApplied: false);
         }
-
-        pairings =
-        [
-            .. resolution.PairingResults
-                .Select(pairing =>
-                {
-                    var sideA = EntryDisplayNames.ToSide(entries, pairing.EntryA);
-                    var sideB = EntryDisplayNames.ToSide(entries, pairing.EntryB);
-                    return new StageDrawPairingDto(
-                        pairing.EntryA.Value,
-                        sideA.DisplayName,
-                        sideA.ShortName,
-                        pairing.EntryB.Value,
-                        sideB.DisplayName,
-                        sideB.ShortName,
-                        sideA.LogoMediaId,
-                        sideA.PrimaryColor,
-                        sideB.LogoMediaId,
-                        sideB.PrimaryColor);
-                })
-        ];
 
         slotPlacements =
         [
@@ -155,7 +132,6 @@ public static class StageOverviewAssembler
             draw.Kind,
             draw.Status,
             resolution.State,
-            pairings,
             slotPlacements,
             groupPlacements,
             DrawAppliedState.IsApplied(draw, stage));

@@ -591,32 +591,6 @@ function DrawCard({
       </p>
 
       {ui.showResults &&
-        draw.kind === 'Pairing' &&
-        draw.pairings.length > 0 && (
-          <div className="stack stack--tight">
-            <h4 className="draw-card__results-title">{t('result')}</h4>
-            <ul className="draw-pairing-list">
-              {draw.pairings.map((pairing) => (
-                <li
-                  key={`${pairing.entryAId}-${pairing.entryBId}`}
-                  className="draw-pairing"
-                >
-                  <span className="draw-pairing__side">
-                    {pairing.entryADisplayName?.trim() ||
-                      t('unknownEntry', { ns: 'common' })}
-                  </span>
-                  <span className="draw-pairing__vs">{t('vs')}</span>
-                  <span className="draw-pairing__side">
-                    {pairing.entryBDisplayName?.trim() ||
-                      t('unknownEntry', { ns: 'common' })}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-      {ui.showResults &&
         draw.kind === 'Slot' &&
         draw.slotPlacements.length > 0 && (
           <div className="stack stack--tight">
@@ -695,12 +669,12 @@ function DrawActions({
   const canPublishAndApply =
     draw.status === 'Draft' &&
     draw.resolutionState === 'Resolved' &&
-    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
+    (draw.kind === 'Slot' || draw.kind === 'Group');
   const canApply =
     draw.status === 'Published' &&
     draw.resolutionState === 'Resolved' &&
     !isApplied &&
-    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
+    (draw.kind === 'Slot' || draw.kind === 'Group');
 
   const publishAndApplyMutation = useMutation({
     mutationFn: () =>
@@ -709,11 +683,6 @@ function DrawActions({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
       });
-      if (draw.kind === 'Pairing') {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.matches.byStage(stageId),
-        });
-      }
     },
   });
 
@@ -724,11 +693,6 @@ function DrawActions({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
       });
-      if (draw.kind === 'Pairing') {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.matches.byStage(stageId),
-        });
-      }
     },
   });
 

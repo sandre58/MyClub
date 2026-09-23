@@ -35,14 +35,11 @@ internal static class DrawResolutionJson
 
     private sealed record GroupPlacementDocument(Guid EntryId, Guid GroupId);
 
-    private sealed record PairingDocument(Guid EntryA, Guid EntryB);
-
     private sealed record DrawResolutionDocument(
         DrawResolutionState State,
         DrawResolutionKind? ResolvedKind,
         SlotPlacementDocument[]? SlotResults,
-        GroupPlacementDocument[]? GroupResults,
-        PairingDocument[]? PairingResults)
+        GroupPlacementDocument[]? GroupResults)
     {
         internal static DrawResolutionDocument From(DrawResolution resolution)
         {
@@ -52,10 +49,7 @@ internal static class DrawResolutionJson
             GroupPlacementDocument[]? groupResults = resolution.GroupResults.Count == 0
                 ? null
                 : [.. resolution.GroupResults.Select(p => new GroupPlacementDocument(p.EntryId.Value, p.GroupId.Value))];
-            PairingDocument[]? pairingResults = resolution.PairingResults.Count == 0
-                ? null
-                : [.. resolution.PairingResults.Select(p => new PairingDocument(p.EntryA.Value, p.EntryB.Value))];
-            return new DrawResolutionDocument(resolution.State, resolution.ResolvedKind, slotResults, groupResults, pairingResults);
+            return new DrawResolutionDocument(resolution.State, resolution.ResolvedKind, slotResults, groupResults);
         }
 
         internal DrawResolution ToDomain() =>
@@ -71,11 +65,6 @@ internal static class DrawResolutionJson
                     [
                         .. (GroupResults ?? []).Select(p =>
                             new GroupDrawPlacement(new EntryId(p.EntryId), new GroupId(p.GroupId)))
-                    ]),
-                    DrawResolutionKind.Pairing => DrawResolution.ResolvedPairings(
-                    [
-                        .. (PairingResults ?? []).Select(p =>
-                            new PairingDrawResult(new EntryId(p.EntryA), new EntryId(p.EntryB)))
                     ]),
                     _ => throw new InvalidOperationException("Resolved draw resolution is missing ResolvedKind.")
                 },

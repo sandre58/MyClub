@@ -25,7 +25,7 @@ public static class GenerateDrawResolution
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="slotTargets">Required for Slot kind (destination slot keys).</param>
     /// <param name="groupTargets">Required for Group kind (destination group identities).</param>
-    /// <param name="constraintContext">Optional maps for Pairing (group/team) and Group (association) constraints.</param>
+    /// <param name="constraintContext">Optional maps for Group (association) constraints.</param>
     /// <param name="seed">Optional RNG seed (Application builds <see cref="SeededRandomSource"/>).</param>
     /// <param name="randomSource">Optional injected source; when null, uses seed or <see cref="SystemRandomSource"/>.</param>
     /// <returns>The generation result (also recorded on the Draw; soft violations not persisted).</returns>
@@ -154,7 +154,6 @@ public static class GenerateDrawResolution
             randomSource,
             slotTargets,
             inputs.FixedSlots,
-            inputs.FixedPairings,
             groupTargets,
             drawRules?.PotRules?.NumberOfPots,
             inputs.PotMembership,
@@ -163,14 +162,11 @@ public static class GenerateDrawResolution
 
     /// <summary>
     /// Filters DrawRules constraints to those applicable for the generation kind.
-    /// Pairing: SameGroup / SameTeam. Group: MaxSameAssociationPerGroup. SameAssociationAvoidance never passed.
+    /// Group: MaxSameAssociationPerGroup. SameAssociationAvoidance / SameGroup / SameTeam never passed.
     /// </summary>
     private static bool IsConstraintApplicable(DrawResolutionKind kind, DrawConstraint constraint) =>
         constraint.ConstraintType switch
         {
-            DrawConstraintType.SameAssociationAvoidance => false,
-            DrawConstraintType.SameGroupAvoidance or DrawConstraintType.SameTeamAvoidance =>
-                kind == DrawResolutionKind.Pairing,
             DrawConstraintType.MaxSameAssociationPerGroup => kind == DrawResolutionKind.Group,
             _ => false
         };

@@ -136,7 +136,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Cup_pairing_draw_apply_creates_matchesAsync()
+    public async Task Cup_slot_draw_apply_and_materialize_creates_matchesAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();
@@ -160,11 +160,12 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
 
         using var createDraw = await client.PostAsJsonAsync(
             $"/stages/{stageId}/draws",
-            new CreateDrawRequest("Pairing"));
+            new CreateDrawRequest("Slot"));
         createDraw.EnsureSuccessStatusCode();
         var draw = await createDraw.Content.ReadFromJsonAsync<DrawSummaryDto>(HostJson.Options);
+        draw!.Kind.Should().Be(DrawResolutionKind.Slot);
 
-        using var inputs = await client.PostAsync($"/stages/{stageId}/draws/{draw!.DrawId}/inputs", null);
+        using var inputs = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/inputs", null);
         inputs.EnsureSuccessStatusCode();
         using var generate = await client.PostAsync(
             $"/stages/{stageId}/draws/{draw.DrawId}/generate",
@@ -178,6 +179,15 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             $"/stages/{stageId}/draws/{draw.DrawId}/apply",
             new ApplyDrawRequest());
         apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var materialize = await client.PostAsJsonAsync(
+            $"/stages/{stageId}/matches/materialize-from-slots",
+            new MaterializeCupFromOccupiedSlotsRequest(
+            [
+                new CupSlotPairRequest("S1", "S2"),
+                new CupSlotPairRequest("S3", "S4"),
+            ]));
+        materialize.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
         var view = await orgAfter.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);

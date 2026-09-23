@@ -37,8 +37,7 @@
   },
   "drawResolutionKind": {
     "Slot": "Slot",
-    "Group": "Group",
-    "Pairing": "Pairing"
+    "Group": "Group"
   },
   "structureFormatKind": {
     "Championship": "League",

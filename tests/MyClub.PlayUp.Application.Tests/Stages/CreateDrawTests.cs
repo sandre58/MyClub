@@ -35,7 +35,7 @@ public sealed class CreateDrawTests
             _clock).Stage;
         stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
 
-        var act = () => CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
+        var act = () => CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.DrawRulesRequired);
@@ -58,9 +58,9 @@ public sealed class CreateDrawTests
         stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
 
-        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Pairing, _clock);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
 
         draw.Status.Should().Be(DrawStatus.Draft);
-        draw.Kind.Should().Be(DrawResolutionKind.Pairing);
+        draw.Kind.Should().Be(DrawResolutionKind.Slot);
     }
 }

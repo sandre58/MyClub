@@ -794,7 +794,7 @@ export function cancelDraw(stageId: string, drawId: string): Promise<void> {
 /** POST /stages/{stageId}/draws → 201 DrawSummary */
 export function createDraw(
   stageId: string,
-  kind: 'Slot' | 'Group' | 'Pairing',
+  kind: 'Slot' | 'Group',
   intent: 'Default' | 'Rerun' = 'Default',
 ): Promise<{ drawId: string }> {
   return sendJson('POST', `/stages/${stageId}/draws`, { kind, intent });
@@ -830,7 +830,7 @@ export function generateDraw(
  */
 export async function createAndGenerateDraw(
   stageId: string,
-  kind: 'Slot' | 'Group' | 'Pairing',
+  kind: 'Slot' | 'Group',
 ): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
   const created = await createDraw(stageId, kind, 'Rerun');
   await configureDrawInputs(stageId, created.drawId, 'Rerun');

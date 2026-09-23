@@ -12,8 +12,7 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Flat input contract for <see cref="DrawResolutionGenerator"/> (never the Draw aggregate).
-/// Slot/Pairing: Required = feasibility; Preferred = soft optimization (Pairing SameGroup/SameTeam).
-/// Group V1: pots + uniform capacity + FixedGroups; Required feasibility only (no soft).
+/// Slot: Required = feasibility. Group V1: pots + uniform capacity + FixedGroups; Required feasibility only (no soft).
 /// Incomplete maps / structural incoherence → Invalid regardless of enforcement.
 /// </summary>
 public sealed class DrawGenerationRequest
@@ -29,7 +28,6 @@ public sealed class DrawGenerationRequest
         IRandomSource randomSource,
         IReadOnlyList<string>? targets = null,
         IReadOnlyList<SlotDrawPlacement>? fixedSlots = null,
-        IReadOnlyList<PairingDrawResult>? fixedPairings = null,
         IReadOnlyList<GroupId>? groupTargets = null,
         int? numberOfPots = null,
         PotMembership? potMembership = null,
@@ -47,7 +45,6 @@ public sealed class DrawGenerationRequest
         RandomSource = randomSource;
         Targets = targets;
         FixedSlots = fixedSlots ?? [];
-        FixedPairings = fixedPairings ?? [];
         GroupTargets = groupTargets;
         NumberOfPots = numberOfPots;
         PotMembership = potMembership;
@@ -65,13 +62,13 @@ public sealed class DrawGenerationRequest
     public IReadOnlyList<EntryId> Entries { get; }
 
     /// <summary>
-    /// Gets draw constraints (Required = feasibility; Preferred = soft cost for Pairing).
-    /// Unused for Group V1 (must be empty).
+    /// Gets draw constraints (Required = feasibility).
+    /// Unused for Group V1 soft costs (must be empty or MaxSameAssociation only).
     /// </summary>
     public IReadOnlyList<DrawConstraint> Constraints { get; }
 
     /// <summary>
-    /// Gets auxiliary constraint maps (Pairing).
+    /// Gets auxiliary constraint maps (Group association).
     /// </summary>
     public DrawConstraintContext ConstraintContext { get; }
 
@@ -89,11 +86,6 @@ public sealed class DrawGenerationRequest
     /// Gets fixed Slot placements (Slot kind).
     /// </summary>
     public IReadOnlyList<SlotDrawPlacement> FixedSlots { get; }
-
-    /// <summary>
-    /// Gets fixed Pairings (Pairing kind).
-    /// </summary>
-    public IReadOnlyList<PairingDrawResult> FixedPairings { get; }
 
     /// <summary>
     /// Gets explicit Group destination ids when <see cref="Kind"/> is Group.

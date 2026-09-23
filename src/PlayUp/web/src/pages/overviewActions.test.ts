@@ -64,27 +64,12 @@ describe('resolveOverviewActionIntent', () => {
     });
   });
 
-  it('navigates Pairing ApplyDraw to the stage workspace', () => {
-    const view = overviewView({
-      operationalFocus: {
-        ...overviewView().operationalFocus,
-        draws: [
-          {
-            stageId,
-            drawId,
-            kind: 'Pairing',
-            status: 'Published',
-            resolutionState: 'Resolved',
-            isApplied: false,
-          },
-        ],
-      },
-    });
+  it('executes ApplyDraw for Slot/Group (empty fixtureIds)', () => {
     const intent = resolveOverviewActionIntent(
       { code: 'ApplyDraw', guaranteed: false, stageId, drawId },
-      view,
+      overviewView(),
     );
-    expect(intent).toEqual({ kind: 'navigate', to: `/stages/${stageId}` });
+    expect(intent.kind).toBe('execute');
   });
 
   it('navigates MaterializeFromOccupiedSlots to the stage pairing UI', () => {

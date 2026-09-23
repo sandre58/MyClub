@@ -46,28 +46,6 @@ public sealed class GenerateDrawResolutionTests
     }
 
     [Fact]
-    public void Execute_no_solution_marks_draw_no_solution()
-    {
-        var stage = CreateStageWithSameGroupRequired();
-        var entries = NewEntries(4);
-        var g = GroupId.New();
-        var groups = entries.ToDictionary(e => e, _ => g);
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries));
-
-        var result = GenerateDrawResolution.Execute(
-            stage,
-            draw.Id,
-            _clock,
-            constraintContext: new DrawConstraintContext(groups, null),
-            seed: 1);
-
-        result.IsNoSolution.Should().BeTrue();
-        draw.Resolution.State.Should().Be(DrawResolutionState.NoSolution);
-        draw.Status.Should().Be(DrawStatus.Draft);
-    }
-
-    [Fact]
     public void Execute_same_seed_is_reproducible_via_application()
     {
         var stage1 = CreateStage();
@@ -374,24 +352,6 @@ public sealed class GenerateDrawResolutionTests
     }
 
     [Fact]
-    public void Execute_filters_max_association_off_pairing()
-    {
-        var stage = CreateStage();
-        stage.ReplaceDrawRules(
-            new DrawRules(
-                DrawMode.Random,
-                constraints: [DrawConstraint.MaxSameAssociationPerGroup(1)]),
-            _clock);
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(NewEntries(2)));
-
-        var result = GenerateDrawResolution.Execute(stage, draw.Id, _clock, seed: 1);
-
-        result.IsResolved.Should().BeTrue();
-        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
-    }
-
-    [Fact]
     public void Execute_filters_pairing_constraints_off_slot_and_resolves()
     {
         // S9: Application filters SameGroup off Slot; generation proceeds without Domain Invalid.
@@ -424,57 +384,6 @@ public sealed class GenerateDrawResolutionTests
         draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
     }
 
-    [Fact]
-    public void Execute_passes_preferred_and_returns_violations_without_persisting_on_draw()
-    {
-        var stage = CreateStage();
-        stage.ReplaceDrawRules(
-            new DrawRules(
-                DrawMode.Random,
-                constraints: [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)]),
-            _clock);
-        var entries = NewEntries(4);
-        var g = GroupId.New();
-        var groups = entries.ToDictionary(e => e, _ => g);
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries));
-
-        var result = GenerateDrawResolution.Execute(
-            stage,
-            draw.Id,
-            _clock,
-            constraintContext: new DrawConstraintContext(groups, null),
-            seed: 3);
-
-        result.IsResolved.Should().BeTrue();
-        result.PreferredViolationsCount.Should().BeGreaterThan(0);
-        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
-        draw.Resolution.PairingResults.Should().HaveCount(2);
-    }
-
-    [Fact]
-    public void Execute_preferred_incomplete_map_is_invalid_and_does_not_mark_no_solution()
-    {
-        var stage = CreateStage();
-        stage.ReplaceDrawRules(
-            new DrawRules(
-                DrawMode.Random,
-                constraints: [new DrawConstraint(DrawConstraintType.SameGroupAvoidance)]),
-            _clock);
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(NewEntries(4)));
-
-        var act = () => GenerateDrawResolution.Execute(
-            stage,
-            draw.Id,
-            _clock,
-            constraintContext: DrawConstraintContext.Empty,
-            seed: 1);
-
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
-        draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
-    }
-
     private static Dictionary<EntryId, int> BalancedPots(EntryId[] entries, int numberOfPots)
     {
         var perPot = entries.Length / numberOfPots;
@@ -505,20 +414,6 @@ public sealed class GenerateDrawResolutionTests
 
     private Stage CreateStage() =>
         Stage.Create(_competitionId, new StageName("Phase"), SampleRegulations.Standard(), _clock);
-
-    private Stage CreateStageWithSameGroupRequired()
-    {
-        var stage = CreateStage();
-        stage.ReplaceDrawRules(
-            new DrawRules(
-                DrawMode.Random,
-                constraints:
-                [
-                    new DrawConstraint(DrawConstraintType.SameGroupAvoidance, ConstraintEnforcement.Required)
-                ]),
-            _clock);
-        return stage;
-    }
 
     private Draw PrepareSlotDraw(Stage stage, IReadOnlyList<EntryId> entries, IReadOnlyList<string> targets)
     {

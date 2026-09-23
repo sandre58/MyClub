@@ -24,14 +24,12 @@ public sealed class DrawResolutionJsonConverterTests
     }
 
     [Fact]
-    public void Convert_round_trips_resolved_slot_group_and_pairing()
+    public void Convert_round_trips_resolved_slot_and_group()
     {
         var entryA = EntryId.New();
-        var entryB = EntryId.New();
 
         RoundTrip(DrawResolution.ResolvedSlots([new SlotDrawPlacement(entryA, "SF1")]));
         RoundTrip(DrawResolution.ResolvedGroups([new GroupDrawPlacement(entryA, GroupId.New())]));
-        RoundTrip(DrawResolution.ResolvedPairings([new PairingDrawResult(entryA, entryB)]));
     }
 
     [Fact]
@@ -59,6 +57,5 @@ public sealed class DrawResolutionJsonConverterTests
         restored.ResolvedKind.Should().Be(resolution.ResolvedKind);
         restored.SlotResults.Should().Equal(resolution.SlotResults);
         restored.GroupResults.Should().Equal(resolution.GroupResults);
-        restored.PairingResults.Should().Equal(resolution.PairingResults);
     }
 }

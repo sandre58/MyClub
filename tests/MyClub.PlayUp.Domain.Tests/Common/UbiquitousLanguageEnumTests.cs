@@ -32,7 +32,7 @@ public sealed class UbiquitousLanguageEnumTests
 
     [Fact]
     public void DrawResolutionKind_matches_documented_kinds() =>
-        Enum.GetNames<DrawResolutionKind>().Should().BeEquivalentTo("Slot", "Group", "Pairing");
+        Enum.GetNames<DrawResolutionKind>().Should().BeEquivalentTo("Slot", "Group");
 
     [Fact]
     public void DrawResolutionState_is_orthogonal_to_lifecycle() =>

@@ -268,20 +268,16 @@ public sealed partial class UseCaseExecutor(
     /// </summary>
     /// <param name="stageId">Stage that owns the draw.</param>
     /// <param name="drawId">Draw identity.</param>
-    /// <param name="fixtureIds">
-    /// Target fixtures for Pairing apply (one per pairing result, same order). Ignored for Slot/Group.
-    /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when both steps succeed, or fails after a durable Publish.</returns>
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist or Apply fails.</exception>
     public async Task PublishAndApplyDrawAsync(
         StageId stageId,
         DrawId drawId,
-        IReadOnlyList<FixtureId>? fixtureIds = null,
         CancellationToken cancellationToken = default)
     {
         await PublishDrawAsync(stageId, drawId, cancellationToken).ConfigureAwait(false);
-        await ApplyDrawAsync(stageId, drawId, fixtureIds, cancellationToken).ConfigureAwait(false);
+        await ApplyDrawAsync(stageId, drawId, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -311,20 +307,16 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Loads a stage, runs <see cref="ApplyDraw"/>, adds newly created Matches, and saves once.
+    /// Loads a stage, runs <see cref="ApplyDraw"/>, and saves once.
     /// </summary>
     /// <param name="stageId">Stage that owns the draw.</param>
     /// <param name="drawId">Draw identity.</param>
-    /// <param name="fixtureIds">
-    /// Target fixtures for Pairing apply (one per pairing result, same order). Ignored for Slot/Group.
-    /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the draw is applied and persisted.</returns>
-    /// <exception cref="ApplicationFailureException">Thrown when the stage or known matches cannot be loaded.</exception>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage cannot be loaded.</exception>
     public async Task ApplyDrawAsync(
         StageId stageId,
         DrawId drawId,
-        IReadOnlyList<FixtureId>? fixtureIds = null,
         CancellationToken cancellationToken = default)
     {
         var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
@@ -335,54 +327,9 @@ public sealed partial class UseCaseExecutor(
         await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
 
-        var draw = stage.GetDraw(drawId);
-        var resolvedFixtures = fixtureIds;
-        if (draw.Kind == DrawResolutionKind.Pairing
-            && (resolvedFixtures is null || resolvedFixtures.Count == 0))
-        {
-            resolvedFixtures = EnsurePairingFixtures(stage, draw, clock);
-        }
-
-        PairingApplicationContext? pairingContext = null;
-        IReadOnlyList<Match> knownMatches = [];
-        if (resolvedFixtures is { Count: > 0 })
-        {
-            pairingContext = new PairingApplicationContext(resolvedFixtures);
-            knownMatches = await LoadKnownMatchesForFixturesAsync(stage, resolvedFixtures, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        var result = ApplyDraw.Execute(stage, drawId, clock, pairingContext, knownMatches);
-        foreach (var created in result.CreatedMatches)
-        {
-            matches.Add(created);
-        }
-
+        var result = ApplyDraw.Execute(stage, drawId, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         LogDrawApplied(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value, result.CreatedMatches.Count);
-    }
-
-    private static IReadOnlyList<FixtureId> EnsurePairingFixtures(Stage stage, Draw draw, IClock clock)
-    {
-        if (draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            throw new ApplicationFailureException(
-                $"Draw '{draw.Id}' must be Resolved before Pairing apply.",
-                ApplicationErrorCodes.DrawApplyFailure);
-        }
-
-        var needed = draw.Resolution.PairingResults.Count;
-        var round = stage.Rounds.FirstOrDefault()
-                    ?? throw new ApplicationFailureException(
-                        "Pairing apply requires a round with fixtures on the stage.",
-                        ApplicationErrorCodes.DrawApplyFailure);
-
-        while (round.Fixtures.Count < needed)
-        {
-            stage.AddFixture(round.Id, clock);
-        }
-
-        return [.. round.Fixtures.Take(needed).Select(fixture => fixture.Id)];
     }
 
     /// <summary>
@@ -1914,7 +1861,7 @@ public sealed partial class UseCaseExecutor(
                 : loaded;
         }
 
-        // Pairing-draw cups carry their placed sides on real matches, not on slots.
+        // Match rows enrich cup fixture connections when sides are already attached.
         var matchRows = await matches.ListSummaryRowsByStageReadOnlyAsync(stageId, cancellationToken)
             .ConfigureAwait(false);
 
@@ -1994,34 +1941,6 @@ public sealed partial class UseCaseExecutor(
                 $"Lifecycle mutations are not allowed when competition is '{competition.Status}'.",
                 ApplicationErrorCodes.CompetitionClosed);
         }
-    }
-
-    private async Task<IReadOnlyList<Match>> LoadKnownMatchesForFixturesAsync(
-        Stage stage,
-        IReadOnlyList<FixtureId> fixtureIds,
-        CancellationToken cancellationToken)
-    {
-        var loaded = new List<Match>();
-        foreach (var fixtureId in fixtureIds)
-        {
-            var fixture = stage.FindFixture(fixtureId);
-            if (fixture is null)
-            {
-                continue;
-            }
-
-            foreach (var attachment in fixture.Attachments)
-            {
-                var match = await matches.GetByIdForUpdateAsync(attachment.MatchId, cancellationToken)
-                                .ConfigureAwait(false)
-                            ?? throw new ApplicationFailureException(
-                                $"Match '{attachment.MatchId}' was not found.",
-                                ApplicationErrorCodes.MatchNotFound);
-                loaded.Add(match);
-            }
-        }
-
-        return loaded;
     }
 
     private async Task EnsureCompetitionAllowsMatchOperationAsync(

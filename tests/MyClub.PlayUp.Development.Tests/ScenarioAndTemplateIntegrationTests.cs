@@ -450,7 +450,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         quarter.Should().NotBeNull();
         semi.Should().NotBeNull();
         quarter.Regulation.DrawRules.Should().NotBeNull(
-            "QF seed must engage DrawRules when a Pairing Draw is applied");
+            "QF seed must engage DrawRules when a Slot Draw is applied");
         quarter.CompositionEntries.Should().HaveCount(8);
         quarter.Draws.Should().NotBeEmpty();
         quarter.Draws.Should().OnlyContain(draw => draw.Status != DrawStatus.Cancelled);
@@ -512,7 +512,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         roundOf32.Regulation.ProgressionRules.Should().NotBeNull();
         roundOf32.Regulation.ProgressionRules!.Intents.Should().ContainSingle();
         roundOf32.Regulation.ProgressionRules.Intents[0].TargetsPopulation.Should().BeTrue();
-        roundOf32.Draws.Should().Contain(draw => draw.Kind == DrawResolutionKind.Pairing);
+        roundOf32.Draws.Should().Contain(draw => draw.Kind == DrawResolutionKind.Slot);
 
         var roundOf16 = loaded[1];
         roundOf16.Regulation.DrawRules.Should().NotBeNull();

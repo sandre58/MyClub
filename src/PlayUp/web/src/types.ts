@@ -28,7 +28,7 @@ export type ResultType = 'Played' | 'Forfeit' | 'WalkOver' | 'Administrative';
 
 export type DrawStatus = 'Draft' | 'Published' | 'Cancelled';
 
-export type DrawResolutionKind = 'Slot' | 'Group' | 'Pairing';
+export type DrawResolutionKind = 'Slot' | 'Group';
 
 export type DrawResolutionState = 'NotResolved' | 'Resolved' | 'NoSolution';
 
@@ -1318,7 +1318,7 @@ export interface FinishMatchRequest {
   penaltyShootoutAwayGoals?: number | null;
 }
 
-/** Body for POST .../draws/{id}/apply — Pairing needs one fixture id per pairing (same order). */
+/** Body for POST .../draws/{id}/apply — Slot/Group use empty fixtureIds (Host owns mapping). */
 export interface ApplyDrawRequest {
   fixtureIds: string[];
 }
@@ -1349,21 +1349,6 @@ export interface StageSlot {
   coveredByCompleteFixture: boolean;
 }
 
-export interface StageDrawPairing {
-  entryAId: string;
-  entryADisplayName: string | null;
-  /** Optional abbreviated name for compact layouts. */
-  entryAShortName?: string | null;
-  entryALogoMediaId?: string | null;
-  entryAPrimaryColor?: string | null;
-  entryBId: string;
-  entryBDisplayName: string | null;
-  /** Optional abbreviated name for compact layouts. */
-  entryBShortName?: string | null;
-  entryBLogoMediaId?: string | null;
-  entryBPrimaryColor?: string | null;
-}
-
 export interface StageDrawSlotPlacement {
   slotKey: string;
   entryId: string;
@@ -1389,7 +1374,6 @@ export interface StageDraw {
   kind: DrawResolutionKind;
   status: DrawStatus;
   resolutionState: DrawResolutionState;
-  pairings: StageDrawPairing[];
   slotPlacements: StageDrawSlotPlacement[];
   /** Present when resolved as Group; may be empty on older payloads. */
   groupPlacements?: StageDrawGroupPlacement[];

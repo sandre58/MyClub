@@ -71,16 +71,14 @@ public static class StageSchematicAssembler
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
         IReadOnlyList<MatchSummaryRow> matchRows)
     {
+        _ = matchRows;
         var feedBySlot = ResolveFeedsTolerant(stage, competitionStages);
-        var pairingDrawOrigin = ResolvePublishedPairingDrawOrigin(stage);
         var addressBySlot = new Dictionary<string, CupPlaceAddress>(StringComparer.Ordinal);
 
         // A1: topology first (stable Place ordinals). Fixture binding only attaches FixtureId.
         FillTopologyCupAddresses(stage, addressBySlot);
 
-        var rowsByMatch = matchRows.ToDictionary(row => row.Id);
         var connections = new List<SchematicConnectionDto>();
-        var pairingCases = new List<SchematicCaseDto>();
         for (var roundOrder = 0; roundOrder < stage.Rounds.Count; roundOrder++)
         {
             var round = stage.Rounds[roundOrder];
@@ -119,41 +117,18 @@ public static class StageSchematicAssembler
                     continue;
                 }
 
-                // Pairing-draw fixture: no slot binding; the placed sides live on the real match.
-                var row = FirstLegRow(fixture, rowsByMatch);
-                if (row is null)
+                // Unbound fixture: expose a connection only when a real match exists
+                // (no Place cases invented). Empty unbound fixtures stay silent.
+                if (fixture.MatchIds.Count > 0)
                 {
-                    continue;
+                    connections.Add(
+                        new SchematicConnectionDto(
+                            fixture.Id.Value,
+                            roundOrder,
+                            SlotAKey: null,
+                            SlotBKey: null,
+                            fixtureIndex + 1));
                 }
-
-                connections.Add(
-                    new SchematicConnectionDto(
-                        fixture.Id.Value,
-                        roundOrder,
-                        SlotAKey: null,
-                        SlotBKey: null,
-                        fixtureIndex + 1));
-                if (roundOrder != 0) continue;
-                pairingCases.Add(
-                    PairingCase(
-                        fixture.Id,
-                        "A",
-                        row.HomeEntryId,
-                        entries,
-                        roundOrder,
-                        round.Name,
-                        pairOrdinal,
-                        pairingDrawOrigin));
-                pairingCases.Add(
-                    PairingCase(
-                        fixture.Id,
-                        "B",
-                        row.AwayEntryId,
-                        entries,
-                        roundOrder,
-                        round.Name,
-                        pairOrdinal,
-                        pairingDrawOrigin));
             }
 
             continue;
@@ -163,7 +138,7 @@ public static class StageSchematicAssembler
                 fixtures.Count > 1 ? fixtureIndex + 1 : null;
         }
 
-        var slotCases = stage.Slots
+        var cases = stage.Slots
             .Select(slot =>
             {
                 var feed = feedBySlot.GetValueOrDefault(slot.SlotKey);
@@ -182,12 +157,6 @@ public static class StageSchematicAssembler
                     MapAssignment(slot.EntryId, entries));
             })
             .ToArray();
-
-        // Places-first (I3): existing SlotKeys are never replaced by unbound Pairing sides.
-        // PairingCase fallback only when the stage has no Places at all.
-        IReadOnlyList<SchematicCaseDto> cases = stage.Slots.Count > 0
-            ? slotCases
-            : pairingCases;
 
         return new StageSchematicDto(
             stage.Id.Value,
@@ -338,57 +307,6 @@ public static class StageSchematicAssembler
         {
             return new Dictionary<string, SlotFeedResolution>(StringComparer.Ordinal);
         }
-    }
-
-    private static SchematicCaseDto PairingCase(
-        FixtureId fixtureId,
-        string side,
-        EntryId entryId,
-        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
-        int roundOrder,
-        string roundName,
-        int? pairOrdinal,
-        SchematicFeedOriginDto? drawOrigin) =>
-        new(
-            new SchematicFormPositionDto(
-                FormKindCupSlot,
-                FixtureId: fixtureId.Value,
-                Side: side,
-                RoundOrder: roundOrder,
-                RoundName: roundName,
-                PairOrdinal: pairOrdinal),
-            drawOrigin,
-            MapEntry(entryId, entries),
-            MapAssignment(entryId, entries));
-
-    /// <summary>
-    /// Pairing occupation is not a Slot WhoFeeds target — annotate cases from the published Pairing draw.
-    /// </summary>
-    private static SchematicFeedOriginDto? ResolvePublishedPairingDrawOrigin(Stage stage)
-    {
-        for (var i = stage.Draws.Count - 1; i >= 0; i--)
-        {
-            var draw = stage.Draws[i];
-            if (draw is
-                {
-                    Status: DrawStatus.Published,
-                    Kind: DrawResolutionKind.Pairing,
-                    Resolution.State: DrawResolutionState.Resolved
-                })
-            {
-                return new SchematicFeedOriginDto(FeedKind.Draw, DrawId: draw.Id.Value);
-            }
-        }
-
-        return null;
-    }
-
-    private static MatchSummaryRow? FirstLegRow(
-        Fixture fixture,
-        IReadOnlyDictionary<MatchId, MatchSummaryRow> rowsByMatch)
-    {
-        var attachment = fixture.Attachments.OrderBy(a => a.LegIndex).FirstOrDefault();
-        return attachment is null ? null : rowsByMatch.GetValueOrDefault(attachment.MatchId);
     }
 
     private static StageSchematicDto AssembleGroups(

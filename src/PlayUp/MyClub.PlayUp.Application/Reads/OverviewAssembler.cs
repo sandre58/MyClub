@@ -1420,7 +1420,7 @@ public static class OverviewAssembler
             foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
             {
                 if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved }
-                    && draw.Kind is DrawResolutionKind.Slot or DrawResolutionKind.Group or DrawResolutionKind.Pairing)
+                    && draw.Kind is DrawResolutionKind.Slot or DrawResolutionKind.Group)
                 {
                     actions.Add(new OverviewActionDto(
                         ActionPublishAndApplyDraw,
@@ -1429,7 +1429,7 @@ public static class OverviewAssembler
                         draw.Id.Value));
                 }
 
-                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group or DrawResolutionKind.Pairing }
+                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group }
                     && !DrawAppliedState.IsApplied(draw, stage))
                 {
                     actions.Add(new OverviewActionDto(

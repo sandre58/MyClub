@@ -196,7 +196,7 @@ public static class MaterializeMatches
             : attached.Count == 0
             ?
 
-            // Fixtures ready for Pairing ApplyDraw — Matches are created by Apply, not here.
+            // Fixtures skeleton only — Matches are created by MaterializeCupFromOccupiedSlots after Slot apply.
             new MaterializeMatchesResult([], [], AlreadyComplete: false)
             : new MaterializeMatchesResult([], attached, AlreadyComplete: attached.Count >= expectedFixtures);
     }

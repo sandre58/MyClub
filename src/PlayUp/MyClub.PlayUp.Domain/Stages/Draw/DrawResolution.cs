@@ -16,14 +16,12 @@ public sealed record DrawResolution
 {
     private readonly SlotDrawPlacement[] _slotResults;
     private readonly GroupDrawPlacement[] _groupResults;
-    private readonly PairingDrawResult[] _pairingResults;
 
     private DrawResolution(
         DrawResolutionState state,
         DrawResolutionKind? resolvedKind,
         IReadOnlyList<SlotDrawPlacement>? slotResults,
-        IReadOnlyList<GroupDrawPlacement>? groupResults,
-        IReadOnlyList<PairingDrawResult>? pairingResults)
+        IReadOnlyList<GroupDrawPlacement>? groupResults)
     {
         if (!Enum.IsDefined(state))
         {
@@ -36,7 +34,6 @@ public sealed record DrawResolution
         ResolvedKind = resolvedKind;
         _slotResults = slotResults is null ? [] : [..slotResults];
         _groupResults = groupResults is null ? [] : [..groupResults];
-        _pairingResults = pairingResults is null ? [] : [..pairingResults];
     }
 
     /// <summary>
@@ -60,21 +57,16 @@ public sealed record DrawResolution
     public IReadOnlyList<GroupDrawPlacement> GroupResults => _groupResults;
 
     /// <summary>
-    /// Gets Pairing results when resolved as Pairing.
-    /// </summary>
-    public IReadOnlyList<PairingDrawResult> PairingResults => _pairingResults;
-
-    /// <summary>
     /// Creates a not-resolved resolution.
     /// </summary>
     public static DrawResolution NotResolved() =>
-        new(DrawResolutionState.NotResolved, null, null, null, null);
+        new(DrawResolutionState.NotResolved, null, null, null);
 
     /// <summary>
     /// Creates a no-solution resolution.
     /// </summary>
     public static DrawResolution NoSolution() =>
-        new(DrawResolutionState.NoSolution, null, null, null, null);
+        new(DrawResolutionState.NoSolution, null, null, null);
 
     /// <summary>
     /// Creates a resolved Slot resolution.
@@ -91,7 +83,7 @@ public sealed record DrawResolution
             ? throw new DomainException(
                 "Slot resolution results must have unique entries and unique slot keys.",
                 StageErrorCodes.DrawResolutionInvalid)
-            : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Slot, results, null, null);
+            : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Slot, results, null);
     }
 
     /// <summary>
@@ -108,33 +100,12 @@ public sealed record DrawResolution
             ? throw new DomainException(
                 "Group resolution results must have unique entries.",
                 StageErrorCodes.DrawResolutionInvalid)
-            : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Group, null, results, null);
-    }
-
-    /// <summary>
-    /// Creates a resolved Pairing resolution.
-    /// </summary>
-    public static DrawResolution ResolvedPairings(IReadOnlyList<PairingDrawResult> results)
-    {
-        ArgumentNullException.ThrowIfNull(results);
-        if (results.Count == 0)
-        {
-            throw new DomainException(
-                "Resolved pairing results cannot be empty.",
-                StageErrorCodes.DrawResolutionInvalid);
-        }
-
-        var entries = results.SelectMany(r => new[] { r.EntryA, r.EntryB }).ToArray();
-        return entries.Distinct().Count() != entries.Length
-            ? throw new DomainException(
-                "Pairing resolution results must not reuse an entry.",
-                StageErrorCodes.DrawResolutionInvalid)
-            : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Pairing, null, null, results);
+            : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Group, null, results);
     }
 
     /// <summary>
     /// Returns an independent copy.
     /// </summary>
     public DrawResolution Copy() =>
-        new(State, ResolvedKind, _slotResults, _groupResults, _pairingResults);
+        new(State, ResolvedKind, _slotResults, _groupResults);
 }

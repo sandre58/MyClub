@@ -91,7 +91,7 @@ public static class ApplicationErrorCodes
     public const string DrawApplyFailure = "Application.DrawApplyFailure";
 
     /// <summary>
-    /// Gets the code when ApplyDraw does not support the Draw resolution kind (e.g. Pairing in V1.A).
+    /// Gets the code when ApplyDraw does not support the Draw resolution kind.
     /// </summary>
     public const string DrawKindNotSupported = "Application.DrawKindNotSupported";
 

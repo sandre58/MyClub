@@ -9,7 +9,7 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// <summary>
 /// HTTP body for creating a Draw.
 /// </summary>
-/// <param name="Kind">Slot | Group | Pairing (case-insensitive).</param>
+/// <param name="Kind">Slot | Group (case-insensitive).</param>
 /// <param name="Intent">
 /// Default | Rerun (case-insensitive). Product intent for the following inputs step;
 /// Rerun = full redraw (Fixed* empty). Omitted → Default.

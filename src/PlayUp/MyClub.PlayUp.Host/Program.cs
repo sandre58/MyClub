@@ -1430,18 +1430,14 @@ try
         async (
             Guid stageId,
             Guid drawId,
-            ApplyDrawRequest? request,
+            ApplyDrawRequest? _,
             UseCaseExecutor executor,
             CancellationToken cancellationToken) =>
         {
-            IReadOnlyList<FixtureId>? fixtureIds = request?.FixtureIds is { Count: > 0 } ids
-                ? [.. ids.Select(id => new FixtureId(id))]
-                : null;
             await executor
                 .PublishAndApplyDrawAsync(
                     new StageId(stageId),
                     new DrawId(drawId),
-                    fixtureIds,
                     cancellationToken)
                 .ConfigureAwait(false);
             return Results.NoContent();
@@ -1462,15 +1458,12 @@ try
         async (
             Guid stageId,
             Guid drawId,
-            ApplyDrawRequest? request,
+            ApplyDrawRequest? _,
             UseCaseExecutor executor,
             CancellationToken cancellationToken) =>
         {
-            IReadOnlyList<FixtureId>? fixtureIds = request?.FixtureIds is { Count: > 0 } ids
-                ? [.. ids.Select(id => new FixtureId(id))]
-                : null;
             await executor
-                .ApplyDrawAsync(new StageId(stageId), new DrawId(drawId), fixtureIds, cancellationToken)
+                .ApplyDrawAsync(new StageId(stageId), new DrawId(drawId), cancellationToken)
                 .ConfigureAwait(false);
             return Results.NoContent();
         });
@@ -1663,12 +1656,9 @@ static DrawResolutionKind parseDrawKind(string kind) => kind.Equals("Slot", Stri
     : kind.Equals("Group", StringComparison.OrdinalIgnoreCase)
       || kind.Equals("Groups", StringComparison.OrdinalIgnoreCase)
         ? DrawResolutionKind.Group
-        : kind.Equals("Pairing", StringComparison.OrdinalIgnoreCase)
-          || kind.Equals("Cup", StringComparison.OrdinalIgnoreCase)
-            ? DrawResolutionKind.Pairing
-            : throw new ApplicationFailureException(
-                $"Unknown draw kind '{kind}'. Expected Slot, Group, or Pairing.",
-                ApplicationErrorCodes.DrawKindNotSupported);
+        : throw new ApplicationFailureException(
+            $"Unknown draw kind '{kind}'. Expected Slot or Group.",
+            ApplicationErrorCodes.DrawKindNotSupported);
 
 static DrawInputsIntent parseDrawInputsIntent(string? intent)
 {

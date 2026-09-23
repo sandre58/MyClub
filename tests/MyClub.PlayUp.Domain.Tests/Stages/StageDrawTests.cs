@@ -312,36 +312,6 @@ public sealed class StageDrawTests
     }
 
     [Fact]
-    public void Pairing_draw_records_opposition_without_creating_match_structure()
-    {
-        var stage = CreateStage();
-        var a = EntryId.New();
-        var b = EntryId.New();
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([a, b]));
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(a, b)]),
-            _clock);
-        stage.PublishDraw(draw.Id, _clock);
-
-        draw.Resolution.PairingResults.Should().ContainSingle();
-        stage.Rounds.Should().BeEmpty();
-        stage.Matchdays.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void PairingDrawResult_rejects_self_pairing()
-    {
-        var entry = EntryId.New();
-
-        var act = () => new PairingDrawResult(entry, entry);
-
-        act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be(StageErrorCodes.DrawInputsInvalid);
-    }
-
-    [Fact]
     public void Fixed_groups_on_slot_draw_inputs_are_rejected()
     {
         var entry = EntryId.New();
@@ -395,25 +365,6 @@ public sealed class StageDrawTests
         draw.Status.Should().Be(DrawStatus.Published);
         draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
         draw.Resolution.SlotResults.Should().ContainSingle();
-    }
-
-    [Fact]
-    public void Pairing_fixed_placement_order_insensitive()
-    {
-        var stage = CreateStage();
-        var a = EntryId.New();
-        var b = EntryId.New();
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(
-            draw.Id,
-            DrawInputs.ForPairing([a, b], fixedPlacements: [new PairingDrawResult(a, b)]));
-
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(b, a)]),
-            _clock);
-
-        draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
     }
 
     private Stage CreateStage() =>

@@ -281,7 +281,7 @@ public sealed class OverviewAssemblerTests
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         competition.AddStage(stage.Id, _clock);
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.MarkDrawNoSolution(draw.Id, _clock);
 
         var view = OverviewAssembler.Assemble(

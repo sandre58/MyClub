@@ -32,14 +32,12 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 14, 19, 0, 0, TimeSpan.Zero));
 
     [IntegrationFact]
-    public async Task ApplyDraw_pairing_persists_stage_attachment_and_matches_atomicallyAsync()
+    public async Task ApplyDraw_slot_persists_slot_occupancy_atomicallyAsync()
     {
         StageId stageId;
         DrawId drawId;
-        FixtureId fixtureId;
         var entryA = EntryId.New();
         var entryB = EntryId.New();
-        MatchId createdMatchId;
 
         using (var scope = fixture.CreateScope())
         {
@@ -51,14 +49,17 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             competitions.Add(competition);
 
             var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-            var round = stage.AddRound("R1", _clock);
-            var addFixture = stage.AddFixture(round.Id, _clock);
-            fixtureId = addFixture.Id;
-            var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-            stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]));
+            stage.AddSlot("S1");
+            stage.AddSlot("S2");
+            var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+            stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entryA, entryB]));
             stage.RecordDrawResolution(
                 draw.Id,
-                DrawResolution.ResolvedPairings([new PairingDrawResult(entryA, entryB)]),
+                DrawResolution.ResolvedSlots(
+                [
+                    new SlotDrawPlacement(entryA, "S1"),
+                    new SlotDrawPlacement(entryB, "S2"),
+                ]),
                 _clock);
             stage.PublishDraw(draw.Id, _clock);
             stageId = stage.Id;
@@ -70,44 +71,26 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
         using (var scope = fixture.CreateScope())
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-            var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
             var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
 
-            var result = ApplyDraw.Execute(
-                stage,
-                drawId,
-                _clock,
-                new PairingApplicationContext(fixtureId),
-                []);
+            var result = ApplyDraw.Execute(stage, drawId, _clock);
 
-            result.CreatedMatches.Should().ContainSingle();
-            createdMatchId = result.CreatedMatches[0].Id;
-            foreach (var match in result.CreatedMatches)
-            {
-                matches.Add(match);
-            }
-
+            result.SlotInstructions.Should().HaveCount(2);
+            result.CreatedMatches.Should().BeEmpty();
             await unitOfWork.SaveChangesAsync();
         }
 
         using (var scope = fixture.CreateScope())
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-            var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
 
             var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
-            var fixture1 = stage.GetFixture(fixtureId);
-            fixture1.MatchIds.Should().ContainSingle().Which.Should().Be(createdMatchId);
-
-            var match = await matches.GetByIdForUpdateAsync(createdMatchId);
-            match.Should().NotBeNull();
-            match.HomeEntryId.Should().Be(entryA);
-            match.AwayEntryId.Should().Be(entryB);
-            match.StageId.Should().Be(stageId);
+            stage.FindSlot("S1")!.EntryId.Should().Be(entryA);
+            stage.FindSlot("S2")!.EntryId.Should().Be(entryB);
         }
     }
 

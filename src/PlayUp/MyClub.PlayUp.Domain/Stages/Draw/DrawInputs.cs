@@ -20,15 +20,13 @@ public sealed record DrawInputs
     private readonly EntryId[] _entries;
     private readonly SlotDrawPlacement[] _fixedSlots;
     private readonly GroupDrawPlacement[] _fixedGroups;
-    private readonly PairingDrawResult[] _fixedPairings;
 
     private DrawInputs(
         IReadOnlyList<EntryId> entries,
         SeedMap? seedMap,
         PotMembership? potMembership,
         IReadOnlyList<SlotDrawPlacement>? fixedSlots,
-        IReadOnlyList<GroupDrawPlacement>? fixedGroups,
-        IReadOnlyList<PairingDrawResult>? fixedPairings)
+        IReadOnlyList<GroupDrawPlacement>? fixedGroups)
     {
         ArgumentNullException.ThrowIfNull(entries);
 
@@ -51,7 +49,6 @@ public sealed record DrawInputs
         PotMembership = potMembership?.Copy();
         _fixedSlots = fixedSlots is null ? [] : [..fixedSlots];
         _fixedGroups = fixedGroups is null ? [] : [..fixedGroups];
-        _fixedPairings = fixedPairings is null ? [] : [..fixedPairings];
 
         ValidateMapsAgainstEntries();
         ValidateFixedAgainstEntries();
@@ -83,11 +80,6 @@ public sealed record DrawInputs
     public IReadOnlyList<GroupDrawPlacement> FixedGroups => _fixedGroups;
 
     /// <summary>
-    /// Gets fixed Pairings (kind Pairing only).
-    /// </summary>
-    public IReadOnlyList<PairingDrawResult> FixedPairings => _fixedPairings;
-
-    /// <summary>
     /// Creates inputs for a Slot draw.
     /// </summary>
     public static DrawInputs ForSlot(
@@ -95,7 +87,7 @@ public sealed record DrawInputs
         SeedMap? seedMap = null,
         PotMembership? potMembership = null,
         IReadOnlyList<SlotDrawPlacement>? fixedPlacements = null) =>
-        new(entries, seedMap, potMembership, fixedPlacements, null, null);
+        new(entries, seedMap, potMembership, fixedPlacements, null);
 
     /// <summary>
     /// Creates inputs for a Group draw.
@@ -105,17 +97,7 @@ public sealed record DrawInputs
         SeedMap? seedMap = null,
         PotMembership? potMembership = null,
         IReadOnlyList<GroupDrawPlacement>? fixedPlacements = null) =>
-        new(entries, seedMap, potMembership, null, fixedPlacements, null);
-
-    /// <summary>
-    /// Creates inputs for a Pairing draw.
-    /// </summary>
-    public static DrawInputs ForPairing(
-        IReadOnlyList<EntryId> entries,
-        SeedMap? seedMap = null,
-        PotMembership? potMembership = null,
-        IReadOnlyList<PairingDrawResult>? fixedPlacements = null) =>
-        new(entries, seedMap, potMembership, null, null, fixedPlacements);
+        new(entries, seedMap, potMembership, null, fixedPlacements);
 
     /// <summary>
     /// Ensures fixed placement lists match the draw kind.
@@ -124,9 +106,8 @@ public sealed record DrawInputs
     {
         var invalid = kind switch
         {
-            DrawResolutionKind.Slot => _fixedGroups.Length > 0 || _fixedPairings.Length > 0,
-            DrawResolutionKind.Group => _fixedSlots.Length > 0 || _fixedPairings.Length > 0,
-            DrawResolutionKind.Pairing => _fixedSlots.Length > 0 || _fixedGroups.Length > 0,
+            DrawResolutionKind.Slot => _fixedGroups.Length > 0,
+            DrawResolutionKind.Group => _fixedSlots.Length > 0,
             _ => true
         };
 
@@ -142,7 +123,7 @@ public sealed record DrawInputs
     /// Returns an independent copy.
     /// </summary>
     public DrawInputs Copy() =>
-        new(_entries, SeedMap, PotMembership, _fixedSlots, _fixedGroups, _fixedPairings);
+        new(_entries, SeedMap, PotMembership, _fixedSlots, _fixedGroups);
 
     private void ValidateMapsAgainstEntries()
     {
@@ -194,13 +175,6 @@ public sealed record DrawInputs
         {
             throw new DomainException(
                 "Fixed group placements must have unique entries.",
-                StageErrorCodes.DrawInputsInvalid);
-        }
-
-        if (_fixedPairings.Any(pairing => !_entries.Contains(pairing.EntryA) || !_entries.Contains(pairing.EntryB)))
-        {
-            throw new DomainException(
-                "Fixed pairing references an entry outside the draw pool.",
                 StageErrorCodes.DrawInputsInvalid);
         }
     }

@@ -43,7 +43,6 @@ public static class DrawInputsFactory
                 entries,
                 potMembership: BuildSequentialPots(entries, stage),
                 fixedPlacements: promoteFixed ? CollectFixedGroups(stage, entries) : []),
-            DrawResolutionKind.Pairing => DrawInputs.ForPairing(entries),
             DrawResolutionKind.Slot => DrawInputs.ForSlot(
                 entries,
                 fixedPlacements: promoteFixed ? CollectFixedSlots(stage, entries) : []),

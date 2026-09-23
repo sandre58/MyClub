@@ -36,7 +36,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
     public async Task R2_Host_EndToEnd_PublishApplyPlayProgressAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedResolvedDraftPairingCupAsync(factory);
+        var seed = await SeedResolvedDraftSlotCupAsync(factory);
         using var client = factory.CreateClient();
 
         // Prepare (Draft → Ready), including cross-stage progression destination validation.
@@ -68,12 +68,22 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
         }
 
-        // ApplyDraw (Pairing → Scheduled Match)
+        // ApplyDraw (Slot occupancy) then materialize confrontations.
         using (var apply = await client.PostAsJsonAsync(
                    ApplyDrawUri(seed.QuarterStageId, seed.DrawId),
-                   new ApplyDrawRequest([seed.FixtureId.Value])))
+                   new ApplyDrawRequest()))
         {
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var materialize = await client.PostAsJsonAsync(
+                   MaterializeUri(seed.QuarterStageId),
+                   new MaterializeCupFromOccupiedSlotsRequest(
+                   [
+                       new CupSlotPairRequest("S1", "S2")
+                   ])))
+        {
+            materialize.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
         MatchId matchId;
@@ -190,7 +200,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
     public async Task ApplyProgression_when_fixture_has_no_match_leaves_destination_slot_emptyAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedResolvedDraftPairingCupAsync(factory);
+        var seed = await SeedResolvedDraftSlotCupAsync(factory);
         using var client = factory.CreateClient();
 
         using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
@@ -230,6 +240,9 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
     private static Uri ApplyDrawUri(StageId stageId, DrawId drawId) =>
         new($"/stages/{stageId.Value}/draws/{drawId.Value}/apply", UriKind.Relative);
+
+    private static Uri MaterializeUri(StageId stageId) =>
+        new($"/stages/{stageId.Value}/matches/materialize-from-slots", UriKind.Relative);
 
     private static Uri StartUri(MatchId matchId) =>
         new($"/matches/{matchId.Value}/start", UriKind.Relative);
@@ -293,9 +306,9 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
     }
 
     /// <summary>
-    /// Seeds structure + Pairing Draw Draft+Resolved. HTTP workflow starts at Prepare / Publish.
+    /// Seeds structure + Slot Draw Draft+Resolved. HTTP workflow starts at Prepare / Publish.
     /// </summary>
-    private async Task<R2CupSeed> SeedResolvedDraftPairingCupAsync(PlayUpWebApplicationFactory factory)
+    private async Task<R2CupSeed> SeedResolvedDraftSlotCupAsync(PlayUpWebApplicationFactory factory)
     {
         using var scope = factory.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
@@ -309,7 +322,9 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock);
+        quarter.AddSlot("S1");
+        quarter.AddSlot("S2");
+        var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "S1", "S2");
 
         var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
@@ -331,11 +346,15 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         var home = homeEntry.Id;
         var away = awayEntry.Id;
-        var draw = quarter.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        quarter.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home, away]));
+        var draw = quarter.CreateDraw(DrawResolutionKind.Slot, _clock);
+        quarter.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([home, away]));
         quarter.RecordDrawResolution(
             draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(home, away)]),
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(home, "S1"),
+                new SlotDrawPlacement(away, "S2"),
+            ]),
             _clock);
 
         stages.Add(quarter);

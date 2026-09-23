@@ -37,15 +37,12 @@ internal static class DrawInputsJson
 
     private sealed record GroupPlacementDocument(Guid EntryId, Guid GroupId);
 
-    private sealed record PairingDocument(Guid EntryA, Guid EntryB);
-
     private sealed record DrawInputsDocument(
         Guid[] Entries,
         EntryNumberDocument[]? Seeds,
         EntryNumberDocument[]? Pots,
         SlotPlacementDocument[]? FixedSlots,
-        GroupPlacementDocument[]? FixedGroups,
-        PairingDocument[]? FixedPairings)
+        GroupPlacementDocument[]? FixedGroups)
     {
         internal static DrawInputsDocument From(DrawInputs inputs)
         {
@@ -62,10 +59,7 @@ internal static class DrawInputsJson
             GroupPlacementDocument[]? fixedGroups = inputs.FixedGroups.Count == 0
                 ? null
                 : [.. inputs.FixedGroups.Select(p => new GroupPlacementDocument(p.EntryId.Value, p.GroupId.Value))];
-            PairingDocument[]? fixedPairings = inputs.FixedPairings.Count == 0
-                ? null
-                : [.. inputs.FixedPairings.Select(p => new PairingDocument(p.EntryA.Value, p.EntryB.Value))];
-            return new DrawInputsDocument(entries, seeds, pots, fixedSlots, fixedGroups, fixedPairings);
+            return new DrawInputsDocument(entries, seeds, pots, fixedSlots, fixedGroups);
         }
 
         internal DrawInputs ToDomain()
@@ -99,16 +93,7 @@ internal static class DrawInputsJson
                     ]);
             }
 
-            if (FixedPairings is { Length: > 0 })
-            {
-                return DrawInputs.ForPairing(
-                    entries,
-                    seedMap,
-                    pots,
-                    [.. FixedPairings.Select(p => new PairingDrawResult(new EntryId(p.EntryA), new EntryId(p.EntryB)))]);
-            }
-
-            // Empty fixed lists: ForSlot/ForGroup/ForPairing are equivalent for persistence.
+            // Empty fixed lists: ForSlot/ForGroup are equivalent for persistence.
             return DrawInputs.ForSlot(entries, seedMap, pots);
         }
     }

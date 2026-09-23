@@ -276,20 +276,14 @@ export function StructureDrawDialog({
 
   const publishAndApplyMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
-      // Pairing: Host EnsurePairingFixtures when fixtureIds empty — no client 1:1 gate.
       return publishAndApplyDraw(stageId, draw.id, { fixtureIds: [] });
     },
     onSuccess: () => {
       notify.success(tDraw('toastPublishedAndApplied'));
     },
     // Always refresh: Apply may fail after a durable Publish (recovery state).
-    onSettled: async (_data, _error, draw) => {
+    onSettled: async () => {
       await invalidateDrawQueries();
-      if (draw?.kind === 'Pairing') {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.matches.byStage(stageId),
-        });
-      }
     },
   });
 
@@ -304,17 +298,11 @@ export function StructureDrawDialog({
 
   const applyMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
-      // Slot/Group/Pairing — Host ensures Pairing fixtures when body is empty.
       return applyDraw(stageId, draw.id, { fixtureIds: [] });
     },
-    onSuccess: async (_void, draw) => {
+    onSuccess: async () => {
       setApplyConfirmOpen(false);
       await invalidateDrawQueries();
-      if (draw.kind === 'Pairing') {
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.matches.byStage(stageId),
-        });
-      }
       notify.success(tDraw('toastApplied'));
     },
   });
@@ -713,12 +701,12 @@ function DrawExecutionDetail({
   const canPublishAndApply =
     draw.status === 'Draft' &&
     draw.resolutionState === 'Resolved' &&
-    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
+    (draw.kind === 'Slot' || draw.kind === 'Group');
   const canApply =
     draw.status === 'Published' &&
     draw.resolutionState === 'Resolved' &&
     !ui.isApplied &&
-    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
+    (draw.kind === 'Slot' || draw.kind === 'Group');
   const canCancel =
     draw.status === 'Draft' || draw.status === 'Published';
 
@@ -740,11 +728,9 @@ function DrawExecutionDetail({
         )
       : [];
 
-  const hasPairings =
-    ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0;
   const hasSlots = ui.showResults && draw.kind === 'Slot' && slotRows.length > 0;
   const hasGroups = ui.showResults && draw.kind === 'Group' && groupRows.length > 0;
-  const showResults = hasPairings || hasSlots || hasGroups;
+  const showResults = hasSlots || hasGroups;
 
   const stateActions =
     canPublishAndApply || canApply || canCancel ? (
@@ -847,46 +833,6 @@ function DrawExecutionDetail({
 
       {showResults ? (
         <div className="structure-draw-result">
-          {hasPairings ? (
-            <ul className="draw-pairing-list">
-              {draw.pairings.map((pairing) => {
-                const sideA = pairingSideLabels(
-                  pairing.entryADisplayName,
-                  pairing.entryAShortName,
-                  tCommon('unknownEntry'),
-                );
-                const sideB = pairingSideLabels(
-                  pairing.entryBDisplayName,
-                  pairing.entryBShortName,
-                  tCommon('unknownEntry'),
-                );
-                return (
-                  <li
-                    key={`${pairing.entryAId}-${pairing.entryBId}`}
-                    className="draw-pairing"
-                  >
-                    <DrawConfrontationSide
-                      side={{
-                        ...sideA,
-                        logoMediaId: pairing.entryALogoMediaId,
-                        primaryColor: pairing.entryAPrimaryColor,
-                      }}
-                    />
-                    <span className="draw-pairing__vs">{t('vs')}</span>
-                    <DrawConfrontationSide
-                      side={{
-                        ...sideB,
-                        logoMediaId: pairing.entryBLogoMediaId,
-                        primaryColor: pairing.entryBPrimaryColor,
-                      }}
-                      away
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
-
           {hasSlots ? (
             <ul className="draw-pairing-list" aria-label={t('result')}>
               {slotRows.map((row) => (

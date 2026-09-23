@@ -31,7 +31,7 @@ public sealed class StageOverviewAssemblerTests
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
         stage.AddSlot("QF1-A");
         stage.AddSlot("QF1-B");
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
 
         var overview = StageOverviewAssembler.Assemble(stage, competition);
 
@@ -47,15 +47,15 @@ public sealed class StageOverviewAssemblerTests
             slot.EntryId == null && slot.DisplayName == null && !slot.CoveredByCompleteFixture);
         overview.Draws.Should().ContainSingle();
         overview.Draws[0].Id.Should().Be(draw.Id.Value);
-        overview.Draws[0].Kind.Should().Be(DrawResolutionKind.Pairing);
+        overview.Draws[0].Kind.Should().Be(DrawResolutionKind.Slot);
         overview.Draws[0].Status.Should().Be(DrawStatus.Draft);
         overview.Draws[0].ResolutionState.Should().Be(DrawResolutionState.NotResolved);
-        overview.Draws[0].Pairings.Should().BeEmpty();
+        overview.Draws[0].SlotPlacements.Should().BeEmpty();
         home.Id.Should().NotBe(away.Id);
     }
 
     [Fact]
-    public void Assemble_maps_resolved_pairing_draw_and_populated_slots_with_display_names()
+    public void Assemble_maps_resolved_slot_draw_and_populated_slots_with_display_names()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var home = competition.AddEntry(TeamId.New(), "Alpha", _clock);
@@ -63,14 +63,18 @@ public sealed class StageOverviewAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         stage.AddSlot("SF1-A");
         stage.AddSlot("SF1-B");
-        stage.ReplaceCompositionEntries([home.Id], _clock);
+        stage.ReplaceCompositionEntries([home.Id, away.Id], _clock);
         stage.AssignEntryToSlot("SF1-A", home.Id);
 
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([home.Id, away.Id]));
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([home.Id, away.Id]));
         stage.RecordDrawResolution(
             draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(home.Id, away.Id)]),
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(home.Id, "SF1-A"),
+                new SlotDrawPlacement(away.Id, "SF1-B"),
+            ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);
 
@@ -81,13 +85,12 @@ public sealed class StageOverviewAssemblerTests
         overview.Slots.Single(slot => slot.SlotKey == "SF1-B").EntryId.Should().BeNull();
         overview.Draws[0].Status.Should().Be(DrawStatus.Published);
         overview.Draws[0].ResolutionState.Should().Be(DrawResolutionState.Resolved);
-        overview.Draws[0].Pairings.Should().ContainSingle();
-        overview.Draws[0].Pairings[0].EntryADisplayName.Should().Be("Alpha");
-        overview.Draws[0].Pairings[0].EntryAShortName.Should().NotBeNullOrWhiteSpace();
-        overview.Draws[0].Pairings[0].EntryBDisplayName.Should().Be("Beta");
-        overview.Draws[0].Pairings[0].EntryBShortName.Should().NotBeNullOrWhiteSpace();
-        overview.Draws[0].Pairings[0].EntryALogoMediaId.Should().BeNull();
-        overview.Draws[0].Pairings[0].EntryBLogoMediaId.Should().BeNull();
+        overview.Draws[0].SlotPlacements.Should().HaveCount(2);
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-A").DisplayName.Should().Be("Alpha");
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-A").ShortName.Should().NotBeNullOrWhiteSpace();
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-B").DisplayName.Should().Be("Beta");
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-B").ShortName.Should().NotBeNullOrWhiteSpace();
+        overview.Draws[0].SlotPlacements.Should().OnlyContain(p => p.LogoMediaId == null);
     }
 
     [Fact]
@@ -120,7 +123,7 @@ public sealed class StageOverviewAssemblerTests
         overview.Draws[0].SlotPlacements[0].ShortName.Should().Be("SEE");
         overview.Draws[0].SlotPlacements[0].LogoMediaId.Should().Be(logoId);
         overview.Draws[0].SlotPlacements[0].PrimaryColor.Should().Be("#112233");
-        overview.Draws[0].Pairings.Should().BeEmpty();
+        overview.Draws[0].GroupPlacements.Should().BeEmpty();
     }
 
     [Fact]

@@ -262,7 +262,7 @@ internal static class ScenarioOrchestration
         return created;
     }
 
-    public static IReadOnlyList<Match> ApplyCupPairingDeterministic(
+    public static IReadOnlyList<Match> ApplyCupSlotDrawDeterministic(
         ScenarioContext context,
         Competition competition,
         Stage stage)
@@ -276,52 +276,26 @@ internal static class ScenarioOrchestration
         var entries = stage.CompositionEntries
             .Select(entry => entry.EntryId)
             .OrderBy(id => id.Value)
-            .ToList();
+            .ToArray();
 
-        if (entries.Count < 2 || (entries.Count & (entries.Count - 1)) != 0)
+        if (entries.Length < 2 || (entries.Length & (entries.Length - 1)) != 0)
         {
             throw new InvalidOperationException(
-                $"Cup pairing on '{stage.Name.Value}' requires a power-of-two Composition count (got {entries.Count}).");
+                $"Cup slot draw on '{stage.Name.Value}' requires a power-of-two Composition count (got {entries.Length}).");
         }
 
-        var draw = stage.CreateDraw(
-            DrawResolutionKind.Pairing,
-            context.Ids.Draw($"pairing-{stage.Id.Value:N}"),
-            context.Clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing(entries));
-
-        var pairings = new List<PairingDrawResult>();
-        for (var i = 0; i < entries.Count; i += 2)
+        var slotKeys = stage.Slots
+            .Select(slot => slot.SlotKey)
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToArray();
+        if (slotKeys.Length != entries.Length)
         {
-            pairings.Add(new PairingDrawResult(entries[i], entries[i + 1]));
+            throw new InvalidOperationException(
+                $"Cup slot draw on '{stage.Name.Value}' requires slot count ({slotKeys.Length}) to match composition ({entries.Length}).");
         }
 
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedPairings(pairings),
-            context.Clock);
-        stage.PublishDraw(draw.Id, context.Clock);
-
-        var round = stage.Rounds[0];
-        while (round.Fixtures.Count < pairings.Count)
-        {
-            stage.AddFixture(round.Id, context.Clock);
-        }
-
-        var fixtures = round.Fixtures.Take(pairings.Count).ToList();
-        var applyResult = ApplyDraw.Execute(
-            stage,
-            draw.Id,
-            context.Clock,
-            new PairingApplicationContext([.. fixtures.Select(fixture => fixture.Id)]),
-            []);
-        foreach (var match in applyResult.CreatedMatches)
-        {
-            context.Matches.Add(match);
-        }
-
-        MatchEnrichment.ApplyKickoffs(context, competition, stage, applyResult.CreatedMatches);
-        return applyResult.CreatedMatches;
+        RecordAndApplySlotDraw(context, stage, entries, slotKeys);
+        return MaterializeFromSlots(context, competition, stage, AdjacentPairs(slotKeys));
     }
 
     /// <summary>
@@ -912,7 +886,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         EngageRandomDrawRules(quarter, context.Clock);
-        var qfMatches = ApplyCupPairingDeterministic(context, competition, quarter);
+        var qfMatches = ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
         var semi = Stage.Create(
@@ -1292,7 +1266,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         EngageRandomDrawRules(quarter, context.Clock);
-        var qfMatches = ApplyCupPairingDeterministic(context, competition, quarter);
+        var qfMatches = ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var semi = Stage.Create(
             competition.Id,
@@ -1590,9 +1564,9 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
 
-        // Engage DrawRules so Structure chrome (badge + CTA) matches the seeded Pairing execution.
+        // Engage DrawRules so Structure chrome (badge + CTA) matches the seeded Slot draw execution.
         quarter.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        var qfMatches = ApplyCupPairingDeterministic(context, competition, quarter);
+        var qfMatches = ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var semi = Stage.Create(
             competition.Id,
@@ -1640,7 +1614,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Coupe de France multi-stage: R32 pairing draw → Winner→Population intents → Slot Draw placement
+    /// Coupe de France multi-stage: R32 Slot draw → Winner→Population intents → Slot Draw placement
     /// through Final; PlacementAwards 1–2; Completed + Outcome.
     /// Ignores <see cref="ScenarioContext.Progress"/> (fixed seed). Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
     /// </summary>
@@ -1677,7 +1651,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         roundOf32.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        var r32Matches = ApplyCupPairingDeterministic(context, competition, roundOf32);
+        var r32Matches = ApplyCupSlotDrawDeterministic(context, competition, roundOf32);
 
         var r16SlotKeys = PairSlotKeys("R16", pairCount: 8);
         var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
@@ -2431,7 +2405,7 @@ internal static class ScenarioOrchestration
         => recipe.Format switch
         {
             RecipeFormat.Groups => AssignThenMaterializeGroups(context, competition, stage, entries),
-            RecipeFormat.Cup => ApplyCupPairingDeterministic(context, competition, stage),
+            RecipeFormat.Cup => ApplyCupSlotDrawDeterministic(context, competition, stage),
             RecipeFormat.Championship => MaterializeChampionshipMatches(context, competition, stage),
             RecipeFormat.Swiss => throw new InvalidOperationException(
                 "Swiss does not use MaterializeForFormat — ApplySwissProgress after PrepareAndStart."),

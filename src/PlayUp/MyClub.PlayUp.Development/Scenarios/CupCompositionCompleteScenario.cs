@@ -23,7 +23,7 @@ public sealed class CupCompositionCompleteScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Cup 16 bracket, composition 16/16 (E2 Modifier), no pairing draw yet.";
+        "Cup 16 bracket, composition 16/16 (E2 Modifier), no Slot draw yet.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

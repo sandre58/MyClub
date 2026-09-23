@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Cup bracket structured without pairing draw — Draft, ready for tirage.
+/// Cup bracket structured without Slot draw — Draft, ready for tirage.
 /// </summary>
 public sealed class CupDrawPendingScenario : IScenario
 {
@@ -23,7 +23,7 @@ public sealed class CupDrawPendingScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Cup 16 bracket + entries, composition empty (E0 Constituer), no pairing draw. Contrast: cup-composition-complete / cup:prepared.";
+        "Cup 16 bracket + entries, composition empty (E0 Constituer), no Slot draw. Contrast: cup-composition-complete / cup:prepared.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

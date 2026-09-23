@@ -18,7 +18,7 @@ public static class CreateDraw
     /// Creates a Draft draw of the given resolution kind.
     /// </summary>
     /// <param name="stage">Owning stage.</param>
-    /// <param name="kind">Resolution kind (Slot, Group, Pairing).</param>
+    /// <param name="kind">Resolution kind (Slot or Group).</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <returns>The created draw.</returns>
     public static Draw Execute(Stage stage, DrawResolutionKind kind, IClock clock)

@@ -41,7 +41,7 @@ public sealed class DrawInputsJsonConverterTests
     }
 
     [Fact]
-    public void Convert_round_trips_group_and_pairing_fixed_lists()
+    public void Convert_round_trips_group_fixed_lists()
     {
         var entryA = EntryId.New();
         var entryB = EntryId.New();
@@ -51,11 +51,6 @@ public sealed class DrawInputsJsonConverterTests
         Structural(
             (DrawInputs)_converter.ConvertFromProvider(_converter.ConvertToProvider(groupInputs))!,
             groupInputs);
-
-        var pairingInputs = DrawInputs.ForPairing([entryA, entryB], fixedPlacements: [new PairingDrawResult(entryA, entryB)]);
-        Structural(
-            (DrawInputs)_converter.ConvertFromProvider(_converter.ConvertToProvider(pairingInputs))!,
-            pairingInputs);
     }
 
     [Fact]
@@ -74,7 +69,6 @@ public sealed class DrawInputsJsonConverterTests
         actual.Entries.Should().Equal(expected.Entries);
         actual.FixedSlots.Should().Equal(expected.FixedSlots);
         actual.FixedGroups.Should().Equal(expected.FixedGroups);
-        actual.FixedPairings.Should().Equal(expected.FixedPairings);
         if (expected.SeedMap is null)
         {
             actual.SeedMap.Should().BeNull();

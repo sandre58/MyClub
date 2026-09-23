@@ -505,7 +505,6 @@ describe('StructurePage Structure hub', () => {
           kind: 'Group',
           status: 'Draft',
           resolutionState: 'NotResolved',
-          pairings: [],
           slotPlacements: [],
         },
       ],

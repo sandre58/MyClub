@@ -41,8 +41,7 @@ public sealed class DrawInputsJsonConverter : ValueConverter<DrawInputs?, string
             && MapEquals(left.SeedMap?.Seeds, right.SeedMap?.Seeds)
             && MapEquals(left.PotMembership?.Pots, right.PotMembership?.Pots)
             && left.FixedSlots.SequenceEqual(right.FixedSlots)
-            && left.FixedGroups.SequenceEqual(right.FixedGroups)
-            && left.FixedPairings.SequenceEqual(right.FixedPairings)));
+            && left.FixedGroups.SequenceEqual(right.FixedGroups)));
 
     private static int StructuralHash(DrawInputs? inputs)
     {
@@ -65,11 +64,6 @@ public sealed class DrawInputsJsonConverter : ValueConverter<DrawInputs?, string
         }
 
         foreach (var item in inputs.FixedGroups)
-        {
-            hash.Add(item);
-        }
-
-        foreach (var item in inputs.FixedPairings)
         {
             hash.Add(item);
         }

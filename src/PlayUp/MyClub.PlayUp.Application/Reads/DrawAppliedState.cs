@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -15,11 +14,9 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 /// <remarks>
 /// Domain has no Applied status. Applied means a <see cref="DrawStatus.Published"/> draw's
-/// resolution occupancy/attachments already match the stage — Publish ≠ Apply.
+/// resolution occupancy already matches the stage — Publish ≠ Apply.
 /// Draft/Cancelled draws never report Applied even if stage occupancy still matches a prior Apply
 /// (Cancel does not unwind materialization).
-/// Pairing: each fixture must have attachments equal to the hosting Round's TieFormat legs
-/// (null TieFormat ⇒ OneLeg).
 /// </remarks>
 public static class DrawAppliedState
 {
@@ -28,7 +25,7 @@ public static class DrawAppliedState
     /// </summary>
     /// <param name="draw">Draw entity.</param>
     /// <param name="stage">Owning stage.</param>
-    /// <returns><see langword="true"/> when the draw is Published and placements/attachments match.</returns>
+    /// <returns><see langword="true"/> when the draw is Published and placements match.</returns>
     public static bool IsApplied(Draw draw, Stage stage)
     {
         ArgumentNullException.ThrowIfNull(draw);
@@ -44,7 +41,6 @@ public static class DrawAppliedState
         {
             DrawResolutionKind.Slot => IsSlotApplied(draw, stage),
             DrawResolutionKind.Group => IsGroupApplied(draw, stage),
-            DrawResolutionKind.Pairing => IsPairingApplied(draw, stage),
             _ => false
         };
     }
@@ -75,20 +71,5 @@ public static class DrawAppliedState
         }
 
         return true;
-    }
-
-    private static bool IsPairingApplied(Draw draw, Stage stage)
-    {
-        var pairings = draw.Resolution.PairingResults;
-        var fixtures = stage.Rounds.SelectMany(round => round.Fixtures).ToArray();
-        return pairings.Count != 0
-               && fixtures.Length != 0
-               && pairings.Count == fixtures.Length
-               && fixtures.All(fixture =>
-               {
-                   var round = stage.Rounds.First(r => r.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
-                   var expectedLegs = TieFormat.OrDefaultOneLeg(round.TieFormat).NumberOfLegs;
-                   return fixture.Attachments.Count == expectedLegs;
-               });
     }
 }

@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Application.Stages;
 /// Shared Application helper: attach cup confrontation Matches (LegIndex 1 / optional 2) to a Fixture.
 /// </summary>
 /// <remarks>
-/// Used by Pairing <see cref="ApplyDraw"/> and <see cref="MaterializeCupFromOccupiedSlots"/>.
+/// Used by <see cref="MaterializeCupFromOccupiedSlots"/>.
 /// TwoLegs = same Fixture, Leg 2 Home/Away mirrored — not Double RR.
 /// </remarks>
 internal static class CupConfrontationMaterializer

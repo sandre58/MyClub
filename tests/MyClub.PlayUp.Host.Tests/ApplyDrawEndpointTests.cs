@@ -27,32 +27,24 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 14, 20, 0, 0, TimeSpan.Zero));
 
     [IntegrationFact]
-    public async Task Apply_pairing_returns_204_and_persists_Scheduled_matchAsync()
+    public async Task Apply_slot_returns_204_and_persists_slot_occupancyAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedPublishedPairingAsync(factory);
+        var seed = await SeedPublishedSlotDrawAsync(factory);
 
         using var client = factory.CreateClient();
         using var response = await client.PostAsJsonAsync(
             ApplyUri(seed.StageId, seed.DrawId),
-            new ApplyDrawRequest([seed.FixtureId.Value]));
+            new ApplyDrawRequest());
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var scope = factory.Services.CreateScope();
-        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-
-        var stage = await stages.GetByIdForUpdateAsync(seed.StageId);
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
-        var matchId = stage.GetFixture(seed.FixtureId).MatchIds.Should().ContainSingle().Subject;
-
-        var match = await matches.GetByIdForUpdateAsync(matchId);
-        match.Should().NotBeNull();
-        match.Status.Should().Be(MatchStatus.Scheduled);
-        match.HomeEntryId.Should().Be(seed.EntryA);
-        match.AwayEntryId.Should().Be(seed.EntryB);
-        match.Result.Should().BeNull();
+        stage.FindSlot("S1")!.EntryId.Should().Be(seed.EntryA);
+        stage.FindSlot("S2")!.EntryId.Should().Be(seed.EntryB);
+        stage.GetFixture(seed.FixtureId).MatchIds.Should().BeEmpty();
     }
 
     [IntegrationFact]
@@ -63,7 +55,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         using var client = factory.CreateClient();
         using var response = await client.PostAsJsonAsync(
             ApplyUri(StageId.New(), DrawId.New()),
-            new ApplyDrawRequest([Guid.NewGuid()]));
+            new ApplyDrawRequest());
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
@@ -72,15 +64,15 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Apply_when_draw_draft_returns_400_and_creates_no_matchAsync()
+    public async Task Apply_when_draw_draft_returns_400_and_occupies_no_slotsAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedDraftPairingAsync(factory);
+        var seed = await SeedDraftSlotDrawAsync(factory);
 
         using var client = factory.CreateClient();
         using var response = await client.PostAsJsonAsync(
             ApplyUri(seed.StageId, seed.DrawId),
-            new ApplyDrawRequest([seed.FixtureId.Value]));
+            new ApplyDrawRequest());
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
@@ -89,21 +81,32 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
 
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
-        stage!.GetFixture(seed.FixtureId).MatchIds.Should().BeEmpty();
+        stage!.FindSlot("S1")!.EntryId.Should().BeNull();
+        stage.FindSlot("S2")!.EntryId.Should().BeNull();
     }
 
     [IntegrationFact]
-    public async Task Apply_then_start_persists_Live_matchAsync()
+    public async Task Apply_materialize_then_start_persists_Live_matchAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedPublishedPairingAsync(factory);
+        var seed = await SeedPublishedSlotDrawAsync(factory);
 
         using var client = factory.CreateClient();
         using (var apply = await client.PostAsJsonAsync(
                    ApplyUri(seed.StageId, seed.DrawId),
-                   new ApplyDrawRequest([seed.FixtureId.Value])))
+                   new ApplyDrawRequest()))
         {
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var materialize = await client.PostAsJsonAsync(
+                   MaterializeUri(seed.StageId),
+                   new MaterializeCupFromOccupiedSlotsRequest(
+                   [
+                       new CupSlotPairRequest("S1", "S2")
+                   ])))
+        {
+            materialize.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
         MatchId matchId;
@@ -128,6 +131,9 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
     private static Uri ApplyUri(StageId stageId, DrawId drawId) =>
         new($"/stages/{stageId.Value}/draws/{drawId.Value}/apply", UriKind.Relative);
 
+    private static Uri MaterializeUri(StageId stageId) =>
+        new($"/stages/{stageId.Value}/matches/materialize-from-slots", UriKind.Relative);
+
     private static string? GetCode(ProblemDetails problem) =>
         !problem.Extensions.TryGetValue("code", out var raw) || raw is null
             ? null
@@ -138,13 +144,13 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
                 _ => raw.ToString()
             };
 
-    private Task<PairingSeed> SeedPublishedPairingAsync(PlayUpWebApplicationFactory factory) =>
-        SeedPairingAsync(factory, publish: true);
+    private Task<SlotDrawSeed> SeedPublishedSlotDrawAsync(PlayUpWebApplicationFactory factory) =>
+        SeedSlotDrawAsync(factory, publish: true);
 
-    private Task<PairingSeed> SeedDraftPairingAsync(PlayUpWebApplicationFactory factory) =>
-        SeedPairingAsync(factory, publish: false);
+    private Task<SlotDrawSeed> SeedDraftSlotDrawAsync(PlayUpWebApplicationFactory factory) =>
+        SeedSlotDrawAsync(factory, publish: false);
 
-    private async Task<PairingSeed> SeedPairingAsync(PlayUpWebApplicationFactory factory, bool publish)
+    private async Task<SlotDrawSeed> SeedSlotDrawAsync(PlayUpWebApplicationFactory factory, bool publish)
     {
         using var scope = factory.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
@@ -156,14 +162,20 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("R1", _clock);
-        var addFixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("S1");
+        stage.AddSlot("S2");
+        var addFixture = stage.AddFixture(round.Id, _clock, "S1", "S2");
         var entryA = EntryId.New();
         var entryB = EntryId.New();
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([entryA, entryB]));
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entryA, entryB]));
         stage.RecordDrawResolution(
             draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(entryA, entryB)]),
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(entryA, "S1"),
+                new SlotDrawPlacement(entryB, "S2"),
+            ]),
             _clock);
         if (publish)
         {
@@ -174,10 +186,10 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
 
-        return new PairingSeed(stage.Id, draw.Id, addFixture.Id, entryA, entryB);
+        return new SlotDrawSeed(stage.Id, draw.Id, addFixture.Id, entryA, entryB);
     }
 
-    private sealed record PairingSeed(
+    private sealed record SlotDrawSeed(
         StageId StageId,
         DrawId DrawId,
         FixtureId FixtureId,

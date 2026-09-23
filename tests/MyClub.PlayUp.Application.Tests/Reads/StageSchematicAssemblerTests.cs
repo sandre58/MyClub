@@ -297,7 +297,7 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Cup_pairing_fixture_exposes_sides_and_connection_from_real_match()
+    public void Cup_fixture_exposes_sides_and_connection_from_real_match()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var alpha = competition.AddEntry(TeamId.New(), "Alpha", _clock);
@@ -313,7 +313,7 @@ public sealed class StageSchematicAssemblerTests
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage], [row]);
 
-        // I3 — Places-first: unbound Pairing sides must not replace existing SlotKeys.
+        // I3 — Places-first: fixture sides must not replace existing SlotKeys.
         schematic.Cases.Should().HaveCount(2);
         schematic.Cases.Select(c => c.FormPosition.SlotKey).Should().BeEquivalentTo(["S1", "S2"]);
         schematic.Cases.Should().OnlyContain(c => c.Entry == null && c.Assignment == null);
@@ -323,36 +323,6 @@ public sealed class StageSchematicAssemblerTests
         schematic.Connections[0].SlotAKey.Should().BeNull();
         schematic.Connections[0].SlotBKey.Should().BeNull();
         schematic.Connections[0].MatchNumber.Should().Be(1);
-    }
-
-    [Fact]
-    public void Cup_published_pairing_with_empty_slots_keeps_place_cases()
-    {
-        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
-        var alpha = competition.AddEntry(TeamId.New(), "Alpha", _clock);
-        var beta = competition.AddEntry(TeamId.New(), "Beta", _clock);
-        var stage = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
-        stage.AddRound("R32", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        stage.AddSlot("S1");
-        stage.AddSlot("S2");
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
-        var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
-
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([alpha.Id, beta.Id]));
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(alpha.Id, beta.Id)]),
-            _clock);
-        stage.PublishDraw(draw.Id, _clock);
-
-        var row = new MatchSummaryRow(matchId, stage.Id, MatchStatus.Finished, alpha.Id, beta.Id, null);
-        var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage], [row]);
-
-        schematic.Cases.Should().HaveCount(2);
-        schematic.Cases.Select(c => c.FormPosition.SlotKey).Should().BeEquivalentTo(["S1", "S2"]);
-        schematic.Cases.Should().OnlyContain(c => c.Entry == null);
     }
 
     [Fact]
@@ -390,27 +360,30 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Cup_pairing_fixture_exposes_draw_feed_origin_when_pairing_draw_is_published()
+    public void Cup_slot_draw_exposes_draw_feed_origin_when_published()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var alpha = competition.AddEntry(TeamId.New(), "Alpha", _clock);
         var beta = competition.AddEntry(TeamId.New(), "Beta", _clock);
         var stage = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R32", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
-        var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
+        stage.AddSlot("S1");
+        stage.AddSlot("S2");
+        stage.ReplaceCompositionEntries([alpha.Id, beta.Id], _clock);
 
-        var draw = stage.CreateDraw(DrawResolutionKind.Pairing, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForPairing([alpha.Id, beta.Id]));
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([alpha.Id, beta.Id]));
         stage.RecordDrawResolution(
             draw.Id,
-            DrawResolution.ResolvedPairings([new PairingDrawResult(alpha.Id, beta.Id)]),
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(alpha.Id, "S1"),
+                new SlotDrawPlacement(beta.Id, "S2"),
+            ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);
 
-        var row = new MatchSummaryRow(matchId, stage.Id, MatchStatus.Finished, alpha.Id, beta.Id, null);
-        var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage], [row]);
+        var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage]);
 
         schematic.Cases.Should().HaveCount(2);
         schematic.Cases.Should().OnlyContain(c =>
