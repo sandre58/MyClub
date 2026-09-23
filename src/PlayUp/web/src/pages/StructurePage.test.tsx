@@ -431,8 +431,8 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
     const launch = screen.getByRole('button', { name: /Lancer le tirage/i });
     expect(launch).toHaveAttribute('data-tone', 'emphasis');
-    expect(launch).toHaveTextContent(/Tirage aléatoire/i);
     expect(launch).toHaveTextContent(/équipes résolues/i);
+    expect(launch).not.toHaveTextContent(/Tirage aléatoire/i);
     expect(launch.querySelector('.structure-draw-cta__chevron')).not.toBeNull();
     expect(
       screen.getByRole('button', { name: /Paramètres du tirage/i }),

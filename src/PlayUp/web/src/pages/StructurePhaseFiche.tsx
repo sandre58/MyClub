@@ -1526,9 +1526,6 @@ export function StructurePhaseFiche({
     showPoolHint && placesN != null
       ? resolveDrawCtaPoolTone(poolFilled, placesN)
       : 'neutral';
-  const drawCtaModeLabel = stage.hasDrawRules
-    ? t('fiche.drawModeRandom')
-    : null;
   const showConfrontation = sections.includes('confrontation');
   const canEditProg = actions.includes('ReplaceProgressionRules');
   const canEditPlacement = actions.includes('ReplacePlacementAwardRules');
@@ -1881,15 +1878,14 @@ export function StructurePhaseFiche({
                         : t('fiche.performDraw')
                     }
                     body={
-                      showPoolHint && placesN != null && drawCtaModeLabel ? (
+                      showPoolHint && placesN != null ? (
                         <DrawCtaActionBody
                           filled={poolFilled}
                           capacity={placesN}
                           teamsCaption={t('fiche.drawCtaTeamsCaption')}
                           poolTone={drawCtaPoolTone}
-                          modeLabel={drawCtaModeLabel}
                         />
-                      ) : drawCtaModeLabel
+                      ) : null
                     }
                     onClick={() => setDrawWorkflowOpen(true)}
                   />

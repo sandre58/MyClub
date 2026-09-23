@@ -4,9 +4,15 @@ import { useTranslation } from 'react-i18next';
 import {
   replaceStageDrawRules,
 } from '../api';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
+import { ChoiceTile } from '../design-system/components/ChoiceTile';
 import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { InputNumber } from '../design-system/components/InputNumber';
+import { SwitchPanel } from '../design-system/components/SwitchPanel';
+import { notify } from '../design-system/toastStore';
+import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
+import { RandomIcon } from '../design-system/icons/contentIcons';
 import { MutationError, PendingLabel } from '../ui';
 import type {
   StructureStageHubSummary,
@@ -163,6 +169,7 @@ export function ConfrontationEditors({
 /**
  * Activate (`DrawRules` null → Random min) or edit DrawRules params.
  * Deactivate lives under the fiche CTA group (not in this dialog).
+ * V1 fields: Mode (RO) + PotRules for Groups only (SwitchPanel). Seeds/constraints not editable.
  */
 export function DrawRulesDialog({
   competitionId,
@@ -179,122 +186,208 @@ export function DrawRulesDialog({
 }) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
+  const { t: tReg } = useTranslation('regulation');
   const formId = useId();
   const queryClient = useQueryClient();
-  const [numberOfPots, setNumberOfPots] = useState<number | null>(
-    stage.numberOfPots ?? null,
-  );
-  const [numberOfSeeds, setNumberOfSeeds] = useState<number | null>(
-    stage.numberOfSeeds ?? null,
-  );
+  const isActivate = intent === 'activate';
+  const showPots = stage.formatKind === 'Groups';
+  const defaultPots =
+    stage.placesPerGroup != null && stage.placesPerGroup >= 2
+      ? stage.placesPerGroup
+      : 2;
+
+  const [usePots, setUsePots] = useState(false);
+  const [numberOfPots, setNumberOfPots] = useState(defaultPots);
+  const [baselineUsePots, setBaselineUsePots] = useState(false);
+  const [baselinePots, setBaselinePots] = useState(defaultPots);
+
+  const normalizedPots = showPots && usePots ? normalizeDrawPots(numberOfPots) : null;
+  const isDirty = showPots
+    ? usePots !== baselineUsePots ||
+      (usePots && numberOfPots !== baselinePots)
+    : false;
+  /** Activate may save while clean (engagement). Params require a field delta. */
+  const canSave = isActivate || isDirty;
+
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(isDirty, onClose);
 
   useEffect(() => {
-    if (open) {
-      setNumberOfPots(stage.numberOfPots ?? null);
-      setNumberOfSeeds(stage.numberOfSeeds ?? null);
+    if (!open) {
+      return;
     }
-  }, [open, stage]);
+    const pots = normalizeDrawPots(stage.numberOfPots ?? null);
+    const enabled = pots != null;
+    const value = pots ?? defaultPots;
+    setUsePots(enabled);
+    setNumberOfPots(value);
+    setBaselineUsePots(enabled);
+    setBaselinePots(value);
+    resetDiscard();
+  }, [open, stage, defaultPots, resetDiscard]);
 
   const saveMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       const body: ReplaceStageDrawRulesRequest = {
         clear: false,
         mode: 'Random',
-        numberOfPots:
-          numberOfPots != null && numberOfPots >= 2
-            ? numberOfPots
-            : undefined,
-        numberOfSeeds:
-          numberOfSeeds != null && numberOfSeeds > 0
-            ? numberOfSeeds
-            : undefined,
+        numberOfPots: showPots ? (normalizedPots ?? undefined) : undefined,
       };
-      return replaceStageDrawRules(stage.stageId, body);
+      const demoted = stage.status === 'Ready';
+      await replaceStageDrawRules(stage.stageId, body);
+      return { demoted, activated: isActivate };
     },
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, competitionId);
+    onSuccess: async (result) => {
+      await invalidateAfterStructureMutation(queryClient, competitionId, {
+        stageId: stage.stageId,
+      });
+      notify.success(
+        result.activated
+          ? t('regulation.drawActivatedToast')
+          : t('regulation.drawParamsSavedToast'),
+      );
+      if (result.demoted) {
+        notify.attention(t('regulation.drawSavedDemotedToast'));
+      }
       onClose();
     },
   });
 
-  const isActivate = intent === 'activate';
   const title = isActivate ? t('fiche.activateDraw') : t('fiche.drawParams');
   const saveLabel = isActivate
     ? t('fiche.activateDraw')
     : t('regulation.save');
   const busy = saveMutation.isPending;
 
+  function requestClose() {
+    requestDiscardClose(busy);
+  }
+
+  function requestSave() {
+    if (busy || !canSave) {
+      return;
+    }
+    saveMutation.mutate();
+  }
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={title}
-      description={stage.name}
-      size="sm"
-      closeLabel={tCommon('close')}
-      closeDisabled={busy}
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            onClick={onClose}
-            disabled={busy}
-          >
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            className="ds-btn ds-btn--primary"
-            disabled={busy}
-          >
-            {saveMutation.isPending ? (
-              <PendingLabel>{t('regulation.saving')}</PendingLabel>
-            ) : (
-              saveLabel
-            )}
-          </button>
-        </>
-      }
-      footerStatus={
-        saveMutation.isError ? (
-          <MutationError error={saveMutation.error} />
-        ) : null
-      }
-    >
-      <form
-        id={formId}
-        className="structure-form"
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault();
-          saveMutation.mutate();
-        }}
+    <>
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={title}
+        description={stage.name}
+        size="sm"
+        closeLabel={tCommon('close')}
+        closeDisabled={busy || discardOpen}
+        trapFocus={!discardOpen}
+        footer={
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost"
+              onClick={requestClose}
+              disabled={busy || discardOpen}
+            >
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="submit"
+              form={formId}
+              className="ds-btn ds-btn--primary"
+              disabled={busy || discardOpen || !canSave}
+            >
+              {saveMutation.isPending ? (
+                <PendingLabel>{t('regulation.saving')}</PendingLabel>
+              ) : (
+                saveLabel
+              )}
+            </button>
+          </>
+        }
+        footerStatus={
+          saveMutation.isError ? (
+            <MutationError error={saveMutation.error} />
+          ) : null
+        }
       >
-        <p className="structure-detail__hint">
-          {isActivate
-            ? t('regulation.activateDrawHint')
-            : t('regulation.drawModeHint')}
-        </p>
-        <Field label={t('regulation.numberOfPots')}>
-          <InputNumber
-            value={numberOfPots}
-            min={2}
-            max={16}
-            controlsLayout="split"
-            onChange={(value) => setNumberOfPots(value)}
-          />
-        </Field>
-        <Field label={t('regulation.numberOfSeeds')}>
-          <InputNumber
-            value={numberOfSeeds}
-            min={0}
-            max={64}
-            controlsLayout="split"
-            onChange={(value) => setNumberOfSeeds(value)}
-          />
-        </Field>
-      </form>
-    </Dialog>
+        <form
+          id={formId}
+          className="structure-form"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault();
+            requestSave();
+          }}
+        >
+          <Field label={t('regulation.drawModeLabel')}>
+            <div
+              className="structure-qualification__scope-tiles"
+              data-count="1"
+              role="radiogroup"
+              aria-label={t('regulation.drawModeLabel')}
+            >
+              <ChoiceTile
+                label={t('fiche.drawModeRandomShort')}
+                description={t('fiche.drawModeRandom')}
+                leading={<RandomIcon size="sm" />}
+                selected
+                onChange={(selected) => {
+                  // Sole V1 mode — cannot deselect.
+                  if (!selected) return;
+                }}
+              />
+            </div>
+          </Field>
+          {showPots ? (
+            <SwitchPanel
+              title={t('regulation.potsPanelTitle')}
+              description={t('regulation.potsPanelHint')}
+              checked={usePots}
+              onChange={(checked) => {
+                setUsePots(checked);
+                if (checked && numberOfPots < 2) {
+                  setNumberOfPots(defaultPots);
+                }
+              }}
+              switchLabel={t('regulation.enablePots')}
+            >
+              <Field label={t('regulation.numberOfPots')} required>
+                <InputNumber
+                  value={numberOfPots}
+                  min={2}
+                  max={16}
+                  controlsLayout="split"
+                  onChange={(value) => {
+                    if (value != null && Number.isFinite(value)) {
+                      setNumberOfPots(value);
+                    }
+                  }}
+                />
+              </Field>
+            </SwitchPanel>
+          ) : null}
+        </form>
+      </Dialog>
+      <ConfirmDialog
+        open={discardOpen}
+        title={tReg('editor.discardTitle')}
+        message={tReg('editor.discardMessage')}
+        confirmLabel={tReg('editor.discardConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        onConfirm={confirmDiscard}
+        onCancel={cancelDiscard}
+      />
+    </>
   );
+}
+
+function normalizeDrawPots(value: number | null): number | null {
+  return value != null && value >= 2 ? value : null;
 }

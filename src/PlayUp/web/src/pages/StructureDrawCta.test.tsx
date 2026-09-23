@@ -26,7 +26,6 @@ describe('StructureDrawCta', () => {
             capacity={8}
             teamsCaption="équipes résolues"
             poolTone="complete"
-            modeLabel="Tirage aléatoire"
           />
         }
         onClick={() => {}}
@@ -49,12 +48,14 @@ describe('StructureDrawCta', () => {
         capacity={8}
         teamsCaption="équipes résolues"
         poolTone="neutral"
-        modeLabel="Tirage aléatoire"
       />,
     );
     expect(
       container.querySelector('[data-pool-tone="neutral"]'),
     ).not.toBeNull();
+    expect(
+      container.querySelector('.structure-draw-cta__mode-row'),
+    ).toBeNull();
 
     rerender(
       <DrawCtaActionBody
@@ -62,7 +63,6 @@ describe('StructureDrawCta', () => {
         capacity={8}
         teamsCaption="équipes résolues"
         poolTone="partial"
-        modeLabel="Tirage aléatoire"
       />,
     );
     expect(
@@ -75,7 +75,6 @@ describe('StructureDrawCta', () => {
         capacity={8}
         teamsCaption="équipes résolues"
         poolTone="complete"
-        modeLabel="Tirage aléatoire"
       />,
     );
     expect(

@@ -894,6 +894,8 @@ try
                 var pots = request.NumberOfPots is null
                     ? null
                     : new PotRules(request.NumberOfPots.Value);
+                // Constraints omitted from the write contract — Application preserves
+                // any existing constraints on replace (see ReplaceStageDrawRules).
                 drawRules = new DrawRules(request.Mode.Value, seeding, pots);
             }
 

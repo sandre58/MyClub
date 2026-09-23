@@ -1,8 +1,5 @@
 import type { ReactNode } from 'react';
-import {
-  DrawPendingIcon,
-  RandomIcon,
-} from '../design-system/icons/contentIcons';
+import { DrawPendingIcon } from '../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
 
 /** Ghost = Activer (subdued). Emphasis = Lancer/Ouvrir (outlined). Never brand primary. */
@@ -63,22 +60,20 @@ export function StructureDrawCta({
 }
 
 /**
- * Lancer/Ouvrir — gros ratio coloré (neutre / attention / success) + mode.
- * Légende toujours secondary. Couleur ≠ readiness Draw.
+ * Lancer/Ouvrir — gros ratio coloré (neutre / attention / success).
+ * Légende toujours secondary. Couleur ≠ readiness Draw. Pas de mode sur la CTA.
  */
 export function DrawCtaActionBody({
   filled,
   capacity,
   teamsCaption,
   poolTone = 'neutral',
-  modeLabel,
 }: {
   filled: number;
   capacity: number;
   /** e.g. « équipes résolues » */
   teamsCaption: string;
   poolTone?: DrawCtaPoolTone;
-  modeLabel: string;
 }) {
   return (
     <span className="structure-draw-cta__context">
@@ -92,12 +87,6 @@ export function DrawCtaActionBody({
           <span className="structure-draw-cta__ratio-cap">{capacity}</span>
         </span>
         <span className="structure-draw-cta__caption">{teamsCaption}</span>
-      </span>
-      <span className="structure-draw-cta__mode-row">
-        <span className="structure-draw-cta__mode-icon" aria-hidden="true">
-          <RandomIcon size="sm" />
-        </span>
-        <span className="structure-draw-cta__mode-label">{modeLabel}</span>
       </span>
     </span>
   );

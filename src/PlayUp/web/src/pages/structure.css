@@ -1509,6 +1509,13 @@
   gap: var(--space-12);
 }
 
+.structure-form__readonly {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
 .structure-form__danger-zone {
   display: flex;
   flex-direction: column;
