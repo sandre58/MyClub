@@ -76,6 +76,7 @@
       "MaterializeFromOccupiedSlots": "Slots are occupied — open the stage to configure fixtures (SlotA ↔ SlotB).",
       "GenerateNextRound": "Generate the next Swiss round (pairings + matches) — after current round results if needed.",
       "PublishDraw": "Publish the draw to lock the composition.",
+      "PublishAndApplyDraw": "Publish and apply the draw to populate the stage.",
       "ApplyDraw": "Apply the published draw to place the teams.",
       "ApplyProgression": "Apply progression to advance the stage.",
       "ApplyQualification": "Apply qualification to feed the next stage.",

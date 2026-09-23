@@ -923,16 +923,16 @@ public sealed class OverviewAssemblerTests
         OverviewAssembler.ActionStartStage)]
     [InlineData(
         OverviewAssembler.ActionMaterializeMatches,
-        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionPublishAndApplyDraw,
         OverviewAssembler.ActionMaterializeMatches)]
     [InlineData(
         OverviewAssembler.ActionPrepareStage,
         OverviewAssembler.ActionStartStage,
         OverviewAssembler.ActionPrepareStage)]
     [InlineData(
-        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionPublishAndApplyDraw,
         OverviewAssembler.ActionApplyDraw,
-        OverviewAssembler.ActionPublishDraw)]
+        OverviewAssembler.ActionPublishAndApplyDraw)]
     public void ResolveConstructionStructuralProgression_priority_is_semantic_not_list_order(
         string lowerListedFirst,
         string higherOrEqualSecond,
@@ -960,12 +960,12 @@ public sealed class OverviewAssemblerTests
         OverviewAssembler.ActionMaterializeFromOccupiedSlots)]
     [InlineData(
         OverviewAssembler.ActionGenerateNextRound,
-        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionPublishAndApplyDraw,
         OverviewAssembler.ActionGenerateNextRound)]
     [InlineData(
-        OverviewAssembler.ActionPublishDraw,
+        OverviewAssembler.ActionPublishAndApplyDraw,
         OverviewAssembler.ActionApplyDraw,
-        OverviewAssembler.ActionPublishDraw)]
+        OverviewAssembler.ActionPublishAndApplyDraw)]
     [InlineData(
         OverviewAssembler.ActionApplyProgression,
         OverviewAssembler.ActionCompleteCompetition,

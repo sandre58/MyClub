@@ -22,7 +22,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// <summary>
 /// Minimal persistence orchestration for Application use cases and named read methods
 /// (CreateCompetition, Structure Slice 2, PrepareStage, StartStage, ApplyProgressionOutcome,
-/// PublishDraw, ApplyDraw, StartMatch, FinishMatch, PrepareCompetition, StartCompetition,
+/// PublishDraw, PublishAndApplyDraw, ApplyDraw, StartMatch, FinishMatch, PrepareCompetition, StartCompetition,
 /// CompleteCompetition, ArchiveCompetition, ListCompetitions, GetWorkspaceSummary,
 /// GetCompetitionDetail, GetStructureView, GetStageOverview, ListMatchesByStage,
 /// GetMatchDetail, GetConsultation).
@@ -259,6 +259,29 @@ public sealed partial class UseCaseExecutor(
         PublishDraw.Execute(stage, drawId, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         LogDrawPublished(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value);
+    }
+
+    /// <summary>
+    /// Orchestrates Publish then Apply as two durable steps (not one Domain transaction).
+    /// Publish is committed before Apply runs so an Apply failure leaves Published + not applied
+    /// — the V1 recovery state, not a rolled-back draft.
+    /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="drawId">Draw identity.</param>
+    /// <param name="fixtureIds">
+    /// Target fixtures for Pairing apply (one per pairing result, same order). Ignored for Slot/Group.
+    /// </param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when both steps succeed, or fails after a durable Publish.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist or Apply fails.</exception>
+    public async Task PublishAndApplyDrawAsync(
+        StageId stageId,
+        DrawId drawId,
+        IReadOnlyList<FixtureId>? fixtureIds = null,
+        CancellationToken cancellationToken = default)
+    {
+        await PublishDrawAsync(stageId, drawId, cancellationToken).ConfigureAwait(false);
+        await ApplyDrawAsync(stageId, drawId, fixtureIds, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

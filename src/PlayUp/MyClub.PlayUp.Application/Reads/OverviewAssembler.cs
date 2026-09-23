@@ -116,6 +116,9 @@ public static class OverviewAssembler
     /// <summary>Publish draw.</summary>
     public const string ActionPublishDraw = "PublishDraw";
 
+    /// <summary>V1 happy-path orchestration: Publish then Apply (recovery remains <see cref="ActionApplyDraw"/>).</summary>
+    public const string ActionPublishAndApplyDraw = "PublishAndApplyDraw";
+
     /// <summary>Apply draw.</summary>
     public const string ActionApplyDraw = "ApplyDraw";
 
@@ -1416,10 +1419,11 @@ public static class OverviewAssembler
 
             foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
             {
-                if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved })
+                if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved }
+                    && draw.Kind is DrawResolutionKind.Slot or DrawResolutionKind.Group or DrawResolutionKind.Pairing)
                 {
                     actions.Add(new OverviewActionDto(
-                        ActionPublishDraw,
+                        ActionPublishAndApplyDraw,
                         Guaranteed: false,
                         stage.Id.Value,
                         draw.Id.Value));
@@ -1649,7 +1653,7 @@ public static class OverviewAssembler
         ActionPrepareStage,
         ActionStartStage,
         ActionMaterializeMatches,
-        ActionPublishDraw,
+        ActionPublishAndApplyDraw,
         ActionApplyDraw
     ];
 
@@ -1661,7 +1665,7 @@ public static class OverviewAssembler
     [
         ActionMaterializeFromOccupiedSlots,
         ActionGenerateNextRound,
-        ActionPublishDraw,
+        ActionPublishAndApplyDraw,
         ActionApplyDraw,
         ActionApplyProgression,
         ActionApplyQualification,

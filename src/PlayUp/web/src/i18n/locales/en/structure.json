@@ -499,18 +499,29 @@
     "drawModeRandom": "Random draw",
     "drawWorkflow": {
       "title": "Draw executions",
-      "description": "Phase “{{phase}}” — multiple executions ≠ multiple rounds.",
       "loading": "Loading executions…",
       "loadError": "Could not load draw executions.",
       "empty": "No draw executions for this phase yet.",
+      "emptyTitle": "No executions",
+      "emptyBody": "Start a first draw to populate this phase’s form.",
+      "emptyBodyNeedPool": "Add teams to this phase before starting the draw.",
+      "emptyBodyNeedUpstream": "The matches that decide which teams enter this phase are not finished yet. The draw cannot run yet.",
       "kindUnsupported": "This phase format does not support creating a draw from Structure yet.",
       "create": "New draw",
+      "createBlocked": {
+        "unsupported": "This format does not support creating a draw from Structure yet.",
+        "active": "Cancel the active execution before starting a new one.",
+        "emptyPool": "Add teams to this phase before starting the draw.",
+        "emptyPoolUpstream": "The matches that decide which teams enter this phase are not finished yet. The draw cannot run yet.",
+        "oddPool": "A Cup draw needs an even number of teams.",
+        "missingPots": "Configure draw pots (Settings) before generating.",
+        "groupShape": "The number of teams must equal pots × groups."
+      },
       "creating": "Drawing…",
       "historyAria": "Execution history",
-      "historyHint": "Successive executions of this phase (not competition rounds).",
       "execution": "Execution #{{n}}",
-      "poolFromPopulation_one": "Draw pool · {{count}} entry from the Population",
-      "poolFromPopulation_other": "Draw pool · {{count}} entries from the Population"
+      "factPool_one": "resolved team",
+      "factPool_other": "resolved teams"
     },
     "addExit": "Add exit",
     "addAttribution": "Add place awards",

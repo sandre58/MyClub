@@ -57,6 +57,7 @@ export function actionPresentationSlot(
     case 'PrepareStage':
     case 'StartStage':
     case 'PublishDraw':
+    case 'PublishAndApplyDraw':
     case 'ApplyDraw':
     case 'MaterializeMatches':
     case 'MaterializeFromOccupiedSlots':
@@ -153,7 +154,9 @@ export function actionsForDraw(
 ): OverviewAction[] {
   return actions.filter(
     (action) =>
-      (action.code === 'PublishDraw' || action.code === 'ApplyDraw') &&
+      (action.code === 'PublishDraw' ||
+        action.code === 'PublishAndApplyDraw' ||
+        action.code === 'ApplyDraw') &&
       action.stageId === stageId &&
       action.drawId === drawId,
   );

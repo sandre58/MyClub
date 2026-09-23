@@ -1364,6 +1364,8 @@ export interface StageDrawSlotPlacement {
 
 export interface StageDrawGroupPlacement {
   groupId: string;
+  /** Present when resolved from stage groups; may be absent on older payloads. */
+  groupDisplayName?: string | null;
   entryId: string;
   displayName: string | null;
 }

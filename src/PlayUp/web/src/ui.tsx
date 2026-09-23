@@ -156,17 +156,29 @@ export function EntryStatusBadge({ status }: { status: EntryStatus }) {
   );
 }
 
-export function DrawStatusBadge({ status }: { status: DrawStatus }) {
+export function DrawStatusBadge({
+  status,
+  density = 'context',
+}: {
+  status: DrawStatus;
+  density?: 'context' | 'compact';
+}) {
   return (
-    <StatusBadge tone={drawStatusTone[status]}>
+    <StatusBadge tone={drawStatusTone[status]} density={density}>
       {drawStatusLabel(status)}
     </StatusBadge>
   );
 }
 
-export function DrawResolutionBadge({ state }: { state: DrawResolutionState }) {
+export function DrawResolutionBadge({
+  state,
+  density = 'context',
+}: {
+  state: DrawResolutionState;
+  density?: 'context' | 'compact';
+}) {
   return (
-    <StatusBadge tone={drawResolutionTone[state]}>
+    <StatusBadge tone={drawResolutionTone[state]} density={density}>
       {drawResolutionStateLabel(state)}
     </StatusBadge>
   );

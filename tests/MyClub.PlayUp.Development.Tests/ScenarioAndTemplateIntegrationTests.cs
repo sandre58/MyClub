@@ -449,7 +449,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var semi = await stages.GetByIdForUpdateAsync(competition.StageIds[1]);
         quarter.Should().NotBeNull();
         semi.Should().NotBeNull();
-        quarter!.Regulation.DrawRules.Should().NotBeNull(
+        quarter.Regulation.DrawRules.Should().NotBeNull(
             "QF seed must engage DrawRules when a Pairing Draw is applied");
         quarter.CompositionEntries.Should().HaveCount(8);
         quarter.Draws.Should().NotBeEmpty();

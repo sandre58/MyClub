@@ -76,6 +76,7 @@
       "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — ouvrez la phase pour configurer les confrontations (SlotA ↔ SlotB).",
       "GenerateNextRound": "Générez le prochain tour Swiss (appariements + matchs) — après résultats du tour courant si besoin.",
       "PublishDraw": "Publiez le tirage pour figer la composition.",
+      "PublishAndApplyDraw": "Publiez et appliquez le tirage pour peupler la phase.",
       "ApplyDraw": "Appliquez le tirage publié pour placer les équipes.",
       "ApplyProgression": "Appliquez la progression pour avancer la phase.",
       "ApplyQualification": "Appliquez la qualification pour alimenter la phase suivante.",

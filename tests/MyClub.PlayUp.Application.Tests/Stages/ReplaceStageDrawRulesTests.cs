@@ -34,7 +34,7 @@ public sealed class ReplaceStageDrawRulesTests
             constraints:
             [
                 new DrawConstraint(DrawConstraintType.SameAssociationAvoidance),
-                DrawConstraint.MaxSameAssociationPerGroup(2),
+                DrawConstraint.MaxSameAssociationPerGroup(2)
             ]);
         ReplaceStageDrawRules.Execute(stage, constrained, _clock);
 
@@ -45,7 +45,7 @@ public sealed class ReplaceStageDrawRulesTests
 
         var rules = stage.Regulation.DrawRules;
         rules.Should().NotBeNull();
-        rules!.SeedingRules!.NumberOfSeeds.Should().Be(1);
+        rules.SeedingRules!.NumberOfSeeds.Should().Be(1);
         rules.PotRules!.NumberOfPots.Should().Be(2);
         rules.Constraints.Should().HaveCount(2);
         rules.Constraints[0].ConstraintType.Should().Be(DrawConstraintType.SameAssociationAvoidance);
@@ -104,7 +104,7 @@ public sealed class ReplaceStageDrawRulesTests
 
         var rules = stage.Regulation.DrawRules;
         rules.Should().NotBeNull();
-        rules!.SeedingRules!.NumberOfSeeds.Should().Be(4);
+        rules.SeedingRules!.NumberOfSeeds.Should().Be(4);
         rules.PotRules!.NumberOfPots.Should().Be(2);
     }
 

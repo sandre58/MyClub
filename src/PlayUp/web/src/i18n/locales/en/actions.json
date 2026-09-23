@@ -8,6 +8,7 @@
   "PrepareStage": "Prepare stage “{{name}}”",
   "StartStage": "Start stage “{{name}}”",
   "PublishDraw": "Publish the draw",
+  "PublishAndApplyDraw": "Publish and apply",
   "ApplyDraw": "Apply the draw",
   "MaterializeMatches": "Create matches / skeleton",
   "MaterializeFromOccupiedSlots": "Configure fixtures — {{stageName}}",

@@ -8,7 +8,7 @@ import {
   fetchStageOverview,
   materializeCupFromOccupiedSlots,
   prepareStage,
-  publishDraw,
+  publishAndApplyDraw,
   startStage,
 } from '../api';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
@@ -32,8 +32,12 @@ import {
   type StageRound,
   type StageSlot,
 } from '../types';
-import { getDrawUiProjection, resolvePairingFixtureIds } from './drawUi';
+import {
+  getDrawUiProjection,
+  groupPlacementRows,
+} from './drawUi';
 import './StagePage.css';
+import './structure.css';
 
 export function StagePage() {
   const { stageId = '' } = useParams();
@@ -547,6 +551,7 @@ function DrawCard({
   rounds: StageRound[];
 }) {
   const { t } = useTranslation('draw');
+  const { t: tStructure } = useTranslation('structure');
   // DERIVED UI: computed each render from props (server state), never useState.
   const ui = getDrawUiProjection(draw, slots, rounds);
 
@@ -557,9 +562,15 @@ function DrawCard({
           {t('title', { kind: drawResolutionKindLabel(draw.kind) })}
         </h3>
         <p className="badge-row">
-          <DrawStatusBadge status={draw.status} />
-          <DrawResolutionBadge state={draw.resolutionState} />
-          {ui.isApplied && <StatusBadge tone="ok">{t('applied')}</StatusBadge>}
+          {ui.chrome.showStatus ? (
+            <DrawStatusBadge status={draw.status} />
+          ) : null}
+          {ui.chrome.showResolution ? (
+            <DrawResolutionBadge state={draw.resolutionState} />
+          ) : null}
+          {ui.chrome.showApplied ? (
+            <StatusBadge tone="ok">{t('applied')}</StatusBadge>
+          ) : null}
         </p>
       </header>
 
@@ -620,16 +631,31 @@ function DrawCard({
 
       {ui.showResults &&
         draw.kind === 'Group' &&
-        draw.resolutionState === 'Resolved' && (
-          <p className="hint" role="status">
-            {t('groupPlacementsHint')}
-          </p>
+        (draw.groupPlacements?.length ?? 0) > 0 && (
+          <div className="stack stack--tight">
+            <h4 className="draw-card__results-title">{t('result')}</h4>
+            <ul className="draw-group-list">
+              {groupPlacementRows(
+                draw.groupPlacements!,
+                t('unknownEntry', { ns: 'common' }),
+                t('unknownGroup'),
+              ).map((row) => (
+                <li key={row.groupId} className="draw-group-row">
+                  <span className="draw-group-row__label">
+                    {tStructure('place.group', { name: row.groupLabel })}
+                  </span>
+                  <span className="draw-group-row__entries">
+                    {row.entries.map((e) => e.displayName).join(' · ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
       <DrawActions
         stageId={stageId}
         draw={draw}
-        rounds={rounds}
         isApplied={ui.isApplied}
       />
     </article>
@@ -643,12 +669,10 @@ function DrawCard({
 function DrawActions({
   stageId,
   draw,
-  rounds,
   isApplied,
 }: {
   stageId: string;
   draw: StageDraw;
-  rounds: StageRound[];
   isApplied: boolean;
 }) {
   const { t } = useTranslation('draw');
@@ -656,49 +680,33 @@ function DrawActions({
   const queryClient = useQueryClient();
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
 
-  const canPublish =
-    draw.status === 'Draft' && draw.resolutionState === 'Resolved';
+  const canPublishAndApply =
+    draw.status === 'Draft' &&
+    draw.resolutionState === 'Resolved' &&
+    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
   const canApply =
     draw.status === 'Published' &&
     draw.resolutionState === 'Resolved' &&
     !isApplied &&
     (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
 
-  const pairingFixtureIds =
-    draw.kind === 'Pairing' ? resolvePairingFixtureIds(draw, rounds) : null;
-  const pairingMapBlocked =
-    draw.kind === 'Pairing' && canApply && pairingFixtureIds === null;
-
-  const publishMutation = useMutation({
-    mutationFn: () => publishDraw(stageId, draw.id),
-    onSuccess: async () => {
-      // invalidateQueries marks cache stale → active queries refetch.
-      // Prefer this over refetchQueries: only mounted observers refetch;
-      // inactive keys refresh when next used.
+  const publishAndApplyMutation = useMutation({
+    mutationFn: () =>
+      publishAndApplyDraw(stageId, draw.id, { fixtureIds: [] }),
+    onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
       });
+      if (draw.kind === 'Pairing') {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.matches.byStage(stageId),
+        });
+      }
     },
   });
 
   const applyMutation = useMutation({
-    mutationFn: () => {
-      if (draw.kind === 'Slot' || draw.kind === 'Group') {
-        return applyDraw(stageId, draw.id, { fixtureIds: [] });
-      }
-
-      if (draw.kind === 'Pairing') {
-        const fixtureIds = resolvePairingFixtureIds(draw, rounds);
-        if (fixtureIds === null) {
-          throw new Error(
-            'Cannot apply pairing: fixture count must match pairing count for a 1:1 map.',
-          );
-        }
-        return applyDraw(stageId, draw.id, { fixtureIds });
-      }
-
-      throw new Error('Apply is not available for this draw kind.');
-    },
+    mutationFn: () => applyDraw(stageId, draw.id, { fixtureIds: [] }),
     onSuccess: async () => {
       setApplyConfirmOpen(false);
       await queryClient.invalidateQueries({
@@ -712,40 +720,41 @@ function DrawActions({
     },
   });
 
-  const busy = publishMutation.isPending || applyMutation.isPending;
-  const mutationError = publishMutation.error ?? applyMutation.error;
+  const busy = publishAndApplyMutation.isPending || applyMutation.isPending;
+  const mutationError =
+    publishAndApplyMutation.error ?? applyMutation.error;
 
-  function handlePublish() {
-    publishMutation.mutate();
+  function handlePublishAndApply() {
+    publishAndApplyMutation.mutate();
   }
 
   function handleApply() {
     setApplyConfirmOpen(true);
   }
 
-  if (!canPublish && !canApply && !pairingMapBlocked && !mutationError) {
+  if (!canPublishAndApply && !canApply && !mutationError) {
     return null;
   }
 
   return (
     <>
       <div className="button-row" aria-busy={busy}>
-        {canPublish && (
+        {canPublishAndApply && (
           <button
             type="button"
             className="ds-btn ds-btn--primary"
             disabled={busy}
-            onClick={handlePublish}
+            onClick={handlePublishAndApply}
           >
-            {publishMutation.isPending ? (
-              <PendingLabel>{t('publishing')}</PendingLabel>
+            {publishAndApplyMutation.isPending ? (
+              <PendingLabel>{t('publishingAndApplying')}</PendingLabel>
             ) : (
-              t('publish')
+              t('publishAndApply')
             )}
           </button>
         )}
 
-        {canApply && draw.kind === 'Slot' && (
+        {canApply && (
           <button
             type="button"
             className="ds-btn ds-btn--primary"
@@ -758,27 +767,6 @@ function DrawActions({
               t('apply')
             )}
           </button>
-        )}
-
-        {canApply && draw.kind === 'Pairing' && pairingFixtureIds !== null && (
-          <button
-            type="button"
-            className="ds-btn ds-btn--primary"
-            disabled={busy || applyConfirmOpen}
-            onClick={handleApply}
-          >
-            {applyMutation.isPending ? (
-              <PendingLabel>{t('applying')}</PendingLabel>
-            ) : (
-              t('apply')
-            )}
-          </button>
-        )}
-
-        {pairingMapBlocked && (
-          <p className="ds-notice ds-notice--warning" role="status">
-            {t('pairingMapBlocked')}
-          </p>
         )}
 
         {mutationError && <MutationError error={mutationError} />}

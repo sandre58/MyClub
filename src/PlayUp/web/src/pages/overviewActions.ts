@@ -1,4 +1,5 @@
 import {
+  publishAndApplyDraw,
   applyDraw,
   applyProgressionOutcome,
   applyQualification,
@@ -57,6 +58,19 @@ export function resolveOverviewActionIntent(
         : stageId
           ? { kind: 'navigate', to: `/stages/${stageId}` }
           : { kind: 'unsupported' };
+
+    case 'PublishAndApplyDraw': {
+      if (!stageId || !drawId) {
+        return stageId
+          ? { kind: 'navigate', to: `/stages/${stageId}` }
+          : { kind: 'unsupported' };
+      }
+      // Host EnsurePairingFixtures covers Pairing when fixtureIds are empty.
+      return {
+        kind: 'execute',
+        run: () => publishAndApplyDraw(stageId, drawId, { fixtureIds: [] }),
+      };
+    }
 
     case 'ApplyDraw': {
       if (!stageId || !drawId) {

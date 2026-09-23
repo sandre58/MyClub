@@ -1916,11 +1916,6 @@ export function StructurePhaseFiche({
                         <TrashIcon size="sm" />
                         {t('fiche.deactivateDraw')}
                       </button>
-                      {hasNonCancelledDraw ? (
-                        <p className="structure-draw-actions__hint">
-                          {t('regulation.deactivateDrawBlockedHint')}
-                        </p>
-                      ) : null}
                     </div>
                   ) : null}
                 </div>

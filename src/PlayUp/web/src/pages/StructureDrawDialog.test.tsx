@@ -5,9 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createAndGenerateDraw,
   fetchStageOverview,
-  publishDraw,
+  publishAndApplyDraw,
 } from '../api';
-import type { StageOverview, StructureStageHubSummary } from '../types';
+import type { StageDraw, StageOverview, StructureStageHubSummary } from '../types';
 import { StructureDrawDialog } from './StructureDrawDialog';
 
 vi.mock('../api', async (importOriginal) => {
@@ -16,7 +16,7 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchStageOverview: vi.fn(),
     createAndGenerateDraw: vi.fn(),
-    publishDraw: vi.fn(),
+    publishAndApplyDraw: vi.fn(),
     cancelDraw: vi.fn(),
     applyDraw: vi.fn(),
   };
@@ -42,6 +42,8 @@ function groupsStage(
     hasPenaltyShootout: false,
     hasStandingRules: true,
     hasDrawRules: true,
+    numberOfPots: 4,
+    compositionEntryCount: 8,
     hasQualificationRules: false,
     qualificationPathCount: 0,
     hasProgressionRules: false,
@@ -69,6 +71,19 @@ function overview(draws: StageOverview['draws']): StageOverview {
     slots: [],
     rounds: [],
     draws,
+  };
+}
+
+function groupDraw(overrides: Partial<StageDraw> = {}): StageDraw {
+  return {
+    id: 'draw-1',
+    kind: 'Group',
+    status: 'Draft',
+    resolutionState: 'Resolved',
+    pairings: [],
+    slotPlacements: [],
+    groupPlacements: [],
+    ...overrides,
   };
 }
 
@@ -106,12 +121,53 @@ describe('StructureDrawDialog', () => {
     expect(
       await screen.findByRole('heading', { name: 'Exécutions de tirage' }),
     ).toBeInTheDocument();
+    expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
     expect(
-      await screen.findByText('Aucune exécution de tirage pour cette phase.'),
+      screen.getByText(
+        'Lancez un premier tirage pour peupler la forme de cette phase.',
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Nouveau tirage' }),
-    ).toBeInTheDocument();
+    ).toBeEnabled();
+  });
+
+  it('disables Nouveau and explains when upstream teams are not ready', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+
+    renderDialog(
+      groupsStage({
+        compositionEntryCount: 0,
+        isRootComposition: false,
+      }),
+    );
+
+    expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
+    const blocked =
+      'Les confrontations qui déterminent les équipes de cette phase ne sont pas encore terminées. Le tirage ne peut pas encore être effectué.';
+    expect(screen.getAllByText(blocked).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
+  });
+
+  it('disables Nouveau and explains when a root phase has no teams', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+
+    renderDialog(
+      groupsStage({
+        compositionEntryCount: 0,
+        isRootComposition: true,
+      }),
+    );
+
+    expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
+    const blocked =
+      'Ajoutez des équipes à cette phase avant de lancer le tirage.';
+    expect(screen.getAllByText(blocked).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
   });
 
   it('runs G2 create on Nouveau tirage', async () => {
@@ -132,53 +188,135 @@ describe('StructureDrawDialog', () => {
     });
   });
 
-  it('uses detail-only layout for a single draw (no history rail)', async () => {
+  it('disables Nouveau when a non-Cancelled draw exists (Draft)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([groupDraw({ status: 'Draft' })]),
+    );
+
+    renderDialog();
+
+    expect(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
+  });
+
+  it('disables Nouveau when a Published draw exists (applied or not)', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
-        {
-          id: 'draw-1',
-          kind: 'Group',
-          status: 'Draft',
-          resolutionState: 'Resolved',
-          pairings: [],
-          slotPlacements: [],
-        },
+        groupDraw({
+          status: 'Published',
+          isApplied: true,
+        }),
       ]),
     );
 
     renderDialog();
 
     expect(
-      await screen.findByText('Tirage résolu mais non publié.'),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Historique des exécutions'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Publier le tirage' }),
-    ).toBeInTheDocument();
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
   });
 
-  it('shows master-detail when more than one draw exists', async () => {
+  it('enables Nouveau when history is Cancelled-only', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          id: 'draw-old',
+          status: 'Cancelled',
+        }),
+      ]),
+    );
+
+    renderDialog();
+
+    expect(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeEnabled();
+  });
+
+  it('shows execution tiles and unified detail for a single draw', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([groupDraw()]),
+    );
+
+    renderDialog();
+
+    expect(
+      await screen.findByText('Résultat prêt à être appliqué.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Historique' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Historique des exécutions'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Tirage Groupe' }),
+    ).toBeInTheDocument();
+    const publishAndApply = screen.getByRole('button', {
+      name: 'Publier et appliquer',
+    });
+    expect(publishAndApply).toBeInTheDocument();
+    expect(publishAndApply.className).toContain('ds-btn--primary');
+  });
+
+  it('lists group placements as dense rows', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          groupPlacements: [
+            {
+              groupId: 'g-a',
+              groupDisplayName: 'A',
+              entryId: 'e1',
+              displayName: 'Équipe 1',
+            },
+            {
+              groupId: 'g-a',
+              groupDisplayName: 'A',
+              entryId: 'e4',
+              displayName: 'Équipe 4',
+            },
+            {
+              groupId: 'g-b',
+              groupDisplayName: 'B',
+              entryId: 'e2',
+              displayName: 'Équipe 2',
+            },
+            {
+              groupId: 'g-b',
+              groupDisplayName: 'B',
+              entryId: 'e3',
+              displayName: 'Équipe 3',
+            },
+          ],
+        }),
+      ]),
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText('Résultat')).toBeInTheDocument();
+    expect(screen.getByText('Groupe A')).toBeInTheDocument();
+    expect(screen.getByText('Équipe 1')).toBeInTheDocument();
+    expect(screen.getByText('Équipe 4')).toBeInTheDocument();
+    expect(screen.getByText('Groupe B')).toBeInTheDocument();
+    expect(screen.getByText('Équipe 2')).toBeInTheDocument();
+    expect(screen.getByText('Équipe 3')).toBeInTheDocument();
+  });
+
+  it('shows master-detail with selectable tiles when more than one draw exists', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
-        {
+        groupDraw({
           id: 'draw-1',
-          kind: 'Group',
           status: 'Cancelled',
-          resolutionState: 'Resolved',
-          pairings: [],
-          slotPlacements: [],
-        },
-        {
+        }),
+        groupDraw({
           id: 'draw-2',
-          kind: 'Group',
           status: 'Draft',
-          resolutionState: 'Resolved',
-          pairings: [],
-          slotPlacements: [],
-        },
+        }),
       ]),
     );
 
@@ -196,29 +334,22 @@ describe('StructureDrawDialog', () => {
     ).toBeInTheDocument();
   });
 
-  it('publishes the selected draft draw', async () => {
+  it('publishes and applies the selected draft draw', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([
-        {
-          id: 'draw-1',
-          kind: 'Group',
-          status: 'Draft',
-          resolutionState: 'Resolved',
-          pairings: [],
-          slotPlacements: [],
-        },
-      ]),
+      overview([groupDraw()]),
     );
-    vi.mocked(publishDraw).mockResolvedValue(undefined);
+    vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
 
     renderDialog();
     await user.click(
-      await screen.findByRole('button', { name: 'Publier le tirage' }),
+      await screen.findByRole('button', { name: 'Publier et appliquer' }),
     );
 
     await waitFor(() => {
-      expect(publishDraw).toHaveBeenCalledWith(stageId, 'draw-1');
+      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, 'draw-1', {
+        fixtureIds: [],
+      });
     });
   });
 });

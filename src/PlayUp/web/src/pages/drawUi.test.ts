@@ -3,6 +3,7 @@ import type { StageDraw, StageRound, StageSlot } from '../types';
 import {
   pickActiveDraw,
   pickDefaultDrawId,
+  resolveDrawCreateGate,
   resolveTopologyDrawExecutionBadge,
 } from './drawUi';
 
@@ -16,6 +17,96 @@ function draw(partial: Partial<StageDraw> & Pick<StageDraw, 'id'>): StageDraw {
     ...partial,
   };
 }
+
+describe('resolveDrawCreateGate', () => {
+  it('blocks empty pool and odd pairing pools', () => {
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Pairing',
+        hasActiveDraw: false,
+        compositionEntryCount: 0,
+        isRootComposition: true,
+        numberOfPots: null,
+        groupCount: 0,
+      }),
+    ).toEqual({ ok: false, reason: 'emptyPool' });
+
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Pairing',
+        hasActiveDraw: false,
+        compositionEntryCount: 0,
+        isRootComposition: false,
+        numberOfPots: null,
+        groupCount: 0,
+      }),
+    ).toEqual({ ok: false, reason: 'emptyPoolUpstream' });
+
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Pairing',
+        hasActiveDraw: false,
+        compositionEntryCount: 3,
+        numberOfPots: null,
+        groupCount: 0,
+      }),
+    ).toEqual({ ok: false, reason: 'oddPool' });
+
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Pairing',
+        hasActiveDraw: false,
+        compositionEntryCount: 4,
+        numberOfPots: null,
+        groupCount: 0,
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it('requires pots × groups for Group kind', () => {
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Group',
+        hasActiveDraw: false,
+        compositionEntryCount: 8,
+        numberOfPots: null,
+        groupCount: 2,
+      }),
+    ).toEqual({ ok: false, reason: 'missingPots' });
+
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Group',
+        hasActiveDraw: false,
+        compositionEntryCount: 8,
+        numberOfPots: 4,
+        groupCount: 2,
+      }),
+    ).toEqual({ ok: true });
+
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Group',
+        hasActiveDraw: false,
+        compositionEntryCount: 7,
+        numberOfPots: 4,
+        groupCount: 2,
+      }),
+    ).toEqual({ ok: false, reason: 'groupShape' });
+  });
+
+  it('blocks when an active draw already exists', () => {
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Pairing',
+        hasActiveDraw: true,
+        compositionEntryCount: 4,
+        numberOfPots: null,
+        groupCount: 0,
+      }),
+    ).toEqual({ ok: false, reason: 'active' });
+  });
+});
 
 describe('pickActiveDraw', () => {
   it('returns null when empty or only cancelled', () => {

@@ -770,6 +770,22 @@ export function publishDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/publish`);
 }
 
+/**
+ * V1 happy path — Publish then Apply (Host orchestration, two durable steps).
+ * Not Domain-atomic: Apply failure leaves Published + not applied; resume with applyDraw.
+ * POST /stages/{stageId}/draws/{drawId}/publish-and-apply → 204
+ */
+export function publishAndApplyDraw(
+  stageId: string,
+  drawId: string,
+  request: ApplyDrawRequest = { fixtureIds: [] },
+): Promise<void> {
+  return postNoContent(
+    `/stages/${stageId}/draws/${drawId}/publish-and-apply`,
+    request,
+  );
+}
+
 /** POST /stages/{stageId}/draws/{drawId}/cancel → 204 */
 export function cancelDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/cancel`);

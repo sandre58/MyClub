@@ -1,4 +1,124 @@
-import type { StageDraw, StageFixture, StageRound, StageSlot } from '../types';
+import type {
+  StageDraw,
+  StageDrawGroupPlacement,
+  StageFixture,
+  StageRound,
+  StageSlot,
+} from '../types';
+
+export type GroupPlacementEntry = {
+  entryId: string;
+  displayName: string;
+};
+
+export type GroupPlacementRow = {
+  groupId: string;
+  groupLabel: string;
+  entries: GroupPlacementEntry[];
+};
+
+/** Collapse flat groupPlacements into one row per group (list density, not nested cards). */
+export function groupPlacementRows(
+  placements: StageDrawGroupPlacement[],
+  unknownEntry: string,
+  unknownGroup: string,
+): GroupPlacementRow[] {
+  const byGroup = new Map<string, GroupPlacementRow>();
+  for (const placement of placements) {
+    let row = byGroup.get(placement.groupId);
+    if (!row) {
+      row = {
+        groupId: placement.groupId,
+        groupLabel: placement.groupDisplayName?.trim() || unknownGroup,
+        entries: [],
+      };
+      byGroup.set(placement.groupId, row);
+    }
+    row.entries.push({
+      entryId: placement.entryId,
+      displayName: placement.displayName?.trim() || unknownEntry,
+    });
+  }
+  return [...byGroup.values()];
+}
+
+/**
+ * Why « Nouveau tirage » (G2) cannot run — mirrors Domain / DrawInputsFactory fail-closed
+ * checks the SPA can see without calling Generate (avoids 400 + orphan Draft).
+ */
+export type DrawCreateBlockReason =
+  | 'unsupported'
+  | 'active'
+  | 'emptyPool'
+  | 'emptyPoolUpstream'
+  | 'oddPool'
+  | 'missingPots'
+  | 'groupShape';
+
+export type DrawCreateGate =
+  | { ok: true }
+  | { ok: false; reason: DrawCreateBlockReason };
+
+/**
+ * Client gate for Create+Generate. Encoding F: pool = CompositionEntries only.
+ * Pairing: even pool. Group: pots ≥ 2 and entries = pots × groupCount.
+ */
+export function resolveDrawCreateGate(input: {
+  kind: 'Group' | 'Pairing' | 'Slot' | null;
+  hasActiveDraw: boolean;
+  compositionEntryCount: number;
+  /** False / undefined when the phase is fed by Qual/Prog (teams arrive from upstream). */
+  isRootComposition?: boolean;
+  numberOfPots: number | null | undefined;
+  groupCount: number | null | undefined;
+}): DrawCreateGate {
+  if (input.kind == null) {
+    return { ok: false, reason: 'unsupported' };
+  }
+  if (input.hasActiveDraw) {
+    return { ok: false, reason: 'active' };
+  }
+
+  const pool = input.compositionEntryCount;
+  if (pool <= 0) {
+    return {
+      ok: false,
+      reason:
+        input.isRootComposition === false ? 'emptyPoolUpstream' : 'emptyPool',
+    };
+  }
+
+  if (input.kind === 'Pairing') {
+    return pool % 2 === 0
+      ? { ok: true }
+      : { ok: false, reason: 'oddPool' };
+  }
+
+  if (input.kind === 'Group') {
+    const pots = input.numberOfPots ?? null;
+    const groups = input.groupCount ?? 0;
+    if (pots == null || pots < 2) {
+      return { ok: false, reason: 'missingPots' };
+    }
+    if (groups < 1 || pool !== pots * groups) {
+      return { ok: false, reason: 'groupShape' };
+    }
+    return { ok: true };
+  }
+
+  // Slot — Structural V1 Cup uses Pairing; keep pool non-empty only.
+  return { ok: true };
+}
+
+/**
+ * Synthetic chrome flags — projection keeps three axes; UI does not teach the matrix
+ * via three systematic badges (PublishAndApply decision).
+ */
+export type DrawChromeFlags = {
+  showStatus: boolean;
+  showResolution: boolean;
+  showApplied: boolean;
+};
 
 /**
  * UI-only projection of DrawStatus × DrawResolutionState (+ derived Applied).
@@ -9,6 +129,7 @@ export type DrawUiProjection = {
   messageKey: string;
   showResults: boolean;
   isApplied: boolean;
+  chrome: DrawChromeFlags;
 };
 
 /** Topology badge states — mirrors server StructureDrawExecutionBadge. */
@@ -89,6 +210,7 @@ export function getDrawUiProjection(
       messageKey: 'cancelled',
       showResults: draw.resolutionState === 'Resolved',
       isApplied: false,
+      chrome: { showStatus: true, showResolution: false, showApplied: false },
     };
   }
 
@@ -97,6 +219,7 @@ export function getDrawUiProjection(
       messageKey: 'draftNotResolved',
       showResults: false,
       isApplied: false,
+      chrome: { showStatus: true, showResolution: true, showApplied: false },
     };
   }
 
@@ -105,6 +228,8 @@ export function getDrawUiProjection(
       messageKey: 'draftResolved',
       showResults: true,
       isApplied: false,
+      // Brouillon · Résolu — phrase carries “ready to apply”
+      chrome: { showStatus: true, showResolution: true, showApplied: false },
     };
   }
 
@@ -113,6 +238,7 @@ export function getDrawUiProjection(
       messageKey: 'noSolution',
       showResults: false,
       isApplied: false,
+      chrome: { showStatus: true, showResolution: true, showApplied: false },
     };
   }
 
@@ -130,6 +256,12 @@ export function getDrawUiProjection(
       messageKey,
       showResults: true,
       isApplied,
+      // Publié · (Appliqué when done) — no “Non appliqué” badge on happy recovery path
+      chrome: {
+        showStatus: true,
+        showResolution: false,
+        showApplied: isApplied,
+      },
     };
   }
 
@@ -137,6 +269,7 @@ export function getDrawUiProjection(
     messageKey: 'fallback',
     showResults: draw.resolutionState === 'Resolved',
     isApplied: false,
+    chrome: { showStatus: true, showResolution: true, showApplied: false },
   };
 }
 

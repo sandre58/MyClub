@@ -71,7 +71,8 @@ try
         // Phase 12.8: HTTP enums as JSON strings (camelCase property names unchanged).
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
     builder.Services.AddProblemDetails(static options =>
-        options.CustomizeProblemDetails = static context => context.ProblemDetails.Extensions["correlationId"] = context.HttpContext.GetCorrelationId());
+        options.CustomizeProblemDetails = static context =>
+            context.ProblemDetails.Extensions["correlationId"] = context.HttpContext.GetCorrelationId());
     builder.Services.AddExceptionHandler<MediaExceptionHandler>();
     builder.Services.AddExceptionHandler<PlayUpExceptionHandler>();
 
@@ -479,11 +480,12 @@ try
     app.MapPost(
         "/competitions/{competitionId:guid}/structure",
         async (
-            Guid competitionId,
-            ConfigureStructureRequest request,
-            UseCaseExecutor executor,
-            CancellationToken cancellationToken) => await configureStructureHttpAsync(competitionId, request, executor, cancellationToken)
-            .ConfigureAwait(false));
+                Guid competitionId,
+                ConfigureStructureRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            await configureStructureHttpAsync(competitionId, request, executor, cancellationToken)
+                .ConfigureAwait(false));
 
     app.MapPost(
         "/competitions/{competitionId:guid}/stages",
@@ -698,7 +700,9 @@ try
                         DestinationSlotKeys: coerceDestinationSlotKeys(
                             intent.DestinationSlotKeys,
                             intent.DestinationSlotKey),
-                        DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 } ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray() : null,
+                        DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 }
+                            ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray()
+                            : null,
                         DestinationForm: intent.DestinationForm))
                 ];
                 await executor
@@ -894,6 +898,7 @@ try
                 var pots = request.NumberOfPots is null
                     ? null
                     : new PotRules(request.NumberOfPots.Value);
+
                 // Constraints omitted from the write contract — Application preserves
                 // any existing constraints on replace (see ReplaceStageDrawRules).
                 drawRules = new DrawRules(request.Mode.Value, seeding, pots);
@@ -1160,7 +1165,8 @@ try
 
     app.MapPost(
         "/matches/{matchId:guid}/finish",
-        async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+        async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
         {
             var result = request.ToDomain();
             await executor.FinishMatchAsync(new MatchId(matchId), result, cancellationToken).ConfigureAwait(false);
@@ -1417,6 +1423,30 @@ try
             return Results.NoContent();
         });
 
+    // Orchestration: Publish then Apply (two durable steps). Not Domain-atomic —
+    // Apply failure leaves Published + not applied for recovery via /apply.
+    app.MapPost(
+        "/stages/{stageId:guid}/draws/{drawId:guid}/publish-and-apply",
+        async (
+            Guid stageId,
+            Guid drawId,
+            ApplyDrawRequest? request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            IReadOnlyList<FixtureId>? fixtureIds = request?.FixtureIds is { Count: > 0 } ids
+                ? [.. ids.Select(id => new FixtureId(id))]
+                : null;
+            await executor
+                .PublishAndApplyDrawAsync(
+                    new StageId(stageId),
+                    new DrawId(drawId),
+                    fixtureIds,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
     app.MapPost(
         "/stages/{stageId:guid}/draws/{drawId:guid}/cancel",
         async (Guid stageId, Guid drawId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
@@ -1447,7 +1477,8 @@ try
 
     app.MapPost(
         "/stages/{stageId:guid}/draws",
-        async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+        async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
         {
             var kind = parseDrawKind(request.Kind);
             var summary = await executor

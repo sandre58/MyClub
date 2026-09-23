@@ -39,6 +39,7 @@ describe('overviewComposition', () => {
     expect(actionPresentationSlot('AddEntry')).toBe('teams');
     expect(actionPresentationSlot('ConfigureStructure')).toBe('structure');
     expect(actionPresentationSlot('PublishDraw')).toBe('operational');
+    expect(actionPresentationSlot('PublishAndApplyDraw')).toBe('operational');
     expect(actionPresentationSlot('CompleteCompetition')).toBe('closure');
     // Lifecycle Prepare/Start stay secondary — closure slot is hidden during Construction.
     expect(actionPresentationSlot('PrepareCompetition')).toBe('secondary');
@@ -67,19 +68,19 @@ describe('overviewComposition', () => {
     ).toEqual(['AddEntry']);
   });
 
-  it('attaches PrepareStage and PublishDraw to stage/draw ids from the Read', () => {
+  it('attaches PrepareStage and PublishAndApplyDraw to stage/draw ids from the Read', () => {
     const stageId = 'stage-1';
     const drawId = 'draw-1';
     const actions = [
       { code: 'PrepareStage', guaranteed: false, stageId },
-      { code: 'PublishDraw', guaranteed: false, stageId, drawId },
+      { code: 'PublishAndApplyDraw', guaranteed: false, stageId, drawId },
       { code: 'PrepareStage', guaranteed: false, stageId: 'other' },
     ];
     expect(actionsForStage(actions, stageId).map((a) => a.code)).toEqual([
       'PrepareStage',
     ]);
     expect(actionsForDraw(actions, stageId, drawId).map((a) => a.code)).toEqual(
-      ['PublishDraw'],
+      ['PublishAndApplyDraw'],
     );
   });
 

@@ -532,9 +532,13 @@ describe('StructurePage Structure hub', () => {
       name: /Désactiver le tirage/i,
     });
     expect(deactivate).toBeDisabled();
+    expect(deactivate).toHaveAttribute(
+      'title',
+      expect.stringMatching(/Annulez d’abord le tirage en cours/i),
+    );
     expect(
-      screen.getByText(/Annulez d’abord le tirage en cours/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/Annulez d’abord le tirage en cours/i),
+    ).not.toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: /Autres actions/i }),

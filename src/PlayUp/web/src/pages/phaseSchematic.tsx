@@ -445,7 +445,7 @@ function GroupsSchematic({
             className={`regulation-schematic__card regulation-schematic__card--${i % 4}`}
           >
             <span className="regulation-schematic__card-label">
-              {group.name}
+              {t('structure:place.group', { name: group.name })}
             </span>
             <div className="regulation-schematic__card-slots">
               {group.cases.map((c, j) => (

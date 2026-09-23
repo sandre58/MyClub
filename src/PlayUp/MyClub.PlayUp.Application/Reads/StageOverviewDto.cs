@@ -115,6 +115,11 @@ public sealed record StageDrawSlotPlacementDto(string SlotKey, Guid EntryId, str
 /// Group placement result summary.
 /// </summary>
 /// <param name="GroupId">Destination group.</param>
+/// <param name="GroupDisplayName">Group display name when known.</param>
 /// <param name="EntryId">Placed entry.</param>
-/// <param name="DisplayName">Display name when known.</param>
-public sealed record StageDrawGroupPlacementDto(Guid GroupId, Guid EntryId, string? DisplayName);
+/// <param name="DisplayName">Entry display name when known.</param>
+public sealed record StageDrawGroupPlacementDto(
+    Guid GroupId,
+    string? GroupDisplayName,
+    Guid EntryId,
+    string? DisplayName);

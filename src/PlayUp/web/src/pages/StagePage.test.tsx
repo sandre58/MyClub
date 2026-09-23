@@ -8,7 +8,7 @@ import {
   fetchCompetitionDetail,
   fetchStageOverview,
   prepareStage,
-  publishDraw,
+  publishAndApplyDraw,
   startStage,
 } from '../api';
 import type { StageDraw, StageOverview, StageRound, StageSlot } from '../types';
@@ -28,7 +28,7 @@ vi.mock('../api', async (importOriginal) => {
     fetchCompetitionDetail: vi.fn(),
     prepareStage: vi.fn(),
     startStage: vi.fn(),
-    publishDraw: vi.fn(),
+    publishAndApplyDraw: vi.fn(),
     applyDraw: vi.fn(),
     materializeCupFromOccupiedSlots: vi.fn(),
   };
@@ -97,7 +97,7 @@ async function confirmApplyInDialog(user: ReturnType<typeof userEvent.setup>) {
     name: 'Appliquer le tirage ?',
   });
   await user.click(
-    within(dialog).getByRole('button', { name: 'Appliquer le tirage' }),
+    within(dialog).getByRole('button', { name: 'Appliquer' }),
   );
 }
 
@@ -248,7 +248,7 @@ describe('StagePage prepare', () => {
     });
     vi.mocked(prepareStage).mockResolvedValue(undefined);
     vi.mocked(startStage).mockResolvedValue(undefined);
-    vi.mocked(publishDraw).mockResolvedValue(undefined);
+    vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
     vi.mocked(applyDraw).mockResolvedValue(undefined);
   });
 
@@ -382,7 +382,7 @@ describe('StagePage start', () => {
     });
     vi.mocked(prepareStage).mockResolvedValue(undefined);
     vi.mocked(startStage).mockResolvedValue(undefined);
-    vi.mocked(publishDraw).mockResolvedValue(undefined);
+    vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
     vi.mocked(applyDraw).mockResolvedValue(undefined);
   });
 
@@ -532,7 +532,7 @@ describe('StagePage draws', () => {
     });
     vi.mocked(prepareStage).mockResolvedValue(undefined);
     vi.mocked(startStage).mockResolvedValue(undefined);
-    vi.mocked(publishDraw).mockResolvedValue(undefined);
+    vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
     vi.mocked(applyDraw).mockResolvedValue(undefined);
   });
 
@@ -545,7 +545,7 @@ describe('StagePage draws', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Tirage résolu mais non publié.'),
+        screen.getByText('Résultat prêt à être appliqué.'),
       ).toBeInTheDocument();
     });
     expect(
@@ -556,10 +556,10 @@ describe('StagePage draws', () => {
     expect(screen.getByText('Beta')).toBeInTheDocument();
     expect(screen.getByText('vs')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Publier le tirage' }),
+      screen.getByRole('button', { name: 'Publier et appliquer' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Appliquer le tirage/i }),
+      screen.queryByRole('button', { name: 'Appliquer' }),
     ).not.toBeInTheDocument();
   });
 
@@ -585,10 +585,10 @@ describe('StagePage draws', () => {
     expect(screen.queryByText('Résultat')).not.toBeInTheDocument();
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Publier le tirage/i }),
+      screen.queryByRole('button', { name: /Publier et appliquer/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Appliquer le tirage/i }),
+      screen.queryByRole('button', { name: 'Appliquer' }),
     ).not.toBeInTheDocument();
   });
 
@@ -613,10 +613,10 @@ describe('StagePage draws', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Aucune solution')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Publier le tirage/i }),
+      screen.queryByRole('button', { name: /Publier et appliquer/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Appliquer le tirage/i }),
+      screen.queryByRole('button', { name: 'Appliquer' }),
     ).not.toBeInTheDocument();
   });
 
@@ -642,10 +642,10 @@ describe('StagePage draws', () => {
     expect(screen.getByText('Annulé')).toBeInTheDocument();
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Publier le tirage/i }),
+      screen.queryByRole('button', { name: /Publier et appliquer/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Appliquer le tirage/i }),
+      screen.queryByRole('button', { name: 'Appliquer' }),
     ).not.toBeInTheDocument();
   });
 
@@ -660,14 +660,14 @@ describe('StagePage draws', () => {
     renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Tirage publié.')).toBeInTheDocument();
+      expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
     });
     expect(screen.getByText('Publié')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Publier le tirage/i }),
+      screen.queryByRole('button', { name: /Publier et appliquer/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Appliquer le tirage' }),
+      screen.getByRole('button', { name: 'Appliquer' }),
     ).toBeInTheDocument();
   });
 
@@ -693,7 +693,7 @@ describe('StagePage draws', () => {
     });
     expect(
       screen.getByText(
-        'Tirage publié. Les placements correspondent aux emplacements de la phase.',
+        'Résultat appliqué à la phase.',
       ),
     ).toBeInTheDocument();
     expect(
@@ -702,7 +702,7 @@ describe('StagePage draws', () => {
     expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.queryByRole('button', { name: /Appliquer le tirage/i }),
+      screen.queryByRole('button', { name: 'Appliquer' }),
     ).not.toBeInTheDocument();
   });
 
@@ -724,15 +724,15 @@ describe('StagePage draws', () => {
     renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText('Tirage publié.')).toBeInTheDocument();
+      expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
     });
     expect(screen.queryByText('Appliqué')).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Appliquer le tirage' }),
+      screen.getByRole('button', { name: 'Appliquer' }),
     ).toBeInTheDocument();
   });
 
-  it('Publish calls publishDraw and shows Published after refetch', async () => {
+  it('Publish calls publishAndApplyDraw and shows Published after refetch', async () => {
     const user = userEvent.setup();
     let published = false;
 
@@ -742,20 +742,20 @@ describe('StagePage draws', () => {
         rounds: oneEmptyFixtureRound(),
       }),
     );
-    vi.mocked(publishDraw).mockImplementation(async () => {
+    vi.mocked(publishAndApplyDraw).mockImplementation(async () => {
       published = true;
     });
 
     renderStagePage();
     const publishButton = await screen.findByRole('button', {
-      name: 'Publier le tirage',
+      name: 'Publier et appliquer',
     });
     await user.click(publishButton);
 
     await waitFor(() => {
-      expect(publishDraw).toHaveBeenCalledWith(stageId, drawId);
+      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, drawId, { fixtureIds: [] });
       expect(screen.getByText('Publié')).toBeInTheDocument();
-      expect(screen.getByText('Tirage publié.')).toBeInTheDocument();
+      expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
     });
   });
 
@@ -765,7 +765,7 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({ draws: [pairingDraw()] }),
     );
-    vi.mocked(publishDraw).mockImplementation(
+    vi.mocked(publishAndApplyDraw).mockImplementation(
       () =>
         new Promise((resolve) => {
           resolvePublish = () => resolve(undefined);
@@ -774,17 +774,17 @@ describe('StagePage draws', () => {
 
     renderStagePage();
     const publishButton = await screen.findByRole('button', {
-      name: 'Publier le tirage',
+      name: 'Publier et appliquer',
     });
     await user.click(publishButton);
 
     expect(
-      await screen.findByRole('button', { name: 'Publication…' }),
+      await screen.findByRole('button', { name: 'Publication et application…' }),
     ).toBeDisabled();
 
     resolvePublish();
     await waitFor(() => {
-      expect(publishDraw).toHaveBeenCalled();
+      expect(publishAndApplyDraw).toHaveBeenCalled();
     });
   });
 
@@ -793,11 +793,11 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({ draws: [pairingDraw()] }),
     );
-    vi.mocked(publishDraw).mockRejectedValue(new Error('Publish blocked'));
+    vi.mocked(publishAndApplyDraw).mockRejectedValue(new Error('Publish blocked'));
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Publier le tirage' }),
+      await screen.findByRole('button', { name: 'Publier et appliquer' }),
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -828,7 +828,7 @@ describe('StagePage draws', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+      await screen.findByRole('button', { name: 'Appliquer' }),
     );
     await confirmApplyInDialog(user);
 
@@ -866,7 +866,7 @@ describe('StagePage draws', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+      await screen.findByRole('button', { name: 'Appliquer' }),
     );
     await confirmApplyInDialog(user);
 
@@ -903,7 +903,7 @@ describe('StagePage draws', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+      await screen.findByRole('button', { name: 'Appliquer' }),
     );
     await confirmApplyInDialog(user);
 
@@ -929,7 +929,7 @@ describe('StagePage draws', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+      await screen.findByRole('button', { name: 'Appliquer' }),
     );
 
     const dialog = await screen.findByRole('dialog', {
@@ -940,7 +940,7 @@ describe('StagePage draws', () => {
     expect(applyDraw).not.toHaveBeenCalled();
   });
 
-  it('Apply Pairing posts 1:1 fixtureIds after confirmation', async () => {
+  it('Apply Pairing posts empty fixtureIds after confirmation', async () => {
     const user = userEvent.setup();
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -952,13 +952,13 @@ describe('StagePage draws', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Appliquer le tirage' }),
+      await screen.findByRole('button', { name: 'Appliquer' }),
     );
     await confirmApplyInDialog(user);
 
     await waitFor(() => {
       expect(applyDraw).toHaveBeenCalledWith(stageId, drawId, {
-        fixtureIds: [fixtureId],
+        fixtureIds: [],
       });
     });
   });
@@ -988,12 +988,12 @@ describe('StagePage draws', () => {
 
     expect(
       await screen.findByText(
-        'Tirage publié. Les rencontres cibles ont déjà des matchs attachés.',
+        'Résultat appliqué à la phase.',
       ),
     ).toBeInTheDocument();
     expect(screen.getByText('Appliqué')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Appliquer le tirage/i }),
+      screen.queryByRole('button', { name: 'Appliquer' }),
     ).not.toBeInTheDocument();
   });
 

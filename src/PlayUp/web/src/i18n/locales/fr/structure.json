@@ -499,18 +499,29 @@
     "drawModeRandom": "Tirage aléatoire",
     "drawWorkflow": {
       "title": "Exécutions de tirage",
-      "description": "Phase « {{phase}} » — plusieurs exécutions ≠ plusieurs tours.",
       "loading": "Chargement des exécutions…",
       "loadError": "Impossible de charger les exécutions de tirage.",
       "empty": "Aucune exécution de tirage pour cette phase.",
+      "emptyTitle": "Aucune exécution",
+      "emptyBody": "Lancez un premier tirage pour peupler la forme de cette phase.",
+      "emptyBodyNeedPool": "Ajoutez des équipes à cette phase avant de lancer le tirage.",
+      "emptyBodyNeedUpstream": "Les confrontations qui déterminent les équipes de cette phase ne sont pas encore terminées. Le tirage ne peut pas encore être effectué.",
       "kindUnsupported": "Ce format de phase ne propose pas encore de création de tirage depuis Structure.",
       "create": "Nouveau tirage",
+      "createBlocked": {
+        "unsupported": "Ce format ne propose pas encore de tirage depuis Structure.",
+        "active": "Annulez d’abord l’exécution active pour en lancer une nouvelle.",
+        "emptyPool": "Ajoutez des équipes à cette phase avant de lancer le tirage.",
+        "emptyPoolUpstream": "Les confrontations qui déterminent les équipes de cette phase ne sont pas encore terminées. Le tirage ne peut pas encore être effectué.",
+        "oddPool": "Le tirage Coupe nécessite un nombre pair d’équipes.",
+        "missingPots": "Configurez les pots du tirage (Paramètres) avant de générer.",
+        "groupShape": "Le nombre d’équipes doit égaler pots × groupes."
+      },
       "creating": "Tirage en cours…",
       "historyAria": "Historique des exécutions",
-      "historyHint": "Exécutions successives de cette phase (pas des tours de compétition).",
       "execution": "Exécution #{{n}}",
-      "poolFromPopulation_one": "Pool de tirage · {{count}} Entrée de la Population",
-      "poolFromPopulation_other": "Pool de tirage · {{count}} Entrées de la Population"
+      "factPool_one": "équipe résolue",
+      "factPool_other": "équipes résolues"
     },
     "addExit": "Ajouter une sortie",
     "addAttribution": "Ajouter une attribution",

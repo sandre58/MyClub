@@ -2009,13 +2009,6 @@
   gap: var(--space-4) var(--space-8);
 }
 
-.structure-draw-actions__hint {
-  flex: 1 0 100%;
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-}
-
 .structure-draw-cta:focus-visible {
   box-shadow: var(--focus-halo);
   outline: none;
@@ -2552,10 +2545,34 @@ button.structure-flux-group__peer {
   gap: var(--space-8);
 }
 
-/* ---------- Dialog ex?cutions tirage (H1) ---------- */
+/* ---------- Dialog exécutions tirage (H1) ---------- */
+
+.structure-draw-dialog {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.structure-draw-dialog .ds-empty--idle {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-draw-summary {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-16);
+}
 
 .structure-draw-layout {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--space-16);
   min-height: 0;
@@ -2563,13 +2580,16 @@ button.structure-flux-group__peer {
 
 .structure-draw-layout--split {
   display: grid;
-  grid-template-columns: minmax(11rem, 14rem) minmax(0, 1fr);
+  grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr);
   gap: var(--space-16);
-  align-items: start;
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.structure-draw-master__hint {
-  margin: 0 0 var(--space-8);
+.structure-draw-master {
+  min-height: 0;
+  overflow: auto;
 }
 
 .structure-draw-master__list {
@@ -2578,65 +2598,113 @@ button.structure-flux-group__peer {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-8);
 }
 
-.structure-draw-master__item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-  width: 100%;
-  margin: 0;
-  background: transparent;
-  text-align: start;
-  cursor: pointer;
-  color: inherit;
-  font: inherit;
-}
-
-.structure-draw-master__item--active {
-  border-color: var(--color-brand);
-  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
-}
-
-.structure-draw-master__item-title {
-  font-weight: 600;
-}
-
-.structure-draw-detail {
+.structure-draw-master__card {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-12);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  color: inherit;
+}
+
+.structure-draw-master__card-head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.structure-draw-master__card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
   min-width: 0;
 }
 
-.structure-draw-detail__title {
-  margin: 0;
-  font-weight: 650;
+.structure-draw-master__card-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-brand);
+  line-height: 0;
+  opacity: 0.85;
+}
+
+.structure-draw-master__card-icon .ds-icon {
+  color: inherit;
+}
+
+.structure-draw-master__card-name {
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-draw-master__card-status {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.structure-draw-master__card-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.structure-draw-tile {
+  padding: var(--space-16);
+  gap: var(--space-12);
+  box-shadow: none;
+  min-height: 0;
+  overflow: auto;
+}
+
+.structure-draw-tile .ds-form-section__body {
+  gap: var(--space-12);
 }
 
 .structure-draw-detail__message {
   margin: 0;
 }
 
-.structure-draw-detail__section {
-  margin: 0;
-  font-weight: 600;
-}
-
-.structure-draw-empty {
+.structure-draw-result {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-12);
+  margin-top: var(--space-4);
+  padding-top: var(--space-12);
+  border-top: var(--border-width) solid var(--color-border);
 }
 
-.structure-draw-pool {
-  margin: 0 0 var(--space-8);
-  padding: var(--space-8);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-muted);
-  font-size: var(--font-size-sm);
+.structure-draw-result__title {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.structure-draw-result-schematic.regulation-schematic {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
 }
 
 .draw-pairing-list,
@@ -2651,10 +2719,55 @@ button.structure-flux-group__peer {
 
 .draw-pairing,
 .draw-placement {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-12);
+  margin: 0;
+  padding: var(--space-12);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-secondary) 55%, transparent);
+}
+
+.draw-pairing {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.draw-pairing__side {
+  min-width: 0;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.draw-pairing__side:last-child {
+  text-align: end;
+}
+
+.draw-pairing__vs {
+  flex: none;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.draw-placement {
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+.draw-placement__key {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+}
+
+.draw-placement__arrow {
+  color: var(--color-text-secondary);
+}
+
+.draw-placement__entry {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
 }
 
 @media (max-width: 40rem) {
@@ -2700,14 +2813,19 @@ button.structure-flux-group__peer {
 
 /* Fixed chrome while editing — only viewport resize changes dialog size. */
 .ds-dialog:has(.structure-qualification) .ds-dialog__panel,
-.ds-dialog:has(.structure-progression) .ds-dialog__panel {
+.ds-dialog:has(.structure-progression) .ds-dialog__panel,
+.ds-dialog:has(.structure-draw-dialog) .ds-dialog__panel {
   height: min(92vh, 52rem);
   max-height: min(92vh, 52rem);
 }
 
 .ds-dialog:has(.structure-qualification) .ds-dialog__body,
-.ds-dialog:has(.structure-progression) .ds-dialog__body {
+.ds-dialog:has(.structure-progression) .ds-dialog__body,
+.ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Attribution: fixed size — height independent of row count. */

@@ -520,6 +520,7 @@ describe('PhaseSchematic', () => {
     const card = container.querySelector('.regulation-schematic__card');
     expect(card).not.toBeNull();
     expect(card!.querySelector('.regulation-schematic__card-feed')).toBeNull();
+    expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText(/Vainqueur · Match #1/)).toBeInTheDocument();
     expect(card!.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
   });

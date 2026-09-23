@@ -1,15 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   applyDraw,
   cancelDraw,
   createAndGenerateDraw,
   fetchStageOverview,
-  publishDraw,
+  publishAndApplyDraw,
 } from '../api';
+import { Alert } from '../design-system/components/Alert';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
+import { RandomIcon } from '../design-system/icons/contentIcons';
+import { TeamCrest } from '../design-system/TeamCrest';
 import { drawResolutionKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import type {
@@ -21,17 +24,21 @@ import type {
 } from '../types';
 import {
   getDrawUiProjection,
+  groupPlacementRows,
   pickDefaultDrawId,
-  resolvePairingFixtureIds,
+  resolveDrawCreateGate,
 } from './drawUi';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import {
   DrawResolutionBadge,
   DrawStatusBadge,
+  EmptyState,
+  LoadingState,
   MutationError,
   PendingLabel,
   StatusBadge,
 } from '../ui';
+import './phase-schematic.css';
 
 function resolveDrawKindForFormat(
   format: StructureFormatKind | null | undefined,
@@ -45,6 +52,11 @@ function resolveDrawKindForFormat(
   return null;
 }
 
+/** One non-Cancelled Draw may own the active execution; rerun = Cancel → Nouveau. */
+function hasActiveDraw(draws: StageDraw[]): boolean {
+  return draws.some((d) => d.status !== 'Cancelled');
+}
+
 type StructureDrawDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -54,7 +66,8 @@ type StructureDrawDialogProps = {
 
 /**
  * Work dialog — exécutions de tirage de la phase (H1).
- * Master-detail only when draws.length > 1. Create = G2 (create+inputs+generate).
+ * Stats pool (comme Qual/Prog) · tuile Historique dès 1 Draw ·
+ * une tuile détail (état + résultat) · Nouveau = seul primary.
  */
 export function StructureDrawDialog({
   open,
@@ -79,7 +92,8 @@ export function StructureDrawDialog({
   const slots = overviewQuery.data?.slots ?? [];
   const rounds = overviewQuery.data?.rounds ?? [];
   const drawList = draws ?? [];
-  const showMaster = drawList.length > 1;
+  const showHistory = drawList.length >= 1;
+  const poolCount = stage.compositionEntryCount ?? 0;
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
@@ -109,8 +123,24 @@ export function StructureDrawDialog({
     [drawList, selectedId],
   );
 
-  const hasDraft = drawList.some((d) => d.status === 'Draft');
-  const canCreate = drawKind != null && !hasDraft && !overviewQuery.isLoading;
+  const activeExists = hasActiveDraw(drawList);
+  const createGate = resolveDrawCreateGate({
+    kind: drawKind,
+    hasActiveDraw: activeExists,
+    compositionEntryCount: poolCount,
+    isRootComposition: stage.isRootComposition,
+    numberOfPots: stage.numberOfPots,
+    groupCount: stage.groupCount,
+  });
+  const showCreate = drawKind != null && !overviewQuery.isLoading;
+  const canCreate = showCreate && createGate.ok;
+  const createBlockedReason =
+    showCreate && !createGate.ok ? createGate.reason : null;
+
+  const createBlockedMessage =
+    createBlockedReason != null
+      ? t(`fiche.drawWorkflow.createBlocked.${createBlockedReason}`)
+      : null;
 
   async function invalidateDrawQueries() {
     await invalidateAfterStructureMutation(queryClient, competitionId, {
@@ -131,10 +161,19 @@ export function StructureDrawDialog({
     },
   });
 
-  const publishMutation = useMutation({
-    mutationFn: (drawId: string) => publishDraw(stageId, drawId),
-    onSuccess: async () => {
+  const publishAndApplyMutation = useMutation({
+    mutationFn: async (draw: StageDraw) => {
+      // Pairing: Host EnsurePairingFixtures when fixtureIds empty — no client 1:1 gate.
+      return publishAndApplyDraw(stageId, draw.id, { fixtureIds: [] });
+    },
+    // Always refresh: Apply may fail after a durable Publish (recovery state).
+    onSettled: async (_data, _error, draw) => {
       await invalidateDrawQueries();
+      if (draw?.kind === 'Pairing') {
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.matches.byStage(stageId),
+        });
+      }
     },
   });
 
@@ -148,19 +187,8 @@ export function StructureDrawDialog({
 
   const applyMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
-      if (draw.kind === 'Slot' || draw.kind === 'Group') {
-        return applyDraw(stageId, draw.id, { fixtureIds: [] });
-      }
-      if (draw.kind === 'Pairing') {
-        const fixtureIds = resolvePairingFixtureIds(draw, rounds);
-        if (fixtureIds === null) {
-          throw new Error(
-            'Cannot apply pairing: fixture count must match pairing count for a 1:1 map.',
-          );
-        }
-        return applyDraw(stageId, draw.id, { fixtureIds });
-      }
-      throw new Error('Apply is not available for this draw kind.');
+      // Slot/Group/Pairing — Host ensures Pairing fixtures when body is empty.
+      return applyDraw(stageId, draw.id, { fixtureIds: [] });
     },
     onSuccess: async (_void, draw) => {
       setApplyConfirmOpen(false);
@@ -175,13 +203,13 @@ export function StructureDrawDialog({
 
   const busy =
     createMutation.isPending ||
-    publishMutation.isPending ||
+    publishAndApplyMutation.isPending ||
     cancelMutation.isPending ||
     applyMutation.isPending;
 
   const mutationError =
     createMutation.error ??
-    publishMutation.error ??
+    publishAndApplyMutation.error ??
     cancelMutation.error ??
     applyMutation.error;
 
@@ -190,26 +218,33 @@ export function StructureDrawDialog({
     [drawList],
   );
 
+  const selectedApplied =
+    selected != null &&
+    getDrawUiProjection(selected, slots, rounds).isApplied;
+
   return (
     <>
       <Dialog
         open={open}
         onClose={onClose}
         title={t('fiche.drawWorkflow.title')}
-        description={t('fiche.drawWorkflow.description', {
-          phase: stage.name,
-        })}
+        description={stage.name}
         size="lg"
         closeLabel={tCommon('close')}
         closeDisabled={busy}
         trapFocus={!applyConfirmOpen && !cancelConfirmOpen}
         footer={
           <div className="button-row">
-            {canCreate ? (
+            {showCreate ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--primary"
-                disabled={busy}
+                disabled={busy || !canCreate}
+                aria-describedby={
+                  createBlockedMessage != null
+                    ? 'structure-draw-create-blocked'
+                    : undefined
+                }
                 onClick={() => createMutation.mutate()}
               >
                 {createMutation.isPending ? (
@@ -230,79 +265,130 @@ export function StructureDrawDialog({
           </div>
         }
         footerStatus={
-          overviewQuery.isError || mutationError ? (
+          overviewQuery.isError ||
+          mutationError ||
+          createBlockedMessage != null ? (
             <>
+              {createBlockedMessage != null ? (
+                <Alert
+                  id="structure-draw-create-blocked"
+                  tone="warning"
+                  role="status"
+                >
+                  {createBlockedMessage}
+                </Alert>
+              ) : null}
               {overviewQuery.isError ? (
-                <p className="ds-notice ds-notice--danger" role="alert">
+                <Alert tone="danger" role="alert">
                   {t('fiche.drawWorkflow.loadError')}
-                </p>
+                </Alert>
               ) : null}
               {mutationError ? <MutationError error={mutationError} /> : null}
             </>
           ) : null
         }
       >
-        {(stage.compositionEntryCount ?? 0) > 0 ? (
-          <p className="structure-draw-pool" role="note">
-            {t('fiche.drawWorkflow.poolFromPopulation', {
-              count: stage.compositionEntryCount,
-            })}
-          </p>
-        ) : null}
-        {overviewQuery.isLoading ? (
-          <p className="structure-panel__muted" role="status">
-            {t('fiche.drawWorkflow.loading')}
-          </p>
-        ) : null}
+        <div className="structure-draw-dialog">
+          {!overviewQuery.isLoading ? (
+            <div
+              className="structure-draw-summary"
+              aria-live="polite"
+            >
+              <div className="structure-qualification__facts">
+                <div className="structure-qualification__fact structure-qualification__fact--primary">
+                  <span className="structure-qualification__fact-value">
+                    {poolCount}
+                  </span>
+                  <span className="structure-qualification__fact-label">
+                    {t('fiche.drawWorkflow.factPool', { count: poolCount })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
-        {!overviewQuery.isLoading && !overviewQuery.isError && drawList.length === 0 ? (
-          <div className="structure-draw-empty">
-            <p className="structure-panel__muted">{t('fiche.drawWorkflow.empty')}</p>
-            {drawKind == null ? (
-              <p className="hint">{t('fiche.drawWorkflow.kindUnsupported')}</p>
-            ) : null}
-          </div>
-        ) : null}
+          {overviewQuery.isLoading ? (
+            <LoadingState
+              size="region"
+              label={t('fiche.drawWorkflow.loading')}
+            />
+          ) : null}
 
-        {drawList.length > 0 ? (
-          <div
-            className={
-              showMaster
-                ? 'structure-draw-layout structure-draw-layout--split'
-                : 'structure-draw-layout'
-            }
-          >
-            {showMaster ? (
+          {!overviewQuery.isLoading &&
+          !overviewQuery.isError &&
+          drawList.length === 0 ? (
+            <EmptyState
+              variant="idle"
+              icon={<RandomIcon size="lg" />}
+              title={t('fiche.drawWorkflow.emptyTitle')}
+            >
+              {drawKind == null
+                ? t('fiche.drawWorkflow.kindUnsupported')
+                : createBlockedReason === 'emptyPool' ||
+                    createBlockedReason === 'emptyPoolUpstream'
+                  ? t(
+                      createBlockedReason === 'emptyPoolUpstream'
+                        ? 'fiche.drawWorkflow.emptyBodyNeedUpstream'
+                        : 'fiche.drawWorkflow.emptyBodyNeedPool',
+                    )
+                  : createBlockedReason != null
+                    ? createBlockedMessage
+                    : t('fiche.drawWorkflow.emptyBody')}
+            </EmptyState>
+          ) : null}
+
+          {showHistory ? (
+            <div className="structure-draw-layout structure-draw-layout--split">
               <nav
                 className="structure-draw-master"
                 aria-label={t('fiche.drawWorkflow.historyAria')}
               >
-                <p className="structure-draw-master__hint">
-                  {t('fiche.drawWorkflow.historyHint')}
-                </p>
                 <ul className="structure-draw-master__list">
                   {newestFirst.map((draw, index) => {
                     const execLabel = t('fiche.drawWorkflow.execution', {
                       n: drawList.length - index,
                     });
                     const isCurrent = draw.id === selected?.id;
+                    const chrome = getDrawUiProjection(draw, slots, rounds).chrome;
                     return (
                       <li key={draw.id}>
                         <button
                           type="button"
-                          className={
-                            isCurrent
-                              ? 'structure-draw-master__item structure-draw-master__item--active'
-                              : 'structure-draw-master__item'
-                          }
+                          className="structure-draw-master__card ds-selectable-tile"
+                          data-selected={isCurrent ? 'true' : 'false'}
                           aria-current={isCurrent ? 'true' : undefined}
                           onClick={() => setSelectedId(draw.id)}
                         >
-                          <span className="structure-draw-master__item-title">
-                            {execLabel}
+                          <span className="structure-draw-master__card-head">
+                            <span className="structure-draw-master__card-title">
+                              <span className="structure-draw-master__card-icon">
+                                <RandomIcon size="sm" aria-hidden="true" />
+                              </span>
+                              <span className="structure-draw-master__card-name">
+                                {execLabel}
+                              </span>
+                            </span>
+                            {chrome.showStatus ? (
+                              <span className="structure-draw-master__card-status">
+                                <DrawStatusBadge
+                                  status={draw.status}
+                                  density="compact"
+                                />
+                              </span>
+                            ) : null}
                           </span>
-                          <span className="badge-row">
-                            <DrawStatusBadge status={draw.status} />
+                          <span className="structure-draw-master__card-facts">
+                            {chrome.showResolution ? (
+                              <DrawResolutionBadge
+                                state={draw.resolutionState}
+                                density="compact"
+                              />
+                            ) : null}
+                            {chrome.showApplied ? (
+                              <StatusBadge tone="ok" density="compact">
+                                {tDraw('applied')}
+                              </StatusBadge>
+                            ) : null}
                           </span>
                         </button>
                       </li>
@@ -310,24 +396,26 @@ export function StructureDrawDialog({
                   })}
                 </ul>
               </nav>
-            ) : null}
 
-            {selected ? (
-              <DrawExecutionDetail
-                draw={selected}
-                slots={slots}
-                rounds={rounds}
-                busy={busy}
-                onPublish={() => publishMutation.mutate(selected.id)}
-                onApply={() => setApplyConfirmOpen(true)}
-                onCancel={() => setCancelConfirmOpen(true)}
-                publishPending={publishMutation.isPending}
-                applyPending={applyMutation.isPending}
-                cancelPending={cancelMutation.isPending}
-              />
-            ) : null}
-          </div>
-        ) : null}
+              {selected ? (
+                <DrawExecutionDetail
+                  draw={selected}
+                  slots={slots}
+                  rounds={rounds}
+                  busy={busy}
+                  onPublishAndApply={() =>
+                    publishAndApplyMutation.mutate(selected)
+                  }
+                  onApply={() => setApplyConfirmOpen(true)}
+                  onCancel={() => setCancelConfirmOpen(true)}
+                  publishAndApplyPending={publishAndApplyMutation.isPending}
+                  applyPending={applyMutation.isPending}
+                  cancelPending={cancelMutation.isPending}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </Dialog>
 
       <ConfirmDialog
@@ -357,7 +445,11 @@ export function StructureDrawDialog({
       <ConfirmDialog
         open={cancelConfirmOpen}
         title={tDraw('confirmCancelTitle')}
-        message={tDraw('confirmCancel')}
+        message={
+          selectedApplied
+            ? tDraw('confirmCancelApplied')
+            : tDraw('confirmCancel')
+        }
         confirmLabel={tDraw('cancel')}
         cancelLabel={tCommon('close')}
         closeLabel={tCommon('close')}
@@ -382,15 +474,60 @@ export function StructureDrawDialog({
   );
 }
 
+function DrawSectionTile({
+  id,
+  title,
+  description,
+  icon,
+  footer,
+  children,
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  icon: ReactNode;
+  footer?: ReactNode;
+  children: ReactNode;
+}) {
+  const titleId = `${id}-title`;
+  return (
+    <section
+      id={id}
+      className="ds-form-section structure-domain-tile structure-draw-tile"
+      aria-labelledby={titleId}
+    >
+      <header className="ds-form-section__head structure-domain-tile__head">
+        <span className="ds-form-section__icon" aria-hidden="true">
+          {icon}
+        </span>
+        <div className="ds-form-section__copy">
+          <h3 id={titleId} className="ds-form-section__title">
+            {title}
+          </h3>
+          {description ? (
+            <p className="ds-form-section__description">{description}</p>
+          ) : null}
+        </div>
+      </header>
+      <div className="ds-form-section__body structure-domain-tile__content">
+        {children}
+      </div>
+      {footer ? (
+        <div className="structure-domain-tile__footer">{footer}</div>
+      ) : null}
+    </section>
+  );
+}
+
 function DrawExecutionDetail({
   draw,
   slots,
   rounds,
   busy,
-  onPublish,
+  onPublishAndApply,
   onApply,
   onCancel,
-  publishPending,
+  publishAndApplyPending,
   applyPending,
   cancelPending,
 }: {
@@ -398,18 +535,22 @@ function DrawExecutionDetail({
   slots: StageSlot[];
   rounds: StageRound[];
   busy: boolean;
-  onPublish: () => void;
+  onPublishAndApply: () => void;
   onApply: () => void;
   onCancel: () => void;
-  publishPending: boolean;
+  publishAndApplyPending: boolean;
   applyPending: boolean;
   cancelPending: boolean;
 }) {
   const { t } = useTranslation('draw');
+  const { t: tCommon } = useTranslation('common');
+  const { t: tStructure } = useTranslation('structure');
   const ui = getDrawUiProjection(draw, slots, rounds);
 
-  const canPublish =
-    draw.status === 'Draft' && draw.resolutionState === 'Resolved';
+  const canPublishAndApply =
+    draw.status === 'Draft' &&
+    draw.resolutionState === 'Resolved' &&
+    (draw.kind === 'Slot' || draw.kind === 'Group' || draw.kind === 'Pairing');
   const canApply =
     draw.status === 'Published' &&
     draw.resolutionState === 'Resolved' &&
@@ -418,139 +559,179 @@ function DrawExecutionDetail({
   const canCancel =
     draw.status === 'Draft' || draw.status === 'Published';
 
-  const pairingFixtureIds =
-    draw.kind === 'Pairing' ? resolvePairingFixtureIds(draw, rounds) : null;
-  const pairingMapBlocked =
-    draw.kind === 'Pairing' && canApply && pairingFixtureIds === null;
+  const groupRows =
+    draw.kind === 'Group' && (draw.groupPlacements?.length ?? 0) > 0
+      ? groupPlacementRows(
+          draw.groupPlacements!,
+          tCommon('unknownEntry'),
+          t('unknownGroup'),
+        )
+      : [];
+
+  const hasPairings =
+    ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0;
+  const hasSlots =
+    ui.showResults &&
+    draw.kind === 'Slot' &&
+    draw.slotPlacements.length > 0;
+  const hasGroups = ui.showResults && draw.kind === 'Group' && groupRows.length > 0;
+  const showResults = hasPairings || hasSlots || hasGroups;
+
+  const stateActions =
+    canPublishAndApply || canApply || canCancel ? (
+      <div className="button-row" aria-busy={busy}>
+        {canPublishAndApply ? (
+          <button
+            type="button"
+            className="ds-btn ds-btn--primary"
+            disabled={busy}
+            onClick={onPublishAndApply}
+          >
+            {publishAndApplyPending ? (
+              <PendingLabel>{t('publishingAndApplying')}</PendingLabel>
+            ) : (
+              t('publishAndApply')
+            )}
+          </button>
+        ) : null}
+        {canApply ? (
+          <button
+            type="button"
+            className="ds-btn ds-btn--primary"
+            disabled={busy}
+            onClick={onApply}
+          >
+            {applyPending ? (
+              <PendingLabel>{t('applying')}</PendingLabel>
+            ) : (
+              t('apply')
+            )}
+          </button>
+        ) : null}
+        {canCancel ? (
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost ds-btn--destructive"
+            disabled={busy}
+            onClick={onCancel}
+          >
+            {cancelPending ? (
+              <PendingLabel>{t('cancelling')}</PendingLabel>
+            ) : (
+              t('cancel')
+            )}
+          </button>
+        ) : null}
+      </div>
+    ) : null;
 
   return (
-    <article className="structure-draw-detail">
-      <header className="stack stack--tight">
-        <h3 className="structure-draw-detail__title">
-          {t('title', { kind: drawResolutionKindLabel(draw.kind) })}
-        </h3>
-        <p className="badge-row">
+    <DrawSectionTile
+      id={`draw-detail-${draw.id}`}
+      title={t('title', { kind: drawResolutionKindLabel(draw.kind) })}
+      icon={<RandomIcon size="sm" />}
+      footer={stateActions}
+    >
+      <p className="badge-row">
+        {ui.chrome.showStatus ? (
           <DrawStatusBadge status={draw.status} />
+        ) : null}
+        {ui.chrome.showResolution ? (
           <DrawResolutionBadge state={draw.resolutionState} />
-          {ui.isApplied ? (
-            <StatusBadge tone="ok">{t('applied')}</StatusBadge>
-          ) : null}
-        </p>
-      </header>
-
+        ) : null}
+        {ui.chrome.showApplied ? (
+          <StatusBadge tone="ok">{t('applied')}</StatusBadge>
+        ) : null}
+      </p>
       <p className="structure-draw-detail__message" role="status">
         {t(ui.messageKey)}
       </p>
 
-      {ui.showResults && draw.kind === 'Pairing' && draw.pairings.length > 0 ? (
-        <div className="stack stack--tight">
-          <h4 className="structure-draw-detail__section">{t('result')}</h4>
-          <ul className="draw-pairing-list">
-            {draw.pairings.map((pairing) => (
-              <li
-                key={`${pairing.entryAId}-${pairing.entryBId}`}
-                className="draw-pairing"
-              >
-                <span className="draw-pairing__side">
-                  {pairing.entryADisplayName?.trim() ||
-                    t('unknownEntry', { ns: 'common' })}
-                </span>
-                <span className="draw-pairing__vs">{t('vs')}</span>
-                <span className="draw-pairing__side">
-                  {pairing.entryBDisplayName?.trim() ||
-                    t('unknownEntry', { ns: 'common' })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {ui.showResults &&
-      draw.kind === 'Slot' &&
-      draw.slotPlacements.length > 0 ? (
-        <div className="stack stack--tight">
-          <h4 className="structure-draw-detail__section">{t('placements')}</h4>
-          <ul className="draw-placement-list">
-            {draw.slotPlacements.map((placement) => (
-              <li
-                key={`${placement.slotKey}-${placement.entryId}`}
-                className="draw-placement"
-              >
-                <code>{placement.slotKey}</code>
-                <span className="draw-placement__arrow" aria-hidden="true">
-                  →
-                </span>
-                <span className="draw-placement__entry">
-                  {placement.displayName?.trim() ||
-                    t('unknownEntry', { ns: 'common' })}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {ui.showResults &&
-      draw.kind === 'Group' &&
-      draw.resolutionState === 'Resolved' ? (
-        <p className="hint" role="status">
-          {t('groupPlacementsHint')}
-        </p>
-      ) : null}
-
-      {pairingMapBlocked ? (
-        <p className="ds-notice ds-notice--warning" role="status">
-          {t('pairingMapBlocked')}
-        </p>
-      ) : null}
-
-      {(canPublish || canApply || canCancel) && (
-        <div className="button-row" aria-busy={busy}>
-          {canPublish ? (
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
-              disabled={busy}
-              onClick={onPublish}
-            >
-              {publishPending ? (
-                <PendingLabel>{t('publishing')}</PendingLabel>
-              ) : (
-                t('publish')
-              )}
-            </button>
+      {showResults ? (
+        <div className="structure-draw-result">
+          <h4 className="structure-draw-result__title">{t('result')}</h4>
+          {hasPairings ? (
+            <ul className="draw-pairing-list">
+              {draw.pairings.map((pairing) => (
+                <li
+                  key={`${pairing.entryAId}-${pairing.entryBId}`}
+                  className="draw-pairing"
+                >
+                  <span className="draw-pairing__side">
+                    {pairing.entryADisplayName?.trim() ||
+                      tCommon('unknownEntry')}
+                  </span>
+                  <span className="draw-pairing__vs">{t('vs')}</span>
+                  <span className="draw-pairing__side">
+                    {pairing.entryBDisplayName?.trim() ||
+                      tCommon('unknownEntry')}
+                  </span>
+                </li>
+              ))}
+            </ul>
           ) : null}
-          {canApply && !pairingMapBlocked ? (
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
-              disabled={busy}
-              onClick={onApply}
-            >
-              {applyPending ? (
-                <PendingLabel>{t('applying')}</PendingLabel>
-              ) : (
-                t('apply')
-              )}
-            </button>
+
+          {hasSlots ? (
+            <ul className="draw-placement-list">
+              {draw.slotPlacements.map((placement) => (
+                <li
+                  key={`${placement.slotKey}-${placement.entryId}`}
+                  className="draw-placement"
+                >
+                  <code className="draw-placement__key">{placement.slotKey}</code>
+                  <span className="draw-placement__arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="draw-placement__entry">
+                    {placement.displayName?.trim() || tCommon('unknownEntry')}
+                  </span>
+                </li>
+              ))}
+            </ul>
           ) : null}
-          {canCancel ? (
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost"
-              disabled={busy}
-              onClick={onCancel}
+
+          {hasGroups ? (
+            <div
+              className="regulation-schematic regulation-schematic--groups structure-draw-result-schematic"
+              aria-label={t('result')}
             >
-              {cancelPending ? (
-                <PendingLabel>{t('cancelling')}</PendingLabel>
-              ) : (
-                t('cancel')
-              )}
-            </button>
+              <div className="regulation-schematic__cards">
+                {groupRows.map((row, index) => (
+                  <div
+                    key={row.groupId}
+                    className={`regulation-schematic__card regulation-schematic__card--${index % 4}`}
+                  >
+                    <span className="regulation-schematic__card-label">
+                      {tStructure('place.group', { name: row.groupLabel })}
+                    </span>
+                    <div className="regulation-schematic__card-slots">
+                      {row.entries.map((entry) => (
+                        <div
+                          key={`${row.groupId}-${entry.entryId}`}
+                          className="schematic-slot"
+                        >
+                          <span className="schematic-slot__body">
+                            <TeamCrest
+                              name={entry.displayName}
+                              size="sm"
+                              className="schematic-slot__crest"
+                            />
+                            <span className="schematic-slot__copy">
+                              <span className="schematic-slot__primary">
+                                {entry.displayName}
+                              </span>
+                            </span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : null}
         </div>
-      )}
-    </article>
+      ) : null}
+    </DrawSectionTile>
   );
 }

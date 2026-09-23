@@ -8,6 +8,7 @@
   "PrepareStage": "Préparer la phase « {{name}} »",
   "StartStage": "Démarrer la phase « {{name}} »",
   "PublishDraw": "Publier le tirage",
+  "PublishAndApplyDraw": "Publier et appliquer",
   "ApplyDraw": "Appliquer le tirage",
   "MaterializeMatches": "Créer les matchs / le squelette",
   "MaterializeFromOccupiedSlots": "Configurer les confrontations — {{stageName}}",

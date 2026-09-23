@@ -79,7 +79,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         using var client = factory.CreateClient();
 
         var competitionId = await CreateCompetitionAsync(client, "Groups3");
-        await AddEntriesAsync(client, competitionId, 4);
+        var entryIds = await AddEntriesAsync(client, competitionId, 4);
 
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/structure",
@@ -87,6 +87,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;
         var stageId = org.Format.PrimaryStageId!.Value;
+
+        await SeedStageAffectationAsync(client, stageId, entryIds);
 
         using var drawRules = await client.PutAsJsonAsync(
             $"/stages/{stageId}/draw-rules",
@@ -140,7 +142,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         using var client = factory.CreateClient();
 
         var competitionId = await CreateCompetitionAsync(client, "Cup3");
-        await AddEntriesAsync(client, competitionId, 4);
+        var entryIds = await AddEntriesAsync(client, competitionId, 4);
 
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/structure",
@@ -148,6 +150,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;
         var stageId = org.Format.PrimaryStageId!.Value;
+
+        await SeedStageAffectationAsync(client, stageId, entryIds);
 
         using var drawRules = await client.PutAsJsonAsync(
             $"/stages/{stageId}/draw-rules",
@@ -160,13 +164,16 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         createDraw.EnsureSuccessStatusCode();
         var draw = await createDraw.Content.ReadFromJsonAsync<DrawSummaryDto>(HostJson.Options);
 
-        await client.PostAsync($"/stages/{stageId}/draws/{draw!.DrawId}/inputs", null);
+        using var inputs = await client.PostAsync($"/stages/{stageId}/draws/{draw!.DrawId}/inputs", null);
+        inputs.EnsureSuccessStatusCode();
         using var generate = await client.PostAsync(
             $"/stages/{stageId}/draws/{draw.DrawId}/generate",
             null);
+        generate.EnsureSuccessStatusCode();
         (await generate.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options))!.IsResolved.Should().BeTrue();
 
-        await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/publish", null);
+        using var publish = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/publish", null);
+        publish.EnsureSuccessStatusCode();
         using var apply = await client.PostAsJsonAsync(
             $"/stages/{stageId}/draws/{draw.DrawId}/apply",
             new ApplyDrawRequest());
@@ -188,14 +195,26 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         return created!.Id;
     }
 
-    private static async Task AddEntriesAsync(HttpClient client, Guid competitionId, int count)
+    private static async Task<Guid[]> AddEntriesAsync(HttpClient client, Guid competitionId, int count)
     {
+        StructureViewDto? view = null;
         for (var i = 0; i < count; i++)
         {
             using var response = await client.PostAsJsonAsync(
                 $"/competitions/{competitionId}/entries",
                 new AddEntryRequest($"Team {i}"));
             response.EnsureSuccessStatusCode();
+            view = await response.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         }
+
+        return [.. view!.Participants.Entries.Select(entry => entry.EntryId)];
+    }
+
+    private static async Task SeedStageAffectationAsync(HttpClient client, Guid stageId, Guid[] entryIds)
+    {
+        using var affectation = await client.PutAsJsonAsync(
+            $"/stages/{stageId}/affectation",
+            new EntryIdsRequest(entryIds));
+        affectation.EnsureSuccessStatusCode();
     }
 }

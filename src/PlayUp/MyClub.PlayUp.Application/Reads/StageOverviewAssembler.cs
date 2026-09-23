@@ -107,11 +107,16 @@ public static class StageOverviewAssembler
                     EntryDisplayNames.Resolve(names, placement.EntryId)))
         ];
 
+        var groupNames = stage.Groups.ToDictionary(
+            group => group.Id,
+            group => group.Name);
+
         groupPlacements =
         [
             .. resolution.GroupResults
                 .Select(placement => new StageDrawGroupPlacementDto(
                     placement.GroupId.Value,
+                    groupNames.GetValueOrDefault(placement.GroupId),
                     placement.EntryId.Value,
                     EntryDisplayNames.Resolve(names, placement.EntryId)))
         ];

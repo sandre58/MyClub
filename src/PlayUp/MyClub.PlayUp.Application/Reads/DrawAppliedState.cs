@@ -43,12 +43,7 @@ public static class DrawAppliedState
     private static bool IsGroupApplied(Draw draw, Stage stage)
     {
         var placements = draw.Resolution.GroupResults;
-        if (placements.Count == 0)
-        {
-            return false;
-        }
-
-        return !(from placement in placements let @group = stage.FindGroup(placement.GroupId) where @group?.EntryIds.Contains(placement.EntryId) != true select placement).Any();
+        return placements.Count != 0 && !(from placement in placements let @group = stage.FindGroup(placement.GroupId) where @group?.EntryIds.Contains(placement.EntryId) != true select placement).Any();
     }
 
     private static bool IsSlotApplied(Draw draw, Stage stage)
