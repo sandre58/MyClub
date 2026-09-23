@@ -23,14 +23,14 @@
   "applying": "Application…",
   "confirmApplyTitle": "Appliquer le tirage ?",
   "confirmApply": "Cela mettra à jour la phase et peut créer des matchs.",
-  "cancel": "Annuler",
+  "cancel": "Annuler l’exécution",
   "cancelling": "Annulation…",
-  "confirmCancelTitle": "Annuler cette exécution ?",
-  "confirmCancel": "L’exécution passera en annulée. Un nouveau tirage sera alors possible.",
-  "confirmCancelApplied": "L’exécution passera en annulée. Cela n’annule pas l’application déjà faite sur la phase — seuls un nouveau tirage puis une nouvelle application peuvent peupler à nouveau. Un nouveau tirage sera alors possible.",
+  "confirmCancelTitle": "Annuler l’exécution ?",
+  "confirmCancel": "Cette action annule l’exécution du tirage. Pour refaire le tirage, vous pourrez lancer une nouvelle exécution.",
+  "confirmCancelApplied": "Cette action annule l’exécution du tirage. Elle ne retire pas les placements déjà appliqués à la phase. Pour refaire le tirage, vous pourrez lancer une nouvelle exécution.",
   "toastCreated": "Nouvelle exécution créée.",
   "toastPublished": "Tirage publié.",
   "toastPublishedAndApplied": "Tirage publié et appliqué.",
   "toastApplied": "Tirage appliqué à la phase.",
-  "toastCancelled": "Tirage annulé."
+  "toastCancelled": "Exécution annulée."
 }

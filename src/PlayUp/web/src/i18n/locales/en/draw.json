@@ -23,14 +23,14 @@
   "applying": "Applying…",
   "confirmApplyTitle": "Apply the draw?",
   "confirmApply": "This will update the stage and may create matches.",
-  "cancel": "Cancel",
+  "cancel": "Cancel execution",
   "cancelling": "Cancelling…",
-  "confirmCancelTitle": "Cancel this execution?",
-  "confirmCancel": "The execution will be cancelled. A new draw will then be available.",
-  "confirmCancelApplied": "The execution will be cancelled. This does not undo the application already made on the stage — only a new draw and a new apply can populate again. A new draw will then be available.",
+  "confirmCancelTitle": "Cancel execution?",
+  "confirmCancel": "This action cancels the draw execution. To redraw, you can start a new execution.",
+  "confirmCancelApplied": "This action cancels the draw execution. It does not remove placements already applied to the stage. To redraw, you can start a new execution.",
   "toastCreated": "New execution created.",
   "toastPublished": "Draw published.",
   "toastPublishedAndApplied": "Draw published and applied.",
   "toastApplied": "Draw applied to the stage.",
-  "toastCancelled": "Draw cancelled."
+  "toastCancelled": "Execution cancelled."
 }

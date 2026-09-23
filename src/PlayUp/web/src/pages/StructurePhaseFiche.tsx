@@ -2165,6 +2165,7 @@ export function StructurePhaseFiche({
       />
       <StructureDrawDialog
         competitionId={data.competitionId}
+        competitionStatus={data.status}
         stage={stage}
         open={drawWorkflowOpen}
         onClose={() => setDrawWorkflowOpen(false)}

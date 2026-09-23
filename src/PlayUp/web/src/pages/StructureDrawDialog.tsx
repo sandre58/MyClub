@@ -23,9 +23,11 @@ import { notify } from '../design-system/toastStore';
 import { drawResolutionKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import type {
+  CompetitionStatus,
   StageDraw,
   StageRound,
   StageSlot,
+  StageStatus,
   StructureFormatKind,
   StructureStageHubSummary,
 } from '../types';
@@ -44,6 +46,7 @@ import {
   type DrawMasterChip,
   type SlotConfrontationSide,
 } from './drawUi';
+import { canCancelDrawExecution } from './lifecycleGates';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import {
   DrawResolutionBadge,
@@ -158,6 +161,8 @@ type StructureDrawDialogProps = {
   open: boolean;
   onClose: () => void;
   competitionId: string;
+  /** Host lifecycle gate — Completed|Archived → Cancel hidden. */
+  competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
 };
 
@@ -170,6 +175,7 @@ export function StructureDrawDialog({
   open,
   onClose,
   competitionId,
+  competitionStatus,
   stage,
 }: StructureDrawDialogProps) {
   const { t } = useTranslation('structure');
@@ -498,6 +504,8 @@ export function StructureDrawDialog({
                   draw={selected}
                   slots={slots}
                   rounds={rounds}
+                  competitionStatus={competitionStatus}
+                  stageStatus={overviewQuery.data?.status ?? stage.status}
                   busy={busy}
                   onPublishAndApply={() =>
                     publishAndApplyMutation.mutate(selected)
@@ -674,6 +682,8 @@ function DrawExecutionDetail({
   draw,
   slots,
   rounds,
+  competitionStatus,
+  stageStatus,
   busy,
   onPublishAndApply,
   onApply,
@@ -685,6 +695,8 @@ function DrawExecutionDetail({
   draw: StageDraw;
   slots: StageSlot[];
   rounds: StageRound[];
+  competitionStatus: CompetitionStatus;
+  stageStatus: StageStatus;
   busy: boolean;
   onPublishAndApply: () => void;
   onApply: () => void;
@@ -707,8 +719,11 @@ function DrawExecutionDetail({
     draw.resolutionState === 'Resolved' &&
     !ui.isApplied &&
     (draw.kind === 'Slot' || draw.kind === 'Group');
-  const canCancel =
-    draw.status === 'Draft' || draw.status === 'Published';
+  const canCancel = canCancelDrawExecution({
+    competitionStatus,
+    stageStatus,
+    drawStatus: draw.status,
+  });
 
   const groupRows =
     draw.kind === 'Group' && (draw.groupPlacements?.length ?? 0) > 0

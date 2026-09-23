@@ -10,6 +10,7 @@ import {
 } from '../api';
 import { clearToasts, getToastsSnapshot } from '../design-system/toastStore';
 import type {
+  CompetitionStatus,
   StageDraw,
   StageOverview,
   StructureStageHubSummary,
@@ -68,7 +69,10 @@ function groupsStage(
   };
 }
 
-function overview(draws: StageOverview['draws']): StageOverview {
+function overview(
+  draws: StageOverview['draws'],
+  overrides: Partial<StageOverview> = {},
+): StageOverview {
   return {
     id: stageId,
     competitionId,
@@ -77,6 +81,7 @@ function overview(draws: StageOverview['draws']): StageOverview {
     slots: [],
     rounds: [],
     draws,
+    ...overrides,
   };
 }
 
@@ -141,6 +146,7 @@ function cupStage(
 function renderDialog(
   stage = groupsStage(),
   open = true,
+  competitionStatus: CompetitionStatus = 'Draft',
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -152,6 +158,7 @@ function renderDialog(
         open={open}
         onClose={onClose}
         competitionId={competitionId}
+        competitionStatus={competitionStatus}
         stage={stage}
       />
     </QueryClientProvider>,
@@ -522,5 +529,60 @@ describe('StructureDrawDialog', () => {
         'Tirage publié et appliqué.',
       );
     });
+  });
+
+  it('shows Annuler l’exécution for Draft when competition open and stage Draft|Ready', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([groupDraw({ status: 'Draft' })]),
+    );
+
+    renderDialog(groupsStage({ status: 'Ready' }), true, 'Running');
+
+    expect(
+      await screen.findByRole('button', { name: 'Annuler l’exécution' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps Annuler l’exécution after Apply (A)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Published',
+          isApplied: true,
+        }),
+      ]),
+    );
+
+    renderDialog();
+
+    expect(
+      await screen.findByRole('button', { name: 'Annuler l’exécution' }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides Annuler l’exécution when competition is Completed (D)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([groupDraw({ status: 'Draft' })]),
+    );
+
+    renderDialog(groupsStage(), true, 'Completed');
+
+    await screen.findByRole('heading', { name: 'Tirage Groupe' });
+    expect(
+      screen.queryByRole('button', { name: 'Annuler l’exécution' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides Annuler l’exécution when stage is Running (D)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([groupDraw({ status: 'Draft' })], { status: 'Running' }),
+    );
+
+    renderDialog(groupsStage({ status: 'Running' }), true, 'Running');
+
+    await screen.findByRole('heading', { name: 'Tirage Groupe' });
+    expect(
+      screen.queryByRole('button', { name: 'Annuler l’exécution' }),
+    ).not.toBeInTheDocument();
   });
 });
