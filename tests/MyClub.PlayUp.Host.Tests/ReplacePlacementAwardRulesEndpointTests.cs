@@ -27,6 +27,8 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 16, 0, 0, TimeSpan.Zero));
 
+    private static string PathKey(FixtureId fixtureId) => fixtureId.Value.ToString("N");
+
     [IntegrationFact]
     public async Task Put_placement_award_rules_returns_204_and_persistsAsync()
     {
@@ -38,8 +40,8 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
             RulesUri(seed.StageId),
             new ReplaceStagePlacementAwardRulesRequest(
             [
-                new PlacementAwardPathRequest(seed.FixtureId.Value, ProgressionOutcome.Winner, 1),
-                new PlacementAwardPathRequest(seed.FixtureId.Value, ProgressionOutcome.Loser, 2)
+                new PlacementAwardPathRequest(ProgressionOutcome.Winner, 1, SourcePairKey: PathKey(seed.FixtureId)),
+                new PlacementAwardPathRequest(ProgressionOutcome.Loser, 2, SourcePairKey: PathKey(seed.FixtureId))
             ]),
             HostJson.Options);
 
@@ -64,7 +66,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
             RulesUri(seed.StageId),
             new ReplaceStagePlacementAwardRulesRequest(
             [
-                new PlacementAwardPathRequest(seed.FixtureId.Value, ProgressionOutcome.Winner, 1)
+                new PlacementAwardPathRequest(ProgressionOutcome.Winner, 1, SourcePairKey: PathKey(seed.FixtureId))
             ]),
             HostJson.Options);
 
@@ -90,7 +92,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
             RulesUri(StageId.New()),
             new ReplaceStagePlacementAwardRulesRequest(
             [
-                new PlacementAwardPathRequest(Guid.NewGuid(), ProgressionOutcome.Winner, 1)
+                new PlacementAwardPathRequest(ProgressionOutcome.Winner, 1, SourcePairKey: Guid.NewGuid().ToString("N"))
             ]),
             HostJson.Options);
 

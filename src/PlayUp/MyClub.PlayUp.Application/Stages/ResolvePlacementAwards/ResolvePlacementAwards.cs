@@ -20,7 +20,7 @@ public static class ResolvePlacementAwards
 {
     /// <summary>
     /// Resolves all determinable final placements across competition stages.
-    /// Undecided fixtures are skipped (partial outcome — missing ranks are not invented).
+    /// Undecided / unmaterialized sources are skipped (partial outcome — missing ranks are not invented).
     /// </summary>
     /// <param name="stages">Competition stages (canonical instances).</param>
     /// <param name="matchesByStage">Matches keyed by owning stage.</param>
@@ -43,14 +43,14 @@ public static class ResolvePlacementAwards
             }
 
             var stageMatches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
-            var fixtureIds = rules.Paths
-                .Select(path => path.SourceFixtureId)
-                .Distinct()
+            var sourceKeys = rules.Paths
+                .Select(path => path.SourcePairKey)
+                .Distinct(StringComparer.Ordinal)
                 .ToArray();
 
-            foreach (var fixtureId in fixtureIds)
+            foreach (var sourcePairKey in sourceKeys)
             {
-                if (!TryResolveFixtureAwards(stage, fixtureId, stageMatches, rules, out var instructions))
+                if (!TryResolveSourceAwards(stage, sourcePairKey, stageMatches, rules, out var instructions))
                 {
                     continue;
                 }
@@ -68,6 +68,7 @@ public static class ResolvePlacementAwards
 
     /// <summary>
     /// Resolves awards for a single fixture when the confrontation is decided.
+    /// HTTP/fixture trigger resolves to structural SourcePairKey (fail-closed on Cup without BracketPairKey).
     /// </summary>
     public static IReadOnlyList<FinalPlacementInstruction> ExecuteForFixture(
         Stage stage,
@@ -78,21 +79,10 @@ public static class ResolvePlacementAwards
         ArgumentNullException.ThrowIfNull(matches);
 
         var rules = stage.Regulation.PlacementAwardRules;
-        return rules is null
-            ? []
-            : TryResolveFixtureAwards(stage, fixtureId, matches, rules, out var instructions)
-            ? instructions
-            : [];
-    }
-
-    private static bool TryResolveFixtureAwards(
-        Stage stage,
-        FixtureId fixtureId,
-        IReadOnlyList<Match> matches,
-        PlacementAwardRules rules,
-        out IReadOnlyList<FinalPlacementInstruction> instructions)
-    {
-        instructions = [];
+        if (rules is null)
+        {
+            return [];
+        }
 
         Fixture fixture;
         try
@@ -101,11 +91,36 @@ public static class ResolvePlacementAwards
         }
         catch (DomainException)
         {
+            return [];
+        }
+
+        if (!TryResolveSourcePairKey(stage, fixture, out var sourcePairKey))
+        {
+            return [];
+        }
+
+        return TryResolveSourceAwards(stage, sourcePairKey, matches, rules, out var instructions)
+            ? instructions
+            : [];
+    }
+
+    private static bool TryResolveSourceAwards(
+        Stage stage,
+        string sourcePairKey,
+        IReadOnlyList<Match> matches,
+        PlacementAwardRules rules,
+        out IReadOnlyList<FinalPlacementInstruction> instructions)
+    {
+        instructions = [];
+
+        var fixture = ResolveFixtureFromSourcePairKey(stage, sourcePairKey);
+        if (fixture is null)
+        {
             return false;
         }
 
         var round = stage.Rounds.FirstOrDefault(candidate =>
-            candidate.Fixtures.Any(f => f.Id.Equals(fixtureId)));
+            candidate.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
         if (round is null)
         {
             return false;
@@ -133,7 +148,7 @@ public static class ResolvePlacementAwards
 
             var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, fixtureMatches);
             var outcome = FixtureOutcomeResolver.Resolve(tieFormat, snapshot);
-            instructions = PlacementAwardApplier.ApplyForFixture(rules, fixtureId, outcome);
+            instructions = PlacementAwardApplier.ApplyForSource(rules, sourcePairKey, outcome);
             return instructions.Count > 0;
         }
         catch (DomainException)
@@ -144,6 +159,40 @@ public static class ResolvePlacementAwards
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Cup: requires Fixture.BracketPairKey. Non-Cup interim: fixture Guid N.
+    /// </summary>
+    private static bool TryResolveSourcePairKey(Stage stage, Fixture fixture, out string sourcePairKey)
+    {
+        if (!string.IsNullOrWhiteSpace(fixture.BracketPairKey))
+        {
+            sourcePairKey = BracketPair.NormalizePairKey(fixture.BracketPairKey);
+            return true;
+        }
+
+        if (stage.BracketPairs.Count > 0)
+        {
+            sourcePairKey = string.Empty;
+            return false;
+        }
+
+        sourcePairKey = fixture.Id.Value.ToString("N");
+        return true;
+    }
+
+    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey)
+    {
+        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
+        if (byPair is not null)
+        {
+            return byPair;
+        }
+
+        return Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
+            ? stage.FindFixture(new FixtureId(fixtureGuid))
+            : null;
     }
 
     private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<Match> matches)

@@ -2274,8 +2274,8 @@ internal static class ScenarioOrchestration
         final.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
-                new PlacementAwardPath(finalFixture.Id, ProgressionOutcome.Winner, rank: 1),
-                new PlacementAwardPath(finalFixture.Id, ProgressionOutcome.Loser, rank: 2)
+                new PlacementAwardPath(ToSourcePairKey(finalFixture), ProgressionOutcome.Winner, rank: 1),
+                new PlacementAwardPath(ToSourcePairKey(finalFixture), ProgressionOutcome.Loser, rank: 2)
             ]),
             clock);
 
@@ -2290,8 +2290,8 @@ internal static class ScenarioOrchestration
         bronze.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
-                new PlacementAwardPath(bronzeFixture.Id, ProgressionOutcome.Winner, rank: 3),
-                new PlacementAwardPath(bronzeFixture.Id, ProgressionOutcome.Loser, rank: 4)
+                new PlacementAwardPath(ToSourcePairKey(bronzeFixture), ProgressionOutcome.Winner, rank: 3),
+                new PlacementAwardPath(ToSourcePairKey(bronzeFixture), ProgressionOutcome.Loser, rank: 4)
             ]),
             clock);
     }

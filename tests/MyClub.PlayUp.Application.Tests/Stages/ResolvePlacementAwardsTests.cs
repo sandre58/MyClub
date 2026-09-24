@@ -19,6 +19,9 @@ public sealed class ResolvePlacementAwardsTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 12, 0, 0, TimeSpan.Zero));
 
+    private static string PathKey(Fixture fixture) =>
+        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+
     [Fact]
     public void Execute_final_fixture_awards_ranks_1_and_2()
     {
@@ -57,10 +60,10 @@ public sealed class ResolvePlacementAwardsTests
         stage.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
-                new PlacementAwardPath(final.Id, ProgressionOutcome.Winner, 1),
-                new PlacementAwardPath(final.Id, ProgressionOutcome.Loser, 2),
-                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Winner, 3),
-                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Loser, 4)
+                new PlacementAwardPath(PathKey(final), ProgressionOutcome.Winner, 1),
+                new PlacementAwardPath(PathKey(final), ProgressionOutcome.Loser, 2),
+                new PlacementAwardPath(PathKey(bronze), ProgressionOutcome.Winner, 3),
+                new PlacementAwardPath(PathKey(bronze), ProgressionOutcome.Loser, 4)
             ]),
             _clock);
 
@@ -119,8 +122,8 @@ public sealed class ResolvePlacementAwardsTests
         stage.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
-                new PlacementAwardPath(fixture.Id, ProgressionOutcome.Winner, winnerRank),
-                new PlacementAwardPath(fixture.Id, ProgressionOutcome.Loser, loserRank)
+                new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Winner, winnerRank),
+                new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Loser, loserRank)
             ]),
             _clock);
 

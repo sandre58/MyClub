@@ -459,7 +459,7 @@ function placementRuleParts(
     badgeTone: isWinner ? 'win' : 'loss',
     context: matchNumberContext(
       award.sourceLabel,
-      award.sourceFixtureId,
+      award.sourcePairKey ?? award.sourceFixtureId,
       t,
     ),
   };
@@ -2206,7 +2206,7 @@ export function StructurePhaseFiche({
                           const parts = placementRuleParts(award, t);
                           return (
                             <li
-                              key={`${award.rank}-${award.outcome}-${award.sourceFixtureId ?? ''}`}
+                              key={`${award.rank}-${award.outcome}-${award.sourcePairKey ?? award.sourceFixtureId ?? ''}`}
                               className="structure-flux-group__rule"
                             >
                               <PlacementAwardRow

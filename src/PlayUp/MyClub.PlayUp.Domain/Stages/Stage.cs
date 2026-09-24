@@ -733,7 +733,7 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             foreach (var path in progressionRules.Paths)
             {
-                EnsureProgressionPathSource(path);
+                EnsureStructuralConfrontationSource(path.SourcePairKey);
                 EnsureWinnerPathOnChampionshipTerminal(path);
 
                 if (path.Destination.TargetsPopulation)
@@ -783,12 +783,9 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             foreach (var path in placementAwardRules.Paths)
             {
-                if (!HasFixture(path.SourceFixtureId))
-                {
-                    throw new DomainException(
-                        $"Fixture '{path.SourceFixtureId}' was not found.",
-                        StageErrorCodes.FixtureNotFound);
-                }
+                EnsureStructuralConfrontationSource(
+                    path.SourcePairKey,
+                    RulesErrorCodes.PlacementAwardRulesInvalid);
             }
         }
 
@@ -2674,31 +2671,36 @@ public sealed class Stage : AggregateRoot<StageId>
         }
     }
 
-    private void EnsureProgressionPathSource(ProgressionPath path)
+    private void EnsureStructuralConfrontationSource(
+        string sourcePairKey,
+        string errorCode = RulesErrorCodes.ProgressionRulesInvalid)
     {
-        if (FindBracketPair(path.SourcePairKey) is not null)
+        if (FindBracketPair(sourcePairKey) is not null)
         {
             return;
         }
 
         // Non-Cup interim Expand keys fixture Guid "N" when BracketPairs are absent.
         if (_bracketPairs.Count == 0
-            && Guid.TryParseExact(path.SourcePairKey, "N", out var fixtureGuid)
+            && Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
             && HasFixture(new FixtureId(fixtureGuid)))
         {
             return;
         }
 
         // Fixture may carry BracketPairKey matching the path after materialize — still structural.
-        if (FindFixtureByBracketPairKey(path.SourcePairKey) is not null)
+        if (FindFixtureByBracketPairKey(sourcePairKey) is not null)
         {
             return;
         }
 
         throw new DomainException(
-            $"Progression path source '{path.SourcePairKey}' was not found on the stage form.",
-            RulesErrorCodes.ProgressionRulesInvalid);
+            $"Confrontation source '{sourcePairKey}' was not found on the stage form.",
+            errorCode);
     }
+
+    private void EnsureProgressionPathSource(ProgressionPath path) =>
+        EnsureStructuralConfrontationSource(path.SourcePairKey);
 
     /// <summary>
     /// Winner Sorties must exit the championship-path terminal round (not an intermediate KO round).
@@ -2861,9 +2863,9 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             foreach (var path in progression.Paths)
             {
-                EnsureProgressionPathSource(path);
+                    EnsureStructuralConfrontationSource(path.SourcePairKey);
 
-                if (path.Destination.TargetsPopulation)
+                    if (path.Destination.TargetsPopulation)
                 {
                     continue;
                 }

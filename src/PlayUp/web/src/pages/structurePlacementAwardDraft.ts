@@ -1,13 +1,18 @@
 // -----------------------------------------------------------------------
 // Attribution des places — confrontation-centric authoring drafts.
-// UI: 1 card = fixture + winnerRank? + loserRank? → Domain: 0..2 paths.
+// UI: 1 card = structural source (PairKey / interim fixture) + winnerRank? + loserRank?
+// → Domain: 0..2 paths. Cup V1: BracketPairs before fixtures.
 // -----------------------------------------------------------------------
 
-import type { StageRound, StructurePlacementAward } from '../types';
+import type {
+  StageBracketPair,
+  StageRound,
+  StructurePlacementAward,
+} from '../types';
 
 /** Visual grouping only — not an authoring grain. */
 export type PlacementRoundSection = {
-  /** Null = cards without a resolvable round (empty or unknown fixture). */
+  /** Null = cards without a resolvable round (empty or unknown source). */
   roundId: string | null;
   roundName: string | null;
   cards: PlacementAwardCardDraft[];
@@ -15,7 +20,8 @@ export type PlacementRoundSection = {
 
 export type PlacementAwardCardDraft = {
   id: string;
-  sourceFixtureId: string;
+  /** Cup = PairKey; non-Cup interim = fixture Guid. */
+  sourcePairKey: string;
   /** Empty string = no Winner award. */
   winnerRank: string;
   /** Empty string = no Loser award. */
@@ -30,6 +36,11 @@ export type PlacementIncompleteReason =
   | 'DuplicateRank'
   | 'UnknownFixture';
 
+export type PlacementSourceOption = {
+  id: string;
+  label: string;
+};
+
 export function newPlacementCardId(): string {
   return crypto.randomUUID();
 }
@@ -37,7 +48,7 @@ export function newPlacementCardId(): string {
 export function emptyPlacementCard(): PlacementAwardCardDraft {
   return {
     id: newPlacementCardId(),
-    sourceFixtureId: '',
+    sourcePairKey: '',
     winnerRank: '',
     loserRank: '',
   };
@@ -60,29 +71,62 @@ export function parseOptionalRank(raw: string): number | null | 'invalid' {
 }
 
 /**
- * Group persisted paths by fixture into confrontation cards.
- * Paths without a fixture id are skipped (cannot form a card).
+ * Authoring catalogue: BracketPairs when present (pre-materialize OK);
+ * otherwise round fixtures (non-Cup interim).
+ */
+export function listPlacementSourceOptions(
+  bracketPairs: readonly StageBracketPair[],
+  rounds: StageRound[],
+  formatMatch: (n: number) => string,
+): PlacementSourceOption[] {
+  if (bracketPairs.length > 0) {
+    return [...bracketPairs]
+      .sort((a, b) => a.pairKey.localeCompare(b.pairKey))
+      .map((p) => ({
+        id: p.pairKey,
+        label: `${p.pairKey} · ${p.slotAKey} vs ${p.slotBKey}`,
+      }));
+  }
+
+  const options: PlacementSourceOption[] = [];
+  for (const round of rounds) {
+    round.fixtures.forEach((fixture, index) => {
+      options.push({
+        id: fixture.id.replace(/-/g, '').toLowerCase(),
+        label: formatMatch(index + 1),
+      });
+    });
+  }
+  return options;
+}
+
+/**
+ * Group persisted paths by source key into confrontation cards.
+ * Prefer sourcePairKey; legacy sourceFixtureId (Guid) dual-read for cutover.
  */
 export function cardsFromApiPaths(
   paths: StructurePlacementAward[],
 ): PlacementAwardCardDraft[] {
-  const byFixture = new Map<string, PlacementAwardCardDraft>();
+  const bySource = new Map<string, PlacementAwardCardDraft>();
   const order: string[] = [];
 
   for (const path of paths) {
-    const fixtureId = path.sourceFixtureId?.trim() ?? '';
-    if (!fixtureId) continue;
+    const pairKey =
+      path.sourcePairKey?.trim() ||
+      path.sourceFixtureId?.replace(/-/g, '').toLowerCase() ||
+      '';
+    if (!pairKey) continue;
 
-    let card = byFixture.get(fixtureId);
+    let card = bySource.get(pairKey);
     if (!card) {
       card = {
         id: newPlacementCardId(),
-        sourceFixtureId: fixtureId,
+        sourcePairKey: pairKey,
         winnerRank: '',
         loserRank: '',
       };
-      byFixture.set(fixtureId, card);
-      order.push(fixtureId);
+      bySource.set(pairKey, card);
+      order.push(pairKey);
     }
 
     if (path.outcome === 'Winner') {
@@ -92,7 +136,7 @@ export function cardsFromApiPaths(
     }
   }
 
-  return order.map((id) => byFixture.get(id)!);
+  return order.map((id) => bySource.get(id)!);
 }
 
 /** Expand cards to Domain paths (stable: Winner then Loser per card). */
@@ -101,13 +145,13 @@ export function cardsToApiPaths(
 ): StructurePlacementAward[] {
   const paths: StructurePlacementAward[] = [];
   for (const card of cards) {
-    const fixtureId = card.sourceFixtureId.trim();
-    if (!fixtureId) continue;
+    const sourcePairKey = card.sourcePairKey.trim();
+    if (!sourcePairKey) continue;
 
     const winner = parseOptionalRank(card.winnerRank);
     if (typeof winner === 'number') {
       paths.push({
-        sourceFixtureId: fixtureId,
+        sourcePairKey,
         outcome: 'Winner',
         rank: winner,
       });
@@ -116,7 +160,7 @@ export function cardsToApiPaths(
     const loser = parseOptionalRank(card.loserRank);
     if (typeof loser === 'number') {
       paths.push({
-        sourceFixtureId: fixtureId,
+        sourcePairKey,
         outcome: 'Loser',
         rank: loser,
       });
@@ -129,7 +173,7 @@ export function cardsToApiPaths(
 export function serializeCards(cards: PlacementAwardCardDraft[]): string {
   return JSON.stringify(
     cards.map((c) => ({
-      f: c.sourceFixtureId.trim(),
+      f: c.sourcePairKey.trim(),
       w: c.winnerRank.trim(),
       l: c.loserRank.trim(),
     })),
@@ -157,23 +201,23 @@ function nextUnusedRank(used: ReadonlySet<number>, start: number): number {
 
 /**
  * Prefill a new card so Add does not open incomplete:
- * first unused fixture (catalogue order) + two lowest free ranks (Winner then Loser).
- * Fixture stays empty when none remain available.
+ * first unused source (catalogue order) + two lowest free ranks (Winner then Loser).
+ * Source stays empty when none remain available.
  */
 export function createNextPlacementCard(
   existing: PlacementAwardCardDraft[],
-  fixtureIdsInOrder: readonly string[],
+  sourceKeysInOrder: readonly string[],
 ): PlacementAwardCardDraft {
-  const usedFixtures = new Set<string>();
+  const usedSources = new Set<string>();
   const usedRanks = new Set<number>();
   for (const card of existing) {
-    const fixtureId = card.sourceFixtureId.trim();
-    if (fixtureId) usedFixtures.add(fixtureId);
+    const key = card.sourcePairKey.trim();
+    if (key) usedSources.add(key);
     for (const rank of cardRanks(card)) usedRanks.add(rank);
   }
 
-  const sourceFixtureId =
-    fixtureIdsInOrder.find((id) => id && !usedFixtures.has(id)) ?? '';
+  const sourcePairKey =
+    sourceKeysInOrder.find((id) => id && !usedSources.has(id)) ?? '';
 
   const winner = nextUnusedRank(usedRanks, 1);
   usedRanks.add(winner);
@@ -181,7 +225,7 @@ export function createNextPlacementCard(
 
   return {
     id: newPlacementCardId(),
-    sourceFixtureId,
+    sourcePairKey,
     winnerRank: String(winner),
     loserRank: String(loser),
   };
@@ -190,12 +234,12 @@ export function createNextPlacementCard(
 export function incompleteCardReason(
   card: PlacementAwardCardDraft,
   all: PlacementAwardCardDraft[],
-  knownFixtureIds: ReadonlySet<string>,
+  knownSourceKeys: ReadonlySet<string>,
 ): PlacementIncompleteReason | null {
-  const fixtureId = card.sourceFixtureId.trim();
-  if (!fixtureId) return 'Fixture';
+  const sourceKey = card.sourcePairKey.trim();
+  if (!sourceKey) return 'Fixture';
 
-  if (knownFixtureIds.size > 0 && !knownFixtureIds.has(fixtureId)) {
+  if (knownSourceKeys.size > 0 && !knownSourceKeys.has(sourceKey)) {
     return 'UnknownFixture';
   }
 
@@ -204,11 +248,11 @@ export function incompleteCardReason(
   if (winner === 'invalid' || loser === 'invalid') return 'Rank';
   if (winner == null && loser == null) return 'Placement';
 
-  const duplicateFixture = all.some(
+  const duplicateSource = all.some(
     (other) =>
-      other.id !== card.id && other.sourceFixtureId.trim() === fixtureId,
+      other.id !== card.id && other.sourcePairKey.trim() === sourceKey,
   );
-  if (duplicateFixture) return 'DuplicateFixture';
+  if (duplicateSource) return 'DuplicateFixture';
 
   const mine = cardRanks(card);
   if (mine.length !== new Set(mine).size) return 'DuplicateRank';
@@ -226,16 +270,16 @@ export function incompleteCardReason(
 export function isCardComplete(
   card: PlacementAwardCardDraft,
   all: PlacementAwardCardDraft[],
-  knownFixtureIds: ReadonlySet<string>,
+  knownSourceKeys: ReadonlySet<string>,
 ): boolean {
-  return incompleteCardReason(card, all, knownFixtureIds) == null;
+  return incompleteCardReason(card, all, knownSourceKeys) == null;
 }
 
 export function areCardsComplete(
   cards: PlacementAwardCardDraft[],
-  knownFixtureIds: ReadonlySet<string>,
+  knownSourceKeys: ReadonlySet<string>,
 ): boolean {
-  return cards.every((c) => isCardComplete(c, cards, knownFixtureIds));
+  return cards.every((c) => isCardComplete(c, cards, knownSourceKeys));
 }
 
 /** Soft warning: awarded ranks have a gap (e.g. 1,2,4). Suite 3–4 is fine. */
@@ -254,13 +298,13 @@ export function hasNonContiguousRanks(
 
 export function summarizeCardWho(
   card: PlacementAwardCardDraft,
-  fixtureLabel: string | null,
+  sourceLabel: string | null,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
-  if (!card.sourceFixtureId.trim()) {
+  if (!card.sourcePairKey.trim()) {
     return t('attribution.newCard');
   }
-  return fixtureLabel?.trim() || t('attribution.unknownFixture');
+  return sourceLabel?.trim() || t('attribution.unknownFixture');
 }
 
 export function summarizeCardWhere(
@@ -282,24 +326,46 @@ export function summarizeCardWhere(
 
 /**
  * Group attributed cards under round headings (overview order).
- * Only cards present in `cards` appear — never the full fixture catalogue.
- * Empty / unknown fixtures land in a trailing orphan section (`roundId: null`).
+ * PairKeys on Cup V1 mono-round → sole round; fixture Guid N → owning round;
+ * unknown sources → orphan section.
  */
 export function groupCardsByRound(
   cards: PlacementAwardCardDraft[],
   rounds: Pick<StageRound, 'id' | 'name' | 'fixtures'>[],
+  bracketPairs: readonly StageBracketPair[] = [],
 ): PlacementRoundSection[] {
-  const fixtureToRound = new Map<
+  const sourceToRound = new Map<
     string,
-    { roundId: string; roundName: string; fixtureIndex: number }
+    { roundId: string; roundName: string; sortIndex: number }
   >();
+
+  if (bracketPairs.length > 0 && rounds.length === 1) {
+    const round = rounds[0]!;
+    [...bracketPairs]
+      .sort((a, b) => a.pairKey.localeCompare(b.pairKey))
+      .forEach((pair, index) => {
+        sourceToRound.set(pair.pairKey, {
+          roundId: round.id,
+          roundName: round.name,
+          sortIndex: index,
+        });
+      });
+  }
+
   for (const round of rounds) {
     round.fixtures.forEach((fixture, index) => {
-      fixtureToRound.set(fixture.id, {
+      const guidN = fixture.id.replace(/-/g, '').toLowerCase();
+      sourceToRound.set(guidN, {
         roundId: round.id,
         roundName: round.name,
-        fixtureIndex: index,
+        sortIndex: index,
       });
+      sourceToRound.set(fixture.id, {
+        roundId: round.id,
+        roundName: round.name,
+        sortIndex: index,
+      });
+      // Bound fixture may expose BracketPairKey via label only — PairKey already mapped above.
     });
   }
 
@@ -307,12 +373,12 @@ export function groupCardsByRound(
   const orphans: PlacementAwardCardDraft[] = [];
 
   for (const card of cards) {
-    const fixtureId = card.sourceFixtureId.trim();
-    if (!fixtureId) {
+    const key = card.sourcePairKey.trim();
+    if (!key) {
       orphans.push(card);
       continue;
     }
-    const meta = fixtureToRound.get(fixtureId);
+    const meta = sourceToRound.get(key);
     if (!meta) {
       orphans.push(card);
       continue;
@@ -327,10 +393,8 @@ export function groupCardsByRound(
     const list = byRound.get(round.id);
     if (!list || list.length === 0) continue;
     const sorted = [...list].sort((a, b) => {
-      const ai =
-        fixtureToRound.get(a.sourceFixtureId.trim())?.fixtureIndex ?? 0;
-      const bi =
-        fixtureToRound.get(b.sourceFixtureId.trim())?.fixtureIndex ?? 0;
+      const ai = sourceToRound.get(a.sourcePairKey.trim())?.sortIndex ?? 0;
+      const bi = sourceToRound.get(b.sourcePairKey.trim())?.sortIndex ?? 0;
       return ai - bi;
     });
     sections.push({

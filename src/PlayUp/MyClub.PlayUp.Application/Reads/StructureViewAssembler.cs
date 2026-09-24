@@ -260,11 +260,19 @@ public static class StructureViewAssembler
 
         IReadOnlyList<StructurePlacementAwardDto>? placementAwards = placement?.Paths
             .OrderBy(path => path.Rank)
-            .Select(path => new StructurePlacementAwardDto(
-                path.Rank,
-                path.Outcome,
-                path.SourceFixtureId.Value,
-                ResolveFixtureSourceLabel(stage, path.SourceFixtureId)))
+            .Select(path =>
+            {
+                var fixture = stage.FindFixtureByBracketPairKey(path.SourcePairKey)
+                    ?? (Guid.TryParseExact(path.SourcePairKey, "N", out var fixtureGuid)
+                        ? stage.FindFixture(new FixtureId(fixtureGuid))
+                        : null);
+                return new StructurePlacementAwardDto(
+                    path.Rank,
+                    path.Outcome,
+                    path.SourcePairKey,
+                    ResolveProgressionSourceLabel(stage, path.SourcePairKey),
+                    fixture?.Id.Value);
+            })
             .ToArray();
         IReadOnlyList<StructureDrawConstraintDto>? drawConstraints = draw?.Constraints
             .Select(constraint => new StructureDrawConstraintDto(

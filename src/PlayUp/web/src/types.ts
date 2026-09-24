@@ -985,6 +985,9 @@ export type ProgressionOutcome = 'Winner' | 'Loser';
 export interface StructurePlacementAward {
   rank: number;
   outcome: ProgressionOutcome;
+  /** Structural source key (Cup = BracketPair.PairKey). */
+  sourcePairKey?: string | null;
+  /** Legacy dual-read / optional bound fixture Guid when materialized. */
   sourceFixtureId?: string | null;
   sourceLabel?: string | null;
 }

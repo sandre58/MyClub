@@ -430,13 +430,15 @@ public sealed record StructureStageDefaultsBindingDto(
 /// <summary>One placement-award path for the Règlement / Structure hubs.</summary>
 /// <param name="Rank">1-based final competition rank.</param>
 /// <param name="Outcome">Winner or Loser of the source confrontation.</param>
-/// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
-/// <param name="SourceLabel">Resolved fixture label (round · #order · slots) when found.</param>
+/// <param name="SourcePairKey">Structural source key (Cup = BracketPair.PairKey).</param>
+/// <param name="SourceLabel">Resolved confrontation label (PairKey or bound fixture) when found.</param>
+/// <param name="SourceFixtureId">Optional bound fixture Guid when materialized (read overlay).</param>
 public sealed record StructurePlacementAwardDto(
     int Rank,
     ProgressionOutcome Outcome,
-    Guid? SourceFixtureId = null,
-    string? SourceLabel = null);
+    string SourcePairKey,
+    string? SourceLabel = null,
+    Guid? SourceFixtureId = null);
 
 /// <summary>One draw constraint for the Règlement hub Tirage column.</summary>
 /// <param name="Type">DrawConstraintType member name.</param>

@@ -22,6 +22,9 @@ public sealed class OverviewAssemblerTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 20, 12, 0, 0, TimeSpan.Zero));
 
+    private static string PathKey(Fixture fixture) =>
+        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+
     [Fact]
     public void Assemble_draft_exposes_construction_cycle_and_structure_actions()
     {
@@ -1133,8 +1136,8 @@ public sealed class OverviewAssemblerTests
         stage.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
-                new PlacementAwardPath(fixture.Id, ProgressionOutcome.Winner, 1),
-                new PlacementAwardPath(fixture.Id, ProgressionOutcome.Loser, 2)
+                new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Winner, 1),
+                new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Loser, 2)
             ]),
             _clock);
 
@@ -1176,10 +1179,10 @@ public sealed class OverviewAssemblerTests
         stage.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
-                new PlacementAwardPath(final.Id, ProgressionOutcome.Winner, 1),
-                new PlacementAwardPath(final.Id, ProgressionOutcome.Loser, 2),
-                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Winner, 3),
-                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Loser, 4)
+                new PlacementAwardPath(PathKey(final), ProgressionOutcome.Winner, 1),
+                new PlacementAwardPath(PathKey(final), ProgressionOutcome.Loser, 2),
+                new PlacementAwardPath(PathKey(bronze), ProgressionOutcome.Winner, 3),
+                new PlacementAwardPath(PathKey(bronze), ProgressionOutcome.Loser, 4)
             ]),
             _clock);
 
@@ -1228,10 +1231,10 @@ public sealed class OverviewAssemblerTests
         stage.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
-                new PlacementAwardPath(final.Id, ProgressionOutcome.Winner, 1),
-                new PlacementAwardPath(final.Id, ProgressionOutcome.Loser, 2),
-                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Winner, 3),
-                new PlacementAwardPath(bronze.Id, ProgressionOutcome.Loser, 4)
+                new PlacementAwardPath(PathKey(final), ProgressionOutcome.Winner, 1),
+                new PlacementAwardPath(PathKey(final), ProgressionOutcome.Loser, 2),
+                new PlacementAwardPath(PathKey(bronze), ProgressionOutcome.Winner, 3),
+                new PlacementAwardPath(PathKey(bronze), ProgressionOutcome.Loser, 4)
             ]),
             _clock);
 

@@ -12,7 +12,6 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: replace PlacementAwardRules on a Stage (thin authoring — configuration only).
-/// Does not resolve awards, mutate slots, or compute CompetitionOutcome.
 /// </summary>
 public static class ReplaceStagePlacementAwardRules
 {
@@ -26,13 +25,7 @@ public static class ReplaceStagePlacementAwardRules
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Placement award rules cannot be replaced while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        EnsureMutable(stage);
 
         if (paths is null || paths.Count == 0)
         {
@@ -51,20 +44,32 @@ public static class ReplaceStagePlacementAwardRules
                     ApplicationErrorCodes.InvalidStructureIntent);
             }
 
-            domainPaths.Add(new PlacementAwardPath(spec.SourceFixtureId, spec.Outcome, spec.Rank));
+            domainPaths.Add(new PlacementAwardPath(spec.SourcePairKey, spec.Outcome, spec.Rank));
         }
 
         stage.ReplacePlacementAwardRules(new PlacementAwardRules(domainPaths), clock);
+    }
+
+    private static void EnsureMutable(Stage stage)
+    {
+        if (stage.Status is StageStatus.Draft or StageStatus.Ready)
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"Stage '{stage.Id}' structure is not mutable in status '{stage.Status}'.",
+            ApplicationErrorCodes.StructureNotMutable);
     }
 }
 
 /// <summary>
 /// Application DTO for one placement award path (not a Domain VO).
 /// </summary>
-/// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
+/// <param name="SourcePairKey">Structural source key (Cup = BracketPair.PairKey).</param>
 /// <param name="Outcome">Winner or Loser.</param>
-/// <param name="Rank">1-based final competition rank awarded.</param>
+/// <param name="Rank">1-based final competition rank.</param>
 public sealed record PlacementAwardPathSpec(
-    FixtureId SourceFixtureId,
+    string SourcePairKey,
     ProgressionOutcome Outcome,
     int Rank);

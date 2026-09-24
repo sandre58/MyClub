@@ -32,7 +32,6 @@ import { queryKeys } from '../queryKeys';
 import type { StructureStageHubSummary, StructureView } from '../types';
 import { EmptyState, LoadingState, MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
-import { listFixtureOptions } from './structureFixtureLabels';
 import { ordinalRankSuffix } from './structureQualificationDraft';
 import {
   areCardsComplete,
@@ -42,6 +41,7 @@ import {
   createNextPlacementCard,
   hasNonContiguousRanks,
   incompleteCardReason,
+  listPlacementSourceOptions,
   parseOptionalRank,
   serializeCards,
   type PlacementAwardCardDraft,
@@ -77,14 +77,17 @@ export function StructurePlacementAwardDialog({
   const [sessionReady, setSessionReady] = useState(false);
 
   const rounds = overviewQuery.data?.rounds ?? [];
-  const fixtureOptions = useMemo(
+  const bracketPairs = overviewQuery.data?.bracketPairs ?? [];
+  const sourceOptions = useMemo(
     () =>
-      listFixtureOptions(rounds, (n) => t('fiche.rule.matchNumber', { n })),
-    [rounds, t],
+      listPlacementSourceOptions(bracketPairs, rounds, (n) =>
+        t('fiche.rule.matchNumber', { n }),
+      ),
+    [bracketPairs, rounds, t],
   );
-  const knownFixtureIds = useMemo(
-    () => new Set(fixtureOptions.map((o) => o.id)),
-    [fixtureOptions],
+  const knownSourceKeys = useMemo(
+    () => new Set(sourceOptions.map((o) => o.id)),
+    [sourceOptions],
   );
 
   const dirty = sessionReady && serializeCards(cards) !== baselineSerialized;
@@ -139,9 +142,9 @@ export function StructurePlacementAwardDialog({
     resetDiscard,
   ]);
 
-  const canAuthor = fixtureOptions.length > 0;
+  const canAuthor = sourceOptions.length > 0;
   const cardsComplete =
-    sessionReady && areCardsComplete(cards, knownFixtureIds);
+    sessionReady && areCardsComplete(cards, knownSourceKeys);
   const canSave = !mutation.isPending && cardsComplete;
   const rankTotal = sessionReady ? awardedRankCount(cards) : 0;
   const nonContiguous =
@@ -150,11 +153,11 @@ export function StructurePlacementAwardDialog({
   const firstIncompleteReason = useMemo((): PlacementIncompleteReason | null => {
     if (!sessionReady) return null;
     for (const card of cards) {
-      const reason = incompleteCardReason(card, cards, knownFixtureIds);
+      const reason = incompleteCardReason(card, cards, knownSourceKeys);
       if (reason != null) return reason;
     }
     return null;
-  }, [cards, knownFixtureIds, sessionReady]);
+  }, [cards, knownSourceKeys, sessionReady]);
 
   const saveBlockedReason =
     !sessionReady || mutation.isPending || mutation.isSuccess
@@ -167,10 +170,10 @@ export function StructurePlacementAwardDialog({
     requestDiscardClose(mutation.isPending);
   }
 
-  function addFixture(fixtureId: string) {
+  function addSource(sourcePairKey: string) {
     setCards((prev) => [
       ...prev,
-      createNextPlacementCard(prev, [fixtureId]),
+      createNextPlacementCard(prev, [sourcePairKey]),
     ]);
   }
 
@@ -182,31 +185,31 @@ export function StructurePlacementAwardDialog({
     setCards((prev) => prev.map((c) => (c.id === next.id ? next : c)));
   }
 
-  const usedFixtureIds = useMemo(() => {
+  const usedSourceKeys = useMemo(() => {
     const used = new Set<string>();
     for (const card of cards) {
-      const id = card.sourceFixtureId.trim();
+      const id = card.sourcePairKey.trim();
       if (id) used.add(id);
     }
     return used;
   }, [cards]);
 
-  const freeFixtureItems = useMemo(
+  const freeSourceItems = useMemo(
     () =>
-      fixtureOptions
-        .filter((o) => !usedFixtureIds.has(o.id))
+      sourceOptions
+        .filter((o) => !usedSourceKeys.has(o.id))
         .map((o) => ({ value: o.id, label: o.label })),
-    [fixtureOptions, usedFixtureIds],
+    [sourceOptions, usedSourceKeys],
   );
 
   const canAdd =
-    sessionReady && canAuthor && freeFixtureItems.length > 0 && !mutation.isPending;
+    sessionReady && canAuthor && freeSourceItems.length > 0 && !mutation.isPending;
 
-  const fixtureLabelById = useMemo(() => {
+  const sourceLabelById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const o of fixtureOptions) map.set(o.id, o.label);
+    for (const o of sourceOptions) map.set(o.id, o.label);
     return map;
-  }, [fixtureOptions]);
+  }, [sourceOptions]);
 
   return (
     <>
@@ -302,11 +305,11 @@ export function StructurePlacementAwardDialog({
               label={t('attribution.add')}
               aria-label={t('attribution.add')}
               leadingIcon={<PlusIcon size="sm" />}
-              items={freeFixtureItems}
+              items={freeSourceItems}
               emptyLabel={t('attribution.addEmpty')}
               disabled={!canAdd}
               align="end"
-              onSelect={addFixture}
+              onSelect={addSource}
             />
           </div>
 
@@ -337,10 +340,10 @@ export function StructurePlacementAwardDialog({
                       draft={card}
                       all={cards}
                       title={
-                        fixtureLabelById.get(card.sourceFixtureId.trim()) ??
+                        sourceLabelById.get(card.sourcePairKey.trim()) ??
                         t('attribution.unknownFixture')
                       }
-                      knownFixtureIds={knownFixtureIds}
+                      knownSourceKeys={knownSourceKeys}
                       disabled={mutation.isPending}
                       onChange={updateCard}
                       onRemove={() => removeCard(card.id)}
@@ -372,7 +375,7 @@ function AttributionTile({
   draft,
   all,
   title,
-  knownFixtureIds,
+  knownSourceKeys,
   disabled,
   onChange,
   onRemove,
@@ -380,7 +383,7 @@ function AttributionTile({
   draft: PlacementAwardCardDraft;
   all: PlacementAwardCardDraft[];
   title: string;
-  knownFixtureIds: ReadonlySet<string>;
+  knownSourceKeys: ReadonlySet<string>;
   disabled: boolean;
   onChange: (next: PlacementAwardCardDraft) => void;
   onRemove: () => void;
@@ -397,7 +400,7 @@ function AttributionTile({
   const incompleteReason = incompleteCardReason(
     draft,
     all,
-    knownFixtureIds,
+    knownSourceKeys,
   );
   const statusMessage =
     incompleteReason == null

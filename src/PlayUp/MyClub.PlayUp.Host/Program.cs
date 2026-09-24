@@ -854,10 +854,23 @@ try
                 paths =
                 [
                     .. request.Paths
-                        .Select(path => new PlacementAwardPathSpec(
-                            new FixtureId(path.SourceFixtureId),
-                            path.Outcome,
-                            path.Rank))
+                        .Select(path =>
+                        {
+                            var pairKey = path.SourcePairKey?.Trim();
+                            if (string.IsNullOrEmpty(pairKey) && path.SourceFixtureId is { } legacyFixtureId)
+                            {
+                                pairKey = legacyFixtureId.ToString("N");
+                            }
+
+                            if (string.IsNullOrEmpty(pairKey))
+                            {
+                                throw new ApplicationFailureException(
+                                    "Placement award path requires SourcePairKey (or legacy SourceFixtureId).",
+                                    ApplicationErrorCodes.InvalidStructureIntent);
+                            }
+
+                            return new PlacementAwardPathSpec(pairKey, path.Outcome, path.Rank);
+                        })
                 ];
             }
 

@@ -73,8 +73,8 @@ public sealed class StageRegulationJsonConverterTests
             .WithPlacementAwardRules(
                 new PlacementAwardRules(
                 [
-                    new PlacementAwardPath(fixtureId, ProgressionOutcome.Winner, rank: 3),
-                    new PlacementAwardPath(fixtureId, ProgressionOutcome.Loser, rank: 4)
+                    new PlacementAwardPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, rank: 3),
+                    new PlacementAwardPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Loser, rank: 4)
                 ]));
 
         var json = _converter.ConvertToProvider(regulation).Should().BeOfType<string>().Subject;
@@ -88,6 +88,7 @@ public sealed class StageRegulationJsonConverterTests
         json.Should().Contain("\"QualificationRules\"");
         json.Should().Contain("\"ProgressionRules\"");
         json.Should().Contain("\"PlacementAwardRules\"");
+        json.Should().Contain("\"SourcePairKey\"");
     }
 
     [Fact]

@@ -12,31 +12,33 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Domain.Placement;
 
 /// <summary>
-/// Pure placement helper: maps an award path and fixture outcome to a final-rank instruction.
+/// Pure placement helper: maps an award path and confrontation outcome to a final-rank instruction.
 /// Distinct from <see cref="Progression.ProgressionApplier"/> (slot routing).
 /// </summary>
 public static class PlacementAwardApplier
 {
     /// <summary>
-    /// Applies a single placement award path to a decided fixture outcome.
+    /// Applies a single placement award path to a decided confrontation outcome.
     /// </summary>
-    /// <param name="path">Declarative award path (source fixture, outcome, rank).</param>
-    /// <param name="fixtureId">Fixture identity supplied by Application (must match <see cref="PlacementAwardPath.SourceFixtureId"/>).</param>
+    /// <param name="path">Declarative award path (source pair key, outcome, rank).</param>
+    /// <param name="sourcePairKey">
+    /// Structural key supplied by Application (must match <see cref="PlacementAwardPath.SourcePairKey"/>).
+    /// </param>
     /// <param name="outcome">Decided winner/loser of the confrontation.</param>
     /// <returns>Final placement instruction (no Stage mutation).</returns>
     [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Global", Justification = "False positive")]
     public static FinalPlacementInstruction Apply(
         PlacementAwardPath path,
-        FixtureId fixtureId,
+        string sourcePairKey,
         FixtureOutcome outcome)
     {
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(outcome);
 
-        if (!path.SourceFixtureId.Equals(fixtureId))
+        if (!string.Equals(path.SourcePairKey, BracketPair.NormalizePairKey(sourcePairKey), StringComparison.Ordinal))
         {
             throw new DomainException(
-                "Placement award path source fixture does not match the supplied fixture identity.",
+                "Placement award path source does not match the supplied confrontation key.",
                 StageErrorCodes.PlacementAwardApplyFixtureMismatch);
         }
 
@@ -48,25 +50,26 @@ public static class PlacementAwardApplier
     }
 
     /// <summary>
-    /// Applies all award paths for a fixture, ordered by rank ascending.
+    /// Applies all award paths for a structural source key, ordered by rank ascending.
     /// </summary>
     /// <param name="rules">Placement award rules.</param>
-    /// <param name="fixtureId">Fixture identity.</param>
+    /// <param name="sourcePairKey">Structural confrontation key.</param>
     /// <param name="outcome">Decided winner/loser of the confrontation.</param>
-    /// <returns>Instructions for that fixture (empty when no path matches).</returns>
-    public static IReadOnlyList<FinalPlacementInstruction> ApplyForFixture(
+    /// <returns>Instructions for that source (empty when no path matches).</returns>
+    public static IReadOnlyList<FinalPlacementInstruction> ApplyForSource(
         PlacementAwardRules rules,
-        FixtureId fixtureId,
+        string sourcePairKey,
         FixtureOutcome outcome)
     {
         ArgumentNullException.ThrowIfNull(rules);
         ArgumentNullException.ThrowIfNull(outcome);
 
+        var key = BracketPair.NormalizePairKey(sourcePairKey);
         return
         [
             .. rules.Paths
-                .Where(path => path.SourceFixtureId.Equals(fixtureId))
-                .Select(path => Apply(path, fixtureId, outcome))
+                .Where(path => string.Equals(path.SourcePairKey, key, StringComparison.Ordinal))
+                .Select(path => Apply(path, key, outcome))
                 .OrderBy(instruction => instruction.Rank)
         ];
     }

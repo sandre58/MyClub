@@ -17,11 +17,14 @@ public sealed record ReplaceStagePlacementAwardRulesRequest(
 
 /// <summary>
 /// One HTTP placement award path.
+/// Prefer <see cref="SourcePairKey"/>; legacy <see cref="SourceFixtureId"/> dual-read at Host for cutover.
 /// </summary>
-/// <param name="SourceFixtureId">Fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="Rank">1-based final competition rank awarded.</param>
+/// <param name="SourcePairKey">Structural source key (Cup = PairKey).</param>
+/// <param name="SourceFixtureId">Legacy dual-read only — never Path identity.</param>
 public sealed record PlacementAwardPathRequest(
-    Guid SourceFixtureId,
     ProgressionOutcome Outcome,
-    int Rank);
+    int Rank,
+    string? SourcePairKey = null,
+    Guid? SourceFixtureId = null);

@@ -26,6 +26,9 @@ public sealed class CompetitionOutcomePlacementScenariosTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 14, 0, 0, TimeSpan.Zero));
 
+    private static string PathKey(Fixture fixture) =>
+        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+
     /// <summary>
     /// F1 — Amateur 2×6 shape: terminal placement fixtures award ranks 1–12.
     /// (Groups feed slots via Qualification/Progression elsewhere; this scenario owns the award→outcome seam.)
@@ -194,8 +197,8 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         {
             var fixture = stage.AddFixture(round.Id, _clock);
             fixtureIds.Add(fixture.Id);
-            awardPaths.Add(new PlacementAwardPath(fixture.Id, ProgressionOutcome.Winner, winnerRank));
-            awardPaths.Add(new PlacementAwardPath(fixture.Id, ProgressionOutcome.Loser, loserRank));
+            awardPaths.Add(new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Winner, winnerRank));
+            awardPaths.Add(new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Loser, loserRank));
         }
 
         stage.ReplacePlacementAwardRules(new PlacementAwardRules(awardPaths), _clock);

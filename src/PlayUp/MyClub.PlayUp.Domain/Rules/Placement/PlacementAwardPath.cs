@@ -5,23 +5,28 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Declarative award of a final competition rank from a Fixture/Tie outcome.
+/// Declarative award of a final competition rank from a structural confrontation outcome.
 /// Value object — no technical identity and no Order.
 /// Distinct from <see cref="ProgressionPath"/> (routing to a slot).
+/// Cup V1 source identity = <see cref="BracketPair.PairKey"/> (not FixtureId).
 /// </summary>
 public sealed record PlacementAwardPath
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="PlacementAwardPath"/> class.
     /// </summary>
-    /// <param name="sourceFixtureId">Fixture identity owned by the stage that carries the placement award rules.</param>
+    /// <param name="sourcePairKey">
+    /// Structural source key — Cup V1 = <see cref="BracketPair.PairKey"/>;
+    /// non-Cup without pairs uses fixture Guid "N" as interim carrier.
+    /// </param>
     /// <param name="outcome">Winner or loser of the confrontation.</param>
     /// <param name="rank">1-based final competition rank awarded to that participant.</param>
-    public PlacementAwardPath(FixtureId sourceFixtureId, ProgressionOutcome outcome, int rank)
+    public PlacementAwardPath(string sourcePairKey, ProgressionOutcome outcome, int rank)
     {
         if (!Enum.IsDefined(outcome))
         {
@@ -37,15 +42,15 @@ public sealed record PlacementAwardPath
                 RulesErrorCodes.PlacementAwardRulesInvalid);
         }
 
-        SourceFixtureId = sourceFixtureId;
+        SourcePairKey = BracketPair.NormalizePairKey(sourcePairKey);
         Outcome = outcome;
         Rank = rank;
     }
 
     /// <summary>
-    /// Gets the source fixture identity.
+    /// Gets the structural source confrontation key (Cup = PairKey).
     /// </summary>
-    public FixtureId SourceFixtureId { get; }
+    public string SourcePairKey { get; }
 
     /// <summary>
     /// Gets the confrontation outcome selector (Winner or Loser).
@@ -61,5 +66,5 @@ public sealed record PlacementAwardPath
     /// Returns an independent copy.
     /// </summary>
     /// <returns>A copy of this path.</returns>
-    public PlacementAwardPath Copy() => new(SourceFixtureId, Outcome, Rank);
+    public PlacementAwardPath Copy() => new(SourcePairKey, Outcome, Rank);
 }

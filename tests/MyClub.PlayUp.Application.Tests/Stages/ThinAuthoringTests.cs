@@ -23,6 +23,9 @@ public sealed class ThinAuthoringTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 26, 14, 0, 0, TimeSpan.Zero));
 
+    private static string PathKey(Fixture fixture) =>
+        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+
     [Fact]
     public void Composition_authors_qf_to_sf_chain()
     {
@@ -161,8 +164,8 @@ public sealed class ThinAuthoringTests
         ReplaceStagePlacementAwardRules.Execute(
             stage,
             [
-                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Winner, Rank: 1),
-                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Loser, Rank: 2)
+                new PlacementAwardPathSpec(PathKey(fixture), ProgressionOutcome.Winner, Rank: 1),
+                new PlacementAwardPathSpec(PathKey(fixture), ProgressionOutcome.Loser, Rank: 2)
             ],
             _clock);
 
@@ -185,7 +188,7 @@ public sealed class ThinAuthoringTests
         ReplaceStagePlacementAwardRules.Execute(
             stage,
             [
-                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Winner, 1)
+                new PlacementAwardPathSpec(PathKey(fixture), ProgressionOutcome.Winner, 1)
             ],
             _clock);
 
@@ -207,7 +210,7 @@ public sealed class ThinAuthoringTests
         var act = () => ReplaceStagePlacementAwardRules.Execute(
             stage,
             [
-                new PlacementAwardPathSpec(fixture.Id, ProgressionOutcome.Winner, 1)
+                new PlacementAwardPathSpec(PathKey(fixture), ProgressionOutcome.Winner, 1)
             ],
             _clock);
 
