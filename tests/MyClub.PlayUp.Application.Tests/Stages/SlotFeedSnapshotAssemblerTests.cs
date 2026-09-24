@@ -126,20 +126,61 @@ public sealed class SlotFeedSnapshotAssemblerTests
     }
 
     [Fact]
+    public void Assemble_emits_progression_WhoFeeds_on_PairKey_without_fixtures()
+    {
+        var competitionId = CompetitionId.New();
+        var source = Stage.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var target = Stage.Create(competitionId, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        source.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("S1");
+        source.AddSlot("S2");
+        source.AddSlot("S3");
+        source.AddSlot("S4");
+        source.SeedEntryRoundBracketPairs();
+        source.Rounds[0].Fixtures.Should().BeEmpty();
+        target.AddRound("SF", _clock);
+        target.AddSlot("SF1-A");
+        target.AddSlot("SF1-B");
+
+        ReplaceStageProgressionRules.Execute(
+            source,
+            [
+                new ProgressionIntentSpec(
+                    IntentId: null,
+                    Order: 1,
+                    RoundId: source.Rounds[0].Id,
+                    Outcome: ProgressionOutcome.Winner,
+                    DestinationStageId: target.Id,
+                    DestinationSlotKeys: ["SF1-A", "SF1-B"])
+            ],
+            _clock);
+
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(target, [source, target]);
+
+        snapshot.InboundProgression.Should().HaveCount(2);
+        snapshot.InboundProgression.Select(p => p.SourcePairKey).Should().Equal("P1", "P2");
+        SlotFeedResolver.Resolve(snapshot, "SF1-A").Source!.Progression!.SourcePairKey.Should().Be("P1");
+        SlotFeedResolver.Resolve(snapshot, "SF1-B").Source!.Progression!.SourcePairKey.Should().Be("P2");
+    }
+
+    [Fact]
     public void Assemble_ignores_cross_stage_population_progression()
     {
         var competitionId = CompetitionId.New();
         var source = Stage.Create(competitionId, new StageName("QF"), SampleRegulations.Standard(), _clock);
         var target = Stage.Create(competitionId, new StageName("SF"), SampleRegulations.Standard(), _clock);
         var round = source.AddRound("QF", _clock);
-        var fixture = source.AddFixture(round.Id, _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
+        source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        _ = source.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         target.AddRound("SF", _clock);
         target.AddSlot("SF1-A");
 
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(target.Id))
             ]),
@@ -157,13 +198,16 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var competitionId = CompetitionId.New();
         var stage = Stage.Create(competitionId, new StageName("KO"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("R1", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        _ = stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
 
         var act = () => stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "Missing"))
             ]),

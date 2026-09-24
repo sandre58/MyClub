@@ -262,10 +262,7 @@ public static class StructureViewAssembler
             .OrderBy(path => path.Rank)
             .Select(path =>
             {
-                var fixture = stage.FindFixtureByBracketPairKey(path.SourcePairKey)
-                    ?? (Guid.TryParseExact(path.SourcePairKey, "N", out var fixtureGuid)
-                        ? stage.FindFixture(new FixtureId(fixtureGuid))
-                        : null);
+                var fixture = stage.FindFixtureByBracketPairKey(path.SourcePairKey);
                 return new StructurePlacementAwardDto(
                     path.Rank,
                     path.Outcome,

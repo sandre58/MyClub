@@ -50,7 +50,7 @@ public sealed class ApplyProgressionOutcomeTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForSlot(destination.Id, "SF1-A"))
             ]),
@@ -82,7 +82,7 @@ public sealed class ApplyProgressionOutcomeTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id))
             ]),
@@ -122,12 +122,12 @@ public sealed class ApplyProgressionOutcomeTests
     [Fact]
     public void Execute_rejects_fixture_without_match()
     {
-        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
+        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A", "SF1-B"]);
+        var fixture = AddBoundFixture(stage);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -150,8 +150,11 @@ public sealed class ApplyProgressionOutcomeTests
             SampleRegulations.Standard(),
             _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
         var home = EntryId.New();
         var away = EntryId.New();
         var first = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
@@ -163,7 +166,7 @@ public sealed class ApplyProgressionOutcomeTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -184,8 +187,8 @@ public sealed class ApplyProgressionOutcomeTests
     [Fact]
     public void Execute_rejects_attachments_count_mismatch_vs_tie_format()
     {
-        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A");
+        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A", "SF1-B"]);
+        var fixture = AddBoundFixture(stage);
         var home = EntryId.New();
         var away = EntryId.New();
         var first = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
@@ -195,7 +198,7 @@ public sealed class ApplyProgressionOutcomeTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -264,10 +267,13 @@ public sealed class ApplyProgressionOutcomeTests
             "R1",
             new TieFormat(TieFormat.SingleLeg, false, penaltyShootoutRule: new PenaltyShootoutRule()),
             _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
         source.AddSlot("SF1-A");
+        source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         var home = EntryId.New();
         var away = EntryId.New();
-        var fixture = source.AddFixture(source.Rounds[0].Id, _clock);
+        var fixture = source.AddFixture(source.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
         var match = Match.Create(source.CompetitionId, source.Id, home, away, _clock);
         source.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
@@ -281,7 +287,7 @@ public sealed class ApplyProgressionOutcomeTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(source.Id, "SF1-A"))
             ]),
@@ -327,14 +333,14 @@ public sealed class ApplyProgressionOutcomeTests
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
-        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A", "SF1-B"]);
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(source, home, away, homeGoals: 1, awayGoals: 0);
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id))
             ]),
@@ -356,14 +362,14 @@ public sealed class ApplyProgressionOutcomeTests
     {
         var competitionId = CompetitionId.New();
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
-        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A", "SF1-B"]);
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(source, home, away, homeGoals: 1, awayGoals: 0);
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id))
             ]),
@@ -390,16 +396,18 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_rejects_when_match_not_finished()
     {
         var competitionId = CompetitionId.New();
-        var stage = CreateKnockoutStage(competitionId, "QF", ["SF1-A", "Consolante-1"]);
+        var stage = CreateKnockoutStage(competitionId, "QF", ["KO-A", "KO-B", "SF1-A", "Consolante-1"]);
+        // Keep only confrontation pair — destinations must stay unpaired.
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         var home = EntryId.New();
         var away = EntryId.New();
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var fixture = AddBoundFixture(stage);
         var match = Match.Create(competitionId, stage.Id, home, away, _clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -415,7 +423,7 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_rejects_missing_destination_stage_without_mutation()
     {
         var competitionId = CompetitionId.New();
-        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
         var missingDestinationId = StageId.New();
         var home = EntryId.New();
         var away = EntryId.New();
@@ -423,7 +431,7 @@ public sealed class ApplyProgressionOutcomeTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(missingDestinationId))
             ]),
@@ -440,14 +448,14 @@ public sealed class ApplyProgressionOutcomeTests
     public void ReplaceProgressionRules_allows_cross_stage_place()
     {
         var competitionId = CompetitionId.New();
-        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
-        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
-        var fixture = source.AddFixture(source.Rounds[0].Id, _clock);
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A", "SF1-B"]);
+        var fixture = AddBoundFixture(source);
 
         var act = () => source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(destination.Id, "SF1-A"))
             ]),
@@ -461,8 +469,8 @@ public sealed class ApplyProgressionOutcomeTests
     [Fact]
     public void Execute_rejects_match_stage_id_mismatch()
     {
-        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A", "SF1-B"]);
+        var fixture = AddBoundFixture(stage);
         var home = EntryId.New();
         var away = EntryId.New();
         var match = Match.Create(stage.CompetitionId, StageId.New(), home, away, _clock);
@@ -471,7 +479,7 @@ public sealed class ApplyProgressionOutcomeTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -487,8 +495,8 @@ public sealed class ApplyProgressionOutcomeTests
     [Fact]
     public void Execute_rejects_match_competition_id_mismatch()
     {
-        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A"]);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var stage = CreateKnockoutStage(CompetitionId.New(), "QF", ["SF1-A", "SF1-B"]);
+        var fixture = AddBoundFixture(stage);
         var home = EntryId.New();
         var away = EntryId.New();
         var match = Match.Create(CompetitionId.New(), stage.Id, home, away, _clock);
@@ -497,7 +505,7 @@ public sealed class ApplyProgressionOutcomeTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -514,8 +522,8 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_population_succeeds_alongside_destination_direct_slot_assignment()
     {
         var competitionId = CompetitionId.New();
-        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
-        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A", "SF1-B"]);
         var directEntry = EntryId.New();
         destination.ReplaceCompositionEntries([directEntry], _clock);
         destination.AssignEntryToSlot("SF1-A", directEntry);
@@ -525,7 +533,7 @@ public sealed class ApplyProgressionOutcomeTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id))
             ]),
@@ -542,8 +550,8 @@ public sealed class ApplyProgressionOutcomeTests
     public void Execute_preflight_second_path_missing_stage_mutates_nothing()
     {
         var competitionId = CompetitionId.New();
-        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A"]);
-        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A"]);
+        var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
+        var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A", "SF1-B"]);
         var missingLoserDestinationId = StageId.New();
         var home = EntryId.New();
         var away = EntryId.New();
@@ -551,10 +559,10 @@ public sealed class ApplyProgressionOutcomeTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id)),
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Loser,
                     ProgressionDestination.ForPopulation(missingLoserDestinationId))
             ]),
@@ -649,14 +657,17 @@ public sealed class ApplyProgressionOutcomeTests
             SampleRegulations.Standard(),
             _clock);
         stage.AddRound("R1", tieFormat: null, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(stage, home, away, homeGoals: 1, awayGoals: 0);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -678,8 +689,11 @@ public sealed class ApplyProgressionOutcomeTests
             SampleRegulations.Standard(),
             _clock);
         var matchday = stage.AddMatchday(1, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
-        var fixture = stage.AddFixture(matchday.Id, _clock);
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var fixture = stage.AddFixture(matchday.Id, _clock, "KO-A", "KO-B", "P1");
         var home = EntryId.New();
         var away = EntryId.New();
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
@@ -688,7 +702,7 @@ public sealed class ApplyProgressionOutcomeTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Loser,
                     ProgressionDestination.ForSlot(stage.Id, "SF1-A"))
             ]),
@@ -726,23 +740,36 @@ public sealed class ApplyProgressionOutcomeTests
         leg.PenaltyShootoutScore.Should().BeNull();
     }
 
+    private static string PathKey(Fixture fixture) =>
+        fixture.BracketPairKey
+        ?? throw new InvalidOperationException($"Fixture '{fixture.Id}' has no BracketPairKey.");
+
     private SelfStageContext CreateSelfStageContext(int homeGoals, int awayGoals, bool withLoserPath)
     {
         var competitionId = CompetitionId.New();
-        var slotKeys = withLoserPath ? new[] { "SF1-A", "Consolante-1" } : ["SF1-A"];
-        var source = CreateKnockoutStage(competitionId, "Knockout", slotKeys);
+        var source = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
+        source.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
+        source.AddSlot("SF1-A");
+        if (withLoserPath)
+        {
+            source.AddSlot("Consolante-1");
+        }
+
+        source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         var home = EntryId.New();
         var away = EntryId.New();
         var (fixtureId, match) = AttachFinishedMatch(source, home, away, homeGoals, awayGoals);
 
         var paths = new List<ProgressionPath>
         {
-            new(fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(source.Id, "SF1-A"))
+            new("P1", ProgressionOutcome.Winner, new ProgressionDestination(source.Id, "SF1-A"))
         };
         if (withLoserPath)
         {
             paths.Add(
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Loser,
                     new ProgressionDestination(source.Id, "Consolante-1")));
         }
@@ -760,7 +787,42 @@ public sealed class ApplyProgressionOutcomeTests
             stage.AddSlot(key);
         }
 
+        if (slotKeys.Length >= 2 && slotKeys.Length % 2 == 0)
+        {
+            stage.SeedEntryRoundBracketPairs();
+        }
+
         return stage;
+    }
+
+    private Fixture AddBoundFixture(Stage stage)
+    {
+        if (stage.BracketPairs.Count == 0)
+        {
+            var slots = stage.Slots.Select(s => s.SlotKey).ToList();
+            if (slots.Count >= 2)
+            {
+                stage.ReplaceBracketPairs([new BracketPair("P1", slots[0], slots[1])]);
+            }
+            else
+            {
+                if (stage.FindSlot("KO-A") is null)
+                {
+                    stage.AddSlot("KO-A");
+                }
+
+                if (stage.FindSlot("KO-B") is null)
+                {
+                    stage.AddSlot("KO-B");
+                }
+
+                stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+            }
+        }
+
+        var pair = stage.BracketPairs.FirstOrDefault(p => stage.FindFixtureByBracketPairKey(p.PairKey) is null)
+                   ?? throw new InvalidOperationException("No free BracketPair for fixture.");
+        return stage.AddFixture(stage.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
     }
 
     private (FixtureId FixtureId, Match Match) AttachFinishedMatch(
@@ -770,7 +832,7 @@ public sealed class ApplyProgressionOutcomeTests
         int homeGoals,
         int awayGoals)
     {
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var fixture = AddBoundFixture(stage);
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         Finish(match, homeGoals, awayGoals);

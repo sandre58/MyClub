@@ -21,8 +21,7 @@ public sealed record PlacementAwardPath
     /// Initializes a new instance of the <see cref="PlacementAwardPath"/> class.
     /// </summary>
     /// <param name="sourcePairKey">
-    /// Structural source key — Cup V1 = <see cref="BracketPair.PairKey"/>;
-    /// non-Cup without pairs uses fixture Guid "N" as interim carrier.
+    /// Structural source key — Cup V1 = <see cref="BracketPair.PairKey"/>.
     /// </param>
     /// <param name="outcome">Winner or loser of the confrontation.</param>
     /// <param name="rank">1-based final competition rank awarded to that participant.</param>

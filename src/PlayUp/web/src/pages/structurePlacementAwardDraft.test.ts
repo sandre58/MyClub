@@ -120,32 +120,27 @@ describe('structurePlacementAwardDraft', () => {
     expect(serializeCards([a])).toBe(serializeCards([b]));
   });
 
-  it('groups cards by round overview order; orphans at the end', () => {
+  it('groups cards by BracketPair keys; orphans at the end', () => {
     const rounds = [
-      {
-        id: 'r-sf',
-        name: 'Demi-finales',
-        fixtures: [{ id: 'fix-sf1' }, { id: 'fix-sf2' }],
-      },
       {
         id: 'r-final',
         name: 'Finale',
-        fixtures: [{ id: 'fix-final' }],
-      },
-      {
-        id: 'r-bronze',
-        name: 'Petite finale',
-        fixtures: [{ id: 'fix-bronze' }],
+        fixtures: [],
       },
     ];
 
+    const pairs = [
+      { pairKey: 'P-bronze', slotAKey: 'B-A', slotBKey: 'B-B' },
+      { pairKey: 'P-final', slotAKey: 'F-A', slotBKey: 'F-B' },
+    ];
+
     const final = emptyPlacementCard();
-    final.sourcePairKey = 'fix-final';
+    final.sourcePairKey = 'P-final';
     final.winnerRank = '1';
     final.loserRank = '2';
 
     const bronze = emptyPlacementCard();
-    bronze.sourcePairKey = 'fix-bronze';
+    bronze.sourcePairKey = 'P-bronze';
     bronze.winnerRank = '3';
     bronze.loserRank = '4';
 
@@ -154,20 +149,20 @@ describe('structurePlacementAwardDraft', () => {
     unknown.sourcePairKey = 'gone';
     unknown.winnerRank = '5';
 
-    // Only attributed fixtures appear — sf fixtures never listed.
-    const sections = groupCardsByRound([bronze, empty, final, unknown], rounds);
+    const sections = groupCardsByRound(
+      [bronze, empty, final, unknown],
+      rounds,
+      pairs,
+    );
 
-    expect(sections).toHaveLength(3);
+    expect(sections).toHaveLength(2);
     expect(sections[0].roundName).toBe('Finale');
     expect(sections[0].cards.map((c) => c.sourcePairKey)).toEqual([
-      'fix-final',
+      'P-bronze',
+      'P-final',
     ]);
-    expect(sections[1].roundName).toBe('Petite finale');
-    expect(sections[1].cards.map((c) => c.sourcePairKey)).toEqual([
-      'fix-bronze',
-    ]);
-    expect(sections[2].roundId).toBeNull();
-    expect(sections[2].cards.map((c) => c.id)).toEqual([
+    expect(sections[1].roundId).toBeNull();
+    expect(sections[1].cards.map((c) => c.id)).toEqual([
       empty.id,
       unknown.id,
     ]);

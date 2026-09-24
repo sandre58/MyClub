@@ -188,7 +188,23 @@ public sealed class UseCaseExecutorTests
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        var fixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock);
+        quarter.AddSlot("QF1-A");
+        quarter.AddSlot("QF1-B");
+        quarter.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
+        _ = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
+        var entryA = EntryId.New();
+        var entryB = EntryId.New();
+        var draw = quarter.CreateDraw(DrawResolutionKind.Slot, _clock);
+        quarter.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entryA, entryB]));
+        quarter.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(entryA, "QF1-A"),
+                new SlotDrawPlacement(entryB, "QF1-B")
+            ]),
+            _clock);
+        quarter.PublishDraw(draw.Id, _clock);
 
         var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
@@ -200,7 +216,7 @@ public sealed class UseCaseExecutorTests
         quarter.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(semi.Id))
             ]),
@@ -857,9 +873,10 @@ public sealed class UseCaseExecutorTests
         competition.AddStage(source.Id, _clock);
         competition.AddStage(destination.Id, _clock);
 
+        source.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
         var home = EntryId.New();
         var away = EntryId.New();
-        var fixture = source.AddFixture(source.Rounds[0].Id, _clock);
+        var fixture = source.AddFixture(source.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
         var match = DomainMatch.Create(competition.Id, source.Id, home, away, _clock);
         source.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
@@ -868,7 +885,7 @@ public sealed class UseCaseExecutorTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id))
             ]),

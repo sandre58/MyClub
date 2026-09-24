@@ -718,7 +718,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces progression rules. Allowed in Draft or Ready; Ready is demoted to Draft.
-    /// Each path source must be a known BracketPair (Cup) or a fixture-backed interim key (non-Cup).
+    /// Each path source must be a known <see cref="BracketPair.PairKey"/> (Cup V1 structural identity).
     /// Local Place destinations must reference an existing slot and must not conflict with a direct assignment.
     /// Cross-stage Place is allowed when SlotKey exists on the destination stage form (validated at Prepare/Apply).
     /// </summary>
@@ -2675,20 +2675,13 @@ public sealed class Stage : AggregateRoot<StageId>
         string sourcePairKey,
         string errorCode = RulesErrorCodes.ProgressionRulesInvalid)
     {
+        // Cup V1: structural identity is BracketPair.PairKey only (not FixtureId).
         if (FindBracketPair(sourcePairKey) is not null)
         {
             return;
         }
 
-        // Non-Cup interim Expand keys fixture Guid "N" when BracketPairs are absent.
-        if (_bracketPairs.Count == 0
-            && Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
-            && HasFixture(new FixtureId(fixtureGuid)))
-        {
-            return;
-        }
-
-        // Fixture may carry BracketPairKey matching the path after materialize — still structural.
+        // After materialize, a fixture may still expose the same PairKey.
         if (FindFixtureByBracketPairKey(sourcePairKey) is not null)
         {
             return;
@@ -2730,25 +2723,18 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Resolves the round that owns a path source key (fixture Guid N, BracketPairKey on fixture,
+    /// Resolves the round that owns a path source PairKey (fixture bound to BracketPairKey,
     /// or sole round when only a structural BracketPair exists — Cup V1 mono-round).
     /// </summary>
     private Round? FindRoundForProgressionSource(string sourcePairKey)
     {
-        if (Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid))
-        {
-            var fixtureId = new FixtureId(fixtureGuid);
-            var byFixture = _rounds.FirstOrDefault(r => r.FindFixture(fixtureId) is not null);
-            if (byFixture is not null)
-            {
-                return byFixture;
-            }
-        }
-
         var byPairKey = _rounds.FirstOrDefault(r =>
             r.Fixtures.Any(f =>
                 string.Equals(f.BracketPairKey, sourcePairKey, StringComparison.Ordinal)));
-        return byPairKey ?? (FindBracketPair(sourcePairKey) is not null && _rounds.Count == 1 ? _rounds[0] : null);
+        return byPairKey
+               ?? (FindBracketPair(sourcePairKey) is not null && _rounds.Count == 1
+                   ? _rounds[0]
+                   : null);
     }
 
     private void EnsureBracketPairSlotExists(string slotKey)
@@ -2863,9 +2849,9 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             foreach (var path in progression.Paths)
             {
-                    EnsureStructuralConfrontationSource(path.SourcePairKey);
+                EnsureStructuralConfrontationSource(path.SourcePairKey);
 
-                    if (path.Destination.TargetsPopulation)
+                if (path.Destination.TargetsPopulation)
                 {
                     continue;
                 }

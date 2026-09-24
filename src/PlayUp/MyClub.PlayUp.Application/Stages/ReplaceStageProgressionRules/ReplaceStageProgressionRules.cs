@@ -75,6 +75,13 @@ public static class ReplaceStageProgressionRules
                     ApplicationErrorCodes.InvalidStructureIntent);
             }
 
+            if (string.IsNullOrWhiteSpace(spec.SourcePairKey))
+            {
+                throw new ApplicationFailureException(
+                    "Progression path requires SourcePairKey.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
             var destination = ResolvePathDestination(
                 spec.DestinationStageId,
                 spec.DestinationSlotKey,
@@ -168,6 +175,12 @@ public static class ReplaceStageProgressionRules
 /// <summary>
 /// Application DTO for one progression path (not a Domain VO).
 /// </summary>
+/// <param name="SourcePairKey">Structural key (Cup = BracketPair.PairKey).</param>
+/// <param name="Outcome">Winner or Loser.</param>
+/// <param name="DestinationStageId">Destination stage.</param>
+/// <param name="DestinationSlotKey">Optional Place slot.</param>
+/// <param name="DestinationGroupId">Optional group destination.</param>
+/// <param name="DestinationForm">When true, ForForm destination.</param>
 public sealed record ProgressionPathSpec(
     string SourcePairKey,
     ProgressionOutcome Outcome,

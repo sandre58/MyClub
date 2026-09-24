@@ -43,11 +43,11 @@ public sealed class B1M2VerticalSliceTests
             new ProgressionRules(
             [
                 new ProgressionPath(
-                    fixture1.Value.ToString("N"),
+                    "P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(phaseB.Id)),
                 new ProgressionPath(
-                    fixture2.Value.ToString("N"),
+                    "P2",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(phaseB.Id))
             ]),

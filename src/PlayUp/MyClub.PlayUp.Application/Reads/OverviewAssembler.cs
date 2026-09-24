@@ -1542,7 +1542,7 @@ public static class OverviewAssembler
                 case NeedsAttentionAssembler.SourceProgressionPending
                     or NeedsAttentionAssembler.SourceProgressionConflict:
                     {
-                        var fixtureId = ResolveSourceFixtureIdForAttentionItem(item, stages);
+                        var fixtureId = ResolveMaterializedFixtureIdForAttentionItem(item, stages);
                         Guid? matchId = fixtureId is not null &&
                                         fixtureToMatch.TryGetValue(fixtureId.Value, out var mid)
                             ? mid
@@ -1931,15 +1931,15 @@ public static class OverviewAssembler
         IReadOnlyList<Stage> stages,
         Dictionary<Guid, Guid> fixtureToMatch)
     {
-        var fixtureId = ResolveSourceFixtureIdForAttentionItem(item, stages);
+        var fixtureId = ResolveMaterializedFixtureIdForAttentionItem(item, stages);
         return fixtureId is not null && fixtureToMatch.TryGetValue(fixtureId.Value, out var matchId) ? matchId : null;
     }
 
     /// <summary>
-    /// Resolves the source fixture for a Needs Attention item when TargetType is Fixture,
-    /// or when a Slot-targeted progression item maps back through ProgressionRules.
+    /// UI overlay only: resolves a materialized fixture Guid for a Needs Attention item.
+    /// Path identity remains <c>SourcePairKey</c>; FixtureId is never the structural source.
     /// </summary>
-    private static Guid? ResolveSourceFixtureIdForAttentionItem(
+    private static Guid? ResolveMaterializedFixtureIdForAttentionItem(
         NeedsAttentionItemDto item,
         IReadOnlyList<Stage> stages)
     {
@@ -1974,7 +1974,7 @@ public static class OverviewAssembler
                 if (path.Destination.StageId.Value == destinationStageId
                     && string.Equals(path.Destination.SlotKey, slotKey, StringComparison.Ordinal))
                 {
-                    return ResolveFixtureIdFromSourcePairKey(stage, path.SourcePairKey);
+                    return FindMaterializedFixtureIdByPairKey(stage, path.SourcePairKey);
                 }
             }
         }
@@ -1983,18 +1983,10 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Maps a structural SourcePairKey to the bound fixture Guid when materialized.
+    /// Post-materialize overlay: PairKey → bound Fixture Guid when present.
     /// </summary>
-    private static Guid? ResolveFixtureIdFromSourcePairKey(Stage stage, string sourcePairKey)
-    {
-        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
-        return byPair is not null
-            ? byPair.Id.Value
-            : Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
-              && stage.FindFixture(new FixtureId(fixtureGuid)) is not null
-                ? fixtureGuid
-                : null;
-    }
+    private static Guid? FindMaterializedFixtureIdByPairKey(Stage stage, string sourcePairKey) =>
+        stage.FindFixtureByBracketPairKey(sourcePairKey)?.Id.Value;
 
     private static Guid? FindStageIdForFixture(IReadOnlyList<Stage> stages, Guid fixtureId)
     {

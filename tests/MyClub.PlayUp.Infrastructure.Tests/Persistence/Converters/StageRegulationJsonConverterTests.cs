@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using System.Text.Json;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Infrastructure.Persistence.Converters;
@@ -35,7 +36,6 @@ public sealed class StageRegulationJsonConverterTests
     {
         var groupId = GroupId.New();
         var destinationStageId = StageId.New();
-        var fixtureId = FixtureId.New();
         var progressionStageId = StageId.New();
 
         var regulation = StageRegulation.MaterializeFrom(SampleRegulations.Standard())
@@ -63,18 +63,20 @@ public sealed class StageRegulationJsonConverterTests
             .WithProgressionRules(
                 new ProgressionRules(
                 [
-                    new ProgressionPath(fixtureId.Value.ToString("N"),
+                    new ProgressionPath(
+                        "P1",
                         ProgressionOutcome.Winner,
                         ProgressionDestination.ForPopulation(progressionStageId)),
-                    new ProgressionPath(fixtureId.Value.ToString("N"),
+                    new ProgressionPath(
+                        "P1",
                         ProgressionOutcome.Loser,
                         ProgressionDestination.ForPopulation(progressionStageId))
                 ]))
             .WithPlacementAwardRules(
                 new PlacementAwardRules(
                 [
-                    new PlacementAwardPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, rank: 3),
-                    new PlacementAwardPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Loser, rank: 4)
+                    new PlacementAwardPath("P1", ProgressionOutcome.Winner, rank: 3),
+                    new PlacementAwardPath("P1", ProgressionOutcome.Loser, rank: 4)
                 ]));
 
         var json = _converter.ConvertToProvider(regulation).Should().BeOfType<string>().Subject;
@@ -113,5 +115,28 @@ public sealed class StageRegulationJsonConverterTests
         json.Should().Contain("\"ExtraTimeRule\"");
         json.Should().Contain("\"PenaltyShootoutRule\"");
         json.Should().NotContain("\"numberOfLegs\"");
+    }
+
+    [Fact]
+    public void ProgressionPath_requires_SourcePairKey_rejects_SourceFixtureId_only()
+    {
+        var fixtureId = FixtureId.New();
+        var destinationStageId = StageId.New();
+        var seed = StageRegulation.MaterializeFrom(SampleRegulations.Standard())
+            .WithProgressionRules(
+                new ProgressionRules(
+                [
+                    new ProgressionPath(
+                        "P1",
+                        ProgressionOutcome.Winner,
+                        ProgressionDestination.ForPopulation(destinationStageId))
+                ]));
+        var json = _converter.ConvertToProvider(seed).Should().BeOfType<string>().Subject
+            .Replace("\"SourcePairKey\":\"P1\"", $"\"SourceFixtureId\":\"{fixtureId.Value}\"", StringComparison.Ordinal);
+
+        var act = () => _converter.ConvertFromProvider(json);
+
+        act.Should().Throw<JsonException>()
+            .WithMessage("*SourcePairKey*");
     }
 }

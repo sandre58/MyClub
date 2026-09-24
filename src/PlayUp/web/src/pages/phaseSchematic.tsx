@@ -1391,11 +1391,15 @@ function feedOriginLabel(origin: SchematicFeedOrigin, t: Translate): string {
         origin.outcome === 'Loser'
           ? t('structure:fiche.rule.loser', { count: 1 })
           : t('structure:fiche.rule.winner', { count: 1 });
+      const pair = origin.sourcePairKey?.trim();
+      const base = pair
+        ? t('structure:fiche.rule.outcomeOfPair', { outcome, pair })
+        : outcome;
       return origin.sourceFixtureNumber != null
-        ? `${outcome} · ${t('structure:fiche.rule.matchNumber', {
+        ? `${base} · ${t('structure:fiche.rule.matchNumber', {
             n: origin.sourceFixtureNumber,
           })}`
-        : outcome;
+        : base;
     }
     case 'Direct':
       return t('structure:entries.originAffectation');

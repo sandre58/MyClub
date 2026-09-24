@@ -752,23 +752,20 @@ try
                         .Select(path =>
                         {
                             var pairKey = path.SourcePairKey?.Trim();
-                            if (string.IsNullOrEmpty(pairKey) && path.SourceFixtureId is { } legacyFixtureId)
+                            if (string.IsNullOrEmpty(pairKey))
                             {
-                                // Legacy dual-read: interim non-Cup key = fixture Guid N.
-                                pairKey = legacyFixtureId.ToString("N");
+                                throw new ArgumentException(
+                                    "Progression path requires SourcePairKey.",
+                                    nameof(request));
                             }
 
-                            return string.IsNullOrEmpty(pairKey)
-                                ? throw new ArgumentException(
-                                    "Progression path requires SourcePairKey (or legacy SourceFixtureId).",
-                                    nameof(request))
-                                : new ProgressionPathSpec(
-                                    pairKey,
-                                    path.Outcome,
-                                    new StageId(path.DestinationStageId),
-                                    path.DestinationSlotKey,
-                                    path.DestinationGroupId is { } gid ? new GroupId(gid) : null,
-                                    path.DestinationForm);
+                            return new ProgressionPathSpec(
+                                pairKey,
+                                path.Outcome,
+                                new StageId(path.DestinationStageId),
+                                path.DestinationSlotKey,
+                                path.DestinationGroupId is { } gid ? new GroupId(gid) : null,
+                                path.DestinationForm);
                         })
                 ];
             }
@@ -857,15 +854,10 @@ try
                         .Select(path =>
                         {
                             var pairKey = path.SourcePairKey?.Trim();
-                            if (string.IsNullOrEmpty(pairKey) && path.SourceFixtureId is { } legacyFixtureId)
-                            {
-                                pairKey = legacyFixtureId.ToString("N");
-                            }
-
                             if (string.IsNullOrEmpty(pairKey))
                             {
                                 throw new ApplicationFailureException(
-                                    "Placement award path requires SourcePairKey (or legacy SourceFixtureId).",
+                                    "Placement award path requires SourcePairKey.",
                                     ApplicationErrorCodes.InvalidStructureIntent);
                             }
 

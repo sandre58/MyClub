@@ -986,10 +986,10 @@ export interface StructurePlacementAward {
   rank: number;
   outcome: ProgressionOutcome;
   /** Structural source key (Cup = BracketPair.PairKey). */
-  sourcePairKey?: string | null;
-  /** Legacy dual-read / optional bound fixture Guid when materialized. */
-  sourceFixtureId?: string | null;
+  sourcePairKey: string;
   sourceLabel?: string | null;
+  /** Optional execution fixture when the PairKey is materialized (read overlay). */
+  boundFixtureId?: string | null;
 }
 
 /** Host DrawConstraintType — string enum member names. */
@@ -1444,7 +1444,8 @@ export interface SchematicFeedOrigin {
   groupId?: string | null;
   groupName?: string | null;
   acrossGroupsPosition?: number | null;
-  sourceFixtureId?: string | null;
+  /** Structural progression source (Cup = BracketPair.PairKey). */
+  sourcePairKey?: string | null;
   sourceFixtureNumber?: number | null;
   outcome?: ProgressionOutcome | null;
   drawId?: string | null;

@@ -212,6 +212,14 @@ Generation demos: `--templates ligue-1:finished` (Championship Outcome) · `--te
 
 Reset is refused unless the DB name ends with `_dev`, the host is localhost/loopback, and the environment is not Production. Host has **no** reset/seed capability.
 
+## Unsupported legacy regulation JSON (Progression / PlacementAward)
+
+Cup V1 Paths are **PairKey-only** (`SourcePairKey` = `BracketPair.PairKey`). There is **no** application migration, dual-read, or fallback from the former FixtureId-based path identity (`SourceFixtureId`, Guid `"N"` as PairKey).
+
+Data produced under that old model is **outside the supported contract**. Loading or applying it fails explicitly.
+
+For a local `*_dev` database that still holds such rows: **purge and reseed** with DevRunner (`--reset` + templates/scenarios). Do not add compatibility code in Host or Domain.
+
 ## Useful commands
 
 | Command | Purpose |

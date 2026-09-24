@@ -431,14 +431,14 @@ public sealed record StructureStageDefaultsBindingDto(
 /// <param name="Rank">1-based final competition rank.</param>
 /// <param name="Outcome">Winner or Loser of the source confrontation.</param>
 /// <param name="SourcePairKey">Structural source key (Cup = BracketPair.PairKey).</param>
-/// <param name="SourceLabel">Resolved confrontation label (PairKey or bound fixture) when found.</param>
-/// <param name="SourceFixtureId">Optional bound fixture Guid when materialized (read overlay).</param>
+/// <param name="SourceLabel">Display label (PairKey; Match # overlay when materialized).</param>
+/// <param name="BoundFixtureId">Optional execution fixture when the PairKey is materialized (read overlay only).</param>
 public sealed record StructurePlacementAwardDto(
     int Rank,
     ProgressionOutcome Outcome,
     string SourcePairKey,
     string? SourceLabel = null,
-    Guid? SourceFixtureId = null);
+    Guid? BoundFixtureId = null);
 
 /// <summary>One draw constraint for the Règlement hub Tirage column.</summary>
 /// <param name="Type">DrawConstraintType member name.</param>

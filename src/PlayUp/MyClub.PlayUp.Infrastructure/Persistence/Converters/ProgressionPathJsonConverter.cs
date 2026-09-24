@@ -11,9 +11,7 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
 
 /// <summary>
-/// Persists <see cref="ProgressionPath"/> with <c>SourcePairKey</c>.
-/// Dual-reads legacy <c>SourceFixtureId</c> as interim Guid N key (non-semantic migration —
-/// Intents re-Expand is the SoT cutover).
+/// Persists <see cref="ProgressionPath"/> with structural <c>SourcePairKey</c> only.
 /// </summary>
 internal sealed class ProgressionPathJsonConverter : JsonConverter<ProgressionPath>
 {
@@ -33,24 +31,14 @@ internal sealed class ProgressionPathJsonConverter : JsonConverter<ProgressionPa
             options)
             ?? throw new JsonException("ProgressionPath.Destination is required.");
 
-        string pairKey;
-        if (root.TryGetProperty("SourcePairKey", out var pairElement)
-            && pairElement.ValueKind == JsonValueKind.String
-            && !string.IsNullOrWhiteSpace(pairElement.GetString()))
+        if (!root.TryGetProperty("SourcePairKey", out var pairElement)
+            || pairElement.ValueKind != JsonValueKind.String
+            || string.IsNullOrWhiteSpace(pairElement.GetString()))
         {
-            pairKey = pairElement.GetString()!;
-        }
-        else if (root.TryGetProperty("SourceFixtureId", out var fixtureElement))
-        {
-            var fixtureId = JsonSerializer.Deserialize<Guid>(fixtureElement.GetRawText(), options);
-            pairKey = fixtureId.ToString("N");
-        }
-        else
-        {
-            throw new JsonException("ProgressionPath requires SourcePairKey (or legacy SourceFixtureId).");
+            throw new JsonException("ProgressionPath requires SourcePairKey.");
         }
 
-        return new ProgressionPath(pairKey, outcome, destination);
+        return new ProgressionPath(pairElement.GetString()!, outcome, destination);
     }
 
     public override void Write(

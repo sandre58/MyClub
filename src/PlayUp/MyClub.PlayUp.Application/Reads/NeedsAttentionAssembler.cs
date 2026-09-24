@@ -328,15 +328,10 @@ public static class NeedsAttentionAssembler
     }
 
     /// <summary>
-    /// Resolves the execution fixture for a structural SourcePairKey (Cup PairKey or interim Guid N).
+    /// Resolves the execution fixture for a structural SourcePairKey (Cup = PairKey).
     /// </summary>
-    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey)
-    {
-        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
-        return byPair ?? (Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
-            ? stage.FindFixture(new FixtureId(fixtureGuid))
-            : null);
-    }
+    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey) =>
+        stage.FindFixtureByBracketPairKey(sourcePairKey);
 
     private static string ResolveAttentionTargetType(QualificationDestination destination) =>
         destination.TargetsSlot

@@ -18,6 +18,33 @@ public sealed class ProgressionChampionshipPathTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 9, 21, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
+    public void TerminalRound_mono_round_without_fixtures_is_terminal_Cup_V1()
+    {
+        var stage = Stage.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        stage.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+
+        ProgressionChampionshipPath.TerminalRound(stage.Rounds).Should().Be(stage.Rounds[0]);
+    }
+
+    [Fact]
+    public void TerminalRound_multi_round_without_fixtures_is_outside_Cup_V1_scope()
+    {
+        var stage = Stage.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        stage.AddRound("QF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+
+        ProgressionChampionshipPath.TerminalRound(stage.Rounds).Should().BeNull();
+    }
+
+    [Fact]
     public void TerminalRound_single_round_with_fixtures_is_terminal()
     {
         var stage = CreateCupWithRoundFixtures([4]);
@@ -69,7 +96,7 @@ public sealed class ProgressionChampionshipPathTests
     [Fact]
     public void Materialize_rejects_Winner_on_intermediate_round()
     {
-        var stage = CreateCupWithRoundFixtures([2, 1]);
+        var stage = CreateCupWithRoundFixtures([2, 1], expandPairCount: 2);
         var peer = StageId.New();
         var intent = new ProgressionIntent(
             IntentId.New(),
@@ -87,7 +114,7 @@ public sealed class ProgressionChampionshipPathTests
     [Fact]
     public void Materialize_allows_Winner_on_championship_terminal()
     {
-        var stage = CreateCupWithRoundFixtures([2, 1]);
+        var stage = CreateCupWithRoundFixtures([2, 1], expandPairCount: 1);
         var peer = StageId.New();
         var intent = new ProgressionIntent(
             IntentId.New(),
@@ -104,7 +131,7 @@ public sealed class ProgressionChampionshipPathTests
     [Fact]
     public void Materialize_allows_Loser_on_intermediate_round()
     {
-        var stage = CreateCupWithRoundFixtures([2, 1]);
+        var stage = CreateCupWithRoundFixtures([2, 1], expandPairCount: 2);
         var peer = StageId.New();
         var intent = new ProgressionIntent(
             IntentId.New(),
@@ -121,14 +148,17 @@ public sealed class ProgressionChampionshipPathTests
     [Fact]
     public void ReplaceProgressionRules_rejects_Winner_path_from_intermediate_round()
     {
-        var stage = CreateCupWithRoundFixtures([2, 1]);
+        var stage = CreateCupWithRoundFixtures([2, 1], expandPairCount: 2);
         var peer = StageId.New();
-        var fixture = stage.Rounds[0].Fixtures[0];
+        var pair = stage.BracketPairs[0];
+        // Bind PairKey to the intermediate round so Winner terminal check can resolve ownership.
+        stage.AddFixture(stage.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
 
         var act = () => stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(
+                    pair.PairKey,
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(peer))
             ]),
@@ -138,7 +168,7 @@ public sealed class ProgressionChampionshipPathTests
             .Which.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
     }
 
-    private Stage CreateCupWithRoundFixtures(int[] fixtureCountsPerRound)
+    private Stage CreateCupWithRoundFixtures(int[] fixtureCountsPerRound, int? expandPairCount = null)
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -153,8 +183,26 @@ public sealed class ProgressionChampionshipPathTests
                 _clock);
             for (var i = 0; i < fixtureCountsPerRound[r]; i++)
             {
+                // Unbound fixtures for championship-path terminal detection (fixture counts).
                 stage.AddFixture(round.Id, _clock);
             }
+        }
+
+        // Cup V1 Expand identity = BracketPairs (PairKey), independent of fixture binding.
+        var pairCount = expandPairCount ?? fixtureCountsPerRound.Sum();
+        if (pairCount > 0)
+        {
+            var pairs = new List<BracketPair>(pairCount);
+            for (var i = 0; i < pairCount; i++)
+            {
+                var a = $"A{i + 1}";
+                var b = $"B{i + 1}";
+                stage.AddSlot(a);
+                stage.AddSlot(b);
+                pairs.Add(new BracketPair($"P{i + 1}", a, b));
+            }
+
+            stage.ReplaceBracketPairs(pairs);
         }
 
         return stage;

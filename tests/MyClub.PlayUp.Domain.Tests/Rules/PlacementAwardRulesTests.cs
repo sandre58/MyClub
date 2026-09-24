@@ -19,12 +19,12 @@ public sealed class PlacementAwardRulesTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 10, 0, 0, TimeSpan.Zero));
 
     private static string PathKey(Fixture fixture) =>
-        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+        fixture.BracketPairKey ?? throw new InvalidOperationException("missing BracketPairKey");
 
     [Fact]
     public void Constructor_accepts_winner_and_loser_ranks_for_same_source()
     {
-        var sourcePairKey = FixtureId.New().Value.ToString("N");
+        var sourcePairKey = "P1";
         var paths = new[]
         {
             new PlacementAwardPath(sourcePairKey, ProgressionOutcome.Winner, rank: 3),
@@ -51,8 +51,8 @@ public sealed class PlacementAwardRulesTests
     {
         var paths = new[]
         {
-            new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, rank: 1),
-            new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, rank: 1)
+            new PlacementAwardPath("P1", ProgressionOutcome.Winner, rank: 1),
+            new PlacementAwardPath("P1", ProgressionOutcome.Winner, rank: 1)
         };
 
         var act = () => new PlacementAwardRules(paths);
@@ -63,7 +63,7 @@ public sealed class PlacementAwardRulesTests
     [Fact]
     public void Constructor_rejects_duplicate_source_outcome()
     {
-        var sourcePairKey = FixtureId.New().Value.ToString("N");
+        var sourcePairKey = "P1";
         var paths = new[]
         {
             new PlacementAwardPath(sourcePairKey, ProgressionOutcome.Winner, rank: 1),
@@ -78,7 +78,7 @@ public sealed class PlacementAwardRulesTests
     [Fact]
     public void Path_rejects_rank_below_one()
     {
-        var act = () => new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, rank: 0);
+        var act = () => new PlacementAwardPath("P1", ProgressionOutcome.Winner, rank: 0);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.PlacementAwardRulesInvalid);
     }
@@ -88,7 +88,7 @@ public sealed class PlacementAwardRulesTests
     {
         var rules = new PlacementAwardRules(
         [
-            new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, rank: 1)
+            new PlacementAwardPath("P1", ProgressionOutcome.Winner, rank: 1)
         ]);
 
         var copy = rules.Copy();
@@ -102,8 +102,8 @@ public sealed class PlacementAwardRulesTests
     {
         var awards = new PlacementAwardRules(
         [
-            new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, rank: 1),
-            new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Loser, rank: 2)
+            new PlacementAwardPath("P1", ProgressionOutcome.Winner, rank: 1),
+            new PlacementAwardPath("P1", ProgressionOutcome.Loser, rank: 2)
         ]);
         var baseReg = StageRegulation.MaterializeFrom(SampleRegulations.Standard());
 
@@ -124,7 +124,10 @@ public sealed class PlacementAwardRulesTests
             SampleRegulations.Standard(),
             _clock);
         var round = stage.AddRound("Final", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var fixture = stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
         stage.ClearDomainEvents();
@@ -185,7 +188,7 @@ public sealed class PlacementAwardRulesTests
 
         var rules = new PlacementAwardRules(
         [
-            new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, rank: 1)
+            new PlacementAwardPath("P1", ProgressionOutcome.Winner, rank: 1)
         ]);
 
         var act = () => stage.ReplacePlacementAwardRules(rules, _clock);
@@ -194,7 +197,7 @@ public sealed class PlacementAwardRulesTests
     }
 
     [Fact]
-    public void ReplacePlacementAwardRules_does_not_require_slots()
+    public void ReplacePlacementAwardRules_does_not_require_destination_place_slots()
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -202,7 +205,10 @@ public sealed class PlacementAwardRulesTests
             SampleRegulations.Standard(),
             _clock);
         var round = stage.AddRound("3rd place", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var fixture = stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
 
         var rules = new PlacementAwardRules(
         [
@@ -213,6 +219,6 @@ public sealed class PlacementAwardRulesTests
         stage.ReplacePlacementAwardRules(rules, _clock);
 
         stage.Regulation.PlacementAwardRules.Should().Be(rules);
-        stage.Slots.Should().BeEmpty();
+        stage.DirectAssignments.Should().BeEmpty();
     }
 }

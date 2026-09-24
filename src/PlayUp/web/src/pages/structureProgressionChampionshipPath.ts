@@ -12,6 +12,7 @@ export type ChampionshipPathRound = {
 
 /**
  * Mono-round form (Cup V1): that round is terminal without fixtures.
+ * Multi-round without fixtures → null (outside Cup V1 scope — do not treat as regression).
  * Multi-round interim: longest classic KO prefix among rounds with fixtures
  * (halving). Remaining rounds (e.g. 3ᵉ after Finale) excluded.
  */

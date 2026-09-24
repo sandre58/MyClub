@@ -27,7 +27,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 16, 0, 0, TimeSpan.Zero));
 
-    private static string PathKey(FixtureId fixtureId) => fixtureId.Value.ToString("N");
+    private static string PathKey(FixtureId fixtureId) => "P1"; // structural PairKey (tests seed BracketPair P1)
 
     [IntegrationFact]
     public async Task Put_placement_award_rules_returns_204_and_persistsAsync()
@@ -131,8 +131,11 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
 
         var stage = Stage.Create(competition.Id, new StageName("Final"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Final", _clock);
-        var addFixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
         stage.AddSlot("Unused");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
+        var addFixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
         competition.AddStage(stage.Id, _clock);
 
         competitions.Add(competition);

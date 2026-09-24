@@ -47,6 +47,12 @@ public static class ApplicationErrorCodes
     public const string FixtureInvalid = "Application.FixtureInvalid";
 
     /// <summary>
+    /// Gets the code when ProgressionRules exist but no Path matches the fixture's structural PairKey.
+    /// Distinct from empty rules (no-op Apply).
+    /// </summary>
+    public const string ProgressionPathNotFound = "Application.ProgressionPathNotFound";
+
+    /// <summary>
     /// Gets the code when ApplyProgressionOutcome cannot resolve a Round for the fixture
     /// (e.g. Matchday fixture — Progression requires a Round-hosted Fixture).
     /// Null <c>Round.TieFormat</c> is not an error (effective OneLeg).

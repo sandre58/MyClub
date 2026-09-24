@@ -247,7 +247,7 @@ public static class StageSchematicAssembler
             return connections;
         }
 
-        // Legacy: no BracketPairs yet — fixture wires only (no invented structural pairs).
+        // No BracketPairs: emit fixture wires only (do not invent structural pairs).
         for (var roundOrder = 0; roundOrder < stage.Rounds.Count; roundOrder++)
         {
             var round = stage.Rounds[roundOrder];
@@ -436,7 +436,6 @@ public static class StageSchematicAssembler
             var ordered = origins
                 .OrderBy(o => o.PathOrder ?? int.MaxValue)
                 .ThenBy(o => o.SourcePairKey ?? string.Empty, StringComparer.Ordinal)
-                .ThenBy(o => o.SourceFixtureId ?? Guid.Empty)
                 .ThenBy(o => o.SourceStageId ?? Guid.Empty)
                 .ToList();
             result[groupId] = ordered;
@@ -610,7 +609,6 @@ public static class StageSchematicAssembler
             pending
                 .OrderBy(o => o.PathOrder ?? int.MaxValue)
                 .ThenBy(o => o.SourcePairKey ?? string.Empty, StringComparer.Ordinal)
-                .ThenBy(o => o.SourceFixtureId ?? Guid.Empty)
                 .ThenBy(o => o.SourceStageId ?? Guid.Empty)
                 .ToArray();
 
@@ -696,7 +694,6 @@ public static class StageSchematicAssembler
             SourceStageId: sourceStage.Id.Value,
             SourceStageName: sourceStage.Name.Value,
             SourcePairKey: path.SourcePairKey,
-            SourceFixtureId: fixture?.Id.Value,
             SourceFixtureNumber: fixture is null ? null : FindFixtureNumber(sourceStage.Id, fixture.Id, competitionStages),
             Outcome: path.Outcome,
             DestinationGroupId: destinationGroupId);
@@ -716,19 +713,13 @@ public static class StageSchematicAssembler
             SourceStageId: progression.SourceStageId.Value,
             SourceStageName: FindStageName(progression.SourceStageId, competitionStages),
             SourcePairKey: progression.SourcePairKey,
-            SourceFixtureId: fixture?.Id.Value,
             SourceFixtureNumber: fixture is null || sourceStage is null ? null : FindFixtureNumber(progression.SourceStageId, fixture.Id, competitionStages),
             Outcome: progression.Outcome,
             SlotKey: slotKey);
     }
 
-    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey)
-    {
-        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
-        return byPair ?? (Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
-            ? stage.FindFixture(new FixtureId(fixtureGuid))
-            : null);
-    }
+    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey) =>
+        stage.FindFixtureByBracketPairKey(sourcePairKey);
 
     private static string? FindStageName(
         StageId stageId,

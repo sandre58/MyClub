@@ -182,6 +182,7 @@ describe('PhaseSchematic', () => {
               feedOrigin: {
                 kind: 'Progression',
                 outcome: 'Winner',
+                sourcePairKey: 'P1',
                 sourceFixtureNumber: 4,
               },
               entry: null,
@@ -196,7 +197,32 @@ describe('PhaseSchematic', () => {
         })}
       />,
     );
-    expect(screen.getByText(/Vainqueur · Match #4/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Vainqueur de P1 · Match #4/),
+    ).toBeInTheDocument();
+  });
+
+  it('cup slot shows Winner de P1 before fixtures exist', () => {
+    render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'SF1-A' },
+              feedOrigin: {
+                kind: 'Progression',
+                outcome: 'Winner',
+                sourcePairKey: 'P1',
+              },
+              entry: null,
+              assignment: null,
+            },
+          ],
+        })}
+      />,
+    );
+    expect(screen.getByText(/^Vainqueur de P1$/)).toBeInTheDocument();
+    expect(screen.queryByText(/Match #/)).toBeNull();
   });
 
   it('cup Qual/Prog feed stays primary; resolved team is not shown (U4 B1)', () => {

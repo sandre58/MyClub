@@ -126,26 +126,13 @@ function stageFormatIcon(kind?: StructureFormatKind | null) {
 
 function resolveRoundIdForPairOrFixture(
   rounds: ProgRoundOption[],
-  sourcePairKey: string,
+  _sourcePairKey: string,
 ): { roundId: string; roundName: string } | null {
   // Cup V1 mono-round: all pairs belong to the structural form / first round.
+  // SourcePairKey is BracketPair.PairKey — never FixtureId.
   if (rounds.length === 1) {
     return { roundId: rounds[0]!.id, roundName: rounds[0]!.name };
   }
-  for (const round of rounds) {
-    if (round.fixtures.some((f) => f.id === sourcePairKey)) {
-      return { roundId: round.id, roundName: round.name };
-    }
-    // Interim non-Cup Expand keys fixture Guid N — match fixture.id when same format.
-    if (
-      round.fixtures.some(
-        (f) => f.id.replace(/-/g, '').toLowerCase() === sourcePairKey.toLowerCase(),
-      )
-    ) {
-      return { roundId: round.id, roundName: round.name };
-    }
-  }
-  // Fallback: championship terminal or first playable round.
   const terminal = championshipTerminalRound(rounds);
   if (terminal) {
     return { roundId: terminal.id, roundName: terminal.name };
@@ -467,13 +454,8 @@ export function StructureProgressionDialog({
         let idx =
           orderedPairKeys.length > 0
             ? orderedPairKeys.indexOf(path.sourcePairKey)
-            : (round?.fixtures.findIndex(
-                (f) =>
-                  f.id === path.sourcePairKey ||
-                  f.id.replace(/-/g, '').toLowerCase() ===
-                    path.sourcePairKey.toLowerCase(),
-              ) ?? -1);
-        if (idx < 0 && orderedPairKeys.length === 0) {
+            : sortedPaths.indexOf(path);
+        if (idx < 0) {
           idx = sortedPaths.indexOf(path);
         }
         const identity = isGroupPlace

@@ -134,4 +134,56 @@ public sealed class ApplyProgressionOutcomeRcPre1Tests
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.FixtureInvalid);
     }
+
+    [Fact]
+    public void Apply_with_rules_but_no_matching_PairKey_fails_closed()
+    {
+        var competition = CreateCompetition.Execute("RC-PRE1-mismatch", _clock);
+        var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(destination.Id, _clock);
+
+        source.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("S1");
+        source.AddSlot("S2");
+        source.AddSlot("S3");
+        source.AddSlot("S4");
+        source.SeedEntryRoundBracketPairs();
+
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForPopulation(destination.Id))
+            ]),
+            _clock);
+
+        var home = EntryId.New();
+        var away = EntryId.New();
+        source.ApplyResolvedEntry("S3", home, _clock);
+        source.ApplyResolvedEntry("S4", away, _clock);
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            source,
+            ["P2"],
+            [],
+            _clock);
+        var fixture = source.FindFixtureByBracketPairKey("P2")!;
+        var match = materialized.CreatedMatches.Should().ContainSingle().Subject;
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+
+        var act = () => ApplyProgressionOutcome.Execute(
+            source,
+            fixture.Id,
+            [match],
+            [source, destination],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ProgressionPathNotFound);
+    }
 }

@@ -65,7 +65,7 @@ public sealed class MechanismBoundaryTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixtureId.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id))
             ]),

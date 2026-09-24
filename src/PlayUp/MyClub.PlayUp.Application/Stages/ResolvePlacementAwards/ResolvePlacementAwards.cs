@@ -162,38 +162,23 @@ public static class ResolvePlacementAwards
     }
 
     /// <summary>
-    /// Cup: requires Fixture.BracketPairKey. Non-Cup interim: fixture Guid N.
+    /// Requires <see cref="Fixture.BracketPairKey"/> (structural PairKey).
     /// </summary>
     private static bool TryResolveSourcePairKey(Stage stage, Fixture fixture, out string sourcePairKey)
     {
+        _ = stage;
         if (!string.IsNullOrWhiteSpace(fixture.BracketPairKey))
         {
             sourcePairKey = BracketPair.NormalizePairKey(fixture.BracketPairKey);
             return true;
         }
 
-        if (stage.BracketPairs.Count > 0)
-        {
-            sourcePairKey = string.Empty;
-            return false;
-        }
-
-        sourcePairKey = fixture.Id.Value.ToString("N");
-        return true;
+        sourcePairKey = string.Empty;
+        return false;
     }
 
-    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey)
-    {
-        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
-        if (byPair is not null)
-        {
-            return byPair;
-        }
-
-        return Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
-            ? stage.FindFixture(new FixtureId(fixtureGuid))
-            : null;
-    }
+    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey) =>
+        stage.FindFixtureByBracketPairKey(sourcePairKey);
 
     private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<Match> matches)
     {

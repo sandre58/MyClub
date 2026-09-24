@@ -23,7 +23,7 @@ public sealed class OverviewAssemblerTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 20, 12, 0, 0, TimeSpan.Zero));
 
     private static string PathKey(Fixture fixture) =>
-        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+        fixture.BracketPairKey ?? throw new InvalidOperationException("missing BracketPairKey");
 
     [Fact]
     public void Assemble_draft_exposes_construction_cycle_and_structure_actions()
@@ -1810,7 +1810,7 @@ public sealed class OverviewAssemblerTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),

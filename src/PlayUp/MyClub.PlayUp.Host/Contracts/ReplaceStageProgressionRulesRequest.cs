@@ -10,7 +10,7 @@ namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
 /// HTTP body for replacing progression rules on a stage.
-/// Prefer <see cref="Intents"/> (V3 authoring). Paths = atomic / legacy.
+/// Prefer <see cref="Intents"/> (V3 authoring). Paths = atomic path-list authoring.
 /// </summary>
 /// <param name="Intents">Authoring intents (Round × Outcome → Destination).</param>
 /// <param name="Paths">Replacement paths (empty or null clears when intents also empty).</param>
@@ -20,7 +20,7 @@ public sealed record ReplaceStageProgressionRulesRequest(
 
 /// <summary>
 /// One HTTP progression intent.
-/// Prefer <c>DestinationSlotKeys</c>; legacy <c>DestinationSlotKey</c> coerces to a one-element list.
+/// Prefer <c>DestinationSlotKeys</c>; singular <c>DestinationSlotKey</c> coerces to a one-element list.
 /// </summary>
 public sealed record ProgressionIntentRequest(
     Guid? IntentId,
@@ -34,21 +34,18 @@ public sealed record ProgressionIntentRequest(
     bool DestinationForm = false);
 
 /// <summary>
-/// One HTTP progression path.
-/// Prefer <see cref="SourcePairKey"/>; legacy <see cref="SourceFixtureId"/> dual-read at Host for cutover.
+/// One HTTP progression path. Structural identity = <see cref="SourcePairKey"/> (Cup = PairKey).
 /// </summary>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="SourcePairKey">Structural source key (Cup = PairKey).</param>
+/// <param name="SourcePairKey">Structural source key (Cup = PairKey). Required.</param>
 /// <param name="DestinationSlotKey">Cup Place slot key; omit or null when not slot-targeting.</param>
 /// <param name="DestinationGroupId">Groups Place group id; omit or null when not group-targeting.</param>
 /// <param name="DestinationForm">True for Form Placement.</param>
-/// <param name="SourceFixtureId">Legacy dual-read only — never Path identity.</param>
 public sealed record ProgressionPathRequest(
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
-    string? SourcePairKey = null,
+    string SourcePairKey,
     string? DestinationSlotKey = null,
     Guid? DestinationGroupId = null,
-    bool DestinationForm = false,
-    Guid? SourceFixtureId = null);
+    bool DestinationForm = false);

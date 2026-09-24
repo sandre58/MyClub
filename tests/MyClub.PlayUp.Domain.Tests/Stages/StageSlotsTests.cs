@@ -120,12 +120,15 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
         var round = stage.AddRound("QF", _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -181,12 +184,15 @@ public sealed class StageSlotsTests
     {
         var stage = CreateCup();
         var round = stage.AddRound("QF", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),

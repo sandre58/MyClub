@@ -119,7 +119,8 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
 
         var home = EntryId.New();
         var away = EntryId.New();
-        var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock);
+        quarter.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
+        var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
         var match = Match.Create(competition.Id, quarter.Id, home, away, _clock);
         quarter.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
@@ -128,7 +129,7 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
         quarter.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(addFixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(semi.Id))
             ]),

@@ -35,7 +35,7 @@ public sealed class ProgressionPathExpanderTests
         paths.Should().HaveCount(2);
         paths.Should().OnlyContain(p =>
             p.Outcome == ProgressionOutcome.Winner && p.Destination.TargetsPopulation);
-        paths.Select(p => p.SourcePairKey).Should().BeEquivalentTo(round.Fixtures.Select(f => f.Id.Value.ToString("N")));
+        paths.Select(p => p.SourcePairKey).Should().BeEquivalentTo(stage.BracketPairs.Select(bp => bp.PairKey));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class ProgressionPathExpanderTests
         paths.Should().HaveCount(2);
         paths[0].Destination.SlotKey.Should().Be("SF1-A");
         paths[1].Destination.SlotKey.Should().Be("SF1-B");
-        paths.Select(p => p.SourcePairKey).Should().Equal(stage.Rounds[0].Fixtures.Select(f => f.Id.Value.ToString("N")));
+        paths.Select(p => p.SourcePairKey).Should().Equal(stage.BracketPairs.OrderBy(bp => bp.PairKey).Select(bp => bp.PairKey));
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public sealed class ProgressionPathExpanderTests
         var act = () => source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath(fixture.BracketPairKey!,
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForSlot(peer.Id, "SF1-A"))
             ]),
@@ -146,9 +146,20 @@ public sealed class ProgressionPathExpanderTests
             SampleRegulations.Standard(),
             _clock);
         var round = stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        var pairs = new List<BracketPair>(fixtureCount);
         for (var i = 0; i < fixtureCount; i++)
         {
-            stage.AddFixture(round.Id, _clock);
+            var a = $"A{i + 1}";
+            var b = $"B{i + 1}";
+            stage.AddSlot(a);
+            stage.AddSlot(b);
+            pairs.Add(new BracketPair($"P{i + 1}", a, b));
+        }
+
+        stage.ReplaceBracketPairs(pairs);
+        foreach (var pair in pairs)
+        {
+            stage.AddFixture(round.Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
         }
 
         return stage;

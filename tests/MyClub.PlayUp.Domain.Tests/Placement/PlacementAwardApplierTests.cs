@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Domain.Tests.Placement;
 
 public sealed class PlacementAwardApplierTests
 {
-    private readonly string _sourcePairKey = FixtureId.New().Value.ToString("N");
+    private readonly string _sourcePairKey = "P1";
     private readonly EntryId _winner = EntryId.New();
     private readonly EntryId _loser = EntryId.New();
 
@@ -49,7 +49,7 @@ public sealed class PlacementAwardApplierTests
         var path = new PlacementAwardPath(_sourcePairKey, ProgressionOutcome.Winner, rank: 1);
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var act = () => PlacementAwardApplier.Apply(path, FixtureId.New().Value.ToString("N"), outcome);
+        var act = () => PlacementAwardApplier.Apply(path, "P2", outcome);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.PlacementAwardApplyFixtureMismatch);
@@ -58,7 +58,7 @@ public sealed class PlacementAwardApplierTests
     [Fact]
     public void ApplyForSource_returns_both_ranks_ordered()
     {
-        var otherKey = FixtureId.New().Value.ToString("N");
+        var otherKey = "P2";
         var rules = new PlacementAwardRules(
         [
             new PlacementAwardPath(_sourcePairKey, ProgressionOutcome.Loser, rank: 4),
@@ -79,7 +79,7 @@ public sealed class PlacementAwardApplierTests
     {
         var rules = new PlacementAwardRules(
         [
-            new PlacementAwardPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, rank: 1)
+            new PlacementAwardPath("P2", ProgressionOutcome.Winner, rank: 1)
         ]);
         var outcome = new FixtureOutcome(_winner, _loser);
 

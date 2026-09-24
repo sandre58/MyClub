@@ -27,7 +27,7 @@ public sealed class PipelineCompositionTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 11, 16, 0, 0, TimeSpan.Zero));
 
     private static string PathKey(Fixture fixture) =>
-        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+        fixture.BracketPairKey ?? throw new InvalidOperationException("missing BracketPairKey");
 
     private static string PathKey(Stage stage, FixtureId fixtureId) =>
         PathKey(stage.GetFixture(fixtureId));

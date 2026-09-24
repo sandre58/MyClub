@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Domain.Tests.Progression;
 
 public sealed class ProgressionApplierTests
 {
-    private readonly string _sourcePairKey = FixtureId.New().Value.ToString("N");
+    private readonly string _sourcePairKey = "P1";
     private readonly StageId _destinationStageId = StageId.New();
     private readonly EntryId _winner = EntryId.New();
     private readonly EntryId _loser = EntryId.New();
@@ -52,7 +52,7 @@ public sealed class ProgressionApplierTests
         var path = Path(ProgressionOutcome.Winner, "SF1-A");
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var act = () => ProgressionApplier.Apply(path, FixtureId.New().Value.ToString("N"), outcome);
+        var act = () => ProgressionApplier.Apply(path, "P2", outcome);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.ProgressionApplyFixtureMismatch);
     }

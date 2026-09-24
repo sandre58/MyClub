@@ -281,10 +281,10 @@ public sealed class StageSchematicAssemblerTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(late.Id.Value.ToString("N"),
+                new ProgressionPath("P2",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(target.Id)),
-                new ProgressionPath(early.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(target.Id))
             ]),

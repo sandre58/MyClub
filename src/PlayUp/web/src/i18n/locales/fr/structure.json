@@ -618,6 +618,7 @@
       "winner_other": "Vainqueurs",
       "loser_one": "Perdant",
       "loser_other": "Perdants",
+      "outcomeOfPair": "{{outcome}} de {{pair}}",
       "matchOutcome": "{{outcome}} du match {{match}}",
       "placementOutcome": "{{outcome}} du match {{match}} → {{rank}}e",
       "contextGroup": "Groupe {{group}}",

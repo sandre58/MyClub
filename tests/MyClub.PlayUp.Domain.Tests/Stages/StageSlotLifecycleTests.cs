@@ -22,12 +22,12 @@ public sealed class StageSlotLifecycleTests
     {
         var stage = CreatePositionalKnockout();
         var qf = stage.Rounds[0];
-        var fixture = stage.AddFixture(qf.Id, _clock, "QF1-A", "QF1-B");
+        var fixture = stage.AddFixture(qf.Id, _clock, "QF1-A", "QF1-B", "P1");
         stage.AddSlot("SF1-A");
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -43,7 +43,7 @@ public sealed class StageSlotLifecycleTests
     public void Prepare_allows_slot_without_local_feed_visibility_gap()
     {
         var stage = CreatePositionalKnockout();
-        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
+        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
 
         var act = () => stage.Prepare(_clock);
 
@@ -55,7 +55,7 @@ public sealed class StageSlotLifecycleTests
     public void Start_positional_requires_playable_fixture_in_initial_round()
     {
         var stage = CreatePositionalKnockout();
-        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
+        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
         stage.Prepare(_clock);
 
         var act = () => stage.Start(_clock);
@@ -67,7 +67,7 @@ public sealed class StageSlotLifecycleTests
     public void Start_positional_succeeds_when_initial_round_fixture_resolved()
     {
         var stage = CreatePositionalKnockout();
-        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
+        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
         var a = EntryId.New();
         var b = EntryId.New();
         stage.ReplaceCompositionEntries([a, b], _clock);
@@ -84,11 +84,16 @@ public sealed class StageSlotLifecycleTests
     public void Start_rejects_when_only_later_round_is_resolved()
     {
         var stage = CreatePositionalKnockout();
-        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B");
+        stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
         var sf = stage.AddRound("SF", _clock);
         stage.AddSlot("SF1-A");
         stage.AddSlot("SF1-B");
-        stage.AddFixture(sf.Id, _clock, "SF1-A", "SF1-B");
+        stage.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "QF1-A", "QF1-B"),
+            new BracketPair("P2", "SF1-A", "SF1-B")
+        ]);
+        stage.AddFixture(sf.Id, _clock, "SF1-A", "SF1-B", "P2");
         var a = EntryId.New();
         var b = EntryId.New();
         stage.ReplaceCompositionEntries([a, b], _clock);
@@ -127,6 +132,7 @@ public sealed class StageSlotLifecycleTests
         stage.AddRound("QF", _clock);
         stage.AddSlot("QF1-A");
         stage.AddSlot("QF1-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
         return stage;
     }
 }

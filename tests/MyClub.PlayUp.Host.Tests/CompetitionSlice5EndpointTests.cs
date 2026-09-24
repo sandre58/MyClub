@@ -194,10 +194,13 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
 
-        var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(3, 1)), _clock);
@@ -205,7 +208,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(addFixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -235,10 +238,13 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
         competition.AddStage(stage.Id, _clock);
 
-        var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var addFixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
@@ -246,7 +252,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(addFixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),

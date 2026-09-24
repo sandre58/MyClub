@@ -24,7 +24,7 @@ public sealed class ThinAuthoringTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 26, 14, 0, 0, TimeSpan.Zero));
 
     private static string PathKey(Fixture fixture) =>
-        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+        fixture.BracketPairKey ?? throw new InvalidOperationException("missing BracketPairKey");
 
     [Fact]
     public void Composition_authors_qf_to_sf_chain()
@@ -39,7 +39,8 @@ public sealed class ThinAuthoringTests
             _clock);
         AddStageSlot.Execute(qf, "QF1-A");
         AddStageSlot.Execute(qf, "QF1-B");
-        var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B");
+        qf.SeedEntryRoundBracketPairs();
+        var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B", "P1");
 
         var sf = AddEmptyStage(competition, "Semi-Finals");
         var sfRound = AddStageRound.Execute(
@@ -54,12 +55,12 @@ public sealed class ThinAuthoringTests
             qf,
             [
                 new ProgressionPathSpec(
-                    qfFixture.Id.Value.ToString("N"),
+                    "P1",
                     ProgressionOutcome.Winner,
                     sf.Id,
                     DestinationSlotKey: null),
                 new ProgressionPathSpec(
-                    qfFixture.Id.Value.ToString("N"),
+                    "P1",
                     ProgressionOutcome.Loser,
                     sf.Id,
                     DestinationSlotKey: null)
@@ -154,12 +155,15 @@ public sealed class ThinAuthoringTests
     }
 
     [Fact]
-    public void ReplacePlacementAwardRules_authors_final_ranks_without_slots()
+    public void ReplacePlacementAwardRules_authors_final_ranks_on_PairKey()
     {
         var competition = CreateCompetition.Execute("Cup-Awards", _clock);
         var stage = AddEmptyStage(competition, "Final");
         var round = AddStageRound.Execute(stage, "Final", null, _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        AddStageSlot.Execute(stage, "F-A");
+        AddStageSlot.Execute(stage, "F-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
+        var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
 
         ReplaceStagePlacementAwardRules.Execute(
             stage,
@@ -171,11 +175,11 @@ public sealed class ThinAuthoringTests
 
         stage.Regulation.PlacementAwardRules.Should().NotBeNull();
         stage.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
+        stage.Regulation.PlacementAwardRules.Paths.Should().OnlyContain(p => p.SourcePairKey == "P1");
         stage.Regulation.PlacementAwardRules.Paths.Should().Contain(p =>
             p.Outcome == ProgressionOutcome.Winner && p.Rank == 1);
         stage.Regulation.PlacementAwardRules.Paths.Should().Contain(p =>
             p.Outcome == ProgressionOutcome.Loser && p.Rank == 2);
-        stage.Slots.Should().BeEmpty();
     }
 
     [Fact]
@@ -184,7 +188,10 @@ public sealed class ThinAuthoringTests
         var competition = CreateCompetition.Execute("Cup-Awards-Clear", _clock);
         var stage = AddEmptyStage(competition, "Final");
         var round = AddStageRound.Execute(stage, "Final", null, _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        AddStageSlot.Execute(stage, "F-A");
+        AddStageSlot.Execute(stage, "F-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
+        var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
         ReplaceStagePlacementAwardRules.Execute(
             stage,
             [
@@ -203,7 +210,12 @@ public sealed class ThinAuthoringTests
         var competition = CreateCompetition.Execute("Cup-Awards-Lock", _clock);
         var stage = AddEmptyStage(competition, "Final");
         var round = AddStageRound.Execute(stage, "R1", null, _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        AddStageSlot.Execute(stage, "F-A");
+        AddStageSlot.Execute(stage, "F-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
+        var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
+        stage.ApplyResolvedEntry("F-A", EntryId.New(), _clock);
+        stage.ApplyResolvedEntry("F-B", EntryId.New(), _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
 
@@ -232,7 +244,7 @@ public sealed class ThinAuthoringTests
             stage,
             [
                 new ProgressionPathSpec(
-                    fixture.Id.Value.ToString("N"),
+                    "P1",
                     ProgressionOutcome.Winner,
                     stage.Id,
                     "A")

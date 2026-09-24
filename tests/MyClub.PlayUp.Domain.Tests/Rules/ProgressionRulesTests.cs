@@ -26,10 +26,10 @@ public sealed class ProgressionRulesTests
         var stageId = StageId.New();
         var paths = new[]
         {
-            new ProgressionPath(fixtureId.Value.ToString("N"),
+            new ProgressionPath("P1",
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stageId, "SF1-A")),
-            new ProgressionPath(fixtureId.Value.ToString("N"),
+            new ProgressionPath("P1",
                 ProgressionOutcome.Loser,
                 new ProgressionDestination(stageId, "Consolante-1"))
         };
@@ -58,8 +58,8 @@ public sealed class ProgressionRulesTests
         var stageId = StageId.New();
         var paths = new[]
         {
-            new ProgressionPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
-            new ProgressionPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A"))
+            new ProgressionPath("P1", ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
+            new ProgressionPath("P1", ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A"))
         };
 
         // Act
@@ -77,8 +77,8 @@ public sealed class ProgressionRulesTests
         var stageId = StageId.New();
         var paths = new[]
         {
-            new ProgressionPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
-            new ProgressionPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-B"))
+            new ProgressionPath("P1", ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
+            new ProgressionPath("P1", ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-B"))
         };
 
         // Act
@@ -98,13 +98,16 @@ public sealed class ProgressionRulesTests
             SampleRegulations.Standard(),
             _clock);
         var round = stage.AddRound("QF", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         stage.AssignEntryToSlot("SF1-A", Admit(stage, EntryId.New()));
 
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(fixture.Id.Value.ToString("N"),
+            new ProgressionPath("P1",
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stage.Id, "SF1-A"))
         ]);
@@ -133,7 +136,7 @@ public sealed class ProgressionRulesTests
         // Arrange
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(FixtureId.New().Value.ToString("N"),
+            new ProgressionPath("P1",
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(StageId.New(), "Final-A"))
         ]);
@@ -153,7 +156,7 @@ public sealed class ProgressionRulesTests
         // Arrange
         var progression = new ProgressionRules(
         [
-            new ProgressionPath(FixtureId.New().Value.ToString("N"),
+            new ProgressionPath("P1",
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(StageId.New(), "SF1-A"))
         ]);
@@ -178,15 +181,18 @@ public sealed class ProgressionRulesTests
             SampleRegulations.Standard(),
             _clock);
         var round = stage.AddRound("QF", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
         stage.ClearDomainEvents();
 
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(fixture.Id.Value.ToString("N"),
+            new ProgressionPath("P1",
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stage.Id, "SF1-A"))
         ]);
@@ -209,13 +215,16 @@ public sealed class ProgressionRulesTests
             SampleRegulations.Standard(),
             _clock);
         var round = stage.AddRound("QF", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         var peerId = StageId.New();
 
         var act = () => stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(peerId, "SF1-A"))
             ]),
@@ -239,7 +248,7 @@ public sealed class ProgressionRulesTests
 
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(FixtureId.New().Value.ToString("N"),
+            new ProgressionPath("P1",
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stage.Id, "SF1-A"))
         ]);

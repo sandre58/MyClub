@@ -27,7 +27,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 14, 0, 0, TimeSpan.Zero));
 
     private static string PathKey(Fixture fixture) =>
-        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+        fixture.BracketPairKey ?? throw new InvalidOperationException("missing BracketPairKey");
 
     /// <summary>
     /// F1 — Amateur 2×6 shape: terminal placement fixtures award ranks 1–12.

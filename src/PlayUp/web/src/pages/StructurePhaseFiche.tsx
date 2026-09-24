@@ -378,6 +378,37 @@ function qualificationRuleParts(
   };
 }
 
+/** Structural PairKey primary; Match # is an optional post-materialize overlay. */
+function progressionSourceContext(
+  sourcePairKey: string | null | undefined,
+  sourceLabel: string | null | undefined,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): string {
+  const pair = sourcePairKey?.trim();
+  const fromLabel = sourceLabel?.match(/#(\d+)/);
+  if (pair && fromLabel?.[1]) {
+    return `${pair} · ${t('fiche.rule.matchNumber', { n: fromLabel[1] })}`;
+  }
+  if (pair) {
+    return pair;
+  }
+  return matchNumberContext(sourceLabel, sourcePairKey, t);
+}
+
+function progressionSortKey(
+  sourcePairKey: string | null | undefined,
+  sourceLabel: string | null | undefined,
+): string {
+  const pair = sourcePairKey?.trim();
+  if (pair) {
+    const fromLabel = sourceLabel?.match(/#(\d+)/);
+    return fromLabel?.[1]
+      ? `${pair}-${fromLabel[1].padStart(8, '0')}`
+      : pair;
+  }
+  return matchSortKey(sourceLabel, sourcePairKey);
+}
+
 /** M2: always Match #n — phase name already shown by flux grouping. */
 function matchNumberContext(
   sourceLabel: string | null | undefined,
@@ -425,10 +456,10 @@ function progressionRuleParts(
       ? t('fiche.rule.winner', { count: 1 })
       : t('fiche.rule.loser', { count: 1 }),
     badgeTone: isWinner ? 'win' : 'loss',
-    context: matchNumberContext(path.sourceLabel, path.sourcePairKey, t),
+    context: progressionSourceContext(path.sourcePairKey, path.sourceLabel, t),
     family: 'result',
     sortPrimary: isWinner ? 0 : 1,
-    sortSecondary: matchSortKey(path.sourceLabel, path.sourcePairKey),
+    sortSecondary: progressionSortKey(path.sourcePairKey, path.sourceLabel),
   };
 }
 
@@ -457,9 +488,9 @@ function placementRuleParts(
       ? t('fiche.rule.winner', { count: 1 })
       : t('fiche.rule.loser', { count: 1 }),
     badgeTone: isWinner ? 'win' : 'loss',
-    context: matchNumberContext(
+    context: progressionSourceContext(
+      award.sourcePairKey ?? undefined,
       award.sourceLabel,
-      award.sourcePairKey ?? award.sourceFixtureId,
       t,
     ),
   };
@@ -2206,7 +2237,7 @@ export function StructurePhaseFiche({
                           const parts = placementRuleParts(award, t);
                           return (
                             <li
-                              key={`${award.rank}-${award.outcome}-${award.sourcePairKey ?? award.sourceFixtureId ?? ''}`}
+                              key={`${award.rank}-${award.outcome}-${award.sourcePairKey}`}
                               className="structure-flux-group__rule"
                             >
                               <PlacementAwardRow

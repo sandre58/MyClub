@@ -1103,13 +1103,13 @@ describe('StructurePage Structure hub', () => {
               {
                 rank: 1,
                 outcome: 'Winner',
-                sourceFixtureId: 'fix-final',
+                sourcePairKey: 'P1',
                 sourceLabel: 'Finale · #1',
               },
               {
                 rank: 2,
                 outcome: 'Loser',
-                sourceFixtureId: 'fix-final',
+                sourcePairKey: 'P1',
                 sourceLabel: 'Finale · #1',
               },
             ],

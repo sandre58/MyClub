@@ -201,7 +201,7 @@ public sealed class NeedsAttentionAssemblerTests
         cup.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForGroup(groups.Id, groupA.Id))
             ]),
@@ -246,7 +246,7 @@ public sealed class NeedsAttentionAssemblerTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),

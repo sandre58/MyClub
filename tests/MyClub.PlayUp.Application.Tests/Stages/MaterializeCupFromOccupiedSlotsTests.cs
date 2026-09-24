@@ -315,9 +315,10 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         var qfRound = qf.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         qf.AddSlot("QF1-A");
         qf.AddSlot("QF1-B");
+        qf.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
         qf.ApplyResolvedEntry("QF1-A", home, _clock);
         qf.ApplyResolvedEntry("QF1-B", away, _clock);
-        var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B");
+        var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B", "P1");
         var qfMatch = Match.Create(competition.Id, qf.Id, home, away, _clock);
         qf.AttachMatch(qfFixture.Id, qfMatch.Id, legIndex: 1, _clock);
         qfMatch.Start(_clock);
@@ -325,10 +326,10 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         qf.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(qfFixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(sf.Id)),
-                new ProgressionPath(qfFixture.Id.Value.ToString("N"),
+                new ProgressionPath("P1",
                     ProgressionOutcome.Loser,
                     ProgressionDestination.ForPopulation(sf.Id))
             ]),

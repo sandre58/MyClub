@@ -20,7 +20,7 @@ export type PlacementRoundSection = {
 
 export type PlacementAwardCardDraft = {
   id: string;
-  /** Cup = PairKey; non-Cup interim = fixture Guid. */
+  /** Cup = BracketPair.PairKey. */
   sourcePairKey: string;
   /** Empty string = no Winner award. */
   winnerRank: string;
@@ -71,38 +71,28 @@ export function parseOptionalRank(raw: string): number | null | 'invalid' {
 }
 
 /**
- * Authoring catalogue: BracketPairs when present (pre-materialize OK);
- * otherwise round fixtures (non-Cup interim).
+ * Authoring catalogue: BracketPairs (Cup V1 PairKey identity).
+ * Empty when the stage has no structural pairs yet.
  */
 export function listPlacementSourceOptions(
   bracketPairs: readonly StageBracketPair[],
-  rounds: StageRound[],
-  formatMatch: (n: number) => string,
+  _rounds: StageRound[],
+  _formatMatch: (n: number) => string,
 ): PlacementSourceOption[] {
-  if (bracketPairs.length > 0) {
-    return [...bracketPairs]
-      .sort((a, b) => a.pairKey.localeCompare(b.pairKey))
-      .map((p) => ({
-        id: p.pairKey,
-        label: `${p.pairKey} · ${p.slotAKey} vs ${p.slotBKey}`,
-      }));
+  if (bracketPairs.length === 0) {
+    return [];
   }
 
-  const options: PlacementSourceOption[] = [];
-  for (const round of rounds) {
-    round.fixtures.forEach((fixture, index) => {
-      options.push({
-        id: fixture.id.replace(/-/g, '').toLowerCase(),
-        label: formatMatch(index + 1),
-      });
-    });
-  }
-  return options;
+  return [...bracketPairs]
+    .sort((a, b) => a.pairKey.localeCompare(b.pairKey))
+    .map((p) => ({
+      id: p.pairKey,
+      label: `${p.pairKey} · ${p.slotAKey} vs ${p.slotBKey}`,
+    }));
 }
 
 /**
- * Group persisted paths by source key into confrontation cards.
- * Prefer sourcePairKey; legacy sourceFixtureId (Guid) dual-read for cutover.
+ * Group persisted paths by source PairKey into confrontation cards.
  */
 export function cardsFromApiPaths(
   paths: StructurePlacementAward[],
@@ -111,10 +101,7 @@ export function cardsFromApiPaths(
   const order: string[] = [];
 
   for (const path of paths) {
-    const pairKey =
-      path.sourcePairKey?.trim() ||
-      path.sourceFixtureId?.replace(/-/g, '').toLowerCase() ||
-      '';
+    const pairKey = path.sourcePairKey?.trim() || '';
     if (!pairKey) continue;
 
     let card = bySource.get(pairKey);
@@ -326,7 +313,7 @@ export function summarizeCardWhere(
 
 /**
  * Group attributed cards under round headings (overview order).
- * PairKeys on Cup V1 mono-round → sole round; fixture Guid N → owning round;
+ * PairKeys on Cup V1 mono-round → sole round;
  * unknown sources → orphan section.
  */
 export function groupCardsByRound(
@@ -350,23 +337,20 @@ export function groupCardsByRound(
           sortIndex: index,
         });
       });
-  }
-
-  for (const round of rounds) {
-    round.fixtures.forEach((fixture, index) => {
-      const guidN = fixture.id.replace(/-/g, '').toLowerCase();
-      sourceToRound.set(guidN, {
-        roundId: round.id,
-        roundName: round.name,
-        sortIndex: index,
-      });
-      sourceToRound.set(fixture.id, {
-        roundId: round.id,
-        roundName: round.name,
-        sortIndex: index,
-      });
-      // Bound fixture may expose BracketPairKey via label only — PairKey already mapped above.
-    });
+  } else if (bracketPairs.length > 0) {
+    // Multi-round Cup V1 not modeled: map all pairs to the first round for grouping only.
+    const round = rounds[0];
+    if (round) {
+      [...bracketPairs]
+        .sort((a, b) => a.pairKey.localeCompare(b.pairKey))
+        .forEach((pair, index) => {
+          sourceToRound.set(pair.pairKey, {
+            roundId: round.id,
+            roundName: round.name,
+            sortIndex: index,
+          });
+        });
+    }
   }
 
   const byRound = new Map<string, PlacementAwardCardDraft[]>();

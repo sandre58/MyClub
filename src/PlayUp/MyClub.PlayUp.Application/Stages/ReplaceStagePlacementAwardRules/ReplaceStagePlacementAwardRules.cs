@@ -44,6 +44,13 @@ public static class ReplaceStagePlacementAwardRules
                     ApplicationErrorCodes.InvalidStructureIntent);
             }
 
+            if (string.IsNullOrWhiteSpace(spec.SourcePairKey))
+            {
+                throw new ApplicationFailureException(
+                    "Placement award path requires SourcePairKey.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
             domainPaths.Add(new PlacementAwardPath(spec.SourcePairKey, spec.Outcome, spec.Rank));
         }
 

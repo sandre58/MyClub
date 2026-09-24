@@ -3027,10 +3027,13 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Cup: BracketPairKey when bound; otherwise interim Guid N for non-Cup Expand.
+    /// Cup V1: structural Path identity is Fixture.BracketPairKey (PairKey).
     /// </summary>
     private static string ToSourcePairKey(Fixture fixture) =>
-        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+        !string.IsNullOrWhiteSpace(fixture.BracketPairKey)
+            ? fixture.BracketPairKey
+            : throw new InvalidOperationException(
+                $"Fixture '{fixture.Id}' has no BracketPairKey; cannot author Progression Path.");
 
     private static Fixture[] OrderedFixtures(Stage stage, int expectedCount)
     {

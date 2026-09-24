@@ -12,7 +12,7 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
 
 /// <summary>
 /// Persists <see cref="ProgressionRules"/> as intents (authoring SoT) + path projection for Apply.
-/// Legacy JSON with only <c>Paths</c> still deserializes.
+/// Paths-only JSON (no Intents) still deserializes as path-list authoring.
 /// </summary>
 internal sealed class ProgressionRulesJsonConverter : JsonConverter<ProgressionRules>
 {

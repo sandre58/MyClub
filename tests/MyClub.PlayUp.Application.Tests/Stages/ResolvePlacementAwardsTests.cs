@@ -20,7 +20,7 @@ public sealed class ResolvePlacementAwardsTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 12, 0, 0, TimeSpan.Zero));
 
     private static string PathKey(Fixture fixture) =>
-        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+        fixture.BracketPairKey ?? throw new InvalidOperationException("missing BracketPairKey");
 
     [Fact]
     public void Execute_final_fixture_awards_ranks_1_and_2()
@@ -46,8 +46,17 @@ public sealed class ResolvePlacementAwardsTests
         var competitionId = CompetitionId.New();
         var stage = Stage.Create(competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Finals", _clock);
-        var final = stage.AddFixture(round.Id, _clock);
-        var bronze = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.AddSlot("B-A");
+        stage.AddSlot("B-B");
+        stage.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "F-A", "F-B"),
+            new BracketPair("P2", "B-A", "B-B")
+        ]);
+        var final = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
+        var bronze = stage.AddFixture(round.Id, _clock, "B-A", "B-B", "P2");
 
         var home = EntryId.New();
         var away = EntryId.New();
@@ -112,7 +121,10 @@ public sealed class ResolvePlacementAwardsTests
         var competitionId = CompetitionId.New();
         var stage = Stage.Create(competitionId, new StageName("Final"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Final", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
+        var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
         var home = EntryId.New();
         var away = EntryId.New();
         var match = Match.Create(competitionId, stage.Id, home, away, _clock);
