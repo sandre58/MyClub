@@ -492,6 +492,7 @@
     "activateDraw": "Activer le tirage",
     "activateDrawBody": "Permet de remplir la forme de cette phase par tirage au sort.",
     "drawParams": "Paramètres du tirage",
+    "drawParamsAction": "Paramètres",
     "deactivateDraw": "Désactiver le tirage",
     "drawPoolHint": "Pool {{filled}}/{{capacity}}",
     "drawCtaTeamsCaption": "équipes résolues",
@@ -509,12 +510,27 @@
       "kindUnsupported": "Ce format de phase ne propose pas encore de création de tirage depuis Structure.",
       "create": "Nouveau tirage",
       "createBlocked": {
-        "unsupported": "Ce format ne propose pas encore de tirage depuis Structure.",
-        "active": "Annulez d’abord l’exécution active pour en lancer une nouvelle.",
-        "emptyPool": "Ajoutez des équipes à cette phase avant de lancer le tirage.",
-        "emptyPoolUpstream": "Les confrontations qui déterminent les équipes de cette phase ne sont pas encore terminées. Le tirage ne peut pas encore être effectué.",
-        "missingPots": "Configurez les pots du tirage (Paramètres) avant de générer.",
-        "groupShape": "Le nombre d’équipes doit égaler pots × groupes."
+        "short": {
+          "unsupported": "Tirage non disponible pour ce format.",
+          "active": "Annulez d’abord l’exécution active.",
+          "emptyPool": "Constituez d’abord la population de la phase.",
+          "emptyPoolUpstream": "Attendez que l’amont fournisse la population.",
+          "belowMinimumTeams": "Minimum réglementaire non atteint.",
+          "countMismatch": "Population ≠ places de la phase.",
+          "directAssignment": "Affectation(s) directe(s) en place.",
+          "occupiedSlots": "Des placements occupent encore des places.",
+          "missingPots": "Pots de tirage non configurés.",
+          "groupShape": "Population ≠ pots × groupes."
+        },
+        "detail": {
+          "emptyPool": "La population de cette phase doit d’abord être constituée avant de lancer un tirage.",
+          "belowMinimumTeams": "Le nombre d’équipes est inférieur au minimum réglementaire de la compétition.",
+          "countMismatch": "Le tirage nécessite {{places}} équipes pour {{places}} places. La composition actuelle en contient {{count}}.",
+          "directAssignment": "Une ou plusieurs places ont une affectation directe. Libérez ces affectations avant de lancer un nouveau tirage.",
+          "occupiedSlots": "Des placements existent encore. Libérez-les avant de lancer un nouveau tirage.",
+          "missingPots": "Configurez les pots du tirage (Paramètres) avant de générer.",
+          "groupShape": "Le nombre d’équipes doit égaler pots × groupes pour que la phase soit tirable."
+        }
       },
       "creating": "Tirage en cours…",
       "historyAria": "Historique des exécutions",

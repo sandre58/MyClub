@@ -1,12 +1,13 @@
 import type {
   DrawResolutionState,
   DrawStatus,
+  StageBracketPair,
   StageDraw,
   StageDrawGroupPlacement,
   StageDrawSlotPlacement,
-  StageFixture,
   StageRound,
   StageSlot,
+  StructureFormatKind,
 } from '../types';
 
 export type GroupPlacementEntry = {
@@ -84,30 +85,10 @@ function toSlotConfrontationSide(
   };
 }
 
-/** `R16-1-A` → stem `R16-1`, side A — Cup slot pairing convention. */
-function slotPairParts(
-  slotKey: string,
-): { stem: string; side: 'A' | 'B' } | null {
-  const match = /^(.+)-([ABab])$/.exec(slotKey.trim());
-  if (!match) {
-    return null;
-  }
-  return {
-    stem: match[1]!,
-    side: match[2]!.toUpperCase() as 'A' | 'B',
-  };
-}
-
 /**
- * Fixtures in StageOverview order: rounds then fixtures within each round.
- */
-export function listStageFixturesInOrder(rounds: StageRound[]): StageFixture[] {
-  return rounds.flatMap((round) => round.fixtures);
-}
-
-/**
- * Slot draw product for Exécutions: dense A vs B when pairable (fixtures or *-A/*-B).
- * Leftovers (Cup `S{n}`, incomplete pairs, …) stay as flat Place → Entry — never drop Resolved placements.
+ * Slot draw product for Exécutions: dense A vs B from Domain BracketPairs.
+ * Leftovers (placement without a covering pair) stay as flat Place → Entry —
+ * never drop Resolved placements. No *-A/*-B stem heuristic; no Fixture pairing.
  */
 export type SlotDrawResultProjection = {
   confrontations: SlotConfrontationRow[];
@@ -116,7 +97,7 @@ export type SlotDrawResultProjection = {
 
 export function projectSlotDrawResult(
   placements: StageDrawSlotPlacement[],
-  rounds: StageRound[],
+  bracketPairs: ReadonlyArray<StageBracketPair>,
   unknownEntry: string,
 ): SlotDrawResultProjection {
   const byKey = new Map(
@@ -125,9 +106,9 @@ export function projectSlotDrawResult(
   const used = new Set<string>();
   const confrontations: SlotConfrontationRow[] = [];
 
-  for (const fixture of listStageFixturesInOrder(rounds)) {
-    const aKey = fixture.slotAKey?.trim() || '';
-    const bKey = fixture.slotBKey?.trim() || '';
+  for (const pair of bracketPairs) {
+    const aKey = pair.slotAKey.trim();
+    const bKey = pair.slotBKey.trim();
     if (!aKey || !bKey) {
       continue;
     }
@@ -139,57 +120,12 @@ export function projectSlotDrawResult(
     used.add(aKey);
     used.add(bKey);
     confrontations.push({
-      key: `${aKey}|${bKey}`,
+      key: pair.pairKey.trim() || `${aKey}|${bKey}`,
       sideA: toSlotConfrontationSide(placementA, unknownEntry),
       sideB: toSlotConfrontationSide(placementB, unknownEntry),
     });
   }
 
-  const byStem = new Map<
-    string,
-    { a?: StageDrawSlotPlacement; b?: StageDrawSlotPlacement }
-  >();
-  for (const placement of placements) {
-    const key = placement.slotKey.trim();
-    if (used.has(key)) {
-      continue;
-    }
-    const parts = slotPairParts(key);
-    if (!parts) {
-      continue;
-    }
-    let pair = byStem.get(parts.stem);
-    if (!pair) {
-      pair = {};
-      byStem.set(parts.stem, pair);
-    }
-    if (parts.side === 'A') {
-      pair.a = placement;
-    } else {
-      pair.b = placement;
-    }
-  }
-
-  const stemKeys = [...byStem.keys()].sort((a, b) =>
-    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }),
-  );
-  for (const stem of stemKeys) {
-    const pair = byStem.get(stem)!;
-    if (!pair.a || !pair.b) {
-      continue;
-    }
-    const aKey = pair.a.slotKey.trim();
-    const bKey = pair.b.slotKey.trim();
-    used.add(aKey);
-    used.add(bKey);
-    confrontations.push({
-      key: `${aKey}|${bKey}`,
-      sideA: toSlotConfrontationSide(pair.a, unknownEntry),
-      sideB: toSlotConfrontationSide(pair.b, unknownEntry),
-    });
-  }
-
-  // Incomplete *-A/*-B stems (only one side) fall through with other leftovers.
   const unpaired = placements
     .filter((placement) => !used.has(placement.slotKey.trim()))
     .map((placement) => toSlotConfrontationSide(placement, unknownEntry))
@@ -206,15 +142,16 @@ export function projectSlotDrawResult(
 /** Confrontations only — prefer {@link projectSlotDrawResult} when unpaired matter. */
 export function slotConfrontationRows(
   placements: StageDrawSlotPlacement[],
-  rounds: StageRound[],
+  bracketPairs: ReadonlyArray<StageBracketPair>,
   unknownEntry: string,
 ): SlotConfrontationRow[] {
-  return projectSlotDrawResult(placements, rounds, unknownEntry).confrontations;
+  return projectSlotDrawResult(placements, bracketPairs, unknownEntry)
+    .confrontations;
 }
 
 /**
- * Why « Nouveau tirage » (G2) cannot run — mirrors Domain / DrawInputsFactory fail-closed
- * checks the SPA can see without calling Generate (avoids 400 + orphan Draft).
+ * Why « Nouveau tirage » (G2) cannot run — UI gate to start Rerun only.
+ * Domain Generate/Apply remain the final invariants.
  */
 export type DrawCreateBlockReason =
   | 'unsupported'
@@ -222,16 +159,22 @@ export type DrawCreateBlockReason =
   | 'emptyPool'
   | 'emptyPoolUpstream'
   | 'missingPots'
-  | 'groupShape';
+  | 'groupShape'
+  | 'belowMinimumTeams'
+  | 'countMismatch'
+  | 'directAssignment'
+  | 'occupiedSlots';
 
 export type DrawCreateGate =
   | { ok: true }
   | { ok: false; reason: DrawCreateBlockReason };
 
 /**
- * Client gate for Create+Generate. Encoding F: pool = CompositionEntries only.
+ * Client gate for Create+Generate (Rerun workflow start).
+ * Encoding F: pool = CompositionEntries only.
  * Group: pots ≥ 2 and entries = pots × groupCount.
- * Slot: pool non-empty; destinations = stage slots (Host).
+ * Slot (Cup): pool non-empty, composition == Places, no DirectAssignment,
+ * all Places free (entryId null). Priority is fixed — do not reorder without product decision.
  */
 export function resolveDrawCreateGate(input: {
   kind: 'Group' | 'Slot' | null;
@@ -241,6 +184,17 @@ export function resolveDrawCreateGate(input: {
   isRootComposition?: boolean;
   numberOfPots: number | null | undefined;
   groupCount: number | null | undefined;
+  /** Cup Places N (compositionCapacity / entry places). Required for Slot equality. */
+  slotCount?: number | null;
+  /** Competition EntryRules.MinimumTeams — blocks when composition is below. */
+  minimumTeams?: number | null;
+  /** True when any Place has a DirectAssignment configured. */
+  hasDirectAssignment?: boolean;
+  /**
+   * True when any Place has entryId set (occupant).
+   * Fed-but-vacant Qual/Prog (entryId null) must NOT set this.
+   */
+  hasOccupiedSlots?: boolean;
 }): DrawCreateGate {
   if (input.kind == null) {
     return { ok: false, reason: 'unsupported' };
@@ -258,6 +212,11 @@ export function resolveDrawCreateGate(input: {
     };
   }
 
+  const minimumTeams = input.minimumTeams ?? null;
+  if (minimumTeams != null && minimumTeams > 0 && pool < minimumTeams) {
+    return { ok: false, reason: 'belowMinimumTeams' };
+  }
+
   if (input.kind === 'Group') {
     const pots = input.numberOfPots ?? null;
     const groups = input.groupCount ?? 0;
@@ -270,8 +229,89 @@ export function resolveDrawCreateGate(input: {
     return { ok: true };
   }
 
-  // Slot (Cup): Encoding F — pool non-empty; destinations = stage slots (Host).
+  // Slot (Cup) — Rerun only on a free Places grid with exact population coverage.
+  const places = input.slotCount ?? null;
+  if (places == null || places <= 0 || pool !== places) {
+    return { ok: false, reason: 'countMismatch' };
+  }
+  if (input.hasDirectAssignment) {
+    return { ok: false, reason: 'directAssignment' };
+  }
+  if (input.hasOccupiedSlots) {
+    return { ok: false, reason: 'occupiedSlots' };
+  }
   return { ok: true };
+}
+
+/** Occupant = entryId present; vacant Qual/Prog feed does not count. */
+export function slotsHaveOccupants(
+  slots: ReadonlyArray<{ entryId: string | null | undefined }>,
+): boolean {
+  return slots.some((slot) => slot.entryId != null);
+}
+
+/**
+ * How to surface a primary DrawCreateBlockReason.
+ * Quiet = tooltip only; inline = visible Alert (info|warning). Never danger —
+ * these are journey / config / authoring states, not system errors.
+ */
+export type DrawCreateBlockPresentation =
+  | { kind: 'quiet' }
+  | { kind: 'inline'; tone: 'info' | 'warning'; action: boolean };
+
+export function resolveDrawCreateBlockPresentation(
+  reason: DrawCreateBlockReason,
+): DrawCreateBlockPresentation {
+  switch (reason) {
+    case 'active':
+    case 'emptyPoolUpstream':
+    case 'unsupported':
+      return { kind: 'quiet' };
+    case 'emptyPool':
+      return { kind: 'inline', tone: 'info', action: false };
+    case 'countMismatch':
+    case 'belowMinimumTeams':
+    case 'groupShape':
+    case 'missingPots':
+      return { kind: 'inline', tone: 'warning', action: false };
+    case 'occupiedSlots':
+    case 'directAssignment':
+      return { kind: 'inline', tone: 'warning', action: true };
+  }
+}
+
+/** Shared Structure + Tirage gate from stage / overview payloads. */
+export function resolveStageDrawCreateGate(input: {
+  formatKind: StructureFormatKind | null | undefined;
+  draws: ReadonlyArray<{ status: string }>;
+  slots: ReadonlyArray<{ entryId: string | null | undefined }>;
+  compositionEntryCount: number;
+  isRootComposition?: boolean;
+  numberOfPots: number | null | undefined;
+  groupCount: number | null | undefined;
+  /** Places N (compositionCapacity / entry places) — not full bracket slotCount. */
+  placesN: number | null | undefined;
+  minimumTeams?: number | null;
+  directAssignmentCount?: number | null;
+}): DrawCreateGate {
+  const kind =
+    input.formatKind === 'Groups'
+      ? 'Group'
+      : input.formatKind === 'Cup'
+        ? 'Slot'
+        : null;
+  return resolveDrawCreateGate({
+    kind,
+    hasActiveDraw: input.draws.some((d) => d.status !== 'Cancelled'),
+    compositionEntryCount: input.compositionEntryCount,
+    isRootComposition: input.isRootComposition,
+    numberOfPots: input.numberOfPots,
+    groupCount: input.groupCount,
+    slotCount: input.placesN,
+    minimumTeams: input.minimumTeams,
+    hasDirectAssignment: (input.directAssignmentCount ?? 0) > 0,
+    hasOccupiedSlots: slotsHaveOccupants(input.slots),
+  });
 }
 
 /**
@@ -441,21 +481,35 @@ export function resolveDrawDetailHeaderChips(
  */
 export type DrawDetailGuidance =
   | { kind: 'phrase'; messageKey: string }
-  | { kind: 'alert'; tone: 'warning' | 'danger'; messageKey: string }
+  | {
+      kind: 'alert';
+      tone: 'warning' | 'danger';
+      messageKey: string;
+      /** Optional secondary line under the alert title (e.g. generation interrupted). */
+      bodyMessageKey?: string;
+    }
   | null;
 
 export function resolveDrawDetailGuidance(
   ui: DrawUiProjection,
 ): DrawDetailGuidance {
-  if (
-    ui.messageKey === 'cancelled' ||
-    ui.messageKey === 'draftNotResolved' ||
-    ui.messageKey === 'fallback'
-  ) {
+  if (ui.messageKey === 'fallback') {
     return null;
   }
+  if (ui.messageKey === 'cancelled') {
+    // Badge carries Cancelled; detail body is EmptyState when there is no result.
+    return null;
+  }
+  if (ui.messageKey === 'generationInterrupted') {
+    return {
+      kind: 'alert',
+      tone: 'warning',
+      messageKey: 'generationInterrupted',
+      bodyMessageKey: 'generationInterruptedBody',
+    };
+  }
   if (ui.messageKey === 'noSolution') {
-    return { kind: 'alert', tone: 'danger', messageKey: ui.messageKey };
+    return { kind: 'alert', tone: 'warning', messageKey: 'noSolution' };
   }
   if (ui.messageKey === 'published') {
     return { kind: 'alert', tone: 'warning', messageKey: ui.messageKey };
@@ -524,8 +578,9 @@ export function getDrawUiProjection(
   }
 
   if (draw.status === 'Draft' && draw.resolutionState === 'NotResolved') {
+    // V1 Nouveau = Create+Generate; a lasting Draft/NotResolved is an interrupted generate.
     return {
-      messageKey: 'draftNotResolved',
+      messageKey: 'generationInterrupted',
       showResults: false,
       isApplied: false,
       chrome: { showStatus: true, showResolution: true, showApplied: false },

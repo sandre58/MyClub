@@ -6,6 +6,7 @@ import {
   cancelDraw,
   createAndGenerateDraw,
   fetchStageOverview,
+  isDrawGenerateFailedError,
   publishAndApplyDraw,
   releaseDrawAlignedPlacements,
 } from '../api';
@@ -17,6 +18,7 @@ import {
   CheckIcon,
   PlusIcon,
   RandomIcon,
+  UnlockIcon,
 } from '../design-system/icons/contentIcons';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 import { TeamCrest } from '../design-system/TeamCrest';
@@ -25,6 +27,7 @@ import { drawResolutionKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import type {
   CompetitionStatus,
+  StageBracketPair,
   StageDraw,
   StageRound,
   StageSlot,
@@ -38,7 +41,8 @@ import {
   getDrawUiProjection,
   groupPlacementRows,
   pickDefaultDrawId,
-  resolveDrawCreateGate,
+  resolveDrawCreateBlockPresentation,
+  resolveStageDrawCreateGate,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
   countAlignedSlotPlacements,
@@ -53,6 +57,7 @@ import {
   canReleaseDrawAlignedPlacements,
 } from './lifecycleGates';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { resolvePlacesN } from './structurePlaces';
 import {
   DrawResolutionBadge,
   DrawStatusBadge,
@@ -158,16 +163,14 @@ function resolveDrawKindForFormat(
 }
 
 /** One non-Cancelled Draw may own the active execution; rerun = Cancel → Nouveau. */
-function hasActiveDraw(draws: StageDraw[]): boolean {
-  return draws.some((d) => d.status !== 'Cancelled');
-}
-
 type StructureDrawDialogProps = {
   open: boolean;
   onClose: () => void;
   competitionId: string;
   /** Host lifecycle gate — Completed|Archived → Cancel hidden. */
   competitionStatus: CompetitionStatus;
+  /** Competition EntryRules.MinimumTeams — gate belowMinimumTeams. */
+  minimumTeams?: number | null;
   stage: StructureStageHubSummary;
 };
 
@@ -181,6 +184,7 @@ export function StructureDrawDialog({
   onClose,
   competitionId,
   competitionStatus,
+  minimumTeams = null,
   stage,
 }: StructureDrawDialogProps) {
   const { t } = useTranslation('structure');
@@ -202,6 +206,7 @@ export function StructureDrawDialog({
   const drawList = draws ?? [];
   const showHistory = drawList.length >= 1;
   const poolCount = stage.compositionEntryCount ?? 0;
+  const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
@@ -244,23 +249,40 @@ export function StructureDrawDialog({
     [drawList, selectedId],
   );
 
-  const activeExists = hasActiveDraw(drawList);
-  const createGate = resolveDrawCreateGate({
-    kind: drawKind,
-    hasActiveDraw: activeExists,
+  const createGateInput = {
+    formatKind: stage.formatKind,
+    draws: drawList,
+    slots,
     compositionEntryCount: poolCount,
     isRootComposition: stage.isRootComposition,
     numberOfPots: stage.numberOfPots,
     groupCount: stage.groupCount,
-  });
+    placesN,
+    minimumTeams,
+    directAssignmentCount: stage.directAssignmentCount,
+  };
+  const createGate = resolveStageDrawCreateGate(createGateInput);
   const showCreate = drawKind != null && !overviewQuery.isLoading;
   const canCreate = showCreate && createGate.ok;
   const createBlockedReason =
     showCreate && !createGate.ok ? createGate.reason : null;
-
-  const createBlockedMessage =
+  const createBlockPresentation =
     createBlockedReason != null
-      ? t(`fiche.drawWorkflow.createBlocked.${createBlockedReason}`)
+      ? resolveDrawCreateBlockPresentation(createBlockedReason)
+      : null;
+  const createBlockedShort =
+    createBlockedReason != null
+      ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
+      : null;
+  const createBlockedDetail =
+    createBlockedReason != null &&
+    createBlockPresentation?.kind === 'inline'
+      ? createBlockedReason === 'countMismatch'
+        ? t('fiche.drawWorkflow.createBlocked.detail.countMismatch', {
+            count: poolCount,
+            places: placesN ?? 0,
+          })
+        : t(`fiche.drawWorkflow.createBlocked.detail.${createBlockedReason}`)
       : null;
 
   async function invalidateDrawQueries() {
@@ -274,16 +296,34 @@ export function StructureDrawDialog({
       if (!drawKind) {
         throw new Error('Draw kind unavailable for this format.');
       }
+      // Revalidate before Create+Generate — same gate as CTA (stale overview / race).
+      const gate = resolveStageDrawCreateGate(createGateInput);
+      if (!gate.ok) {
+        throw new Error(`Draw create blocked: ${gate.reason}`);
+      }
       return createAndGenerateDraw(stageId, drawKind);
     },
     onSuccess: async (result) => {
       pendingSelectIdRef.current = result.drawId;
       await invalidateDrawQueries();
       setSelectedId(result.drawId);
-      notify.success(tDraw('toastCreated'));
+      if (result.isNoSolution) {
+        notify.attention(tDraw('toastCreatedNoSolution'));
+      } else {
+        notify.success(tDraw('toastCreated'));
+      }
     },
-    onError: () => {
+    onError: async (error) => {
+      if (isDrawGenerateFailedError(error)) {
+        // Create succeeded — keep Draft selected; do not sticky-footer the error.
+        pendingSelectIdRef.current = error.drawId;
+        await invalidateDrawQueries();
+        setSelectedId(error.drawId);
+        notify.error(tDraw('toastGenerationFailed'));
+        return;
+      }
       pendingSelectIdRef.current = null;
+      notify.error(tDraw('toastActionFailed'));
     },
   });
 
@@ -339,8 +379,9 @@ export function StructureDrawDialog({
     releaseMutation.isPending ||
     applyMutation.isPending;
 
+  // Create path uses toasts only (NoSolution / generation interrupted / hard fail).
+  // Do not sticky MutationError in the dialog footer after Create+Generate.
   const mutationError =
-    createMutation.error ??
     publishAndApplyMutation.error ??
     cancelMutation.error ??
     releaseMutation.error ??
@@ -371,8 +412,8 @@ export function StructureDrawDialog({
         footer={
           <div className="button-row">
             {showCreate ? (
-              createBlockedMessage != null ? (
-                <Tooltip content={createBlockedMessage}>
+              createBlockedShort != null ? (
+                <Tooltip content={createBlockedShort}>
                   <button
                     type="button"
                     className="ds-btn ds-btn--primary"
@@ -387,8 +428,15 @@ export function StructureDrawDialog({
                 <button
                   type="button"
                   className="ds-btn ds-btn--primary"
-                  disabled={busy}
-                  onClick={() => createMutation.mutate()}
+                  disabled={busy || !canCreate}
+                  onClick={() => {
+                    if (!canCreate) return;
+                    createMutation.mutate(undefined, {
+                      onSettled: () => {
+                        createMutation.reset();
+                      },
+                    });
+                  }}
                 >
                   {createMutation.isPending ? (
                     <PendingLabel>
@@ -415,7 +463,10 @@ export function StructureDrawDialog({
           </div>
         }
         footerStatus={
-          overviewQuery.isError || mutationError ? (
+          overviewQuery.isError ||
+          mutationError ||
+          (createBlockedDetail != null &&
+            createBlockPresentation?.kind === 'inline') ? (
             <>
               {overviewQuery.isError ? (
                 <Alert tone="danger" role="alert">
@@ -423,6 +474,13 @@ export function StructureDrawDialog({
                 </Alert>
               ) : null}
               {mutationError ? <MutationError error={mutationError} /> : null}
+              {!overviewQuery.isLoading &&
+              createBlockedDetail != null &&
+              createBlockPresentation?.kind === 'inline' ? (
+                <Alert tone={createBlockPresentation.tone} role="status">
+                  <p className="ds-body">{createBlockedDetail}</p>
+                </Alert>
+              ) : null}
             </>
           ) : null
         }
@@ -463,16 +521,9 @@ export function StructureDrawDialog({
             >
               {drawKind == null
                 ? t('fiche.drawWorkflow.kindUnsupported')
-                : createBlockedReason === 'emptyPool' ||
-                    createBlockedReason === 'emptyPoolUpstream'
-                  ? t(
-                      createBlockedReason === 'emptyPoolUpstream'
-                        ? 'fiche.drawWorkflow.emptyBodyNeedUpstream'
-                        : 'fiche.drawWorkflow.emptyBodyNeedPool',
-                    )
-                  : createBlockedReason != null
-                    ? createBlockedMessage
-                    : t('fiche.drawWorkflow.emptyBody')}
+                : createBlockPresentation?.kind === 'inline'
+                  ? null
+                  : t('fiche.drawWorkflow.emptyBody')}
             </EmptyState>
           ) : null}
 
@@ -527,6 +578,7 @@ export function StructureDrawDialog({
                   draw={selected}
                   slots={slots}
                   rounds={rounds}
+                  bracketPairs={overviewQuery.data?.bracketPairs ?? []}
                   competitionStatus={competitionStatus}
                   stageStatus={overviewQuery.data?.status ?? stage.status}
                   busy={busy}
@@ -557,6 +609,11 @@ export function StructureDrawDialog({
         confirmDisabled={applyMutation.isPending}
         confirmPending={applyMutation.isPending}
         confirmPendingLabel={tDraw('applying')}
+        footerStatus={
+          applyMutation.isError ? (
+            <MutationError error={applyMutation.error} />
+          ) : null
+        }
         onCancel={() => {
           if (applyMutation.isPending) {
             return;
@@ -587,6 +644,11 @@ export function StructureDrawDialog({
         confirmDisabled={cancelMutation.isPending}
         confirmPending={cancelMutation.isPending}
         confirmPendingLabel={tDraw('cancelling')}
+        footerStatus={
+          cancelMutation.isError ? (
+            <MutationError error={cancelMutation.error} />
+          ) : null
+        }
         onCancel={() => {
           if (cancelMutation.isPending) {
             return;
@@ -606,12 +668,17 @@ export function StructureDrawDialog({
         title={tDraw('confirmReleaseTitle')}
         message={tDraw('confirmRelease')}
         confirmLabel={tDraw('releasePlacements')}
+        confirmIcon={<UnlockIcon size="sm" />}
         cancelLabel={tCommon('close')}
         closeLabel={tCommon('close')}
-        danger
         confirmDisabled={releaseMutation.isPending}
         confirmPending={releaseMutation.isPending}
         confirmPendingLabel={tDraw('releasingPlacements')}
+        footerStatus={
+          releaseMutation.isError ? (
+            <MutationError error={releaseMutation.error} />
+          ) : null
+        }
         onCancel={() => {
           if (releaseMutation.isPending) {
             return;
@@ -732,6 +799,7 @@ function DrawExecutionDetail({
   draw,
   slots,
   rounds,
+  bracketPairs,
   competitionStatus,
   stageStatus,
   busy,
@@ -747,6 +815,7 @@ function DrawExecutionDetail({
   draw: StageDraw;
   slots: StageSlot[];
   rounds: StageRound[];
+  bracketPairs: StageBracketPair[];
   competitionStatus: CompetitionStatus;
   stageStatus: StageStatus;
   busy: boolean;
@@ -800,7 +869,7 @@ function DrawExecutionDetail({
     draw.kind === 'Slot' && draw.slotPlacements.length > 0
       ? projectSlotDrawResult(
           draw.slotPlacements,
-          rounds,
+          bracketPairs,
           tCommon('unknownEntry'),
         )
       : { confrontations: [], unpaired: [] };
@@ -853,18 +922,26 @@ function DrawExecutionDetail({
           </button>
         ) : null}
         {canRelease ? (
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost ds-btn--destructive"
-            disabled={busy}
-            onClick={onRelease}
-          >
-            {releasePending ? (
-              <PendingLabel>{t('releasingPlacements')}</PendingLabel>
-            ) : (
-              t('releasePlacements')
-            )}
-          </button>
+          <Tooltip content={t('releasePlacementsHint')}>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost"
+              disabled={busy}
+              onClick={onRelease}
+            >
+              {releasePending ? (
+                <PendingLabel>{t('releasingPlacements')}</PendingLabel>
+              ) : (
+                <>
+                  <UnlockIcon size="sm" />
+                  {t('releasePlacementsCount', {
+                    aligned: alignedCount,
+                    total: draw.slotPlacements.length,
+                  })}
+                </>
+              )}
+            </button>
+          </Tooltip>
         ) : null}
         {canCancel ? (
           <button
@@ -888,11 +965,7 @@ function DrawExecutionDetail({
 
   const headerChips = resolveDrawDetailHeaderChips(draw, ui.isApplied);
   const guidance = resolveDrawDetailGuidance(ui);
-  const showAlignedRemaining =
-    draw.status === 'Cancelled' &&
-    draw.kind === 'Slot' &&
-    draw.resolutionState === 'Resolved' &&
-    draw.slotPlacements.length > 0;
+  const showEmptyResult = !showResults && guidance?.kind !== 'alert';
 
   return (
     <DrawSectionTile
@@ -922,14 +995,6 @@ function DrawExecutionDetail({
       }
       footer={stateActions}
     >
-      {showAlignedRemaining ? (
-        <p className="structure-draw-detail__phrase" role="status">
-          {t('alignedPlacementsRemaining', {
-            aligned: alignedCount,
-            total: draw.slotPlacements.length,
-          })}
-        </p>
-      ) : null}
       {guidance?.kind === 'phrase' ? (
         <p className="structure-draw-detail__phrase" role="status">
           {t(guidance.messageKey)}
@@ -937,8 +1002,27 @@ function DrawExecutionDetail({
       ) : null}
       {guidance?.kind === 'alert' ? (
         <Alert tone={guidance.tone} role="status">
-          {t(guidance.messageKey)}
+          {guidance.bodyMessageKey ? (
+            <>
+              <p className="ds-body">
+                <strong>{t(guidance.messageKey)}</strong>
+              </p>
+              <p className="ds-body">{t(guidance.bodyMessageKey)}</p>
+            </>
+          ) : (
+            t(guidance.messageKey)
+          )}
         </Alert>
+      ) : null}
+
+      {showEmptyResult ? (
+        <EmptyState
+          variant="idle"
+          icon={<RandomIcon size="lg" />}
+          title={t('noResultTitle')}
+        >
+          {t('noResultBody')}
+        </EmptyState>
       ) : null}
 
       {showResults ? (

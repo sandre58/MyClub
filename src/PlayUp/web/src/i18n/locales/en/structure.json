@@ -492,6 +492,7 @@
     "activateDraw": "Activate draw",
     "activateDrawBody": "Populate this stage’s form by draw.",
     "drawParams": "Draw settings",
+    "drawParamsAction": "Settings",
     "deactivateDraw": "Deactivate draw",
     "drawPoolHint": "Pool {{filled}}/{{capacity}}",
     "drawCtaTeamsCaption": "resolved teams",
@@ -509,12 +510,27 @@
       "kindUnsupported": "This phase format does not support creating a draw from Structure yet.",
       "create": "New draw",
       "createBlocked": {
-        "unsupported": "This format does not support creating a draw from Structure yet.",
-        "active": "Cancel the active execution before starting a new one.",
-        "emptyPool": "Add teams to this phase before starting the draw.",
-        "emptyPoolUpstream": "The matches that decide which teams enter this phase are not finished yet. The draw cannot run yet.",
-        "missingPots": "Configure draw pots (Settings) before generating.",
-        "groupShape": "The number of teams must equal pots × groups."
+        "short": {
+          "unsupported": "Draw not available for this format.",
+          "active": "Cancel the active execution first.",
+          "emptyPool": "Build this phase’s population first.",
+          "emptyPoolUpstream": "Wait until upstream supplies the population.",
+          "belowMinimumTeams": "Regulatory minimum not met.",
+          "countMismatch": "Population ≠ phase places.",
+          "directAssignment": "Direct assignment(s) in place.",
+          "occupiedSlots": "Placements still occupy places.",
+          "missingPots": "Draw pots not configured.",
+          "groupShape": "Population ≠ pots × groups."
+        },
+        "detail": {
+          "emptyPool": "This phase’s population must be built before starting a draw.",
+          "belowMinimumTeams": "The number of teams is below the competition’s regulatory minimum.",
+          "countMismatch": "The draw needs {{places}} teams for {{places}} places. The current composition has {{count}}.",
+          "directAssignment": "One or more places have a direct assignment. Clear those assignments before starting a new draw.",
+          "occupiedSlots": "Placements still exist. Release them before starting a new draw.",
+          "missingPots": "Configure draw pots (Settings) before generating.",
+          "groupShape": "The number of teams must equal pots × groups for the phase to be drawable."
+        }
       },
       "creating": "Drawing…",
       "historyAria": "Execution history",

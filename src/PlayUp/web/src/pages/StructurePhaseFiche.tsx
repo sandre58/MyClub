@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import {
   fetchStageOverview,
   fetchStageSchematic,
+  releaseDrawAlignedPlacements,
   replaceStageDrawRules,
 } from '../api';
 import { Chip } from '../design-system/components/Chip';
@@ -42,14 +43,17 @@ import {
   SwissFormatIcon,
   EmptySelectionIcon,
   TrashIcon,
+  UnlockIcon,
 } from '../design-system/icons/contentIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { TeamCrest } from '../design-system/TeamCrest';
+import { notify } from '../design-system/toastStore';
 import {
   EmptyState,
   LoadingState,
   MutationError,
+  PendingLabel,
   StageStatusBadge,
   StatusBadge,
 } from '../ui';
@@ -79,7 +83,13 @@ import {
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
-import { pickActiveDraw } from './drawUi';
+import {
+  countAlignedSlotPlacements,
+  pickActiveDraw,
+  resolveDrawCreateBlockPresentation,
+  resolveStageDrawCreateGate,
+} from './drawUi';
+import { canReleaseDrawAlignedPlacements } from './lifecycleGates';
 import {
   DrawCtaActionBody,
   resolveDrawCtaPoolTone,
@@ -1391,6 +1401,7 @@ export function StructurePhaseFiche({
 }) {
   const { t, i18n } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
+  const { t: tDraw } = useTranslation('draw');
   const queryClient = useQueryClient();
   const [edit, setEdit] = useState<EditTarget>(null);
   const [rulesEditStage, setRulesEditStage] =
@@ -1398,6 +1409,7 @@ export function StructurePhaseFiche({
   const [removeOpen, setRemoveOpen] = useState(false);
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
   const [deactivateDrawOpen, setDeactivateDrawOpen] = useState(false);
+  const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeFocusSearch, setComposeFocusSearch] = useState(false);
 
@@ -1407,6 +1419,7 @@ export function StructurePhaseFiche({
     setRemoveOpen(false);
     setDrawWorkflowOpen(false);
     setDeactivateDrawOpen(false);
+    setReleaseConfirmOpen(false);
     setComposeOpen(false);
     setComposeFocusSearch(false);
   }, [stage?.stageId]);
@@ -1417,6 +1430,20 @@ export function StructurePhaseFiche({
     onSuccess: async () => {
       await invalidateAfterStructureMutation(queryClient, data.competitionId);
       setDeactivateDrawOpen(false);
+    },
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: (drawId: string) =>
+      releaseDrawAlignedPlacements(stage!.stageId, drawId),
+    onSuccess: async (result) => {
+      setReleaseConfirmOpen(false);
+      await invalidateAfterStructureMutation(queryClient, data.competitionId, {
+        stageId: stage!.stageId,
+      });
+      notify.success(
+        tDraw('toastReleased', { count: result.releasedCount }),
+      );
     },
   });
 
@@ -1526,6 +1553,65 @@ export function StructurePhaseFiche({
     showPoolHint && placesN != null
       ? resolveDrawCtaPoolTone(poolFilled, placesN)
       : 'neutral';
+  const overviewSlots = drawOverviewQuery.data?.slots ?? [];
+  const overviewDraws = drawOverviewQuery.data?.draws ?? [];
+  const drawGateReady =
+    drawOverviewQuery.isSuccess ||
+    stage.formatKind === 'Groups' ||
+    !showDrawCta;
+  const createGate = drawGateReady
+    ? resolveStageDrawCreateGate({
+        formatKind: stage.formatKind,
+        draws: overviewDraws,
+        slots: overviewSlots,
+        compositionEntryCount: poolFilled,
+        isRootComposition: stage.isRootComposition,
+        numberOfPots: stage.numberOfPots,
+        groupCount: stage.groupCount,
+        placesN,
+        minimumTeams: data.regulation.minimumTeams,
+        directAssignmentCount: stage.directAssignmentCount,
+      })
+    : null;
+  const createBlockedReason =
+    createGate != null && !createGate.ok ? createGate.reason : null;
+  const createBlockPresentation =
+    createBlockedReason != null
+      ? resolveDrawCreateBlockPresentation(createBlockedReason)
+      : null;
+  const createBlockedShort =
+    createBlockedReason != null
+      ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
+      : null;
+  const releasableDraw = overviewDraws.find((draw) =>
+    canReleaseDrawAlignedPlacements({
+      competitionStatus: data.status,
+      stageStatus: stage.status,
+      drawStatus: draw.status,
+      drawKind: draw.kind,
+      alignedPlacementCount: countAlignedSlotPlacements(draw, overviewSlots),
+    }),
+  );
+  const releasableAlignedCount =
+    releasableDraw != null
+      ? countAlignedSlotPlacements(releasableDraw, overviewSlots)
+      : 0;
+  const showReleaseCta =
+    releasableDraw != null &&
+    createBlockPresentation?.kind === 'inline' &&
+    createBlockPresentation.action;
+  /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
+  const blockPerformDrawCta =
+    createBlockedShort != null &&
+    !activeDraw &&
+    overviewDraws.length === 0;
+  /** Inline short caption on fiche — skip when Libérer is the unblock action, and
+   * skip countMismatch when the filled/capacity ratio already carries the signal. */
+  const showCreateBlockedCaption =
+    createBlockedShort != null &&
+    createBlockPresentation?.kind === 'inline' &&
+    !showReleaseCta &&
+    !(createBlockedReason === 'countMismatch' && showPoolHint);
   const showConfrontation = sections.includes('confrontation');
   const canEditProg = actions.includes('ReplaceProgressionRules');
   const canEditPlacement = actions.includes('ReplacePlacementAwardRules');
@@ -1870,60 +1956,133 @@ export function StructurePhaseFiche({
             {showDrawCta ? (
               <div className="structure-phase-hero__draw">
                 <div className="structure-draw-block">
-                  <StructureDrawCta
-                    tone="emphasis"
-                    title={
-                      activeDraw
-                        ? t('fiche.openDrawWorkflow')
-                        : t('fiche.performDraw')
-                    }
-                    body={
-                      showPoolHint && placesN != null ? (
-                        <DrawCtaActionBody
-                          filled={poolFilled}
-                          capacity={placesN}
-                          teamsCaption={t('fiche.drawCtaTeamsCaption')}
-                          poolTone={drawCtaPoolTone}
+                  {blockPerformDrawCta ? (
+                    <Tooltip content={createBlockedShort}>
+                      <span className="structure-draw-cta-wrap">
+                        <StructureDrawCta
+                          tone="emphasis"
+                          title={t('fiche.performDraw')}
+                          body={
+                            showPoolHint && placesN != null ? (
+                              <DrawCtaActionBody
+                                filled={poolFilled}
+                                capacity={placesN}
+                                teamsCaption={t('fiche.drawCtaTeamsCaption')}
+                                poolTone={drawCtaPoolTone}
+                              />
+                            ) : showCreateBlockedCaption ? (
+                              <span className="structure-draw-cta__caption">
+                                {createBlockedShort}
+                              </span>
+                            ) : null
+                          }
+                          onClick={() => setDrawWorkflowOpen(true)}
+                          disabled
                         />
-                      ) : null
-                    }
-                    onClick={() => setDrawWorkflowOpen(true)}
-                  />
-                  {canEditDraw ? (
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    <StructureDrawCta
+                      tone="emphasis"
+                      title={
+                        activeDraw
+                          ? t('fiche.openDrawWorkflow')
+                          : t('fiche.performDraw')
+                      }
+                      body={
+                        <>
+                          {showPoolHint && placesN != null ? (
+                            <DrawCtaActionBody
+                              filled={poolFilled}
+                              capacity={placesN}
+                              teamsCaption={t('fiche.drawCtaTeamsCaption')}
+                              poolTone={drawCtaPoolTone}
+                            />
+                          ) : null}
+                          {showCreateBlockedCaption ? (
+                            <span
+                              className="structure-draw-cta__caption"
+                              role="status"
+                            >
+                              {createBlockedShort}
+                            </span>
+                          ) : null}
+                        </>
+                      }
+                      onClick={() => setDrawWorkflowOpen(true)}
+                    />
+                  )}
+                  {canEditDraw || showReleaseCta ? (
                     <div className="structure-draw-actions">
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--ghost ds-btn--sm"
-                        onClick={() => setEdit('tirage-params')}
-                      >
-                        <LucideIcon icon={Settings} size="sm" />
-                        {t('fiche.drawParams')}
-                      </button>
-                      {hasNonCancelledDraw ? (
-                        <Tooltip
-                          content={t('regulation.deactivateDrawBlockedHint')}
-                        >
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm"
-                            disabled
-                            aria-label={t('fiche.deactivateDraw')}
-                          >
-                            <TrashIcon size="sm" />
-                            {t('fiche.deactivateDraw')}
-                          </button>
-                        </Tooltip>
-                      ) : (
+                      {canEditDraw ? (
                         <button
                           type="button"
-                          className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm"
-                          disabled={deactivateDrawMutation.isPending}
-                          onClick={() => setDeactivateDrawOpen(true)}
+                          className="ds-btn ds-btn--ghost ds-btn--sm"
+                          onClick={() => setEdit('tirage-params')}
                         >
-                          <TrashIcon size="sm" />
-                          {t('fiche.deactivateDraw')}
+                          <LucideIcon icon={Settings} size="sm" />
+                          {t('fiche.drawParamsAction')}
                         </button>
-                      )}
+                      ) : null}
+                      {showReleaseCta || canEditDraw ? (
+                        <div className="structure-draw-actions__risk">
+                          {showReleaseCta && releasableDraw ? (
+                            <Tooltip content={tDraw('releasePlacementsHint')}>
+                              <button
+                                type="button"
+                                className="ds-btn ds-btn--ghost ds-btn--sm"
+                                disabled={releaseMutation.isPending}
+                                onClick={() => setReleaseConfirmOpen(true)}
+                              >
+                                {releaseMutation.isPending ? (
+                                  <PendingLabel>
+                                    {tDraw('releasingPlacements')}
+                                  </PendingLabel>
+                                ) : (
+                                  <>
+                                    <UnlockIcon size="sm" />
+                                    {tDraw('releasePlacementsCount', {
+                                      aligned: releasableAlignedCount,
+                                      total:
+                                        releasableDraw.slotPlacements.length,
+                                    })}
+                                  </>
+                                )}
+                              </button>
+                            </Tooltip>
+                          ) : null}
+                          {canEditDraw ? (
+                            hasNonCancelledDraw ? (
+                              <Tooltip
+                                content={t(
+                                  'regulation.deactivateDrawBlockedHint',
+                                )}
+                              >
+                                <button
+                                  type="button"
+                                  className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
+                                  disabled
+                                  aria-label={t('fiche.deactivateDraw')}
+                                >
+                                  <TrashIcon size="sm" />
+                                </button>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip content={t('fiche.deactivateDraw')}>
+                                <button
+                                  type="button"
+                                  className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
+                                  disabled={deactivateDrawMutation.isPending}
+                                  aria-label={t('fiche.deactivateDraw')}
+                                  onClick={() => setDeactivateDrawOpen(true)}
+                                >
+                                  <TrashIcon size="sm" />
+                                </button>
+                              </Tooltip>
+                            )
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -2143,29 +2302,53 @@ export function StructurePhaseFiche({
       <ConfirmDialog
         open={deactivateDrawOpen}
         title={t('regulation.deactivateDrawConfirmTitle')}
-        message={
-          deactivateDrawMutation.isError ? (
-            <>
-              <p className="ds-body">
-                {t('regulation.deactivateDrawConfirmBody')}
-              </p>
-              <MutationError error={deactivateDrawMutation.error} />
-            </>
-          ) : (
-            t('regulation.deactivateDrawConfirmBody')
-          )
-        }
+        message={t('regulation.deactivateDrawConfirmBody')}
         confirmLabel={t('fiche.deactivateDraw')}
         cancelLabel={tCommon('cancel')}
         closeLabel={tCommon('close')}
         danger
         confirmPending={deactivateDrawMutation.isPending}
+        footerStatus={
+          deactivateDrawMutation.isError ? (
+            <MutationError error={deactivateDrawMutation.error} />
+          ) : null
+        }
         onConfirm={() => deactivateDrawMutation.mutate()}
         onCancel={() => setDeactivateDrawOpen(false)}
+      />
+      <ConfirmDialog
+        open={releaseConfirmOpen}
+        title={tDraw('confirmReleaseTitle')}
+        message={tDraw('confirmRelease')}
+        confirmLabel={tDraw('releasePlacements')}
+        confirmIcon={<UnlockIcon size="sm" />}
+        cancelLabel={tCommon('close')}
+        closeLabel={tCommon('close')}
+        confirmDisabled={releaseMutation.isPending}
+        confirmPending={releaseMutation.isPending}
+        confirmPendingLabel={tDraw('releasingPlacements')}
+        footerStatus={
+          releaseMutation.isError ? (
+            <MutationError error={releaseMutation.error} />
+          ) : null
+        }
+        onCancel={() => {
+          if (releaseMutation.isPending) {
+            return;
+          }
+          setReleaseConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          if (!releasableDraw || releaseMutation.isPending) {
+            return;
+          }
+          releaseMutation.mutate(releasableDraw.id);
+        }}
       />
       <StructureDrawDialog
         competitionId={data.competitionId}
         competitionStatus={data.status}
+        minimumTeams={data.regulation.minimumTeams}
         stage={stage}
         open={drawWorkflowOpen}
         onClose={() => setDrawWorkflowOpen(false)}

@@ -651,6 +651,11 @@ export function TeamRosterDrawer({
         confirmDisabled={removeMutation.isPending || confirmNoneOk}
         confirmPending={removeMutation.isPending}
         confirmPendingLabel={t('roster.removing')}
+        footerStatus={
+          removeMutation.isError ? (
+            <MutationError error={removeMutation.error} />
+          ) : null
+        }
         onCancel={() => {
           if (removeMutation.isPending) {
             return;

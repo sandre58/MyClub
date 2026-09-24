@@ -27,18 +27,22 @@ export function StructureDrawCta({
   tone,
   onClick,
   leading,
+  disabled = false,
 }: {
   title: string;
   body: ReactNode;
   tone: StructureDrawCtaTone;
   onClick: () => void;
   leading?: ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       className="structure-draw-cta"
       data-tone={tone}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
       onClick={onClick}
     >
       <span className="structure-draw-cta__main">

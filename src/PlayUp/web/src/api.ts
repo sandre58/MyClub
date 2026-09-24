@@ -841,19 +841,45 @@ export function generateDraw(
  * G2 — one UI gesture « Nouveau tirage »: Create → inputs (Rerun) → Generate.
  * Rerun = full redraw (ignore occupancy Fixed*); Encoding F stays Default elsewhere.
  * Generate is not a separate product action in V1.
+ *
+ * If Create succeeded but inputs/Generate fail technically, throws
+ * {@link DrawGenerateFailedError} with the created drawId (Draft orphan — SPA projects it).
  */
 export async function createAndGenerateDraw(
   stageId: string,
   kind: 'Slot' | 'Group',
 ): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
   const created = await createDraw(stageId, kind, 'Rerun');
-  await configureDrawInputs(stageId, created.drawId, 'Rerun');
-  const generated = await generateDraw(stageId, created.drawId);
-  return {
-    drawId: created.drawId,
-    isResolved: generated.isResolved,
-    isNoSolution: generated.isNoSolution,
-  };
+  try {
+    await configureDrawInputs(stageId, created.drawId, 'Rerun');
+    const generated = await generateDraw(stageId, created.drawId);
+    return {
+      drawId: created.drawId,
+      isResolved: generated.isResolved,
+      isNoSolution: generated.isNoSolution,
+    };
+  } catch (cause) {
+    throw new DrawGenerateFailedError(created.drawId, cause);
+  }
+}
+
+/** Create succeeded; Generate (or inputs) failed — Draft exists server-side. */
+export class DrawGenerateFailedError extends Error {
+  readonly drawId: string;
+  readonly cause: unknown;
+
+  constructor(drawId: string, cause?: unknown) {
+    super('Draw generation failed after create');
+    this.name = 'DrawGenerateFailedError';
+    this.drawId = drawId;
+    this.cause = cause;
+  }
+}
+
+export function isDrawGenerateFailedError(
+  error: unknown,
+): error is DrawGenerateFailedError {
+  return error instanceof DrawGenerateFailedError;
 }
 
 /** POST /stages/{stageId}/draws/{drawId}/apply → 204 */

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyDraw,
   createAndGenerateDraw,
+  DrawGenerateFailedError,
   fetchStageOverview,
   publishAndApplyDraw,
   releaseDrawAlignedPlacements,
@@ -83,6 +84,7 @@ function overview(
     slots: [],
     rounds: [],
     draws,
+    bracketPairs: [],
     ...overrides,
   };
 }
@@ -107,22 +109,22 @@ function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
     resolutionState: 'Resolved',
     slotPlacements: [
       {
-        slotKey: 'R16-1-A',
+        slotKey: 'S1',
         entryId: 'e1',
         displayName: 'Belgium',
       },
       {
-        slotKey: 'R16-1-B',
+        slotKey: 'S2',
         entryId: 'e2',
         displayName: 'Poland',
       },
       {
-        slotKey: 'R16-2-A',
+        slotKey: 'S3',
         entryId: 'e3',
         displayName: 'Turkey',
       },
       {
-        slotKey: 'R16-2-B',
+        slotKey: 'S4',
         entryId: 'e4',
         displayName: 'Denmark',
       },
@@ -130,6 +132,11 @@ function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
     ...overrides,
   };
 }
+
+const cupBracketPairs = [
+  { pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' },
+  { pairKey: 'P2', slotAKey: 'S3', slotBKey: 'S4' },
+];
 
 function cupStage(
   overrides: Partial<StructureStageHubSummary> = {},
@@ -204,15 +211,22 @@ describe('StructureDrawDialog', () => {
     );
 
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
-    const blocked =
-      'Les confrontations qui déterminent les équipes de cette phase ne sont pas encore terminées. Le tirage ne peut pas encore être effectué.';
-    expect(screen.getAllByText(blocked).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByText(
+        'Lancez un premier tirage pour peupler la forme de cette phase.',
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Nouveau tirage' }),
     ).toBeDisabled();
+    expect(
+      screen.queryByText(
+        'Les confrontations qui déterminent les équipes de cette phase ne sont pas encore terminées. Le tirage ne peut pas encore être effectué.',
+      ),
+    ).not.toBeInTheDocument();
   });
 
-  it('disables Nouveau and explains when a root phase has no teams', async () => {
+  it('disables Nouveau and shows inline info when a root phase has no teams', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
 
     renderDialog(
@@ -223,9 +237,11 @@ describe('StructureDrawDialog', () => {
     );
 
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
-    const blocked =
-      'Ajoutez des équipes à cette phase avant de lancer le tirage.';
-    expect(screen.getAllByText(blocked).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getByText(
+        'La population de cette phase doit d’abord être constituée avant de lancer un tirage.',
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Nouveau tirage' }),
     ).toBeDisabled();
@@ -254,6 +270,113 @@ describe('StructureDrawDialog', () => {
     });
   });
 
+  it('toasts warning when Create+Generate returns NoSolution', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    vi.mocked(createAndGenerateDraw).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview([
+          groupDraw({
+            id: 'draw-nosol',
+            status: 'Draft',
+            resolutionState: 'NoSolution',
+            groupPlacements: [],
+          }),
+        ]),
+      );
+      return {
+        drawId: 'draw-nosol',
+        isResolved: false,
+        isNoSolution: true,
+      };
+    });
+
+    renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    );
+
+    await waitFor(() => {
+      expect(getToastsSnapshot().map((t) => t.message)).toContain(
+        'Exécution créée — aucune résolution valide.',
+      );
+    });
+    expect(
+      await screen.findByText(
+        'Aucune résolution valide n’a pu être générée.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Nouvelle exécution créée.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps Draft and projects generation interrupted when Generate fails after Create', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    vi.mocked(createAndGenerateDraw).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview([
+          groupDraw({
+            id: 'draw-orphan',
+            status: 'Draft',
+            resolutionState: 'NotResolved',
+            groupPlacements: [],
+          }),
+        ]),
+      );
+      throw new DrawGenerateFailedError('draw-orphan', new Error('timeout'));
+    });
+
+    renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    );
+
+    await waitFor(() => {
+      const toasts = getToastsSnapshot();
+      expect(toasts.map((t) => t.message)).toContain(
+        'Génération interrompue. L’exécution a été créée sans résultat.',
+      );
+      expect(toasts.some((t) => t.tone === 'error')).toBe(true);
+    });
+    expect(
+      await screen.findByText('Génération interrompue'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'L’exécution a été créée, mais la génération n’a pas pu être terminée.',
+      ),
+    ).toBeInTheDocument();
+    // No sticky MutationError footer after create path clears.
+    expect(
+      screen.queryByText('Draw generation failed after create'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows EmptyState for Cancelled+NotResolved (badge only, no phrase)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          id: 'draw-cancelled-empty',
+          status: 'Cancelled',
+          resolutionState: 'NotResolved',
+          groupPlacements: [],
+        }),
+      ]),
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText('Annulé')).toBeInTheDocument();
+    expect(screen.getByText('Aucun résultat')).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it('creates Slot draws for Cup Nouveau (not Pairing)', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
@@ -266,7 +389,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(
       cupStage({
         compositionEntryCount: 4,
-        slotCount: 4,
+        compositionCapacity: 4,
       }),
     );
 
@@ -280,6 +403,191 @@ describe('StructureDrawDialog', () => {
       stageId,
       'Pairing',
     );
+  });
+
+  it('disables Cup Nouveau when composition does not match Places', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 15,
+        compositionCapacity: 16,
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Le tirage nécessite 16 équipes pour 16 places. La composition actuelle en contient 15.',
+      ),
+    ).toBeInTheDocument();
+    expect(createAndGenerateDraw).not.toHaveBeenCalled();
+  });
+
+  it('disables Cup Nouveau when a Place has an occupant', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([], {
+        slots: [
+          {
+            slotKey: 'R16-1-A',
+            entryId: 'e1',
+            displayName: 'Belgium',
+            coveredByCompleteFixture: false,
+          },
+          {
+            slotKey: 'R16-1-B',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
+      }),
+    );
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 16,
+        compositionCapacity: 16,
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Des placements existent encore. Libérez-les avant de lancer un nouveau tirage.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('disables Cup Nouveau for DirectAssignment when count matches', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 16,
+        compositionCapacity: 16,
+        directAssignmentCount: 1,
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Une ou plusieurs places ont une affectation directe. Libérez ces affectations avant de lancer un nouveau tirage.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('allows Cup Nouveau when Qual/Prog feeds are vacant (entryId null)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([], {
+        slots: [
+          {
+            slotKey: 'R16-1-A',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+          {
+            slotKey: 'R16-1-B',
+            entryId: null,
+            displayName: null,
+            coveredByCompleteFixture: false,
+          },
+        ],
+      }),
+    );
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 16,
+        compositionCapacity: 16,
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeEnabled();
+  });
+
+  it('enables Cup Nouveau after Libérer clears aligned occupants', async () => {
+    const user = userEvent.setup();
+    const occupiedSlots = [
+      {
+        slotKey: 'R16-1-A',
+        entryId: 'e1',
+        displayName: 'Belgium',
+        coveredByCompleteFixture: false,
+      },
+      {
+        slotKey: 'R16-1-B',
+        entryId: 'e2',
+        displayName: 'Poland',
+        coveredByCompleteFixture: false,
+      },
+    ];
+    const cancelled = slotDraw({
+      id: 'draw-cancelled',
+      status: 'Cancelled',
+      resolutionState: 'Resolved',
+      slotPlacements: [
+        {
+          slotKey: 'R16-1-A',
+          entryId: 'e1',
+          displayName: 'Belgium',
+        },
+        {
+          slotKey: 'R16-1-B',
+          entryId: 'e2',
+          displayName: 'Poland',
+        },
+      ],
+    });
+
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([cancelled], { slots: occupiedSlots }),
+    );
+    vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview([cancelled], {
+          slots: occupiedSlots.map((slot) => ({ ...slot, entryId: null, displayName: null })),
+        }),
+      );
+      return { releasedCount: 2 };
+    });
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 16,
+        compositionCapacity: 16,
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Nouveau tirage' }),
+    ).toBeDisabled();
+
+    await user.click(await screen.findByRole('button', { name: 'Libérer 2/2' }));
+    const confirmDialog = await screen.findByRole('dialog', {
+      name: 'Libérer les placements du tirage ?',
+    });
+    await user.click(
+      within(confirmDialog).getByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Nouveau tirage' }),
+      ).toBeEnabled();
+    });
   });
 
   it('selects the new draw after Nouveau when history had a cancelled execution', async () => {
@@ -445,8 +753,10 @@ describe('StructureDrawDialog', () => {
     expect(screen.getByText('Équipe 3')).toBeInTheDocument();
   });
 
-  it('renders Slot placements as dense A vs B confrontations without match numbers', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(overview([slotDraw()]));
+  it('renders Slot placements as dense A vs B from BracketPairs without match numbers', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([slotDraw()], { bracketPairs: cupBracketPairs }),
+    );
 
     renderDialog(cupStage());
 
@@ -457,27 +767,35 @@ describe('StructureDrawDialog', () => {
     expect(screen.getByText('Poland')).toBeInTheDocument();
     expect(screen.getByText('Turkey')).toBeInTheDocument();
     expect(screen.getByText('Denmark')).toBeInTheDocument();
-    expect(screen.getByText('R16-1-A')).toBeInTheDocument();
-    expect(screen.getByText('R16-1-B')).toBeInTheDocument();
-    expect(screen.getByText('R16-2-A')).toBeInTheDocument();
-    expect(screen.getByText('R16-2-B')).toBeInTheDocument();
+    expect(screen.getByText('S1')).toBeInTheDocument();
+    expect(screen.getByText('S2')).toBeInTheDocument();
+    expect(screen.getByText('S3')).toBeInTheDocument();
+    expect(screen.getByText('S4')).toBeInTheDocument();
     expect(screen.getAllByText('vs').length).toBe(2);
     expect(screen.queryByText('#1')).not.toBeInTheDocument();
+    expect(screen.queryByText('P1')).not.toBeInTheDocument();
     expect(
       document.querySelector('.regulation-schematic--cup'),
     ).toBeNull();
   });
 
-  it('renders Cup S{n} Slot placements as flat Place → Entry (no pair stems)', async () => {
+  it('does not fall back to flat Place → Entry when BracketPairs cover Cup S{n}', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([
-        slotDraw({
-          slotPlacements: [
-            { slotKey: 'S1', entryId: 'e1', displayName: 'Belgium' },
-            { slotKey: 'S2', entryId: 'e2', displayName: 'Poland' },
+      overview(
+        [
+          slotDraw({
+            slotPlacements: [
+              { slotKey: 'S1', entryId: 'e1', displayName: 'Belgium' },
+              { slotKey: 'S2', entryId: 'e2', displayName: 'Poland' },
+            ],
+          }),
+        ],
+        {
+          bracketPairs: [
+            { pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' },
           ],
-        }),
-      ]),
+        },
+      ),
     );
 
     renderDialog(cupStage());
@@ -485,11 +803,10 @@ describe('StructureDrawDialog', () => {
     expect(
       await screen.findByRole('heading', { name: 'Tirage Emplacement' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('S1')).toBeInTheDocument();
     expect(screen.getByText('Belgium')).toBeInTheDocument();
-    expect(screen.getByText('S2')).toBeInTheDocument();
     expect(screen.getByText('Poland')).toBeInTheDocument();
-    expect(screen.queryByText('vs')).not.toBeInTheDocument();
+    expect(screen.getByText('vs')).toBeInTheDocument();
+    expect(screen.queryByText('→')).not.toBeInTheDocument();
   });
 
   it('shows master-detail with selectable tiles when more than one draw exists', async () => {
@@ -528,7 +845,7 @@ describe('StructureDrawDialog', () => {
     expect(detailSection).toHaveClass('structure-draw-tile--muted');
     expect(
       screen.queryByText(
-        'Ce tirage a été annulé. Un nouveau tirage est nécessaire pour recommencer.',
+        'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
       ),
     ).not.toBeInTheDocument();
   });
@@ -660,13 +977,12 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage());
 
     expect(
-      await screen.findByText('1 / 2 placements encore présents'),
+      await screen.findByRole('button', { name: 'Libérer 1/2' }),
     ).toBeInTheDocument();
-    await user.click(
-      await screen.findByRole('button', {
-        name: 'Libérer les placements du tirage',
-      }),
-    );
+    expect(
+      screen.queryByText(/placements encore présents/),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Libérer 1/2' }));
     const confirm = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
@@ -720,10 +1036,12 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(cupStage());
 
-    await screen.findByText('0 / 1 placements encore présents');
+    expect(
+      screen.queryByText(/placements encore présents/),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', {
-        name: 'Libérer les placements du tirage',
+        name: /Libérer/,
       }),
     ).not.toBeInTheDocument();
   });

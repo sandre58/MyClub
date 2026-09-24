@@ -1389,6 +1389,15 @@ export interface StageOverview {
   rounds: StageRound[];
   slots: StageSlot[];
   draws: StageDraw[];
+  /** Cup structural confrontations (P1 = S1↔S2). Empty for Groups; omit only in tests. */
+  bracketPairs?: StageBracketPair[];
+}
+
+/** Structural Cup pair from StageOverview — drives Slot draw A vs B (not Fixture #). */
+export interface StageBracketPair {
+  pairKey: string;
+  slotAKey: string;
+  slotBKey: string;
 }
 
 /** GET /stages/{id}/schematic — form units + placed entries (S1–S8). */
@@ -1406,7 +1415,7 @@ export interface SchematicFormPosition {
   groupId?: string | null;
   groupName?: string | null;
   index?: number | null;
-  /** Backing fixture when the unit is a pairing-draw bracket side (no slot binding). */
+  /** Backing fixture when the unit is a Cup bracket side without Place binding. */
   fixtureId?: string | null;
   /** Bracket side ('A' | 'B') when known for Cup address. */
   side?: string | null;

@@ -48,6 +48,10 @@ public static class StageOverviewAssembler
 
         var draws = stage.Draws.Select(draw => MapDraw(draw, stage, entries)).ToArray();
 
+        var bracketPairs = stage.BracketPairs
+            .Select(pair => new StageBracketPairDto(pair.PairKey, pair.SlotAKey, pair.SlotBKey))
+            .ToArray();
+
         return new StageOverviewDto(
             stage.Id.Value,
             stage.CompetitionId.Value,
@@ -55,7 +59,8 @@ public static class StageOverviewAssembler
             stage.Status,
             rounds,
             slots,
-            draws);
+            draws,
+            bracketPairs);
     }
 
     private static StageFixtureDto MapFixture(Fixture fixture) =>

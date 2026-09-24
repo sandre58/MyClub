@@ -30,6 +30,7 @@ import {
 import { drawResolutionKindLabel } from '../i18n/enumLabels';
 import {
   type SchematicConnection,
+  type StageBracketPair,
   type StageDraw,
   type StageOverview,
   type StageRound,
@@ -38,6 +39,7 @@ import {
 import {
   getDrawUiProjection,
   groupPlacementRows,
+  projectSlotDrawResult,
 } from './drawUi';
 import './StagePage.css';
 import './structure.css';
@@ -280,6 +282,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         draws={data.draws}
         slots={data.slots}
         rounds={data.rounds}
+        bracketPairs={data.bracketPairs ?? []}
       />
     </div>
   );
@@ -500,11 +503,13 @@ function DrawSection({
   draws,
   slots,
   rounds,
+  bracketPairs,
 }: {
   stageId: string;
   draws: StageDraw[];
   slots: StageSlot[];
   rounds: StageRound[];
+  bracketPairs: StageBracketPair[];
 }) {
   const { t } = useTranslation('stage');
   return (
@@ -525,6 +530,7 @@ function DrawSection({
                 draw={draw}
                 slots={slots}
                 rounds={rounds}
+                bracketPairs={bracketPairs}
               />
             </li>
           ))}
@@ -539,16 +545,22 @@ function DrawCard({
   draw,
   slots,
   rounds,
+  bracketPairs,
 }: {
   stageId: string;
   draw: StageDraw;
   slots: StageSlot[];
   rounds: StageRound[];
+  bracketPairs: StageBracketPair[];
 }) {
   const { t } = useTranslation('draw');
   const { t: tStructure } = useTranslation('structure');
   // DERIVED UI: computed each render from props (server state), never useState.
   const ui = getDrawUiProjection(draw, slots, rounds);
+  const slotResult =
+    draw.kind === 'Slot' && draw.slotPlacements.length > 0
+      ? projectSlotDrawResult(draw.slotPlacements, bracketPairs, '?')
+      : { confrontations: [], unpaired: [] };
 
   return (
     <article className="draw-card">
@@ -575,26 +587,40 @@ function DrawCard({
 
       {ui.showResults &&
         draw.kind === 'Slot' &&
-        draw.slotPlacements.length > 0 && (
+        (slotResult.confrontations.length > 0 ||
+          slotResult.unpaired.length > 0) && (
           <div className="stack stack--tight">
-            <h4 className="draw-card__results-title">{t('placements')}</h4>
-            <ul className="draw-placement-list">
-              {draw.slotPlacements.map((placement) => (
-                <li
-                  key={`${placement.slotKey}-${placement.entryId}`}
-                  className="draw-placement"
-                >
-                  <code>{placement.slotKey}</code>
-                  <span className="draw-placement__arrow" aria-hidden="true">
-                    →
-                  </span>
-                  <span className="draw-placement__entry">
-                    {placement.displayName?.trim() ||
-                      t('unknownEntry', { ns: 'common' })}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <h4 className="draw-card__results-title">{t('result')}</h4>
+            {slotResult.confrontations.length > 0 ? (
+              <ul className="draw-pairing-list">
+                {slotResult.confrontations.map((row) => (
+                  <li key={row.key} className="draw-pairing">
+                    <span>
+                      <code>{row.sideA.slotKey}</code> {row.sideA.displayName}
+                    </span>
+                    <span className="draw-pairing__vs">{t('vs')}</span>
+                    <span>
+                      <code>{row.sideB.slotKey}</code> {row.sideB.displayName}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {slotResult.unpaired.length > 0 ? (
+              <ul className="draw-placement-list">
+                {slotResult.unpaired.map((side) => (
+                  <li key={side.slotKey} className="draw-placement">
+                    <code>{side.slotKey}</code>
+                    <span className="draw-placement__arrow" aria-hidden="true">
+                      →
+                    </span>
+                    <span className="draw-placement__entry">
+                      {side.displayName}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         )}
 
@@ -746,6 +772,11 @@ function DrawActions({
         confirmDisabled={applyMutation.isPending}
         confirmPending={applyMutation.isPending}
         confirmPendingLabel={t('applying')}
+        footerStatus={
+          applyMutation.isError ? (
+            <MutationError error={applyMutation.error} />
+          ) : null
+        }
         onCancel={() => {
           if (applyMutation.isPending) {
             return;

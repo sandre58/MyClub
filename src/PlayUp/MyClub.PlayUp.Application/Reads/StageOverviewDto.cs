@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Product overview of a stage: structure, slots, fixtures, and draws.
+/// Product overview of a stage: structure, slots, fixtures, draws, and Cup BracketPairs.
 /// </summary>
 /// <param name="Id">Stage identity.</param>
 /// <param name="CompetitionId">Owning competition.</param>
@@ -19,6 +19,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Rounds">Rounds with fixtures.</param>
 /// <param name="Slots">Bracket / destination slots.</param>
 /// <param name="Draws">Draw lifecycle and summarized resolution.</param>
+/// <param name="BracketPairs">Cup structural confrontations (empty for Groups).</param>
 public sealed record StageOverviewDto(
     Guid Id,
     Guid CompetitionId,
@@ -26,7 +27,16 @@ public sealed record StageOverviewDto(
     StageStatus Status,
     IReadOnlyList<StageRoundDto> Rounds,
     IReadOnlyList<StageSlotDto> Slots,
-    IReadOnlyList<StageDrawDto> Draws);
+    IReadOnlyList<StageDrawDto> Draws,
+    IReadOnlyList<StageBracketPairDto> BracketPairs);
+
+/// <summary>
+/// Structural Cup confrontation potential (PairKey P1… = SlotA ↔ SlotB).
+/// </summary>
+/// <param name="PairKey">Persistent pair identity (e.g. P1).</param>
+/// <param name="SlotAKey">First place key.</param>
+/// <param name="SlotBKey">Second place key.</param>
+public sealed record StageBracketPairDto(string PairKey, string SlotAKey, string SlotBKey);
 
 /// <summary>
 /// Round with fixtures for stage overview.

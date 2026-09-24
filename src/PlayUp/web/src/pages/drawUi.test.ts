@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { StageDraw, StageRound, StageSlot } from '../types';
+import type { StageBracketPair, StageDraw, StageRound, StageSlot } from '../types';
 import {
   drawExecutionNumber,
   getDrawUiProjection,
@@ -7,11 +7,13 @@ import {
   pickActiveDraw,
   pickDefaultDrawId,
   projectSlotDrawResult,
+  resolveDrawCreateBlockPresentation,
   resolveDrawCreateGate,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
   resolveTopologyDrawExecutionBadge,
   slotConfrontationRows,
+  slotsHaveOccupants,
   sortDrawsNewestFirst,
 } from './drawUi';
 
@@ -53,117 +55,85 @@ describe('groupPlacementRows', () => {
 describe('slotConfrontationRows', () => {
   const placements = [
     {
-      slotKey: 'R16-1-A',
+      slotKey: 'S1',
       entryId: 'e1',
       displayName: 'Belgium',
       logoMediaId: 'logo-be',
     },
     {
-      slotKey: 'R16-1-B',
+      slotKey: 'S2',
       entryId: 'e2',
       displayName: 'Poland',
     },
     {
-      slotKey: 'R16-2-A',
+      slotKey: 'S3',
       entryId: 'e3',
       displayName: 'Turkey',
     },
     {
-      slotKey: 'R16-2-B',
+      slotKey: 'S4',
       entryId: 'e4',
       displayName: 'Denmark',
     },
   ];
 
-  it('pairs from fixture slot keys without exposing match numbers', () => {
-    const rounds: StageRound[] = [
-      {
-        id: 'r1',
-        name: 'R16',
-        fixtures: [
-          {
-            id: 'f2',
-            slotAKey: 'R16-2-A',
-            slotBKey: 'R16-2-B',
-            attachments: [],
-          },
-          {
-            id: 'f1',
-            slotAKey: 'R16-1-A',
-            slotBKey: 'R16-1-B',
-            attachments: [],
-          },
-        ],
-      },
-    ];
+  const pairs: StageBracketPair[] = [
+    { pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' },
+    { pairKey: 'P2', slotAKey: 'S3', slotBKey: 'S4' },
+  ];
 
-    const rows = slotConfrontationRows(placements, rounds, '?');
+  it('pairs from BracketPairs in structural order without match numbers', () => {
+    const rows = slotConfrontationRows(placements, pairs, '?');
 
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({
-      sideA: { displayName: 'Turkey', entryId: 'e3' },
-      sideB: { displayName: 'Denmark', entryId: 'e4' },
-    });
-    expect(rows[1]).toMatchObject({
+      key: 'P1',
       sideA: {
         displayName: 'Belgium',
         logoMediaId: 'logo-be',
+        slotKey: 'S1',
       },
-      sideB: { displayName: 'Poland' },
+      sideB: { displayName: 'Poland', slotKey: 'S2' },
+    });
+    expect(rows[1]).toMatchObject({
+      key: 'P2',
+      sideA: { displayName: 'Turkey', entryId: 'e3' },
+      sideB: { displayName: 'Denmark', entryId: 'e4' },
     });
   });
 
-  it('falls back to *-A/*-B stems when fixtures lack slot keys', () => {
-    const rows = slotConfrontationRows(placements, [], '?');
-
-    expect(rows.map((row) => row.key)).toEqual([
-      'R16-1-A|R16-1-B',
-      'R16-2-A|R16-2-B',
-    ]);
-  });
-
-  it('keeps Cup S{n} placements as unpaired flat rows (no *-A/*-B)', () => {
+  it('keeps placements without a covering BracketPair as unpaired', () => {
     const cupPlacements = [
       { slotKey: 'S2', entryId: 'e2', displayName: 'Poland' },
       { slotKey: 'S1', entryId: 'e1', displayName: 'Belgium' },
       { slotKey: 'S3', entryId: 'e3', displayName: 'Turkey' },
     ];
 
-    const result = projectSlotDrawResult(cupPlacements, [], '?');
+    const result = projectSlotDrawResult(
+      cupPlacements,
+      [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+      '?',
+    );
 
-    expect(result.confrontations).toEqual([]);
-    expect(result.unpaired.map((side) => side.slotKey)).toEqual([
-      'S1',
-      'S2',
-      'S3',
-    ]);
-    expect(result.unpaired[0]?.displayName).toBe('Belgium');
+    expect(result.confrontations).toHaveLength(1);
+    expect(result.confrontations[0]?.key).toBe('P1');
+    expect(result.unpaired.map((side) => side.slotKey)).toEqual(['S3']);
+    expect(result.unpaired[0]?.displayName).toBe('Turkey');
   });
 
-  it('mixes fixture confrontations with leftover unpaired keys', () => {
-    const mixed = [
-      ...placements,
-      { slotKey: 'S1', entryId: 'e9', displayName: 'Solo' },
-    ];
-    const rounds: StageRound[] = [
-      {
-        id: 'r1',
-        name: 'R16',
-        fixtures: [
-          {
-            id: 'f1',
-            slotAKey: 'R16-1-A',
-            slotBKey: 'R16-1-B',
-            attachments: [],
-          },
-        ],
-      },
+  it('does not invent pairs from *-A/*-B stems or empty BracketPairs', () => {
+    const legacy = [
+      { slotKey: 'R16-1-A', entryId: 'e1', displayName: 'Belgium' },
+      { slotKey: 'R16-1-B', entryId: 'e2', displayName: 'Poland' },
     ];
 
-    const result = projectSlotDrawResult(mixed, rounds, '?');
+    const result = projectSlotDrawResult(legacy, [], '?');
 
-    expect(result.confrontations).toHaveLength(2); // fixture + leftover R16-2 stem
-    expect(result.unpaired.map((s) => s.slotKey)).toEqual(['S1']);
+    expect(result.confrontations).toEqual([]);
+    expect(result.unpaired.map((s) => s.slotKey)).toEqual([
+      'R16-1-A',
+      'R16-1-B',
+    ]);
   });
 });
 
@@ -339,7 +309,7 @@ describe('resolveDrawDetailGuidance', () => {
     });
   });
 
-  it('uses danger alert for NoSolution', () => {
+  it('uses warning alert for NoSolution', () => {
     const ui = getDrawUiProjection(
       draw({
         id: 'no-sol',
@@ -349,9 +319,39 @@ describe('resolveDrawDetailGuidance', () => {
     );
     expect(resolveDrawDetailGuidance(ui)).toEqual({
       kind: 'alert',
-      tone: 'danger',
+      tone: 'warning',
       messageKey: 'noSolution',
     });
+  });
+
+  it('projects Draft+NotResolved as generation interrupted with body', () => {
+    const ui = getDrawUiProjection(
+      draw({
+        id: 'orphan',
+        status: 'Draft',
+        resolutionState: 'NotResolved',
+      }),
+    );
+    expect(ui.messageKey).toBe('generationInterrupted');
+    expect(resolveDrawDetailGuidance(ui)).toEqual({
+      kind: 'alert',
+      tone: 'warning',
+      messageKey: 'generationInterrupted',
+      bodyMessageKey: 'generationInterruptedBody',
+    });
+  });
+
+  it('omits Cancelled phrase (badge + EmptyState when no result)', () => {
+    const ui = getDrawUiProjection(
+      draw({
+        id: 'cancelled-empty',
+        status: 'Cancelled',
+        resolutionState: 'NotResolved',
+      }),
+    );
+    expect(ui.messageKey).toBe('cancelled');
+    expect(ui.showResults).toBe(false);
+    expect(resolveDrawDetailGuidance(ui)).toBeNull();
   });
 
   it('omits draftResolved phrase (tooltip on Résolu chip instead)', () => {
@@ -367,7 +367,7 @@ describe('resolveDrawDetailGuidance', () => {
 });
 
 describe('resolveDrawCreateGate', () => {
-  it('blocks empty Slot pools', () => {
+  it('blocks empty Slot pools as emptyPool (not countMismatch)', () => {
     expect(
       resolveDrawCreateGate({
         kind: 'Slot',
@@ -376,6 +376,7 @@ describe('resolveDrawCreateGate', () => {
         isRootComposition: true,
         numberOfPots: null,
         groupCount: 0,
+        slotCount: 16,
       }),
     ).toEqual({ ok: false, reason: 'emptyPool' });
 
@@ -387,8 +388,22 @@ describe('resolveDrawCreateGate', () => {
         isRootComposition: false,
         numberOfPots: null,
         groupCount: 0,
+        slotCount: 16,
       }),
     ).toEqual({ ok: false, reason: 'emptyPoolUpstream' });
+  });
+
+  it('requires composition == Places for Slot', () => {
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Slot',
+        hasActiveDraw: false,
+        compositionEntryCount: 4,
+        numberOfPots: null,
+        groupCount: 0,
+        slotCount: 4,
+      }),
+    ).toEqual({ ok: true });
 
     expect(
       resolveDrawCreateGate({
@@ -397,8 +412,9 @@ describe('resolveDrawCreateGate', () => {
         compositionEntryCount: 4,
         numberOfPots: null,
         groupCount: 0,
+        slotCount: 16,
       }),
-    ).toEqual({ ok: true });
+    ).toEqual({ ok: false, reason: 'countMismatch' });
   });
 
   it('requires pots × groups for Group kind', () => {
@@ -441,8 +457,50 @@ describe('resolveDrawCreateGate', () => {
         compositionEntryCount: 4,
         numberOfPots: null,
         groupCount: 0,
+        slotCount: 4,
       }),
     ).toEqual({ ok: false, reason: 'active' });
+  });
+
+  it('does not treat vacant Qual/Prog feeds as occupants', () => {
+    expect(
+      slotsHaveOccupants([
+        { entryId: null },
+        { entryId: undefined },
+        { entryId: null },
+      ]),
+    ).toBe(false);
+
+    expect(
+      resolveDrawCreateGate({
+        kind: 'Slot',
+        hasActiveDraw: false,
+        compositionEntryCount: 16,
+        numberOfPots: null,
+        groupCount: 0,
+        slotCount: 16,
+        hasOccupiedSlots: slotsHaveOccupants([
+          { entryId: null },
+          { entryId: null },
+        ]),
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it('maps create-block presentation tones', () => {
+    expect(resolveDrawCreateBlockPresentation('active')).toEqual({
+      kind: 'quiet',
+    });
+    expect(resolveDrawCreateBlockPresentation('emptyPool')).toEqual({
+      kind: 'inline',
+      tone: 'info',
+      action: false,
+    });
+    expect(resolveDrawCreateBlockPresentation('occupiedSlots')).toEqual({
+      kind: 'inline',
+      tone: 'warning',
+      action: true,
+    });
   });
 });
 

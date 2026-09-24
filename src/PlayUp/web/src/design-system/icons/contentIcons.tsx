@@ -28,6 +28,7 @@ import {
   SquareOff,
   Trash2,
   Trophy,
+  Unlock,
   UsersRound,
   Volleyball,
   X, Handshake,
@@ -182,6 +183,11 @@ export function PencilIcon({ size, ...props }: ContentIconProps) {
 /** Suppression — corbeille (préparation). */
 export function TrashIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Trash2} size={size} {...props} />;
+}
+
+/** Libérer des placements / débloquer une grille — pas une suppression. */
+export function UnlockIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Unlock} size={size} {...props} />;
 }
 
 /** Retrait d’une équipe en saison — bouclier moins (pas une personne). */

@@ -301,6 +301,9 @@ function CreateCompetitionDialog({
           </button>
         </>
       }
+      footerStatus={
+        mutation.isError ? <MutationError error={mutation.error} /> : null
+      }
     >
       <form
         id={formId}
@@ -332,8 +335,6 @@ function CreateCompetitionDialog({
             allowClear
           />
         </Field>
-
-        {mutation.isError && <MutationError error={mutation.error} />}
       </form>
     </Dialog>
   );

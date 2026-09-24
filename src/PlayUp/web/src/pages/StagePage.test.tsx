@@ -48,6 +48,7 @@ function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
     rounds: [],
     slots: [],
     draws: [],
+    bracketPairs: [],
     ...overrides,
   };
 }
@@ -150,7 +151,7 @@ describe('isSlotDrawApplied', () => {
 });
 
 describe('getDrawUiProjection', () => {
-  it('describes draft + not resolved without results', () => {
+  it('describes draft + not resolved as generation interrupted', () => {
     const ui = getDrawUiProjection(
       slotDraw({
         status: 'Draft',
@@ -159,7 +160,7 @@ describe('getDrawUiProjection', () => {
       }),
       [],
     );
-    expect(ui.messageKey).toBe('draftNotResolved');
+    expect(ui.messageKey).toBe('generationInterrupted');
     expect(ui.showResults).toBe(false);
   });
 
@@ -492,7 +493,7 @@ describe('StagePage draws', () => {
       screen.getByRole('heading', { name: /Tirage Emplacement/i }),
     ).toBeInTheDocument();
     expect(screen.getByText('Résolu')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Placements' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Résultat' })).toBeInTheDocument();
     expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
     expect(
@@ -520,7 +521,7 @@ describe('StagePage draws', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Tirage en préparation — pas encore de résultat.'),
+        screen.getByText('Génération interrompue'),
       ).toBeInTheDocument();
     });
     expect(screen.queryByText('Placements')).not.toBeInTheDocument();
@@ -578,7 +579,7 @@ describe('StagePage draws', () => {
 
     expect(
       await screen.findByText(
-        'Ce tirage a été annulé. Un nouveau tirage est nécessaire pour recommencer.',
+        'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
       ),
     ).toBeInTheDocument();
     expect(screen.getByText('Annulé')).toBeInTheDocument();
@@ -646,7 +647,7 @@ describe('StagePage draws', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Placements' }),
+      screen.getByRole('heading', { name: 'Résultat' }),
     ).toBeInTheDocument();
     expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
@@ -867,7 +868,9 @@ describe('StagePage draws', () => {
     );
     await confirmApplyInDialog(user);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Apply blocked');
+    expect(
+      await screen.findAllByText('Apply blocked'),
+    ).not.toHaveLength(0);
   });
 
   it('cancelling Apply confirmation does not call applyDraw', async () => {

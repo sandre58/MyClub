@@ -26,6 +26,11 @@ export type ConfirmDialogProps = {
   confirmPending?: boolean;
   /** Label while pending. Defaults to `confirmLabel`. */
   confirmPendingLabel?: string;
+  /**
+   * Window-level status (mutation error / warning) — left of footer actions.
+   * Same slot as Dialog `footerStatus`; do not put MutationError in `message`.
+   */
+  footerStatus?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -49,6 +54,7 @@ export function ConfirmDialog({
   confirmDisabled = false,
   confirmPending = false,
   confirmPendingLabel,
+  footerStatus,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -66,6 +72,7 @@ export function ConfirmDialog({
       size="sm"
       closeLabel={closeLabel}
       closeDisabled={busy}
+      footerStatus={footerStatus}
       footer={
         <>
           <button

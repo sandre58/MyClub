@@ -814,6 +814,9 @@ export function RegulationEditorDialog({
         closeLabel={tCommon('close')}
         confirmPending={mutation.isPending}
         confirmPendingLabel={t('editor.saving')}
+        footerStatus={
+          mutation.isError ? <MutationError error={mutation.error} /> : null
+        }
         onCancel={() => {
           setConfirmOpen(false);
           setPendingPreview(null);

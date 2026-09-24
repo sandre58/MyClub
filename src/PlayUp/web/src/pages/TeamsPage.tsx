@@ -651,6 +651,13 @@ function TeamsView({
         confirmPendingLabel={
           pendingRemove?.verb === 'withdraw' ? t('withdrawing') : t('deleting')
         }
+        footerStatus={
+          deleteMutation.isError || withdrawMutation.isError ? (
+            <MutationError
+              error={deleteMutation.error ?? withdrawMutation.error}
+            />
+          ) : null
+        }
         onCancel={() => {
           if (removePending) {
             return;
@@ -803,6 +810,11 @@ function AddEntryDialog({
             </button>
           </>
         }
+        footerStatus={
+          addMutation.isError ? (
+            <MutationError error={addMutation.error} />
+          ) : null
+        }
       >
         <form
           id={formId}
@@ -817,7 +829,6 @@ function AddEntryDialog({
             addMutation.mutate();
           }}
         >
-          {addMutation.isError && <MutationError error={addMutation.error} />}
           <IdentityFields
             name={displayName}
             shortName={shortName}
@@ -1012,6 +1023,11 @@ function IdentityDialog({
             </button>
           </>
         }
+        footerStatus={
+          saveMutation.isError ? (
+            <MutationError error={saveMutation.error} />
+          ) : null
+        }
       >
         <form
           id={formId}
@@ -1026,7 +1042,6 @@ function IdentityDialog({
             saveMutation.mutate();
           }}
         >
-          {saveMutation.isError && <MutationError error={saveMutation.error} />}
           <IdentityFields
             name={name}
             shortName={shortName}
