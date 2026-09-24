@@ -1463,11 +1463,12 @@ export interface SchematicCase {
 }
 
 export interface SchematicConnection {
-  fixtureId: string;
+  fixtureId?: string | null;
   roundOrder: number;
   slotAKey?: string | null;
   slotBKey?: string | null;
   matchNumber: number;
+  pairKey?: string | null;
 }
 
 /** Groups A1 — feed at Groupe grain (under group title), never Place k. */

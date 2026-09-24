@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 /// <param name="CreatedMatches">Newly created matches.</param>
 /// <param name="AttachedMatchIds">All match ids attached to materialized confrontations.</param>
-/// <param name="AlreadyComplete">True when every requested pair was already complete.</param>
+/// <param name="AlreadyComplete">True when omit/empty selected all pairs that already have fixtures, or every target fixture already had complete matching legs.</param>
 public sealed record MaterializeCupFromOccupiedSlotsResult(
     IReadOnlyList<Match> CreatedMatches,
     IReadOnlyList<MatchId> AttachedMatchIds,

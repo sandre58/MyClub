@@ -38,11 +38,31 @@ public sealed class StageSchematicAssemblerTests
         schematic.Cases.Should().OnlyContain(c => c.Entry == null && c.Assignment == null);
         schematic.Cases.Should().OnlyContain(c => c.FormPosition.Kind == StageSchematicAssembler.FormKindCupSlot);
 
-        // A1: topology address even without fixtures.
-        schematic.Cases.Single(c => c.FormPosition.SlotKey == "A").FormPosition.Side.Should().Be("A");
-        schematic.Cases.Single(c => c.FormPosition.SlotKey == "B").FormPosition.Side.Should().Be("B");
-        schematic.Cases.Should().OnlyContain(c => c.FormPosition.RoundName == "R1");
+        // No BracketPairs → no invented Side / PairOrdinal from slot adjacency.
+        schematic.Cases.Should().OnlyContain(c => c.FormPosition.Side == null && c.FormPosition.PairOrdinal == null);
         schematic.Connections.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Cup_bracket_pairs_without_fixtures_expose_structural_connections()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("S1");
+        stage.AddSlot("S2");
+        stage.AddSlot("S3");
+        stage.AddSlot("S4");
+        stage.SeedEntryRoundBracketPairs();
+
+        var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage]);
+
+        schematic.Connections.Should().HaveCount(2);
+        schematic.Connections.Should().OnlyContain(c => c.FixtureId == null && c.MatchNumber == 0);
+        schematic.Connections.Select(c => c.PairKey).Should().BeEquivalentTo("P1", "P2");
+        schematic.Cases.Single(c => c.FormPosition.SlotKey == "S1").FormPosition.Side.Should().Be("A");
+        schematic.Cases.Single(c => c.FormPosition.SlotKey == "S2").FormPosition.Side.Should().Be("B");
+        schematic.Cases.Single(c => c.FormPosition.SlotKey == "S1").FormPosition.PairOrdinal.Should().Be(1);
     }
 
     [Fact]
@@ -54,9 +74,10 @@ public sealed class StageSchematicAssemblerTests
         stage.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         stage.AddSlot("SF1-A");
         stage.AddSlot("SF1-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "SF1-A", "SF1-B")]);
         stage.ReplaceCompositionEntries([alpha.Id], _clock);
         stage.AssignEntryToSlot("SF1-A", alpha.Id);
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", "SF1-B");
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", "SF1-B", "P1");
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage]);
 
@@ -71,6 +92,7 @@ public sealed class StageSchematicAssemblerTests
         schematic.Connections[0].MatchNumber.Should().Be(1);
         schematic.Connections[0].SlotAKey.Should().Be("SF1-A");
         schematic.Connections[0].SlotBKey.Should().Be("SF1-B");
+        schematic.Connections[0].PairKey.Should().Be("P1");
 
         // U4: single-pair round → RoundName + Side, no PairOrdinal (Finale-style).
         placed.FormPosition.RoundName.Should().Be("SF");
@@ -81,7 +103,7 @@ public sealed class StageSchematicAssemblerTests
     }
 
     [Fact]
-    public void Cup_slots_without_fixture_binding_get_topology_place_address()
+    public void Cup_slots_without_bracket_pairs_do_not_invent_place_addresses()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
@@ -91,25 +113,15 @@ public sealed class StageSchematicAssemblerTests
         stage.AddSlot("SF-2-A");
         stage.AddSlot("SF-2-B");
 
-        // Unbound fixtures (Flux Draft style) — address must still come from topology.
-        stage.AddFixture(stage.Rounds[0].Id, _clock);
-        stage.AddFixture(stage.Rounds[0].Id, _clock);
-
         var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage]);
 
-        var sf1A = schematic.Cases.Single(c => c.FormPosition.SlotKey == "SF-1-A");
-        sf1A.FormPosition.RoundName.Should().Be("Demi-finales");
-        sf1A.FormPosition.PairOrdinal.Should().Be(1);
-        sf1A.FormPosition.Side.Should().Be("A");
-        sf1A.FormPosition.FixtureId.Should().BeNull();
-
-        var sf2B = schematic.Cases.Single(c => c.FormPosition.SlotKey == "SF-2-B");
-        sf2B.FormPosition.PairOrdinal.Should().Be(2);
-        sf2B.FormPosition.Side.Should().Be("B");
+        schematic.Connections.Should().BeEmpty();
+        schematic.Cases.Should().OnlyContain(c =>
+            c.FormPosition.Side == null && c.FormPosition.PairOrdinal == null);
     }
 
     [Fact]
-    public void Cup_multi_pair_round_exposes_pair_ordinal_on_place_address()
+    public void Cup_multi_pair_round_exposes_pair_ordinal_from_bracket_pairs()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
@@ -118,8 +130,13 @@ public sealed class StageSchematicAssemblerTests
         stage.AddSlot("SF1-B");
         stage.AddSlot("SF2-A");
         stage.AddSlot("SF2-B");
-        stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", "SF1-B");
-        stage.AddFixture(stage.Rounds[0].Id, _clock, "SF2-A", "SF2-B");
+        stage.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "SF1-A", "SF1-B"),
+            new BracketPair("P2", "SF2-A", "SF2-B")
+        ]);
+        stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", "SF1-B", "P1");
+        stage.AddFixture(stage.Rounds[0].Id, _clock, "SF2-A", "SF2-B", "P2");
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, [stage]);
 
@@ -132,6 +149,8 @@ public sealed class StageSchematicAssemblerTests
         var sf2B = schematic.Cases.Single(c => c.FormPosition.SlotKey == "SF2-B");
         sf2B.FormPosition.PairOrdinal.Should().Be(2);
         sf2B.FormPosition.Side.Should().Be("B");
+        schematic.Connections.Should().HaveCount(2);
+        schematic.Connections.Should().OnlyContain(c => c.PairKey != null && c.FixtureId != null);
     }
 
     [Fact]

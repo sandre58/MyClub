@@ -7,15 +7,11 @@
 namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
-/// HTTP body for materializing Cup Fixtures/Matches from occupied bracket slots.
+/// HTTP body for materializing Cup Fixtures/Matches from occupied bracket pairs.
 /// </summary>
-/// <param name="Pairs">Explicit SlotA/SlotB confrontations (Home/Away convention).</param>
+/// <param name="PairKeys">
+/// Optional explicit <c>BracketPair</c> keys (e.g. P1, P3).
+/// Omit / null / empty → all eligible pairs on the stage.
+/// </param>
 public sealed record MaterializeCupFromOccupiedSlotsRequest(
-    IReadOnlyList<CupSlotPairRequest> Pairs);
-
-/// <summary>
-/// One bracket confrontation to materialize.
-/// </summary>
-/// <param name="SlotAKey">Home-side slot key.</param>
-/// <param name="SlotBKey">Away-side slot key.</param>
-public sealed record CupSlotPairRequest(string SlotAKey, string SlotBKey);
+    IReadOnlyList<string>? PairKeys = null);

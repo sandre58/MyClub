@@ -1448,17 +1448,17 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
-    /// Materializes Cup Fixtures/Matches from occupied bracket slots (Lot C2).
+    /// Materializes Cup Fixtures/Matches from occupied bracket pairs (Lot C2).
     /// </summary>
     public async Task<MaterializeCupFromOccupiedSlotsResult> MaterializeCupFromOccupiedSlotsAsync(
         StageId stageId,
-        IReadOnlyList<CupSlotPair> slotPairs,
+        IReadOnlyList<string>? pairKeys,
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
         var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, slotPairs, existing, clock);
+        var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, pairKeys, existing, clock);
         foreach (var created in result.CreatedMatches)
         {
             matches.Add(created);

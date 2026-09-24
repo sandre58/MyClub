@@ -75,68 +75,10 @@ public static class StageSchematicAssembler
         var feedBySlot = ResolveFeedsTolerant(stage, competitionStages);
         var addressBySlot = new Dictionary<string, CupPlaceAddress>(StringComparer.Ordinal);
 
-        // A1: topology first (stable Place ordinals). Fixture binding only attaches FixtureId.
+        // A1: topology from BracketPairs when present; else legacy adjacent layout.
         FillTopologyCupAddresses(stage, addressBySlot);
 
-        var connections = new List<SchematicConnectionDto>();
-        for (var roundOrder = 0; roundOrder < stage.Rounds.Count; roundOrder++)
-        {
-            var round = stage.Rounds[roundOrder];
-            var fixtures = OrderedFixtures(round);
-
-            // Stable Match #n: EF collection order is not deterministic across loads.
-            for (var fixtureIndex = 0; fixtureIndex < fixtures.Count; fixtureIndex++)
-            {
-                var fixture = fixtures[fixtureIndex];
-                var pairOrdinal = pairOrdinalOrNull(fixtureIndex);
-                if (fixture.SlotAKey is not null && fixture.SlotBKey is not null)
-                {
-                    connections.Add(
-                        new SchematicConnectionDto(
-                            fixture.Id.Value,
-                            roundOrder,
-                            fixture.SlotAKey,
-                            fixture.SlotBKey,
-                            fixtureIndex + 1));
-                    AttachFixtureToCupAddress(
-                        addressBySlot,
-                        fixture.SlotAKey,
-                        fixture.Id.Value,
-                        roundOrder,
-                        round.Name,
-                        pairOrdinal,
-                        "A");
-                    AttachFixtureToCupAddress(
-                        addressBySlot,
-                        fixture.SlotBKey,
-                        fixture.Id.Value,
-                        roundOrder,
-                        round.Name,
-                        pairOrdinal,
-                        "B");
-                    continue;
-                }
-
-                // Unbound fixture: expose a connection only when a real match exists
-                // (no Place cases invented). Empty unbound fixtures stay silent.
-                if (fixture.MatchIds.Count > 0)
-                {
-                    connections.Add(
-                        new SchematicConnectionDto(
-                            fixture.Id.Value,
-                            roundOrder,
-                            SlotAKey: null,
-                            SlotBKey: null,
-                            fixtureIndex + 1));
-                }
-            }
-
-            continue;
-
-            // U4: omit pair ordinal when the round has a single fixture (e.g. Finale).
-            int? pairOrdinalOrNull(int fixtureIndex) =>
-                fixtures.Count > 1 ? fixtureIndex + 1 : null;
-        }
+        var connections = BuildCupConnections(stage, addressBySlot);
 
         var cases = stage.Slots
             .Select(slot =>
@@ -207,8 +149,7 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// U4 A1 — derive Place address from form topology when fixtures do not bind slots yet.
-    /// Matches SPA bracket column layout (classic KO tree or single-round adjacent pairs).
+    /// U4 A1 — Place addresses from BracketPairs when present; no invented adjacent pairs.
     /// </summary>
     private static void FillTopologyCupAddresses(
         Stage stage,
@@ -219,70 +160,146 @@ public static class StageSchematicAssembler
             return;
         }
 
-        var keys = stage.Slots.Select(slot => slot.SlotKey).ToArray();
-        var roundCount = stage.Rounds.Count;
-
-        if (roundCount == 1)
+        if (stage.BracketPairs.Count > 0)
         {
-            FillAdjacentPairsInRound(stage, roundOrder: 0, keys, offset: 0, length: keys.Length, addressBySlot);
-            return;
+            FillAddressesFromBracketPairs(stage, addressBySlot);
         }
 
-        var firstRoundSlots = 1 << roundCount;
-        var allRoundsSlots = (2 * firstRoundSlots) - 2;
-
-        if (keys.Length == allRoundsSlots)
-        {
-            var offset = 0;
-            var size = firstRoundSlots;
-            for (var roundOrder = 0; roundOrder < roundCount; roundOrder++)
-            {
-                FillAdjacentPairsInRound(stage, roundOrder, keys, offset, size, addressBySlot);
-                offset += size;
-                size /= 2;
-            }
-
-            return;
-        }
-
-        if (keys.Length == firstRoundSlots)
-        {
-            FillAdjacentPairsInRound(stage, roundOrder: 0, keys, offset: 0, length: keys.Length, addressBySlot);
-            return;
-        }
-
-        // Non-classic slot counts: still label as adjacent pairs on round 0.
-        FillAdjacentPairsInRound(stage, roundOrder: 0, keys, offset: 0, length: keys.Length, addressBySlot);
+        // No BracketPairs → no Side / PairOrdinal invention from slot order.
     }
 
-    private static void FillAdjacentPairsInRound(
+    private static void FillAddressesFromBracketPairs(
         Stage stage,
-        int roundOrder,
-        string[] keys,
-        int offset,
-        int length,
         Dictionary<string, CupPlaceAddress> addressBySlot)
     {
-        if (roundOrder < 0 || roundOrder >= stage.Rounds.Count || length < 2)
+        var roundOrder = 0;
+        var roundName = stage.Rounds[0].Name;
+        var ordered = stage.BracketPairs
+            .OrderBy(pair => pair.PairKey, StringComparer.Ordinal)
+            .ToArray();
+        var multi = ordered.Length > 1;
+        for (var i = 0; i < ordered.Length; i++)
         {
-            return;
+            var pair = ordered[i];
+            int? pairOrdinal = multi ? i + 1 : null;
+            RememberCupAddress(
+                addressBySlot,
+                pair.SlotAKey,
+                new CupPlaceAddress(roundOrder, roundName, pairOrdinal, "A", FixtureId: null));
+            RememberCupAddress(
+                addressBySlot,
+                pair.SlotBKey,
+                new CupPlaceAddress(roundOrder, roundName, pairOrdinal, "B", FixtureId: null));
+        }
+    }
+
+    /// <summary>
+    /// Connections = BracketPairs (structure) with optional Fixture overlay; legacy unbound fixtures kept.
+    /// </summary>
+    private static List<SchematicConnectionDto> BuildCupConnections(
+        Stage stage,
+        Dictionary<string, CupPlaceAddress> addressBySlot)
+    {
+        var connections = new List<SchematicConnectionDto>();
+
+        if (stage.BracketPairs.Count > 0)
+        {
+            var orderedPairs = stage.BracketPairs
+                .OrderBy(pair => pair.PairKey, StringComparer.Ordinal)
+                .ToArray();
+            for (var i = 0; i < orderedPairs.Length; i++)
+            {
+                var pair = orderedPairs[i];
+                var fixture = stage.FindFixtureByBracketPairKey(pair.PairKey);
+                var matchNumber = 0;
+                if (fixture is not null)
+                {
+                    matchNumber = i + 1;
+                    AttachFixtureToCupAddress(
+                        addressBySlot,
+                        pair.SlotAKey,
+                        fixture.Id.Value,
+                        roundOrder: 0,
+                        stage.Rounds[0].Name,
+                        multiPairOrdinal(orderedPairs.Length, i),
+                        "A");
+                    AttachFixtureToCupAddress(
+                        addressBySlot,
+                        pair.SlotBKey,
+                        fixture.Id.Value,
+                        roundOrder: 0,
+                        stage.Rounds[0].Name,
+                        multiPairOrdinal(orderedPairs.Length, i),
+                        "B");
+                }
+
+                connections.Add(
+                    new SchematicConnectionDto(
+                        fixture?.Id.Value,
+                        RoundOrder: 0,
+                        pair.SlotAKey,
+                        pair.SlotBKey,
+                        matchNumber,
+                        pair.PairKey));
+            }
+
+            return connections;
         }
 
-        var round = stage.Rounds[roundOrder];
-        var pairCount = length / 2;
-        for (var pairIndex = 0; pairIndex < pairCount; pairIndex++)
+        // Legacy: no BracketPairs yet — fixture wires only (no invented structural pairs).
+        for (var roundOrder = 0; roundOrder < stage.Rounds.Count; roundOrder++)
         {
-            var i = offset + (pairIndex * 2);
-            int? pairOrdinal = pairCount > 1 ? pairIndex + 1 : null;
-            RememberCupAddress(
-                addressBySlot,
-                keys[i],
-                new CupPlaceAddress(roundOrder, round.Name, pairOrdinal, "A", FixtureId: null));
-            RememberCupAddress(
-                addressBySlot,
-                keys[i + 1],
-                new CupPlaceAddress(roundOrder, round.Name, pairOrdinal, "B", FixtureId: null));
+            var round = stage.Rounds[roundOrder];
+            var fixtures = OrderedFixtures(round);
+            for (var fixtureIndex = 0; fixtureIndex < fixtures.Count; fixtureIndex++)
+            {
+                var fixture = fixtures[fixtureIndex];
+                if (fixture.SlotAKey is not null && fixture.SlotBKey is not null)
+                {
+                    connections.Add(
+                        new SchematicConnectionDto(
+                            fixture.Id.Value,
+                            roundOrder,
+                            fixture.SlotAKey,
+                            fixture.SlotBKey,
+                            fixtureIndex + 1,
+                            fixture.BracketPairKey));
+                    AttachFixtureToCupAddress(
+                        addressBySlot,
+                        fixture.SlotAKey,
+                        fixture.Id.Value,
+                        roundOrder,
+                        round.Name,
+                        fixtures.Count > 1 ? fixtureIndex + 1 : null,
+                        "A");
+                    AttachFixtureToCupAddress(
+                        addressBySlot,
+                        fixture.SlotBKey,
+                        fixture.Id.Value,
+                        roundOrder,
+                        round.Name,
+                        fixtures.Count > 1 ? fixtureIndex + 1 : null,
+                        "B");
+                    continue;
+                }
+
+                if (fixture.MatchIds.Count > 0)
+                {
+                    connections.Add(
+                        new SchematicConnectionDto(
+                            fixture.Id.Value,
+                            roundOrder,
+                            SlotAKey: null,
+                            SlotBKey: null,
+                            fixtureIndex + 1));
+                }
+            }
         }
+
+        return connections;
+
+        static int? multiPairOrdinal(int pairCount, int index) =>
+            pairCount > 1 ? index + 1 : null;
     }
 
     /// <summary>

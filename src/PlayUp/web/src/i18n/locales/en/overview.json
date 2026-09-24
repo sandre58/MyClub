@@ -72,7 +72,7 @@
   "progression": {
     "heading": "Next action",
     "codes": {
-      "MaterializeMatches": "Create fixtures / matches to progress (league) or the fixture skeleton (cup).",
+      "MaterializeMatches": "Create fixtures / matches to progress (league / groups).",
       "MaterializeFromOccupiedSlots": "Slots are occupied — open the stage to configure fixtures (SlotA ↔ SlotB).",
       "GenerateNextRound": "Generate the next Swiss round (pairings + matches) — after current round results if needed.",
       "PublishDraw": "Publish the draw to lock the composition.",

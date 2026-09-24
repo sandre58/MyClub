@@ -140,6 +140,7 @@ public sealed class StageOverviewAssemblerTests
         stage.AddSlot("SF1-B");
         stage.AddSlot("SF2-A");
         stage.AddSlot("SF2-B");
+        stage.SeedEntryRoundBracketPairs();
         stage.ApplyResolvedEntry("SF1-A", a.Id, _clock);
         stage.ApplyResolvedEntry("SF1-B", b.Id, _clock);
         stage.ApplyResolvedEntry("SF2-A", c.Id, _clock);
@@ -148,7 +149,7 @@ public sealed class StageOverviewAssemblerTests
         MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
-            [new CupSlotPair("SF1-A", "SF1-B")],
+            ["P1"],
             [],
             _clock);
 

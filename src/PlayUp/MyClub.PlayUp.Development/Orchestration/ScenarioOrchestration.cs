@@ -295,7 +295,7 @@ internal static class ScenarioOrchestration
         }
 
         RecordAndApplySlotDraw(context, stage, entries, slotKeys);
-        return MaterializeFromSlots(context, competition, stage, AdjacentPairs(slotKeys));
+        return MaterializeFromSlots(context, competition, stage, pairKeys: null);
     }
 
     /// <summary>
@@ -901,6 +901,8 @@ internal static class ScenarioOrchestration
             semi.AddSlot(key);
         }
 
+        semi.SeedEntryRoundBracketPairs();
+
         competition.AddStage(semi.Id, context.Clock);
         context.Stages.Add(semi);
 
@@ -1280,6 +1282,8 @@ internal static class ScenarioOrchestration
             semi.AddSlot(key);
         }
 
+        semi.SeedEntryRoundBracketPairs();
+
         competition.AddStage(semi.Id, context.Clock);
         context.Stages.Add(semi);
 
@@ -1309,8 +1313,7 @@ internal static class ScenarioOrchestration
 
         quarter.Complete(context.Clock);
 
-        var sfPairs = AdjacentPairs(destinationKeys);
-        var sfMatches = MaterializeFromSlots(context, competition, semi, sfPairs);
+        var sfMatches = MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
         PrepareAndStartStage(context, semi);
         PlayMatches(context, competition, sfMatches, count: Math.Max(1, sfMatches.Count / 2));
 
@@ -1448,7 +1451,7 @@ internal static class ScenarioOrchestration
                 groupOrder),
             context.Clock);
 
-        var barragesFixture = barrages.AddFixture(barrages.Rounds[0].Id, context.Clock);
+        var barragesFixture = AddCupRoundFixture(barrages, barrages.Rounds[0].Id, context.Clock);
         barrages.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -1580,6 +1583,8 @@ internal static class ScenarioOrchestration
             semi.AddSlot(key);
         }
 
+        semi.SeedEntryRoundBracketPairs();
+
         competition.AddStage(semi.Id, context.Clock);
         context.Stages.Add(semi);
 
@@ -1703,7 +1708,7 @@ internal static class ScenarioOrchestration
             context,
             competition,
             roundOf16,
-            AdjacentPairs(r16SlotKeys),
+            AdjacentPairKeys(pairCount: 8),
             expectedFixtures: 8,
             nextStage: quarter,
             nextSlotKeys: qfSlotKeys,
@@ -1714,7 +1719,7 @@ internal static class ScenarioOrchestration
             context,
             competition,
             quarter,
-            AdjacentPairs(qfSlotKeys),
+            AdjacentPairKeys(pairCount: 4),
             expectedFixtures: 4,
             nextStage: semi,
             nextSlotKeys: sfSlotKeys,
@@ -1725,7 +1730,7 @@ internal static class ScenarioOrchestration
             context,
             competition,
             semi,
-            AdjacentPairs(sfSlotKeys),
+            AdjacentPairKeys(pairCount: 2),
             expectedFixtures: 2,
             nextStage: final,
             nextSlotKeys: finalSlotKeys,
@@ -1733,7 +1738,7 @@ internal static class ScenarioOrchestration
             placeViaSlotDraw: true,
             intentKey: "prog-cdf-sf");
 
-        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
+        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
         WireFinalPlacementAwards(final, finalFixture, context.Clock);
         PrepareAndStartStage(context, final);
@@ -1832,7 +1837,7 @@ internal static class ScenarioOrchestration
             context,
             competition,
             roundOf16,
-            AdjacentPairs(r16SlotKeys),
+            AdjacentPairKeys(pairCount: 8),
             expectedFixtures: 8,
             nextStage: quarter,
             nextSlotKeys: qfSlotKeys,
@@ -1843,7 +1848,7 @@ internal static class ScenarioOrchestration
             context,
             competition,
             quarter,
-            AdjacentPairs(qfSlotKeys),
+            AdjacentPairKeys(pairCount: 4),
             expectedFixtures: 4,
             nextStage: semi,
             nextSlotKeys: sfSlotKeys,
@@ -1854,7 +1859,7 @@ internal static class ScenarioOrchestration
             context,
             competition,
             semi,
-            AdjacentPairs(sfSlotKeys),
+            AdjacentPairKeys(pairCount: 2),
             expectedFixtures: 2,
             nextStage: final,
             nextSlotKeys: finalSlotKeys,
@@ -1862,7 +1867,7 @@ internal static class ScenarioOrchestration
             placeViaSlotDraw: true,
             intentKey: "prog-euro-sf");
 
-        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
+        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
         WireFinalPlacementAwards(final, finalFixture, context.Clock);
         PrepareAndStartStage(context, final);
@@ -1910,7 +1915,6 @@ internal static class ScenarioOrchestration
         AssignRootComposition(groups, entries, context.Clock);
 
         var r16SlotKeys = WorldCupR16SlotKeys;
-        var r16Pairs = WorldCupR16Pairs;
         var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
         var sfSlotKeys = PairSlotKeys("SF", pairCount: 2);
         var finalSlotKeys = new[] { "F-A", "F-B" };
@@ -1962,7 +1966,7 @@ internal static class ScenarioOrchestration
             context,
             competition,
             roundOf16,
-            r16Pairs,
+            AdjacentPairKeys(pairCount: 8),
             expectedFixtures: 8,
             nextStage: quarter,
             nextSlotKeys: qfSlotKeys,
@@ -1971,13 +1975,13 @@ internal static class ScenarioOrchestration
             context,
             competition,
             quarter,
-            AdjacentPairs(qfSlotKeys),
+            AdjacentPairKeys(pairCount: 4),
             expectedFixtures: 4,
             nextStage: semi,
             nextSlotKeys: sfSlotKeys,
             allStages);
 
-        var sfMatches = MaterializeFromSlots(context, competition, semi, AdjacentPairs(sfSlotKeys));
+        var sfMatches = MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
         var sfFixtures = OrderedFixtures(semi, expectedCount: 2);
         WireSemiToFinalAndBronzeAutoPlace(
             semi, final, bronze, sfFixtures, finalSlotKeys, bronzeSlotKeys, context.Clock);
@@ -1985,8 +1989,8 @@ internal static class ScenarioOrchestration
         PlayDecisiveMatches(context, competition, sfMatches);
         ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
 
-        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairs(finalSlotKeys));
-        var bronzeMatches = MaterializeFromSlots(context, competition, bronze, AdjacentPairs(bronzeSlotKeys));
+        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
+        var bronzeMatches = MaterializeFromSlots(context, competition, bronze, AdjacentPairKeys(pairCount: 1));
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
         var bronzeFixture = OrderedFixtures(bronze, expectedCount: 1)[0];
         WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
@@ -2135,7 +2139,7 @@ internal static class ScenarioOrchestration
         MatchEnrichment.SpecializeWithExtraTimeAndPenalties(final, context.Clock);
         final.ReplaceDefaultTieFormat(richTie, context.Clock);
         final.ReplaceRoundTieFormat(final.Rounds[0].Id, richTie, context.Clock);
-        var finalFixture = final.AddFixture(final.Rounds[0].Id, context.Clock);
+        var finalFixture = AddCupRoundFixture(final, final.Rounds[0].Id, context.Clock);
         WireFinalPlacementAwards(final, finalFixture, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -2236,7 +2240,7 @@ internal static class ScenarioOrchestration
         ScenarioContext context,
         Competition competition,
         Stage stage,
-        IReadOnlyList<CupSlotPair> pairs,
+        IReadOnlyList<string>? pairKeys,
         int expectedFixtures,
         Stage nextStage,
         string[] nextSlotKeys,
@@ -2244,7 +2248,7 @@ internal static class ScenarioOrchestration
         bool placeViaSlotDraw = false,
         string intentKey = "prog-winner")
     {
-        var matches = MaterializeFromSlots(context, competition, stage, pairs);
+        var matches = MaterializeFromSlots(context, competition, stage, pairKeys);
         var fixtures = OrderedFixtures(stage, expectedFixtures);
         if (placeViaSlotDraw)
         {
@@ -2446,6 +2450,8 @@ internal static class ScenarioOrchestration
             stage.AddSlot(key);
         }
 
+        stage.SeedEntryRoundBracketPairs();
+
         competition.AddStage(stage.Id, context.Clock);
         context.Stages.Add(stage);
         return stage;
@@ -2579,20 +2585,20 @@ internal static class ScenarioOrchestration
         return keys;
     }
 
-    private static CupSlotPair[] AdjacentPairs(string[] slotKeys)
+    private static string[] AdjacentPairKeys(int pairCount)
     {
-        if (slotKeys.Length % 2 != 0)
+        if (pairCount <= 0)
         {
-            throw new InvalidOperationException("Slot keys must come in pairs for from-slots materialization.");
+            throw new InvalidOperationException("Pair count must be positive for from-slots materialization.");
         }
 
-        var pairs = new CupSlotPair[slotKeys.Length / 2];
-        for (var i = 0; i < pairs.Length; i++)
+        var keys = new string[pairCount];
+        for (var i = 0; i < pairCount; i++)
         {
-            pairs[i] = new CupSlotPair(slotKeys[i * 2], slotKeys[(i * 2) + 1]);
+            keys[i] = $"P{i + 1}";
         }
 
-        return pairs;
+        return keys;
     }
 
     /// <summary>Classic WC R16 matrix (Top2): A1–B2, C1–D2, then B1–A2, and so on.</summary>
@@ -2600,18 +2606,6 @@ internal static class ScenarioOrchestration
     [
         "A1", "B2", "C1", "D2", "E1", "F2", "G1", "H2",
         "B1", "A2", "D1", "C2", "F1", "E2", "H1", "G2"
-    ];
-
-    private static readonly CupSlotPair[] WorldCupR16Pairs =
-    [
-        new("A1", "B2"),
-        new("C1", "D2"),
-        new("E1", "F2"),
-        new("G1", "H2"),
-        new("B1", "A2"),
-        new("D1", "C2"),
-        new("F1", "E2"),
-        new("H1", "G2")
     ];
 
     private static Fixture[] AddRoundFixtures(Stage stage, int count, IClock clock) => stage.Rounds.Count == 0
@@ -2629,10 +2623,23 @@ internal static class ScenarioOrchestration
         var fixtures = new Fixture[count];
         for (var i = 0; i < count; i++)
         {
-            fixtures[i] = stage.AddFixture(roundId, clock);
+            fixtures[i] = AddCupRoundFixture(stage, roundId, clock);
         }
 
         return fixtures;
+    }
+
+    private static Fixture AddCupRoundFixture(Stage stage, RoundId roundId, IClock clock)
+    {
+        if (stage.BracketPairs.Count == 0)
+        {
+            return stage.AddFixture(roundId, clock);
+        }
+
+        var pair = stage.BracketPairs.FirstOrDefault(p => stage.FindFixtureByBracketPairKey(p.PairKey) is null)
+                   ?? throw new InvalidOperationException(
+                       $"Stage '{stage.Name.Value}' has no free BracketPair for a new fixture.");
+        return stage.AddFixture(roundId, clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
     }
 
     private static void WireWorldCupQualification(
@@ -3033,12 +3040,12 @@ internal static class ScenarioOrchestration
         ScenarioContext context,
         Competition competition,
         Stage stage,
-        IReadOnlyList<CupSlotPair> pairs)
+        IReadOnlyList<string>? pairKeys)
     {
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
-            pairs,
+            pairKeys,
             [],
             context.Clock);
         foreach (var match in result.CreatedMatches)

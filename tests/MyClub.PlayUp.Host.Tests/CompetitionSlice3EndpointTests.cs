@@ -182,11 +182,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
 
         using var materialize = await client.PostAsJsonAsync(
             $"/stages/{stageId}/matches/materialize-from-slots",
-            new MaterializeCupFromOccupiedSlotsRequest(
-            [
-                new CupSlotPairRequest("S1", "S2"),
-                new CupSlotPairRequest("S3", "S4")
-            ]));
+            new MaterializeCupFromOccupiedSlotsRequest(["P1", "P2"]));
         materialize.StatusCode.Should().Be(HttpStatusCode.OK);
 
         using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");

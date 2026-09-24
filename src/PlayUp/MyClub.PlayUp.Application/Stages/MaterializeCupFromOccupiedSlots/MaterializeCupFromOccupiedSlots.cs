@@ -12,28 +12,35 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: materialize Cup Fixtures + Matches from occupied bracket Slots (Lot C2).
+/// Application use case: materialize Cup Fixtures + Matches from occupied <see cref="BracketPair"/>s (Lot C2).
 /// </summary>
 /// <remarks>
-/// Progression only fills Slot.EntryId. This UC creates Fixture(SlotA/B) and Matches when both
-/// slots are occupied. Reuses C1 leg rules via <see cref="CupConfrontationMaterializer"/>.
+/// Progression only fills Slot.EntryId. This UC creates Fixture(SlotA/B, BracketPairKey) and Matches when
+/// a pair is eligible. Reuses C1 leg rules via <see cref="CupConfrontationMaterializer"/>.
 /// Does not author ProgressionRules, create Stages, or schedule.
 /// </remarks>
 public static class MaterializeCupFromOccupiedSlots
 {
     /// <summary>
-    /// Materializes confrontations for the given slot pairs on a Cup stage.
+    /// Materializes confrontations for eligible bracket pairs on a Cup stage.
     /// </summary>
+    /// <param name="competition">Owning competition.</param>
+    /// <param name="stage">Cup stage (rounds only).</param>
+    /// <param name="pairKeys">
+    /// Optional explicit <see cref="BracketPair.PairKey"/> list.
+    /// Null / empty → all eligible pairs; non-empty → each key must exist and be eligible (fail-closed).
+    /// </param>
+    /// <param name="existingMatches">Matches already known for the stage.</param>
+    /// <param name="clock">Clock for domain events.</param>
     public static MaterializeCupFromOccupiedSlotsResult Execute(
         Competition competition,
         Stage stage,
-        IReadOnlyList<CupSlotPair> slotPairs,
+        IReadOnlyList<string>? pairKeys,
         IReadOnlyList<Match> existingMatches,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
-        ArgumentNullException.ThrowIfNull(slotPairs);
         ArgumentNullException.ThrowIfNull(existingMatches);
         ArgumentNullException.ThrowIfNull(clock);
 
@@ -53,50 +60,42 @@ public static class MaterializeCupFromOccupiedSlots
                 ApplicationErrorCodes.MaterializationFailure);
         }
 
-        if (slotPairs.Count == 0)
+        var requestEmpty = pairKeys is null || pairKeys.Count == 0;
+        var targets = ResolveTargetPairs(stage, pairKeys, requestEmpty);
+        if (targets.Count == 0)
         {
+            if (requestEmpty
+                && stage.BracketPairs.Count > 0
+                && stage.BracketPairs.All(pair => stage.FindFixtureByBracketPairKey(pair.PairKey) is not null))
+            {
+                return new MaterializeCupFromOccupiedSlotsResult([], [], AlreadyComplete: true);
+            }
+
             throw new ApplicationFailureException(
-                "At least one slot pair is required.",
+                "No eligible bracket pairs to materialize.",
                 ApplicationErrorCodes.MaterializationFailure);
         }
 
         var round = stage.Rounds[0];
         var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(round);
-        ValidateSlotPairs(slotPairs);
 
         var knownById = existingMatches
             .Where(match => stage.HasMatch(match.Id))
             .ToDictionary(match => match.Id);
 
-        var resolved = new List<(CupSlotPair Pair, Fixture Fixture, EntryId Home, EntryId Away)>(slotPairs.Count);
-        foreach (var pair in slotPairs)
+        var resolved = new List<(BracketPair Pair, Fixture Fixture, EntryId Home, EntryId Away)>(targets.Count);
+        foreach (var pair in targets)
         {
-            var slotA = stage.FindSlot(pair.SlotAKey)
-                        ?? throw new ApplicationFailureException(
-                            $"Slot '{pair.SlotAKey}' was not found.",
-                            ApplicationErrorCodes.MaterializationFailure);
-            var slotB = stage.FindSlot(pair.SlotBKey)
-                        ?? throw new ApplicationFailureException(
-                            $"Slot '{pair.SlotBKey}' was not found.",
-                            ApplicationErrorCodes.MaterializationFailure);
-
-            if (slotA.EntryId is null || slotB.EntryId is null)
-            {
-                throw new ApplicationFailureException(
-                    $"Both slots must be occupied before materialization ('{pair.SlotAKey}', '{pair.SlotBKey}').",
-                    ApplicationErrorCodes.MaterializationFailure);
-            }
-
-            if (slotA.EntryId.Equals(slotB.EntryId))
-            {
-                throw new ApplicationFailureException(
-                    $"Slot pair ('{pair.SlotAKey}', '{pair.SlotBKey}') resolves to the same entry.",
-                    ApplicationErrorCodes.MaterializationFailure);
-            }
-
-            var fixture = FindFixtureForSlots(round, pair.SlotAKey, pair.SlotBKey)
-                          ?? stage.AddFixture(round.Id, clock, pair.SlotAKey, pair.SlotBKey);
-            resolved.Add((pair, fixture, slotA.EntryId.Value, slotB.EntryId.Value));
+            var slotA = stage.FindSlot(pair.SlotAKey)!;
+            var slotB = stage.FindSlot(pair.SlotBKey)!;
+            var fixture = stage.FindFixtureByBracketPairKey(pair.PairKey)
+                          ?? stage.AddFixture(
+                              round.Id,
+                              clock,
+                              pair.SlotAKey,
+                              pair.SlotBKey,
+                              pair.PairKey);
+            resolved.Add((pair, fixture, slotA.EntryId!.Value, slotB.EntryId!.Value));
         }
 
         var matchedIndexes = new HashSet<int>();
@@ -162,38 +161,83 @@ public static class MaterializeCupFromOccupiedSlots
         return new MaterializeCupFromOccupiedSlotsResult(created, attached, AlreadyComplete: false);
     }
 
-    private static void ValidateSlotPairs(IReadOnlyList<CupSlotPair> slotPairs)
+    private static List<BracketPair> ResolveTargetPairs(
+        Stage stage,
+        IReadOnlyList<string>? pairKeys,
+        bool requestEmpty)
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var pair in slotPairs)
+        if (requestEmpty)
         {
-            if (string.IsNullOrWhiteSpace(pair.SlotAKey) || string.IsNullOrWhiteSpace(pair.SlotBKey))
-            {
-                throw new ApplicationFailureException(
-                    "Slot keys must be non-empty.",
-                    ApplicationErrorCodes.MaterializationFailure);
-            }
-
-            if (string.Equals(pair.SlotAKey, pair.SlotBKey, StringComparison.Ordinal))
-            {
-                throw new ApplicationFailureException(
-                    $"Slot pair cannot reference the same key twice ('{pair.SlotAKey}').",
-                    ApplicationErrorCodes.MaterializationFailure);
-            }
-
-            if (!seen.Add(pair.SlotAKey) || !seen.Add(pair.SlotBKey))
-            {
-                throw new ApplicationFailureException(
-                    "Each slot key may appear in at most one pair in the batch.",
-                    ApplicationErrorCodes.MaterializationFailure);
-            }
+            return [.. stage.BracketPairs.Where(pair => IsEligible(stage, pair))];
         }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var targets = new List<BracketPair>(pairKeys!.Count);
+        foreach (var rawKey in pairKeys)
+        {
+            if (string.IsNullOrWhiteSpace(rawKey))
+            {
+                throw new ApplicationFailureException(
+                    "Bracket pair keys must be non-empty.",
+                    ApplicationErrorCodes.MaterializationFailure);
+            }
+
+            string key;
+            try
+            {
+                key = BracketPair.NormalizePairKey(rawKey);
+            }
+            catch (DomainException)
+            {
+                throw new ApplicationFailureException(
+                    $"Bracket pair key '{rawKey}' is invalid.",
+                    ApplicationErrorCodes.MaterializationFailure);
+            }
+
+            if (!seen.Add(key))
+            {
+                throw new ApplicationFailureException(
+                    $"Duplicate bracket pair key '{key}' in the batch.",
+                    ApplicationErrorCodes.MaterializationFailure);
+            }
+
+            var pair = stage.FindBracketPair(key)
+                       ?? throw new ApplicationFailureException(
+                           $"Bracket pair '{key}' was not found on the stage.",
+                           ApplicationErrorCodes.MaterializationFailure);
+
+            if (!IsEligible(stage, pair))
+            {
+                throw new ApplicationFailureException(
+                    $"Bracket pair '{key}' is not eligible for materialization.",
+                    ApplicationErrorCodes.MaterializationFailure);
+            }
+
+            targets.Add(pair);
+        }
+
+        return targets;
     }
 
-    private static Fixture? FindFixtureForSlots(Round round, string slotAKey, string slotBKey) =>
-        round.Fixtures.FirstOrDefault(fixture =>
-            string.Equals(fixture.SlotAKey, slotAKey, StringComparison.Ordinal)
-            && string.Equals(fixture.SlotBKey, slotBKey, StringComparison.Ordinal));
+    /// <summary>
+    /// Eligible: both slots occupied with distinct entries, and no fixture already bound to this PairKey.
+    /// </summary>
+    private static bool IsEligible(Stage stage, BracketPair pair)
+    {
+        var slotA = stage.FindSlot(pair.SlotAKey);
+        var slotB = stage.FindSlot(pair.SlotBKey);
+        if (slotA?.EntryId is null || slotB?.EntryId is null)
+        {
+            return false;
+        }
+
+        if (slotA.EntryId.Equals(slotB.EntryId))
+        {
+            return false;
+        }
+
+        return stage.FindFixtureByBracketPairKey(pair.PairKey) is null;
+    }
 
     /// <summary>
     /// Late materialization of a not-yet-started Cup stage is allowed while the competition runs.

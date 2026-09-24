@@ -171,17 +171,18 @@ public sealed record SchematicParticipantRefDto(
     string? SecondaryColor = null);
 
 /// <summary>
-/// Cup bracket connection backed by a real fixture.
-/// Slot keys are null for unbound fixtures (no SlotA/B keys yet).
+/// Cup bracket connection — structural <c>BracketPair</c> and optional materialized fixture.
 /// </summary>
-/// <param name="FixtureId">Fixture identity.</param>
+/// <param name="FixtureId">Fixture identity when materialized; null for structure-only pair.</param>
 /// <param name="RoundOrder">0-based round index in the stage.</param>
-/// <param name="SlotAKey">Slot A key when the fixture is slot-bound.</param>
-/// <param name="SlotBKey">Slot B key when the fixture is slot-bound.</param>
-/// <param name="MatchNumber">1-based index within the round's fixtures.</param>
+/// <param name="SlotAKey">Slot A key.</param>
+/// <param name="SlotBKey">Slot B key.</param>
+/// <param name="MatchNumber">1-based Match # within the round when a fixture exists; 0 when structural only.</param>
+/// <param name="PairKey">Persistent BracketPair identity (P1…); null for legacy unbound fixture wires.</param>
 public sealed record SchematicConnectionDto(
-    Guid FixtureId,
+    Guid? FixtureId,
     int RoundOrder,
     string? SlotAKey,
     string? SlotBKey,
-    int MatchNumber);
+    int MatchNumber,
+    string? PairKey = null);

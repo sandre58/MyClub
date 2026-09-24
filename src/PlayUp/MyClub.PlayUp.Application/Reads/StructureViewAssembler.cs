@@ -1176,15 +1176,10 @@ public static class StructureViewAssembler
                     else
                     {
                         // Draw path = structure (rounds + valid entry bracket).
-                        // MaterializeMatches = empty Fixture skeleton for Pairing — distinct from
-                        // Overview from-slots (occupied SlotA/B on a later stage).
-                        // Skeleton expectation = first-round fixtures (Places N / 2), not slotCount/2.
+                        // Cup fixtures come only from MaterializeCupFromOccupiedSlots (BracketPair) —
+                        // never from MaterializeMatches skeleton.
                         readyForDraw = structure.RoundCount >= 1;
-                        var expectedSkeletonFixtures = cupEntryPlaces.Value / 2;
-                        var skeletonFixtures = primary.Rounds.Count > 0
-                            ? primary.Rounds[0].Fixtures.Count
-                            : 0;
-                        readyForMaterialization = readyForDraw && skeletonFixtures < expectedSkeletonFixtures;
+                        readyForMaterialization = false;
                     }
 
                     break;

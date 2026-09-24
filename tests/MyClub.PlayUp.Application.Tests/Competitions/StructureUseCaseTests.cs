@@ -126,6 +126,30 @@ public sealed class StructureUseCaseTests
 
         result.Stage.Rounds.Should().ContainSingle();
         result.Stage.Slots.Should().HaveCount(8);
+        result.Stage.BracketPairs.Should().HaveCount(4);
+        result.Stage.FindBracketPair("P1")!.SlotAKey.Should().Be("S1");
+        result.Stage.FindBracketPair("P4")!.SlotBKey.Should().Be("S8");
+    }
+
+    [Fact]
+    public void StructureSkeleton_Clear_removes_fixtures_before_bracket_pairs()
+    {
+        var competition = CreateCompetition.Execute("Cup-Clear", _clock);
+        var result = ConfigureStructure.Execute(
+            competition,
+            primaryStage: null,
+            StructureIntent.Cup(4),
+            _clock);
+        var stage = result.Stage;
+        var pair = stage.BracketPairs.First(p => p.PairKey == "P1");
+        stage.AddFixture(stage.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
+
+        var impact = StructureSkeleton.Clear(stage, _clock);
+
+        impact.ClearedRounds.Should().Be(1);
+        stage.Rounds.Should().BeEmpty();
+        stage.BracketPairs.Should().BeEmpty();
+        stage.Slots.Should().BeEmpty();
     }
 
     [Fact]

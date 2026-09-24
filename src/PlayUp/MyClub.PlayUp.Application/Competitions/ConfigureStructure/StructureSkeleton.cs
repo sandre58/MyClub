@@ -67,6 +67,9 @@ internal static class StructureSkeleton
             stage.RemoveMatchday(matchday.Id, clock);
         }
 
+        // BracketPairs after fixtures (rounds/matchdays) so referenced PairKeys can be cleared.
+        stage.ClearBracketPairs();
+
         foreach (var group in stage.Groups.ToList())
         {
             stage.RemoveGroup(group.Id, clock);
@@ -192,6 +195,7 @@ internal static class StructureSkeleton
             stage.AddSlot($"S{index}");
         }
 
+        stage.SeedEntryRoundBracketPairs();
         stage.ReplaceDrawRules(null, clock);
     }
 

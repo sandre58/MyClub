@@ -191,8 +191,8 @@ Contract notes:
 - `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking.
 - Structure construction blockers (`InsufficientParticipants`, `MissingStage`, …) become Overview situations only while competition is Draft/Ready.
 - `constructionDimensions.regulation` (Phase 16.4): factual Competition summary (`competition`) + optional Stage regulation flags (`stage`) + `competitionRegulationMutable` + `transitionReadiness[]`. **No** global `isValid` / `isSatisfactory`.
-- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots` | `GenerateNextRound`. `Draw` / `MaterializeMatches` reuse Structure readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. **Championship** and **Swiss** omit `Draw`. **Swiss** omits `MaterializeMatches` and projects `GenerateNextRound` instead (ready when stage Running, previous round Finished, rounds remaining).
-- `transitionReadiness` for Draw / MaterializeMatches reuses Structure readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Structure / Situations — not a parallel validation system. **Cup `ReadyForMaterialization`** means the primary stage still needs its empty Fixture **skeleton** (fixture count below `slotCount / 2`) — it is **not** the from-slots path and is **not** equal to `ReadyForDraw` after the skeleton exists. From-slots uses its own opportunity check; the Overview projects that transition **only when ready** (no standing `InsufficientOccupiedSlots` regulation gap during early Cup construction). Swiss `GenerateNextRound` blockers: `SwissStageNotRunning` | `SwissAwaitingRoundResults` | `SwissRoundsComplete` | `SwissInsufficientParticipants`.
+- `transitionReadiness[].transition`: `Draw` | `MaterializeMatches` | `MaterializeFromOccupiedSlots` | `GenerateNextRound`. `Draw` / `MaterializeMatches` reuse Structure readiness (construction). `MaterializeFromOccupiedSlots` is a **distinct** Cup opportunity (occupied slots not yet covered by complete SlotA/B fixtures) and may appear while competition is Draft/Ready/**Running** when a target Cup stage is still Draft/Ready. **Championship** and **Swiss** omit `Draw`. **Cup** omits `MaterializeMatches` (`ReadyForMaterialization` is always false — Cup fixtures come only from `materialize-from-slots` via BracketPair). **Swiss** omits `MaterializeMatches` and projects `GenerateNextRound` instead (ready when stage Running, previous round Finished, rounds remaining).
+- `transitionReadiness` for Draw / MaterializeMatches reuses Structure readiness (`ReadyForDraw` / `ReadyForMaterialization`) and the same blocker codes as Structure / Situations — not a parallel validation system. **Cup** never uses the MaterializeMatches skeleton path; use `MaterializeFromOccupiedSlots` after Slot draw/apply. From-slots uses its own opportunity check; the Overview projects that transition **only when ready** (no standing `InsufficientOccupiedSlots` regulation gap during early Cup construction). Swiss `GenerateNextRound` blockers: `SwissStageNotRunning` | `SwissAwaitingRoundResults` | `SwissRoundsComplete` | `SwissInsufficientParticipants`.
 - Structure facts may include `swissRoundCount` / `swissByeCount` when Kind is Swiss. `operationalFocus.swissByes[]` lists recorded bye pairing events (`roundIndex`, `entryId`, `entryDisplayName`) — **not** fixtures/matches.
 - `operationalFocus.recentUnit` / `nextUnit`: temporal sport units on **ReferenceStage** only (Championship/Groups/Swiss → Matchday; Cup → Round). Full unit, **no** silent truncation.
   - `recentUnit` = highest-order unit with ≥1 `Live` or `Finished` match (includes that unit’s `Scheduled` matches). Null → SPA empty state « Dernières » (card still shown in En cours).
@@ -211,7 +211,7 @@ Contract notes:
   - Cup / no standing for ReferenceStage → null.
   - Projected only when competition is Running / Suspended / Completed / Archived.
   - Same `CalculateStanding` path as Consultation (`ProjectStandingsForStage`) — not a second ranking algorithm.
-- Natural progression prefers **from-slots** over skeleton `MaterializeMatches` when both apply (multi-stage).
+- Natural progression prefers **from-slots** over Championship/Groups `MaterializeMatches` when both apply (multi-stage).
 - `naturalProgression` (Draft / Ready): **0 or 1** structural tip — from-slots when applicable, else scan projected actions by priority `PrepareStage` → `StartStage` → `MaterializeMatches` → `PublishDraw` → `ApplyDraw`. **`null` is a valid calm Construction state** (no `ContinueStructure` fallback; SPA hides the card unless a lifecycle Prepare/Start competition action is available alone). Distinct from `availableActions` and from À traiter. `AddEntry` is never a tip.
 - `naturalProgression` (Running / Suspended): **0 or 1** structural tip from `availableActions` in fixed priority — `MaterializeFromOccupiedSlots` → `GenerateNextRound` → `PublishDraw` → `ApplyDraw` → `ApplyProgression` → `ApplyQualification` → `PrepareStage` → `StartStage` → `CompleteCompetition`. **`null` is a valid calm state** (no `OpenMatches` fallback; SPA hides the card). Distinct from `availableActions` and from À traiter.
 - `naturalProgression` (Completed / Archived): **`null`** — no Overview tip (consultation is not a “next action”; `OpenConsultation` may still appear on other surfaces such as workspace).
@@ -219,7 +219,7 @@ Contract notes:
 - Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Overview `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7). SPA may show **one** of them on Prochaine action **only when** `naturalProgression` is null — never stacked with a structural tip. Stage `PrepareStage` / `StartStage` **are** eligible as Préparation tips when projected. Resume (Suspended) remains Domain-only — not projected as an action.
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
 - `availableActions` are opportunities from known state — not execution guarantees (R19). Resume (Suspended) is Domain-only — not projected as an action.
-- **`MaterializeFromOccupiedSlots` (Overview):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Overview does **not** choose SlotA/SlotB pairs and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects pairs explicitly on the Stage surface, then calls `POST …/matches/materialize-from-slots`.
+- **`MaterializeFromOccupiedSlots` (Overview):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Overview does **not** choose `pairKeys` and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects bracket pairs explicitly on the Stage surface (or omits for all eligible), then calls `POST …/matches/materialize-from-slots`.
 - Stage overview `slots[].coveredByCompleteFixture`: true when that slot key is already on a Fixture with the expected legs attached. Confrontations pairing UI excludes those slots (same coverage rule as Overview opportunity).
 - `naturalProgression` replaces the workspace `nextAction*` stub for Overview consumption (code only). May be `MaterializeFromOccupiedSlots` when that opportunity is the relevant tip. On Running/Suspended may be **null** when no structural tip applies.
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
@@ -291,7 +291,7 @@ Competition lifecycle: Domain `Ready → Running`. No request body.
 
 ### Thin authoring (multi-stage Cup)
 
-Additional stages / rounds / slots / progression rules without Domain seeding. Does **not** author Fixtures (first tour remains MaterializeCup + Pairing; later tours use materialize-from-slots).
+Additional stages / rounds / slots / progression rules without Domain seeding. Does **not** author Fixtures (Cup confrontations use BracketPair → `materialize-from-slots`).
 
 #### `POST /competitions/{competitionId}/structure` → 200 `ConfigureStructureResponse`
 
@@ -446,7 +446,7 @@ Empty or null `paths` clears rules. Domain validates source fixture ownership, u
 
 ### `POST /stages/{stageId}/matches/materialize` → `MaterializeMatchesResponse`
 
-Creates Fixtures/Matches for the stage format (Championship / Groups RR, or Cup empty-fixture skeleton for Pairing). No request body. Reads persisted `Stage.MatchGenerationFormat` for RR (see ConfigureStructure above). **Not applicable to Swiss** (`Application.MaterializationFailure` — use `GenerateNextRound`).
+Creates Fixtures/Matches for Championship / Groups round-robin. No request body. Reads persisted `Stage.MatchGenerationFormat` for RR (see ConfigureStructure above). **Not applicable to Cup or Swiss** (`Application.MaterializationFailure` — Cup uses `materialize-from-slots`; Swiss uses `GenerateNextRound`).
 
 ```json
 {
@@ -458,7 +458,7 @@ Creates Fixtures/Matches for the stage format (Championship / Groups RR, or Cup 
 
 ### `POST /stages/{stageId}/swiss/generate-next-round` → `GenerateNextRoundResponse`
 
-Generates the next Swiss round (pairings + Matchday + Matches, optional bye). Stage must be **Running**. Distinct from `…/matches/materialize` (RR / Cup skeleton).
+Generates the next Swiss round (pairings + Matchday + Matches, optional bye). Stage must be **Running**. Distinct from `…/matches/materialize` (Championship / Groups RR).
 
 ```json
 {
@@ -481,15 +481,22 @@ Host contract: `MyClub.PlayUp.Host.Contracts.GenerateNextRoundResponse`.
 
 ### `POST /stages/{stageId}/matches/materialize-from-slots` → `MaterializeMatchesResponse`
 
-**Distinct from** `…/matches/materialize`. Materializes Cup confrontations from **explicit** occupied SlotA/SlotB pairs (creates Fixture + Matches; reuses TieFormat legs). Does **not** invent pairs.
+**Distinct from** `…/matches/materialize`. Materializes Cup confrontations from stage **`BracketPair`** identities (creates Fixture with `BracketPairKey` + Matches; reuses TieFormat legs). Does **not** invent pairs — only existing stage `BracketPairs`.
 
 ```json
 {
-  "pairs": [
-    { "slotAKey": "SF1-A", "slotBKey": "SF1-B" }
-  ]
+  "pairKeys": ["P1", "P3"]
 }
 ```
+
+| Body | Behaviour |
+| :--- | :--- |
+| omit / `null` / `[]` | All **eligible** pairs on the stage |
+| non-empty `pairKeys` | Each key must exist on the stage **and** be eligible; unknown or ineligible → fail-closed (`Application.MaterializationFailure`) |
+
+**Eligible:** both pair slots occupied with distinct entries, and no Fixture on the stage already has `BracketPairKey` equal to that pair key.
+
+When omit/empty resolves to no eligible pairs: if every stage `BracketPair` already has a Fixture → `AlreadyComplete` with empty created; otherwise `MaterializationFailure` (“no eligible pairs”). Explicit `pairKeys` that already have a Fixture are **not** eligible (fail), not treated as idempotent success.
 
 Response shape is the same `MaterializeMatchesResponse` as materialize.
 
@@ -505,7 +512,7 @@ Typical product flow (Overview is readiness + navigation only):
 ```text
 Overview (MaterializeFromOccupiedSlots)
   → navigate to Stage
-  → user selects SlotA ↔ SlotB
+  → user selects BracketPair keys (or omits for all eligible)
   → POST /stages/{id}/matches/materialize-from-slots
 ```
 

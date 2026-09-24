@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -681,8 +682,8 @@ public sealed class OverviewAssemblerTests
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
             item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
 
-        // Primary Cup skeleton still incomplete → MaterializeMatches; SF from-slots is the natural next step.
-        view.AvailableActions.Should().Contain(item => item.Code == OverviewAssembler.ActionMaterializeMatches);
+        // Primary Cup never offers MaterializeMatches skeleton; SF from-slots is the natural next step.
+        view.AvailableActions.Should().NotContain(item => item.Code == OverviewAssembler.ActionMaterializeMatches);
         view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionMaterializeFromOccupiedSlots);
         view.AvailableActions.Should().NotContain(item =>
             item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
@@ -712,13 +713,15 @@ public sealed class OverviewAssemblerTests
 
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotContain(item =>
             item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots);
-        view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == OverviewAssembler.ActionMaterializeMatches);
+        (view.NaturalProgression?.Code).Should().NotBe(OverviewAssembler.ActionMaterializeMatches);
     }
 
     [Fact]
-    public void Assemble_cup_ready_for_materialization_false_after_skeleton_fixtures()
+    public void Assemble_cup_never_offers_materialize_matches_skeleton()
     {
-        var competition = CreateCompetition.Execute("Cup-SkeletonDone", _clock);
+        var competition = CreateCompetition.Execute("Cup-NoSkeleton", _clock);
         AddEntry.Execute(competition, "A", _clock);
         AddEntry.Execute(competition, "B", _clock);
         AddEntry.Execute(competition, "C", _clock);
@@ -728,11 +731,15 @@ public sealed class OverviewAssemblerTests
             null,
             StructureIntent.Cup(4),
             _clock);
-        MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
 
         var structureView = StructureViewAssembler.Assemble(competition, [configured.Stage]);
         structureView.Readiness.ReadyForDraw.Should().BeTrue();
         structureView.Readiness.ReadyForMaterialization.Should().BeFalse();
+
+        var act = () => MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.MaterializationFailure);
+        configured.Stage.Rounds[0].Fixtures.Should().BeEmpty();
 
         var view = OverviewAssembler.Assemble(
             competition,
@@ -755,12 +762,13 @@ public sealed class OverviewAssemblerTests
         sf.AddRound("SF", _clock);
         sf.AddSlot("SF1-A");
         sf.AddSlot("SF1-B");
+        sf.SeedEntryRoundBracketPairs();
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
         MaterializeCupFromOccupiedSlots.Execute(
             competition,
             sf,
-            [new CupSlotPair("SF1-A", "SF1-B")],
+            ["P1"],
             [],
             _clock);
         sf.Prepare(_clock);
@@ -1707,9 +1715,9 @@ public sealed class OverviewAssemblerTests
     }
 
     [Fact]
-    public void Assemble_cup_ready_with_skeleton_matches_stays_Setup()
+    public void Assemble_cup_ready_without_skeleton_stays_Setup()
     {
-        var competition = CreateCompetition.Execute("Cup-Ready-Skeleton", _clock);
+        var competition = CreateCompetition.Execute("Cup-Ready-NoSkeleton", _clock);
         AddEntry.Execute(competition, "A", _clock);
         AddEntry.Execute(competition, "B", _clock);
         AddEntry.Execute(competition, "C", _clock);
@@ -1719,20 +1727,18 @@ public sealed class OverviewAssemblerTests
             null,
             StructureIntent.Cup(4),
             _clock);
-        var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
         competition.Prepare(_clock);
 
         var view = OverviewAssembler.Assemble(
             competition,
             [configured.Stage],
-            new Dictionary<StageId, IReadOnlyList<Match>>
-            {
-                [configured.Stage.Id] = materialize.CreatedMatches
-            });
+            new Dictionary<StageId, IReadOnlyList<Match>>());
 
         view.Status.Should().Be(CompetitionStatus.Ready);
         view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusSetup);
         view.CalendarSummary.Should().BeNull();
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == OverviewAssembler.ActionMaterializeMatches);
     }
 
     [Fact]

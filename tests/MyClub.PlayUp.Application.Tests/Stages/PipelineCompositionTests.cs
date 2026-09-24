@@ -102,7 +102,7 @@ public sealed class PipelineCompositionTests
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
-            [new CupSlotPair("KO-A", "KO-B")],
+            ["P1"],
             [],
             _clock);
         materialized.CreatedMatches.Should().ContainSingle();
@@ -279,7 +279,7 @@ public sealed class PipelineCompositionTests
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             qf,
-            [new CupSlotPair("QF1-A", "QF1-B"), new CupSlotPair("QF2-A", "QF2-B")],
+            ["P1", "P2"],
             [],
             _clock);
         var m1 = materialized.CreatedMatches[0];
@@ -347,6 +347,11 @@ public sealed class PipelineCompositionTests
             stage.AddSlot(key);
         }
 
+        if (slotKeys.Length > 0 && slotKeys.Length % 2 == 0)
+        {
+            stage.SeedEntryRoundBracketPairs();
+        }
+
         return stage;
     }
 
@@ -357,11 +362,24 @@ public sealed class PipelineCompositionTests
         int homeGoals,
         int awayGoals)
     {
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var fixture = AddCupFixture(stage);
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         Finish(match, homeGoals, awayGoals);
         return (fixture.Id, match);
+    }
+
+    private Fixture AddCupFixture(Stage stage)
+    {
+        var roundId = stage.Rounds[0].Id;
+        if (stage.BracketPairs.Count == 0)
+        {
+            return stage.AddFixture(roundId, _clock);
+        }
+
+        var pair = stage.BracketPairs.FirstOrDefault(p => stage.FindFixtureByBracketPairKey(p.PairKey) is null)
+                   ?? throw new InvalidOperationException("No free BracketPair for fixture.");
+        return stage.AddFixture(roundId, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
     }
 
     private void Finish(Match match, int homeGoals, int awayGoals)

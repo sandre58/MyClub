@@ -25,7 +25,7 @@ type SchematicDensity = 'full' | 'crest' | 'compact';
 
 type PairLabel =
   | { kind: 'fixture'; matchNumber: number }
-  | { kind: 'pair'; ordinal: number };
+  | { kind: 'pair'; pairKey: string };
 
 /**
  * Phase form schematic driven by StageSchematic DTO.
@@ -829,32 +829,47 @@ function buildCupColumnYs(leafCount: number, m: CupMetrics): number[][] {
   return columns;
 }
 
+/** Domain label from a schematic connection — never invent ordinals. */
+function labelFromConnection(
+  conn: SchematicConnection | undefined,
+): PairLabel | null {
+  if (!conn) {
+    return null;
+  }
+  if (conn.fixtureId && conn.matchNumber > 0) {
+    return { kind: 'fixture', matchNumber: conn.matchNumber };
+  }
+  if (conn.pairKey) {
+    return { kind: 'pair', pairKey: conn.pairKey };
+  }
+  return null;
+}
+
 /**
- * Fixture Match # when a real connection exists; otherwise structural pair ordinal (S7).
+ * Read-model structural relation for two leaves — never invent from case order.
  */
-function pairLabelFor(
+function connectionForLeaves(
   roundConns: SchematicConnection[],
   caseA: SchematicCase | null,
   caseB: SchematicCase | null,
-  pairIndex: number,
-): PairLabel {
-  const keyA = caseA?.formPosition.slotKey;
-  const keyB = caseB?.formPosition.slotKey;
-  if (keyA && keyB) {
-    const bySlots = roundConns.find(
-      (c) =>
-        (c.slotAKey === keyA && c.slotBKey === keyB) ||
-        (c.slotAKey === keyB && c.slotBKey === keyA),
-    );
-    if (bySlots) {
-      return { kind: 'fixture', matchNumber: bySlots.matchNumber };
+): SchematicConnection | undefined {
+  const fixtureId = caseA?.formPosition.fixtureId;
+  if (fixtureId && fixtureId === caseB?.formPosition.fixtureId) {
+    const byFixture = roundConns.find((c) => c.fixtureId === fixtureId);
+    if (byFixture) {
+      return byFixture;
     }
   }
-  const sorted = [...roundConns].sort((a, b) => a.matchNumber - b.matchNumber);
-  if (sorted[pairIndex]) {
-    return { kind: 'fixture', matchNumber: sorted[pairIndex]!.matchNumber };
+  const keyA = caseA?.formPosition.slotKey;
+  const keyB = caseB?.formPosition.slotKey;
+  if (!keyA || !keyB) {
+    return undefined;
   }
-  return { kind: 'pair', ordinal: pairIndex + 1 };
+  return roundConns.find(
+    (c) =>
+      (c.slotAKey === keyA && c.slotBKey === keyB) ||
+      (c.slotAKey === keyB && c.slotBKey === keyA),
+  );
 }
 
 function PairOrdinalText({
@@ -880,7 +895,7 @@ function PairOrdinalText({
       textAnchor="start"
       className="schematic-cup__pair-ordinal"
     >
-      {label.ordinal}
+      {label.pairKey}
     </text>
   );
 }
@@ -996,22 +1011,25 @@ function CupMultiRoundSchematic({
             return (
               <g key={`wire-col-${col}`}>
                 {Array.from({ length: ys.length / 2 }, (_, pair) => {
+                  const caseA = colCases[pair * 2] ?? null;
+                  const caseB = colCases[pair * 2 + 1] ?? null;
+                  const conn = connectionForLeaves(roundConns, caseA, caseB);
+                  if (!conn) {
+                    return null;
+                  }
                   const y1 = ys[pair * 2]!;
                   const y2 = ys[pair * 2 + 1]!;
                   const mid = (y1 + y2) / 2;
-                  const label = pairLabelFor(
-                    roundConns,
-                    colCases[pair * 2] ?? null,
-                    colCases[pair * 2 + 1] ?? null,
-                    pair,
-                  );
+                  const label = labelFromConnection(conn);
                   return (
                     <g key={`w-${col}-${pair}`}>
                       <path
                         d={`M ${x0} ${y1} H ${xMid} M ${x0} ${y2} H ${xMid} M ${xMid} ${y1} V ${y2} M ${xMid} ${mid} H ${x1}`}
                         className="schematic-cup__wire-line"
                       />
-                      <PairOrdinalText label={label} x={xMid + 6} y={mid - 5} />
+                      {label ? (
+                        <PairOrdinalText label={label} x={xMid + 6} y={mid - 5} />
+                      ) : null}
                     </g>
                   );
                 })}
@@ -1080,7 +1098,9 @@ function CupSingleRoundSchematic({
     (c) => c.roundOrder === firstRoundOrder,
   );
   for (const conn of firstRoundConns) {
-    byFixture.set(conn.fixtureId, conn);
+    if (conn.fixtureId) {
+      byFixture.set(conn.fixtureId, conn);
+    }
     if (conn.slotAKey && conn.slotBKey) {
       bySlotPair.set(`${conn.slotAKey}|${conn.slotBKey}`, conn);
       bySlotPair.set(`${conn.slotBKey}|${conn.slotAKey}`, conn);
@@ -1144,63 +1164,33 @@ function CupSingleRoundSchematic({
           viewBox={`0 0 ${svgWidth} ${height}`}
           aria-hidden="true"
         >
-          {columnYs.slice(0, effectiveWires).map((ys, col) => {
-            const x = col * m.colGap + 2;
-            const xNext = (col + 1) * m.colGap + 2;
-            const xMid = x + m.colGap / 2;
-            return (
-              <g key={`col-${col}`}>
-                {Array.from({ length: ys.length / 2 }, (_, pair) => {
-                  const y1 = ys[pair * 2]!;
-                  const y2 = ys[pair * 2 + 1]!;
-                  const mid = (y1 + y2) / 2;
-                  return (
-                    <path
-                      key={`w-${col}-${pair}`}
-                      d={`M ${x} ${y1} H ${xMid} M ${x} ${y2} H ${xMid} M ${xMid} ${y1} V ${y2} M ${xMid} ${mid} H ${xNext}`}
-                      className="schematic-cup__wire-line"
-                    />
-                  );
-                })}
-                {col > 0
-                  ? ys.map((y, i) => (
-                      <circle
-                        key={`n-${col}-${i}`}
-                        cx={x}
-                        cy={y}
-                        r={3}
-                        className="schematic-cup__wire-node"
-                      />
-                    ))
-                  : null}
-              </g>
-            );
-          })}
-          {columnYs[effectiveWires]?.map((y, i) => (
-            <circle
-              key={`end-${i}`}
-              cx={effectiveWires * m.colGap + 2}
-              cy={y}
-              r={3}
-              className="schematic-cup__wire-node"
-            />
-          ))}
+          {/* Wires only when read-model connection exists — never from case adjacency. */}
           {Array.from({ length: pairCount }, (_, p) => {
-            const a = cases[p * 2] ?? null;
-            const b = cases[p * 2 + 1] ?? null;
             const conn = pairConnection(p);
-            const label: PairLabel = conn
-              ? { kind: 'fixture', matchNumber: conn.matchNumber }
-              : pairLabelFor(firstRoundConns, a, b, p);
+            if (!conn) {
+              return null;
+            }
             const y1 = leafYs[p * 2]!;
             const y2 = leafYs[p * 2 + 1]!;
+            const mid = (y1 + y2) / 2;
+            const x = 2;
+            const xMid = 2 + m.colGap / 2;
+            const xNext = 2 + m.colGap;
+            const label = labelFromConnection(conn);
             return (
-              <PairOrdinalText
-                key={`pair-${p}`}
-                label={label}
-                x={2 + m.colGap / 2 + 8}
-                y={(y1 + y2) / 2 - 5}
-              />
+              <g key={`pair-wire-${p}`}>
+                <path
+                  d={`M ${x} ${y1} H ${xMid} M ${x} ${y2} H ${xMid} M ${xMid} ${y1} V ${y2} M ${xMid} ${mid} H ${xNext}`}
+                  className="schematic-cup__wire-line"
+                />
+                {label ? (
+                  <PairOrdinalText
+                    label={label}
+                    x={xMid + 8}
+                    y={mid - 5}
+                  />
+                ) : null}
+              </g>
             );
           })}
         </svg>
@@ -1238,16 +1228,24 @@ function orderLeafCases(
 
   const ordered: SchematicCase[] = [];
   const used = new Set<SchematicCase>();
-  const sorted = [...firstRoundConnections].sort(
-    (a, b) => a.matchNumber - b.matchNumber,
-  );
+  const sorted = [...firstRoundConnections].sort((a, b) => {
+    const byMatch = a.matchNumber - b.matchNumber;
+    if (byMatch !== 0) {
+      return byMatch;
+    }
+    return (a.pairKey ?? '').localeCompare(b.pairKey ?? '');
+  });
   for (const conn of sorted) {
     const a =
       (conn.slotAKey ? bySlotKey.get(conn.slotAKey) : undefined) ??
-      byFixtureSide.get(`${conn.fixtureId}|A`);
+      (conn.fixtureId
+        ? byFixtureSide.get(`${conn.fixtureId}|A`)
+        : undefined);
     const b =
       (conn.slotBKey ? bySlotKey.get(conn.slotBKey) : undefined) ??
-      byFixtureSide.get(`${conn.fixtureId}|B`);
+      (conn.fixtureId
+        ? byFixtureSide.get(`${conn.fixtureId}|B`)
+        : undefined);
     if (!a || !b || used.has(a) || used.has(b)) continue;
     ordered.push(a, b);
     used.add(a);

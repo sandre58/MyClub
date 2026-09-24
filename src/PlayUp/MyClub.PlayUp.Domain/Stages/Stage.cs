@@ -21,6 +21,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<Round> _rounds = [];
     private readonly List<Matchday> _matchdays = [];
     private readonly List<Slot> _slots = [];
+    private readonly List<BracketPair> _bracketPairs = [];
     private readonly List<DirectAssignment> _directAssignments = [];
     private readonly List<CompositionEntry> _affectationAuthoring = [];
     private readonly List<CompositionEntry> _compositionEntries = [];
@@ -112,6 +113,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets the positional slots in this stage.
     /// </summary>
     public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
+
+    /// <summary>
+    /// Gets the structural Cup confrontation potentials (distinct from materialized fixtures).
+    /// </summary>
+    public IReadOnlyList<BracketPair> BracketPairs => _bracketPairs.AsReadOnly();
 
     /// <summary>
     /// Gets the direct slot assignments (configuration feeds).
@@ -878,6 +884,20 @@ public sealed class Stage : AggregateRoot<StageId>
         ?? _matchdays.Select(m => m.FindFixture(fixtureId)).FirstOrDefault(f => f is not null);
 
     /// <summary>
+    /// Finds a fixture bound to the given structural <see cref="BracketPair"/> key, if any.
+    /// </summary>
+    /// <param name="pairKey">The persistent pair key (e.g. P1).</param>
+    /// <returns>The fixture, or <see langword="null"/>.</returns>
+    public Fixture? FindFixtureByBracketPairKey(string pairKey)
+    {
+        var key = BracketPair.NormalizePairKey(pairKey);
+        return EnumerateFixtures()
+            .FirstOrDefault(fixture =>
+                fixture.BracketPairKey is not null
+                && string.Equals(fixture.BracketPairKey, key, StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// Finds the fixture that currently attaches <paramref name="matchId"/>, if any.
     /// </summary>
     /// <param name="matchId">The match identity.</param>
@@ -1261,7 +1281,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Removes a slot when it is not referenced by direct assignment, local progression,
-    /// local qualification, or fixture slots.
+    /// local qualification, fixture slots, or a bracket pair.
     /// </summary>
     /// <param name="slotKey">The slot key to remove.</param>
     public void RemoveSlot(string slotKey)
@@ -1280,7 +1300,8 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         if (IsSlotReferencedByLocalProgression(key)
-            || IsSlotReferencedByFixture(key))
+            || IsSlotReferencedByFixture(key)
+            || IsSlotReferencedByBracketPair(key))
         {
             throw new DomainException(
                 $"Slot '{key}' is still referenced.",
@@ -1290,6 +1311,74 @@ public sealed class Stage : AggregateRoot<StageId>
         DemoteToDraftIfReady();
         _slots.Remove(slot);
     }
+
+    /// <summary>
+    /// Finds a bracket pair by persistent key.
+    /// </summary>
+    /// <param name="pairKey">The pair key (e.g. P1).</param>
+    /// <returns>The pair when found; otherwise <see langword="null"/>.</returns>
+    public BracketPair? FindBracketPair(string pairKey)
+    {
+        var key = BracketPair.NormalizePairKey(pairKey);
+        return _bracketPairs.FirstOrDefault(p => string.Equals(p.PairKey, key, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Replaces the stage bracket pairs. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Rejects when an existing fixture references a pair key that would be removed.
+    /// </summary>
+    /// <param name="pairs">The new pair set (may be empty).</param>
+    public void ReplaceBracketPairs(IReadOnlyList<BracketPair> pairs)
+    {
+        ArgumentNullException.ThrowIfNull(pairs);
+        EnsureStructureMutable();
+
+        var pairKeys = new HashSet<string>(StringComparer.Ordinal);
+        var coveredSlots = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var pair in pairs)
+        {
+            if (!pairKeys.Add(pair.PairKey))
+            {
+                throw new DomainException(
+                    $"Duplicate BracketPair key '{pair.PairKey}'.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            EnsureBracketPairSlotExists(pair.SlotAKey);
+            EnsureBracketPairSlotExists(pair.SlotBKey);
+
+            if (!coveredSlots.Add(pair.SlotAKey))
+            {
+                throw new DomainException(
+                    $"Slot '{pair.SlotAKey}' is referenced by more than one BracketPair.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            if (!coveredSlots.Add(pair.SlotBKey))
+            {
+                throw new DomainException(
+                    $"Slot '{pair.SlotBKey}' is referenced by more than one BracketPair.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+        }
+
+        EnsureNoReferencedBracketPairRemoved(pairKeys);
+
+        DemoteToDraftIfReady();
+        _bracketPairs.Clear();
+        _bracketPairs.AddRange(pairs);
+    }
+
+    /// <summary>
+    /// Clears all bracket pairs. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// </summary>
+    public void ClearBracketPairs() => ReplaceBracketPairs([]);
+
+    /// <summary>
+    /// Seeds V1 mono-round entry pairs from current slots in structural order.
+    /// </summary>
+    public void SeedEntryRoundBracketPairs() =>
+        ReplaceBracketPairs(BracketPair.CreateEntryRoundPairs([.. _slots.Select(s => s.SlotKey)]));
 
     /// <summary>
     /// Adds a resolved entry to the phase population (B1-M2 / Progression inter → population).
@@ -1889,8 +1978,14 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="clock">The clock used for domain events.</param>
     /// <param name="slotAKey">Optional bracket slot A.</param>
     /// <param name="slotBKey">Optional bracket slot B.</param>
+    /// <param name="bracketPairKey">Optional structural bracket pair key.</param>
     /// <returns>The created fixture.</returns>
-    public Fixture AddFixture(RoundId roundId, IClock clock, string? slotAKey = null, string? slotBKey = null)
+    public Fixture AddFixture(
+        RoundId roundId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
@@ -1899,8 +1994,9 @@ public sealed class Stage : AggregateRoot<StageId>
             ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
 
         EnsureSlotKeysExist(slotAKey, slotBKey);
+        EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
         DemoteToDraftIfReady();
-        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey);
+        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey, bracketPairKey);
         round.AddFixture(fixture);
         Raise(new StageFixtureAdded(Id, fixture.Id, clock));
         return fixture;
@@ -1913,8 +2009,14 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="clock">The clock used for domain events.</param>
     /// <param name="slotAKey">Optional bracket slot A.</param>
     /// <param name="slotBKey">Optional bracket slot B.</param>
+    /// <param name="bracketPairKey">Optional structural bracket pair key.</param>
     /// <returns>The created fixture.</returns>
-    public Fixture AddFixture(MatchdayId matchdayId, IClock clock, string? slotAKey = null, string? slotBKey = null)
+    public Fixture AddFixture(
+        MatchdayId matchdayId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
@@ -1925,8 +2027,9 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.MatchdayNotFound);
 
         EnsureSlotKeysExist(slotAKey, slotBKey);
+        EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
         DemoteToDraftIfReady();
-        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey);
+        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey, bracketPairKey);
         matchday.AddFixture(fixture);
         Raise(new StageFixtureAdded(Id, fixture.Id, clock));
         return fixture;
@@ -2546,6 +2649,11 @@ public sealed class Stage : AggregateRoot<StageId>
             string.Equals(f.SlotAKey, slotKey, StringComparison.Ordinal)
             || string.Equals(f.SlotBKey, slotKey, StringComparison.Ordinal));
 
+    private bool IsSlotReferencedByBracketPair(string slotKey) =>
+        _bracketPairs.Any(p =>
+            string.Equals(p.SlotAKey, slotKey, StringComparison.Ordinal)
+            || string.Equals(p.SlotBKey, slotKey, StringComparison.Ordinal));
+
     private IEnumerable<Fixture> EnumerateFixtures() =>
         _rounds.SelectMany(r => r.Fixtures).Concat(_matchdays.SelectMany(m => m.Fixtures));
 
@@ -2563,6 +2671,74 @@ public sealed class Stage : AggregateRoot<StageId>
             throw new DomainException(
                 $"Slot '{Slot.NormalizeKey(slotBKey)}' was not found.",
                 StageErrorCodes.SlotNotFound);
+        }
+    }
+
+    private void EnsureBracketPairSlotExists(string slotKey)
+    {
+        if (FindSlot(slotKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{slotKey}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+    }
+
+    /// <summary>
+    /// Ensures Fixture ↔ BracketPair binding when pairs are defined on the stage.
+    /// </summary>
+    private void EnsureFixtureBracketPairBinding(string? slotAKey, string? slotBKey, string? bracketPairKey)
+    {
+        if (string.IsNullOrWhiteSpace(bracketPairKey))
+        {
+            if (_bracketPairs.Count > 0)
+            {
+                throw new DomainException(
+                    "A BracketPair key is required when the stage defines BracketPairs.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            return;
+        }
+
+        var pair = FindBracketPair(bracketPairKey)
+                   ?? throw new DomainException(
+                       $"BracketPair '{BracketPair.NormalizePairKey(bracketPairKey)}' was not found.",
+                       StageErrorCodes.InvalidConfiguration);
+
+        if (!pair.MatchesSlots(slotAKey, slotBKey))
+        {
+            throw new DomainException(
+                $"Fixture slots do not match BracketPair '{pair.PairKey}' ({pair.SlotAKey}/{pair.SlotBKey}).",
+                StageErrorCodes.InvalidConfiguration);
+        }
+
+        if (FindFixtureByBracketPairKey(pair.PairKey) is not null)
+        {
+            throw new DomainException(
+                $"BracketPair '{pair.PairKey}' already has a Fixture.",
+                StageErrorCodes.InvalidConfiguration);
+        }
+    }
+
+    /// <summary>
+    /// Rejects removing any BracketPair still referenced by a Fixture.
+    /// </summary>
+    private void EnsureNoReferencedBracketPairRemoved(HashSet<string> remainingPairKeys)
+    {
+        foreach (var fixture in EnumerateFixtures())
+        {
+            if (fixture.BracketPairKey is null)
+            {
+                continue;
+            }
+
+            if (!remainingPairKeys.Contains(fixture.BracketPairKey))
+            {
+                throw new DomainException(
+                    $"Cannot remove BracketPair '{fixture.BracketPairKey}' while Fixture '{fixture.Id}' references it.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
         }
     }
 

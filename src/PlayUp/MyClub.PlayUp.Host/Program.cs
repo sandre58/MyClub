@@ -1557,11 +1557,8 @@ try
             CancellationToken cancellationToken) =>
         {
             ArgumentNullException.ThrowIfNull(request);
-            var pairs = request.Pairs
-                .Select(pair => new CupSlotPair(pair.SlotAKey, pair.SlotBKey))
-                .ToArray();
             var result = await executor
-                .MaterializeCupFromOccupiedSlotsAsync(new StageId(stageId), pairs, cancellationToken)
+                .MaterializeCupFromOccupiedSlotsAsync(new StageId(stageId), request.PairKeys, cancellationToken)
                 .ConfigureAwait(false);
             return Results.Ok(new MaterializeMatchesResponse(
                 result.CreatedMatches.Count,

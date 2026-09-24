@@ -42,10 +42,10 @@ function cupSchematic(overrides?: Partial<StageSchematic>): StageSchematic {
 }
 
 describe('PhaseSchematic', () => {
-  it('does not invent Match # without connections (pair ordinal ok)', () => {
+  it('does not invent pair labels without connections', () => {
     const { container } = render(<PhaseSchematic schematic={cupSchematic()} />);
     expect(container.querySelector('.schematic-cup__match-n')).toBeNull();
-    expect(container.querySelector('.schematic-cup__pair-ordinal')).not.toBeNull();
+    expect(container.querySelector('.schematic-cup__pair-ordinal')).toBeNull();
   });
 
   it('shows Match # from real connection', () => {
@@ -59,12 +59,34 @@ describe('PhaseSchematic', () => {
               slotAKey: 'A',
               slotBKey: 'B',
               matchNumber: 7,
+              pairKey: 'P1',
             },
           ],
         })}
       />,
     );
     expect(screen.getByText('#7')).toBeInTheDocument();
+  });
+
+  it('shows Domain pairKey when connection has no fixture', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          connections: [
+            {
+              fixtureId: null,
+              roundOrder: 0,
+              slotAKey: 'A',
+              slotBKey: 'B',
+              matchNumber: 0,
+              pairKey: 'P1',
+            },
+          ],
+        })}
+      />,
+    );
+    expect(container.querySelector('.schematic-cup__match-n')).toBeNull();
+    expect(screen.getByText('P1')).toBeInTheDocument();
   });
 
   it('shows match number for pairing-draw sides without slot keys', () => {
@@ -548,7 +570,7 @@ describe('PhaseSchematic', () => {
     ).toBeInTheDocument();
   });
 
-  it('cup multi-round shows structural pair ordinals without fixtures', () => {
+  it('cup multi-round shows no invented pair ordinals without connections', () => {
     const cases = Array.from({ length: 14 }, (_, i) => ({
       formPosition: { kind: 'CupSlot' as const, slotKey: `S${i + 1}` },
       entry: null,
@@ -563,11 +585,45 @@ describe('PhaseSchematic', () => {
         })}
       />,
     );
-    const labels = [
-      ...container.querySelectorAll('.schematic-cup__pair-ordinal'),
-    ].map((el) => el.textContent);
-    // 4 QF + 2 SF + 1 F — ordinals, not Match #
-    expect(labels).toEqual(['1', '2', '3', '4', '1', '2', '1']);
+    expect(container.querySelector('.schematic-cup__pair-ordinal')).toBeNull();
+    expect(container.querySelector('.schematic-cup__match-n')).toBeNull();
+  });
+
+  it('cup multi-round shows Domain pairKeys from structural connections', () => {
+    const cases = Array.from({ length: 14 }, (_, i) => ({
+      formPosition: { kind: 'CupSlot' as const, slotKey: `S${i + 1}` },
+      entry: null,
+      assignment: null,
+    }));
+    const connections = [
+      {
+        fixtureId: null,
+        roundOrder: 0,
+        slotAKey: 'S1',
+        slotBKey: 'S2',
+        matchNumber: 0,
+        pairKey: 'P1',
+      },
+      {
+        fixtureId: null,
+        roundOrder: 0,
+        slotAKey: 'S3',
+        slotBKey: 'S4',
+        matchNumber: 0,
+        pairKey: 'P2',
+      },
+    ];
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases,
+          cupRoundCount: 3,
+          connections,
+        })}
+      />,
+    );
+    expect(screen.getByText('P1')).toBeInTheDocument();
+    expect(screen.getByText('P2')).toBeInTheDocument();
     expect(container.querySelector('.schematic-cup__match-n')).toBeNull();
   });
 
@@ -606,8 +662,90 @@ describe('PhaseSchematic', () => {
       />,
     );
     expect(container.querySelector('.schematic-cup--multi')).toBeNull();
-    // One wire column only — not 3 projected KO rounds.
-    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(4);
+    // No read-model connections → no wires (geometry alone never invents pairs).
+    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(0);
+  });
+
+  it('draws zero wires when connections are empty', () => {
+    const cases = Array.from({ length: 4 }, (_, i) => ({
+      formPosition: { kind: 'CupSlot' as const, slotKey: `S${i + 1}` },
+      entry: null,
+      assignment: null,
+    }));
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({ cases, cupRoundCount: 1, connections: [] })}
+        cupRoundCount={1}
+      />,
+    );
+    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(0);
+  });
+
+  it('draws exactly one wire for connection P1', () => {
+    const cases = Array.from({ length: 4 }, (_, i) => ({
+      formPosition: { kind: 'CupSlot' as const, slotKey: `S${i + 1}` },
+      entry: null,
+      assignment: null,
+    }));
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases,
+          cupRoundCount: 1,
+          connections: [
+            {
+              fixtureId: null,
+              roundOrder: 0,
+              slotAKey: 'S1',
+              slotBKey: 'S2',
+              matchNumber: 0,
+              pairKey: 'P1',
+            },
+          ],
+        })}
+        cupRoundCount={1}
+      />,
+    );
+    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(1);
+    expect(screen.getByText('P1')).toBeInTheDocument();
+  });
+
+  it('draws exactly two wires for connections P1 and P3', () => {
+    const cases = Array.from({ length: 6 }, (_, i) => ({
+      formPosition: { kind: 'CupSlot' as const, slotKey: `S${i + 1}` },
+      entry: null,
+      assignment: null,
+    }));
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases,
+          cupRoundCount: 1,
+          connections: [
+            {
+              fixtureId: null,
+              roundOrder: 0,
+              slotAKey: 'S1',
+              slotBKey: 'S2',
+              matchNumber: 0,
+              pairKey: 'P1',
+            },
+            {
+              fixtureId: null,
+              roundOrder: 0,
+              slotAKey: 'S5',
+              slotBKey: 'S6',
+              matchNumber: 0,
+              pairKey: 'P3',
+            },
+          ],
+        })}
+        cupRoundCount={1}
+      />,
+    );
+    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(2);
+    expect(screen.getByText('P1')).toBeInTheDocument();
+    expect(screen.getByText('P3')).toBeInTheDocument();
   });
 
   it('cup multi-round uses round hint from structure hub', () => {

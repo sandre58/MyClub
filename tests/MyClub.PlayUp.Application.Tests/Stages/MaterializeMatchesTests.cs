@@ -189,7 +189,7 @@ public sealed class MaterializeMatchesTests
     }
 
     [Fact]
-    public void Cup_materialize_prepares_fixtures_without_matches_until_pairing_apply()
+    public void Cup_materialize_matches_is_rejected_in_favor_of_from_slots()
     {
         var competition = CreateCompetition.Execute("Cup", _clock);
         AddEntry.Execute(competition, "A", _clock);
@@ -202,12 +202,14 @@ public sealed class MaterializeMatchesTests
             StructureIntent.Cup(4),
             _clock);
 
-        var result = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
-        result.CreatedMatches.Should().BeEmpty();
-        configured.Stage.Rounds[0].Fixtures.Should().HaveCount(2);
+        var act = () => MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.MaterializationFailure);
+        configured.Stage.Rounds[0].Fixtures.Should().BeEmpty();
 
         var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
-        view.Readiness.ReadyForMatchOperation.Should().BeFalse();
+        view.Readiness.ReadyForMaterialization.Should().BeFalse();
+        view.Readiness.ReadyForDraw.Should().BeTrue();
     }
 
     [Fact]

@@ -10,7 +10,7 @@
   "PublishDraw": "Publier le tirage",
   "PublishAndApplyDraw": "Publier et appliquer",
   "ApplyDraw": "Appliquer le tirage",
-  "MaterializeMatches": "Créer les matchs / le squelette",
+  "MaterializeMatches": "Créer les matchs",
   "MaterializeFromOccupiedSlots": "Configurer les confrontations — {{stageName}}",
   "GenerateNextRound": "Générer le tour Swiss {{roundIndex}} / {{plannedRounds}}",
   "GenerateSchedule": "Générer un calendrier",

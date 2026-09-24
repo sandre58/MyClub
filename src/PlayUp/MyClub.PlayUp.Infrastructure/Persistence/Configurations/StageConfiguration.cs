@@ -167,6 +167,33 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
         builder.Navigation(stage => stage.SwissByeHistory)
             .HasField("_swissByeHistory")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        builder.OwnsMany(stage => stage.BracketPairs, ConfigureBracketPairs);
+        builder.Navigation(stage => stage.BracketPairs)
+            .HasField("_bracketPairs")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+
+    private static void ConfigureBracketPairs(OwnedNavigationBuilder<Stage, BracketPair> pairs)
+    {
+        pairs.ToTable("stage_bracket_pairs");
+        pairs.WithOwner().HasForeignKey("stage_id");
+        pairs.HasKey("stage_id", "PairKey");
+
+        pairs.Property(pair => pair.PairKey)
+            .HasColumnName("pair_key")
+            .HasMaxLength(BracketPair.PairKeyMaxLength)
+            .IsRequired();
+
+        pairs.Property(pair => pair.SlotAKey)
+            .HasColumnName("slot_a_key")
+            .HasMaxLength(Slot.SlotKeyMaxLength)
+            .IsRequired();
+
+        pairs.Property(pair => pair.SlotBKey)
+            .HasColumnName("slot_b_key")
+            .HasMaxLength(Slot.SlotKeyMaxLength)
+            .IsRequired();
     }
 
     private static void ConfigureDirectAssignments(OwnedNavigationBuilder<Stage, DirectAssignment> assignments)

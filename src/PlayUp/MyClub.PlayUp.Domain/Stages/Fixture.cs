@@ -18,9 +18,16 @@ public sealed class Fixture : Entity<FixtureId>
 {
     private readonly List<MatchAttachment> _attachments = [];
 
-    internal Fixture(FixtureId id, string? slotAKey = null, string? slotBKey = null)
-        : base(id) =>
+    internal Fixture(
+        FixtureId id,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null)
+        : base(id)
+    {
         BindSlots(slotAKey, slotBKey);
+        BindBracketPair(bracketPairKey);
+    }
 
     /// <summary>
     /// Gets the match attachments (MatchId + LegIndex). Order is not a business semantic for legs.
@@ -41,6 +48,11 @@ public sealed class Fixture : Entity<FixtureId>
     /// Gets bracket position B when set; otherwise <see langword="null"/>.
     /// </summary>
     public string? SlotBKey { get; private set; }
+
+    /// <summary>
+    /// Gets the structural <see cref="BracketPair"/> key when set; otherwise <see langword="null"/>.
+    /// </summary>
+    public string? BracketPairKey { get; private set; }
 
     internal bool Contains(MatchId matchId) => _attachments.Exists(a => a.MatchId.Equals(matchId));
 
@@ -96,6 +108,11 @@ public sealed class Fixture : Entity<FixtureId>
         SlotAKey = a;
         SlotBKey = b;
     }
+
+    internal void BindBracketPair(string? bracketPairKey) =>
+        BracketPairKey = string.IsNullOrWhiteSpace(bracketPairKey)
+            ? null
+            : BracketPair.NormalizePairKey(bracketPairKey);
 
     private static string? NormalizeOptionalSlotKey(string? slotKey) => slotKey is null ? null : Slot.NormalizeKey(slotKey);
 }

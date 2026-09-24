@@ -6,13 +6,14 @@ import {
   applyDraw,
   fetchCompetitionDetail,
   fetchStageOverview,
+  fetchStageSchematic,
   materializeCupFromOccupiedSlots,
   prepareStage,
   publishAndApplyDraw,
   startStage,
 } from '../api';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
-import { CheckIcon, PlusIcon, TrashIcon } from '../design-system/icons/contentIcons';
+import { CheckIcon } from '../design-system/icons/contentIcons';
 import { queryKeys } from '../queryKeys';
 import {
   DrawResolutionBadge,
@@ -28,6 +29,7 @@ import {
 } from '../ui';
 import { drawResolutionKindLabel } from '../i18n/enumLabels';
 import {
+  type SchematicConnection,
   type StageDraw,
   type StageOverview,
   type StageRound,
@@ -283,52 +285,74 @@ function StageOverviewView({ data }: { data: StageOverview }) {
   );
 }
 
-type CupSlotPairDraft = { slotAKey: string; slotBKey: string };
-
 /**
- * Explicit SlotA↔SlotB pairing for materialize-from-slots (D2 / Slice 4).
- * No naming heuristic — organizer chooses pairs among occupied slots not yet
- * covered by a complete Fixture (same rule as Overview readiness).
+ * Materialize Cup confrontations from Domain BracketPairs (pairKey).
+ * Lists schematic connections with pairKey; eligibility = both slots occupied
+ * and no fixture bound yet (fixtureId null / matchNumber 0).
  */
 function CupConfrontationsPanel({ data }: { data: StageOverview }) {
   const { t } = useTranslation('stage');
   const queryClient = useQueryClient();
-  const [pairs, setPairs] = useState<CupSlotPairDraft[]>([]);
-  const [slotA, setSlotA] = useState('');
-  const [slotB, setSlotB] = useState('');
+  const [selectedPairKeys, setSelectedPairKeys] = useState<string[]>([]);
 
   const occupied = data.slots.filter((slot) => slot.entryId != null);
-  const pairable = occupied.filter((slot) => !slot.coveredByCompleteFixture);
-  const coveredCount = occupied.filter(
-    (slot) => slot.coveredByCompleteFixture,
-  ).length;
-  const usedKeys = new Set(
-    pairs.flatMap((pair) => [pair.slotAKey, pair.slotBKey]),
-  );
-  const availableForSelect = pairable.filter(
-    (slot) => !usedKeys.has(slot.slotKey),
-  );
+  const slotByKey = new Map(data.slots.map((slot) => [slot.slotKey, slot]));
 
   const canShow =
     (data.status === 'Draft' || data.status === 'Ready') &&
     data.rounds.length > 0 &&
     occupied.length >= 2;
 
+  const schematicQuery = useQuery({
+    queryKey: queryKeys.stages.schematic(data.id),
+    queryFn: () => fetchStageSchematic(data.id),
+    enabled: canShow,
+  });
+
+  const bracketPairs = (schematicQuery.data?.connections ?? []).filter(
+    (conn): conn is SchematicConnection & { pairKey: string } =>
+      Boolean(conn.pairKey),
+  );
+
+  const rows = bracketPairs.map((conn) => {
+    const slotA = conn.slotAKey ? slotByKey.get(conn.slotAKey) : undefined;
+    const slotB = conn.slotBKey ? slotByKey.get(conn.slotBKey) : undefined;
+    const bothOccupied =
+      slotA?.entryId != null &&
+      slotB?.entryId != null &&
+      slotA.entryId !== slotB.entryId;
+    const materialized = Boolean(conn.fixtureId) || conn.matchNumber > 0;
+    const eligible = bothOccupied && !materialized;
+    return {
+      pairKey: conn.pairKey,
+      slotAKey: conn.slotAKey ?? '—',
+      slotBKey: conn.slotBKey ?? '—',
+      eligible,
+      materialized,
+    };
+  });
+
+  const eligibleKeys = rows.filter((row) => row.eligible).map((row) => row.pairKey);
+  const eligibleCount = eligibleKeys.length;
+  const materializedCount = rows.filter((row) => row.materialized).length;
+  const selectionValid = selectedPairKeys.every((key) =>
+    eligibleKeys.includes(key),
+  );
+  const keysToSubmit =
+    selectedPairKeys.length > 0 && selectionValid
+      ? selectedPairKeys
+      : eligibleKeys;
+
   const materializeMutation = useMutation({
     mutationFn: () =>
-      materializeCupFromOccupiedSlots(
-        data.id,
-        pairs.map((pair) => ({
-          slotAKey: pair.slotAKey,
-          slotBKey: pair.slotBKey,
-        })),
-      ),
+      materializeCupFromOccupiedSlots(data.id, keysToSubmit),
     onSuccess: async () => {
-      setPairs([]);
-      setSlotA('');
-      setSlotB('');
+      setSelectedPairKeys([]);
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(data.id),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.stages.schematic(data.id),
       });
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.overview(data.competitionId),
@@ -343,14 +367,16 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
     return null;
   }
 
-  const canAdd =
-    slotA.length > 0 &&
-    slotB.length > 0 &&
-    slotA !== slotB &&
-    !usedKeys.has(slotA) &&
-    !usedKeys.has(slotB);
+  const togglePair = (pairKey: string) => {
+    setSelectedPairKeys((current) =>
+      current.includes(pairKey)
+        ? current.filter((key) => key !== pairKey)
+        : [...current, pairKey],
+    );
+  };
 
-  const pairingExhausted = pairable.length < 2 && pairs.length === 0;
+  const pairingExhausted =
+    rows.length > 0 && eligibleCount === 0 && materializedCount === rows.length;
 
   return (
     <section className="ds-panel" aria-labelledby="confrontations-heading">
@@ -361,136 +387,93 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       <p className="muted">
         {t('confrontations.occupiedHint', { count: occupied.length })}
       </p>
-      {coveredCount > 0 && (
+      {materializedCount > 0 && (
         <p className="muted">
-          {t('confrontations.coveredHint', { count: coveredCount })}
+          {t('confrontations.coveredHint', { count: materializedCount })}
         </p>
+      )}
+
+      {schematicQuery.isLoading && (
+        <p className="muted">{t('confrontations.loadingPairs')}</p>
+      )}
+      {schematicQuery.isError && (
+        <MutationError error={schematicQuery.error} />
+      )}
+
+      {schematicQuery.isSuccess && rows.length === 0 && (
+        <p className="muted">{t('confrontations.noBracketPairs')}</p>
       )}
 
       {pairingExhausted ? (
         <p className="ds-notice" role="status">
           {t('confrontations.allCovered')}
         </p>
-      ) : (
+      ) : rows.length > 0 ? (
         <>
-          {pairs.length > 0 && (
-            <ul
-              className="plain-list"
-              aria-label={t('confrontations.pairsHeading')}
-            >
-              {pairs.map((pair) => (
-                <li
-                  key={`${pair.slotAKey}:${pair.slotBKey}`}
-                  className="button-row"
-                >
-                  <span>
+          <ul
+            className="plain-list"
+            aria-label={t('confrontations.pairsHeading')}
+          >
+            {rows.map((row) => (
+              <li key={row.pairKey} className="button-row">
+                {row.eligible ? (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedPairKeys.includes(row.pairKey)}
+                      onChange={() => togglePair(row.pairKey)}
+                    />{' '}
+                    <code>{row.pairKey}</code>
+                    {' — '}
                     {t('confrontations.pairLabel', {
-                      slotA: pair.slotAKey,
-                      slotB: pair.slotBKey,
+                      slotA: row.slotAKey,
+                      slotB: row.slotBKey,
                     })}
+                  </label>
+                ) : (
+                  <span className="muted">
+                    <code>{row.pairKey}</code>
+                    {' — '}
+                    {t('confrontations.pairLabel', {
+                      slotA: row.slotAKey,
+                      slotB: row.slotBKey,
+                    })}
+                    {row.materialized
+                      ? ` — ${t('confrontations.pairMaterialized')}`
+                      : ` — ${t('confrontations.pairWaitingSlots')}`}
                   </span>
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--secondary"
-                    onClick={() =>
-                      setPairs((current) =>
-                        current.filter(
-                          (item) =>
-                            item.slotAKey !== pair.slotAKey ||
-                            item.slotBKey !== pair.slotBKey,
-                        ),
-                      )
-                    }
-                  >
-                    <TrashIcon size="sm" />
-                    {t('confrontations.removePair')}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {pairs.length === 0 && (
-            <p className="muted">{t('confrontations.pairsEmpty')}</p>
-          )}
+                )}
+              </li>
+            ))}
+          </ul>
 
-          {availableForSelect.length >= 2 && (
+          {eligibleCount > 0 && (
             <div className="button-row">
-              <label>
-                {t('confrontations.slotA')}{' '}
-                <select
-                  value={slotA}
-                  onChange={(event) => setSlotA(event.target.value)}
-                >
-                  <option value="">
-                    {t('confrontations.selectPlaceholder')}
-                  </option>
-                  {availableForSelect
-                    .filter((slot) => slot.slotKey !== slotB)
-                    .map((slot) => (
-                      <option key={slot.slotKey} value={slot.slotKey}>
-                        {slot.slotKey}
-                        {slot.displayName ? ` — ${slot.displayName}` : ''}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <label>
-                {t('confrontations.slotB')}{' '}
-                <select
-                  value={slotB}
-                  onChange={(event) => setSlotB(event.target.value)}
-                >
-                  <option value="">
-                    {t('confrontations.selectPlaceholder')}
-                  </option>
-                  {availableForSelect
-                    .filter((slot) => slot.slotKey !== slotA)
-                    .map((slot) => (
-                      <option key={slot.slotKey} value={slot.slotKey}>
-                        {slot.slotKey}
-                        {slot.displayName ? ` — ${slot.displayName}` : ''}
-                      </option>
-                    ))}
-                </select>
-              </label>
               <button
                 type="button"
-                className="ds-btn ds-btn--secondary"
-                disabled={!canAdd}
-                onClick={() => {
-                  setPairs((current) => [
-                    ...current,
-                    { slotAKey: slotA, slotBKey: slotB },
-                  ]);
-                  setSlotA('');
-                  setSlotB('');
-                }}
+                className="ds-btn ds-btn--primary"
+                disabled={materializeMutation.isPending}
+                onClick={() => materializeMutation.mutate()}
               >
-                <PlusIcon size="sm" />
-                {t('confrontations.addPair')}
+                {materializeMutation.isPending ? (
+                  <PendingLabel>{t('confrontations.submitting')}</PendingLabel>
+                ) : (
+                  <>
+                    <CheckIcon size="sm" />
+                    {selectedPairKeys.length > 0 && selectionValid
+                      ? t('confrontations.submitSelected', {
+                          count: selectedPairKeys.length,
+                        })
+                      : t('confrontations.submitAll', {
+                          count: eligibleCount,
+                        })}
+                  </>
+                )}
               </button>
             </div>
           )}
-
-          <div className="button-row">
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
-              disabled={pairs.length === 0 || materializeMutation.isPending}
-              onClick={() => materializeMutation.mutate()}
-            >
-              {materializeMutation.isPending ? (
-                <PendingLabel>{t('confrontations.submitting')}</PendingLabel>
-              ) : (
-                <>
-                  <CheckIcon size="sm" />
-                  {t('confrontations.submit')}
-                </>
-              )}
-            </button>
-          </div>
         </>
-      )}
+      ) : null}
 
       {materializeMutation.isSuccess && (
         <p className="ds-notice" role="status">

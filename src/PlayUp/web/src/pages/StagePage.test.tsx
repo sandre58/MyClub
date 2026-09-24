@@ -7,11 +7,13 @@ import {
   applyDraw,
   fetchCompetitionDetail,
   fetchStageOverview,
+  fetchStageSchematic,
+  materializeCupFromOccupiedSlots,
   prepareStage,
   publishAndApplyDraw,
   startStage,
 } from '../api';
-import type { StageDraw, StageOverview, StageSlot } from '../types';
+import type { StageDraw, StageOverview, StageSchematic, StageSlot } from '../types';
 import { getDrawUiProjection, isSlotDrawApplied } from './drawUi';
 import { StagePage } from './StagePage';
 
@@ -20,6 +22,7 @@ vi.mock('../api', async (importOriginal) => {
   return {
     ...actual,
     fetchStageOverview: vi.fn(),
+    fetchStageSchematic: vi.fn(),
     fetchCompetitionDetail: vi.fn(),
     prepareStage: vi.fn(),
     startStage: vi.fn(),
@@ -45,6 +48,19 @@ function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
     rounds: [],
     slots: [],
     draws: [],
+    ...overrides,
+  };
+}
+
+function baseSchematic(overrides?: Partial<StageSchematic>): StageSchematic {
+  return {
+    stageId,
+    competitionId,
+    name: 'QF',
+    status: 'Draft',
+    formatKind: 'Cup',
+    cases: [],
+    connections: [],
     ...overrides,
   };
 }
@@ -452,6 +468,12 @@ describe('StagePage draws', () => {
     vi.mocked(startStage).mockResolvedValue(undefined);
     vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
     vi.mocked(applyDraw).mockResolvedValue(undefined);
+    vi.mocked(fetchStageSchematic).mockResolvedValue(baseSchematic());
+    vi.mocked(materializeCupFromOccupiedSlots).mockResolvedValue({
+      createdCount: 0,
+      attachedMatchIds: [],
+      alreadyComplete: false,
+    });
   });
 
   it('shows Slot result for draft + resolved without Apply', async () => {
@@ -878,7 +900,7 @@ describe('StagePage draws', () => {
     expect(applyDraw).not.toHaveBeenCalled();
   });
 
-  it('Confrontations excludes slots covered by a complete fixture', async () => {
+  it('Confrontations lists eligible BracketPairs and posts pairKeys', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
@@ -925,6 +947,33 @@ describe('StagePage draws', () => {
         ],
       }),
     );
+    vi.mocked(fetchStageSchematic).mockResolvedValue(
+      baseSchematic({
+        connections: [
+          {
+            fixtureId,
+            roundOrder: 0,
+            slotAKey: 'SF1-A',
+            slotBKey: 'SF1-B',
+            matchNumber: 1,
+            pairKey: 'P1',
+          },
+          {
+            fixtureId: null,
+            roundOrder: 0,
+            slotAKey: 'SF2-A',
+            slotBKey: 'SF2-B',
+            matchNumber: 0,
+            pairKey: 'P2',
+          },
+        ],
+      }),
+    );
+    vi.mocked(materializeCupFromOccupiedSlots).mockResolvedValue({
+      createdCount: 1,
+      attachedMatchIds: ['m2'],
+      alreadyComplete: false,
+    });
 
     renderStagePage();
 
@@ -932,21 +981,25 @@ describe('StagePage draws', () => {
       await screen.findByRole('heading', { name: 'Confrontations' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/2 déjà couvert\(s\) par une confrontation complète/i),
+      await screen.findByText(/1 paire\(s\) déjà matérialisée\(s\)/i),
     ).toBeInTheDocument();
-
-    const slotA = screen.getByLabelText(/Emplacement A/i);
-    expect(within(slotA).queryByText(/SF1-A/)).not.toBeInTheDocument();
-    expect(within(slotA).getByText(/SF2-A/)).toBeInTheDocument();
-    expect(within(slotA).getByText(/SF2-B/)).toBeInTheDocument();
-
-    await user.selectOptions(slotA, 'SF2-A');
-    await user.selectOptions(screen.getByLabelText(/Emplacement B/i), 'SF2-B');
-    await user.click(screen.getByRole('button', { name: /Ajouter la paire/i }));
+    expect(screen.getByText(/déjà générée/i)).toBeInTheDocument();
     expect(screen.getByText(/SF2-A ↔ SF2-B/)).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /Générer les confrontations \(1\)/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(materializeCupFromOccupiedSlots).toHaveBeenCalledWith(stageId, [
+        'P2',
+      ]);
+    });
   });
 
-  it('Confrontations shows all-covered when no pairable slots remain', async () => {
+  it('Confrontations shows all-covered when no eligible pairs remain', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         status: 'Draft',
@@ -963,6 +1016,20 @@ describe('StagePage draws', () => {
             entryId: entryB,
             displayName: 'Beta',
             coveredByCompleteFixture: true,
+          },
+        ],
+      }),
+    );
+    vi.mocked(fetchStageSchematic).mockResolvedValue(
+      baseSchematic({
+        connections: [
+          {
+            fixtureId,
+            roundOrder: 0,
+            slotAKey: 'SF1-A',
+            slotBKey: 'SF1-B',
+            matchNumber: 1,
+            pairKey: 'P1',
           },
         ],
       }),

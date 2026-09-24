@@ -10,7 +10,7 @@
   "PublishDraw": "Publish the draw",
   "PublishAndApplyDraw": "Publish and apply",
   "ApplyDraw": "Apply the draw",
-  "MaterializeMatches": "Create matches / skeleton",
+  "MaterializeMatches": "Create matches",
   "MaterializeFromOccupiedSlots": "Configure fixtures — {{stageName}}",
   "GenerateNextRound": "Generate Swiss round {{roundIndex}} / {{plannedRounds}}",
   "GenerateSchedule": "Generate a schedule",

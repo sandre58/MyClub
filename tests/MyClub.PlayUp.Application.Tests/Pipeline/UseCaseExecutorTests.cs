@@ -357,24 +357,7 @@ public sealed class UseCaseExecutorTests
     [Fact]
     public async Task PublishAndApplyDrawAsync_when_apply_fails_keeps_publish_savedAsync()
     {
-        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
-        var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        var round = stage.AddRound("R1", _clock);
-        _ = stage.AddFixture(round.Id, _clock);
-        var entryA = EntryId.New();
-        var entryB = EntryId.New();
-        stage.AddSlot("A");
-        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entryA, entryB]));
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedSlots(
-            [
-                new SlotDrawPlacement(entryA, "A"),
-                new SlotDrawPlacement(entryB, "Missing")
-            ]),
-            _clock);
-
+        var (competition, stage, drawId) = CreateReadyToPublishSlotDraw();
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
@@ -385,7 +368,7 @@ public sealed class UseCaseExecutorTests
             .ReturnsAsync(stage);
         SetupCompetitionLookup(competitions, competition);
 
-        // First SaveChanges = Publish; second = Apply — fail Apply so Publish stays durable.
+        // First SaveChanges = Publish; second = Apply persistence — fail Apply save so Publish stays durable.
         var saveCount = 0;
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -400,10 +383,10 @@ public sealed class UseCaseExecutorTests
             });
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
-        var act = async () => await executor.PublishAndApplyDrawAsync(stage.Id, draw.Id);
+        var act = async () => await executor.PublishAndApplyDrawAsync(stage.Id, drawId);
 
         await act.Should().ThrowAsync<ApplicationFailureException>();
-        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Published);
+        stage.GetDraw(drawId).Status.Should().Be(DrawStatus.Published);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 

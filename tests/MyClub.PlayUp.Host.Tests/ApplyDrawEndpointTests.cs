@@ -44,7 +44,8 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         stage.Should().NotBeNull();
         stage.FindSlot("S1")!.EntryId.Should().Be(seed.EntryA);
         stage.FindSlot("S2")!.EntryId.Should().Be(seed.EntryB);
-        stage.GetFixture(seed.FixtureId).MatchIds.Should().BeEmpty();
+        stage.FindFixtureByBracketPairKey("P1").Should().BeNull();
+        stage.Rounds[0].Fixtures.Should().BeEmpty();
     }
 
     [IntegrationFact]
@@ -101,10 +102,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
 
         using (var materialize = await client.PostAsJsonAsync(
                    MaterializeUri(seed.StageId),
-                   new MaterializeCupFromOccupiedSlotsRequest(
-                   [
-                       new CupSlotPairRequest("S1", "S2")
-                   ])))
+                   new MaterializeCupFromOccupiedSlotsRequest(["P1"])))
         {
             materialize.StatusCode.Should().Be(HttpStatusCode.OK);
         }
@@ -113,7 +111,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         using (var scope = factory.Services.CreateScope())
         {
             var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
-            matchId = stage!.GetFixture(seed.FixtureId).MatchIds.Should().ContainSingle().Subject;
+            matchId = stage!.FindFixtureByBracketPairKey("P1")!.MatchIds.Should().ContainSingle().Subject;
         }
 
         using (var start = await client.PostAsync(new Uri($"/matches/{matchId.Value}/start", UriKind.Relative), content: null))
@@ -161,10 +159,10 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         competitions.Add(competition);
 
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        var round = stage.AddRound("R1", _clock);
+        stage.AddRound("R1", _clock);
         stage.AddSlot("S1");
         stage.AddSlot("S2");
-        var addFixture = stage.AddFixture(round.Id, _clock, "S1", "S2");
+        stage.SeedEntryRoundBracketPairs();
         var entryA = EntryId.New();
         var entryB = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -186,13 +184,12 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
 
-        return new SlotDrawSeed(stage.Id, draw.Id, addFixture.Id, entryA, entryB);
+        return new SlotDrawSeed(stage.Id, draw.Id, entryA, entryB);
     }
 
     private sealed record SlotDrawSeed(
         StageId StageId,
         DrawId DrawId,
-        FixtureId FixtureId,
         EntryId EntryA,
         EntryId EntryB);
 }

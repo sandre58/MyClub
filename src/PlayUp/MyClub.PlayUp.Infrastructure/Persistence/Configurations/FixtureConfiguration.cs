@@ -45,6 +45,12 @@ internal sealed class FixtureConfiguration : IEntityTypeConfiguration<Fixture>
             .IsRequired(false)
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
+        builder.Property(fixture => fixture.BracketPairKey)
+            .HasColumnName("bracket_pair_key")
+            .HasMaxLength(BracketPair.PairKeyMaxLength)
+            .IsRequired(false)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Property<RoundId?>("round_id")
             .HasColumnName("round_id")
             .HasColumnType("uuid")

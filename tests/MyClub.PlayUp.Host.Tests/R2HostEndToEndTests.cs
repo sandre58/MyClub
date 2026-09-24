@@ -39,22 +39,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         var seed = await SeedResolvedDraftSlotCupAsync(factory);
         using var client = factory.CreateClient();
 
-        // Prepare (Draft → Ready), including cross-stage progression destination validation.
-        using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
-        {
-            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        }
-
-        using (var scope = factory.Services.CreateScope())
-        {
-            var quarter = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
-                .GetByIdForUpdateAsync(seed.QuarterStageId);
-            quarter!.Status.Should().Be(StageStatus.Ready);
-            quarter.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Draft);
-            quarter.GetDraw(seed.DrawId).Resolution.State.Should().Be(DrawResolutionState.Resolved);
-        }
-
-        // PublishDraw
+        // PublishDraw (stage stays Draft until fixtures + progression are ready for Prepare).
         using (var publish = await client.PostAsync(PublishUri(seed.QuarterStageId, seed.DrawId), content: null))
         {
             publish.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -78,21 +63,34 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         using (var materialize = await client.PostAsJsonAsync(
                    MaterializeUri(seed.QuarterStageId),
-                   new MaterializeCupFromOccupiedSlotsRequest(
-                   [
-                       new CupSlotPairRequest("S1", "S2")
-                   ])))
+                   new MaterializeCupFromOccupiedSlotsRequest(["P1"])))
         {
             materialize.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
         MatchId matchId;
+        FixtureId fixtureId;
         using (var scope = factory.Services.CreateScope())
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             var quarter = await stages.GetByIdForUpdateAsync(seed.QuarterStageId);
-            matchId = quarter!.GetFixture(seed.FixtureId).MatchIds.Should().ContainSingle().Subject;
+            var fixture = quarter!.FindFixtureByBracketPairKey("P1");
+            fixture.Should().NotBeNull();
+            fixtureId = fixture!.Id;
+            matchId = fixture.MatchIds.Should().ContainSingle().Subject;
+
+            quarter.ReplaceProgressionRules(
+                new ProgressionRules(
+                [
+                    new ProgressionPath(
+                        fixtureId,
+                        ProgressionOutcome.Winner,
+                        ProgressionDestination.ForPopulation(seed.SemiStageId))
+                ]),
+                _clock);
+            await unitOfWork.SaveChangesAsync();
 
             var match = await matches.GetByIdForUpdateAsync(matchId);
             match.Should().NotBeNull();
@@ -102,6 +100,19 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             match.StageId.Should().Be(seed.QuarterStageId);
             match.CompetitionId.Should().Be(seed.CompetitionId);
             match.Result.Should().BeNull();
+        }
+
+        // Prepare after fixtures + progression exist (Draft → Ready).
+        using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var quarter = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
+                .GetByIdForUpdateAsync(seed.QuarterStageId);
+            quarter!.Status.Should().Be(StageStatus.Ready);
         }
 
         // Before progression — destination population and slots empty (observable via Read Surface).
@@ -146,7 +157,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         // ApplyProgressionOutcome — Winner derived from finished Match(es), not from HTTP body.
         using (var progress = await client.PostAsync(
-                   ProgressUri(seed.QuarterStageId, seed.FixtureId),
+                   ProgressUri(seed.QuarterStageId, fixtureId),
                    content: null))
         {
             progress.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -200,7 +211,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
     public async Task ApplyProgression_when_fixture_has_no_match_leaves_destination_slot_emptyAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedResolvedDraftSlotCupAsync(factory);
+        var seed = await SeedResolvedDraftSlotCupAsync(factory, createEmptyFixture: true);
         using var client = factory.CreateClient();
 
         using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
@@ -215,7 +226,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
         // Intentionally skip ApplyDraw — progression must fail without a coherent fixture/match set.
         using (var progress = await client.PostAsync(
-                   ProgressUri(seed.QuarterStageId, seed.FixtureId),
+                   ProgressUri(seed.QuarterStageId, seed.FixtureId!.Value),
                    content: null))
         {
             progress.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -306,9 +317,13 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
     }
 
     /// <summary>
-    /// Seeds structure + Slot Draw Draft+Resolved. HTTP workflow starts at Prepare / Publish.
+    /// Seeds structure + Slot Draw Draft+Resolved. HTTP workflow starts at Publish / Apply.
+    /// When <paramref name="createEmptyFixture"/> is true, also seeds an empty P1 fixture + Winner progression
+    /// (for progression-without-match negative cases).
     /// </summary>
-    private async Task<R2CupSeed> SeedResolvedDraftSlotCupAsync(PlayUpWebApplicationFactory factory)
+    private async Task<R2CupSeed> SeedResolvedDraftSlotCupAsync(
+        PlayUpWebApplicationFactory factory,
+        bool createEmptyFixture = false)
     {
         using var scope = factory.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
@@ -324,25 +339,32 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         quarter.AddSlot("S1");
         quarter.AddSlot("S2");
-        var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "S1", "S2");
+        quarter.SeedEntryRoundBracketPairs();
 
         var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         semi.AddSlot("SF1-A");
         semi.AddSlot("SF1-B");
+        semi.SeedEntryRoundBracketPairs();
 
         competition.AddStage(quarter.Id, _clock);
         competition.AddStage(semi.Id, _clock);
 
-        quarter.ReplaceProgressionRules(
-            new ProgressionRules(
-            [
-                new ProgressionPath(
-                    addFixture.Id,
-                    ProgressionOutcome.Winner,
-                    ProgressionDestination.ForPopulation(semi.Id))
-            ]),
-            _clock);
+        FixtureId? fixtureId = null;
+        if (createEmptyFixture)
+        {
+            var empty = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "S1", "S2", "P1");
+            fixtureId = empty.Id;
+            quarter.ReplaceProgressionRules(
+                new ProgressionRules(
+                [
+                    new ProgressionPath(
+                        empty.Id,
+                        ProgressionOutcome.Winner,
+                        ProgressionDestination.ForPopulation(semi.Id))
+                ]),
+                _clock);
+        }
 
         var home = homeEntry.Id;
         var away = awayEntry.Id;
@@ -366,7 +388,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             quarter.Id,
             semi.Id,
             draw.Id,
-            addFixture.Id,
+            fixtureId,
             home,
             away);
     }
@@ -376,7 +398,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         StageId QuarterStageId,
         StageId SemiStageId,
         DrawId DrawId,
-        FixtureId FixtureId,
+        FixtureId? FixtureId,
         EntryId Home,
         EntryId Away);
 }

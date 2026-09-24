@@ -13,8 +13,8 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: materialize Fixtures and Matches for Slice 3 (Championship / Groups).
-/// Cup Matches come from Pairing <see cref="ApplyDraw"/>; this UC only ensures fixtures / verifies.
+/// Application use case: materialize Fixtures and Matches for Championship / Groups.
+/// Cup uses <see cref="MaterializeCupFromOccupiedSlots"/> exclusively (BracketPair → Fixture).
 /// </summary>
 /// <remarks>
 /// Orchestrates Domain primitives only (AddMatchday / AddFixture / Match.Create / AttachMatch).
@@ -60,7 +60,11 @@ public static class MaterializeMatches
         {
             StructureFormatKind.Championship => MaterializeChampionship(competition, stage, existingMatches, clock),
             StructureFormatKind.Groups => MaterializeGroups(competition, stage, existingMatches, clock),
-            StructureFormatKind.Cup => MaterializeCup(competition, stage, existingMatches, clock),
+            StructureFormatKind.Cup => throw new ApplicationFailureException(
+                "Cup stages use MaterializeCupFromOccupiedSlots (BracketPair → Fixture) — MaterializeMatches is not applicable.",
+                ApplicationErrorCodes.MaterializationFailure),
+            // Legacy DBs may still contain unbound Cup fixtures created by the removed skeleton path
+            // (no BracketPairKey). Do not auto-delete them here; clean up via a dedicated data task if needed.
             StructureFormatKind.Swiss => throw new ApplicationFailureException(
                 "Swiss stages use GenerateNextRound — MaterializeMatches is not applicable.",
                 ApplicationErrorCodes.MaterializationFailure),
@@ -161,44 +165,6 @@ public static class MaterializeMatches
             created,
             [.. existingByPair.Values.Select(match => match.Id)],
             AlreadyComplete: false);
-    }
-
-    private static MaterializeMatchesResult MaterializeCup(
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<Match> existingMatches,
-        IClock clock)
-    {
-        var entries = GetActiveEntries(competition);
-        if (entries.Count < 2 || !IsPowerOfTwo(entries.Count))
-        {
-            throw new ApplicationFailureException(
-                "Cup materialization requires a power-of-two count of active entries (2–64).",
-                ApplicationErrorCodes.MaterializationFailure);
-        }
-
-        var round = stage.Rounds.FirstOrDefault()
-                    ?? throw new ApplicationFailureException(
-                        "Cup materialization requires a round on the stage.",
-                        ApplicationErrorCodes.MaterializationFailure);
-
-        var expectedFixtures = entries.Count / 2;
-        while (round.Fixtures.Count < expectedFixtures)
-        {
-            stage.AddFixture(round.Id, clock);
-        }
-
-        var attached = CollectAttachedMatchIds(stage);
-        return attached.Count >= expectedFixtures
-            && existingMatches.Count >= expectedFixtures
-            && existingMatches.All(match => attached.Contains(match.Id))
-            ? new MaterializeMatchesResult([], attached, AlreadyComplete: true)
-            : attached.Count == 0
-            ?
-
-            // Fixtures skeleton only — Matches are created by MaterializeCupFromOccupiedSlots after Slot apply.
-            new MaterializeMatchesResult([], [], AlreadyComplete: false)
-            : new MaterializeMatchesResult([], attached, AlreadyComplete: attached.Count >= expectedFixtures);
     }
 
     private static MaterializeMatchesResult MaterializeRoundsOnMatchdays(
@@ -393,14 +359,6 @@ public static class MaterializeMatches
             .OrderBy(id => id.Value)
     ];
 
-    private static IReadOnlyList<MatchId> CollectAttachedMatchIds(Stage stage) =>
-    [
-        .. stage.Matchdays.SelectMany(matchday => matchday.Fixtures)
-            .Concat(stage.Rounds.SelectMany(round => round.Fixtures))
-            .SelectMany(fixture => fixture.MatchIds)
-            .Distinct()
-    ];
-
     private static (EntryId Home, EntryId Away) DirectedPair(EntryId home, EntryId away) => (home, away);
 
     private static (EntryId Home, EntryId Away) CanonicalOrdered(EntryId a, EntryId b) =>
@@ -436,6 +394,4 @@ public static class MaterializeMatches
                 ApplicationErrorCodes.StructureNotMutable);
         }
     }
-
-    private static bool IsPowerOfTwo(int value) => value > 0 && (value & (value - 1)) == 0;
 }

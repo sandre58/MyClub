@@ -130,6 +130,44 @@ public sealed class StagePersistenceTests
     }
 
     [Fact]
+    public async Task Cup_bracket_pairs_and_fixture_pair_key_round_tripAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        StageId stageId;
+        FixtureId fixtureId;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var stage = Stage.Create(CompetitionId.New(), new StageName("Cup"), SampleRegulations.Standard(), _clock);
+            stage.AddRound("Tour", _clock);
+            stage.AddSlot("S1");
+            stage.AddSlot("S2");
+            stage.AddSlot("S3");
+            stage.AddSlot("S4");
+            stage.SeedEntryRoundBracketPairs();
+            var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "S1", "S2", "P1");
+            stageId = stage.Id;
+            fixtureId = fixture.Id;
+
+            new StageRepository(context).Add(stage);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var loaded = await new StageRepository(context).GetByIdForUpdateAsync(stageId);
+            loaded.Should().NotBeNull();
+            loaded.BracketPairs.Should().HaveCount(2);
+            loaded.FindBracketPair("P1")!.SlotBKey.Should().Be("S2");
+            loaded.FindBracketPair("P2")!.SlotAKey.Should().Be("S3");
+            var fixture = loaded.GetFixture(fixtureId);
+            fixture.BracketPairKey.Should().Be("P1");
+            fixture.SlotAKey.Should().Be("S1");
+            fixture.SlotBKey.Should().Be("S2");
+        }
+    }
+
+    [Fact]
     public async Task Fixture_XOR_round_parent_materializes_with_matchday_fk_nullAsync()
     {
         var databaseName = Guid.NewGuid().ToString();

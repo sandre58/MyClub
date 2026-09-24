@@ -1686,8 +1686,8 @@ public static class OverviewAssembler
         bool fromSlotsOpportunity) =>
         competition.Status switch
         {
-            // From-slots (later Cup stage) before skeleton MaterializeMatches — avoid concurrent
-            // "create matches" vs "configure confrontations" when multi-stage slots are ready.
+            // From-slots Cup before championship/groups MaterializeMatches — avoid concurrent
+            // "create matches" tips when occupied Cup slots are ready.
             CompetitionStatus.Draft or CompetitionStatus.Ready when fromSlotsOpportunity =>
                 new OverviewNaturalProgressionDto(ActionMaterializeFromOccupiedSlots),
             CompetitionStatus.Draft or CompetitionStatus.Ready =>
