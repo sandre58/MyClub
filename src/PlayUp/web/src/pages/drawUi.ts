@@ -392,6 +392,18 @@ export function drawExecutionNumber(
 }
 
 /**
+ * L2 lock: DrawRules become immutable once a non-cancelled Draw has left
+ * NotResolved (Generate consumed the rules — Resolved or NoSolution).
+ * Draft+NotResolved remains editable; Cancel unlocks for a new cycle.
+ */
+export function areDrawRulesLockedByExecution(draws: StageDraw[]): boolean {
+  return draws.some(
+    (d) =>
+      d.status !== 'Cancelled' && d.resolutionState !== 'NotResolved',
+  );
+}
+
+/**
  * Current non-cancelled draw for Structure chrome (newest first).
  * Cancelled-only history → null (capacity / config, not engagement).
  */

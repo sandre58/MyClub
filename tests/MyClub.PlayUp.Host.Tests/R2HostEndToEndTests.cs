@@ -76,10 +76,10 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             var quarter = await stages.GetByIdForUpdateAsync(seed.QuarterStageId);
-            var fixture = quarter!.FindFixtureByBracketPairKey("P1");
-            fixture.Should().NotBeNull();
-            fixtureId = fixture!.Id;
-            matchId = fixture.MatchIds.Should().ContainSingle().Subject;
+            var bracketPairKey = quarter!.FindFixtureByBracketPairKey("P1");
+            bracketPairKey.Should().NotBeNull();
+            fixtureId = bracketPairKey.Id;
+            matchId = bracketPairKey.MatchIds.Should().ContainSingle().Subject;
 
             quarter.ReplaceProgressionRules(
                 new ProgressionRules(

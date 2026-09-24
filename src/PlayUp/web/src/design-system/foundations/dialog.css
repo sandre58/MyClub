@@ -156,8 +156,9 @@
   gap: var(--space-8);
 }
 
-/* Narrow panel: status full width above actions. */
-@container ds-dialog (max-width: 32rem) {
+/* Truly narrow panel (below sm 28rem): status full width above actions.
+ * sm (28rem) keeps status left of actions — the documented footer contract. */
+@container ds-dialog (max-width: 24rem) {
   .ds-dialog__footer {
     flex-wrap: wrap;
     align-items: stretch;

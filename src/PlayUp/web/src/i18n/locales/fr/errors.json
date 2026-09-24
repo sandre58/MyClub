@@ -74,6 +74,7 @@
     "StructureLocked": "La structure est verrouillée.",
     "DrawNotFound": "Tirage introuvable.",
     "DrawInvalidTransition": "Transition de tirage interdite.",
-    "DrawRulesClearBlockedByActiveDraw": "Annulez d’abord le tirage en cours."
+    "DrawRulesClearBlockedByActiveDraw": "Annulez d’abord le tirage en cours.",
+    "DrawRulesReplaceBlockedAfterGenerate": "Les paramètres sont figés après génération. Annulez l’exécution pour en créer une nouvelle."
   }
 }

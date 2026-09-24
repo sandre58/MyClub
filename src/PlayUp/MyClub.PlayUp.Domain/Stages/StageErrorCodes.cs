@@ -243,6 +243,12 @@ public static class StageErrorCodes
     public const string DrawRulesClearBlockedByActiveDraw = "Stage.DrawRulesClearBlockedByActiveDraw";
 
     /// <summary>
+    /// Gets the code when replacing DrawRules is blocked because a non-cancelled Draw
+    /// already has a generated resolution (Resolved or NoSolution).
+    /// </summary>
+    public const string DrawRulesReplaceBlockedAfterGenerate = "Stage.DrawRulesReplaceBlockedAfterGenerate";
+
+    /// <summary>
     /// Gets the code when standing rules presence violates A5 (classifying vs non-classifying topology).
     /// </summary>
     public const string StandingRulesInvariant = "Stage.StandingRulesInvariant";

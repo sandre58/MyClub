@@ -507,6 +507,9 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces draw rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Clear is refused while any non-cancelled Draw exists.
+    /// Replace (non-null) is refused once a non-cancelled Draw has left NotResolved
+    /// (Generate consumed the rules for that execution — L2 lock).
     /// </summary>
     /// <param name="drawRules">The new draw rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -523,9 +526,25 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.DrawRulesClearBlockedByActiveDraw);
         }
 
+        if (drawRules is not null && HasDrawWithGeneratedResolution())
+        {
+            throw new DomainException(
+                "Cannot replace draw rules after a non-cancelled draw has been generated. Cancel the execution first.",
+                StageErrorCodes.DrawRulesReplaceBlockedAfterGenerate);
+        }
+
         Regulation = Regulation.WithDrawRules(drawRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }
+
+    /// <summary>
+    /// True when any non-cancelled Draw has left <see cref="DrawResolutionState.NotResolved"/>
+    /// (Resolved or NoSolution) — DrawRules are locked for that execution cycle.
+    /// </summary>
+    private bool HasDrawWithGeneratedResolution() =>
+        _draws.Any(draw =>
+            draw.Status != DrawStatus.Cancelled
+            && draw.Resolution.State != DrawResolutionState.NotResolved);
 
     /// <summary>
     /// Adds a standing points deduction for an entry (mutable until Completed).

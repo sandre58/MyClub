@@ -185,6 +185,71 @@ public sealed class StageDrawTests
     }
 
     [Fact]
+    public void ReplaceDrawRules_allowed_while_draft_draw_not_yet_generated()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        _ = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random, potRules: new PotRules(4)), _clock);
+
+        stage.Regulation.DrawRules!.PotRules!.NumberOfPots.Should().Be(4);
+    }
+
+    [Fact]
+    public void ReplaceDrawRules_rejected_after_generate_resolved()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.AddSlot("A");
+        var entry = EntryId.New();
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "A")]),
+            _clock);
+
+        var replace = () => stage.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(6)),
+            _clock);
+
+        replace.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.DrawRulesReplaceBlockedAfterGenerate);
+        stage.Regulation.DrawRules!.PotRules.Should().BeNull();
+    }
+
+    [Fact]
+    public void ReplaceDrawRules_rejected_after_generate_no_solution()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
+        stage.MarkDrawNoSolution(draw.Id, _clock);
+
+        var replace = () => stage.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(3)),
+            _clock);
+
+        replace.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.DrawRulesReplaceBlockedAfterGenerate);
+    }
+
+    [Fact]
+    public void ReplaceDrawRules_allowed_again_after_cancel_of_generated_draw()
+    {
+        var stage = CreateStage();
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), _clock);
+        var (draw, _) = PublishSlotDraw(stage);
+        stage.CancelDraw(draw.Id, _clock);
+
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random, potRules: new PotRules(6)), _clock);
+
+        stage.Regulation.DrawRules!.PotRules!.NumberOfPots.Should().Be(6);
+    }
+
+    [Fact]
     public void Fixed_slot_placements_do_not_create_DirectAssignment()
     {
         var stage = CreateStage();

@@ -144,7 +144,7 @@ public sealed class BracketPairTests
         var stage = CreateSeededCup();
         stage.AddFixture(stage.Rounds[0].Id, _clock, "S1", "S2", "P1");
 
-        var act = () => stage.ClearBracketPairs();
+        var act = stage.ClearBracketPairs;
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidConfiguration);
         stage.BracketPairs.Should().HaveCount(2);

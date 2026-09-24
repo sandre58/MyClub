@@ -63,6 +63,7 @@ public static class MaterializeMatches
             StructureFormatKind.Cup => throw new ApplicationFailureException(
                 "Cup stages use MaterializeCupFromOccupiedSlots (BracketPair → Fixture) — MaterializeMatches is not applicable.",
                 ApplicationErrorCodes.MaterializationFailure),
+
             // Legacy DBs may still contain unbound Cup fixtures created by the removed skeleton path
             // (no BracketPairKey). Do not auto-delete them here; clean up via a dedicated data task if needed.
             StructureFormatKind.Swiss => throw new ApplicationFailureException(
@@ -368,12 +369,12 @@ public static class MaterializeMatches
         stage.IsSwiss
             ? StructureFormatKind.Swiss
             : stage.Rounds.Count > 0
-            ? StructureFormatKind.Cup
-            : stage.Groups.Count > 0
-            ? StructureFormatKind.Groups
-            : stage.Matchdays.Count > 0
-            ? StructureFormatKind.Championship
-            : null;
+                ? StructureFormatKind.Cup
+                : stage.Groups.Count > 0
+                    ? StructureFormatKind.Groups
+                    : stage.Matchdays.Count > 0
+                        ? StructureFormatKind.Championship
+                        : null;
 
     private static void EnsureMutable(Competition competition, Stage stage)
     {

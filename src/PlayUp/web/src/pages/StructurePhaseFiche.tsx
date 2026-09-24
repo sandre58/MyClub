@@ -84,6 +84,7 @@ import {
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import {
+  areDrawRulesLockedByExecution,
   countAlignedSlotPlacements,
   pickActiveDraw,
   resolveDrawCreateBlockPresentation,
@@ -1530,6 +1531,9 @@ export function StructurePhaseFiche({
   const actions = stageActions(stage);
   const regulationHref = `/competitions/${data.competitionId}/regulation`;
   const activeDraw = pickActiveDraw(drawOverviewQuery.data?.draws ?? []);
+  const drawRulesLocked = areDrawRulesLockedByExecution(
+    drawOverviewQuery.data?.draws ?? [],
+  );
   const canEditDraw = actions.includes('ReplaceDrawRules');
   /** CTA exécution only when DrawRules engage the mechanism. */
   const showDrawCta = stage.hasDrawRules;
@@ -2298,6 +2302,7 @@ export function StructurePhaseFiche({
         open={edit === 'tirage-activate' || edit === 'tirage-params'}
         onClose={() => setEdit(null)}
         intent={edit === 'tirage-activate' ? 'activate' : 'params'}
+        rulesLocked={edit === 'tirage-params' && drawRulesLocked}
       />
       <ConfirmDialog
         open={deactivateDrawOpen}

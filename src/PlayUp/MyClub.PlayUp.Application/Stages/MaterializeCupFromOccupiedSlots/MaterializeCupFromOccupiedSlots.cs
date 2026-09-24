@@ -64,14 +64,11 @@ public static class MaterializeCupFromOccupiedSlots
         var targets = ResolveTargetPairs(stage, pairKeys, requestEmpty);
         if (targets.Count == 0)
         {
-            if (requestEmpty
+            return requestEmpty
                 && stage.BracketPairs.Count > 0
-                && stage.BracketPairs.All(pair => stage.FindFixtureByBracketPairKey(pair.PairKey) is not null))
-            {
-                return new MaterializeCupFromOccupiedSlotsResult([], [], AlreadyComplete: true);
-            }
-
-            throw new ApplicationFailureException(
+                && stage.BracketPairs.All(pair => stage.FindFixtureByBracketPairKey(pair.PairKey) is not null)
+                ? new MaterializeCupFromOccupiedSlotsResult([], [], AlreadyComplete: true)
+                : throw new ApplicationFailureException(
                 "No eligible bracket pairs to materialize.",
                 ApplicationErrorCodes.MaterializationFailure);
         }
@@ -84,19 +81,7 @@ public static class MaterializeCupFromOccupiedSlots
             .ToDictionary(match => match.Id);
 
         var resolved = new List<(BracketPair Pair, Fixture Fixture, EntryId Home, EntryId Away)>(targets.Count);
-        foreach (var pair in targets)
-        {
-            var slotA = stage.FindSlot(pair.SlotAKey)!;
-            var slotB = stage.FindSlot(pair.SlotBKey)!;
-            var fixture = stage.FindFixtureByBracketPairKey(pair.PairKey)
-                          ?? stage.AddFixture(
-                              round.Id,
-                              clock,
-                              pair.SlotAKey,
-                              pair.SlotBKey,
-                              pair.PairKey);
-            resolved.Add((pair, fixture, slotA.EntryId!.Value, slotB.EntryId!.Value));
-        }
+        resolved.AddRange(from pair in targets let slotA = stage.FindSlot(pair.SlotAKey)! let slotB = stage.FindSlot(pair.SlotBKey)! let fixture = stage.FindFixtureByBracketPairKey(pair.PairKey) ?? stage.AddFixture(round.Id, clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey) select (pair, fixture, slotA.EntryId!.Value, slotB.EntryId!.Value));
 
         var matchedIndexes = new HashSet<int>();
         var matchedMatchIds = new HashSet<MatchId>();
@@ -226,17 +211,7 @@ public static class MaterializeCupFromOccupiedSlots
     {
         var slotA = stage.FindSlot(pair.SlotAKey);
         var slotB = stage.FindSlot(pair.SlotBKey);
-        if (slotA?.EntryId is null || slotB?.EntryId is null)
-        {
-            return false;
-        }
-
-        if (slotA.EntryId.Equals(slotB.EntryId))
-        {
-            return false;
-        }
-
-        return stage.FindFixtureByBracketPairKey(pair.PairKey) is null;
+        return slotA?.EntryId is not null && slotB?.EntryId is not null && (!slotA.EntryId.Equals(slotB.EntryId) && stage.FindFixtureByBracketPairKey(pair.PairKey) is null);
     }
 
     /// <summary>

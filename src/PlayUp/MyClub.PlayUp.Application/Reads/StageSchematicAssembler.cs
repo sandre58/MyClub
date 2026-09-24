@@ -172,7 +172,7 @@ public static class StageSchematicAssembler
         Stage stage,
         Dictionary<string, CupPlaceAddress> addressBySlot)
     {
-        var roundOrder = 0;
+        const int roundOrder = 0;
         var roundName = stage.Rounds[0].Name;
         var ordered = stage.BracketPairs
             .OrderBy(pair => pair.PairKey, StringComparer.Ordinal)

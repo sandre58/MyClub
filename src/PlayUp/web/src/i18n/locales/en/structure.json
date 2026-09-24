@@ -441,6 +441,7 @@
     "drawParamsSavedToast": "Draw settings saved",
     "drawSavedDemotedToast": "The stage was moved back to Draft.",
     "activateDrawHint": "The first save engages the mechanism (Random).",
+    "drawParamsLockedHint": "Settings are read-only after generation. To change them, cancel the draw and create a new one.",
     "potsPanelTitle": "Pots",
     "potsPanelHint": "Splits teams into pots before placing them into groups.",
     "enablePots": "Use pots",

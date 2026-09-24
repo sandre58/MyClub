@@ -74,6 +74,7 @@
     "StructureLocked": "The structure is locked.",
     "DrawNotFound": "Draw not found.",
     "DrawInvalidTransition": "Forbidden draw transition.",
-    "DrawRulesClearBlockedByActiveDraw": "Cancel the current draw first."
+    "DrawRulesClearBlockedByActiveDraw": "Cancel the current draw first.",
+    "DrawRulesReplaceBlockedAfterGenerate": "Settings are locked after generation. Cancel the execution to start a new one."
   }
 }

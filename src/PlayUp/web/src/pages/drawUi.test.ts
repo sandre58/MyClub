@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { StageBracketPair, StageDraw, StageRound, StageSlot } from '../types';
 import {
+  areDrawRulesLockedByExecution,
   drawExecutionNumber,
   getDrawUiProjection,
   groupPlacementRows,
@@ -608,5 +609,46 @@ describe('resolveTopologyDrawExecutionBadge', () => {
         rounds,
       ),
     ).toBe('Applied');
+  });
+});
+
+describe('areDrawRulesLockedByExecution', () => {
+  it('is unlocked with no draws or only NotResolved draft', () => {
+    expect(areDrawRulesLockedByExecution([])).toBe(false);
+    expect(
+      areDrawRulesLockedByExecution([
+        draw({ id: '1', status: 'Draft', resolutionState: 'NotResolved' }),
+      ]),
+    ).toBe(false);
+  });
+
+  it('locks after Generate (Resolved or NoSolution) while non-cancelled', () => {
+    expect(
+      areDrawRulesLockedByExecution([
+        draw({ id: '1', status: 'Draft', resolutionState: 'Resolved' }),
+      ]),
+    ).toBe(true);
+    expect(
+      areDrawRulesLockedByExecution([
+        draw({ id: '1', status: 'Draft', resolutionState: 'NoSolution' }),
+      ]),
+    ).toBe(true);
+    expect(
+      areDrawRulesLockedByExecution([
+        draw({ id: '1', status: 'Published', resolutionState: 'Resolved' }),
+      ]),
+    ).toBe(true);
+  });
+
+  it('unlocks after Cancel even if resolution was generated', () => {
+    expect(
+      areDrawRulesLockedByExecution([
+        draw({
+          id: '1',
+          status: 'Cancelled',
+          resolutionState: 'Resolved',
+        }),
+      ]),
+    ).toBe(false);
   });
 });

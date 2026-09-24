@@ -5,11 +5,9 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 

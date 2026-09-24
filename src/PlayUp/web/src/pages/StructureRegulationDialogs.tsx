@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   replaceStageDrawRules,
 } from '../api';
+import { Alert } from '../design-system/components/Alert';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { ChoiceTile } from '../design-system/components/ChoiceTile';
 import { Dialog } from '../design-system/components/Dialog';
@@ -100,9 +101,12 @@ export function MatchStandingEditors({
 export function TirageEditors({
   data,
   stage,
+  rulesLocked = false,
 }: {
   data: StructureView;
   stage: StructureStageHubSummary;
+  /** L2: true when a non-cancelled Draw already has a generated resolution. */
+  rulesLocked?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const [open, setOpen] = useState(false);
@@ -126,6 +130,7 @@ export function TirageEditors({
         open={open}
         onClose={() => setOpen(false)}
         intent={stage.hasDrawRules ? 'params' : 'activate'}
+        rulesLocked={rulesLocked}
       />
     </>
   );
@@ -171,6 +176,7 @@ export function ConfrontationEditors({
  * Activate (`DrawRules` null → Random min) or edit DrawRules params.
  * Deactivate lives under the fiche CTA group (not in this dialog).
  * V1 fields: Mode (RO) + PotRules for Groups only (SwitchPanel). Seeds/constraints not editable.
+ * L2: when `rulesLocked`, params are view-only (Generate already consumed the rules).
  */
 export function DrawRulesDialog({
   competitionId,
@@ -178,12 +184,15 @@ export function DrawRulesDialog({
   open,
   onClose,
   intent = 'params',
+  rulesLocked = false,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
   intent?: DrawRulesDialogIntent;
+  /** True when ReplaceDrawRules is Domain-blocked (generated non-cancelled Draw). */
+  rulesLocked?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
@@ -203,12 +212,12 @@ export function DrawRulesDialog({
   const [baselinePots, setBaselinePots] = useState(defaultPots);
 
   const normalizedPots = showPots && usePots ? normalizeDrawPots(numberOfPots) : null;
-  const isDirty = showPots
-    ? usePots !== baselineUsePots ||
-      (usePots && numberOfPots !== baselinePots)
-    : false;
-  /** Activate may save while clean (engagement). Params require a field delta. */
-  const canSave = isActivate || isDirty;
+  const isDirty =
+    !rulesLocked &&
+    showPots &&
+    (usePots !== baselineUsePots || (usePots && numberOfPots !== baselinePots));
+  /** Activate may save while clean (engagement). Params require a field delta. Locked = view only. */
+  const canSave = !rulesLocked && (isActivate || isDirty);
 
   const {
     discardOpen,
@@ -296,28 +305,34 @@ export function DrawRulesDialog({
               disabled={busy || discardOpen}
             >
               <CloseIcon size="sm" />
-              {tCommon('cancel')}
+              {rulesLocked ? tCommon('close') : tCommon('cancel')}
             </button>
-            <button
-              type="submit"
-              form={formId}
-              className="ds-btn ds-btn--primary"
-              disabled={busy || discardOpen || !canSave}
-            >
-              {saveMutation.isPending ? (
-                <PendingLabel>{t('regulation.saving')}</PendingLabel>
-              ) : (
-                <>
-                  <CheckIcon size="sm" />
-                  {saveLabel}
-                </>
-              )}
-            </button>
+            {rulesLocked ? null : (
+              <button
+                type="submit"
+                form={formId}
+                className="ds-btn ds-btn--primary"
+                disabled={busy || discardOpen || !canSave}
+              >
+                {saveMutation.isPending ? (
+                  <PendingLabel>{t('regulation.saving')}</PendingLabel>
+                ) : (
+                  <>
+                    <CheckIcon size="sm" />
+                    {saveLabel}
+                  </>
+                )}
+              </button>
+            )}
           </>
         }
         footerStatus={
           saveMutation.isError ? (
             <MutationError error={saveMutation.error} />
+          ) : rulesLocked ? (
+            <Alert tone="info" role="status">
+              {t('regulation.drawParamsLockedHint')}
+            </Alert>
           ) : null
         }
       >
@@ -353,6 +368,7 @@ export function DrawRulesDialog({
               title={t('regulation.potsPanelTitle')}
               description={t('regulation.potsPanelHint')}
               checked={usePots}
+              disabled={rulesLocked}
               onChange={(checked) => {
                 setUsePots(checked);
                 if (checked && numberOfPots < 2) {
@@ -367,6 +383,7 @@ export function DrawRulesDialog({
                   min={2}
                   max={16}
                   controlsLayout="split"
+                  disabled={rulesLocked}
                   onChange={(value) => {
                     if (value != null && Number.isFinite(value)) {
                       setNumberOfPots(value);
