@@ -78,7 +78,7 @@ public sealed class ProgressionChampionshipPathTests
             ProgressionOutcome.Winner,
             peer);
 
-        var act = () => ProgressionPathExpander.Materialize([intent], stage.Rounds);
+        var act = () => ProgressionPathExpander.Materialize([intent], stage.Rounds, stage.BracketPairs);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
@@ -96,7 +96,7 @@ public sealed class ProgressionChampionshipPathTests
             ProgressionOutcome.Winner,
             peer);
 
-        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds);
+        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds, stage.BracketPairs);
 
         paths.Should().HaveCount(1);
     }
@@ -113,7 +113,7 @@ public sealed class ProgressionChampionshipPathTests
             ProgressionOutcome.Loser,
             peer);
 
-        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds);
+        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds, stage.BracketPairs);
 
         paths.Should().HaveCount(2);
     }
@@ -128,8 +128,7 @@ public sealed class ProgressionChampionshipPathTests
         var act = () => stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(peer))
             ]),

@@ -76,16 +76,16 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
             var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             var quarter = await stages.GetByIdForUpdateAsync(seed.QuarterStageId);
-            var bracketPairKey = quarter!.FindFixtureByBracketPairKey("P1");
-            bracketPairKey.Should().NotBeNull();
-            fixtureId = bracketPairKey.Id;
-            matchId = bracketPairKey.MatchIds.Should().ContainSingle().Subject;
+            var pairFixture = quarter!.FindFixtureByBracketPairKey("P1");
+            pairFixture.Should().NotBeNull();
+            fixtureId = pairFixture.Id;
+            matchId = pairFixture.MatchIds.Should().ContainSingle().Subject;
 
             quarter.ReplaceProgressionRules(
                 new ProgressionRules(
                 [
                     new ProgressionPath(
-                        fixtureId,
+                        pairFixture.BracketPairKey!,
                         ProgressionOutcome.Winner,
                         ProgressionDestination.ForPopulation(seed.SemiStageId))
                 ]),
@@ -214,17 +214,24 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         var seed = await SeedResolvedDraftSlotCupAsync(factory, createEmptyFixture: true);
         using var client = factory.CreateClient();
 
-        using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
-        {
-            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        }
-
         using (var publish = await client.PostAsync(PublishUri(seed.QuarterStageId, seed.DrawId), content: null))
         {
             publish.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
-        // Intentionally skip ApplyDraw — progression must fail without a coherent fixture/match set.
+        using (var apply = await client.PostAsJsonAsync(
+                   ApplyDrawUri(seed.QuarterStageId, seed.DrawId),
+                   new ApplyDrawRequest()))
+        {
+            apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        // Empty P1 fixture (no match) — progression must fail-closed without coherent fixture/match set.
         using (var progress = await client.PostAsync(
                    ProgressUri(seed.QuarterStageId, seed.FixtureId!.Value),
                    content: null))
@@ -359,7 +366,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
                 new ProgressionRules(
                 [
                     new ProgressionPath(
-                        empty.Id,
+                        empty.BracketPairKey!,
                         ProgressionOutcome.Winner,
                         ProgressionDestination.ForPopulation(semi.Id))
                 ]),

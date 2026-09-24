@@ -1974,12 +1974,26 @@ public static class OverviewAssembler
                 if (path.Destination.StageId.Value == destinationStageId
                     && string.Equals(path.Destination.SlotKey, slotKey, StringComparison.Ordinal))
                 {
-                    return path.SourceFixtureId.Value;
+                    return ResolveFixtureIdFromSourcePairKey(stage, path.SourcePairKey);
                 }
             }
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Maps a structural SourcePairKey to the bound fixture Guid when materialized.
+    /// </summary>
+    private static Guid? ResolveFixtureIdFromSourcePairKey(Stage stage, string sourcePairKey)
+    {
+        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
+        return byPair is not null
+            ? byPair.Id.Value
+            : Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
+              && stage.FindFixture(new FixtureId(fixtureGuid)) is not null
+                ? fixtureGuid
+                : null;
     }
 
     private static Guid? FindStageIdForFixture(IReadOnlyList<Stage> stages, Guid fixtureId)

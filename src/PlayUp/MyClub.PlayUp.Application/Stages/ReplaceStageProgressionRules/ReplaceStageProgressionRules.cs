@@ -42,7 +42,7 @@ public static class ReplaceStageProgressionRules
         }
 
         stage.ReplaceProgressionRules(
-            ProgressionRules.FromIntents(domainIntents, stage.Rounds),
+            ProgressionRules.FromIntents(domainIntents, stage.Rounds, stage.BracketPairs),
             clock);
     }
 
@@ -83,7 +83,7 @@ public static class ReplaceStageProgressionRules
 
             domainPaths.Add(
                 new ProgressionPath(
-                    spec.SourceFixtureId,
+                    spec.SourcePairKey,
                     spec.Outcome,
                     destination));
         }
@@ -169,7 +169,7 @@ public static class ReplaceStageProgressionRules
 /// Application DTO for one progression path (not a Domain VO).
 /// </summary>
 public sealed record ProgressionPathSpec(
-    FixtureId SourceFixtureId,
+    string SourcePairKey,
     ProgressionOutcome Outcome,
     StageId DestinationStageId,
     string? DestinationSlotKey = null,

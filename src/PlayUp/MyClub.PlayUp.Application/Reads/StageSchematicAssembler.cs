@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -424,14 +425,7 @@ public static class StageSchematicAssembler
                 }
 
                 var groupId = path.Destination.GroupId!.Value.Value;
-                var origin = new SchematicFeedOriginDto(
-                    FeedKind.Progression,
-                    SourceStageId: stage.Id.Value,
-                    SourceStageName: stage.Name.Value,
-                    SourceFixtureId: path.SourceFixtureId.Value,
-                    SourceFixtureNumber: FindFixtureNumber(stage.Id, path.SourceFixtureId, competitionStages),
-                    Outcome: path.Outcome,
-                    DestinationGroupId: groupId);
+                var origin = MapProgressionPathOrigin(path, stage, competitionStages, groupId);
                 AddGroupFeedCandidate(candidates, groupId, origin);
             }
         }
@@ -441,6 +435,7 @@ public static class StageSchematicAssembler
         {
             var ordered = origins
                 .OrderBy(o => o.PathOrder ?? int.MaxValue)
+                .ThenBy(o => o.SourcePairKey ?? string.Empty, StringComparer.Ordinal)
                 .ThenBy(o => o.SourceFixtureId ?? Guid.Empty)
                 .ThenBy(o => o.SourceStageId ?? Guid.Empty)
                 .ToList();
@@ -488,7 +483,7 @@ public static class StageSchematicAssembler
     }
 
     private static SchematicFeedOriginDto MapQualificationPathOrigin(
-        Domain.Rules.QualificationPath path,
+        QualificationPath path,
         Stage sourceStage,
         Guid? destinationGroupId)
     {
@@ -608,12 +603,13 @@ public static class StageSchematicAssembler
                 continue;
             }
 
-            pending.AddRange(from path in progression.Paths where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm let fingerprint = FormPathResolutionKey.FromProgression(source.Id, path) where !applied.Contains(fingerprint) select new SchematicFeedOriginDto(FeedKind.Progression, SourceStageId: source.Id.Value, SourceStageName: source.Name.Value, SourceFixtureId: path.SourceFixtureId.Value, SourceFixtureNumber: FindFixtureNumber(source.Id, path.SourceFixtureId, competitionStages), Outcome: path.Outcome));
+            pending.AddRange(from path in progression.Paths where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm let fingerprint = FormPathResolutionKey.FromProgression(source.Id, path) where !applied.Contains(fingerprint) select MapProgressionPathOrigin(path, source, competitionStages, destinationGroupId: null));
         }
 
         var orderedPending =
             pending
                 .OrderBy(o => o.PathOrder ?? int.MaxValue)
+                .ThenBy(o => o.SourcePairKey ?? string.Empty, StringComparer.Ordinal)
                 .ThenBy(o => o.SourceFixtureId ?? Guid.Empty)
                 .ThenBy(o => o.SourceStageId ?? Guid.Empty)
                 .ToArray();
@@ -676,25 +672,62 @@ public static class StageSchematicAssembler
                 FeedKind.Draw,
                 DrawId: source.Draw!.DrawId.Value,
                 SlotKey: slotKey),
-            FeedKind.Progression => new SchematicFeedOriginDto(
-                FeedKind.Progression,
-                SourceStageId: source.Progression!.SourceStageId.Value,
-                SourceStageName: FindStageName(
-                    source.Progression.SourceStageId,
-                    competitionStages),
-                SourceFixtureId: source.Progression.SourceFixtureId.Value,
-                SourceFixtureNumber: FindFixtureNumber(
-                    source.Progression.SourceStageId,
-                    source.Progression.SourceFixtureId,
-                    competitionStages),
-                Outcome: source.Progression.Outcome,
-                SlotKey: slotKey),
+            FeedKind.Progression => MapProgressionFeedRef(
+                source.Progression!,
+                slotKey,
+                competitionStages),
             FeedKind.Qualification => MapQualificationOrigin(
                 source.Qualification!,
                 slotKey,
                 competitionStages),
             _ => null
         };
+    }
+
+    private static SchematicFeedOriginDto MapProgressionPathOrigin(
+        ProgressionPath path,
+        Stage sourceStage,
+        IReadOnlyList<Stage> competitionStages,
+        Guid? destinationGroupId)
+    {
+        var fixture = ResolveFixtureFromSourcePairKey(sourceStage, path.SourcePairKey);
+        return new SchematicFeedOriginDto(
+            FeedKind.Progression,
+            SourceStageId: sourceStage.Id.Value,
+            SourceStageName: sourceStage.Name.Value,
+            SourcePairKey: path.SourcePairKey,
+            SourceFixtureId: fixture?.Id.Value,
+            SourceFixtureNumber: fixture is null ? null : FindFixtureNumber(sourceStage.Id, fixture.Id, competitionStages),
+            Outcome: path.Outcome,
+            DestinationGroupId: destinationGroupId);
+    }
+
+    private static SchematicFeedOriginDto MapProgressionFeedRef(
+        ProgressionFeedRef progression,
+        string slotKey,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        var sourceStage = competitionStages.FirstOrDefault(s => s.Id.Equals(progression.SourceStageId));
+        var fixture = sourceStage is null
+            ? null
+            : ResolveFixtureFromSourcePairKey(sourceStage, progression.SourcePairKey);
+        return new SchematicFeedOriginDto(
+            FeedKind.Progression,
+            SourceStageId: progression.SourceStageId.Value,
+            SourceStageName: FindStageName(progression.SourceStageId, competitionStages),
+            SourcePairKey: progression.SourcePairKey,
+            SourceFixtureId: fixture?.Id.Value,
+            SourceFixtureNumber: fixture is null || sourceStage is null ? null : FindFixtureNumber(progression.SourceStageId, fixture.Id, competitionStages),
+            Outcome: progression.Outcome,
+            SlotKey: slotKey);
+    }
+
+    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey)
+    {
+        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
+        return byPair ?? (Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
+            ? stage.FindFixture(new FixtureId(fixtureGuid))
+            : null);
     }
 
     private static string? FindStageName(

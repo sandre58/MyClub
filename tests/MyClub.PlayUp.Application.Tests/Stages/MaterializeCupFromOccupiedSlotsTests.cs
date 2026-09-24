@@ -325,12 +325,10 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         qf.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    qfFixture.Id,
+                new ProgressionPath(qfFixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(sf.Id)),
-                new ProgressionPath(
-                    qfFixture.Id,
+                new ProgressionPath(qfFixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Loser,
                     ProgressionDestination.ForPopulation(sf.Id))
             ]),

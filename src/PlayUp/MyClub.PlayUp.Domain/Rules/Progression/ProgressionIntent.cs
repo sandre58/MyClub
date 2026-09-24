@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// </summary>
 /// <remarks>
 /// Placement maps are total functions Expand → destination grain: <see cref="DestinationSlotKeys"/>
-/// or <see cref="DestinationGroupIds"/> count must equal fixture count, index-aligned.
+/// or <see cref="DestinationGroupIds"/> count must equal Expand source count (BracketPairs or fixtures), index-aligned.
 /// <see cref="DestinationForm"/> applies <c>ForForm(DestinationStageId)</c> to every expanded Path.
 /// Exactly one of: Population | Form | Slot keys | Group ids. After Expand, Apply / WhoFeeds
 /// consume <c>path.Destination</c> only.

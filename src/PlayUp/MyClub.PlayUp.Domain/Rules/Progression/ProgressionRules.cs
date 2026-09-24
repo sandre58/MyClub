@@ -65,14 +65,15 @@ public sealed record ProgressionRules
     }
 
     /// <summary>
-    /// Builds rules from authoring intents by Expand (paths derived at commit).
+    /// Builds rules from authoring intents by Expand (paths derived at commit / Save).
     /// </summary>
     public static ProgressionRules FromIntents(
         IReadOnlyList<ProgressionIntent> intents,
-        IReadOnlyList<Round> rounds)
+        IReadOnlyList<Round> rounds,
+        IReadOnlyList<BracketPair> bracketPairs)
     {
         ArgumentNullException.ThrowIfNull(intents);
-        var paths = ProgressionPathExpander.Materialize(intents, rounds);
+        var paths = ProgressionPathExpander.Materialize(intents, rounds, bracketPairs);
         return new ProgressionRules(intents, paths);
     }
 
@@ -108,12 +109,12 @@ public sealed record ProgressionRules
         }
 
         var sources = paths
-            .Select(p => (p.SourceFixtureId, p.Outcome))
+            .Select(p => (p.SourcePairKey, p.Outcome))
             .ToArray();
         if (sources.Distinct().Count() != sources.Length)
         {
             throw new DomainException(
-                "Progression paths must have unique source fixture and outcome pairs.",
+                "Progression paths must have unique source pair key and outcome pairs.",
                 RulesErrorCodes.ProgressionRulesInvalid);
         }
 
@@ -126,7 +127,7 @@ public sealed record ProgressionRules
                 "Progression paths must target unique slot destinations.",
                 RulesErrorCodes.ProgressionRulesInvalid)
             : [
-            ..paths.OrderBy(p => p.SourceFixtureId.Value)
+            ..paths.OrderBy(p => p.SourcePairKey, StringComparer.Ordinal)
                 .ThenBy(p => p.Outcome)
                 .ThenBy(p => p.Destination.StageId.Value)
                 .ThenBy(p => p.Destination.SlotKey ?? string.Empty, StringComparer.Ordinal)

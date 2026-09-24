@@ -749,13 +749,27 @@ try
                 paths =
                 [
                     .. request.Paths
-                        .Select(path => new ProgressionPathSpec(
-                            new FixtureId(path.SourceFixtureId),
-                            path.Outcome,
-                            new StageId(path.DestinationStageId),
-                            path.DestinationSlotKey,
-                            path.DestinationGroupId is { } gid ? new GroupId(gid) : null,
-                            path.DestinationForm))
+                        .Select(path =>
+                        {
+                            var pairKey = path.SourcePairKey?.Trim();
+                            if (string.IsNullOrEmpty(pairKey) && path.SourceFixtureId is { } legacyFixtureId)
+                            {
+                                // Legacy dual-read: interim non-Cup key = fixture Guid N.
+                                pairKey = legacyFixtureId.ToString("N");
+                            }
+
+                            return string.IsNullOrEmpty(pairKey)
+                                ? throw new ArgumentException(
+                                    "Progression path requires SourcePairKey (or legacy SourceFixtureId).",
+                                    nameof(request))
+                                : new ProgressionPathSpec(
+                                    pairKey,
+                                    path.Outcome,
+                                    new StageId(path.DestinationStageId),
+                                    path.DestinationSlotKey,
+                                    path.DestinationGroupId is { } gid ? new GroupId(gid) : null,
+                                    path.DestinationForm);
+                        })
                 ];
             }
 

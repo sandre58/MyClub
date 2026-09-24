@@ -200,8 +200,7 @@ public sealed class UseCaseExecutorTests
         quarter.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(semi.Id))
             ]),
@@ -869,8 +868,7 @@ public sealed class UseCaseExecutorTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(destination.Id))
             ]),

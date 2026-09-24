@@ -601,11 +601,11 @@ public static class StructureViewAssembler
             :
             [
                 .. rules.Paths.Select(path => new StructureProgressionPathDto(
-                    path.SourceFixtureId.Value,
+                    path.SourcePairKey,
                     path.Outcome,
                     path.Destination.StageId.Value,
                     path.Destination.SlotKey,
-                    ResolveFixtureSourceLabel(stage, path.SourceFixtureId),
+                    ResolveProgressionSourceLabel(stage, path.SourcePairKey),
                     path.Destination.GroupId?.Value,
                     path.Destination.TargetsForm))
             ];
@@ -620,13 +620,18 @@ public static class StructureViewAssembler
         }
 
         var roundNameById = stage.Rounds.ToDictionary(r => r.Id, r => r.Name);
+        var expandCount = stage.BracketPairs.Count > 0
+            ? stage.BracketPairs.Count
+            : 0;
         return
         [
             .. rules.Intents.Select(intent =>
             {
-                var fixtureCount = stage.Rounds
-                    .FirstOrDefault(r => r.Id.Equals(intent.RoundId))
-                    ?.Fixtures.Count ?? 0;
+                var count = expandCount > 0
+                    ? expandCount
+                    : stage.Rounds
+                        .FirstOrDefault(r => r.Id.Equals(intent.RoundId))
+                        ?.Fixtures.Count ?? 0;
                 return new StructureProgressionIntentDto(
                     intent.Id.Value,
                     intent.Order,
@@ -635,11 +640,22 @@ public static class StructureViewAssembler
                     intent.Outcome,
                     intent.DestinationStageId.Value,
                     intent.DestinationSlotKeys,
-                    fixtureCount,
+                    count,
                     intent.DestinationGroupIds.Count == 0 ? null : intent.DestinationGroupIds.Select(g => g.Value).ToArray(),
                     intent.DestinationForm);
             })
         ];
+    }
+
+    /// <summary>
+    /// Human source label: PairKey, or bound fixture label when materialized.
+    /// </summary>
+    private static string ResolveProgressionSourceLabel(Stage stage, string sourcePairKey)
+    {
+        var fixture = stage.FindFixtureByBracketPairKey(sourcePairKey);
+        return fixture is not null
+            ? ResolveFixtureSourceLabel(stage, fixture.Id) ?? sourcePairKey
+            : sourcePairKey;
     }
 
     /// <summary>

@@ -27,8 +27,7 @@ public sealed class StageSlotLifecycleTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),

@@ -26,6 +26,12 @@ public sealed class PipelineCompositionTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 11, 16, 0, 0, TimeSpan.Zero));
 
+    private static string PathKey(Fixture fixture) =>
+        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
+
+    private static string PathKey(Stage stage, FixtureId fixtureId) =>
+        PathKey(stage.GetFixture(fixtureId));
+
     [Fact]
     public void Progression_then_Draw_Apply_uses_progressed_entries_as_host_pool()
     {
@@ -44,8 +50,8 @@ public sealed class PipelineCompositionTests
         qf.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fx1, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
-                new ProgressionPath(fx2, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
+                new ProgressionPath(PathKey(qf, fx1), ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
+                new ProgressionPath(PathKey(qf, fx2), ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
             ]),
             _clock);
 
@@ -113,12 +119,10 @@ public sealed class PipelineCompositionTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A")),
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Loser,
                     new ProgressionDestination(stage.Id, "Consolante"))
             ]),
@@ -177,8 +181,7 @@ public sealed class PipelineCompositionTests
         qf.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixtureId,
+                new ProgressionPath(PathKey(qf, fixtureId),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(sf.Id))
             ]),
@@ -292,8 +295,8 @@ public sealed class PipelineCompositionTests
         qf.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(fxQf1.Id, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
-                new ProgressionPath(fxQf2.Id, ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
+                new ProgressionPath(PathKey(fxQf1), ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
+                new ProgressionPath(PathKey(fxQf2), ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
             ]),
             _clock);
         ApplyProgressionOutcome.Execute(qf, fxQf1.Id, [m1], [qf, bridge], _clock);

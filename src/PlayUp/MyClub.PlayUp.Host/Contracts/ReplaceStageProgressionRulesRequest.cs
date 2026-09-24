@@ -35,17 +35,20 @@ public sealed record ProgressionIntentRequest(
 
 /// <summary>
 /// One HTTP progression path.
+/// Prefer <see cref="SourcePairKey"/>; legacy <see cref="SourceFixtureId"/> dual-read at Host for cutover.
 /// </summary>
-/// <param name="SourceFixtureId">Fixture on the rules-owning stage.</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
+/// <param name="SourcePairKey">Structural source key (Cup = PairKey).</param>
 /// <param name="DestinationSlotKey">Cup Place slot key; omit or null when not slot-targeting.</param>
 /// <param name="DestinationGroupId">Groups Place group id; omit or null when not group-targeting.</param>
 /// <param name="DestinationForm">True for Form Placement.</param>
+/// <param name="SourceFixtureId">Legacy dual-read only — never Path identity.</param>
 public sealed record ProgressionPathRequest(
-    Guid SourceFixtureId,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
+    string? SourcePairKey = null,
     string? DestinationSlotKey = null,
     Guid? DestinationGroupId = null,
-    bool DestinationForm = false);
+    bool DestinationForm = false,
+    Guid? SourceFixtureId = null);

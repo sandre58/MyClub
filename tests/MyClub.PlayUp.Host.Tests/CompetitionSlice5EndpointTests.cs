@@ -205,8 +205,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    addFixture.Id,
+                new ProgressionPath(addFixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -247,8 +246,7 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    addFixture.Id,
+                new ProgressionPath(addFixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),

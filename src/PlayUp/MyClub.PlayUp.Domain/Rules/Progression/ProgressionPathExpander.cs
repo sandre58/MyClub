@@ -11,37 +11,95 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Expands <see cref="ProgressionIntent"/> into atomic <see cref="ProgressionPath"/> (V3).
-/// Fixture order = round fixture storage order (stable Expand).
+/// Cup V1: Expand on <see cref="BracketPair"/> order (PairKey) — fixtures not required at Save.
+/// Non-Cup (no BracketPairs): Expand on round fixture order (interim SourcePairKey = fixture Guid N).
 /// </summary>
 public static class ProgressionPathExpander
 {
     /// <summary>
-    /// Materializes intents into paths using the source stage's rounds/fixtures.
+    /// Materializes intents into paths using the source stage form.
     /// </summary>
     /// <param name="intents">Authoring intents.</param>
-    /// <param name="rounds">Rounds of the rules-owning stage (fixtures expand per RoundId).</param>
+    /// <param name="rounds">Rounds of the rules-owning stage.</param>
+    /// <param name="bracketPairs">Cup structural pairs (empty for non-Cup).</param>
     /// <returns>Derived paths (non-empty when intents non-empty).</returns>
     public static IReadOnlyList<ProgressionPath> Materialize(
         IReadOnlyList<ProgressionIntent> intents,
-        IReadOnlyList<Round> rounds)
+        IReadOnlyList<Round> rounds,
+        IReadOnlyList<BracketPair> bracketPairs)
     {
         ArgumentNullException.ThrowIfNull(intents);
         ArgumentNullException.ThrowIfNull(rounds);
+        ArgumentNullException.ThrowIfNull(bracketPairs);
 
-        if (intents.Count == 0)
-        {
-            throw new DomainException(
+        return intents.Count == 0
+            ? throw new DomainException(
                 "Progression intents require at least one intent.",
-                RulesErrorCodes.ProgressionRulesInvalid);
-        }
-
-        if (intents.Select(i => i.Order).Distinct().Count() != intents.Count)
-        {
-            throw new DomainException(
+                RulesErrorCodes.ProgressionRulesInvalid)
+            : intents.Select(i => i.Order).Distinct().Count() != intents.Count
+            ? throw new DomainException(
                 "Progression intent orders must be unique.",
-                RulesErrorCodes.ProgressionRulesInvalid);
+                RulesErrorCodes.ProgressionRulesInvalid)
+            : bracketPairs.Count > 0
+            ? MaterializeFromPairs(intents, rounds, bracketPairs)
+            : MaterializeFromFixtures(intents, rounds);
+    }
+
+    /// <summary>
+    /// Builds a singleton intent for one path (legacy migration / atomic authoring).
+    /// </summary>
+    public static ProgressionIntent ToSingletonIntent(
+        ProgressionPath path,
+        RoundId roundId,
+        IntentId? id = null) =>
+        new(
+            id ?? IntentId.New(),
+            order: 1,
+            roundId,
+            path.Outcome,
+            path.Destination.StageId,
+            path.Destination.TargetsSlot ? [path.Destination.SlotKey!] : null,
+            path.Destination.TargetsGroup ? [path.Destination.GroupId!.Value] : null,
+            destinationForm: path.Destination.TargetsForm);
+
+    private static List<ProgressionPath> MaterializeFromPairs(
+        IReadOnlyList<ProgressionIntent> intents,
+        IReadOnlyList<Round> rounds,
+        IReadOnlyList<BracketPair> bracketPairs)
+    {
+        var roundById = rounds.ToDictionary(r => r.Id);
+        var orderedPairs = bracketPairs
+            .OrderBy(p => p.PairKey, StringComparer.Ordinal)
+            .ToArray();
+        var paths = new List<ProgressionPath>();
+
+        foreach (var intent in intents.OrderBy(i => i.Order))
+        {
+            if (!roundById.TryGetValue(intent.RoundId, out _))
+            {
+                throw new DomainException(
+                    $"Progression intent round '{intent.RoundId}' was not found on the source stage.",
+                    RulesErrorCodes.ProgressionRulesInvalid);
+            }
+
+            if (intent.Outcome == ProgressionOutcome.Winner
+                && !ProgressionChampionshipPath.IsChampionshipTerminal(rounds, intent.RoundId))
+            {
+                throw new DomainException(
+                    "Progression Winner intent must use the championship-path terminal round.",
+                    RulesErrorCodes.ProgressionRulesInvalid);
+            }
+
+            paths.AddRange(ExpandZip(intent, [.. orderedPairs.Select(p => p.PairKey)]));
         }
 
+        return paths;
+    }
+
+    private static List<ProgressionPath> MaterializeFromFixtures(
+        IReadOnlyList<ProgressionIntent> intents,
+        IReadOnlyList<Round> rounds)
+    {
         var roundById = rounds.ToDictionary(r => r.Id);
         var paths = new List<ProgressionPath>();
 
@@ -69,72 +127,53 @@ public static class ProgressionPathExpander
                     RulesErrorCodes.ProgressionRulesInvalid);
             }
 
-            if (intent.TargetsPopulation)
-            {
-                var destination = ProgressionDestination.ForPopulation(intent.DestinationStageId);
-                paths.AddRange(round.Fixtures.Select(fixture =>
-                    new ProgressionPath(fixture.Id, intent.Outcome, destination.Copy())));
-                continue;
-            }
-
-            if (intent.TargetsForm)
-            {
-                // Expand zip: each Path i gets ForForm(DestinationStageId).
-                var destination = ProgressionDestination.ForForm(intent.DestinationStageId);
-                paths.AddRange(round.Fixtures.Select(fixture =>
-                    new ProgressionPath(fixture.Id, intent.Outcome, destination.Copy())));
-                continue;
-            }
-
-            if (intent.TargetsGroup)
-            {
-                if (intent.DestinationGroupIds.Count != round.Fixtures.Count)
-                {
-                    throw new DomainException(
-                        "Progression place destination group ids count must equal round fixture count.",
-                        RulesErrorCodes.ProgressionRulesInvalid);
-                }
-
-                paths.AddRange(round.Fixtures.Select((fixture, i) => new ProgressionPath(
-                    fixture.Id,
-                    intent.Outcome,
-                    ProgressionDestination.ForGroup(
-                        intent.DestinationStageId,
-                        intent.DestinationGroupIds[i]))));
-                continue;
-            }
-
-            if (intent.DestinationSlotKeys.Count != round.Fixtures.Count)
-            {
-                throw new DomainException(
-                    "Progression place destination slot keys count must equal round fixture count.",
-                    RulesErrorCodes.ProgressionRulesInvalid);
-            }
-
-            paths.AddRange(round.Fixtures.Select((t, i) => new ProgressionPath(
-                t.Id,
-                intent.Outcome,
-                ProgressionDestination.ForSlot(intent.DestinationStageId, intent.DestinationSlotKeys[i]))));
+            var keys = round.Fixtures
+                .Select(f => f.BracketPairKey ?? f.Id.Value.ToString("N"))
+                .ToArray();
+            paths.AddRange(ExpandZip(intent, keys));
         }
 
         return paths;
     }
 
-    /// <summary>
-    /// Builds a singleton intent for one path (legacy migration / atomic authoring).
-    /// Requires the path's fixture round identity.
-    /// </summary>
-    public static ProgressionIntent ToSingletonIntent(
-        ProgressionPath path,
-        RoundId roundId,
-        IntentId? id = null) =>
-        new(
-            id ?? IntentId.New(),
-            order: 1,
-            roundId,
-            path.Outcome,
-            path.Destination.StageId,
-            path.Destination.TargetsSlot ? [path.Destination.SlotKey!] : null,
-            path.Destination.TargetsGroup ? [path.Destination.GroupId!.Value] : null,
-            destinationForm: path.Destination.TargetsForm);
+    private static IEnumerable<ProgressionPath> ExpandZip(
+        ProgressionIntent intent,
+        string[] sourceKeys)
+    {
+        if (intent.TargetsPopulation)
+        {
+            var destination = ProgressionDestination.ForPopulation(intent.DestinationStageId);
+            return sourceKeys.Select(key =>
+                new ProgressionPath(key, intent.Outcome, destination.Copy()));
+        }
+
+        if (!intent.TargetsForm)
+        {
+            return intent.TargetsGroup
+                ? intent.DestinationGroupIds.Count != sourceKeys.Length
+                    ? throw new DomainException(
+                        "Progression place destination group ids count must equal expand source count.",
+                        RulesErrorCodes.ProgressionRulesInvalid)
+                    : sourceKeys.Select((key, i) => new ProgressionPath(
+                        key,
+                        intent.Outcome,
+                        ProgressionDestination.ForGroup(
+                            intent.DestinationStageId,
+                            intent.DestinationGroupIds[i])))
+                : intent.DestinationSlotKeys.Count != sourceKeys.Length
+                    ? throw new DomainException(
+                        "Progression place destination slot keys count must equal expand source count.",
+                        RulesErrorCodes.ProgressionRulesInvalid)
+                    : sourceKeys.Select((key, i) => new ProgressionPath(
+                        key,
+                        intent.Outcome,
+                        ProgressionDestination.ForSlot(intent.DestinationStageId, intent.DestinationSlotKeys[i])));
+        }
+
+        {
+            var destination = ProgressionDestination.ForForm(intent.DestinationStageId);
+            return sourceKeys.Select(key =>
+                new ProgressionPath(key, intent.Outcome, destination.Copy()));
+        }
+    }
 }

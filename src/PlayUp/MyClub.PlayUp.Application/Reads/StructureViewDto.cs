@@ -372,15 +372,15 @@ public sealed record StructureProgressionIntentDto(
     bool DestinationForm = false);
 
 /// <summary>One progression path for Structure authoring / impact preview.</summary>
-/// <param name="SourceFixtureId">Source fixture on the rules-owning stage.</param>
+/// <param name="SourcePairKey">Structural source key (Cup = BracketPair.PairKey).</param>
 /// <param name="Outcome">Winner or Loser.</param>
 /// <param name="DestinationStageId">Destination stage.</param>
 /// <param name="DestinationSlotKey">Cup Place slot key; null when not slot-targeting.</param>
-/// <param name="SourceLabel">Resolved fixture label (round · #order · slots) when the fixture exists.</param>
+/// <param name="SourceLabel">Resolved confrontation label (PairKey or bound fixture) when known.</param>
 /// <param name="DestinationGroupId">Groups Place group id; null when not group-targeting.</param>
 /// <param name="DestinationForm">True when path targets Form Placement.</param>
 public sealed record StructureProgressionPathDto(
-    Guid SourceFixtureId,
+    string SourcePairKey,
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
     string? DestinationSlotKey,

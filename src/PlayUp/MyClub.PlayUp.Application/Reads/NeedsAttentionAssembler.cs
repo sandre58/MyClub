@@ -240,19 +240,17 @@ public static class NeedsAttentionAssembler
             return;
         }
 
-        foreach (var pathGroup in paths.GroupBy(path => path.SourceFixtureId))
+        foreach (var pathGroup in paths.GroupBy(path => path.SourcePairKey))
         {
-            var fixtureId = pathGroup.Key;
-            Fixture fixture;
-            try
+            var sourcePairKey = pathGroup.Key;
+            var fixture = ResolveFixtureFromSourcePairKey(source, sourcePairKey);
+            if (fixture is null)
             {
-                fixture = source.GetFixture(fixtureId);
-            }
-            catch (Exception)
-            {
+                // Pair defined but fixture not materialized yet — not ready for Apply.
                 continue;
             }
 
+            var fixtureId = fixture.Id;
             if (!AllLegsFinished(fixture, matches))
             {
                 continue;
@@ -283,7 +281,7 @@ public static class NeedsAttentionAssembler
                 ProgressionInstruction instruction;
                 try
                 {
-                    instruction = ProgressionApplier.Apply(path, fixtureId, outcome);
+                    instruction = ProgressionApplier.Apply(path, sourcePairKey, outcome);
                 }
                 catch (Exception)
                 {
@@ -327,6 +325,17 @@ public static class NeedsAttentionAssembler
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Resolves the execution fixture for a structural SourcePairKey (Cup PairKey or interim Guid N).
+    /// </summary>
+    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey)
+    {
+        var byPair = stage.FindFixtureByBracketPairKey(sourcePairKey);
+        return byPair ?? (Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid)
+            ? stage.FindFixture(new FixtureId(fixtureGuid))
+            : null);
     }
 
     private static string ResolveAttentionTargetType(QualificationDestination destination) =>

@@ -11,13 +11,20 @@ export type ChampionshipPathRound = {
 };
 
 /**
- * Longest classic KO prefix among rounds that have fixtures
- * (each round halves the previous fixture count). Terminal = last of prefix.
- * Remaining rounds (e.g. 3ᵉ after Finale) are excluded.
+ * Mono-round form (Cup V1): that round is terminal without fixtures.
+ * Multi-round interim: longest classic KO prefix among rounds with fixtures
+ * (halving). Remaining rounds (e.g. 3ᵉ after Finale) excluded.
  */
 export function championshipTerminalRound<T extends ChampionshipPathRound>(
   rounds: readonly T[],
 ): T | null {
+  if (rounds.length === 0) {
+    return null;
+  }
+  if (rounds.length === 1) {
+    return rounds[0]!;
+  }
+
   const withFixtures = rounds.filter((r) => r.fixtures.length > 0);
   if (withFixtures.length === 0) {
     return null;
@@ -39,8 +46,12 @@ export function championshipTerminalRound<T extends ChampionshipPathRound>(
   return prefix[prefix.length - 1]!;
 }
 
+/** Rounds that can expand Sorties — fixtures and/or structural (all rounds when mono). */
 export function roundsWithFixtures<T extends ChampionshipPathRound>(
   rounds: readonly T[],
 ): T[] {
+  if (rounds.length === 1) {
+    return [...rounds];
+  }
   return rounds.filter((r) => r.fixtures.length > 0);
 }

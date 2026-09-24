@@ -42,6 +42,7 @@ import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
 import type {
   ProgressionOutcome,
+  StageBracketPair,
   StageFixture,
   StageSchematic,
   StructureFormatKind,
@@ -123,16 +124,43 @@ function stageFormatIcon(kind?: StructureFormatKind | null) {
   }
 }
 
-function resolveRoundIdForFixture(
+function resolveRoundIdForPairOrFixture(
   rounds: ProgRoundOption[],
-  fixtureId: string,
+  sourcePairKey: string,
 ): { roundId: string; roundName: string } | null {
+  // Cup V1 mono-round: all pairs belong to the structural form / first round.
+  if (rounds.length === 1) {
+    return { roundId: rounds[0]!.id, roundName: rounds[0]!.name };
+  }
   for (const round of rounds) {
-    if (round.fixtures.some((f) => f.id === fixtureId)) {
+    if (round.fixtures.some((f) => f.id === sourcePairKey)) {
+      return { roundId: round.id, roundName: round.name };
+    }
+    // Interim non-Cup Expand keys fixture Guid N — match fixture.id when same format.
+    if (
+      round.fixtures.some(
+        (f) => f.id.replace(/-/g, '').toLowerCase() === sourcePairKey.toLowerCase(),
+      )
+    ) {
       return { roundId: round.id, roundName: round.name };
     }
   }
-  return null;
+  // Fallback: championship terminal or first playable round.
+  const terminal = championshipTerminalRound(rounds);
+  if (terminal) {
+    return { roundId: terminal.id, roundName: terminal.name };
+  }
+  return rounds[0]
+    ? { roundId: rounds[0].id, roundName: rounds[0].name }
+    : null;
+}
+
+function pairPlaceMapLabel(
+  pairKey: string,
+  slotAKey: string,
+  slotBKey: string,
+): string {
+  return `${pairKey} · ${slotAKey} vs ${slotBKey}`;
 }
 
 function fixturePlaceMapLabel(
@@ -246,6 +274,10 @@ export function StructureProgressionDialog({
       })),
     [overviewQuery.data?.rounds],
   );
+  const bracketPairs = overviewQuery.data?.bracketPairs ?? [];
+  const expandSourceCount = bracketPairs.length > 0
+    ? bracketPairs.length
+    : null; // null = derive from round fixtures
   const playableRounds = useMemo(() => roundsWithFixtures(rounds), [rounds]);
   const championshipTerminal = useMemo(
     () => championshipTerminalRound(rounds),
@@ -340,7 +372,10 @@ export function StructureProgressionDialog({
     };
     const groups = new Map<string, PathGroup>();
     for (const path of existingPaths) {
-      const resolved = resolveRoundIdForFixture(rounds, path.sourceFixtureId);
+      const resolved = resolveRoundIdForPairOrFixture(
+        rounds,
+        path.sourcePairKey,
+      );
       if (!resolved) continue;
       const targetKind: ProgTargetKind =
         !path.destinationForm &&
@@ -371,9 +406,15 @@ export function StructureProgressionDialog({
 
     const next: ProgIntentDraft[] = [];
     let order = 1;
+    const orderedPairKeys = [...bracketPairs]
+      .map((p) => p.pairKey)
+      .sort((a, b) => a.localeCompare(b));
     for (const group of groups.values()) {
       const round = roundById.get(group.roundId);
-      const fixtureCount = round?.fixtures.length ?? group.paths.length;
+      const expandCount =
+        orderedPairKeys.length > 0
+          ? orderedPairKeys.length
+          : (round?.fixtures.length ?? group.paths.length);
       if (group.targetKind === 'population') {
         const seed = pathToSingletonIntent(
           group.paths[0],
@@ -389,7 +430,7 @@ export function StructureProgressionDialog({
             destinationSlotKeys: [],
             destinationGroupIds: [],
             destinationForm: false,
-            expandedPathCount: fixtureCount,
+            expandedPathCount: expandCount,
           }),
         );
         continue;
@@ -409,7 +450,7 @@ export function StructureProgressionDialog({
             destinationSlotKeys: [],
             destinationGroupIds: [],
             destinationForm: true,
-            expandedPathCount: fixtureCount,
+            expandedPathCount: expandCount,
           }),
         );
         continue;
@@ -418,10 +459,23 @@ export function StructureProgressionDialog({
       const isGroupPlace = group.paths.some((p) =>
         Boolean(p.destinationGroupId?.trim()),
       );
-      const keys = resizeDestinationSlotKeys([], fixtureCount);
-      for (const path of group.paths) {
-        const idx =
-          round?.fixtures.findIndex((f) => f.id === path.sourceFixtureId) ?? -1;
+      const keys = resizeDestinationSlotKeys([], expandCount);
+      const sortedPaths = [...group.paths].sort((a, b) =>
+        a.sourcePairKey.localeCompare(b.sourcePairKey),
+      );
+      for (const path of sortedPaths) {
+        let idx =
+          orderedPairKeys.length > 0
+            ? orderedPairKeys.indexOf(path.sourcePairKey)
+            : (round?.fixtures.findIndex(
+                (f) =>
+                  f.id === path.sourcePairKey ||
+                  f.id.replace(/-/g, '').toLowerCase() ===
+                    path.sourcePairKey.toLowerCase(),
+              ) ?? -1);
+        if (idx < 0 && orderedPairKeys.length === 0) {
+          idx = sortedPaths.indexOf(path);
+        }
         const identity = isGroupPlace
           ? (path.destinationGroupId?.trim() ?? '')
           : (path.destinationSlotKey?.trim() ?? '');
@@ -441,7 +495,7 @@ export function StructureProgressionDialog({
           destinationSlotKeys: isGroupPlace ? [] : keys,
           destinationGroupIds: isGroupPlace ? keys : [],
           destinationForm: false,
-          expandedPathCount: fixtureCount,
+          expandedPathCount: expandCount,
         }),
       );
     }
@@ -464,6 +518,7 @@ export function StructureProgressionDialog({
     sourceSchematicQuery.isLoading,
     rounds,
     roundById,
+    bracketPairs,
     mutation.isPending,
     mutation.isSuccess,
     resetDiscard,
@@ -608,7 +663,8 @@ export function StructureProgressionDialog({
     if (championshipTerminal) {
       next.roundId = championshipTerminal.id;
       next.roundName = championshipTerminal.name;
-      next.expandedPathCount = championshipTerminal.fixtures.length;
+      next.expandedPathCount =
+        expandSourceCount ?? championshipTerminal.fixtures.length;
     }
     setIntents((prev) => [...prev, next]);
     setExpandedId(next.id);
@@ -890,18 +946,21 @@ export function StructureProgressionDialog({
                             rounds={rounds}
                             playableRounds={playableRounds}
                             championshipTerminal={championshipTerminal}
+                            bracketPairs={bracketPairs}
                             roundsLoading={overviewQuery.isLoading}
                             draftEntriesByDestination={
                               draftEntriesByDestination
                             }
                             onChange={(next) => {
                               const round = roundById.get(next.roundId);
+                              const count =
+                                expandSourceCount ??
+                                round?.fixtures.length ??
+                                next.expandedPathCount;
                               updateIntent({
                                 ...next,
                                 roundName: round?.name ?? next.roundName,
-                                expandedPathCount:
-                                  round?.fixtures.length ??
-                                  next.expandedPathCount,
+                                expandedPathCount: count,
                               });
                             }}
                           />
@@ -939,6 +998,7 @@ function ProgIntentEditor({
   rounds,
   playableRounds,
   championshipTerminal,
+  bracketPairs,
   roundsLoading,
   draftEntriesByDestination,
   onChange,
@@ -950,6 +1010,7 @@ function ProgIntentEditor({
   rounds: ProgRoundOption[];
   playableRounds: ProgRoundOption[];
   championshipTerminal: ProgRoundOption | null;
+  bracketPairs: readonly StageBracketPair[];
   roundsLoading: boolean;
   draftEntriesByDestination: Map<string, number>;
   onChange: (next: ProgIntentDraft) => void;
@@ -1002,22 +1063,42 @@ function ProgIntentEditor({
     () => rounds.find((r) => r.id === draft.roundId) ?? null,
     [draft.roundId, rounds],
   );
-  const roundFixtures = selectedRound?.fixtures ?? [];
+  const orderedPairs = useMemo(
+    () =>
+      [...bracketPairs].sort((a, b) => a.pairKey.localeCompare(b.pairKey)),
+    [bracketPairs],
+  );
+  const expandRows: Array<{
+    key: string;
+    label: string;
+  }> = useMemo(() => {
+    if (orderedPairs.length > 0) {
+      return orderedPairs.map((p) => ({
+        key: p.pairKey,
+        label: pairPlaceMapLabel(p.pairKey, p.slotAKey, p.slotBKey),
+      }));
+    }
+    const fixtures = selectedRound?.fixtures ?? [];
+    return fixtures.map((fixture, index) => ({
+      key: fixture.id,
+      label: fixturePlaceMapLabel(fixture, index, t),
+    }));
+  }, [orderedPairs, selectedRound?.fixtures, t]);
   const placeSlotKeys = useMemo(() => {
     const source =
       placeGrain === 'group'
         ? draft.destinationGroupIds
         : draft.destinationSlotKeys;
-    return resizeDestinationSlotKeys(source, roundFixtures.length);
+    return resizeDestinationSlotKeys(source, expandRows.length);
   }, [
     draft.destinationGroupIds,
     draft.destinationSlotKeys,
     placeGrain,
-    roundFixtures.length,
+    expandRows.length,
   ]);
 
   function applyPlaceKeys(next: string[]) {
-    const aligned = resizeDestinationSlotKeys(next, roundFixtures.length);
+    const aligned = resizeDestinationSlotKeys(next, expandRows.length);
     onChange({
       ...draft,
       targetKind: 'place',
@@ -1073,7 +1154,10 @@ function ProgIntentEditor({
         outcome,
         roundId: championshipTerminal.id,
         roundName: championshipTerminal.name,
-        expandedPathCount: championshipTerminal.fixtures.length,
+        expandedPathCount:
+          orderedPairs.length > 0
+            ? orderedPairs.length
+            : championshipTerminal.fixtures.length,
       });
       return;
     }
@@ -1180,7 +1264,10 @@ function ProgIntentEditor({
                   ...draft,
                   roundId: id,
                   roundName: round?.name ?? '',
-                  expandedPathCount: round?.fixtures.length ?? 0,
+                  expandedPathCount:
+                    orderedPairs.length > 0
+                      ? orderedPairs.length
+                      : (round?.fixtures.length ?? 0),
                 });
               }}
             />
@@ -1268,7 +1355,7 @@ function ProgIntentEditor({
             aria-label={tCommon('loading')}
           >
             {Array.from({
-              length: Math.max(roundFixtures.length, 3),
+              length: Math.max(expandRows.length, 3),
             }).map((_, index) => (
               <li key={`skel-${index}`} aria-hidden="true">
                 <span className="structure-qualification__place-map-skel-label" />
@@ -1277,17 +1364,26 @@ function ProgIntentEditor({
             ))}
           </ul>
         ) : placeUnavailable || !placesLabeled ? (
-          <p className="structure-qualification__field-hint" role="status">
+          <EmptyState
+            icon={<EmptySelectionIcon size="lg" />}
+            title={t('progression.emptyNoPlacePeerTitle')}
+          >
             {t('progression.emptyNoPlacePeerBody')}
-          </p>
+          </EmptyState>
         ) : labeledPlaces.length === 0 ? (
-          <p className="structure-qualification__field-hint" role="status">
+          <EmptyState
+            icon={<EmptySelectionIcon size="lg" />}
+            title={t('progression.placeEmpty')}
+          >
             {t('progression.placeEmpty')}
-          </p>
-        ) : roundFixtures.length === 0 ? (
-          <p className="structure-qualification__field-hint" role="status">
-            {t('progression.placeMapEmptySelection')}
-          </p>
+          </EmptyState>
+        ) : expandRows.length === 0 ? (
+          <EmptyState
+            icon={<EmptySelectionIcon size="lg" />}
+            title={t('progression.placeMapEmptySelection')}
+          >
+            {t('progression.roundNeedsFixturesHint')}
+          </EmptyState>
         ) : (
           <div className="structure-qualification__place-map-block">
             <div className="structure-qualification__place-map-toolbar">
@@ -1348,14 +1444,14 @@ function ProgIntentEditor({
               className="structure-qualification__place-map"
               aria-label={t('progression.placeMapAria')}
             >
-              {roundFixtures.map((fixture, index) => {
+              {expandRows.map((row, index) => {
                 const selected = placeSlotKeys[index]?.trim() || null;
                 const rowId = `prog-place-${draft.id}-${index}`;
                 const rowInvalid = !selected;
-                const sourceLabel = fixturePlaceMapLabel(fixture, index, t);
+                const sourceLabel = row.label;
                 return (
                   <li
-                    key={fixture.id}
+                    key={row.key}
                     data-invalid={rowInvalid ? 'true' : 'false'}
                   >
                     <label

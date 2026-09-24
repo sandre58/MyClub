@@ -128,8 +128,7 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
         quarter.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    addFixture.Id,
+                new ProgressionPath(addFixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(semi.Id))
             ]),

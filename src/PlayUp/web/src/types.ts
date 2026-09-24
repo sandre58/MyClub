@@ -789,7 +789,8 @@ export interface StructureProgressionIntent {
 
 /** One progression path for Structure authoring / impact preview. */
 export interface StructureProgressionPath {
-  sourceFixtureId: string;
+  /** Structural source key (Cup = BracketPair.PairKey). */
+  sourcePairKey: string;
   outcome: ProgressionOutcome;
   destinationStageId: string;
   /**
@@ -801,7 +802,7 @@ export interface StructureProgressionPath {
   destinationGroupId?: string | null;
   /** Champ/Swiss Form Placement when true. */
   destinationForm?: boolean | null;
-  /** Resolved fixture label (round · #order · slots) when available. */
+  /** Resolved confrontation label (PairKey or bound fixture) when available. */
   sourceLabel?: string | null;
 }
 

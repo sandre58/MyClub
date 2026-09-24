@@ -209,8 +209,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             source.ReplaceProgressionRules(
                 new ProgressionRules(
                 [
-                    new ProgressionPath(
-                        fixtureId,
+                    new ProgressionPath(fixtureId.Value.ToString("N"),
                         ProgressionOutcome.Winner,
                         ProgressionDestination.ForPopulation(destination.Id))
                 ]),

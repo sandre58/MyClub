@@ -13,6 +13,12 @@ function round(id: string, fixtureCount: number) {
 }
 
 describe('championshipTerminalRound', () => {
+  it('returns the only round even without fixtures (Cup V1 structural)', () => {
+    expect(
+      championshipTerminalRound([{ id: 'entry', name: 'entry', fixtures: [] }])?.id,
+    ).toBe('entry');
+  });
+
   it('returns the only round with fixtures', () => {
     expect(championshipTerminalRound([round('F', 1)])?.id).toBe('F');
   });
@@ -38,7 +44,7 @@ describe('championshipTerminalRound', () => {
     ).toBe('F');
   });
 
-  it('skips empty rounds', () => {
+  it('skips empty rounds when multi-round', () => {
     expect(
       championshipTerminalRound([
         { id: 'empty', name: 'empty', fixtures: [] },
@@ -47,13 +53,26 @@ describe('championshipTerminalRound', () => {
     ).toBe('F');
   });
 
-  it('returns null when no fixtures', () => {
-    expect(championshipTerminalRound([{ id: 'x', name: 'x', fixtures: [] }])).toBeNull();
+  it('returns null when multi-round and no fixtures', () => {
+    expect(
+      championshipTerminalRound([
+        { id: 'a', name: 'a', fixtures: [] },
+        { id: 'b', name: 'b', fixtures: [] },
+      ]),
+    ).toBeNull();
   });
 });
 
 describe('roundsWithFixtures', () => {
-  it('filters empty rounds', () => {
+  it('keeps mono-round without fixtures', () => {
+    expect(
+      roundsWithFixtures([{ id: 'only', name: 'only', fixtures: [] }]).map(
+        (r) => r.id,
+      ),
+    ).toEqual(['only']);
+  });
+
+  it('filters empty rounds when multi-round', () => {
     expect(
       roundsWithFixtures([
         round('A', 2),

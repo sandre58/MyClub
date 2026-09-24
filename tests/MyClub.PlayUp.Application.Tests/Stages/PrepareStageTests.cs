@@ -113,8 +113,7 @@ public sealed class PrepareStageTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -143,8 +142,7 @@ public sealed class PrepareStageTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -190,8 +188,7 @@ public sealed class PrepareStageTests
         var act = () => source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(semi.Id, "SF1-B"))
             ]),
@@ -242,8 +239,7 @@ public sealed class PrepareStageTests
         final.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(superFinalId))
             ]),
@@ -301,8 +297,7 @@ public sealed class PrepareStageTests
         source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(semi.Id))
             ]),

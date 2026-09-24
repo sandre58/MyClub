@@ -18,12 +18,12 @@ public sealed record ProgressionFeedSource
     /// Initializes a new instance of the <see cref="ProgressionFeedSource"/> class.
     /// </summary>
     /// <param name="sourceStageId">Stage that owns the progression rules.</param>
-    /// <param name="sourceFixtureId">Fixture identity on the source stage.</param>
+    /// <param name="sourcePairKey">Structural source key (Cup = PairKey).</param>
     /// <param name="outcome">Winner or loser.</param>
     /// <param name="destinationSlotKey">Target slot key on the destination stage.</param>
     public ProgressionFeedSource(
         StageId sourceStageId,
-        FixtureId sourceFixtureId,
+        string sourcePairKey,
         ProgressionOutcome outcome,
         string destinationSlotKey)
     {
@@ -35,7 +35,7 @@ public sealed record ProgressionFeedSource
         }
 
         SourceStageId = sourceStageId;
-        SourceFixtureId = sourceFixtureId;
+        SourcePairKey = BracketPair.NormalizePairKey(sourcePairKey);
         Outcome = outcome;
         DestinationSlotKey = Slot.NormalizeKey(destinationSlotKey);
     }
@@ -46,9 +46,9 @@ public sealed record ProgressionFeedSource
     public StageId SourceStageId { get; }
 
     /// <summary>
-    /// Gets the source fixture identity.
+    /// Gets the structural source confrontation key.
     /// </summary>
-    public FixtureId SourceFixtureId { get; }
+    public string SourcePairKey { get; }
 
     /// <summary>
     /// Gets the confrontation outcome.

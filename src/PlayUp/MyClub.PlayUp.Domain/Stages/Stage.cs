@@ -576,9 +576,9 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsurePenaltiesMutable();
 
         var penalty = FindPenalty(penaltyId)
-            ?? throw new DomainException(
-                $"Penalty '{penaltyId}' was not found.",
-                StageErrorCodes.PenaltyNotFound);
+                      ?? throw new DomainException(
+                          $"Penalty '{penaltyId}' was not found.",
+                          StageErrorCodes.PenaltyNotFound);
 
         _penalties.Remove(penalty);
         Raise(new StagePenaltyRemoved(Id, penalty.Id, penalty.EntryId, penalty.PointsDeducted, clock));
@@ -718,7 +718,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces progression rules. Allowed in Draft or Ready; Ready is demoted to Draft.
-    /// Each path fixture must belong to this stage.
+    /// Each path source must be a known BracketPair (Cup) or a fixture-backed interim key (non-Cup).
     /// Local Place destinations must reference an existing slot and must not conflict with a direct assignment.
     /// Cross-stage Place is allowed when SlotKey exists on the destination stage form (validated at Prepare/Apply).
     /// </summary>
@@ -733,27 +733,8 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             foreach (var path in progressionRules.Paths)
             {
-                if (!HasFixture(path.SourceFixtureId))
-                {
-                    throw new DomainException(
-                        $"Fixture '{path.SourceFixtureId}' was not found.",
-                        StageErrorCodes.FixtureNotFound);
-                }
-
-                if (path.Outcome == ProgressionOutcome.Winner)
-                {
-                    var owningRound = _rounds.FirstOrDefault(r =>
-                        r.FindFixture(path.SourceFixtureId) is not null)
-                        ?? throw new DomainException(
-                            $"Fixture '{path.SourceFixtureId}' was not found on a round.",
-                            StageErrorCodes.FixtureNotFound);
-                    if (!ProgressionChampionshipPath.IsChampionshipTerminal(Rounds, owningRound.Id))
-                    {
-                        throw new DomainException(
-                            "Progression Winner path must use a fixture on the championship-path terminal round.",
-                            RulesErrorCodes.ProgressionRulesInvalid);
-                    }
-                }
+                EnsureProgressionPathSource(path);
+                EnsureWinnerPathOnChampionshipTerminal(path);
 
                 if (path.Destination.TargetsPopulation)
                 {
@@ -1040,9 +1021,9 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureSwissByeMutable();
 
         var settings = SwissSettings
-            ?? throw new DomainException(
-                "Swiss bye can only be recorded on a Swiss stage.",
-                StageErrorCodes.SwissByeInvalid);
+                       ?? throw new DomainException(
+                           "Swiss bye can only be recorded on a Swiss stage.",
+                           StageErrorCodes.SwissByeInvalid);
 
         if (roundIndex < 1 || roundIndex > settings.RoundCount)
         {
@@ -1107,9 +1088,9 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureSwissProgressiveMutable();
 
         var matchday = _matchdays.FirstOrDefault(candidate => candidate.Id.Equals(matchdayId))
-            ?? throw new DomainException(
-                $"Matchday '{matchdayId}' was not found.",
-                StageErrorCodes.MatchdayNotFound);
+                       ?? throw new DomainException(
+                           $"Matchday '{matchdayId}' was not found.",
+                           StageErrorCodes.MatchdayNotFound);
 
         var fixture = new Fixture(FixtureId.New(), slotAKey: null, slotBKey: null);
         matchday.AddFixture(fixture);
@@ -1309,7 +1290,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
-            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
 
         if (_directAssignments.Any(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
         {
@@ -1601,7 +1582,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
-            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
 
         if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
         {
@@ -1651,7 +1632,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
-            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
 
         var index = _directAssignments.FindIndex(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal));
         if (index < 0)
@@ -1683,7 +1664,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
-            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
 
         if (_directAssignments.Exists(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
         {
@@ -1726,7 +1707,7 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureResolutionMutable();
 
         var group = FindGroup(groupId)
-            ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
+                    ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
 
         var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
         if (owningGroup is not null)
@@ -1760,7 +1741,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
-            ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
 
         if (_directAssignments.Exists(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
         {
@@ -1864,7 +1845,7 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
 
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
-            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
 
         DemoteToDraftIfReady();
         round.ReplaceTieFormat(tieFormat?.Copy());
@@ -1882,7 +1863,7 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
 
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
-            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
 
         DemoteToDraftIfReady();
         _rounds.Remove(round);
@@ -1899,7 +1880,7 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureDraftOrReady();
 
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
-            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
         round.Rename(name);
     }
 
@@ -1957,9 +1938,9 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
 
         var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
-            ?? throw new DomainException(
-                $"Matchday '{matchdayId}' was not found.",
-                StageErrorCodes.MatchdayNotFound);
+                       ?? throw new DomainException(
+                           $"Matchday '{matchdayId}' was not found.",
+                           StageErrorCodes.MatchdayNotFound);
 
         DemoteToDraftIfReady();
         _matchdays.Remove(matchday);
@@ -2010,7 +1991,7 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
 
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
-            ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
 
         EnsureSlotKeysExist(slotAKey, slotBKey);
         EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
@@ -2041,9 +2022,9 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
 
         var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
-            ?? throw new DomainException(
-                $"Matchday '{matchdayId}' was not found.",
-                StageErrorCodes.MatchdayNotFound);
+                       ?? throw new DomainException(
+                           $"Matchday '{matchdayId}' was not found.",
+                           StageErrorCodes.MatchdayNotFound);
 
         EnsureSlotKeysExist(slotAKey, slotBKey);
         EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
@@ -2693,6 +2674,81 @@ public sealed class Stage : AggregateRoot<StageId>
         }
     }
 
+    private void EnsureProgressionPathSource(ProgressionPath path)
+    {
+        if (FindBracketPair(path.SourcePairKey) is not null)
+        {
+            return;
+        }
+
+        // Non-Cup interim Expand keys fixture Guid "N" when BracketPairs are absent.
+        if (_bracketPairs.Count == 0
+            && Guid.TryParseExact(path.SourcePairKey, "N", out var fixtureGuid)
+            && HasFixture(new FixtureId(fixtureGuid)))
+        {
+            return;
+        }
+
+        // Fixture may carry BracketPairKey matching the path after materialize — still structural.
+        if (FindFixtureByBracketPairKey(path.SourcePairKey) is not null)
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Progression path source '{path.SourcePairKey}' was not found on the stage form.",
+            RulesErrorCodes.ProgressionRulesInvalid);
+    }
+
+    /// <summary>
+    /// Winner Sorties must exit the championship-path terminal round (not an intermediate KO round).
+    /// </summary>
+    private void EnsureWinnerPathOnChampionshipTerminal(ProgressionPath path)
+    {
+        if (path.Outcome != ProgressionOutcome.Winner)
+        {
+            return;
+        }
+
+        if (ProgressionChampionshipPath.TerminalRound(Rounds) is null)
+        {
+            throw new DomainException(
+                "Progression Winner path requires a championship-path terminal round.",
+                RulesErrorCodes.ProgressionRulesInvalid);
+        }
+
+        var owningRound = FindRoundForProgressionSource(path.SourcePairKey);
+        if (owningRound is not null
+            && !ProgressionChampionshipPath.IsChampionshipTerminal(Rounds, owningRound.Id))
+        {
+            throw new DomainException(
+                "Progression Winner path must use a source on the championship-path terminal round.",
+                RulesErrorCodes.ProgressionRulesInvalid);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the round that owns a path source key (fixture Guid N, BracketPairKey on fixture,
+    /// or sole round when only a structural BracketPair exists — Cup V1 mono-round).
+    /// </summary>
+    private Round? FindRoundForProgressionSource(string sourcePairKey)
+    {
+        if (Guid.TryParseExact(sourcePairKey, "N", out var fixtureGuid))
+        {
+            var fixtureId = new FixtureId(fixtureGuid);
+            var byFixture = _rounds.FirstOrDefault(r => r.FindFixture(fixtureId) is not null);
+            if (byFixture is not null)
+            {
+                return byFixture;
+            }
+        }
+
+        var byPairKey = _rounds.FirstOrDefault(r =>
+            r.Fixtures.Any(f =>
+                string.Equals(f.BracketPairKey, sourcePairKey, StringComparison.Ordinal)));
+        return byPairKey ?? (FindBracketPair(sourcePairKey) is not null && _rounds.Count == 1 ? _rounds[0] : null);
+    }
+
     private void EnsureBracketPairSlotExists(string slotKey)
     {
         if (FindSlot(slotKey) is null)
@@ -2805,12 +2861,7 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             foreach (var path in progression.Paths)
             {
-                if (!HasFixture(path.SourceFixtureId))
-                {
-                    throw new DomainException(
-                        $"Fixture '{path.SourceFixtureId}' was not found.",
-                        StageErrorCodes.FixtureNotFound);
-                }
+                EnsureProgressionPathSource(path);
 
                 if (path.Destination.TargetsPopulation)
                 {

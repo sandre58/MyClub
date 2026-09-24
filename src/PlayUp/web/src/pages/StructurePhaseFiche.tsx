@@ -425,10 +425,10 @@ function progressionRuleParts(
       ? t('fiche.rule.winner', { count: 1 })
       : t('fiche.rule.loser', { count: 1 }),
     badgeTone: isWinner ? 'win' : 'loss',
-    context: matchNumberContext(path.sourceLabel, path.sourceFixtureId, t),
+    context: matchNumberContext(path.sourceLabel, path.sourcePairKey, t),
     family: 'result',
     sortPrimary: isWinner ? 0 : 1,
-    sortSecondary: matchSortKey(path.sourceLabel, path.sourceFixtureId),
+    sortSecondary: matchSortKey(path.sourceLabel, path.sourcePairKey),
   };
 }
 
@@ -508,7 +508,7 @@ function inboundFeeds(
       if (path.destinationStageId !== stageId) continue;
       const parts = progressionRuleParts(path, t);
       feeds.push({
-        key: `p-${source.stageId}-${path.sourceFixtureId}-${path.outcome}`,
+        key: `p-${source.stageId}-${path.sourcePairKey}-${path.outcome}`,
         peerId: source.stageId,
         peerName: source.name,
         peerOrder: stagePeerOrder(data, source.stageId),
@@ -543,7 +543,7 @@ function outboundFeeds(
   for (const path of stage.progressionPaths ?? []) {
     const parts = progressionRuleParts(path, t);
     feeds.push({
-      key: `p-out-${path.sourceFixtureId}-${path.outcome}-${path.destinationStageId}`,
+      key: `p-out-${path.sourcePairKey}-${path.outcome}-${path.destinationStageId}`,
       peerId: path.destinationStageId,
       peerName: nameOf(path.destinationStageId),
       peerOrder: stagePeerOrder(data, path.destinationStageId),

@@ -14,5 +14,5 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// </summary>
 public sealed record ProgressionFeedRef(
     StageId SourceStageId,
-    FixtureId SourceFixtureId,
+    string SourcePairKey,
     ProgressionOutcome Outcome);

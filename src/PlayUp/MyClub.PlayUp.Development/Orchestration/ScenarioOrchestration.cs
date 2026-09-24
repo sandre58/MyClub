@@ -1080,11 +1080,11 @@ internal static class ScenarioOrchestration
             new ProgressionRules(
             [
                 new ProgressionPath(
-                    sfFixtures[0].Id,
+                    ToSourcePairKey(sfFixtures[0]),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForGroup(groups.Id, orderedGroups[0].Id)),
                 new ProgressionPath(
-                    sfFixtures[1].Id,
+                    ToSourcePairKey(sfFixtures[1]),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForGroup(groups.Id, orderedGroups[1].Id))
             ]),
@@ -1456,11 +1456,11 @@ internal static class ScenarioOrchestration
             new ProgressionRules(
             [
                 new ProgressionPath(
-                    barragesFixture.Id,
+                    ToSourcePairKey(barragesFixture),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForPopulation(finale.Id)),
                 new ProgressionPath(
-                    barragesFixture.Id,
+                    ToSourcePairKey(barragesFixture),
                     ProgressionOutcome.Loser,
                     ProgressionDestination.ForPopulation(bronze.Id))
             ]),
@@ -2928,7 +2928,8 @@ internal static class ScenarioOrchestration
                         ProgressionOutcome.Winner,
                         destination.Id)
                 ],
-                source.Rounds),
+                source.Rounds,
+                source.BracketPairs),
             clock);
     }
 
@@ -2986,7 +2987,8 @@ internal static class ScenarioOrchestration
                         destination.Id,
                         orderedKeys)
                 ],
-                source.Rounds),
+                source.Rounds,
+                source.BracketPairs),
             clock);
     }
 
@@ -3016,13 +3018,19 @@ internal static class ScenarioOrchestration
 
         var paths = new ProgressionPath[]
         {
-            new(sfFixtures[0].Id, ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, finalSlotKeys[0])),
-            new(sfFixtures[1].Id, ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, finalSlotKeys[1])),
-            new(sfFixtures[0].Id, ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, bronzeSlotKeys[0])),
-            new(sfFixtures[1].Id, ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, bronzeSlotKeys[1]))
+            new(ToSourcePairKey(sfFixtures[0]), ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, finalSlotKeys[0])),
+            new(ToSourcePairKey(sfFixtures[1]), ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, finalSlotKeys[1])),
+            new(ToSourcePairKey(sfFixtures[0]), ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, bronzeSlotKeys[0])),
+            new(ToSourcePairKey(sfFixtures[1]), ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, bronzeSlotKeys[1]))
         };
         semi.ReplaceProgressionRules(new ProgressionRules(paths), clock);
     }
+
+    /// <summary>
+    /// Cup: BracketPairKey when bound; otherwise interim Guid N for non-Cup Expand.
+    /// </summary>
+    private static string ToSourcePairKey(Fixture fixture) =>
+        fixture.BracketPairKey ?? fixture.Id.Value.ToString("N");
 
     private static Fixture[] OrderedFixtures(Stage stage, int expectedCount)
     {

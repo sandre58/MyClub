@@ -5,24 +5,28 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Declarative routing from a Fixture/Tie outcome to a destination (population or slot).
+/// Declarative routing from a structural confrontation outcome to a destination (population or slot).
 /// Value object — no technical identity and no Order (unlike <see cref="QualificationPath"/>).
-/// Does not embed TieFormat resolution.
+/// Cup V1 source identity = <see cref="BracketPair.PairKey"/> (not FixtureId).
 /// </summary>
 public sealed record ProgressionPath
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ProgressionPath"/> class.
     /// </summary>
-    /// <param name="sourceFixtureId">Fixture identity owned by the stage that carries the progression rules.</param>
+    /// <param name="sourcePairKey">
+    /// Structural source key — Cup V1 = <see cref="BracketPair.PairKey"/>;
+    /// non-Cup Expand without pairs uses fixture Guid "N" as interim carrier.
+    /// </param>
     /// <param name="outcome">Winner or loser of the confrontation.</param>
     /// <param name="destination">Where the selected participant is routed.</param>
     public ProgressionPath(
-        FixtureId sourceFixtureId,
+        string sourcePairKey,
         ProgressionOutcome outcome,
         ProgressionDestination destination)
     {
@@ -35,15 +39,15 @@ public sealed record ProgressionPath
                 RulesErrorCodes.ProgressionRulesInvalid);
         }
 
-        SourceFixtureId = sourceFixtureId;
+        SourcePairKey = BracketPair.NormalizePairKey(sourcePairKey);
         Outcome = outcome;
         Destination = destination;
     }
 
     /// <summary>
-    /// Gets the source fixture identity.
+    /// Gets the structural source confrontation key (Cup = PairKey).
     /// </summary>
-    public FixtureId SourceFixtureId { get; }
+    public string SourcePairKey { get; }
 
     /// <summary>
     /// Gets the confrontation outcome.
@@ -58,6 +62,5 @@ public sealed record ProgressionPath
     /// <summary>
     /// Returns an independent copy (new nested value-object instances).
     /// </summary>
-    /// <returns>A deep copy of this path.</returns>
-    public ProgressionPath Copy() => new(SourceFixtureId, Outcome, Destination.Copy());
+    public ProgressionPath Copy() => new(SourcePairKey, Outcome, Destination.Copy());
 }

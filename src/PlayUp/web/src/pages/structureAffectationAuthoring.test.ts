@@ -45,7 +45,7 @@ describe('S1 AffectationAuthoring vs CompositionEntries', () => {
       stageId: 'r32',
       name: '32es',
       progressionPaths: Array.from({ length: 16 }, (_, i) => ({
-        sourceFixtureId: `f${i}`,
+        sourcePairKey: `f${i}`,
         outcome: 'Winner' as const,
         destinationStageId: 'r16',
       })),

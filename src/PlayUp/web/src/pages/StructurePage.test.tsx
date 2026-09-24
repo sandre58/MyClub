@@ -780,13 +780,13 @@ describe('StructurePage Structure hub', () => {
             progressionPathCount: 2,
             progressionPaths: [
               {
-                sourceFixtureId: 'sf-1',
+                sourcePairKey: 'sf-1',
                 outcome: 'Winner',
                 destinationStageId: finaleId,
                 destinationSlotKey: 'home',
               },
               {
-                sourceFixtureId: 'sf-1',
+                sourcePairKey: 'sf-1',
                 outcome: 'Loser',
                 destinationStageId: bronzeId,
                 destinationSlotKey: 'home',

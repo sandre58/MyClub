@@ -64,9 +64,9 @@ public sealed record UniqueFeedSource
     /// </summary>
     public static UniqueFeedSource ForProgression(
         StageId sourceStageId,
-        FixtureId sourceFixtureId,
+        string sourcePairKey,
         ProgressionOutcome outcome) =>
-        new(FeedKind.Progression, null, new ProgressionFeedRef(sourceStageId, sourceFixtureId, outcome), null, null);
+        new(FeedKind.Progression, null, new ProgressionFeedRef(sourceStageId, sourcePairKey, outcome), null, null);
 
     /// <summary>
     /// Creates a unique direct feed source from configuration.

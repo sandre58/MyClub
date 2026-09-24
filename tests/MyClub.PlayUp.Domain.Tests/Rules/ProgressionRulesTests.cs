@@ -26,12 +26,10 @@ public sealed class ProgressionRulesTests
         var stageId = StageId.New();
         var paths = new[]
         {
-            new ProgressionPath(
-                fixtureId,
+            new ProgressionPath(fixtureId.Value.ToString("N"),
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stageId, "SF1-A")),
-            new ProgressionPath(
-                fixtureId,
+            new ProgressionPath(fixtureId.Value.ToString("N"),
                 ProgressionOutcome.Loser,
                 new ProgressionDestination(stageId, "Consolante-1"))
         };
@@ -60,8 +58,8 @@ public sealed class ProgressionRulesTests
         var stageId = StageId.New();
         var paths = new[]
         {
-            new ProgressionPath(FixtureId.New(), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
-            new ProgressionPath(FixtureId.New(), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A"))
+            new ProgressionPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
+            new ProgressionPath(FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A"))
         };
 
         // Act
@@ -79,8 +77,8 @@ public sealed class ProgressionRulesTests
         var stageId = StageId.New();
         var paths = new[]
         {
-            new ProgressionPath(fixtureId, ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
-            new ProgressionPath(fixtureId, ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-B"))
+            new ProgressionPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-A")),
+            new ProgressionPath(fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, new ProgressionDestination(stageId, "SF1-B"))
         };
 
         // Act
@@ -106,8 +104,7 @@ public sealed class ProgressionRulesTests
 
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(
-                fixture.Id,
+            new ProgressionPath(fixture.Id.Value.ToString("N"),
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stage.Id, "SF1-A"))
         ]);
@@ -136,8 +133,7 @@ public sealed class ProgressionRulesTests
         // Arrange
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(
-                FixtureId.New(),
+            new ProgressionPath(FixtureId.New().Value.ToString("N"),
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(StageId.New(), "Final-A"))
         ]);
@@ -157,8 +153,7 @@ public sealed class ProgressionRulesTests
         // Arrange
         var progression = new ProgressionRules(
         [
-            new ProgressionPath(
-                FixtureId.New(),
+            new ProgressionPath(FixtureId.New().Value.ToString("N"),
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(StageId.New(), "SF1-A"))
         ]);
@@ -191,8 +186,7 @@ public sealed class ProgressionRulesTests
 
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(
-                fixture.Id,
+            new ProgressionPath(fixture.Id.Value.ToString("N"),
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stage.Id, "SF1-A"))
         ]);
@@ -221,8 +215,7 @@ public sealed class ProgressionRulesTests
         var act = () => stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(peerId, "SF1-A"))
             ]),
@@ -246,8 +239,7 @@ public sealed class ProgressionRulesTests
 
         var rules = new ProgressionRules(
         [
-            new ProgressionPath(
-                FixtureId.New(),
+            new ProgressionPath(FixtureId.New().Value.ToString("N"),
                 ProgressionOutcome.Winner,
                 new ProgressionDestination(stage.Id, "SF1-A"))
         ]);
@@ -256,7 +248,7 @@ public sealed class ProgressionRulesTests
         var act = () => stage.ReplaceProgressionRules(rules, _clock);
 
         // Assert
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureNotFound);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
     }
 
     private EntryId Admit(Stage stage, EntryId entryId)

@@ -28,7 +28,7 @@ public static class ApplyProgressionOutcome
     /// <summary>
     /// Applies progression for a fixture onto already-loaded competition stages.
     /// </summary>
-    /// <returns>Applied progression instructions; empty when no path targets the fixture.</returns>
+    /// <returns>Applied progression instructions; empty when no path targets the confrontation.</returns>
     public static IReadOnlyList<ProgressionInstruction> Execute(
         Stage sourceStage,
         FixtureId fixtureId,
@@ -46,8 +46,10 @@ public static class ApplyProgressionOutcome
         var tieFormat = ResolveRoundTieFormat(canonicalSource, fixtureId);
         EnsureFixtureMatchCoherence(canonicalSource, fixture, matches, tieFormat);
 
+        // HTTP fixtureId = execution trigger only — Path identity is SourcePairKey.
+        var sourcePairKey = ResolveSourcePairKey(canonicalSource, fixture);
         var paths = canonicalSource.Regulation.ProgressionRules?.Paths
-            .Where(p => p.SourceFixtureId.Equals(fixtureId))
+            .Where(p => string.Equals(p.SourcePairKey, sourcePairKey, StringComparison.Ordinal))
             .ToArray() ?? [];
 
         if (paths.Length == 0)
@@ -59,7 +61,7 @@ public static class ApplyProgressionOutcome
         var outcome = FixtureOutcomeResolver.Resolve(tieFormat, snapshot);
 
         var instructions = paths
-            .Select(path => ProgressionApplier.Apply(path, fixtureId, outcome))
+            .Select(path => ProgressionApplier.Apply(path, sourcePairKey, outcome))
             .ToArray();
 
         var destinations = new Stage[instructions.Length];
@@ -126,6 +128,19 @@ public static class ApplyProgressionOutcome
 
         return instructions;
     }
+
+    /// <summary>
+    /// Resolves the structural key for Apply from the execution fixture.
+    /// Cup: requires <see cref="Fixture.BracketPairKey"/> (fail-closed). Non-Cup interim: fixture Guid N.
+    /// </summary>
+    private static string ResolveSourcePairKey(Stage stage, Fixture fixture) =>
+        !string.IsNullOrWhiteSpace(fixture.BracketPairKey)
+            ? BracketPair.NormalizePairKey(fixture.BracketPairKey)
+            : stage.BracketPairs.Count > 0
+                ? throw new ApplicationFailureException(
+                    $"Fixture '{fixture.Id}' has no BracketPairKey; cannot resolve progression paths on a Cup stage.",
+                    ApplicationErrorCodes.FixtureInvalid)
+                : fixture.Id.Value.ToString("N");
 
     private static Stage ResolveCanonicalStage(
         StageId stageId,

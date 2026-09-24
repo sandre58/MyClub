@@ -15,21 +15,30 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// <c>max(round list order)</c> (Finale + Match 3ᵉ must not confuse that).
 /// </summary>
 /// <remarks>
-/// Interim carrier until form templates expose an explicit championship path:
-/// longest classic KO prefix among rounds that have fixtures (halving fixture
-/// counts). Remaining rounds (e.g. 3ᵉ place after Finale) are excluded.
-/// Single round with fixtures → that round is terminal.
+/// Mono-round form (Cup V1): the single round is terminal without fixtures.
+/// Multi-round interim: longest classic KO prefix among rounds that have fixtures
+/// (halving fixture counts). Remaining rounds (e.g. 3ᵉ place after Finale) excluded.
 /// </remarks>
 public static class ProgressionChampionshipPath
 {
     /// <summary>
     /// Returns the championship-path terminal round, or <see langword="null"/>
-    /// when no round has fixtures.
+    /// when the form cannot resolve a terminal.
     /// </summary>
     /// <param name="rounds">Stage rounds in Structure / storage order.</param>
     public static Round? TerminalRound(IReadOnlyList<Round> rounds)
     {
         ArgumentNullException.ThrowIfNull(rounds);
+
+        switch (rounds.Count)
+        {
+            case 0:
+                return null;
+
+            // Structural mono-round (Cup V1) — no fixtures required.
+            case 1:
+                return rounds[0];
+        }
 
         var withFixtures = rounds.Where(static r => r.Fixtures.Count > 0).ToList();
         switch (withFixtures.Count)

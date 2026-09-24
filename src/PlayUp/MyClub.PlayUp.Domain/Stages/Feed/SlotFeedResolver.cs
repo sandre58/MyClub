@@ -94,7 +94,7 @@ public static class SlotFeedResolver
                 qualifications[0].PathOrder),
             FeedKind.Progression => UniqueFeedSource.ForProgression(
                 progressions[0].SourceStageId,
-                progressions[0].SourceFixtureId,
+                progressions[0].SourcePairKey,
                 progressions[0].Outcome),
             FeedKind.Draw => UniqueFeedSource.ForDraw(draws[0].DrawId),
             _ => throw new DomainException(

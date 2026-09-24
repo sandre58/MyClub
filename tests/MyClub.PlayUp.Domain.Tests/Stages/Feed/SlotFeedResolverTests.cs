@@ -54,7 +54,7 @@ public sealed class SlotFeedResolverTests
             directs: [new DirectFeedSource("SF1-A", EntryId.New())],
             progressions:
             [
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A")
+                new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, "SF1-A")
             ]);
 
         var result = SlotFeedResolver.Resolve(snapshot, "SF1-A");
@@ -71,14 +71,14 @@ public sealed class SlotFeedResolverTests
             ["SF1-A"],
             progressions:
             [
-                new ProgressionFeedSource(_source, fixtureId, ProgressionOutcome.Winner, "SF1-A")
+                new ProgressionFeedSource(_source, fixtureId.Value.ToString("N"), ProgressionOutcome.Winner, "SF1-A")
             ]);
 
         var result = SlotFeedResolver.Resolve(snapshot, "SF1-A");
 
         result.Status.Should().Be(FeedResolutionStatus.Unique);
         result.Source!.Progression!.Outcome.Should().Be(ProgressionOutcome.Winner);
-        result.Source.Progression.SourceFixtureId.Should().Be(fixtureId);
+        result.Source.Progression.SourcePairKey.Should().Be(fixtureId.Value.ToString("N"));
         result.Source.Progression.SourceStageId.Should().Be(_source);
     }
 
@@ -89,7 +89,7 @@ public sealed class SlotFeedResolverTests
             ["Consolante"],
             progressions:
             [
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Loser, "Consolante")
+                new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Loser, "Consolante")
             ]);
 
         var result = SlotFeedResolver.Resolve(snapshot, "Consolante");
@@ -106,8 +106,8 @@ public sealed class SlotFeedResolverTests
             ["SF1-A"],
             progressions:
             [
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A"),
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Loser, "SF1-A")
+                new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, "SF1-A"),
+                new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Loser, "SF1-A")
             ]);
 
         var result = SlotFeedResolver.Resolve(snapshot, "SF1-A");
@@ -122,7 +122,7 @@ public sealed class SlotFeedResolverTests
             ["SF1-A"],
             progressions:
             [
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A")
+                new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, "SF1-A")
             ],
             draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
 
@@ -147,8 +147,8 @@ public sealed class SlotFeedResolverTests
             ["SF1-A"],
             progressions:
             [
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "SF1-A"),
-                new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Loser, "SF1-A")
+                new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, "SF1-A"),
+                new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Loser, "SF1-A")
             ],
             draws: [new DrawFeedSource("SF1-A", DrawId.New())]);
 
@@ -190,7 +190,7 @@ public sealed class SlotFeedResolverTests
             ["SF1-A"],
             [],
             [],
-            [new ProgressionFeedSource(_source, FixtureId.New(), ProgressionOutcome.Winner, "Missing")],
+            [new ProgressionFeedSource(_source, FixtureId.New().Value.ToString("N"), ProgressionOutcome.Winner, "Missing")],
             []);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FeedSnapshotInvalid);

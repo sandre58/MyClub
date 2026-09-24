@@ -26,7 +26,7 @@ public sealed class RemoveCompetitionStageTests
         var competition = CreateCompetition.Execute("Cup-Remove", _clock);
         var qf = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Quarter-Finals"), _clock);
         var pair = qf.BracketPairs.Should().ContainSingle().Subject;
-        var fixture = qf.AddFixture(qf.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
+        qf.AddFixture(qf.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
 
         var sf = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Semi-Finals"), _clock);
 
@@ -34,7 +34,7 @@ public sealed class RemoveCompetitionStageTests
             qf,
             [
                 new ProgressionPathSpec(
-                    fixture.Id,
+                    pair.PairKey,
                     ProgressionOutcome.Winner,
                     sf.Id,
                     DestinationSlotKey: null)

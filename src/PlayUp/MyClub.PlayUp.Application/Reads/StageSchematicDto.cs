@@ -119,7 +119,8 @@ public sealed record SchematicFormPositionDto(
 /// <param name="GroupId">Source group when scope is Group.</param>
 /// <param name="GroupName">Resolved source group name when known.</param>
 /// <param name="AcrossGroupsPosition">Across-groups position when applicable.</param>
-/// <param name="SourceFixtureId">Progression source fixture.</param>
+/// <param name="SourcePairKey">Progression structural source key (Cup = PairKey).</param>
+/// <param name="SourceFixtureId">Optional bound fixture when materialized (read overlay).</param>
 /// <param name="SourceFixtureNumber">1-based index of the source fixture within its round (real fixture only).</param>
 /// <param name="Outcome">Progression outcome.</param>
 /// <param name="DrawId">Draw feed target id when Kind is Draw.</param>
@@ -138,6 +139,7 @@ public sealed record SchematicFeedOriginDto(
     Guid? GroupId = null,
     string? GroupName = null,
     int? AcrossGroupsPosition = null,
+    string? SourcePairKey = null,
     Guid? SourceFixtureId = null,
     int? SourceFixtureNumber = null,
     ProgressionOutcome? Outcome = null,

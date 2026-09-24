@@ -137,8 +137,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             .WithProgressionRules(
                 new ProgressionRules(
                 [
-                    new ProgressionPath(
-                        fixtureId,
+                    new ProgressionPath(fixtureId.Value.ToString("N"),
                         ProgressionOutcome.Winner,
                         ProgressionDestination.ForPopulation(progressionStageId))
                 ]));

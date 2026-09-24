@@ -30,12 +30,12 @@ public sealed class ProgressionPathExpanderTests
             ProgressionOutcome.Winner,
             peer);
 
-        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds);
+        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds, stage.BracketPairs);
 
         paths.Should().HaveCount(2);
         paths.Should().OnlyContain(p =>
             p.Outcome == ProgressionOutcome.Winner && p.Destination.TargetsPopulation);
-        paths.Select(p => p.SourceFixtureId).Should().BeEquivalentTo(round.Fixtures.Select(f => f.Id));
+        paths.Select(p => p.SourcePairKey).Should().BeEquivalentTo(round.Fixtures.Select(f => f.Id.Value.ToString("N")));
     }
 
     [Fact]
@@ -52,12 +52,12 @@ public sealed class ProgressionPathExpanderTests
             stage.Id,
             ["SF1-A", "SF1-B"]);
 
-        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds);
+        var paths = ProgressionPathExpander.Materialize([intent], stage.Rounds, stage.BracketPairs);
 
         paths.Should().HaveCount(2);
         paths[0].Destination.SlotKey.Should().Be("SF1-A");
         paths[1].Destination.SlotKey.Should().Be("SF1-B");
-        paths.Select(p => p.SourceFixtureId).Should().Equal(stage.Rounds[0].Fixtures.Select(f => f.Id));
+        paths.Select(p => p.SourcePairKey).Should().Equal(stage.Rounds[0].Fixtures.Select(f => f.Id.Value.ToString("N")));
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class ProgressionPathExpanderTests
             stage.Id,
             ["SF1-A"]);
 
-        var act = () => ProgressionPathExpander.Materialize([intent], stage.Rounds);
+        var act = () => ProgressionPathExpander.Materialize([intent], stage.Rounds, stage.BracketPairs);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(RulesErrorCodes.ProgressionRulesInvalid);
@@ -106,7 +106,7 @@ public sealed class ProgressionPathExpanderTests
             ProgressionOutcome.Loser,
             peer);
 
-        var rules = ProgressionRules.FromIntents([intent], stage.Rounds);
+        var rules = ProgressionRules.FromIntents([intent], stage.Rounds, stage.BracketPairs);
 
         rules.Intents.Should().ContainSingle();
         rules.Paths.Should().HaveCount(2);
@@ -127,8 +127,7 @@ public sealed class ProgressionPathExpanderTests
         var act = () => source.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath(
-                    fixture.Id,
+                new ProgressionPath(fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     ProgressionDestination.ForSlot(peer.Id, "SF1-A"))
             ]),

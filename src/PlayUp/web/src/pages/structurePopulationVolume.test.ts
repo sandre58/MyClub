@@ -62,19 +62,19 @@ describe('structurePopulationVolume', () => {
         name: 'Demis',
         progressionPaths: [
           {
-            sourceFixtureId: 'f1',
+            sourcePairKey: 'f1',
             outcome: 'Winner',
             destinationStageId: 'final',
             destinationSlotKey: null,
           },
           {
-            sourceFixtureId: 'f2',
+            sourcePairKey: 'f2',
             outcome: 'Winner',
             destinationStageId: 'final',
             destinationSlotKey: 'F-A',
           },
           {
-            sourceFixtureId: 'f3',
+            sourcePairKey: 'f3',
             outcome: 'Loser',
             destinationStageId: 'third',
             destinationSlotKey: 'B-A',
@@ -92,13 +92,13 @@ describe('structurePopulationVolume', () => {
       name: 'Demis',
       progressionPaths: [
         {
-          sourceFixtureId: 'f1',
+          sourcePairKey: 'f1',
           outcome: 'Winner',
           destinationStageId: 'final',
           destinationSlotKey: 'F-A',
         },
         {
-          sourceFixtureId: 'f2',
+          sourcePairKey: 'f2',
           outcome: 'Winner',
           destinationStageId: 'final',
           destinationSlotKey: 'F-B',
@@ -152,13 +152,13 @@ describe('structurePopulationVolume', () => {
       name: 'Demis',
       progressionPaths: [
         {
-          sourceFixtureId: 'f1',
+          sourcePairKey: 'f1',
           outcome: 'Winner',
           destinationStageId: 'final',
           destinationSlotKey: null,
         },
         {
-          sourceFixtureId: 'f2',
+          sourcePairKey: 'f2',
           outcome: 'Winner',
           destinationStageId: 'final',
           destinationSlotKey: null,
@@ -201,13 +201,13 @@ describe('structurePopulationVolume', () => {
       name: 'Groupes',
       progressionPaths: [
         {
-          sourceFixtureId: 'f1',
+          sourcePairKey: 'f1',
           outcome: 'Winner',
           destinationStageId: 'demis',
           destinationSlotKey: null,
         },
         {
-          sourceFixtureId: 'f2',
+          sourcePairKey: 'f2',
           outcome: 'Winner',
           destinationStageId: 'demis',
           destinationSlotKey: null,

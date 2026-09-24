@@ -67,7 +67,7 @@ public static class FormPathResolutionKey
         sb.Append("P|");
         sb.Append(sourceStageId.Value.ToString("N"));
         sb.Append('|');
-        sb.Append(path.SourceFixtureId.Value.ToString("N"));
+        sb.Append(path.SourcePairKey);
         sb.Append('|');
         sb.Append(path.Outcome.ToString());
         return sb.ToString();

@@ -90,7 +90,7 @@ public static class SlotFeedSnapshotAssembler
                 progressions.Add(
                     new ProgressionFeedSource(
                         stage.Id,
-                        path.SourceFixtureId,
+                        path.SourcePairKey,
                         path.Outcome,
                         path.Destination.SlotKey!));
             }

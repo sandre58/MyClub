@@ -51,12 +51,12 @@ public sealed class ThinAuthoringTests
             qf,
             [
                 new ProgressionPathSpec(
-                    qfFixture.Id,
+                    qfFixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     sf.Id,
                     DestinationSlotKey: null),
                 new ProgressionPathSpec(
-                    qfFixture.Id,
+                    qfFixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Loser,
                     sf.Id,
                     DestinationSlotKey: null)
@@ -229,7 +229,7 @@ public sealed class ThinAuthoringTests
             stage,
             [
                 new ProgressionPathSpec(
-                    fixture.Id,
+                    fixture.Id.Value.ToString("N"),
                     ProgressionOutcome.Winner,
                     stage.Id,
                     "A")
