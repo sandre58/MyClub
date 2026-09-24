@@ -9,6 +9,11 @@ export type ChoiceTileProps = {
   onChange: (selected: boolean) => void;
   /** Leading visual — swatch, icon, crest fragment (aligned with the title). */
   leading?: ReactNode;
+  /**
+   * `start` = leading beside the title (default).
+   * `above` = leading centered above the title (e.g. team crest pickers).
+   */
+  leadingPlacement?: 'start' | 'above';
   disabled?: boolean;
   /** Accessible name; defaults to label. */
   'aria-label'?: string;
@@ -24,6 +29,7 @@ export function ChoiceTile({
   selected,
   onChange,
   leading,
+  leadingPlacement = 'start',
   disabled = false,
   'aria-label': ariaLabel,
 }: ChoiceTileProps) {
@@ -37,6 +43,7 @@ export function ChoiceTile({
       className="ds-choice-tile"
       data-selected={selected ? 'true' : 'false'}
       data-disabled={disabled ? 'true' : 'false'}
+      data-leading={leading ? leadingPlacement : undefined}
       onClick={() => {
         if (!disabled) {
           onChange(!selected);

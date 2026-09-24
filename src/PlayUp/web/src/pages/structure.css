@@ -1880,6 +1880,91 @@
   min-width: 0;
 }
 
+.structure-manual-placement {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  /* Fixed chrome so blocked vs editable does not resize the panel. */
+  min-height: 22rem;
+}
+
+.structure-manual-placement__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.structure-manual-placement__field--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-manual-placement__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 16rem;
+}
+
+.structure-manual-placement__label {
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.structure-manual-placement__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  min-height: 1.75rem;
+}
+
+.structure-manual-placement__place-locked {
+  margin: 0;
+  padding: var(--space-8) var(--space-12);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-secondary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.structure-manual-placement__teams {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+  align-content: start;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 16rem;
+  overflow: auto;
+  padding-block: var(--space-4);
+}
+
+.structure-manual-placement__teams .ds-choice-tile {
+  width: 100%;
+  align-items: center;
+}
+
+.structure-manual-placement__teams .ds-choice-tile__check {
+  align-self: center;
+  margin-block-start: 0;
+}
+
+@container ds-dialog (max-width: 28rem) {
+  .structure-manual-placement__teams {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container ds-dialog (max-width: 20rem) {
+  .structure-manual-placement__teams {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .structure-composition__select-all {
   flex: none;
   align-self: end;
@@ -1976,9 +2061,30 @@
   width: 100%;
 }
 
+.structure-draw-block__col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
 @media (min-width: 40rem) {
   .structure-draw-block {
     width: min(100%, 22rem);
+  }
+
+  /* Tirage + Placement side-by-side when both present. */
+  .structure-draw-block--paired {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    width: min(100%, 44rem);
+  }
+
+  .structure-draw-block--paired > .structure-draw-block__col {
+    flex: 1 1 calc(50% - var(--space-4));
+    min-width: 11rem;
   }
 }
 

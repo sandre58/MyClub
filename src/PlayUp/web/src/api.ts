@@ -531,6 +531,30 @@ export function replaceStageAffectationAuthoring(
   return sendNoContent('PUT', `/stages/${stageId}/affectation`, { entryIds });
 }
 
+/** PUT /stages/{id}/slots/{slotKey}/assignment → 204 — Placement manuel Coupe */
+export function assignEntryToSlot(
+  stageId: string,
+  slotKey: string,
+  entryId: string,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/stages/${stageId}/slots/${encodeURIComponent(slotKey)}/assignment`,
+    { entryId },
+  );
+}
+
+/** DELETE /stages/{id}/slots/{slotKey}/assignment → 204 */
+export function clearSlotAssignment(
+  stageId: string,
+  slotKey: string,
+): Promise<void> {
+  return sendNoContent(
+    'DELETE',
+    `/stages/${stageId}/slots/${encodeURIComponent(slotKey)}/assignment`,
+  );
+}
+
 /** PUT /stages/{id}/tie-format → 204 */
 export function replaceStageDefaultTieFormat(
   stageId: string,

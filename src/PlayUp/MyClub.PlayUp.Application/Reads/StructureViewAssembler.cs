@@ -67,6 +67,12 @@ public static class StructureViewAssembler
     /// <summary>Per-phase action: add slot (locale).</summary>
     public const string ActionAddSlot = "AddSlot";
 
+    /// <summary>Per-phase action: assign entry to Cup slot (Placement manuel).</summary>
+    public const string ActionAssignEntryToSlot = "AssignEntryToSlot";
+
+    /// <summary>Per-phase action: clear Cup DirectAssignment.</summary>
+    public const string ActionClearSlotAssignment = "ClearSlotAssignment";
+
     /// <summary>Per-phase action: set match generation format (locale).</summary>
     public const string ActionReplaceMatchGenerationFormat = "ReplaceMatchGenerationFormat";
 
@@ -772,6 +778,8 @@ public static class StructureViewAssembler
             case StructureFormatKind.Cup or null:
                 actions.Add(ActionAddRound);
                 actions.Add(ActionAddSlot);
+                actions.Add(ActionAssignEntryToSlot);
+                actions.Add(ActionClearSlotAssignment);
                 break;
             case StructureFormatKind.Championship or StructureFormatKind.Groups:
                 actions.Add(ActionReplaceMatchGenerationFormat);

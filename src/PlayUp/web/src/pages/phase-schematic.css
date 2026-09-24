@@ -39,6 +39,20 @@
   visibility: hidden;
 }
 
+.schematic-slot--interactive {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.schematic-slot--interactive:focus-visible {
+  outline: 2px solid var(--color-focus-ring, var(--color-accent));
+  outline-offset: 2px;
+}
+
 .schematic-slot__primary {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -54,7 +68,8 @@
   font-weight: var(--font-weight-regular);
 }
 
-/* DS Tooltip host — Cup absolute geometry on the host; flow formats stretch. */
+/* DS Tooltip host — Cup absolute geometry on the host; flow formats stretch.
+ * Host wraps Tooltip so `.ds-tooltip-trigger` does not steal absolute top/height. */
 .schematic-slot-tip {
   display: block;
   box-sizing: border-box;
@@ -62,11 +77,17 @@
   width: 100%;
 }
 
-.ds-tooltip-trigger:has(> .schematic-slot-tip) {
+.schematic-cup .schematic-slot-tip > .ds-tooltip-trigger {
   display: block;
   width: 100%;
+  height: 100%;
   max-width: none;
-  vertical-align: top;
+}
+
+.schematic-cup .schematic-slot-tip .schematic-slot {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 /* Structured case tip — identity first, provenance under rule (all formats). */
@@ -184,6 +205,14 @@
 .schematic-case-tip__origin-emphasis {
   font-weight: var(--font-weight-regular);
   color: var(--color-text-primary);
+}
+
+.schematic-case-tip__action {
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  line-height: 1.25;
 }
 
 /* Slot body: optional crest + copy when a real team is resolved. */

@@ -595,6 +595,40 @@ try
                 new AddStageSlotResponse(slot.SlotKey));
         });
 
+    app.MapPut(
+        "/stages/{stageId:guid}/slots/{slotKey}/assignment",
+        async (
+            Guid stageId,
+            string slotKey,
+            AssignEntryToSlotRequest request,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            ArgumentNullException.ThrowIfNull(request);
+            await executor
+                .AssignEntryToSlotAsync(
+                    new StageId(stageId),
+                    slotKey,
+                    new EntryId(request.EntryId),
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
+    app.MapDelete(
+        "/stages/{stageId:guid}/slots/{slotKey}/assignment",
+        async (
+            Guid stageId,
+            string slotKey,
+            UseCaseExecutor executor,
+            CancellationToken cancellationToken) =>
+        {
+            await executor
+                .ClearSlotAssignmentAsync(new StageId(stageId), slotKey, cancellationToken)
+                .ConfigureAwait(false);
+            return Results.NoContent();
+        });
+
     app.MapPost(
         "/stages/{stageId:guid}/rename",
         async (

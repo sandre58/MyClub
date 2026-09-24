@@ -18,6 +18,7 @@ import {
 } from '../design-system/icons/contentIcons';
 import { nextPowerOfTwo } from './structureFixtureLabels';
 import { placeChromeLabel } from './structurePlaceLabel';
+import { resolveManualPlaceMode } from './manualPlacementUi';
 import './phase-schematic.css';
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
@@ -37,10 +38,13 @@ export function PhaseSchematic({
   terminal = false,
   /** Stage hub round count — used when schematic.cupRoundCount is absent (older Host). */
   cupRoundCount,
+  /** Cup Placement manuel — click a place to open the shared dialog. */
+  onPlaceActivate,
 }: {
   schematic: StageSchematic;
   terminal?: boolean;
   cupRoundCount?: number | null;
+  onPlaceActivate?: (place: SchematicCase) => void;
 }): ReactElement {
   const { t } = useTranslation(['regulation', 'structure']);
   const format = schematic.formatKind;
@@ -56,6 +60,7 @@ export function PhaseSchematic({
         t={t}
         terminal={terminal}
         roundHint={cupRoundCount}
+        onPlaceActivate={onPlaceActivate}
       />
     );
   }
@@ -83,12 +88,14 @@ function SlotBox({
   ghost,
   density = 'full',
   style,
+  onActivate,
 }: {
   c?: SchematicCase | null;
   t: Translate;
   ghost?: boolean;
   density?: SchematicDensity;
   style?: CSSProperties;
+  onActivate?: (place: SchematicCase) => void;
 }) {
   const address = c ? placeChromeLabel(c.formPosition) : null;
   const { primary, secondary } = c
@@ -102,11 +109,18 @@ function SlotBox({
   // Solid chrome when the case shows a label (occupant or structural WhoFeeds).
   // Dashed `--empty` = blank cell only — not "no EntryId".
   const hasSurface = !!(primary || secondary);
+  const canManualPlace =
+    !!onActivate &&
+    !!c &&
+    !ghost &&
+    resolveManualPlaceMode(c) === 'editable';
+  const interactive = canManualPlace;
   const className = [
     'schematic-slot',
     `schematic-slot--${density}`,
     hasSurface ? '' : 'schematic-slot--empty',
     ghost ? 'schematic-slot--ghost' : '',
+    interactive ? 'schematic-slot--interactive' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -124,6 +138,7 @@ function SlotBox({
                 primaryColor: c.assignment.primaryColor,
               }
             : null,
+          canManualPlace,
           t,
         })
       : null;
@@ -131,22 +146,16 @@ function SlotBox({
   // Cup absolute hosts need the slot to fill the tip wrapper; flow formats
   // (Champ width:100%, Groups) must keep CSS min-height: 2rem.
   const cupAbsolute = style?.position === 'absolute';
-  const slotStyle: CSSProperties | undefined = tip
-    ? cupAbsolute
-      ? { width: '100%', height: '100%', minHeight: 0 }
-      : undefined
-    : style;
+  const fillStyle: CSSProperties | undefined = cupAbsolute
+    ? { width: '100%', height: '100%', minHeight: 0 }
+    : undefined;
 
   // Crest only with a real team name — never beside a Qual/Prog path label.
   const showTeamCrest =
     !!resolvedName && !!primary && primary === resolvedName;
   const showSlotCrest = density === 'full' && showTeamCrest;
-  const slot = (
-    <span
-      className={className}
-      style={slotStyle}
-      aria-hidden={ghost || undefined}
-    >
+  const slotInner = (
+    <>
       {density === 'crest' && showTeamCrest ? (
         <TeamCrest
           name={resolvedName!}
@@ -179,6 +188,26 @@ function SlotBox({
           </span>
         </span>
       ) : null}
+    </>
+  );
+
+  const slot = interactive ? (
+    <button
+      type="button"
+      className={className}
+      style={tip ? fillStyle : style}
+      onClick={() => onActivate?.(c!)}
+      aria-label={address ?? c!.formPosition.slotKey ?? undefined}
+    >
+      {slotInner}
+    </button>
+  ) : (
+    <span
+      className={className}
+      style={tip ? fillStyle : style}
+      aria-hidden={ghost || undefined}
+    >
+      {slotInner}
     </span>
   );
 
@@ -186,12 +215,14 @@ function SlotBox({
     return slot;
   }
 
+  // Geometry host OUTSIDE the DS Tooltip trigger — otherwise Cup absolute
+  // top/height land on an inner node and slots collapse / drift vs wires.
   return (
-    <Tooltip content={tip} side="top">
-      <span className="schematic-slot-tip" style={style}>
+    <span className="schematic-slot-tip" style={style}>
+      <Tooltip content={tip} side="top">
         {slot}
-      </span>
-    </Tooltip>
+      </Tooltip>
+    </span>
   );
 }
 
@@ -227,6 +258,8 @@ export type SchematicCaseTooltipModel = {
     /** Emphasized span (phase name) or full line for draw / affectation. */
     text: string;
   } | null;
+  /** When the place accepts Placement manuel (click to open dialog). */
+  action: string | null;
 };
 
 /**
@@ -239,6 +272,7 @@ export function buildSchematicCaseTooltipModel({
   resolvedName,
   feed,
   crest,
+  canManualPlace = false,
   t,
 }: {
   address: string | null;
@@ -249,6 +283,8 @@ export function buildSchematicCaseTooltipModel({
     logoMediaId?: string | null;
     primaryColor?: string | null;
   } | null;
+  /** True when this place is clickable for Placement manuel. */
+  canManualPlace?: boolean;
   t: Translate;
 }): SchematicCaseTooltipModel | null {
   const teamName = resolvedName?.trim() || null;
@@ -305,6 +341,14 @@ export function buildSchematicCaseTooltipModel({
       kind: 'draw',
       text: t('structure:fiche.schematicTooltipByDraw'),
     };
+  } else if (canManualPlace) {
+    // One provenance line with PersonIcon — filled vs empty copy.
+    origin = {
+      kind: 'affectation',
+      text: teamName
+        ? t('structure:fiche.schematicTooltipManualPlaceEdit')
+        : t('structure:fiche.schematicTooltipManualPlace'),
+    };
   } else if (feed?.kind === 'Direct') {
     origin = {
       kind: 'affectation',
@@ -322,6 +366,7 @@ export function buildSchematicCaseTooltipModel({
     subject,
     resolvedTeam,
     origin,
+    action: null,
   };
 }
 
@@ -341,10 +386,10 @@ export function buildSchematicCaseTooltip(
 
   return (
     <div className="schematic-case-tip">
-      {model.address ? (
-        <p className="schematic-case-tip__address">{model.address}</p>
-      ) : null}
-      {model.subject ? (
+          {model.address ? (
+            <p className="schematic-case-tip__address">{model.address}</p>
+          ) : null}
+          {model.subject ? (
         <div className="schematic-case-tip__subject">
           {model.subject.kind === 'team' ? (
             <TeamCrest
@@ -404,6 +449,14 @@ export function buildSchematicCaseTooltip(
               </span>
             )}
           </p>
+        </>
+      ) : null}
+      {model.action ? (
+        <>
+          {model.subject || model.resolvedTeam || model.origin ? (
+            <div className="schematic-case-tip__rule" aria-hidden="true" />
+          ) : null}
+          <p className="schematic-case-tip__action">{model.action}</p>
         </>
       ) : null}
     </div>
@@ -558,11 +611,13 @@ function CupSchematic({
   t,
   terminal,
   roundHint,
+  onPlaceActivate,
 }: {
   schematic: StageSchematic;
   t: Translate;
   terminal: boolean;
   roundHint?: number | null;
+  onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const roundCount = resolveCupRoundCount(
     schematic.cupRoundCount,
@@ -663,6 +718,7 @@ function CupSchematic({
       terminal={terminal}
       density={density}
       metrics={metrics}
+      onPlaceActivate={onPlaceActivate}
     />
   ) : (
     <CupSingleRoundSchematic
@@ -672,6 +728,7 @@ function CupSchematic({
       wireRounds={roundCount}
       density={density}
       metrics={metrics}
+      onPlaceActivate={onPlaceActivate}
     />
   );
 
@@ -907,6 +964,7 @@ function CupMultiRoundSchematic({
   terminal,
   density,
   metrics: m,
+  onPlaceActivate,
 }: {
   columns: (SchematicCase | null)[][];
   connections: SchematicConnection[];
@@ -914,6 +972,7 @@ function CupMultiRoundSchematic({
   terminal: boolean;
   density: SchematicDensity;
   metrics: CupMetrics;
+  onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const leafCount = columns[0]?.length ?? 0;
   if (leafCount < 2 || leafCount % 2 !== 0) {
@@ -979,6 +1038,7 @@ function CupMultiRoundSchematic({
                     t={t}
                     ghost={!c}
                     density={density}
+                    onActivate={onPlaceActivate}
                     style={{
                       position: 'absolute',
                       top: y - m.slotH / 2,
@@ -1064,6 +1124,7 @@ function CupSingleRoundSchematic({
   wireRounds,
   density,
   metrics: m,
+  onPlaceActivate,
 }: {
   schematic: StageSchematic;
   t: Translate;
@@ -1071,6 +1132,7 @@ function CupSingleRoundSchematic({
   wireRounds: number;
   density: SchematicDensity;
   metrics: CupMetrics;
+  onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const roundOrders = [
     ...new Set(schematic.connections.map((c) => c.roundOrder)),
@@ -1148,6 +1210,7 @@ function CupSingleRoundSchematic({
                 t={t}
                 ghost={!c && i >= cases.length}
                 density={density}
+                onActivate={onPlaceActivate}
                 style={{
                   height: m.slotH,
                   minHeight: 0,

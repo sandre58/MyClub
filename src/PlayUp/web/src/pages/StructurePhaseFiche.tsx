@@ -35,6 +35,7 @@ import {
   LayersIcon,
   MatchRulesIcon,
   MatchdayStatIcon,
+  PersonIcon,
   PlusIcon,
   PencilIcon,
   RoundsStatIcon,
@@ -59,6 +60,7 @@ import {
 } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import type {
+  SchematicCase,
   SelectionMode,
   StructureConfrontationSegment,
   StructureEntry,
@@ -75,6 +77,7 @@ import {
   RemovePhaseDialog,
 } from './StructureGraphDialogs';
 import { StructurePlacementAwardDialog } from './StructurePlacementAwardDialog';
+import { StructureManualPlacementDialog } from './StructureManualPlacementDialog';
 import {
   DrawRulesDialog,
   MatchRulesDialog,
@@ -111,6 +114,7 @@ import {
 } from './structureHubSections';
 import { resolvePlacesN } from './structurePlaces';
 import { PhaseSchematic } from './phaseSchematic';
+import { listCupManualPlaces } from './manualPlacementUi';
 import {
   MatchRulesPanel,
   StandingRulesPanel,
@@ -1413,6 +1417,8 @@ export function StructurePhaseFiche({
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeFocusSearch, setComposeFocusSearch] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualSlotKey, setManualSlotKey] = useState<string | null>(null);
 
   useEffect(() => {
     setEdit(null);
@@ -1628,6 +1634,18 @@ export function StructurePhaseFiche({
   const canRemove = actions.includes('RemoveStage');
   const canCompose = actions.includes('ReplaceAffectationAuthoring');
   const canEditQualif = actions.includes('ReplaceQualificationRules');
+  const canAssignEntryToSlot =
+    stage.formatKind === 'Cup' && actions.includes('AssignEntryToSlot');
+  /** Same capacity predicate as schematic click: at least one editable Cup place. */
+  const editableManualPlaceCount = listCupManualPlaces(
+    schematicQuery.data?.cases ?? [],
+  ).filter((place) => place.mode === 'editable').length;
+  const canManualPlace =
+    canAssignEntryToSlot &&
+    schematicQuery.isSuccess &&
+    editableManualPlaceCount > 0;
+  const showPlacementBlock =
+    showDrawCta || showActivateDrawCta || canManualPlace;
   const placementAwards = stage.placementAwards ?? [];
   const hasExits = outboundGroups.length > 0;
   const hasAttribution = placementAwards.length > 0;
@@ -1921,6 +1939,16 @@ export function StructurePhaseFiche({
                     schematic={schematicQuery.data}
                     terminal={!hasExits}
                     cupRoundCount={stage.roundCount}
+                    onPlaceActivate={
+                      canManualPlace
+                        ? (place: SchematicCase) => {
+                            const key = place.formPosition.slotKey?.trim();
+                            if (!key) return;
+                            setManualSlotKey(key);
+                            setManualOpen(true);
+                          }
+                        : undefined
+                    }
                   />
                 ) : schematicQuery.isError ? (
                   <p className="structure-panel__muted">
@@ -1957,149 +1985,185 @@ export function StructurePhaseFiche({
                 </li>
               ))}
             </ul>
-            {showDrawCta ? (
+            {showPlacementBlock ? (
               <div className="structure-phase-hero__draw">
-                <div className="structure-draw-block">
-                  {blockPerformDrawCta ? (
-                    <Tooltip content={createBlockedShort}>
-                      <span className="structure-draw-cta-wrap">
-                        <StructureDrawCta
-                          tone="emphasis"
-                          title={t('fiche.performDraw')}
-                          body={
-                            showPoolHint && placesN != null ? (
-                              <DrawCtaActionBody
-                                filled={poolFilled}
-                                capacity={placesN}
-                                teamsCaption={t('fiche.drawCtaTeamsCaption')}
-                                poolTone={drawCtaPoolTone}
+                <div
+                  className={[
+                    'structure-draw-block',
+                    (showDrawCta || showActivateDrawCta) && canManualPlace
+                      ? 'structure-draw-block--paired'
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {showDrawCta || showActivateDrawCta ? (
+                    <div className="structure-draw-block__col">
+                      {showDrawCta ? (
+                        blockPerformDrawCta ? (
+                          <Tooltip content={createBlockedShort}>
+                            <span className="structure-draw-cta-wrap">
+                              <StructureDrawCta
+                                tone="emphasis"
+                                title={t('fiche.performDraw')}
+                                body={
+                                  showPoolHint && placesN != null ? (
+                                    <DrawCtaActionBody
+                                      filled={poolFilled}
+                                      capacity={placesN}
+                                      teamsCaption={t(
+                                        'fiche.drawCtaTeamsCaption',
+                                      )}
+                                      poolTone={drawCtaPoolTone}
+                                    />
+                                  ) : showCreateBlockedCaption ? (
+                                    <span className="structure-draw-cta__caption">
+                                      {createBlockedShort}
+                                    </span>
+                                  ) : null
+                                }
+                                onClick={() => setDrawWorkflowOpen(true)}
+                                disabled
                               />
-                            ) : showCreateBlockedCaption ? (
-                              <span className="structure-draw-cta__caption">
-                                {createBlockedShort}
-                              </span>
-                            ) : null
-                          }
-                          onClick={() => setDrawWorkflowOpen(true)}
-                          disabled
-                        />
-                      </span>
-                    </Tooltip>
-                  ) : (
-                    <StructureDrawCta
-                      tone="emphasis"
-                      title={
-                        activeDraw
-                          ? t('fiche.openDrawWorkflow')
-                          : t('fiche.performDraw')
-                      }
-                      body={
-                        <>
-                          {showPoolHint && placesN != null ? (
-                            <DrawCtaActionBody
-                              filled={poolFilled}
-                              capacity={placesN}
-                              teamsCaption={t('fiche.drawCtaTeamsCaption')}
-                              poolTone={drawCtaPoolTone}
-                            />
-                          ) : null}
-                          {showCreateBlockedCaption ? (
-                            <span
-                              className="structure-draw-cta__caption"
-                              role="status"
-                            >
-                              {createBlockedShort}
                             </span>
-                          ) : null}
-                        </>
-                      }
-                      onClick={() => setDrawWorkflowOpen(true)}
-                    />
-                  )}
-                  {canEditDraw || showReleaseCta ? (
-                    <div className="structure-draw-actions">
-                      {canEditDraw ? (
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost ds-btn--sm"
-                          onClick={() => setEdit('tirage-params')}
-                        >
-                          <LucideIcon icon={Settings} size="sm" />
-                          {t('fiche.drawParamsAction')}
-                        </button>
-                      ) : null}
-                      {showReleaseCta || canEditDraw ? (
-                        <div className="structure-draw-actions__risk">
-                          {showReleaseCta && releasableDraw ? (
-                            <Tooltip content={tDraw('releasePlacementsHint')}>
-                              <button
-                                type="button"
-                                className="ds-btn ds-btn--ghost ds-btn--sm"
-                                disabled={releaseMutation.isPending}
-                                onClick={() => setReleaseConfirmOpen(true)}
-                              >
-                                {releaseMutation.isPending ? (
-                                  <PendingLabel>
-                                    {tDraw('releasingPlacements')}
-                                  </PendingLabel>
-                                ) : (
-                                  <>
-                                    <UnlockIcon size="sm" />
-                                    {tDraw('releasePlacementsCount', {
-                                      aligned: releasableAlignedCount,
-                                      total:
-                                        releasableDraw.slotPlacements.length,
-                                    })}
-                                  </>
-                                )}
-                              </button>
-                            </Tooltip>
-                          ) : null}
+                          </Tooltip>
+                        ) : (
+                          <StructureDrawCta
+                            tone="emphasis"
+                            title={
+                              activeDraw
+                                ? t('fiche.openDrawWorkflow')
+                                : t('fiche.performDraw')
+                            }
+                            body={
+                              <>
+                                {showPoolHint && placesN != null ? (
+                                  <DrawCtaActionBody
+                                    filled={poolFilled}
+                                    capacity={placesN}
+                                    teamsCaption={t(
+                                      'fiche.drawCtaTeamsCaption',
+                                    )}
+                                    poolTone={drawCtaPoolTone}
+                                  />
+                                ) : null}
+                                {showCreateBlockedCaption ? (
+                                  <span
+                                    className="structure-draw-cta__caption"
+                                    role="status"
+                                  >
+                                    {createBlockedShort}
+                                  </span>
+                                ) : null}
+                              </>
+                            }
+                            onClick={() => setDrawWorkflowOpen(true)}
+                          />
+                        )
+                      ) : (
+                        <StructureDrawCta
+                          tone="ghost"
+                          title={t('fiche.activateDraw')}
+                          body={t('fiche.activateDrawBody')}
+                          onClick={() => setEdit('tirage-activate')}
+                        />
+                      )}
+                      {showDrawCta && (canEditDraw || showReleaseCta) ? (
+                        <div className="structure-draw-actions">
                           {canEditDraw ? (
-                            hasNonCancelledDraw ? (
-                              <Tooltip
-                                content={t(
-                                  'regulation.deactivateDrawBlockedHint',
-                                )}
-                              >
-                                <button
-                                  type="button"
-                                  className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
-                                  disabled
-                                  aria-label={t('fiche.deactivateDraw')}
+                            <button
+                              type="button"
+                              className="ds-btn ds-btn--ghost ds-btn--sm"
+                              onClick={() => setEdit('tirage-params')}
+                            >
+                              <LucideIcon icon={Settings} size="sm" />
+                              {t('fiche.drawParamsAction')}
+                            </button>
+                          ) : null}
+                          {showReleaseCta || canEditDraw ? (
+                            <div className="structure-draw-actions__risk">
+                              {showReleaseCta && releasableDraw ? (
+                                <Tooltip
+                                  content={tDraw('releasePlacementsHint')}
                                 >
-                                  <TrashIcon size="sm" />
-                                </button>
-                              </Tooltip>
-                            ) : (
-                              <Tooltip content={t('fiche.deactivateDraw')}>
-                                <button
-                                  type="button"
-                                  className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
-                                  disabled={deactivateDrawMutation.isPending}
-                                  aria-label={t('fiche.deactivateDraw')}
-                                  onClick={() => setDeactivateDrawOpen(true)}
-                                >
-                                  <TrashIcon size="sm" />
-                                </button>
-                              </Tooltip>
-                            )
+                                  <button
+                                    type="button"
+                                    className="ds-btn ds-btn--ghost ds-btn--sm"
+                                    disabled={releaseMutation.isPending}
+                                    onClick={() => setReleaseConfirmOpen(true)}
+                                  >
+                                    {releaseMutation.isPending ? (
+                                      <PendingLabel>
+                                        {tDraw('releasingPlacements')}
+                                      </PendingLabel>
+                                    ) : (
+                                      <>
+                                        <UnlockIcon size="sm" />
+                                        {tDraw('releasePlacementsCount', {
+                                          aligned: releasableAlignedCount,
+                                          total:
+                                            releasableDraw.slotPlacements
+                                              .length,
+                                        })}
+                                      </>
+                                    )}
+                                  </button>
+                                </Tooltip>
+                              ) : null}
+                              {canEditDraw ? (
+                                hasNonCancelledDraw ? (
+                                  <Tooltip
+                                    content={t(
+                                      'regulation.deactivateDrawBlockedHint',
+                                    )}
+                                  >
+                                    <button
+                                      type="button"
+                                      className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
+                                      disabled
+                                      aria-label={t('fiche.deactivateDraw')}
+                                    >
+                                      <TrashIcon size="sm" />
+                                    </button>
+                                  </Tooltip>
+                                ) : (
+                                  <Tooltip content={t('fiche.deactivateDraw')}>
+                                    <button
+                                      type="button"
+                                      className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
+                                      disabled={
+                                        deactivateDrawMutation.isPending
+                                      }
+                                      aria-label={t('fiche.deactivateDraw')}
+                                      onClick={() =>
+                                        setDeactivateDrawOpen(true)
+                                      }
+                                    >
+                                      <TrashIcon size="sm" />
+                                    </button>
+                                  </Tooltip>
+                                )
+                              ) : null}
+                            </div>
                           ) : null}
                         </div>
                       ) : null}
                     </div>
                   ) : null}
-                </div>
-              </div>
-            ) : showActivateDrawCta ? (
-              <div className="structure-phase-hero__draw">
-                <div className="structure-draw-block">
-                  <StructureDrawCta
-                    tone="ghost"
-                    title={t('fiche.activateDraw')}
-                    body={t('fiche.activateDrawBody')}
-                    onClick={() => setEdit('tirage-activate')}
-                  />
+                  {canManualPlace ? (
+                    <div className="structure-draw-block__col">
+                      <StructureDrawCta
+                        tone="ghost"
+                        title={t('fiche.manualPlacementCta')}
+                        body={t('fiche.manualPlacementCtaBody')}
+                        leading={<PersonIcon size="sm" />}
+                        onClick={() => {
+                          setManualSlotKey(null);
+                          setManualOpen(true);
+                        }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -2369,6 +2433,18 @@ export function StructurePhaseFiche({
         entries={data.participants.entries}
         reservedFromFeeds={populationFeedVolume}
         focusSearch={composeFocusSearch}
+      />
+      <StructureManualPlacementDialog
+        open={manualOpen}
+        onClose={() => {
+          setManualOpen(false);
+          setManualSlotKey(null);
+        }}
+        competitionId={data.competitionId}
+        stage={stage}
+        entries={data.participants.entries}
+        cases={schematicQuery.data?.cases ?? []}
+        initialSlotKey={manualSlotKey}
       />
       <TieFormatDialog
         competitionId={data.competitionId}

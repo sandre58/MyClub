@@ -294,6 +294,32 @@ describe('PhaseSchematic', () => {
       subject: { kind: 'team', name: 'FC Nice' },
       resolvedTeam: null,
       origin: { kind: 'affectation', text: 'Affectation manuelle' },
+      action: null,
+    });
+  });
+
+  it('buildSchematicCaseTooltipModel tips filled placeable with edit affordance', () => {
+    const model = buildSchematicCaseTooltipModel({
+      address: '1·A',
+      primary: 'FC Nice',
+      resolvedName: 'FC Nice',
+      feed: { kind: 'Direct', configuredEntryId: 'e1' },
+      canManualPlace: true,
+      t: (key) => {
+        if (key === 'structure:fiche.schematicTooltipManualPlaceEdit')
+          return 'Affectation manuelle · Modifier';
+        return key;
+      },
+    });
+    expect(model).toEqual({
+      address: '1·A',
+      subject: { kind: 'team', name: 'FC Nice' },
+      resolvedTeam: null,
+      origin: {
+        kind: 'affectation',
+        text: 'Affectation manuelle · Modifier',
+      },
+      action: null,
     });
   });
 
@@ -307,6 +333,31 @@ describe('PhaseSchematic', () => {
         t: (key) => key,
       }),
     ).toBeNull();
+  });
+
+  it('buildSchematicCaseTooltipModel tips empty placeable chrome', () => {
+    const model = buildSchematicCaseTooltipModel({
+      address: '1·A',
+      primary: null,
+      resolvedName: null,
+      feed: null,
+      canManualPlace: true,
+      t: (key) => {
+        if (key === 'structure:fiche.schematicTooltipManualPlace')
+          return 'Placer une équipe manuellement';
+        return key;
+      },
+    });
+    expect(model).toEqual({
+      address: '1·A',
+      subject: null,
+      resolvedTeam: null,
+      origin: {
+        kind: 'affectation',
+        text: 'Placer une équipe manuellement',
+      },
+      action: null,
+    });
   });
 
   it('buildSchematicCaseTooltipModel stacks path primary / team secondary / from-phase', () => {
@@ -343,6 +394,7 @@ describe('PhaseSchematic', () => {
         lead: 'Vient de',
         text: 'Demi-finales',
       },
+      action: null,
     });
   });
 
@@ -367,6 +419,7 @@ describe('PhaseSchematic', () => {
       subject: { kind: 'label', name: 'Perdant · Match #1' },
       resolvedTeam: null,
       origin: { kind: 'from', lead: 'Vient de', text: 'Tour 1' },
+      action: null,
     });
   });
 
@@ -387,6 +440,7 @@ describe('PhaseSchematic', () => {
       subject: { kind: 'team', name: 'OGC Nice' },
       resolvedTeam: null,
       origin: { kind: 'draw', text: 'Placé par tirage' },
+      action: null,
     });
   });
 

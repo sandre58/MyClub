@@ -1099,6 +1099,37 @@ public sealed partial class UseCaseExecutor(
     }
 
     /// <summary>
+    /// Assigns an entry to a Cup slot via DirectAssignment (Placement manuel).
+    /// </summary>
+    public async Task AssignEntryToSlotAsync(
+        StageId stageId,
+        string slotKey,
+        EntryId entryId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        AssignEntryToSlot.Execute(stage, slotKey, entryId);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Clears a Cup DirectAssignment (and synced occupant) when present.
+    /// </summary>
+    public async Task ClearSlotAssignmentAsync(
+        StageId stageId,
+        string slotKey,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ClearSlotAssignment.Execute(stage, slotKey);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Renames a stage (locale).
     /// </summary>
     public async Task RenameStageAsync(
