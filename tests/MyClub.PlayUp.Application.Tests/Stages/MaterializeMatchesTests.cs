@@ -11,6 +11,7 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -22,33 +23,27 @@ public sealed class MaterializeMatchesTests
     [Fact]
     public void Championship_round_robin_creates_expected_matches_and_is_idempotent()
     {
-        var competition = CreateCompetition.Execute("Champ", _clock);
-        AddEntry.Execute(competition, "A", _clock);
-        AddEntry.Execute(competition, "B", _clock);
-        AddEntry.Execute(competition, "C", _clock);
-        AddEntry.Execute(competition, "D", _clock);
-        var configured = ConfigureStructure.Execute(
-            competition,
-            null,
-            StructureIntent.Championship(),
-            _clock);
+        var situation = TestCompetition.Create("Champ", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
 
-        configured.Stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.SingleRoundRobin);
+        stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.SingleRoundRobin);
 
-        var first = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+        var first = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         first.CreatedMatches.Should().HaveCount(6); // 4*3/2
         first.AlreadyComplete.Should().BeFalse();
 
         var second = MaterializeMatches.Execute(
-            competition,
-            configured.Stage,
+            situation.Competition,
+            stage,
             first.CreatedMatches,
             _clock);
         second.CreatedMatches.Should().BeEmpty();
         second.AlreadyComplete.Should().BeTrue();
         second.AttachedMatchIds.Should().HaveCount(6);
 
-        var view = StructureViewAssembler.Assemble(competition, [configured.Stage]);
+        var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
         view.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(6);
         view.Readiness.ReadyForSchedule.Should().BeTrue();

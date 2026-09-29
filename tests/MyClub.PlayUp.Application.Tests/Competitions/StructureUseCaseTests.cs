@@ -13,6 +13,7 @@ using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Competitions;
@@ -84,53 +85,42 @@ public sealed class StructureUseCaseTests
     [Fact]
     public void ConfigureStructure_championship_builds_matchdays()
     {
-        var competition = CreateCompetition.Execute("Champ", _clock);
-        var result = ConfigureStructure.Execute(
-            competition,
-            primaryStage: null,
-            StructureIntent.Championship(),
-            _clock);
-
-        result.StageCreated.Should().BeTrue();
+        var situation = TestCompetition.Create("Champ", _clock)
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
 
         // Pre-Materialize: skeleton seed only (not calendar J).
-        result.Stage.Matchdays.Should().HaveCount(1);
-        result.Stage.Groups.Should().BeEmpty();
-        result.Stage.Rounds.Should().BeEmpty();
-        competition.StageIds.Should().ContainSingle().Which.Should().Be(result.Stage.Id);
+        stage.Matchdays.Should().HaveCount(1);
+        stage.Groups.Should().BeEmpty();
+        stage.Rounds.Should().BeEmpty();
+        situation.Competition.StageIds.Should().ContainSingle().Which.Should().Be(stage.Id);
     }
 
     [Fact]
     public void ConfigureStructure_groups_builds_groups_matchday_and_places()
     {
-        var competition = CreateCompetition.Execute("Groups", _clock);
-        var result = ConfigureStructure.Execute(
-            competition,
-            primaryStage: null,
-            StructureIntent.Groups(4, 4),
-            _clock);
+        var stage = TestCompetition.Create("Groups", _clock)
+            .WithStructure(StructureIntent.Groups(4, 4))
+            .RequirePrimaryStage();
 
-        result.Stage.Groups.Should().HaveCount(4);
-        result.Stage.Matchdays.Should().HaveCount(1);
-        result.Stage.PlacesPerGroup.Should().Be(4);
-        result.Stage.Regulation.DrawRules.Should().BeNull();
+        stage.Groups.Should().HaveCount(4);
+        stage.Matchdays.Should().HaveCount(1);
+        stage.PlacesPerGroup.Should().Be(4);
+        stage.Regulation.DrawRules.Should().BeNull();
     }
 
     [Fact]
     public void ConfigureStructure_cup_builds_round_and_power_of_two_slots()
     {
-        var competition = CreateCompetition.Execute("Cup", _clock);
-        var result = ConfigureStructure.Execute(
-            competition,
-            primaryStage: null,
-            StructureIntent.Cup(8),
-            _clock);
+        var stage = TestCompetition.Create("Cup", _clock)
+            .WithStructure(StructureIntent.Cup(8))
+            .RequirePrimaryStage();
 
-        result.Stage.Rounds.Should().ContainSingle();
-        result.Stage.Slots.Should().HaveCount(8);
-        result.Stage.BracketPairs.Should().HaveCount(4);
-        result.Stage.FindBracketPair("P1")!.SlotAKey.Should().Be("S1");
-        result.Stage.FindBracketPair("P4")!.SlotBKey.Should().Be("S8");
+        stage.Rounds.Should().ContainSingle();
+        stage.Slots.Should().HaveCount(8);
+        stage.BracketPairs.Should().HaveCount(4);
+        stage.FindBracketPair("P1")!.SlotAKey.Should().Be("S1");
+        stage.FindBracketPair("P4")!.SlotBKey.Should().Be("S8");
     }
 
     [Fact]

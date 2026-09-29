@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -67,19 +68,16 @@ public sealed class LocaleStructureTests
     [Fact]
     public void Rename_is_allowed_while_Running()
     {
-        var competition = CreateCompetition.Execute("RenameRunning", _clock);
-        var configured = ConfigureStructure.Execute(
-            competition,
-            null,
-            StructureIntent.Championship(),
-            _clock);
-        configured.Stage.Prepare(_clock);
-        configured.Stage.Start(_clock);
+        var stage = TestCompetition.Create("RenameRunning", _clock)
+            .WithStructure(StructureIntent.Championship())
+            .PreparePrimaryStage()
+            .StartPrimaryStage()
+            .RequirePrimaryStage();
 
-        RenameStage.Execute(configured.Stage, "Live name");
+        RenameStage.Execute(stage, "Live name");
 
-        configured.Stage.Name.Value.Should().Be("Live name");
-        configured.Stage.Status.Should().Be(StageStatus.Running);
+        stage.Name.Value.Should().Be("Live name");
+        stage.Status.Should().Be(StageStatus.Running);
     }
 
     [Fact]

@@ -7,8 +7,8 @@
 namespace MyClub.PlayUp.TestKit;
 
 /// <summary>
-/// Marks the TestKit assembly. Public construction APIs are intentionally absent in Lot A
-/// (packaging / dependency boundary only); they emerge from real test migrations in later lots.
+/// Marks the TestKit assembly. Construction helpers live in <see cref="TestCompetition"/> and
+/// <see cref="RegulationPacks"/>; expand only when real test migrations demand it.
 /// </summary>
 internal static class AssemblyMarker
 {

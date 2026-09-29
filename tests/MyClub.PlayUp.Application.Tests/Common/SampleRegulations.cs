@@ -5,23 +5,14 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.TestKit;
 
 namespace MyClub.PlayUp.Application.Tests.Common;
 
+/// <summary>
+/// Compatibility shim — prefer <see cref="RegulationPacks"/> in new tests.
+/// </summary>
 internal static class SampleRegulations
 {
-    public static Regulation Standard() =>
-        new(
-            new EntryRules(minimumTeams: 2, maximumTeams: 64),
-            new MatchRules(
-                new MatchDuration(durationPerPeriod: 45, numberOfPeriods: 2, halfTimeDuration: 15),
-                new AdministrativeResultPolicy(forfeitWinnerGoals: 3, forfeitLoserGoals: 0)),
-            new StandingRules(
-                new PointsPolicy(winPoints: 3, drawPoints: 1, lossPoints: 0),
-                [
-                    RankingCriterion.Points,
-                    RankingCriterion.GoalDifference,
-                    RankingCriterion.GoalsFor,
-                    RankingCriterion.HeadToHead
-                ]));
+    public static Regulation Standard() => RegulationPacks.Standard();
 }
