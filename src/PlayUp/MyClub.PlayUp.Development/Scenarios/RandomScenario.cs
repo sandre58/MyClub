@@ -22,7 +22,8 @@ public sealed class RandomScenario : IScenario
     public string Name => "Random";
 
     /// <inheritdoc />
-    public string Description => "Deterministic-from-seed format/size pick. Use :prepared|:running|:finished.";
+    public string Description =>
+        "Meta-picker over championship|groups|cup (seed-driven). Prefer explicit scenario ids for QA; use :prepared|:running|:finished.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Random;

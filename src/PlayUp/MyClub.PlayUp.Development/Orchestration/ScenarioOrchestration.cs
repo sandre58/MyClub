@@ -284,46 +284,42 @@ internal static class ScenarioOrchestration
     /// <summary>
     /// Cup 16 with partial composition (10 / 16) — Draft E1 complete entries.
     /// </summary>
-    public static async Task BuildCupCompositionPartialAsync(
+    public static Task BuildCupCompositionPartialAsync(
         ScenarioContext context,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var recipe = new CompetitionRecipe
-        {
-            DisplayName = "Coupe — composition partielle",
-            Format = RecipeFormat.Cup,
-            TeamCount = 16,
-            BracketSize = 16,
-            StageName = "Tour à élimination",
-            TeamNames = TeamNameSource.Generated
-        };
-
-        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
-            .ConfigureAwait(false);
-        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
-            .ConfigureAwait(false);
-        var stage = ConfigurePrimaryStage(context, competition, recipe);
-        AssignRootComposition(stage, entries, context.Clock, take: 10);
-
-        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        BuildCupCompositionAsync(
+            context,
+            displayName: "Coupe — composition partielle",
+            compositionTake: 10,
+            engageDrawRules: false,
+            cancellationToken);
 
     /// <summary>
     /// Cup 16 with full composition (16 / 16) — Draft E2 edit entries + draw pending.
     /// </summary>
-    public static async Task BuildCupCompositionCompleteAsync(
+    public static Task BuildCupCompositionCompleteAsync(
         ScenarioContext context,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        BuildCupCompositionAsync(
+            context,
+            displayName: "Coupe — composition complète",
+            compositionTake: null,
+            engageDrawRules: true,
+            cancellationToken);
+
+    private static async Task BuildCupCompositionAsync(
+        ScenarioContext context,
+        string displayName,
+        int? compositionTake,
+        bool engageDrawRules,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
 
         var recipe = new CompetitionRecipe
         {
-            DisplayName = "Coupe — composition complète",
+            DisplayName = displayName,
             Format = RecipeFormat.Cup,
             TeamCount = 16,
             BracketSize = 16,
@@ -336,8 +332,11 @@ internal static class ScenarioOrchestration
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
-        AssignRootComposition(stage, entries, context.Clock);
-        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        AssignRootComposition(stage, entries, context.Clock, take: compositionTake);
+        if (engageDrawRules)
+        {
+            stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        }
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

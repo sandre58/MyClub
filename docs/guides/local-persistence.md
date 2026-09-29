@@ -109,7 +109,7 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `structure-graph-invalid` | no | Poules → Barrages → Finale/Bronze Draft with missing qual slots + multi-dest progression — Structure Topology / anomaly QA |
 | `championship-ready` | no | Championship Ready (not started) |
 | `championship-archived` | no | Championship Completed then Archived |
-| `championship` / `groups` / `cup` / `random` | yes | Mono progressive. Cup = pairing draw applied + single principal round. Progressive seeds assign full root composition |
+| `championship` / `groups` / `cup` / `random` | yes | Mono progressive. Cup = pairing draw applied + single principal round. Progressive seeds assign full root composition. `random` = meta-picker over championship\|groups\|cup (prefer explicit ids for QA) |
 | `groups-suspended` | no | Groups mid-results then Suspended |
 | `groups-draw-pending` | no | Groups + pot DrawRules + full composition, empty groups — Draft awaiting draw (E4) |
 | `groups-to-ko-mid` | no | Groups 2×4 finished → Top2 in QF slots — KO Draft (healthy multi-phase mid) |

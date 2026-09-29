@@ -25,6 +25,131 @@ namespace MyClub.PlayUp.Development.Tests;
 public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixture fixture)
 {
     [Fact]
+    public void Scenario_catalog_lists_exact_ids_and_progress_flags()
+    {
+        var catalog = fixture.Services.GetRequiredService<ScenarioCatalog>();
+        string[] expectedIds =
+        [
+            "empty-workspace",
+            "draft-empty",
+            "registration-open",
+            "registration-withdrawn",
+            "championship",
+            "championship-ready",
+            "championship-archived",
+            "championship-structure-draft",
+            "structure-graph-invalid",
+            "groups",
+            "groups-suspended",
+            "groups-draw-pending",
+            "groups-to-ko-mid",
+            "qual-auto-place-mid",
+            "qual-hybrid-auto-draw-mid",
+            "prog-auto-place-mid",
+            "flux-qualif-draft",
+            "flux-qual-form-draft",
+            "flux-prog-group-draft",
+            "flux-prog-placement-draft",
+            "flux-empty-relations-draft",
+            "flux-full-graph-draft",
+            "qual-form-to-champ-mid",
+            "regulation-demo",
+            "regulation-tie-homogeneous",
+            "confrontation-multi-round",
+            "cup",
+            "cup-draw-pending",
+            "cup-composition-partial",
+            "cup-composition-complete",
+            "cup-qf-sf",
+            "cup-sf-running",
+            "swiss-8x3",
+            "swiss-ready",
+            "random"
+        ];
+        string[] progressiveIds = ["championship", "groups", "cup", "swiss-8x3", "random"];
+
+        catalog.All.Select(s => s.Id).OrderBy(id => id, StringComparer.Ordinal)
+            .Should().Equal(expectedIds.OrderBy(id => id, StringComparer.Ordinal));
+        catalog.All.Should().HaveCount(35);
+
+        foreach (var id in progressiveIds)
+        {
+            catalog.Get(id).AcceptsProgress.Should().BeTrue(because: id);
+        }
+
+        foreach (var scenario in catalog.All.Where(s => !progressiveIds.Contains(s.Id, StringComparer.Ordinal)))
+        {
+            scenario.AcceptsProgress.Should().BeFalse(because: scenario.Id);
+        }
+
+        catalog.Get("random").Category.Should().Be(ScenarioCategory.Random);
+        catalog.Get("random").Description.Should().Contain("Meta-picker");
+    }
+
+    [Fact]
+    public async Task Cup_composition_ladder_stays_draft_with_expected_sizesAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync(
+        [
+            SeedSpec.Parse("cup-draw-pending"),
+            SeedSpec.Parse("cup-composition-partial"),
+            SeedSpec.Parse("cup-composition-complete")
+        ]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var list = await competitions.ListAsync();
+        list.Should().HaveCount(3);
+        list.Should().OnlyContain(c => c.Status == CompetitionStatus.Draft);
+
+        async Task AssertCompositionAsync(string nameFragment, int expectedComposition, bool expectDrawRules)
+        {
+            var summary = list.Single(c => c.Name.Value.Contains(nameFragment, StringComparison.Ordinal));
+            var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+            competition.Should().NotBeNull();
+            var stage = await stages.GetByIdForUpdateAsync(competition.StageIds[0]);
+            stage.Should().NotBeNull();
+            stage.CompositionEntries.Should().HaveCount(expectedComposition);
+            if (expectDrawRules)
+            {
+                stage.Regulation.DrawRules.Should().NotBeNull();
+            }
+        }
+
+        await AssertCompositionAsync("tirage en attente", expectedComposition: 0, expectDrawRules: true);
+        await AssertCompositionAsync("composition partielle", expectedComposition: 10, expectDrawRules: false);
+        await AssertCompositionAsync("composition complète", expectedComposition: 16, expectDrawRules: true);
+    }
+
+    [Fact]
+    public async Task Flux_remainder_and_structure_graph_invalid_seed_draft_graphsAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync(
+        [
+            SeedSpec.Parse("flux-prog-placement-draft"),
+            SeedSpec.Parse("flux-empty-relations-draft"),
+            SeedSpec.Parse("flux-full-graph-draft"),
+            SeedSpec.Parse("structure-graph-invalid")
+        ]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var list = await competitions.ListAsync();
+        list.Should().HaveCount(4);
+        list.Should().OnlyContain(c => c.Status == CompetitionStatus.Draft);
+
+        foreach (var summary in list)
+        {
+            var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+            competition.Should().NotBeNull();
+            competition.StageIds.Should().HaveCountGreaterThanOrEqualTo(2, because: competition.Name.Value);
+        }
+    }
+
+    [Fact]
     public async Task Empty_workspace_has_no_competitionsAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
