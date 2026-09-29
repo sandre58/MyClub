@@ -290,12 +290,16 @@ public sealed partial class UseCaseExecutor
 
         var competitionStages =
             await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        var matchesByStage = await matches
+            .ListByStageIdsForUpdateAsync(competition.StageIds, cancellationToken)
+            .ConfigureAwait(false);
         var allMatches = new List<Match>();
-        foreach (var stage in competitionStages)
+        foreach (var stageId in competition.StageIds)
         {
-            var stageMatches = await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken)
-                .ConfigureAwait(false);
-            allMatches.AddRange(stageMatches);
+            if (matchesByStage.TryGetValue(stageId, out var stageMatches))
+            {
+                allMatches.AddRange(stageMatches);
+            }
         }
 
         return (competitionStages, allMatches);
@@ -405,17 +409,18 @@ public sealed partial class UseCaseExecutor
         Competition competition,
         CancellationToken cancellationToken)
     {
-        var competitionStages = new List<Stage>(competition.StageIds.Count);
-        foreach (var stageId in competition.StageIds)
+        if (competition.StageIds.Count == 0)
         {
-            var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                        ?? throw new ApplicationFailureException(
-                            $"Stage '{stageId}' was not found.",
-                            ApplicationErrorCodes.StageNotFound);
-            competitionStages.Add(stage);
+            return [];
         }
 
-        return competitionStages;
+        var loaded = await stages.GetByIdsForUpdateAsync(competition.StageIds, cancellationToken)
+            .ConfigureAwait(false);
+        return loaded.Count != competition.StageIds.Count
+            ? throw new ApplicationFailureException(
+                "One or more competition stages were not found.",
+                ApplicationErrorCodes.StageNotFound)
+            : [.. loaded];
     }
 
     private async Task<List<Stage>> LoadCompetitionStagesReadOnlyAsync(

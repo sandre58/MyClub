@@ -390,11 +390,21 @@ public sealed class StructureUseCaseTests
         public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<IReadOnlyList<Match>> GetByIdsForUpdateAsync(
+            IReadOnlyList<MatchId> ids,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<Match?> GetByIdReadOnlyAsync(MatchId id, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
         public Task<IReadOnlyList<Match>> ListByStageForUpdateAsync(
             StageId stageId,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<IReadOnlyDictionary<StageId, IReadOnlyList<Match>>> ListByStageIdsForUpdateAsync(
+            IReadOnlyList<StageId> stageIds,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

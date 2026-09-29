@@ -22,6 +22,69 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         LoadByIdAsync(id, StageLoadProfile.Full, trackChanges: true, cancellationToken);
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<Stage>> GetByIdsForUpdateAsync(
+        IReadOnlyList<StageId> ids,
+        CancellationToken cancellationToken = default)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        var byId = new Dictionary<StageId, Stage>(ids.Count);
+        var missing = new List<StageId>(ids.Count);
+        foreach (var id in ids)
+        {
+            if (byId.ContainsKey(id))
+            {
+                continue;
+            }
+
+            var tracked = context.Set<Stage>().Local.FirstOrDefault(candidate => candidate.Id.Equals(id));
+            if (tracked is not null)
+            {
+                byId[id] = tracked;
+            }
+            else
+            {
+                missing.Add(id);
+            }
+        }
+
+        if (missing.Count > 0)
+        {
+            var capabilities = StageReadCapabilities.FromProfile(StageLoadProfile.Full);
+            var query = ApplyReadShape(context.Set<Stage>().AsSplitQuery(), capabilities)
+                .Where(candidate => missing.Contains(candidate.Id));
+
+            var loaded = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
+            if (RequiresStructureHydration(capabilities))
+            {
+                foreach (var stage in loaded)
+                {
+                    await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            foreach (var stage in loaded)
+            {
+                byId[stage.Id] = stage;
+            }
+        }
+
+        var ordered = new List<Stage>(ids.Count);
+        foreach (var id in ids)
+        {
+            if (byId.TryGetValue(id, out var stage))
+            {
+                ordered.Add(stage);
+            }
+        }
+
+        return ordered;
+    }
+
+    /// <inheritdoc />
     public Task<Stage?> GetByIdReadOnlyAsync(
         StageId id,
         StageLoadProfile profile,

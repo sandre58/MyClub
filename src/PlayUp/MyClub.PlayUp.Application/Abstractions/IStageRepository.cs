@@ -23,6 +23,16 @@ public interface IStageRepository
     Task<Stage?> GetByIdForUpdateAsync(StageId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Loads multiple tracked stages with the full graph in one query (command paths).
+    /// </summary>
+    /// <param name="ids">Stage identities in competition order.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Stages found, in the same order as <paramref name="ids"/> (missing ids omitted).</returns>
+    Task<IReadOnlyList<Stage>> GetByIdsForUpdateAsync(
+        IReadOnlyList<StageId> ids,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads a stage without change tracking using the requested graph profile.
     /// </summary>
     /// <param name="id">The stage identity.</param>

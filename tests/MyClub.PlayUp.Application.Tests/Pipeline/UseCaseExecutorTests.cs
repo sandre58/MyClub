@@ -40,6 +40,11 @@ public sealed class UseCaseExecutorTests
         stages
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
+        stages
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.SequenceEqual(new[] { scenario.Stage.Id })),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([scenario.Stage]);
         competitions
             .Setup(repository =>
                 repository.GetByIdForUpdateAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()))
@@ -53,7 +58,12 @@ public sealed class UseCaseExecutorTests
 
         scenario.Stage.Status.Should().Be(StageStatus.Ready);
         stages.Verify(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()),
-            Times.Exactly(2));
+            Times.Once);
+        stages.Verify(
+            repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.SequenceEqual(new[] { scenario.Stage.Id })),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
         competitions.Verify(
             repository => repository.GetByIdForUpdateAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()),
             Times.Once);
@@ -96,6 +106,11 @@ public sealed class UseCaseExecutorTests
         stages
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
+        stages
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.IsAny<IReadOnlyList<StageId>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([scenario.Stage]);
         competitions
             .Setup(repository =>
                 repository.GetByIdForUpdateAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()))
@@ -229,8 +244,11 @@ public sealed class UseCaseExecutorTests
 
         stages.Setup(repository => repository.GetByIdForUpdateAsync(quarter.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(quarter);
-        stages.Setup(repository => repository.GetByIdForUpdateAsync(semi.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(semi);
+        stages
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.Count == 2 && ids.Contains(quarter.Id) && ids.Contains(semi.Id)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([quarter, semi]);
         competitions
             .Setup(repository => repository.GetByIdForUpdateAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
@@ -243,8 +261,11 @@ public sealed class UseCaseExecutorTests
 
         quarter.Status.Should().Be(StageStatus.Ready);
         stages.Verify(repository => repository.GetByIdForUpdateAsync(quarter.Id, It.IsAny<CancellationToken>()),
-            Times.Exactly(2));
-        stages.Verify(repository => repository.GetByIdForUpdateAsync(semi.Id, It.IsAny<CancellationToken>()),
+            Times.Once);
+        stages.Verify(
+            repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.Count == 2 && ids.Contains(quarter.Id) && ids.Contains(semi.Id)),
+                It.IsAny<CancellationToken>()),
             Times.Once);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -262,16 +283,20 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Source.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Source);
         stages
-            .Setup(repository =>
-                repository.GetByIdForUpdateAsync(scenario.Destination.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(scenario.Destination);
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<StageId>>(ids =>
+                    ids.Contains(scenario.Source.Id) && ids.Contains(scenario.Destination.Id)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([scenario.Source, scenario.Destination]);
         competitions
             .Setup(repository =>
                 repository.GetByIdForUpdateAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Competition);
         matchRepo
-            .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Match.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(scenario.Match);
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<MatchId>>(ids => ids.Count == 1 && ids[0].Equals(scenario.Match.Id)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([scenario.Match]);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -283,7 +308,9 @@ public sealed class UseCaseExecutorTests
         scenario.Destination.FindSlot("SF1-A")!.EntryId.Should().BeNull();
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         matchRepo.Verify(
-            repository => repository.GetByIdForUpdateAsync(scenario.Match.Id, It.IsAny<CancellationToken>()),
+            repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<MatchId>>(ids => ids.Count == 1 && ids[0].Equals(scenario.Match.Id)),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -300,16 +327,19 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Source.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Source);
         stages
-            .Setup(repository =>
-                repository.GetByIdForUpdateAsync(scenario.Destination.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(scenario.Destination);
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.IsAny<IReadOnlyList<StageId>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([scenario.Source, scenario.Destination]);
         competitions
             .Setup(repository =>
                 repository.GetByIdForUpdateAsync(scenario.Competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Competition);
         matchRepo
-            .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Match.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DomainMatch?)null);
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.IsAny<IReadOnlyList<MatchId>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.ApplyProgressionOutcomeAsync(scenario.Source.Id, scenario.FixtureId);

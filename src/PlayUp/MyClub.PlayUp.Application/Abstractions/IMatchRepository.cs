@@ -23,6 +23,16 @@ public interface IMatchRepository
     Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Loads multiple tracked matches in one query for command paths.
+    /// </summary>
+    /// <param name="ids">Match identities (caller order preserved for found rows).</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Matches found, in the same order as <paramref name="ids"/> (missing ids omitted).</returns>
+    Task<IReadOnlyList<Match>> GetByIdsForUpdateAsync(
+        IReadOnlyList<MatchId> ids,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads a match without change tracking for read-only queries.
     /// </summary>
     /// <param name="id">The match identity.</param>
@@ -38,6 +48,16 @@ public interface IMatchRepository
     /// <returns>Matches for the stage (possibly empty).</returns>
     Task<IReadOnlyList<Match>> ListByStageForUpdateAsync(
         StageId stageId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists tracked matches for multiple stages in one query (command paths).
+    /// </summary>
+    /// <param name="stageIds">Stage identities.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>Matches grouped by stage (empty stages omitted).</returns>
+    Task<IReadOnlyDictionary<StageId, IReadOnlyList<Match>>> ListByStageIdsForUpdateAsync(
+        IReadOnlyList<StageId> stageIds,
         CancellationToken cancellationToken = default);
 
     /// <summary>

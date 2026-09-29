@@ -41,15 +41,8 @@ public sealed partial class UseCaseExecutor
 
         EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        var competitionStages = new List<Stage>(competition.StageIds.Count);
-        foreach (var competitionStageId in competition.StageIds)
-        {
-            var loaded = await stages.GetByIdForUpdateAsync(competitionStageId, cancellationToken).ConfigureAwait(false)
-                         ?? throw new ApplicationFailureException(
-                             $"Stage '{competitionStageId}' was not found.",
-                             ApplicationErrorCodes.StageNotFound);
-            competitionStages.Add(loaded);
-        }
+        var competitionStages =
+            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
 
         if (!competitionStages.Exists(candidate => candidate.Id.Equals(stageId)))
         {
@@ -117,15 +110,8 @@ public sealed partial class UseCaseExecutor
 
         EnsureCompetitionAllowsConsequenceOperation(competition);
 
-        var competitionStages = new List<Stage>(competition.StageIds.Count);
-        foreach (var stageId in competition.StageIds)
-        {
-            var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                        ?? throw new ApplicationFailureException(
-                            $"Stage '{stageId}' was not found.",
-                            ApplicationErrorCodes.StageNotFound);
-            competitionStages.Add(stage);
-        }
+        var competitionStages =
+            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
 
         if (!competitionStages.Exists(candidate => candidate.Id.Equals(sourceStageId)))
         {
@@ -135,18 +121,19 @@ public sealed partial class UseCaseExecutor
         }
 
         // Fixture lookup uses the tracked source instance (same identity as competitionStages entry).
-        var fixture = source.GetFixture(fixtureId);
-        var loadedMatches = new List<Match>(fixture.Attachments.Count);
-        foreach (var attachment in fixture.Attachments)
+        var trackedSource = competitionStages.First(candidate => candidate.Id.Equals(sourceStageId));
+        var fixture = trackedSource.GetFixture(fixtureId);
+        var matchIds = fixture.Attachments.Select(attachment => attachment.MatchId).ToArray();
+        var loadedMatches = await matches.GetByIdsForUpdateAsync(matchIds, cancellationToken).ConfigureAwait(false);
+        if (loadedMatches.Count != matchIds.Length)
         {
-            var match = await matches.GetByIdForUpdateAsync(attachment.MatchId, cancellationToken).ConfigureAwait(false)
-                        ?? throw new ApplicationFailureException(
-                            $"Match '{attachment.MatchId}' was not found.",
-                            ApplicationErrorCodes.MatchNotFound);
-            loadedMatches.Add(match);
+            var missing = matchIds.First(id => !loadedMatches.Any(match => match.Id.Equals(id)));
+            throw new ApplicationFailureException(
+                $"Match '{missing}' was not found.",
+                ApplicationErrorCodes.MatchNotFound);
         }
 
-        ApplyProgressionOutcome.Execute(source, fixtureId, loadedMatches, competitionStages, clock);
+        ApplyProgressionOutcome.Execute(trackedSource, fixtureId, loadedMatches, competitionStages, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

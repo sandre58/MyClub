@@ -133,6 +133,11 @@ public sealed class UseCaseExecutorCompletionTests
                 .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(stage);
             stages
+                .Setup(repository => repository.GetByIdsForUpdateAsync(
+                    It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([stage]);
+            stages
                 .Setup(repository => repository.GetByIdsReadOnlyAsync(
                     It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
                     It.IsAny<StageReadCapabilities>(),
@@ -148,6 +153,11 @@ public sealed class UseCaseExecutorCompletionTests
         else
         {
             stages
+                .Setup(repository => repository.GetByIdsForUpdateAsync(
+                    It.IsAny<IReadOnlyList<StageId>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync([]);
+            stages
                 .Setup(repository => repository.GetByIdsReadOnlyAsync(
                     It.IsAny<IReadOnlyList<StageId>>(),
                     StageLoadProfile.Full,
@@ -161,6 +171,14 @@ public sealed class UseCaseExecutorCompletionTests
             matchRepo
                 .Setup(repository => repository.ListByStageForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(matches);
+            matchRepo
+                .Setup(repository => repository.ListByStageIdsForUpdateAsync(
+                    It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<DomainMatch>>
+                {
+                    [stage.Id] = matches
+                });
             matchRepo
                 .Setup(repository => repository.ListAttentionSlicesByStageIdsReadOnlyAsync(
                     It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
@@ -180,6 +198,11 @@ public sealed class UseCaseExecutorCompletionTests
         }
         else
         {
+            matchRepo
+                .Setup(repository => repository.ListByStageIdsForUpdateAsync(
+                    It.IsAny<IReadOnlyList<StageId>>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<DomainMatch>>());
             matchRepo
                 .Setup(repository => repository.ListByStageIdsReadOnlyAsync(
                     It.IsAny<IReadOnlyList<StageId>>(),
