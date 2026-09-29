@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
     <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+    <ProjectReference Include="..\MyClub.PlayUp.TestKit\MyClub.PlayUp.TestKit.csproj" />
     <ProjectReference Include="..\..\Media\MyClub.Media.Application\MyClub.Media.Application.csproj" />
   </ItemGroup>
 

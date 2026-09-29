@@ -16,9 +16,9 @@ namespace MyClub.PlayUp.TestKit;
 /// In-memory competition situation for automated tests. Orchestrates Application use cases only.
 /// </summary>
 /// <remarks>
-/// Lot B/C surface: create, teams, structure, competition Prepare/Start/Complete,
-/// primary-stage Prepare/Start. Richer helpers emerge from later migrations —
-/// do not invent a fluent DSL ahead of need.
+/// Lot B/C/D surface: create, teams, structure, competition Prepare/Start/Complete,
+/// primary-stage Prepare/Start. Optional deterministic ids emerge from DevSeed (Lot D).
+/// Richer helpers emerge from later migrations — do not invent a fluent DSL ahead of need.
 /// </remarks>
 public sealed class TestCompetition
 {
@@ -47,17 +47,35 @@ public sealed class TestCompetition
     /// <param name="name">Competition display name.</param>
     /// <param name="clock">Optional fixed clock; defaults to a stable epoch.</param>
     /// <param name="regulation">Optional regulation; defaults to <see cref="RegulationPacks.Standard"/>.</param>
+    /// <param name="competitionId">Optional explicit competition identity (deterministic seeds).</param>
     /// <returns>A new situation.</returns>
     public static TestCompetition Create(
         string name,
         IClock? clock = null,
-        Regulation? regulation = null)
+        Regulation? regulation = null,
+        CompetitionId? competitionId = null)
     {
         var resolvedClock = clock ?? new FixedClock(DefaultEpoch);
-        var competition = regulation is null
-            ? CreateCompetition.Execute(name, resolvedClock)
-            : CreateCompetition.Execute(name, regulation, resolvedClock);
+        var resolvedRegulation = regulation ?? RegulationPacks.Standard();
+        var competition = CreateCompetition.Execute(name, resolvedRegulation, resolvedClock, competitionId);
         return new TestCompetition(competition, resolvedClock, primaryStage: null);
+    }
+
+    /// <summary>
+    /// Wraps an existing competition aggregate (DevSeed enrichment after TestKit birth).
+    /// </summary>
+    /// <param name="competition">Competition already created.</param>
+    /// <param name="clock">Clock for further mutations.</param>
+    /// <param name="primaryStage">Optional primary stage already attached.</param>
+    /// <returns>A situation bound to the given aggregates.</returns>
+    public static TestCompetition For(
+        Competition competition,
+        IClock clock,
+        Stage? primaryStage = null)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(clock);
+        return new TestCompetition(competition, clock, primaryStage);
     }
 
     /// <summary>
@@ -93,14 +111,50 @@ public sealed class TestCompetition
     }
 
     /// <summary>
+    /// Registers one team with optional deterministic ids and presentation (DevSeed).
+    /// </summary>
+    /// <param name="displayName">Entry display name.</param>
+    /// <param name="teamId">Optional team identity.</param>
+    /// <param name="entryId">Optional entry identity.</param>
+    /// <param name="presentation">Optional presentation metadata.</param>
+    /// <returns>This situation.</returns>
+    public TestCompetition WithTeam(
+        string displayName,
+        TeamId? teamId = null,
+        EntryId? entryId = null,
+        EntryPresentation? presentation = null)
+    {
+        AddEntry.Execute(Competition, displayName, Clock, teamId, presentation, entryId);
+        return this;
+    }
+
+    /// <summary>
     /// Applies <see cref="ConfigureStructure"/> and remembers the primary stage.
     /// </summary>
     /// <param name="intent">Structure intent.</param>
+    /// <param name="stageId">
+    /// Optional explicit stage identity. When set, pre-creates the primary stage before ConfigureStructure
+    /// (DevSeed deterministic ids).
+    /// </param>
     /// <returns>This situation.</returns>
-    public TestCompetition WithStructure(StructureIntent intent)
+    public TestCompetition WithStructure(StructureIntent intent, StageId? stageId = null)
     {
         ArgumentNullException.ThrowIfNull(intent);
-        var result = ConfigureStructure.Execute(Competition, PrimaryStage, intent, Clock);
+
+        Stage? seed = PrimaryStage;
+        if (seed is null && stageId is { } explicitStageId)
+        {
+            // Match DevSeed ConfigurePrimaryStage: Regulation overload (classifying), then ConfigureStructure.
+            seed = Stage.Create(
+                Competition.Id,
+                new StageName(intent.StageName),
+                Competition.Regulation,
+                explicitStageId,
+                Clock);
+            Competition.AddStage(seed.Id, Clock);
+        }
+
+        var result = ConfigureStructure.Execute(Competition, seed, intent, Clock);
         PrimaryStage = result.Stage;
         return this;
     }

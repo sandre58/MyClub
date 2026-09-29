@@ -16,6 +16,7 @@ using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
+using MyClub.PlayUp.TestKit;
 
 namespace MyClub.PlayUp.Development.Orchestration;
 
@@ -34,11 +35,13 @@ internal static class ScenarioOrchestration
         DateTimeOffset? scheduledEnd = null,
         CancellationToken cancellationToken = default)
     {
-        var competition = Competition.Create(
-            new CompetitionName(name),
-            MatchEnrichment.WithDiscipline(regulation ?? BootstrapRegulation.Standard()),
-            context.Ids.Competition(),
-            context.Clock);
+        // Lot D: birth via TestKit (RegulationPacks + optional deterministic id); DevSeed adds presentation / logos.
+        var situation = TestCompetition.Create(
+            name,
+            context.Clock,
+            MatchEnrichment.WithDiscipline(regulation ?? RegulationPacks.Standard()),
+            context.Ids.Competition());
+        var competition = situation.Competition;
         var logoMediaId = await context.Logos.GetOrImportAsync(logoAsset, cancellationToken).ConfigureAwait(false);
         if (shortName is not null || logoMediaId is not null)
         {
@@ -88,6 +91,7 @@ internal static class ScenarioOrchestration
         CancellationToken cancellationToken = default)
     {
         var count = countOverride ?? recipe.TeamCount;
+        var situation = TestCompetition.For(competition, context.Clock);
         var entries = new List<CompetitionEntry>(count);
         for (var i = 0; i < count; i++)
         {
@@ -103,13 +107,12 @@ internal static class ScenarioOrchestration
                 recipe.DatasetCompetitionKey,
                 context.Datasets,
                 logoMediaId);
-            var entry = competition.AddEntry(
-                context.Ids.Team($"team-{i}"),
+            situation.WithTeam(
                 displayName,
+                context.Ids.Team($"team-{i}"),
                 context.Ids.Entry($"entry-{i}"),
-                context.Clock,
                 presentation);
-            entries.Add(entry);
+            entries.Add(competition.Entries[^1]);
         }
 
         MatchEnrichment.SeedRosters(context, competition);
@@ -145,14 +148,9 @@ internal static class ScenarioOrchestration
         CompetitionRecipe recipe)
     {
         var intent = CompetitionRecipeValidator.ToStructureIntent(recipe);
-        var stage = Stage.Create(
-            competition.Id,
-            new StageName(intent.StageName),
-            competition.Regulation,
-            context.Ids.Stage(),
-            context.Clock);
-        competition.AddStage(stage.Id, context.Clock);
-        ConfigureStructure.Execute(competition, stage, intent, context.Clock);
+        var situation = TestCompetition.For(competition, context.Clock)
+            .WithStructure(intent, context.Ids.Stage());
+        var stage = situation.RequirePrimaryStage();
         context.Stages.Add(stage);
         return stage;
     }

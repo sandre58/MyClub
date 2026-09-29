@@ -36,12 +36,19 @@ public static class CreateCompetition
     /// <param name="name">Display name.</param>
     /// <param name="regulation">Regulation to copy onto the Competition.</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="id">Optional explicit competition identity (deterministic seeds).</param>
     /// <returns>The new Competition aggregate (not yet persisted).</returns>
-    public static Competition Execute(string name, Regulation regulation, IClock clock)
+    public static Competition Execute(
+        string name,
+        Regulation regulation,
+        IClock clock,
+        CompetitionId? id = null)
     {
         ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
 
-        return Competition.Create(new CompetitionName(name), regulation, clock);
+        return id is { } competitionId
+            ? Competition.Create(new CompetitionName(name), regulation, competitionId, clock)
+            : Competition.Create(new CompetitionName(name), regulation, clock);
     }
 }
