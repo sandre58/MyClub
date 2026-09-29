@@ -94,12 +94,9 @@ public static class ResolvePlacementAwards
             return [];
         }
 
-        if (!TryResolveSourcePairKey(stage, fixture, out var sourcePairKey))
-        {
-            return [];
-        }
-
-        return TryResolveSourceAwards(stage, sourcePairKey, matches, rules, out var instructions)
+        return !TryResolveSourcePairKey(stage, fixture, out var sourcePairKey)
+            ? []
+            : TryResolveSourceAwards(stage, sourcePairKey, matches, rules, out var instructions)
             ? instructions
             : [];
     }

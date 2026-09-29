@@ -14,7 +14,6 @@ namespace MyClub.PlayUp.Domain.Qualification;
 /// <summary>
 /// Pure qualification helper: selects entries from a standing and maps a path to a population instruction.
 /// Does not mutate aggregates or calculate standings.
-/// Best/Worst are obsolete aliases of Top/Bottom (normalized in <see cref="QualificationSelection"/>).
 /// Optional <see cref="QualificationPath.Condition"/> gates a single selected row (skip when false).
 /// </summary>
 public static class QualificationApplier

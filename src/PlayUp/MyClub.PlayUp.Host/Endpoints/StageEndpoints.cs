@@ -264,15 +264,12 @@ internal static class StageEndpoints
                         .. request.Paths
                             .Select(path =>
                             {
-                                var pairKey = path.SourcePairKey?.Trim();
-                                if (string.IsNullOrEmpty(pairKey))
-                                {
-                                    throw new ApplicationFailureException(
+                                var pairKey = path.SourcePairKey.Trim();
+                                return string.IsNullOrEmpty(pairKey)
+                                    ? throw new ApplicationFailureException(
                                         "Placement award path requires SourcePairKey.",
-                                        ApplicationErrorCodes.InvalidStructureIntent);
-                                }
-
-                                return new PlacementAwardPathSpec(pairKey, path.Outcome, path.Rank);
+                                        ApplicationErrorCodes.InvalidStructureIntent)
+                                    : new PlacementAwardPathSpec(pairKey, path.Outcome, path.Rank);
                             })
                     ];
                 }

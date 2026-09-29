@@ -28,14 +28,11 @@ internal sealed class PlacementAwardPathJsonConverter : JsonConverter<PlacementA
             options);
         var rank = root.GetProperty("Rank").GetInt32();
 
-        if (!root.TryGetProperty("SourcePairKey", out var pairElement)
+        return !root.TryGetProperty("SourcePairKey", out var pairElement)
             || pairElement.ValueKind != JsonValueKind.String
-            || string.IsNullOrWhiteSpace(pairElement.GetString()))
-        {
-            throw new JsonException("PlacementAwardPath requires SourcePairKey.");
-        }
-
-        return new PlacementAwardPath(pairElement.GetString()!, outcome, rank);
+            || string.IsNullOrWhiteSpace(pairElement.GetString())
+            ? throw new JsonException("PlacementAwardPath requires SourcePairKey.")
+            : new PlacementAwardPath(pairElement.GetString()!, outcome, rank);
     }
 
     public override void Write(

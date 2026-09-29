@@ -187,9 +187,11 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             .ToList();
         if (refs.Count == 0)
         {
-            refs = context.Set<CompetitionStageRef>()
-                .Where(row => row.StageId == stage.Id)
-                .ToList();
+            refs =
+            [
+                .. context.Set<CompetitionStageRef>()
+                    .Where(row => row.StageId == stage.Id)
+            ];
         }
 
         if (refs.Count > 0)

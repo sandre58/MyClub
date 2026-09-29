@@ -40,6 +40,10 @@ jobs:
             echo "MyClub.PlayUp.DevRunner.dll must not be published with Host" >&2
             exit 1
           fi
+          if [ -f "${RUNNER_TEMP}/playup-host-publish/MyClub.PlayUp.TestKit.dll" ]; then
+            echo "MyClub.PlayUp.TestKit.dll must not be published with Host" >&2
+            exit 1
+          fi
 
   web:
     runs-on: ubuntu-latest

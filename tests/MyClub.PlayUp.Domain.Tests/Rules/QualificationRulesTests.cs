@@ -74,13 +74,11 @@ public sealed class QualificationRulesTests
     {
         // Arrange — Best (JSON int 3) is a Top alias; not AcrossGroups / Best Third.
         var destination = StageId.New();
-#pragma warning disable CS0618
         var path = new QualificationPath(
             1,
             QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Best, 4),
+            new QualificationSelection(SelectionMode.Top, 4),
             QualificationDestination.ForPopulation(destination));
-#pragma warning restore CS0618
 
         // Act
         var rules = new QualificationRules([path]);
@@ -269,9 +267,7 @@ public sealed class QualificationRulesTests
             new QualificationPath(
                 1,
                 QualificationSource.Overall(),
-#pragma warning disable CS0618
-                new QualificationSelection(SelectionMode.Best, 4),
-#pragma warning restore CS0618
+                new QualificationSelection(SelectionMode.Bottom, 4),
                 QualificationDestination.ForPopulation(StageId.New()))
         ]);
 

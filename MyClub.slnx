@@ -5,6 +5,7 @@
     <Project Path="src/PlayUp/MyClub.PlayUp.Application/MyClub.PlayUp.Application.csproj" />
     <Project Path="src/PlayUp/MyClub.PlayUp.Infrastructure/MyClub.PlayUp.Infrastructure.csproj" />
     <Project Path="src/PlayUp/MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj" />
+    <Project Path="src/PlayUp/MyClub.PlayUp.TestKit/MyClub.PlayUp.TestKit.csproj" />
   </Folder>
   <Folder Name="/src/PlayUp/Development/">
     <Project Path="src/PlayUp/MyClub.PlayUp.Development/MyClub.PlayUp.Development.csproj" />
@@ -22,6 +23,7 @@
     <Project Path="tests/MyClub.PlayUp.Host.Tests/MyClub.PlayUp.Host.Tests.csproj" />
     <Project Path="tests/MyClub.PlayUp.Development.Tests/MyClub.PlayUp.Development.Tests.csproj" />
     <Project Path="tests/MyClub.PlayUp.DevRunner.Tests/MyClub.PlayUp.DevRunner.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.TestKit.Tests/MyClub.PlayUp.TestKit.Tests.csproj" />
     <Project Path="tests/MyClub.Media.Domain.Tests/MyClub.Media.Domain.Tests.csproj" />
     <Project Path="tests/MyClub.Media.Application.Tests/MyClub.Media.Application.Tests.csproj" />
     <Project Path="tests/MyClub.Media.Infrastructure.Tests/MyClub.Media.Infrastructure.Tests.csproj" />

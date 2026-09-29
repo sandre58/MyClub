@@ -13,7 +13,7 @@ namespace MyClub.PlayUp.Host.Tests;
 public sealed class HostArchitectureIsolationTests
 {
     [Fact]
-    public void Host_csproj_does_not_reference_Development_or_DevRunner()
+    public void Host_csproj_does_not_reference_Development_DevRunner_or_TestKit()
     {
         var hostCsproj = LocateHostCsproj();
         var document = XDocument.Load(hostCsproj);
@@ -27,6 +27,8 @@ public sealed class HostArchitectureIsolationTests
             path.Contains("MyClub.PlayUp.Development", StringComparison.OrdinalIgnoreCase));
         references.Should().NotContain(static path =>
             path.Contains("MyClub.PlayUp.DevRunner", StringComparison.OrdinalIgnoreCase));
+        references.Should().NotContain(static path =>
+            path.Contains("MyClub.PlayUp.TestKit", StringComparison.OrdinalIgnoreCase));
         references.Should().Contain(static path =>
             path.Contains("MyClub.PlayUp.Application", StringComparison.OrdinalIgnoreCase));
         references.Should().Contain(static path =>
@@ -46,6 +48,7 @@ public sealed class HostArchitectureIsolationTests
         {
             var text = File.ReadAllText(source);
             text.Should().NotContain("MyClub.PlayUp.Development", because: source);
+            text.Should().NotContain("MyClub.PlayUp.TestKit", because: source);
             text.Should().NotContain("DevelopmentWorkspace", because: source);
             text.Should().NotContain("PersistenceMode", because: source);
             text.Should().NotContain("AddPlayUpInMemoryPersistence", because: source);

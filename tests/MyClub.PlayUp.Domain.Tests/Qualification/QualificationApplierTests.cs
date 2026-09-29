@@ -14,8 +14,6 @@ using Xunit;
 
 namespace MyClub.PlayUp.Domain.Tests.Qualification;
 
-#pragma warning disable CS0618 // Best/Worst obsolete aliases normalized to Top/Bottom
-
 public sealed class QualificationApplierTests
 {
     private readonly EntryId _a = EntryId.New();
@@ -79,7 +77,7 @@ public sealed class QualificationApplierTests
 
         var selected = QualificationApplier.SelectEntries(
             standing,
-            new QualificationSelection(SelectionMode.Best, 1));
+            new QualificationSelection(SelectionMode.Top, 1));
 
         selected.Should().Equal(_a);
     }
@@ -91,7 +89,7 @@ public sealed class QualificationApplierTests
 
         var selected = QualificationApplier.SelectEntries(
             standing,
-            new QualificationSelection(SelectionMode.Best, 2));
+            new QualificationSelection(SelectionMode.Top, 2));
 
         selected.Should().Equal(_a, _b);
     }
@@ -103,7 +101,7 @@ public sealed class QualificationApplierTests
 
         var selected = QualificationApplier.SelectEntries(
             standing,
-            new QualificationSelection(SelectionMode.Worst, 1));
+            new QualificationSelection(SelectionMode.Bottom, 1));
 
         selected.Should().Equal(_d);
     }
@@ -115,46 +113,16 @@ public sealed class QualificationApplierTests
 
         var selected = QualificationApplier.SelectEntries(
             standing,
-            new QualificationSelection(SelectionMode.Worst, 2));
+            new QualificationSelection(SelectionMode.Bottom, 2));
 
         selected.Should().Equal(_c, _d);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    [InlineData(4)]
-    public void SelectEntries_best_equals_top_for_n(int n)
-    {
-        var standing = BuildStanding();
-
-        var best = QualificationApplier.SelectEntries(standing, new QualificationSelection(SelectionMode.Best, n));
-        var top = QualificationApplier.SelectEntries(standing, new QualificationSelection(SelectionMode.Top, n));
-
-        best.Should().Equal(top);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    [InlineData(4)]
-    public void SelectEntries_worst_equals_bottom_for_n(int n)
-    {
-        var standing = BuildStanding();
-
-        var worst = QualificationApplier.SelectEntries(standing, new QualificationSelection(SelectionMode.Worst, n));
-        var bottom = QualificationApplier.SelectEntries(standing, new QualificationSelection(SelectionMode.Bottom, n));
-
-        worst.Should().Equal(bottom);
     }
 
     [Fact]
     public void Apply_best_1_returns_instruction()
     {
         var standing = BuildStanding();
-        var path = PopulationPath(new QualificationSelection(SelectionMode.Best, 1));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Top, 1));
 
         var instruction = QualificationApplier.Apply(path, standing);
 
@@ -166,7 +134,7 @@ public sealed class QualificationApplierTests
     public void Apply_best_n_rejects_path_multi_entry()
     {
         var standing = BuildStanding();
-        var path = PopulationPath(new QualificationSelection(SelectionMode.Best, 2));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Top, 2));
 
         var act = () => QualificationApplier.Apply(path, standing);
 
@@ -177,7 +145,7 @@ public sealed class QualificationApplierTests
     public void Apply_worst_1_returns_instruction()
     {
         var standing = BuildStanding();
-        var path = PopulationPath(new QualificationSelection(SelectionMode.Worst, 1));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Bottom, 1));
 
         var instruction = QualificationApplier.Apply(path, standing);
 
@@ -189,7 +157,7 @@ public sealed class QualificationApplierTests
     public void Apply_worst_n_rejects_path_multi_entry()
     {
         var standing = BuildStanding();
-        var path = PopulationPath(new QualificationSelection(SelectionMode.Worst, 2));
+        var path = PopulationPath(new QualificationSelection(SelectionMode.Bottom, 2));
 
         var act = () => QualificationApplier.Apply(path, standing);
 
@@ -199,7 +167,7 @@ public sealed class QualificationApplierTests
     [Fact]
     public void Selection_rejects_best_zero()
     {
-        var act = () => new QualificationSelection(SelectionMode.Best, 0);
+        var act = () => new QualificationSelection(SelectionMode.Top, 0);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
     }
@@ -207,7 +175,7 @@ public sealed class QualificationApplierTests
     [Fact]
     public void Selection_rejects_worst_negative()
     {
-        var act = () => new QualificationSelection(SelectionMode.Worst, -1);
+        var act = () => new QualificationSelection(SelectionMode.Bottom, -1);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(RulesErrorCodes.QualificationRulesInvalid);
     }
@@ -307,8 +275,6 @@ public sealed class QualificationApplierTests
     [Theory]
     [InlineData(SelectionMode.Top)]
     [InlineData(SelectionMode.Bottom)]
-    [InlineData(SelectionMode.Best)]
-    [InlineData(SelectionMode.Worst)]
     public void Path_rejects_condition_with_non_position_mode(SelectionMode mode)
     {
         var act = () => new QualificationPath(

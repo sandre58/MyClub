@@ -18,8 +18,6 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
-#pragma warning disable CS0618 // Best/Worst obsolete aliases
-
 public sealed class ApplyQualificationTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 10, 15, 0, 0, TimeSpan.Zero));
@@ -1066,7 +1064,7 @@ public sealed class ApplyQualificationTests
                 new QualificationPath(
                     1,
                     QualificationSource.AcrossGroups(3),
-                    new QualificationSelection(SelectionMode.Best, 1),
+                    new QualificationSelection(SelectionMode.Top, 1),
                     QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);
@@ -1107,9 +1105,9 @@ public sealed class ApplyQualificationTests
             scenario.GroupsStage.Regulation.StandingRules.OrThrow());
 
         var overallBest1 = QualificationApplier.SelectEntries(
-            overall, new QualificationSelection(SelectionMode.Best, 1))[0];
+            overall, new QualificationSelection(SelectionMode.Top, 1))[0];
         var thirdsBest1 = QualificationApplier.SelectEntries(
-            derivedThirds, new QualificationSelection(SelectionMode.Best, 1))[0];
+            derivedThirds, new QualificationSelection(SelectionMode.Top, 1))[0];
 
         overallBest1.Should().Be(overall.EntryAt(1)!.Value);
         thirdsBest1.Should().Be(derivedThirds.EntryAt(1)!.Value);
@@ -1122,7 +1120,7 @@ public sealed class ApplyQualificationTests
                 new QualificationPath(
                     1,
                     QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Best, 1),
+                    new QualificationSelection(SelectionMode.Top, 1),
                     QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);

@@ -37,6 +37,4 @@ public sealed partial class UseCaseExecutor(
     IUnitOfWork unitOfWork,
     IClock clock,
     IMediaReferenceChecker mediaReferences,
-    ILogger<UseCaseExecutor> logger)
-{
-}
+    ILogger<UseCaseExecutor> logger);

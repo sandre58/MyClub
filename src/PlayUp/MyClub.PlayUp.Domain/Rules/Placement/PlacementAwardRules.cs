@@ -61,7 +61,7 @@ public sealed record PlacementAwardRules
     /// Returns a deep copy.
     /// </summary>
     public PlacementAwardRules Copy() =>
-        new(_paths.Select(p => p.Copy()).ToArray());
+        new([.. _paths.Select(p => p.Copy())]);
 
     /// <inheritdoc />
     public bool Equals(PlacementAwardRules? other) =>
