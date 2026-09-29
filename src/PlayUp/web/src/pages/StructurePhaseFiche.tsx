@@ -74,6 +74,7 @@ import type {
   StructureView,
 } from '../types';
 import {
+  EditSkeletonDialog,
   QualificationRulesDialog,
   ProgressionRulesDialog,
   RemovePhaseDialog,
@@ -1335,8 +1336,6 @@ function ConfrontationPanel({
 export function StructurePhaseFiche({
   data,
   stage,
-  canConfigure: _canConfigure,
-  onConfigure,
   onSelectStage,
   initialEdit,
   initialCompose,
@@ -1344,8 +1343,6 @@ export function StructurePhaseFiche({
 }: {
   data: StructureView;
   stage: StructureStageHubSummary | null;
-  canConfigure: boolean;
-  onConfigure: () => void;
   onSelectStage?: (stageId: string) => void;
   initialEdit?: StructureSectionId | null;
   initialCompose?: boolean;
@@ -1359,6 +1356,7 @@ export function StructurePhaseFiche({
   const [rulesEditStage, setRulesEditStage] =
     useState<StructureStageHubSummary | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [skeletonOpen, setSkeletonOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
@@ -1373,6 +1371,7 @@ export function StructurePhaseFiche({
     setEdit(null);
     setRulesEditStage(null);
     setRemoveOpen(false);
+    setSkeletonOpen(false);
     setEditingName(false);
     setNameDraft('');
     setDrawWorkflowOpen(false);
@@ -1441,10 +1440,12 @@ export function StructurePhaseFiche({
       setRulesEditStage(stage);
       setEdit(target);
     } else if (initialEdit === 'construction') {
-      onConfigure();
+      if ((stage.actions ?? []).includes('RebuildStructure')) {
+        setSkeletonOpen(true);
+      }
     }
     onInitialEditConsumed?.();
-  }, [initialEdit, initialCompose, stage, onConfigure, onInitialEditConsumed]);
+  }, [initialEdit, initialCompose, stage, onInitialEditConsumed]);
 
   const schematicQuery = useQuery({
     queryKey: queryKeys.stages.schematic(stage?.stageId ?? ''),
@@ -1592,6 +1593,7 @@ export function StructurePhaseFiche({
   const canRebind = actions.includes('BindToCompetition');
   const canRemove = actions.includes('RemoveStage');
   const canRename = actions.includes('RenameStage');
+  const canRebuild = actions.includes('RebuildStructure');
   const canCompose = actions.includes('ReplaceAffectationAuthoring');
   const removeDisabledHint = removePhaseDisabledHint(t, data, stage);
 
@@ -2005,6 +2007,43 @@ export function StructurePhaseFiche({
           </FluxRail>
 
           <div className="structure-phase-hero__center">
+            {(heroFacts.length > 0 || canRebuild) && (
+              <div className="structure-phase-hero__meta">
+                {heroFacts.length > 0 ? (
+                  <ul
+                    className="structure-phase-hero__stats"
+                    aria-label={t('fiche.statsAria')}
+                  >
+                    {heroFacts.map((fact) => (
+                      <li key={fact.label} className="structure-phase-hero__stat">
+                        <span
+                          className="structure-phase-hero__stat-icon"
+                          aria-hidden="true"
+                        >
+                          {fact.icon}
+                        </span>
+                        <span className="structure-phase-hero__stat-value">
+                          {fact.value}
+                        </span>
+                        <span className="structure-phase-hero__stat-label">
+                          {fact.label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {canRebuild ? (
+                  <button
+                    type="button"
+                    className="ds-btn ds-btn--ghost structure-phase-hero__forme-cta"
+                    onClick={() => setSkeletonOpen(true)}
+                  >
+                    <StructureIcon size="sm" />
+                    {t('fiche.editForme')}
+                  </button>
+                ) : null}
+              </div>
+            )}
             <div className="structure-schematic-viewport">
               <div className="structure-schematic-viewport__scale">
                 {schematicQuery.data ? (
@@ -2037,27 +2076,6 @@ export function StructurePhaseFiche({
                 )}
               </div>
             </div>
-            <ul
-              className="structure-phase-hero__stats"
-              aria-label={t('fiche.statsAria')}
-            >
-              {heroFacts.map((fact) => (
-                <li key={fact.label} className="structure-phase-hero__stat">
-                  <span
-                    className="structure-phase-hero__stat-icon"
-                    aria-hidden="true"
-                  >
-                    {fact.icon}
-                  </span>
-                  <span className="structure-phase-hero__stat-value">
-                    {fact.value}
-                  </span>
-                  <span className="structure-phase-hero__stat-label">
-                    {fact.label}
-                  </span>
-                </li>
-              ))}
-            </ul>
             {showPlacementBlock ? (
               <div className="structure-phase-hero__draw">
                 <div
@@ -2405,6 +2423,12 @@ export function StructurePhaseFiche({
           onClose={() => setRemoveOpen(false)}
         />
       )}
+      <EditSkeletonDialog
+        data={data}
+        stage={stage}
+        open={skeletonOpen}
+        onClose={() => setSkeletonOpen(false)}
+      />
       <QualificationRulesDialog
         data={data}
         stage={rulesEditStage ?? stage}

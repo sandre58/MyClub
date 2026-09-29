@@ -8,7 +8,7 @@
     "topology": "Topology",
     "phaseFiche": "Stage",
     "configureStructure": "Create structure",
-    "configureDisabledHint": "Structure already exists — rebuild from the stage fiche.",
+    "configureDisabledHint": "Structure already exists — edit the form from the phase fiche.",
     "addPhaseDisabledHint": "Create the structure before adding another phase.",
     "editConstruction": "Edit construction",
     "noPhaseSelectedTitle": "No stage selected",
@@ -286,7 +286,7 @@
     "rebuildLegend": "Rebuild structure",
     "rebuildHint": "Destructive: clears the current skeleton then rebuilds the same phase type (type is immutable).",
     "rebuildSubmit": "Rebuild",
-    "rebuildConfirm": "I confirm clearing the current skeleton ({{matchdays}} matchdays · {{groups}} groups · {{rounds}} rounds · {{slots}} slots).",
+    "rebuildImpact": "Rebuild will delete the current structure and recreate it from this configuration. Currently generated elements will be lost.",
     "bracketHint": "Power of two between 2 and 64."
   },
   "skeleton": {
@@ -302,15 +302,17 @@
     "discardTitle": "Discard this phase?",
     "discardMessage": "What you entered will be lost.",
     "discardConfirm": "Discard",
+    "editDiscardTitle": "Discard changes?",
+    "editDiscardMessage": "The parameters you entered will be lost.",
     "formatTile": {
       "Championship": "A single pool, matchdays, and a standing.",
       "Groups": "Several groups with a defined place capacity.",
       "Cup": "A single-elimination bracket.",
       "Swiss": "Rounds with pairings that evolve with results."
     },
-    "editTitle": "Edit skeleton",
+    "editTitle": "Edit form",
     "editLede": "Rebuilds the phase form (same type). Does not create draw rules or relations.",
-    "editAction": "Edit skeleton"
+    "editAction": "Edit form"
   },
   "locale": {
     "heading": "Local adjustments (no rebuild)",
@@ -482,6 +484,7 @@
     "slots": "Slots",
     "equipes": "Teams",
     "edit": "Edit",
+    "editForme": "Edit form",
     "editPhase": "Rename phase",
     "renamePhase": "Phase name",
     "confirmRename": "Save",

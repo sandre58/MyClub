@@ -6,6 +6,7 @@ import {
   rebuildStageStructure,
   removeCompetitionStage,
 } from '../api';
+import { Alert } from '../design-system/components/Alert';
 import { ChoiceTile } from '../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
@@ -15,11 +16,11 @@ import { Tooltip } from '../design-system/components/Tooltip';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import {
   ChampionshipFormatIcon,
-  CheckIcon,
   CupFormatIcon,
   EmptySelectionIcon,
   GroupsFormatIcon,
   PlusIcon,
+  StructureIcon,
   SwissFormatIcon,
   TrashIcon,
 } from '../design-system/icons/contentIcons';
@@ -28,6 +29,7 @@ import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { EmptyState, MutationError, PendingLabel } from '../ui';
 import type {
+  MatchGenerationFormat,
   StructureFormatKind,
   StructureStageHubSummary,
   StructureView,
@@ -38,7 +40,6 @@ import { StructureProgressionDialog } from './StructureProgressionDialog';
 import { StructureQualificationDialog } from './StructureQualificationDialog';
 import {
   defaultSkeletonForm,
-  SkeletonFields,
   skeletonPayload,
   skeletonStepValid,
 } from './structureSkeletonForm';
@@ -395,41 +396,38 @@ export function EditSkeletonDialog({
   const formId = useId();
   const queryClient = useQueryClient();
   const format = (stage.formatKind ?? 'Championship') as StructureFormatKind;
-  const [stageName, setStageName] = useState(stage.name);
-  const [confirmRebuild, setConfirmRebuild] = useState(false);
-  const [skeleton, setSkeleton] = useState(() => ({
-    ...defaultSkeletonForm(format),
-    groupCount: Math.max(2, stage.groupCount || 2),
-    participantsPerGroup: Math.max(2, stage.placesPerGroup || 2),
-    bracketSize: Math.max(2, stage.slotCount || 4),
-    swissRoundCount: Math.max(1, stage.swissRoundCount || 3),
-    matchGenerationFormat:
-      data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
-  }));
+  const [baseline, setBaseline] = useState(() =>
+    skeletonFromStage(stage, data.structure.matchGenerationFormat),
+  );
+  const [skeleton, setSkeleton] = useState(baseline);
+
+  const dirty = !skeletonFormEqual(skeleton, baseline);
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(dirty, onClose);
 
   useEffect(() => {
     if (!open) {
       return;
     }
-    const kind = (stage.formatKind ?? 'Championship') as StructureFormatKind;
-    setStageName(stage.name);
-    setConfirmRebuild(false);
-    setSkeleton({
-      ...defaultSkeletonForm(kind),
-      groupCount: Math.max(2, stage.groupCount || 2),
-      participantsPerGroup: Math.max(2, stage.placesPerGroup || 2),
-      bracketSize: Math.max(2, stage.slotCount || 4),
-      swissRoundCount: Math.max(1, stage.swissRoundCount || 3),
-      matchGenerationFormat:
-        data.structure.matchGenerationFormat ?? 'SingleRoundRobin',
-    });
-  }, [open, stage, data.structure.matchGenerationFormat]);
+    const next = skeletonFromStage(
+      stage,
+      data.structure.matchGenerationFormat,
+    );
+    setBaseline(next);
+    setSkeleton(next);
+    resetDiscard();
+  }, [open, stage, data.structure.matchGenerationFormat, resetDiscard]);
 
   const mutation = useMutation({
     mutationFn: () =>
       rebuildStageStructure(stage.stageId, {
         format: skeleton.format,
-        stageName: stageName.trim() || stage.name,
+        stageName: null,
         ...skeletonPayload(skeleton),
       }),
     onSuccess: async (response) => {
@@ -442,94 +440,130 @@ export function EditSkeletonDialog({
     },
   });
 
-  const canSubmit =
-    stageName.trim().length > 0 &&
-    skeletonStepValid(skeleton) &&
-    confirmRebuild;
+  const canSubmit = skeletonStepValid(skeleton);
+
+  function requestClose() {
+    requestDiscardClose(mutation.isPending);
+  }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={t('skeleton.editTitle')}
-      description={t('skeleton.editLede')}
-      closeLabel={tCommon('close')}
-      closeDisabled={mutation.isPending}
-      size="md"
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            disabled={mutation.isPending}
-            onClick={onClose}
-          >
-            <CloseIcon size="sm" />
-            {tCommon('cancel')}
-          </button>
-          <button
-            type="submit"
-            form={formId}
-            className="ds-btn ds-btn--primary"
-            disabled={!canSubmit || mutation.isPending}
-          >
-            {mutation.isPending ? (
-              <PendingLabel>{t('structure.configuring')}</PendingLabel>
-            ) : (
-              <>
-                <CheckIcon size="sm" />
-                {t('structure.rebuildSubmit')}
-              </>
-            )}
-          </button>
-        </>
-      }
-      footerStatus={
-        mutation.isError ? <MutationError error={mutation.error} /> : null
-      }
-    >
-      <form
-        id={formId}
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault();
-          if (!canSubmit || mutation.isPending) {
-            return;
-          }
-          mutation.mutate();
-        }}
+    <>
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={t('skeleton.editTitle')}
+        description={t('skeleton.editLede')}
+        closeLabel={tCommon('close')}
+        closeDisabled={mutation.isPending || discardOpen}
+        trapFocus={!discardOpen}
+        size="md"
+        footer={
+          <>
+            <button
+              type="button"
+              className="ds-btn ds-btn--ghost"
+              disabled={mutation.isPending || discardOpen}
+              onClick={requestClose}
+            >
+              <CloseIcon size="sm" />
+              {tCommon('cancel')}
+            </button>
+            <button
+              type="submit"
+              form={formId}
+              className="ds-btn ds-btn--primary"
+              disabled={!canSubmit || mutation.isPending}
+            >
+              {mutation.isPending ? (
+                <PendingLabel>{t('structure.configuring')}</PendingLabel>
+              ) : (
+                <>
+                  <StructureIcon size="sm" />
+                  {t('structure.rebuildSubmit')}
+                </>
+              )}
+            </button>
+          </>
+        }
+        footerStatus={
+          mutation.isError ? <MutationError error={mutation.error} /> : null
+        }
       >
-        <label className="ds-field">
-          <span className="ds-field__label">{t('graph.phaseName')}</span>
-          <input
-            className="ds-input"
-            value={stageName}
-            onChange={(event) => setStageName(event.target.value)}
-            required
-          />
-        </label>
-        <SkeletonFields
-          state={skeleton}
-          onChange={setSkeleton}
-          t={t}
-          formatLocked
-        />
-        <label className="ds-field ds-field--checkbox">
-          <input
-            type="checkbox"
-            checked={confirmRebuild}
-            onChange={(event) => setConfirmRebuild(event.target.checked)}
-          />
-          <span>
-            {t('structure.rebuildConfirm', {
-              matchdays: stage.matchdayCount ?? 0,
-              groups: stage.groupCount ?? 0,
-              rounds: stage.roundCount ?? 0,
-              slots: stage.slotCount ?? 0,
-            })}
-          </span>
-        </label>
-      </form>
-    </Dialog>
+        <form
+          id={formId}
+          className="structure-edit-forme"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault();
+            if (!canSubmit || mutation.isPending) {
+              return;
+            }
+            mutation.mutate();
+          }}
+        >
+          <div
+            className="structure-qualification__scope-tiles"
+            data-count="1"
+            role="group"
+            aria-label={t('skeleton.phaseType')}
+          >
+            <ChoiceTile
+              label={structureFormatKindLabel(format)}
+              description={t(`skeleton.formatTile.${format}`)}
+              leading={addPhaseFormatIcon(format)}
+              selected
+              disabled
+              onChange={() => undefined}
+            />
+          </div>
+
+          <AddPhaseFormatParams state={skeleton} onChange={setSkeleton} />
+
+          <Alert tone="warning" role="status">
+            {t('structure.rebuildImpact')}
+          </Alert>
+        </form>
+      </Dialog>
+      <ConfirmDialog
+        open={discardOpen}
+        title={t('skeleton.editDiscardTitle')}
+        message={t('skeleton.editDiscardMessage')}
+        confirmLabel={t('skeleton.discardConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        danger
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
+    </>
+  );
+}
+
+function skeletonFromStage(
+  stage: StructureStageHubSummary,
+  matchGenerationFormat: MatchGenerationFormat | null | undefined,
+) {
+  const kind = (stage.formatKind ?? 'Championship') as StructureFormatKind;
+  return {
+    ...defaultSkeletonForm(kind),
+    groupCount: Math.max(2, stage.groupCount || 2),
+    participantsPerGroup: Math.max(2, stage.placesPerGroup || 2),
+    bracketSize: Math.max(2, stage.slotCount || 4),
+    swissRoundCount: Math.max(1, stage.swissRoundCount || 3),
+    matchGenerationFormat: matchGenerationFormat ?? 'SingleRoundRobin',
+  };
+}
+
+function skeletonFormEqual(
+  a: ReturnType<typeof defaultSkeletonForm>,
+  b: ReturnType<typeof defaultSkeletonForm>,
+): boolean {
+  return (
+    a.format === b.format &&
+    a.groupCount === b.groupCount &&
+    a.participantsPerGroup === b.participantsPerGroup &&
+    a.bracketSize === b.bracketSize &&
+    a.swissRoundCount === b.swissRoundCount &&
+    a.matchGenerationFormat === b.matchGenerationFormat
   );
 }
 

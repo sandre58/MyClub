@@ -608,8 +608,6 @@ describe('StructurePage Structure hub', () => {
       await within(dialog).findByLabelText(/^Format$/i),
       'Championship',
     );
-    const matchdays = within(dialog).getByLabelText(/Nombre de journées/i);
-    fireEvent.change(matchdays, { target: { value: '2' } });
     await user.click(
       within(dialog).getByRole('button', { name: 'Créer la structure' }),
     );
@@ -619,7 +617,6 @@ describe('StructurePage Structure hub', () => {
         competitionId,
         expect.objectContaining({
           format: 'Championship',
-          matchdayCount: 2,
           groupCount: null,
           participantsPerGroup: null,
           bracketSize: null,
@@ -633,7 +630,13 @@ describe('StructurePage Structure hub', () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         actions: ['ConfigureStructure', 'AddCompetitionStage'],
-        stages: [championshipStage()],
+        stages: [
+          championshipStage({
+            actions: ['RebuildStructure'],
+            matchdayCount: 2,
+            compositionCapacity: 8,
+          }),
+        ],
         format: {
           kind: 'Championship',
           primaryStageId: stageId,
@@ -659,8 +662,57 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('button', { name: /Ajouter une phase/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole('button', { name: /Reconstruire/i }).length,
-    ).toBeGreaterThanOrEqual(1);
+      screen.queryByRole('button', { name: /^Reconstruire$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /^Forme$/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Modifier la forme/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens EditSkeleton from the Forme CTA near the schematic', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        actions: ['AddCompetitionStage'],
+        stages: [
+          championshipStage({
+            actions: ['RebuildStructure'],
+            matchdayCount: 2,
+            compositionCapacity: 8,
+          }),
+        ],
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    await user.click(
+      await screen.findByRole('button', { name: /Modifier la forme/i }),
+    );
+    const dialog = await screen.findByRole('dialog');
+    expect(
+      within(dialog).getByRole('heading', { name: /Modifier la forme/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        /La reconstruction supprimera la structure actuelle/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('switch'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('button', { name: /^Reconstruire$/i }),
+    ).toBeInTheDocument();
   });
 
   it('creates a phase via ChoiceTiles and selects the new stage', async () => {

@@ -36,7 +36,7 @@ import {
   type StructureView,
 } from '../types';
 import {invalidateAfterStructureMutation} from './structureInvalidation';
-import {AddPhaseDialog, EditSkeletonDialog} from './StructureGraphDialogs';
+import {AddPhaseDialog} from './StructureGraphDialogs';
 import {StructurePhaseFiche} from './StructurePhaseFiche';
 import {type StructureSectionId} from './structureHubSections';
 import {resolvePlacesN, resolvePlacesPerGroup} from './structurePlaces';
@@ -78,7 +78,6 @@ function StructureHub({ data }: { data: StructureView }) {
   const canConfigure = data.actions.includes('ConfigureStructure');
   const canAddPhase = data.actions.includes('AddCompetitionStage');
   const [structureEditorOpen, setStructureEditorOpen] = useState(false);
-  const [editSkeletonOpen, setEditSkeletonOpen] = useState(false);
   const [addPhaseOpen, setAddPhaseOpen] = useState(false);
   const stages = useMemo(() => resolveStages(data), [data]);
   const structuralAnomalies = useMemo(
@@ -163,41 +162,41 @@ function StructureHub({ data }: { data: StructureView }) {
     );
   };
 
-  const openStructureEditor = () => {
-    if (stages.length > 0) {
-      setEditSkeletonOpen(true);
+  /** Bootstrap only — first structure. Rebuild lives on the Forme tile. */
+  const openBootstrapConfigure = () => setStructureEditorOpen(true);
+
+  /** Readiness blockers: bootstrap configure, or Forme on the selected phase. */
+  const openReadinessConfigure = () => {
+    if (stages.length === 0) {
+      setStructureEditorOpen(true);
       return;
     }
-    setStructureEditorOpen(true);
+    setPendingEdit('construction');
   };
 
   const headActions = (
     <>
-      <Tooltip
-        content={
-          canConfigure
-            ? stages.length > 0
-              ? t('structure.rebuildLegend')
-              : t('hub.configureStructure')
-            : t('hub.configureDisabledHint')
-        }
-      >
-        <span>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={!canConfigure}
-            onClick={openStructureEditor}
-          >
-            <StructureIcon size="sm" />
-            <span>
-              {stages.length > 0
-                ? t('structure.rebuildSubmit')
-                : t('hub.configureStructure')}
-            </span>
-          </button>
-        </span>
-      </Tooltip>
+      {stages.length === 0 ? (
+        <Tooltip
+          content={
+            canConfigure
+              ? t('hub.configureStructure')
+              : t('hub.configureDisabledHint')
+          }
+        >
+          <span>
+            <button
+              type="button"
+              className="ds-btn ds-btn--secondary"
+              disabled={!canConfigure}
+              onClick={openBootstrapConfigure}
+            >
+              <StructureIcon size="sm" />
+              <span>{t('hub.configureStructure')}</span>
+            </button>
+          </span>
+        </Tooltip>
+      ) : null}
       <Tooltip
         content={
           canAddPhase ? t('graph.addPhase') : t('hub.addPhaseDisabledHint')
@@ -223,7 +222,7 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={headActions}
-        note={readinessStatusNote(data, openStructureEditor)}
+        note={readinessStatusNote(data, openReadinessConfigure)}
       />
 
       <div className="structure-hub__layout">
@@ -237,8 +236,6 @@ function StructureHub({ data }: { data: StructureView }) {
         <StructurePhaseFiche
           data={data}
           stage={selectedStage}
-          canConfigure={canConfigure}
-          onConfigure={openStructureEditor}
           onSelectStage={selectStage}
           initialEdit={pendingEdit}
           initialCompose={pendingCompose}
@@ -264,14 +261,6 @@ function StructureHub({ data }: { data: StructureView }) {
         open={structureEditorOpen}
         onClose={() => setStructureEditorOpen(false)}
       />
-      {selectedStage && (
-        <EditSkeletonDialog
-          data={data}
-          stage={selectedStage}
-          open={editSkeletonOpen}
-          onClose={() => setEditSkeletonOpen(false)}
-        />
-      )}
       <AddPhaseDialog
         competitionId={data.competitionId}
         open={addPhaseOpen}

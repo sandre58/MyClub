@@ -8,7 +8,7 @@
     "topology": "Topologie",
     "phaseFiche": "Phase",
     "configureStructure": "Créer la structure",
-    "configureDisabledHint": "La structure existe déjà — reconstruisez depuis la fiche phase.",
+    "configureDisabledHint": "La structure existe déjà — modifiez la forme depuis la fiche phase.",
     "addPhaseDisabledHint": "Créez la structure avant d’ajouter une autre phase.",
     "editConstruction": "Modifier la construction",
     "noPhaseSelectedTitle": "Aucune phase sélectionnée",
@@ -286,7 +286,7 @@
     "rebuildLegend": "Reconstruire la structure",
     "rebuildHint": "Opération destructive : efface le squelette actuel puis reconstruit le même type de phase (type immutable).",
     "rebuildSubmit": "Reconstruire",
-    "rebuildConfirm": "Je confirme l’effacement du squelette actuel ({{matchdays}} journées · {{groups}} groupes · {{rounds}} tours · {{slots}} emplacements).",
+    "rebuildImpact": "La reconstruction supprimera la structure actuelle et la recréera selon cette configuration. Les éléments actuellement générés seront perdus.",
     "bracketHint": "Puissance de 2 entre 2 et 64."
   },
   "skeleton": {
@@ -302,15 +302,17 @@
     "discardTitle": "Abandonner la création ?",
     "discardMessage": "Les informations saisies seront perdues.",
     "discardConfirm": "Abandonner",
+    "editDiscardTitle": "Abandonner les modifications ?",
+    "editDiscardMessage": "Les paramètres saisis seront perdus.",
     "formatTile": {
       "Championship": "Une poule unique, des journées, un classement.",
       "Groups": "Plusieurs groupes avec une capacité de places définie.",
       "Cup": "Un tableau à élimination directe.",
       "Swiss": "Des rondes avec des appariements au fil des résultats."
     },
-    "editTitle": "Modifier le squelette",
+    "editTitle": "Modifier la forme",
     "editLede": "Reconstruit la forme de la phase (même type). Aucun tirage ni relation n’est créé.",
-    "editAction": "Modifier le squelette"
+    "editAction": "Modifier la forme"
   },
   "locale": {
     "heading": "Ajustements locaux (sans rebuild)",
@@ -482,6 +484,7 @@
     "slots": "Emplacements",
     "equipes": "Équipes",
     "edit": "Modifier",
+    "editForme": "Modifier la forme",
     "editPhase": "Renommer la phase",
     "renamePhase": "Nom de la phase",
     "confirmRename": "Enregistrer",

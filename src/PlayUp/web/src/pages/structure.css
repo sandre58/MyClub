@@ -2571,14 +2571,31 @@ button.structure-flux-group__peer {
   color: var(--color-text-primary);
 }
 
-.structure-phase-hero__stats {
+/* Meta chrome above schematic: centered compact [stats][CTA] */
+.structure-phase-hero__meta {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-16);
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-phase-hero__stats {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
   margin: 0;
   padding: 0;
   list-style: none;
+  min-width: 0;
+}
+
+.structure-phase-hero__forme-cta {
+  flex: 0 0 auto;
 }
 
 .structure-phase-hero__stat {
@@ -2612,6 +2629,19 @@ button.structure-flux-group__peer {
   text-align: center;
   color: var(--color-text-secondary);
   font-size: var(--text-meta);
+}
+
+@media (max-width: 40rem) {
+  .structure-phase-hero__meta {
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .structure-phase-hero__forme-cta {
+    width: 100%;
+    max-width: 20rem;
+    justify-content: center;
+  }
 }
 
 .structure-domain-tile--full {
@@ -3565,6 +3595,13 @@ button.structure-flux-group__peer {
 }
 
 .structure-add-phase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-height: 0;
+}
+
+.structure-edit-forme {
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
