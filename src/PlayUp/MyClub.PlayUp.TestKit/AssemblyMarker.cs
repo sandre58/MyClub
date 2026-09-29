@@ -10,6 +10,4 @@ namespace MyClub.PlayUp.TestKit;
 /// Marks the TestKit assembly. Construction helpers live in <see cref="TestCompetition"/> and
 /// <see cref="RegulationPacks"/>; expand only when real test migrations demand it.
 /// </summary>
-internal static class AssemblyMarker
-{
-}
+internal static class AssemblyMarker;

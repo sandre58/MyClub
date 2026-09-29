@@ -155,174 +155,6 @@ internal static class ScenarioOrchestration
         return stage;
     }
 
-    public static void AssignGroupsRoundRobin(
-        Stage stage,
-        IReadOnlyList<CompetitionEntry> entries)
-    {
-        if (stage.Groups.Count == 0)
-        {
-            throw new InvalidOperationException("Stage has no groups to assign.");
-        }
-
-        var ordered = entries.OrderBy(e => e.Id.Value).ToList();
-        for (var i = 0; i < ordered.Count; i++)
-        {
-            var group = stage.Groups[i % stage.Groups.Count];
-            stage.AssignEntryToGroup(group.Id, ordered[i].Id);
-        }
-    }
-
-    public static IReadOnlyList<Match> MaterializeGroupsMatches(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage)
-    {
-        var created = new List<Match>();
-        var maxRounds = 0;
-        var perGroupRounds =
-            new List<(int GroupIndex, IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> Rounds)>();
-        for (var groupIndex = 0; groupIndex < stage.Groups.Count; groupIndex++)
-        {
-            var group = stage.Groups[groupIndex];
-            var rounds = MaterializeMatches.BuildRoundRobinRounds(
-                [.. group.EntryIds],
-                stage.MatchGenerationFormat);
-            perGroupRounds.Add((groupIndex, rounds));
-            maxRounds = Math.Max(maxRounds, rounds.Count);
-        }
-
-        EnsureMatchdays(stage, Math.Max(1, maxRounds), context.Clock);
-        var matchdays = stage.Matchdays.OrderBy(m => m.Number).ToList();
-
-        foreach (var (groupIndex, rounds) in perGroupRounds)
-        {
-            var matchOrdinal = 0;
-            for (var roundIndex = 0; roundIndex < rounds.Count; roundIndex++)
-            {
-                var matchday = matchdays[roundIndex];
-                foreach (var (home, away) in rounds[roundIndex])
-                {
-                    var fixture = stage.AddFixture(matchday.Id, context.Clock);
-                    var match = Match.Create(
-                        competition.Id,
-                        stage.Id,
-                        home,
-                        away,
-                        context.Ids.Match($"g-{groupIndex}-m-{matchOrdinal}"),
-                        context.Clock);
-                    stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
-                    context.Matches.Add(match);
-                    created.Add(match);
-                    matchOrdinal++;
-                }
-            }
-        }
-
-        MatchEnrichment.ApplyKickoffs(context, competition, stage, created);
-        return created;
-    }
-
-    public static IReadOnlyList<Match> MaterializeChampionshipMatches(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage)
-    {
-        var entries = competition.Entries
-            .Where(e => e.Status == EntryStatus.Active)
-            .Select(e => e.Id)
-            .ToList();
-        var rounds = MaterializeMatches.BuildRoundRobinRounds(entries, stage.MatchGenerationFormat);
-        EnsureMatchdays(stage, Math.Max(stage.Matchdays.Count, rounds.Count), context.Clock);
-        var matchdays = stage.Matchdays.OrderBy(m => m.Number).ToList();
-        var created = new List<Match>();
-        var matchOrdinal = 0;
-        for (var roundIndex = 0; roundIndex < rounds.Count; roundIndex++)
-        {
-            var matchday = matchdays[roundIndex];
-            foreach (var (home, away) in rounds[roundIndex])
-            {
-                var fixture = stage.AddFixture(matchday.Id, context.Clock);
-                var match = Match.Create(
-                    competition.Id,
-                    stage.Id,
-                    home,
-                    away,
-                    context.Ids.Match($"ch-m-{matchOrdinal}"),
-                    context.Clock);
-                stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
-                context.Matches.Add(match);
-                created.Add(match);
-                matchOrdinal++;
-            }
-        }
-
-        MatchEnrichment.ApplyKickoffs(context, competition, stage, created);
-        return created;
-    }
-
-    public static IReadOnlyList<Match> ApplyCupSlotDrawDeterministic(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stage);
-        EnsureDrawRulesEngaged(stage);
-
-        // Encoding F: pool = CompositionEntries (not Active[]).
-        var entries = stage.CompositionEntries
-            .Select(entry => entry.EntryId)
-            .OrderBy(id => id.Value)
-            .ToArray();
-
-        if (entries.Length < 2 || (entries.Length & (entries.Length - 1)) != 0)
-        {
-            throw new InvalidOperationException(
-                $"Cup slot draw on '{stage.Name.Value}' requires a power-of-two Composition count (got {entries.Length}).");
-        }
-
-        var slotKeys = stage.Slots
-            .Select(slot => slot.SlotKey)
-            .OrderBy(key => key, StringComparer.Ordinal)
-            .ToArray();
-        if (slotKeys.Length != entries.Length)
-        {
-            throw new InvalidOperationException(
-                $"Cup slot draw on '{stage.Name.Value}' requires slot count ({slotKeys.Length}) to match composition ({entries.Length}).");
-        }
-
-        RecordAndApplySlotDraw(context, stage, entries, slotKeys);
-        return MaterializeFromSlots(context, competition, stage, pairKeys: null);
-    }
-
-    /// <summary>
-    /// Seed guard: Structure chrome requires DrawRules before any Create/Publish/Apply Draw.
-    /// </summary>
-    private static void EnsureDrawRulesEngaged(Stage stage)
-    {
-        if (stage.Regulation.DrawRules is not null)
-        {
-            return;
-        }
-
-        throw new InvalidOperationException(
-            $"Stage '{stage.Name.Value}' must have DrawRules before creating a draw (seed incoherence).");
-    }
-
-    /// <summary>
-    /// Engages random DrawRules when absent — call immediately before a seed Create/Apply Draw.
-    /// </summary>
-    private static void EngageRandomDrawRules(Stage stage, IClock clock)
-    {
-        if (stage.Regulation.DrawRules is not null)
-        {
-            return;
-        }
-
-        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), clock);
-    }
-
     public static void PlayMatches(
         ScenarioContext context,
         Competition competition,
@@ -338,49 +170,6 @@ internal static class ScenarioOrchestration
         Competition competition,
         IReadOnlyList<Match> matches) =>
         MatchEnrichment.PlayMatches(context, competition, matches, matches.Count, decisive: true);
-
-    public static void PrepareAndStart(ScenarioContext context, Competition competition, Stage stage)
-    {
-        stage.Prepare(context.Clock);
-        competition.Prepare(context.Clock);
-        stage.Start(context.Clock);
-        competition.Start(context.Clock);
-    }
-
-    /// <summary>
-    /// Transitions stage + competition to Ready without starting.
-    /// </summary>
-    public static void PrepareOnly(ScenarioContext context, Competition competition, Stage stage)
-    {
-        stage.Prepare(context.Clock);
-        competition.Prepare(context.Clock);
-    }
-
-    public static void CompleteRunning(ScenarioContext context, Competition competition, Stage stage) =>
-        CompleteAllRunning(context, competition, [stage]);
-
-    /// <summary>
-    /// Completes every Running/Suspended stage, then the competition (Normal).
-    /// </summary>
-    public static void CompleteAllRunning(
-        ScenarioContext context,
-        Competition competition,
-        IEnumerable<Stage> stages)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stages);
-
-        foreach (var stage in stages)
-        {
-            if (stage.Status is StageStatus.Running or StageStatus.Suspended)
-            {
-                stage.Complete(context.Clock);
-            }
-        }
-
-        competition.Complete(CompletionMode.Normal, context.Clock);
-    }
 
     /// <summary>
     /// Builds a structured competition (register → configure → materialize → lifecycle).
@@ -408,17 +197,17 @@ internal static class ScenarioOrchestration
 
         if (recipe.Format == RecipeFormat.Swiss)
         {
-            ApplyStructuredLifecycleSwiss(context, competition, stage, lifecycle);
+            SeedLifecycle.ApplyStructuredLifecycleSwiss(context, competition, stage, lifecycle);
         }
         else
         {
             if (recipe.Format == RecipeFormat.Cup)
             {
-                EngageRandomDrawRules(stage, context.Clock);
+                SeedSlotDraw.EngageRandomDrawRules(stage, context.Clock);
             }
 
-            var matches = MaterializeForFormat(context, competition, stage, recipe, entries);
-            ApplyStructuredLifecycle(context, competition, stage, matches, lifecycle);
+            var matches = SeedMaterialization.MaterializeForFormat(context, competition, stage, recipe, entries);
+            SeedLifecycle.ApplyStructuredLifecycle(context, competition, stage, matches, lifecycle);
         }
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -577,9 +366,9 @@ internal static class ScenarioOrchestration
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
-        var matches = MaterializeForFormat(context, competition, stage, recipe, entries);
-        PrepareAndStart(context, competition, stage);
-        ApplyProgress(context, competition, stage, matches, SeedProgress.Running);
+        var matches = SeedMaterialization.MaterializeForFormat(context, competition, stage, recipe, entries);
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        SeedLifecycle.ApplyProgress(context, competition, stage, matches, SeedProgress.Running);
 
         var withdrawn = entries.OrderBy(entry => entry.Id.Value).First();
         competition.WithdrawEntry(withdrawn.Id, context.Clock);
@@ -624,8 +413,8 @@ internal static class ScenarioOrchestration
         WireEachGroupQualificationToPopulation(
             context.Ids, groups, quarter, positionFrom: 1, positionTo: 2, context.Clock);
 
-        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
-        PrepareAndStart(context, competition, groups);
+        var groupMatches = SeedMaterialization.AssignThenMaterializeGroups(context, competition, groups, entries);
+        SeedLifecycle.PrepareAndStart(context, competition, groups);
         PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
 
         var groupStandings = new Dictionary<GroupId, Standing>();
@@ -644,7 +433,7 @@ internal static class ScenarioOrchestration
             [groups, quarter],
             context.Clock);
 
-        PlacePopulationIntoSlotsViaDraw(context, competition, quarter, qfSlotKeys);
+        SeedSlotDraw.PlacePopulationIntoSlotsViaDraw(context, competition, quarter, qfSlotKeys);
 
         groups.Complete(context.Clock);
 
@@ -687,8 +476,8 @@ internal static class ScenarioOrchestration
         WireEachGroupQualificationToSlots(
             context.Ids, groups, quarter, positionFrom: 1, positionTo: 2, qfSlotKeys, context.Clock);
 
-        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
-        PrepareAndStart(context, competition, groups);
+        var groupMatches = SeedMaterialization.AssignThenMaterializeGroups(context, competition, groups, entries);
+        SeedLifecycle.PrepareAndStart(context, competition, groups);
         PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
 
         var groupStandings = new Dictionary<GroupId, Standing>();
@@ -747,7 +536,7 @@ internal static class ScenarioOrchestration
         var ordered = entries.OrderBy(entry => entry.Id.Value).ToList();
         var groupPool = ordered.Take(4).ToList();
         var directs = ordered.Skip(4).Take(2).ToList();
-        AssignGroupsRoundRobin(groups, groupPool);
+        SeedMaterialization.AssignGroupsRoundRobin(groups, groupPool);
         AssignRootComposition(groups, groupPool, context.Clock);
 
         var champ = CreateChampionshipStage(context, competition, "champ", "Championnat");
@@ -756,8 +545,8 @@ internal static class ScenarioOrchestration
         WireEachGroupQualificationToForm(
             context.Ids, groups, champ, positionFrom: 1, positionTo: 1, context.Clock);
 
-        var groupMatches = MaterializeGroupsMatches(context, competition, groups);
-        PrepareAndStart(context, competition, groups);
+        var groupMatches = SeedMaterialization.MaterializeGroupsMatches(context, competition, groups);
+        SeedLifecycle.PrepareAndStart(context, competition, groups);
         PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
 
         var groupStandings = new Dictionary<GroupId, Standing>();
@@ -823,8 +612,8 @@ internal static class ScenarioOrchestration
             autoSlotKeys: [qfSlotKeys[0], qfSlotKeys[2]],
             context.Clock);
 
-        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
-        PrepareAndStart(context, competition, groups);
+        var groupMatches = SeedMaterialization.AssignThenMaterializeGroups(context, competition, groups, entries);
+        SeedLifecycle.PrepareAndStart(context, competition, groups);
         PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
 
         var groupStandings = new Dictionary<GroupId, Standing>();
@@ -843,7 +632,7 @@ internal static class ScenarioOrchestration
             [groups, quarter],
             context.Clock);
 
-        PlaceRemainingPopulationIntoEmptySlotsViaDraw(context, competition, quarter);
+        SeedSlotDraw.PlaceRemainingPopulationIntoEmptySlotsViaDraw(context, competition, quarter);
 
         groups.Complete(context.Clock);
 
@@ -882,8 +671,8 @@ internal static class ScenarioOrchestration
             quarter.Rounds[0].Id,
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
-        EngageRandomDrawRules(quarter, context.Clock);
-        var qfMatches = ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.EngageRandomDrawRules(quarter, context.Clock);
+        var qfMatches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
         var semi = Stage.Create(
@@ -1007,7 +796,7 @@ internal static class ScenarioOrchestration
         var ordered = entries.OrderBy(entry => entry.Id.Value).ToList();
         var groupPool = ordered.Take(4).ToList();
         var directs = ordered.Skip(4).Take(2).ToList();
-        AssignGroupsRoundRobin(groups, groupPool);
+        SeedMaterialization.AssignGroupsRoundRobin(groups, groupPool);
         AssignRootComposition(groups, groupPool, context.Clock);
 
         var champ = CreateChampionshipStage(context, competition, "champ", "Championnat");
@@ -1264,8 +1053,8 @@ internal static class ScenarioOrchestration
             quarter.Rounds[0].Id,
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
-        EngageRandomDrawRules(quarter, context.Clock);
-        var qfMatches = ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.EngageRandomDrawRules(quarter, context.Clock);
+        var qfMatches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var semi = Stage.Create(
             competition.Id,
@@ -1310,8 +1099,8 @@ internal static class ScenarioOrchestration
 
         quarter.Complete(context.Clock);
 
-        var sfMatches = MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
-        PrepareAndStartStage(context, semi);
+        var sfMatches = SeedMaterialization.MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
+        SeedLifecycle.PrepareAndStartStage(context, semi);
         PlayMatches(context, competition, sfMatches, count: Math.Max(1, sfMatches.Count / 2));
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -1342,7 +1131,7 @@ internal static class ScenarioOrchestration
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
         AssignRootComposition(stage, entries, context.Clock);
-        _ = MaterializeForFormat(context, competition, stage, recipe, entries);
+        _ = SeedMaterialization.MaterializeForFormat(context, competition, stage, recipe, entries);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1462,73 +1251,10 @@ internal static class ScenarioOrchestration
             ]),
             context.Clock);
 
-        AssignGroupsRoundRobin(groups, entries);
-        _ = MaterializeGroupsMatches(context, competition, groups);
+        SeedMaterialization.AssignGroupsRoundRobin(groups, entries);
+        _ = SeedMaterialization.MaterializeGroupsMatches(context, competition, groups);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    private static void ApplyStructuredLifecycle(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<Match> matches,
-        StructuredSeedLifecycle lifecycle)
-    {
-        switch (lifecycle)
-        {
-            case StructuredSeedLifecycle.Ready:
-                PrepareOnly(context, competition, stage);
-                return;
-            case StructuredSeedLifecycle.Suspended:
-                PrepareAndStart(context, competition, stage);
-                ApplyProgress(context, competition, stage, matches, SeedProgress.Running);
-                stage.Suspend(context.Clock);
-                competition.Suspend(context.Clock);
-                return;
-            case StructuredSeedLifecycle.Archived:
-                PrepareAndStart(context, competition, stage);
-                ApplyProgress(context, competition, stage, matches, SeedProgress.Finished);
-                competition.Archive(context.Clock);
-                return;
-            case StructuredSeedLifecycle.Progressive:
-                PrepareAndStart(context, competition, stage);
-                ApplyProgress(context, competition, stage, matches, context.Progress);
-                return;
-            default:
-                throw new InvalidOperationException($"Unsupported structured lifecycle '{lifecycle}'.");
-        }
-    }
-
-    private static void ApplyStructuredLifecycleSwiss(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        StructuredSeedLifecycle lifecycle)
-    {
-        switch (lifecycle)
-        {
-            case StructuredSeedLifecycle.Ready:
-                PrepareOnly(context, competition, stage);
-                return;
-            case StructuredSeedLifecycle.Suspended:
-                PrepareAndStart(context, competition, stage);
-                ApplySwissProgress(context, competition, stage, SeedProgress.Running);
-                stage.Suspend(context.Clock);
-                competition.Suspend(context.Clock);
-                return;
-            case StructuredSeedLifecycle.Archived:
-                PrepareAndStart(context, competition, stage);
-                ApplySwissProgress(context, competition, stage, SeedProgress.Finished);
-                competition.Archive(context.Clock);
-                return;
-            case StructuredSeedLifecycle.Progressive:
-                PrepareAndStart(context, competition, stage);
-                ApplySwissProgress(context, competition, stage, context.Progress);
-                return;
-            default:
-                throw new InvalidOperationException($"Unsupported structured lifecycle '{lifecycle}'.");
-        }
     }
 
     /// <summary>
@@ -1565,7 +1291,7 @@ internal static class ScenarioOrchestration
 
         // Engage DrawRules so Structure chrome (badge + CTA) matches the seeded Slot draw execution.
         quarter.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        var qfMatches = ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        var qfMatches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var semi = Stage.Create(
             competition.Id,
@@ -1652,7 +1378,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         roundOf32.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        var r32Matches = ApplyCupSlotDrawDeterministic(context, competition, roundOf32);
+        var r32Matches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, roundOf32);
 
         var r16SlotKeys = PairSlotKeys("R16", pairCount: 8);
         var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
@@ -1698,7 +1424,7 @@ internal static class ScenarioOrchestration
 
         PlayDecisiveMatches(context, competition, r32Matches);
         ApplyAllProgressions(context, roundOf32, r32Fixtures, r32Matches, allStages);
-        PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
+        SeedSlotDraw.PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
 
         PlayKnockoutRound(
             context,
@@ -1734,13 +1460,13 @@ internal static class ScenarioOrchestration
             placeViaSlotDraw: true,
             intentKey: "prog-cdf-sf");
 
-        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
+        var finalMatches = SeedMaterialization.MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
         WireFinalPlacementAwards(final, finalFixture, context.Clock);
-        PrepareAndStartStage(context, final);
+        SeedLifecycle.PrepareAndStartStage(context, final);
         PlayDecisiveMatches(context, competition, finalMatches);
 
-        CompleteAllRunning(context, competition, allStages);
+        SeedLifecycle.CompleteAllRunning(context, competition, allStages);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1805,8 +1531,8 @@ internal static class ScenarioOrchestration
 
         WireEuroQualification(context.Ids, groups, roundOf16, context.Clock);
 
-        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
-        PrepareAndStart(context, competition, groups);
+        var groupMatches = SeedMaterialization.AssignThenMaterializeGroups(context, competition, groups, entries);
+        SeedLifecycle.PrepareAndStart(context, competition, groups);
         PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
 
         var groupStandings = new Dictionary<GroupId, Standing>();
@@ -1827,7 +1553,7 @@ internal static class ScenarioOrchestration
             allStages,
             context.Clock);
 
-        PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
+        SeedSlotDraw.PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
 
         PlayKnockoutRound(
             context,
@@ -1863,13 +1589,13 @@ internal static class ScenarioOrchestration
             placeViaSlotDraw: true,
             intentKey: "prog-euro-sf");
 
-        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
+        var finalMatches = SeedMaterialization.MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
         WireFinalPlacementAwards(final, finalFixture, context.Clock);
-        PrepareAndStartStage(context, final);
+        SeedLifecycle.PrepareAndStartStage(context, final);
         PlayDecisiveMatches(context, competition, finalMatches);
 
-        CompleteAllRunning(context, competition, allStages);
+        SeedLifecycle.CompleteAllRunning(context, competition, allStages);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1935,8 +1661,8 @@ internal static class ScenarioOrchestration
 
         WireWorldCupQualification(context.Ids, groups, roundOf16, context.Clock);
 
-        var groupMatches = AssignThenMaterializeGroups(context, competition, groups, entries);
-        PrepareAndStart(context, competition, groups);
+        var groupMatches = SeedMaterialization.AssignThenMaterializeGroups(context, competition, groups, entries);
+        SeedLifecycle.PrepareAndStart(context, competition, groups);
         PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
 
         var groupStandings = new Dictionary<GroupId, Standing>();
@@ -1956,7 +1682,7 @@ internal static class ScenarioOrchestration
             allStages,
             context.Clock);
 
-        PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
+        SeedSlotDraw.PlacePopulationIntoSlotsViaDraw(context, competition, roundOf16, r16SlotKeys);
 
         PlayKnockoutRound(
             context,
@@ -1977,25 +1703,25 @@ internal static class ScenarioOrchestration
             nextSlotKeys: sfSlotKeys,
             allStages);
 
-        var sfMatches = MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
+        var sfMatches = SeedMaterialization.MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
         var sfFixtures = OrderedFixtures(semi, expectedCount: 2);
         WireSemiToFinalAndBronzeAutoPlace(
             semi, final, bronze, sfFixtures, finalSlotKeys, bronzeSlotKeys, context.Clock);
-        PrepareAndStartStage(context, semi);
+        SeedLifecycle.PrepareAndStartStage(context, semi);
         PlayDecisiveMatches(context, competition, sfMatches);
         ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
 
-        var finalMatches = MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
-        var bronzeMatches = MaterializeFromSlots(context, competition, bronze, AdjacentPairKeys(pairCount: 1));
+        var finalMatches = SeedMaterialization.MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
+        var bronzeMatches = SeedMaterialization.MaterializeFromSlots(context, competition, bronze, AdjacentPairKeys(pairCount: 1));
         var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
         var bronzeFixture = OrderedFixtures(bronze, expectedCount: 1)[0];
         WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
-        PrepareAndStartStage(context, final);
-        PrepareAndStartStage(context, bronze);
+        SeedLifecycle.PrepareAndStartStage(context, final);
+        SeedLifecycle.PrepareAndStartStage(context, bronze);
         PlayDecisiveMatches(context, competition, finalMatches);
         PlayDecisiveMatches(context, competition, bronzeMatches);
 
-        CompleteAllRunning(context, competition, allStages);
+        SeedLifecycle.CompleteAllRunning(context, competition, allStages);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -2055,8 +1781,8 @@ internal static class ScenarioOrchestration
         groups.ReplaceDrawRules(
             new DrawRules(DrawMode.Random, potRules: new PotRules(4)),
             context.Clock);
-        AssignGroupsRoundRobin(groups, entries);
-        _ = MaterializeGroupsMatches(context, competition, groups);
+        SeedMaterialization.AssignGroupsRoundRobin(groups, entries);
+        _ = SeedMaterialization.MaterializeGroupsMatches(context, competition, groups);
 
         var richTie = new TieFormat(
             TieFormat.TwoLegs,
@@ -2244,7 +1970,7 @@ internal static class ScenarioOrchestration
         bool placeViaSlotDraw = false,
         string intentKey = "prog-winner")
     {
-        var matches = MaterializeFromSlots(context, competition, stage, pairKeys);
+        var matches = SeedMaterialization.MaterializeFromSlots(context, competition, stage, pairKeys);
         var fixtures = OrderedFixtures(stage, expectedFixtures);
         if (placeViaSlotDraw)
         {
@@ -2257,12 +1983,12 @@ internal static class ScenarioOrchestration
                 context.Ids, stage, nextStage, fixtures, nextSlotKeys, context.Clock, intentKey);
         }
 
-        PrepareAndStartStage(context, stage);
+        SeedLifecycle.PrepareAndStartStage(context, stage);
         PlayDecisiveMatches(context, competition, matches);
         ApplyAllProgressions(context, stage, fixtures, matches, allStages);
         if (placeViaSlotDraw)
         {
-            PlacePopulationIntoSlotsViaDraw(context, competition, nextStage, nextSlotKeys);
+            SeedSlotDraw.PlacePopulationIntoSlotsViaDraw(context, competition, nextStage, nextSlotKeys);
         }
     }
 
@@ -2290,136 +2016,6 @@ internal static class ScenarioOrchestration
                 new PlacementAwardPath(ToSourcePairKey(bronzeFixture), ProgressionOutcome.Loser, rank: 4)
             ]),
             clock);
-    }
-
-    public static void ApplyProgress(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<Match> matches,
-        SeedProgress progress)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stage);
-        ArgumentNullException.ThrowIfNull(matches);
-
-        switch (progress)
-        {
-            case SeedProgress.Prepared:
-                PlayMatches(context, competition, matches, count: 0);
-                return;
-            case SeedProgress.Running:
-                PlayMatches(context, competition, matches, count: matches.Count / 2);
-                return;
-            case SeedProgress.Finished:
-                PlayMatches(context, competition, matches, count: matches.Count);
-                CompleteRunning(context, competition, stage);
-                return;
-            default:
-                throw new InvalidOperationException($"Unsupported seed progress '{progress}'.");
-        }
-    }
-
-    /// <summary>
-    /// Swiss progress: rounds are created only after Running via GenerateNextRound.
-    /// </summary>
-    /// <remarks>
-    /// <list type="bullet">
-    /// <item><c>prepared</c> — Running, 0 rounds (Overview ready for GenerateNextRound).</item>
-    /// <item><c>running</c> — round 1 finished + round 2 generated, half played (awaiting results).</item>
-    /// <item><c>finished</c> — all planned rounds generated and finished; competition Completed.</item>
-    /// </list>
-    /// </remarks>
-    public static void ApplySwissProgress(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        SeedProgress progress)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stage);
-        if (!stage.IsSwiss || stage.SwissSettings is null)
-        {
-            throw new InvalidOperationException("ApplySwissProgress requires a Swiss stage with SwissSettings.");
-        }
-
-        var planned = stage.SwissSettings.RoundCount;
-        var allMatches = new List<Match>();
-
-        switch (progress)
-        {
-            case SeedProgress.Prepared:
-                return;
-            case SeedProgress.Running:
-                {
-                    // Round 1 complete → round 2 open with ~50% results (awaiting next GenerateNextRound).
-                    var round1 = GenerateSwissRound(context, competition, stage, allMatches);
-                    PlayMatches(context, competition, round1, count: round1.Count);
-                    var round2 = GenerateSwissRound(context, competition, stage, allMatches);
-                    PlayMatches(context, competition, round2, count: Math.Max(1, round2.Count / 2));
-                    return;
-                }
-
-            case SeedProgress.Finished:
-                {
-                    for (var round = 1; round <= planned; round++)
-                    {
-                        var created = GenerateSwissRound(context, competition, stage, allMatches);
-                        PlayMatches(context, competition, created, count: created.Count);
-                    }
-
-                    CompleteRunning(context, competition, stage);
-                    return;
-                }
-
-            default:
-                throw new InvalidOperationException($"Unsupported seed progress '{progress}'.");
-        }
-    }
-
-    private static IReadOnlyList<Match> GenerateSwissRound(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        List<Match> accumulated)
-    {
-        var result = GenerateNextRound.Execute(competition, stage, accumulated, context.Clock);
-        foreach (var match in result.CreatedMatches)
-        {
-            context.Matches.Add(match);
-            accumulated.Add(match);
-        }
-
-        MatchEnrichment.ApplyKickoffs(context, competition, stage, result.CreatedMatches);
-        return result.CreatedMatches;
-    }
-
-    private static IReadOnlyList<Match> MaterializeForFormat(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        CompetitionRecipe recipe,
-        IReadOnlyList<CompetitionEntry> entries)
-        => recipe.Format switch
-        {
-            RecipeFormat.Groups => AssignThenMaterializeGroups(context, competition, stage, entries),
-            RecipeFormat.Cup => ApplyCupSlotDrawDeterministic(context, competition, stage),
-            RecipeFormat.Championship => MaterializeChampionshipMatches(context, competition, stage),
-            RecipeFormat.Swiss => throw new InvalidOperationException(
-                "Swiss does not use MaterializeForFormat — ApplySwissProgress after PrepareAndStart."),
-            _ => throw new InvalidOperationException($"Unsupported recipe format '{recipe.Format}'.")
-        };
-
-    private static IReadOnlyList<Match> AssignThenMaterializeGroups(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<CompetitionEntry> entries)
-    {
-        AssignGroupsRoundRobin(stage, entries);
-        return MaterializeGroupsMatches(context, competition, stage);
     }
 
     private static Stage CreateKnockoutStage(
@@ -2469,104 +2065,6 @@ internal static class ScenarioOrchestration
         competition.AddStage(stage.Id, context.Clock);
         context.Stages.Add(stage);
         return stage;
-    }
-
-    /// <summary>
-    /// Case 1: after ApplyQualification filled <see cref="Stage.CompositionEntries"/>,
-    /// place them into form slots via a deterministic Slot Draw (then Publish + Apply).
-    /// </summary>
-    private static void PlacePopulationIntoSlotsViaDraw(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        string[] slotKeys)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stage);
-        ArgumentNullException.ThrowIfNull(slotKeys);
-
-        var pool = stage.CompositionEntries.Select(entry => entry.EntryId).ToArray();
-        if (pool.Length == 0)
-        {
-            throw new InvalidOperationException(
-                $"Stage '{stage.Name.Value}' has no population entries to place into slots.");
-        }
-
-        if (pool.Length != slotKeys.Length)
-        {
-            throw new InvalidOperationException(
-                $"Population count ({pool.Length}) must match slot count ({slotKeys.Length}) for stage '{stage.Name.Value}'.");
-        }
-
-        _ = competition;
-        EngageRandomDrawRules(stage, context.Clock);
-        RecordAndApplySlotDraw(context, stage, pool, slotKeys);
-    }
-
-    /// <summary>
-    /// Case 7: Slot Draw only for vacant Places from Population members not already occupying a Place.
-    /// Auto-fed Places stay untouched; Occupants ⊆ Population remains.
-    /// </summary>
-    private static void PlaceRemainingPopulationIntoEmptySlotsViaDraw(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stage);
-
-        var occupiedEntryIds = stage.Slots
-            .SelectMany(slot => slot.EntryId is { } entryId ? [entryId] : Array.Empty<EntryId>())
-            .ToHashSet();
-        var emptySlotKeys = stage.Slots
-            .Where(slot => slot.EntryId is null)
-            .Select(slot => slot.SlotKey)
-            .OrderBy(key => key, StringComparer.Ordinal)
-            .ToArray();
-        var remainingPool = stage.CompositionEntries
-            .Select(entry => entry.EntryId)
-            .Where(entryId => !occupiedEntryIds.Contains(entryId))
-            .ToArray();
-
-        if (emptySlotKeys.Length == 0)
-        {
-            return;
-        }
-
-        if (remainingPool.Length != emptySlotKeys.Length)
-        {
-            throw new InvalidOperationException(
-                $"Hybrid draw requires remaining population ({remainingPool.Length}) to match empty slots ({emptySlotKeys.Length}) on '{stage.Name.Value}'.");
-        }
-
-        EngageRandomDrawRules(stage, context.Clock);
-        RecordAndApplySlotDraw(context, stage, remainingPool, emptySlotKeys);
-        _ = competition;
-    }
-
-    private static void RecordAndApplySlotDraw(
-        ScenarioContext context,
-        Stage stage,
-        EntryId[] pool,
-        string[] slotKeys)
-    {
-        EnsureDrawRulesEngaged(stage);
-
-        var inputs = DrawInputs.ForSlot(pool);
-        var draw = stage.CreateDraw(
-            DrawResolutionKind.Slot,
-            context.Ids.Draw($"slot-{stage.Id.Value:N}-{slotKeys.Length}"),
-            context.Clock);
-        stage.ConfigureDrawInputs(draw.Id, inputs);
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedSlots(
-                [.. pool.Select((entryId, index) => new SlotDrawPlacement(entryId, slotKeys[index]))]),
-            context.Clock);
-        stage.PublishDraw(draw.Id, context.Clock);
-        ApplyDraw.Execute(stage, draw.Id, context.Clock);
     }
 
     private static string[] PairSlotKeys(string prefix, int pairCount)
@@ -3043,33 +2541,6 @@ internal static class ScenarioOrchestration
             : fixtures;
     }
 
-    private static IReadOnlyList<Match> MaterializeFromSlots(
-        ScenarioContext context,
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<string>? pairKeys)
-    {
-        var result = MaterializeCupFromOccupiedSlots.Execute(
-            competition,
-            stage,
-            pairKeys,
-            [],
-            context.Clock);
-        foreach (var match in result.CreatedMatches)
-        {
-            context.Matches.Add(match);
-        }
-
-        MatchEnrichment.ApplyKickoffs(context, competition, stage, result.CreatedMatches);
-        return result.CreatedMatches;
-    }
-
-    private static void PrepareAndStartStage(ScenarioContext context, Stage stage)
-    {
-        stage.Prepare(context.Clock);
-        stage.Start(context.Clock);
-    }
-
     private static void ApplyAllProgressions(
         ScenarioContext context,
         Stage source,
@@ -3088,17 +2559,6 @@ internal static class ScenarioOrchestration
                 legMatches,
                 competitionStages,
                 context.Clock);
-        }
-    }
-
-    private static void EnsureMatchdays(Stage stage, int requiredCount, IClock clock)
-    {
-        var nextNumber = stage.Matchdays.Count == 0
-            ? 1
-            : stage.Matchdays.Max(m => m.Number) + 1;
-        while (stage.Matchdays.Count < requiredCount)
-        {
-            stage.AddMatchday(nextNumber++, clock);
         }
     }
 }
