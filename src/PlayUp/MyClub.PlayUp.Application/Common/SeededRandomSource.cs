@@ -5,13 +5,13 @@
 // -----------------------------------------------------------------------
 
 using System.Diagnostics.CodeAnalysis;
-using MyNet.Generator;
+using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Application;
 
 /// <summary>
-/// Application/Infra <see cref="IRandomSource"/> backed by a seeded <see cref="Random"/>.
-/// Must not be referenced from Domain (Domain knows only <see cref="IRandomSource"/>).
+/// Application <see cref="IRandomSource"/> backed by a seeded <see cref="Random"/>.
+/// Must not be referenced from Domain (Domain depends only on <see cref="IRandomSource"/>).
 /// </summary>
 /// <remarks>
 /// Initializes a new instance of the <see cref="SeededRandomSource"/> class.

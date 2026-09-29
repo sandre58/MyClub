@@ -7,7 +7,6 @@
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
-using MyNet.Generator;
 
 namespace MyClub.PlayUp.Application.Stages;
 

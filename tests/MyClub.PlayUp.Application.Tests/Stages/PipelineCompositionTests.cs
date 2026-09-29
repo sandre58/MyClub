@@ -13,7 +13,6 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
-using MyNet.Primitives;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;

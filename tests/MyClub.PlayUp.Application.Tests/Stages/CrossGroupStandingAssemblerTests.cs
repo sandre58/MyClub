@@ -12,7 +12,6 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
-using MyNet.Primitives;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;

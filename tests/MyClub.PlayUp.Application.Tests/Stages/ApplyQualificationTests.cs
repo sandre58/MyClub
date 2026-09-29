@@ -14,7 +14,6 @@ using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
-using MyNet.Primitives;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
