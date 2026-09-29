@@ -36,6 +36,24 @@ public sealed class HostArchitectureIsolationTests
     }
 
     [Fact]
+    public void HostTests_csproj_references_TestKit_but_not_Development()
+    {
+        var testsCsproj = LocateHostTestsCsproj();
+        var document = XDocument.Load(testsCsproj);
+        var references = document
+            .Descendants("ProjectReference")
+            .Select(static e => (string?)e.Attribute("Include") ?? string.Empty)
+            .ToArray();
+
+        references.Should().Contain(static path =>
+            path.Contains("MyClub.PlayUp.TestKit", StringComparison.OrdinalIgnoreCase));
+        references.Should().NotContain(static path =>
+            path.Contains("MyClub.PlayUp.Development", StringComparison.OrdinalIgnoreCase));
+        references.Should().NotContain(static path =>
+            path.Contains("MyClub.PlayUp.DevRunner", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Host_source_does_not_mention_Development_workspace_types()
     {
         var hostDir = Path.GetDirectoryName(LocateHostCsproj())
@@ -71,5 +89,26 @@ public sealed class HostArchitectureIsolationTests
         }
 
         throw new InvalidOperationException("Could not locate MyClub.PlayUp.Host.csproj from test output.");
+    }
+
+    private static string LocateHostTestsCsproj()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            var candidate = Path.Combine(
+                dir.FullName,
+                "tests",
+                "MyClub.PlayUp.Host.Tests",
+                "MyClub.PlayUp.Host.Tests.csproj");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException("Could not locate MyClub.PlayUp.Host.Tests.csproj from test output.");
     }
 }

@@ -16,8 +16,9 @@ namespace MyClub.PlayUp.TestKit;
 /// In-memory competition situation for automated tests. Orchestrates Application use cases only.
 /// </summary>
 /// <remarks>
-/// Lot B surface: create, teams, structure, primary-stage Prepare/Start.
-/// Richer helpers emerge from later migrations — do not invent a fluent DSL ahead of need.
+/// Lot B/C surface: create, teams, structure, competition Prepare/Start/Complete,
+/// primary-stage Prepare/Start. Richer helpers emerge from later migrations —
+/// do not invent a fluent DSL ahead of need.
 /// </remarks>
 public sealed class TestCompetition
 {
@@ -121,6 +122,37 @@ public sealed class TestCompetition
     public TestCompetition StartPrimaryStage()
     {
         EnsurePrimaryStage().Start(Clock);
+        return this;
+    }
+
+    /// <summary>
+    /// Calls <see cref="Competition.Prepare"/>.
+    /// </summary>
+    /// <returns>This situation.</returns>
+    public TestCompetition PrepareCompetition()
+    {
+        Competition.Prepare(Clock);
+        return this;
+    }
+
+    /// <summary>
+    /// Calls <see cref="Competition.Start"/>.
+    /// </summary>
+    /// <returns>This situation.</returns>
+    public TestCompetition StartCompetition()
+    {
+        Competition.Start(Clock);
+        return this;
+    }
+
+    /// <summary>
+    /// Calls <see cref="Competition.Complete"/>.
+    /// </summary>
+    /// <param name="mode">Completion mode.</param>
+    /// <returns>This situation.</returns>
+    public TestCompetition CompleteCompetition(CompletionMode mode)
+    {
+        Competition.Complete(mode, Clock);
         return this;
     }
 

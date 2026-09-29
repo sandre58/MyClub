@@ -12,9 +12,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -88,39 +89,19 @@ public sealed class StartStageEndpointTests(HostPostgresFixture fixture)
     private async Task<StageId> SeedDraftChampionshipAsync(PlayUpWebApplicationFactory factory)
     {
         using var scope = factory.Services.CreateScope();
-        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-
-        var competition = Competition.Create(new CompetitionName("Championnat Start Draft"), SampleRegulations.Standard(), _clock);
-        competitions.Add(competition);
-
-        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
-        stage.AddMatchday(1, _clock);
-        competition.AddStage(stage.Id, _clock);
-        stages.Add(stage);
-
-        await unitOfWork.SaveChangesAsync();
-        return stage.Id;
+        var situation = TestCompetition.Create("Championnat Start Draft", _clock)
+            .WithStructure(StructureIntent.Championship(stageName: "League"));
+        await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
+        return situation.RequirePrimaryStage().Id;
     }
 
     private async Task<StageId> SeedReadyChampionshipAsync(PlayUpWebApplicationFactory factory)
     {
         using var scope = factory.Services.CreateScope();
-        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-
-        var competition = Competition.Create(new CompetitionName("Championnat Start Ready"), SampleRegulations.Standard(), _clock);
-        competitions.Add(competition);
-
-        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
-        stage.AddMatchday(1, _clock);
-        stage.Prepare(_clock);
-        competition.AddStage(stage.Id, _clock);
-        stages.Add(stage);
-
-        await unitOfWork.SaveChangesAsync();
-        return stage.Id;
+        var situation = TestCompetition.Create("Championnat Start Ready", _clock)
+            .WithStructure(StructureIntent.Championship(stageName: "League"))
+            .PreparePrimaryStage();
+        await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
+        return situation.RequirePrimaryStage().Id;
     }
 }
