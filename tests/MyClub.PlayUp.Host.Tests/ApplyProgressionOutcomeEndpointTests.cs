@@ -12,11 +12,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -96,49 +97,34 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
     private async Task<R2Seed> SeedR2QuarterToSemiAsync(PlayUpWebApplicationFactory factory)
     {
         using var scope = factory.Services.CreateScope();
-        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var situation = TestCompetition.Create("Coupe du club", _clock);
 
-        var competition = Competition.Create(new CompetitionName("Coupe du club"), SampleRegulations.Standard(), _clock);
-        competitions.Add(competition);
-
-        var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        quarter.AddSlot("QF1-A");
-        quarter.AddSlot("QF1-B");
-
-        var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
-        semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        semi.AddSlot("SF1-A");
-        semi.AddSlot("SF1-B");
-
-        competition.AddStage(quarter.Id, _clock);
-        competition.AddStage(semi.Id, _clock);
+        var quarter = situation.AddKnockoutStage(
+            "QF",
+            "R1",
+            ["QF1-A", "QF1-B"],
+            seedBracketPairs: false);
+        var semi = situation.AddKnockoutStage(
+            "SF",
+            "R1",
+            ["SF1-A", "SF1-B"],
+            seedBracketPairs: false);
 
         var home = EntryId.New();
         var away = EntryId.New();
         quarter.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
         var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
-        var match = Match.Create(competition.Id, quarter.Id, home, away, _clock);
+        var match = Match.Create(situation.Competition.Id, quarter.Id, home, away, _clock);
         quarter.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        situation.TrackMatch(match);
 
-        quarter.ReplaceProgressionRules(
-            new ProgressionRules(
-            [
-                new ProgressionPath("P1",
-                    ProgressionOutcome.Winner,
-                    ProgressionDestination.ForPopulation(semi.Id))
-            ]),
-            _clock);
+        situation.WithProgressionPaths(
+            quarter,
+            new ProgressionPathSpec("P1", ProgressionOutcome.Winner, semi.Id));
 
-        stages.Add(quarter);
-        stages.Add(semi);
-        matches.Add(match);
-        await unitOfWork.SaveChangesAsync();
+        await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
 
         return new R2Seed(quarter.Id, semi.Id, addFixture.Id, home);
     }

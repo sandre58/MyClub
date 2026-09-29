@@ -5,8 +5,10 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -16,20 +18,27 @@ namespace MyClub.PlayUp.TestKit;
 /// In-memory competition situation for automated tests. Orchestrates Application use cases only.
 /// </summary>
 /// <remarks>
-/// Lot B/C/D surface: create, teams, structure, competition Prepare/Start/Complete,
-/// primary-stage Prepare/Start. Optional deterministic ids emerge from DevSeed (Lot D).
-/// Richer helpers emerge from later migrations — do not invent a fluent DSL ahead of need.
+/// Lot B–F surface: create, teams, structure, multi-stage, Qual/Prog paths, resolved Slot Draw,
+/// competition/stage lifecycle. Optional deterministic ids (DevSeed). Richer helpers emerge from
+/// later migrations — do not invent a fluent DSL ahead of need.
 /// </remarks>
 public sealed class TestCompetition
 {
     private static readonly DateTimeOffset DefaultEpoch =
         new(2026, 8, 16, 12, 0, 0, TimeSpan.Zero);
 
+    private readonly List<Stage> _stages = [];
+    private readonly List<Match> _matches = [];
+
     private TestCompetition(Competition competition, IClock clock, Stage? primaryStage)
     {
         Competition = competition;
         Clock = clock;
         PrimaryStage = primaryStage;
+        if (primaryStage is not null)
+        {
+            _stages.Add(primaryStage);
+        }
     }
 
     /// <summary>Gets the competition aggregate.</summary>
@@ -37,6 +46,12 @@ public sealed class TestCompetition
 
     /// <summary>Gets the primary structured stage when configured; otherwise null.</summary>
     public Stage? PrimaryStage { get; private set; }
+
+    /// <summary>Gets tracked stages (primary and additional) for consumer persist.</summary>
+    public IReadOnlyList<Stage> Stages => _stages;
+
+    /// <summary>Gets tracked matches for consumer persist.</summary>
+    public IReadOnlyList<Match> Matches => _matches;
 
     /// <summary>Gets the clock used for domain mutations.</summary>
     public IClock Clock { get; }
@@ -141,7 +156,7 @@ public sealed class TestCompetition
     {
         ArgumentNullException.ThrowIfNull(intent);
 
-        Stage? seed = PrimaryStage;
+        var seed = PrimaryStage;
         if (seed is null && stageId is { } explicitStageId)
         {
             // Match DevSeed ConfigurePrimaryStage: Regulation overload (classifying), then ConfigureStructure.
@@ -156,6 +171,140 @@ public sealed class TestCompetition
 
         var result = ConfigureStructure.Execute(Competition, seed, intent, Clock);
         PrimaryStage = result.Stage;
+        TrackStage(result.Stage);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a bare Draft stage (no structure skeleton) and tracks it.
+    /// </summary>
+    /// <param name="name">Stage display name.</param>
+    /// <param name="stageId">Optional explicit stage identity.</param>
+    /// <returns>The created stage.</returns>
+    public Stage AddBareStage(string name, StageId? stageId = null)
+    {
+        var stage = stageId is { } id
+            ? Stage.Create(Competition.Id, new StageName(name), Competition.Regulation, id, Clock)
+            : Stage.Create(Competition.Id, new StageName(name), Competition.Regulation, Clock);
+        Competition.AddStage(stage.Id, Clock);
+        TrackStage(stage);
+        PrimaryStage ??= stage;
+        return stage;
+    }
+
+    /// <summary>
+    /// Adds a knockout stage (round + slots + optional bracket pairs) and tracks it.
+    /// </summary>
+    /// <param name="name">Stage display name.</param>
+    /// <param name="roundName">Entry round name.</param>
+    /// <param name="slotKeys">Slot keys in order.</param>
+    /// <param name="stageId">Optional explicit stage identity.</param>
+    /// <param name="seedBracketPairs">When true, calls <see cref="Stage.SeedEntryRoundBracketPairs"/>.</param>
+    /// <returns>The created stage.</returns>
+    public Stage AddKnockoutStage(
+        string name,
+        string roundName,
+        IReadOnlyList<string> slotKeys,
+        StageId? stageId = null,
+        bool seedBracketPairs = true)
+    {
+        ArgumentNullException.ThrowIfNull(slotKeys);
+        var stage = stageId is { } id
+            ? Stage.Create(Competition.Id, new StageName(name), Competition.Regulation, id, Clock)
+            : Stage.Create(Competition.Id, new StageName(name), Competition.Regulation, Clock);
+        stage.AddRound(roundName, new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), Clock);
+        foreach (var key in slotKeys)
+        {
+            stage.AddSlot(key);
+        }
+
+        if (seedBracketPairs)
+        {
+            stage.SeedEntryRoundBracketPairs();
+        }
+
+        Competition.AddStage(stage.Id, Clock);
+        TrackStage(stage);
+        PrimaryStage ??= stage;
+        return stage;
+    }
+
+    /// <summary>
+    /// Replaces qualification paths on <paramref name="stage"/> via Application authoring.
+    /// </summary>
+    /// <param name="stage">Source stage.</param>
+    /// <param name="paths">Qualification path specs.</param>
+    /// <returns>This situation.</returns>
+    public TestCompetition WithQualificationPaths(Stage stage, params QualificationPathSpec[] paths)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(paths);
+        ReplaceStageQualificationRules.Execute(stage, paths, Clock);
+        return this;
+    }
+
+    /// <summary>
+    /// Replaces progression paths on <paramref name="stage"/> via Application authoring.
+    /// </summary>
+    /// <param name="stage">Source stage.</param>
+    /// <param name="paths">Progression path specs.</param>
+    /// <returns>This situation.</returns>
+    public TestCompetition WithProgressionPaths(Stage stage, params ProgressionPathSpec[] paths)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(paths);
+        ReplaceStageProgressionRules.Execute(stage, paths, Clock);
+        return this;
+    }
+
+    /// <summary>
+    /// Creates a Slot Draw in Draft with a deterministic Resolved resolution (no Publish/Apply).
+    /// </summary>
+    /// <param name="stage">Stage receiving the draw.</param>
+    /// <param name="pool">Entry pool (ordered to match <paramref name="slotKeys"/>).</param>
+    /// <param name="slotKeys">Target slot keys.</param>
+    /// <param name="drawId">Optional explicit draw identity.</param>
+    /// <returns>The created draw identity.</returns>
+    public DrawId CreateResolvedSlotDraw(
+        Stage stage,
+        IReadOnlyList<EntryId> pool,
+        IReadOnlyList<string> slotKeys,
+        DrawId? drawId = null)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(pool);
+        ArgumentNullException.ThrowIfNull(slotKeys);
+        if (pool.Count != slotKeys.Count)
+        {
+            throw new InvalidOperationException(
+                $"Slot draw pool count ({pool.Count}) must match slot key count ({slotKeys.Count}).");
+        }
+
+        var draw = drawId is { } id
+            ? stage.CreateDraw(DrawResolutionKind.Slot, id, Clock)
+            : stage.CreateDraw(DrawResolutionKind.Slot, Clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([.. pool]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots(
+                [.. pool.Select((entryId, index) => new SlotDrawPlacement(entryId, slotKeys[index]))]),
+            Clock);
+        return draw.Id;
+    }
+
+    /// <summary>
+    /// Tracks a match for consumer persistence (Host.Tests / DevSeed).
+    /// </summary>
+    /// <param name="match">Match to track.</param>
+    /// <returns>This situation.</returns>
+    public TestCompetition TrackMatch(Match match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        if (!_matches.Exists(m => m.Id.Equals(match.Id)))
+        {
+            _matches.Add(match);
+        }
+
         return this;
     }
 
@@ -215,6 +364,14 @@ public sealed class TestCompetition
     /// </summary>
     /// <returns>The primary stage.</returns>
     public Stage RequirePrimaryStage() => EnsurePrimaryStage();
+
+    private void TrackStage(Stage stage)
+    {
+        if (!_stages.Exists(s => s.Id.Equals(stage.Id)))
+        {
+            _stages.Add(stage);
+        }
+    }
 
     private Stage EnsurePrimaryStage() =>
         PrimaryStage

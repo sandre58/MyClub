@@ -13,11 +13,13 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -333,68 +335,36 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         bool createEmptyFixture = false)
     {
         using var scope = factory.Services.CreateScope();
-        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var situation = TestCompetition.Create("R2 Host Cup", _clock)
+            .WithTeams("Home FC", "Away FC");
 
-        var competition = Competition.Create(new CompetitionName("R2 Host Cup"), SampleRegulations.Standard(), _clock);
-        var homeEntry = competition.AddEntry(TeamId.New(), "Home FC", _clock);
-        var awayEntry = competition.AddEntry(TeamId.New(), "Away FC", _clock);
-        competitions.Add(competition);
-
-        var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        quarter.AddSlot("S1");
-        quarter.AddSlot("S2");
-        quarter.SeedEntryRoundBracketPairs();
-
-        var semi = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
-        semi.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
-        semi.AddSlot("SF1-A");
-        semi.AddSlot("SF1-B");
-        semi.SeedEntryRoundBracketPairs();
-
-        competition.AddStage(quarter.Id, _clock);
-        competition.AddStage(semi.Id, _clock);
+        var quarter = situation.AddKnockoutStage("QF", "R1", ["S1", "S2"]);
+        var semi = situation.AddKnockoutStage("SF", "R1", ["SF1-A", "SF1-B"]);
 
         FixtureId? fixtureId = null;
         if (createEmptyFixture)
         {
             var empty = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "S1", "S2", "P1");
             fixtureId = empty.Id;
-            quarter.ReplaceProgressionRules(
-                new ProgressionRules(
-                [
-                    new ProgressionPath(
-                        empty.BracketPairKey!,
-                        ProgressionOutcome.Winner,
-                        ProgressionDestination.ForPopulation(semi.Id))
-                ]),
-                _clock);
+            situation.WithProgressionPaths(
+                quarter,
+                new ProgressionPathSpec(
+                    empty.BracketPairKey!,
+                    ProgressionOutcome.Winner,
+                    semi.Id));
         }
 
-        var home = homeEntry.Id;
-        var away = awayEntry.Id;
-        var draw = quarter.CreateDraw(DrawResolutionKind.Slot, _clock);
-        quarter.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([home, away]));
-        quarter.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedSlots(
-            [
-                new SlotDrawPlacement(home, "S1"),
-                new SlotDrawPlacement(away, "S2")
-            ]),
-            _clock);
+        var home = situation.Competition.Entries[0].Id;
+        var away = situation.Competition.Entries[1].Id;
+        var drawId = situation.CreateResolvedSlotDraw(quarter, [home, away], ["S1", "S2"]);
 
-        stages.Add(quarter);
-        stages.Add(semi);
-        await unitOfWork.SaveChangesAsync();
+        await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
 
         return new R2CupSeed(
-            competition.Id,
+            situation.Competition.Id,
             quarter.Id,
             semi.Id,
-            draw.Id,
+            drawId,
             fixtureId,
             home,
             away);

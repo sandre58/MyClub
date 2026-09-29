@@ -11,7 +11,7 @@ using MyClub.PlayUp.TestKit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Persists a <see cref="TestCompetition"/> graph via Host DI ports (Lot C).
+/// Persists a <see cref="TestCompetition"/> graph via Host DI ports (Lots C/F).
 /// </summary>
 internal static class HostTestPersist
 {
@@ -25,12 +25,26 @@ internal static class HostTestPersist
 
         var competitions = services.GetRequiredService<ICompetitionRepository>();
         var stages = services.GetRequiredService<IStageRepository>();
+        var matches = services.GetRequiredService<IMatchRepository>();
         var unitOfWork = services.GetRequiredService<IUnitOfWork>();
 
         competitions.Add(situation.Competition);
-        if (situation.PrimaryStage is not null)
+
+        if (situation.Stages.Count > 0)
+        {
+            foreach (var stage in situation.Stages)
+            {
+                stages.Add(stage);
+            }
+        }
+        else if (situation.PrimaryStage is not null)
         {
             stages.Add(situation.PrimaryStage);
+        }
+
+        foreach (var match in situation.Matches)
+        {
+            matches.Add(match);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
