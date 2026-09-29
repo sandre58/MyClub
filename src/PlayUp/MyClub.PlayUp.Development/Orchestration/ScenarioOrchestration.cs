@@ -570,7 +570,6 @@ internal static class ScenarioOrchestration
             DisplayName = "Championnat — forfait",
             Format = RecipeFormat.Championship,
             TeamCount = 8,
-            MatchdayCount = 7,
             StageName = "Championnat",
             TeamNames = TeamNameSource.Generated
         };
@@ -1335,7 +1334,6 @@ internal static class ScenarioOrchestration
             DisplayName = "Championnat — structure Draft",
             Format = RecipeFormat.Championship,
             TeamCount = 8,
-            MatchdayCount = 7,
             StageName = "Championnat",
             TeamNames = TeamNameSource.Generated
         };

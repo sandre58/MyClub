@@ -95,7 +95,7 @@ public sealed class StructureConfrontationSegmentsTests
         var result = ConfigureStructure.Execute(
             competition,
             primaryStage: null,
-            StructureIntent.Championship(3),
+            StructureIntent.Championship(),
             _clock);
 
         var hub = StructureViewAssembler.Assemble(competition, [result.Stage]).Stages.Single();

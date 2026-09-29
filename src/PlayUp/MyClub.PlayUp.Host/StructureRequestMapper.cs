@@ -26,7 +26,6 @@ public static class StructureRequestMapper
         return ToStructureIntent(
             request.Format,
             request.StageName,
-            request.MatchdayCount,
             request.GroupCount,
             request.ParticipantsPerGroup,
             request.BracketSize,
@@ -43,7 +42,6 @@ public static class StructureRequestMapper
         return ToStructureIntent(
             request.Format,
             request.Name,
-            request.MatchdayCount,
             request.GroupCount,
             request.ParticipantsPerGroup,
             request.BracketSize,
@@ -64,7 +62,6 @@ public static class StructureRequestMapper
         return ToStructureIntent(
             request.Format,
             string.IsNullOrWhiteSpace(request.StageName) ? currentStageName : request.StageName,
-            request.MatchdayCount,
             request.GroupCount,
             request.ParticipantsPerGroup,
             request.BracketSize,
@@ -75,7 +72,6 @@ public static class StructureRequestMapper
     private static StructureIntent ToStructureIntent(
         string formatRaw,
         string? stageName,
-        int? matchdayCount,
         int? groupCount,
         int? participantsPerGroup,
         int? bracketSize,
@@ -87,7 +83,7 @@ public static class StructureRequestMapper
 
         return format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
             || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase)
-            ? StructureIntent.Championship(matchdayCount ?? 1, stageName, matchGenerationFormat)
+            ? StructureIntent.Championship(stageName, matchGenerationFormat)
             : format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
             || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase)
             ? groupCount is null || participantsPerGroup is null

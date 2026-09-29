@@ -13,7 +13,6 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// </summary>
 /// <param name="Format">Championship | Groups | Cup | Swiss (case-insensitive).</param>
 /// <param name="Name">Stage display name.</param>
-/// <param name="MatchdayCount">Championship matchdays (≥ 1).</param>
 /// <param name="GroupCount">Groups format group count (≥ 2).</param>
 /// <param name="ParticipantsPerGroup">Groups places per group (≥ 2) — capacity, not population.</param>
 /// <param name="BracketSize">Cup bracket size (power of two, 2–64).</param>
@@ -22,7 +21,6 @@ namespace MyClub.PlayUp.Host.Contracts;
 public sealed record AddCompetitionStageRequest(
     string Format,
     string Name,
-    int? MatchdayCount = null,
     int? GroupCount = null,
     int? ParticipantsPerGroup = null,
     int? BracketSize = null,

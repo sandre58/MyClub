@@ -228,18 +228,12 @@ export function AddPhaseDialog({
   }, [open, resetDiscard]);
 
   const mutation = useMutation({
-    mutationFn: () => {
-      // Birth always seeds Championship matchdayCount = 1 (not a product birth param).
-      const birth =
-        skeleton.format === 'Championship'
-          ? { ...skeleton, matchdayCount: 1 }
-          : skeleton;
-      return addCompetitionStage(competitionId, {
-        format: birth.format,
+    mutationFn: () =>
+      addCompetitionStage(competitionId, {
+        format: skeleton.format,
         name: name.trim(),
-        ...skeletonPayload(birth),
-      });
-    },
+        ...skeletonPayload(skeleton),
+      }),
     onSuccess: async (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(competitionId),
@@ -405,7 +399,6 @@ export function EditSkeletonDialog({
   const [confirmRebuild, setConfirmRebuild] = useState(false);
   const [skeleton, setSkeleton] = useState(() => ({
     ...defaultSkeletonForm(format),
-    matchdayCount: Math.max(1, stage.matchdayCount || 1),
     groupCount: Math.max(2, stage.groupCount || 2),
     participantsPerGroup: Math.max(2, stage.placesPerGroup || 2),
     bracketSize: Math.max(2, stage.slotCount || 4),
@@ -423,7 +416,6 @@ export function EditSkeletonDialog({
     setConfirmRebuild(false);
     setSkeleton({
       ...defaultSkeletonForm(kind),
-      matchdayCount: Math.max(1, stage.matchdayCount || 1),
       groupCount: Math.max(2, stage.groupCount || 2),
       participantsPerGroup: Math.max(2, stage.placesPerGroup || 2),
       bracketSize: Math.max(2, stage.slotCount || 4),

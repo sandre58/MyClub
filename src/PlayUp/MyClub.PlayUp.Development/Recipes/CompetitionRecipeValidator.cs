@@ -35,13 +35,8 @@ public static class CompetitionRecipeValidator
         };
     }
 
-    private static StructureIntent ValidateChampionship(CompetitionRecipe recipe)
-    {
-        var matchdays = recipe.MatchdayCount ?? 1;
-        return matchdays < 1
-            ? throw new InvalidOperationException("Championship requires MatchdayCount >= 1.")
-            : StructureIntent.Championship(matchdays, recipe.StageName, recipe.MatchGenerationFormat);
-    }
+    private static StructureIntent ValidateChampionship(CompetitionRecipe recipe) =>
+        StructureIntent.Championship(recipe.StageName, recipe.MatchGenerationFormat);
 
     private static StructureIntent ValidateGroups(CompetitionRecipe recipe)
     {

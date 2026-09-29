@@ -25,9 +25,6 @@ public sealed record CompetitionRecipe
     /// <summary>Gets the optional primary stage name.</summary>
     public string? StageName { get; init; }
 
-    /// <summary>Gets championship matchday count (Championship).</summary>
-    public int? MatchdayCount { get; init; }
-
     /// <summary>
     /// Gets Championship / Groups match generation format (default SingleRoundRobin).
     /// </summary>

@@ -51,7 +51,6 @@ public sealed class RandomScenario : IScenario
                 DisplayName = "Random championship",
                 Format = RecipeFormat.Championship,
                 TeamCount = 8,
-                MatchdayCount = 7,
                 StageName = "Championnat"
             },
             1 => new CompetitionRecipe

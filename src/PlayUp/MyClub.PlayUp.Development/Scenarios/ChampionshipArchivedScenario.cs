@@ -36,7 +36,6 @@ public sealed class ChampionshipArchivedScenario : IScenario
         DisplayName = "Championnat Archived",
         Format = RecipeFormat.Championship,
         TeamCount = 8,
-        MatchdayCount = 7,
         StageName = "Championnat"
     };
 

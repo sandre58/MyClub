@@ -828,7 +828,6 @@ export interface RemoveCompetitionStageResponse {
 export type AddCompetitionStageRequest = {
   format: StructureFormatKind | string;
   name: string;
-  matchdayCount?: number | null;
   groupCount?: number | null;
   participantsPerGroup?: number | null;
   bracketSize?: number | null;
@@ -847,7 +846,6 @@ export interface AddCompetitionStageResponse {
 export type RebuildStageStructureRequest = {
   format: StructureFormatKind | string;
   stageName?: string | null;
-  matchdayCount?: number | null;
   groupCount?: number | null;
   participantsPerGroup?: number | null;
   bracketSize?: number | null;
@@ -1073,7 +1071,6 @@ export interface ReplaceRegulationRequest {
 export type ConfigureStructureRequest = {
   format: StructureFormatKind | string;
   stageName?: string | null;
-  matchdayCount?: number | null;
   groupCount?: number | null;
   participantsPerGroup?: number | null;
   bracketSize?: number | null;

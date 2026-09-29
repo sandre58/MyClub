@@ -104,7 +104,7 @@ internal static class StructureSkeleton
         switch (intent.Format)
         {
             case StructureFormatKind.Championship:
-                BuildChampionship(stage, intent.MatchdayCount, clock);
+                BuildChampionship(stage, clock);
                 break;
             case StructureFormatKind.Groups:
                 BuildGroups(stage, intent.GroupCount, intent.ParticipantsPerGroup, clock);
@@ -163,9 +163,12 @@ internal static class StructureSkeleton
         stage.SeedStandingRules(standingDefaults, clock);
     }
 
-    private static void BuildChampionship(Stage stage, int matchdayCount, IClock clock)
+    private static void BuildChampionship(Stage stage, IClock clock)
     {
-        for (var number = 1; number <= matchdayCount; number++)
+        // Seed technique minimal du skeleton. Ne fait pas partie de StructureIntent
+        // et ne représente pas le nombre de journées du championnat.
+        const int InitialMatchdaySeedCount = 1;
+        for (var number = 1; number <= InitialMatchdaySeedCount; number++)
         {
             stage.AddMatchday(number, clock);
         }

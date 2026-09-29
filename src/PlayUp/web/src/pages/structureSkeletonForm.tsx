@@ -6,7 +6,6 @@ import {
 
 export type SkeletonFormState = {
   format: StructureFormatKind;
-  matchdayCount: number;
   groupCount: number;
   participantsPerGroup: number;
   bracketSize: number;
@@ -19,7 +18,6 @@ export function defaultSkeletonForm(
 ): SkeletonFormState {
   return {
     format,
-    matchdayCount: 1,
     groupCount: 2,
     participantsPerGroup: 2,
     bracketSize: 4,
@@ -30,8 +28,6 @@ export function defaultSkeletonForm(
 
 export function skeletonPayload(state: SkeletonFormState) {
   return {
-    matchdayCount:
-      state.format === 'Championship' ? state.matchdayCount : null,
     groupCount: state.format === 'Groups' ? state.groupCount : null,
     participantsPerGroup:
       state.format === 'Groups' ? state.participantsPerGroup : null,
@@ -51,7 +47,7 @@ export function isPowerOfTwo(value: number): boolean {
 export function skeletonStepValid(state: SkeletonFormState): boolean {
   switch (state.format) {
     case 'Championship':
-      return state.matchdayCount >= 1;
+      return true;
     case 'Groups':
       return state.groupCount >= 2 && state.participantsPerGroup >= 2;
     case 'Cup':
@@ -147,22 +143,6 @@ export function SkeletonFields({
             </option>
           </select>
           <span className="caption">{t('structure.matchGenerationHint')}</span>
-        </label>
-      )}
-
-      {state.format === 'Championship' && (
-        <label className="ds-field">
-          <span className="ds-field__label">{t('structure.matchdayCount')}</span>
-          <input
-            className="ds-input"
-            type="number"
-            min={1}
-            value={state.matchdayCount}
-            onChange={(event) =>
-              set('matchdayCount', Number(event.target.value) || 1)
-            }
-            required
-          />
         </label>
       )}
 

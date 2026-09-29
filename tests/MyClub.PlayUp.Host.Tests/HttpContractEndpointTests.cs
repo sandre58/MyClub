@@ -49,7 +49,7 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
         await AddEntriesAsync(client, competitionId, 4);
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/structure",
-            new ConfigureStructureRequest("Championship", MatchdayCount: 1));
+            new ConfigureStructureRequest("Championship"));
         structureResponse.EnsureSuccessStatusCode();
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;

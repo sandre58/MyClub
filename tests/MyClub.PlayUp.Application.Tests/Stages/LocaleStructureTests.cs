@@ -28,20 +28,23 @@ public sealed class LocaleStructureTests
         var first = ConfigureStructure.Execute(
             competition,
             primaryStage: null,
-            StructureIntent.Championship(2),
+            StructureIntent.Championship(),
             _clock);
         first.StageCreated.Should().BeTrue();
+
+        // Pre-Materialize seed.
+        first.Stage.Matchdays.Should().HaveCount(1);
 
         var rebuilt = ConfigureStructure.Execute(
             competition,
             first.Stage,
-            StructureIntent.Championship(3, "Saison"),
+            StructureIntent.Championship(stageName: "Saison"),
             _clock);
 
         rebuilt.StageCreated.Should().BeFalse();
         rebuilt.RebuildImpact.Should().NotBeNull();
-        rebuilt.RebuildImpact!.ClearedMatchdays.Should().Be(2);
-        rebuilt.Stage.Matchdays.Should().HaveCount(3);
+        rebuilt.RebuildImpact!.ClearedMatchdays.Should().Be(1);
+        rebuilt.Stage.Matchdays.Should().HaveCount(1);
         rebuilt.Stage.Name.Value.Should().Be("Saison");
     }
 

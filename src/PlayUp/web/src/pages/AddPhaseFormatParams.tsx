@@ -18,7 +18,7 @@ type Props = {
 
 /**
  * Type-specific birth params for AddPhaseDialog (flat flow, DS controls only).
- * Championship matchdayCount stays at default 1 — not exposed at birth.
+ * Championship MatchdayCount is not part of StructureIntent (skeleton seed is internal).
  */
 export function AddPhaseFormatParams({ state, onChange }: Props) {
   const { t } = useTranslation('structure');

@@ -13,13 +13,14 @@ namespace MyClub.PlayUp.Application.Competitions;
 /// </summary>
 /// <remarks>
 /// Not a Domain concept. Factories validate format-specific parameters before Domain mutation.
+/// Championship matchday seed is a construction constant in <see cref="StructureSkeleton"/> —
+/// not part of this contract.
 /// </remarks>
 public sealed class StructureIntent
 {
     private StructureIntent(
         StructureFormatKind format,
         string stageName,
-        int matchdayCount,
         int groupCount,
         int participantsPerGroup,
         int bracketSize,
@@ -28,7 +29,6 @@ public sealed class StructureIntent
     {
         Format = format;
         StageName = stageName;
-        MatchdayCount = matchdayCount;
         GroupCount = groupCount;
         ParticipantsPerGroup = participantsPerGroup;
         BracketSize = bracketSize;
@@ -41,9 +41,6 @@ public sealed class StructureIntent
 
     /// <summary>Gets the primary stage display name.</summary>
     public string StageName { get; }
-
-    /// <summary>Gets championship matchday count (Championship only).</summary>
-    public int MatchdayCount { get; }
 
     /// <summary>Gets group count (Groups only).</summary>
     public int GroupCount { get; }
@@ -63,28 +60,21 @@ public sealed class StructureIntent
     public int SwissRoundCount { get; }
 
     /// <summary>
-    /// Builds a championship intent (matchdays only; fixtures/matches deferred to Slice 3).
+    /// Builds a championship intent (seed matchday is skeleton-internal; fixtures deferred).
     /// </summary>
-    /// <param name="matchdayCount">Number of matchdays (≥ 1).</param>
     /// <param name="stageName">Optional stage name.</param>
     /// <param name="matchGenerationFormat">Single or double round-robin (default single).</param>
     /// <returns>Validated intent.</returns>
     public static StructureIntent Championship(
-        int matchdayCount = 1,
         string? stageName = null,
         MatchGenerationFormat matchGenerationFormat = MatchGenerationFormat.SingleRoundRobin) =>
-        matchdayCount < 1
-            ? throw new ApplicationFailureException(
-                "Championship requires at least one matchday.",
-                ApplicationErrorCodes.InvalidStructureIntent)
-            : !Enum.IsDefined(matchGenerationFormat)
+        !Enum.IsDefined(matchGenerationFormat)
             ? throw new ApplicationFailureException(
                 $"Unknown match generation format '{matchGenerationFormat}'.",
                 ApplicationErrorCodes.InvalidStructureIntent)
             : new StructureIntent(
                 StructureFormatKind.Championship,
                 NormalizeStageName(stageName, "Championnat"),
-                matchdayCount,
                 groupCount: 0,
                 participantsPerGroup: 0,
                 bracketSize: 0,
@@ -123,7 +113,6 @@ public sealed class StructureIntent
                 : new StructureIntent(
                     StructureFormatKind.Groups,
                     NormalizeStageName(stageName, "Phase de groupes"),
-                    matchdayCount: 1,
                     groupCount,
                     participantsPerGroup,
                     bracketSize: 0,
@@ -144,7 +133,6 @@ public sealed class StructureIntent
             : new StructureIntent(
                 StructureFormatKind.Cup,
                 NormalizeStageName(stageName, "Coupe"),
-                matchdayCount: 0,
                 groupCount: 0,
                 participantsPerGroup: 0,
                 bracketSize,
@@ -165,7 +153,6 @@ public sealed class StructureIntent
             : new StructureIntent(
                 StructureFormatKind.Swiss,
                 NormalizeStageName(stageName, "Swiss"),
-                matchdayCount: 0,
                 groupCount: 0,
                 participantsPerGroup: 0,
                 bracketSize: 0,

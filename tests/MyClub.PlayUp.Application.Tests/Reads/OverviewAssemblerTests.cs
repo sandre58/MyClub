@@ -547,7 +547,7 @@ public sealed class OverviewAssemblerTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(2),
+            StructureIntent.Championship(),
             _clock);
 
         var view = OverviewAssembler.Assemble(
@@ -1702,7 +1702,7 @@ public sealed class OverviewAssemblerTests
         var configured = ConfigureStructure.Execute(
             competition,
             null,
-            StructureIntent.Championship(2),
+            StructureIntent.Championship(),
             _clock);
         competition.Prepare(_clock);
 

@@ -30,7 +30,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
 
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/structure",
-            new ConfigureStructureRequest("Championship", MatchdayCount: 1));
+            new ConfigureStructureRequest("Championship"));
         structureResponse.EnsureSuccessStatusCode();
         var org = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure;

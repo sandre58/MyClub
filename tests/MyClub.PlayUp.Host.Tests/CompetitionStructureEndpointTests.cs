@@ -51,14 +51,16 @@ public sealed class CompetitionStructureEndpointTests(HostPostgresFixture fixtur
 
         using var structureResponse = await client.PostAsJsonAsync(
             $"/competitions/{competitionId}/structure",
-            new ConfigureStructureRequest("Championship", MatchdayCount: 2));
+            new ConfigureStructureRequest("Championship"));
         structureResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var structured = await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options);
         structured.Should().NotBeNull();
         structured.StageCreated.Should().BeTrue();
         structured.RebuildImpact.Should().BeNull();
         structured.Structure.Format.Kind.Should().Be(StructureFormatKind.Championship);
-        structured.Structure.Structure.MatchdayCount.Should().Be(2);
+
+        // Pre-Materialize: skeleton seed only.
+        structured.Structure.Structure.MatchdayCount.Should().Be(1);
         structured.Structure.Readiness.ReadyForNextSlice.Should().BeTrue();
         structured.Structure.Readiness.ReadyForSchedulePath.Should().BeTrue();
 
@@ -67,7 +69,7 @@ public sealed class CompetitionStructureEndpointTests(HostPostgresFixture fixtur
         var reloaded = await getResponse.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         reloaded.Should().NotBeNull();
         reloaded.Participants.ActiveCount.Should().Be(2);
-        reloaded.Structure.MatchdayCount.Should().Be(2);
+        reloaded.Structure.MatchdayCount.Should().Be(1);
         reloaded.Format.PrimaryStageId.Should().NotBeNull();
     }
 

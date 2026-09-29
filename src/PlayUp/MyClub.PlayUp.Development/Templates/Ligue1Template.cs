@@ -32,7 +32,6 @@ public sealed class Ligue1Template : ICompetitionTemplate
         DisplayName = "Ligue 1",
         Format = RecipeFormat.Championship,
         TeamCount = 18,
-        MatchdayCount = 34,
         MatchGenerationFormat = MatchGenerationFormat.DoubleRoundRobin,
         StageName = "Championnat",
         TeamNames = TeamNameSource.Dataset,

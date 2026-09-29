@@ -975,7 +975,6 @@ function StructureEditorDialog({
     data.format.kind ?? 'Championship',
   );
   const [stageName, setStageName] = useState('');
-  const [matchdayCount, setMatchdayCount] = useState(1);
   const [groupCount, setGroupCount] = useState(2);
   const [participantsPerGroup, setParticipantsPerGroup] = useState(2);
   const [bracketSize, setBracketSize] = useState(4);
@@ -987,7 +986,6 @@ function StructureEditorDialog({
     if (open) {
       setFormat(data.format.kind ?? 'Championship');
       setStageName('');
-      setMatchdayCount(1);
       setGroupCount(2);
       setParticipantsPerGroup(2);
       setBracketSize(4);
@@ -1001,7 +999,6 @@ function StructureEditorDialog({
       configureStructure(data.competitionId, {
         format,
         stageName: stageName.trim() || null,
-        matchdayCount: format === 'Championship' ? matchdayCount : null,
         groupCount: format === 'Groups' ? groupCount : null,
         participantsPerGroup: format === 'Groups' ? participantsPerGroup : null,
         bracketSize: format === 'Cup' ? bracketSize : null,
@@ -1128,20 +1125,6 @@ function StructureEditorDialog({
               <span id="match-generation-hint" className="caption">
                 {t('structure.matchGenerationHint')}
               </span>
-            </label>
-          )}
-          {format === 'Championship' && (
-            <label className="field">
-              {t('structure.matchdayCount')}
-              <input
-                type="number"
-                min={1}
-                value={matchdayCount}
-                onChange={(event) =>
-                  setMatchdayCount(Number(event.target.value) || 1)
-                }
-                required
-              />
             </label>
           )}
           {format === 'Groups' && (

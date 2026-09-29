@@ -88,11 +88,13 @@ public sealed class StructureUseCaseTests
         var result = ConfigureStructure.Execute(
             competition,
             primaryStage: null,
-            StructureIntent.Championship(3),
+            StructureIntent.Championship(),
             _clock);
 
         result.StageCreated.Should().BeTrue();
-        result.Stage.Matchdays.Should().HaveCount(3);
+
+        // Pre-Materialize: skeleton seed only (not calendar J).
+        result.Stage.Matchdays.Should().HaveCount(1);
         result.Stage.Groups.Should().BeEmpty();
         result.Stage.Rounds.Should().BeEmpty();
         competition.StageIds.Should().ContainSingle().Which.Should().Be(result.Stage.Id);
