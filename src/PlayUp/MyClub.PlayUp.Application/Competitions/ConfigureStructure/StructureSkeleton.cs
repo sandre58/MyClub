@@ -123,7 +123,9 @@ internal static class StructureSkeleton
 
         AlignStandingRulesForIntent(stage, intent.Format, standingDefaults, clock);
 
-        if (intent.Format is not StructureFormatKind.Swiss)
+        // Domain gate: MatchGenerationFormat only on RR topology (Championship / Groups).
+        // Cup / Swiss must not call SetMatchGenerationFormat (rounds / SwissSettings).
+        if (intent.Format is StructureFormatKind.Championship or StructureFormatKind.Groups)
         {
             stage.SetMatchGenerationFormat(intent.MatchGenerationFormat);
         }
@@ -167,8 +169,8 @@ internal static class StructureSkeleton
     {
         // Seed technique minimal du skeleton. Ne fait pas partie de StructureIntent
         // et ne représente pas le nombre de journées du championnat.
-        const int InitialMatchdaySeedCount = 1;
-        for (var number = 1; number <= InitialMatchdaySeedCount; number++)
+        const int initialMatchdaySeedCount = 1;
+        for (var number = 1; number <= initialMatchdaySeedCount; number++)
         {
             stage.AddMatchday(number, clock);
         }

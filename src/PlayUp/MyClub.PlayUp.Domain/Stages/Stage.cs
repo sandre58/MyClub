@@ -946,8 +946,12 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Sets how Championship / Groups matches are generated. No-op when unchanged.
+    /// Sets how RR (matchday-based) matches are generated. No-op when unchanged.
     /// </summary>
+    /// <remarks>
+    /// Topology gate (not product format names): forbidden when Swiss or when knockout rounds exist.
+    /// Allowed for unstructured Draft, Championship (matchdays), and Groups (+ matchdays).
+    /// </remarks>
     /// <param name="format">The match generation format.</param>
     public void SetMatchGenerationFormat(MatchGenerationFormat format)
     {
@@ -965,6 +969,7 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.InvalidMatchGenerationFormat);
         }
 
+        EnsureMatchGenerationFormatApplicable();
         MatchGenerationFormat = format;
     }
 
@@ -1138,6 +1143,10 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Sets or clears structural places-per-group (Groups form capacity). Draft/Ready only.
     /// Independent of <see cref="ReplaceDrawRules"/> — clearing Draw does not clear this value.
     /// </summary>
+    /// <remarks>
+    /// Non-null requires at least one Group. Clearing (<see langword="null"/>) is always allowed
+    /// so Structure Clear can reset capacity after groups are removed.
+    /// </remarks>
     /// <param name="placesPerGroup">Places per group (≥ 2), or <see langword="null"/> to clear.</param>
     public void SetPlacesPerGroup(int? placesPerGroup)
     {
@@ -1153,6 +1162,13 @@ public sealed class Stage : AggregateRoot<StageId>
                     "Places per group must be at least 2.",
                     StageErrorCodes.InvalidConfiguration);
             default:
+                if (_groups.Count == 0)
+                {
+                    throw new DomainException(
+                        "Places per group requires at least one group.",
+                        StageErrorCodes.PlacesPerGroupNotApplicable);
+                }
+
                 PlacesPerGroup = placesPerGroup;
                 break;
         }
@@ -2593,6 +2609,26 @@ public sealed class Stage : AggregateRoot<StageId>
             StageErrorCodes.InvalidComposition);
     }
 
+    /// <summary>
+    /// MatchGenerationFormat applies only to RR topology (no Swiss, no knockout rounds).
+    /// </summary>
+    private void EnsureMatchGenerationFormatApplicable()
+    {
+        if (IsSwiss)
+        {
+            throw new DomainException(
+                "Match generation format cannot be set when Swiss settings are present.",
+                StageErrorCodes.MatchGenerationFormatNotApplicable);
+        }
+
+        if (_rounds.Count > 0)
+        {
+            throw new DomainException(
+                "Match generation format cannot be set when knockout rounds are present.",
+                StageErrorCodes.MatchGenerationFormatNotApplicable);
+        }
+    }
+
     private void EnsureSwissByeMutable()
     {
         if (Status is StageStatus.Completed)
@@ -2691,9 +2727,6 @@ public sealed class Stage : AggregateRoot<StageId>
             $"Confrontation source '{sourcePairKey}' was not found on the stage form.",
             errorCode);
     }
-
-    private void EnsureProgressionPathSource(ProgressionPath path) =>
-        EnsureStructuralConfrontationSource(path.SourcePairKey);
 
     /// <summary>
     /// Winner Sorties must exit the championship-path terminal round (not an intermediate KO round).

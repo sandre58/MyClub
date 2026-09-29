@@ -223,6 +223,17 @@ public static class StageErrorCodes
     public const string InvalidMatchGenerationFormat = "Stage.InvalidMatchGenerationFormat";
 
     /// <summary>
+    /// Gets the code when MatchGenerationFormat cannot be set for the current topology
+    /// (Swiss or knockout rounds — RR property only).
+    /// </summary>
+    public const string MatchGenerationFormatNotApplicable = "Stage.MatchGenerationFormatNotApplicable";
+
+    /// <summary>
+    /// Gets the code when PlacesPerGroup cannot be set because the stage has no Groups.
+    /// </summary>
+    public const string PlacesPerGroupNotApplicable = "Stage.PlacesPerGroupNotApplicable";
+
+    /// <summary>
     /// Gets the code when Swiss settings are invalid or incompatible with stage composition.
     /// </summary>
     public const string SwissSettingsInvalid = "Stage.SwissSettingsInvalid";
