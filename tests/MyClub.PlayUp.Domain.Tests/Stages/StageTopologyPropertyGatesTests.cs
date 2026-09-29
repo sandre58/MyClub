@@ -133,4 +133,27 @@ public sealed class StageTopologyPropertyGatesTests
 
         stage.PlacesPerGroup.Should().BeNull();
     }
+
+    [Fact]
+    public void SetPlacesPerGroup_below_minimum_throws()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        stage.AddGroup("A", _clock);
+
+        var act = () => stage.SetPlacesPerGroup(1);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.InvalidConfiguration);
+    }
+
+    [Fact]
+    public void SetMatchGenerationFormat_unknown_enum_throws()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Champ"), SampleRegulations.Standard(), _clock);
+
+        var act = () => stage.SetMatchGenerationFormat((MatchGenerationFormat)99);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.InvalidMatchGenerationFormat);
+    }
 }

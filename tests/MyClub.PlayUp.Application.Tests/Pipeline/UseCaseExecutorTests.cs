@@ -267,6 +267,11 @@ public sealed class UseCaseExecutorTests
                 It.Is<IReadOnlyList<StageId>>(ids => ids.Count == 2 && ids.Contains(quarter.Id) && ids.Contains(semi.Id)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+
+        // Lot 8 anti-N+1: sibling stages must not be loaded one-by-one.
+        stages.Verify(
+            repository => repository.GetByIdForUpdateAsync(semi.Id, It.IsAny<CancellationToken>()),
+            Times.Never);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -312,6 +317,14 @@ public sealed class UseCaseExecutorTests
                 It.Is<IReadOnlyList<MatchId>>(ids => ids.Count == 1 && ids[0].Equals(scenario.Match.Id)),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+
+        // Lot 8 anti-N+1: destination stage + match come from batch loads only.
+        stages.Verify(
+            repository => repository.GetByIdForUpdateAsync(scenario.Destination.Id, It.IsAny<CancellationToken>()),
+            Times.Never);
+        matchRepo.Verify(
+            repository => repository.GetByIdForUpdateAsync(scenario.Match.Id, It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
