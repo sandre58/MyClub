@@ -4,7 +4,7 @@
  */
 
 .ds-home {
-  /* One lockup composition (v3): mark height = wordmark + gap + tagline.
+  /* One lockup composition: mark height = wordmark + gap + tagline.
        When the column is narrower, the whole lockup scales — proportions stay. */
   --home-wordmark-h: 5.375rem;
   --home-copy-gap: var(--space-8);
