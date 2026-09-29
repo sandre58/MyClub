@@ -7,8 +7,12 @@
 namespace MyClub.PlayUp.Domain.Common;
 
 /// <summary>
-/// Base type for domain events. Callers must supply <see cref="OccurredOn"/> via <see cref="IClock"/> or an explicit timestamp — never <c>DateTime.UtcNow</c>.
+/// Base type for domain events (V1: in-memory observation for tests/audit — not runtime integration).
+/// Callers must supply <see cref="OccurredOn"/> via <see cref="IClock"/> or an explicit timestamp — never <c>DateTime.UtcNow</c>.
 /// </summary>
+/// <remarks>
+/// Not persisted (Décision 9.1). Not dispatched in Application V1 (Décision D-06).
+/// </remarks>
 public abstract record DomainEvent : IDomainEvent
 {
     /// <summary>
