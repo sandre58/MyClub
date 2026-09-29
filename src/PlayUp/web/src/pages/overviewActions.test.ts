@@ -64,7 +64,7 @@ describe('resolveOverviewActionIntent', () => {
     });
   });
 
-  it('executes ApplyDraw for Slot/Group (empty fixtureIds)', () => {
+  it('executes ApplyDraw for Slot/Group (no body)', () => {
     const intent = resolveOverviewActionIntent(
       { code: 'ApplyDraw', guaranteed: false, stageId, drawId },
       overviewView(),

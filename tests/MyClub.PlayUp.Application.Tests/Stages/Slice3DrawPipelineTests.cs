@@ -38,7 +38,7 @@ public sealed class Slice3DrawPipelineTests
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
 
-        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(e => e.Id)], _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
         var inputs = DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group);
@@ -76,7 +76,7 @@ public sealed class Slice3DrawPipelineTests
         var stage = configured.Stage;
         stage.Slots.Should().HaveCount(4);
 
-        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(e => e.Id)], _clock);
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
@@ -107,7 +107,7 @@ public sealed class Slice3DrawPipelineTests
             StructureIntent.Cup(2),
             _clock);
         var stage = configured.Stage;
-        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(e => e.Id)], _clock);
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
         ConfigureDrawInputs.Execute(

@@ -264,7 +264,7 @@ public sealed class ProgressionRulesTests
     {
         var existing = stage.CompositionEntries.Select(e => e.EntryId).ToList();
         existing.Add(entryId);
-        stage.ReplaceCompositionEntries(existing, _clock);
+        stage.ReplaceAffectationAuthoring(existing, _clock);
         return entryId;
     }
 }

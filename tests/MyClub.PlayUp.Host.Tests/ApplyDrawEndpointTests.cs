@@ -33,9 +33,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         var seed = await SeedPublishedSlotDrawAsync(factory);
 
         using var client = factory.CreateClient();
-        using var response = await client.PostAsJsonAsync(
-            ApplyUri(seed.StageId, seed.DrawId),
-            new ApplyDrawRequest());
+        using var response = await client.PostAsync(ApplyUri(seed.StageId, seed.DrawId), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
@@ -54,9 +52,9 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
 
         using var client = factory.CreateClient();
-        using var response = await client.PostAsJsonAsync(
+        using var response = await client.PostAsync(
             ApplyUri(StageId.New(), DrawId.New()),
-            new ApplyDrawRequest());
+            content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
@@ -71,9 +69,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         var seed = await SeedDraftSlotDrawAsync(factory);
 
         using var client = factory.CreateClient();
-        using var response = await client.PostAsJsonAsync(
-            ApplyUri(seed.StageId, seed.DrawId),
-            new ApplyDrawRequest());
+        using var response = await client.PostAsync(ApplyUri(seed.StageId, seed.DrawId), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
@@ -93,9 +89,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         var seed = await SeedPublishedSlotDrawAsync(factory);
 
         using var client = factory.CreateClient();
-        using (var apply = await client.PostAsJsonAsync(
-                   ApplyUri(seed.StageId, seed.DrawId),
-                   new ApplyDrawRequest()))
+        using (var apply = await client.PostAsync(ApplyUri(seed.StageId, seed.DrawId), content: null))
         {
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }

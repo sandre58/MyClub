@@ -270,7 +270,7 @@ public sealed class StagePersistenceTests
             stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
 
             stage.AddSlot("W1");
-            stage.ReplaceCompositionEntries([entryA], _clock);
+            stage.ReplaceAffectationAuthoring([entryA], _clock);
             stage.AssignEntryToSlot("W1", entryA);
 
             stageId = stage.Id;

@@ -106,7 +106,7 @@ public static class StructureViewAssembler
     /// <summary>Replace or clear DrawRules.</summary>
     public const string ActionReplaceDrawRules = "ReplaceDrawRules";
 
-    /// <summary>Replace root composition entry set (Affectation).</summary>
+    /// <summary>Replace Affectation authoring set (manual population producers).</summary>
     public const string ActionReplaceAffectationAuthoring = "ReplaceAffectationAuthoring";
 
     /// <summary>Replace or clear stage default TieFormat.</summary>
@@ -484,7 +484,8 @@ public static class StructureViewAssembler
         competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
 
     /// <summary>
-    /// Groups N = groupCount × placesPerGroup (form fact). Legacy bridge: PotRules only if PlacesPerGroup unset.
+    /// Groups Places N = groupCount × <see cref="Stage.PlacesPerGroup"/> (form fact).
+    /// Draw <c>NumberOfPots</c> is never used here — pots are tirage-only.
     /// </summary>
     private static int? ResolveGroupsPlaces(Stage stage)
     {
@@ -493,8 +494,7 @@ public static class StructureViewAssembler
             return null;
         }
 
-        var perGroup = stage.PlacesPerGroup
-                       ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
+        var perGroup = stage.PlacesPerGroup;
         return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
     }
 

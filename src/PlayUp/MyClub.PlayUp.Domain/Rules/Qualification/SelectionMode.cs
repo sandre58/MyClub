@@ -27,14 +27,15 @@ public enum SelectionMode
     Bottom = 2,
 
     /// <summary>
-    /// Alias of <see cref="Top"/>: the best N participants of the supplied standing
-    /// (not a cross-group Best Third mechanism).
+    /// Obsolete alias of <see cref="Top"/> (JSON int 3). Normalized to <see cref="Top"/> on construction.
     /// </summary>
+    [Obsolete("Use Top. Persisted/JSON value 3 is normalized to Top.")]
     Best = 3,
 
     /// <summary>
-    /// Alias of <see cref="Bottom"/>: the worst N participants of the supplied standing.
+    /// Obsolete alias of <see cref="Bottom"/> (JSON int 4). Normalized to <see cref="Bottom"/> on construction.
     /// </summary>
+    [Obsolete("Use Bottom. Persisted/JSON value 4 is normalized to Bottom.")]
     Worst = 4,
 
     /// <summary>

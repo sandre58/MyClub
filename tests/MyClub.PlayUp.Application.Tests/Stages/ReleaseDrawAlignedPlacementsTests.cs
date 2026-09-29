@@ -42,7 +42,7 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         stage.CancelDraw(draw.Id, _clock);
 
         var entryB = EntryId.New();
-        stage.ReplaceCompositionEntries([entryA, entryB], _clock);
+        stage.ReplaceAffectationAuthoring([entryA, entryB], _clock);
         stage.ApplyResolvedEntry("S1", entryB, _clock);
         stage.ClearDomainEvents();
 
@@ -62,7 +62,7 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         stage.CancelDraw(draw.Id, _clock);
 
         var entryB = EntryId.New();
-        stage.ReplaceCompositionEntries([entryA, entryB], _clock);
+        stage.ReplaceAffectationAuthoring([entryA, entryB], _clock);
         stage.AssignEntryToSlot("S1", entryB);
         var directs = stage.DirectAssignments.ToArray();
         stage.ClearDomainEvents();
@@ -82,7 +82,7 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         var stage = CreateStage();
         var group = stage.AddGroup("A", _clock);
         var entry = EntryId.New();
-        stage.ReplaceCompositionEntries([entry], _clock);
+        stage.ReplaceAffectationAuthoring([entry], _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]));
         stage.RecordDrawResolution(
@@ -122,7 +122,7 @@ public sealed class ReleaseDrawAlignedPlacementsTests
     {
         stage.AddSlot(slotKey);
         var entry = EntryId.New();
-        stage.ReplaceCompositionEntries([entry], _clock);
+        stage.ReplaceAffectationAuthoring([entry], _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(

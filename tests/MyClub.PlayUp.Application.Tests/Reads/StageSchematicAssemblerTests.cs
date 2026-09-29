@@ -75,7 +75,7 @@ public sealed class StageSchematicAssemblerTests
         stage.AddSlot("SF1-A");
         stage.AddSlot("SF1-B");
         stage.ReplaceBracketPairs([new BracketPair("P1", "SF1-A", "SF1-B")]);
-        stage.ReplaceCompositionEntries([alpha.Id], _clock);
+        stage.ReplaceAffectationAuthoring([alpha.Id], _clock);
         stage.AssignEntryToSlot("SF1-A", alpha.Id);
         var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", "SF1-B", "P1");
 
@@ -161,9 +161,9 @@ public sealed class StageSchematicAssemblerTests
         var e2 = competition.AddEntry(TeamId.New(), "Two", _clock);
         var e3 = competition.AddEntry(TeamId.New(), "Three", _clock);
         var stage = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
-        stage.SetPlacesPerGroup(4);
         var groupA = stage.AddGroup("A", _clock);
         var groupB = stage.AddGroup("B", _clock);
+        stage.SetPlacesPerGroup(4);
         stage.AssignEntryToGroup(groupA.Id, e1.Id);
         stage.AssignEntryToGroup(groupA.Id, e2.Id);
         stage.AssignEntryToGroup(groupA.Id, e3.Id);
@@ -202,9 +202,9 @@ public sealed class StageSchematicAssemblerTests
         source.AddMatchday(1, _clock);
 
         var dest = Stage.Create(competition.Id, new StageName("Poules 2"), SampleRegulations.Standard(), _clock);
-        dest.SetPlacesPerGroup(4);
         var destA = dest.AddGroup("Poule A", _clock);
         dest.AddGroup("Poule B", _clock);
+        dest.SetPlacesPerGroup(4);
 
         var intent = new QualificationIntent(
             IntentId.New(),
@@ -243,7 +243,7 @@ public sealed class StageSchematicAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("Ligue"), SampleRegulations.Standard(), _clock);
         stage.AddMatchday(1, _clock);
 
-        stage.ReplaceCompositionEntries(
+        stage.ReplaceAffectationAuthoring(
             [
                 competition.Entries[0].Id,
                 competition.Entries[1].Id
@@ -271,8 +271,13 @@ public sealed class StageSchematicAssemblerTests
         source.AddSlot("S2");
         source.AddSlot("S3");
         source.AddSlot("S4");
-        var early = source.AddFixture(source.Rounds[0].Id, _clock, "S1", "S2");
-        var late = source.AddFixture(source.Rounds[0].Id, _clock, "S3", "S4");
+        source.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "S1", "S2"),
+            new BracketPair("P2", "S3", "S4")
+        ]);
+        var early = source.AddFixture(source.Rounds[0].Id, _clock, "S1", "S2", "P1");
+        var late = source.AddFixture(source.Rounds[0].Id, _clock, "S3", "S4", "P2");
 
         var target = Stage.Create(competition.Id, new StageName("R16"), SampleRegulations.Standard(), _clock);
         target.AddRound("R16", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
@@ -352,7 +357,7 @@ public sealed class StageSchematicAssemblerTests
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         stage.AddSlot("S1");
         stage.AddSlot("S2");
-        stage.ReplaceCompositionEntries([alpha.Id, beta.Id], _clock);
+        stage.ReplaceAffectationAuthoring([alpha.Id, beta.Id], _clock);
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([alpha.Id, beta.Id]));
@@ -386,7 +391,7 @@ public sealed class StageSchematicAssemblerTests
         stage.AddRound("R32", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         stage.AddSlot("S1");
         stage.AddSlot("S2");
-        stage.ReplaceCompositionEntries([alpha.Id, beta.Id], _clock);
+        stage.ReplaceAffectationAuthoring([alpha.Id, beta.Id], _clock);
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([alpha.Id, beta.Id]));
@@ -445,7 +450,7 @@ public sealed class StageSchematicAssemblerTests
         competition.AddEntry(TeamId.New(), "B", _clock);
         var stage = Stage.Create(competition.Id, new StageName("Suisse"), SampleRegulations.Standard(), _clock);
         stage.SetSwissSettings(new SwissSettings(roundCount: 5));
-        stage.ReplaceCompositionEntries(
+        stage.ReplaceAffectationAuthoring(
             [competition.Entries[0].Id, competition.Entries[1].Id],
             _clock);
 

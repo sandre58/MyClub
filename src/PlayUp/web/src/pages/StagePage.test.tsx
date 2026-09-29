@@ -712,9 +712,7 @@ describe('StagePage draws', () => {
     await user.click(publishButton);
 
     await waitFor(() => {
-      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, slotDrawId, {
-        fixtureIds: [],
-      });
+      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, slotDrawId);
       expect(screen.getByText('Publié')).toBeInTheDocument();
       expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
     });
@@ -766,7 +764,7 @@ describe('StagePage draws', () => {
     );
   });
 
-  it('Apply Slot confirms then posts empty fixtureIds and shows Applied', async () => {
+  it('Apply Slot confirms then posts apply and shows Applied', async () => {
     const user = userEvent.setup();
     let applied = false;
 
@@ -794,9 +792,7 @@ describe('StagePage draws', () => {
     await confirmApplyInDialog(user);
 
     await waitFor(() => {
-      expect(applyDraw).toHaveBeenCalledWith(stageId, slotDrawId, {
-        fixtureIds: [],
-      });
+      expect(applyDraw).toHaveBeenCalledWith(stageId, slotDrawId);
       expect(screen.getByText('Appliqué')).toBeInTheDocument();
     });
   });

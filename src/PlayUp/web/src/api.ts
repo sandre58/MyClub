@@ -6,7 +6,6 @@ import type {
   AddCompetitionStageResponse,
   EntryIdsRequest,
   MemberIdsRequest,
-  ApplyDrawRequest,
   OverviewView,
   CompetitionListItem,
   CompetitionDetail,
@@ -802,11 +801,9 @@ export function publishDraw(stageId: string, drawId: string): Promise<void> {
 export function publishAndApplyDraw(
   stageId: string,
   drawId: string,
-  request: ApplyDrawRequest = { fixtureIds: [] },
 ): Promise<void> {
   return postNoContent(
     `/stages/${stageId}/draws/${drawId}/publish-and-apply`,
-    request,
   );
 }
 
@@ -907,12 +904,8 @@ export function isDrawGenerateFailedError(
 }
 
 /** POST /stages/{stageId}/draws/{drawId}/apply → 204 */
-export function applyDraw(
-  stageId: string,
-  drawId: string,
-  request: ApplyDrawRequest,
-): Promise<void> {
-  return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`, request);
+export function applyDraw(stageId: string, drawId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`);
 }
 
 /** POST /stages/{stageId}/matches/materialize → MaterializeMatchesResponse */

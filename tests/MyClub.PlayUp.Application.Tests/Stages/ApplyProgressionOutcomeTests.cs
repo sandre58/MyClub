@@ -525,7 +525,7 @@ public sealed class ApplyProgressionOutcomeTests
         var source = CreateKnockoutStage(competitionId, "QF", ["QF1-A", "QF1-B"]);
         var destination = CreateKnockoutStage(competitionId, "SF", ["SF1-A", "SF1-B"]);
         var directEntry = EntryId.New();
-        destination.ReplaceCompositionEntries([directEntry], _clock);
+        destination.ReplaceAffectationAuthoring([directEntry], _clock);
         destination.AssignEntryToSlot("SF1-A", directEntry);
         var home = EntryId.New();
         var away = EntryId.New();

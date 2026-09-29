@@ -14,8 +14,7 @@ namespace MyClub.PlayUp.Domain.Qualification;
 /// <summary>
 /// Pure qualification helper: selects entries from a standing and maps a path to a population instruction.
 /// Does not mutate aggregates or calculate standings.
-/// <see cref="SelectionMode.Best"/> is an alias of <see cref="SelectionMode.Top"/>;
-/// <see cref="SelectionMode.Worst"/> is an alias of <see cref="SelectionMode.Bottom"/>.
+/// Best/Worst are obsolete aliases of Top/Bottom (normalized in <see cref="QualificationSelection"/>).
 /// Optional <see cref="QualificationPath.Condition"/> gates a single selected row (skip when false).
 /// </summary>
 public static class QualificationApplier
@@ -37,8 +36,8 @@ public static class QualificationApplier
             : selection.Mode switch
         {
             SelectionMode.Position => SelectPosition(rows, selection.Value),
-            SelectionMode.Top or SelectionMode.Best => SelectTop(rows, selection.Value),
-            SelectionMode.Bottom or SelectionMode.Worst => SelectBottom(rows, selection.Value),
+            SelectionMode.Top => SelectTop(rows, selection.Value),
+            SelectionMode.Bottom => SelectBottom(rows, selection.Value),
             SelectionMode.Range => SelectRange(rows, selection.Value, selection.EndValue!.Value),
             _ => throw new DomainException(
                 "Selection mode is unknown.",

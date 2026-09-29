@@ -281,12 +281,10 @@ export function StructureProgressionDialog({
       if (intents.length === 0) {
         return replaceStageProgressionRules(stage.stageId, {
           intents: null,
-          paths: null,
         });
       }
       return replaceStageProgressionRules(stage.stageId, {
         intents: intents.map((draft, index) => toApiIntent(draft, index + 1)),
-        paths: null,
       });
     },
     onSuccess: async () => {

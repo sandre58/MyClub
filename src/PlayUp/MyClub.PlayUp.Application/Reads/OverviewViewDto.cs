@@ -165,7 +165,7 @@ public sealed record OverviewRegulationDimensionDto(
 /// <param name="StageId">Primary stage identity.</param>
 /// <param name="StageName">Display name.</param>
 /// <param name="HasDrawRules">Whether DrawRules are set.</param>
-/// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
+/// <param name="NumberOfPots">Draw PotRules only (tirage). Not Groups places / PlacesPerGroup.</param>
 /// <param name="HasQualificationRules">Whether QualificationRules are set.</param>
 /// <param name="QualificationPathCount">Path count when qualification rules exist.</param>
 /// <param name="HasProgressionRules">Whether ProgressionRules are set.</param>

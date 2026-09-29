@@ -14,6 +14,8 @@ using Xunit;
 
 namespace MyClub.PlayUp.Domain.Tests.Qualification;
 
+#pragma warning disable CS0618 // Best/Worst obsolete aliases normalized to Top/Bottom
+
 public sealed class QualificationApplierTests
 {
     private readonly EntryId _a = EntryId.New();

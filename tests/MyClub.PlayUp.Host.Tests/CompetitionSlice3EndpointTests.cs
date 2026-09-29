@@ -41,8 +41,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             null);
         materializeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
-        var view = await orgAfter.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
+        using var structureAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
+        var view = await structureAfter.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(6);
 
@@ -119,9 +119,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             null);
         publish.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        using var apply = await client.PostAsJsonAsync(
-            $"/stages/{stageId}/draws/{draw.DrawId}/apply",
-            new ApplyDrawRequest());
+        using var apply = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/apply", null);
         apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var materialize = await client.PostAsync(
@@ -129,8 +127,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             null);
         materialize.EnsureSuccessStatusCode();
 
-        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
-        var view = await orgAfter.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
+        using var structureAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
+        var view = await structureAfter.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(2);
     }
@@ -175,9 +173,7 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
 
         using var publish = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/publish", null);
         publish.EnsureSuccessStatusCode();
-        using var apply = await client.PostAsJsonAsync(
-            $"/stages/{stageId}/draws/{draw.DrawId}/apply",
-            new ApplyDrawRequest());
+        using var apply = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/apply", null);
         apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var materialize = await client.PostAsJsonAsync(
@@ -185,8 +181,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             new MaterializeCupFromOccupiedSlotsRequest(["P1", "P2"]));
         materialize.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        using var orgAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
-        var view = await orgAfter.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
+        using var structureAfter = await client.GetAsync($"/competitions/{competitionId}/structure");
+        var view = await structureAfter.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         view!.Readiness.ReadyForMatchOperation.Should().BeTrue();
         view.Readiness.AttachedMatchCount.Should().Be(2);
     }

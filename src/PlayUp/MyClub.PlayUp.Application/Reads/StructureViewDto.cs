@@ -125,7 +125,7 @@ public sealed record StructureRegulationSummaryDto(
 /// <param name="MatchdayCount">Matchdays.</param>
 /// <param name="SlotCount">Slots.</param>
 /// <param name="HasDrawRules">Whether stage DrawRules are set.</param>
-/// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
+/// <param name="NumberOfPots">Draw PotRules only (tirage). Never a substitute for <c>PlacesPerGroup</c>.</param>
 /// <param name="MatchGenerationFormat">Championship / Groups generation mode.</param>
 /// <param name="SwissRoundCount">Planned Swiss rounds K when Kind is Swiss.</param>
 public sealed record StructureTopologySummaryDto(
@@ -183,7 +183,7 @@ public sealed record StructureReadinessDto(
 /// <param name="LossPoints">Standing loss points when HasStandingRules.</param>
 /// <param name="HasDrawRules">DrawRules present.</param>
 /// <param name="DrawMode">DrawRules.Mode when HasDrawRules.</param>
-/// <param name="NumberOfPots">PotRules.NumberOfPots when present.</param>
+/// <param name="NumberOfPots">Draw PotRules only (tirage). Never a substitute for <c>PlacesPerGroup</c>.</param>
 /// <param name="HasQualificationRules">QualificationRules present.</param>
 /// <param name="QualificationPathCount">Qualification path count.</param>
 /// <param name="HasProgressionRules">ProgressionRules present.</param>
@@ -232,7 +232,7 @@ public sealed record StructureReadinessDto(
 /// <param name="AffectationPreviewNames">Display names for Affectation authoring.</param>
 /// <param name="AffectationIneligibleCount">Affectation authoring entries that are no longer Active.</param>
 /// <param name="IsRootComposition">True when the phase has no inbound Qualif/Prog feeds.</param>
-/// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N); independent of Draw.</param>
+/// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N). Independent of Draw <paramref name="NumberOfPots"/>.</param>
 /// <param name="DefaultTieFormat">Stage regulation TieFormat (AddRound copy source); null when unset.</param>
 /// <param name="DrawExecutionBadge">Topology execution badge when DrawRules engaged; null otherwise.</param>
 public sealed record StructureStageHubSummaryDto(

@@ -192,9 +192,7 @@ internal static class StageEndpoints
                             new RoundId(intent.RoundId),
                             intent.Outcome,
                             new StageId(intent.DestinationStageId),
-                            DestinationSlotKeys: EndpointHttpHelpers.CoerceDestinationSlotKeys(
-                                intent.DestinationSlotKeys,
-                                intent.DestinationSlotKey),
+                            DestinationSlotKeys: intent.DestinationSlotKeys is { Count: > 0 } ? intent.DestinationSlotKeys : null,
                             DestinationGroupIds: intent.DestinationGroupIds is { Count: > 0 } ? intent.DestinationGroupIds.Select(id => new GroupId(id)).ToArray() : null,
                             DestinationForm: intent.DestinationForm))
                     ];
@@ -204,35 +202,8 @@ internal static class StageEndpoints
                     return Results.NoContent();
                 }
 
-                IReadOnlyList<ProgressionPathSpec>? paths = null;
-                if (request.Paths is { Count: > 0 })
-                {
-                    paths =
-                    [
-                        .. request.Paths
-                            .Select(path =>
-                            {
-                                var pairKey = path.SourcePairKey?.Trim();
-                                if (string.IsNullOrEmpty(pairKey))
-                                {
-                                    throw new ArgumentException(
-                                        "Progression path requires SourcePairKey.",
-                                        nameof(request));
-                                }
-
-                                return new ProgressionPathSpec(
-                                    pairKey,
-                                    path.Outcome,
-                                    new StageId(path.DestinationStageId),
-                                    path.DestinationSlotKey,
-                                    path.DestinationGroupId is { } gid ? new GroupId(gid) : null,
-                                    path.DestinationForm);
-                            })
-                    ];
-                }
-
                 await executor
-                    .ReplaceStageProgressionRulesAsync(new StageId(stageId), paths, cancellationToken)
+                    .ReplaceStageProgressionRulesAsync(new StageId(stageId), paths: null, cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
             });
@@ -260,7 +231,7 @@ internal static class StageEndpoints
                             intent.GroupId,
                             intent.AcrossGroupsPosition,
                             intent.MinimumPoints,
-                            EndpointHttpHelpers.CoerceDestinationSlotKeys(intent.DestinationSlotKeys, intent.DestinationSlotKey),
+                            intent.DestinationSlotKeys is { Count: > 0 } ? intent.DestinationSlotKeys : null,
                             intent.DestinationGroupIds,
                             intent.DestinationForm))
                     ];
@@ -270,29 +241,8 @@ internal static class StageEndpoints
                     return Results.NoContent();
                 }
 
-                IReadOnlyList<QualificationPathSpec>? paths = null;
-                if (request.Paths is { Count: > 0 })
-                {
-                    paths =
-                    [
-                        .. request.Paths.Select(path => new QualificationPathSpec(
-                            path.Order,
-                            path.SelectionMode,
-                            path.SelectionValue,
-                            path.DestinationStageId,
-                            path.RankingScope,
-                            path.GroupId,
-                            path.AcrossGroupsPosition,
-                            path.SelectionEndValue,
-                            path.MinimumPoints,
-                            path.DestinationSlotKey,
-                            path.DestinationGroupId,
-                            path.DestinationForm))
-                    ];
-                }
-
                 await executor
-                    .ReplaceStageQualificationRulesAsync(new StageId(stageId), paths, cancellationToken)
+                    .ReplaceStageQualificationRulesAsync(new StageId(stageId), paths: null, cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
             });
@@ -586,7 +536,6 @@ internal static class StageEndpoints
             async (
                 Guid stageId,
                 Guid drawId,
-                ApplyDrawRequest? _,
                 UseCaseExecutor executor,
                 CancellationToken cancellationToken) =>
             {
@@ -627,7 +576,6 @@ internal static class StageEndpoints
             async (
                 Guid stageId,
                 Guid drawId,
-                ApplyDrawRequest? _,
                 UseCaseExecutor executor,
                 CancellationToken cancellationToken) =>
             {

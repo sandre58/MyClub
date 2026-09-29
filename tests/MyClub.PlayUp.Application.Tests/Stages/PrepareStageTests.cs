@@ -44,7 +44,7 @@ public sealed class PrepareStageTests
         target.AddSlot("SF1-B");
         var a = EntryId.New();
         var b = EntryId.New();
-        target.ReplaceCompositionEntries([a, b], _clock);
+        target.ReplaceAffectationAuthoring([a, b], _clock);
         target.AssignEntryToSlot("SF1-A", a);
         target.AssignEntryToSlot("SF1-B", b);
 
@@ -81,7 +81,7 @@ public sealed class PrepareStageTests
         target.AddRound("QF", _clock);
         target.AddSlot("SF1-A");
         var directEntry = EntryId.New();
-        target.ReplaceCompositionEntries([directEntry], _clock);
+        target.ReplaceAffectationAuthoring([directEntry], _clock);
         target.AssignEntryToSlot("SF1-A", directEntry);
         var drawEntry = EntryId.New();
         var draw = target.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -108,8 +108,16 @@ public sealed class PrepareStageTests
             SampleRegulations.Standard(),
             _clock);
         var round = stage.AddRound("QuarterFinal", tieFormat: null, _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
+        stage.AssignEntryToSlot("KO-A", a);
+        stage.AssignEntryToSlot("KO-B", b);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -137,8 +145,16 @@ public sealed class PrepareStageTests
             "QuarterFinal",
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
+        stage.AssignEntryToSlot("KO-A", a);
+        stage.AssignEntryToSlot("KO-B", b);
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -181,9 +197,12 @@ public sealed class PrepareStageTests
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
         var fixture = source.AddFixture(round.Id, _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
+        source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         semi.AddRound("SF", _clock);
         semi.AddSlot("SF1-A");
-        semi.AddSlot("SF1B");
+        semi.AddSlot("SF1-B");
 
         var act = () => source.ReplaceProgressionRules(
             new ProgressionRules(
@@ -236,6 +255,14 @@ public sealed class PrepareStageTests
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
         var fixture = final.AddFixture(round.Id, _clock);
+        final.AddSlot("KO-A");
+        final.AddSlot("KO-B");
+        final.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        final.ReplaceAffectationAuthoring([a, b], _clock);
+        final.AssignEntryToSlot("KO-A", a);
+        final.AssignEntryToSlot("KO-B", b);
         final.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -292,6 +319,14 @@ public sealed class PrepareStageTests
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
         var fixture = source.AddFixture(round.Id, _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
+        source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        source.ReplaceAffectationAuthoring([a, b], _clock);
+        source.AssignEntryToSlot("KO-A", a);
+        source.AssignEntryToSlot("KO-B", b);
         semi.AddRound("SF", _clock);
         semi.AddSlot("SF1-A");
         source.ReplaceProgressionRules(

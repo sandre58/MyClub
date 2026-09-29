@@ -67,7 +67,7 @@ export function resolveOverviewActionIntent(
       }
       return {
         kind: 'execute',
-        run: () => publishAndApplyDraw(stageId, drawId, { fixtureIds: [] }),
+        run: () => publishAndApplyDraw(stageId, drawId),
       };
     }
 
@@ -79,7 +79,7 @@ export function resolveOverviewActionIntent(
       }
       return {
         kind: 'execute',
-        run: () => applyDraw(stageId, drawId, { fixtureIds: [] }),
+        run: () => applyDraw(stageId, drawId),
       };
     }
 

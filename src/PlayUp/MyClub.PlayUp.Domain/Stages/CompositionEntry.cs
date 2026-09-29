@@ -9,8 +9,11 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// One entry in the stage runtime population membership (<see cref="Stage.CompositionEntries"/>).
-/// Distinct from Affectation authoring, <see cref="DirectAssignment"/> (slot feed), and slot/group resolution.
+/// Entry identity row shared by two distinct Stage collections:
+/// <see cref="Stage.AffectationAuthoring"/> (manual producers) and
+/// <see cref="Stage.CompositionEntries"/> (runtime population / Draw·Live pool).
+/// Same shape, different semantics — do not treat the lists as interchangeable.
+/// Also distinct from <see cref="DirectAssignment"/> (slot feed) and group/slot resolution.
 /// </summary>
 public sealed record CompositionEntry
 {

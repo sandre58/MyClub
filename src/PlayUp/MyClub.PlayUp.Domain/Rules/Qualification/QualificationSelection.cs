@@ -32,6 +32,15 @@ public sealed record QualificationSelection
                 RulesErrorCodes.QualificationRulesInvalid);
         }
 
+#pragma warning disable CS0618 // Best/Worst retained for JSON ints 3/4; normalize to Top/Bottom.
+        mode = mode switch
+        {
+            SelectionMode.Best => SelectionMode.Top,
+            SelectionMode.Worst => SelectionMode.Bottom,
+            _ => mode
+        };
+#pragma warning restore CS0618
+
         if (value < 1)
         {
             throw new DomainException(

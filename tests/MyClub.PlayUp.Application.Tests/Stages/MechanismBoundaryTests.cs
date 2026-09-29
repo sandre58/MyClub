@@ -172,6 +172,11 @@ public sealed class MechanismBoundaryTests
     {
         var stage = CreateSlots(competitionId, name, slotKeys);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        if (slotKeys.Length >= 2 && slotKeys.Length % 2 == 0)
+        {
+            stage.SeedEntryRoundBracketPairs();
+        }
+
         return stage;
     }
 
@@ -199,7 +204,14 @@ public sealed class MechanismBoundaryTests
         int homeGoals,
         int awayGoals)
     {
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        if (stage.BracketPairs.Count == 0 && stage.Slots.Count >= 2)
+        {
+            stage.SeedEntryRoundBracketPairs();
+        }
+
+        var pair = stage.BracketPairs.FirstOrDefault(p => stage.FindFixtureByBracketPairKey(p.PairKey) is null)
+                   ?? throw new InvalidOperationException("No free BracketPair for fixture.");
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, _clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);

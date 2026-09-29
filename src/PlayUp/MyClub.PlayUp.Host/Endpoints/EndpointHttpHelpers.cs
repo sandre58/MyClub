@@ -61,12 +61,4 @@ internal static class EndpointHttpHelpers
     internal static DrawInputsIntent ParseDrawInputsIntent(string? intent) => string.IsNullOrWhiteSpace(intent) || intent.Equals("Default", StringComparison.OrdinalIgnoreCase)
         ? DrawInputsIntent.Default
         : intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase) ? DrawInputsIntent.Rerun : throw new BadHttpRequestException($"Unknown draw inputs intent '{intent}'. Expected Default or Rerun.");
-
-    // Prefers keys when present; otherwise coerces legacy singular key to a one-element list.
-    internal static IReadOnlyList<string>? CoerceDestinationSlotKeys(IReadOnlyList<string>? keys, string? singular) =>
-        keys is { Count: > 0 }
-            ? keys
-            : string.IsNullOrWhiteSpace(singular)
-                ? null
-                : [singular];
 }

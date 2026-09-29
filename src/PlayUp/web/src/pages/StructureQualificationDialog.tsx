@@ -259,7 +259,6 @@ export function StructureQualificationDialog({
       );
       return replaceStageQualificationRules(stage.stageId, {
         intents: payload,
-        paths: null,
       });
     },
     onSuccess: async () => {

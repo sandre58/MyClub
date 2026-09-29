@@ -19,6 +19,8 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
+#pragma warning disable CS0618 // Best/Worst obsolete aliases
+
 public sealed class ApplyQualificationTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 10, 15, 0, 0, TimeSpan.Zero));

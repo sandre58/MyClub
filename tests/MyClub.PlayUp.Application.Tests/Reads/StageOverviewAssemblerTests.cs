@@ -63,7 +63,7 @@ public sealed class StageOverviewAssemblerTests
         var stage = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
         stage.AddSlot("SF1-A");
         stage.AddSlot("SF1-B");
-        stage.ReplaceCompositionEntries([home.Id, away.Id], _clock);
+        stage.ReplaceAffectationAuthoring([home.Id, away.Id], _clock);
         stage.AssignEntryToSlot("SF1-A", home.Id);
 
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);

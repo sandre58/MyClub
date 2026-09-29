@@ -22,7 +22,7 @@ public enum FeedKind
     Progression = 1,
 
     /// <summary>
-    /// Draw target (Entity Draw future; snapshot placeholder in V1).
+    /// Draw resolution target (slot keyed by a published <see cref="Draw"/>).
     /// </summary>
     Draw = 2,
 

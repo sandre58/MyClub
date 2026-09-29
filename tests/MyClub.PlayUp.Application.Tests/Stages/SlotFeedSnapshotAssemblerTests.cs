@@ -55,7 +55,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         target.AddRound("QF", _clock);
         target.AddSlot("SF1-A");
         var directEntry = EntryId.New();
-        target.ReplaceCompositionEntries([directEntry], _clock);
+        target.ReplaceAffectationAuthoring([directEntry], _clock);
         target.AssignEntryToSlot("SF1-A", directEntry);
 
         source.ReplaceQualificationRules(
@@ -263,7 +263,7 @@ public sealed class SlotFeedSnapshotAssemblerTests
         var stage = Stage.Create(competitionId, new StageName("Knockout"), SampleRegulations.Standard(), _clock);
         stage.AddSlot("SF1-A");
         var directEntry = EntryId.New();
-        stage.ReplaceCompositionEntries([directEntry], _clock);
+        stage.ReplaceAffectationAuthoring([directEntry], _clock);
         stage.AssignEntryToSlot("SF1-A", directEntry);
         var drawEntry = EntryId.New();
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);

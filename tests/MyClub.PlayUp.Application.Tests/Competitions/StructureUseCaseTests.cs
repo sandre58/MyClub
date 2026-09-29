@@ -367,6 +367,31 @@ public sealed class StructureUseCaseTests
     }
 
     [Fact]
+    public void StructureView_groups_places_ignore_draw_number_of_pots()
+    {
+        var competition = CreateCompetition.Execute("Places≠Pots", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+        AddEntry.Execute(competition, "D", _clock);
+        var groups = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 4),
+            _clock);
+        ReplaceStageDrawRules.Execute(
+            groups.Stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [groups.Stage]).Stages.Single();
+
+        hub.PlacesPerGroup.Should().Be(4);
+        hub.NumberOfPots.Should().Be(2);
+        hub.CompositionCapacity.Should().Be(8);
+    }
+
+    [Fact]
     public void StructureView_exposes_RenameStage_when_stage_is_Running()
     {
         var competition = CreateCompetition.Execute("RenameActions", _clock);

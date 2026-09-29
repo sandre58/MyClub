@@ -55,7 +55,7 @@ public sealed class DrawInputsFactoryTests
             stage,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
-        stage.ReplaceCompositionEntries(ids, _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
 
         var fixedGroup = stage.Groups[0];
         stage.AssignEntryToGroup(fixedGroup.Id, ids[0]);
@@ -86,7 +86,7 @@ public sealed class DrawInputsFactoryTests
             stage,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
-        stage.ReplaceCompositionEntries(ids, _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
 
         var fixedGroup = stage.Groups[0];
         stage.AssignEntryToGroup(fixedGroup.Id, ids[0]);
@@ -111,7 +111,7 @@ public sealed class DrawInputsFactoryTests
             null,
             StructureIntent.Cup(2),
             _clock).Stage;
-        stage.ReplaceCompositionEntries([a, b], _clock);
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
 
         var slotKey = stage.Slots[0].SlotKey;
         stage.ApplyResolvedEntry(slotKey, a, _clock);

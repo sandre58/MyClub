@@ -54,9 +54,9 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         }
 
         // ApplyDraw (Slot occupancy) then materialize confrontations.
-        using (var apply = await client.PostAsJsonAsync(
+        using (var apply = await client.PostAsync(
                    ApplyDrawUri(seed.QuarterStageId, seed.DrawId),
-                   new ApplyDrawRequest()))
+                   content: null))
         {
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
@@ -219,9 +219,9 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             publish.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
-        using (var apply = await client.PostAsJsonAsync(
+        using (var apply = await client.PostAsync(
                    ApplyDrawUri(seed.QuarterStageId, seed.DrawId),
-                   new ApplyDrawRequest()))
+                   content: null))
         {
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }

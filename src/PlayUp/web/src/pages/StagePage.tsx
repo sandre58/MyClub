@@ -687,7 +687,7 @@ function DrawActions({
 
   const publishAndApplyMutation = useMutation({
     mutationFn: () =>
-      publishAndApplyDraw(stageId, draw.id, { fixtureIds: [] }),
+      publishAndApplyDraw(stageId, draw.id),
     onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
@@ -696,7 +696,7 @@ function DrawActions({
   });
 
   const applyMutation = useMutation({
-    mutationFn: () => applyDraw(stageId, draw.id, { fixtureIds: [] }),
+    mutationFn: () => applyDraw(stageId, draw.id),
     onSuccess: async () => {
       setApplyConfirmOpen(false);
       await queryClient.invalidateQueries({

@@ -35,7 +35,7 @@ public sealed class QualificationForFormDestinationTests
         champ.AddMatchday(1, _clock);
         var e1 = competition.AddEntry(TeamId.New(), "E1", _clock).Id;
         var e2 = competition.AddEntry(TeamId.New(), "E2", _clock).Id;
-        champ.ReplaceCompositionEntries([e1, e2], _clock);
+        champ.ReplaceAffectationAuthoring([e1, e2], _clock);
 
         ReplaceEachGroupTop1Form(source, groupA.Id, groupB.Id, champ.Id);
 

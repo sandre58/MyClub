@@ -38,7 +38,7 @@ public sealed class DrawAppliedStateTests
             stage,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
-        stage.ReplaceCompositionEntries(ids, _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
         ConfigureDrawInputs.Execute(

@@ -329,7 +329,7 @@ export function StructureDrawDialog({
 
   const publishAndApplyMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
-      return publishAndApplyDraw(stageId, draw.id, { fixtureIds: [] });
+      return publishAndApplyDraw(stageId, draw.id);
     },
     onSuccess: () => {
       notify.success(tDraw('toastPublishedAndApplied'));
@@ -363,7 +363,7 @@ export function StructureDrawDialog({
 
   const applyMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
-      return applyDraw(stageId, draw.id, { fixtureIds: [] });
+      return applyDraw(stageId, draw.id);
     },
     onSuccess: async () => {
       setApplyConfirmOpen(false);

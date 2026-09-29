@@ -714,7 +714,7 @@ export interface StructureQualificationIntent {
    * Wire camelCase matches Domain DestinationSlotKeys.
    */
   destinationSlotKeys?: string[] | null;
-  /** @deprecated Prefer destinationSlotKeys; Host still dual-accepts singular. */
+  /** @deprecated Dual-read only (legacy singular wire); writes use destinationSlotKeys. */
   destinationSlotKey?: string | null;
   /**
    * Groups A1 Place group ids (Expand index ↔ group). Duplicates allowed.
@@ -771,7 +771,7 @@ export interface StructureProgressionIntent {
    * Mutually exclusive with destinationGroupIds. Both empty = Population.
    */
   destinationSlotKeys?: string[] | null;
-  /** @deprecated Prefer destinationSlotKeys; Host still dual-accepts singular. */
+  /** @deprecated Dual-read only (legacy singular wire); writes use destinationSlotKeys. */
   destinationSlotKey?: string | null;
   /**
    * Groups A1 Place group ids (fixture index ↔ group). Duplicates allowed.
@@ -859,16 +859,14 @@ export interface RebuildStageStructureResponse {
 }
 
 
-/** PUT /stages/{id}/qualification-rules */
+/** PUT /stages/{id}/qualification-rules (intents authoring SoT). */
 export interface ReplaceQualificationRulesRequest {
   intents?: StructureQualificationIntent[] | null;
-  paths?: StructureQualificationPath[] | null;
 }
 
-/** PUT /stages/{id}/progression-rules */
+/** PUT /stages/{id}/progression-rules (intents authoring SoT). */
 export interface ReplaceProgressionRulesRequest {
   intents?: StructureProgressionIntent[] | null;
-  paths?: StructureProgressionPath[] | null;
 }
 
 /** PUT /stages/{id}/placement-award-rules */
@@ -1319,10 +1317,7 @@ export interface FinishMatchRequest {
   penaltyShootoutAwayGoals?: number | null;
 }
 
-/** Body for POST .../draws/{id}/apply — Slot/Group use empty fixtureIds (Host owns mapping). */
-export interface ApplyDrawRequest {
-  fixtureIds: string[];
-}
+/** Apply / publish-and-apply take no body (Host owns Slot/Group mapping). */
 
 export interface StageFixtureAttachment {
   matchId: string;

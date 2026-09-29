@@ -332,8 +332,7 @@ public static class StageSchematicAssembler
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
-        var perGroup = stage.PlacesPerGroup
-                       ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
+        var perGroup = stage.PlacesPerGroup;
         if (stage.Groups.Count == 0 || perGroup is null or < 1)
         {
             return Empty(stage, StructureFormatKind.Groups);
@@ -845,8 +844,7 @@ public static class StageSchematicAssembler
             return null;
         }
 
-        var perGroup = stage.PlacesPerGroup
-                       ?? stage.Regulation.DrawRules?.PotRules?.NumberOfPots;
+        var perGroup = stage.PlacesPerGroup;
         return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
     }
 

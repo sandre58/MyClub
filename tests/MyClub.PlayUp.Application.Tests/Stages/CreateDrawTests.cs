@@ -33,7 +33,7 @@ public sealed class CreateDrawTests
             null,
             StructureIntent.Cup(4),
             _clock).Stage;
-        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(e => e.Id)], _clock);
 
         var act = () => CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
 
@@ -55,7 +55,7 @@ public sealed class CreateDrawTests
             null,
             StructureIntent.Cup(4),
             _clock).Stage;
-        stage.ReplaceCompositionEntries([.. competition.Entries.Select(e => e.Id)], _clock);
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(e => e.Id)], _clock);
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);

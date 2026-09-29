@@ -863,9 +863,7 @@ describe('StructureDrawDialog', () => {
     );
 
     await waitFor(() => {
-      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, 'draw-1', {
-        fixtureIds: [],
-      });
+      expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, 'draw-1');
     });
     await waitFor(() => {
       expect(getToastsSnapshot().map((t) => t.message)).toContain(

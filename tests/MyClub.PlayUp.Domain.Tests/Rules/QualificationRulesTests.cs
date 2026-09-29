@@ -70,22 +70,24 @@ public sealed class QualificationRulesTests
     }
 
     [Fact]
-    public void Constructor_accepts_selection_mode_best_as_top_alias_not_best_third()
+    public void Constructor_normalizes_selection_mode_best_to_top()
     {
-        // Arrange — Best is a Top alias on the supplied standing; not AcrossGroups / Best Third.
+        // Arrange — Best (JSON int 3) is a Top alias; not AcrossGroups / Best Third.
         var destination = StageId.New();
+#pragma warning disable CS0618
         var path = new QualificationPath(
             1,
             QualificationSource.Overall(),
             new QualificationSelection(SelectionMode.Best, 4),
             QualificationDestination.ForPopulation(destination));
+#pragma warning restore CS0618
 
         // Act
         var rules = new QualificationRules([path]);
 
         // Assert
         rules.Paths[0].Source.Scope.Should().Be(RankingScope.Overall);
-        rules.Paths[0].Selection.Mode.Should().Be(SelectionMode.Best);
+        rules.Paths[0].Selection.Mode.Should().Be(SelectionMode.Top);
         rules.Paths[0].Selection.Value.Should().Be(4);
         rules.Paths[0].Source.AcrossGroupsPosition.Should().BeNull();
         rules.Paths[0].Destination.StageId.Should().Be(destination);
@@ -267,7 +269,9 @@ public sealed class QualificationRulesTests
             new QualificationPath(
                 1,
                 QualificationSource.Overall(),
+#pragma warning disable CS0618
                 new QualificationSelection(SelectionMode.Best, 4),
+#pragma warning restore CS0618
                 QualificationDestination.ForPopulation(StageId.New()))
         ]);
 

@@ -9,18 +9,14 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
-/// HTTP body for replacing progression rules on a stage.
-/// Prefer <see cref="Intents"/> (V3 authoring). Paths = atomic path-list authoring.
+/// HTTP body for replacing progression rules on a stage (intents authoring SoT).
 /// </summary>
-/// <param name="Intents">Authoring intents (Round × Outcome → Destination).</param>
-/// <param name="Paths">Replacement paths (empty or null clears when intents also empty).</param>
+/// <param name="Intents">Authoring intents; null or empty clears rules.</param>
 public sealed record ReplaceStageProgressionRulesRequest(
-    IReadOnlyList<ProgressionIntentRequest>? Intents = null,
-    IReadOnlyList<ProgressionPathRequest>? Paths = null);
+    IReadOnlyList<ProgressionIntentRequest>? Intents = null);
 
 /// <summary>
 /// One HTTP progression intent.
-/// Prefer <c>DestinationSlotKeys</c>; singular <c>DestinationSlotKey</c> coerces to a one-element list.
 /// </summary>
 public sealed record ProgressionIntentRequest(
     Guid? IntentId,
@@ -29,23 +25,5 @@ public sealed record ProgressionIntentRequest(
     ProgressionOutcome Outcome,
     Guid DestinationStageId,
     IReadOnlyList<string>? DestinationSlotKeys = null,
-    string? DestinationSlotKey = null,
     IReadOnlyList<Guid>? DestinationGroupIds = null,
-    bool DestinationForm = false);
-
-/// <summary>
-/// One HTTP progression path. Structural identity = <see cref="SourcePairKey"/> (Cup = PairKey).
-/// </summary>
-/// <param name="Outcome">Winner or Loser.</param>
-/// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="SourcePairKey">Structural source key (Cup = PairKey). Required.</param>
-/// <param name="DestinationSlotKey">Cup Place slot key; omit or null when not slot-targeting.</param>
-/// <param name="DestinationGroupId">Groups Place group id; omit or null when not group-targeting.</param>
-/// <param name="DestinationForm">True for Form Placement.</param>
-public sealed record ProgressionPathRequest(
-    ProgressionOutcome Outcome,
-    Guid DestinationStageId,
-    string SourcePairKey,
-    string? DestinationSlotKey = null,
-    Guid? DestinationGroupId = null,
     bool DestinationForm = false);

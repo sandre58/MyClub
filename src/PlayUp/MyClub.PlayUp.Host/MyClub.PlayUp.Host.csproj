@@ -3,6 +3,7 @@
     <PropertyGroup>
         <Description>Play'Up HTTP host (Minimal APIs composition root).</Description>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <!-- CA1515: composition-root types stay public. CA2007: ConfigureAwait noise in ASP.NET request paths. Do not widen. -->
         <NoWarn>$(NoWarn);CA1515;CA2007</NoWarn>
         <UserSecretsId>MyClub.PlayUp.Host</UserSecretsId>
     </PropertyGroup>

@@ -16,7 +16,7 @@ using MyClub.PlayUp.Infrastructure.Time;
 namespace MyClub.PlayUp.Infrastructure.DependencyInjection;
 
 /// <summary>
-/// Registers Play'Up infrastructure services for a future Host and for tests.
+/// Registers Play'Up infrastructure services for the Host composition root and for tests.
 /// </summary>
 public static class PlayUpInfrastructureServiceCollectionExtensions
 {

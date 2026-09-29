@@ -1512,12 +1512,6 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Alias for <see cref="ReplaceAffectationAuthoring"/> (historical name). Prefer Affectation authoring API.
-    /// </summary>
-    public void ReplaceCompositionEntries(IReadOnlyList<EntryId> entryIds, IClock clock) =>
-        ReplaceAffectationAuthoring(entryIds, clock);
-
-    /// <summary>
     /// Clears Affectation authoring, runtime membership, and ForForm provenances (Structure rebuild).
     /// Draft/Ready only.
     /// </summary>

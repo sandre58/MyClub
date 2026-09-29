@@ -70,7 +70,7 @@ public sealed class StageSlotLifecycleTests
         stage.AddFixture(stage.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
         var a = EntryId.New();
         var b = EntryId.New();
-        stage.ReplaceCompositionEntries([a, b], _clock);
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
         stage.AssignEntryToSlot("QF1-A", a);
         stage.AssignEntryToSlot("QF1-B", b);
         stage.Prepare(_clock);
@@ -96,7 +96,7 @@ public sealed class StageSlotLifecycleTests
         stage.AddFixture(sf.Id, _clock, "SF1-A", "SF1-B", "P2");
         var a = EntryId.New();
         var b = EntryId.New();
-        stage.ReplaceCompositionEntries([a, b], _clock);
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
         stage.AssignEntryToSlot("SF1-A", a);
         stage.AssignEntryToSlot("SF1-B", b);
         stage.Prepare(_clock);
