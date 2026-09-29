@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Cup 16 with partial root composition (10/16) — Structure Entrées E1.
+/// Cup 16 with partial root composition (10/16) — Structure Entries E1.
 /// </summary>
 public sealed class CupCompositionPartialScenario : IScenario
 {

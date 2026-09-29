@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// Immutable; replace as a whole on change.
 /// </summary>
 /// <remarks>
-/// <see cref="StandingRules"/> on Competition are <strong>defaults de classement</strong> (A4 seed)
+/// <see cref="StandingRules"/> on Competition are <strong>standing defaults</strong>
 /// for classifying stages — not a competition-wide standing consumed at runtime.
 /// </remarks>
 public sealed record Regulation
@@ -23,7 +23,7 @@ public sealed record Regulation
     /// <param name="matchRules">How an individual match is played.</param>
     /// <param name="standingRules">How standings are calculated.</param>
     /// <param name="disciplinaryRules">
-    /// Disciplinary types allowed for the competition (V1: AllowedTypes only).
+    /// Disciplinary types allowed for the competition (AllowedTypes catalogue only).
     /// When omitted, defaults to <see cref="DisciplinaryRules.None"/> (no events authorized).
     /// </param>
     public Regulation(
@@ -53,13 +53,13 @@ public sealed record Regulation
     public MatchRules MatchRules { get; }
 
     /// <summary>
-    /// Gets the standing rules (defaults de classement for classifying stages — A4).
+    /// Gets the standing rules (standing defaults for classifying stages).
     /// Not consumed by runtime standing calculation; stages carry their own copy when classifying.
     /// </summary>
     public StandingRules StandingRules { get; }
 
     /// <summary>
-    /// Gets the disciplinary rules (V1: AllowedTypes catalogue only; no consequences).
+    /// Gets the disciplinary rules (AllowedTypes catalogue only; no consequences).
     /// </summary>
     public DisciplinaryRules DisciplinaryRules { get; }
 

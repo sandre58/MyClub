@@ -12,7 +12,7 @@ type AttentionSituationRowProps = {
 };
 
 /**
- * Product À traiter row (drawer + Vue d'ensemble preview).
+ * Product Needs-attention row (drawer + Overview preview).
  * Distinct from DS `AttentionRow` (D9 count+icon Lab recipe) — do not merge.
  * Hover A via `.ds-interactive-row` — no rest fill, no pills.
  * Meta: prefer situation description when available; else targetType label.

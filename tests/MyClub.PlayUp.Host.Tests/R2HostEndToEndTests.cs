@@ -23,7 +23,7 @@ using Xunit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Phase 10.9 / 11.1.b — vertical R2 proof with Read Surface observability
+/// Vertical R2 proof with Read Surface observability
 /// (Prepare → Publish → Apply → Start → Finish → Progression → GET Stage/Matches/Match).
 /// </summary>
 [Collection("host-postgres")]

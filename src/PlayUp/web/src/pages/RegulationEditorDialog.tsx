@@ -269,7 +269,7 @@ function buildImpactMessage(
   );
 }
 
-/** Shared ReplaceRegulation dialog — Règlement hub + Structure hub (F3 / Lot 2.5). */
+/** Shared ReplaceRegulation dialog — Regulation hub + Structure hub. */
 export function RegulationEditorDialog({
   data,
   open,

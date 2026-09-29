@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Pure Application resolution: FixtureOutcome + PlacementAwardRules → FinalPlacementInstruction[].
-/// No Stage mutation, no persistence, no Host Apply — Read projection only (Lot D / E).
+/// No Stage mutation, no persistence, no Host Apply — Read projection only.
 /// </summary>
 public static class ResolvePlacementAwards
 {

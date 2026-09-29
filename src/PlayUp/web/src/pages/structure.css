@@ -30,7 +30,7 @@
   gap: var(--space-16);
 }
 
-/* ---------- Panneau ---------- */
+/* ---------- Panel ---------- */
 
 .structure-panel__head {
   display: flex;
@@ -102,7 +102,7 @@
   color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
 }
 
-/* ---------- Bandeau ---------- */
+/* ---------- Banner ---------- */
 
 .structure-band {
   display: flex;
@@ -545,7 +545,7 @@
 
 /* Dialog chrome lives in design-system Dialog. */
 
-/* ---------- Page joueurs d?une ?quipe ---------- */
+/* ---------- Team roster page ---------- */
 
 .page--structure .ds-panel.structure-roster__identity {
   flex-direction: row;
@@ -1533,7 +1533,7 @@
   font-size: var(--text-label);
 }
 
-/* ?? Flat phase fiche (N2) ?? */
+/* -- Flat phase card (N2) -- */
 .structure-fiche--flat {
   display: flex;
   flex-direction: column;
@@ -2115,7 +2115,7 @@
     width: min(100%, 22rem);
   }
 
-  /* Tirage + Placement side-by-side when both present. */
+  /* Draw + Placement side-by-side when both present. */
   .structure-draw-block--paired {
     flex-direction: row;
     flex-wrap: wrap;
@@ -2181,7 +2181,7 @@
   width: 100%;
 }
 
-/* Activer — subdued / ghost (bordure = contrôle) */
+/* Activate — subdued / ghost (border = control) */
 .structure-draw-cta[data-tone='ghost'] {
   background: transparent;
   border-style: dashed;
@@ -2199,7 +2199,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Lancer / Ouvrir — outlined emphase (jamais brand primary) */
+/* Launch / Open — outlined emphasis (never brand primary) */
 .structure-draw-cta[data-tone='emphasis'] {
   background: var(--color-surface);
   border-style: solid;
@@ -2217,7 +2217,7 @@
   transform: translateX(2px);
 }
 
-/* Colonne contenu + chevron centré sur toute la carte */
+/* Content column + chevron centred on the whole card */
 .structure-draw-cta__main {
   display: flex;
   flex: 1 1 auto;
@@ -2226,7 +2226,7 @@
   min-width: 0;
 }
 
-/* Rangée titre : leading + titre */
+/* Title row: leading + title */
 .structure-draw-cta__head {
   display: flex;
   align-items: center;
@@ -2268,7 +2268,7 @@
   transform: translateX(2px);
 }
 
-/* Corps indenté sous le titre (pas sous le leading) */
+/* Body indented under the title (not under the leading) */
 .structure-draw-cta__body {
   /* leading sm ≈ 1rem + gap 0.5rem */
   padding-inline-start: calc(1rem + var(--space-8));
@@ -2459,7 +2459,7 @@ button.structure-flux-group__peer {
   min-width: 0;
 }
 
-/* Placement rank ? round ordinal like Ordre de departage; medal fill for 1-3. */
+/* Placement rank · round ordinal like tie-break order; medal fill for 1-3. */
 .structure-place-rank {
   display: inline-flex;
   align-items: center;
@@ -2742,7 +2742,7 @@ button.structure-flux-group__peer {
   gap: var(--space-8);
 }
 
-/* ---------- Dialog exécutions tirage (H1) ---------- */
+/* ---------- Draw execution dialogs ---------- */
 
 .structure-draw-dialog {
   display: flex;

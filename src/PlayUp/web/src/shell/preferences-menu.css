@@ -34,7 +34,7 @@
   text-transform: uppercase;
 }
 
-/* Accueil: pin to top-right of the home root (no shell header). */
+/* Home: pin to top-right of the home root (no shell header). */
 .ds-home > .shell-preferences--home {
   position: absolute;
   top: var(--space-16);

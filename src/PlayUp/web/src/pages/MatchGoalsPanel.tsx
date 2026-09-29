@@ -34,7 +34,7 @@ import {
 } from './matchGoalsHelpers';
 
 /**
- * Nominative goals panel (Lot 3) — faits ≠ RunningScore ≠ Finish.
+ * Nominative goals panel — facts ≠ RunningScore ≠ Finish.
  * Live: RecordGoal / Correct / Remove then SetRunningScore as separate calls (not atomic).
  */
 export function MatchGoalsPanel({ match }: { match: MatchDetail }) {

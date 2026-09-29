@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Domain.Matches;
 
 /// <summary>
-/// Nominative disciplinary fact recorded on a match — no Domain consequences in V1
+/// Nominative disciplinary fact recorded on a match — no Domain consequences
 /// (presence, score, result, substitutions, standing, suspensions).
 /// </summary>
 [DebuggerDisplay("{Type} → {MemberId} ({Id})")]
@@ -31,7 +31,7 @@ public sealed class RecordedDisciplinaryEvent : Entity<DisciplinaryEventId>
     public MemberId MemberId { get; private set; }
 
     /// <summary>
-    /// Gets the disciplinary type from the V1 catalogue.
+    /// Gets the disciplinary type from the closed catalogue.
     /// </summary>
     public DisciplinaryType Type { get; private set; }
 

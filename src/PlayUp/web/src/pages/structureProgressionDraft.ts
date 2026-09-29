@@ -72,7 +72,7 @@ export type ProgIncompleteReason =
   | 'DuplicatePlace'
   | 'ChampionshipTerminalRound';
 
-/** Place ChoiceTile / map gate — Cup slots, Groups poules, or Champ/Swiss Forme. */
+/** Place ChoiceTile / map gate — Cup slots, Groups pools, or Champ/Swiss Form. */
 export { areProgressionPlacesLabeled } from './structurePlaceLabel';
 
 export function newProgIntentId(): string {

@@ -19,7 +19,7 @@ import { ThemePreferenceListbox } from './ThemePreferenceListbox';
 import './preferences-menu.css';
 
 type PreferencesMenuProps = {
-  /** Placement variant for Accueil vs shell chrome. */
+  /** Placement variant for Home vs shell chrome. */
   className?: string;
 };
 

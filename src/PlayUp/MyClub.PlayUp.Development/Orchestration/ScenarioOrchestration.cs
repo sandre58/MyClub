@@ -462,7 +462,7 @@ internal static class ScenarioOrchestration
 
     /// <summary>
     /// Cup bracket structured, entries registered, composition <strong>empty</strong>, draw not created —
-    /// Draft E0 (Constituer les entrées) + tirage pending.
+    /// Draft E0 (build entries) + draw pending.
     /// </summary>
     public static async Task BuildCupDrawPendingAsync(
         ScenarioContext context,
@@ -487,15 +487,15 @@ internal static class ScenarioOrchestration
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
 
-        // DrawRules are not seeded by ConfigureStructure — engage tirage for this scenario.
+        // DrawRules are not seeded by ConfigureStructure — engage draw for this scenario.
         stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
 
-        // Intentionally no AssignRootComposition — Structure Entrées E0 (0 / 16).
+        // Intentionally no AssignRootComposition — Structure Entries E0 (0 / 16).
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
-    /// Cup 16 with partial composition (10 / 16) — Draft E1 Completer les entrées.
+    /// Cup 16 with partial composition (10 / 16) — Draft E1 complete entries.
     /// </summary>
     public static async Task BuildCupCompositionPartialAsync(
         ScenarioContext context,
@@ -525,7 +525,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Cup 16 with full composition (16 / 16) — Draft E2 Modifier les entrées + tirage pending.
+    /// Cup 16 with full composition (16 / 16) — Draft E2 edit entries + draw pending.
     /// </summary>
     public static async Task BuildCupCompositionCompleteAsync(
         ScenarioContext context,
@@ -591,7 +591,7 @@ internal static class ScenarioOrchestration
 
     /// <summary>
     /// Case 1 mid-state: Groups 2×4 finished → Top2 → QF population → Slot Draw; KO stays Draft.
-    /// Structure UX — Affectation racine + inbound Qualif (population) then Draw placement.
+    /// Structure UX — root Affectation + inbound Qualif (population) then Draw placement.
     /// WhoFeeds on QF Places = Draw (not Qual). Auto Place / hybrid = dedicated scenarios.
     /// </summary>
     public static async Task BuildGroupsToKoMidAsync(
@@ -933,8 +933,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Structure flux QA — Affectation racine + Sorties Qualification Auto Place, reste Draft.
-    /// Groups 2×4 → QF (Top1/Top2 → Places) ; pas de matchs joués.
+    /// Structure flux QA — root Affectation + Qualification Auto Place exits, stays Draft.
+    /// Groups 2×4 → QF (Top1/Top2 → Places); no matches played.
     /// WhoFeeds on QF Places = Qual paths (jump / edit on source).
     /// </summary>
     public static async Task BuildFluxQualifDraftAsync(
@@ -974,7 +974,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Structure flux QA — Qual Place → Championship Forme (ForForm), reste Draft.
+    /// Structure flux QA — Qual Place → Championship Form (ForForm), stays Draft.
     /// Groups 2×2 (4) + 2 directs sur Championnat ; Top1 EachGroup → ForForm.
     /// Schematic Champ = sac ExpectedFormParticipants (2 resolved + 2 pending).
     /// </summary>
@@ -1022,8 +1022,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Structure flux QA — Prog Place → Groups poules (ForGroup), reste Draft.
-    /// Coupe 4 (Affectation) → Winner Prog ForGroup vers 2 poules aval.
+    /// Structure flux QA — Prog Place → Groups pools (ForGroup), stays Draft.
+    /// Cup 4 (Affectation) → Winner Prog ForGroup into 2 downstream groups.
     /// </summary>
     public static async Task BuildFluxProgGroupDraftAsync(
         ScenarioContext context,
@@ -1093,8 +1093,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Structure flux QA — Sorties Progression Auto Place (Winner/Loser) + Attribution 1–4, reste Draft.
-    /// Demi (Affectation 4) → Finale + Bronze Places ; fixtures créées pour lier les chemins.
+    /// Structure flux QA — Progression Auto Place exits (Winner/Loser) + Attribution 1–4, stays Draft.
+    /// Semi (Affectation 4) → Final + Bronze Places; fixtures created to link paths.
     /// WhoFeeds on Final/Bronze Places = Prog paths.
     /// </summary>
     public static async Task BuildFluxProgPlacementDraftAsync(
@@ -1141,8 +1141,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Structure flux QA — multi-phases sans arêtes (Sorties / Attribution vides).
-    /// Overflow « Ajouter une sortie » / « Ajouter une attribution » depuis la fiche.
+    /// Structure flux QA — multi-stage with empty edges (exits / Attribution empty).
+    /// Overflow "Add an exit" / "Add an attribution" from the stage card.
     /// </summary>
     public static async Task BuildFluxEmptyRelationsDraftAsync(
         ScenarioContext context,
@@ -1185,8 +1185,8 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Structure flux QA — graphe complet Draft : Qualif Auto Place + Progression Auto Place + Attribution.
-    /// Groups → Demis Places (Top2) → Finale/Bronze Places ; Affectation racine ; aucun match joué.
+    /// Structure flux QA — full Draft graph: Qual Auto Place + Progression Auto Place + Attribution.
+    /// Groups → Semi Places (Top2) → Final/Bronze Places; root Affectation; no matches played.
     /// </summary>
     public static async Task BuildFluxFullGraphDraftAsync(
         ScenarioContext context,
@@ -2003,7 +2003,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Hub Règlement QA seed: groupes classants + phase finale multi-tours (QF/SF A/R · Finale unique),
+    /// Regulation hub QA seed: classifying groups + multi-round final phase (QF/SF two-legs · single Final),
     /// ET+TAB MatchRules, remains <see cref="CompetitionStatus.Draft"/> so <c>ReplaceRegulation</c> stays available.
     /// </summary>
     public static async Task BuildRegulationHubDemoAsync(
@@ -2095,7 +2095,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Hub Règlement QA seed: single KO round with a rich TwoLegs TieFormat (homogeneous tokens),
+    /// Regulation hub QA seed: single KO round with a rich TwoLegs TieFormat (homogeneous tokens),
     /// remains <see cref="CompetitionStatus.Draft"/>.
     /// </summary>
     public static async Task BuildRegulationTieHomogeneousDemoAsync(
@@ -2172,7 +2172,7 @@ internal static class ScenarioOrchestration
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
-        // Default ≠ any round — makes the « format par défaut » section visibly distinct.
+        // Default ≠ any round — makes the "default format" section visibly distinct.
         var defaultTie = new TieFormat(
             TieFormat.TwoLegs,
             aggregateScoring: true,
@@ -3025,7 +3025,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Cup V1: structural Path identity is Fixture.BracketPairKey (PairKey).
+    /// Cup: structural Path identity is Fixture.BracketPairKey (PairKey).
     /// </summary>
     private static string ToSourcePairKey(Fixture fixture) =>
         !string.IsNullOrWhiteSpace(fixture.BracketPairKey)

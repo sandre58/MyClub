@@ -37,7 +37,7 @@ public sealed class DeclaredParticipation : Entity<MemberId>
     public CompositionStatus CompositionStatus { get; private set; }
 
     /// <summary>
-    /// Gets the optional jersey number for this match (not a value object in V1).
+    /// Gets the optional jersey number for this match (not a value object).
     /// </summary>
     public int? JerseyNumber { get; private set; }
 

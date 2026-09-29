@@ -791,7 +791,7 @@ function RootEntriesRail({
   entries: StructureEntry[];
   /** B2 — inbound Qualif/Prog rules (same rail as Affectation teams). */
   sources?: ReactNode;
-  /** Expected volume from inbound rules (promised Entrées, not yet necessarily in CompositionEntries). */
+  /** Expected volume from inbound rules (promised Entries, not yet necessarily in CompositionEntries). */
   sourcesConfiguredVolume?: number;
   canCompose?: boolean;
   onEditCompose?: () => void;
@@ -1501,12 +1501,12 @@ export function StructurePhaseFiche({
     drawOverviewQuery.data?.draws ?? [],
   );
   const canEditDraw = actions.includes('ReplaceDrawRules');
-  /** CTA exécution only when DrawRules engage the mechanism. */
+  /** Execution CTA only when DrawRules engage the mechanism. */
   const showDrawCta = stage.hasDrawRules;
   /**
-   * CTA secondaire découverte — Groups/Cup, mécanisme non engagé.
-   * Visibilité = format + !DrawRules + ReplaceDrawRules seulement.
-   * Pas de prédicat occupation / Qual / Composition / Places N (décision Activer ≠ couverture).
+   * Secondary discovery CTA — Groups/Cup, mechanism not yet engaged.
+   * Visibility = format + !DrawRules + ReplaceDrawRules only.
+   * No occupation / Qual / Composition / Places N predicate (Activate ≠ coverage).
    */
   const showActivateDrawCta =
     !stage.hasDrawRules &&
@@ -1575,7 +1575,7 @@ export function StructurePhaseFiche({
     createBlockedShort != null &&
     !activeDraw &&
     overviewDraws.length === 0;
-  /** Inline short caption on fiche — skip when Libérer is the unblock action, and
+  /** Inline short caption on the stage card — skip when Release is the unblock action, and
    * skip countMismatch when the filled/capacity ratio already carries the signal. */
   const showCreateBlockedCaption =
     createBlockedShort != null &&
@@ -1636,7 +1636,7 @@ export function StructurePhaseFiche({
   const placementAwards = stage.placementAwards ?? [];
   const hasExits = outboundGroups.length > 0;
   const hasAttribution = placementAwards.length > 0;
-  /** Inter-Stage only — no Sorties create without an aval peer. */
+  /** Inter-Stage only — no Sorties create without a downstream peer. */
   const canAddExit = data.stages.length >= 2;
   const canCreateExit =
     canAddExit && (canEditQualif || canEditProg);
@@ -1660,7 +1660,7 @@ export function StructurePhaseFiche({
     setRulesEditStage(null);
   };
 
-  /** Open Qualif/Prog editor for a source stage without changing the selected fiche. */
+  /** Open Qualif/Prog editor for a source stage without changing the selected stage card. */
   const openExitEdit = (
     kind: ExitKind,
     sourceStage: StructureStageHubSummary = stage,
@@ -1790,7 +1790,7 @@ export function StructurePhaseFiche({
       );
     }
     if (!canCreateExit) return undefined;
-    // V1 topology: Qual XOR Prog — open the single available editor.
+    // Qual XOR Prog — open the single available editor.
     const kind: ExitKind = canEditQualif ? 'qualification' : 'progression';
     return (
       <Tooltip content={t('fiche.addExit')}>

@@ -4,7 +4,7 @@ import { ChevronRightIcon } from '../icons/shellIcons';
 
 /**
  * Cross-surface text CTA — label + trailing chevron.
- * Prefer over page-local overview/classements link clones.
+ * Prefer over page-local overview/standings link clones.
  */
 export function TextLink({
   to,

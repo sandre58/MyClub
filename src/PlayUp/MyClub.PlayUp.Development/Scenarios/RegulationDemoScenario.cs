@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Règlement hub QA: classifying groupes + KO finale, ET+TAB, stays Draft.
+/// Regulation hub QA: classifying groups + KO finale, ET+TAB, stays Draft.
 /// </summary>
 public sealed class RegulationDemoScenario : IScenario
 {

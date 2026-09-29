@@ -1,5 +1,5 @@
 /*
- * Canonical clickable row (Accueil, MatchRow, later lists).
+ * Canonical clickable row (Home, MatchRow, later lists).
  * Hover A: full-bleed --color-surface-secondary wash; chevron → ink.
  * Pressed = hover. Focus = global :focus-visible. No brand bar, shadow, lift, underline.
  */
@@ -43,7 +43,7 @@
   cursor: not-allowed;
 }
 
-/* Full-bleed wash inside padded .ds-panel (Accueil panel has no padding). */
+/* Full-bleed wash inside padded .ds-panel (Home panel has no padding). */
 .ds-panel .ds-interactive-row {
   margin-inline: calc(-1 * var(--space-16));
   padding-inline: var(--space-16);

@@ -8,7 +8,7 @@ import type { LabMatch, LabTeam } from './labData';
 
 export { PanelHead };
 
-/** Crest d'équipe lab — délègue à TeamCrest (pas de 2ᵉ implémentation). */
+/** Lab team crest — delegates to TeamCrest (no second implementation). */
 export function Crest({
   team,
   className,

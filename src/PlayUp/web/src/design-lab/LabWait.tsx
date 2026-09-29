@@ -5,7 +5,7 @@ export type LabWaitKind = 'b' | 'c';
 export type LabWaitScale = WaitSize | 'button';
 
 /**
- * Atome d'attente Lab — B spinner + barre (rejeté) · C WaitMark (retenu 2026-09-03).
+ * Lab wait atom — B spinner + bar (comparison) · C WaitMark (product treatment).
  */
 export function LabWaitAtom({
   kind,
@@ -77,7 +77,7 @@ function WaitBar() {
 }
 
 /**
- * Planche d'arbitrage — C retenu (2026-09-03). B reste visible comme alternative rejetée.
+ * Wait comparison board — C is the product treatment; B remains visible for comparison.
  */
 export function LabWait() {
   return (
@@ -85,23 +85,23 @@ export function LabWait() {
       <header className="dlab-wait-board__intro">
         <h1 className="ds-heading">États d’attente</h1>
         <p className="ds-body">
-          Retenu : C — mark Accueil statique, anneau qui tourne, label centré
-          sous l’animation. Tailles : Accueil (home) · page · région. Produit :{' '}
-          <code>WaitMark</code> / <code>LoadingState</code>. Boutons : spinner
-          (le PNG n’est pas un glyphe de contrôle).
+          Product treatment: C — static Home mark, orbiting ring, label
+          centered under the animation. Sizes: Home · page · region.
+          Product: <code>WaitMark</code> / <code>LoadingState</code>. Buttons:
+          spinner (the PNG is not a control glyph).
         </p>
       </header>
 
       <div className="dlab-wait-board__grid">
         <div className="dlab-wait-board__col-head" aria-hidden="true" />
         <div className="dlab-wait-board__col-head">
-          <p className="ds-label">B — spinner + barre</p>
+          <p className="ds-label">B — spinner + bar</p>
           <p className="ds-meta">
             Anneau currentColor · piste 12° · Chargement…
           </p>
         </div>
         <div className="dlab-wait-board__col-head">
-          <p className="ds-label">C — marque + anneau (retenu)</p>
+          <p className="ds-label">C — mark + ring (product)</p>
           <p className="ds-meta">WaitMark · 3 tailles · label centré</p>
         </div>
 

@@ -124,7 +124,7 @@
 }
 
 /* ------------------------------------------------------------------ */
-/* Wait states — Lab exploration only (not DS foundations)             */
+/* Wait states — lab-only (not DS foundations)             */
 /* ------------------------------------------------------------------ */
 
 .dlab-wait-board {
@@ -391,7 +391,7 @@
   gap: var(--space-4);
 }
 
-/* Tooltip board — surface vs ink exploration (not a DS recipe) */
+/* Tooltip board — surface vs ink lab mock (not a DS recipe) */
 .dlab-tooltip-compare {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));

@@ -17,8 +17,8 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// B1-M2 vertical slice: Winner Phase A → Prog inter → Population B → Draw pool → Placement.
-/// SoT: Open minimaux B1-M2 (O1-a, O2-a, O4-a).
+/// Vertical slice: Winner stage A → Prog inter → Population B → Draw pool → Placement.
+/// SoT: open minima O1-a, O2-a, O4-a.
 /// </summary>
 public sealed class B1M2VerticalSliceTests
 {

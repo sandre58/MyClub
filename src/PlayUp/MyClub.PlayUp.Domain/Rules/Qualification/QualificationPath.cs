@@ -22,7 +22,7 @@ public sealed record QualificationPath
     /// <param name="selection">Which participants are selected.</param>
     /// <param name="destination">Where participants are routed (population or Place).</param>
     /// <param name="condition">
-    /// Optional gate on the selected standing row (V1: Points ≥ threshold; Position selection only).
+    /// Optional gate on the selected standing row (Points ≥ threshold; Position selection only).
     /// </param>
     public QualificationPath(
         int order,

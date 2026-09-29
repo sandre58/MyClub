@@ -354,9 +354,9 @@ public sealed class Competition : AggregateRoot<CompetitionId>
     /// Removes a declared member from an entry roster.
     /// </summary>
     /// <remarks>
-    /// R4 (Décision Feuille Acceptée): callers must refuse removal when the member is still referenced by any
+    /// Callers must refuse removal when the member is still referenced by any
     /// match <c>DeclaredParticipation</c> (Application orchestration — Competition does not load Match).
-    /// Explicit sequence: remove from sheet(s), then remove from roster. No Domain auto-clean / orphan V1.
+    /// Explicit sequence: remove from sheet(s), then remove from roster. Domain does not auto-clean sheet references.
     /// </remarks>
     public void RemoveDeclaredMember(EntryId entryId, MemberId memberId, IClock clock)
     {

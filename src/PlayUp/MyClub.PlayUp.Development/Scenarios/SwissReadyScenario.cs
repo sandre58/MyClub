@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Swiss 8×3 Prepared only — Ready, 0 rounds yet (also Règlement Swiss schematic).
+/// Swiss 8×3 Prepared only — Ready, 0 rounds yet (also Regulation Swiss schematic).
 /// </summary>
 public sealed class SwissReadyScenario : IScenario
 {

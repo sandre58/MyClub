@@ -142,11 +142,11 @@ export function LabForm() {
         <p className="ds-eyebrow">Design System</p>
         <h1 className="dlab-form__title">Form controls</h1>
         <p className="dlab-form__lede">
-          Tous les contrôles d’édition DS : Field, TextInput, Select,
-          InputNumber (end / split + suffixe), Switch / SwitchPanel,
+          All DS edit controls: Field, TextInput, Select,
+          InputNumber (end / split + suffix), Switch / SwitchPanel,
           FormSection, FormGroup, OutcomePoints, ReorderList, ChoiceTile,
-          ToggleButtonGroup, Upload, ColorPicker. Surface Règlement = garde-fous
-          produit à part.
+          ToggleButtonGroup, Upload, ColorPicker. Regulation surface =
+          separate product safeguards.
         </p>
       </header>
 

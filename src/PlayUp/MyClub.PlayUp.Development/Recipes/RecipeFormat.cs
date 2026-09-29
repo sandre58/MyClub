@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Development.Recipes;
 
 /// <summary>
-/// V1 structure formats for recipe metadata (aligned with Application <c>StructureFormatKind</c>).
+/// Structure formats for recipe metadata (aligned with Application <c>StructureFormatKind</c>).
 /// Multi-stage inspired templates compose several stages via dedicated builders.
 /// </summary>
 public enum RecipeFormat

@@ -174,8 +174,8 @@ export function ConfrontationEditors({
 
 /**
  * Activate (`DrawRules` null → Random min) or edit DrawRules params.
- * Deactivate lives under the fiche CTA group (not in this dialog).
- * V1 fields: Mode (RO) + PotRules for Groups only (SwitchPanel). Seeds/constraints not editable.
+ * Deactivate lives under the stage-card CTA group (not in this dialog).
+ * Fields: Mode (RO) + PotRules for Groups only (SwitchPanel). Seeds/constraints not editable.
  * L2: when `rulesLocked`, params are view-only (Generate already consumed the rules).
  */
 export function DrawRulesDialog({
@@ -357,7 +357,7 @@ export function DrawRulesDialog({
                 leading={<RandomIcon size="sm" />}
                 selected
                 onChange={(selected) => {
-                  // Sole V1 mode — cannot deselect.
+                  // Sole available mode — cannot deselect.
                   if (!selected) return;
                 }}
               />

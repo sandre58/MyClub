@@ -54,11 +54,11 @@ type LabView =
   | 'standings';
 
 /**
- * /design-lab — prototype de la direction « Grille de compétition, exécutée ».
+ * /design-lab — visual prototype for the competition-grid direction.
  *
- * Référence visuelle, hors produit : données fictives, aucune API,
- * aucune surface existante modifiée. La barre du haut pilote le prototype
- * (surface + état du cycle) ; tout le reste est le produit proposé.
+ * Visual reference, outside product: fictional data, no API,
+ * no existing surface modified. The top bar drives the prototype
+ * (surface + lifecycle state); everything else is the proposed product.
  */
 export function DesignLabPage() {
   const [view, setView] = useState<LabView>('overview');
@@ -241,7 +241,7 @@ export function DesignLabPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Barre lab (hors produit)                                            */
+/* Lab chrome bar (outside product)                                    */
 /* ------------------------------------------------------------------ */
 
 const viewOptions: Array<{ key: LabView; label: string }> = [
@@ -391,7 +391,7 @@ function LabBar({
 }
 
 /* ------------------------------------------------------------------ */
-/* Shell proposé                                                       */
+/* Proposed shell                                                      */
 /* ------------------------------------------------------------------ */
 
 const labNavGroups: Array<{

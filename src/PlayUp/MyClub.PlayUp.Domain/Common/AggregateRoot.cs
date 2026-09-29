@@ -13,14 +13,9 @@ namespace MyClub.PlayUp.Domain.Common;
 /// </summary>
 /// <typeparam name="TId">The typed identifier of the aggregate.</typeparam>
 /// <remarks>
-/// <para>
-/// Play'Up V1: domain events are an <strong>observation side-channel</strong> (tests / optional technical audit).
+/// Domain events are an <strong>observation side-channel</strong> (tests / optional technical audit).
 /// They are not dispatched by Application, not persisted, and are not the source of truth for behaviour —
-/// aggregate state and invariants are. See Décision D-06.
-/// </para>
-/// <para>
-/// Initializes a new instance of the <see cref="AggregateRoot{TId}"/> class.
-/// </para>
+/// aggregate state and invariants are.
 /// </remarks>
 /// <param name="id">The aggregate identity.</param>
 [DebuggerDisplay("{GetType().Name} {Id}")]
@@ -33,7 +28,7 @@ public abstract class AggregateRoot<TId>(TId id) : Entity<TId>(id)
     /// Gets the uncommitted domain events in raise order (FIFO).
     /// </summary>
     /// <remarks>
-    /// V1: consumed by tests (and optionally cleared there). Not a runtime Application pipeline API.
+    /// Consumed by tests (and optionally cleared there). Not a runtime Application pipeline API.
     /// </remarks>
     public IReadOnlyList<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
@@ -41,7 +36,7 @@ public abstract class AggregateRoot<TId>(TId id) : Entity<TId>(id)
     /// Clears the in-memory event buffer (typically after test assertions).
     /// </summary>
     /// <remarks>
-    /// V1 does not dispatch these events. Clearing is not a post-handler step of a production pipeline.
+    /// Events are not dispatched at runtime. Clearing is not a post-handler step of a production pipeline.
     /// </remarks>
     public void ClearDomainEvents() => _domainEvents.Clear();
 

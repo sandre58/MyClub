@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Assembled Structure hub read for Slice 2 (not a Domain mirror).
+/// Assembled Structure hub read (not a Domain mirror).
 /// </summary>
 /// <param name="CompetitionId">Competition identity.</param>
 /// <param name="Name">Competition name.</param>
@@ -21,8 +21,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Regulation">High-level regulation summary.</param>
 /// <param name="Structure">Structure counts (not full Domain graph).</param>
 /// <param name="Actions">Available structure action codes.</param>
-/// <param name="Readiness">Application readiness diagnostic for Slice 3.</param>
-/// <param name="Stages">Per-stage topology + regulation tokens (Règlement hub Lot 1).</param>
+/// <param name="Readiness">Application readiness diagnostic.</param>
+/// <param name="Stages">Per-stage topology + regulation tokens (Regulation hub).</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="ScheduledStart">Optional declared start.</param>
@@ -125,7 +125,7 @@ public sealed record StructureRegulationSummaryDto(
 /// <param name="MatchdayCount">Matchdays.</param>
 /// <param name="SlotCount">Slots.</param>
 /// <param name="HasDrawRules">Whether stage DrawRules are set.</param>
-/// <param name="NumberOfPots">Draw PotRules only (tirage). Never a substitute for <c>PlacesPerGroup</c>.</param>
+/// <param name="NumberOfPots">Draw PotRules only (draw). Never a substitute for <c>PlacesPerGroup</c>.</param>
 /// <param name="MatchGenerationFormat">Championship / Groups generation mode.</param>
 /// <param name="SwissRoundCount">Planned Swiss rounds K when Kind is Swiss.</param>
 public sealed record StructureTopologySummaryDto(
@@ -139,12 +139,12 @@ public sealed record StructureTopologySummaryDto(
     int? SwissRoundCount = null);
 
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
-/// <param name="ReadyForNextSlice">True when structure is sufficient for Slice 3 entry.</param>
+/// <param name="ReadyForNextSlice">True when structure is sufficient for the next construction step.</param>
 /// <param name="ReadyForDraw">True when a Draw path is identifiable.</param>
 /// <param name="ReadyForMaterialization">True when Fixtures/Matches can be materialized (Cup: primary skeleton fixtures incomplete; not from-slots).</param>
 /// <param name="ReadyForSchedule">True when attached Matches exist for scheduling.</param>
-/// <param name="ReadyForMatchOperation">True when Slice 4 can start (Matches attached; schedule optional).</param>
-/// <param name="ReadyForSchedulePath">Slice 2 hint: championship schedule path identifiable from structure.</param>
+/// <param name="ReadyForMatchOperation">True when match operations can start (Matches attached; schedule optional).</param>
+/// <param name="ReadyForSchedulePath">Structure hint: championship schedule path identifiable from structure.</param>
 /// <param name="AttachedMatchCount">Matches attached to the primary stage.</param>
 /// <param name="Blockers">Machine-readable blocker codes (authoritative for SPA i18n).</param>
 public sealed record StructureReadinessDto(
@@ -158,8 +158,8 @@ public sealed record StructureReadinessDto(
     IReadOnlyList<string> Blockers);
 
 /// <summary>
-/// Per-stage hub row for Structure / Règlement (topology + regulation tokens + graph authoring).
-/// Optional families omitted when absent (présence seule).
+/// Per-stage hub row for Structure / Regulation (topology + regulation tokens + graph authoring).
+/// Optional families omitted when absent (presence-only).
 /// </summary>
 /// <param name="StageId">Stage identity.</param>
 /// <param name="Name">Stage display name.</param>
@@ -183,7 +183,7 @@ public sealed record StructureReadinessDto(
 /// <param name="LossPoints">Standing loss points when HasStandingRules.</param>
 /// <param name="HasDrawRules">DrawRules present.</param>
 /// <param name="DrawMode">DrawRules.Mode when HasDrawRules.</param>
-/// <param name="NumberOfPots">Draw PotRules only (tirage). Never a substitute for <c>PlacesPerGroup</c>.</param>
+/// <param name="NumberOfPots">Draw PotRules only (draw). Never a substitute for <c>PlacesPerGroup</c>.</param>
 /// <param name="HasQualificationRules">QualificationRules present.</param>
 /// <param name="QualificationPathCount">Qualification path count.</param>
 /// <param name="HasProgressionRules">ProgressionRules present.</param>
@@ -213,7 +213,7 @@ public sealed record StructureReadinessDto(
 /// <param name="QualificationPaths">Authoring projection of qualification paths when present.</param>
 /// <param name="QualificationIntents">Authoring projection of qualification intents when present.</param>
 /// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
-/// <param name="ProgressionIntents">Authoring projection of progression intents when present (V3).</param>
+/// <param name="ProgressionIntents">Authoring projection of progression intents when present.</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 /// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
@@ -224,7 +224,7 @@ public sealed record StructureReadinessDto(
 /// ≠ total slotCount when multi-round); Championship/Swiss = Active;
 /// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
 /// </param>
-/// <param name="CompositionPreviewNames">Display names for runtime composition (Tirage / Live).</param>
+/// <param name="CompositionPreviewNames">Display names for runtime composition (Draw / Live).</param>
 /// <param name="CompositionPreviewOverflow">Always 0 — retained for API shape; rails no longer truncate.</param>
 /// <param name="CompositionIneligibleCount">Runtime composition entries that are no longer Active.</param>
 /// <param name="AffectationEntryCount">Affectation authoring set size (Population tile).</param>
@@ -358,7 +358,7 @@ public sealed record StructureQualificationPathDto(
     Guid? DestinationGroupId = null,
     bool DestinationForm = false);
 
-/// <summary>One progression authoring intent for Structure dialog (V3).</summary>
+/// <summary>One progression authoring intent for Structure dialog.</summary>
 public sealed record StructureProgressionIntentDto(
     Guid IntentId,
     int Order,
@@ -427,7 +427,7 @@ public sealed record StructureStageDefaultsBindingDto(
     StructureHeritablePartBindingDto? Points,
     StructureHeritablePartBindingDto? RankingCriteria);
 
-/// <summary>One placement-award path for the Règlement / Structure hubs.</summary>
+/// <summary>One placement-award path for the Regulation / Structure hubs.</summary>
 /// <param name="Rank">1-based final competition rank.</param>
 /// <param name="Outcome">Winner or Loser of the source confrontation.</param>
 /// <param name="SourcePairKey">Structural source key (Cup = BracketPair.PairKey).</param>
@@ -440,7 +440,7 @@ public sealed record StructurePlacementAwardDto(
     string? SourceLabel = null,
     Guid? BoundFixtureId = null);
 
-/// <summary>One draw constraint for the Règlement hub Tirage column.</summary>
+/// <summary>One draw constraint for the Regulation hub Draw column.</summary>
 /// <param name="Type">DrawConstraintType member name.</param>
 /// <param name="Enforcement">Preferred or Required.</param>
 /// <param name="MaxPerGroup">Only for MaxSameAssociationPerGroup.</param>

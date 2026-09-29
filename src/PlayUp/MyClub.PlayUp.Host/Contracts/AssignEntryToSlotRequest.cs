@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
-/// HTTP body for assigning an entry to a slot (Placement manuel Coupe).
+/// HTTP body for assigning an entry to a slot (manual Cup placement).
 /// </summary>
 /// <param name="EntryId">Competition entry to pin on the slot.</param>
 public sealed record AssignEntryToSlotRequest(Guid EntryId);

@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Standings;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Optional gate evaluated on a selected standing row after selection (V1: Points ≥ threshold).
+/// Optional gate evaluated on a selected standing row after selection (Points ≥ threshold).
 /// </summary>
 public sealed record QualificationCondition
 {

@@ -10,8 +10,8 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Expands <see cref="ProgressionIntent"/> into atomic <see cref="ProgressionPath"/> (V3).
-/// Cup V1: Expand on <see cref="BracketPair"/> order (PairKey) — fixtures not required at Save.
+/// Expands <see cref="ProgressionIntent"/> into atomic <see cref="ProgressionPath"/>.
+/// Cup: Expand on <see cref="BracketPair"/> order (PairKey) — fixtures not required at Save.
 /// </summary>
 public static class ProgressionPathExpander
 {

@@ -12,7 +12,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Placement / population destination (one-of).
-/// Population | Form (Championship/Swiss) | Group (Groups A1) | Slot (Cup).
+/// Population | Form (Championship/Swiss) | Group (Groups) | Slot (Cup).
 /// </summary>
 public sealed record ProgressionDestination
 {
@@ -60,7 +60,7 @@ public sealed record ProgressionDestination
     public static ProgressionDestination ForSlot(StageId stageId, string slotKey) =>
         new(stageId, slotKey, groupId: null, form: false);
 
-    /// <summary>Creates a group Placement destination (Groups A1).</summary>
+    /// <summary>Creates a group Placement destination (Groups).</summary>
     public static ProgressionDestination ForGroup(StageId stageId, GroupId groupId) =>
         new(stageId, slotKey: null, groupId, form: false);
 

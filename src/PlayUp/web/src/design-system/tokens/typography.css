@@ -1,5 +1,5 @@
 /*
- * One grotesque family. Product face = IBM Plex Sans (14.5).
+ * One grotesque family. Product face = IBM Plex Sans.
  * Five roles — not a 7-step type scale. No mono, no display sportif.
  */
 :root,
@@ -16,7 +16,7 @@
   --text-label: 0.8125rem;
   --text-meta: 0.75rem;
 
-  /* Numeric roles — chiffres tabulaires, vecteur d'identité (Design Lab V2). */
+  /* Numeric roles — tabular figures, identity vector. */
   --text-score: 3.25rem;
   --text-hero-num: 3.25rem;
   --text-row-score: 1.0625rem;

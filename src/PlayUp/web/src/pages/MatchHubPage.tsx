@@ -34,8 +34,8 @@ import {
 import './matches.css';
 
 /**
- * Matchs workspace — overview stages + stage match lists.
- * Presents Read facts by journée (V3). No page-level « À traiter » (Shell drawer).
+ * Matches workspace — overview stages + stage match lists.
+ * Presents Read facts by matchday. No page-level Needs attention (Shell drawer).
  */
 export function MatchHubPage() {
   const { competitionId = '' } = useParams();

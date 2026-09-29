@@ -15,7 +15,7 @@ using Xunit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Minimal Phase 12.8 HTTP contract tests (string enums + named response DTOs).
+/// Minimal HTTP contract tests (string enums + named response DTOs).
 /// </summary>
 [Collection("host-postgres")]
 [Trait("Category", "Integration")]

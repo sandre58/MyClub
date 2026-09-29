@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Needs Attention list for hub À traiter (derived Read — not persisted).
+/// Needs Attention list for the attention hub (derived Read — not persisted).
 /// </summary>
 /// <param name="CompetitionId">Competition identity.</param>
 /// <param name="Items">Attention items.</param>

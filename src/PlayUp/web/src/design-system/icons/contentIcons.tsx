@@ -45,22 +45,22 @@ import {
 type ContentIconProps = SVGProps<SVGSVGElement> & { size?: IconSize };
 
 /**
- * Product / métier content icons (Structure, Règlement, Overview, forms…).
+ * Product / domain content icons (Structure, Regulation, Overview, forms…).
  * Same rules as shell chrome: stroke monocolor, currentColor, 24×24, sizes via Icon.
- * SoT: Identité §13 · foundations/icons.css · Icon.tsx
+ * See foundations/icons.css · Icon.tsx
  */
 
-/** Prochaine action — flag (en-tête générique). */
+/** Next action — flag (generic header). */
 export function NextActionIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Flag} size={size} {...props} />;
 }
 
-/** Ajout — plus (CTA Créer). */
+/** Add — plus (Create CTA). */
 export function PlusIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Plus} size={size} {...props} />;
 }
 
-/** Stepper — moins. */
+/** Stepper — minus. */
 export function MinusIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Minus} size={size} {...props} />;
 }
@@ -70,52 +70,52 @@ export function GripIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={GripVertical} size={size} {...props} />;
 }
 
-/** Victoire / trophée. */
+/** Win / trophy. */
 export function TrophyIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Trophy} size={size} {...props} />;
 }
 
-/** Attribution des places. */
+/** Placement awards. */
 export function AttributionIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Medal} size={size} {...props} />;
 }
 
-/** Poules — grille de groupes. */
+/** Groups — group grid. */
 export function GroupsFormatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={LayoutGrid} size={size} {...props} />;
 }
 
-/** Championnat — classement ordonné. */
+/** Championship — ordered ranking. */
 export function ChampionshipFormatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ListOrdered} size={size} {...props} />;
 }
 
-/** Coupe — arbre / bracket. */
+/** Cup — tree / bracket. */
 export function CupFormatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={GitBranch} size={size} {...props} />;
 }
 
-/** Tours de coupe — jalons (distinct du type Coupe). */
+/** Cup rounds — milestones (distinct from Cup format). */
 export function RoundsStatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Flag} size={size} {...props} />;
 }
 
-/** Journées — calendrier. */
+/** Matchdays — calendar. */
 export function MatchdayStatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={CalendarDays} size={size} {...props} />;
 }
 
-/** Matchs attachés. */
+/** Attached matches. */
 export function MatchesStatIcon({ size, ...props }: ContentIconProps) {
   return <MatchesNavIcon size={size} {...props} />;
 }
 
-/** Règles de match (cadre / phase) — aligné Règlement. */
+/** Match rules (framework / phase) — aligned with Regulation hub. */
 export function MatchRulesIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Volleyball} size={size} {...props} />;
 }
 
-/** Classement — podium (aligné Règlement). */
+/** Standing — podium (aligned with Regulation hub). */
 export function StandingRulesIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Podium} size={size} {...props} />;
 }
@@ -125,72 +125,72 @@ export function ConfrontationIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Handshake} size={size} {...props} />;
 }
 
-/** Aller-retour / manches. */
+/** Two legs / legs. */
 export function LegsStatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowLeftRight} size={size} {...props} />;
 }
 
-/** Anomalie structurelle compacte (≠ tirage / ops). */
+/** Compact structural anomaly (≠ draw / ops). */
 export function StructureIssueIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={CircleAlert} size={size} {...props} />;
 }
 
-/** Tirage à définir — mélange / pots (≠ anomalie). */
+/** Draw pending — shuffle / pots (≠ anomaly). */
 export function DrawPendingIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Shuffle} size={size} {...props} />;
 }
 
-/** Tirage — configuration (aligné Règlement Shuffle). */
+/** Draw — configuration (aligned with Regulation Shuffle). */
 export function DrawConfigIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Shuffle} size={size} {...props} />;
 }
 
-/** Têtes de série. */
+/** Seeds. */
 export function SeedsIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Medal} size={size} {...props} />;
 }
 
-/** Contraintes de tirage. */
+/** Draw constraints. */
 export function DrawConstraintIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Lock} size={size} {...props} />;
 }
 
-/** Tirage aléatoire. */
+/** Random draw. */
 export function RandomIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Dices} size={size} {...props} />;
 }
 
-/** Swiss — réseau de paires. */
+/** Swiss — pairing network. */
 export function SwissFormatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Network} size={size} {...props} />;
 }
 
-/** Nul — égalité. */
+/** Draw — equality. */
 export function EqualIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Equal} size={size} {...props} />;
 }
 
-/** Défaite — croix. */
+/** Loss — cross. */
 export function CrossIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={X} size={size} {...props} />;
 }
 
-/** Identité — crayon. */
+/** Identity — pencil. */
 export function PencilIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Pencil} size={size} {...props} />;
 }
 
-/** Suppression — corbeille (préparation). */
+/** Delete — trash (preparation). */
 export function TrashIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Trash2} size={size} {...props} />;
 }
 
-/** Libérer des placements / débloquer une grille — pas une suppression. */
+/** Release placements / unlock a grid — not a delete. */
 export function UnlockIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Unlock} size={size} {...props} />;
 }
 
-/** Retrait d’une équipe en saison — bouclier moins (pas une personne). */
+/** Withdraw a team mid-season — shield minus (not a person). */
 export function WithdrawIcon({ size, ...props }: ContentIconProps) {
   return (
     <Icon size={size} {...props}>
@@ -200,55 +200,55 @@ export function WithdrawIcon({ size, ...props }: ContentIconProps) {
   );
 }
 
-/** Empty state — cadre en pointillés (rien de sélectionné). */
+/** Empty state — dashed frame (nothing selected). */
 export function EmptySelectionIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={SquareOff} size={size} {...props} />;
 }
 
-/** Sélection multiple — deux calques. */
+/** Multi-select — two layers. */
 export function LayersIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Layers} size={size} {...props} />;
 }
 
-/** Créer les matchs — calendrier + ajout. */
+/** Create matches — calendar + add. */
 export function CreateMatchesIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={CalendarPlus} size={size} {...props} />;
 }
 
-/** Préparation (presse-papier) — playground / surfaces futures. */
+/** Preparation (clipboard) — playground / future surfaces. */
 export function PreparationIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Clipboard} size={size} {...props} />;
 }
 
-/** Copier dans le presse-papiers. */
+/** Copy to clipboard. */
 export function CopyIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Copy} size={size} {...props} />;
 }
 
-/** Pipette — échantillonner une couleur à l’écran (EyeDropper). */
+/** Eyedropper — sample a color on screen (EyeDropper). */
 export function PipetteIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Pipette} size={size} {...props} />;
 }
 
 /**
- * Calendrier sportif — glyphe Matches nav.
- * Used by Préparation / GeneratedCalendar overview panel.
+ * Sport calendar — Matches nav glyph.
+ * Used by Preparation / GeneratedCalendar overview panel.
  */
 export function CalendarIcon({ size, ...props }: ContentIconProps) {
   return <MatchesNavIcon size={size} {...props} />;
 }
 
-/** Équipes — participants (même glyphe que la nav Équipes). */
+/** Teams — participants (same glyph as Teams nav). */
 export function TeamsIcon({ size, ...props }: ContentIconProps) {
   return <TeamsNavIcon size={size} {...props} />;
 }
 
-/** Règlement — document. */
+/** Regulation — document. */
 export function RegulationIcon({ size, ...props }: ContentIconProps) {
   return <RegulationNavIcon size={size} {...props} />;
 }
 
-/** Structure — arborescence de phases / groupes. */
+/** Structure — stage / group tree. */
 export function StructureIcon({ size, ...props }: ContentIconProps) {
   return (
     <Icon size={size} {...props}>
@@ -261,17 +261,17 @@ export function StructureIcon({ size, ...props }: ContentIconProps) {
   );
 }
 
-/** À traiter — triangle d'alerte (identique au shell). */
+/** Attention — alert triangle (same as shell). */
 export function OverviewAttentionIcon({ size, ...props }: ContentIconProps) {
   return <AttentionIcon size={size} {...props} />;
 }
 
-/** Confirmation d'état — check (pastilles de statut). */
+/** State confirmation — check (status pills). */
 export function CheckIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Check} size={size} {...props} />;
 }
 
-/** Étape non encore atteinte — cercle en pointillés. */
+/** Step not yet reached — dashed circle. */
 export function PendingCircleIcon({ size, ...props }: ContentIconProps) {
   return (
     <Icon size={size} strokeDasharray="3 3" {...props}>
@@ -280,17 +280,17 @@ export function PendingCircleIcon({ size, ...props }: ContentIconProps) {
   );
 }
 
-/** Personne — tête / épaules (placeholder effectif). */
+/** Person — head / shoulders (roster placeholder). */
 export function PersonIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={UsersRound} size={size} {...props} />;
 }
 
-/** Progression neutre — flèche droite (fallback action). */
+/** Neutral progression — right arrow (fallback action). */
 export function ArrowRightIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowRight} size={size} {...props} />;
 }
 
-/** Connecteur vertical — flèche bas (topologie ordonnée). */
+/** Vertical connector — down arrow (ordered topology). */
 export function ArrowDownIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowDown} size={size} {...props} />;
 }

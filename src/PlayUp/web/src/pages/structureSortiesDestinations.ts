@@ -1,13 +1,12 @@
 import type { StructureStageHubSummary } from '../types';
 
 /**
- * Sorties destinations = peers **aval** in Structure order only
- * (Competition.StageIds / `data.stages` index).
+ * Sorties destinations = later peers in Structure order only
+ * (`Competition.StageIds` / `data.stages` index).
  *
- * - Self excluded (intra-Stage Place = forme, not Sorties).
- * - Amont excluded (index ≤ source).
- *
- * @see Notion: Sorties = inter-Stage only ; destination aval
+ * - Self excluded (intra-stage Place is form, not Sorties).
+ * - Earlier stages excluded (index ≤ source).
+ * - Inter-stage only; destination must be downstream.
  */
 export function sortiesAvalPeerStages(
   stages: readonly StructureStageHubSummary[],

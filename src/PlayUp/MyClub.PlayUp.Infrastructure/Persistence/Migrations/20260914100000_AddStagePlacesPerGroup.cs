@@ -26,7 +26,7 @@ public partial class AddStagePlacesPerGroup : Migration
             type: "integer",
             nullable: true);
 
-        // Legacy bridge: copy Groups V1 pot count (used as per-group capacity) into form fact.
+        // Legacy bridge: copy Groups pot count (used as per-group capacity) into form fact.
         migrationBuilder.Sql(
             """
             UPDATE stages

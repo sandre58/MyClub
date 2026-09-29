@@ -25,9 +25,8 @@ import { Crest, MatchRow, PanelHead } from './LabShared';
 import { TrendIcon } from '../design-system/TrendIcon';
 
 /**
- * Vue d'ensemble — composition émergente selon le cycle.
- * Intensité B : le caractère vient de l'échelle et de la hiérarchie,
- * pas du remplissage.
+ * Overview — composition emerges by cycle.
+ * Intensity B: character comes from scale and hierarchy, not fill.
  */
 export function LabOverview({ lifecycle }: { lifecycle: LabLifecycle }) {
   switch (lifecycle) {

@@ -1,6 +1,6 @@
 /*
  * Short scale only.
- * Hub page stacks (Équipes, Règlement, …) use --space-16 between sections.
+ * Hub page stacks (Teams, Regulation, …) use --space-16 between sections.
  * --space-32 is for major separations already established elsewhere — not the default hub gap.
  * Do not add a second spacing ladder per density.
  * Exposed on :root + .ds-root so admin chrome and product share one SoT.

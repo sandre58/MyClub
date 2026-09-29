@@ -13,7 +13,7 @@ public enum ConstraintEnforcement
 {
     /// <summary>
     /// The generator should try to respect the constraint but may deviate.
-    /// Default V1 value.
+    /// Default value.
     /// </summary>
     Preferred = 0,
 

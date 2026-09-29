@@ -30,9 +30,9 @@ type ShellHeaderProps = {
 };
 
 /**
- * Shell header (A) — competition context + À traiter on navy chrome.
- * Accueil / change-competition is the rail lockup. On phone it lives at
- * the top of the overlay (above Pilotage), not in this bar.
+ * Shell header (A) — competition context + Needs attention on navy chrome.
+ * Home / change-competition is the rail lockup. On phone it lives at
+ * the top of the overlay (above Ops), not in this bar.
  */
 export function ShellHeader({
   viewport = 'desktop',

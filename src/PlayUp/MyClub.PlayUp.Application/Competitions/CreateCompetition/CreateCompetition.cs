@@ -17,7 +17,7 @@ namespace MyClub.PlayUp.Application.Competitions;
 /// Domain owns identity, name, regulation copy, and <see cref="CompetitionStatus.Draft"/>.
 /// Persistence: caller invokes this use case, <c>ICompetitionRepository.Add</c>, then SaveChanges once.
 /// Regulation defaults to <see cref="BootstrapRegulation.Standard"/> until the organizer
-/// replaces it via Slice 2 <c>ReplaceRegulation</c>.
+/// replaces it via <c>ReplaceRegulation</c>.
 /// </remarks>
 public static class CreateCompetition
 {

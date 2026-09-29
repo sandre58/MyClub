@@ -1,5 +1,5 @@
 /**
- * Play'Up wordmark — Accueil and chrome rasters from mockup v3.
+ * Play'Up wordmark — Home and chrome rasters.
  *
  * `home` swaps light/dark assets via CSS when `data-theme` changes
  * (applyTheme remains the sole DOM authority — no React theme prop).

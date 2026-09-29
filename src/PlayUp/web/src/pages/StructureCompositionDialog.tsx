@@ -30,7 +30,7 @@ type StructureCompositionDialogProps = {
   entries: StructureEntry[];
   /**
    * Inbound Qualif/Prog expected volume (Draft). Reserves Places N so Affectation
-   * cannot overfill the expected Population (U1/V2).
+   * cannot overfill the expected Population.
    */
   reservedFromFeeds?: number;
   /** Focus search when opened via deep-link. */

@@ -76,7 +76,7 @@ public static class StageSchematicAssembler
         var feedBySlot = ResolveFeedsTolerant(stage, competitionStages);
         var addressBySlot = new Dictionary<string, CupPlaceAddress>(StringComparer.Ordinal);
 
-        // A1: topology from BracketPairs when present; else legacy adjacent layout.
+        // Topology from BracketPairs when present; else legacy adjacent layout.
         FillTopologyCupAddresses(stage, addressBySlot);
 
         var connections = BuildCupConnections(stage, addressBySlot);
@@ -150,7 +150,7 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// U4 A1 — Place addresses from BracketPairs when present; no invented adjacent pairs.
+    /// Place addresses from BracketPairs when present; no invented adjacent pairs.
     /// </summary>
     private static void FillTopologyCupAddresses(
         Stage stage,

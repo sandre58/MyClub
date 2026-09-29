@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// <summary>
 /// HTTP body for replacing DrawRules on a stage.
 /// <see cref="Clear"/> true (or omit Mode) clears DrawRules.
-/// V1 mode is typically <see cref="DrawMode.Random"/>.
+/// Mode is typically <see cref="DrawMode.Random"/>.
 /// </summary>
 public sealed record ReplaceStageDrawRulesRequest(
     bool Clear = false,

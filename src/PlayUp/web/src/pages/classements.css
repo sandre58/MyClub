@@ -1,7 +1,7 @@
 /*
- * Classements (20.5) — même langage de surface que Vue d'ensemble :
- * panneaux blancs aérés, ombre légère, titre + contenu avec gap.
- * Composition V3 : bandeau · tableau · [Dernière journée | Règlement].
+ * Standings — same surface language as Overview:
+ * airy white panels, light shadow, title + content with gap.
+ * Composition: banner · table · [Last matchday | Regulation].
  */
 
 .page.page--classements {
@@ -32,7 +32,7 @@
   box-shadow: var(--classements-shadow);
 }
 
-/* ---------- En-tête de panneau (comme overview) ---------- */
+/* ---------- Panel header (same as overview) ---------- */
 
 .classements-panel__head {
   display: flex;
@@ -71,7 +71,7 @@
   padding-top: var(--space-8);
 }
 
-/* ---------- Bandeau contexte ---------- */
+/* ---------- Context banner ---------- */
 
 .classements-band {
   display: flex;
@@ -107,7 +107,7 @@
   color: var(--color-brand);
 }
 
-/* ---------- Tables (plusieurs groupes) ---------- */
+/* ---------- Tables (multiple groups) ---------- */
 
 .classements__tables {
   display: flex;
@@ -115,7 +115,7 @@
   gap: var(--space-16);
 }
 
-/* ---------- Bas de page ---------- */
+/* ---------- Page footer ---------- */
 
 .classements__bottom {
   display: grid;

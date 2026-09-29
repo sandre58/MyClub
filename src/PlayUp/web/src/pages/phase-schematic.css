@@ -252,7 +252,7 @@
   opacity: 0.9;
 }
 
-/* Résolution (équipe) = information secondaire discrète (S3). */
+/* Resolution (team) = discreet secondary information (S3). */
 .schematic-slot__secondary {
   overflow: hidden;
   text-overflow: ellipsis;

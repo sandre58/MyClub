@@ -1,7 +1,7 @@
 import type { SchematicCase, SchematicFeedKind } from '../types';
 import { placeChromeLabel } from './structurePlaceLabel';
 
-/** How a Cup place responds to Placement manuel. */
+/** How a Cup place responds to manual placement. */
 export type ManualPlaceMode =
   | 'editable'
   | 'qualProg'

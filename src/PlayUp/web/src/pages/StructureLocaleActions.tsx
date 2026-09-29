@@ -32,7 +32,7 @@ function stageActions(stage: StructureStageHubSummary): string[] {
 }
 
 /**
- * Locale Construction editors (Lot 3) — additive / rename / RR / Swiss K.
+ * Locale Construction editors — additive / rename / RR / Swiss K.
  * Same-kind skeleton rebuild → EditSkeletonDialog.
  */
 export function ConstructionLocaleActions({

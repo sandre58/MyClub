@@ -174,7 +174,7 @@ public sealed record QualificationIntent
     /// <summary>Gets a value indicating whether this intent targets Cup slots.</summary>
     public bool TargetsSlot => DestinationSlotKeys.Count > 0;
 
-    /// <summary>Gets a value indicating whether this intent targets Groups poules.</summary>
+    /// <summary>Gets a value indicating whether this intent targets Groups pools.</summary>
     public bool TargetsGroup => DestinationGroupIds.Count > 0;
 
     /// <summary>Returns a deep copy.</summary>

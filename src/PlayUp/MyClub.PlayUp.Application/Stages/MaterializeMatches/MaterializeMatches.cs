@@ -240,8 +240,8 @@ public static class MaterializeMatches
     /// Builds packed matchday rounds for Championship / Groups according to <paramref name="format"/>.
     /// </summary>
     /// <remarks>
-    /// DoubleRoundRobin = phase-1 circle packing + PairMirror (swap Home/Away), without H/A streak optimization.
-    /// Contract is invariants B1–B6; circle method is the V1 packing implementation only.
+    /// DoubleRoundRobin = first-leg circle packing + PairMirror (swap Home/Away), without H/A streak optimization.
+    /// Contract is invariants B1–B6; circle method is the packing implementation used here.
     /// </remarks>
     public static IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> BuildRoundRobinRounds(
         IReadOnlyList<EntryId> entries,

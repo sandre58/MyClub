@@ -33,3 +33,4 @@ CI `web` job fails on **errors** from those steps (plus `build`). Oxlint warning
 - Prefer extracting non-component exports (helpers) over disabling `only-export-components`
 - Form `onSubmit`: use `SubmitEvent`, not deprecated `FormEvent`
 - Do not add Stylelint / ESLint without a demonstrated problem beyond IDE noise
+- Source comments / JSDoc: English; current technical constraints only; no Notion / V1–MVP history — see `documentation.mdc`

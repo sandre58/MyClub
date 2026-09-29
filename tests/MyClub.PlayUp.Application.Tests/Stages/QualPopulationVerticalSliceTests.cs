@@ -19,7 +19,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// Qual V2 vertical slice: Groups standing → Qual ForPopulation(phaseB) → population → Draw pool → Placement.
+/// Qual vertical slice: Groups standing → Qual ForPopulation(phaseB) → population → Draw pool → Placement.
 /// </summary>
 public sealed class QualPopulationVerticalSliceTests
 {

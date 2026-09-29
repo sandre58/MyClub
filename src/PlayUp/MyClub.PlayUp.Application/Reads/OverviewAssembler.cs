@@ -16,7 +16,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Assembles the Overview Read projection from competition state (Phase 16.1).
+/// Assembles the Overview Read projection from competition state.
 /// </summary>
 /// <remarks>
 /// Composes existing Application diagnostics — does not re-implement Domain invariants.
@@ -38,16 +38,16 @@ public static class OverviewAssembler
     /// <summary>Cycle reading: archived.</summary>
     public const string CycleArchived = "Archived";
 
-    /// <summary>Préparation focus: configuration / structure work.</summary>
+    /// <summary>Preparation focus: configuration / structure work.</summary>
     public const string PreparationFocusSetup = "Setup";
 
-    /// <summary>Préparation focus: Championship calendar generated, ready to start.</summary>
+    /// <summary>Preparation focus: Championship calendar generated, ready to start.</summary>
     public const string PreparationFocusGeneratedCalendar = "GeneratedCalendar";
 
-    /// <summary>Résultat presentation: hero vainqueur (Cup KO without Top-3).</summary>
+    /// <summary>Result presentation: hero winner (Cup KO without Top-3).</summary>
     public const string OutcomePresentationWinner = "Winner";
 
-    /// <summary>Résultat presentation: Top-3 podium (Championship / Swiss / PlacementAwards 1–3).</summary>
+    /// <summary>Result presentation: Top-3 podium (Championship / Swiss / PlacementAwards 1–3).</summary>
     public const string OutcomePresentationPodium = "Podium";
 
     /// <summary>Max matchdays in calendar overview preview.</summary>
@@ -56,7 +56,7 @@ public static class OverviewAssembler
     /// <summary>Situation nature: blocking attention.</summary>
     public const string NatureBlocking = "Blocking";
 
-    /// <summary>Situation nature: informational (minimal V1).</summary>
+    /// <summary>Situation nature: informational.</summary>
     public const string NatureInformational = "Informational";
 
     /// <summary>Impact: construction / structure progress blocked.</summary>
@@ -116,7 +116,7 @@ public static class OverviewAssembler
     /// <summary>Publish draw.</summary>
     public const string ActionPublishDraw = "PublishDraw";
 
-    /// <summary>V1 happy-path orchestration: Publish then Apply (recovery remains <see cref="ActionApplyDraw"/>).</summary>
+    /// <summary>Happy-path orchestration: Publish then Apply (recovery remains <see cref="ActionApplyDraw"/>).</summary>
     public const string ActionPublishAndApplyDraw = "PublishAndApplyDraw";
 
     /// <summary>Apply draw.</summary>
@@ -249,8 +249,8 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Host-owned Préparation sub-situation — not a cycleReading code.
-    /// V1 GeneratedCalendar: Construction + Championship + Ready + matches.total &gt; 0.
+    /// Host-owned preparation sub-situation — not a cycleReading code.
+    /// GeneratedCalendar: Construction + Championship + Ready + matches.total &gt; 0.
     /// </summary>
     internal static string ResolvePreparationFocus(
         string cycleReadingCode,
@@ -717,7 +717,7 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Game-rule facts for Vue d'ensemble Règlement — ReferenceStage only.
+    /// Game-rule facts for Overview Regulation — ReferenceStage only.
     /// </summary>
     internal static OverviewReferenceStageGameRulesDto? BuildReferenceStageGameRules(
         Competition competition,
@@ -765,7 +765,7 @@ public static class OverviewAssembler
                 : stage.Groups.Count > 0 ? StructureFormatKind.Groups : StructureFormatKind.Championship);
 
     /// <summary>
-    /// Dernières / Prochaines on ReferenceStage only — full Matchday or Round units (no caps).
+    /// Recent / Upcoming on ReferenceStage only — full Matchday or Round units (no caps).
     /// </summary>
     internal static (OverviewSportUnitDto? Recent, OverviewSportUnitDto? Next) BuildTemporalSportUnits(
         Competition competition,
@@ -909,7 +909,7 @@ public static class OverviewAssembler
         List<Match> Matches);
 
     /// <summary>
-    /// Projects CompetitionOutcome for the Terminée Résultat surface.
+    /// Projects CompetitionOutcome for the Completed Result surface.
     /// Includes Host <see cref="CompetitionOutcomeDto.Presentation"/> (Winner | Podium).
     /// Null when Abandoned, no places, or places that cannot conclude a presentable Result
     /// (no unique rank-1 and not a Top-3 podium case).
@@ -933,7 +933,7 @@ public static class OverviewAssembler
 
         var names = EntryDisplayNames.ToMap(competition);
 
-        // Explicit placement awards (Cup / classification / consolantes) when rules exist and fixtures are decided.
+        // Explicit placement awards (Cup / classification / consolation) when rules exist and fixtures are decided.
         var awardPlaces = ProjectPlacementAwardPlaces(stages, matchesByStage, names);
         if (awardPlaces.Count > 0)
         {
@@ -949,7 +949,7 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Host presentation for Résultat: Podium (standing or ranks 1–3) vs Winner (unique rank 1 only).
+    /// Host presentation for Result: Podium (standing or ranks 1–3) vs Winner (unique rank 1 only).
     /// Returns null when neither mode applies — SPA silence (no fake champion).
     /// </summary>
     internal static string? ResolveOutcomePresentation(
@@ -1042,7 +1042,7 @@ public static class OverviewAssembler
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
     {
-        // Pilotage En cours / Terminée — not useful during construction.
+        // Operational In-progress / Completed — not useful during construction.
         if (competition.Status is not (
             CompetitionStatus.Running or
             CompetitionStatus.Suspended or
@@ -1082,9 +1082,9 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Reference stage for compact standing (V1):
+    /// Reference stage for compact standing:
     /// first Running or Suspended in StageIds order; else last Completed in StageIds order; else null.
-    /// For Vue d'ensemble display, Suspended is treated as Running. Multiple candidates → first wins (no error).
+    /// For Overview display, Suspended is treated as Running. Multiple candidates → first wins (no error).
     /// </summary>
     public static Stage? ResolveReferenceStage(
         Competition competition,
@@ -1161,7 +1161,7 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// AttentionSummary V1 = Blocking situations only (subset of Situations — not a parallel list).
+    /// AttentionSummary = Blocking situations only (subset of Situations — not a parallel list).
     /// </summary>
     private static OverviewAttentionSummaryDto BuildAttentionSummary(
         IReadOnlyList<OverviewSituationDto> situations)
@@ -1171,10 +1171,10 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Builds pilotage situations from Needs Attention + construction blockers + Suspended.
+    /// Builds operational situations from Needs Attention + construction blockers + Suspended.
     /// </summary>
     /// <remarks>
-    /// AttentionSummary V1 = Blocking only (not a second calculation).
+    /// AttentionSummary = Blocking only (not a second calculation).
     /// Structure readiness blockers become situations only during Draft/Ready (construction).
     /// <c>InsufficientParticipants</c> is projected from Needs Attention (single SoT); other org blockers still merge here.
     /// Completion blockers stay on ClosureHint — never merged here.
@@ -1642,10 +1642,10 @@ public static class OverviewAssembler
     ];
 
     /// <summary>
-    /// Préparation structural tip priority — first matching projected action wins.
+    /// Preparation structural tip priority — first matching projected action wins.
     /// From-slots is handled separately before this scan (<see cref="ResolveNaturalProgression"/>).
-    /// PrepareCompetition / StartCompetition stay in availableActions only (L7) — never naturalProgression.
-    /// AddEntry is never a tip (Équipes / À traiter).
+    /// PrepareCompetition / StartCompetition stay in availableActions only — never naturalProgression.
+    /// AddEntry is never a tip (Teams / Needs attention).
     /// </summary>
     internal static readonly string[] ConstructionStructuralProgressionPriority =
     [
@@ -1657,7 +1657,7 @@ public static class OverviewAssembler
     ];
 
     /// <summary>
-    /// En cours structural tip priority — first matching <see cref="OverviewActionDto.Code"/> wins.
+    /// In-progress structural tip priority — first matching <see cref="OverviewActionDto.Code"/> wins.
     /// Semantic order (not incidental list order). No consultation / match-hub fallback tip.
     /// </summary>
     internal static readonly string[] InProgressStructuralProgressionPriority =
@@ -1698,7 +1698,7 @@ public static class OverviewAssembler
         };
 
     /// <summary>
-    /// Picks the highest-priority structural transition during Préparation (Draft/Ready).
+    /// Picks the highest-priority structural transition during Preparation (Draft/Ready).
     /// Returns null when none — valid calm Construction state (SPA may still show lifecycle alone).
     /// </summary>
     internal static OverviewNaturalProgressionDto? ResolveConstructionStructuralProgression(
@@ -1707,7 +1707,7 @@ public static class OverviewAssembler
 
     /// <summary>
     /// Picks the highest-priority structural transition among projected actions.
-    /// Returns null when none — valid En cours calm state.
+    /// Returns null when none — valid In-progress calm state.
     /// </summary>
     internal static OverviewNaturalProgressionDto? ResolveInProgressStructuralProgression(
         IReadOnlyList<OverviewActionDto> actions) =>

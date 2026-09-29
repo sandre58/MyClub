@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Product detail of a competition for the organizer (GET by id — not Vue d'ensemble).
+/// Product detail of a competition for the organizer (GET by id — not Overview).
 /// </summary>
 /// <param name="Id">Competition identity.</param>
 /// <param name="Name">Competition display name.</param>

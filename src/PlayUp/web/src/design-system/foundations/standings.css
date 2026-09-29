@@ -1,5 +1,5 @@
 /*
- * Standings — full numeric grammar (Lot 5, Design Lab SoT).
+ * Standings — full numeric grammar.
  * Zones = side bar + legend; points = ds-num-pts; rank column = scan anchor.
  */
 
@@ -50,7 +50,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Zones sportives : barre latérale — la couleur confirme, la légende explique. */
+/* Sport zones: side bar — colour confirms, legend explains. */
 .ds-standings tr[data-zone='promotion'] td.rank::before,
 .ds-standings tr[data-zone='relegation'] td.rank::before {
   content: '';

@@ -530,7 +530,7 @@ export function replaceStageAffectationAuthoring(
   return sendNoContent('PUT', `/stages/${stageId}/affectation`, { entryIds });
 }
 
-/** PUT /stages/{id}/slots/{slotKey}/assignment → 204 — Placement manuel Coupe */
+/** PUT /stages/{id}/slots/{slotKey}/assignment → 204 — manual Cup placement */
 export function assignEntryToSlot(
   stageId: string,
   slotKey: string,
@@ -669,7 +669,7 @@ export function setDeclaredParticipationJerseyNumber(
   );
 }
 
-/** POST /matches/{id}/recorded-goals → 204 (faits-only; Live RS is a separate call). */
+/** POST /matches/{id}/recorded-goals → 204 (facts only; Live RS is a separate call). */
 export function recordGoal(
   matchId: string,
   request: RecordGoalRequest,
@@ -794,7 +794,7 @@ export function publishDraw(stageId: string, drawId: string): Promise<void> {
 }
 
 /**
- * V1 happy path — Publish then Apply (Host orchestration, two durable steps).
+ * Happy path — Publish then Apply (Host orchestration, two durable steps).
  * Not Domain-atomic: Apply failure leaves Published + not applied; resume with applyDraw.
  * POST /stages/{stageId}/draws/{drawId}/publish-and-apply → 204
  */
@@ -813,7 +813,7 @@ export function cancelDraw(stageId: string, drawId: string): Promise<void> {
 }
 
 /**
- * Decision D — release Places still exactly matching this Slot draw's resolution.
+ * Release Places still exactly matching this Slot draw's resolution.
  * POST /stages/{stageId}/draws/{drawId}/release-aligned-placements → 200
  */
 export function releaseDrawAlignedPlacements(
@@ -859,9 +859,9 @@ export function generateDraw(
 }
 
 /**
- * G2 — one UI gesture « Nouveau tirage »: Create → inputs (Rerun) → Generate.
+ * One UI gesture for a new draw: Create → inputs (Rerun) → Generate.
  * Rerun = full redraw (ignore occupancy Fixed*); Encoding F stays Default elsewhere.
- * Generate is not a separate product action in V1.
+ * Generate is not exposed as a separate product action.
  *
  * If Create succeeded but inputs/Generate fail technically, throws
  * {@link DrawGenerateFailedError} with the created drawId (Draft orphan — SPA projects it).

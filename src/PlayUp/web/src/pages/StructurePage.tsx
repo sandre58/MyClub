@@ -50,7 +50,7 @@ import {
 import './structure.css';
 
 /**
- * Structure hub — master-detail N1|N2 + Lot 2 graph mutations (dialogs).
+ * Structure hub — master-detail N1|N2 + graph mutations (dialogs).
  * Route `/structure`. Editing = dialogs only.
  */
 export function StructurePage() {
@@ -807,7 +807,7 @@ function readinessStatusNote(
     );
   }
 
-  // Draw readiness is not a Structure-global status (tirage optional).
+  // Draw readiness is not a Structure-global status (draw optional).
   // CTA + topology badge carry execution; Hub stays construction-focused.
 
   if (readyToMaterialize) {

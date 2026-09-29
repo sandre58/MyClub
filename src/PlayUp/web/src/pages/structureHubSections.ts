@@ -44,7 +44,7 @@ export function isStandingFrameBound(
 
 /**
  * Domains reachable from Overview for this phase (S0: no inter-domain switcher).
- * Absent model → omitted. Matchs/Classement stay separate Overview pointers.
+ * Absent model → omitted. Matches/Standing stay separate Overview pointers.
  */
 export function relevantPhaseSections(
   stage: StructureStageHubSummary,
@@ -76,7 +76,7 @@ export function relevantPhaseSections(
 
 function stageNeedsDrawSection(stage: StructureStageHubSummary): boolean {
   // Engaged mechanism only (DrawRules). Format alone ≠ obligation / chrome.
-  // Active Draw without rules = edge case handled on the fiche via overview fetch.
+  // Active Draw without rules = edge case handled on the stage card via overview fetch.
   return stage.hasDrawRules;
 }
 

@@ -31,9 +31,9 @@ import {
 } from './matchSubstitutionsHelpers';
 
 /**
- * Nominative substitutions panel (Lot 1 Remplacements).
- * Faits ≠ feuille déclarative ≠ RunningScore ≠ Finish.
- * Présence dérivée (baseline Starter + journal) = pickers only.
+ * Nominative substitutions panel.
+ * Facts ≠ declarative sheet ≠ RunningScore ≠ Finish.
+ * Derived presence (Starter baseline + journal) = pickers only.
  */
 export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');

@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Ordered standing ranking criterion (V1). FairPlay is out of scope.
+/// Ordered standing ranking criterion. FairPlay is out of scope.
 /// </summary>
 public enum RankingCriterion
 {

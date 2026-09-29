@@ -31,6 +31,6 @@ public sealed record DrawGenerationDto(
     DrawResolutionState ResolutionState);
 
 /// <summary>
-/// Outcome of releasing slot occupants still aligned with a Slot draw resolution (decision D).
+/// Outcome of releasing slot occupants still aligned with a Slot draw resolution.
 /// </summary>
 public sealed record ReleaseDrawAlignedPlacementsDto(int ReleasedCount, int SkippedCount);

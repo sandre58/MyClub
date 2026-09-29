@@ -50,9 +50,9 @@ import { MatchSubstitutionsPanel } from './MatchSubstitutionsPanel';
 import './matches.css';
 
 /**
- * Championship match detail — two jobs for score, plus Lot 2 sheet:
+ * Championship match detail — two jobs for score, plus sheet:
  * live observed counter (`SetRunningScore`) ≠ official close (`Finish`).
- * Sheet = composition déclarée (Starter/Bench/jersey). No goals UI yet (Lot 3).
+ * Sheet = declared composition (Starter/Bench/jersey).
  */
 export function MatchPage() {
   const { matchId = '' } = useParams();

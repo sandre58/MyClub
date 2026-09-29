@@ -7,24 +7,24 @@
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Closed V1 catalogue of disciplinary event types known to MyClub.
+/// Closed catalogue of disciplinary event types known to MyClub.
 /// A competition may only authorize types from this catalogue (<see cref="DisciplinaryRules.AllowedTypes"/>).
 /// Types do not encode consequences (presence, tempo, suspensions, …).
 /// </summary>
 public enum DisciplinaryType
 {
     /// <summary>
-    /// Yellow card (or equivalent caution). No Domain consequence in V1.
+    /// Yellow card (or equivalent caution). No Domain consequence.
     /// </summary>
     Yellow = 0,
 
     /// <summary>
-    /// Red card (or equivalent sending-off signal). No Domain consequence in V1.
+    /// Red card (or equivalent sending-off signal). No Domain consequence.
     /// </summary>
     Red = 1,
 
     /// <summary>
-    /// White card (competition-specific meaning). No Domain consequence in V1.
+    /// White card (competition-specific meaning). No Domain consequence.
     /// </summary>
     White = 2
 }

@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Cup 16 with full root composition (16/16) — Structure Entrées E2 + tirage pending.
+/// Cup 16 with full root composition (16/16) — Structure entries E2 + draw pending.
 /// </summary>
 public sealed class CupCompositionCompleteScenario : IScenario
 {

@@ -68,7 +68,7 @@ function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
 }
 
-/** Remove-phase control for the phase fiche (N2) — not page-level chrome. */
+/** Remove-phase control for the phase card (N2) — not page-level chrome. */
 export function RemovePhaseAction({
   data,
   stage,
@@ -163,7 +163,7 @@ export function RelationEditors({
   );
 }
 
-/** Thin wrapper — Prog V2 authoring lives in StructureProgressionDialog. */
+/** Thin wrapper — Progression authoring lives in StructureProgressionDialog. */
 export function ProgressionRulesDialog({
   data,
   stage,
@@ -681,7 +681,7 @@ export function QualificationRulesDialog({
   stage: StructureStageHubSummary;
   open: boolean;
   onClose: () => void;
-  /** Fiche stage when the dialog was opened from destination Population. */
+  /** Stage card when the dialog was opened from destination Population. */
   openedFromDestinationStageId?: string | null;
 }) {
   return (

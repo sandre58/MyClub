@@ -70,7 +70,7 @@ import {
 
 /**
  * Competition Overview — GET /competitions/{id}/overview.
- * Composes Read facts (prominence, situations, actions); does not recompute métier rules.
+ * Composes Read facts (prominence, situations, actions); does not recompute domain rules.
  */
 export function CompetitionOverviewPage() {
   const { competitionId = '' } = useParams();
@@ -155,7 +155,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
   const completedLike =
     data.cycleReading.code === 'Completed' ||
     data.cycleReading.code === 'Archived';
-  /** En cours + Terminée share Config + Sport composition (not Préparation). */
+  /** In-progress + Completed share Config + Sport composition (not Preparation). */
   const operationalOverview = inProgress || completedLike;
   const generatedCalendar =
     !operationalOverview && data.preparationFocus === 'GeneratedCalendar';
@@ -175,14 +175,14 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
   const showProgression =
     Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0;
   const focus = data.operationalFocus;
-  // En cours + Terminée: standingCompact when Host projects it (independent of Outcome).
-  // Terminée Résultat: Host presentation Winner|Podium — silence when Outcome null.
+  // In-progress + Completed: standingCompact when Host projects it (independent of Outcome).
+  // Completed Result: Host presentation Winner|Podium — silence when Outcome null.
   const showStanding = operationalOverview && focus.standingCompact != null;
   const showOutcome =
     completedLike &&
     data.competitionOutcome != null &&
     data.competitionOutcome.places.length > 0;
-  // En cours: always Dernières + Prochaines (empty-state). Terminée: Dernières always; Prochaines only if nextUnit.
+  // In progress: always Recent + Upcoming (empty-state). Completed: Recent always; Upcoming only if nextUnit.
   const showRecentUnit = operationalOverview;
   const showNextUnit = inProgress || (completedLike && focus.nextUnit != null);
   const showTemporalUnits = showRecentUnit || showNextUnit;
@@ -1152,7 +1152,7 @@ function PointsChip({
   );
 }
 
-/** Exit link toward the owning workspace — right-aligned, réf. V9. */
+/** Exit link toward the owning workspace — right-aligned. */
 function OverviewLink({ to, children }: { to: string; children: ReactNode }) {
   return <TextLink to={to}>{children}</TextLink>;
 }
@@ -1244,8 +1244,8 @@ function TeamsPanel({
 }
 
 /**
- * Structure — editorial rows (construction) or one-line facts (En cours condensed).
- * Journées détaillées / noms de groupes absents du Read — pas inventés ici.
+ * Structure — editorial rows (construction) or one-line facts (in-progress condensed).
+ * Detailed matchdays / group names absent from Read — not invented here.
  */
 function StructurePanel({
   variant = 'construction',
@@ -1498,7 +1498,7 @@ function buildStructureCondensedMetrics({
   return metrics;
 }
 
-/** Text facts for En cours Règlement (points rendered separately as chips). */
+/** Text facts for In-progress Regulation (points rendered separately as chips). */
 function buildGameRegulationTextFacts(
   rules: OverviewReferenceStageGameRules,
   t: (key: string, options?: Record<string, unknown>) => string,
@@ -1578,7 +1578,7 @@ function ActionButtons({
 }: {
   actions: OverviewAction[];
   actionRunner: ActionRunner;
-  /** Primary only when this region owns the single CTA — Identité §11. */
+  /** Primary only when this region owns the single CTA. */
   emphasizeFirst?: boolean;
 }) {
   const { t } = useTranslation('overview');
@@ -1651,7 +1651,7 @@ function NaturalProgressionSection({
   data: OverviewView;
   actionRunner: ActionRunner;
   /**
-   * PrepareCompetition / StartCompetition leftovers — occupy Prochaine action only when
+   * PrepareCompetition / StartCompetition leftovers — occupy Next action only when
    * naturalProgression is null (never stacked with a structural tip).
    */
   lifecycleActions: OverviewAction[];
@@ -1664,7 +1664,7 @@ function NaturalProgressionSection({
   const lifecycle = lifecycleActions[0];
   const hasPrimary = Boolean(code);
 
-  // Structural tip XOR lifecycle — never both (Préparation V1 P5).
+  // Structural tip XOR lifecycle — never both.
   if (hasPrimary) {
     return (
       <OverviewNextAction

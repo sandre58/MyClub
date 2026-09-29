@@ -46,7 +46,7 @@ export function cupPlaceApiIdentity(
 }
 
 /**
- * Chrome schématique Place — SlotKey Domain only (I2).
+ * Schematic Place chrome — Domain SlotKey only (I2).
  * Never invents `ordinal·side` as a Place address (that is confrontation identity).
  */
 export function placeChromeLabel(
@@ -74,7 +74,7 @@ export function isCupPlaceTargetable(
 
 /**
  * Long recipe for rail / dialog:
- * `{Tour} {ordinal} · côté {A|B}` or `{Tour} · côté {A|B}`.
+ * `{Round} {ordinal} · side {A|B}` or `{Round} · side {A|B}`.
  */
 export function placeDisplayLabel(
   formPosition: SchematicFormPosition,
@@ -119,8 +119,8 @@ export function areProgressionPlacesLabeled(
 }
 
 /**
- * Aval peers whose form currently exposes addressable Places
- * (Cup slots, Groups poules, or Champ/Swiss Forme).
+ * Downstream peers whose form currently exposes addressable Places
+ * (Cup slots, Groups pools, or Champ/Swiss form).
  */
 export function filterPlaceEligiblePeers<T extends { stageId: string }>(
   peers: readonly T[],

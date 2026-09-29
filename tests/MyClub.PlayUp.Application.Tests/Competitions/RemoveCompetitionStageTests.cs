@@ -14,7 +14,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Competitions;
 
 /// <summary>
-/// Structure Lot 2: remove stage + scrub inbound Qualif/Prog dependencies.
+/// Structure: remove stage + scrub inbound Qualif/Prog dependencies.
 /// </summary>
 public sealed class RemoveCompetitionStageTests
 {

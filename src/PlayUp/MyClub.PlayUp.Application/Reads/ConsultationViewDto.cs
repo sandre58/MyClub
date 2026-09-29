@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Product Consultation destination (Slice 7) — derived read, never persisted.
+/// Product Consultation destination — derived read, never persisted.
 /// </summary>
 /// <param name="CompetitionId">Competition identity.</param>
 /// <param name="Name">Display name.</param>
@@ -33,7 +33,7 @@ public sealed record ConsultationViewDto(
     ConsultationStructureDto Structure);
 
 /// <summary>
-/// One result line for Consultation Résultats.
+/// One result line for Consultation Results.
 /// </summary>
 public sealed record ConsultationResultDto(
     Guid MatchId,

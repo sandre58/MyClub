@@ -716,7 +716,7 @@ export function FoundationsPlayground() {
             </a>
             <button type="button" className="ds-interactive-row" disabled>
               <span className="ds-interactive-row-demo__label">
-                Désactivée — hors Accueil V1
+                Disabled — outside Accueil scope
               </span>
               <span className="ds-interactive-row__chevron" aria-hidden="true">
                 <ChevronRightIcon size="sm" />
@@ -726,7 +726,7 @@ export function FoundationsPlayground() {
         </section>
 
         <section className="ds-section" aria-labelledby="section-lot1-brand">
-          <p className="ds-section__kicker">Lot 1 — Brand</p>
+          <p className="ds-section__kicker">Brand</p>
           <h2 id="section-lot1-brand" className="ds-heading">
             Lockup PNG · tendances 12°
           </h2>
@@ -750,7 +750,7 @@ export function FoundationsPlayground() {
         </section>
 
         <section className="ds-section" aria-labelledby="section-numbers">
-          <p className="ds-section__kicker">Lot 1 — Numbers</p>
+          <p className="ds-section__kicker">Numbers</p>
           <h2 id="section-numbers" className="ds-heading">
             Rôles numériques
           </h2>
@@ -764,7 +764,7 @@ export function FoundationsPlayground() {
         </section>
 
         <section className="ds-section" aria-labelledby="section-live">
-          <p className="ds-section__kicker">Lot 1 — Live</p>
+          <p className="ds-section__kicker">Live</p>
           <h2 id="section-live" className="ds-heading">
             Live ≠ success
           </h2>

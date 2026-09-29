@@ -61,8 +61,8 @@ import './regulation.css';
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 /**
- * Règlement — hub lecture + édition cadre.
- * Vocabulaire mockup riche, tokens DS (surface, brand, typo).
+ * Regulation — read hub + framework editing.
+ * Rich mockup vocabulary, DS tokens (surface, brand, type).
  */
 
 // —— Page ——
@@ -186,7 +186,7 @@ export function RegulationPage() {
   );
 }
 
-// —— Cadre: shared card chrome ——
+// —— Framework: shared card chrome ——
 
 function FrameCard({
   icon,
@@ -204,7 +204,7 @@ function FrameCard({
   );
 }
 
-// —— Cadre: Equipes ——
+// —— Framework: Teams ——
 
 function EntriesTile({
   regulation,
@@ -269,7 +269,7 @@ function EntriesTile({
   );
 }
 
-// —— Cadre: Match ——
+// —— Framework: Match ——
 
 function MatchTile({
   regulation,
@@ -297,7 +297,7 @@ function MatchTile({
   );
 }
 
-// —— Cadre: Disciplinaire ——
+// —— Framework: Disciplinary ——
 
 function DisciplineTile({
   regulation,
@@ -350,7 +350,7 @@ function DisciplineTile({
   );
 }
 
-// —— Cadre: Classement ——
+// —— Framework: Standing ——
 
 function StandingTile({
   regulation,
@@ -376,7 +376,7 @@ function StandingTile({
   );
 }
 
-// —— Phases: tile ——
+// —— Stages: tile ——
 
 function PersonalizedBadge() {
   const { t } = useTranslation('regulation');
@@ -571,7 +571,7 @@ function PhaseRuleItemList({ items }: { items: PhaseRuleItem[] }) {
   );
 }
 
-// —— Phases: rule builders ——
+// —— Stages: rule builders ——
 
 type TieFormatTokens = {
   numberOfLegs: number;

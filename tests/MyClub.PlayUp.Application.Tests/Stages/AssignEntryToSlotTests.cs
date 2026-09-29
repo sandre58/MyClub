@@ -15,7 +15,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// Placement manuel Coupe — AssignEntryToSlot / ClearSlotAssignment Application wrappers.
+/// Manual Cup placement — AssignEntryToSlot / ClearSlotAssignment Application wrappers.
 /// </summary>
 public sealed class AssignEntryToSlotTests
 {

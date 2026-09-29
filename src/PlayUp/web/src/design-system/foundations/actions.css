@@ -1,6 +1,6 @@
 /*
  * Action foundations — not a Button library.
- * Primary = brand fill (moins sombre que l’encre ; Identité §11).
+ * Primary = brand fill (lighter than ink).
  * One primary max per region. No pills, no glow, no underline on actions.
  */
 
@@ -49,7 +49,7 @@
   color: var(--color-on-brand);
 }
 
-/* Ancres stylées en bouton — ne jamais hériter du lien de contenu. */
+/* Styled anchors as buttons — never inherit content-link styles. */
 .ds-root a.ds-btn,
 .ds-root a.ds-btn:hover {
   text-decoration: none;

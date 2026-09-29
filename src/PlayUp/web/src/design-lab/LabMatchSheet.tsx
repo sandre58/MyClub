@@ -10,14 +10,13 @@ import { Status } from '../design-system/components/Status';
 import { Crest, PanelHead } from './LabShared';
 
 /**
- * Fiche match — la surface la plus sportive du produit.
+ * Match detail — the most sports-oriented product surface.
  *
- * Match Hero (hypothèse C, tranchée) : un grand en-tête d'objet qui porte
- * tout ce qui identifie le match — équipes, score géant, état, méta — et
- * dont le centre change avec l'état :
- *   Scheduled : l'heure du coup d'envoi est le héros, action « Démarrer »
- *   Live      : le score est le héros, saisie collée au score
- *   Finished  : le score final est le héros, action de correction en retrait
+ * Match Hero: a large object header that carries everything that identifies
+ * the match — teams, giant score, status, meta — and whose centre changes with state:
+ *   Scheduled : kickoff time is the hero, with a Start action
+ *   Live      : score is the hero, input glued to the score
+ *   Finished  : final score is the hero, correction action recessed
  */
 export function LabMatchSheet({ lifecycle }: { lifecycle: LabLifecycle }) {
   const match = labRounds

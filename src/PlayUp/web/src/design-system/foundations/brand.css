@@ -1,9 +1,9 @@
 /*
  * Brand — lockup rasters and trend arrows (12° system on trends only).
- * SoT: Identité · .cursor/rules/design/01-brand.mdc
+ * See .cursor/rules/design/01-brand.mdc
  */
 
-/* Lockup rasters — Accueil (`accueil-*.png`) and chrome wordmark (`*-on-chrome.png`). */
+/* Lockup rasters — Home (`accueil-*.png`) and chrome wordmark (`*-on-chrome.png`). */
 .ds-lockup-mark,
 .ds-lockup-wordmark,
 .ds-lockup-wordmark-pair {
@@ -24,7 +24,7 @@
   line-height: 0;
 }
 
-/* Accueil: light canvas uses dark ink wordmark; dark canvas uses on-chrome asset. */
+/* Home: light canvas uses dark ink wordmark; dark canvas uses on-chrome asset. */
 .ds-lockup-wordmark--on-dark {
   display: none;
 }
@@ -39,7 +39,7 @@
   display: block;
 }
 
-/* Trend — même vocabulaire que la marque. */
+/* Trend — same vocabulary as the brand. */
 .ds-trend {
   display: inline-block;
   width: 0.75rem;

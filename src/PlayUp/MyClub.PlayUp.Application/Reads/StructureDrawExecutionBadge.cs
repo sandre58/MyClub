@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 /// <remarks>
 /// Visible only when DrawRules are engaged. Maps active Draw (+ Applied) to four product states.
-/// Detail (Draft / Published / Resolution) stays in the Exécutions dialog.
+/// Detail (Draft / Published / Resolution) stays in the Executions dialog.
 /// </remarks>
 public enum StructureDrawExecutionBadge
 {

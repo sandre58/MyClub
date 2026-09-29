@@ -1,5 +1,5 @@
 /*
- * Match — hero, rows, timeline, rounds (Design Lab SoT, Lot 3).
+ * Match — hero, rows, timeline, rounds.
  */
 
 /* --- Match Hero ---------------------------------------------------------- */
@@ -251,7 +251,7 @@ button.ds-match-row {
   color: var(--color-text-primary);
 }
 
-/* --- Journée / round ----------------------------------------------------- */
+/* --- Matchday / round ----------------------------------------------------- */
 
 .ds-match-round {
   padding: var(--space-12) 0;

@@ -1,4 +1,4 @@
-/* Règlement hub — page / cadre / phases (live selectors only). */
+/* Regulation hub — page / frame / stages (live selectors only). */
 
 /* -- Page shell -- */
 .page.page--regulation {
@@ -178,7 +178,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Match — timelines + max ring à droite */
+/* Match — timelines + max ring on the right */
 
 /* -- Cadre: Match -- */
 .regulation-match {
@@ -426,7 +426,7 @@
   border: 3px solid var(--color-brand);
 }
 
-/* Classement — gauges unifiées (longueur = signal) */
+/* Standing — unified gauges (length = signal) */
 
 /* -- Cadre: Classement -- */
 .regulation-standing {

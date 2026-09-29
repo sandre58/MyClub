@@ -15,7 +15,7 @@ using Xunit;
 namespace MyClub.PlayUp.Domain.Tests.Matches;
 
 /// <summary>
-/// Reference cases A–X — Domain #6 Remplacements (Décision Acceptée + PD P-S0–P-S8).
+/// Reference cases A–X — Domain substitutions (recorded substitutions invariants).
 /// </summary>
 public sealed class MatchRecordedSubstitutionsTests
 {

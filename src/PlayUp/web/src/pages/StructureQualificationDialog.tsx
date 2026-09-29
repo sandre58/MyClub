@@ -168,7 +168,7 @@ export function StructureQualificationDialog({
   const queryClient = useQueryClient();
   const locale = i18n.language ?? 'fr';
 
-  /** Inter-Stage aval only — self / amont excluded (Sorties ownership). */
+  /** Inter-Stage downstream only — self / upstream excluded (Sorties ownership). */
   const peerStages = useMemo(
     () => sortiesAvalPeerStages(data.stages, stage.stageId),
     [data.stages, stage.stageId],

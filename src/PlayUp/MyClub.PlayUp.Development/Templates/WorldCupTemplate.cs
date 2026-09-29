@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Development.Templates;
 /// </summary>
 /// <remarks>
 /// Seed plays Groups→Qual population→Draw→R16, then Prog Auto Place QF→SF→Final+Bronze with PlacementAwards
-/// (ranks 1–4) and Completes so Overview Terminée can show <c>CompetitionOutcome</c>.
+/// (ranks 1–4) and Completes so Overview Completed can show <c>CompetitionOutcome</c>.
 /// Groups→R16 product choice = Draw placement (not Auto bracket). KO Auto Place / hybrid Case 7 =
 /// <c>qual-auto-place-mid</c> / <c>qual-hybrid-auto-draw-mid</c>. Mid-bracket from-slots demo = <c>cup-qf-sf</c>.
 /// <c>:progress</c> is ignored — fixed seed.

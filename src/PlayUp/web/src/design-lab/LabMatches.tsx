@@ -6,8 +6,8 @@ import { MatchRoundStatus } from '../design-system/components/MatchRoundStatus';
 import { MatchRow, PanelHead } from './LabShared';
 
 /**
- * Matchs — calendrier sportif par journée. Un seul panneau, journées en
- * sections typographiques (pas de boîtes imbriquées). Gate grille passé.
+ * Matches — sports calendar by matchday. One panel, matchdays as
+ * typographic sections (no nested boxes). Grid gate already passed.
  */
 export function LabMatches() {
   const leader = labStandings[0];

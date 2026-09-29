@@ -1,6 +1,6 @@
 /*
- * Matchs (20.4) — même langage de surface que Vue d'ensemble / Classements.
- * Composition V3 : bandeau · Calendrier des matchs (par journée) · synthèse bas.
+ * Matches — same surface language as Overview / Standings.
+ * Composition: banner · Match calendar (by matchday) · bottom synthesis.
  */
 
 .page.page--matches {
@@ -31,7 +31,7 @@
   box-shadow: var(--matches-shadow);
 }
 
-/* ---------- Panneau ---------- */
+/* ---------- Panel ---------- */
 
 .matches-panel__head {
   display: flex;
@@ -113,7 +113,7 @@
   cursor: not-allowed;
 }
 
-/* ---------- Bandeau ---------- */
+/* ---------- Banner ---------- */
 
 .matches-band {
   display: flex;
@@ -149,7 +149,7 @@
   color: var(--color-brand);
 }
 
-/* ---------- Calendrier / journées ---------- */
+/* ---------- Calendar / matchdays ---------- */
 
 .matches-day {
   display: flex;
@@ -220,7 +220,7 @@
   text-align: end;
 }
 
-/* ---------- Ligne match (réf. mockup Classements / Matchs) ---------- */
+/* ---------- Match row ---------- */
 
 .matches-day__rows {
   display: flex;
@@ -237,7 +237,7 @@
   line-height: var(--leading-tight);
 }
 
-/* ---------- Synthèse bas ---------- */
+/* ---------- Bottom synthesis ---------- */
 
 .matches__bottom {
   display: grid;
@@ -272,7 +272,7 @@
   padding-top: 0;
 }
 
-/* ---------- Fiche match ---------- */
+/* ---------- Match detail ---------- */
 
 .match-detail__title-row {
   display: flex;

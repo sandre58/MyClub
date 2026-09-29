@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Principal result kind produced by a Draw (V1: one kind per Draw).
+/// Principal result kind produced by a Draw (one kind per Draw).
 /// Cup uses Slot only; Swiss pairing is a separate Domain concern.
 /// </summary>
 public enum DrawResolutionKind

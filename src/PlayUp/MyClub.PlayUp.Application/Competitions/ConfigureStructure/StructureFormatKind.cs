@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
-/// Application-only V1 structure format intents (not a Domain aggregate).
+/// Application-only structure format intents (not a Domain aggregate).
 /// </summary>
 public enum StructureFormatKind
 {

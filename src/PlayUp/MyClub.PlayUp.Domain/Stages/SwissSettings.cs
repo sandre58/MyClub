@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Configuration for a Swiss Kind stage (V1: planned round count K).
+/// Configuration for a Swiss Kind stage (planned round count K).
 /// Presence of settings marks the stage as Swiss — not a Championship RR variant.
 /// </summary>
 public sealed record SwissSettings

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Attribution des places — tile per confrontation (immutable fixture).
+// Place awards — tile per confrontation (immutable fixture).
 // Domain: 0..2 paths per card.
 // -----------------------------------------------------------------------
 

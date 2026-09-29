@@ -1,6 +1,6 @@
 import type { StructureSectionId } from './structureHubSections';
 
-/** Query keys for Structure deep-links (Règlement → Structure navigation contract). */
+/** Query keys for Structure deep-links (Regulation → Structure navigation contract). */
 export const STRUCTURE_STAGE_PARAM = 'stage';
 export const STRUCTURE_SECTION_PARAM = 'section';
 export const STRUCTURE_ROUND_PARAM = 'round';

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Placement manuel Coupe — DirectAssignment dialog (Structure).
+// Manual Cup placement — DirectAssignment dialog (Structure).
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';

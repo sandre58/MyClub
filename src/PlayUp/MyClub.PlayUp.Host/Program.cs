@@ -61,7 +61,7 @@ try
     builder.Services.AddScoped<UseCaseExecutor>();
     builder.Services.ConfigureHttpJsonOptions(static options =>
 
-        // Phase 12.8: HTTP enums as JSON strings (camelCase property names unchanged).
+        // HTTP enums as JSON strings (camelCase property names unchanged).
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
     builder.Services.AddProblemDetails(static options =>
         options.CustomizeProblemDetails = static context =>

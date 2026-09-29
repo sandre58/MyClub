@@ -268,7 +268,7 @@ public sealed class UseCaseExecutorTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        // Lot 8 anti-N+1: sibling stages must not be loaded one-by-one.
+        // Anti-N+1: sibling stages must not be loaded one-by-one.
         stages.Verify(
             repository => repository.GetByIdForUpdateAsync(semi.Id, It.IsAny<CancellationToken>()),
             Times.Never);
@@ -318,7 +318,7 @@ public sealed class UseCaseExecutorTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        // Lot 8 anti-N+1: destination stage + match come from batch loads only.
+        // Anti-N+1: destination stage + match come from batch loads only.
         stages.Verify(
             repository => repository.GetByIdForUpdateAsync(scenario.Destination.Id, It.IsAny<CancellationToken>()),
             Times.Never);

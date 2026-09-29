@@ -38,7 +38,7 @@ export function PhaseSchematic({
   terminal = false,
   /** Stage hub round count — used when schematic.cupRoundCount is absent (older Host). */
   cupRoundCount,
-  /** Cup Placement manuel — click a place to open the shared dialog. */
+  /** Cup manual placement — click a place to open the shared dialog. */
   onPlaceActivate,
 }: {
   schematic: StageSchematic;
@@ -258,7 +258,7 @@ export type SchematicCaseTooltipModel = {
     /** Emphasized span (phase name) or full line for draw / affectation. */
     text: string;
   } | null;
-  /** When the place accepts Placement manuel (click to open dialog). */
+  /** When the place accepts manual placement (click to open dialog). */
   action: string | null;
 };
 
@@ -283,7 +283,7 @@ export function buildSchematicCaseTooltipModel({
     logoMediaId?: string | null;
     primaryColor?: string | null;
   } | null;
-  /** True when this place is clickable for Placement manuel. */
+  /** True when this place is clickable for manual placement. */
   canManualPlace?: boolean;
   t: Translate;
 }): SchematicCaseTooltipModel | null {
@@ -1348,7 +1348,7 @@ function structureCaseLabels(
   }
 
   // Draw: Published Slot WhoFeeds on Cup places.
-  // Provenance after materialization — occupant primary; tip = "Placé par tirage".
+  // Provenance after materialization — occupant primary; tip = placed by draw.
   if (feed.kind === 'Draw') {
     if (occupant) {
       return { primary: occupant, secondary: null };

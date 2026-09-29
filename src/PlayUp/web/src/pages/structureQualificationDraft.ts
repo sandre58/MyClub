@@ -559,7 +559,7 @@ export function incompleteIntentReason(
     });
     if (gap) return gap;
 
-    // DuplicatePlace only for Cup slots — Groups allow shared poules.
+    // DuplicatePlace only for Cup slots — Groups allow shared pools.
     if (grain === 'slot') {
       const mine = new Set(placeOccupancyKeys(draft));
       if (mine.size > 0) {

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Shared Qui → Où flow chrome for Qual / Prog Sorties editors.
+// Shared Who → Where flow chrome for Qual / Prog Sorties editors.
 // -----------------------------------------------------------------------
 
 import type { ReactNode } from 'react';
@@ -12,11 +12,11 @@ export function SortiesWhoWhereFlow({
   source,
   destination,
 }: {
-  /** Accessible name for the source block (e.g. Qui ?). */
+  /** Accessible name for the source block (e.g. "Who?"). */
   sourceLabel: string;
-  /** Accessible name for the destination block (e.g. Où ?). */
+  /** Accessible name for the destination block (e.g. Where?). */
   destinationLabel: string;
-  /** Visible connector label (e.g. Alimente). */
+  /** Visible connector label (e.g. "Feeds"). */
   feedsLabel: string;
   source: ReactNode;
   destination: ReactNode;

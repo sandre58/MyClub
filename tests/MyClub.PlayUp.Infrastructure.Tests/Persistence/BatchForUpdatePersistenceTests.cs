@@ -16,7 +16,7 @@ using Xunit;
 namespace MyClub.PlayUp.Infrastructure.Tests.Persistence;
 
 /// <summary>
-/// Lot 8 baseline — batch ForUpdate ports (Lot 7) load multiple ARs without per-id loops.
+/// Batch ForUpdate ports load multiple ARs without per-id loops.
 /// </summary>
 public sealed class BatchForUpdatePersistenceTests
 {

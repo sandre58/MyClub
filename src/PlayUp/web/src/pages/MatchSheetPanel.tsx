@@ -39,8 +39,8 @@ import type {
 import { canMutateMatchSheet } from './matchSheetHelpers';
 
 /**
- * Championship match sheet — composition déclarée only (Lot 2).
- * No goals / subs / discipline. Effectif stays on Structure/Teams (cas 7).
+ * Championship match sheet — declared composition only.
+ * No goals / subs / discipline. Roster stays on Structure/Teams.
  */
 export function MatchSheetPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');

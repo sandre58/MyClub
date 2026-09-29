@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Domain.Scheduling;
 /// <summary>
 /// Global scheduling horizon represented as half-open <c>[Start, End)</c>.
 /// <para>
-/// A17 métier: <c>H0 &gt; H1</c> ⇒ InvalidRequest. Mechanically this VO rejects
+/// A17 domain: <c>H0 &gt; H1</c> ⇒ InvalidRequest. Mechanically this VO rejects
 /// <c>start &gt; end</c> with <see cref="DomainException"/> (same pattern as other Scheduling VOs),
 /// so that case never reaches <see cref="ScheduleGenerator.Generate"/> / <see cref="SchedulingResult"/>.
 /// <c>H0 == H1</c> is a valid empty horizon (domains empty when Duration &gt; 0).

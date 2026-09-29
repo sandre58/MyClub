@@ -22,7 +22,7 @@ export type ShellNavGroupSpec = {
   items: readonly ShellNavItemSpec[];
 };
 
-/** Visual SoT (Shell A). Stades has no product route yet. */
+/** Visual SoT (Shell A). Venues has no product route yet. */
 export const shellNavGroups: readonly ShellNavGroupSpec[] = [
   { id: 'pilotage', items: [{ key: 'overview', hrefKey: 'overview' }] },
   {

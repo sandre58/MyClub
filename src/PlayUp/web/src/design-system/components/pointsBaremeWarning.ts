@@ -1,5 +1,5 @@
 /**
- * Soft guard for standing barème — Domain allows any ints; UX warns when
+ * Soft guard for standing points scale — Domain allows any ints; UX warns when
  * win < draw or draw < loss (min each is 0, enforced by InputNumber).
  * Caller supplies the localized message (i18n).
  */

@@ -11,7 +11,7 @@ import type {
   StructureView,
 } from '../types';
 
-/** Volume of Entrées promised by one qualification path. */
+/** Volume of Entries promised by one qualification path. */
 export function qualificationPathVolume(
   path: StructureQualificationPath,
 ): number {

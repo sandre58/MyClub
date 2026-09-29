@@ -1,6 +1,6 @@
 /*
- * Shell layout (14.6.1) — product chrome only.
- * Uses 14.5 semantic tokens; no hex values, no generic component library.
+ * Shell layout — product chrome only.
+ * Uses design-system semantic tokens; no hex values, no generic component library.
  */
 
 @import './shell-sidebar.css';
@@ -82,7 +82,7 @@
   margin-inline: 0;
 }
 
-/* Narrow page frame for migrated pages / error recovery (coexists with .page 13.5). */
+/* Narrow page frame for migrated pages / error recovery (coexists with legacy .page). */
 .shell-page {
   max-width: 36rem;
   margin-inline: auto;

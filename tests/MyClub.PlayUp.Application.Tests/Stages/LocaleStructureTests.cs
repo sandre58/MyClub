@@ -14,7 +14,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// Structure Lot 3: locale skeleton mutations and rebuild impact.
+/// Structure: locale skeleton mutations and rebuild impact.
 /// </summary>
 public sealed class LocaleStructureTests
 {

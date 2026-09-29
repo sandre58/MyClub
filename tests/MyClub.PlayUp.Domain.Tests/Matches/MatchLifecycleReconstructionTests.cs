@@ -14,7 +14,7 @@ using Xunit;
 namespace MyClub.PlayUp.Domain.Tests.Matches;
 
 /// <summary>
-/// Reference cases L*/N*/X* — Lifecycle / State Reconstruction (A0–A6, P-D0–P-D5).
+/// Lifecycle / state reconstruction reference cases (Live open, finish, sheet freeze, forfeit, cancellation).
 /// </summary>
 public sealed class MatchLifecycleReconstructionTests
 {

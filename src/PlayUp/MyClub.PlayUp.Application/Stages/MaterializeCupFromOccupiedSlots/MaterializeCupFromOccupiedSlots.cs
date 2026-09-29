@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: materialize Cup Fixtures + Matches from occupied <see cref="BracketPair"/>s (Lot C2).
+/// Application use case: materialize Cup Fixtures + Matches from occupied <see cref="BracketPair"/>s.
 /// </summary>
 /// <remarks>
 /// Progression only fills Slot.EntryId. This UC creates Fixture(SlotA/B, BracketPairKey) and Matches when

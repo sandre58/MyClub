@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Championship structure + matches materialized, stays Draft (Structure edit + Règlement schematic).
+/// Championship structure + matches materialized, stays Draft (Structure edit + Regulation schematic).
 /// </summary>
 public sealed class ChampionshipStructureDraftScenario : IScenario
 {

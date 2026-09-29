@@ -11,7 +11,7 @@ export type OutcomePointsCardProps = {
 };
 
 /**
- * Semantic points card — Victoire / Nul / Défaite barème display or edit slot.
+ * Semantic points card — Win / Draw / Loss points scale display or edit slot.
  */
 export function OutcomePointsCard({
   tone,

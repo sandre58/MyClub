@@ -1,14 +1,14 @@
 /*
- * Vue d'ensemble (20.2) — layout par cycle (composition SPA).
+ * Overview — layout by cycle (SPA composition).
  *
- * Préparation : signals (Prochaine action · À traiter) → config (Équipes | Règlement)
- *   → structure pleine largeur.
- * En cours / Terminée : attention? → config condensée → tip? → sport.
+ * Preparation: signals (Next action · Needs attention) → config (Teams | Regulation)
+ *   → full-width structure.
+ * In progress / Completed: attention? → condensed config → tip? → sport.
  *
- * Invariants : zone absente = silence ; signals = fit-content (pas de largeur forcée) ;
- * dimensions = faits ; À traiter = blockers ; Prochaine action = transition 0|1.
+ * Invariants: absent zone = silence; signals = fit-content (no forced width);
+ * dimensions = facts; Needs attention = blockers; Next action = transition 0|1.
  *
- * Radius : token DS `--radius-panel` (pas d'override local — arbitré 2026-08-22).
+ * Radius: DS token `--radius-panel` (no local override).
  */
 
 .page.page--overview {
@@ -29,7 +29,7 @@
   gap: var(--space-16);
 }
 
-/* ---------- Panneaux ---------- */
+/* ---------- Panels ---------- */
 
 .page--overview .ds-panel {
   display: flex;
@@ -46,7 +46,7 @@
   gap: var(--space-16);
 }
 
-/* Signaux de pilotage (À traiter, Prochaine action) : priorité ≠ largeur pleine */
+/* Operational signals (Needs attention, Next action): priority ≠ full width */
 .overview__signals {
   display: flex;
   flex-wrap: wrap;
@@ -100,19 +100,19 @@
 
 @media (min-width: 52rem) {
   .overview__mid {
-    /* Préparation config : Équipes | Règlement */
+    /* Preparation config: Teams | Regulation */
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
-/* ---------- En-tête de panneau ---------- */
+/* ---------- Panel header ---------- */
 
 .overview-panel__head {
   display: flex;
   align-items: center;
   gap: var(--space-8);
   margin: 0;
-  /* padding — le reset h2 annule toute margin. */
+  /* padding — the h2 reset clears all margin. */
   padding-bottom: var(--space-8);
   color: var(--color-text-primary);
   font-size: 1rem;
@@ -150,7 +150,7 @@
   line-height: var(--leading-normal);
 }
 
-/* Lien de sortie vers l'espace métier — aligné à droite, ancré en bas. */
+/* Exit link to the domain workspace — right-aligned, bottom-anchored. */
 .overview-panel__footer {
   display: flex;
   justify-content: flex-end;
@@ -170,13 +170,13 @@
   margin: 0;
 }
 
-/* ---------- À traiter (section hors panneau — items = classes drawer) ---------- */
+/* ---------- Needs attention (section outside panel — items = drawer classes) ---------- */
 
 .overview-attention .shell-attention-drawer__list {
   gap: var(--space-8);
 }
 
-/* ---------- Équipes ---------- */
+/* ---------- Teams ---------- */
 
 .overview-figure {
   display: flex;
@@ -266,7 +266,7 @@
   line-height: var(--leading-tight);
 }
 
-/* ---------- Règlement ---------- */
+/* ---------- Regulation ---------- */
 
 .overview-chips {
   display: flex;
@@ -325,7 +325,7 @@
   line-height: var(--leading-tight);
 }
 
-/* ---------- Structure (surface éditoriale) ---------- */
+/* ---------- Structure (editorial surface) ---------- */
 
 .overview-rows {
   display: flex;
@@ -365,7 +365,7 @@
   padding-block: var(--space-12);
 }
 
-/* ---------- En cours — sport ---------- */
+/* ---------- In progress — sport ---------- */
 
 .overview__sport {
   display: grid;
@@ -411,7 +411,7 @@
   line-height: var(--leading-tight);
 }
 
-/* ---------- Structure / Règlement En cours (config cards) ---------- */
+/* ---------- Structure / Regulation In progress (config cards) ---------- */
 
 .overview-config-card {
   min-height: 11.5rem;

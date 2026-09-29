@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Flat input contract for <see cref="DrawResolutionGenerator"/> (never the Draw aggregate).
-/// Slot: Required = feasibility. Group V1: pots + uniform capacity + FixedGroups; Required feasibility only (no soft).
+/// Slot: Required = feasibility. Group: pots + uniform capacity + FixedGroups; Required feasibility only (no soft).
 /// Incomplete maps / structural incoherence → Invalid regardless of enforcement.
 /// </summary>
 public sealed class DrawGenerationRequest
@@ -62,7 +62,7 @@ public sealed class DrawGenerationRequest
 
     /// <summary>
     /// Gets draw constraints (Required = feasibility).
-    /// Unused for Group V1 soft costs (must be empty or MaxSameAssociation only).
+    /// Unused for Group soft costs (must be empty or MaxSameAssociation only).
     /// </summary>
     public IReadOnlyList<DrawConstraint> Constraints { get; }
 
@@ -92,12 +92,12 @@ public sealed class DrawGenerationRequest
     public IReadOnlyList<GroupId>? GroupTargets { get; }
 
     /// <summary>
-    /// Gets <see cref="Rules.PotRules.NumberOfPots"/> for Group V1 (required).
+    /// Gets <see cref="Rules.PotRules.NumberOfPots"/> for Group generation (required).
     /// </summary>
     public int? NumberOfPots { get; }
 
     /// <summary>
-    /// Gets Entry→pot membership for Group V1 (required).
+    /// Gets Entry→pot membership for Group generation (required).
     /// </summary>
     public PotMembership? PotMembership { get; }
 

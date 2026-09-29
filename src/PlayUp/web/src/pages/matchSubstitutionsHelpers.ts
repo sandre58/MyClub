@@ -5,7 +5,7 @@ import type {
   RecordedSubstitution,
 } from '../types';
 
-/** Domain CanMutateSubstitutionsFreely — Create/Remove/Correct UI V1. */
+/** Domain CanMutateSubstitutionsFreely — Create/Remove/Correct UI gate. */
 export function canMutateRecordedSubstitutions(match: MatchDetail): boolean {
   if (match.status === 'Live') {
     return true;

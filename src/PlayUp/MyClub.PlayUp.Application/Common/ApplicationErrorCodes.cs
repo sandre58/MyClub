@@ -141,7 +141,7 @@ public static class ApplicationErrorCodes
     public const string InvalidStructureIntent = "Application.InvalidStructureIntent";
 
     /// <summary>
-    /// Gets the code when Cup bracket size is not a supported power of two (V1 bound).
+    /// Gets the code when Cup bracket size is not a supported power of two.
     /// </summary>
     public const string CupBracketNotPowerOfTwo = "Application.CupBracketNotPowerOfTwo";
 

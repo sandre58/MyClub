@@ -4,9 +4,9 @@ import { TrendIcon } from '../design-system/TrendIcon';
 import { StandingsLegend } from '../design-system/components/StandingsLegend';
 
 /**
- * Classements — consultation sportive. Grille légitime (gate passé) :
- * lignes homogènes, colonnes comparables, scan. Zones = règlement,
- * couleur en confirmation (barre latérale + légende).
+ * Standings — sports consultation. Legitimate grid (gate passed):
+ * homogeneous rows, comparable columns, scan. Zones = regulation,
+ * colour as confirmation (side bar + legend).
  */
 export function LabStandings() {
   const lastDone = [...labRounds].reverse().find((r) => r.state === 'done');

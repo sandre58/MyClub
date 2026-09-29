@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
-/// Shared form materialization for V1 structure intents.
+/// Shared form materialization for structure intents.
 /// Skeleton = topology capacity only — no DrawRules, relations, or population.
 /// </summary>
 internal static class StructureSkeleton
@@ -167,8 +167,8 @@ internal static class StructureSkeleton
 
     private static void BuildChampionship(Stage stage, IClock clock)
     {
-        // Seed technique minimal du skeleton. Ne fait pas partie de StructureIntent
-        // et ne représente pas le nombre de journées du championnat.
+        // Minimal technical skeleton seed. Not part of StructureIntent
+        // and does not represent the championship matchday count.
         const int initialMatchdaySeedCount = 1;
         for (var number = 1; number <= initialMatchdaySeedCount; number++)
         {

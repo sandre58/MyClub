@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Standing calculation: points barème and ordered ranking criteria.
+/// Standing calculation: points scale and ordered ranking criteria.
 /// </summary>
 public sealed record StandingRules
 {
@@ -19,7 +19,7 @@ public sealed record StandingRules
     /// Initializes a new instance of the <see cref="StandingRules"/> class.
     /// </summary>
     /// <param name="points">Points awarded for win / draw / loss.</param>
-    /// <param name="rankingCriteria">Ordered ranking criteria (non-empty, no duplicates, V1 values only).</param>
+    /// <param name="rankingCriteria">Ordered ranking criteria (non-empty, no duplicates).</param>
     public StandingRules(PointsPolicy points, IReadOnlyList<RankingCriterion> rankingCriteria)
     {
         ArgumentNullException.ThrowIfNull(points);

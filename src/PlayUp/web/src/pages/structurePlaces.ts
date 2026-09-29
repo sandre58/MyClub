@@ -1,7 +1,7 @@
 import type { StructureStageHubSummary } from '../types';
 
 /**
- * Places N (target cardinality at T) — topology, hero, Entrées rail.
+ * Places N (target cardinality at T) — topology, hero, Entries rail.
  * Prefer server compositionCapacity (ResolvePlaces). Client fallbacks use form facts only.
  * Never invent N from k / occupants / Draw alone.
  *

@@ -8,7 +8,7 @@ namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
 /// HTTP body for replacing the stage default TieFormat.
-/// <see cref="Clear"/> true clears the default. Legs must be 1 or 2 (V1).
+/// <see cref="Clear"/> true clears the default. Legs must be 1 or 2.
 /// Two legs imply aggregate scoring; away goals require two legs.
 /// </summary>
 public sealed record ReplaceStageDefaultTieFormatRequest(

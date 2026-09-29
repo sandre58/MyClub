@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
-/// Application use case: configure primary Stage structure from a typed V1 format intent.
+/// Application use case: configure primary Stage structure from a typed format intent.
 /// </summary>
 /// <remarks>
 /// Orchestrates Domain APIs only — not a generic Stage builder. Atomicity is the caller's

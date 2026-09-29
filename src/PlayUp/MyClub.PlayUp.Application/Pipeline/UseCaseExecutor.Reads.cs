@@ -44,7 +44,7 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
-    /// Loads a competition and assembles the minimal Accueil <see cref="WorkspaceSummaryDto"/>.
+    /// Loads a competition and assembles the minimal Home <see cref="WorkspaceSummaryDto"/>.
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -81,7 +81,7 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
-    /// Assembles the Overview Read projection for a competition (Phase 16.1).
+    /// Assembles the Overview Read projection for a competition.
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

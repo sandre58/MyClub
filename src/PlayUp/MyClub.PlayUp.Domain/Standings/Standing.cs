@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Standings;
 
 /// <summary>
-/// Calculated standing view (never an entity; not persisted in V1).
+/// Calculated standing view (never an entity; not persisted).
 /// </summary>
 public sealed class Standing
 {

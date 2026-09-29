@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 /**
- * Pilot page for 13.5 → Design System + i18n migration (see docs/page-migration.md).
+ * Pilot page for Design System + i18n migration (see docs/page-migration.md).
  */
 export function NotFoundPage() {
   const { t } = useTranslation('common');

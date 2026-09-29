@@ -79,7 +79,7 @@ public sealed record DrawConstraint
     /// entries sharing an association in the same group.
     /// </summary>
     /// <param name="maxPerGroup">Maximum entries per association per group (&gt; 0).</param>
-    /// <param name="enforcement">Must be <see cref="ConstraintEnforcement.Required"/> (V1).</param>
+    /// <param name="enforcement">Must be <see cref="ConstraintEnforcement.Required"/>.</param>
     /// <returns>A parameterized draw constraint.</returns>
     public static DrawConstraint MaxSameAssociationPerGroup(
         int maxPerGroup,

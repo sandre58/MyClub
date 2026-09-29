@@ -35,12 +35,12 @@ export function StructureNavIcon({ size, ...props }: ShellIconProps) {
   );
 }
 
-/** Équipes — shield. */
+/** Teams — shield. */
 export function TeamsNavIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={Shield} size={size} {...props} />;
 }
 
-/** Stades — venue / stand. */
+/** Venues — venue / stand. */
 export function VenuesNavIcon({ size, ...props }: ShellIconProps) {
   return (
     <Icon size={size} {...props}>
@@ -50,17 +50,17 @@ export function VenuesNavIcon({ size, ...props }: ShellIconProps) {
   );
 }
 
-/** Règlement — document. */
+/** Regulation — document. */
 export function RegulationNavIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={FileText} size={size} {...props} />;
 }
 
-/** Matchs — calendrier / hub opérationnel. */
+/** Matches — calendar / operational hub. */
 export function MatchesNavIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={CalendarDays} size={size} {...props} />;
 }
 
-/** Classements — podium. */
+/** Standings — podium. */
 export function ClassementsNavIcon({ size, ...props }: ShellIconProps) {
   return (
     <Icon size={size} {...props}>
@@ -74,7 +74,7 @@ export function ClassementsNavIcon({ size, ...props }: ShellIconProps) {
   );
 }
 
-/** Paramètres — gear (outline). */
+/** Settings — gear (outline). */
 export function SettingsNavIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={Settings} size={size} {...props} />;
 }

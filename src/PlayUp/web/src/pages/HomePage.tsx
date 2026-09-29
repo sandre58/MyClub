@@ -37,8 +37,8 @@ import {
 } from '../types';
 
 /**
- * Accueil hub ops — hors Shell (`.ds-root` seul).
- * Choisir / créer une compétition. Shell V1 commence sur `/competitions/:id…`.
+ * Home hub ops — outside the competition Shell (`.ds-root` only).
+ * Choose or create a competition. Competition shell starts at `/competitions/:id…`.
  */
 export function HomePage() {
   useThemeRoot();

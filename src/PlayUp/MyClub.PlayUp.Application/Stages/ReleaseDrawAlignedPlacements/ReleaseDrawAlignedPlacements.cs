@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: release slot occupants that still exactly match a Slot draw's
-/// recorded resolution (decision D — explicit liberate, not Cancel rollback, not Apply replace).
+/// recorded resolution (explicit liberate — not Cancel rollback, not Apply replace).
 /// </summary>
 /// <remarks>
 /// For each <c>(SlotKey, EntryId)</c> in <see cref="DrawResolution.SlotResults"/>:

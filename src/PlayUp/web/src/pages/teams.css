@@ -772,7 +772,7 @@
     container-name: teams-main;
   }
 
-  /* Split pane: colonne principale étroite — icône seule pour éviter le débordement */
+  /* Split pane: narrow main column — icon only to avoid overflow */
   @container teams-main (max-width: 42rem) {
     .teams__ops-row {
       --teams-add-min-width: var(--control-height);

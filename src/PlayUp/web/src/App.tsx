@@ -27,16 +27,16 @@ const DesignLabPage = lazy(async () => {
 /**
  * Route table only.
  *
- * / and /competitions (redirect to Accueil) are outside AppLayout: Accueil hub
- * (pré-compétition). Shell V1 starts at /competitions/:id….
+ * `/` and `/competitions` (redirect to Home) are outside AppLayout: Home hub
+ * (pre-competition entry). Competition shell starts at `/competitions/:id…`.
  *
- * /dev/foundations is outside AppLayout: 14.5 validation terrain,
- * not organizer chrome. Lazy so Plex and DS CSS stay off the 13.5 bundle.
+ * `/dev/foundations` is outside AppLayout: foundations validation terrain,
+ * not organizer chrome. Lazy so Plex and DS CSS stay off the product bundle.
  *
- * /design-lab is outside AppLayout too: direction artistique prototype
- * (audit Phase 20) — static data, own shell, no product surface touched.
+ * `/design-lab` is outside AppLayout too: design-system prototype
+ * with static data, own shell, no product surface touched.
  *
- * Nested under AppLayout so Outlet swaps page content while the 14.6 shell stays.
+ * Nested under AppLayout so Outlet swaps page content while the shell stays.
  * Params (:competitionId, :stageId, :matchId, :entryId) are opaque ids — not business fields.
  */
 export default function App() {

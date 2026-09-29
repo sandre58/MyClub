@@ -9,11 +9,11 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Minimal Accueil / workspace landing payload (Slice 1 + Slice 6 completion hints).
+/// Minimal Home / workspace landing payload.
 /// </summary>
 /// <remarks>
 /// <see cref="NextActionCode"/> is mapped to organizer copy in the SPA i18n layer.
-/// <see cref="AttentionCount"/> is a derived Needs Attention count (Slice 5) — not persisted.
+/// <see cref="AttentionCount"/> is a derived Needs Attention count — not persisted.
 /// <see cref="CanCompleteNormally"/> / <see cref="CompletionBlockers"/> are derived CompletionAnalyzer facts — not persisted.
 /// </remarks>
 /// <param name="Id">Competition identity.</param>

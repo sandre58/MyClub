@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
-/// HTTP body for typed V1 structure configuration (not a Domain Format).
+/// HTTP body for typed structure configuration (not a Domain Format).
 /// </summary>
 /// <param name="Format">Championship | Groups | Cup | Swiss (case-insensitive).</param>
 /// <param name="StageName">Optional primary stage name.</param>

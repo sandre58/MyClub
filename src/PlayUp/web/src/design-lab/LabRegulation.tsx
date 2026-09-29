@@ -1,5 +1,5 @@
 /**
- * Design Lab — Règlement editor scenarios (impact Confirm, binding, garde-fous).
+ * Design Lab — Regulation editor scenarios (Confirm impact, binding, guards).
  * Specimens only; product Dialog stays the SoT implementation.
  */
 export function LabRegulation() {

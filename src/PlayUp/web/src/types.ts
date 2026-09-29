@@ -1,7 +1,7 @@
 /**
  * Manual mirrors of Application Reads DTOs.
  * ASP.NET Core JSON uses camelCase property names.
- * Phase 12.8: enums are JSON strings (enum member names), not numbers.
+ * Enums are JSON strings (enum member names), not numbers.
  * See docs/guides/http-api-contract.md.
  *
  * TypeScript types document the expected shape at compile time.
@@ -110,7 +110,7 @@ export interface MemberIdsRequest {
 }
 
 /**
- * GET /competitions/{id}/workspace — Accueil / competition landing.
+ * GET /competitions/{id}/workspace — Home / competition landing.
  * nextActionCode and attention/completion fields are Read facts from the Host.
  */
 export interface WorkspaceSummary {
@@ -134,11 +134,11 @@ export type OverviewCycleCode =
 export type OverviewProminence =
   'Present' | 'Condensed' | 'Dominant' | 'Absent';
 
-/** Situation nature — minimal V1 (string on wire). */
+/** Situation nature on the wire (Blocking | Informational). */
 export type OverviewSituationNature = 'Blocking' | 'Informational';
 
 /**
- * GET /competitions/{id}/overview — Phase 16.1 aggregated Overview Read.
+ * GET /competitions/{id}/overview — aggregated Overview Read.
  * Codes + facts only; organizer copy lives in SPA i18n.
  */
 export interface OverviewView {
@@ -150,17 +150,17 @@ export interface OverviewView {
   period?: OverviewCompetitionPeriod | null;
   cycleReading: OverviewCycleReading;
   /**
-   * Préparation sub-situation (Host-owned) — not a cycle code.
+   * Preparation sub-situation (Host-owned) — not a cycle code.
    * Setup | GeneratedCalendar. SPA must not infer from Ready + match counts.
    */
   preparationFocus: OverviewPreparationFocus | string;
   /** Calendar overview synthesis when preparationFocus is GeneratedCalendar; else null. */
   calendarSummary: OverviewCalendarSummary | null;
   /**
-   * Derived final placements (`places[]`) when Terminée and presentable.
-   * Null when not Terminée/Archived, Abandoned, or no Host presentation (Winner|Podium).
+   * Derived final placements (`places[]`) when Completed and presentable.
+   * Null when not Completed/Archived, Abandoned, or no Host presentation (Winner|Podium).
    * `presentation` is Host UX hint — independent of standingCompact.
-   * SPA Résultat uses presentation; Classements = full consultation truth.
+   * SPA Result uses presentation; Standings = full consultation truth.
    */
   competitionOutcome: CompetitionOutcome | null;
   constructionDimensions: OverviewConstructionDimensions;
@@ -176,7 +176,7 @@ export interface OverviewView {
 /** Read projection — competition final placements (not Domain). */
 export interface CompetitionOutcome {
   places: FinalPlacement[];
-  /** Host UX: Winner = hero; Podium = Top-3 mise en scène. */
+  /** Host UX: Winner = hero; Podium = Top-3 presentation staging. */
   presentation: 'Winner' | 'Podium';
 }
 
@@ -186,7 +186,7 @@ export interface FinalPlacement {
   displayName: string;
 }
 
-/** Host-owned Préparation focus — wire codes. */
+/** Host-owned preparation focus — wire codes. */
 export type OverviewPreparationFocus = 'Setup' | 'GeneratedCalendar';
 
 export interface OverviewCalendarSummary {
@@ -269,20 +269,20 @@ export interface OverviewOperationalFocus {
   matchCounts: OverviewMatchCounts;
   /** Swiss bye pairing events — never fixtures/matches. */
   swissByes: OverviewSwissBye[];
-  /** Dernières — last engaged unit on ReferenceStage; null → empty state. */
+  /** Recent — last engaged unit on ReferenceStage; null → empty state. */
   recentUnit: OverviewSportUnit | null;
-  /** Prochaines — next unit (or first before kickoff); null → empty state. */
+  /** Upcoming — next unit (or first before kickoff); null → empty state. */
   nextUnit: OverviewSportUnit | null;
   /** Compact standing; null when not applicable (Cup / no structure). */
   standingCompact: OverviewStandingCompact | null;
   /**
-   * Game-rule facts for En cours Règlement (ReferenceStage).
+   * Game-rule facts for In-progress Regulation (ReferenceStage).
    * Null when no ReferenceStage — SPA hides the card.
    */
   referenceStageGameRules: OverviewReferenceStageGameRules | null;
 }
 
-/** Machine facts for En cours Règlement — SPA picks 2–3 by formatKind. */
+/** Machine facts for In-progress Regulation — SPA picks 2–3 by formatKind. */
 export interface OverviewReferenceStageGameRules {
   stageId: string;
   stageName: string;
@@ -301,7 +301,7 @@ export interface OverviewReferenceStageGameRules {
   swissPlannedRounds?: number | null;
 }
 
-/** Matchday or Round slice for Vue d'ensemble temporal panels. */
+/** Matchday or Round slice for Overview temporal panels. */
 export interface OverviewSportUnit {
   stageId: string;
   stageName: string;
@@ -477,7 +477,7 @@ export interface StructureView {
   structure: StructureTopologySummary;
   actions: string[];
   readiness: StructureReadiness;
-  /** Per-stage topology + regulation tokens (Règlement hub). */
+  /** Per-stage topology + regulation tokens (Regulation hub). */
   stages: StructureStageHubSummary[];
   shortName?: string | null;
   logoMediaId?: string | null;
@@ -575,7 +575,7 @@ export interface StructureReadiness {
 /** Host DrawMode — string enum member names. */
 export type DrawMode = 'Random';
 
-/** GET structure `stages[]` — Règlement hub phase row. */
+/** GET structure `stages[]` — Regulation hub stage row. */
 export interface StructureStageHubSummary {
   stageId: string;
   name: string;
@@ -605,7 +605,7 @@ export interface StructureStageHubSummary {
   drawPoints?: number | null;
   lossPoints?: number | null;
   hasDrawRules: boolean;
-  /** Topology execution badge when DrawRules engaged (SoT Structure × Tirage chrome). */
+  /** Topology execution badge when DrawRules engaged (SoT Structure × Draw chrome). */
   drawExecutionBadge?:
     | 'ToLaunch'
     | 'InProgress'
@@ -672,7 +672,7 @@ export interface StructureStageHubSummary {
   compositionCapacity?: number | null;
   /** Groups form fact: places per group (SoT for Places N); independent of Draw. */
   placesPerGroup?: number | null;
-  /** Display names for runtime composition (Tirage / Live). */
+  /** Display names for runtime composition (Draw / Live). */
   compositionPreviewNames?: string[] | null;
   /** Always 0 — retained for API shape; rails no longer truncate. */
   compositionPreviewOverflow?: number;
@@ -758,7 +758,7 @@ export interface StructureQualificationPath {
   minimumPoints?: number | null;
 }
 
-/** One progression authoring intent (V3). */
+/** One progression authoring intent. */
 export interface StructureProgressionIntent {
   intentId: string;
   order: number;
@@ -1097,7 +1097,7 @@ export interface ConfigureStructureResponse {
   structure: StructureView;
 }
 
-/** GET /competitions/{id}/consultation — Slice 7 multi-consumer Read (camelCase wire). */
+/** GET /competitions/{id}/consultation — multi-consumer Read (camelCase wire). */
 export interface ConsultationView {
   competitionId: string;
   name: string;
@@ -1154,7 +1154,7 @@ export interface ConsultationStandingRow {
   points: number;
 }
 
-/** Structure section — typed for contract fidelity; Classements does not render it. */
+/** Structure section — typed for contract fidelity; Standings does not render it. */
 export interface ConsultationStructure {
   formatKind: StructureFormatKind | null;
   stages: ConsultationStageStructure[];

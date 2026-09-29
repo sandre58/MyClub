@@ -5,7 +5,7 @@ const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const drawId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 const matchId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 
-/** Sample ReferenceStage game rules for En cours Règlement tests. */
+/** Sample ReferenceStage game rules for in-progress Regulation tests. */
 export function referenceStageGameRules(
   overrides: Partial<OverviewReferenceStageGameRules> = {},
 ): OverviewReferenceStageGameRules {

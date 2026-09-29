@@ -44,7 +44,7 @@ const navIcons: Record<
 };
 
 /**
- * Structural sidebar (Shell A). Lockup → Accueil. Collapse lives in the rail.
+ * Structural sidebar (Shell A). Lockup → Home. Collapse lives in the rail.
  */
 export function ShellSidebar({
   collapsed,

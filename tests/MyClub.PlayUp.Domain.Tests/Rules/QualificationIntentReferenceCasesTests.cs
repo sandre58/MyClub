@@ -12,7 +12,7 @@ using Xunit;
 namespace MyClub.PlayUp.Domain.Tests.Rules;
 
 /// <summary>
-/// RC1–RC4 from QualificationIntent decision, adapted to Qual V2 population destinations
+/// Qualification-intent reference cases RC1–RC4 for population destinations
 /// (no SlotOrder / overrides — RC5 slot mapping is N/A).
 /// </summary>
 public sealed class QualificationIntentReferenceCasesTests

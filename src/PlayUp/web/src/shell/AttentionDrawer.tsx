@@ -23,7 +23,7 @@ type AttentionDrawerProps = {
 };
 
 /**
- * Temporary triage surface (14.6.4) — not navigation, not a generic drawer primitive.
+ * Attention triage surface — not navigation, not a generic drawer primitive.
  * Shell drawer — consumes GET /attention (lighter than full Overview).
  */
 export function AttentionDrawer({

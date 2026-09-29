@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Règlement Confrontation tokens QA: one KO round with a rich TwoLegs TieFormat.
+/// Regulation Confrontation tokens QA: one KO round with a rich TwoLegs TieFormat.
 /// </summary>
 public sealed class RegulationTieHomogeneousScenario : IScenario
 {

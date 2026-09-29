@@ -1,5 +1,5 @@
 /*
- * Play’Up design-system foundations (14.5).
+ * Play'Up design-system foundations.
  *
  * Scoped primarily to `.ds-root`; token sheets also expose the public API on
  * `:root` so early paint / admin chrome can consume the same SoT (no ladder in

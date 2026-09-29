@@ -86,7 +86,7 @@ function toSlotConfrontationSide(
 }
 
 /**
- * Slot draw product for Exécutions: dense A vs B from Domain BracketPairs.
+ * Slot draw product for Executions: dense A vs B from Domain BracketPairs.
  * Leftovers (placement without a covering pair) stay as flat Place → Entry —
  * never drop Resolved placements. No *-A/*-B stem heuristic; no Fixture pairing.
  */
@@ -150,7 +150,7 @@ export function slotConfrontationRows(
 }
 
 /**
- * Why « Nouveau tirage » (G2) cannot run — UI gate to start Rerun only.
+ * Why a new-draw gesture cannot run — UI gate to start Rerun only.
  * Domain Generate/Apply remain the final invariants.
  */
 export type DrawCreateBlockReason =
@@ -280,7 +280,7 @@ export function resolveDrawCreateBlockPresentation(
   }
 }
 
-/** Shared Structure + Tirage gate from stage / overview payloads. */
+/** Shared Structure + Draw gate from stage / overview payloads. */
 export function resolveStageDrawCreateGate(input: {
   formatKind: StructureFormatKind | null | undefined;
   draws: ReadonlyArray<{ status: string }>;
@@ -342,7 +342,7 @@ export type DrawUiProjection = {
   isApplied: boolean;
   chrome: DrawChromeFlags;
   /**
-   * One optional chip for history tiles (rail V1).
+   * One optional chip for history tiles (draw rail).
    * Never teaches the full 3-axis matrix — detail carries phrase + chrome.
    */
   masterChip: DrawMasterChip;
@@ -416,7 +416,7 @@ export function pickActiveDraw(draws: StageDraw[]): StageDraw | null {
   );
 }
 
-/** Default selection id for the Tirage dialog (prefers active, else newest). */
+/** Default selection id for the Draw dialog (prefers active, else newest). */
 export function pickDefaultDrawId(draws: StageDraw[]): string | null {
   if (draws.length === 0) {
     return null;
@@ -427,9 +427,9 @@ export function pickDefaultDrawId(draws: StageDraw[]): string | null {
 }
 
 /**
- * Rail V1 identity chip — observable principal status only.
+ * Rail identity chip — observable principal status only.
  * Priority: Cancelled > NoSolution > Applied > Published > Resolved.
- * Draft / NotResolved → no chip (G2 makes that state rare; detail can still show it).
+ * Draft / NotResolved → no chip (Create+Generate makes that state rare; detail can still show it).
  */
 export function resolveDrawMasterChip(
   draw: StageDraw,
@@ -455,7 +455,7 @@ export function resolveDrawMasterChip(
 
 /**
  * Detail header chips — synthetic business state (not the rail’s single principal chip).
- * Applied keeps Publié · Appliqué so Publish ≠ Apply stays readable in the detail.
+ * Applied keeps "Publié" · "Appliqué" so Publish ≠ Apply stays readable in the detail.
  */
 export type DrawDetailHeaderChip =
   | { kind: 'lifecycle'; status: Extract<DrawStatus, 'Published' | 'Cancelled'> }
@@ -590,7 +590,7 @@ export function getDrawUiProjection(
   }
 
   if (draw.status === 'Draft' && draw.resolutionState === 'NotResolved') {
-    // V1 Nouveau = Create+Generate; a lasting Draft/NotResolved is an interrupted generate.
+    // New draw = Create+Generate; a lasting Draft/NotResolved is an interrupted generate.
     return {
       messageKey: 'generationInterrupted',
       showResults: false,
@@ -605,7 +605,7 @@ export function getDrawUiProjection(
       messageKey: 'draftResolved',
       showResults: true,
       isApplied: false,
-      // Brouillon · Résolu — phrase carries “ready to apply”
+      // "Brouillon" · "Résolu" — phrase carries "ready to apply"
       chrome: { showStatus: true, showResolution: true, showApplied: false },
       masterChip,
     };
@@ -633,7 +633,7 @@ export function getDrawUiProjection(
       messageKey,
       showResults: true,
       isApplied,
-      // Publié · (Appliqué when done) — no “Non appliqué” badge on happy recovery path
+      // "Publié" · ("Appliqué" when done) — no "Non appliqué" badge on happy recovery path
       chrome: {
         showStatus: true,
         showResolution: false,
@@ -677,7 +677,7 @@ export function isSlotDrawApplied(
 }
 
 /**
- * Decision D — how many Places still carry exactly this draw's SlotResults.
+ * How many Places still carry exactly this draw's SlotResults.
  * Does not inspect DirectAssignment (server skips DA); SPA uses this for CTA visibility.
  */
 export function countAlignedSlotPlacements(

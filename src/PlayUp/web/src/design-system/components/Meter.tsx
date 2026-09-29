@@ -29,7 +29,7 @@ function clamp01(n: number): number {
 }
 
 /**
- * Capsule progress meter — shared by Teams plateau and Règlement point gauges.
+ * Capsule progress meter — shared by Teams plateau and Regulation point gauges.
  */
 export function Meter({
   ratio,

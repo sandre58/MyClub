@@ -6,8 +6,7 @@
 export type ToastTone = 'success' | 'error' | 'info' | 'attention';
 
 /**
- * Reserved for a future 0–1 event action (Réessayer, etc.).
- * Accepted by the API in V1 but not rendered — see Notion Toast decision.
+ * Optional action payload accepted by `notify` but not rendered by the toaster yet.
  */
 export type ToastAction = {
   label: string;
@@ -22,7 +21,7 @@ export type ToastItem = {
   id: string;
   message: string;
   tone: ToastTone;
-  /** Reserved — not shown in V1. */
+  /** Accepted by the store; not rendered by the toaster yet. */
   action?: ToastAction;
 };
 
@@ -32,7 +31,7 @@ export const TOAST_DURATION_MS: Record<ToastTone, number> = {
   success: 4000,
   info: 4000,
   attention: 6000,
-  /** Sticky-ish: long auto-dismiss; dismiss manuel reste prioritaire. */
+  /** Longer auto-dismiss; manual dismiss still takes priority. */
   error: 10_000,
 };
 

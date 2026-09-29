@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Competitions;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Assembles a minimal WorkspaceSummary for Accueil (Slice 1 + Slice 6).
+/// Assembles a minimal WorkspaceSummary for Home.
 /// </summary>
 /// <remarks>
 /// Next action is a Read stub. AttentionCount / completion fields are derived — never Domain.

@@ -217,7 +217,7 @@ public sealed partial class UseCaseExecutor
     /// <summary>
     /// Orchestrates Publish then Apply as two durable steps (not one Domain transaction).
     /// Publish is committed before Apply runs so an Apply failure leaves Published + not applied
-    /// — the V1 recovery state, not a rolled-back draft.
+    /// (recoverable state), not a rolled-back draft.
     /// </summary>
     /// <param name="stageId">Stage that owns the draw.</param>
     /// <param name="drawId">Draw identity.</param>
@@ -349,7 +349,7 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
-    /// Assigns an entry to a Cup slot via DirectAssignment (Placement manuel).
+    /// Assigns an entry to a Cup slot via DirectAssignment (manual placement).
     /// </summary>
     public async Task AssignEntryToSlotAsync(
         StageId stageId,
@@ -714,7 +714,7 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
-    /// Materializes Cup Fixtures/Matches from occupied bracket pairs (Lot C2).
+    /// Materializes Cup Fixtures/Matches from occupied bracket pairs.
     /// </summary>
     public async Task<MaterializeCupFromOccupiedSlotsResult> MaterializeCupFromOccupiedSlotsAsync(
         StageId stageId,

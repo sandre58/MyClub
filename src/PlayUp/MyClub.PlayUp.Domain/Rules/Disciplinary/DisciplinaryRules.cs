@@ -10,7 +10,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Extension point for competition disciplinary rules.
-/// V1 capacity: declare which <see cref="DisciplinaryType"/> values are allowed — no consequences.
+/// Declares which <see cref="DisciplinaryType"/> values are allowed — no consequences.
 /// </summary>
 public sealed record DisciplinaryRules
 {

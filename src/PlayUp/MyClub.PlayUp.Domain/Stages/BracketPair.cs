@@ -12,7 +12,7 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// Structural Cup confrontation potential between two Places (distinct from a materialized Fixture).
 /// </summary>
 /// <remarks>
-/// V1 mono-round: PairKey is a persistent business identity (P1, P2, …), never recomputed by UI layout.
+/// Mono-round Cup: PairKey is a persistent business identity (P1, P2, …), never recomputed by UI layout.
 /// </remarks>
 public sealed record BracketPair
 {
@@ -51,7 +51,7 @@ public sealed record BracketPair
     public string SlotBKey { get; }
 
     /// <summary>
-    /// Builds V1 mono-round pairs from slots in structural order: (S1,S2)→P1, (S3,S4)→P2, ….
+    /// Builds mono-round pairs from slots in structural order: (S1,S2)→P1, (S3,S4)→P2, ….
     /// </summary>
     /// <param name="slotKeys">Slot keys in structural order.</param>
     /// <returns>Bracket pairs covering consecutive pairs of slots.</returns>

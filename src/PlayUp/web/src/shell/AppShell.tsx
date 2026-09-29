@@ -17,7 +17,7 @@ import { useShellViewport } from './useShellViewport';
 const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed';
 
 /**
- * Product shell (14.6.1) — global framing only. Business pages render via Outlet.
+ * Product shell — global framing only. Business pages render via Outlet.
  */
 export function AppShell() {
   useThemeRoot();

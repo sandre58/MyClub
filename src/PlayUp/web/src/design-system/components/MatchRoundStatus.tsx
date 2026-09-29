@@ -2,7 +2,7 @@ import { LiveStatus } from './LiveStatus';
 import { Status } from './Status';
 
 /**
- * Journée / round status — calendrier sportif (Lab SoT).
+ * Matchday / round status — sports calendar (Lab SoT).
  * Renders via Status / LiveStatus; state mapping stays calendrier-specific.
  */
 export function MatchRoundStatus({

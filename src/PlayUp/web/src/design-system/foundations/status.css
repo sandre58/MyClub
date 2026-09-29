@@ -6,11 +6,11 @@
  * not a mix with --color-surface. Text follows color-scheme: full tone on
  * light, slightly lifted on dark chrome (`color-scheme: dark` on the header).
  *
- *   variant soft    — texte teinté + wash transparent (défaut)
- *   variant outline — bordure teintée + wash plus léger
- *   variant plain   — texte teinté seul
- *   shape rounded   — radius-control (défaut)
- *   shape pill      — réservé si besoin explicite
+ *   variant soft    — tinted text + transparent wash (default)
+ *   variant outline — tinted border + lighter wash
+ *   variant plain   — tinted text only
+ *   shape rounded   — radius-control (default)
+ *   shape pill      — reserved for an explicit need
  */
 
 .ds-status {

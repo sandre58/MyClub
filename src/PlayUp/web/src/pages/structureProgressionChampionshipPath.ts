@@ -11,10 +11,10 @@ export type ChampionshipPathRound = {
 };
 
 /**
- * Mono-round form (Cup V1): that round is terminal without fixtures.
- * Multi-round without fixtures → null (outside Cup V1 scope — do not treat as regression).
+ * Mono-round form: that round is terminal without fixtures.
+ * Multi-round without fixtures → null (expected until fixtures exist).
  * Multi-round interim: longest classic KO prefix among rounds with fixtures
- * (halving). Remaining rounds (e.g. 3ᵉ after Finale) excluded.
+ * (halving). Remaining rounds (e.g. 3rd place after Final) excluded.
  */
 export function championshipTerminalRound<T extends ChampionshipPathRound>(
   rounds: readonly T[],

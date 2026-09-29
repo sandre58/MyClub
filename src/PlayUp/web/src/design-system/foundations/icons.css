@@ -1,12 +1,12 @@
 /*
- * Icon style (20.2) — stroke monocolor, currentColor only.
+ * Icon style — stroke monocolor, currentColor only.
  *
  * Scale:
  *   sm 16px — dense rows, badges
  *   md 20px — nav, header actions (default)
  *   lg 24px — empty states, emphasis
  *
- * Content icons (Vue d'ensemble panels): design-system/icons/contentIcons.tsx
+ * Content icons (Overview panels): design-system/icons/contentIcons.tsx
  * Chrome icons (nav / header / drawer): design-system/icons/shellIcons.tsx
  *
  * No duotone in chrome; semantic colour comes from parent, not fills inside SVG.

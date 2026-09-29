@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Groups with pot DrawRules, empty groups — tirage not applied (Draft).
+/// Groups with pot DrawRules, empty groups — draw not applied (Draft).
 /// </summary>
 public sealed class GroupsDrawPendingScenario : IScenario
 {

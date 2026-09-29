@@ -30,7 +30,7 @@ import { EmptyState, ErrorState, LoadingState } from '../ui';
 import './classements.css';
 
 /**
- * Classements workspace — GET /consultation (+ structure for standing barème).
+ * Standings workspace — GET /consultation (+ structure for standing points scale).
  * Presents Read facts only. Never recalculates rank or invents points.
  */
 export function ClassementsPage() {

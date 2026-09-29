@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Application.Competitions;
 /// Application use case: remove a declared member from an entry roster.
 /// </summary>
 /// <remarks>
-/// Enforces R4 (Décision Feuille): refuse removal while the member is still on any match composition sheet.
+/// Refuses removal while the member is still on any match composition sheet.
 /// Explicit sequence: remove from sheet(s), then remove from roster.
 /// </remarks>
 public static class RemoveDeclaredMember

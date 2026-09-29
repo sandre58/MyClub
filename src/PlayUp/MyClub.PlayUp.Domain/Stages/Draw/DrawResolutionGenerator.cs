@@ -12,8 +12,8 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// <summary>
 /// Pure Domain service: proposes one admissible <see cref="DrawResolution"/> under Required constraints,
 /// or <see cref="DrawGenerationResult.NoSolution"/>.
-/// Does not mutate Draw / Stage. Slot and Group (pots V1). Invalid request → <see cref="DomainException"/>.
-/// Group V1: uniform capacity, mandatory pots, ≤1 entry per pot per group;
+/// Does not mutate Draw / Stage. Slot and Group (pots). Invalid request → <see cref="DomainException"/>.
+/// Group: uniform capacity, mandatory pots, ≤1 entry per pot per group;
 /// optional Required <c>MaxSameAssociationPerGroup</c>. Soft Group constraints are out of scope.
 /// Without MaxSameAssociation, G3–G7 alone always resolve; with MaxSameAssociation, NoSolution is a real outcome.
 /// </summary>

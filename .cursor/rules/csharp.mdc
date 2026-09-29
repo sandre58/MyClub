@@ -89,6 +89,7 @@ When Domain / C# conventions change, update **all** of:
 - Property summaries use “Gets …” / “Gets or sets …”.
 - Skip trivial `internal` / private members and test projects.
 - Prefer useful domain wording over paraphrases (“The Id property”).
+- Follow the source-comment policy in `documentation.mdc` (English; current constraints only; no Notion / Décision / V1–MVP history).
 
 ## Analyzers challenged for DDD
 
@@ -122,4 +123,4 @@ When Domain / C# conventions change, update **all** of:
 - Avoid premature optimization and clever solutions that hurt maintainability.
 - Keep methods and classes focused on one responsibility.
 - Remove dead code instead of commenting it out.
-- Comments explain *why*, complex rules, or non-obvious decisions — not obvious code.
+- Comments explain non-obvious behaviour or genuine technical constraints — not obvious code, project history, or decision provenance (see `documentation.mdc`).

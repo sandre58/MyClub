@@ -396,7 +396,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Rebinds a heritable part to Competition defaults (copies value + marks bound).
-    /// Domain primitive — no Host/SPA surface in Lot 2.
+    /// Domain primitive — no Host/SPA surface.
     /// </summary>
     public void BindToCompetition(HeritableRegulationPart part, Regulation competitionRegulation, IClock clock)
     {
@@ -718,7 +718,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces progression rules. Allowed in Draft or Ready; Ready is demoted to Draft.
-    /// Each path source must be a known <see cref="BracketPair.PairKey"/> (Cup V1 structural identity).
+    /// Each path source must be a known <see cref="BracketPair.PairKey"/> (Cup structural identity).
     /// Local Place destinations must reference an existing slot and must not conflict with a direct assignment.
     /// Cross-stage Place is allowed when SlotKey exists on the destination stage form (validated at Prepare/Apply).
     /// </summary>
@@ -1101,7 +1101,7 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Attaches a Match to a Swiss Fixture while Running (GenerateNextRound). LegIndex 1 for V1.
+    /// Attaches a Match to a Swiss Fixture while Running (GenerateNextRound). LegIndex 1 only.
     /// </summary>
     /// <param name="fixtureId">Fixture identity.</param>
     /// <param name="matchId">Match identity.</param>
@@ -1388,7 +1388,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ClearBracketPairs() => ReplaceBracketPairs([]);
 
     /// <summary>
-    /// Seeds V1 mono-round entry pairs from current slots in structural order.
+    /// Seeds mono-round entry pairs from current slots in structural order.
     /// </summary>
     public void SeedEntryRoundBracketPairs() =>
         ReplaceBracketPairs(BracketPair.CreateEntryRoundPairs([.. _slots.Select(s => s.SlotKey)]));
@@ -2295,8 +2295,8 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.NotReady);
         }
 
-        // Elimination (Phase 5.5): ≥1 Round is enough; fixtures optional for Prepare.
-        // Championship: Matchdays only. Poules: Groups + Matchdays + ≥1 entry.
+        // Elimination: ≥1 Round is enough; fixtures optional for Prepare.
+        // Championship: Matchdays only. Groups format: Groups + Matchdays + ≥1 entry.
         // Swiss: SwissSettings is enough — Matchdays are created by GenerateNextRound.
         if (_rounds.Count == 0 && _groups.Count > 0)
         {
@@ -2705,7 +2705,7 @@ public sealed class Stage : AggregateRoot<StageId>
         string sourcePairKey,
         string errorCode = RulesErrorCodes.ProgressionRulesInvalid)
     {
-        // Cup V1: structural identity is BracketPair.PairKey only (not FixtureId).
+        // Cup: structural identity is BracketPair.PairKey only (not FixtureId).
         if (FindBracketPair(sourcePairKey) is not null)
         {
             return;
@@ -2751,7 +2751,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Resolves the round that owns a path source PairKey (fixture bound to BracketPairKey,
-    /// or sole round when only a structural BracketPair exists — Cup V1 mono-round).
+    /// or sole round when only a structural BracketPair exists — Cup mono-round).
     /// </summary>
     private Round? FindRoundForProgressionSource(string sourcePairKey)
     {

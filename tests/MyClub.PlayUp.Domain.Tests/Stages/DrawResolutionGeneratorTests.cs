@@ -133,7 +133,7 @@ public sealed class DrawResolutionGeneratorTests
         var entries = NewEntries(16);
         var groups = NewGroups(4);
 
-        // Capacity would be 4; NumberOfPots 5 is structurally invalid for V1.
+        // Capacity would be 4; NumberOfPots 5 is structurally invalid.
         var pots = new Dictionary<EntryId, int>();
         for (var i = 0; i < entries.Length; i++)
         {

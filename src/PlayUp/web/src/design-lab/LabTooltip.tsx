@@ -5,8 +5,7 @@ import { PencilIcon } from '../design-system/icons/contentIcons';
 
 /**
  * Design Lab — Tooltip specimens (Hint + DisabledReason + Label).
- * Contract: Notion task DS Tooltip V1.
- * Surface vs ink mock: documents why surface won; ink is exploration only.
+ * Product tooltips use the surface (Overlay) treatment; the ink mock is comparison-only.
  */
 export function LabTooltip() {
   return (
@@ -88,9 +87,9 @@ export function LabTooltip() {
       >
         <h2 className="dlab-form__panel-title">Surface vs ink</h2>
         <p className="dlab-form__hint">
-          Exploration figée — bascule Light/Dark via Préférences pour juger les
-          deux thèmes. <strong>V1 = surface</strong> (famille Overlay). ink /
-          on-ink = non retenu (contraste tip OS, rupture avec Popover).
+          Lab comparison — toggle Light/Dark in Preferences to judge both
+          themes. <strong>Product treatment: surface</strong> (Overlay family).
+          ink / on-ink is comparison-only (OS-tip contrast, breaks from Popover).
         </p>
         <div className="dlab-tooltip-compare">
           <figure className="dlab-tooltip-compare__item">
@@ -101,7 +100,7 @@ export function LabTooltip() {
               Victoire — 3 points
             </div>
             <figcaption>
-              <strong>V1 — surface</strong> (retenu) · border · ombre courte
+              <strong>surface</strong> (product) · border · short shadow
             </figcaption>
           </figure>
           <figure className="dlab-tooltip-compare__item">
@@ -112,7 +111,7 @@ export function LabTooltip() {
               Victoire — 3 points
             </div>
             <figcaption>
-              <strong>Exploration — ink</strong> (non retenu) · tip OS-like
+              <strong>ink</strong> (comparison-only) · OS-like tip
             </figcaption>
           </figure>
         </div>

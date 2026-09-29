@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
-/// Regulation-time duration of a match (fixed periods; no dynamic period collection in V1).
+/// Regulation-time duration of a match (fixed periods; no dynamic period collection).
 /// Durations are expressed in whole minutes.
 /// </summary>
 public sealed record MatchDuration

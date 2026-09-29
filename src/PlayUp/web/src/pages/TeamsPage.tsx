@@ -94,7 +94,7 @@ async function invalidateAfterTeamsMutation(
 }
 
 /**
- * Équipes — grille de tuiles + tiroir d’effectif.
+ * Teams — tile grid + roster drawer.
  * Read: GET …/structure. Mutations: Add/Rename/Presentation/Delete/Withdraw.
  */
 export function TeamsPage() {

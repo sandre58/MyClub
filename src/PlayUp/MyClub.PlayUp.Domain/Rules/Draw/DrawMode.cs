@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 public enum DrawMode
 {
     /// <summary>
-    /// V1 automated attempt may use randomness (subject to constraints).
+    /// Automated attempt may use randomness (subject to constraints).
     /// Does not imply that every Draw resolution comes from a random generator —
     /// recorded or assisted resolutions remain valid.
     /// </summary>

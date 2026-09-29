@@ -7,7 +7,7 @@
 namespace MyClub.Media.Domain;
 
 /// <summary>
-/// Provisional allowlist of Media content types (v1 product policy — not a formal Décision yet).
+/// Allowlist of Media content types accepted by the current product policy.
 /// </summary>
 public static class MediaContentTypes
 {
@@ -27,7 +27,7 @@ public static class MediaContentTypes
     public const string Webp = "image/webp";
 
     /// <summary>
-    /// Gets the allowed content types for Media v1.
+    /// Gets the allowed content types.
     /// </summary>
     public static IReadOnlySet<string> Allowed { get; } =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Png, Jpeg, Webp };

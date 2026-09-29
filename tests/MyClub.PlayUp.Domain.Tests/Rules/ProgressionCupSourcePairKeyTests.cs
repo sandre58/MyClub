@@ -15,7 +15,7 @@ using Xunit;
 namespace MyClub.PlayUp.Domain.Tests.Rules;
 
 /// <summary>
-/// Cup V1 SourcePairKey — Save on pairs before fixtures (RC-PRE1).
+/// Cup SourcePairKey — Save on pairs before fixtures (RC-PRE1).
 /// </summary>
 public sealed class ProgressionCupSourcePairKeyTests
 {

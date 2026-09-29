@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Development.Templates;
 /// Inspired Groups capacity demo (8×4, 32 clubs) — approximates a classic CL group stage, not today's UEFA League Phase.
 /// </summary>
 /// <remarks>
-/// Lot 3: Groups-only on purpose. Do not wire Swiss (≠ League Phase). Knockout / League Phase = future or other seeds.
+/// Groups-only on purpose. Do not wire Swiss (≠ League Phase). Knockout / League Phase = other seeds.
 /// </remarks>
 public sealed class ChampionsLeagueTemplate : ICompetitionTemplate
 {

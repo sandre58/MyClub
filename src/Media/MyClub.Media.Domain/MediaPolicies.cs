@@ -7,7 +7,7 @@
 namespace MyClub.Media.Domain;
 
 /// <summary>
-/// Provisional Media size and naming policies (v1 — subject to future product arbitration).
+/// Media size and naming policies for the current product allowlist.
 /// </summary>
 public static class MediaPolicies
 {

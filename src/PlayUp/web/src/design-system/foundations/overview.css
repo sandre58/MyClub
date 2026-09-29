@@ -1,6 +1,6 @@
 /*
- * Overview — Vue d'ensemble grammar (Lot 4, Design Lab SoT).
- * State → hero number → next action → À traiter.
+ * Overview — overview page grammar.
+ * State → hero number → next action → attention.
  */
 
 .ds-overview-hero {
@@ -90,7 +90,7 @@
   color: var(--color-text-secondary);
 }
 
-/* À traiter — groupe hors panneau (D9 : chiffre + icône + label + couleur). */
+/* Needs attention — group outside panel (count + icon + label + color). */
 .ds-overview-attention {
   display: flex;
   flex-direction: column;
@@ -156,7 +156,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Classement / équipes compact (overview) */
+/* Standing / teams compact (overview) */
 .ds-overview-mini-table {
   width: 100%;
   border-collapse: collapse;
@@ -182,7 +182,7 @@
   font-size: var(--text-body);
 }
 
-/* Podium (Terminée) */
+/* Podium (Completed) */
 .ds-overview-podium {
   display: flex;
   align-items: flex-end;

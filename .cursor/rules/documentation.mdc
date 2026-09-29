@@ -8,8 +8,26 @@ alwaysApply: true
 ## SoT
 - Notion: product, domain, UX, durable decisions summary on reference pages.
 - Git: code, HTTP contract, local persistence, active i18n conventions.
-- Both: Notion = intent; Git = operational detail; cross-link required.
+- Both: Notion = intent; Git = operational detail; cross-link required **between Notion pages and Git docs/README** — not inside source-code comments.
 - One normative truth = one SoT elsewhere = link only.
+
+## Source code vs Notion
+
+**Source code documents the current implementation.  
+Notion documents project decisions, rationale, alternatives, and historical context.**
+
+Do not duplicate decision rationale in source comments. Do not reference Notion pages, Décisions, explorations, reviews, or meeting notes from comments.
+
+### Code comments (all languages)
+
+- Write comments in clear professional **English**.
+- Explain non-obvious behaviour or genuine technical constraints (ordering, provider limits, concurrency, wire dual-read, algorithmic invariants, …).
+- Prefer expressive naming and structure over comments; do not refactor solely to remove a comment.
+- Do **not** document project history, discarded alternatives, V1/V2/MVP framing, architecture/product decision provenance, or “as decided in …”.
+- Do **not** add obvious comments that restate the next line of code.
+- Remove or rewrite stale comments that contradict current code.
+- Keep useful current technical constraints; rewrite them without historical framing.
+- Prefer no comment over an invented explanation.
 
 ## Reference pages
 - Describe current truth + active constraints. No phase numbers in titles.

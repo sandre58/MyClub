@@ -122,7 +122,7 @@ export function sortConstructionSlots(view: OverviewView): ConstructionSlot[] {
     .map((entry) => entry.slot);
 }
 
-/** Primary overview actions for teams — admin mutations stay on Équipes. */
+/** Primary overview actions for teams — admin mutations stay on Teams. */
 export function primaryTeamActions(
   actions: OverviewAction[],
 ): OverviewAction[] {
@@ -178,7 +178,7 @@ export function stageWideOperationalActions(
   );
 }
 
-/** Prefer Blocking situations first for pilotage order (stable within nature). */
+/** Prefer Blocking situations first for operational order (stable within nature). */
 export function orderSituationsForDisplay(
   situations: OverviewSituation[],
 ): OverviewSituation[] {

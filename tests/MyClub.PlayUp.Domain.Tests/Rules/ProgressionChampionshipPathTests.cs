@@ -188,7 +188,7 @@ public sealed class ProgressionChampionshipPathTests
             }
         }
 
-        // Cup V1 Expand identity = BracketPairs (PairKey), independent of fixture binding.
+        // Cup Expand identity = BracketPairs (PairKey), independent of fixture binding.
         var pairCount = expandPairCount ?? fixtureCountsPerRound.Sum();
         if (pairCount > 0)
         {

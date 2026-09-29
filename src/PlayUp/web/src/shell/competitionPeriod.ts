@@ -23,7 +23,7 @@ export function formatCompetitionPeriod(
 }
 
 /**
- * Declared schedule (ScheduledStart / ScheduledEnd) for Accueil rows.
+ * Declared schedule (ScheduledStart / ScheduledEnd) for Home rows.
  * Distinct from Overview operational min/max kickoff.
  */
 export type DeclaredSchedule =

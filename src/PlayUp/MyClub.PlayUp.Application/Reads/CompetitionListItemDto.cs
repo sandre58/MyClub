@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// One row in the organizer Competition List (Slice 1).
+/// One row in the organizer Competition List.
 /// </summary>
 /// <param name="Id">Competition identity.</param>
 /// <param name="Name">Display name.</param>

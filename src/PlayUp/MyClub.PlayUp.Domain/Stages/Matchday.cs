@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// A matchday (journée) within a stage, holding fixtures for championship or poule calendars.
+/// A matchday within a stage, holding fixtures for championship or group calendars.
 /// </summary>
 [DebuggerDisplay("Matchday {Number}")]
 public sealed class Matchday : Entity<MatchdayId>

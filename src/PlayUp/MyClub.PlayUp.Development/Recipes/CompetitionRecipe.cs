@@ -16,7 +16,7 @@ public sealed record CompetitionRecipe
     /// <summary>Gets the competition display name.</summary>
     public required string DisplayName { get; init; }
 
-    /// <summary>Gets the V1 structure format.</summary>
+    /// <summary>Gets the structure format.</summary>
     public required RecipeFormat Format { get; init; }
 
     /// <summary>Gets the planned team count.</summary>

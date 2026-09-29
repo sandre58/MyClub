@@ -103,7 +103,7 @@ public sealed class Match : AggregateRoot<MatchId>
     public IReadOnlyList<RecordedSubstitution> RecordedSubstitutions => _recordedSubstitutions.AsReadOnly();
 
     /// <summary>
-    /// Gets the disciplinary facts recorded on this match (no Domain consequences in V1).
+    /// Gets the disciplinary facts recorded on this match (no Domain consequences).
     /// </summary>
     public IReadOnlyList<RecordedDisciplinaryEvent> RecordedDisciplinaryEvents =>
         _recordedDisciplinaryEvents.AsReadOnly();

@@ -20,7 +20,7 @@ namespace MyClub.PlayUp.Application.Reads;
 public static class StructureViewAssembler
 {
     /// <summary>
-    /// Display-name order for entries and declared members (Équipes SoT: nom affiché).
+    /// Display-name order for entries and declared members (Teams: display name).
     /// </summary>
     private static readonly StringComparer DisplayNameComparer =
         StringComparer.Create(CultureInfo.CurrentCulture, ignoreCase: true);
@@ -37,7 +37,7 @@ public static class StructureViewAssembler
     /// <summary>Blocker: Groups format without PotRules.</summary>
     public const string BlockerMissingPotRules = "MissingPotRules";
 
-    /// <summary>Blocker: Cup slots not a power of two (V1).</summary>
+    /// <summary>Blocker: Cup slots not a power of two.</summary>
     public const string BlockerCupBracketInvalid = "CupBracketInvalid";
 
     /// <summary>Blocker: Qualif/Prog graph has dangling destinations (Draft persistable; Ready/Prepare blocked).</summary>
@@ -67,7 +67,7 @@ public static class StructureViewAssembler
     /// <summary>Per-phase action: add slot (locale).</summary>
     public const string ActionAddSlot = "AddSlot";
 
-    /// <summary>Per-phase action: assign entry to Cup slot (Placement manuel).</summary>
+    /// <summary>Per-phase action: assign entry to Cup slot (manual placement).</summary>
     public const string ActionAssignEntryToSlot = "AssignEntryToSlot";
 
     /// <summary>Per-phase action: clear Cup DirectAssignment.</summary>
@@ -354,7 +354,7 @@ public static class StructureViewAssembler
     }
 
     /// <summary>
-    /// Topology signal only: DrawRules engaged → four execution states (not pots / « configuré »).
+    /// Topology signal only: DrawRules engaged → four execution states (not pots / "configured").
     /// </summary>
     private static StructureDrawExecutionBadge? ResolveDrawExecutionBadge(
         Stage stage,
@@ -485,7 +485,7 @@ public static class StructureViewAssembler
 
     /// <summary>
     /// Groups Places N = groupCount × <see cref="Stage.PlacesPerGroup"/> (form fact).
-    /// Draw <c>NumberOfPots</c> is never used here — pots are tirage-only.
+    /// Draw <c>NumberOfPots</c> is never used here — pots are draw-only.
     /// </summary>
     private static int? ResolveGroupsPlaces(Stage stage)
     {
@@ -739,7 +739,7 @@ public static class StructureViewAssembler
             ActionRenameStage, ActionReplaceMatchRules, ActionBindToCompetition
         };
 
-        // V1 exit capacity: classifying → Qualification ; Cup/KO non-classifying → Progression.
+        // Exit capacity: classifying → Qualification ; Cup/KO non-classifying → Progression.
         // Attribution (PlacementAwardRules) = KO/Cup only — Championship/Groups use Standing.
         // Domain still allows both Qual/Prog on StageRegulation; UI/actions filter by topology.
         if (StageClassification.IsClassifyingPhase(stage))
@@ -764,8 +764,8 @@ public static class StructureViewAssembler
             actions.Add(ActionReplaceDrawRules);
         }
 
-        // B2 — Affectation may co-exist with inbound Qualif/Prog on the same phase
-        // (V2 I7 / scenario B2). Domain ReplaceAffectationAuthoring is not root-gated.
+        // Affectation may co-exist with inbound Qualif/Prog on the same phase
+        // (scenario B2). Domain ReplaceAffectationAuthoring is not root-gated.
         actions.Add(ActionReplaceAffectationAuthoring);
 
         if (StageNeedsTieFormatAction(stage))

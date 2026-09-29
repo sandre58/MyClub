@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { DrawPendingIcon } from '../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
 
-/** Ghost = Activer (subdued). Emphasis = Lancer/Ouvrir (outlined). Never brand primary. */
+/** Ghost = Activate (subdued). Emphasis = Launch/Open (outlined). Never brand primary. */
 export type StructureDrawCtaTone = 'ghost' | 'emphasis';
 
 /** Ratio color = pool resolution only — never Draw readiness. */
@@ -18,8 +18,8 @@ export function resolveDrawCtaPoolTone(
 }
 
 /**
- * Fiche Tirage CTA — geste + contexte minimal.
- * Chevron aligné sur toute la carte ; titre aligné au leading.
+ * Draw stage-card CTA — gesture + minimal context.
+ * Chevron aligned across the whole card; title aligned to the leading.
  */
 export function StructureDrawCta({
   title,
@@ -64,8 +64,8 @@ export function StructureDrawCta({
 }
 
 /**
- * Lancer/Ouvrir — gros ratio coloré (neutre / attention / success).
- * Légende toujours secondary. Couleur ≠ readiness Draw. Pas de mode sur la CTA.
+ * Launch/Open — large coloured ratio (neutral / attention / success).
+ * Caption always secondary. Colour ≠ Draw readiness. No mode on the CTA.
  */
 export function DrawCtaActionBody({
   filled,
@@ -75,7 +75,7 @@ export function DrawCtaActionBody({
 }: {
   filled: number;
   capacity: number;
-  /** e.g. « équipes résolues » */
+  /** e.g. "teams resolved" */
   teamsCaption: string;
   poolTone?: DrawCtaPoolTone;
 }) {

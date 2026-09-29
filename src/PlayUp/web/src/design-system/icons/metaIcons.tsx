@@ -4,12 +4,12 @@ import { LucideIcon, type IconSize } from './Icon';
 
 type MetaIconProps = SVGProps<SVGSVGElement> & { size?: IconSize };
 
-/** Horloge — méta horaire (Match Hero, calendrier). */
+/** Clock — time meta (Match Hero, calendar). */
 export function ClockIcon({ size, ...props }: MetaIconProps) {
   return <LucideIcon icon={Clock3} size={size} {...props} />;
 }
 
-/** Lieu — stade / terrain. */
+/** Place — stadium / pitch. */
 export function PinIcon({ size, ...props }: MetaIconProps) {
   return <LucideIcon icon={MapPin} size={size} {...props} />;
 }

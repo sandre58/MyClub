@@ -24,7 +24,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Connections">Cup bracket wires only; empty for other formats.</param>
 /// <param name="SwissRoundCount">Planned Swiss rounds (structural K) when Kind is Swiss.</param>
 /// <param name="CupRoundCount">Cup rounds in this phase when Kind is Cup.</param>
-/// <param name="GroupFeeds">Optional Groups A1 summary (compat); Structure SPA paints ForGroup WhoFeeds on empty seats in <see cref="Cases"/>.</param>
+/// <param name="GroupFeeds">Optional Groups feed summary (compat); Structure SPA paints ForGroup WhoFeeds on empty seats in <see cref="Cases"/>.</param>
 /// <param name="ExpectedFormParticipants">
 /// Championship/Swiss expected form bag: Composition occupants + pending ForForm intentions.
 /// Projected into <see cref="Cases"/> (N cells, non-addressing order).
@@ -59,7 +59,7 @@ public sealed record ExpectedResolvedFormParticipantDto(
     SchematicParticipantRefDto? Assignment);
 
 /// <summary>
-/// Groups A1 — feed origin at Groupe grain (never bound to Place k / GroupPlace index).
+/// Groups — feed origin at Groupe grain (never bound to Place k / GroupPlace index).
 /// </summary>
 /// <param name="GroupId">Destination group identity.</param>
 /// <param name="FeedOrigin">Configured inbound Qual/Prog feed when Unique-like.</param>
@@ -125,7 +125,7 @@ public sealed record SchematicFormPositionDto(
 /// <param name="DrawId">Draw feed target id when Kind is Draw.</param>
 /// <param name="ConfiguredEntryId">Direct assignment configured entry.</param>
 /// <param name="SlotKey">Destination slot key of this feed (Cup).</param>
-/// <param name="DestinationGroupId">Destination group when this feed targets Groups Placement (A1).</param>
+/// <param name="DestinationGroupId">Destination group when this feed targets Groups Placement.</param>
 public sealed record SchematicFeedOriginDto(
     FeedKind Kind,
     Guid? SourceStageId = null,

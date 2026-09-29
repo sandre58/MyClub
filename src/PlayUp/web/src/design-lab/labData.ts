@@ -1,8 +1,8 @@
 /*
- * Design Lab — données fictives.
+ * Design Lab — fictional data.
  *
- * Tout est statique et local : le lab est une référence visuelle,
- * pas une surface produit. Aucun appel API.
+ * Everything is static and local: the lab is a visual reference,
+ * not a product surface. No API calls.
  */
 
 export type LabLifecycle = 'preparation' | 'live' | 'done';
@@ -218,7 +218,7 @@ export type LabStandingRow = {
   zone?: 'promotion' | 'relegation';
 };
 
-/* Cohérent avec labRounds : matchs joués uniquement (J2 SAB–VER non saisi, J3 ROC–VER en cours). */
+/* Consistent with labRounds: only played matches (J2 SAB–VER not entered, J3 ROC–VER in progress). */
 export const labStandings: LabStandingRow[] = [
   {
     rank: 1,

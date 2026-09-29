@@ -128,7 +128,7 @@ function resolveRoundIdForPairOrFixture(
   rounds: ProgRoundOption[],
   _sourcePairKey: string,
 ): { roundId: string; roundName: string } | null {
-  // Cup V1 mono-round: all pairs belong to the structural form / first round.
+  // Cup mono-round: all pairs belong to the structural form / first round.
   // SourcePairKey is BracketPair.PairKey — never FixtureId.
   if (rounds.length === 1) {
     return { roundId: rounds[0]!.id, roundName: rounds[0]!.name };
@@ -184,7 +184,7 @@ export function StructureProgressionDialog({
     queryFn: () => fetchStageSchematic(stage.stageId),
     enabled: open,
   });
-  /** Inter-Stage aval only — self / amont excluded (Sorties ownership). */
+  /** Inter-Stage downstream only — self / upstream excluded (Sorties ownership). */
   const peerStages = useMemo(
     () => sortiesAvalPeerStages(data.stages, stage.stageId),
     [data.stages, stage.stageId],

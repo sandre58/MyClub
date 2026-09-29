@@ -18,8 +18,8 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
 /// <summary>
-/// Lot F reference scenarios — PlacementAwardRules → ResolvePlacementAwards → CompetitionOutcome.
-/// Proves amateur placement / consolante shapes without Host or SPA.
+/// Placement-award reference scenarios — PlacementAwardRules → ResolvePlacementAwards → CompetitionOutcome.
+/// Proves amateur placement / consolation shapes without Host or SPA.
 /// Groups → slots (qualification/progression) are out of scope here; awards are the seam under test.
 /// </summary>
 public sealed class CompetitionOutcomePlacementScenariosTests
@@ -75,7 +75,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
     }
 
     /// <summary>
-    /// F2 — Cup 16 + consolantes: eight terminal fixtures award ranks 1–16 via explicit PlacementAwardPath,
+    /// F2 — Cup 16 + consolation: eight terminal fixtures award ranks 1–16 via explicit PlacementAwardPath,
     /// never via SlotKey heuristics (Consolante3 ≠ rank).
     /// </summary>
     [Fact]

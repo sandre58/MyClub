@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { PanelHead } from './PanelHead';
 
 /**
- * Prochaine action — title/why + primary CTA.
+ * Next action — title/why + primary CTA.
  * Lab: `eyebrow` inside body. Product: `heading` via PanelHead (tests).
  */
 export function OverviewNextAction({

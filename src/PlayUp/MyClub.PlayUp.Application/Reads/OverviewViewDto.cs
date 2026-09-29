@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Aggregated Overview Read projection (Phase 16.1) — Application interpretation, not Domain.
+/// Aggregated Overview Read projection — Application interpretation, not Domain.
 /// </summary>
 /// <remarks>
 /// One projection among several Read Surfaces (R22). Does not replace workspace / structure / attention endpoints.
@@ -22,23 +22,23 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Status">Official Domain lifecycle status (distinct from situations).</param>
 /// <param name="CompletionMode">Completion mode when Completed/Archived.</param>
 /// <param name="Period">Operational calendar span from match placements (null when none scheduled).</param>
-/// <param name="CycleReading">Minimal cycle interpretation for pilotage (machine codes only).</param>
+/// <param name="CycleReading">Minimal cycle interpretation for operational reading (machine codes only).</param>
 /// <param name="PreparationFocus">
-/// Préparation sub-situation (Host-owned): Setup | GeneratedCalendar.
+/// Preparation sub-situation (Host-owned): Setup | GeneratedCalendar.
 /// Not a cycle code — Draft/Ready stay Construction. SPA composes Prep variants from this field only.
 /// </param>
 /// <param name="CalendarSummary">
 /// Overview calendar synthesis when <paramref name="PreparationFocus"/> is GeneratedCalendar; otherwise null.
 /// </param>
 /// <param name="CompetitionOutcome">
-/// Derived final placements when Terminée can conclude them for the Résultat surface.
+/// Derived final placements when Completed can conclude them for the Result surface.
 /// Sources: PlacementAwardRules + FixtureOutcome, else Championship/Swiss Overall Standing.
 /// Includes Host <c>presentation</c> (<c>Winner</c> | <c>Podium</c>) — Read UX hint, not Domain.
 /// Null when Abandoned / no presentable Result (no unique winner and not a podium case).
 /// </param>
-/// <param name="ConstructionDimensions">Équipes · Structure · Règlement · Matchs.</param>
+/// <param name="ConstructionDimensions">Teams · Structure · Regulation · Matches.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, temporal sport units, compact standing.</param>
-/// <param name="Situations">Derived pilotage situations (not persisted alerts).</param>
+/// <param name="Situations">Derived operational situations (not persisted alerts).</param>
 /// <param name="AttentionSummary">Attention subset derived from <paramref name="Situations"/>.</param>
 /// <param name="AvailableActions">Semantic actions/transitions available from known state.</param>
 /// <param name="NaturalProgression">
@@ -46,7 +46,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Draft/Ready: null is a valid calm Construction state (no ContinueStructure fallback).
 /// Running/Suspended: null is a valid calm state (no OpenMatches fallback).
 /// Distinct from <paramref name="AvailableActions"/> (full opportunity set).
-/// PrepareCompetition / StartCompetition are never elevated here (lifecycle — L7).
+/// PrepareCompetition / StartCompetition are never elevated here (lifecycle only).
 /// </param>
 /// <param name="ClosureHint">Completion synthesis (distinct from Attention).</param>
 /// <param name="NavigationHints">Navigable targets including resolved match ids.</param>
@@ -78,20 +78,20 @@ public sealed record OverviewViewDto(
 /// May be partial; missing ranks are omitted.
 /// </param>
 /// <param name="Presentation">
-/// <c>Winner</c> — hero vainqueur; <c>Podium</c> — Top-3 mise en scène.
+/// <c>Winner</c> — hero winner; <c>Podium</c> — Top-3 presentation staging.
 /// </param>
 public sealed record CompetitionOutcomeDto(
     IReadOnlyList<FinalPlacementDto> Places,
     string Presentation);
 
 /// <summary>One final placement in a <see cref="CompetitionOutcomeDto"/>.</summary>
-/// <param name="Rank">1-based final rank (Standing Position for Championship V1).</param>
+/// <param name="Rank">1-based final rank (Standing Position for Championship).</param>
 /// <param name="EntryId">Entry identity.</param>
 /// <param name="DisplayName">Entry display name for SPA.</param>
 public sealed record FinalPlacementDto(int Rank, Guid EntryId, string DisplayName);
 
 /// <summary>
-/// Overview calendar synthesis for Préparation / GeneratedCalendar (not Match hub duplication).
+/// Overview calendar synthesis for Preparation / GeneratedCalendar (not Match hub duplication).
 /// </summary>
 /// <param name="MatchdayCount">Number of matchdays on the reference Championship stage.</param>
 /// <param name="MatchCount">Total matches in the competition projection (same as matchCounts.total).</param>
@@ -165,7 +165,7 @@ public sealed record OverviewRegulationDimensionDto(
 /// <param name="StageId">Primary stage identity.</param>
 /// <param name="StageName">Display name.</param>
 /// <param name="HasDrawRules">Whether DrawRules are set.</param>
-/// <param name="NumberOfPots">Draw PotRules only (tirage). Not Groups places / PlacesPerGroup.</param>
+/// <param name="NumberOfPots">Draw PotRules only (draw). Not Groups places / PlacesPerGroup.</param>
 /// <param name="HasQualificationRules">Whether QualificationRules are set.</param>
 /// <param name="QualificationPathCount">Path count when qualification rules exist.</param>
 /// <param name="HasProgressionRules">Whether ProgressionRules are set.</param>
@@ -197,14 +197,14 @@ public sealed record OverviewTransitionReadinessDto(
 /// <param name="MatchCounts">Match status counters.</param>
 /// <param name="SwissByes">Recorded Swiss byes (pairing events — not fixtures/matches).</param>
 /// <param name="RecentUnit">
-/// Dernières rencontres — last engaged sport unit on ReferenceStage (null → SPA empty state).
+/// Recent matches — last engaged sport unit on ReferenceStage (null → SPA empty state).
 /// </param>
 /// <param name="NextUnit">
-/// Prochaines rencontres — next sport unit after RecentUnit, or first unit before kickoff (null → SPA empty state).
+/// Upcoming matches — next sport unit after RecentUnit, or first unit before kickoff (null → SPA empty state).
 /// </param>
-/// <param name="StandingCompact">Compact standing for En cours / Terminée; null when not applicable (Cup / no structure).</param>
+/// <param name="StandingCompact">Compact standing for In-progress / Completed; null when not applicable (Cup / no structure).</param>
 /// <param name="ReferenceStageGameRules">
-/// Game-rule facts for Vue d'ensemble Règlement (ReferenceStage). Null when no ReferenceStage.
+/// Game-rule facts for Overview Regulation (ReferenceStage). Null when no ReferenceStage.
 /// SPA picks 2–3 explanatory facts by formatKind — does not dump all fields.
 /// </param>
 public sealed record OverviewOperationalFocusDto(
@@ -218,7 +218,7 @@ public sealed record OverviewOperationalFocusDto(
     OverviewReferenceStageGameRulesDto? ReferenceStageGameRules);
 
 /// <summary>
-/// Machine facts for En cours Règlement — derived from ReferenceStage Domain regulation.
+/// Machine facts for In-progress Regulation — derived from ReferenceStage Domain regulation.
 /// Organizer copy is SPA i18n; presence flags enable selective display (not a full regulation dump).
 /// </summary>
 /// <param name="StageId">Reference stage identity.</param>
@@ -254,7 +254,7 @@ public sealed record OverviewReferenceStageGameRulesDto(
     int? SwissPlannedRounds);
 
 /// <summary>
-/// One sport unit (Matchday or Round) on the ReferenceStage for Vue d'ensemble temporal panels.
+/// One sport unit (Matchday or Round) on the ReferenceStage for Overview temporal panels.
 /// Full unit — no silent truncation. Organizer unit title copy is SPA i18n from facts.
 /// </summary>
 /// <param name="StageId">Reference stage identity.</param>
@@ -308,7 +308,7 @@ public sealed record OverviewMatchCountsDto(
     int Cancelled,
     int Total);
 
-/// <summary>Match line inside a temporal sport unit (Dernières / Prochaines).</summary>
+/// <summary>Match line inside a temporal sport unit (Recent / Upcoming).</summary>
 /// <param name="MatchId">Match identity.</param>
 /// <param name="StageId">Owning stage.</param>
 /// <param name="Status">Match status (Scheduled, Live, Finished, …).</param>
@@ -325,7 +325,7 @@ public sealed record OverviewMatchLineDto(
     string AwayDisplayName,
     MatchScoreDto? Score);
 
-/// <summary>Compact standing for Vue d'ensemble — derived from ReferenceStage only (Running or Suspended preferred, else last Completed).</summary>
+/// <summary>Compact standing for Overview — derived from ReferenceStage only (Running or Suspended preferred, else last Completed).</summary>
 /// <param name="StageId">Reference stage identity.</param>
 /// <param name="StageName">Reference stage display name.</param>
 /// <param name="Tables">
@@ -348,7 +348,7 @@ public sealed record OverviewStandingCompactTableDto(
     string? GroupName,
     IReadOnlyList<OverviewStandingCompactRowDto> Rows);
 
-/// <summary>One compact standing row — pilotage subset of ConsultationStandingRowDto.</summary>
+/// <summary>One compact standing row — operational subset of ConsultationStandingRowDto.</summary>
 public sealed record OverviewStandingCompactRowDto(
     int Position,
     Guid EntryId,
@@ -360,10 +360,10 @@ public sealed record OverviewStandingCompactRowDto(
 /// <remarks>
 /// Stable identity = <see cref="Source"/> + <see cref="TargetType"/> + <see cref="TargetId"/> (not translated text).
 /// Reason copy = SPA i18n keyed by <see cref="Source"/> (+ <see cref="Params"/>).
-/// AttentionSummary V1 = situations with <see cref="Nature"/> = Blocking only.
+/// AttentionSummary = situations with <see cref="Nature"/> = Blocking only.
 /// </remarks>
 /// <param name="Source">Stable source kind (identity + reason key).</param>
-/// <param name="Nature">Blocking | Informational (V1 — Opportunity / richer natures OPEN).</param>
+/// <param name="Nature">Blocking | Informational (Opportunity / richer natures not projected).</param>
 /// <param name="TargetType">Optional target kind.</param>
 /// <param name="TargetId">Optional target identity.</param>
 /// <param name="MatchId">Resolved match when Fixture target maps to an attachment.</param>
@@ -405,7 +405,7 @@ public sealed record OverviewActionDto(
 /// <summary>Natural progression hint (R18) — guide without prescribing; label via SPA i18n.</summary>
 public sealed record OverviewNaturalProgressionDto(string Code);
 
-/// <summary>Closure synthesis — distinct from Attention (Completion blockers ≠ À traiter).</summary>
+/// <summary>Closure synthesis — distinct from Attention (Completion blockers ≠ Needs attention).</summary>
 public sealed record OverviewClosureHintDto(
     bool CanCompleteNormally,
     IReadOnlyList<string> BlockerCodes);

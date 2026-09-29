@@ -175,9 +175,9 @@ type StructureDrawDialogProps = {
 };
 
 /**
- * Work dialog — exécutions de tirage de la phase (H1).
- * Stats pool (comme Qual/Prog) · tuile Historique dès 1 Draw ·
- * une tuile détail (état + résultat) · Nouveau = seul primary.
+ * Work dialog — stage draw executions.
+ * Pool stats (like Qual/Prog) · History tile once ≥1 Draw ·
+ * one detail tile (status + result) · Nouveau = sole primary.
  */
 export function StructureDrawDialog({
   open,
@@ -212,7 +212,7 @@ export function StructureDrawDialog({
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
-  /** After « Nouveau tirage », prefer this id once it appears in overview. */
+  /** After "Nouveau tirage" (new draw), prefer this id once it appears in overview. */
   const pendingSelectIdRef = useRef<string | null>(null);
 
   useEffect(() => {

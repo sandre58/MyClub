@@ -24,9 +24,9 @@ export function LabToast() {
         <p className="ds-eyebrow">Design System</p>
         <h1 className="dlab-toast__title">Toast</h1>
         <p className="dlab-toast__lede">
-          Feedback d’événement éphémère — bas-droit du canvas. Soft fill ~16 %,
-          sans bordure ; icône tone ; barre 2 px vers la gauche (pause au
-          survol). Slot action réservé, pas en V1.
+          Feedback for short-lived events — bottom-right of the canvas. Soft
+          fill ~16 %, no border; tone icon; 2 px bar on the left (pauses on
+          hover). Action slot reserved, not used yet.
         </p>
       </header>
 

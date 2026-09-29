@@ -8,7 +8,7 @@ namespace MyClub.PlayUp.Host.Contracts;
 
 /// <summary>
 /// HTTP body for replacing a Round TieFormat.
-/// <see cref="Clear"/> true clears the round format (effective OneLeg). Legs must be 1 or 2 (V1).
+/// <see cref="Clear"/> true clears the round format (effective OneLeg). Legs must be 1 or 2.
 /// Two legs imply aggregate scoring; away goals require two legs.
 /// </summary>
 public sealed record ReplaceRoundTieFormatRequest(

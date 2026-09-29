@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Cup bracket structured without Slot draw — Draft, ready for tirage.
+/// Cup bracket structured without Slot draw — Draft, ready for draw.
 /// </summary>
 public sealed class CupDrawPendingScenario : IScenario
 {

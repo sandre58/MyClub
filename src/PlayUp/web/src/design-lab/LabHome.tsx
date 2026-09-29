@@ -8,9 +8,8 @@ import { labCompetitions } from './labData';
 import { LabWaitAtom, type LabWaitKind } from './LabWait';
 
 /**
- * Accueil hors Shell — hub ops avec l'atmosphère décidée le 2026-09-01 :
- * halos brand/info désaturés en haut, retour au canvas en bas.
- * Lockup Accueil (planche 2026-09-02) + lignes interactives hover A.
+ * Home outside Shell — ops hub with desaturated brand/info halos at the top
+ * and return to canvas at the bottom. Home lockup + interactive hover rows.
  */
 export function LabHome({
   empty,

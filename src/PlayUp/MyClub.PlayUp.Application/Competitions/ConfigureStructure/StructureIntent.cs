@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
-/// Application command describing a typed V1 structure configuration.
+/// Application command describing a typed structure configuration.
 /// </summary>
 /// <remarks>
 /// Not a Domain concept. Factories validate format-specific parameters before Domain mutation.
@@ -83,12 +83,12 @@ public sealed class StructureIntent
 
     /// <summary>
     /// Builds a groups intent (empty groups + technical initial matchday + PlacesPerGroup form fact).
-    /// Does not seed DrawRules — tirage remains an optional post-birth mechanism.
+    /// Does not seed DrawRules — draw remains an optional post-birth mechanism.
     /// </summary>
     /// <param name="groupCount">Number of groups (≥ 2).</param>
     /// <param name="participantsPerGroup">
     /// Places per group (≥ 2) — stored as <c>Stage.PlacesPerGroup</c>.
-    /// Does not seed DrawRules / PotRules — tirage remains an optional post-birth mechanism.
+    /// Does not seed DrawRules / PotRules — draw remains an optional post-birth mechanism.
     /// </param>
     /// <param name="stageName">Optional stage name.</param>
     /// <param name="matchGenerationFormat">Single or double round-robin (default single).</param>
@@ -120,7 +120,7 @@ public sealed class StructureIntent
                     swissRoundCount: 0);
 
     /// <summary>
-    /// Builds a cup intent. V1 bounds bracket size to a power of two (no bye matrix).
+    /// Builds a cup intent. Bracket size must be a power of two (no bye matrix).
     /// </summary>
     /// <param name="bracketSize">Slot count; must be a power of two in [2, 64].</param>
     /// <param name="stageName">Optional stage name.</param>

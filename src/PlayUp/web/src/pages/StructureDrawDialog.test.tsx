@@ -831,7 +831,7 @@ describe('StructureDrawDialog', () => {
     // Newest first: #2 (Draft) above #1 (Cancelled)
     expect(tiles[0]).toHaveTextContent('Exécution #2');
     expect(tiles[1]).toHaveTextContent('Exécution #1');
-    // One chip only (Résolu for draft resolved) — not the full matrix
+    // One chip only ("Résolu" for draft resolved) — not the full matrix
     expect(within(tiles[0]).getByText('Résolu')).toBeInTheDocument();
     expect(within(tiles[0]).queryByText('Brouillon')).not.toBeInTheDocument();
     expect(within(tiles[0]).queryByText('Non appliqué')).not.toBeInTheDocument();

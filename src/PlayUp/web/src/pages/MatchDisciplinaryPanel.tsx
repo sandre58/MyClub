@@ -37,8 +37,8 @@ import { CloseIcon } from '../design-system/icons/shellIcons';
 import { canMutateRecordedDisciplinaryEvents } from './matchDisciplinaryHelpers';
 
 /**
- * Nominative discipline panel (Lot 1) — faits ≠ score ≠ présence ≠ conséquences.
- * Types = Structure AllowedTypes ; cible = toute personne sur la feuille.
+ * Nominative discipline panel — facts ≠ score ≠ presence ≠ consequences.
+ * Types = Structure AllowedTypes; target = anyone on the sheet.
  */
 export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');

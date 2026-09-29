@@ -17,7 +17,7 @@ public static class QualificationErrorCodes
     public const string SelectionNotSupported = "Qualification.SelectionNotSupported";
 
     /// <summary>
-    /// Gets the code when a path selects more than one entry (V1: one path → one slot).
+    /// Gets the code when a path selects more than one entry (one path → one slot).
     /// </summary>
     public const string PathMultiEntry = "Qualification.PathMultiEntry";
 

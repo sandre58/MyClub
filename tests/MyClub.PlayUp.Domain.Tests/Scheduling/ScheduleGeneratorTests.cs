@@ -72,7 +72,7 @@ public sealed class ScheduleGeneratorTests
     [Fact]
     public void Validation_horizon_start_greater_than_end_throws_on_vo_outside_result_trichotomy()
     {
-        // A17 métier: H0 > H1 → InvalidRequest. Architecture: Horizon VO rejects construction
+        // A17 domain: H0 > H1 → InvalidRequest. Architecture: Horizon VO rejects construction
         // (DomainException), so Generate never sees an inverted horizon — same pattern as Duration/Granularity.
         var act = () => new Horizon(H0.AddHours(1), H0);
 

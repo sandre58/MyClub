@@ -16,7 +16,7 @@ export const DEFAULT_RANKING_CRITERIA: RankingCriterion[] = [
   'HeadToHead',
 ];
 
-/** Points always first — T3 arbitration. */
+/** Points always first. */
 export function normalizeCriteria(
   criteria: RankingCriterion[] | null | undefined,
 ): RankingCriterion[] {

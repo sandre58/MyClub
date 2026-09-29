@@ -15,12 +15,12 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// <c>max(round list order)</c> (Finale + Match 3ᵉ must not confuse that).
 /// </summary>
 /// <remarks>
-/// Cup V1 / mono-round scope: a single round is always the championship-path terminal
-/// without requiring fixtures. Multi-round Coupe (halving fixture counts, bronze match, …)
-/// is out of V1 scope — <see cref="TerminalRound"/> may return null when several rounds
-/// exist without fixtures; do not treat that as a Cup V1 regression.
+/// Mono-round scope: a single round is always the championship-path terminal
+/// without requiring fixtures. Multi-round cup (halving fixture counts, bronze match, …)
+/// without fixtures: <see cref="TerminalRound"/> may return null when several rounds
+/// exist; that is expected until fixtures are present.
 /// Multi-round interim (when fixtures exist): longest classic KO prefix among rounds that
-/// have fixtures (halving counts). Remaining rounds (e.g. 3ᵉ place after Finale) excluded.
+/// have fixtures (halving counts). Remaining rounds (e.g. 3rd place after Final) excluded.
 /// </remarks>
 public static class ProgressionChampionshipPath
 {
@@ -38,12 +38,12 @@ public static class ProgressionChampionshipPath
             case 0:
                 return null;
 
-            // Structural mono-round (Cup V1) — no fixtures required.
+            // Structural mono-round — no fixtures required.
             case 1:
                 return rounds[0];
         }
 
-        // Multi-round: V1 does not claim structural terminal without fixtures.
+        // Multi-round: no structural terminal without fixtures.
         var withFixtures = rounds.Where(static r => r.Fixtures.Count > 0).ToList();
         switch (withFixtures.Count)
         {

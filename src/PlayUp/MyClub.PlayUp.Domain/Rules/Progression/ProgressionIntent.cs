@@ -10,7 +10,7 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Persisted authoring unit: one round × outcome intention that expands to N <see cref="ProgressionPath"/>.
-/// Paths are derived (Expand) — Intent is the authoring source of truth (Qual/Prog V3).
+/// Paths are derived (Expand) — Intent is the authoring source of truth.
 /// Destination is Population, Form (Championship/Swiss), Cup Place (slots), or Groups Place (group ids).
 /// </summary>
 /// <remarks>
@@ -110,7 +110,7 @@ public sealed record ProgressionIntent
     /// <summary>Gets a value indicating whether this intent targets Cup slots.</summary>
     public bool TargetsSlot => DestinationSlotKeys.Count > 0;
 
-    /// <summary>Gets a value indicating whether this intent targets Groups poules.</summary>
+    /// <summary>Gets a value indicating whether this intent targets Groups pools.</summary>
     public bool TargetsGroup => DestinationGroupIds.Count > 0;
 
     /// <summary>Returns a deep copy.</summary>

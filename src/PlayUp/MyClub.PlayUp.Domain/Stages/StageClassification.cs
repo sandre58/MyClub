@@ -40,7 +40,7 @@ public static class StageClassification
     }
 
     /// <summary>
-    /// Returns whether the stage topology is non-classifying knockout (Cup V1: rounds, not Swiss).
+    /// Returns whether the stage topology is non-classifying knockout (Cup: rounds, not Swiss).
     /// </summary>
     /// <param name="stage">The stage.</param>
     /// <returns><see langword="true"/> when standing rules must be absent.</returns>

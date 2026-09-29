@@ -28,7 +28,7 @@
   display: inline-flex;
 }
 
-/* Skip to main — shared Accueil + Shell; inverse on chrome. */
+/* Skip to main — shared Home + Shell; inverse on chrome. */
 .ds-skip-link {
   position: absolute;
   inset-inline-start: var(--space-16);

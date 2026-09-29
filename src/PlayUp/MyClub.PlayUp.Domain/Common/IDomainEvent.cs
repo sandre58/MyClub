@@ -7,10 +7,10 @@
 namespace MyClub.PlayUp.Domain.Common;
 
 /// <summary>
-/// Marker for a domain event raised by an aggregate root (V1: observation side-channel, not a dispatch message).
+/// Marker for a domain event raised by an aggregate root (observation side-channel, not a dispatch message).
 /// </summary>
 /// <remarks>
-/// Play'Up V1 does not process these events in Application/Host. See Décision D-06.
+/// Application and Host do not process these events.
 /// </remarks>
 public interface IDomainEvent
 {

@@ -393,7 +393,7 @@ describe('StructurePage Structure hub', () => {
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
     expect(screen.getAllByText('Général').length).toBeGreaterThanOrEqual(1);
-    // S5: no Slots|Équipes toggle — the schematic is a single populated view.
+    // S5: no Slots|Teams toggle — the schematic is a single populated view.
     expect(
       screen.queryByRole('group', { name: /Affichage de la silhouette/i }),
     ).not.toBeInTheDocument();

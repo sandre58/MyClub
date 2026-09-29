@@ -30,7 +30,7 @@ export type InputNumberProps = Omit<
   controls?: boolean;
   /**
    * `end` — Ant-like vertical chevrons (default).
-   * `split` — horizontal − value + (édition dense / mockup règlement).
+   * `split` — horizontal − value + (dense edit / regulation mockup).
    */
   controlsLayout?: InputNumberControlsLayout;
   leadingIcon?: ReactNode;

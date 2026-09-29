@@ -15,7 +15,7 @@ using Xunit;
 namespace MyClub.PlayUp.Domain.Tests.Matches;
 
 /// <summary>
-/// Reference cases 1–13 (FROZEN). Cases 2 and 4 are Application AllowedTypes gates —
+/// Disciplinary reference cases 1–13. Cases 2 and 4 are Application AllowedTypes gates —
 /// covered at <see cref="DisciplinaryRules"/> level here.
 /// </summary>
 public sealed class MatchRecordedDisciplinaryEventsTests

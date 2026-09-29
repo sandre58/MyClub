@@ -43,7 +43,7 @@ export function canCancelDrawExecution(input: {
 }
 
 /**
- * Decision D — release CTA: Cancelled Slot draw still aligning with stage occupancy,
+ * Release CTA: Cancelled Slot draw still aligning with stage occupancy,
  * under the same competition × stage gates as Cancel.
  */
 export function canReleaseDrawAlignedPlacements(input: {

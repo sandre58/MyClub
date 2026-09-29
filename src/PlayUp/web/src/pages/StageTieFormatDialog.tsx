@@ -32,7 +32,7 @@ import './regulation.css';
 
 type TieFormState = {
   numberOfLegs: 1 | 2;
-  /** Domain V1: forced true when two legs, false when one. */
+  /** Domain: forced true when two legs, false when one. */
   aggregateScoring: boolean;
   hasAwayGoalsRule: boolean;
   hasExtraTimeRule: boolean;

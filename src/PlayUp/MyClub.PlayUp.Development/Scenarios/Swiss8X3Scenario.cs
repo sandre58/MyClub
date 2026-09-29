@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Lot 2 reference case 1: Swiss classique, 8 teams × 3 rounds (progressive GenerateNextRound).
+/// Swiss classique, 8 teams × 3 rounds (progressive GenerateNextRound).
 /// </summary>
 public sealed class Swiss8X3Scenario : IScenario
 {

@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------
-// Attribution des places — confrontation-centric authoring drafts.
+// Placement awards — confrontation-centric authoring drafts.
 // UI: 1 card = structural source (PairKey / interim fixture) + winnerRank? + loserRank?
-// → Domain: 0..2 paths. Cup V1: BracketPairs before fixtures.
+// → Domain: 0..2 paths. Cup: BracketPairs before fixtures.
 // -----------------------------------------------------------------------
 
 import type {
@@ -71,7 +71,7 @@ export function parseOptionalRank(raw: string): number | null | 'invalid' {
 }
 
 /**
- * Authoring catalogue: BracketPairs (Cup V1 PairKey identity).
+ * Authoring catalogue: BracketPairs (PairKey identity).
  * Empty when the stage has no structural pairs yet.
  */
 export function listPlacementSourceOptions(
@@ -313,7 +313,7 @@ export function summarizeCardWhere(
 
 /**
  * Group attributed cards under round headings (overview order).
- * PairKeys on Cup V1 mono-round → sole round;
+ * PairKeys on Cup mono-round → sole round;
  * unknown sources → orphan section.
  */
 export function groupCardsByRound(
@@ -338,7 +338,7 @@ export function groupCardsByRound(
         });
       });
   } else if (bracketPairs.length > 0) {
-    // Multi-round Cup V1 not modeled: map all pairs to the first round for grouping only.
+    // Multi-round Cup not modeled: map all pairs to the first round for grouping only.
     const round = rounds[0];
     if (round) {
       [...bracketPairs]

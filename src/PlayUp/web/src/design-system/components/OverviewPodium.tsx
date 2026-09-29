@@ -5,7 +5,7 @@ export type OverviewPodiumStep = {
   testId?: string;
 };
 
-/** Visual order: 2 — 1 — 3 (Lab Terminée). */
+/** Visual order: 2 — 1 — 3 (Completed podium). */
 const PODIUM_ORDER = [2, 1, 3] as const;
 
 export function OverviewPodium({

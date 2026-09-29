@@ -43,9 +43,12 @@ Do not duplicate information already maintained elsewhere (Git history, generate
 
 Technology knowledge (React, TypeScript, …) belongs in Notion **Connaissances / Technologies** (and linked Guides), not in Play’Up Domaine, Décisions, or Architecture technique as general learning material.
 
+**Source comments vs Notion:** source code documents the current implementation; Notion captures decisions, rationale, and history. Do not put decision provenance or Notion references in source comments — see `documentation.mdc`.
+
 ## Language
 
 - Public GitHub documentation (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`, contributor-facing `docs/**`) must be written in **English**.
+- Source-code comments must be written in **English** (see `documentation.mdc`).
 - Product vision, architecture narratives, and decisions may live in Notion in French; do not duplicate them as ADR Markdown in Git.
 
 # Dependencies

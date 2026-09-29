@@ -1,6 +1,6 @@
 import type { MatchDetail } from '../types';
 
-/** Domain CanMutateDisciplinaryEventsFreely — Create/Remove/Correct UI V1 (#4-like). */
+/** Domain CanMutateDisciplinaryEventsFreely — Create/Remove/Correct UI gate. */
 export function canMutateRecordedDisciplinaryEvents(
   match: MatchDetail,
 ): boolean {
