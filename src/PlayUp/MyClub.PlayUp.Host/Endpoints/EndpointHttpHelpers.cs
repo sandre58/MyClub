@@ -5,11 +5,9 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application;
-using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 
