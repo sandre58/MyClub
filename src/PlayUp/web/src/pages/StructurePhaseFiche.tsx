@@ -3,7 +3,6 @@ import {
   ArrowLeftRight,
   ArrowRight,
   CircleAlert,
-  EllipsisVertical,
   Goal,
   MapPin,
   Settings,
@@ -16,6 +15,7 @@ import {
   fetchStageOverview,
   fetchStageSchematic,
   releaseDrawAlignedPlacements,
+  renameStage,
   replaceStageDrawRules,
 } from '../api';
 import { Chip } from '../design-system/components/Chip';
@@ -38,6 +38,7 @@ import {
   PersonIcon,
   PlusIcon,
   PencilIcon,
+  CheckIcon,
   RoundsStatIcon,
   StandingRulesIcon,
   StructureIcon,
@@ -46,6 +47,7 @@ import {
   TrashIcon,
   UnlockIcon,
 } from '../design-system/icons/contentIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { TeamCrest } from '../design-system/TeamCrest';
@@ -136,9 +138,25 @@ type EditTarget =
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
+const compactDangerIcon =
+  'ds-btn ds-btn--destructive ds-icon-button ds-icon-button--compact';
 
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
+}
+
+function removePhaseDisabledHint(
+  t: (key: string) => string,
+  data: StructureView,
+  stage: StructureStageHubSummary,
+): string {
+  if (data.stages.length <= 1) {
+    return t('graph.removePhaseDisabledLast');
+  }
+  if (stage.matchCount > 0) {
+    return t('graph.removePhaseDisabledMatches');
+  }
+  return t('graph.removePhaseDisabled');
 }
 
 function FormatGlyph({
@@ -1003,109 +1021,7 @@ function CompositionMeter({
   );
 }
 
-type OverflowItem = {
-  id: string;
-  label: string;
-  onSelect?: () => void;
-  submenu?: OverflowItem[];
-  danger?: boolean;
-  disabled?: boolean;
-};
-
 type ExitKind = 'qualification' | 'progression';
-
-function PhaseOverflowMenu({
-  items,
-  label,
-  backLabel,
-}: {
-  items: OverflowItem[];
-  label: string;
-  backLabel: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [submenuParent, setSubmenuParent] = useState<OverflowItem | null>(null);
-  const anchorRef = useRef<HTMLButtonElement>(null);
-  if (items.length === 0) return null;
-
-  const visible = submenuParent?.submenu ?? items;
-  const menuLabel = submenuParent?.label ?? label;
-
-  return (
-    <>
-      <Tooltip content={label}>
-        <button
-          ref={anchorRef}
-          type="button"
-          className={compactIcon}
-          aria-label={label}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          onClick={() => {
-            setSubmenuParent(null);
-            setOpen((value) => !value);
-          }}
-        >
-          <LucideIcon icon={EllipsisVertical} size="sm" />
-        </button>
-      </Tooltip>
-      <Popover
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (!next) setSubmenuParent(null);
-        }}
-        anchorRef={anchorRef}
-        role="menu"
-        align="end"
-        width={240}
-        aria-label={menuLabel}
-      >
-        <ul className="structure-overflow-menu">
-          {submenuParent ? (
-            <li role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className="structure-overflow-menu__item structure-overflow-menu__item--back"
-                onClick={() => setSubmenuParent(null)}
-              >
-                {backLabel}
-              </button>
-            </li>
-          ) : null}
-          {visible.map((item) => (
-            <li key={item.id} role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className={[
-                  'structure-overflow-menu__item',
-                  item.danger ? 'structure-overflow-menu__item--danger' : null,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                disabled={item.disabled}
-                onClick={() => {
-                  if (item.disabled) return;
-                  if (item.submenu && item.submenu.length > 0) {
-                    setSubmenuParent(item);
-                    return;
-                  }
-                  setOpen(false);
-                  setSubmenuParent(null);
-                  item.onSelect?.();
-                }}
-              >
-                {item.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Popover>
-    </>
-  );
-}
 
 /** Compact pencil → single action, or Qualif | Prog menu when both apply. */
 function ExitKindMenu({
@@ -1443,6 +1359,8 @@ export function StructurePhaseFiche({
   const [rulesEditStage, setRulesEditStage] =
     useState<StructureStageHubSummary | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
   const [deactivateDrawOpen, setDeactivateDrawOpen] = useState(false);
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
@@ -1455,6 +1373,8 @@ export function StructurePhaseFiche({
     setEdit(null);
     setRulesEditStage(null);
     setRemoveOpen(false);
+    setEditingName(false);
+    setNameDraft('');
     setDrawWorkflowOpen(false);
     setDeactivateDrawOpen(false);
     setReleaseConfirmOpen(false);
@@ -1468,6 +1388,14 @@ export function StructurePhaseFiche({
     onSuccess: async () => {
       await invalidateAfterStructureMutation(queryClient, data.competitionId);
       setDeactivateDrawOpen(false);
+    },
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: (name: string) => renameStage(stage!.stageId, name),
+    onSuccess: async () => {
+      await invalidateAfterStructureMutation(queryClient, data.competitionId);
+      setEditingName(false);
     },
   });
 
@@ -1663,7 +1591,33 @@ export function StructurePhaseFiche({
   const canEditStanding = actions.includes('ReplaceStandingRules');
   const canRebind = actions.includes('BindToCompetition');
   const canRemove = actions.includes('RemoveStage');
+  const canRename = actions.includes('RenameStage');
   const canCompose = actions.includes('ReplaceAffectationAuthoring');
+  const removeDisabledHint = removePhaseDisabledHint(t, data, stage);
+
+  const beginRename = () => {
+    if (!canRename || renameMutation.isPending) return;
+    renameMutation.reset();
+    setNameDraft(stage.name);
+    setEditingName(true);
+  };
+
+  const cancelRename = () => {
+    if (renameMutation.isPending) return;
+    setEditingName(false);
+    setNameDraft(stage.name);
+    renameMutation.reset();
+  };
+
+  const commitRename = () => {
+    const next = nameDraft.trim();
+    if (!next || renameMutation.isPending) return;
+    if (next === stage.name) {
+      setEditingName(false);
+      return;
+    }
+    renameMutation.mutate(next);
+  };
   const canEditQualif = actions.includes('ReplaceQualificationRules');
   const canAssignEntryToSlot =
     stage.formatKind === 'Cup' && actions.includes('AssignEntryToSlot');
@@ -1823,16 +1777,7 @@ export function StructurePhaseFiche({
     }
   }
 
-  // Overflow = phase-level only. Draw mechanism actions live under the CTA.
-  const overflowItems: OverflowItem[] = [
-    {
-      id: 'remove',
-      label: t('graph.removePhase'),
-      onSelect: () => setRemoveOpen(true),
-      danger: true,
-      disabled: !canRemove,
-    },
-  ];
+  // Overflow removed — Edit/Delete live in the header toolbar.
 
   const sortiesEditControl = (() => {
     if (hasExits) {
@@ -1909,22 +1854,119 @@ export function StructurePhaseFiche({
                 <FormatGlyph kind={stage.formatKind} size="lg" />
               </span>
             )}
-            <h2 id="phase-overview-heading" className="structure-fiche__title">
-              {stage.name}
-            </h2>
+            {editingName ? (
+              <form
+                className="structure-fiche__title-edit"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  commitRename();
+                }}
+              >
+                <label className="structure-fiche__title-edit-field">
+                  <span className="ds-visually-hidden">
+                    {t('fiche.renamePhase')}
+                  </span>
+                  <input
+                    value={nameDraft}
+                    onChange={(event) => setNameDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape') {
+                        event.preventDefault();
+                        cancelRename();
+                      }
+                    }}
+                    disabled={renameMutation.isPending}
+                    maxLength={100}
+                    required
+                    autoFocus
+                    aria-invalid={renameMutation.isError || undefined}
+                  />
+                </label>
+                <div className="ds-icon-toolbar">
+                  <Tooltip content={t('fiche.confirmRename')}>
+                    <button
+                      type="submit"
+                      className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
+                      disabled={
+                        renameMutation.isPending || nameDraft.trim().length === 0
+                      }
+                      aria-label={t('fiche.confirmRename')}
+                    >
+                      {renameMutation.isPending ? (
+                        <span className="ds-spinner" aria-hidden="true" />
+                      ) : (
+                        <CheckIcon size="sm" />
+                      )}
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={tCommon('cancel')}>
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
+                      disabled={renameMutation.isPending}
+                      aria-label={tCommon('cancel')}
+                      onClick={cancelRename}
+                    >
+                      <CloseIcon size="sm" />
+                    </button>
+                  </Tooltip>
+                </div>
+                {renameMutation.isError ? (
+                  <MutationError error={renameMutation.error} />
+                ) : null}
+              </form>
+            ) : (
+              <>
+                <h2 id="phase-overview-heading" className="structure-fiche__title">
+                  {stage.name}
+                </h2>
+                {canRename ? (
+                  <Tooltip content={t('fiche.editPhase')}>
+                    <button
+                      type="button"
+                      className={compactIcon}
+                      aria-label={t('fiche.editPhase')}
+                      onClick={beginRename}
+                    >
+                      <PencilIcon size="sm" />
+                    </button>
+                  </Tooltip>
+                ) : null}
+              </>
+            )}
           </div>
+        </div>
+        <div className="structure-fiche__actions">
           <ul className="structure-fiche__pills">
             <li className="structure-fiche__pill structure-fiche__pill--status">
               <StageStatusBadge status={stage.status} />
             </li>
           </ul>
-        </div>
-        <div className="structure-fiche__actions">
-          <PhaseOverflowMenu
-            label={t('fiche.moreActions')}
-            backLabel={t('fiche.menuBack')}
-            items={overflowItems}
-          />
+          <div className="ds-icon-toolbar">
+            {canRemove ? (
+              <Tooltip content={t('graph.removePhase')}>
+                <button
+                  type="button"
+                  className={compactDangerIcon}
+                  aria-label={t('graph.removePhase')}
+                  onClick={() => setRemoveOpen(true)}
+                >
+                  <TrashIcon size="sm" />
+                </button>
+              </Tooltip>
+            ) : (
+              <Tooltip content={removeDisabledHint}>
+                <button
+                  type="button"
+                  className={compactDangerIcon}
+                  disabled
+                  aria-label={t('graph.removePhase')}
+                >
+                  <TrashIcon size="sm" />
+                </button>
+              </Tooltip>
+            )}
+          </div>
         </div>
       </header>
 

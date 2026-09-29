@@ -1,31 +1,38 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   addCompetitionStage,
   rebuildStageStructure,
   removeCompetitionStage,
 } from '../api';
+import { ChoiceTile } from '../design-system/components/ChoiceTile';
+import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
+import { Field } from '../design-system/components/Field';
+import { TextInput } from '../design-system/components/TextInput';
 import { Tooltip } from '../design-system/components/Tooltip';
+import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import {
-  ArrowRightIcon,
+  ChampionshipFormatIcon,
   CheckIcon,
+  CupFormatIcon,
+  EmptySelectionIcon,
+  GroupsFormatIcon,
   PlusIcon,
+  SwissFormatIcon,
   TrashIcon,
 } from '../design-system/icons/contentIcons';
-import {
-  ChevronLeftIcon,
-  CloseIcon,
-} from '../design-system/icons/shellIcons';
+import { CloseIcon } from '../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
-import { MutationError, PendingLabel } from '../ui';
+import { EmptyState, MutationError, PendingLabel } from '../ui';
 import type {
   StructureFormatKind,
   StructureStageHubSummary,
   StructureView,
 } from '../types';
+import { AddPhaseFormatParams } from './AddPhaseFormatParams';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { StructureProgressionDialog } from './StructureProgressionDialog';
 import { StructureQualificationDialog } from './StructureQualificationDialog';
@@ -35,6 +42,26 @@ import {
   skeletonPayload,
   skeletonStepValid,
 } from './structureSkeletonForm';
+
+const ADD_PHASE_FORMATS: StructureFormatKind[] = [
+  'Championship',
+  'Groups',
+  'Cup',
+  'Swiss',
+];
+
+function addPhaseFormatIcon(format: StructureFormatKind) {
+  switch (format) {
+    case 'Championship':
+      return <ChampionshipFormatIcon size="sm" />;
+    case 'Groups':
+      return <GroupsFormatIcon size="sm" />;
+    case 'Cup':
+      return <CupFormatIcon size="sm" />;
+    case 'Swiss':
+      return <SwissFormatIcon size="sm" />;
+  }
+}
 
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
@@ -164,34 +191,55 @@ export function AddPhaseDialog({
   competitionId,
   open,
   onClose,
+  onCreated,
 }: {
   competitionId: string;
   open: boolean;
   onClose: () => void;
+  /** Called after a successful create so the hub can select the new phase. */
+  onCreated?: (stageId: string) => void;
 }) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
   const formId = useId();
+  const nameId = useId();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
+  const [formatPicked, setFormatPicked] = useState(false);
   const [skeleton, setSkeleton] = useState(defaultSkeletonForm());
 
+  const dirty = name.trim().length > 0 || formatPicked;
+  const {
+    discardOpen,
+    requestClose: requestDiscardClose,
+    cancelDiscard,
+    confirmDiscard,
+    resetDiscard,
+  } = useDiscardConfirm(dirty, onClose);
+
   useEffect(() => {
-    if (open) {
-      setStep(1);
-      setName('');
-      setSkeleton(defaultSkeletonForm());
+    if (!open) {
+      return;
     }
-  }, [open]);
+    setName('');
+    setFormatPicked(false);
+    setSkeleton(defaultSkeletonForm());
+    resetDiscard();
+  }, [open, resetDiscard]);
 
   const mutation = useMutation({
-    mutationFn: () =>
-      addCompetitionStage(competitionId, {
-        format: skeleton.format,
+    mutationFn: () => {
+      // Birth always seeds Championship matchdayCount = 1 (not a product birth param).
+      const birth =
+        skeleton.format === 'Championship'
+          ? { ...skeleton, matchdayCount: 1 }
+          : skeleton;
+      return addCompetitionStage(competitionId, {
+        format: birth.format,
         name: name.trim(),
-        ...skeletonPayload(skeleton),
-      }),
+        ...skeletonPayload(birth),
+      });
+    },
     onSuccess: async (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(competitionId),
@@ -199,59 +247,44 @@ export function AddPhaseDialog({
       );
       await invalidateAfterStructureMutation(queryClient, competitionId);
       onClose();
+      onCreated?.(response.stageId);
     },
   });
 
-  const identityOk = name.trim().length > 0;
-  const skeletonOk = skeletonStepValid(skeleton);
+  const canSubmit =
+    name.trim().length > 0 && formatPicked && skeletonStepValid(skeleton);
+
+  function requestClose() {
+    requestDiscardClose(mutation.isPending);
+  }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={t('graph.addPhaseTitle')}
-      description={
-        step === 1 ? t('skeleton.wizardIdentityLede') : t('skeleton.wizardSkeletonLede')
-      }
-      closeLabel={tCommon('close')}
-      closeDisabled={mutation.isPending}
-      size="md"
-      footer={
-        <>
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            disabled={mutation.isPending}
-            onClick={step === 1 ? onClose : () => setStep(1)}
-          >
-            {step === 1 ? (
-              <>
-                <CloseIcon size="sm" />
-                {tCommon('cancel')}
-              </>
-            ) : (
-              <>
-                <ChevronLeftIcon size="sm" />
-                {t('skeleton.back')}
-              </>
-            )}
-          </button>
-          {step === 1 ? (
+    <>
+      <Dialog
+        open={open}
+        onClose={requestClose}
+        title={t('graph.addPhaseTitle')}
+        description={t('skeleton.wizardIdentityLede')}
+        closeLabel={tCommon('close')}
+        closeDisabled={mutation.isPending || discardOpen}
+        trapFocus={!discardOpen}
+        size="md"
+        footer={
+          <>
             <button
               type="button"
-              className="ds-btn ds-btn--primary"
-              disabled={!identityOk}
-              onClick={() => setStep(2)}
+              className="ds-btn ds-btn--ghost"
+              disabled={mutation.isPending || discardOpen}
+              onClick={requestClose}
             >
-              <ArrowRightIcon size="sm" />
-              {t('skeleton.next')}
+              <CloseIcon size="sm" />
+              {tCommon('cancel')}
             </button>
-          ) : (
             <button
               type="submit"
               form={formId}
               className="ds-btn ds-btn--primary"
-              disabled={!skeletonOk || mutation.isPending}
+              disabled={!canSubmit || mutation.isPending}
             >
               {mutation.isPending ? (
                 <PendingLabel />
@@ -262,71 +295,93 @@ export function AddPhaseDialog({
                 </>
               )}
             </button>
-          )}
-        </>
-      }
-      footerStatus={
-        mutation.isError ? <MutationError error={mutation.error} /> : null
-      }
-    >
-      <form
-        id={formId}
-        onSubmit={(event: FormEvent) => {
-          event.preventDefault();
-          if (step !== 2 || !identityOk || !skeletonOk || mutation.isPending) {
-            return;
-          }
-          mutation.mutate();
-        }}
-      >
-        {step === 1 ? (
-          <>
-            <label className="ds-field">
-              <span className="ds-field__label">{t('graph.phaseName')}</span>
-              <input
-                className="ds-input"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                required
-                autoFocus
-              />
-            </label>
-            <label className="ds-field">
-              <span className="ds-field__label">{t('structure.format')}</span>
-              <select
-                className="ds-input"
-                value={skeleton.format}
-                onChange={(event) =>
-                  setSkeleton({
-                    ...skeleton,
-                    format: event.target.value as StructureFormatKind,
-                  })
-                }
-              >
-                <option value="Championship">
-                  {structureFormatKindLabel('Championship')}
-                </option>
-                <option value="Groups">
-                  {structureFormatKindLabel('Groups')}
-                </option>
-                <option value="Cup">{structureFormatKindLabel('Cup')}</option>
-                <option value="Swiss">
-                  {structureFormatKindLabel('Swiss')}
-                </option>
-              </select>
-              <span className="caption">{t('skeleton.formatImmutable')}</span>
-            </label>
           </>
-        ) : (
-          <SkeletonFields
-            state={skeleton}
-            onChange={setSkeleton}
-            t={t}
-            formatLocked
-          />
-        )}
-      </form>
-    </Dialog>
+        }
+        footerStatus={
+          mutation.isError ? <MutationError error={mutation.error} /> : null
+        }
+      >
+        <form
+          id={formId}
+          className="structure-add-phase"
+          onSubmit={(event: FormEvent) => {
+            event.preventDefault();
+            if (!canSubmit || mutation.isPending) {
+              return;
+            }
+            mutation.mutate();
+          }}
+        >
+          <Field label={t('graph.phaseName')} htmlFor={nameId} required>
+            <TextInput
+              id={nameId}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t('structure.stageNamePlaceholder')}
+              required
+              autoFocus
+            />
+          </Field>
+
+          <div
+            className="structure-qualification__scope-tiles"
+            data-count="4"
+            role="radiogroup"
+            aria-label={t('skeleton.phaseType')}
+          >
+            {ADD_PHASE_FORMATS.map((format) => (
+              <ChoiceTile
+                key={format}
+                label={structureFormatKindLabel(format)}
+                description={t(`skeleton.formatTile.${format}`)}
+                leading={addPhaseFormatIcon(format)}
+                selected={formatPicked && skeleton.format === format}
+                onChange={(selected) => {
+                  if (!selected) return;
+                  setFormatPicked(true);
+                  setSkeleton(defaultSkeletonForm(format));
+                }}
+              />
+            ))}
+          </div>
+
+          <div
+            className="structure-add-phase__props"
+            data-filled={formatPicked ? 'true' : 'false'}
+          >
+            {formatPicked ? (
+              <>
+                <p
+                  className="structure-add-phase__format-consequence"
+                  role="status"
+                >
+                  {t('skeleton.formatConsequence')}
+                </p>
+                <AddPhaseFormatParams state={skeleton} onChange={setSkeleton} />
+              </>
+            ) : (
+              <EmptyState
+                variant="idle"
+                icon={<EmptySelectionIcon size="lg" />}
+                title={t('skeleton.formatAwaitingTitle')}
+              >
+                {t('skeleton.formatAwaitingType')}
+              </EmptyState>
+            )}
+          </div>
+        </form>
+      </Dialog>
+      <ConfirmDialog
+        open={discardOpen}
+        title={t('skeleton.discardTitle')}
+        message={t('skeleton.discardMessage')}
+        confirmLabel={t('skeleton.discardConfirm')}
+        cancelLabel={tCommon('cancel')}
+        closeLabel={tCommon('close')}
+        onCancel={cancelDiscard}
+        onConfirm={confirmDiscard}
+      />
+    </>
   );
 }
 
@@ -576,6 +631,7 @@ export function RemovePhaseDialog({
       }
     >
       <p>{t('graph.removePhaseBody', { name: stage.name })}</p>
+      <p className="structure-issues__hint">{t('graph.removePhaseStructure')}</p>
       {(inboundQual > 0 || inboundProg > 0) && (
         <p className="structure-issues__hint">
           {t('graph.removePhaseImpact', {

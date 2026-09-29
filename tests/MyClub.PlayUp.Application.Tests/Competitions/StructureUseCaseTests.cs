@@ -364,6 +364,25 @@ public sealed class StructureUseCaseTests
             .Be(8);
     }
 
+    [Fact]
+    public void StructureView_exposes_RenameStage_when_stage_is_Running()
+    {
+        var competition = CreateCompetition.Execute("RenameActions", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        configured.Stage.Prepare(_clock);
+        configured.Stage.Start(_clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [configured.Stage]).Stages.Single();
+
+        hub.Actions.Should().ContainSingle().Which.Should().Be(StructureViewAssembler.ActionRenameStage);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionRemoveStage);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionRebuildStructure);
+    }
+
     private sealed class NoOpMatchRepository : IMatchRepository
     {
         public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>

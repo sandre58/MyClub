@@ -276,6 +276,7 @@ function StructureHub({ data }: { data: StructureView }) {
         competitionId={data.competitionId}
         open={addPhaseOpen}
         onClose={() => setAddPhaseOpen(false)}
+        onCreated={selectStage}
       />
     </div>
   );

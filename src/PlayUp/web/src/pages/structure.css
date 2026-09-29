@@ -1019,7 +1019,7 @@
 .structure-fiche__header {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-12);
 }
@@ -1552,6 +1552,47 @@
   align-items: center;
   gap: var(--space-12);
   min-width: 0;
+}
+
+.structure-fiche__title-edit {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.structure-fiche__title-edit-field {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.structure-fiche__title-edit-field input {
+  width: 100%;
+  max-width: 24rem;
+  min-width: 0;
+  height: 1.75rem;
+  padding-inline: var(--space-8);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.structure-fiche__title-edit-field input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: var(--focus-halo);
+}
+
+.structure-fiche__title-edit .ds-state {
+  flex: 1 1 100%;
 }
 
 .structure-fiche__format-icon {
@@ -3514,12 +3555,68 @@ button.structure-flux-group__peer {
   gap: var(--space-8);
 }
 
-.structure-qualification__scope-tiles[data-count='2'] {
+.structure-qualification__scope-tiles[data-count='2'],
+.structure-qualification__scope-tiles[data-count='4'] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .structure-qualification__scope-tiles[data-count='1'] {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.structure-add-phase {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-height: 0;
+}
+
+.structure-add-phase__props {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-height: 14rem;
+}
+
+.structure-add-phase__props[data-filled='false'] {
+  justify-content: center;
+  align-items: center;
+}
+
+.structure-add-phase__props[data-filled='false'] .ds-empty {
+  width: 100%;
+}
+
+.structure-add-phase__format-consequence {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-normal);
+}
+
+.structure-add-phase__bracket-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+
+.structure-add-phase__bracket-tiles .ds-choice-tile {
+  width: 100%;
+  justify-content: center;
+}
+
+.structure-add-phase__bracket-tiles .ds-choice-tile__check {
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-8);
+}
+
+.structure-skeleton__format-locked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
 }
 
 .structure-qualification__scope-tiles .ds-choice-tile {

@@ -8,8 +8,10 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Infrastructure.Persistence;
 using MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
 using Xunit;
@@ -382,6 +384,59 @@ public sealed class StagePersistenceTests
             loaded.SwissByeHistory.Should().ContainSingle().Which.Should().Be(new SwissBye(1, byeEntry));
             loaded.CountSwissByes(byeEntry).Should().Be(1);
             loaded.Matchdays.Should().ContainSingle().Which.Number.Should().Be(1);
+        }
+    }
+
+    [Fact]
+    public async Task Remove_stage_entity_clears_competition_stage_refs_without_severing_associationAsync()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var competition = Competition.Create(
+            new CompetitionName("Two phases"),
+            SampleRegulations.Standard(),
+            _clock);
+        var stageA = Stage.Create(competition.Id, new StageName("A"), SampleRegulations.Standard(), _clock);
+        var stageB = Stage.Create(competition.Id, new StageName("B"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stageA.Id, _clock);
+        competition.AddStage(stageB.Id, _clock);
+        var competitionId = competition.Id;
+        var stageBId = stageB.Id;
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            new CompetitionRepository(context).Add(competition);
+            new StageRepository(context).Add(stageA);
+            new StageRepository(context).Add(stageB);
+            await ((IUnitOfWork)context).SaveChangesAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var competitions = new CompetitionRepository(context);
+            var stages = new StageRepository(context);
+            var loaded = await competitions.GetByIdForUpdateAsync(competitionId);
+            loaded.Should().NotBeNull();
+            var target = await stages.GetByIdForUpdateAsync(stageBId);
+            target.Should().NotBeNull();
+
+            loaded.RemoveStage(stageBId, _clock);
+            stages.Remove(target);
+
+            var act = async () => await ((IUnitOfWork)context).SaveChangesAsync();
+            await act.Should().NotThrowAsync();
+        }
+
+        await using (var context = PlayUpInMemory.CreateContext(databaseName))
+        {
+            var reloaded = await new CompetitionRepository(context).GetByIdForUpdateAsync(competitionId);
+            reloaded.Should().NotBeNull();
+            reloaded.StageIds.Should().Equal(stageA.Id);
+            (await new StageRepository(context).GetByIdForUpdateAsync(stageBId)).Should().BeNull();
+            var remainingRefs = await context.Set<CompetitionStageRef>()
+                .Where(row => row.CompetitionId == competitionId)
+                .Select(row => row.StageId)
+                .ToListAsync();
+            remainingRefs.Should().Equal(stageA.Id);
         }
     }
 

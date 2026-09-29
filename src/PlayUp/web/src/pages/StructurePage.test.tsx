@@ -10,10 +10,12 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  addCompetitionStage,
   configureStructure,
   fetchStructureView,
   fetchStageOverview,
   fetchStageSchematic,
+  renameStage,
   ApiError,
 } from '../api';
 import type {
@@ -29,8 +31,10 @@ vi.mock('../api', async (importOriginal) => {
     ...actual,
     fetchStructureView: vi.fn(),
     configureStructure: vi.fn(),
+    addCompetitionStage: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchStageSchematic: vi.fn(),
+    renameStage: vi.fn(),
   };
 });
 
@@ -281,6 +285,7 @@ describe('relevantPhaseSections', () => {
 describe('StructurePage Structure hub', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(addCompetitionStage).mockReset();
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: stageId,
       competitionId,
@@ -435,7 +440,7 @@ describe('StructurePage Structure hub', () => {
     expect(launch).not.toHaveTextContent(/Tirage aléatoire/i);
     expect(launch.querySelector('.structure-draw-cta__chevron')).not.toBeNull();
     expect(
-      screen.getByRole('button', { name: /Paramètres du tirage/i }),
+      screen.getByRole('button', { name: /^Paramètres$/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Désactiver le tirage/i }),
@@ -490,7 +495,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('keeps draw params out of phase overflow and blocks deactivate when a draw is alive', async () => {
+  it('keeps draw params off the phase toolbar and blocks deactivate when a draw is alive', async () => {
     const groupsId = groupesStage().stageId;
     vi.mocked(fetchStageOverview).mockResolvedValue({
       id: groupsId,
@@ -521,7 +526,6 @@ describe('StructurePage Structure hub', () => {
       }),
     );
 
-    const user = userEvent.setup();
     renderStructurePage();
 
     expect(
@@ -531,23 +535,18 @@ describe('StructurePage Structure hub', () => {
       name: /Désactiver le tirage/i,
     });
     expect(deactivate).toBeDisabled();
-    expect(deactivate).toHaveAttribute(
-      'title',
-      expect.stringMatching(/Annulez d’abord le tirage en cours/i),
-    );
     expect(
       screen.queryByText(/Annulez d’abord le tirage en cours/i),
     ).not.toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole('button', { name: /Autres actions/i }),
-    );
     expect(
-      screen.queryByRole('menuitem', { name: /Paramètres du tirage/i }),
+      screen.queryByRole('button', { name: /Autres actions/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('menuitem', { name: /Supprimer la phase/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: /Paramètres du tirage/i }),
+    ).not.toBeInTheDocument();
+    const remove = screen.getByRole('button', { name: /Supprimer la phase/i });
+    expect(remove).toBeDisabled();
   });
 
   it('shows an error when structure read fails', async () => {
@@ -662,6 +661,141 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getAllByRole('button', { name: /Reconstruire/i }).length,
     ).toBeGreaterThanOrEqual(1);
+  });
+
+  it('creates a phase via ChoiceTiles and selects the new stage', async () => {
+    const user = userEvent.setup();
+    const newStageId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+    const initial = structureView({
+      actions: ['ConfigureStructure', 'AddCompetitionStage'],
+      stages: [championshipStage()],
+      format: {
+        kind: 'Championship',
+        primaryStageId: stageId,
+        primaryStageName: 'League',
+        primaryStageStatus: 'Draft',
+      },
+    });
+    const createdStage = championshipStage({
+      stageId: newStageId,
+      name: 'Barrages',
+      formatKind: 'Cup',
+      hasStandingRules: false,
+      slotCount: 4,
+    });
+    const afterCreate = structureView({
+      actions: ['ConfigureStructure', 'AddCompetitionStage'],
+      stages: [championshipStage(), createdStage],
+      format: {
+        kind: 'Championship',
+        primaryStageId: stageId,
+        primaryStageName: 'League',
+        primaryStageStatus: 'Draft',
+      },
+    });
+
+    let currentView = initial;
+    vi.mocked(fetchStructureView).mockImplementation(async () => currentView);
+    vi.mocked(addCompetitionStage).mockImplementation(async () => {
+      currentView = afterCreate;
+      return {
+        stageId: newStageId,
+        name: 'Barrages',
+        structure: afterCreate,
+      };
+    });
+
+    renderStructurePage();
+
+    await user.click(
+      await screen.findByRole('button', { name: /Ajouter une phase/i }),
+    );
+
+    const dialog = await screen.findByRole('dialog');
+    await user.type(
+      within(dialog).getByPlaceholderText(/ex\. Saison régulière/i),
+      'Temp',
+    );
+    await user.click(within(dialog).getByRole('button', { name: /Annuler/i }));
+    expect(
+      await screen.findByRole('dialog', { name: /Abandonner la création/i }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: /^Abandonner$/i }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: /Ajouter une phase/i }),
+    );
+    const createDialog = await screen.findByRole('dialog', {
+      name: /Nouvelle phase/i,
+    });
+    await user.type(
+      within(createDialog).getByPlaceholderText(/ex\. Saison régulière/i),
+      'Barrages',
+    );
+    expect(
+      within(createDialog).getByText(/Aucun type sélectionné/i),
+    ).toBeInTheDocument();
+    expect(
+      within(createDialog).getByText(
+        /Choisissez un type pour définir la forme de la phase/i,
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(createDialog).getByRole('checkbox', { name: /Coupe/i }),
+    );
+    expect(
+      within(createDialog).getByText(/Cette décision est irréversible/i),
+    ).toBeInTheDocument();
+    expect(
+      within(createDialog).queryByText(/Aucun type sélectionné/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(createDialog).getByRole('checkbox', { name: '16' }),
+    ).toBeInTheDocument();
+    expect(
+      within(createDialog).queryByRole('button', { name: /Continuer/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(createDialog).queryByLabelText(/Nombre de journées/i),
+    ).not.toBeInTheDocument();
+
+    await user.click(within(createDialog).getByRole('checkbox', { name: '8' }));
+    await user.click(
+      within(createDialog).getByRole('button', { name: /Créer la phase/i }),
+    );
+
+    await waitFor(() => {
+      expect(addCompetitionStage).toHaveBeenCalledWith(
+        competitionId,
+        expect.objectContaining({
+          format: 'Cup',
+          name: 'Barrages',
+          bracketSize: 8,
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      const newPhaseCard = screen
+        .getAllByRole('button')
+        .find(
+          (button) =>
+            button.classList.contains('structure-topology__card') &&
+            button.textContent?.includes('Barrages') &&
+            button.getAttribute('data-selected') === 'true',
+        );
+      expect(newPhaseCard).toBeTruthy();
+    });
   });
 
   it('surfaces structural anomalies in topology with a Qual/Prog fix CTA', async () => {
@@ -975,7 +1109,7 @@ describe('StructurePage Structure hub', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
-  it('shows empty Sorties and Attribution rails with + when editable; omits kebab add items', async () => {
+  it('shows empty Sorties and Attribution rails with + when editable; phase toolbar has remove not add', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
@@ -990,6 +1124,7 @@ describe('StructurePage Structure hub', () => {
             stageId,
             name: 'Demi-finales',
             actions: [
+              'RenameStage',
               'ReplaceProgressionRules',
               'ReplacePlacementAwardRules',
               'RemoveStage',
@@ -1002,7 +1137,7 @@ describe('StructurePage Structure hub', () => {
           cupStage({
             stageId: avalStageId,
             name: 'Finale',
-            actions: [],
+            actions: ['RenameStage'],
           }),
         ],
       }),
@@ -1025,19 +1160,20 @@ describe('StructurePage Structure hub', () => {
       screen.getByRole('button', { name: /Ajouter une attribution/i }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /Autres actions/i }));
-    const menu = await screen.findByRole('menu', { name: /Autres actions/i });
     expect(
-      within(menu).queryByRole('menuitem', { name: /Ajouter une sortie/i }),
+      screen.queryByRole('button', { name: /Autres actions/i }),
     ).not.toBeInTheDocument();
     expect(
-      within(menu).queryByRole('menuitem', {
-        name: /Ajouter une attribution/i,
-      }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(menu).getByRole('menuitem', { name: /Supprimer la phase/i }),
+      screen.getByRole('button', { name: /Renommer la phase/i }),
     ).toBeInTheDocument();
+    const remove = screen.getByRole('button', { name: /Supprimer la phase/i });
+    expect(remove).toBeEnabled();
+    await user.click(remove);
+    const dialog = await screen.findByRole('dialog', {
+      name: /Supprimer la phase/i,
+    });
+    expect(dialog).toHaveTextContent(/disparaîtra de la compétition/i);
+    expect(dialog).toHaveTextContent(/structure et sa population/i);
   });
 
   it('hides empty Sorties without aval peer; hides Attribution on Championship', async () => {
@@ -1145,5 +1281,45 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('button', { name: /^Modifier$/i }),
     ).toBeInTheDocument();
+  });
+
+  it('renames the phase inline from the fiche pencil', async () => {
+    const user = userEvent.setup();
+    vi.mocked(renameStage).mockResolvedValue(undefined);
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [
+          championshipStage({
+            actions: ['RenameStage', 'RemoveStage'],
+          }),
+          championshipStage({
+            stageId: avalStageId,
+            name: 'Other',
+            actions: ['RenameStage'],
+          }),
+        ],
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('heading', { name: 'League' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Renommer la phase/i }));
+    const input = await screen.findByRole('textbox', { name: /Nom de la phase/i });
+    await user.clear(input);
+    await user.type(input, 'Saison');
+    await user.click(screen.getByRole('button', { name: /^Enregistrer$/i }));
+
+    await waitFor(() => {
+      expect(renameStage).toHaveBeenCalledWith(stageId, 'Saison');
+    });
   });
 });

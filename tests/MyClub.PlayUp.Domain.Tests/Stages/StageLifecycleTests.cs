@@ -293,16 +293,17 @@ public sealed class StageLifecycleTests
     }
 
     [Fact]
-    public void Rename_after_Start_is_rejected()
+    public void Rename_after_Start_is_allowed()
     {
         // Arrange
         var stage = CreateRunning();
 
         // Act
-        var act = () => stage.Rename(new StageName("Later"));
+        stage.Rename(new StageName("Later"));
 
         // Assert
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        stage.Name.Value.Should().Be("Later");
+        stage.Status.Should().Be(StageStatus.Running);
     }
 
     [Fact]

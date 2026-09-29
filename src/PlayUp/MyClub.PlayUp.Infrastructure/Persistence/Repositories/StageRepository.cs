@@ -116,6 +116,24 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
     public void Remove(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
+
+        // competition_stage_refs.StageId → Stage is Restrict. Drop join rows before deleting
+        // the Stage so EF does not report a severed required association on SaveChanges.
+        var refs = context.Set<CompetitionStageRef>().Local
+            .Where(row => row.StageId.Equals(stage.Id))
+            .ToList();
+        if (refs.Count == 0)
+        {
+            refs = context.Set<CompetitionStageRef>()
+                .Where(row => row.StageId == stage.Id)
+                .ToList();
+        }
+
+        if (refs.Count > 0)
+        {
+            context.Set<CompetitionStageRef>().RemoveRange(refs);
+        }
+
         context.Set<Stage>().Remove(stage);
     }
 

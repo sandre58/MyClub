@@ -69,17 +69,23 @@ export function skeletonStepValid(state: SkeletonFormState): boolean {
 
 type Translate = (key: string) => string;
 
-/** Skeleton fields for a fixed or editable format (wizard step 2 / EditSkeleton). */
+/** Skeleton fields for AddPhase / EditSkeleton / ConfigureStructure. */
 export function SkeletonFields({
   state,
   onChange,
   t,
   formatLocked,
+  showFormatImmutableHint = true,
+  omitFormatField = false,
 }: {
   state: SkeletonFormState;
   onChange: (next: SkeletonFormState) => void;
   t: Translate;
   formatLocked?: boolean;
+  /** When format is locked, show the immutability caption (EditSkeleton). */
+  showFormatImmutableHint?: boolean;
+  /** Skip format select/locked line — AddPhase shows type via ChoiceTiles. */
+  omitFormatField?: boolean;
 }) {
   const set = <K extends keyof SkeletonFormState>(
     key: K,
@@ -88,31 +94,35 @@ export function SkeletonFields({
 
   return (
     <>
-      {!formatLocked ? (
-        <label className="ds-field">
-          <span className="ds-field__label">{t('structure.format')}</span>
-          <select
-            className="ds-input"
-            value={state.format}
-            onChange={(event) =>
-              set('format', event.target.value as StructureFormatKind)
-            }
-          >
-            <option value="Championship">
-              {structureFormatKindLabel('Championship')}
-            </option>
-            <option value="Groups">{structureFormatKindLabel('Groups')}</option>
-            <option value="Cup">{structureFormatKindLabel('Cup')}</option>
-            <option value="Swiss">{structureFormatKindLabel('Swiss')}</option>
-          </select>
-        </label>
-      ) : (
-        <p className="structure-skeleton__format-locked">
-          <span className="ds-field__label">{t('structure.format')}</span>
-          <strong>{structureFormatKindLabel(state.format)}</strong>
-          <span className="caption">{t('skeleton.formatImmutable')}</span>
-        </p>
-      )}
+      {!omitFormatField ? (
+        !formatLocked ? (
+          <label className="ds-field">
+            <span className="ds-field__label">{t('structure.format')}</span>
+            <select
+              className="ds-input"
+              value={state.format}
+              onChange={(event) =>
+                set('format', event.target.value as StructureFormatKind)
+              }
+            >
+              <option value="Championship">
+                {structureFormatKindLabel('Championship')}
+              </option>
+              <option value="Groups">{structureFormatKindLabel('Groups')}</option>
+              <option value="Cup">{structureFormatKindLabel('Cup')}</option>
+              <option value="Swiss">{structureFormatKindLabel('Swiss')}</option>
+            </select>
+          </label>
+        ) : (
+          <p className="structure-skeleton__format-locked">
+            <span className="ds-field__label">{t('structure.format')}</span>
+            <strong>{structureFormatKindLabel(state.format)}</strong>
+            {showFormatImmutableHint ? (
+              <span className="caption">{t('skeleton.formatImmutable')}</span>
+            ) : null}
+          </p>
+        )
+      ) : null}
 
       {(state.format === 'Championship' || state.format === 'Groups') && (
         <label className="ds-field">
@@ -185,7 +195,6 @@ export function SkeletonFields({
               }
               required
             />
-            <span className="caption">{t('skeleton.placesCapacityHint')}</span>
           </label>
         </div>
       )}

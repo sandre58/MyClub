@@ -4,29 +4,22 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: rename a stage (locale, non-destructive).
+/// Allowed at any lifecycle status — display name is not structure-critical.
 /// </summary>
 public static class RenameStage
 {
     /// <summary>
-    /// Renames the stage when mutable.
+    /// Renames the stage (validates <see cref="StageName"/> only).
     /// </summary>
     public static void Execute(Stage stage, string name)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Stage '{stage.Id}' cannot be renamed while status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
-
         stage.Rename(new StageName(name));
     }
 }

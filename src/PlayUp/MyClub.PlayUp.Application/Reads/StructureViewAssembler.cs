@@ -724,13 +724,14 @@ public static class StructureViewAssembler
         Competition competition,
         Stage stage)
     {
+        // Rename is always available (display name is not structure-critical).
         if (competition.Status is CompetitionStatus.Completed
                 or CompetitionStatus.Archived
                 or CompetitionStatus.Running
                 or CompetitionStatus.Suspended ||
             stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
-            return [];
+            return [ActionRenameStage];
         }
 
         var actions = new List<string>

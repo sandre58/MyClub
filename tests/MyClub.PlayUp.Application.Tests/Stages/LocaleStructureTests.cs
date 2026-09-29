@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -59,6 +60,24 @@ public sealed class LocaleStructureTests
 
         AddStageMatchday.Execute(configured.Stage, number: null, _clock);
         configured.Stage.Matchdays.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Rename_is_allowed_while_Running()
+    {
+        var competition = CreateCompetition.Execute("RenameRunning", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        configured.Stage.Prepare(_clock);
+        configured.Stage.Start(_clock);
+
+        RenameStage.Execute(configured.Stage, "Live name");
+
+        configured.Stage.Name.Value.Should().Be("Live name");
+        configured.Stage.Status.Should().Be(StageStatus.Running);
     }
 
     [Fact]

@@ -930,12 +930,12 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Renames the stage. No-op when the normalized name is unchanged.
+    /// Allowed at any lifecycle status — display name is not structure-critical.
     /// </summary>
     /// <param name="name">The new name.</param>
     public void Rename(StageName name)
     {
         ArgumentNullException.ThrowIfNull(name);
-        EnsureDraftOrReady();
 
         if (Name.Equals(name))
         {
