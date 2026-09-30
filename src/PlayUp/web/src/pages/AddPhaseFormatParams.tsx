@@ -60,7 +60,7 @@ export function AddPhaseFormatParams({ state, onChange }: Props) {
     case 'Groups':
       return (
         <>
-          <div className="form-row">
+          <div className="ds-form--inline">
             <Field
               label={t('structure.groupCount')}
               htmlFor={groupsId}

@@ -19,11 +19,13 @@ Workspace → Match hub → Stage / `drawUi` → Structure → remaining pages.
 
 ## End of `index.css`
 
-`src/index.css` holds global reset + shared admin chrome classes (`.page`, `.form`, `.field`, `.button-row`, Stage helpers…). Visual tokens come from `design-system/tokens/*` only — no concurrent ladder.
+`src/index.css` holds global reset + shared admin chrome classes (`.page`, `.field`, `.button-row`, Match form helpers…). Visual tokens come from `design-system/tokens/*` only — no concurrent ladder.
 
 Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999px`) stay inlined where used until those surfaces migrate off this file.
 
 **Phase 6 (CSS cleanup):** removed orphaned `.row__aside`, `.form--inline`, `.form--wide`. Match score forms use `.ds-form` + page chrome; Match panel forms drop redundant `.form` when page CSS already owns layout. Structure/Teams/Regulation keep page CSS for domain chrome; dead Structure legacy blocks (band/points/entry/old phase/roster/detail/drill/overview/graph…) removed after TSX confirmation (watch dynamic `class--${tone}` modifiers).
+
+**Phase C (follow-ups):** removed invalidate-only `queryKeys.competitions.workspace`. Structure configure + AddPhase Groups row use `.ds-form` / `.ds-form--inline`. Stage-only helpers (`.muted`, `.stack`, `.section-stack`, `.id-chip`, lists, `.mono`, `.badge-row`) relocated to `StagePage.css`; orphaned `.form` / `.hint` dropped from `index.css`. Match panels still keep `.field` / `.button-row` / `.form-row` / `.fieldset` (same Phase 6 stance).
 
 ## Retired token aliases
 

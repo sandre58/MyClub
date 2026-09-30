@@ -4,7 +4,7 @@
  * Visual tokens: design-system/tokens/* (imported below).
  * This file keeps global reset + shared admin chrome classes only —
  * no concurrent spacing / radius / type / color ladder.
- * Stage draw chrome lives in pages/StagePage.css.
+ * Stage layout helpers live in pages/StagePage.css.
  */
 
 @import './design-system/palettes/slate.css';
@@ -87,35 +87,9 @@ a:hover {
   font-size: 1.0625rem;
 }
 
-.muted {
-  color: var(--color-text-secondary);
-}
-
-.hint {
-  color: var(--color-text-secondary);
-  font-size: var(--text-body);
-}
-
 .caption {
   color: var(--color-text-secondary);
   font-size: var(--text-label);
-}
-
-.id-chip {
-  display: inline-block;
-  padding: 0.05rem 0.4rem;
-  border-radius: var(--radius-control);
-  background: var(--color-surface-secondary);
-  color: var(--color-text-secondary);
-  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  font-size: 0.75rem;
-  word-break: break-all;
-}
-
-.mono {
-  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
-  font-size: 0.85em;
-  word-break: break-all;
 }
 
 code {
@@ -127,54 +101,11 @@ code {
   font-size: 0.85em;
 }
 
-.section-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-24);
-}
-
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-}
-
-.stack--tight {
-  gap: var(--space-8);
-}
-
-.badge-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-8);
-}
-
 .button-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-8);
-}
-
-.plain-list {
-  margin: 0;
-  padding-inline-start: 1.15rem;
-  display: grid;
-  gap: var(--space-4);
-}
-
-.nested-list {
-  margin: var(--space-4) 0 0;
-  padding-inline-start: 1.15rem;
-  color: var(--color-text-secondary);
-  font-size: var(--text-body);
-}
-
-.form {
-  display: grid;
-  gap: var(--space-16);
-  max-width: 34rem;
 }
 
 .field {
