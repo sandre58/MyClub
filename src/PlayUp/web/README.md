@@ -97,21 +97,27 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 
 ## Scripts
 
-| Script                 | Role                              |
-| ---------------------- | --------------------------------- |
-| `npm run dev`          | Vite HMR server                   |
-| `npm run build`        | Typecheck + production bundle     |
-| `npm run format`       | Prettier write                    |
-| `npm run format:check` | Prettier check (CI)               |
-| `npm run lint`         | Oxlint (React / TypeScript / oxc) |
-| `npm run typecheck`    | `tsc -b`                          |
-| `npm run test`         | Vitest watch                      |
-| `npm run test:run`     | Vitest single run (CI)            |
-| `npm run preview`      | Serve the production bundle       |
+| Script                 | Role                                |
+| ---------------------- | ----------------------------------- |
+| `npm run dev`          | Vite HMR server                     |
+| `npm run build`        | Typecheck + production bundle       |
+| `npm run format`       | Prettier write                      |
+| `npm run format:check` | Prettier check (CI)                 |
+| `npm run lint`         | Oxlint (React / TypeScript / oxc)   |
+| `npm run typecheck`    | `tsc -b`                            |
+| `npm run test`         | Vitest watch                        |
+| `npm run test:run`     | Vitest single run (CI)              |
+| `npm run test:e2e`     | Build + Playwright smoke (Chromium) |
+| `npm run test:e2e:ui`  | Same with Playwright UI             |
+| `npm run preview`      | Serve the production bundle         |
+
+First-time Playwright browser install (local): `npx playwright install chromium`.
+
+E2E smokes stub Host JSON via Playwright routes (no Postgres / DevRunner required). For a Host-backed manual smoke: start Postgres + Host (`localhost:5287`) + `npm run dev`, then exercise Accueil → Overview → Structure → Match with DevRunner seed.
 
 ### Quality gates (CI `web` job)
 
-Order: `format:check` → `lint` → `typecheck` → `test:run` → `build`.  
+Order: `format:check` → `lint` → `typecheck` → `test:run` → `build` → Playwright smoke.  
 **Errors fail CI.** Oxlint **warnings** do not fail CI today (no `--deny-warnings`). Rider/IDE CSS inspections are not gated. Stylelint is intentionally out of scope for now.
 
 Config: `.prettierrc.json`, `.oxlintrc.json`. Format on save is an optional editor setting (Prettier); this package does **not** ship a committed `.vscode/` folder.
@@ -140,7 +146,7 @@ When reworking a business page, follow [docs/page-migration.md](./docs/page-migr
 | ------------------------------ | --------------------------------------------- |
 | `features/`                    | Domain collision / ownership pain in `pages/` |
 | OpenAPI / generated types      | Frequent DTO drift or a second HTTP consumer  |
-| Playwright E2E                 | Stable critical paths + unit CI already green |
+| Playwright E2E (large suite)   | Beyond the 3–5 smoke scenarios already wired  |
 | Storybook                      | Reused DS components across many screens      |
 | Sass / Tailwind / UI libraries | Notion decision to reopen styling stack       |
 | Auth / Host CORS / deploy prod | Product/platform need                         |
