@@ -20,6 +20,7 @@ import {
 } from '../../design-system/icons/shellIcons';
 import { competitionStatusLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
+import { WaitMark } from '../../design-system/components/WaitMark';
 import { EmptyState, ErrorState, LoadingState } from '../../ui';
 import {
   formatScore,
@@ -134,7 +135,7 @@ function MatchesView({
       <ContextBand data={data} matchCount={rows.length} />
 
       {matchesPending ? (
-        <LoadingState label={t('loading')} size="region" />
+        <WaitMark size="region">{t('loading')}</WaitMark>
       ) : null}
       {matchesError ? <ErrorState error={matchesError} /> : null}
       {!matchesPending && !matchesError ? (

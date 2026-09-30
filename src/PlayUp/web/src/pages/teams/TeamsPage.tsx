@@ -53,13 +53,14 @@ import {
   WithdrawIcon,
 } from '../../design-system/icons/contentIcons';
 import { queryKeys } from '../../queryKeys';
+import { Status } from '../../design-system/components/Status';
+import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import {
   ErrorState,
   LoadingState,
   MutationError,
   EmptyState,
   PendingLabel,
-  StatusBadge,
 } from '../../ui';
 import type { EntryStatus, StructureEntry, StructureView } from '../../types';
 import { TeamRosterDrawer } from './TeamRosterDrawer';
@@ -1299,9 +1300,9 @@ function tileStatusBadge(
 ): ReactNode {
   if (status === 'Withdrawn') {
     return (
-      <StatusBadge tone="warn" density="compact">
+      <Status density="compact" tone={statusToneFromBadgeTone('warn')}>
         {t('withdrawnBadge')}
-      </StatusBadge>
+      </Status>
     );
   }
   return null;

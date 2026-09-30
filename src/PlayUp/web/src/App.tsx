@@ -1,7 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
-import { LoadingState } from './ui';
+import { WaitMark } from './design-system/components/WaitMark';
 import { CompetitionOverviewPage } from './pages/competition/CompetitionOverviewPage';
 import { ClassementsPage } from './pages/classements/ClassementsPage';
 import { HomePage } from './pages/HomePage';
@@ -39,13 +40,18 @@ const DesignLabPage = lazy(async () => {
  * Nested under AppLayout so Outlet swaps page content while the shell stays.
  * Params (:competitionId, :stageId, :matchId, :entryId) are opaque ids — not business fields.
  */
+function RouteFallback() {
+  const { t } = useTranslation('common');
+  return <WaitMark>{t('loading')}</WaitMark>;
+}
+
 export default function App() {
   return (
     <Routes>
       <Route
         path="/dev/foundations"
         element={
-          <Suspense fallback={<LoadingState />}>
+          <Suspense fallback={<RouteFallback />}>
             <FoundationsPlayground />
           </Suspense>
         }
@@ -53,7 +59,7 @@ export default function App() {
       <Route
         path="/design-lab"
         element={
-          <Suspense fallback={<LoadingState />}>
+          <Suspense fallback={<RouteFallback />}>
             <DesignLabPage />
           </Suspense>
         }

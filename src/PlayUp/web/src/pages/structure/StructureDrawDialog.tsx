@@ -19,6 +19,9 @@ import {
 } from '../../api';
 import { Alert } from '../../design-system/components/Alert';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { WaitMark } from '../../design-system/components/WaitMark';
+import { Status } from '../../design-system/components/Status';
+import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import { Dialog } from '../../design-system/components/Dialog';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
@@ -68,10 +71,8 @@ import {
   DrawResolutionBadge,
   DrawStatusBadge,
   EmptyState,
-  LoadingState,
   MutationError,
   PendingLabel,
-  StatusBadge,
 } from '../../ui';
 import './phase-schematic.css';
 
@@ -500,10 +501,7 @@ export function StructureDrawDialog({
           ) : null}
 
           {overviewQuery.isLoading ? (
-            <LoadingState
-              size="region"
-              label={t('fiche.drawWorkflow.loading')}
-            />
+            <WaitMark size="region">{t('fiche.drawWorkflow.loading')}</WaitMark>
           ) : null}
 
           {!overviewQuery.isLoading &&
@@ -698,9 +696,9 @@ function DrawMasterChipBadge({ chip }: { chip: DrawMasterChip }) {
     return <DrawResolutionBadge state={chip.state} density="compact" />;
   }
   return (
-    <StatusBadge tone="ok" density="compact">
+    <Status density="compact" tone={statusToneFromBadgeTone('ok')}>
       {t('applied')}
-    </StatusBadge>
+    </Status>
   );
 }
 
@@ -719,9 +717,9 @@ function DrawDetailHeaderChipBadge({
     badge = <DrawResolutionBadge state={chip.state} density="compact" />;
   } else {
     badge = (
-      <StatusBadge tone="ok" density="compact">
+      <Status density="compact" tone={statusToneFromBadgeTone('ok')}>
         {t('applied')}
-      </StatusBadge>
+      </Status>
     );
   }
   if (!tooltip) {

@@ -30,12 +30,13 @@ import {
 } from '../../design-system/icons/contentIcons';
 import { ClockIcon, PinIcon } from '../../design-system/icons/metaIcons';
 import { queryKeys } from '../../queryKeys';
+import { Status } from '../../design-system/components/Status';
+import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import {
   ErrorState,
   EmptyState,
   LoadingState,
   StageStatusBadge,
-  StatusBadge,
 } from '../../ui';
 import type {
   DisciplinaryType,
@@ -370,9 +371,9 @@ function PersonalizedBadge() {
   const { t } = useTranslation('regulation');
   return (
     <Tooltip content={t('differsFromFrame')}>
-      <StatusBadge tone="warn" density="compact">
+      <Status density="compact" tone={statusToneFromBadgeTone('warn')}>
         {t('personalized')}
-      </StatusBadge>
+      </Status>
     </Tooltip>
   );
 }

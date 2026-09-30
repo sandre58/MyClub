@@ -13,19 +13,21 @@ import {
   startStage,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { PageHead } from '../../design-system/components/PageHead';
+import { Status } from '../../design-system/components/Status';
+import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import { CheckIcon } from '../../design-system/icons/contentIcons';
 import { queryKeys } from '../../queryKeys';
 import {
+  BackLink,
   DrawResolutionBadge,
   DrawStatusBadge,
   EmptyState,
   ErrorState,
   LoadingState,
   MutationError,
-  PageHeader,
   PendingLabel,
   StageStatusBadge,
-  StatusBadge,
 } from '../../ui';
 import { drawResolutionKindLabel } from '../../i18n/enumLabels';
 import {
@@ -65,18 +67,17 @@ export function StagePage() {
 
   return (
     <main id="main" className="page">
-      <PageHeader
+      <PageHead
         eyebrow={t('eyebrow')}
         title={stageQuery.data?.name ?? t('titleFallback')}
         back={
-          competitionId
-            ? {
-                to: `/competitions/${competitionId}/structure`,
-                label: competitionQuery.data?.name
-                  ? t('backNamed', { name: competitionQuery.data.name })
-                  : t('back'),
-              }
-            : undefined
+          competitionId ? (
+            <BackLink to={`/competitions/${competitionId}/structure`}>
+              {competitionQuery.data?.name
+                ? t('backNamed', { name: competitionQuery.data.name })
+                : t('back')}
+            </BackLink>
+          ) : undefined
         }
         badges={
           stageQuery.data && (
@@ -568,7 +569,9 @@ function DrawCard({
             <DrawResolutionBadge state={draw.resolutionState} />
           ) : null}
           {ui.chrome.showApplied ? (
-            <StatusBadge tone="ok">{t('applied')}</StatusBadge>
+            <Status density="context" tone={statusToneFromBadgeTone('ok')}>
+              {t('applied')}
+            </Status>
           ) : null}
         </p>
       </header>

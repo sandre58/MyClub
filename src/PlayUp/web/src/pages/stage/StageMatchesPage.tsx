@@ -8,12 +8,13 @@ import {
 } from '../../design-system/components/MatchRow';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { queryKeys } from '../../queryKeys';
+import { PageHead } from '../../design-system/components/PageHead';
 import {
+  BackLink,
   EmptyState,
   ErrorState,
   LoadingState,
   MatchStatusBadge,
-  PageHeader,
 } from '../../ui';
 import { sideLabel, type MatchSummary } from '../../types';
 import {
@@ -44,7 +45,7 @@ export function StageMatchesPage() {
 
   return (
     <main id="main" className="page">
-      <PageHeader
+      <PageHead
         eyebrow={t('stageList.eyebrow')}
         title={
           stageQuery.data
@@ -52,9 +53,9 @@ export function StageMatchesPage() {
             : t('stageList.titleFallback')
         }
         back={
-          stageId
-            ? { to: `/stages/${stageId}`, label: t('stageList.back') }
-            : undefined
+          stageId ? (
+            <BackLink to={`/stages/${stageId}`}>{t('stageList.back')}</BackLink>
+          ) : undefined
         }
       />
 
