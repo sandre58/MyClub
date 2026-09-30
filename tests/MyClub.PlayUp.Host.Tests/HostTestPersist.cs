@@ -11,7 +11,7 @@ using MyClub.PlayUp.TestKit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Persists a <see cref="TestCompetition"/> graph via Host DI ports (Lots C/F).
+/// Persists a <see cref="TestCompetition"/> graph via Host DI ports.
 /// </summary>
 internal static class HostTestPersist
 {

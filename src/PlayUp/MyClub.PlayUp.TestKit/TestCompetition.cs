@@ -353,12 +353,12 @@ public sealed class TestCompetition
     }
 
     /// <summary>
-    /// Calls <see cref="Competition.Start"/>.
+    /// Starts the competition via the Application start use case.
     /// </summary>
     /// <returns>This situation.</returns>
     public TestCompetition StartCompetition()
     {
-        Competition.Start(Clock);
+        Application.Competitions.StartCompetition.Execute(Competition, Clock);
         return this;
     }
 

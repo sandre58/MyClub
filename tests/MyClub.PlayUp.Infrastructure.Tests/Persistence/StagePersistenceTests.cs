@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using MyClub.PlayUp.Application.Abstractions;
@@ -388,6 +389,7 @@ public sealed class StagePersistenceTests
     }
 
     [Fact]
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Test")]
     public async Task Remove_stage_entity_clears_competition_stage_refs_without_severing_associationAsync()
     {
         var databaseName = Guid.NewGuid().ToString();

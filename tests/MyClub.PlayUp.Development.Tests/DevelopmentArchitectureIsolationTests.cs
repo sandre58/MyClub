@@ -11,7 +11,7 @@ using Xunit;
 namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
-/// Lot D: Development consumes TestKit; never the reverse.
+/// Development consumes TestKit; never the reverse.
 /// </summary>
 public sealed class DevelopmentArchitectureIsolationTests
 {

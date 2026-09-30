@@ -192,13 +192,14 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             source.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
             source.AddSlot("QF1-A");
             source.AddSlot("QF1-B");
+            source.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
 
             var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
             destination.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
             destination.AddSlot("SF1-A");
             destination.AddSlot("SF1-B");
 
-            var addFixture = source.AddFixture(source.Rounds[0].Id, _clock);
+            var addFixture = source.AddFixture(source.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
             fixtureId = addFixture.Id;
             var match = Match.Create(competition.Id, source.Id, home, away, _clock);
             matchId = match.Id;

@@ -192,12 +192,17 @@ public sealed class CompletionAnalyzerTests
         var away = competition.AddEntry(TeamId.New(), "Away", _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
 
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
+        stage.ApplyResolvedEntry("KO-A", home.Id, _clock);
+        stage.ApplyResolvedEntry("KO-B", away.Id, _clock);
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);

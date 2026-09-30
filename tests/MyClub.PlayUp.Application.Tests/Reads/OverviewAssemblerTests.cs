@@ -1124,10 +1124,16 @@ public sealed class OverviewAssemblerTests
         var bravo = competition.AddEntry(TeamId.New(), "Bravo", _clock);
         var stage = Stage.Create(competition.Id, new StageName("Final"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Final", _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
+        var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
+
+        stage.ApplyResolvedEntry("F-A", alpha.Id, _clock);
+        stage.ApplyResolvedEntry("F-B", bravo.Id, _clock);
 
         var match = Match.Create(competition.Id, stage.Id, alpha.Id, bravo.Id, _clock);
         match.Start(_clock);
@@ -1166,11 +1172,23 @@ public sealed class OverviewAssemblerTests
         var b = competition.AddEntry(TeamId.New(), "B", _clock);
         var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Finals", _clock);
-        var final = stage.AddFixture(round.Id, _clock);
-        var bronze = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.AddSlot("B-A");
+        stage.AddSlot("B-B");
+        stage.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "F-A", "F-B"),
+            new BracketPair("P2", "B-A", "B-B")
+        ]);
+        var final = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
+        var bronze = stage.AddFixture(round.Id, _clock, "B-A", "B-B", "P2");
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
+
+        stage.ApplyResolvedEntry("F-A", a.Id, _clock);
+        stage.ApplyResolvedEntry("F-B", b.Id, _clock);
 
         var finalMatch = Match.Create(competition.Id, stage.Id, a.Id, b.Id, _clock);
         finalMatch.Start(_clock);
@@ -1212,11 +1230,25 @@ public sealed class OverviewAssemblerTests
         var d = competition.AddEntry(TeamId.New(), "D", _clock);
         var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Finals", _clock);
-        var final = stage.AddFixture(round.Id, _clock);
-        var bronze = stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.AddSlot("B-A");
+        stage.AddSlot("B-B");
+        stage.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "F-A", "F-B"),
+            new BracketPair("P2", "B-A", "B-B")
+        ]);
+        var final = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
+        var bronze = stage.AddFixture(round.Id, _clock, "B-A", "B-B", "P2");
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
+
+        stage.ApplyResolvedEntry("F-A", a.Id, _clock);
+        stage.ApplyResolvedEntry("F-B", b.Id, _clock);
+        stage.ApplyResolvedEntry("B-A", c.Id, _clock);
+        stage.ApplyResolvedEntry("B-B", d.Id, _clock);
 
         var finalMatch = Match.Create(competition.Id, stage.Id, a.Id, b.Id, _clock);
         finalMatch.Start(_clock);
@@ -1799,10 +1831,15 @@ public sealed class OverviewAssemblerTests
         var away = competition.AddEntry(TeamId.New(), "Away", _clock);
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
         stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         competition.AddStage(stage.Id, _clock);
 
-        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
+        stage.ApplyResolvedEntry("KO-A", home.Id, _clock);
+        stage.ApplyResolvedEntry("KO-B", away.Id, _clock);
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);

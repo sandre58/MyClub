@@ -44,6 +44,7 @@ public sealed class PlayUpDbContextTests
                 "fixtures",
                 "fixture_attachments",
                 "slots",
+                "stage_bracket_pairs",
                 "stage_composition_entries",
                 "stage_affectation_entries",
                 "stage_form_path_resolutions",

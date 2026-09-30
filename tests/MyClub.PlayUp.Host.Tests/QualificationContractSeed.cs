@@ -14,7 +14,7 @@ using MyClub.PlayUp.TestKit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Minimal championship → terminal qualification graph for HTTP contract tests (Lot F / TestKit).
+/// Minimal championship → terminal qualification graph for HTTP contract tests (TestKit).
 /// </summary>
 internal static class QualificationContractSeed
 {

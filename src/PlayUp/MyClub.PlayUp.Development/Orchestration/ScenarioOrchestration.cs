@@ -1775,11 +1775,14 @@ internal static class ScenarioOrchestration
         knockout.ArrangeRounds([quarterRound.Id, semiRound.Id, finalRound.Id]);
         knockout.AddSlot("QF-1-A");
         knockout.AddSlot("QF-1-B");
+        knockout.AddSlot("F-A");
+        knockout.AddSlot("F-B");
+        knockout.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
         MatchEnrichment.SpecializeWithExtraTimeAndPenalties(knockout, context.Clock);
         competition.AddStage(knockout.Id, context.Clock);
         context.Stages.Add(knockout);
 
-        var finalFixture = knockout.AddFixture(finalRound.Id, context.Clock);
+        var finalFixture = knockout.AddFixture(finalRound.Id, context.Clock, "F-A", "F-B", "P1");
         WireFinalPlacementAwards(knockout, finalFixture, context.Clock);
 
         WireEachGroupQualificationToPopulation(

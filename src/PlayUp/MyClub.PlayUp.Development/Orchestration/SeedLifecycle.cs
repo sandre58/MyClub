@@ -29,7 +29,7 @@ internal static class SeedLifecycle
         PrepareStage.Execute(stage, stages, context.Clock);
         PrepareCompetition.Execute(competition, context.Clock);
         StartStage.Execute(stage, context.Clock);
-        competition.Start(context.Clock);
+        StartCompetition.Execute(competition, context.Clock);
     }
 
     /// <summary>

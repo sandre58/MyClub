@@ -11,7 +11,7 @@ using Xunit;
 namespace MyClub.PlayUp.TestKit.Tests;
 
 /// <summary>
-/// Lot A: enforce TestKit dependency boundary (Domain + Application only).
+/// Enforce TestKit dependency boundary (Domain + Application only).
 /// </summary>
 public sealed class TestKitArchitectureIsolationTests
 {

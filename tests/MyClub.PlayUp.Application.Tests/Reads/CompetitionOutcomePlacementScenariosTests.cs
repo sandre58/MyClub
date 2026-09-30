@@ -192,10 +192,25 @@ public sealed class CompetitionOutcomePlacementScenariosTests
 
         var awardPaths = new List<PlacementAwardPath>();
         var fixtureIds = new List<FixtureId>();
+        var pairs = new List<BracketPair>(fixtures.Length);
 
-        foreach (var (_, winnerRank, loserRank) in fixtures)
+        for (var i = 0; i < fixtures.Length; i++)
         {
-            var fixture = stage.AddFixture(round.Id, _clock);
+            var slotA = $"S{i + 1}-A";
+            var slotB = $"S{i + 1}-B";
+            var pairKey = $"P{i + 1}";
+            stage.AddSlot(slotA);
+            stage.AddSlot(slotB);
+            pairs.Add(new BracketPair(pairKey, slotA, slotB));
+        }
+
+        stage.ReplaceBracketPairs(pairs);
+
+        for (var i = 0; i < fixtures.Length; i++)
+        {
+            var (_, winnerRank, loserRank) = fixtures[i];
+            var pair = pairs[i];
+            var fixture = stage.AddFixture(round.Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
             fixtureIds.Add(fixture.Id);
             awardPaths.Add(new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Winner, winnerRank));
             awardPaths.Add(new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Loser, loserRank));
@@ -221,6 +236,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
             var home = scenario.Entries[i * 2];
             var away = scenario.Entries[(i * 2) + 1];
             var fixtureId = scenario.FixtureIds[i];
+            OccupyFixtureSlots(scenario.Stage, fixtureId, home, away);
             var match = Match.Create(scenario.Competition.Id, scenario.Stage.Id, home, away, _clock);
             scenario.Stage.AttachMatch(fixtureId, match.Id, legIndex: 1, _clock);
             scenario.Matches.Add(match);
@@ -239,6 +255,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
             return;
         }
 
+        OccupyFixtureSlots(scenario.Stage, fixtureId, home, away);
         var match = Match.Create(scenario.Competition.Id, scenario.Stage.Id, home, away, _clock);
         match.Start(_clock);
         match.Finish(
@@ -246,6 +263,20 @@ public sealed class CompetitionOutcomePlacementScenariosTests
             _clock);
         scenario.Stage.AttachMatch(fixtureId, match.Id, legIndex: 1, _clock);
         scenario.Matches.Add(match);
+    }
+
+    private void OccupyFixtureSlots(Stage stage, FixtureId fixtureId, EntryId home, EntryId away)
+    {
+        var fixture = stage.GetFixture(fixtureId);
+        if (fixture.SlotAKey is not null)
+        {
+            stage.ApplyResolvedEntry(fixture.SlotAKey, home, _clock);
+        }
+
+        if (fixture.SlotBKey is not null)
+        {
+            stage.ApplyResolvedEntry(fixture.SlotBKey, away, _clock);
+        }
     }
 
     private void FinishAttachedMatch(PlacementScenario scenario, int fixtureIndex, bool homeWins)
