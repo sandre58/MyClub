@@ -26,6 +26,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  /* Local override from TeamCrest.tsx (primaryColor); not a design-system token. */
   fill: var(--team-crest-fill, currentColor);
 }
 

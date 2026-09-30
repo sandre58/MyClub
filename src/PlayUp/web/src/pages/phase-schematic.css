@@ -48,7 +48,7 @@
 }
 
 .schematic-slot--interactive:focus-visible {
-  outline: 2px solid var(--color-focus-ring, var(--color-accent));
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -103,7 +103,7 @@
   margin: 0;
   font-size: var(--text-meta);
   font-weight: var(--font-weight-regular);
-  color: var(--color-text-tertiary, var(--color-text-secondary));
+  color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -189,7 +189,7 @@
   flex: none;
   width: 0.75rem;
   height: 0.75rem;
-  color: var(--color-text-tertiary, var(--color-text-secondary));
+  color: var(--color-text-secondary);
 }
 
 .schematic-case-tip__origin-copy {
@@ -245,7 +245,7 @@
   white-space: nowrap;
   font-size: var(--text-meta);
   font-weight: var(--font-weight-regular);
-  color: var(--color-text-tertiary, var(--color-text-secondary));
+  color: var(--color-text-secondary);
   line-height: 1.15;
   opacity: 0.9;
 }

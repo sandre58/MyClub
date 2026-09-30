@@ -923,7 +923,7 @@
 .structure-composition__meter {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-8);
   min-width: 0;
 }
 
@@ -989,7 +989,7 @@
 .structure-manual-placement__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
 .structure-manual-placement__field--fill {
@@ -1491,7 +1491,7 @@ button.structure-flux-group__peer {
 .structure-flux-rule__who {
   color: var(--color-text-primary);
   font-size: var(--text-meta);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   min-width: 0;
 }
 
