@@ -805,10 +805,6 @@
     box-shadow var(--motion-duration) var(--motion-easing);
 }
 
-.ds-toggle-button-group__option:last-child {
-  border-inline-end: none;
-}
-
 /*
  * End radii always match the group shell so a selected fill at either end
  * follows the control’s rounded corners (not a sharp rectangle).
@@ -819,6 +815,7 @@
 }
 
 .ds-toggle-button-group__option:last-child {
+  border-inline-end: none;
   border-start-end-radius: calc(var(--radius-control) - var(--border-width));
   border-end-end-radius: calc(var(--radius-control) - var(--border-width));
 }
