@@ -19,7 +19,7 @@
 
     <!-- Configuration -->
     <PropertyGroup>
-        <TargetFramework Condition="'$(TargetFrameworks)' == '' and '$(TargetFramework)' == ''">net10.0</TargetFramework>
+        <TargetFramework Condition="'$(TargetFrameworks)' == '' and '$(TargetFramework)' == ''">net11.0</TargetFramework>
         <LangVersion>latest</LangVersion>
         <NeutralLanguage>fr</NeutralLanguage>
         <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>

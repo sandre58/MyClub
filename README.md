@@ -10,7 +10,7 @@
 [![Last commit](https://img.shields.io/github/last-commit/sandre58/MyClub/main?style=for-the-badge)](https://github.com/sandre58/MyClub/commits/main/)
 [![Repo size](https://img.shields.io/github/repo-size/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub)
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge)](https://dotnet.microsoft.com/download/dotnet/10.0)
+[![.NET](https://img.shields.io/badge/.NET-11.0-512BD4?style=for-the-badge)](https://dotnet.microsoft.com/download/dotnet/11.0)
 [![Language](https://img.shields.io/github/languages/top/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub/search?l=c%23)
 [![Architecture](https://img.shields.io/badge/Architecture-DDD%20%7C%20Modular%20Monolith-2EA44F?style=for-the-badge)](docs/README.md)
 
@@ -102,11 +102,11 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 
 | Area | Choice |
 | :--- | :----- |
-| Runtime | .NET 10 LTS |
+| Runtime | .NET 11 |
 | Style | DDD, Modular Monolith |
 | API | ASP.NET Core Minimal APIs |
 | Frontend | React SPA · TypeScript · Vite · React Router · TanStack Query (`src/PlayUp/web`) |
-| Persistence | EF Core 10 + PostgreSQL 18 (Compose for local Host; Testcontainers for integration tests) |
+| Persistence | EF Core 11 + PostgreSQL 18 (Compose for local Host; Testcontainers for integration tests) |
 | Tests | xUnit, FluentAssertions, Moq (via Central Package Management); Vitest/RTL on the web app |
 | Quality | Nullable, StyleCop / Roslynator / NetAnalyzers, Coverlet |
 | Versioning | GitVersion + SemVer + Conventional Commits |
@@ -115,7 +115,7 @@ This repository is an **application suite**: it does **not** publish NuGet packa
 
 ## Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see [`global.json`](global.json))
+- [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) (see [`global.json`](global.json))
 - Git
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) — required for local PostgreSQL (`compose.yml`) and for Testcontainers integration tests
 - Node.js (LTS) + npm — for the Play'Up web SPA in [`src/PlayUp/web`](src/PlayUp/web) (see that folder's README)
@@ -178,7 +178,7 @@ dotnet test /p:CollectCoverage=true
 
 - **Commits:** [Conventional Commits](.gitmessage)
 - **Branches:** `main` / `feature/*`
-- **Code:** `net10.0`, nullable enabled, [`.editorconfig`](.editorconfig), [`stylecop.json`](stylecop.json)
+- **Code:** `net11.0`, nullable enabled, [`.editorconfig`](.editorconfig), [`stylecop.json`](stylecop.json)
 - **Packages:** Central Package Management — [`Directory.Packages.props`](Directory.Packages.props)
 - **Public docs:** English (`README`, `CONTRIBUTING`, `SECURITY`, contributor `docs/**`)
 - **Decisions:** Notion **Décisions** database — never ADR Markdown in Git

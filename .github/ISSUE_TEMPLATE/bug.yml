@@ -48,7 +48,7 @@ body:
     attributes:
       label: .NET SDK version
       description: Output of `dotnet --version`
-      placeholder: "10.0.x"
+      placeholder: "11.0.x"
     validations:
       required: true
 

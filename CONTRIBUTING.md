@@ -6,7 +6,7 @@ Thank you for contributing.
 
 **Prerequisites**
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (see `global.json`)
+- [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) (see `global.json`)
 - Git
 - Docker Desktop — local PostgreSQL via `compose.yml`, and Testcontainers for `Category=Integration` tests
 
@@ -51,7 +51,7 @@ Product workflow (Intent → Reconciliation, Cursor Ask / Plan / Agent modes, No
 
 ## Coding standards
 
-- Target **`net10.0`**.
+- Target **`net11.0`**.
 - Nullable reference types enabled.
 - Follow [.editorconfig](.editorconfig) and [StyleCop](stylecop.json).
 - Document public APIs with XML comments when packing libraries.
