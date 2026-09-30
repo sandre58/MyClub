@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint --deny-warnings",
-    "lint:css": "stylelint \"src/design-system/**/*.css\" \"src/pages/structure/**/*.css\" \"src/pages/teams/**/*.css\" \"src/pages/regulation/**/*.css\" \"src/pages/match/**/*.css\"",
+    "lint:css": "stylelint \"src/design-system/**/*.css\" \"src/pages/structure/**/*.css\" \"src/pages/teams/**/*.css\" \"src/pages/regulation/**/*.css\" \"src/pages/match/**/*.css\" \"src/shell/**/*.css\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -b",
