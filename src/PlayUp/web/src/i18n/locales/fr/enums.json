@@ -98,7 +98,7 @@
   "attentionTargetType": {
     "Stage": "Phase",
     "Slot": "Emplacement",
-    "Fixture": "Rencontre",
+    "Fixture": "Confrontation",
     "Match": "Match",
     "Competition": "Compétition",
     "Structure": "Structure",

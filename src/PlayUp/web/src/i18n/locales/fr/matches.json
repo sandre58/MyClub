@@ -91,7 +91,7 @@
   },
   "sheet": {
     "heading": "Feuille de match",
-    "hint": "Composition déclarée pour cette rencontre. Distincte du score et du résultat officiel.",
+    "hint": "Composition déclarée pour ce match. Distincte du score et du résultat officiel.",
     "readOnly": "La feuille n’est plus modifiable dans cet état.",
     "emptyTitle": "Aucun joueur sur la feuille",
     "emptyBody": "Ajoutez des joueurs depuis l’effectif de l’équipe.",

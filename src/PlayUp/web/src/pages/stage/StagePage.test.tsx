@@ -977,9 +977,13 @@ describe('StagePage draws', () => {
       await screen.findByRole('heading', { name: 'Confrontations' }),
     ).toBeInTheDocument();
     expect(
-      await screen.findByText(/1 paire\(s\) déjà matérialisée\(s\)/i),
+      await screen.findByText(/1 paire\(s\) déjà générée\(s\)/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/déjà générée/i)).toBeInTheDocument();
+    expect(
+      screen.getByText((content) =>
+        content.includes('SF1-A ↔ SF1-B — déjà générée'),
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText(/SF2-A ↔ SF2-B/)).toBeInTheDocument();
 
     await user.click(
