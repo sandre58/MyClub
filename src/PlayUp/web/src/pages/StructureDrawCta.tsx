@@ -1,21 +1,10 @@
 import type { ReactNode } from 'react';
 import { DrawPendingIcon } from '../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
+import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 
 /** Ghost = Activate (subdued). Emphasis = Launch/Open (outlined). Never brand primary. */
 export type StructureDrawCtaTone = 'ghost' | 'emphasis';
-
-/** Ratio color = pool resolution only — never Draw readiness. */
-export type DrawCtaPoolTone = 'neutral' | 'partial' | 'complete';
-
-export function resolveDrawCtaPoolTone(
-  filled: number,
-  capacity: number,
-): DrawCtaPoolTone {
-  if (capacity <= 0 || filled <= 0) return 'neutral';
-  if (filled < capacity) return 'partial';
-  return 'complete';
-}
 
 /**
  * Draw stage-card CTA — gesture + minimal context.

@@ -33,6 +33,8 @@ import { resolvePlacesN } from './structurePlaces';
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
+const EMPTY_ENTRY_IDS: string[] = [];
+
 export function FluxRuleRow({
   badge,
   badgeTone,
@@ -177,7 +179,7 @@ export function RootEntriesRail({
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
   const ineligible = stage.affectationIneligibleCount ?? 0;
-  const composedIds = stage.affectationEntryIds ?? [];
+  const composedIds = stage.affectationEntryIds ?? EMPTY_ENTRY_IDS;
   const previewNames = stage.affectationPreviewNames ?? [];
   // U1 — Population gauge always covers authoring alimentations (never runtime membership).
   const meterEntries = fromAffectation + fromFeeds;

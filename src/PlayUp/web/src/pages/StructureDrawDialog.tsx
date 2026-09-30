@@ -178,6 +178,8 @@ type StructureDrawDialogProps = {
   stage: StructureStageHubSummary;
 };
 
+const EMPTY_DRAWS: StageDraw[] = [];
+
 /**
  * Work dialog — stage draw executions.
  * Pool stats (like Qual/Prog) · History tile once ≥1 Draw ·
@@ -206,7 +208,7 @@ export function StructureDrawDialog({
 
   const draws = overviewQuery.data?.draws;
   const slots = overviewQuery.data?.slots ?? [];
-  const drawList = draws ?? [];
+  const drawList = draws ?? EMPTY_DRAWS;
   const showHistory = drawList.length >= 1;
   const poolCount = stage.compositionEntryCount ?? 0;
   const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);

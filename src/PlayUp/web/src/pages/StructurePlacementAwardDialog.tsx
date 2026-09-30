@@ -25,7 +25,12 @@ import { ToastToneIcon } from '../design-system/icons/toastIcons';
 import { notify } from '../design-system/toastStore';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
-import type { StructureStageHubSummary, StructureView } from '../types';
+import type {
+  StructureStageHubSummary,
+  StructureView,
+  StageBracketPair,
+  StageRound,
+} from '../types';
 import { EmptyState, LoadingState, MutationError, PendingLabel } from '../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { ordinalRankSuffix } from './structureQualificationDraft';
@@ -51,6 +56,9 @@ type StructurePlacementAwardDialogProps = {
   onClose: () => void;
 };
 
+const EMPTY_ROUNDS: StageRound[] = [];
+const EMPTY_BRACKET_PAIRS: StageBracketPair[] = [];
+
 export function StructurePlacementAwardDialog({
   data,
   stage,
@@ -72,8 +80,8 @@ export function StructurePlacementAwardDialog({
   const [baselineSerialized, setBaselineSerialized] = useState('');
   const [sessionReady, setSessionReady] = useState(false);
 
-  const rounds = overviewQuery.data?.rounds ?? [];
-  const bracketPairs = overviewQuery.data?.bracketPairs ?? [];
+  const rounds = overviewQuery.data?.rounds ?? EMPTY_ROUNDS;
+  const bracketPairs = overviewQuery.data?.bracketPairs ?? EMPTY_BRACKET_PAIRS;
   const sourceOptions = useMemo(
     () =>
       listPlacementSourceOptions(bracketPairs, rounds, (n) =>

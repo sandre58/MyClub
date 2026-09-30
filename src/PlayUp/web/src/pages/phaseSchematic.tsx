@@ -224,7 +224,7 @@ function SlotBox({
 }
 
 /** Structured DS Tooltip body for a schematic case (all formats). */
-export function buildSchematicCaseTooltip(
+function buildSchematicCaseTooltip(
   args: Parameters<typeof buildSchematicCaseTooltipModel>[0],
 ): ReactNode {
   const model = buildSchematicCaseTooltipModel(args);
