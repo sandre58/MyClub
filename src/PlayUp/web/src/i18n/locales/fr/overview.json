@@ -72,8 +72,8 @@
   "progression": {
     "heading": "Prochaine action",
     "codes": {
-      "MaterializeMatches": "Créez les fixtures / matchs pour avancer (championnat / poules).",
-      "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — ouvrez la phase pour configurer les confrontations (SlotA ↔ SlotB).",
+      "MaterializeMatches": "Créez les matchs pour avancer (championnat / groupes).",
+      "MaterializeFromOccupiedSlots": "Des emplacements sont occupés — ouvrez la phase pour configurer les confrontations.",
       "GenerateNextRound": "Générez le prochain tour Swiss (appariements + matchs) — après résultats du tour courant si besoin.",
       "PublishDraw": "Publiez le tirage pour figer la composition.",
       "PublishAndApplyDraw": "Publiez et appliquez le tirage pour peupler la phase.",

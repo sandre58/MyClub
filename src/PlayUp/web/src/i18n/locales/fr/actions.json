@@ -3,7 +3,7 @@
   "ConfigureStructure": "Configurer la structure",
   "ReplaceRegulation": "Modifier le règlement",
   "RenameEntry": "Renommer une équipe",
-  "WithdrawEntry": "Retirer une équipe",
+  "WithdrawEntry": "Faire forfait pour une équipe",
   "DeleteEntry": "Supprimer une équipe",
   "PrepareStage": "Préparer la phase « {{name}} »",
   "StartStage": "Démarrer la phase « {{name}} »",

@@ -2,7 +2,7 @@
   "navigation": {
     "overview": "Overview",
     "structure": "Structure",
-    "matches": "Fixtures & matches",
+    "matches": "Schedule & matches",
     "classements": "Standings",
     "teams": "Teams",
     "regulation": "Regulations"
@@ -38,7 +38,7 @@
     "noContext": "Open a competition to see what needs your attention.",
     "loadError": "Unable to load items needing attention.",
     "emptyTitle": "Nothing to handle for now",
-    "emptyHint": "Items appear here when the Host reports a blocked or pending step.",
+    "emptyHint": "Items appear here when the Host reports a blocked or pending situation.",
     "lede": "Situations that need action.",
     "groupBlocking": "Blocking",
     "groupAttention": "Needs attention"
