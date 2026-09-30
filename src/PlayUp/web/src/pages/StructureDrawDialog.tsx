@@ -548,21 +548,21 @@ export function StructureDrawDialog({
                       <li key={draw.id}>
                         <button
                           type="button"
-                          className="structure-draw-master__card ds-selectable-tile"
+                          className="structure-draw-master__tile ds-selectable-tile"
                           data-selected={isCurrent ? 'true' : 'false'}
                           aria-current={isCurrent ? 'true' : undefined}
                           onClick={() => setSelectedId(draw.id)}
                         >
-                          <span className="structure-draw-master__card-head">
-                            <span className="structure-draw-master__card-title">
-                              <span className="structure-draw-master__card-icon">
+                          <span className="structure-draw-master__tile-head">
+                            <span className="structure-draw-master__tile-title">
+                              <span className="structure-draw-master__tile-icon">
                                 <RandomIcon size="sm" aria-hidden="true" />
                               </span>
-                              <span className="structure-draw-master__card-name">
+                              <span className="structure-draw-master__tile-name">
                                 {execLabel}
                               </span>
                             </span>
-                            <span className="structure-draw-master__card-status">
+                            <span className="structure-draw-master__tile-status">
                               <DrawMasterChipBadge chip={masterChip} />
                             </span>
                           </span>

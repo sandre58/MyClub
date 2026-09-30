@@ -789,10 +789,7 @@ export function RegulationEditorDialog({
                         label={t(`discipline.${type}`)}
                         selected={(form.allowedTypes ?? []).includes(type)}
                         leading={
-                          <ChoiceSwatch
-                            color={CARD_SWATCH[type]}
-                            label={t(`discipline.${type}`)}
-                          />
+                          <ChoiceSwatch color={CARD_SWATCH[type]} />
                         }
                         onChange={() => toggleAllowedType(type)}
                       />

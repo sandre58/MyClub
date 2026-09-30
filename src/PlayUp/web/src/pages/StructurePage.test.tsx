@@ -842,7 +842,7 @@ describe('StructurePage Structure hub', () => {
         .getAllByRole('button')
         .find(
           (button) =>
-            button.classList.contains('structure-topology__card') &&
+            button.classList.contains('structure-topology__tile') &&
             button.textContent?.includes('Barrages') &&
             button.getAttribute('data-selected') === 'true',
         );

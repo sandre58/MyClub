@@ -836,7 +836,7 @@ export function StructureProgressionDialog({
                 return (
                   <li key={intent.id} className="structure-qualification__item">
                     <div
-                      className="structure-qualification__card ds-selectable-tile"
+                      className="structure-qualification__tile ds-selectable-tile"
                       data-selected={isExpanded ? 'true' : 'false'}
                     >
                       <div className="structure-qualification__hit">

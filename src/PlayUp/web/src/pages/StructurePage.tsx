@@ -409,13 +409,13 @@ function TopologyPanel({
               <li key={stage.stageId} className="structure-topology__item">
                 <button
                   type="button"
-                  className="structure-topology__card ds-selectable-tile"
+                  className="structure-topology__tile ds-selectable-tile"
                   data-selected={selected ? 'true' : 'false'}
                   aria-current={selected ? 'true' : undefined}
                   onClick={() => onSelectStage(stage.stageId)}
                 >
-                  <span className="structure-topology__card-head">
-                    <span className="structure-topology__card-title">
+                  <span className="structure-topology__tile-head">
+                    <span className="structure-topology__tile-title">
                       <Tooltip content={formatLabel}>
                         <span className="structure-topology__format-icon">
                           <StageFormatGlyph
@@ -424,11 +424,11 @@ function TopologyPanel({
                           />
                         </span>
                       </Tooltip>
-                      <span className="structure-topology__card-name">
+                      <span className="structure-topology__tile-name">
                         {stage.name}
                       </span>
                     </span>
-                    <span className="structure-topology__card-status">
+                    <span className="structure-topology__tile-status">
                       <StageStatusBadge
                         status={stage.status}
                         density="compact"
@@ -446,7 +446,7 @@ function TopologyPanel({
                     </span>
                   </span>
 
-                  <span className="structure-topology__card-facts">
+                  <span className="structure-topology__tile-facts">
                     {facts.map((fact) => (
                       <span
                         key={fact.id}

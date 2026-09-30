@@ -748,10 +748,7 @@ function RosterGroup({
                 : t('roster.readOnly');
             return (
               <li key={member.memberId}>
-                <div
-                  className="teams-member"
-                  data-selected={selected ? 'true' : 'false'}
-                >
+                <div className="teams-member">
                   {canMutate && (
                     <label className="teams-member__check">
                       <input

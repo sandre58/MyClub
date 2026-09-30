@@ -47,7 +47,7 @@ Do **not** invent app-level `hooks/`, `services/`, `features/`, or `components/`
 | DS foundations | `.ds-*`                                                               |
 | Page / domain  | domain prefix (`structure-`, `teams-`, `overview-`, `regulation-`, …) |
 
-Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card farm” level. Tile/card families are documented separately in [design-system.md](./design-system.md) (Phase 4).
+Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card farm” level. Tile families **A** (ChoiceTile) / **B** (`.ds-selectable-tile`) / **C** (panel) — see [design-system.md](./design-system.md) § Surfaces / tiles / panels.
 
 ## i18n keys (naming only)
 

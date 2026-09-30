@@ -454,7 +454,7 @@ export function LabForm() {
             <ChoiceTile
               label="Jaune"
               selected={cards.yellow}
-              leading={<ChoiceSwatch color="#F5C518" label="Jaune" />}
+              leading={<ChoiceSwatch color="#F5C518" />}
               onChange={(selected) =>
                 setCards((prev) => ({ ...prev, yellow: selected }))
               }
@@ -462,7 +462,7 @@ export function LabForm() {
             <ChoiceTile
               label="Rouge"
               selected={cards.red}
-              leading={<ChoiceSwatch color="#E11D48" label="Rouge" />}
+              leading={<ChoiceSwatch color="#E11D48" />}
               onChange={(selected) =>
                 setCards((prev) => ({ ...prev, red: selected }))
               }
@@ -470,7 +470,7 @@ export function LabForm() {
             <ChoiceTile
               label="Blanc"
               selected={cards.white}
-              leading={<ChoiceSwatch color="#F8FAFC" label="Blanc" />}
+              leading={<ChoiceSwatch color="#F8FAFC" />}
               onChange={(selected) =>
                 setCards((prev) => ({ ...prev, white: selected }))
               }
