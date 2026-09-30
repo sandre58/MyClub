@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   fetchStageOverview,
   fetchStageSchematic,
@@ -946,6 +947,38 @@ export function StructurePhaseFiche({
                                   ) : showCreateBlockedCaption ? (
                                     <span className="structure-draw-cta__caption">
                                       {createBlockedShort}
+                                      {createBlockedReason ===
+                                      'belowMinimumTeams' ? (
+                                        <>
+                                          {' '}
+                                          <Link
+                                            className="ds-text-link"
+                                            to={`/competitions/${data.competitionId}/teams`}
+                                          >
+                                            {t(
+                                              'fiche.drawWorkflow.createBlocked.echoTeams',
+                                            )}
+                                          </Link>
+                                        </>
+                                      ) : null}
+                                      {createBlockedReason === 'missingPots' &&
+                                      canEditDraw ? (
+                                        <>
+                                          {' '}
+                                          <button
+                                            type="button"
+                                            className="ds-text-link"
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              setEdit('tirage-params');
+                                            }}
+                                          >
+                                            {t(
+                                              'fiche.drawWorkflow.createBlocked.echoDrawParams',
+                                            )}
+                                          </button>
+                                        </>
+                                      ) : null}
                                     </span>
                                   ) : null
                                 }
@@ -980,6 +1013,38 @@ export function StructurePhaseFiche({
                                     role="status"
                                   >
                                     {createBlockedShort}
+                                    {createBlockedReason ===
+                                    'belowMinimumTeams' ? (
+                                      <>
+                                        {' '}
+                                        <Link
+                                          className="ds-text-link"
+                                          to={`/competitions/${data.competitionId}/teams`}
+                                        >
+                                          {t(
+                                            'fiche.drawWorkflow.createBlocked.echoTeams',
+                                          )}
+                                        </Link>
+                                      </>
+                                    ) : null}
+                                    {createBlockedReason === 'missingPots' &&
+                                    canEditDraw ? (
+                                      <>
+                                        {' '}
+                                        <button
+                                          type="button"
+                                          className="ds-text-link"
+                                          onClick={(event) => {
+                                            event.stopPropagation();
+                                            setEdit('tirage-params');
+                                          }}
+                                        >
+                                          {t(
+                                            'fiche.drawWorkflow.createBlocked.echoDrawParams',
+                                          )}
+                                        </button>
+                                      </>
+                                    ) : null}
                                   </span>
                                 ) : null}
                               </>
@@ -1357,6 +1422,7 @@ export function StructurePhaseFiche({
         stage={stage}
         open={drawWorkflowOpen}
         onClose={() => setDrawWorkflowOpen(false)}
+        onConfigureDrawParams={() => setEdit('tirage-params')}
       />
       <StructureCompositionDialog
         open={composeOpen}

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
 import { attentionTargetTypeLabel } from '../i18n/enumLabels';
 import { situationDescription, situationTitle } from '../i18n/situationCopy';
-import { situationHref } from './situationRoutes';
+import { situationPresentation } from './functionalProblemPresentation';
 import type { OverviewSituation } from '../types';
 
 type AttentionSituationRowProps = {
@@ -16,13 +16,15 @@ type AttentionSituationRowProps = {
  * Distinct from DS `AttentionRow` (D9 count+icon Lab recipe) — do not merge.
  * Hover A via `.ds-interactive-row` — no rest fill, no pills.
  * Meta: prefer situation description when available; else targetType label.
+ * Href via Phase 1 `situationPresentation` (same identity / SoT as Overview).
  */
 export function AttentionSituationRow({
   item,
   competitionId,
   onNavigate,
 }: AttentionSituationRowProps) {
-  const href = situationHref(item, competitionId);
+  const presentation = situationPresentation(item, competitionId);
+  const href = presentation.sotHref;
   const isBlocking = item.nature === 'Blocking';
   const description = situationDescription(item.source, item.params);
   const targetLabel = item.targetType
