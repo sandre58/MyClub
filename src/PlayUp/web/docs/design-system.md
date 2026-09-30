@@ -21,7 +21,7 @@ Operational SoT for `src/design-system/`. Product intent: Notion **Identité vis
 
 **Forbidden in `design-system/`:** `api/` calls, Media upload, page/route logic, feature i18n namespaces.
 
-Feature adapters (e.g. logo upload + Media) live under `pages/` (see `pages/LogoMediaField.tsx`).
+Feature adapters (e.g. logo upload + Media) live under `pages/` (see `pages/teams/LogoMediaField.tsx`).
 
 Do **not** create `brand/`, `ui/`, or `design-system/product/` folders without an explicit architecture decision.
 
@@ -174,7 +174,7 @@ Product forms (e.g. Teams identity dialogs) use:
 `Field`, `TextInput`, `InputNumber`, `Select`, `Upload`, `ColorPicker`, `Alert`,
 `Switch`, `SwitchPanel`, `ChoiceTile`, `ToggleButtonGroup`.
 
-Logo identity uses the DS **Upload** picture-card via `pages/LogoMediaField` (feature adapter). Do not reintroduce a crest+file-row chrome in product forms.
+Logo identity uses the DS **Upload** picture-card via `pages/teams/LogoMediaField` (feature adapter). Do not reintroduce a crest+file-row chrome in product forms.
 
 Do not reintroduce raw `<input>` / `<select>` chrome for those flows.
 

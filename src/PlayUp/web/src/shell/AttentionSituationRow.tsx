@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
 import { attentionTargetTypeLabel } from '../i18n/enumLabels';
 import { situationDescription, situationTitle } from '../i18n/situationCopy';
-import { situationHref } from '../pages/overviewNavigation';
+import { situationHref } from '../pages/competition/overviewNavigation';
 import type { OverviewSituation } from '../types';
 
 type AttentionSituationRowProps = {

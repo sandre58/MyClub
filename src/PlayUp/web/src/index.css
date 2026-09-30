@@ -4,7 +4,7 @@
  * Visual tokens: design-system/tokens/* (imported below).
  * This file keeps global reset + shared admin chrome classes only —
  * no concurrent spacing / radius / type / color ladder.
- * Stage layout helpers live in pages/StagePage.css.
+ * Stage layout helpers live in pages/stage/StagePage.css.
  */
 
 @import './design-system/palettes/slate.css';

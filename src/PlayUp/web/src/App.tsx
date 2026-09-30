@@ -2,17 +2,17 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { LoadingState } from './ui';
-import { CompetitionOverviewPage } from './pages/CompetitionOverviewPage';
-import { ClassementsPage } from './pages/ClassementsPage';
+import { CompetitionOverviewPage } from './pages/competition/CompetitionOverviewPage';
+import { ClassementsPage } from './pages/classements/ClassementsPage';
 import { HomePage } from './pages/HomePage';
-import { MatchHubPage } from './pages/MatchHubPage';
-import { MatchPage } from './pages/MatchPage';
+import { MatchHubPage } from './pages/match/MatchHubPage';
+import { MatchPage } from './pages/match/MatchPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { StructurePage } from './pages/StructurePage';
-import { StageMatchesPage } from './pages/StageMatchesPage';
-import { StagePage } from './pages/StagePage';
-import { RegulationPage } from './pages/RegulationPage';
-import { TeamsPage } from './pages/TeamsPage';
+import { StructurePage } from './pages/structure/StructurePage';
+import { StageMatchesPage } from './pages/stage/StageMatchesPage';
+import { StagePage } from './pages/stage/StagePage';
+import { RegulationPage } from './pages/regulation/RegulationPage';
+import { TeamsPage } from './pages/teams/TeamsPage';
 
 const FoundationsPlayground = lazy(async () => {
   const module = await import('./dev/FoundationsPlayground');
