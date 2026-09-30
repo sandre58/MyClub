@@ -793,6 +793,7 @@ function readinessStatusNote(
   const headerBlockers = blockers.filter(
     (code) => code !== 'StructureGraphInvalid',
   );
+  const showGraphEcho = blockers.includes('StructureGraphInvalid');
   const incomplete = blockers.length > 0;
   const readyToMaterialize = readiness.readyForMaterialization;
   const readyNext =
@@ -803,6 +804,7 @@ function readinessStatusNote(
       <ReadinessNotReadyStatus
         competitionId={data.competitionId}
         headerBlockers={headerBlockers}
+        showGraphEcho={showGraphEcho}
         onConfigure={onConfigure}
       />
     );
@@ -834,10 +836,13 @@ function readinessStatusNote(
 function ReadinessNotReadyStatus({
   competitionId,
   headerBlockers,
+  showGraphEcho,
   onConfigure,
 }: {
   competitionId: string;
   headerBlockers: string[];
+  /** Short echo only — detail SoT remains Topology (D5). */
+  showGraphEcho: boolean;
   onConfigure: () => void;
 }) {
   const { t } = useTranslation('structure');
@@ -851,7 +856,7 @@ function ReadinessNotReadyStatus({
         <OverviewAttentionIcon size="sm" aria-hidden="true" />
         <span>{t('readiness.structureNotReady')}</span>
       </p>
-      {headerBlockers.length > 0 && (
+      {(headerBlockers.length > 0 || showGraphEcho) && (
         <ul
           className="structure-status__actions"
           aria-labelledby="readiness-heading"
@@ -865,6 +870,14 @@ function ReadinessNotReadyStatus({
               />
             </li>
           ))}
+          {showGraphEcho ? (
+            <li key="StructureGraphInvalid-echo">
+              <a className="structure-status__action" href="#topology">
+                {t('readiness.echoGraphInvalid')}
+                <span aria-hidden="true">→</span>
+              </a>
+            </li>
+          ) : null}
         </ul>
       )}
     </div>
@@ -909,11 +922,16 @@ function IncompleteBlockerAction({
   competitionId: string;
   onConfigure: () => void;
 }) {
+  const { t } = useTranslation('structure');
   const presentation = functionalProblemPresentation({
     source: code,
     competitionId,
   });
-  const label = attentionSourceLabel(code);
+  // Short echo for déficit (SoT = Équipes) — avoid repeating Teams plateau prose.
+  const label =
+    presentation.cta?.actionCode === 'AddEntry'
+      ? t('readiness.echoInsufficientParticipants')
+      : attentionSourceLabel(code);
 
   if (presentation.sotHref && presentation.cta?.actionCode === 'AddEntry') {
     return (

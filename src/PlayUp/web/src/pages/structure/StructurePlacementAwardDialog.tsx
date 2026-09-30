@@ -242,7 +242,7 @@ export function StructurePlacementAwardDialog({
                 <MutationError error={mutation.error} />
               ) : null}
               {saveBlockedReason ? (
-                <Alert tone="danger" role="alert">
+                <Alert tone="warning" role="status">
                   <p className="structure-qualification__hint-line">
                     {saveBlockedReason}
                   </p>

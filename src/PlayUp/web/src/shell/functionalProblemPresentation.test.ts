@@ -86,7 +86,27 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toContain('stage=stage-9');
   });
 
-  it('situationPresentation forwards Overview actionCode', () => {
+  it('situationPresentation forwards Overview actionCode and matchId', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'ProgressionPending',
+        nature: 'Blocking',
+        targetType: 'Fixture',
+        targetId: 'fix-1',
+        matchId: 'match-9',
+        actionable: true,
+        actionCode: 'ApplyProgression',
+        impactCode: 'BlocksProgression',
+        params: {},
+      },
+      'comp-1',
+    );
+
+    expect(presentation.cta?.actionCode).toBe('ApplyProgression');
+    expect(presentation.sotHref).toBe('/matches/match-9');
+  });
+
+  it('situationPresentation maps StructureGraphInvalid to Structure SoT', () => {
     const presentation = situationPresentation(
       {
         source: 'StructureGraphInvalid',

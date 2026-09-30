@@ -336,7 +336,7 @@ describe('StructurePage Structure hub', () => {
       screen.queryByRole('button', { name: /Modifier le règlement/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /Participants insuffisants/i }),
+      screen.getByRole('link', { name: /Équipes à compléter/i }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/teams`);
   });
 
@@ -920,24 +920,28 @@ describe('StructurePage Structure hub', () => {
 
     expect(await screen.findByText(/Structure non prête/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Règles de pots manquantes/i }),
+      screen.getByRole('button', { name: /Pots de tirage manquants/i }),
     ).toBeInTheDocument();
+    // Graph detail stays on Topology; PageHead only gets a short echo (D5 / anti-triple).
     expect(
-      screen.queryByText(/Graphe de structure invalide/i),
+      screen.queryByRole('button', { name: /Liaisons entre phases/i }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Liaisons entre phases à corriger/i }),
+    ).toHaveAttribute('href', '#topology');
     expect(screen.queryByText(/points à lever/i)).not.toBeInTheDocument();
 
     const topology = screen.getByRole('region', {
       name: /Topologie/i,
     });
     expect(
-      within(topology).getByText(/^1 anomalie structurelle$/i),
+      within(topology).getByText(/^1 liaison à corriger$/i),
     ).toBeInTheDocument();
     expect(
-      within(topology).getByText(/Destination de qualification absente/i),
+      within(topology).getByText(/Destination de qualification introuvable/i),
     ).toBeInTheDocument();
     expect(
-      within(topology).getByText(/^Anomalie structurelle$/i),
+      within(topology).getByText(/^Liaison entre phases à corriger$/i),
     ).toBeInTheDocument();
     expect(
       within(topology).queryByText(/Affectation par tirage/i),
@@ -955,7 +959,7 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
 
     await user.click(
-      within(topology).getByRole('button', { name: /Corriger la relation/i }),
+      within(topology).getByRole('button', { name: /Ouvrir l’éditeur/i }),
     );
 
     expect(
@@ -1168,7 +1172,7 @@ describe('StructurePage Structure hub', () => {
 
     expect(await screen.findByText(/Structure non prête/i)).toBeInTheDocument();
     await user.click(
-      screen.getByRole('button', { name: /Structure manquante/i }),
+      screen.getByRole('button', { name: /Organisation de phase manquante/i }),
     );
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });

@@ -33,10 +33,10 @@
     "edgeGeneric": "Enchaînement",
     "multiDestinations_one": "{{count}} destination",
     "multiDestinations_other": "{{count}} destinations",
-    "structuralAnomaly_one": "{{count}} anomalie structurelle",
-    "structuralAnomaly_other": "{{count}} anomalies structurelles",
-    "phaseStructuralAnomaly": "Anomalie structurelle",
-    "fixRelation": "Corriger la relation",
+    "structuralAnomaly_one": "{{count}} liaison à corriger",
+    "structuralAnomaly_other": "{{count}} liaisons à corriger",
+    "phaseStructuralAnomaly": "Liaison entre phases à corriger",
+    "fixRelation": "Ouvrir l’éditeur",
     "drawExecution": {
       "toLaunch": "Tirage à lancer",
       "toLaunchTooltip": "Mécanisme engagé — aucune exécution active",
@@ -54,6 +54,8 @@
   },
   "readiness": {
     "structureNotReady": "Structure non prête",
+    "echoInsufficientParticipants": "Équipes à compléter",
+    "echoGraphInvalid": "Liaisons entre phases à corriger",
     "readyForNextSlice": "Prêt pour la suite",
     "readyForMaterialization": "La compétition est prête à créer les matchs",
     "readyForCupSkeleton": "La coupe est prête pour le squelette de confrontations (tirage)"
@@ -183,13 +185,13 @@
     "removePhaseImpact": "Impact : {{qualification}} chemin(s) de qualification et {{progression}} chemin(s) de progression pointant vers cette phase seront retirés.",
     "removePhaseSubmit": "Supprimer",
     "issues": {
-      "DanglingQualificationTarget": "Destination de qualification absente",
-      "DanglingProgressionTarget": "Destination de progression absente",
-      "MissingQualificationDestinationSlot": "Emplacement de qualification manquant",
+      "DanglingQualificationTarget": "Destination de qualification introuvable",
+      "DanglingProgressionTarget": "Destination de progression introuvable",
+      "MissingQualificationDestinationSlot": "Place de qualification manquante",
       "MissingQualificationDestinationGroup": "Groupe de qualification manquant",
-      "MissingProgressionDestinationSlot": "Emplacement de progression manquant",
+      "MissingProgressionDestinationSlot": "Place de progression manquante",
       "MissingProgressionDestinationGroup": "Groupe de progression manquant",
-      "SlotFeedsInvalid": "Alimentations d’emplacements en conflit"
+      "SlotFeedsInvalid": "Plusieurs sources alimentent la même place"
     }
   },
   "fiche": {
@@ -236,22 +238,22 @@
           "emptyPool": "Ajoutez d’abord les équipes de cette phase.",
           "emptyPoolUpstream": "Attendez que l’amont fournisse les équipes.",
           "belowMinimumTeams": "Minimum réglementaire non atteint.",
-          "countMismatch": "Équipes ≠ places de la phase.",
-          "directAssignment": "Affectation(s) directe(s) en place.",
+          "countMismatch": "Nombre d’équipes différent du nombre de places.",
+          "directAssignment": "Des places ont encore une affectation directe.",
           "occupiedSlots": "Des placements occupent encore des places.",
           "missingPots": "Pots de tirage non configurés.",
           "groupShape": "Équipes ≠ pots × groupes."
         },
         "detail": {
-          "emptyPool": "Les équipes de cette phase doivent d’abord être ajoutées avant de lancer un tirage.",
-          "belowMinimumTeams": "Le nombre d’équipes est inférieur au minimum réglementaire de la compétition.",
-          "countMismatch": "Le tirage nécessite {{places}} équipes pour {{places}} places. La composition actuelle en contient {{count}}.",
-          "directAssignment": "Une ou plusieurs places ont une affectation directe. Libérez ces affectations avant de lancer un nouveau tirage.",
-          "occupiedSlots": "Des placements existent encore. Libérez-les avant de lancer un nouveau tirage.",
-          "missingPots": "Configurez les pots du tirage (Paramètres) avant de générer.",
-          "groupShape": "Le nombre d’équipes doit égaler pots × groupes pour que la phase soit tirable."
+          "emptyPool": "Ajoutez d’abord les équipes de cette phase avant de lancer un tirage.",
+          "belowMinimumTeams": "Le nombre d’équipes est inférieur au minimum du règlement.",
+          "countMismatch": "Il faut {{places}} équipes pour {{places}} places ; la composition en a {{count}}.",
+          "directAssignment": "Libérez les affectations directes avant de lancer un nouveau tirage.",
+          "occupiedSlots": "Libérez les placements existants avant de lancer un nouveau tirage.",
+          "missingPots": "Configurez les pots (Paramètres) avant de générer le tirage.",
+          "groupShape": "Le nombre d’équipes doit égaler pots × groupes."
         },
-        "echoTeams": "Ajouter des équipes",
+        "echoTeams": "Ouvrir les équipes",
         "echoDrawParams": "Configurer les pots"
       },
       "creating": "Tirage en cours…",
