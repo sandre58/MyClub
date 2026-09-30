@@ -35,7 +35,7 @@ internal static class ScenarioOrchestration
         DateTimeOffset? scheduledEnd = null,
         CancellationToken cancellationToken = default)
     {
-        // Lot D: birth via TestKit (RegulationPacks + optional deterministic id); DevSeed adds presentation / logos.
+        // Birth via TestKit (RegulationPacks + optional deterministic id); DevSeed adds presentation / logos.
         var situation = TestCompetition.Create(
             name,
             context.Clock,

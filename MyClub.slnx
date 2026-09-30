@@ -5,6 +5,8 @@
     <Project Path="src/PlayUp/MyClub.PlayUp.Application/MyClub.PlayUp.Application.csproj" />
     <Project Path="src/PlayUp/MyClub.PlayUp.Infrastructure/MyClub.PlayUp.Infrastructure.csproj" />
     <Project Path="src/PlayUp/MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/PlayUp/Support/">
     <Project Path="src/PlayUp/MyClub.PlayUp.TestKit/MyClub.PlayUp.TestKit.csproj" />
   </Folder>
   <Folder Name="/src/PlayUp/Development/">

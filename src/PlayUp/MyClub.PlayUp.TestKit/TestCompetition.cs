@@ -15,12 +15,13 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.TestKit;
 
 /// <summary>
-/// In-memory competition situation for automated tests. Orchestrates Application use cases only.
+/// In-memory competition situation for automated tests and DevSeed.
 /// </summary>
 /// <remarks>
-/// Lot B–F surface: create, teams, structure, multi-stage, Qual/Prog paths, resolved Slot Draw,
-/// competition/stage lifecycle. Optional deterministic ids (DevSeed). Richer helpers emerge from
-/// later migrations — do not invent a fluent DSL ahead of need.
+/// Prefers Application use cases for authoring and gated transitions. Explicit Domain shortcuts
+/// exist where tests need a known start state without replaying the full Host publish path —
+/// see <see cref="CreateResolvedSlotDraw"/> and <see cref="AddKnockoutStage"/>.
+/// Optional deterministic ids support DevSeed persist.
 /// </remarks>
 public sealed class TestCompetition
 {
@@ -193,8 +194,13 @@ public sealed class TestCompetition
     }
 
     /// <summary>
-    /// Adds a knockout stage (round + slots + optional bracket pairs) and tracks it.
+    /// Adds a knockout topology via Domain primitives (round + slots + optional bracket pairs).
     /// </summary>
+    /// <remarks>
+    /// Explicit start-state shortcut for multi-stage / cup fixtures. Prefer
+    /// <see cref="WithStructure"/> with <see cref="StructureIntent.Cup"/> when seeding a primary
+    /// stage through the Application structure path.
+    /// </remarks>
     /// <param name="name">Stage display name.</param>
     /// <param name="roundName">Entry round name.</param>
     /// <param name="slotKeys">Slot keys in order.</param>
@@ -258,8 +264,12 @@ public sealed class TestCompetition
     }
 
     /// <summary>
-    /// Creates a Slot Draw in Draft with a deterministic Resolved resolution (no Publish/Apply).
+    /// Seeds a Slot Draw already in Draft with a deterministic Resolved resolution.
     /// </summary>
+    /// <remarks>
+    /// Domain shortcut for Publish-first Host / DevSeed fixtures that need a known placement
+    /// without replaying Publish → Apply. Does not call Draw publish or apply use cases.
+    /// </remarks>
     /// <param name="stage">Stage receiving the draw.</param>
     /// <param name="pool">Entry pool (ordered to match <paramref name="slotKeys"/>).</param>
     /// <param name="slotKeys">Target slot keys.</param>
@@ -309,32 +319,32 @@ public sealed class TestCompetition
     }
 
     /// <summary>
-    /// Calls <see cref="Stage.Prepare"/> on the primary stage.
+    /// Prepares the primary stage via <see cref="PrepareStage"/> (gates + WhoFeeds + Domain Prepare).
     /// </summary>
     /// <returns>This situation.</returns>
     public TestCompetition PreparePrimaryStage()
     {
-        EnsurePrimaryStage().Prepare(Clock);
+        PrepareStage.Execute(EnsurePrimaryStage(), Stages, Clock);
         return this;
     }
 
     /// <summary>
-    /// Calls <see cref="Stage.Start"/> on the primary stage.
+    /// Starts the primary stage via <see cref="StartStage"/>.
     /// </summary>
     /// <returns>This situation.</returns>
     public TestCompetition StartPrimaryStage()
     {
-        EnsurePrimaryStage().Start(Clock);
+        StartStage.Execute(EnsurePrimaryStage(), Clock);
         return this;
     }
 
     /// <summary>
-    /// Calls <see cref="Competition.Prepare"/>.
+    /// Prepares the competition via the Application prepare use case.
     /// </summary>
     /// <returns>This situation.</returns>
     public TestCompetition PrepareCompetition()
     {
-        Competition.Prepare(Clock);
+        MyClub.PlayUp.Application.Competitions.PrepareCompetition.Execute(Competition, Clock);
         return this;
     }
 
