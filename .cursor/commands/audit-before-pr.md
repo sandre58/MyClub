@@ -15,7 +15,7 @@ Assist preparing a pull request. This is **not** a second CI — recommend the r
 6. If Host HTTP contracts or SPA types change: point at `docs/guides/http-api-contract.md` and flag contract drift.
 7. If EF migrations are added/changed: point at `docs/guides/local-persistence.md` and note migration review.
 8. Tests: are behaviour/regression tests present or missing for the change? Prefer TestKit for Domain/Application situations.
-9. Summarize: ready / not ready, with a short checklist and exact commands to run. Fill or draft PR description aligned with `.github/PULL_REQUEST_TEMPLATE.md` if asked.
+9. Summarize: ready / not ready, with a short checklist and exact commands to run. If asked to create or draft a PR: **English**, professional title and body; fill `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ## Do not
 
