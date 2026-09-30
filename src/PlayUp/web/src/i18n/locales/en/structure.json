@@ -185,7 +185,11 @@
     "issues": {
       "DanglingQualificationTarget": "Missing qualification destination",
       "DanglingProgressionTarget": "Missing progression destination",
-      "MissingProgressionDestinationSlot": "Missing progression destination slot"
+      "MissingQualificationDestinationSlot": "Missing qualification destination slot",
+      "MissingQualificationDestinationGroup": "Missing qualification destination group",
+      "MissingProgressionDestinationSlot": "Missing progression destination slot",
+      "MissingProgressionDestinationGroup": "Missing progression destination group",
+      "SlotFeedsInvalid": "Conflicting slot feeds"
     }
   },
   "fiche": {

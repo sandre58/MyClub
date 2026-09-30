@@ -185,7 +185,11 @@
     "issues": {
       "DanglingQualificationTarget": "Destination de qualification absente",
       "DanglingProgressionTarget": "Destination de progression absente",
-      "MissingProgressionDestinationSlot": "Emplacement de progression manquant"
+      "MissingQualificationDestinationSlot": "Emplacement de qualification manquant",
+      "MissingQualificationDestinationGroup": "Groupe de qualification manquant",
+      "MissingProgressionDestinationSlot": "Emplacement de progression manquant",
+      "MissingProgressionDestinationGroup": "Groupe de progression manquant",
+      "SlotFeedsInvalid": "Alimentations d’emplacements en conflit"
     }
   },
   "fiche": {
