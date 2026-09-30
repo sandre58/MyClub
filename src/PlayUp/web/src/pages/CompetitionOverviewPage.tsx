@@ -468,9 +468,6 @@ function useOverviewActionRunner(data: OverviewView) {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.attention(data.competitionId),
       });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.workspace(data.competitionId),
-      });
 
       if (action.code === 'MaterializeMatches') {
         const materialize = result as MaterializeResult;

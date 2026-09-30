@@ -1065,7 +1065,7 @@ function StructureEditorDialog({
     >
       <form
         id={formId}
-        className="form"
+        className="ds-form"
         onSubmit={(event: SubmitEvent) => {
           event.preventDefault();
           if (mutation.isPending) {
@@ -1129,7 +1129,7 @@ function StructureEditorDialog({
             </label>
           )}
           {format === 'Groups' && (
-            <div className="form-row">
+            <div className="ds-form--inline">
               <label className="field">
                 {t('structure.groupCount')}
                 <input

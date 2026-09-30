@@ -99,9 +99,6 @@ async function invalidateAfterMatchMutation(
       queryKey: queryKeys.competitions.overview(data.competitionId),
     }),
     queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.workspace(data.competitionId),
-    }),
-    queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.attention(data.competitionId),
     }),
     queryClient.invalidateQueries({

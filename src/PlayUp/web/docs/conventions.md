@@ -81,4 +81,4 @@ Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card
 - Implementation lives under `src/api/*` and `src/types/*` by Host domain (competitions, entries, stages, matches, draws, …).
 - One HTTP path only (`src/api/http.ts`). No OpenAPI codegen in this phase.
 - Dead Stage construction wrappers removed when unused after Phase 1 (`addStageMatchday` / group / round / slot, `replaceStageMatchGenerationFormat`, `replaceStageSwissSettings`).
-- `queryKeys.competitions.workspace` kept (invalidate-only; no SPA reader yet).
+- `queryKeys.competitions.workspace` removed (invalidate-only no-op; SPA has no GET workspace reader — Host route + `WorkspaceSummary` create response remain).

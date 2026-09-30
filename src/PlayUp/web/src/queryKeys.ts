@@ -6,9 +6,6 @@ export const queryKeys = {
   competitions: {
     all: ['competitions'] as const,
     detail: (competitionId: string) => ['competitions', competitionId] as const,
-    /** Invalidate-only today — no SPA useQuery/fetch for GET workspace (Host still has the route). */
-    workspace: (competitionId: string) =>
-      ['competitions', competitionId, 'workspace'] as const,
     overview: (competitionId: string) =>
       ['competitions', competitionId, 'overview'] as const,
     structure: (competitionId: string) =>
