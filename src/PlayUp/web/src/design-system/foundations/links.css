@@ -13,6 +13,14 @@
   text-decoration: none;
 }
 
+button.ds-text-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
 .ds-root a.ds-text-link,
 .ds-root a.ds-text-link:hover {
   color: var(--color-info);

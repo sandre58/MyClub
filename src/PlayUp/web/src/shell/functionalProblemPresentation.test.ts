@@ -45,19 +45,30 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toBe('/competitions/comp-1/structure');
   });
 
-  it('maps draw create blocks never-danger (info|warning)', () => {
-    expect(
-      functionalProblemPresentation({
-        source: 'emptyPool',
-        competitionId: 'comp-1',
-      }).tone,
-    ).toBe('info');
-    expect(
-      functionalProblemPresentation({
-        source: 'missingPots',
-        competitionId: 'comp-1',
-      }).tone,
-    ).toBe('warning');
+  it('maps draw create blocks never-danger (info|warning) with Structure fiche i18n', () => {
+    const emptyPool = functionalProblemPresentation({
+      source: 'emptyPool',
+      competitionId: 'comp-1',
+    });
+    expect(emptyPool.tone).toBe('info');
+    expect(emptyPool.titleNs).toBe('structure');
+    expect(emptyPool.titleKey).toContain('createBlocked.short.emptyPool');
+
+    const missingPots = functionalProblemPresentation({
+      source: 'missingPots',
+      competitionId: 'comp-1',
+      stageId: 'stage-1',
+    });
+    expect(missingPots.tone).toBe('warning');
+    expect(missingPots.cta?.actionCode).toBe('ConfigureDrawParams');
+
+    const belowMin = functionalProblemPresentation({
+      source: 'belowMinimumTeams',
+      competitionId: 'comp-1',
+    });
+    expect(belowMin.tone).toBe('warning');
+    expect(belowMin.sotHref).toBe('/competitions/comp-1/teams');
+    expect(belowMin.cta?.actionCode).toBe('AddEntry');
   });
 
   it('maps structureIssues children via structureIssuePresentation', () => {

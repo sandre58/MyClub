@@ -221,14 +221,52 @@ export function ErrorState({ error }: { error: unknown }) {
 }
 
 /** Dialog footer status failure of a write — next to the save actions. */
-export function MutationError({ error }: { error: unknown }) {
+export function MutationError({
+  error,
+  sotHref,
+}: {
+  error: unknown;
+  /** When the failure reveals a persistent Structure problem, link to its SoT. */
+  sotHref?: string | null;
+}) {
   const { t } = useTranslation('common');
 
   return (
     <Alert tone="danger" role="alert">
-      {formatError(error, t)}
+      <span>{formatError(error, t)}</span>
+      {sotHref ? (
+        <>
+          {' '}
+          <Link className="ds-text-link" to={sotHref}>
+            {t('fixOnStructure')}
+          </Link>
+        </>
+      ) : null}
     </Alert>
   );
+}
+
+/** Application codes that encode persistent Structure graph / feed state (Q6). */
+const PERSISTENT_STRUCTURE_MUTATION_CODES = new Set([
+  'Application.SlotFeedsInvalid',
+  'Application.DanglingFeedTarget',
+]);
+
+/**
+ * When a mutation fails because of persistent Structure state, point at Structure SoT.
+ * Footer remains the event — Structure owns the lasting signal.
+ */
+export function persistentStructureMutationSotHref(
+  error: unknown,
+  competitionId: string | null | undefined,
+): string | null {
+  if (!competitionId || !(error instanceof ApiError) || !error.code) {
+    return null;
+  }
+  if (!PERSISTENT_STRUCTURE_MUTATION_CODES.has(error.code)) {
+    return null;
+  }
+  return `/competitions/${competitionId}/structure`;
 }
 
 /**

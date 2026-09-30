@@ -50,6 +50,7 @@ import {
   LoadingState,
   MutationError,
   PendingLabel,
+  persistentStructureMutationSotHref,
 } from '../../ui';
 import {
   StructureProgressionIntentEditor,
@@ -632,7 +633,13 @@ export function StructureProgressionDialog({
           saveBlockedReason ? (
             <>
               {mutation.isError ? (
-                <MutationError error={mutation.error} />
+                <MutationError
+                  error={mutation.error}
+                  sotHref={persistentStructureMutationSotHref(
+                    mutation.error,
+                    data.competitionId,
+                  )}
+                />
               ) : null}
               {saveBlockedReason ? (
                 <Alert tone="danger" role="alert">
