@@ -44,7 +44,6 @@
   color: inherit;
   text-align: inherit;
   appearance: none;
-  -webkit-appearance: none;
 }
 
 .schematic-slot--interactive:focus-visible {
