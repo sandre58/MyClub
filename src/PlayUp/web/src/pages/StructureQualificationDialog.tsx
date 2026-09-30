@@ -9,7 +9,6 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { ListPlus, ListMinus, Trash2 } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -24,7 +23,6 @@ import { Field } from '../design-system/components/Field';
 import { InputNumber } from '../design-system/components/InputNumber';
 import { Select } from '../design-system/components/Select';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { LucideIcon } from '../design-system/icons/Icon';
 import { ToastToneIcon } from '../design-system/icons/toastIcons';
 import {
   ChampionshipFormatIcon,
@@ -32,11 +30,14 @@ import {
   CupFormatIcon,
   EmptySelectionIcon,
   GroupsFormatIcon,
+  ListMinusIcon,
+  ListPlusIcon,
   OverviewAttentionIcon,
   PlusIcon,
   StandingRulesIcon,
   StructureIcon,
   SwissFormatIcon,
+  TrashIcon,
 } from '../design-system/icons/contentIcons';
 import {
   ChevronDownIcon,
@@ -747,7 +748,7 @@ export function StructureQualificationDialog({
                         removeIntent(intent.id);
                       }}
                     >
-                      <LucideIcon icon={Trash2} size="sm" />
+                      <TrashIcon size="sm" />
                     </button>
                   </div>
 
@@ -866,7 +867,7 @@ function PositionFields({
                   onChange({ ...draft, positionTo: draft.positionFrom })
                 }
               >
-                <LucideIcon icon={ListMinus} size="sm" />
+                <ListMinusIcon size="sm" />
               </button>
             </Tooltip>
           </>
@@ -885,7 +886,7 @@ function PositionFields({
                 });
               }}
             >
-              <LucideIcon icon={ListPlus} size="sm" />
+              <ListPlusIcon size="sm" />
             </button>
           </Tooltip>
         )}
@@ -1413,7 +1414,7 @@ function QualIntentEditor({
                       applyPlaceKeys(next);
                     }}
                   >
-                    <LucideIcon icon={ListPlus} size="sm" />
+                    <ListPlusIcon size="sm" />
                     {t('qualification.placeFillEmpties')}
                   </button>
                 </Tooltip>

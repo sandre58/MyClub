@@ -3,7 +3,6 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ListChecks, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { replaceStageAffectationAuthoring } from '../api';
@@ -11,8 +10,11 @@ import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { TextLink } from '../design-system/components/TextLink';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { LucideIcon } from '../design-system/icons/Icon';
-import { CheckIcon } from '../design-system/icons/contentIcons';
+import {
+  CheckIcon,
+  ListChecksIcon,
+  SearchIcon,
+} from '../design-system/icons/contentIcons';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { notify } from '../design-system/toastStore';
@@ -333,7 +335,7 @@ export function StructureCompositionDialog({
               aria-label={t('composition.selectAll')}
               onClick={selectAllFiltered}
             >
-              <LucideIcon icon={ListChecks} size="sm" />
+              <ListChecksIcon size="sm" />
             </button>
           </Tooltip>
 
@@ -341,7 +343,7 @@ export function StructureCompositionDialog({
             <span className="ds-visually-hidden">{t('composition.search')}</span>
             <span className="ds-input">
               <span className="ds-input__leading" aria-hidden="true">
-                <LucideIcon icon={Search} size="sm" />
+                <SearchIcon size="sm" />
               </span>
               <input
                 ref={searchRef}

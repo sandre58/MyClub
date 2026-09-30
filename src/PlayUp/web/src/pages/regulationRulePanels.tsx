@@ -1,8 +1,7 @@
-import { Timer, Volleyball } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Meter, type MeterTone } from '../design-system/components/Meter';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { LucideIcon } from '../design-system/icons/Icon';
+import { MatchRulesIcon, TimerIcon } from '../design-system/icons/contentIcons';
 import type { RankingCriterion } from '../types';
 import './regulation.css';
 
@@ -71,7 +70,7 @@ export function MatchRulesPanel({
             {hasExtra ? (
               <div className="regulation-match-line">
                 <span className="regulation-match-line__label">
-                  <LucideIcon icon={Timer} size="sm" />
+                  <TimerIcon size="sm" />
                   <span>{t('matchTimeline.extraHeading')}</span>
                 </span>
                 <div className="regulation-match-line__visual regulation-clock--compact">
@@ -90,7 +89,7 @@ export function MatchRulesPanel({
                 }
               >
                 <span className="regulation-match-line__label">
-                  <LucideIcon icon={Volleyball} size="sm" />
+                  <MatchRulesIcon size="sm" />
                   <span>{t('matchTimeline.tabHeading')}</span>
                 </span>
                 <div className="regulation-match-line__visual">

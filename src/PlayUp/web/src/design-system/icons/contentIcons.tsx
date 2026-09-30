@@ -12,26 +12,36 @@ import {
   Equal,
   Flag,
   GitBranch,
+  Goal,
   GripVertical,
   LayoutGrid,
   Layers,
+  ListChecks,
+  ListMinus,
   ListOrdered,
+  ListPlus,
   Lock,
   Minus,
   Medal,
   Network,
   Pencil,
   Pipette,
+  PlayingCardsFan,
   Plus,
   Podium,
+  Search,
+  ShieldBan,
   Shuffle,
+  Sigma,
   SquareOff,
+  Timer,
   Trash2,
   Trophy,
   Unlock,
   UsersRound,
   Volleyball,
-  X, Handshake,
+  X,
+  Handshake,
 } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { Icon, LucideIcon, type IconSize } from './Icon';
@@ -293,4 +303,49 @@ export function ArrowRightIcon({ size, ...props }: ContentIconProps) {
 /** Vertical connector — down arrow (ordered topology). */
 export function ArrowDownIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowDown} size={size} {...props} />;
+}
+
+/** Aggregate score — sigma. */
+export function AggregateIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Sigma} size={size} {...props} />;
+}
+
+/** Match clock / period duration. */
+export function TimerIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Timer} size={size} {...props} />;
+}
+
+/** Penalties / goal — shootout token. */
+export function PenaltiesIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Goal} size={size} {...props} />;
+}
+
+/** Disciplinary cards family. */
+export function DisciplineIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={PlayingCardsFan} size={size} {...props} />;
+}
+
+/** Administrative forfeit result. */
+export function ForfeitIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ShieldBan} size={size} {...props} />;
+}
+
+/** Add row / append list item. */
+export function ListPlusIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ListPlus} size={size} {...props} />;
+}
+
+/** Remove row / shrink list. */
+export function ListMinusIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ListMinus} size={size} {...props} />;
+}
+
+/** Confirm multi-select / checklist. */
+export function ListChecksIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ListChecks} size={size} {...props} />;
+}
+
+/** Search field chrome. */
+export function SearchIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Search} size={size} {...props} />;
 }

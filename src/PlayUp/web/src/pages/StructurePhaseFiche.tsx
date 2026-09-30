@@ -1,14 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeftRight,
-  ArrowRight,
-  CircleAlert,
-  Goal,
-  MapPin,
-  Settings,
-  Sigma,
-  Timer,
-} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,8 +13,8 @@ import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Popover } from '../design-system/components/Popover';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { TextLink } from '../design-system/components/TextLink';
-import { LucideIcon } from '../design-system/icons/Icon';
 import {
+  AggregateIcon,
   ArrowDownIcon,
   ArrowRightIcon,
   AttributionIcon,
@@ -33,8 +23,10 @@ import {
   CupFormatIcon,
   GroupsFormatIcon,
   LayersIcon,
+  LegsStatIcon,
   MatchRulesIcon,
   MatchdayStatIcon,
+  PenaltiesIcon,
   PersonIcon,
   PlusIcon,
   PencilIcon,
@@ -42,12 +34,18 @@ import {
   RoundsStatIcon,
   StandingRulesIcon,
   StructureIcon,
+  StructureIssueIcon,
   SwissFormatIcon,
   EmptySelectionIcon,
+  TimerIcon,
   TrashIcon,
   UnlockIcon,
 } from '../design-system/icons/contentIcons';
-import { CloseIcon } from '../design-system/icons/shellIcons';
+import { PinIcon } from '../design-system/icons/metaIcons';
+import {
+  CloseIcon,
+  SettingsNavIcon,
+} from '../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { TeamCrest } from '../design-system/TeamCrest';
@@ -1011,7 +1009,7 @@ function CompositionMeter({
       {gap != null && gap !== 0 ? (
         <p className="structure-assembly__gap" role="status">
           <span className="structure-assembly__gap-icon" aria-hidden="true">
-            <LucideIcon icon={CircleAlert} size="sm" />
+            <StructureIssueIcon size="sm" />
           </span>
           {gap < 0
             ? t('entries.meter.shortfall', { count: Math.abs(gap) })
@@ -1242,39 +1240,43 @@ function ConfrontationPanel({
 
   const renderItems = (seg: StructureConfrontationSegment, prefix: string) => {
     const twoLegs = seg.numberOfLegs > 1;
-    const items: { key: string; label: string; icon: typeof ArrowRight }[] = [
+    const items: { key: string; label: string; icon: ReactNode }[] = [
       {
         key: `${prefix}-legs`,
         label: twoLegs ? t('tokens.tieTwoLegs') : t('tokens.tieOneLeg'),
-        icon: twoLegs ? ArrowLeftRight : ArrowRight,
+        icon: twoLegs ? (
+          <LegsStatIcon size="sm" />
+        ) : (
+          <ArrowRightIcon size="sm" />
+        ),
       },
     ];
     if (seg.aggregateScoring) {
       items.push({
         key: `${prefix}-agg`,
         label: t('tokens.tieAggregate'),
-        icon: Sigma,
+        icon: <AggregateIcon size="sm" />,
       });
     }
     if (seg.hasAwayGoalsRule) {
       items.push({
         key: `${prefix}-away`,
         label: t('tokens.tieAwayGoals'),
-        icon: MapPin,
+        icon: <PinIcon size="sm" />,
       });
     }
     if (seg.hasTieExtraTime) {
       items.push({
         key: `${prefix}-et`,
         label: t('tokens.tieExtraTime'),
-        icon: Timer,
+        icon: <TimerIcon size="sm" />,
       });
     }
     if (seg.hasTiePenaltyShootout) {
       items.push({
         key: `${prefix}-tab`,
         label: t('tokens.tiePenalties'),
-        icon: Goal,
+        icon: <PenaltiesIcon size="sm" />,
       });
     }
     return items;
@@ -1295,7 +1297,7 @@ function ConfrontationPanel({
         {items.map((item) => (
           <li key={item.key} className="regulation-rule-list__item">
             <span className="regulation-rule-list__mark" aria-hidden="true">
-              <LucideIcon icon={item.icon} size="sm" />
+              {item.icon}
             </span>
             <span className="regulation-rule-list__label">{item.label}</span>
           </li>
@@ -1320,7 +1322,7 @@ function ConfrontationPanel({
               {items.map((item) => (
                 <li key={item.key} className="regulation-rule-list__item">
                   <span className="regulation-rule-list__mark" aria-hidden="true">
-                    <LucideIcon icon={item.icon} size="sm" />
+                    {item.icon}
                   </span>
                   <span className="regulation-rule-list__label">{item.label}</span>
                 </li>
@@ -2167,7 +2169,7 @@ export function StructurePhaseFiche({
                               className="ds-btn ds-btn--ghost ds-btn--sm"
                               onClick={() => setEdit('tirage-params')}
                             >
-                              <LucideIcon icon={Settings} size="sm" />
+                              <SettingsNavIcon size="sm" />
                               {t('fiche.drawParamsAction')}
                             </button>
                           ) : null}

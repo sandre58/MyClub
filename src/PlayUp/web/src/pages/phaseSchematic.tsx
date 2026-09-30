@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy } from 'lucide-react';
 import type {
   SchematicCase,
   SchematicConnection,
@@ -15,6 +14,7 @@ import {
   ArrowRightIcon,
   DrawPendingIcon,
   PersonIcon,
+  TrophyIcon,
 } from '../design-system/icons/contentIcons';
 import { nextPowerOfTwo } from './structureFixtureLabels';
 import { placeChromeLabel } from './structurePlaceLabel';
@@ -1109,7 +1109,7 @@ function CupMultiRoundSchematic({
             }}
             aria-hidden="true"
           >
-            <Trophy size={trophySize} strokeWidth={1.75} />
+            <TrophyIcon size="md" strokeWidth={1.75} />
           </span>
         ) : null}
       </div>
@@ -1259,7 +1259,7 @@ function CupSingleRoundSchematic({
         </svg>
         {showTrophy ? (
           <span className="schematic-cup__trophy" aria-hidden="true">
-            <Trophy size={20} strokeWidth={1.75} />
+            <TrophyIcon size="md" strokeWidth={1.75} />
           </span>
         ) : null}
       </div>

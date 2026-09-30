@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ListPlus, Trash2 } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -20,7 +19,6 @@ import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { Select } from '../design-system/components/Select';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { LucideIcon } from '../design-system/icons/Icon';
 import { ToastToneIcon } from '../design-system/icons/toastIcons';
 import {
   ChampionshipFormatIcon,
@@ -28,9 +26,11 @@ import {
   CupFormatIcon,
   EmptySelectionIcon,
   GroupsFormatIcon,
+  ListPlusIcon,
   PlusIcon,
   StructureIcon,
   SwissFormatIcon,
+  TrashIcon,
   TrophyIcon,
 } from '../design-system/icons/contentIcons';
 import {
@@ -912,7 +912,7 @@ export function StructureProgressionDialog({
                             removeIntent(intent.id);
                           }}
                         >
-                          <LucideIcon icon={Trash2} size="sm" />
+                          <TrashIcon size="sm" />
                         </button>
                       </div>
 
@@ -1414,7 +1414,7 @@ function ProgIntentEditor({
                       applyPlaceKeys(next);
                     }}
                   >
-                    <LucideIcon icon={ListPlus} size="sm" />
+                    <ListPlusIcon size="sm" />
                     {t('progression.placeFillEmpties')}
                   </button>
                 </Tooltip>

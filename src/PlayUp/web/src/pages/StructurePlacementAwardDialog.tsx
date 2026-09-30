@@ -4,7 +4,6 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,12 +16,12 @@ import { Dialog } from '../design-system/components/Dialog';
 import { DropDownButton } from '../design-system/components/DropDownButton';
 import { InputNumber } from '../design-system/components/InputNumber';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { LucideIcon } from '../design-system/icons/Icon';
 import {
   CheckIcon,
   EmptySelectionIcon,
   PlusIcon,
   StructureIcon,
+  TrashIcon,
 } from '../design-system/icons/contentIcons';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 import { ToastToneIcon } from '../design-system/icons/toastIcons';
@@ -479,7 +478,7 @@ function AttributionTile({
         disabled={disabled}
         onClick={onRemove}
       >
-        <LucideIcon icon={Trash2} size="sm" />
+        <TrashIcon size="sm" />
       </button>
     </div>
   );

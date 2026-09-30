@@ -162,8 +162,16 @@ Admin-local literals (page max-width/pad, mono, 140ms transitions) stay inlined 
 
 Fully rounded ends (`border-radius: 999px`) stay **local** where needed (progress tracks, circular swatches/avatars, Status `shape="pill"`, live dots). Geometry tokens intentionally have **no** shared product `--radius-pill`.
 
+## Icons
+
+- SoT wrappers: `src/design-system/icons/` — `Icon.tsx` + `contentIcons` / `shellIcons` / `metaIcons` / `toastIcons`.
+- Pages and shell **must not** import `lucide-react` directly; add a named wrapper when a glyph is missing.
+- `design-lab/` may still import Lucide for playground specimens (prefer wrappers when they already exist).
+- Naming & placement rules: [conventions.md](./conventions.md) · Cursor rule `09-icons`.
+
 ## Related
 
+- [conventions.md](./conventions.md)
 - [page-migration.md](./page-migration.md)
 - [i18n.md](./i18n.md)
 - Notion Identité visuelle
