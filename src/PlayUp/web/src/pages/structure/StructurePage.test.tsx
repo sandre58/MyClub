@@ -384,7 +384,7 @@ describe('StructurePage Structure hub', () => {
       screen.getByRole('heading', { name: /^Match$/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Population/i }),
+      screen.getByRole('heading', { name: /Équipes/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
@@ -445,7 +445,7 @@ describe('StructurePage Structure hub', () => {
       screen.getByRole('button', { name: /Désactiver le tirage/i }),
     ).toBeEnabled();
     expect(
-      screen.getByRole('heading', { name: /Population/i }),
+      screen.getByRole('heading', { name: /Équipes/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
@@ -669,7 +669,7 @@ describe('StructurePage Structure hub', () => {
       screen.queryByRole('heading', { name: /^Forme$/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Modifier la forme/i }),
+      screen.getByRole('button', { name: /Modifier l['’]organisation/i }),
     ).toBeInTheDocument();
   });
 
@@ -697,11 +697,11 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     await user.click(
-      await screen.findByRole('button', { name: /Modifier la forme/i }),
+      await screen.findByRole('button', { name: /Modifier l['’]organisation/i }),
     );
     const dialog = await screen.findByRole('dialog');
     expect(
-      within(dialog).getByRole('heading', { name: /Modifier la forme/i }),
+      within(dialog).getByRole('heading', { name: /Modifier l['’]organisation/i }),
     ).toBeInTheDocument();
     expect(
       within(dialog).getByText(
@@ -1194,7 +1194,7 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Demi-finales' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Population/i }),
+      screen.getByRole('heading', { name: /Équipes/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /^Sorties$/i }),
@@ -1248,7 +1248,7 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'League' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Population/i }),
+      screen.getByRole('heading', { name: /Équipes/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
@@ -1317,7 +1317,7 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Finale' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Population/i }),
+      screen.getByRole('heading', { name: /Équipes/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /^Sorties$/i }),
