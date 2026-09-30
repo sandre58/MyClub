@@ -87,8 +87,9 @@ export function LabWait() {
         <p className="ds-body">
           Product treatment: C — static Home mark, orbiting ring, label centered
           under the animation. Sizes: Home · page · region. Product:{' '}
-          <code>WaitMark</code> / <code>LoadingState</code>. Buttons: spinner
-          (the PNG is not a control glyph).
+          <code>WaitMark</code> (pages may still use <code>LoadingState</code>{' '}
+          for unlabeled waits). Buttons: spinner (the PNG is not a control
+          glyph).
         </p>
       </header>
 

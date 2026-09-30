@@ -29,7 +29,8 @@ import type {
   ConsultationView,
   StructureRegulationSummary,
 } from '../../types';
-import { EmptyState, ErrorState, LoadingState } from '../../ui';
+import { EmptyState, ErrorState } from '../../ui';
+import { WaitMark } from '../../design-system/components/WaitMark';
 import './classements.css';
 
 /**
@@ -48,7 +49,7 @@ export function ClassementsPage() {
 
   return (
     <main id="main" className="page page--classements">
-      {query.isPending && !query.data && <LoadingState label={t('loading')} />}
+      {query.isPending && !query.data && <WaitMark>{t('loading')}</WaitMark>}
       {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <ClassementsView data={query.data} />}
     </main>

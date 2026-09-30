@@ -10,6 +10,9 @@ import {
 } from '../../api';
 import { Chip } from '../../design-system/components/Chip';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { Status } from '../../design-system/components/Status';
+import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
+import { WaitMark } from '../../design-system/components/WaitMark';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import { TextLink } from '../../design-system/components/TextLink';
 import {
@@ -41,13 +44,7 @@ import {
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import { notify } from '../../design-system/toastStore';
-import {
-  LoadingState,
-  MutationError,
-  PendingLabel,
-  StageStatusBadge,
-  StatusBadge,
-} from '../../ui';
+import { MutationError, PendingLabel, StageStatusBadge } from '../../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import type {
   SchematicCase,
@@ -908,10 +905,9 @@ export function StructurePhaseFiche({
                   </p>
                 ) : (
                   <div className="structure-schematic-loading">
-                    <LoadingState
-                      size="region"
-                      label={t('fiche.schematicLoading')}
-                    />
+                    <WaitMark size="region">
+                      {t('fiche.schematicLoading')}
+                    </WaitMark>
                   </div>
                 )}
               </div>
@@ -1169,9 +1165,9 @@ export function StructurePhaseFiche({
             matchBound ? (
               <Chip tone="neutral">{t('fiche.binding.general')}</Chip>
             ) : (
-              <StatusBadge tone="warn" density="compact">
+              <Status density="compact" tone={statusToneFromBadgeTone('warn')}>
                 {t('fiche.binding.personalized')}
-              </StatusBadge>
+              </Status>
             )
           }
           onEdit={
@@ -1210,9 +1206,12 @@ export function StructurePhaseFiche({
               standingBound ? (
                 <Chip tone="neutral">{t('fiche.binding.general')}</Chip>
               ) : (
-                <StatusBadge tone="warn" density="compact">
+                <Status
+                  density="compact"
+                  tone={statusToneFromBadgeTone('warn')}
+                >
                   {t('fiche.binding.personalized')}
-                </StatusBadge>
+                </Status>
               )
             }
             onEdit={

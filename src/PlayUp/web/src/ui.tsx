@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { ApiError } from './api';
 import { apiErrorLabel } from './i18n/apiErrorLabel';
-import { PageHead } from './design-system/components/PageHead';
 import { Status } from './design-system/components/Status';
 import { statusToneFromBadgeTone } from './design-system/components/statusTone';
 import { Alert } from './design-system/components/Alert';
@@ -26,46 +25,15 @@ import {
 } from './i18n/enumLabels';
 
 /**
- * Shared page primitives: header, status badges and the loading / error /
- * empty / pending states every read page needs.
- *
- * PageHeader is a drill-down adapter over PageHead. Shell workspace pages
- * use PageHead directly (no back — rail navigation).
+ * Shared page primitives: status badges and loading / error / empty / pending
+ * states. Prefer design-system PageHead / Status / Alert / WaitMark at call
+ * sites when the mapping is 1:1; this module keeps product adapters
+ * (domain badges, i18n error formatting, unlabeled loading).
  */
 
 /** Visual meaning of a state, shared by every status family. */
 export type StatusTone =
   'neutral' | 'info' | 'ok' | 'live' | 'done' | 'warn' | 'danger';
-
-/**
- * Drill-down page header — thin adapter over PageHead (eyebrow + back + badges).
- */
-export function PageHeader({
-  eyebrow,
-  title,
-  back,
-  badges,
-  lede,
-  actions,
-}: {
-  eyebrow: string;
-  title: string;
-  back?: { to: string; label: string };
-  badges?: ReactNode;
-  lede?: ReactNode;
-  actions?: ReactNode;
-}) {
-  return (
-    <PageHead
-      eyebrow={eyebrow}
-      title={title}
-      badges={badges}
-      actions={actions}
-      note={lede ? <p className="lede">{lede}</p> : undefined}
-      back={back ? <BackLink to={back.to}>{back.label}</BackLink> : undefined}
-    />
-  );
-}
 
 export function BackLink({
   to,
@@ -82,7 +50,8 @@ export function BackLink({
   );
 }
 
-export function StatusBadge({
+/** Thin Status adapter for domain badges — not for new call sites (use Status). */
+function StatusBadge({
   tone,
   children,
   variant = 'soft',
@@ -296,7 +265,7 @@ export function EmptyState({
   );
 }
 
-/** Spinner + label inside a button while its mutation runs. */
+/** Spinner + label inside a button while its mutation runs. No DS component yet. */
 export function PendingLabel({ children }: { children: ReactNode }) {
   return (
     <>
