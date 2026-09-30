@@ -236,8 +236,7 @@ export function incompleteCardReason(
   if (winner == null && loser == null) return 'Placement';
 
   const duplicateSource = all.some(
-    (other) =>
-      other.id !== card.id && other.sourcePairKey.trim() === sourceKey,
+    (other) => other.id !== card.id && other.sourcePairKey.trim() === sourceKey,
   );
   if (duplicateSource) return 'DuplicateFixture';
 

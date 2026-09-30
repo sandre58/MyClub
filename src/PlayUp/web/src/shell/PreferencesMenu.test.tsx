@@ -4,7 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../i18n';
 import { LOCALE_STORAGE_KEY } from '../i18n/config';
 import { THEME_STORAGE_KEY } from '../theme/config';
-import { resetThemeState, setThemePreference } from '../theme/setThemePreference';
+import {
+  resetThemeState,
+  setThemePreference,
+} from '../theme/setThemePreference';
 import { PreferencesMenu } from './PreferencesMenu';
 import { renderWithI18n } from '../test/renderWithI18n';
 

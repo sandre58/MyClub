@@ -1,11 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-  type FormEvent,
-} from 'react';
+import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   bindStageRegulation,
@@ -205,9 +199,7 @@ export function MatchRulesDialog({
    * Bind when following and currently unbound.
    * Replace only when values changed — Domain unbinds Match parts solely on value delta.
    */
-  const canSave = followFrame
-    ? canBind && !wasBound
-    : canReplace && formDirty;
+  const canSave = followFrame ? canBind && !wasBound : canReplace && formDirty;
 
   const {
     discardOpen,

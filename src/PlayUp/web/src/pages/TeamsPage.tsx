@@ -61,11 +61,7 @@ import {
   PendingLabel,
   StatusBadge,
 } from '../ui';
-import type {
-  EntryStatus,
-  StructureEntry,
-  StructureView,
-} from '../types';
+import type { EntryStatus, StructureEntry, StructureView } from '../types';
 import { TeamRosterDrawer } from './TeamRosterDrawer';
 import { isTeamsNarrowViewport } from '../layout/viewportBreakpoints';
 import './teams.css';

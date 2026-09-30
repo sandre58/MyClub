@@ -1,4 +1,4 @@
-import type { OverviewNavigationHint, OverviewSituation } from '../types';
+import type { OverviewSituation } from '../types';
 
 /**
  * Resolve an Overview navigationHint / situation target to an existing SPA route.

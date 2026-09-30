@@ -85,10 +85,10 @@ export function LabWait() {
       <header className="dlab-wait-board__intro">
         <h1 className="ds-heading">États d’attente</h1>
         <p className="ds-body">
-          Product treatment: C — static Home mark, orbiting ring, label
-          centered under the animation. Sizes: Home · page · region.
-          Product: <code>WaitMark</code> / <code>LoadingState</code>. Buttons:
-          spinner (the PNG is not a control glyph).
+          Product treatment: C — static Home mark, orbiting ring, label centered
+          under the animation. Sizes: Home · page · region. Product:{' '}
+          <code>WaitMark</code> / <code>LoadingState</code>. Buttons: spinner
+          (the PNG is not a control glyph).
         </p>
       </header>
 

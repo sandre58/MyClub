@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary } from '../types';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 
-function stage(
-  stageId: string,
-  name = stageId,
-): StructureStageHubSummary {
+function stage(stageId: string, name = stageId): StructureStageHubSummary {
   return { stageId, name } as StructureStageHubSummary;
 }
 
@@ -17,13 +14,12 @@ describe('sortiesAvalPeerStages', () => {
   ];
 
   it('excludes self and amont; keeps aval peers in Structure order', () => {
-    expect(sortiesAvalPeerStages(stages, 'poules').map((s) => s.stageId)).toEqual([
-      'demi',
-      'finale',
-    ]);
-    expect(sortiesAvalPeerStages(stages, 'demi').map((s) => s.stageId)).toEqual([
-      'finale',
-    ]);
+    expect(
+      sortiesAvalPeerStages(stages, 'poules').map((s) => s.stageId),
+    ).toEqual(['demi', 'finale']);
+    expect(sortiesAvalPeerStages(stages, 'demi').map((s) => s.stageId)).toEqual(
+      ['finale'],
+    );
   });
 
   it('returns empty when source is last (no aval)', () => {

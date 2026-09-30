@@ -55,9 +55,7 @@ export function fillEmptyPlaceSlotKeys(
   keys: string[],
   availablePlaceIds: string[],
 ): string[] {
-  const used = new Set(
-    keys.map((k) => k.trim()).filter((k) => k.length > 0),
-  );
+  const used = new Set(keys.map((k) => k.trim()).filter((k) => k.length > 0));
   const pool = availablePlaceIds
     .map((id) => id.trim())
     .filter((id) => id.length > 0 && !used.has(id));
@@ -112,10 +110,7 @@ export function placeMappingGap(
 ): 'MultiSlot' | 'DuplicateSlot' | null {
   if (expandCount <= 0) return 'MultiSlot';
   const aligned = resizeDestinationSlotKeys(keys, expandCount);
-  if (
-    aligned.length !== expandCount ||
-    aligned.some((k) => !k.trim())
-  ) {
+  if (aligned.length !== expandCount || aligned.some((k) => !k.trim())) {
     return 'MultiSlot';
   }
   if (!options?.allowDuplicates && hasDuplicateSlotKeys(aligned)) {

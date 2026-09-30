@@ -3,10 +3,7 @@ import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { TextInput } from '../design-system/components/TextInput';
 import { Select } from '../design-system/components/Select';
-import {
-  CheckIcon,
-  PlusIcon,
-} from '../design-system/icons/contentIcons';
+import { CheckIcon, PlusIcon } from '../design-system/icons/contentIcons';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 
 /**
@@ -80,7 +77,9 @@ export function LabDialog() {
           </li>
           <li>Focus initial dans le corps (premier champ)</li>
           <li>Trap Tab · retour de focus au déclencheur</li>
-          <li>Footer sticky : statut (gauche) + actions (droite) ; stack en étroit</li>
+          <li>
+            Footer sticky : statut (gauche) + actions (droite) ; stack en étroit
+          </li>
           <li>
             Clavier propre au composant (ex. flèches Select) reste local — pas
             une commande applicative globale

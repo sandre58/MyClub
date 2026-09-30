@@ -35,9 +35,7 @@ const t = (key: string, opts?: Record<string, unknown>) => {
   return key;
 };
 
-function viewWithStages(
-  stages: StructureStageHubSummary[],
-): StructureView {
+function viewWithStages(stages: StructureStageHubSummary[]): StructureView {
   return {
     competitionId: 'c1',
     stages,

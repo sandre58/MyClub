@@ -182,7 +182,7 @@ export function AddPhaseDialog({
               disabled={!canSubmit || mutation.isPending}
             >
               {mutation.isPending ? (
-                <PendingLabel />
+                <PendingLabel>{t('working')}</PendingLabel>
               ) : (
                 <>
                   <PlusIcon size="sm" />
@@ -314,10 +314,7 @@ export function EditSkeletonDialog({
     if (!open) {
       return;
     }
-    const next = skeletonFromStage(
-      stage,
-      data.structure.matchGenerationFormat,
-    );
+    const next = skeletonFromStage(stage, data.structure.matchGenerationFormat);
     setBaseline(next);
     setSkeleton(next);
     resetDiscard();
@@ -542,7 +539,7 @@ export function RemovePhaseDialog({
             onClick={() => mutation.mutate()}
           >
             {mutation.isPending ? (
-              <PendingLabel />
+              <PendingLabel>{t('working')}</PendingLabel>
             ) : (
               <>
                 <TrashIcon size="sm" />
@@ -557,7 +554,9 @@ export function RemovePhaseDialog({
       }
     >
       <p>{t('graph.removePhaseBody', { name: stage.name })}</p>
-      <p className="structure-issues__hint">{t('graph.removePhaseStructure')}</p>
+      <p className="structure-issues__hint">
+        {t('graph.removePhaseStructure')}
+      </p>
       {(inboundQual > 0 || inboundProg > 0) && (
         <p className="structure-issues__hint">
           {t('graph.removePhaseImpact', {

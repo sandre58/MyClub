@@ -2,15 +2,9 @@ import type { SchematicCase, SchematicFeedKind } from '../types';
 import { placeChromeLabel } from './structurePlaceLabel';
 
 /** How a Cup place responds to manual placement. */
-export type ManualPlaceMode =
-  | 'editable'
-  | 'qualProg'
-  | 'draw'
-  | 'unavailable';
+export type ManualPlaceMode = 'editable' | 'qualProg' | 'draw' | 'unavailable';
 
-export function resolveManualPlaceMode(
-  place: SchematicCase,
-): ManualPlaceMode {
+export function resolveManualPlaceMode(place: SchematicCase): ManualPlaceMode {
   if (place.formPosition.kind !== 'CupSlot' || !place.formPosition.slotKey) {
     return 'unavailable';
   }

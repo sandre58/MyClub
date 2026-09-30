@@ -136,9 +136,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       )}
 
       {structureQuery.isPending && <LoadingState size="region" />}
-      {structureQuery.isError && (
-        <ErrorState error={structureQuery.error} />
-      )}
+      {structureQuery.isError && <ErrorState error={structureQuery.error} />}
 
       {canMutate && catalogueReady && sheet.length === 0 && (
         <p className="ds-notice ds-notice--info">{t('discipline.needSheet')}</p>

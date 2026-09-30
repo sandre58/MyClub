@@ -8,14 +8,17 @@ function round(id: string, fixtureCount: number) {
   return {
     id,
     name: id,
-    fixtures: Array.from({ length: fixtureCount }, (_, i) => ({ id: `${id}-${i}` })),
+    fixtures: Array.from({ length: fixtureCount }, (_, i) => ({
+      id: `${id}-${i}`,
+    })),
   };
 }
 
 describe('championshipTerminalRound', () => {
   it('returns the only round even without fixtures (Cup V1 structural)', () => {
     expect(
-      championshipTerminalRound([{ id: 'entry', name: 'entry', fixtures: [] }])?.id,
+      championshipTerminalRound([{ id: 'entry', name: 'entry', fixtures: [] }])
+        ?.id,
     ).toBe('entry');
   });
 

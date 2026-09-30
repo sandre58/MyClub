@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { StageBracketPair, StageDraw, StageRound, StageSlot } from '../types';
+import type { StageBracketPair, StageDraw, StageSlot } from '../types';
 import {
   areDrawRulesLockedByExecution,
   drawExecutionNumber,
@@ -520,9 +520,7 @@ describe('drawExecutionNumber / sortDrawsNewestFirst', () => {
 describe('pickActiveDraw', () => {
   it('returns null when empty or only cancelled', () => {
     expect(pickActiveDraw([])).toBeNull();
-    expect(
-      pickActiveDraw([draw({ id: '1', status: 'Cancelled' })]),
-    ).toBeNull();
+    expect(pickActiveDraw([draw({ id: '1', status: 'Cancelled' })])).toBeNull();
   });
 
   it('prefers newest non-cancelled', () => {
@@ -560,25 +558,23 @@ describe('resolveTopologyDrawExecutionBadge', () => {
       coveredByCompleteFixture: false,
     },
   ];
-  const rounds: StageRound[] = [];
 
   it('is null without DrawRules', () => {
     expect(
-      resolveTopologyDrawExecutionBadge(false, draw({ id: '1' }), slots, rounds),
+      resolveTopologyDrawExecutionBadge(false, draw({ id: '1' }), slots),
     ).toBeNull();
   });
 
   it('maps ToLaunch / InProgress / ToApply / Applied', () => {
-    expect(
-      resolveTopologyDrawExecutionBadge(true, null, slots, rounds),
-    ).toBe('ToLaunch');
+    expect(resolveTopologyDrawExecutionBadge(true, null, slots)).toBe(
+      'ToLaunch',
+    );
 
     expect(
       resolveTopologyDrawExecutionBadge(
         true,
         draw({ id: '1', status: 'Draft' }),
         slots,
-        rounds,
       ),
     ).toBe('InProgress');
 
@@ -589,10 +585,11 @@ describe('resolveTopologyDrawExecutionBadge', () => {
           id: '2',
           status: 'Published',
           resolutionState: 'Resolved',
-          slotPlacements: [{ slotKey: 'S1', entryId: 'other', displayName: 'B' }],
+          slotPlacements: [
+            { slotKey: 'S1', entryId: 'other', displayName: 'B' },
+          ],
         }),
         slots,
-        rounds,
       ),
     ).toBe('ToApply');
 
@@ -606,7 +603,6 @@ describe('resolveTopologyDrawExecutionBadge', () => {
           slotPlacements: [{ slotKey: 'S1', entryId: 'e1', displayName: 'A' }],
         }),
         slots,
-        rounds,
       ),
     ).toBe('Applied');
   });

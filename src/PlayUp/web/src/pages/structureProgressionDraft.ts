@@ -14,8 +14,6 @@ import {
   coerceDestinationGroupIds,
   coerceDestinationSlotKeys,
   countEmptyPlaceSlots,
-  fillEmptyPlaceKeysAllowingReuse,
-  fillEmptyPlaceSlotKeys,
   placeMappingGap,
   resizeDestinationSlotKeys,
 } from './structurePlaceMapping';
@@ -396,9 +394,7 @@ export function incompleteIntentReason(
 
   const rk = roundOutcomeKey(draft);
   if (
-    all.some(
-      (other) => other.id !== draft.id && roundOutcomeKey(other) === rk,
-    )
+    all.some((other) => other.id !== draft.id && roundOutcomeKey(other) === rk)
   ) {
     return 'DuplicateRoundOutcome';
   }

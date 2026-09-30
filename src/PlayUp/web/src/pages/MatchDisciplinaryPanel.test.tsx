@@ -294,9 +294,7 @@ describe('MatchPage discipline (Lot 1)', () => {
   });
 
   it('allowedTypes []: explicit noneAllowed, no Create form', async () => {
-    vi.mocked(fetchStructureView).mockResolvedValue(
-      structureWithTypes([]),
-    );
+    vi.mocked(fetchStructureView).mockResolvedValue(structureWithTypes([]));
     vi.mocked(fetchMatchDetail).mockResolvedValue(baseMatch());
 
     renderMatchPage();

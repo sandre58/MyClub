@@ -110,7 +110,7 @@ describe('structurePopulationVolume', () => {
       name: 'Finale',
       compositionCapacity: 2,
       compositionEntryCount: 0,
-    affectationEntryCount: 0,
+      affectationEntryCount: 0,
     });
     const data = view([demis, finale]);
 
@@ -170,7 +170,7 @@ describe('structurePopulationVolume', () => {
       name: 'Finale',
       compositionCapacity: 2,
       compositionEntryCount: 0,
-    affectationEntryCount: 0,
+      affectationEntryCount: 0,
     });
     const data = view([groups, demis, finale]);
 
@@ -219,7 +219,7 @@ describe('structurePopulationVolume', () => {
       name: 'Demis',
       compositionCapacity: 4,
       compositionEntryCount: 0,
-    affectationEntryCount: 0,
+      affectationEntryCount: 0,
     });
     const data = view([groups, demis]);
 

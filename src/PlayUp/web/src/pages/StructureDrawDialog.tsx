@@ -36,7 +36,6 @@ import type {
   CompetitionStatus,
   StageBracketPair,
   StageDraw,
-  StageRound,
   StageSlot,
   StageStatus,
   StructureFormatKind,
@@ -207,7 +206,6 @@ export function StructureDrawDialog({
 
   const draws = overviewQuery.data?.draws;
   const slots = overviewQuery.data?.slots ?? [];
-  const rounds = overviewQuery.data?.rounds ?? [];
   const drawList = draws ?? [];
   const showHistory = drawList.length >= 1;
   const poolCount = stage.compositionEntryCount ?? 0;
@@ -392,7 +390,7 @@ export function StructureDrawDialog({
   const newestFirst = useMemo(() => sortDrawsNewestFirst(drawList), [drawList]);
 
   const selectedApplied =
-    selected != null && getDrawUiProjection(selected, slots, rounds).isApplied;
+    selected != null && getDrawUiProjection(selected, slots).isApplied;
 
   return (
     <>
@@ -534,11 +532,7 @@ export function StructureDrawDialog({
                       n: drawExecutionNumber(drawList, draw.id),
                     });
                     const isCurrent = draw.id === selected?.id;
-                    const { masterChip } = getDrawUiProjection(
-                      draw,
-                      slots,
-                      rounds,
-                    );
+                    const { masterChip } = getDrawUiProjection(draw, slots);
                     return (
                       <li key={draw.id}>
                         <button
@@ -572,7 +566,6 @@ export function StructureDrawDialog({
                 <DrawExecutionDetail
                   draw={selected}
                   slots={slots}
-                  rounds={rounds}
                   bracketPairs={overviewQuery.data?.bracketPairs ?? []}
                   competitionStatus={competitionStatus}
                   stageStatus={overviewQuery.data?.status ?? stage.status}
@@ -793,7 +786,6 @@ function DrawSectionTile({
 function DrawExecutionDetail({
   draw,
   slots,
-  rounds,
   bracketPairs,
   competitionStatus,
   stageStatus,
@@ -809,7 +801,6 @@ function DrawExecutionDetail({
 }: {
   draw: StageDraw;
   slots: StageSlot[];
-  rounds: StageRound[];
   bracketPairs: StageBracketPair[];
   competitionStatus: CompetitionStatus;
   stageStatus: StageStatus;
@@ -826,7 +817,7 @@ function DrawExecutionDetail({
   const { t } = useTranslation('draw');
   const { t: tCommon } = useTranslation('common');
   const { t: tStructure } = useTranslation('structure');
-  const ui = getDrawUiProjection(draw, slots, rounds);
+  const ui = getDrawUiProjection(draw, slots);
 
   const alignedCount = countAlignedSlotPlacements(draw, slots);
   const canPublishAndApply =

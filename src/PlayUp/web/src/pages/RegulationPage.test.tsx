@@ -3,10 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  fetchStructureView,
-  replaceCompetitionRegulation,
-} from '../api';
+import { fetchStructureView, replaceCompetitionRegulation } from '../api';
 import { RegulationPage } from './RegulationPage';
 import type {
   StructureStageDefaultsBinding,
@@ -130,9 +127,7 @@ function finaleStage(
   };
 }
 
-function structureView(
-  overrides: Partial<StructureView> = {},
-): StructureView {
+function structureView(overrides: Partial<StructureView> = {}): StructureView {
   return {
     competitionId,
     name: 'Coupe',
@@ -290,7 +285,9 @@ describe('RegulationPage', () => {
     expect(screen.getByText('· 2×15′')).toBeInTheDocument();
     expect(screen.getAllByText(/TAB/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('· 5 tirs')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Structure' })).toHaveLength(2);
+    expect(
+      screen.getAllByRole('link', { name: 'Aller à la phase' }),
+    ).toHaveLength(2);
   });
 
   it('renders an aggregate Confrontation line when rounds differ', async () => {
@@ -354,7 +351,9 @@ describe('RegulationPage', () => {
       within(phaseTile!).getByText('Quarts de finale/Demis de finale'),
     ).toBeInTheDocument();
     expect(within(phaseTile!).getByText('Aller-retour')).toBeInTheDocument();
-    expect(within(phaseTile!).getByText('Cumul des scores')).toBeInTheDocument();
+    expect(
+      within(phaseTile!).getByText('Cumul des scores'),
+    ).toBeInTheDocument();
     expect(
       within(phaseTile!).getByText('Buts à l’extérieur'),
     ).toBeInTheDocument();
@@ -612,9 +611,7 @@ describe('RegulationPage', () => {
       await screen.findByRole('heading', { name: 'Règlement' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Suisse' })).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText(/Système suisse/),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Système suisse/)).not.toBeInTheDocument();
   });
 
   it('opens a sectioned editor without sync banner', async () => {

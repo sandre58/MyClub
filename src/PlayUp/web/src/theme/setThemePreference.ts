@@ -41,7 +41,9 @@ export function getThemePreference(): ThemePreference {
 }
 
 /** Test helper — reset in-memory preference and unsubscribe OS listener. */
-export function resetThemeState(preference: ThemePreference = resolvePreference()): void {
+export function resetThemeState(
+  preference: ThemePreference = resolvePreference(),
+): void {
   currentPreference = preference;
   subscribeToSystemTheme(null);
 }

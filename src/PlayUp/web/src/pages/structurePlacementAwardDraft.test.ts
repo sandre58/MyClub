@@ -162,10 +162,7 @@ describe('structurePlacementAwardDraft', () => {
       'P-final',
     ]);
     expect(sections[1].roundId).toBeNull();
-    expect(sections[1].cards.map((c) => c.id)).toEqual([
-      empty.id,
-      unknown.id,
-    ]);
+    expect(sections[1].cards.map((c) => c.id)).toEqual([empty.id, unknown.id]);
   });
 
   it('prefills next card with first free fixture and lowest free ranks', () => {

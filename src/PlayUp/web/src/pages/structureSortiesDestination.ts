@@ -94,10 +94,7 @@ export function applyTargetKindToDraft<T extends SortiesDestinationFields>(
  */
 export function normalizeFormOnlyDestinationDraft<
   T extends SortiesDestinationFields,
->(
-  draft: T,
-  formatKind: StructureFormatKind | string | null | undefined,
-): T {
+>(draft: T, formatKind: StructureFormatKind | string | null | undefined): T {
   if (!isFormOnlyDestination(formatKind)) {
     return draft;
   }

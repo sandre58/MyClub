@@ -16,7 +16,9 @@ const STRUCTURE_SECTIONS: StructureSectionId[] = [
   'classement',
 ];
 
-export function isStructureSectionId(value: string): value is StructureSectionId {
+export function isStructureSectionId(
+  value: string,
+): value is StructureSectionId {
   return (STRUCTURE_SECTIONS as string[]).includes(value);
 }
 

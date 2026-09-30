@@ -10,11 +10,7 @@ export {
 } from './config';
 export { applyTheme, subscribeToSystemTheme } from './applyTheme';
 export { resolveTheme } from './resolveTheme';
-export {
-  getStoredTheme,
-  resolvePreference,
-  setStoredTheme,
-} from './storage';
+export { getStoredTheme, resolvePreference, setStoredTheme } from './storage';
 export {
   getThemePreference,
   initTheme,

@@ -67,9 +67,7 @@ describe('structurePlaceLabel', () => {
       pairOrdinal: 2,
     };
     expect(placeChromeLabel(pairing)).toBeNull();
-    expect(placeDisplayLabel(pairing, t)).toBe(
-      'Quart de finale 2 · côté A',
-    );
+    expect(placeDisplayLabel(pairing, t)).toBe('Quart de finale 2 · côté A');
     expect(isCupPlaceTargetable(pairing)).toBe(false);
   });
 

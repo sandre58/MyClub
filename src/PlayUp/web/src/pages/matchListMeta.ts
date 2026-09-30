@@ -56,9 +56,7 @@ export function formatKickoffParts(
   }
   const locale = toIntlLocale(language);
   return {
-    date: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
-      date,
-    ),
+    date: new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date),
     time: new Intl.DateTimeFormat(locale, { timeStyle: 'short' }).format(date),
   };
 }

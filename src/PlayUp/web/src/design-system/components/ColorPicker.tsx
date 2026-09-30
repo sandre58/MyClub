@@ -296,288 +296,270 @@ export function ColorPicker({
         flipThreshold={280}
         dismissEnabled={() => !pickingRef.current}
       >
-              <div
-                ref={svRef}
-                className="ds-color-picker__sv"
-                style={{ ['--ds-color-hue' as string]: hueFill }}
-                role="slider"
-                aria-label="Saturation et luminosité"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuetext={`Saturation ${Math.round(hsv.s * 100)} %, luminosité ${Math.round(hsv.v * 100)} %`}
-                tabIndex={disabled ? -1 : 0}
-                onPointerDown={(event) => {
-                  if (!disabled) {
-                    bindDrag(event, readSvFromPointer);
-                  }
+        <div
+          ref={svRef}
+          className="ds-color-picker__sv"
+          style={{ ['--ds-color-hue' as string]: hueFill }}
+          role="slider"
+          aria-label="Saturation et luminosité"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuetext={`Saturation ${Math.round(hsv.s * 100)} %, luminosité ${Math.round(hsv.v * 100)} %`}
+          tabIndex={disabled ? -1 : 0}
+          onPointerDown={(event) => {
+            if (!disabled) {
+              bindDrag(event, readSvFromPointer);
+            }
+          }}
+          onKeyDown={(event) => {
+            if (disabled) {
+              return;
+            }
+            const step = event.shiftKey ? 0.1 : 0.02;
+            if (event.key === 'ArrowRight') {
+              event.preventDefault();
+              commitHsv({ ...hsv, s: hsv.s + step });
+            } else if (event.key === 'ArrowLeft') {
+              event.preventDefault();
+              commitHsv({ ...hsv, s: hsv.s - step });
+            } else if (event.key === 'ArrowUp') {
+              event.preventDefault();
+              commitHsv({ ...hsv, v: hsv.v + step });
+            } else if (event.key === 'ArrowDown') {
+              event.preventDefault();
+              commitHsv({ ...hsv, v: hsv.v - step });
+            }
+          }}
+        >
+          <span
+            className="ds-color-picker__sv-thumb"
+            style={{
+              left: `${hsv.s * 100}%`,
+              top: `${(1 - hsv.v) * 100}%`,
+              background: liveHex,
+            }}
+          />
+        </div>
+
+        <div className="ds-color-picker__slider-row">
+          <div className="ds-color-picker__sliders">
+            <div
+              ref={hueRef}
+              className="ds-color-picker__hue"
+              role="slider"
+              aria-label="Teinte"
+              aria-valuemin={0}
+              aria-valuemax={360}
+              aria-valuenow={Math.round(hsv.h)}
+              tabIndex={disabled ? -1 : 0}
+              onPointerDown={(event) => {
+                if (!disabled) {
+                  bindDrag(event, (x) => readHueFromPointer(x));
+                }
+              }}
+              onKeyDown={(event) => {
+                if (disabled) {
+                  return;
+                }
+                const step = event.shiftKey ? 10 : 2;
+                if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+                  event.preventDefault();
+                  commitHsv({ ...hsv, h: hsv.h + step });
+                } else if (
+                  event.key === 'ArrowLeft' ||
+                  event.key === 'ArrowDown'
+                ) {
+                  event.preventDefault();
+                  commitHsv({ ...hsv, h: hsv.h - step });
+                }
+              }}
+            >
+              <span
+                className="ds-color-picker__hue-thumb"
+                style={{
+                  left: `${(hsv.h / 360) * 100}%`,
+                  background: hueFill,
                 }}
-                onKeyDown={(event) => {
-                  if (disabled) {
-                    return;
-                  }
-                  const step = event.shiftKey ? 0.1 : 0.02;
-                  if (event.key === 'ArrowRight') {
-                    event.preventDefault();
-                    commitHsv({ ...hsv, s: hsv.s + step });
-                  } else if (event.key === 'ArrowLeft') {
-                    event.preventDefault();
-                    commitHsv({ ...hsv, s: hsv.s - step });
-                  } else if (event.key === 'ArrowUp') {
-                    event.preventDefault();
-                    commitHsv({ ...hsv, v: hsv.v + step });
-                  } else if (event.key === 'ArrowDown') {
-                    event.preventDefault();
-                    commitHsv({ ...hsv, v: hsv.v - step });
-                  }
+              />
+            </div>
+          </div>
+          <span
+            className="ds-color-picker__preview"
+            style={{ background: liveHex }}
+            aria-hidden="true"
+          />
+          {eyedropperSupported ? (
+            <Tooltip content={eyedropperLabel}>
+              <button
+                type="button"
+                className="ds-color-picker__eyedropper"
+                disabled={disabled}
+                aria-label={eyedropperLabel}
+                onClick={() => {
+                  void onEyedropper();
                 }}
               >
-                <span
-                  className="ds-color-picker__sv-thumb"
-                  style={{
-                    left: `${hsv.s * 100}%`,
-                    top: `${(1 - hsv.v) * 100}%`,
-                    background: liveHex,
-                  }}
-                />
-              </div>
+                <PipetteIcon size="sm" aria-hidden="true" />
+              </button>
+            </Tooltip>
+          ) : null}
+        </div>
 
-              <div className="ds-color-picker__slider-row">
-                <div className="ds-color-picker__sliders">
-                  <div
-                    ref={hueRef}
-                    className="ds-color-picker__hue"
-                    role="slider"
-                    aria-label="Teinte"
-                    aria-valuemin={0}
-                    aria-valuemax={360}
-                    aria-valuenow={Math.round(hsv.h)}
-                    tabIndex={disabled ? -1 : 0}
-                    onPointerDown={(event) => {
-                      if (!disabled) {
-                        bindDrag(event, (x) => readHueFromPointer(x));
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (disabled) {
-                        return;
-                      }
-                      const step = event.shiftKey ? 10 : 2;
-                      if (
-                        event.key === 'ArrowRight' ||
-                        event.key === 'ArrowUp'
-                      ) {
-                        event.preventDefault();
-                        commitHsv({ ...hsv, h: hsv.h + step });
-                      } else if (
-                        event.key === 'ArrowLeft' ||
-                        event.key === 'ArrowDown'
-                      ) {
-                        event.preventDefault();
-                        commitHsv({ ...hsv, h: hsv.h - step });
-                      }
-                    }}
-                  >
-                    <span
-                      className="ds-color-picker__hue-thumb"
-                      style={{
-                        left: `${(hsv.h / 360) * 100}%`,
-                        background: hueFill,
-                      }}
-                    />
-                  </div>
-                </div>
-                <span
-                  className="ds-color-picker__preview"
-                  style={{ background: liveHex }}
-                  aria-hidden="true"
-                />
-                {eyedropperSupported ? (
-                  <Tooltip content={eyedropperLabel}>
-                    <button
-                      type="button"
-                      className="ds-color-picker__eyedropper"
-                      disabled={disabled}
-                      aria-label={eyedropperLabel}
-                      onClick={() => {
-                        void onEyedropper();
-                      }}
-                    >
-                      <PipetteIcon size="sm" aria-hidden="true" />
-                    </button>
-                  </Tooltip>
-                ) : null}
-              </div>
+        <div className="ds-color-picker__fields">
+          <div className="ds-color-picker__format">
+            <Select
+              value={format}
+              options={FORMAT_OPTIONS}
+              disabled={disabled}
+              aria-label="Format de couleur"
+              onChange={(next) => {
+                if (next === 'hex' || next === 'rgb' || next === 'hsb') {
+                  setFormat(next);
+                  if (next === 'hex') {
+                    setHexDraft(hsvToHex(hsvRef.current));
+                  }
+                }
+              }}
+            />
+          </div>
 
-              <div className="ds-color-picker__fields">
-                <div className="ds-color-picker__format">
-                  <Select
-                    value={format}
-                    options={FORMAT_OPTIONS}
+          {format === 'hex' ? (
+            <TextInput
+              id={`${triggerId}-hex`}
+              value={hexDraft}
+              disabled={disabled}
+              placeholder={placeholder}
+              spellCheck={false}
+              aria-label="Valeur hexadécimale"
+              onChange={(event) => {
+                const next = event.target.value;
+                setHexDraft(next);
+                if (next.trim().length === 0 || normalizeHex(next)) {
+                  commitHex(next);
+                }
+              }}
+              onBlur={() => {
+                if (hexDraft.trim().length === 0) {
+                  return;
+                }
+                commitHex(hexDraft);
+                setHexDraft(normalizeHex(hexDraft) ?? hexDraft);
+              }}
+            />
+          ) : (
+            <div className="ds-color-picker__channels" data-format={format}>
+              {format === 'rgb' ? (
+                <>
+                  <InputNumber
+                    value={rgb.r}
+                    min={0}
+                    max={255}
+                    step={1}
+                    precision={0}
+                    controls={false}
                     disabled={disabled}
-                    aria-label="Format de couleur"
+                    leadingIcon={<span className="ds-color-picker__ch">R</span>}
+                    aria-label="Rouge"
                     onChange={(next) => {
-                      if (next === 'hex' || next === 'rgb' || next === 'hsb') {
-                        setFormat(next);
-                        if (next === 'hex') {
-                          setHexDraft(hsvToHex(hsvRef.current));
-                        }
+                      if (next != null) {
+                        commitRgb({ ...rgb, r: next });
                       }
                     }}
                   />
-                </div>
-
-                {format === 'hex' ? (
-                  <TextInput
-                    id={`${triggerId}-hex`}
-                    value={hexDraft}
+                  <InputNumber
+                    value={rgb.g}
+                    min={0}
+                    max={255}
+                    step={1}
+                    precision={0}
+                    controls={false}
                     disabled={disabled}
-                    placeholder={placeholder}
-                    spellCheck={false}
-                    aria-label="Valeur hexadécimale"
-                    onChange={(event) => {
-                      const next = event.target.value;
-                      setHexDraft(next);
-                      if (next.trim().length === 0 || normalizeHex(next)) {
-                        commitHex(next);
+                    leadingIcon={<span className="ds-color-picker__ch">G</span>}
+                    aria-label="Vert"
+                    onChange={(next) => {
+                      if (next != null) {
+                        commitRgb({ ...rgb, g: next });
                       }
-                    }}
-                    onBlur={() => {
-                      if (hexDraft.trim().length === 0) {
-                        return;
-                      }
-                      commitHex(hexDraft);
-                      setHexDraft(normalizeHex(hexDraft) ?? hexDraft);
                     }}
                   />
-                ) : (
-                  <div
-                    className="ds-color-picker__channels"
-                    data-format={format}
-                  >
-                    {format === 'rgb' ? (
-                      <>
-                        <InputNumber
-                          value={rgb.r}
-                          min={0}
-                          max={255}
-                          step={1}
-                          precision={0}
-                          controls={false}
-                          disabled={disabled}
-                          leadingIcon={
-                            <span className="ds-color-picker__ch">R</span>
-                          }
-                          aria-label="Rouge"
-                          onChange={(next) => {
-                            if (next != null) {
-                              commitRgb({ ...rgb, r: next });
-                            }
-                          }}
-                        />
-                        <InputNumber
-                          value={rgb.g}
-                          min={0}
-                          max={255}
-                          step={1}
-                          precision={0}
-                          controls={false}
-                          disabled={disabled}
-                          leadingIcon={
-                            <span className="ds-color-picker__ch">G</span>
-                          }
-                          aria-label="Vert"
-                          onChange={(next) => {
-                            if (next != null) {
-                              commitRgb({ ...rgb, g: next });
-                            }
-                          }}
-                        />
-                        <InputNumber
-                          value={rgb.b}
-                          min={0}
-                          max={255}
-                          step={1}
-                          precision={0}
-                          controls={false}
-                          disabled={disabled}
-                          leadingIcon={
-                            <span className="ds-color-picker__ch">B</span>
-                          }
-                          aria-label="Bleu"
-                          onChange={(next) => {
-                            if (next != null) {
-                              commitRgb({ ...rgb, b: next });
-                            }
-                          }}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <InputNumber
-                          value={Math.round(hsv.h)}
-                          min={0}
-                          max={360}
-                          step={1}
-                          precision={0}
-                          controls={false}
-                          disabled={disabled}
-                          leadingIcon={
-                            <span className="ds-color-picker__ch">H</span>
-                          }
-                          aria-label="Teinte"
-                          onChange={(next) => {
-                            if (next != null) {
-                              commitHsv({ ...hsvRef.current, h: next });
-                            }
-                          }}
-                        />
-                        <InputNumber
-                          value={Math.round(hsv.s * 100)}
-                          min={0}
-                          max={100}
-                          step={1}
-                          precision={0}
-                          controls={false}
-                          disabled={disabled}
-                          leadingIcon={
-                            <span className="ds-color-picker__ch">S</span>
-                          }
-                          aria-label="Saturation"
-                          onChange={(next) => {
-                            if (next != null) {
-                              commitHsv({
-                                ...hsvRef.current,
-                                s: next / 100,
-                              });
-                            }
-                          }}
-                        />
-                        <InputNumber
-                          value={Math.round(hsv.v * 100)}
-                          min={0}
-                          max={100}
-                          step={1}
-                          precision={0}
-                          controls={false}
-                          disabled={disabled}
-                          leadingIcon={
-                            <span className="ds-color-picker__ch">B</span>
-                          }
-                          aria-label="Luminosité"
-                          onChange={(next) => {
-                            if (next != null) {
-                              commitHsv({
-                                ...hsvRef.current,
-                                v: next / 100,
-                              });
-                            }
-                          }}
-                        />
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
+                  <InputNumber
+                    value={rgb.b}
+                    min={0}
+                    max={255}
+                    step={1}
+                    precision={0}
+                    controls={false}
+                    disabled={disabled}
+                    leadingIcon={<span className="ds-color-picker__ch">B</span>}
+                    aria-label="Bleu"
+                    onChange={(next) => {
+                      if (next != null) {
+                        commitRgb({ ...rgb, b: next });
+                      }
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <InputNumber
+                    value={Math.round(hsv.h)}
+                    min={0}
+                    max={360}
+                    step={1}
+                    precision={0}
+                    controls={false}
+                    disabled={disabled}
+                    leadingIcon={<span className="ds-color-picker__ch">H</span>}
+                    aria-label="Teinte"
+                    onChange={(next) => {
+                      if (next != null) {
+                        commitHsv({ ...hsvRef.current, h: next });
+                      }
+                    }}
+                  />
+                  <InputNumber
+                    value={Math.round(hsv.s * 100)}
+                    min={0}
+                    max={100}
+                    step={1}
+                    precision={0}
+                    controls={false}
+                    disabled={disabled}
+                    leadingIcon={<span className="ds-color-picker__ch">S</span>}
+                    aria-label="Saturation"
+                    onChange={(next) => {
+                      if (next != null) {
+                        commitHsv({
+                          ...hsvRef.current,
+                          s: next / 100,
+                        });
+                      }
+                    }}
+                  />
+                  <InputNumber
+                    value={Math.round(hsv.v * 100)}
+                    min={0}
+                    max={100}
+                    step={1}
+                    precision={0}
+                    controls={false}
+                    disabled={disabled}
+                    leadingIcon={<span className="ds-color-picker__ch">B</span>}
+                    aria-label="Luminosité"
+                    onChange={(next) => {
+                      if (next != null) {
+                        commitHsv({
+                          ...hsvRef.current,
+                          v: next / 100,
+                        });
+                      }
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </Popover>
     </div>
   );

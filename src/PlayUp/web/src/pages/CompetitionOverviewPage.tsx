@@ -895,7 +895,10 @@ function SportMatchLineList({ matches }: { matches: OverviewMatchLine[] }) {
         const isFinished = match.status === 'Finished';
         const scheduledLabel =
           match.scheduledAt != null
-            ? formatMatchSchedule(match.scheduledAt, toIntlLocale(i18n.language))
+            ? formatMatchSchedule(
+                match.scheduledAt,
+                toIntlLocale(i18n.language),
+              )
             : t('sport.scheduledUnset');
 
         return (

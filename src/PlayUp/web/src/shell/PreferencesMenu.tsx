@@ -4,10 +4,7 @@ import { Field } from '../design-system/components/Field';
 import { Popover } from '../design-system/components/Popover';
 import { Select } from '../design-system/components/Select';
 import { SettingsNavIcon } from '../design-system/icons/shellIcons';
-import {
-  isSupportedLocale,
-  type SupportedLocale,
-} from '../i18n/config';
+import { isSupportedLocale, type SupportedLocale } from '../i18n/config';
 import { setStoredLocale } from '../i18n/resolveLocale';
 import type { ThemePreference } from '../theme/config';
 import {
@@ -81,7 +78,11 @@ export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
       >
         <p className="shell-preferences__title">{t('preferences.title')}</p>
 
-        <Field width="md" label={t('preferences.language')} htmlFor={languageFieldId}>
+        <Field
+          width="md"
+          label={t('preferences.language')}
+          htmlFor={languageFieldId}
+        >
           <Select
             id={languageFieldId}
             aria-label={t('preferences.language')}

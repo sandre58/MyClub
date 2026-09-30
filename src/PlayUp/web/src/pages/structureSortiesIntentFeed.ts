@@ -94,7 +94,8 @@ export function qualificationIntentRow(
   const destId = intent.destinationStageId;
   const volume = Math.max(1, intent.destinationCount ?? 1);
   const extra =
-    draft.conditionKind === 'points' && Number.isFinite(Number(draft.minimumPoints))
+    draft.conditionKind === 'points' &&
+    Number.isFinite(Number(draft.minimumPoints))
       ? t('fiche.rule.minimumPoints', { n: Number(draft.minimumPoints) })
       : undefined;
   return {

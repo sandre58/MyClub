@@ -1,10 +1,5 @@
 export type ShellDestinationKey =
-  | 'overview'
-  | 'structure'
-  | 'matches'
-  | 'classements'
-  | 'teams'
-  | 'regulation';
+  'overview' | 'structure' | 'matches' | 'classements' | 'teams' | 'regulation';
 
 export type ShellNavGroupId = 'pilotage' | 'competition' | 'referentiel';
 
@@ -24,11 +19,7 @@ export const shellNavGroups: readonly ShellNavGroupSpec[] = [
   { id: 'pilotage', items: [{ key: 'overview' }] },
   {
     id: 'competition',
-    items: [
-      { key: 'structure' },
-      { key: 'matches' },
-      { key: 'classements' },
-    ],
+    items: [{ key: 'structure' }, { key: 'matches' }, { key: 'classements' }],
   },
   {
     id: 'referentiel',

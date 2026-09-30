@@ -14,7 +14,10 @@ export function resolvePlacesN(stage: StructureStageHubSummary): number | null {
 
   const kind = stage.formatKind;
   if (kind === 'Cup' || (kind == null && (stage.slotCount ?? 0) > 0)) {
-    return resolveCupEntryPlacesFallback(stage.slotCount ?? 0, stage.roundCount ?? 0);
+    return resolveCupEntryPlacesFallback(
+      stage.slotCount ?? 0,
+      stage.roundCount ?? 0,
+    );
   }
 
   if (kind === 'Groups' || (stage.groupCount ?? 0) > 0) {

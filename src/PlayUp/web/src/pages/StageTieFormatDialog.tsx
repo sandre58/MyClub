@@ -1,17 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  replaceRoundTieFormat,
-  replaceStageDefaultTieFormat,
-} from '../api';
+import { replaceRoundTieFormat, replaceStageDefaultTieFormat } from '../api';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { SwitchPanel } from '../design-system/components/SwitchPanel';
 import { ToggleButtonGroup } from '../design-system/components/ToggleButtonGroup';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { CheckIcon, ConfrontationIcon } from '../design-system/icons/contentIcons';
+import {
+  CheckIcon,
+  ConfrontationIcon,
+} from '../design-system/icons/contentIcons';
 import {
   AttentionIcon,
   CloseIcon,
@@ -84,7 +84,9 @@ function tieFormFromSummary(
   };
 }
 
-function tieFormFromSegment(segment: StructureConfrontationSegment): TieFormState {
+function tieFormFromSegment(
+  segment: StructureConfrontationSegment,
+): TieFormState {
   const legs = segment.numberOfLegs === 2 ? 2 : 1;
   const aggregate = legs === 2;
   return {
@@ -277,7 +279,9 @@ export function TieFormatDialog({
   const [baselinePhase, setBaselinePhase] = useState(() =>
     tieFormFromSummary(stage.defaultTieFormat),
   );
-  const [roundForms, setRoundForms] = useState(() => roundFormsFromStage(stage));
+  const [roundForms, setRoundForms] = useState(() =>
+    roundFormsFromStage(stage),
+  );
   const [baselineRounds, setBaselineRounds] = useState(() =>
     roundFormsFromStage(stage),
   );
@@ -320,7 +324,9 @@ export function TieFormatDialog({
     setRoundForms(nextRounds);
     setBaselineRounds(nextRounds);
     setOverrideEditing({});
-    const canDefault = (stage.actions ?? []).includes('ReplaceDefaultTieFormat');
+    const canDefault = (stage.actions ?? []).includes(
+      'ReplaceDefaultTieFormat',
+    );
     const firstRound = flattenRounds(stage.confrontationSegments)[0];
     setNav(canDefault ? 'phase' : (firstRound?.roundId ?? 'phase'));
     resetDiscard();
@@ -595,9 +601,7 @@ export function TieFormatDialog({
                       />
                     </div>
                     <TieFormatFields
-                      form={
-                        selectedIsCustom ? selectedRoundForm : phaseForm
-                      }
+                      form={selectedIsCustom ? selectedRoundForm : phaseForm}
                       disabled={!selectedIsCustom}
                       onChange={(next) =>
                         setRoundForms((current) => ({

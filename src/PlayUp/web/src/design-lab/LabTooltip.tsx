@@ -89,7 +89,8 @@ export function LabTooltip() {
         <p className="dlab-form__hint">
           Lab comparison — toggle Light/Dark in Preferences to judge both
           themes. <strong>Product treatment: surface</strong> (Overlay family).
-          ink / on-ink is comparison-only (OS-tip contrast, breaks from Popover).
+          ink / on-ink is comparison-only (OS-tip contrast, breaks from
+          Popover).
         </p>
         <div className="dlab-tooltip-compare">
           <figure className="dlab-tooltip-compare__item">
@@ -123,7 +124,9 @@ export function LabTooltip() {
             surface + border · radius-control 4px · ombre locale 0 2px 6px (pas
             --shadow-overlay)
           </li>
-          <li>role=&quot;tooltip&quot; · aria-describedby · pas de focus trap</li>
+          <li>
+            role=&quot;tooltip&quot; · aria-describedby · pas de focus trap
+          </li>
           <li>
             Une seule ouverte · Escape / tap extérieur · auto-dismiss ~3&nbsp;s
             mobile

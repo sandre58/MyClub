@@ -83,10 +83,7 @@ export function expectedPopulationWithQualDraft(args: {
   }
 
   return (
-    affectation +
-    qualFromOthers +
-    Math.max(0, draftQualVolume) +
-    progInbound
+    affectation + qualFromOthers + Math.max(0, draftQualVolume) + progInbound
   );
 }
 
@@ -120,9 +117,6 @@ export function expectedPopulationWithProgDraft(args: {
   }
 
   return (
-    affectation +
-    qualInbound +
-    progFromOthers +
-    Math.max(0, draftProgVolume)
+    affectation + qualInbound + progFromOthers + Math.max(0, draftProgVolume)
   );
 }
