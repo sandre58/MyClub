@@ -104,7 +104,7 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 | `npm run format`        | Prettier write                                   |
 | `npm run format:check`  | Prettier check (CI)                              |
 | `npm run lint`          | Oxlint with `--deny-warnings` (React / TS / oxc) |
-| `npm run lint:css`      | Stylelint on `src/design-system/**/*.css` (CI)   |
+| `npm run lint:css`      | Stylelint DS + pages récentes + shell (CI)       |
 | `npm run typecheck`     | `tsc -b`                                         |
 | `npm run test`          | Vitest watch                                     |
 | `npm run test:run`      | Vitest single run (CI)                           |
@@ -120,7 +120,7 @@ E2E smokes stub Host JSON via Playwright routes (no Postgres / DevRunner require
 ### Quality gates (CI `web` job)
 
 Order: `format:check` → `lint` → `lint:css` → `typecheck` → `test:run` → `build` → Playwright smoke.  
-**Errors and Oxlint warnings fail CI** (`oxlint --deny-warnings`). Stylelint covers **design-system** CSS only (page/shell CSS deferred). Coverage (`test:coverage`) is available locally — **no** CI threshold.
+**Errors and Oxlint warnings fail CI** (`oxlint --deny-warnings`). Stylelint covers **design-system**, **pages récentes** (`structure` / `teams` / `regulation` / `match`), and **shell**. Legacy pages CSS (`competition` / `classements` / `stage`) stays hors CI volontairement (pré-refonte ; scan local actuellement 0 finding). Coverage (`test:coverage`) is available locally — **no** CI threshold.
 
 Config: `.prettierrc.json`, `.oxlintrc.json`, `.stylelintrc.json`. Format on save is an optional editor setting (Prettier); this package does **not** ship a committed `.vscode/` folder.
 

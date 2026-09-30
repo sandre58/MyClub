@@ -9,7 +9,6 @@ import type {
   StructureProgressionIntent,
   StructureProgressionPath,
 } from '../../types';
-import { isPopulationDestination } from './structureProgression';
 import {
   coerceDestinationGroupIds,
   coerceDestinationSlotKeys,
@@ -17,6 +16,13 @@ import {
   placeMappingGap,
   resizeDestinationSlotKeys,
 } from './structurePlaceMapping';
+
+/** True when the progression destination targets phase Population (no Place). */
+export function isPopulationDestination(
+  slotKey: string | null | undefined,
+): boolean {
+  return slotKey == null || slotKey.trim() === '';
+}
 
 export {
   coerceDestinationGroupIds,

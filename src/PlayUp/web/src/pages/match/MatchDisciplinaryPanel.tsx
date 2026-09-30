@@ -34,7 +34,19 @@ import {
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
-import { canMutateRecordedDisciplinaryEvents } from './matchDisciplinaryHelpers';
+
+/** Domain CanMutateDisciplinaryEventsFreely — Create/Remove/Correct UI gate. */
+function canMutateRecordedDisciplinaryEvents(match: MatchDetail): boolean {
+  if (
+    match.status === 'Scheduled' ||
+    match.status === 'Postponed' ||
+    match.status === 'Live'
+  ) {
+    return true;
+  }
+
+  return match.status === 'Finished' && !match.hasObservedLive;
+}
 
 /**
  * Nominative discipline panel — facts ≠ score ≠ presence ≠ consequences.

@@ -62,7 +62,7 @@ import {
 } from '../../ui';
 import { DestinationDraftMeter } from './DestinationDraftMeter';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
-import { isPopulationDestination } from './structureProgression';
+import { isPopulationDestination } from './structureProgressionDraft';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import {
   championshipTerminalRound,

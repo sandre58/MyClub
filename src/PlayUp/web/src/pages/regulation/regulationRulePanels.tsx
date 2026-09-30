@@ -6,10 +6,13 @@ import {
   TimerIcon,
 } from '../../design-system/icons/contentIcons';
 import type { RankingCriterion } from '../../types';
-import { criterionLabel } from './regulationCriterionLabel';
 import './regulation.css';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+function criterionLabel(criterion: RankingCriterion, t: Translate) {
+  return t(`criteria.${criterion}`, { defaultValue: criterion });
+}
 
 export type MatchRulesPanelProps = {
   numberOfPeriods: number;

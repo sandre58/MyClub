@@ -26,7 +26,7 @@
   position: absolute;
   inset-block-start: var(--shell-chrome-end, var(--shell-header-min-height));
   inset-block-end: 0;
-  inset-inline-start: var(--shell-rail-end, 0px);
+  inset-inline-start: var(--shell-rail-end, 0);
   inset-inline-end: 0;
   border: 0;
   background: color-mix(in srgb, var(--color-ink) 28%, transparent);
