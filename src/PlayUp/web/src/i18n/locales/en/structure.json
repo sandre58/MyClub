@@ -134,7 +134,7 @@
     "readyForDraw": "Ready for the draw",
     "readyForDrawEntries_one": "{{count}} entry available",
     "readyForDrawEntries_other": "{{count}} entries available",
-    "readyForMaterialization": "The competition is ready to materialise (fixtures / matches)",
+    "readyForMaterialization": "The competition is ready to materialise matches",
     "readyForCupSkeleton": "The cup is ready for the fixture skeleton (draw)",
     "notReadyForMaterialization": "The competition is not yet ready to materialise",
     "materializeHint": "Go to Overview to materialise.",
