@@ -1,13 +1,20 @@
-import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
-import {type ReactNode, type SubmitEvent, useEffect, useId, useMemo, useState,} from 'react';
-import {useTranslation} from 'react-i18next';
-import {Link, useParams, useSearchParams} from 'react-router-dom';
-import {configureStructure, fetchStructureView,} from '../api';
-import {Alert} from '../design-system/components/Alert';
-import {Dialog} from '../design-system/components/Dialog';
-import {FormSection} from '../design-system/components/FormSection';
-import {PageHead} from '../design-system/components/PageHead';
-import {Tooltip} from '../design-system/components/Tooltip';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type ReactNode,
+  type SubmitEvent,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { configureStructure, fetchStructureView } from '../api';
+import { Alert } from '../design-system/components/Alert';
+import { Dialog } from '../design-system/components/Dialog';
+import { FormSection } from '../design-system/components/FormSection';
+import { PageHead } from '../design-system/components/PageHead';
+import { Tooltip } from '../design-system/components/Tooltip';
 import {
   ChampionshipFormatIcon,
   CheckIcon,
@@ -26,20 +33,31 @@ import {
   LayersIcon,
 } from '../design-system/icons/contentIcons';
 import { CloseIcon } from '../design-system/icons/shellIcons';
-import {attentionSourceLabel, matchGenerationFormatLabel, structureFormatKindLabel,} from '../i18n/enumLabels';
-import {queryKeys} from '../queryKeys';
-import {EmptyState, ErrorState, LoadingState, MutationError, PendingLabel, StageStatusBadge,} from '../ui';
+import {
+  attentionSourceLabel,
+  matchGenerationFormatLabel,
+  structureFormatKindLabel,
+} from '../i18n/enumLabels';
+import { queryKeys } from '../queryKeys';
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  MutationError,
+  PendingLabel,
+  StageStatusBadge,
+} from '../ui';
 import {
   type MatchGenerationFormat,
   type StructureFormatKind,
   type StructureStageHubSummary,
   type StructureView,
 } from '../types';
-import {invalidateAfterStructureMutation} from './structureInvalidation';
-import {AddPhaseDialog} from './StructureGraphDialogs';
-import {StructurePhaseFiche} from './StructurePhaseFiche';
-import {type StructureSectionId} from './structureHubSections';
-import {resolvePlacesN, resolvePlacesPerGroup} from './structurePlaces';
+import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { AddPhaseDialog } from './StructureGraphDialogs';
+import { StructurePhaseFiche } from './StructurePhaseFiche';
+import { type StructureSectionId } from './structureHubSections';
+import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
@@ -395,15 +413,14 @@ function TopologyPanel({
               outbound.length === 1 &&
               next != null &&
               outbound[0] === next.stageId;
-            const bridgeMode: 'connector' | 'outbound' | 'empty' = univocalToNext
-              ? 'connector'
-              : outbound.length > 0
-                ? 'outbound'
-                : 'empty';
+            const bridgeMode: 'connector' | 'outbound' | 'empty' =
+              univocalToNext
+                ? 'connector'
+                : outbound.length > 0
+                  ? 'outbound'
+                  : 'empty';
             const edgeLabel =
-              bridgeMode === 'connector'
-                ? edgeLabelFromSource(stage, t)
-                : null;
+              bridgeMode === 'connector' ? edgeLabelFromSource(stage, t) : null;
 
             return (
               <li key={stage.stageId} className="structure-topology__item">
@@ -418,10 +435,7 @@ function TopologyPanel({
                     <span className="structure-topology__tile-title">
                       <Tooltip content={formatLabel}>
                         <span className="structure-topology__format-icon">
-                          <StageFormatGlyph
-                            kind={stage.formatKind}
-                            size="sm"
-                          />
+                          <StageFormatGlyph kind={stage.formatKind} size="sm" />
                         </span>
                       </Tooltip>
                       <span className="structure-topology__tile-name">
@@ -448,10 +462,7 @@ function TopologyPanel({
 
                   <span className="structure-topology__tile-facts">
                     {facts.map((fact) => (
-                      <span
-                        key={fact.id}
-                        className="structure-topology__fact"
-                      >
+                      <span key={fact.id} className="structure-topology__fact">
                         <span className="structure-topology__fact-icon">
                           {fact.icon}
                         </span>
@@ -506,7 +517,10 @@ function TopologyPanel({
             </p>
             <ul className="structure-topology__alert-list">
               {anomalies.map((anomaly) => (
-                <li key={anomaly.key} className="structure-topology__alert-item">
+                <li
+                  key={anomaly.key}
+                  className="structure-topology__alert-item"
+                >
                   <div className="structure-topology__alert-copy">
                     <span className="structure-topology__alert-stage">
                       {anomaly.stageName}
@@ -609,7 +623,9 @@ function TopologyDrawHint({ stage }: { stage: StructureStageHubSummary }) {
           : 'done';
   return (
     <Tooltip content={t(`hub.drawExecution.${key}Tooltip`)}>
-      <span className={`structure-topology__signal structure-topology__signal--${tone}`}>
+      <span
+        className={`structure-topology__signal structure-topology__signal--${tone}`}
+      >
         <DrawPendingIcon size="sm" aria-hidden="true" />
         <span>{t(`hub.drawExecution.${key}`)}</span>
       </span>
@@ -686,14 +702,14 @@ function topologyCardFacts(
       return [
         {
           id: 'rounds',
-          icon: <RoundsStatIcon size="md" aria-hidden="true"/>,
+          icon: <RoundsStatIcon size="md" aria-hidden="true" />,
           value: t('hub.topologyStatRounds', {
             count: stage.roundCount ?? 0,
           }),
         },
         {
           id: 'legs',
-          icon: <LegsStatIcon size="md" aria-hidden="true"/>,
+          icon: <LegsStatIcon size="md" aria-hidden="true" />,
           value:
             (stage.numberOfLegs ?? 1) >= 2
               ? t('hub.topologyLegsReturn')
@@ -779,7 +795,6 @@ function edgeLabelFromSource(
   }
   return t('hub.edgeGeneric');
 }
-
 
 function readinessStatusNote(
   data: StructureView,
@@ -1002,10 +1017,7 @@ function StructureEditorDialog({
         queryKeys.competitions.structure(data.competitionId),
         response.structure,
       );
-      await invalidateAfterStructureMutation(
-        queryClient,
-        data.competitionId,
-      );
+      await invalidateAfterStructureMutation(queryClient, data.competitionId);
       onClose();
     },
   });

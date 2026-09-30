@@ -332,10 +332,7 @@ export function RegulationEditorDialog({
       return replaceCompetitionRegulation(data.competitionId, body);
     },
     onSuccess: async () => {
-      await invalidateAfterStructureMutation(
-        queryClient,
-        data.competitionId,
-      );
+      await invalidateAfterStructureMutation(queryClient, data.competitionId);
       setConfirmOpen(false);
       setPendingPreview(null);
       notify.success(t('editor.savedToast'));
@@ -788,9 +785,7 @@ export function RegulationEditorDialog({
                         key={type}
                         label={t(`discipline.${type}`)}
                         selected={(form.allowedTypes ?? []).includes(type)}
-                        leading={
-                          <ChoiceSwatch color={CARD_SWATCH[type]} />
-                        }
+                        leading={<ChoiceSwatch color={CARD_SWATCH[type]} />}
                         onChange={() => toggleAllowedType(type)}
                       />
                     ))}

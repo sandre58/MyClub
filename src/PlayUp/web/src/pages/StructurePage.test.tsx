@@ -18,10 +18,7 @@ import {
   renameStage,
   ApiError,
 } from '../api';
-import type {
-  StructureStageHubSummary,
-  StructureView,
-} from '../types';
+import type { StructureStageHubSummary, StructureView } from '../types';
 import { StructurePage } from './StructurePage';
 import { relevantPhaseSections } from './structureHubSections';
 
@@ -151,9 +148,7 @@ function cupStage(
   };
 }
 
-function structureView(
-  overrides: Partial<StructureView> = {},
-): StructureView {
+function structureView(overrides: Partial<StructureView> = {}): StructureView {
   return {
     competitionId,
     name: 'Spring Cup',
@@ -335,11 +330,13 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/Structure non prête/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Structure non prête/i),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Identité' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Équipes' })).not.toBeInTheDocument();
+      screen.queryByRole('heading', { name: 'Identité' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Équipes' }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Règlement' }),
     ).not.toBeInTheDocument();
@@ -385,10 +382,16 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(await screen.findByRole('button', { name: /League/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /League/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'League' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /^Match$/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /^Match$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Population/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -427,7 +430,9 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Groupes' }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /Tirage/i }),
     ).not.toBeInTheDocument();
@@ -445,7 +450,9 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('button', { name: /Désactiver le tirage/i }),
     ).toBeEnabled();
-    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Population/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -707,9 +714,7 @@ describe('StructurePage Structure hub', () => {
         /La reconstruction supprimera la structure actuelle/i,
       ),
     ).toBeInTheDocument();
-    expect(
-      within(dialog).queryByRole('switch'),
-    ).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('switch')).not.toBeInTheDocument();
     expect(
       within(dialog).getByRole('button', { name: /^Reconstruire$/i }),
     ).toBeInTheDocument();
@@ -772,9 +777,7 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('dialog', { name: /Abandonner la création/i }),
     ).toBeInTheDocument();
-    await user.click(
-      screen.getByRole('button', { name: /^Abandonner$/i }),
-    );
+    await user.click(screen.getByRole('button', { name: /^Abandonner$/i }));
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
@@ -902,18 +905,14 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      await screen.findByText(/Structure non prête/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Structure non prête/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Règles de pots manquantes/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/Graphe de structure invalide/i),
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/points à lever/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/points à lever/i)).not.toBeInTheDocument();
 
     const topology = screen.getByRole('region', {
       name: /Topologie/i,
@@ -931,7 +930,9 @@ describe('StructurePage Structure hub', () => {
       within(topology).queryByText(/Affectation par tirage/i),
     ).not.toBeInTheDocument();
     expect(
-      within(topology).queryByText(/Tirage (à lancer|en cours|à appliquer|appliqué)/i),
+      within(topology).queryByText(
+        /Tirage (à lancer|en cours|à appliquer|appliqué)/i,
+      ),
     ).not.toBeInTheDocument();
     expect(
       within(topology).queryByText(/Tirage (à définir|requis|configuré)/i),
@@ -1089,7 +1090,9 @@ describe('StructurePage Structure hub', () => {
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Préparer|Démarrer|Tirer|Matérialiser/i }),
+      screen.queryByRole('button', {
+        name: /Préparer|Démarrer|Tirer|Matérialiser/i,
+      }),
     ).not.toBeInTheDocument();
   });
 
@@ -1118,18 +1121,16 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      screen.queryByText(/Prêt pour le tirage/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Prêt pour le tirage/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tirage requis/i)).not.toBeInTheDocument();
-    expect(
-      await screen.findByText(/Tirage à lancer/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Tirage à lancer/i)).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Préparer|Démarrer|Publier|Appliquer/i }),
+      screen.queryByRole('button', {
+        name: /Préparer|Démarrer|Publier|Appliquer/i,
+      }),
     ).not.toBeInTheDocument();
   });
 
@@ -1152,9 +1153,7 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      await screen.findByText(/Structure non prête/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Structure non prête/i)).toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: /Structure manquante/i }),
     );
@@ -1200,8 +1199,12 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('heading', { name: 'Demi-finales' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /^Sorties$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Population/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /^Sorties$/i }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /Attribution des places/i }),
     ).toBeInTheDocument();
@@ -1247,8 +1250,12 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(await screen.findByRole('heading', { name: 'League' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'League' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Population/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -1270,10 +1277,7 @@ describe('StructurePage Structure hub', () => {
           cupStage({
             stageId,
             name: 'Finale',
-            actions: [
-              'ReplaceProgressionRules',
-              'ReplacePlacementAwardRules',
-            ],
+            actions: ['ReplaceProgressionRules', 'ReplacePlacementAwardRules'],
             progressionIntents: [
               {
                 intentId: 'pi-1',
@@ -1315,9 +1319,15 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(await screen.findByRole('heading', { name: 'Finale' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Population/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /^Sorties$/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Finale' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Population/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /^Sorties$/i }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /Attribution des places/i }),
     ).toBeInTheDocument();
@@ -1364,8 +1374,12 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('heading', { name: 'League' }),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Renommer la phase/i }));
-    const input = await screen.findByRole('textbox', { name: /Nom de la phase/i });
+    await user.click(
+      screen.getByRole('button', { name: /Renommer la phase/i }),
+    );
+    const input = await screen.findByRole('textbox', {
+      name: /Nom de la phase/i,
+    });
     await user.clear(input);
     await user.type(input, 'Saison');
     await user.click(screen.getByRole('button', { name: /^Enregistrer$/i }));

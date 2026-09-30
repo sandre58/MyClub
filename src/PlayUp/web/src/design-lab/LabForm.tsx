@@ -142,11 +142,10 @@ export function LabForm() {
         <p className="ds-eyebrow">Design System</p>
         <h1 className="dlab-form__title">Form controls</h1>
         <p className="dlab-form__lede">
-          All DS edit controls: Field, TextInput, Select,
-          InputNumber (end / split + suffix), Switch / SwitchPanel,
-          FormSection, FormGroup, OutcomePoints, ReorderList, ChoiceTile,
-          ToggleButtonGroup, Upload, ColorPicker. Regulation surface =
-          separate product safeguards.
+          All DS edit controls: Field, TextInput, Select, InputNumber (end /
+          split + suffix), Switch / SwitchPanel, FormSection, FormGroup,
+          OutcomePoints, ReorderList, ChoiceTile, ToggleButtonGroup, Upload,
+          ColorPicker. Regulation surface = separate product safeguards.
         </p>
       </header>
 

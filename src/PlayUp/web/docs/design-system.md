@@ -127,23 +127,23 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New UI must pick one of the families below — do not invent a fourth “card” chrome.
 
-| Family | Mechanism | Role | Typical usages |
-| --- | --- | --- | --- |
-| **A. Choice tile** | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`) | Parameter / option choice inside a **form** | Structure dialogs scope, Regulation discipline, AddPhase format |
-| **B. Selectable tile** | `.ds-selectable-tile` + page layout classes | **Entity** selectable in a list/grid (selection chrome only) | `teams-tile`, `structure-topology__tile`, qualif/prog rows, draw master |
-| **C. Panel** | `.ds-panel` (+ `PanelHead`) | Content container (not decorative card farm) | Overview, Classements, Matches hub, Stage |
+| Family                 | Mechanism                                            | Role                                                         | Typical usages                                                          |
+| ---------------------- | ---------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| **A. Choice tile**     | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`) | Parameter / option choice inside a **form**                  | Structure dialogs scope, Regulation discipline, AddPhase format         |
+| **B. Selectable tile** | `.ds-selectable-tile` + page layout classes          | **Entity** selectable in a list/grid (selection chrome only) | `teams-tile`, `structure-topology__tile`, qualif/prog rows, draw master |
+| **C. Panel**           | `.ds-panel` (+ `PanelHead`)                          | Content container (not decorative card farm)                 | Overview, Classements, Matches hub, Stage                               |
 
 **Also page-local (not a fourth family):**
 
-| Pattern | Class | Note |
-| --- | --- | --- |
-| Phase fiche | `.structure-fiche` | Structure layout métier — keep page-local until a second surface reuses it |
-| Domain sections in fiche | `.structure-domain-tile` | Internal fiche sections (FormSection-like), **not** family B selection |
-| Attribution tiles | `.structure-attribution__tile` | Dialog content blocks (not selection chrome) |
-| Schematic pots | `.regulation-schematic__card*` | Diagram cells — naming historical; not family B |
-| Disciplinary tokens | `.regulation-card-token*` | Literal “carton” glyphs — keep `card` in the name |
-| Overview config height | `.overview-config-card` on `.ds-panel` | Layout helper on family **C**, not a card system |
-| Stage draw block | `.draw-card` | Page-local Stage content — migrate naming when Stage is touched (Phase 6+) |
+| Pattern                  | Class                                  | Note                                                                       |
+| ------------------------ | -------------------------------------- | -------------------------------------------------------------------------- |
+| Phase fiche              | `.structure-fiche`                     | Structure layout métier — keep page-local until a second surface reuses it |
+| Domain sections in fiche | `.structure-domain-tile`               | Internal fiche sections (FormSection-like), **not** family B selection     |
+| Attribution tiles        | `.structure-attribution__tile`         | Dialog content blocks (not selection chrome)                               |
+| Schematic pots           | `.regulation-schematic__card*`         | Diagram cells — naming historical; not family B                            |
+| Disciplinary tokens      | `.regulation-card-token*`              | Literal “carton” glyphs — keep `card` in the name                          |
+| Overview config height   | `.overview-config-card` on `.ds-panel` | Layout helper on family **C**, not a card system                           |
+| Stage draw block         | `.draw-card`                           | Page-local Stage content — migrate naming when Stage is touched (Phase 6+) |
 
 ### Rules
 

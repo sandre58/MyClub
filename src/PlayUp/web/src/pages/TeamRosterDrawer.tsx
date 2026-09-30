@@ -804,7 +804,10 @@ function RosterGroup({
                               aria-label={t('roster.confirmRename')}
                             >
                               {renamePending ? (
-                                <span className="ds-spinner" aria-hidden="true" />
+                                <span
+                                  className="ds-spinner"
+                                  aria-hidden="true"
+                                />
                               ) : (
                                 <CheckIcon size="sm" />
                               )}
