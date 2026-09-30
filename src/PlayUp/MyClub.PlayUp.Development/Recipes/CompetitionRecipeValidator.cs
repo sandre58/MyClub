@@ -26,13 +26,13 @@ public static class CompetitionRecipeValidator
         return recipe.TeamCount < 0
             ? throw new InvalidOperationException("Recipe TeamCount cannot be negative.")
             : recipe.Format switch
-        {
-            RecipeFormat.Championship => ValidateChampionship(recipe),
-            RecipeFormat.Groups => ValidateGroups(recipe),
-            RecipeFormat.Cup => ValidateCup(recipe),
-            RecipeFormat.Swiss => ValidateSwiss(recipe),
-            _ => throw new InvalidOperationException($"Unsupported recipe format '{recipe.Format}'.")
-        };
+            {
+                RecipeFormat.Championship => ValidateChampionship(recipe),
+                RecipeFormat.Groups => ValidateGroups(recipe),
+                RecipeFormat.Cup => ValidateCup(recipe),
+                RecipeFormat.Swiss => ValidateSwiss(recipe),
+                _ => throw new InvalidOperationException($"Unsupported recipe format '{recipe.Format}'.")
+            };
     }
 
     private static StructureIntent ValidateChampionship(CompetitionRecipe recipe) =>

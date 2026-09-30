@@ -1,4 +1,4 @@
-﻿# EditorConfig is awesome: https://EditorConfig.org
+# EditorConfig is awesome: https://EditorConfig.org
 
 # top-most EditorConfig file
 root = true
@@ -129,8 +129,13 @@ csharp_space_between_square_brackets = false
 csharp_prefer_braces = when_multiline:silent
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = true
-csharp_using_directive_placement = outside_namespace:silent
+csharp_using_directive_placement = outside_namespace:warning
 csharp_prefer_simple_using_statement = true:suggestion
+
+# Rider - conventions already decided in csharp.mdc / StyleCop (not a zero-inspection campaign)
+resharper_inconsistent_naming_highlighting = hint
+resharper_redundant_this_qualifier_highlighting = warning
+resharper_missing_xml_doc_highlighting = none
 
 # Non-private static fields are PascalCase
 dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.severity = suggestion
@@ -266,17 +271,20 @@ dotnet_diagnostic.SA1501.severity = none
 dotnet_diagnostic.SA1502.severity = none
 dotnet_diagnostic.SA1503.severity = none
 
-# Play'Up Domain: flat namespaces with physical folders (convention B) — Common (Ids/Enums), Rules (Entry/Match/Standing/TieFormat/Draw/Qualification)
-
-
+# Play'Up: flat namespaces with physical folders (csharp.mdc) - Common, Rules, aggregate subfolders
 dotnet_diagnostic.IDE1006.severity = suggestion
 [src/PlayUp/**/*.cs]
 dotnet_diagnostic.IDE0130.severity = none
 resharper_check_namespace_highlighting = none
 
-# Play'Up Domain: require XML docs on public API (CS1591)
+# Play'Up Domain: require XML docs on public API (CS1591); do not force anemic auto-properties (csharp.mdc)
 [src/PlayUp/**/MyClub.PlayUp.Domain/**/*.cs]
 dotnet_diagnostic.CS1591.severity = warning
+resharper_convert_to_auto_property_highlighting = none
+resharper_convert_to_auto_property_when_possible_highlighting = none
+resharper_use_auto_property_still_possible_highlighting = none
+# XML doc warnings outside Domain stay off (CS1591 none globally); Rider mirrors that for Domain-only docs.
+resharper_missing_xml_doc_highlighting = warning
 
 # Play'Up SPA (TypeScript / CSS / JSON)
 [src/PlayUp/web/**/*.{js,jsx,ts,tsx,css,json,jsonc,html,md,yml,yaml}]
@@ -285,9 +293,10 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 end_of_line = lf
 
-# Test projects: no XML doc file — silence SA0001
+# Test projects: no XML doc file - silence SA0001
 [tests/**/*.cs]
 dotnet_diagnostic.SA0001.severity = none
+resharper_missing_xml_doc_highlighting = none
 
 # Do not apply code styles to generated migration files
 [**/Migrations/*.cs]

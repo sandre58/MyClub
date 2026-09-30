@@ -172,7 +172,7 @@ public sealed class GenerateDrawResolutionTests
             stage,
             draw.Id,
             _clock,
-            groupTargets: [..groups.Select(g => g.Id)],
+            groupTargets: [.. groups.Select(g => g.Id)],
             seed: 5);
 
         result.IsResolved.Should().BeTrue();
@@ -325,8 +325,10 @@ public sealed class GenerateDrawResolutionTests
         var a2 = AssociationId.New();
         var associations = new Dictionary<EntryId, AssociationId>
         {
-            [entries[0]] = a1, [entries[1]] = a2,
-            [entries[2]] = a1, [entries[3]] = a2
+            [entries[0]] = a1,
+            [entries[1]] = a2,
+            [entries[2]] = a1,
+            [entries[3]] = a2
         };
         stage.ReplaceDrawRules(
             new DrawRules(
@@ -401,7 +403,7 @@ public sealed class GenerateDrawResolutionTests
     }
 
     private static EntryId[] NewEntries(int count) =>
-        [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+        [.. Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     private Stage CreateStageWithPots(int numberOfPots)
     {

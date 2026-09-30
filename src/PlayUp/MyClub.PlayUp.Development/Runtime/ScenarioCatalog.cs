@@ -20,7 +20,11 @@ public sealed class ScenarioCatalog
     public ScenarioCatalog(IEnumerable<IScenario> scenarios)
     {
         ArgumentNullException.ThrowIfNull(scenarios);
+
+        // Collection expression cannot carry StringComparer; OrdinalIgnoreCase is required for scenario ids.
+#pragma warning disable IDE0028
         _byId = new Dictionary<string, IScenario>(StringComparer.OrdinalIgnoreCase);
+#pragma warning restore IDE0028
         foreach (var scenario in scenarios)
         {
             ArgumentNullException.ThrowIfNull(scenario);

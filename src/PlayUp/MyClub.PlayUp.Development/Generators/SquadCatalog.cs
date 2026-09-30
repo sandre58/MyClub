@@ -35,7 +35,7 @@ public sealed class SquadCatalog
     public static SquadCatalog Instance => Shared.Value;
 
     /// <summary>Gets the team display names that have a catalog overlay.</summary>
-    public IReadOnlyCollection<string> TeamNames => [.._byDisplayName.Keys];
+    public IReadOnlyCollection<string> TeamNames => [.. _byDisplayName.Keys];
 
     /// <summary>
     /// Loads the embedded squad catalog from the given assembly.
@@ -124,7 +124,7 @@ public sealed class SquadCatalog
 #pragma warning disable CA2227 // Bound from JSON.
         public List<string> Staff { get; set; } = [];
 
-        public Dictionary<string, string> Players { get; set; } = new(StringComparer.Ordinal);
+        public Dictionary<string, string> Players { get; set; } = [];
 #pragma warning restore CA2227
     }
 }

@@ -18,7 +18,7 @@ public sealed class SwissPairingResult
     private SwissPairingResult(bool isNoSolution, IReadOnlyList<SwissPairing>? pairings, EntryId? byeEntryId)
     {
         IsNoSolution = isNoSolution;
-        _pairings = pairings is null ? [] : [..pairings];
+        _pairings = pairings is null ? [] : [.. pairings];
         ByeEntryId = byeEntryId;
     }
 

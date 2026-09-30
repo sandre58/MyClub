@@ -135,6 +135,8 @@ public static class StandingCalculator
             case true when filter is MatchFilter.All or MatchFilter.Home:
                 ApplySide(stats[match.HomeEntryId], match.HomeGoals, match.AwayGoals, points);
                 break;
+            default:
+                break;
         }
 
         if (awayIn && filter is MatchFilter.All or MatchFilter.Away)
@@ -194,7 +196,7 @@ public static class StandingCalculator
             groups = nextGroups;
         }
 
-        return [..groups.SelectMany(g => g)];
+        return [.. groups.SelectMany(g => g)];
     }
 
     private static List<List<RankableRow>> PartitionByGlobalCriterion(
@@ -217,7 +219,11 @@ public static class StandingCalculator
             RankingCriterion.GoalsFor => row.GoalsFor,
             RankingCriterion.GoalsAgainst => -row.GoalsAgainst,
             RankingCriterion.Wins => row.Wins,
-            _ => 0
+
+            // Head-to-head is partitioned separately; it must not reach GlobalKey.
+            RankingCriterion.HeadToHead => throw new InvalidOperationException(
+                "Head-to-head ranking must use PartitionByHeadToHead, not GlobalKey."),
+            _ => throw new ArgumentOutOfRangeException(nameof(criterion), criterion, null)
         };
 
     private static List<List<RankableRow>> PartitionByHeadToHead(

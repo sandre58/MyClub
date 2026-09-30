@@ -22,7 +22,7 @@ public sealed class Standing
     public Standing(IReadOnlyList<StandingRow> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        _rows = [..rows];
+        _rows = [.. rows];
     }
 
     /// <summary>

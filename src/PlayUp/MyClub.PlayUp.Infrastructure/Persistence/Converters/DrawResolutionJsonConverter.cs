@@ -35,10 +35,10 @@ public sealed class DrawResolutionJsonConverter : ValueConverter<DrawResolution,
 
     private static bool StructuralEquals(DrawResolution? left, DrawResolution? right) =>
         ReferenceEquals(left, right)
-            || (left is not null && right is not null && (left.State == right.State
+            || (left is not null && right is not null && left.State == right.State
                                                           && left.ResolvedKind == right.ResolvedKind
                                                           && left.SlotResults.SequenceEqual(right.SlotResults)
-                                                          && left.GroupResults.SequenceEqual(right.GroupResults)));
+                                                          && left.GroupResults.SequenceEqual(right.GroupResults));
 
     private static int StructuralHash(DrawResolution resolution)
     {

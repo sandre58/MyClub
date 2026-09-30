@@ -251,5 +251,5 @@ public sealed record StageRegulation
     private static StandingRules CloneStandingRules(StandingRules source) =>
         new(
             new PointsPolicy(source.Points.WinPoints, source.Points.DrawPoints, source.Points.LossPoints),
-            [..source.RankingCriteria]);
+            [.. source.RankingCriteria]);
 }

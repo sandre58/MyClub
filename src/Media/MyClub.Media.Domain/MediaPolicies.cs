@@ -37,6 +37,8 @@ public static class MediaPolicies
                 throw new DomainException(
                     $"Media payload exceeds the maximum of {MaxByteSize} bytes.",
                     MediaErrorCodes.PayloadTooLarge);
+            default:
+                break;
         }
     }
 

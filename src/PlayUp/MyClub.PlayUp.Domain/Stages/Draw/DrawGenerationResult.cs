@@ -21,7 +21,7 @@ public sealed class DrawGenerationResult
     {
         IsNoSolution = isNoSolution;
         Resolution = resolution;
-        _preferredViolations = preferredViolations is null ? [] : [..preferredViolations];
+        _preferredViolations = preferredViolations is null ? [] : [.. preferredViolations];
     }
 
     /// <summary>

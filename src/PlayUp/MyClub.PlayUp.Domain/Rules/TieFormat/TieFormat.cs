@@ -74,6 +74,8 @@ public sealed record TieFormat
                 throw new DomainException(
                     "Two-legged ties require aggregate scoring in V1.",
                     RulesErrorCodes.TieFormatInvalid);
+            default:
+                break;
         }
 
         if (awayGoalsRule is not null && (numberOfLegs != TwoLegs || !aggregateScoring))

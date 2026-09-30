@@ -41,7 +41,7 @@ public sealed record DrawRules
         Mode = mode;
         SeedingRules = seedingRules;
         PotRules = potRules;
-        _constraints = constraints is null ? [] : [..constraints];
+        _constraints = constraints is null ? [] : [.. constraints];
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public sealed record DrawRules
             Mode,
             SeedingRules is null ? null : new SeedingRules(SeedingRules.NumberOfSeeds),
             PotRules is null ? null : new PotRules(PotRules.NumberOfPots),
-            [.._constraints.Select(c => c.Copy())]);
+            [.. _constraints.Select(c => c.Copy())]);
 
     /// <inheritdoc />
     public bool Equals(DrawRules? other) =>

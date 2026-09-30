@@ -275,6 +275,7 @@ public static class QualificationPathExpander
         {
             RankingScope.Group => QualificationSource.FromGroup(occurrence.GroupId!.Value),
             RankingScope.AcrossGroups => QualificationSource.AcrossGroups(occurrence.AcrossGroupsPosition!.Value),
-            _ => QualificationSource.Overall()
+            RankingScope.Overall => QualificationSource.Overall(),
+            _ => throw new ArgumentOutOfRangeException(nameof(occurrence), occurrence.Scope, null)
         };
 }

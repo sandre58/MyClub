@@ -563,6 +563,9 @@ public static class StructureViewAssembler
         return intent.SourceKind switch
         {
             QualificationIntentSourceKind.EachGroup => Math.Max(groupCount, 0) * span,
+            QualificationIntentSourceKind.SingleGroup
+                or QualificationIntentSourceKind.Overall
+                or QualificationIntentSourceKind.AcrossGroups => span,
             _ => span
         };
     }
@@ -808,6 +811,8 @@ public static class StructureViewAssembler
                 break;
             case StructureFormatKind.Swiss:
                 actions.Add(ActionReplaceSwissSettings);
+                break;
+            default:
                 break;
         }
 
@@ -1253,7 +1258,7 @@ public static class StructureViewAssembler
         {
             CompetitionStatus.Completed or CompetitionStatus.Archived => [],
             CompetitionStatus.Running or CompetitionStatus.Suspended => ["WithdrawEntry", "RenameEntry"],
-            _ =>
+            CompetitionStatus.Draft or CompetitionStatus.Ready =>
             [
                 ActionAddEntry,
                 ActionConfigureStructure,
@@ -1261,7 +1266,8 @@ public static class StructureViewAssembler
                 ActionReplaceRegulation,
                 "RenameEntry",
                 "DeleteEntry"
-            ]
+            ],
+            _ => []
         };
 
     private static bool IsPowerOfTwo(int value) => value > 0 && (value & (value - 1)) == 0;

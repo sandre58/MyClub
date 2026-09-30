@@ -93,8 +93,13 @@ public sealed record QualificationIntent
                 throw new DomainException(
                     "Across-groups intent cannot target a specific group.",
                     RulesErrorCodes.QualificationRulesInvalid);
-            default:
+            case QualificationIntentSourceKind.SingleGroup:
+            case QualificationIntentSourceKind.EachGroup:
+            case QualificationIntentSourceKind.Overall:
+            case QualificationIntentSourceKind.AcrossGroups:
                 break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(sourceKind), sourceKind, null);
         }
 
         var slotKeys = destinationSlotKeys is { Count: > 0 } ? destinationSlotKeys : null;

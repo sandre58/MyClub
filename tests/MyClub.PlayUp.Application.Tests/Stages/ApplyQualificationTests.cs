@@ -90,7 +90,7 @@ public sealed class ApplyQualificationTests
         var ko = CreateSlotStage(competitionId, "KO", koSlots);
         var playoff = CreateSlotStage(competitionId, "PO", poSlots);
         var entries = CreateEntries(24);
-        var matches = BuildRoundRobin(league, [..entries.Take(8)]);
+        var matches = BuildRoundRobin(league, [.. entries.Take(8)]);
 
         // Lightweight standings: matches among first 8; remaining entries fill bottom positions.
         var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
@@ -129,7 +129,7 @@ public sealed class ApplyQualificationTests
         var league = CreateLeagueStage(competitionId, "LeaguePhase");
         var ko = CreateSlotStage(competitionId, "KO", ["KO1"]);
         var entries = CreateEntries(36);
-        var matches = BuildRoundRobin(league, [..entries.Take(4)]);
+        var matches = BuildRoundRobin(league, [.. entries.Take(4)]);
         var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules.OrThrow());
 
         league.ReplaceQualificationRules(
@@ -1244,7 +1244,7 @@ public sealed class ApplyQualificationTests
         List<Match> Matches);
 
     private static EntryId[] CreateEntries(int count) =>
-        [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+        [.. Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     private Stage CreateLeagueStage(CompetitionId competitionId, string name) =>
         Stage.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);

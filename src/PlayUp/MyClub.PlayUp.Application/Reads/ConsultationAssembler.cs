@@ -185,15 +185,15 @@ public static class ConsultationAssembler
         else
         {
             tables.AddRange(from @group in stage.Groups
-                where @group.EntryIds.Count > 0
-                let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties)
-                select new ConsultationStandingTableDto(
-                    ScopeGroup,
-                    stage.Id.Value,
-                    stage.Name.Value,
-                    @group.Id.Value,
-                    @group.Name,
-                    MapRows(standing, names)));
+                            where @group.EntryIds.Count > 0
+                            let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties)
+                            select new ConsultationStandingTableDto(
+                                ScopeGroup,
+                                stage.Id.Value,
+                                stage.Name.Value,
+                                @group.Id.Value,
+                                @group.Name,
+                                MapRows(standing, names)));
         }
 
         return tables.Count == 0
@@ -370,9 +370,9 @@ public static class ConsultationAssembler
             else
             {
                 tables.AddRange(from @group in stage.Groups
-                    where @group.EntryIds.Count > 0
-                    let standing = CalculateStanding.Execute(@group.EntryIds, rows, rules, MatchFilter.All, penalties)
-                    select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
+                                where @group.EntryIds.Count > 0
+                                let standing = CalculateStanding.Execute(@group.EntryIds, rows, rules, MatchFilter.All, penalties)
+                                select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
             }
         }
 
@@ -443,9 +443,9 @@ public static class ConsultationAssembler
             else
             {
                 tables.AddRange(from @group in stage.Groups
-                    where @group.EntryIds.Count > 0
-                    let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties)
-                    select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
+                                where @group.EntryIds.Count > 0
+                                let standing = CalculateStanding.Execute(@group.EntryIds, matches, rules, MatchFilter.All, penalties)
+                                select new ConsultationStandingTableDto(ScopeGroup, stage.Id.Value, stage.Name.Value, @group.Id.Value, @group.Name, MapRows(standing, names)));
             }
         }
 

@@ -216,7 +216,7 @@ public sealed class CrossGroupStandingAssemblerTests
     }
 
     private static EntryId[] CreateEntries(int count) =>
-        [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+        [.. Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     private (Stage Stage, Group[] Groups, EntryId[] Thirds, Dictionary<GroupId, Standing> Standings, List<Match> Matches)
         BuildTwoGroupsWithKnownThirds()

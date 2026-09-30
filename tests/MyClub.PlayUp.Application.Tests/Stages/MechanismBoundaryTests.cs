@@ -151,7 +151,7 @@ public sealed class MechanismBoundaryTests
     }
 
     private static EntryId[] CreateEntries(int count) =>
-        [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+        [.. Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     private Stage CreateLeague(CompetitionId competitionId, string name) =>
         Stage.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);

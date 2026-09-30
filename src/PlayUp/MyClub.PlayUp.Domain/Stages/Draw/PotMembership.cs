@@ -32,7 +32,10 @@ public sealed record PotMembership
                 StageErrorCodes.DrawInputsInvalid);
         }
 
+        // Copy ctor — collection expression cannot spread IDictionary into Dictionary.
+#pragma warning disable IDE0028
         _pots = new Dictionary<EntryId, int>(pots);
+#pragma warning restore IDE0028
     }
 
     /// <summary>

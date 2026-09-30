@@ -20,7 +20,11 @@ public sealed class TemplateCatalog
     public TemplateCatalog(IEnumerable<ICompetitionTemplate> templates)
     {
         ArgumentNullException.ThrowIfNull(templates);
+
+        // Collection expression cannot carry StringComparer; OrdinalIgnoreCase is required for template ids.
+#pragma warning disable IDE0028
         _byId = new Dictionary<string, ICompetitionTemplate>(StringComparer.OrdinalIgnoreCase);
+#pragma warning restore IDE0028
         foreach (var template in templates)
         {
             ArgumentNullException.ThrowIfNull(template);

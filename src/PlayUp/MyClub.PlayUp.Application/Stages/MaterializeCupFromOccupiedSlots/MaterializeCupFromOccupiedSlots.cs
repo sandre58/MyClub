@@ -211,7 +211,7 @@ public static class MaterializeCupFromOccupiedSlots
     {
         var slotA = stage.FindSlot(pair.SlotAKey);
         var slotB = stage.FindSlot(pair.SlotBKey);
-        return slotA?.EntryId is not null && slotB?.EntryId is not null && (!slotA.EntryId.Equals(slotB.EntryId) && stage.FindFixtureByBracketPairKey(pair.PairKey) is null);
+        return slotA?.EntryId is not null && slotB?.EntryId is not null && !slotA.EntryId.Equals(slotB.EntryId) && stage.FindFixtureByBracketPairKey(pair.PairKey) is null;
     }
 
     /// <summary>

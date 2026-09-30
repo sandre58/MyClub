@@ -88,6 +88,6 @@ public static class CalculateStanding
     public static IReadOnlyList<StandingPenalty> ToStandingPenalties(IEnumerable<PenaltyEntity> penalties)
     {
         ArgumentNullException.ThrowIfNull(penalties);
-        return [..penalties.Select(p => new StandingPenalty(p.EntryId, p.PointsDeducted))];
+        return [.. penalties.Select(p => new StandingPenalty(p.EntryId, p.PointsDeducted))];
     }
 }

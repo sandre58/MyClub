@@ -58,8 +58,12 @@ public sealed record QualificationSourceOccurrence
                 throw new DomainException(
                     "Group occurrence cannot carry an across-groups position.",
                     RulesErrorCodes.QualificationRulesInvalid);
-            default:
+            case RankingScope.Group:
+            case RankingScope.Overall:
+            case RankingScope.AcrossGroups:
                 break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(scope), scope, null);
         }
 
         Scope = scope;

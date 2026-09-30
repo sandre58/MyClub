@@ -319,11 +319,11 @@ public static class StageSchematicAssembler
         }
         catch (ApplicationFailureException)
         {
-            return new Dictionary<string, SlotFeedResolution>(StringComparer.Ordinal);
+            return [];
         }
         catch (DomainException)
         {
-            return new Dictionary<string, SlotFeedResolution>(StringComparer.Ordinal);
+            return [];
         }
     }
 

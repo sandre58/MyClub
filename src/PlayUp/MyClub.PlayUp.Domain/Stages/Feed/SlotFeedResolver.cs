@@ -21,7 +21,7 @@ public static class SlotFeedResolver
     public static IReadOnlyList<SlotFeedResolution> ResolveAll(SlotFeedSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        return [..snapshot.SlotKeys.Select(key => Resolve(snapshot, key))];
+        return [.. snapshot.SlotKeys.Select(key => Resolve(snapshot, key))];
     }
 
     /// <summary>

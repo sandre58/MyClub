@@ -153,9 +153,13 @@ public sealed class DrawResolutionGeneratorTests
         var groups = NewGroups(2);
         var pots = new Dictionary<EntryId, int>
         {
-            [entries[0]] = 1, [entries[1]] = 1, [entries[2]] = 1, // pot1 size 3
-            [entries[3]] = 2, [entries[4]] = 2,
-            [entries[5]] = 3, [entries[6]] = 3,
+            [entries[0]] = 1,
+            [entries[1]] = 1,
+            [entries[2]] = 1, // pot1 size 3
+            [entries[3]] = 2,
+            [entries[4]] = 2,
+            [entries[5]] = 3,
+            [entries[6]] = 3,
             [entries[7]] = 4
         };
 
@@ -269,10 +273,14 @@ public sealed class DrawResolutionGeneratorTests
         var groups = NewGroups(2);
         var pots = new Dictionary<EntryId, int>
         {
-            [entries[0]] = 1, [entries[1]] = 1,
-            [entries[2]] = 2, [entries[3]] = 2,
-            [entries[4]] = 3, [entries[5]] = 3,
-            [entries[6]] = 4, [entries[7]] = 4
+            [entries[0]] = 1,
+            [entries[1]] = 1,
+            [entries[2]] = 2,
+            [entries[3]] = 2,
+            [entries[4]] = 3,
+            [entries[5]] = 3,
+            [entries[6]] = 4,
+            [entries[7]] = 4
         };
 
         // Group 0 fully filled by Fixed (one of each pot) — capacity 4.
@@ -480,8 +488,10 @@ public sealed class DrawResolutionGeneratorTests
         var groups = NewGroups(2);
         var pots = new Dictionary<EntryId, int>
         {
-            [entries[0]] = 1, [entries[1]] = 1,
-            [entries[2]] = 2, [entries[3]] = 2
+            [entries[0]] = 1,
+            [entries[1]] = 1,
+            [entries[2]] = 2,
+            [entries[3]] = 2
         };
         var associationA = AssociationId.New();
         var associationB = AssociationId.New();
@@ -550,10 +560,14 @@ public sealed class DrawResolutionGeneratorTests
         var a2 = AssociationId.New();
         var associations = new Dictionary<EntryId, AssociationId>
         {
-            [entries[0]] = a1, [entries[1]] = a2,
-            [entries[2]] = a2, [entries[3]] = a1,
-            [entries[4]] = a1, [entries[5]] = a2,
-            [entries[6]] = a2, [entries[7]] = a1
+            [entries[0]] = a1,
+            [entries[1]] = a2,
+            [entries[2]] = a2,
+            [entries[3]] = a1,
+            [entries[4]] = a1,
+            [entries[5]] = a2,
+            [entries[6]] = a2,
+            [entries[7]] = a1
         };
         var fixedGroups = new[] { new GroupDrawPlacement(entries[0], groups[0]) };
 
@@ -675,7 +689,7 @@ public sealed class DrawResolutionGeneratorTests
             fixedGroups: fixedGroups);
 
     private static GroupId[] NewGroups(int count) =>
-        [..Enumerable.Range(0, count).Select(_ => GroupId.New())];
+        [.. Enumerable.Range(0, count).Select(_ => GroupId.New())];
 
     private static Dictionary<EntryId, int> BalancedPots(EntryId[] entries, int numberOfPots)
     {
@@ -703,10 +717,14 @@ public sealed class DrawResolutionGeneratorTests
         // Per pot of size 2: distinct associations; each association appears twice overall.
         return new Dictionary<EntryId, AssociationId>
         {
-            [entries[0]] = associations[0], [entries[1]] = associations[1],
-            [entries[2]] = associations[2], [entries[3]] = associations[3],
-            [entries[4]] = associations[0], [entries[5]] = associations[1],
-            [entries[6]] = associations[2], [entries[7]] = associations[3]
+            [entries[0]] = associations[0],
+            [entries[1]] = associations[1],
+            [entries[2]] = associations[2],
+            [entries[3]] = associations[3],
+            [entries[4]] = associations[0],
+            [entries[5]] = associations[1],
+            [entries[6]] = associations[2],
+            [entries[7]] = associations[3]
         };
     }
 
@@ -749,7 +767,7 @@ public sealed class DrawResolutionGeneratorTests
             .ThenBy(t => t.Group)];
 
     private static EntryId[] NewEntries(int count) =>
-        [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+        [.. Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     /// <summary>
     /// Test double — Domain may use any <see cref="IRandomSource"/>; not Application SeededRandomSource.

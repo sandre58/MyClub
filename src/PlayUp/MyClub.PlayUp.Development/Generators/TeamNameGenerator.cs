@@ -91,7 +91,9 @@ public static class TeamNameGenerator
     private static string Generate(GeneratedTeamNameLexicon lexicon, int index)
     {
         var prefix = lexicon.Prefixes[index % lexicon.Prefixes.Count];
+#pragma warning disable IDE0047 // Keep parentheses — SA1407 requires explicit * / % precedence.
         var place = lexicon.Places[(index * 7) % lexicon.Places.Count];
+#pragma warning restore IDE0047
         return $"{prefix} {place}";
     }
 

@@ -37,7 +37,7 @@ public sealed class Fixture : Entity<FixtureId>
     /// <summary>
     /// Gets the attached match identities (projection of <see cref="Attachments"/>). No leg semantics.
     /// </summary>
-    public IReadOnlyList<MatchId> MatchIds => [.._attachments.Select(a => a.MatchId)];
+    public IReadOnlyList<MatchId> MatchIds => [.. _attachments.Select(a => a.MatchId)];
 
     /// <summary>
     /// Gets bracket position A when set; otherwise <see langword="null"/>.

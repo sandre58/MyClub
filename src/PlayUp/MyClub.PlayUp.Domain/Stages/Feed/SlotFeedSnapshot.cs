@@ -82,10 +82,10 @@ public sealed record SlotFeedSnapshot
 
         TargetStageId = targetStageId;
         SlotKeys = normalizedKeys;
-        DirectAssignments = [..directAssignments];
-        InboundQualification = [..inboundQualification];
-        InboundProgression = [..inboundProgression];
-        DrawTargets = [..drawTargets];
+        DirectAssignments = [.. directAssignments];
+        InboundQualification = [.. inboundQualification];
+        InboundProgression = [.. inboundProgression];
+        DrawTargets = [.. drawTargets];
     }
 
     /// <summary>

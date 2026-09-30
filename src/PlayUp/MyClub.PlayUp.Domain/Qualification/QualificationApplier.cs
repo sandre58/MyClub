@@ -33,15 +33,15 @@ public static class QualificationApplier
         return rows.Count == 0
             ? []
             : selection.Mode switch
-        {
-            SelectionMode.Position => SelectPosition(rows, selection.Value),
-            SelectionMode.Top => SelectTop(rows, selection.Value),
-            SelectionMode.Bottom => SelectBottom(rows, selection.Value),
-            SelectionMode.Range => SelectRange(rows, selection.Value, selection.EndValue!.Value),
-            _ => throw new DomainException(
-                "Selection mode is unknown.",
-                QualificationErrorCodes.SelectionNotSupported)
-        };
+            {
+                SelectionMode.Position => SelectPosition(rows, selection.Value),
+                SelectionMode.Top => SelectTop(rows, selection.Value),
+                SelectionMode.Bottom => SelectBottom(rows, selection.Value),
+                SelectionMode.Range => SelectRange(rows, selection.Value, selection.EndValue!.Value),
+                _ => throw new DomainException(
+                    "Selection mode is unknown.",
+                    QualificationErrorCodes.SelectionNotSupported)
+            };
     }
 
     /// <summary>

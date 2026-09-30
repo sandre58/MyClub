@@ -32,7 +32,10 @@ public sealed record SeedMap
                 StageErrorCodes.DrawInputsInvalid);
         }
 
+        // Copy ctor — collection expression cannot spread IDictionary into Dictionary.
+#pragma warning disable IDE0028
         _seeds = new Dictionary<EntryId, int>(seeds);
+#pragma warning restore IDE0028
     }
 
     /// <summary>

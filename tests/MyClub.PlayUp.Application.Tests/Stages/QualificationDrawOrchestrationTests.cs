@@ -55,7 +55,10 @@ public sealed class QualificationDrawOrchestrationTests
         var pool = qualified.CompositionEntries.Select(e => e.EntryId).ToList();
         var seedMap = new SeedMap(new Dictionary<EntryId, int>
         {
-            [pool[0]] = 1, [pool[1]] = 2, [pool[2]] = 3, [pool[3]] = 4
+            [pool[0]] = 1,
+            [pool[1]] = 2,
+            [pool[2]] = 3,
+            [pool[3]] = 4
         });
 
         var draw = knockout.CreateDraw(DrawResolutionKind.Slot, _clock);
@@ -103,7 +106,7 @@ public sealed class QualificationDrawOrchestrationTests
             QualificationDestination.ForPopulation(stageId));
 
     private static EntryId[] CreateEntries(int count) =>
-        [..Enumerable.Range(0, count).Select(_ => EntryId.New())];
+        [.. Enumerable.Range(0, count).Select(_ => EntryId.New())];
 
     private Stage CreateLeagueStage(CompetitionId competitionId, string name) =>
         Stage.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);

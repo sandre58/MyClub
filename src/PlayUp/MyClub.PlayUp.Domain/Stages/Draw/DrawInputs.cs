@@ -44,11 +44,11 @@ public sealed record DrawInputs
                 StageErrorCodes.DrawInputsInvalid);
         }
 
-        _entries = [..entries];
+        _entries = [.. entries];
         SeedMap = seedMap?.Copy();
         PotMembership = potMembership?.Copy();
-        _fixedSlots = fixedSlots is null ? [] : [..fixedSlots];
-        _fixedGroups = fixedGroups is null ? [] : [..fixedGroups];
+        _fixedSlots = fixedSlots is null ? [] : [.. fixedSlots];
+        _fixedGroups = fixedGroups is null ? [] : [.. fixedGroups];
 
         ValidateMapsAgainstEntries();
         ValidateFixedAgainstEntries();

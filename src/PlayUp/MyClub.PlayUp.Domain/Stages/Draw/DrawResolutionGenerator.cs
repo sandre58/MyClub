@@ -533,7 +533,7 @@ public static class DrawResolutionGenerator
     }
 
     private static List<string> NormalizeTargets(IReadOnlyList<string> targets) =>
-        [..targets.Select(Slot.NormalizeKey)];
+        [.. targets.Select(Slot.NormalizeKey)];
 
     private static List<T> Shuffle<T>(List<T> items, IRandomSource random)
     {

@@ -32,8 +32,8 @@ public sealed record DrawResolution
 
         State = state;
         ResolvedKind = resolvedKind;
-        _slotResults = slotResults is null ? [] : [..slotResults];
-        _groupResults = groupResults is null ? [] : [..groupResults];
+        _slotResults = slotResults is null ? [] : [.. slotResults];
+        _groupResults = groupResults is null ? [] : [.. groupResults];
     }
 
     /// <summary>

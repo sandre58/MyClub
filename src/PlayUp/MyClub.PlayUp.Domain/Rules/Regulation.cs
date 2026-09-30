@@ -96,8 +96,8 @@ public sealed record Regulation
     private static StandingRules CloneStandingRules(StandingRules source) =>
         new(
             new PointsPolicy(source.Points.WinPoints, source.Points.DrawPoints, source.Points.LossPoints),
-            [..source.RankingCriteria]);
+            [.. source.RankingCriteria]);
 
     private static DisciplinaryRules CloneDisciplinaryRules(DisciplinaryRules source) =>
-        new([..source.AllowedTypes]);
+        new([.. source.AllowedTypes]);
 }

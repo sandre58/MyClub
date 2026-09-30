@@ -848,11 +848,15 @@ public sealed class Match : AggregateRoot<MatchId>
             case MatchStatus.Scheduled or MatchStatus.Postponed:
             case MatchStatus.Finished when !HasObservedLive:
                 return;
-            default:
+            case MatchStatus.Live:
+            case MatchStatus.Cancelled:
+            case MatchStatus.Finished:
                 throw new DomainException(
                     $"Match composition cannot be mutated when status is '{Status}'"
                     + (HasObservedLive ? " with an observed Live." : "."),
                     MatchErrorCodes.CompositionImmutable);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(Status), Status, null);
         }
     }
 

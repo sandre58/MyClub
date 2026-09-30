@@ -41,6 +41,9 @@ public static class ProgressionChampionshipPath
             // Structural mono-round — no fixtures required.
             case 1:
                 return rounds[0];
+
+            default:
+                break;
         }
 
         // Multi-round: no structural terminal without fixtures.
@@ -51,6 +54,9 @@ public static class ProgressionChampionshipPath
                 return null;
             case 1:
                 return withFixtures[0];
+
+            default:
+                break;
         }
 
         var prefix = new List<Round> { withFixtures[0] };

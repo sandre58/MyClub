@@ -124,7 +124,7 @@ public static class SlotFeedSnapshotAssembler
             targets.AddRange(draw.Resolution.SlotResults.Select(placement => new DrawFeedSource(placement.SlotKey, draw.Id)));
         }
 
-        return [..targets];
+        return [.. targets];
     }
 
     private static void EnsureSlotExists(

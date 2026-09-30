@@ -34,7 +34,7 @@ public readonly record struct SeedSpec(string Id, SeedProgress? Progress)
             return aliased;
         }
 
-        var separator = token.LastIndexOf(':');
+        var separator = token.LastIndexOf(':', StringComparison.Ordinal);
         if (separator <= 0)
         {
             return new SeedSpec(token, Progress: null);

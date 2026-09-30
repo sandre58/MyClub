@@ -797,10 +797,10 @@ public sealed partial class UseCaseExecutor
         var contextIds = matchContexts.Select(context => context.MatchId).ToHashSet();
         matchContexts =
             (from target in targets
-                where !contextIds.Contains(target)
-                select loadedMatches.FirstOrDefault(candidate => candidate.Id.Equals(target)) ??
-                       throw new ApplicationFailureException($"Match '{target}' was not found for scheduling.",
-                           ApplicationErrorCodes.MatchNotFound)).Aggregate(matchContexts,
+             where !contextIds.Contains(target)
+             select loadedMatches.FirstOrDefault(candidate => candidate.Id.Equals(target)) ??
+                    throw new ApplicationFailureException($"Match '{target}' was not found for scheduling.",
+                        ApplicationErrorCodes.MatchNotFound)).Aggregate(matchContexts,
                 (current, match) =>
                 [
                     .. current,

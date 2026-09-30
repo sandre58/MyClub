@@ -719,7 +719,10 @@ public static class ScheduleGenerator
             Dictionary<MatchId, DateTimeOffset?> componentBound,
             Dictionary<MatchId, MatchId> sameStartParent)
         {
+            // Copy ctor — collection expression cannot spread IDictionary into Dictionary.
+#pragma warning disable IDE0028
             var state = new SearchState(sameStartParent, new Dictionary<MatchId, DateTimeOffset?>(componentBound), matchById);
+#pragma warning restore IDE0028
             foreach (var assignment in fixedAssignments)
             {
                 var end = assignment.Start + matchById[assignment.MatchId].Duration.AsTimeSpan();

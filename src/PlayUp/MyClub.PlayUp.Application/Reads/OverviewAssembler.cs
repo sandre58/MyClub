@@ -1237,6 +1237,11 @@ public static class OverviewAssembler
                     null,
                     new Dictionary<string, string>()));
                 break;
+            case CompetitionStatus.Running:
+            case CompetitionStatus.Completed:
+            case CompetitionStatus.Archived:
+            default:
+                break;
         }
 
         return DeduplicateSituations(items);
@@ -1311,14 +1316,14 @@ public static class OverviewAssembler
                     pair => pair.Value,
                     StringComparer.Ordinal)
                 : new Dictionary<string, string>
-            {
-                ["minimumTeams"] = structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
-                ["missingCount"] = Math.Max(
+                {
+                    ["minimumTeams"] = structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
+                    ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
+                    ["missingCount"] = Math.Max(
                         0,
                         structureView.Regulation.MinimumTeams - structureView.Participants.ActiveCount)
                     .ToString(CultureInfo.InvariantCulture)
-            };
+                };
         }
 
         var parameters = new Dictionary<string, string>();
@@ -1567,6 +1572,9 @@ public static class OverviewAssembler
                             stageId));
                         break;
                     }
+
+                default:
+                    break;
             }
         }
 
@@ -1624,6 +1632,9 @@ public static class OverviewAssembler
 
                     break;
                 }
+
+            default:
+                break;
         }
 
         return stages.Count > 0 ? stages[0].Id.Value : null;
@@ -1694,6 +1705,7 @@ public static class OverviewAssembler
                 ResolveConstructionStructuralProgression(actions),
             CompetitionStatus.Running or CompetitionStatus.Suspended =>
                 ResolveInProgressStructuralProgression(actions),
+            CompetitionStatus.Completed or CompetitionStatus.Archived => null,
             _ => null
         };
 
@@ -1896,6 +1908,8 @@ public static class OverviewAssembler
                     break;
                 case "Fixture" when Guid.TryParse(situation.TargetId, out var fixtureId):
                     stageId = FindStageIdForFixture(stages, fixtureId);
+                    break;
+                default:
                     break;
             }
 

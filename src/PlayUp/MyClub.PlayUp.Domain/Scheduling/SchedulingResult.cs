@@ -22,7 +22,7 @@ public sealed class SchedulingResult
         IsInvalidRequest = isInvalidRequest;
         IsNoSolution = isNoSolution;
         Schedule = schedule;
-        _errors = errors is null ? [] : [..errors];
+        _errors = errors is null ? [] : [.. errors];
     }
 
     /// <summary>

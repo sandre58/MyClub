@@ -14,7 +14,7 @@ public sealed class DefaultsBinding : IEquatable<DefaultsBinding>
 {
     private readonly HashSet<HeritableRegulationPart> _bound;
 
-    private DefaultsBinding(IEnumerable<HeritableRegulationPart> bound) => _bound = [..bound];
+    private DefaultsBinding(IEnumerable<HeritableRegulationPart> bound) => _bound = [.. bound];
 
     /// <summary>
     /// All Match parts bound; Standing parts bound only when <paramref name="isClassifyingPhase"/> is true.

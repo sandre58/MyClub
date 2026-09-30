@@ -43,7 +43,7 @@ public sealed record DisciplinaryRules
                 RulesErrorCodes.DisciplinaryRulesInvalid);
         }
 
-        _allowedTypes = [..allowedTypes.OrderBy(type => (int)type)];
+        _allowedTypes = [.. allowedTypes.OrderBy(type => (int)type)];
     }
 
     /// <summary>

@@ -167,6 +167,9 @@ public static class GenerateDrawResolution
         constraint.ConstraintType switch
         {
             DrawConstraintType.MaxSameAssociationPerGroup => kind == DrawResolutionKind.Group,
+            DrawConstraintType.SameTeamAvoidance
+                or DrawConstraintType.SameGroupAvoidance
+                or DrawConstraintType.SameAssociationAvoidance => false,
             _ => false
         };
 

@@ -47,7 +47,7 @@ public sealed record StandingRules
         }
 
         Points = points;
-        _rankingCriteria = [..rankingCriteria];
+        _rankingCriteria = [.. rankingCriteria];
     }
 
     /// <summary>

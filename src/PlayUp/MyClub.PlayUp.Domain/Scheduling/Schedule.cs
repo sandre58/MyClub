@@ -30,7 +30,7 @@ public sealed class Schedule
                 SchedulingErrorCodes.AssignmentInvalid);
         }
 
-        _assignments = [..assignments];
+        _assignments = [.. assignments];
     }
 
     /// <summary>

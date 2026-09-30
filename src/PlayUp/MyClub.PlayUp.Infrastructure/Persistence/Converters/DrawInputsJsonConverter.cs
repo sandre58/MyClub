@@ -37,11 +37,11 @@ public sealed class DrawInputsJsonConverter : ValueConverter<DrawInputs?, string
     private static DrawInputs? Snapshot(DrawInputs? inputs) => inputs?.Copy();
 
     private static bool StructuralEquals(DrawInputs? left, DrawInputs? right) =>
-        ReferenceEquals(left, right) || (left is not null && right is not null && (left.Entries.SequenceEqual(right.Entries)
+        ReferenceEquals(left, right) || (left is not null && right is not null && left.Entries.SequenceEqual(right.Entries)
             && MapEquals(left.SeedMap?.Seeds, right.SeedMap?.Seeds)
             && MapEquals(left.PotMembership?.Pots, right.PotMembership?.Pots)
             && left.FixedSlots.SequenceEqual(right.FixedSlots)
-            && left.FixedGroups.SequenceEqual(right.FixedGroups)));
+            && left.FixedGroups.SequenceEqual(right.FixedGroups));
 
     private static int StructuralHash(DrawInputs? inputs)
     {

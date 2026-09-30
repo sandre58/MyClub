@@ -42,7 +42,7 @@ public sealed record SlotFeedResolution
         SlotKey = Slot.NormalizeKey(slotKey);
         Status = status;
         Source = source;
-        ContributingKinds = [..contributingKinds];
+        ContributingKinds = [.. contributingKinds];
     }
 
     /// <summary>

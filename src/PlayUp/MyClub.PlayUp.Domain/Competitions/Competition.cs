@@ -449,7 +449,7 @@ public sealed class Competition : AggregateRoot<CompetitionId>
         DemoteToDraftIfReady();
         _stageIds.Clear();
         _stageIds.AddRange(orderedStageIds);
-        Raise(new CompetitionStageOrderChanged(Id, [.._stageIds], clock));
+        Raise(new CompetitionStageOrderChanged(Id, [.. _stageIds], clock));
     }
 
     /// <summary>

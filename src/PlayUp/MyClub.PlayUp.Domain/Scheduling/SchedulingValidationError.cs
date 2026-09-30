@@ -21,7 +21,7 @@ public sealed record SchedulingValidationError
 
         Code = code;
         Message = message;
-        Subjects = subjects is null ? [] : [..subjects];
+        Subjects = subjects is null ? [] : [.. subjects];
     }
 
     /// <summary>
