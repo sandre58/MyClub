@@ -19,9 +19,11 @@ Workspace → Match hub → Stage / `drawUi` → Structure → remaining pages.
 
 ## End of `index.css`
 
-`src/index.css` holds global reset + shared admin chrome classes (`.page`, `.form`, `.row`, draws…). Visual tokens come from `design-system/tokens/*` only — no concurrent ladder.
+`src/index.css` holds global reset + shared admin chrome classes (`.page`, `.form`, `.field`, `.button-row`, Stage helpers…). Visual tokens come from `design-system/tokens/*` only — no concurrent ladder.
 
 Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999px`) stay inlined where used until those surfaces migrate off this file.
+
+**Phase 6 (CSS cleanup):** removed orphaned `.row__aside`, `.form--inline`, `.form--wide`. Match score forms use `.ds-form` + page chrome; Match panel forms drop redundant `.form` when page CSS already owns layout. Structure/Teams/Regulation keep page CSS for domain chrome; dead Structure legacy blocks (band/points/entry/old phase/roster/detail/drill/overview/graph…) removed after TSX confirmation (watch dynamic `class--${tone}` modifiers).
 
 ## Retired token aliases
 
@@ -36,12 +38,14 @@ Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999p
 | `--space-2xs`                             | `--space-4`                 | index                      |
 | `--space-lg`                              | `--space-24`                | index                      |
 | `--space-2xl`                             | `--space-48`                | index                      |
-| `--radius-sm`                             | `--radius-control`          | index                      |
-| `--radius-md`                             | `--radius-panel`            | index                      |
+| `--radius-sm`                             | `--radius-control`          | index + Structure dialogs (Phase 6) |
+| `--radius-md`                             | `--radius-panel`            | index + Structure dialogs (Phase 6) |
 | `--radius-lg`                             | `--radius-overlay`          | index                      |
 | `--color-bg` / `--color-surface` / …      | `--bg` / `--surface` / …    | index + pages              |
 | `--color-text` / `--color-muted`          | `--text` / `--text-muted`   | index + pages              |
 | `--color-border`                          | `--border`                  | index + pages              |
 | `--color-danger` / `--color-warning` / …  | `--danger` / `--warning` / …| index + pages              |
+| `--font-size-sm`                          | `--text-meta`               | Structure hub / prefs (Phase 6) |
+| `--color-text-muted`                      | `--color-text-secondary`    | Structure / schematic (Phase 6) |
 
 Do not reintroduce the previous names. New CSS uses only the replacement tokens.
