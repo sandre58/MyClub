@@ -29,6 +29,8 @@ export type FunctionalProblemIdentity = {
   source: string;
   targetType?: string | null;
   targetId?: string | null;
+  /** Host-resolved Match id when target is Fixture (Overview / Attention). */
+  matchId?: string | null;
   competitionId: string;
   params?: Record<string, string> | null;
   /** Host Overview actionCode when known. */
@@ -120,6 +122,7 @@ export function functionalProblemPresentation(
     structureIssueCode,
     targetType,
     targetId,
+    matchId,
   } = identity;
 
   const descriptionParams = params
@@ -189,7 +192,7 @@ export function functionalProblemPresentation(
           nature: 'Blocking',
           targetType: targetType ?? null,
           targetId: targetId ?? null,
-          matchId: null,
+          matchId: matchId ?? null,
           actionable: actionCode != null,
           actionCode: actionCode ?? null,
           impactCode: null,
@@ -212,13 +215,23 @@ export function functionalProblemPresentation(
       'occupiedSlots',
       'directAssignment',
     ]);
+    // Reuse Structure fiche i18n (no parallel draw.createBlock catalogue).
+    const configEcho =
+      source === 'missingPots'
+        ? { actionCode: 'ConfigureDrawParams' as const }
+        : source === 'belowMinimumTeams'
+          ? { actionCode: 'AddEntry' as const }
+          : null;
     return {
       tone: warningReasons.has(source) ? 'warning' : 'info',
-      titleKey: `createBlock.${source}`,
-      titleNs: 'draw',
+      titleKey: `fiche.drawWorkflow.createBlocked.short.${source}`,
+      titleNs: 'structure',
       descriptionParams,
-      sotHref: structureHref(competitionId, stageId),
-      cta: null,
+      sotHref:
+        source === 'belowMinimumTeams'
+          ? teamsHref(competitionId)
+          : structureHref(competitionId, stageId),
+      cta: configEcho,
       canal: 'draw-gate',
     };
   }
@@ -259,7 +272,7 @@ export function functionalProblemPresentation(
         nature: 'Blocking',
         targetType: targetType ?? null,
         targetId: targetId ?? null,
-        matchId: null,
+        matchId: matchId ?? null,
         actionable: actionCode != null,
         actionCode: actionCode ?? null,
         impactCode: null,
@@ -281,6 +294,7 @@ export function situationPresentation(
     source: situation.source,
     targetType: situation.targetType,
     targetId: situation.targetId,
+    matchId: situation.matchId,
     competitionId,
     params: situation.params,
     actionCode: situation.actionCode,

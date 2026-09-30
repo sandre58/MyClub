@@ -238,7 +238,7 @@ describe('StructureDrawDialog', () => {
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Les équipes de cette phase doivent d’abord être ajoutées avant de lancer un tirage.',
+        'Ajoutez d’abord les équipes de cette phase avant de lancer un tirage.',
       ),
     ).toBeInTheDocument();
     expect(
@@ -414,7 +414,7 @@ describe('StructureDrawDialog', () => {
     ).toBeDisabled();
     expect(
       screen.getByText(
-        'Le tirage nécessite 16 équipes pour 16 places. La composition actuelle en contient 15.',
+        'Il faut 16 équipes pour 16 places ; la composition en a 15.',
       ),
     ).toBeInTheDocument();
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
@@ -452,7 +452,7 @@ describe('StructureDrawDialog', () => {
     ).toBeDisabled();
     expect(
       screen.getByText(
-        'Des placements existent encore. Libérez-les avant de lancer un nouveau tirage.',
+        'Libérez les placements existants avant de lancer un nouveau tirage.',
       ),
     ).toBeInTheDocument();
   });
@@ -473,7 +473,7 @@ describe('StructureDrawDialog', () => {
     ).toBeDisabled();
     expect(
       screen.getByText(
-        'Une ou plusieurs places ont une affectation directe. Libérez ces affectations avant de lancer un nouveau tirage.',
+        'Libérez les affectations directes avant de lancer un nouveau tirage.',
       ),
     ).toBeInTheDocument();
   });

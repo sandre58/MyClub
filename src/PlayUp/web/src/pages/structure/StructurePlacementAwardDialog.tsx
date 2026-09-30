@@ -242,7 +242,7 @@ export function StructurePlacementAwardDialog({
                 <MutationError error={mutation.error} />
               ) : null}
               {saveBlockedReason ? (
-                <Alert tone="danger" role="alert">
+                <Alert tone="warning" role="status">
                   <p className="structure-qualification__hint-line">
                     {saveBlockedReason}
                   </p>
@@ -422,7 +422,7 @@ function AttributionTile({
               className="structure-qualification__blocking-mark"
               aria-label={statusMessage}
             >
-              <ToastToneIcon tone="error" size="sm" />
+              <ToastToneIcon tone="attention" size="sm" />
             </span>
           </Tooltip>
         ) : null}

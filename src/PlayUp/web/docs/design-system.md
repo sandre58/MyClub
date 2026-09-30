@@ -164,8 +164,10 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 
 |       | `AttentionRow` (DS)                  | `AttentionSituationRow` (Shell)          |
 | ----- | ------------------------------------ | ---------------------------------------- |
-| Role  | D9 Lab / Match Hub count+icon recipe | Product triage from GET /attention       |
-| Where | Overview Lab, MatchHub needs-result  | AttentionDrawer + Vue d'ensemble preview |
+| Role  | D9 Lab / Match Hub count+icon recipe | Product triage from GET `/attention`     |
+| Where | Overview Lab, MatchHub needs-result  | AttentionDrawer + Vue d’ensemble preview |
+
+**Functional errors (V1 Structure / Tirage / Placement):** product surfaces use `Alert` / `Status` / PageHead note / Topology / dialog Incomplete — mapped by `functionalProblemPresentation`. Do **not** reuse Lab `AttentionRow` specimens as the product error pattern, and do **not** absorb construction blockers into AttentionDrawer (Q1).
 
 ## Form stack
 

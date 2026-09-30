@@ -117,7 +117,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
     expect(
       screen.queryByText(/situation\(s\) à traiter/i),
     ).not.toBeInTheDocument();
-    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(1);
+    expect(screen.getAllByText('Équipes insuffisantes')).toHaveLength(1);
     expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument();
     expect(screen.queryByText(/Bloque la préparation/)).not.toBeInTheDocument();
     expect(
@@ -230,7 +230,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
       expect(
         await screen.findByRole('heading', { name: 'À traiter' }),
       ).toBeInTheDocument();
-      expect(screen.getByText('Participants insuffisants')).toBeInTheDocument();
+      expect(screen.getByText('Équipes insuffisantes')).toBeInTheDocument();
       expect(screen.getByText('Minimum requis : 2')).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /Préparer la phase/i }),
@@ -835,7 +835,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
     expect(
       (await screen.findAllByRole('heading', { name: 'À traiter' })).length,
     ).toBe(1);
-    expect(screen.getAllByText('Participants insuffisants')).toHaveLength(2);
+    expect(screen.getAllByText('Équipes insuffisantes')).toHaveLength(2);
     expect(
       screen.getByText(/3 situation\(s\) — détail dans le panneau À traiter/),
     ).toBeInTheDocument();
@@ -855,7 +855,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
     expect(
       await screen.findByRole('heading', { name: 'À traiter' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Participants insuffisants')).toBeInTheDocument();
+    expect(screen.getByText('Équipes insuffisantes')).toBeInTheDocument();
     expect(
       screen.queryByText(/situation\(s\) — détail dans le panneau/),
     ).not.toBeInTheDocument();

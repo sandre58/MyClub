@@ -45,19 +45,30 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toBe('/competitions/comp-1/structure');
   });
 
-  it('maps draw create blocks never-danger (info|warning)', () => {
-    expect(
-      functionalProblemPresentation({
-        source: 'emptyPool',
-        competitionId: 'comp-1',
-      }).tone,
-    ).toBe('info');
-    expect(
-      functionalProblemPresentation({
-        source: 'missingPots',
-        competitionId: 'comp-1',
-      }).tone,
-    ).toBe('warning');
+  it('maps draw create blocks never-danger (info|warning) with Structure fiche i18n', () => {
+    const emptyPool = functionalProblemPresentation({
+      source: 'emptyPool',
+      competitionId: 'comp-1',
+    });
+    expect(emptyPool.tone).toBe('info');
+    expect(emptyPool.titleNs).toBe('structure');
+    expect(emptyPool.titleKey).toContain('createBlocked.short.emptyPool');
+
+    const missingPots = functionalProblemPresentation({
+      source: 'missingPots',
+      competitionId: 'comp-1',
+      stageId: 'stage-1',
+    });
+    expect(missingPots.tone).toBe('warning');
+    expect(missingPots.cta?.actionCode).toBe('ConfigureDrawParams');
+
+    const belowMin = functionalProblemPresentation({
+      source: 'belowMinimumTeams',
+      competitionId: 'comp-1',
+    });
+    expect(belowMin.tone).toBe('warning');
+    expect(belowMin.sotHref).toBe('/competitions/comp-1/teams');
+    expect(belowMin.cta?.actionCode).toBe('AddEntry');
   });
 
   it('maps structureIssues children via structureIssuePresentation', () => {
@@ -75,7 +86,27 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toContain('stage=stage-9');
   });
 
-  it('situationPresentation forwards Overview actionCode', () => {
+  it('situationPresentation forwards Overview actionCode and matchId', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'ProgressionPending',
+        nature: 'Blocking',
+        targetType: 'Fixture',
+        targetId: 'fix-1',
+        matchId: 'match-9',
+        actionable: true,
+        actionCode: 'ApplyProgression',
+        impactCode: 'BlocksProgression',
+        params: {},
+      },
+      'comp-1',
+    );
+
+    expect(presentation.cta?.actionCode).toBe('ApplyProgression');
+    expect(presentation.sotHref).toBe('/matches/match-9');
+  });
+
+  it('situationPresentation maps StructureGraphInvalid to Structure SoT', () => {
     const presentation = situationPresentation(
       {
         source: 'StructureGraphInvalid',

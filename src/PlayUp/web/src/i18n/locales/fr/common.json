@@ -20,5 +20,6 @@
   },
   "unknownError": "Erreur inconnue",
   "errorWithStatus": "{{message}} ({{status}})",
-  "unknownEntry": "Entrée inconnue"
+  "unknownEntry": "Entrée inconnue",
+  "fixOnStructure": "Voir dans Structure"
 }

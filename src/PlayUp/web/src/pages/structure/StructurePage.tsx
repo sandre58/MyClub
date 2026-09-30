@@ -44,7 +44,10 @@ import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
-import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
+import {
+  functionalProblemPresentation,
+  structureIssuePresentation,
+} from '../../shell/functionalProblemPresentation';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
@@ -410,7 +413,22 @@ function TopologyPanel({
                   <span className="structure-topology__tile-status">
                     <StageStatusBadge status={stage.status} density="compact" />
                     {hasIssues && (
-                      <Tooltip content={t('hub.phaseStructuralAnomaly')}>
+                      <Tooltip
+                        content={
+                          (stage.structureIssues ?? [])
+                            .map((code) =>
+                              t(
+                                structureIssuePresentation({
+                                  code,
+                                  competitionId,
+                                  stageId: stage.stageId,
+                                }).titleKey,
+                                { defaultValue: code },
+                              ),
+                            )
+                            .join(' · ') || t('hub.phaseStructuralAnomaly')
+                        }
+                      >
                         <span className="structure-topology__issue">
                           <StructureIssueIcon size="sm" aria-hidden="true" />
                           <span className="ds-visually-hidden">
@@ -775,6 +793,7 @@ function readinessStatusNote(
   const headerBlockers = blockers.filter(
     (code) => code !== 'StructureGraphInvalid',
   );
+  const showGraphEcho = blockers.includes('StructureGraphInvalid');
   const incomplete = blockers.length > 0;
   const readyToMaterialize = readiness.readyForMaterialization;
   const readyNext =
@@ -785,6 +804,7 @@ function readinessStatusNote(
       <ReadinessNotReadyStatus
         competitionId={data.competitionId}
         headerBlockers={headerBlockers}
+        showGraphEcho={showGraphEcho}
         onConfigure={onConfigure}
       />
     );
@@ -816,10 +836,13 @@ function readinessStatusNote(
 function ReadinessNotReadyStatus({
   competitionId,
   headerBlockers,
+  showGraphEcho,
   onConfigure,
 }: {
   competitionId: string;
   headerBlockers: string[];
+  /** Short echo only — detail SoT remains Topology (D5). */
+  showGraphEcho: boolean;
   onConfigure: () => void;
 }) {
   const { t } = useTranslation('structure');
@@ -833,7 +856,7 @@ function ReadinessNotReadyStatus({
         <OverviewAttentionIcon size="sm" aria-hidden="true" />
         <span>{t('readiness.structureNotReady')}</span>
       </p>
-      {headerBlockers.length > 0 && (
+      {(headerBlockers.length > 0 || showGraphEcho) && (
         <ul
           className="structure-status__actions"
           aria-labelledby="readiness-heading"
@@ -847,6 +870,14 @@ function ReadinessNotReadyStatus({
               />
             </li>
           ))}
+          {showGraphEcho ? (
+            <li key="StructureGraphInvalid-echo">
+              <a className="structure-status__action" href="#topology">
+                {t('readiness.echoGraphInvalid')}
+                <span aria-hidden="true">→</span>
+              </a>
+            </li>
+          ) : null}
         </ul>
       )}
     </div>
@@ -891,26 +922,27 @@ function IncompleteBlockerAction({
   competitionId: string;
   onConfigure: () => void;
 }) {
-  const label = attentionSourceLabel(code);
+  const { t } = useTranslation('structure');
+  const presentation = functionalProblemPresentation({
+    source: code,
+    competitionId,
+  });
+  // Short echo for déficit (SoT = Équipes) — avoid repeating Teams plateau prose.
+  const label =
+    presentation.cta?.actionCode === 'AddEntry'
+      ? t('readiness.echoInsufficientParticipants')
+      : attentionSourceLabel(code);
 
-  if (code === 'InsufficientParticipants') {
+  if (presentation.sotHref && presentation.cta?.actionCode === 'AddEntry') {
     return (
-      <Link
-        className="structure-status__action"
-        to={`/competitions/${competitionId}/teams`}
-      >
+      <Link className="structure-status__action" to={presentation.sotHref}>
         {label}
         <span aria-hidden="true">→</span>
       </Link>
     );
   }
 
-  if (
-    code === 'MissingStage' ||
-    code === 'MissingStructure' ||
-    code === 'MissingPotRules' ||
-    code === 'CupBracketInvalid'
-  ) {
+  if (presentation.cta?.actionCode === 'ConfigureStructure') {
     return (
       <button
         type="button"

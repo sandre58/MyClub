@@ -50,6 +50,7 @@ import {
   LoadingState,
   MutationError,
   PendingLabel,
+  persistentStructureMutationSotHref,
 } from '../../ui';
 import {
   StructureProgressionIntentEditor,
@@ -632,10 +633,16 @@ export function StructureProgressionDialog({
           saveBlockedReason ? (
             <>
               {mutation.isError ? (
-                <MutationError error={mutation.error} />
+                <MutationError
+                  error={mutation.error}
+                  sotHref={persistentStructureMutationSotHref(
+                    mutation.error,
+                    data.competitionId,
+                  )}
+                />
               ) : null}
               {saveBlockedReason ? (
-                <Alert tone="danger" role="alert">
+                <Alert tone="warning" role="status">
                   <p className="structure-qualification__hint-line">
                     {saveBlockedReason}
                   </p>
@@ -815,7 +822,7 @@ export function StructureProgressionDialog({
                                     className="structure-qualification__blocking-mark"
                                     aria-hidden="true"
                                   >
-                                    <ToastToneIcon tone="error" size="sm" />
+                                    <ToastToneIcon tone="attention" size="sm" />
                                   </span>
                                 </Tooltip>
                               ) : null}
