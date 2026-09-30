@@ -140,11 +140,6 @@ export type LabeledPlace = {
   grain: PlaceGrain;
 };
 
-/** @deprecated Prefer LabeledPlace; Cup-only alias. */
-export type LabeledCupPlace = Omit<LabeledPlace, 'grain'> & {
-  grain?: PlaceGrain;
-};
-
 /** Targetable Cup places for Progression dialog (chrome = SlotKey; long = description). */
 export function listLabeledCupPlaces(
   schematic: StageSchematic | null | undefined,

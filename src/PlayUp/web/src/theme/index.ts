@@ -3,7 +3,6 @@ export {
   RESOLVED_THEMES,
   THEME_PREFERENCES,
   THEME_STORAGE_KEY,
-  isResolvedTheme,
   isThemePreference,
   type ResolvedTheme,
   type ThemePreference,

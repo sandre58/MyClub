@@ -526,7 +526,6 @@
   color: var(--color-text-secondary);
 }
 
-.structure-entries__feed-context,
 .structure-entries__preview {
   margin: 0;
   font-size: var(--text-meta);
@@ -657,10 +656,6 @@
   margin: var(--space-8) 0 0;
   color: var(--color-text-secondary);
   font-size: var(--text-meta);
-}
-
-.structure-graph-dialog .ds-field {
-  margin: 0;
 }
 
 .structure-form {
@@ -888,12 +883,6 @@
 .structure-domain-tile--reg .regulation-gauge__label,
 .structure-domain-tile--reg .regulation-criteria__item {
   font-size: var(--text-meta);
-}
-
-.structure-draw-facts li svg,
-.structure-draw-facts .ds-icon {
-  color: var(--color-brand);
-  flex: none;
 }
 
 .structure-phase-rail .ds-empty--idle {

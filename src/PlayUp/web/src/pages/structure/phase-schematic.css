@@ -467,10 +467,6 @@
   stroke-linejoin: round;
 }
 
-.schematic-cup__wire-node {
-  fill: var(--color-brand);
-}
-
 .schematic-cup__match-n {
   fill: var(--color-text-secondary);
   font-size: 10px;

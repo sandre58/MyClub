@@ -24,12 +24,6 @@
   min-width: 0;
 }
 
-.structure {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-}
-
 /* ---------- Panel ---------- */
 
 .structure-panel__muted {
