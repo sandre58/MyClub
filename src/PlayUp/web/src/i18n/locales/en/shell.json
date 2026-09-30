@@ -5,7 +5,6 @@
     "matches": "Fixtures & matches",
     "classements": "Standings",
     "teams": "Teams",
-    "venues": "Venues",
     "regulation": "Regulations"
   },
   "groups": {
@@ -20,8 +19,7 @@
     "collapse": "Collapse sidebar",
     "menuOpen": "Open navigation menu",
     "menuClose": "Close navigation menu",
-    "home": "Play’Up home",
-    "comingSoon": "{{label}} — coming soon"
+    "home": "Play’Up home"
   },
   "competition": {
     "choose": "Choose a competition",
@@ -39,13 +37,11 @@
     "emptyHost": "No competition is available on this Host.",
     "noContext": "Open a competition to see what needs your attention.",
     "loadError": "Unable to load items needing attention.",
-    "emptyAria": "No items needing attention",
     "emptyTitle": "Nothing to handle for now",
     "emptyHint": "Items appear here when the Host reports a blocked or pending step.",
     "lede": "Situations that need action.",
     "groupBlocking": "Blocking",
-    "groupAttention": "Needs attention",
-    "open": "Open →"
+    "groupAttention": "Needs attention"
   },
   "preferences": {
     "open": "Open preferences",

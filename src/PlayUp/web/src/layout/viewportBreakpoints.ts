@@ -16,11 +16,7 @@ export const SHELL_TABLET_QUERY =
   '(min-width: 48rem) and (max-width: 63.999rem)' as const;
 
 /** Page grids — Overview, Structure, Matches, Standings, Teams split. */
-export const PAGE_GRID_MIN = '52rem';
 export const PAGE_GRID_NARROW_QUERY = '(max-width: 51.999rem)' as const;
-
-/** DS asymmetric pairs — `panels.css`, layout rule 56rem. */
-export const DS_COMPOSITION_NARROW_QUERY = '(max-width: 56rem)' as const;
 
 /** Teams list/detail — same threshold as page grid narrow. */
 export const TEAMS_NARROW_QUERY = PAGE_GRID_NARROW_QUERY;

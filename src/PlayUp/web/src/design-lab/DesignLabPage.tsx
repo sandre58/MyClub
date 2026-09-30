@@ -15,7 +15,6 @@ import {
   SidebarExpandIcon,
   CloseIcon,
   TeamsNavIcon,
-  VenuesNavIcon,
 } from '../design-system/icons/shellIcons';
 import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark';
 import { PlayUpWordmark } from '../design-system/PlayUpWordmark';
@@ -398,7 +397,7 @@ const labNavGroups: Array<{
   id: string;
   label: string;
   items: Array<{
-    key: LabView | 'structure' | 'teams' | 'venues' | 'regulation';
+    key: LabView | 'structure' | 'teams' | 'regulation';
     label: string;
     icon: typeof OverviewNavIcon;
     dest?: LabView;
@@ -445,7 +444,6 @@ const labNavGroups: Array<{
     label: 'Référentiel',
     items: [
       { key: 'teams', label: 'Équipes', icon: TeamsNavIcon },
-      { key: 'venues', label: 'Stades', icon: VenuesNavIcon },
       { key: 'regulation', label: 'Règlement', icon: RegulationNavIcon },
     ],
   },

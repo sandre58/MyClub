@@ -40,16 +40,6 @@ export function TeamsNavIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={Shield} size={size} {...props} />;
 }
 
-/** Venues — venue / stand. */
-export function VenuesNavIcon({ size, ...props }: ShellIconProps) {
-  return (
-    <Icon size={size} {...props}>
-      <path d="M4 20V10l8-6 8 6v10" />
-      <path d="M9 20v-6h6v6" />
-    </Icon>
-  );
-}
-
 /** Regulation — document. */
 export function RegulationNavIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={FileText} size={size} {...props} />;

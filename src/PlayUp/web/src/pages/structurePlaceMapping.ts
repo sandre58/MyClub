@@ -46,9 +46,6 @@ export function resizeDestinationSlotKeys(
   return next;
 }
 
-/** Alias — same resize semantics for group id maps. */
-export const resizeDestinationGroupIds = resizeDestinationSlotKeys;
-
 /**
  * SPA authoring aid: fill empty Place slots from `availablePlaceIds` in view
  * order, skipping ids already used by filled rows. Never overwrites manual picks.

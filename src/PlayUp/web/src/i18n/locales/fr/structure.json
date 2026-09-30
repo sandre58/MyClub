@@ -311,23 +311,7 @@
       "Swiss": "Des rondes avec des appariements au fil des résultats."
     },
     "editTitle": "Modifier la forme",
-    "editLede": "Reconstruit la forme de la phase (même type). Aucun tirage ni relation n’est créé.",
-    "editAction": "Modifier la forme"
-  },
-  "locale": {
-    "heading": "Ajustements locaux (sans rebuild)",
-    "rename": "Renommer la phase",
-    "renameTitle": "Renommer la phase",
-    "addMatchday": "Ajouter une journée",
-    "addGroup": "Ajouter un groupe",
-    "addRound": "Ajouter un tour",
-    "addSlot": "Ajouter un emplacement",
-    "editMatchGeneration": "Mode aller-retour",
-    "editMatchGenerationTitle": "Génération des rencontres",
-    "editSwiss": "Tours (K)",
-    "editSwissTitle": "Nombre de tours",
-    "defaultRoundName": "Tour",
-    "save": "Enregistrer"
+    "editLede": "Reconstruit la forme de la phase (même type). Aucun tirage ni relation n’est créé."
   },
   "graph": {
     "addPhase": "Ajouter une phase",
@@ -343,10 +327,8 @@
     "removePhaseStructure": "Sa structure et sa population disparaîtront avec elle.",
     "removePhaseImpact": "Impact : {{qualification}} chemin(s) de qualification et {{progression}} chemin(s) de progression pointant vers cette phase seront retirés.",
     "removePhaseSubmit": "Supprimer",
-    "editQualification": "Modifier la qualification",
     "editQualificationTitle": "Qualification — {{phase}}",
     "editQualificationLede": "Chemins de sortie vers une autre phase (pas vers soi-même). Draft persistable même si la destination est incomplète.",
-    "editProgression": "Modifier la progression",
     "editProgressionTitle": "Progression — {{phase}}",
     "editProgressionLede": "Chemins Winner/Loser depuis une confrontation vers une autre phase — cible Population (sans slot) ou Place.",
     "editExitNeedsPeer": "Ajoutez au moins une autre phase pour définir une destination de sortie.",
@@ -381,8 +363,6 @@
   "regulation": {
     "personalizeMatch": "Personnaliser les matchs",
     "personalizeStanding": "Personnaliser le classement",
-    "editMatch": "Modifier les règles de match",
-    "editStanding": "Modifier les règles de classement",
     "followFrame": "Suivre le règlement général",
     "followFrameMatchHint": "Les règles de match de la phase restent alignées sur le cadre de la compétition.",
     "followFrameStandingHint": "Les règles de classement de la phase restent alignées sur le cadre de la compétition.",
@@ -408,7 +388,6 @@
     "drawTitle": "Règles de tirage",
     "tieTitle": "Format de confrontation",
     "editDraw": "Modifier le tirage",
-    "editTie": "Modifier la confrontation",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
     "matchSavedToast": "Règles de match enregistrées.",
