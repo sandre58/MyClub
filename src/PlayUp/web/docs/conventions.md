@@ -30,6 +30,8 @@ CI `web` job: `format:check` → `lint` → `typecheck` → `test:run` → `buil
 | DS foundations                    | `kebab-case.css`           | `panels.css`, `selectable-tile.css`        |
 | DS React                          | `PascalCase.tsx`           | `Dialog.tsx`, `ChoiceTile.tsx`             |
 
+`pages/` is grouped by **functional domain** when a domain has multiple related files (`pages/structure/`, `match/`, `teams/`, `regulation/`, `competition/`, `stage/`, `classements/`). Isolated pages (e.g. `HomePage`, `NotFoundPage`) stay at the `pages/` root. This is not `features/`.
+
 Do **not** invent app-level `hooks/`, `services/`, `features/`, or `components/` folders without an explicit architecture decision ([README](../README.md) out-of-scope table).
 
 ## React & hooks
