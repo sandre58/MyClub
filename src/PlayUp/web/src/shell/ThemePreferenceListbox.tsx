@@ -1,7 +1,10 @@
-import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ToggleButtonGroup } from '../design-system/components/ToggleButtonGroup';
-import { LucideIcon } from '../design-system/icons/Icon';
+import {
+  ThemeDarkIcon,
+  ThemeLightIcon,
+  ThemeSystemIcon,
+} from '../design-system/icons/shellIcons';
 import type { ThemePreference } from '../theme';
 
 type ThemePreferenceListboxProps = {
@@ -29,17 +32,17 @@ export function ThemePreferenceListbox({
         {
           value: 'system',
           label: t('preferences.theme.system'),
-          leading: <LucideIcon icon={Monitor} size="sm" aria-hidden="true" />,
+          leading: <ThemeSystemIcon size="sm" aria-hidden="true" />,
         },
         {
           value: 'light',
           label: t('preferences.theme.light'),
-          leading: <LucideIcon icon={Sun} size="sm" aria-hidden="true" />,
+          leading: <ThemeLightIcon size="sm" aria-hidden="true" />,
         },
         {
           value: 'dark',
           label: t('preferences.theme.dark'),
-          leading: <LucideIcon icon={Moon} size="sm" aria-hidden="true" />,
+          leading: <ThemeDarkIcon size="sm" aria-hidden="true" />,
         },
       ]}
     />

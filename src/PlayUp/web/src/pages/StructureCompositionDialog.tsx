@@ -3,7 +3,6 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ListChecks, Search } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { replaceStageAffectationAuthoring } from '../api';
@@ -11,8 +10,11 @@ import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { TextLink } from '../design-system/components/TextLink';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { LucideIcon } from '../design-system/icons/Icon';
-import { CheckIcon } from '../design-system/icons/contentIcons';
+import {
+  CheckIcon,
+  ListChecksIcon,
+  SearchIcon,
+} from '../design-system/icons/contentIcons';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { notify } from '../design-system/toastStore';
@@ -152,8 +154,7 @@ export function StructureCompositionDialog({
 
   const k = selected.size;
   const populationExpected = k + reserved;
-  const atCapacity =
-    affectationCap != null && k >= affectationCap;
+  const atCapacity = affectationCap != null && k >= affectationCap;
   const remaining =
     placesN != null && placesN > 0
       ? Math.max(0, placesN - populationExpected)
@@ -286,138 +287,141 @@ export function StructureCompositionDialog({
           </>
         }
       >
-      <div className="structure-composition">
-        <div className="structure-composition__toolbar">
-          <div
-            className={[
-              'structure-composition__meter',
-              complete ? 'structure-composition__meter--complete' : null,
-              placesN != null &&
-              placesN > 0 &&
-              populationExpected < placesN
-                ? 'structure-composition__meter--short'
-                : null,
-              placesN != null && populationExpected > placesN
-                ? 'structure-composition__meter--over'
-                : null,
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            <p className="structure-composition__counter" aria-live="polite">
-              {counterLabel}
-            </p>
-            {placesN != null && placesN > 0 ? (
-              <div
-                className="structure-composition__track"
-                aria-hidden="true"
-              >
-                <span
-                  className="structure-composition__fill"
-                  style={{ width: `${ratio * 100}%` }}
-                />
-              </div>
-            ) : null}
-            {statusLabel ? (
-              <p className="structure-composition__status" role="status">
-                {statusLabel}
-              </p>
-            ) : null}
-          </div>
-
-          <Tooltip content={t('composition.selectAll')}>
-            <button
-              type="button"
-              className="ds-btn ds-btn--ghost ds-icon-button structure-composition__select-all"
-              disabled={!canSelectAll || saveMutation.isPending}
-              aria-label={t('composition.selectAll')}
-              onClick={selectAllFiltered}
+        <div className="structure-composition">
+          <div className="structure-composition__toolbar">
+            <div
+              className={[
+                'structure-composition__meter',
+                complete ? 'structure-composition__meter--complete' : null,
+                placesN != null && placesN > 0 && populationExpected < placesN
+                  ? 'structure-composition__meter--short'
+                  : null,
+                placesN != null && populationExpected > placesN
+                  ? 'structure-composition__meter--over'
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' ')}
             >
-              <LucideIcon icon={ListChecks} size="sm" />
-            </button>
-          </Tooltip>
+              <p className="structure-composition__counter" aria-live="polite">
+                {counterLabel}
+              </p>
+              {placesN != null && placesN > 0 ? (
+                <div
+                  className="structure-composition__track"
+                  aria-hidden="true"
+                >
+                  <span
+                    className="structure-composition__fill"
+                    style={{ width: `${ratio * 100}%` }}
+                  />
+                </div>
+              ) : null}
+              {statusLabel ? (
+                <p className="structure-composition__status" role="status">
+                  {statusLabel}
+                </p>
+              ) : null}
+            </div>
 
-          <label className="structure-composition__search">
-            <span className="ds-visually-hidden">{t('composition.search')}</span>
-            <span className="ds-input">
-              <span className="ds-input__leading" aria-hidden="true">
-                <LucideIcon icon={Search} size="sm" />
+            <Tooltip content={t('composition.selectAll')}>
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button structure-composition__select-all"
+                disabled={!canSelectAll || saveMutation.isPending}
+                aria-label={t('composition.selectAll')}
+                onClick={selectAllFiltered}
+              >
+                <ListChecksIcon size="sm" />
+              </button>
+            </Tooltip>
+
+            <label className="structure-composition__search">
+              <span className="ds-visually-hidden">
+                {t('composition.search')}
               </span>
-              <input
-                ref={searchRef}
-                type="search"
-                className="ds-input__control"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t('composition.searchPlaceholder')}
-                autoComplete="off"
-              />
-            </span>
-          </label>
-        </div>
-
-        {emptyEligible ? (
-          <div className="structure-composition__empty">
-            <p>{t('composition.emptyEligible')}</p>
-            <TextLink to={teamsHref}>{t('composition.openTeams')}</TextLink>
+              <span className="ds-input">
+                <span className="ds-input__leading" aria-hidden="true">
+                  <SearchIcon size="sm" />
+                </span>
+                <input
+                  ref={searchRef}
+                  type="search"
+                  className="ds-input__control"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t('composition.searchPlaceholder')}
+                  autoComplete="off"
+                />
+              </span>
+            </label>
           </div>
-        ) : (
-          <ul className="structure-composition__list" aria-label={t('composition.listAria')}>
-            {filtered.map((row) => {
-              const locked =
-                !row.selected && atCapacity && affectationCap != null;
-              return (
-                <li key={row.entryId}>
-                  <label
-                    className={[
-                      'structure-composition__row',
-                      !row.eligible
-                        ? 'structure-composition__row--ineligible'
-                        : null,
-                      locked ? 'structure-composition__row--locked' : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                    title={
-                      locked
-                        ? t('composition.atCapacityHint', {
-                            n: affectationCap,
-                          })
-                        : undefined
-                    }
-                  >
-                    <input
-                      type="checkbox"
-                      checked={row.selected}
-                      disabled={
-                        saveMutation.isPending ||
-                        (!row.eligible && !row.selected) ||
+
+          {emptyEligible ? (
+            <div className="structure-composition__empty">
+              <p>{t('composition.emptyEligible')}</p>
+              <TextLink to={teamsHref}>{t('composition.openTeams')}</TextLink>
+            </div>
+          ) : (
+            <ul
+              className="structure-composition__list"
+              aria-label={t('composition.listAria')}
+            >
+              {filtered.map((row) => {
+                const locked =
+                  !row.selected && atCapacity && affectationCap != null;
+                return (
+                  <li key={row.entryId}>
+                    <label
+                      className={[
+                        'structure-composition__row',
+                        !row.eligible
+                          ? 'structure-composition__row--ineligible'
+                          : null,
+                        locked ? 'structure-composition__row--locked' : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      title={
                         locked
+                          ? t('composition.atCapacityHint', {
+                              n: affectationCap,
+                            })
+                          : undefined
                       }
-                      onChange={() => toggle(row.entryId, row.selected)}
-                    />
-                    <TeamCrest
-                      name={row.displayName}
-                      logoMediaId={row.logoMediaId}
-                      primaryColor={row.primaryColor}
-                      size="sm"
-                    />
-                    <span className="structure-composition__name">
-                      {row.displayName}
-                    </span>
-                    {!row.eligible ? (
-                      <span className="structure-composition__warn">
-                        {t('composition.noLongerEligible')}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={row.selected}
+                        disabled={
+                          saveMutation.isPending ||
+                          (!row.eligible && !row.selected) ||
+                          locked
+                        }
+                        onChange={() => toggle(row.entryId, row.selected)}
+                      />
+                      <TeamCrest
+                        name={row.displayName}
+                        logoMediaId={row.logoMediaId}
+                        primaryColor={row.primaryColor}
+                        size="sm"
+                      />
+                      <span className="structure-composition__name">
+                        {row.displayName}
                       </span>
-                    ) : null}
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    </Dialog>
+                      {!row.eligible ? (
+                        <span className="structure-composition__warn">
+                          {t('composition.noLongerEligible')}
+                        </span>
+                      ) : null}
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </Dialog>
 
       <ConfirmDialog
         open={discardOpen}

@@ -1,14 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeftRight,
-  ArrowRight,
-  CircleAlert,
-  Goal,
-  MapPin,
-  Settings,
-  Sigma,
-  Timer,
-} from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,8 +13,8 @@ import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Popover } from '../design-system/components/Popover';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { TextLink } from '../design-system/components/TextLink';
-import { LucideIcon } from '../design-system/icons/Icon';
 import {
+  AggregateIcon,
   ArrowDownIcon,
   ArrowRightIcon,
   AttributionIcon,
@@ -33,8 +23,10 @@ import {
   CupFormatIcon,
   GroupsFormatIcon,
   LayersIcon,
+  LegsStatIcon,
   MatchRulesIcon,
   MatchdayStatIcon,
+  PenaltiesIcon,
   PersonIcon,
   PlusIcon,
   PencilIcon,
@@ -42,12 +34,15 @@ import {
   RoundsStatIcon,
   StandingRulesIcon,
   StructureIcon,
+  StructureIssueIcon,
   SwissFormatIcon,
   EmptySelectionIcon,
+  TimerIcon,
   TrashIcon,
   UnlockIcon,
 } from '../design-system/icons/contentIcons';
-import { CloseIcon } from '../design-system/icons/shellIcons';
+import { PinIcon } from '../design-system/icons/metaIcons';
+import { CloseIcon, SettingsNavIcon } from '../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../i18n/enumLabels';
 import { queryKeys } from '../queryKeys';
 import { TeamCrest } from '../design-system/TeamCrest';
@@ -102,9 +97,7 @@ import {
   resolveDrawCtaPoolTone,
   StructureDrawCta,
 } from './StructureDrawCta';
-import {
-  outboundSortiesFeeds,
-} from './structureSortiesIntentFeed';
+import { outboundSortiesFeeds } from './structureSortiesIntentFeed';
 import {
   inboundPopulationConfiguredVolume,
   qualificationPathVolume,
@@ -118,10 +111,7 @@ import {
 import { resolvePlacesN } from './structurePlaces';
 import { PhaseSchematic } from './phaseSchematic';
 import { listCupManualPlaces } from './manualPlacementUi';
-import {
-  MatchRulesPanel,
-  StandingRulesPanel,
-} from './regulationRulePanels';
+import { MatchRulesPanel, StandingRulesPanel } from './regulationRulePanels';
 import './regulation.css';
 
 type EditTarget =
@@ -291,10 +281,7 @@ function qualificationRuleParts(
 
   if (mode === 'Range') {
     const from = formatPlace(path.selectionValue, t);
-    const to = formatPlace(
-      path.selectionEndValue ?? path.selectionValue,
-      t,
-    );
+    const to = formatPlace(path.selectionEndValue ?? path.selectionValue, t);
     const badge = `${from}–${to}`;
     if (group) {
       return {
@@ -421,9 +408,7 @@ function progressionSortKey(
   const pair = sourcePairKey?.trim();
   if (pair) {
     const fromLabel = sourceLabel?.match(/#(\d+)/);
-    return fromLabel?.[1]
-      ? `${pair}-${fromLabel[1].padStart(8, '0')}`
-      : pair;
+    return fromLabel?.[1] ? `${pair}-${fromLabel[1].padStart(8, '0')}` : pair;
   }
   return matchSortKey(sourceLabel, sourcePairKey);
 }
@@ -753,7 +738,9 @@ function FluxGroupList({
                 {group.peerName}
               </button>
             ) : (
-              <span className="structure-flux-group__peer">{group.peerName}</span>
+              <span className="structure-flux-group__peer">
+                {group.peerName}
+              </span>
             )}
             <div className="structure-flux-group__head-trail">
               <Chip tone="neutral">{teamsLabel(group.volume)}</Chip>
@@ -840,9 +827,7 @@ function RootEntriesRail({
   const soft = state === 'E4';
 
   const hasTeams =
-    composed.length > 0 ||
-    previewNames.length > 0 ||
-    ineligible > 0;
+    composed.length > 0 || previewNames.length > 0 || ineligible > 0;
   // Hide empty Affectation when not editable (e.g. Coupe 16es: feeds only, no authoring).
   const showAffectationSection = hasTeams || Boolean(canCompose);
 
@@ -876,9 +861,15 @@ function RootEntriesRail({
     >
       <div className="structure-entries__main">
         {sources ? (
-          <section className="structure-entries__section" aria-labelledby="population-sources-title">
+          <section
+            className="structure-entries__section"
+            aria-labelledby="population-sources-title"
+          >
             <header className="structure-entries__section-head">
-              <h4 id="population-sources-title" className="structure-entries__section-title">
+              <h4
+                id="population-sources-title"
+                className="structure-entries__section-title"
+              >
                 {t('population.sectionSources')}
               </h4>
             </header>
@@ -986,8 +977,7 @@ function CompositionMeter({
       : entries > 0
         ? 1
         : 0;
-  const tone =
-    gap == null || gap === 0 ? 'ok' : gap < 0 ? 'short' : 'over';
+  const tone = gap == null || gap === 0 ? 'ok' : gap < 0 ? 'short' : 'over';
 
   return (
     <div
@@ -1011,7 +1001,7 @@ function CompositionMeter({
       {gap != null && gap !== 0 ? (
         <p className="structure-assembly__gap" role="status">
           <span className="structure-assembly__gap-icon" aria-hidden="true">
-            <LucideIcon icon={CircleAlert} size="sm" />
+            <StructureIssueIcon size="sm" />
           </span>
           {gap < 0
             ? t('entries.meter.shortfall', { count: Math.abs(gap) })
@@ -1228,11 +1218,7 @@ function FluxRail({
   );
 }
 
-function ConfrontationPanel({
-  stage,
-}: {
-  stage: StructureStageHubSummary;
-}) {
+function ConfrontationPanel({ stage }: { stage: StructureStageHubSummary }) {
   const { t } = useTranslation('regulation');
   const segments = [...(stage.confrontationSegments ?? [])].sort((a, b) => {
     const ao = a.rounds[0]?.sortOrder ?? 0;
@@ -1242,39 +1228,43 @@ function ConfrontationPanel({
 
   const renderItems = (seg: StructureConfrontationSegment, prefix: string) => {
     const twoLegs = seg.numberOfLegs > 1;
-    const items: { key: string; label: string; icon: typeof ArrowRight }[] = [
+    const items: { key: string; label: string; icon: ReactNode }[] = [
       {
         key: `${prefix}-legs`,
         label: twoLegs ? t('tokens.tieTwoLegs') : t('tokens.tieOneLeg'),
-        icon: twoLegs ? ArrowLeftRight : ArrowRight,
+        icon: twoLegs ? (
+          <LegsStatIcon size="sm" />
+        ) : (
+          <ArrowRightIcon size="sm" />
+        ),
       },
     ];
     if (seg.aggregateScoring) {
       items.push({
         key: `${prefix}-agg`,
         label: t('tokens.tieAggregate'),
-        icon: Sigma,
+        icon: <AggregateIcon size="sm" />,
       });
     }
     if (seg.hasAwayGoalsRule) {
       items.push({
         key: `${prefix}-away`,
         label: t('tokens.tieAwayGoals'),
-        icon: MapPin,
+        icon: <PinIcon size="sm" />,
       });
     }
     if (seg.hasTieExtraTime) {
       items.push({
         key: `${prefix}-et`,
         label: t('tokens.tieExtraTime'),
-        icon: Timer,
+        icon: <TimerIcon size="sm" />,
       });
     }
     if (seg.hasTiePenaltyShootout) {
       items.push({
         key: `${prefix}-tab`,
         label: t('tokens.tiePenalties'),
-        icon: Goal,
+        icon: <PenaltiesIcon size="sm" />,
       });
     }
     return items;
@@ -1295,7 +1285,7 @@ function ConfrontationPanel({
         {items.map((item) => (
           <li key={item.key} className="regulation-rule-list__item">
             <span className="regulation-rule-list__mark" aria-hidden="true">
-              <LucideIcon icon={item.icon} size="sm" />
+              {item.icon}
             </span>
             <span className="regulation-rule-list__label">{item.label}</span>
           </li>
@@ -1308,8 +1298,10 @@ function ConfrontationPanel({
     <div className="structure-confrontation-segments">
       {segments.map((seg, index) => {
         const title =
-          seg.rounds.map((r) => r.name).filter(Boolean).join(' / ') ||
-          `§${index + 1}`;
+          seg.rounds
+            .map((r) => r.name)
+            .filter(Boolean)
+            .join(' / ') || `§${index + 1}`;
         const items = renderItems(seg, `seg-${index}`);
         return (
           <div key={title + index} className="structure-confrontation-segment">
@@ -1319,10 +1311,15 @@ function ConfrontationPanel({
             <ul className="regulation-rule-list structure-confrontation-list">
               {items.map((item) => (
                 <li key={item.key} className="regulation-rule-list__item">
-                  <span className="regulation-rule-list__mark" aria-hidden="true">
-                    <LucideIcon icon={item.icon} size="sm" />
+                  <span
+                    className="regulation-rule-list__mark"
+                    aria-hidden="true"
+                  >
+                    {item.icon}
                   </span>
-                  <span className="regulation-rule-list__label">{item.label}</span>
+                  <span className="regulation-rule-list__label">
+                    {item.label}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -1382,8 +1379,7 @@ export function StructurePhaseFiche({
   }, [stage?.stageId]);
 
   const deactivateDrawMutation = useMutation({
-    mutationFn: () =>
-      replaceStageDrawRules(stage!.stageId, { clear: true }),
+    mutationFn: () => replaceStageDrawRules(stage!.stageId, { clear: true }),
     onSuccess: async () => {
       await invalidateAfterStructureMutation(queryClient, data.competitionId);
       setDeactivateDrawOpen(false);
@@ -1406,9 +1402,7 @@ export function StructurePhaseFiche({
       await invalidateAfterStructureMutation(queryClient, data.competitionId, {
         stageId: stage!.stageId,
       });
-      notify.success(
-        tDraw('toastReleased', { count: result.releasedCount }),
-      );
+      notify.success(tDraw('toastReleased', { count: result.releasedCount }));
     },
   });
 
@@ -1517,8 +1511,7 @@ export function StructurePhaseFiche({
   );
   const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
   const poolFilled = stage.compositionEntryCount ?? 0;
-  const showPoolHint =
-    showDrawCta && placesN != null && placesN > 0;
+  const showPoolHint = showDrawCta && placesN != null && placesN > 0;
   const drawCtaPoolTone =
     showPoolHint && placesN != null
       ? resolveDrawCtaPoolTone(poolFilled, placesN)
@@ -1572,9 +1565,7 @@ export function StructurePhaseFiche({
     createBlockPresentation.action;
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
-    createBlockedShort != null &&
-    !activeDraw &&
-    overviewDraws.length === 0;
+    createBlockedShort != null && !activeDraw && overviewDraws.length === 0;
   /** Inline short caption on the stage card — skip when Release is the unblock action, and
    * skip countMismatch when the filled/capacity ratio already carries the signal. */
   const showCreateBlockedCaption =
@@ -1638,8 +1629,7 @@ export function StructurePhaseFiche({
   const hasAttribution = placementAwards.length > 0;
   /** Inter-Stage only — no Sorties create without a downstream peer. */
   const canAddExit = data.stages.length >= 2;
-  const canCreateExit =
-    canAddExit && (canEditQualif || canEditProg);
+  const canCreateExit = canAddExit && (canEditQualif || canEditProg);
   const canCreateAttribution = canEditPlacement;
   const showSortiesRail = hasExits || canCreateExit;
   /** Attribution = KO/Cup only (gated by ReplacePlacementAwardRules). */
@@ -1731,13 +1721,14 @@ export function StructurePhaseFiche({
 
     if (options.length === 0) return null;
 
-    return (
-      <ExitKindMenu label={t('fiche.editExits')} options={options} />
-    );
+    return <ExitKindMenu label={t('fiche.editExits')} options={options} />;
   };
 
-  const heroFacts: { icon: ReactNode; value: string | number; label: string }[] =
-    [];
+  const heroFacts: {
+    icon: ReactNode;
+    value: string | number;
+    label: string;
+  }[] = [];
   const kind = stage.formatKind;
   if (kind === 'Groups' && (stage.groupCount ?? 0) > 0) {
     const n = stage.groupCount!;
@@ -1785,9 +1776,7 @@ export function StructurePhaseFiche({
     if (hasExits) {
       const options = exitEditOptions();
       if (options.length === 0) return undefined;
-      return (
-        <ExitKindMenu label={t('fiche.editExits')} options={options} />
-      );
+      return <ExitKindMenu label={t('fiche.editExits')} options={options} />;
     }
     if (!canCreateExit) return undefined;
     // Qual XOR Prog — open the single available editor.
@@ -1890,7 +1879,8 @@ export function StructurePhaseFiche({
                       type="submit"
                       className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
                       disabled={
-                        renameMutation.isPending || nameDraft.trim().length === 0
+                        renameMutation.isPending ||
+                        nameDraft.trim().length === 0
                       }
                       aria-label={t('fiche.confirmRename')}
                     >
@@ -1919,7 +1909,10 @@ export function StructurePhaseFiche({
               </form>
             ) : (
               <>
-                <h2 id="phase-overview-heading" className="structure-fiche__title">
+                <h2
+                  id="phase-overview-heading"
+                  className="structure-fiche__title"
+                >
                   {stage.name}
                 </h2>
                 {canRename ? (
@@ -2015,7 +2008,10 @@ export function StructurePhaseFiche({
                     aria-label={t('fiche.statsAria')}
                   >
                     {heroFacts.map((fact) => (
-                      <li key={fact.label} className="structure-phase-hero__stat">
+                      <li
+                        key={fact.label}
+                        className="structure-phase-hero__stat"
+                      >
                         <span
                           className="structure-phase-hero__stat-icon"
                           aria-hidden="true"
@@ -2167,7 +2163,7 @@ export function StructurePhaseFiche({
                               className="ds-btn ds-btn--ghost ds-btn--sm"
                               onClick={() => setEdit('tirage-params')}
                             >
-                              <LucideIcon icon={Settings} size="sm" />
+                              <SettingsNavIcon size="sm" />
                               {t('fiche.drawParamsAction')}
                             </button>
                           ) : null}

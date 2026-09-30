@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy } from 'lucide-react';
 import type {
   SchematicCase,
   SchematicConnection,
@@ -15,6 +14,7 @@ import {
   ArrowRightIcon,
   DrawPendingIcon,
   PersonIcon,
+  TrophyIcon,
 } from '../design-system/icons/contentIcons';
 import { nextPowerOfTwo } from './structureFixtureLabels';
 import { placeChromeLabel } from './structurePlaceLabel';
@@ -25,8 +25,7 @@ type Translate = (key: string, opts?: Record<string, unknown>) => string;
 type SchematicDensity = 'full' | 'crest' | 'compact';
 
 type PairLabel =
-  | { kind: 'fixture'; matchNumber: number }
-  | { kind: 'pair'; pairKey: string };
+  { kind: 'fixture'; matchNumber: number } | { kind: 'pair'; pairKey: string };
 
 /**
  * Phase form schematic driven by StageSchematic DTO.
@@ -110,10 +109,7 @@ function SlotBox({
   // Dashed `--empty` = blank cell only — not "no EntryId".
   const hasSurface = !!(primary || secondary);
   const canManualPlace =
-    !!onActivate &&
-    !!c &&
-    !ghost &&
-    resolveManualPlaceMode(c) === 'editable';
+    !!onActivate && !!c && !ghost && resolveManualPlaceMode(c) === 'editable';
   const interactive = canManualPlace;
   const className = [
     'schematic-slot',
@@ -151,8 +147,7 @@ function SlotBox({
     : undefined;
 
   // Crest only with a real team name — never beside a Qual/Prog path label.
-  const showTeamCrest =
-    !!resolvedName && !!primary && primary === resolvedName;
+  const showTeamCrest = !!resolvedName && !!primary && primary === resolvedName;
   const showSlotCrest = density === 'full' && showTeamCrest;
   const slotInner = (
     <>
@@ -226,10 +221,7 @@ function SlotBox({
   );
 }
 
-export type SchematicCaseTooltipOriginKind =
-  | 'from'
-  | 'draw'
-  | 'affectation';
+export type SchematicCaseTooltipOriginKind = 'from' | 'draw' | 'affectation';
 
 export type SchematicCaseTooltipModel = {
   address: string | null;
@@ -386,10 +378,10 @@ export function buildSchematicCaseTooltip(
 
   return (
     <div className="schematic-case-tip">
-          {model.address ? (
-            <p className="schematic-case-tip__address">{model.address}</p>
-          ) : null}
-          {model.subject ? (
+      {model.address ? (
+        <p className="schematic-case-tip__address">{model.address}</p>
+      ) : null}
+      {model.subject ? (
         <div className="schematic-case-tip__subject">
           {model.subject.kind === 'team' ? (
             <TeamCrest
@@ -664,7 +656,12 @@ function CupSchematic({
         const m = cupMetrics(d);
         const size = isMulti
           ? measureCupMultiSize(multiRoundCount, multiLeafCount, m, terminal)
-          : measureCupSingleSize(leafFallback, Math.max(roundCount, 1), m, terminal);
+          : measureCupSingleSize(
+              leafFallback,
+              Math.max(roundCount, 1),
+              m,
+              terminal,
+            );
         if (size.width <= avail + 1) {
           setDensity((prev) => (prev === d ? prev : d));
           setScale((prev) => (prev === 1 ? prev : 1));
@@ -675,7 +672,12 @@ function CupSchematic({
 
       const compact = cupMetrics('compact');
       const compactSize = isMulti
-        ? measureCupMultiSize(multiRoundCount, multiLeafCount, compact, terminal)
+        ? measureCupMultiSize(
+            multiRoundCount,
+            multiLeafCount,
+            compact,
+            terminal,
+          )
         : measureCupSingleSize(
             leafFallback,
             Math.max(roundCount, 1),
@@ -689,7 +691,9 @@ function CupSchematic({
         setScale((prev) => (prev === nextScale ? prev : nextScale));
         setScroll((prev) => (prev ? false : prev));
       } else {
-        setScale((prev) => (prev === CUP_MIN_FIT_SCALE ? prev : CUP_MIN_FIT_SCALE));
+        setScale((prev) =>
+          prev === CUP_MIN_FIT_SCALE ? prev : CUP_MIN_FIT_SCALE,
+        );
         setScroll((prev) => (prev ? prev : true));
       }
     };
@@ -1008,15 +1012,19 @@ function CupMultiRoundSchematic({
     lastYs.length >= 2
       ? (lastYs[0]! + lastYs[lastYs.length - 1]!) / 2 - trophySize / 2
       : height / 2 - trophySize / 2;
-  const width =
-    lastWireEndX + (showTrophy ? trophySize + 12 : 0);
+  const width = lastWireEndX + (showTrophy ? trophySize + 12 : 0);
 
   return (
     <div
       className="regulation-schematic regulation-schematic--cup"
-      aria-label={t('regulation:schematic.bracketRounds', { rounds: roundCount })}
+      aria-label={t('regulation:schematic.bracketRounds', {
+        rounds: roundCount,
+      })}
     >
-      <div className="schematic-cup schematic-cup--multi" style={{ height, width }}>
+      <div
+        className="schematic-cup schematic-cup--multi"
+        style={{ height, width }}
+      >
         {columns.map((colCases, col) => {
           const ys = columnYs[col] ?? [];
           const left = col * (m.slotColW + m.colGap);
@@ -1088,7 +1096,11 @@ function CupMultiRoundSchematic({
                         className="schematic-cup__wire-line"
                       />
                       {label ? (
-                        <PairOrdinalText label={label} x={xMid + 6} y={mid - 5} />
+                        <PairOrdinalText
+                          label={label}
+                          x={xMid + 6}
+                          y={mid - 5}
+                        />
                       ) : null}
                     </g>
                   );
@@ -1109,7 +1121,7 @@ function CupMultiRoundSchematic({
             }}
             aria-hidden="true"
           >
-            <Trophy size={trophySize} strokeWidth={1.75} />
+            <TrophyIcon size="md" strokeWidth={1.75} />
           </span>
         ) : null}
       </div>
@@ -1247,11 +1259,7 @@ function CupSingleRoundSchematic({
                   className="schematic-cup__wire-line"
                 />
                 {label ? (
-                  <PairOrdinalText
-                    label={label}
-                    x={xMid + 8}
-                    y={mid - 5}
-                  />
+                  <PairOrdinalText label={label} x={xMid + 8} y={mid - 5} />
                 ) : null}
               </g>
             );
@@ -1259,7 +1267,7 @@ function CupSingleRoundSchematic({
         </svg>
         {showTrophy ? (
           <span className="schematic-cup__trophy" aria-hidden="true">
-            <Trophy size={20} strokeWidth={1.75} />
+            <TrophyIcon size="md" strokeWidth={1.75} />
           </span>
         ) : null}
       </div>
@@ -1301,14 +1309,10 @@ function orderLeafCases(
   for (const conn of sorted) {
     const a =
       (conn.slotAKey ? bySlotKey.get(conn.slotAKey) : undefined) ??
-      (conn.fixtureId
-        ? byFixtureSide.get(`${conn.fixtureId}|A`)
-        : undefined);
+      (conn.fixtureId ? byFixtureSide.get(`${conn.fixtureId}|A`) : undefined);
     const b =
       (conn.slotBKey ? bySlotKey.get(conn.slotBKey) : undefined) ??
-      (conn.fixtureId
-        ? byFixtureSide.get(`${conn.fixtureId}|B`)
-        : undefined);
+      (conn.fixtureId ? byFixtureSide.get(`${conn.fixtureId}|B`) : undefined);
     if (!a || !b || used.has(a) || used.has(b)) continue;
     ordered.push(a, b);
     used.add(a);

@@ -114,7 +114,11 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 Order: `format:check` → `lint` → `typecheck` → `test:run` → `build`.  
 **Errors fail CI.** Oxlint **warnings** do not fail CI today (no `--deny-warnings`). Rider/IDE CSS inspections are not gated. Stylelint is intentionally out of scope for now.
 
-Config: `.prettierrc.json`, `.oxlintrc.json`, `.vscode/` (Prettier format-on-save).
+Config: `.prettierrc.json`, `.oxlintrc.json`. Format on save is an optional editor setting (Prettier); this package does **not** ship a committed `.vscode/` folder.
+
+## Conventions
+
+File / component / CSS / hook / i18n-key naming: [docs/conventions.md](./docs/conventions.md). Product glossary: [docs/i18n.md](./docs/i18n.md).
 
 ## Internationalization
 

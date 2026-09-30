@@ -1,23 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowLeftRight,
-  ArrowRight,
-  Clock3,
-  Dices,
-  Goal,
-  Handshake,
-  Layers,
-  MapPin,
-  PlayingCardsFan,
-  Shuffle,
-  Sigma,
-  ShieldBan,
-  Timer,
-  Podium,
-  Trophy,
-  Volleyball,
-  type LucideIcon as LucideGlyph,
-} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -28,12 +9,26 @@ import { FormSection } from '../design-system/components/FormSection';
 import { PageHead } from '../design-system/components/PageHead';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { TextLink } from '../design-system/components/TextLink';
-import { LucideIcon } from '../design-system/icons/Icon';
 import {
+  AggregateIcon,
+  ArrowRightIcon,
+  ConfrontationIcon,
+  DisciplineIcon,
+  DrawConfigIcon,
+  EmptySelectionIcon,
+  ForfeitIcon,
+  LayersIcon,
+  LegsStatIcon,
+  MatchRulesIcon,
+  PenaltiesIcon,
   PencilIcon,
   PersonIcon,
-  EmptySelectionIcon,
+  RandomIcon,
+  StandingRulesIcon,
+  TimerIcon,
+  TrophyIcon,
 } from '../design-system/icons/contentIcons';
+import { ClockIcon, PinIcon } from '../design-system/icons/metaIcons';
 import { queryKeys } from '../queryKeys';
 import {
   ErrorState,
@@ -271,18 +266,11 @@ function EntriesTile({
 
 // —— Framework: Match ——
 
-function MatchTile({
-  regulation,
-}: {
-  regulation: StructureRegulationSummary;
-}) {
+function MatchTile({ regulation }: { regulation: StructureRegulationSummary }) {
   const { t } = useTranslation('regulation');
 
   return (
-    <FrameCard
-      icon={<LucideIcon icon={Volleyball} size="md" />}
-      title={t('families.match')}
-    >
+    <FrameCard icon={<MatchRulesIcon size="md" />} title={t('families.match')}>
       <MatchRulesPanel
         numberOfPeriods={regulation.numberOfPeriods}
         durationPerPeriod={regulation.durationPerPeriod}
@@ -309,7 +297,7 @@ function DisciplineTile({
 
   return (
     <FrameCard
-      icon={<LucideIcon icon={PlayingCardsFan} size="md" />}
+      icon={<DisciplineIcon size="md" />}
       title={t('families.discipline')}
     >
       {types.length === 0 ? (
@@ -361,7 +349,7 @@ function StandingTile({
 
   return (
     <FrameCard
-      icon={<LucideIcon icon={Podium} size="md" />}
+      icon={<StandingRulesIcon size="md" />}
       title={t('families.standing')}
     >
       <StandingRulesPanel
@@ -434,7 +422,7 @@ function PhaseTile({
                     className="regulation-rule-col__icon"
                     aria-hidden="true"
                   >
-                    <LucideIcon icon={column.icon} size="sm" />
+                    {column.icon}
                   </span>
                   {column.title}
                 </h4>
@@ -508,7 +496,7 @@ type PhaseRuleItem = {
   title?: string;
   /** Numbered ranking-criteria pill when set. */
   index?: number;
-  icon?: LucideGlyph;
+  icon?: ReactNode;
   /** Unbound heritable part — accent label on the phase tile. */
   overridden?: boolean;
 };
@@ -522,7 +510,7 @@ type PhaseRuleSection = {
 type PhaseRuleColumn = {
   key: string;
   title: string;
-  icon: LucideGlyph;
+  icon: ReactNode;
   chips?: PhaseRuleChip[];
   items: PhaseRuleItem[];
   /** Optional subsections (e.g. Confrontation multi-format). */
@@ -541,7 +529,7 @@ function PhaseRuleItemList({ items }: { items: PhaseRuleItem[] }) {
               </span>
             ) : item.icon ? (
               <span className="regulation-rule-list__mark" aria-hidden="true">
-                <LucideIcon icon={item.icon} size="sm" />
+                {item.icon}
               </span>
             ) : null}
             <span className="regulation-rule-list__label">{item.label}</span>
@@ -592,7 +580,7 @@ function buildTiePropertyItems(
     {
       key: `${prefix}legs`,
       label: twoLegs ? t('tokens.tieTwoLegs') : t('tokens.tieOneLeg'),
-      icon: twoLegs ? ArrowLeftRight : ArrowRight,
+      icon: twoLegs ? <LegsStatIcon size="sm" /> : <ArrowRightIcon size="sm" />,
       title: twoLegs ? t('tokens.tieTwoLegsTip') : t('tokens.tieOneLegTip'),
     },
   ];
@@ -600,7 +588,7 @@ function buildTiePropertyItems(
     items.push({
       key: `${prefix}aggregate`,
       label: t('tokens.tieAggregate'),
-      icon: Sigma,
+      icon: <AggregateIcon size="sm" />,
       title: t('tokens.tieAggregateTip'),
     });
   }
@@ -608,7 +596,7 @@ function buildTiePropertyItems(
     items.push({
       key: `${prefix}away-goals`,
       label: t('tokens.tieAwayGoals'),
-      icon: MapPin,
+      icon: <PinIcon size="sm" />,
       title: t('tokens.tieAwayGoalsTip'),
     });
   }
@@ -616,7 +604,7 @@ function buildTiePropertyItems(
     items.push({
       key: `${prefix}tie-extra-time`,
       label: t('tokens.tieExtraTime'),
-      icon: Timer,
+      icon: <TimerIcon size="sm" />,
       title: t('tokens.tieExtraTimeTip'),
     });
   }
@@ -624,7 +612,7 @@ function buildTiePropertyItems(
     items.push({
       key: `${prefix}tie-penalties`,
       label: t('tokens.tiePenalties'),
-      icon: Goal,
+      icon: <PenaltiesIcon size="sm" />,
       title: t('tokens.tiePenaltiesTip'),
     });
   }
@@ -657,7 +645,7 @@ function buildPhaseRuleColumns(
         periods: stage.numberOfPeriods,
         minutes: stage.durationPerPeriod,
       }),
-      icon: Clock3,
+      icon: <ClockIcon size="sm" />,
       overridden: matchDurationOverridden,
     },
   ];
@@ -677,7 +665,7 @@ function buildPhaseRuleColumns(
           }
         />
       ),
-      icon: Timer,
+      icon: <TimerIcon size="sm" />,
       title: hasDetail
         ? t('tokens.extraTimeTip', { periods, minutes })
         : t('tokens.extraTime'),
@@ -698,7 +686,7 @@ function buildPhaseRuleColumns(
           }
         />
       ),
-      icon: Goal,
+      icon: <PenaltiesIcon size="sm" />,
       title:
         kicks != null
           ? t('tokens.penaltiesTip', { count: kicks })
@@ -709,7 +697,7 @@ function buildPhaseRuleColumns(
   columns.push({
     key: 'match',
     title: t('columns.match'),
-    icon: Volleyball,
+    icon: <MatchRulesIcon size="sm" />,
     items: matchItems,
   });
 
@@ -717,10 +705,14 @@ function buildPhaseRuleColumns(
     const segments = [...(stage.confrontationSegments ?? [])].sort(
       (left, right) => {
         const leftOrder = Math.min(
-          ...left.rounds.map((round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER),
+          ...left.rounds.map(
+            (round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER,
+          ),
         );
         const rightOrder = Math.min(
-          ...right.rounds.map((round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER),
+          ...right.rounds.map(
+            (round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER,
+          ),
         );
         return leftOrder - rightOrder;
       },
@@ -729,7 +721,7 @@ function buildPhaseRuleColumns(
       columns.push({
         key: 'tie',
         title: t('columns.tie'),
-        icon: Handshake,
+        icon: <ConfrontationIcon size="sm" />,
         items: [],
         sections: segments.map((segment, index) => ({
           key: `tie-section-${index}`,
@@ -741,7 +733,7 @@ function buildPhaseRuleColumns(
       columns.push({
         key: 'tie',
         title: t('columns.tie'),
-        icon: Handshake,
+        icon: <ConfrontationIcon size="sm" />,
         items: buildTiePropertyItems(
           {
             numberOfLegs: stage.numberOfLegs,
@@ -769,7 +761,7 @@ function buildPhaseRuleColumns(
             : t(`tokens.drawMode.${stage.drawMode}`, {
                 defaultValue: stage.drawMode,
               }),
-        icon: Dices,
+        icon: <RandomIcon size="sm" />,
         title: t('tokens.drawRandomTip'),
       },
     ];
@@ -782,7 +774,7 @@ function buildPhaseRuleColumns(
             <span>{t('tokens.drawPotsUnit', { count: pots })}</span>
           </span>
         ),
-        icon: Layers,
+        icon: <LayersIcon size="sm" />,
         title: t('tokens.drawPotsTip', { count: pots }),
       });
     }
@@ -827,8 +819,8 @@ function buildPhaseRuleColumns(
     columns.push({
       key: 'draw',
       title: t('columns.draw'),
-      icon: Shuffle,
-      items
+      icon: <DrawConfigIcon size="sm" />,
+      items,
     });
   }
 
@@ -862,7 +854,7 @@ function buildPhaseRuleColumns(
             </span>
           </span>
         ),
-        icon: ShieldBan,
+        icon: <ForfeitIcon size="sm" />,
         title: t('forfeit.aria', {
           winner: forfeitWinner,
           loser: forfeitLoser,
@@ -873,7 +865,7 @@ function buildPhaseRuleColumns(
     columns.push({
       key: 'standing',
       title: t('columns.standing'),
-      icon: Trophy,
+      icon: <TrophyIcon size="sm" />,
       chips: showStandingPoints
         ? [
             {
@@ -899,7 +891,7 @@ function buildPhaseRuleColumns(
             },
           ]
         : undefined,
-      items
+      items,
     });
   }
 
