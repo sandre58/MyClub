@@ -123,10 +123,42 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 - Prefer `Alert` over bare `.ds-notice` when an icon helps scan. Soft-fill tone recipes in `feedback.css`.
 
-## Selectable tile
+## Surfaces / tiles / panels (three families)
+
+There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New UI must pick one of the families below — do not invent a fourth “card” chrome.
+
+| Family                 | Mechanism                                            | Role                                                         | Typical usages                                                          |
+| ---------------------- | ---------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| **A. Choice tile**     | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`) | Parameter / option choice inside a **form**                  | Structure dialogs scope, Regulation discipline, AddPhase format         |
+| **B. Selectable tile** | `.ds-selectable-tile` + page layout classes          | **Entity** selectable in a list/grid (selection chrome only) | `teams-tile`, `structure-topology__tile`, qualif/prog rows, draw master |
+| **C. Panel**           | `.ds-panel` (+ `PanelHead`)                          | Content container (not decorative card farm)                 | Overview, Classements, Matches hub, Stage                               |
+
+**Also page-local (not a fourth family):**
+
+| Pattern                  | Class                                  | Note                                                                       |
+| ------------------------ | -------------------------------------- | -------------------------------------------------------------------------- |
+| Phase fiche              | `.structure-fiche`                     | Structure layout métier — keep page-local until a second surface reuses it |
+| Domain sections in fiche | `.structure-domain-tile`               | Internal fiche sections (FormSection-like), **not** family B selection     |
+| Attribution tiles        | `.structure-attribution__tile`         | Dialog content blocks (not selection chrome)                               |
+| Schematic pots           | `.regulation-schematic__card*`         | Diagram cells — naming historical; not family B                            |
+| Disciplinary tokens      | `.regulation-card-token*`              | Literal “carton” glyphs — keep `card` in the name                          |
+| Overview config height   | `.overview-config-card` on `.ds-panel` | Layout helper on family **C**, not a card system                           |
+| Stage draw block         | `.draw-card`                           | Page-local Stage content — migrate naming when Stage is touched (Phase 6+) |
+
+### Rules
+
+1. **No new one-off “card” CSS** for selection or content chrome — reuse A / B / C.
+2. **B** owns selection visuals exclusively via `.ds-selectable-tile` + `data-selected="true"` (brand border + tint tokens). Page classes may layout content only — **never** re-color selection (no hard-coded blues).
+3. **A** is for form options only — not team/phase lists.
+4. **C** — no panel-in-panel card farm; prefer Group + proximity for clustering.
+5. Prefer the `__tile` suffix for family **B** page classes (pilots: topology, draw master, qualification rows). Remaining `__card` names are debt to rename when the file is already open.
+6. List rows with checkboxes (e.g. roster members) are **not** family B — use row layout + checkbox; do not fake tile selection chrome.
+
+### Selectable tile (family B) recipe
 
 - Canonical: `foundations/selectable-tile.css` (`.ds-selectable-tile`).
-- Shared selected chrome for Teams tiles and Structure topology cards: brand border + light brand tint via tokens (`data-selected="true"`). Never hard-code selection blue on pages.
+- Compose: `className="<page-layout> ds-selectable-tile"` + `data-selected="true|false"`.
+- Hover / selected recipes live only in the foundation file.
 
 ## Attention rows (two models — do not merge)
 

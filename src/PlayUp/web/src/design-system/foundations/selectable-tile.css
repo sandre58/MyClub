@@ -1,6 +1,8 @@
 /*
- * Selectable surface tile — shared selected state for Teams / Structure topology.
+ * Family B — selectable entity tile (list/grid).
+ * Shared selected chrome for Teams, Structure topology, qualif/prog rows, draw master.
  * Border brand + light brand tint via tokens (never hard-coded blue).
+ * Page classes layout content only; do not re-style selection here.
  */
 
 .ds-selectable-tile {

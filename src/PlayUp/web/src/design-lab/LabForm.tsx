@@ -142,11 +142,10 @@ export function LabForm() {
         <p className="ds-eyebrow">Design System</p>
         <h1 className="dlab-form__title">Form controls</h1>
         <p className="dlab-form__lede">
-          All DS edit controls: Field, TextInput, Select,
-          InputNumber (end / split + suffix), Switch / SwitchPanel,
-          FormSection, FormGroup, OutcomePoints, ReorderList, ChoiceTile,
-          ToggleButtonGroup, Upload, ColorPicker. Regulation surface =
-          separate product safeguards.
+          All DS edit controls: Field, TextInput, Select, InputNumber (end /
+          split + suffix), Switch / SwitchPanel, FormSection, FormGroup,
+          OutcomePoints, ReorderList, ChoiceTile, ToggleButtonGroup, Upload,
+          ColorPicker. Regulation surface = separate product safeguards.
         </p>
       </header>
 
@@ -454,7 +453,7 @@ export function LabForm() {
             <ChoiceTile
               label="Jaune"
               selected={cards.yellow}
-              leading={<ChoiceSwatch color="#F5C518" label="Jaune" />}
+              leading={<ChoiceSwatch color="#F5C518" />}
               onChange={(selected) =>
                 setCards((prev) => ({ ...prev, yellow: selected }))
               }
@@ -462,7 +461,7 @@ export function LabForm() {
             <ChoiceTile
               label="Rouge"
               selected={cards.red}
-              leading={<ChoiceSwatch color="#E11D48" label="Rouge" />}
+              leading={<ChoiceSwatch color="#E11D48" />}
               onChange={(selected) =>
                 setCards((prev) => ({ ...prev, red: selected }))
               }
@@ -470,7 +469,7 @@ export function LabForm() {
             <ChoiceTile
               label="Blanc"
               selected={cards.white}
-              leading={<ChoiceSwatch color="#F8FAFC" label="Blanc" />}
+              leading={<ChoiceSwatch color="#F8FAFC" />}
               onChange={(selected) =>
                 setCards((prev) => ({ ...prev, white: selected }))
               }

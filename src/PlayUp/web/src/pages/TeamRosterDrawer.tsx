@@ -748,10 +748,7 @@ function RosterGroup({
                 : t('roster.readOnly');
             return (
               <li key={member.memberId}>
-                <div
-                  className="teams-member"
-                  data-selected={selected ? 'true' : 'false'}
-                >
+                <div className="teams-member">
                   {canMutate && (
                     <label className="teams-member__check">
                       <input
@@ -807,7 +804,10 @@ function RosterGroup({
                               aria-label={t('roster.confirmRename')}
                             >
                               {renamePending ? (
-                                <span className="ds-spinner" aria-hidden="true" />
+                                <span
+                                  className="ds-spinner"
+                                  aria-hidden="true"
+                                />
                               ) : (
                                 <CheckIcon size="sm" />
                               )}

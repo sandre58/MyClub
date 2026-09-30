@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   applyDraw,
@@ -129,9 +136,7 @@ function DrawConfrontationSide({
   );
 }
 
-function confrontationSideFromSlot(
-  side: SlotConfrontationSide,
-): {
+function confrontationSideFromSlot(side: SlotConfrontationSide): {
   full: string;
   short: string;
   logoMediaId?: string | null;
@@ -275,8 +280,7 @@ export function StructureDrawDialog({
       ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
       : null;
   const createBlockedDetail =
-    createBlockedReason != null &&
-    createBlockPresentation?.kind === 'inline'
+    createBlockedReason != null && createBlockPresentation?.kind === 'inline'
       ? createBlockedReason === 'countMismatch'
         ? t('fiche.drawWorkflow.createBlocked.detail.countMismatch', {
             count: poolCount,
@@ -355,9 +359,7 @@ export function StructureDrawDialog({
     onSuccess: async (result) => {
       setReleaseConfirmOpen(false);
       await invalidateDrawQueries();
-      notify.success(
-        tDraw('toastReleased', { count: result.releasedCount }),
-      );
+      notify.success(tDraw('toastReleased', { count: result.releasedCount }));
     },
   });
 
@@ -387,14 +389,10 @@ export function StructureDrawDialog({
     releaseMutation.error ??
     applyMutation.error;
 
-  const newestFirst = useMemo(
-    () => sortDrawsNewestFirst(drawList),
-    [drawList],
-  );
+  const newestFirst = useMemo(() => sortDrawsNewestFirst(drawList), [drawList]);
 
   const selectedApplied =
-    selected != null &&
-    getDrawUiProjection(selected, slots, rounds).isApplied;
+    selected != null && getDrawUiProjection(selected, slots, rounds).isApplied;
 
   return (
     <>
@@ -487,10 +485,7 @@ export function StructureDrawDialog({
       >
         <div className="structure-draw-dialog">
           {!overviewQuery.isLoading ? (
-            <div
-              className="structure-draw-summary"
-              aria-live="polite"
-            >
+            <div className="structure-draw-summary" aria-live="polite">
               <div className="structure-qualification__facts">
                 <div className="structure-qualification__fact structure-qualification__fact--primary">
                   <span className="structure-qualification__fact-value">
@@ -548,21 +543,21 @@ export function StructureDrawDialog({
                       <li key={draw.id}>
                         <button
                           type="button"
-                          className="structure-draw-master__card ds-selectable-tile"
+                          className="structure-draw-master__tile ds-selectable-tile"
                           data-selected={isCurrent ? 'true' : 'false'}
                           aria-current={isCurrent ? 'true' : undefined}
                           onClick={() => setSelectedId(draw.id)}
                         >
-                          <span className="structure-draw-master__card-head">
-                            <span className="structure-draw-master__card-title">
-                              <span className="structure-draw-master__card-icon">
+                          <span className="structure-draw-master__tile-head">
+                            <span className="structure-draw-master__tile-title">
+                              <span className="structure-draw-master__tile-icon">
                                 <RandomIcon size="sm" aria-hidden="true" />
                               </span>
-                              <span className="structure-draw-master__card-name">
+                              <span className="structure-draw-master__tile-name">
                                 {execLabel}
                               </span>
                             </span>
-                            <span className="structure-draw-master__card-status">
+                            <span className="structure-draw-master__tile-status">
                               <DrawMasterChipBadge chip={masterChip} />
                             </span>
                           </span>
@@ -881,7 +876,8 @@ function DrawExecutionDetail({
   const hasSlotUnpaired =
     ui.showResults && draw.kind === 'Slot' && slotResult.unpaired.length > 0;
   const hasSlots = hasSlotConfrontations || hasSlotUnpaired;
-  const hasGroups = ui.showResults && draw.kind === 'Group' && groupRows.length > 0;
+  const hasGroups =
+    ui.showResults && draw.kind === 'Group' && groupRows.length > 0;
   const showResults = hasSlots || hasGroups;
 
   const stateActions =

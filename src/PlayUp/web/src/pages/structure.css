@@ -756,7 +756,7 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.structure-topology__card {
+.structure-topology__tile {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
@@ -768,7 +768,7 @@
   cursor: pointer;
 }
 
-.structure-topology__card-head {
+.structure-topology__tile-head {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-start;
@@ -776,7 +776,7 @@
   gap: var(--space-8);
 }
 
-.structure-topology__card-title {
+.structure-topology__tile-title {
   display: inline-flex;
   align-items: center;
   gap: var(--space-8);
@@ -795,7 +795,7 @@
   color: inherit;
 }
 
-.structure-topology__card-name {
+.structure-topology__tile-name {
   min-width: 0;
   color: var(--color-text-primary);
   font-size: var(--text-body);
@@ -806,7 +806,7 @@
   white-space: nowrap;
 }
 
-.structure-topology__card-status {
+.structure-topology__tile-status {
   display: inline-flex;
   flex-direction: row;
   align-items: center;
@@ -822,7 +822,7 @@
   line-height: 0;
 }
 
-.structure-topology__card-facts {
+.structure-topology__tile-facts {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -840,7 +840,7 @@
 
 /* Narrow topology column (tablet 2-col): wrap then stack ? container query, not viewport. */
 @container structure-topology (max-width: 20rem) {
-  .structure-topology__card-facts {
+  .structure-topology__tile-facts {
     flex-wrap: wrap;
     justify-content: flex-start;
     row-gap: var(--space-8);
@@ -852,11 +852,11 @@
 }
 
 @container structure-topology (max-width: 15.5rem) {
-  .structure-topology__card-head {
+  .structure-topology__tile-head {
     flex-wrap: wrap;
   }
 
-  .structure-topology__card-facts {
+  .structure-topology__tile-facts {
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
@@ -965,8 +965,7 @@
   justify-content: space-between;
   gap: var(--space-8) var(--space-16);
   padding: var(--space-8) 0;
-  border-top: var(--border-width) solid
-    color-mix(in srgb, var(--color-error) 22%, var(--color-border));
+  border-top: var(--border-width) solid color-mix(in srgb, var(--color-error) 22%, var(--color-border));
 }
 
 .structure-topology__alert-item:first-child {
@@ -2322,13 +2321,11 @@
 }
 
 /* Ratio color = pool resolution only */
-.structure-draw-cta__readiness[data-pool-tone='partial']
-  .structure-draw-cta__ratio-filled {
+.structure-draw-cta__readiness[data-pool-tone='partial'] .structure-draw-cta__ratio-filled {
   color: var(--color-attention);
 }
 
-.structure-draw-cta__readiness[data-pool-tone='complete']
-  .structure-draw-cta__ratio-filled {
+.structure-draw-cta__readiness[data-pool-tone='complete'] .structure-draw-cta__ratio-filled {
   color: var(--color-success);
 }
 
@@ -2798,7 +2795,7 @@ button.structure-flux-group__peer {
   gap: var(--space-8);
 }
 
-.structure-draw-master__card {
+.structure-draw-master__tile {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
@@ -2811,7 +2808,7 @@ button.structure-flux-group__peer {
   color: inherit;
 }
 
-.structure-draw-master__card-head {
+.structure-draw-master__tile-head {
   display: flex;
   flex-wrap: nowrap;
   align-items: flex-start;
@@ -2819,14 +2816,14 @@ button.structure-flux-group__peer {
   gap: var(--space-8);
 }
 
-.structure-draw-master__card-title {
+.structure-draw-master__tile-title {
   display: inline-flex;
   align-items: center;
   gap: var(--space-8);
   min-width: 0;
 }
 
-.structure-draw-master__card-icon {
+.structure-draw-master__tile-icon {
   display: inline-flex;
   flex: none;
   color: var(--color-brand);
@@ -2834,11 +2831,11 @@ button.structure-flux-group__peer {
   opacity: 0.85;
 }
 
-.structure-draw-master__card-icon .ds-icon {
+.structure-draw-master__tile-icon .ds-icon {
   color: inherit;
 }
 
-.structure-draw-master__card-name {
+.structure-draw-master__tile-name {
   min-width: 0;
   color: var(--color-text-primary);
   font-size: var(--text-body);
@@ -2849,7 +2846,7 @@ button.structure-flux-group__peer {
   white-space: nowrap;
 }
 
-.structure-draw-master__card-status {
+.structure-draw-master__tile-status {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
@@ -3242,7 +3239,7 @@ button.structure-flux-group__peer {
   padding: 0;
 }
 
-.structure-qualification__card {
+.structure-qualification__tile {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -3368,8 +3365,7 @@ button.structure-flux-group__peer {
 }
 
 .structure-qualification__panel {
-  animation: structure-qualification-panel-in var(--motion-duration)
-    var(--motion-easing);
+  animation: structure-qualification-panel-in var(--motion-duration) var(--motion-easing);
 }
 
 @keyframes structure-qualification-panel-in {
@@ -4002,4 +3998,3 @@ button.structure-flux-group__peer {
     grid-template-columns: 1fr;
   }
 }
-

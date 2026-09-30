@@ -74,16 +74,15 @@ export function ChoiceTile({
 
 export type ChoiceSwatchProps = {
   color: string;
-  /** @deprecated Unused — tile label lives on ChoiceTile. */
-  label?: string;
 };
 
-/** Color swatch for ChoiceTile leading (cards, kits, …). */
+/** Color swatch for ChoiceTile leading (discipline tokens, kits, …). */
 export function ChoiceSwatch({ color }: ChoiceSwatchProps) {
   return (
     <span
       className="ds-choice-swatch"
       style={{ backgroundColor: color }}
+      aria-hidden="true"
     />
   );
 }
