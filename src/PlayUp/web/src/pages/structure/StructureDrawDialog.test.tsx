@@ -191,7 +191,7 @@ describe('StructureDrawDialog', () => {
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Lancez un premier tirage pour peupler la forme de cette phase.',
+        'Lancez un premier tirage pour placer les équipes de cette phase.',
       ),
     ).toBeInTheDocument();
     expect(
@@ -212,7 +212,7 @@ describe('StructureDrawDialog', () => {
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Lancez un premier tirage pour peupler la forme de cette phase.',
+        'Lancez un premier tirage pour placer les équipes de cette phase.',
       ),
     ).toBeInTheDocument();
     expect(
@@ -238,7 +238,7 @@ describe('StructureDrawDialog', () => {
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'La population de cette phase doit d’abord être constituée avant de lancer un tirage.',
+        'Les équipes de cette phase doivent d’abord être ajoutées avant de lancer un tirage.',
       ),
     ).toBeInTheDocument();
     expect(

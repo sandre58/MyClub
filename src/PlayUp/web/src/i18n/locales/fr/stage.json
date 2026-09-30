@@ -13,12 +13,12 @@
   },
   "rounds": {
     "heading": "Tours ({{count}})",
-    "subtitle_one": "{{count}} rencontre au total · la liste des matchs est une lecture séparée",
-    "subtitle_other": "{{count}} rencontres au total · la liste des matchs est une lecture séparée",
+    "subtitle_one": "{{count}} confrontation au total · la liste des matchs est une lecture séparée",
+    "subtitle_other": "{{count}} confrontations au total · la liste des matchs est une lecture séparée",
     "emptyTitle": "Aucun tour défini",
-    "emptyBody": "La préparation de la phase crée ses tours et rencontres.",
-    "fixtureCount_one": "{{count}} rencontre",
-    "fixtureCount_other": "{{count}} rencontres",
+    "emptyBody": "La préparation de la phase crée ses tours et confrontations.",
+    "fixtureCount_one": "{{count}} confrontation",
+    "fixtureCount_other": "{{count}} confrontations",
     "leg": "manche {{index}}"
   },
   "slots": {
@@ -34,9 +34,9 @@
   },
   "confrontations": {
     "heading": "Confrontations",
-    "intro": "Matérialisez les confrontations à partir des paires de tableau dont les deux emplacements sont occupés.",
+    "intro": "Générez les confrontations à partir des paires de tableau dont les deux emplacements sont occupés.",
     "occupiedHint": "{{count}} emplacement(s) occupé(s).",
-    "coveredHint": "{{count}} paire(s) déjà matérialisée(s).",
+    "coveredHint": "{{count}} paire(s) déjà générée(s).",
     "allCovered": "Toutes les confrontations possibles sont déjà générées pour les emplacements occupés.",
     "loadingPairs": "Chargement des paires de tableau…",
     "noBracketPairs": "Aucune paire de tableau sur cette phase.",
@@ -44,7 +44,6 @@
     "pairLabel": "{{slotA}} ↔ {{slotB}}",
     "pairMaterialized": "déjà générée",
     "pairWaitingSlots": "emplacements incomplets",
-    "submit": "Générer les confrontations",
     "submitAll": "Générer les confrontations ({{count}})",
     "submitSelected": "Générer la sélection ({{count}})",
     "submitting": "Génération…",

@@ -18,7 +18,7 @@
     "DrawGenerationFailure": "Unable to generate the draw.",
     "ScheduleGenerationFailure": "Unable to generate the schedule.",
     "ScheduleApplyFailure": "Unable to apply the schedule.",
-    "MaterializationFailure": "Unable to materialise matches.",
+    "MaterializationFailure": "Unable to create matches.",
     "InvalidCompletionMode": "Invalid completion mode.",
     "SlotFeedsInvalid": "Slot feeds are invalid.",
     "FixtureInvalid": "The fixture is inconsistent.",

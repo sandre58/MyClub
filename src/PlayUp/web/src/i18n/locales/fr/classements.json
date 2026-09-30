@@ -2,8 +2,7 @@
   "title": "Classements",
   "back": "Vue d'ensemble",
   "context": {
-    "format": "Format",
-    "status": "Statut"
+    "format": "Format"
   },
   "loading": "Chargement des classements…",
   "error": "Impossible de charger les classements.",
@@ -38,10 +37,6 @@
     "empty": "Aucun résultat à afficher pour le moment.",
     "pending": "—",
     "openMatches": "Voir tous les matchs",
-    "columns": {
-      "match": "Match",
-      "score": "Score"
-    },
     "resultType": {
       "Forfeit": "Forfait",
       "WalkOver": "Walk-over"
