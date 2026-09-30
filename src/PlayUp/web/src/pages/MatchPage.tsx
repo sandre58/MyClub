@@ -557,7 +557,7 @@ function OfficialScoreForm({
   }
 
   return (
-    <form className="form form--wide" onSubmit={handleSubmit} noValidate>
+    <form className="ds-form match-detail__score-form" onSubmit={handleSubmit} noValidate>
       <fieldset className="fieldset" disabled={pending}>
         <legend className="fieldset__legend">{t('detail.finalScore')}</legend>
         <div className="form-row">
@@ -647,7 +647,7 @@ function RunningScoreForm({
   }
 
   return (
-    <form className="form form--wide" onSubmit={handleSubmit} noValidate>
+    <form className="ds-form match-detail__score-form" onSubmit={handleSubmit} noValidate>
       <fieldset className="fieldset" disabled={pending}>
         <legend className="fieldset__legend">
           {t('detail.runningScoreLegend')}

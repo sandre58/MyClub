@@ -27,7 +27,7 @@
 /* Content chrome on shared `.ds-popover` surface (gap from `.ds-popover`). */
 .shell-preferences__title {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   letter-spacing: 0.02em;

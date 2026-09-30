@@ -396,7 +396,7 @@ function GoalForm({
 
   return (
     <form
-      className="form match-goals__form"
+      className="match-goals__form"
       onSubmit={(event: SubmitEvent) => {
         event.preventDefault();
         if (scorerId.length === 0 || pending) {

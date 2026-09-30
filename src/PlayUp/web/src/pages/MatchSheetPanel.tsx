@@ -339,7 +339,7 @@ function SheetSideColumn({
 
                 {canMutate && jerseyEditId === row.memberId && (
                   <form
-                    className="form match-sheet__jersey-form"
+                    className="match-sheet__jersey-form"
                     onSubmit={(event: SubmitEvent) => {
                       event.preventDefault();
                       if (jerseyMutation.isPending) {
@@ -457,7 +457,7 @@ function SheetSideColumn({
 
       {canMutate && (
         <form
-          className="form match-sheet__add"
+          className="match-sheet__add"
           onSubmit={(event: SubmitEvent) => {
             event.preventDefault();
             if (memberId.length === 0 || addMutation.isPending) {

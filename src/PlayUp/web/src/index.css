@@ -171,38 +171,10 @@ code {
   font-size: var(--text-body);
 }
 
-/* Still used by PageHeader actions slot */
-.row__aside {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-8);
-}
-
 .form {
   display: grid;
   gap: var(--space-16);
   max-width: 34rem;
-}
-
-.form--wide {
-  max-width: none;
-}
-
-.form--inline {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: var(--space-8);
-  max-width: none;
-}
-
-.form--inline .field {
-  flex: 0 1 15rem;
-}
-
-.form--inline .ds-notice {
-  flex-basis: 100%;
 }
 
 .field {
@@ -281,12 +253,6 @@ select:disabled,
 fieldset:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-@media (max-width: 40rem) {
-  .form--inline .field {
-    flex-basis: 100%;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

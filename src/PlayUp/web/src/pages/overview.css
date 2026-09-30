@@ -107,35 +107,6 @@
 
 /* ---------- Panel header ---------- */
 
-.overview-panel__head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin: 0;
-  /* padding — the h2 reset clears all margin. */
-  padding-bottom: var(--space-8);
-  color: var(--color-text-primary);
-  font-size: 1rem;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-}
-
-.overview-attention {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-32);
-}
-
-.overview-panel__icon {
-  display: inline-flex;
-  flex: none;
-  color: var(--color-text-secondary);
-}
-
-.overview-panel__title-text {
-  min-width: 0;
-}
-
 .overview-panel__lede {
   margin: 0;
   color: var(--color-text-primary);
@@ -170,26 +141,12 @@
   margin: 0;
 }
 
-/* ---------- Needs attention (section outside panel — items = drawer classes) ---------- */
-
-.overview-attention .shell-attention-drawer__list {
-  gap: var(--space-8);
-}
-
 /* ---------- Teams ---------- */
 
 .overview-figure {
   display: flex;
   align-items: baseline;
   gap: var(--space-8);
-}
-
-.overview-figure__value {
-  color: var(--color-text-primary);
-  font-size: 2rem;
-  font-weight: var(--font-weight-bold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
 }
 
 .overview-figure__label {
@@ -624,40 +581,6 @@
   color: var(--color-brand);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.overview-outcome__steps {
-  list-style: none;
-  margin: 0;
-  padding: var(--space-12) 0 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-12);
-  border-top: var(--border-width) solid var(--color-border);
-}
-
-.overview-outcome__step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--space-4);
-  padding: var(--space-12) var(--space-8);
-  min-width: 0;
-}
-
-.overview-outcome__step-rank {
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
-}
-
-.overview-outcome__step-name {
-  font-size: var(--text-label);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  line-height: 1.25;
-  max-width: 14ch;
 }
 
 .overview-match-list {
