@@ -74,4 +74,11 @@ Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card
 - DS tile/card unification → Phase 4.
 - Structure file splits → Phase 5.
 - Large CSS cleanup → Phase 6.
-- `api.ts` / `types.ts` modularization → Phase 7.
+
+## HTTP contract modules (Phase 7)
+
+- Callers keep importing from barrels `src/api.ts` and `src/types.ts`.
+- Implementation lives under `src/api/*` and `src/types/*` by Host domain (competitions, entries, stages, matches, draws, …).
+- One HTTP path only (`src/api/http.ts`). No OpenAPI codegen in this phase.
+- Dead Stage construction wrappers removed when unused after Phase 1 (`addStageMatchday` / group / round / slot, `replaceStageMatchGenerationFormat`, `replaceStageSwissSettings`).
+- `queryKeys.competitions.workspace` kept (invalidate-only; no SPA reader yet).
