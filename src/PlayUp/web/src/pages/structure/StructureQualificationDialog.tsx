@@ -660,7 +660,7 @@ export function StructureQualificationDialog({
                                     className="structure-qualification__blocking-mark"
                                     aria-hidden="true"
                                   >
-                                    <ToastToneIcon tone="error" size="sm" />
+                                    <ToastToneIcon tone="attention" size="sm" />
                                   </span>
                                 </Tooltip>
                               ) : null}

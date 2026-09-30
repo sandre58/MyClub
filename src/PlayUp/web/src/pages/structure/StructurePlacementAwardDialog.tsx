@@ -422,7 +422,7 @@ function AttributionTile({
               className="structure-qualification__blocking-mark"
               aria-label={statusMessage}
             >
-              <ToastToneIcon tone="error" size="sm" />
+              <ToastToneIcon tone="attention" size="sm" />
             </span>
           </Tooltip>
         ) : null}

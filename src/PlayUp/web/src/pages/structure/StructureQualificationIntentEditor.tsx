@@ -802,7 +802,7 @@ export function StructureQualificationIntentEditor({
                                 className="structure-qualification__place-map-error"
                                 aria-hidden="true"
                               >
-                                <ToastToneIcon tone="error" size="sm" />
+                                <ToastToneIcon tone="attention" size="sm" />
                               </span>
                             ) : null}
                           </div>

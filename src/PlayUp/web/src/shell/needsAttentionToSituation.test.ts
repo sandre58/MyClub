@@ -33,17 +33,17 @@ describe('needsAttentionItemToSituation', () => {
 });
 
 describe('situationDescription', () => {
-  it('describes how many teams are missing to start', () => {
+  it('keeps InsufficientParticipants title-only (Teams SoT holds the long copy)', () => {
     expect(
       situationDescription('InsufficientParticipants', {
         activeCount: 1,
         minimumTeams: 3,
         missingCount: 2,
       }),
-    ).toBe('Il manque 2 équipes pour démarrer (1 / 3).');
+    ).toBeNull();
   });
 
-  it('returns null for sources without a description template', () => {
+  it('returns null for sources without an echo description', () => {
     expect(situationDescription('ProgressionPending')).toBeNull();
   });
 });
