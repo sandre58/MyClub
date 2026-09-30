@@ -107,6 +107,7 @@
     }
   },
   "emptyPhases": "Aucune phase pour l’instant.",
+  "emptyPhasesLink": "Ouvrir la Structure",
   "families": {
     "entries": "Équipes",
     "match": "Match",

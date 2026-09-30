@@ -202,6 +202,10 @@ function renderPage() {
             path="/competitions/:competitionId/regulation"
             element={<RegulationPage />}
           />
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={<p>Structure route</p>}
+          />
           <Route path="/stages/:stageId" element={<p>Stage</p>} />
         </Routes>
       </MemoryRouter>
@@ -288,6 +292,34 @@ describe('RegulationPage', () => {
     expect(
       screen.getAllByRole('link', { name: 'Aller à la phase' }),
     ).toHaveLength(2);
+  });
+
+  it('shows a light empty phases signal with a Structure link', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        stages: [],
+        format: {
+          kind: null,
+          primaryStageId: null,
+          primaryStageName: null,
+          primaryStageStatus: null,
+        },
+      }),
+    );
+
+    renderPage();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Règlement' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Aucune phase pour l’instant.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Ouvrir la Structure' }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}/structure`);
+    expect(screen.queryByText('Aucune phase')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
   });
 
   it('renders an aggregate Confrontation line when rounds differ', async () => {

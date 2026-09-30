@@ -107,6 +107,7 @@
     }
   },
   "emptyPhases": "No stages yet.",
+  "emptyPhasesLink": "Open Structure",
   "families": {
     "entries": "Teams",
     "match": "Match",

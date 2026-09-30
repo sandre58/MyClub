@@ -91,6 +91,7 @@
 .ds-empty__icon {
   display: flex;
   color: var(--color-text-secondary);
+  margin-bottom: var(--space-12);
 }
 
 .ds-empty__icon .ds-icon {
@@ -123,10 +124,6 @@
   font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
-}
-
-.ds-empty--idle .ds-empty__body {
-  max-width: 18rem;
 }
 
 /* Admin pages (Stage) — prefer PageHead; keep back-link recipe here. */

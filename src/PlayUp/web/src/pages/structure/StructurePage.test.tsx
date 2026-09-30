@@ -5,7 +5,6 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addCompetitionStage,
-  configureStructure,
   fetchStructureView,
   fetchStageOverview,
   fetchStageSchematic,
@@ -21,7 +20,6 @@ vi.mock('../../api', async (importOriginal) => {
   return {
     ...actual,
     fetchStructureView: vi.fn(),
-    configureStructure: vi.fn(),
     addCompetitionStage: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchStageSchematic: vi.fn(),
@@ -182,7 +180,7 @@ function structureView(overrides: Partial<StructureView> = {}): StructureView {
       numberOfPots: null,
       matchGenerationFormat: 'SingleRoundRobin',
     },
-    actions: ['ConfigureStructure'],
+    actions: ['ConfigureStructure', 'AddCompetitionStage'],
     readiness: {
       readyForNextSlice: false,
       readyForDraw: false,
@@ -293,19 +291,6 @@ describe('StructurePage Structure hub', () => {
       cases: [],
       connections: [],
     });
-    vi.mocked(configureStructure).mockResolvedValue({
-      stageCreated: true,
-      rebuildImpact: null,
-      structure: structureView({
-        format: {
-          kind: 'Championship',
-          primaryStageId: stageId,
-          primaryStageName: 'League',
-          primaryStageStatus: 'Draft',
-        },
-        stages: [championshipStage()],
-      }),
-    });
   });
 
   it('shows loading while structure is pending', () => {
@@ -325,6 +310,19 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Structure non prête/i)).toBeInTheDocument();
+    expect(screen.getByText('Aucune phase')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Ajouter une phase/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Créer la structure/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Sélectionnez une phase/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Topologie' }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Identité' }),
     ).not.toBeInTheDocument();
@@ -594,34 +592,51 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
   });
 
-  it('configures championship structure via dialog', async () => {
+  it('births the first phase via AddPhase from the empty state', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchStructureView).mockResolvedValue(structureView());
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({ actions: ['AddCompetitionStage'] }),
+    );
+    vi.mocked(addCompetitionStage).mockResolvedValue({
+      stageId,
+      name: 'League',
+      structure: structureView({
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [championshipStage()],
+        actions: ['AddCompetitionStage'],
+      }),
+    });
 
     renderStructurePage();
 
-    const configureButtons = await screen.findAllByRole('button', {
-      name: /Créer la structure/i,
+    await user.click(
+      await screen.findByRole('button', { name: /Ajouter une phase/i }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: /Nouvelle phase/i,
     });
-    await user.click(configureButtons[0]!);
-    const dialog = await screen.findByRole('dialog');
-    await user.selectOptions(
-      await within(dialog).findByLabelText(/^Format$/i),
-      'Championship',
+    await user.type(
+      within(dialog).getByLabelText(/Nom de la phase/i),
+      'League',
     );
     await user.click(
-      within(dialog).getByRole('button', { name: 'Créer la structure' }),
+      within(dialog).getByRole('checkbox', { name: /Championnat/i }),
+    );
+    await user.click(
+      within(dialog).getByRole('button', { name: /Créer la phase/i }),
     );
 
     await waitFor(() => {
-      expect(configureStructure).toHaveBeenCalledWith(
+      expect(addCompetitionStage).toHaveBeenCalledWith(
         competitionId,
         expect.objectContaining({
           format: 'Championship',
-          groupCount: null,
-          participantsPerGroup: null,
-          bracketSize: null,
-          matchGenerationFormat: 'SingleRoundRobin',
+          name: 'League',
         }),
       );
     });
@@ -1026,7 +1041,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('disables configure when Host actions omit it', async () => {
+  it('disables add-phase when Host actions omit it', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({ actions: [] }),
     );
@@ -1037,11 +1052,11 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Créer la structure/i }),
-    ).toBeDisabled();
-    expect(
       screen.getByRole('button', { name: /Ajouter une phase/i }),
     ).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: /Créer la structure/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows materialize readiness status without Overview CTA', async () => {

@@ -157,7 +157,12 @@ export function RegulationPage() {
             {t('phasesHeading')}
           </h2>
           {stages.length === 0 ? (
-            <p className="regulation-empty">{t('emptyPhases')}</p>
+            <div className="regulation-empty">
+              <p className="regulation-empty__text">{t('emptyPhases')}</p>
+              <TextLink to={`/competitions/${competitionId}/structure`}>
+                {t('emptyPhasesLink')}
+              </TextLink>
+            </div>
           ) : (
             <div className="regulation-phases">
               {stages.map((stage, index) => (

@@ -11,6 +11,12 @@
   align-items: stretch;
 }
 
+.structure-hub > .ds-empty--idle {
+  flex: 1 1 auto;
+  min-height: 16rem;
+  padding: var(--space-32) var(--space-8);
+}
+
 @media (min-width: 52rem) {
   .structure-hub__layout {
     grid-template-columns: minmax(14rem, 0.34fr) minmax(0, 1fr);
