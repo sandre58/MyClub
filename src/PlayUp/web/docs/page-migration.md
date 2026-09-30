@@ -31,21 +31,21 @@ Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999p
 
 ### Migrated (P0 + P1-A)
 
-| Previous name                             | Replacement                 | Where                      |
-| ----------------------------------------- | --------------------------- | -------------------------- |
-| `--text-caption`                          | `--text-label`              | pages / index (P0)         |
-| `--space-xs/sm/md`                        | `--space-8/12/16`           | index (P0)                 |
-| `--space-2xs`                             | `--space-4`                 | index                      |
-| `--space-lg`                              | `--space-24`                | index                      |
-| `--space-2xl`                             | `--space-48`                | index                      |
-| `--radius-sm`                             | `--radius-control`          | index + Structure dialogs (Phase 6) |
-| `--radius-md`                             | `--radius-panel`            | index + Structure dialogs (Phase 6) |
-| `--radius-lg`                             | `--radius-overlay`          | index                      |
-| `--color-bg` / `--color-surface` / …      | `--bg` / `--surface` / …    | index + pages              |
-| `--color-text` / `--color-muted`          | `--text` / `--text-muted`   | index + pages              |
-| `--color-border`                          | `--border`                  | index + pages              |
-| `--color-danger` / `--color-warning` / …  | `--danger` / `--warning` / …| index + pages              |
-| `--font-size-sm`                          | `--text-meta`               | Structure hub / prefs (Phase 6) |
-| `--color-text-muted`                      | `--color-text-secondary`    | Structure / schematic (Phase 6) |
+| Previous name                            | Replacement                  | Where                               |
+| ---------------------------------------- | ---------------------------- | ----------------------------------- |
+| `--text-caption`                         | `--text-label`               | pages / index (P0)                  |
+| `--space-xs/sm/md`                       | `--space-8/12/16`            | index (P0)                          |
+| `--space-2xs`                            | `--space-4`                  | index                               |
+| `--space-lg`                             | `--space-24`                 | index                               |
+| `--space-2xl`                            | `--space-48`                 | index                               |
+| `--radius-sm`                            | `--radius-control`           | index + Structure dialogs (Phase 6) |
+| `--radius-md`                            | `--radius-panel`             | index + Structure dialogs (Phase 6) |
+| `--radius-lg`                            | `--radius-overlay`           | index                               |
+| `--color-bg` / `--color-surface` / …     | `--bg` / `--surface` / …     | index + pages                       |
+| `--color-text` / `--color-muted`         | `--text` / `--text-muted`    | index + pages                       |
+| `--color-border`                         | `--border`                   | index + pages                       |
+| `--color-danger` / `--color-warning` / … | `--danger` / `--warning` / … | index + pages                       |
+| `--font-size-sm`                         | `--text-meta`                | Structure hub / prefs (Phase 6)     |
+| `--color-text-muted`                     | `--color-text-secondary`     | Structure / schematic (Phase 6)     |
 
 Do not reintroduce the previous names. New CSS uses only the replacement tokens.

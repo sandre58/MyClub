@@ -1098,11 +1098,7 @@
 
 .tie-format-editor__override[data-enabled='true'] .ds-switch-panel {
   border-color: var(--color-attention);
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 12%,
-    var(--color-surface-secondary)
-  );
+  background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface-secondary));
 }
 
 .tie-format-editor__detail-body {

@@ -66,9 +66,7 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
       )}
 
       {structureQuery.isPending && <LoadingState size="region" />}
-      {structureQuery.isError && (
-        <ErrorState error={structureQuery.error} />
-      )}
+      {structureQuery.isError && <ErrorState error={structureQuery.error} />}
       {structureQuery.data && (
         <div className="match-sheet__sides">
           <SheetSideColumn
