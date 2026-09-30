@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import i18n from '../i18n';
 import type { StageSchematic } from '../types';
-import { buildSchematicCaseTooltipModel, PhaseSchematic } from './phaseSchematic';
+import { PhaseSchematic } from './phaseSchematic';
+import { buildSchematicCaseTooltipModel } from './phaseSchematicTooltip';
 
 await i18n.changeLanguage('fr');
 
@@ -142,7 +143,9 @@ describe('PhaseSchematic', () => {
     const { container } = render(<PhaseSchematic schematic={schematic} />);
     expect(container.querySelectorAll('.schematic-slot')).toHaveLength(2);
     expect(screen.getByText('Alpha')).toBeInTheDocument();
-    expect(container.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
+    expect(container.querySelectorAll('.schematic-slot--empty')).toHaveLength(
+      1,
+    );
     expect(
       container.querySelector('.regulation-schematic__league-rank'),
     ).toBeNull();
@@ -197,9 +200,7 @@ describe('PhaseSchematic', () => {
         })}
       />,
     );
-    expect(
-      screen.getByText(/Vainqueur de P1 · Match #4/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Vainqueur de P1 · Match #4/)).toBeInTheDocument();
   });
 
   it('cup slot shows Winner de P1 before fixtures exist', () => {
@@ -250,9 +251,7 @@ describe('PhaseSchematic', () => {
       container.querySelector('.schematic-slot__primary')?.textContent,
     ).toBe('Vainqueur · Match #2');
     expect(container.querySelector('.schematic-slot__crest')).toBeNull();
-    expect(
-      container.querySelector('.schematic-slot__secondary'),
-    ).toBeNull();
+    expect(container.querySelector('.schematic-slot__secondary')).toBeNull();
     expect(container.querySelector('.schematic-slot-tip')).toBeTruthy();
     expect(container.querySelector('.ds-tooltip-trigger')).toBeTruthy();
   });
@@ -645,9 +644,7 @@ describe('PhaseSchematic', () => {
     expect(container.querySelector('.schematic-cup--multi')).not.toBeNull();
     expect(container.querySelectorAll('.schematic-cup__round')).toHaveLength(3);
     expect(container.querySelectorAll('.schematic-slot')).toHaveLength(14);
-    expect(
-      screen.getByLabelText(/tableau|bracket|3/i),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText(/tableau|bracket|3/i)).toBeInTheDocument();
   });
 
   it('cup multi-round shows no invented pair ordinals without connections', () => {
@@ -743,7 +740,9 @@ describe('PhaseSchematic', () => {
     );
     expect(container.querySelector('.schematic-cup--multi')).toBeNull();
     // No read-model connections → no wires (geometry alone never invents pairs).
-    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(0);
+    expect(
+      container.querySelectorAll('.schematic-cup__wire-line'),
+    ).toHaveLength(0);
   });
 
   it('draws zero wires when connections are empty', () => {
@@ -758,7 +757,9 @@ describe('PhaseSchematic', () => {
         cupRoundCount={1}
       />,
     );
-    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(0);
+    expect(
+      container.querySelectorAll('.schematic-cup__wire-line'),
+    ).toHaveLength(0);
   });
 
   it('draws exactly one wire for connection P1', () => {
@@ -786,7 +787,9 @@ describe('PhaseSchematic', () => {
         cupRoundCount={1}
       />,
     );
-    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(1);
+    expect(
+      container.querySelectorAll('.schematic-cup__wire-line'),
+    ).toHaveLength(1);
     expect(screen.getByText('P1')).toBeInTheDocument();
   });
 
@@ -823,7 +826,9 @@ describe('PhaseSchematic', () => {
         cupRoundCount={1}
       />,
     );
-    expect(container.querySelectorAll('.schematic-cup__wire-line')).toHaveLength(2);
+    expect(
+      container.querySelectorAll('.schematic-cup__wire-line'),
+    ).toHaveLength(2);
     expect(screen.getByText('P1')).toBeInTheDocument();
     expect(screen.getByText('P3')).toBeInTheDocument();
   });

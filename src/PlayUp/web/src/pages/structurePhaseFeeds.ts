@@ -485,3 +485,13 @@ export function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
   });
   return groups;
 }
+
+export type ExitKind = 'qualification' | 'progression';
+
+export function exitKindsPresent(group: FeedGroup): Set<ExitKind> {
+  const kinds = new Set<ExitKind>();
+  for (const rule of group.rules) {
+    kinds.add(rule.family === 'place' ? 'qualification' : 'progression');
+  }
+  return kinds;
+}

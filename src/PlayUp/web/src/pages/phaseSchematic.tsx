@@ -23,12 +23,6 @@ import './phase-schematic.css';
 
 import { buildSchematicCaseTooltipModel } from './phaseSchematicTooltip';
 
-export {
-  buildSchematicCaseTooltipModel,
-  type SchematicCaseTooltipModel,
-  type SchematicCaseTooltipOriginKind,
-} from './phaseSchematicTooltip';
-
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
 type SchematicDensity = 'full' | 'crest' | 'compact';
 

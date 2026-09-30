@@ -96,10 +96,12 @@ import { MatchRulesPanel, StandingRulesPanel } from './regulationRulePanels';
 import './regulation.css';
 
 import {
+  exitKindsPresent,
   groupFeeds,
   inboundFeeds,
   outboundFeeds,
   placementRuleParts,
+  type ExitKind,
   type FeedGroup,
 } from './structurePhaseFeeds';
 import {
@@ -110,8 +112,6 @@ import {
   FluxRail,
   PlacementAwardRow,
   RootEntriesRail,
-  exitKindsPresent,
-  type ExitKind,
 } from './StructurePhaseRails';
 
 type EditTarget =

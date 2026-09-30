@@ -27,7 +27,7 @@ import type {
   StructureEntry,
   StructureStageHubSummary,
 } from '../types';
-import type { FeedGroup } from './structurePhaseFeeds';
+import { type ExitKind, type FeedGroup } from './structurePhaseFeeds';
 import { resolvePlacesN } from './structurePlaces';
 
 const compactIcon =
@@ -401,8 +401,6 @@ export function CompositionMeter({
   );
 }
 
-export type ExitKind = 'qualification' | 'progression';
-
 /** Compact pencil → single action, or Qualif | Prog menu when both apply. */
 export function ExitKindMenu({
   label,
@@ -475,14 +473,6 @@ export function ExitKindMenu({
       </Popover>
     </>
   );
-}
-
-export function exitKindsPresent(group: FeedGroup): Set<ExitKind> {
-  const kinds = new Set<ExitKind>();
-  for (const rule of group.rules) {
-    kinds.add(rule.family === 'place' ? 'qualification' : 'progression');
-  }
-  return kinds;
 }
 
 export function DomainTile({
