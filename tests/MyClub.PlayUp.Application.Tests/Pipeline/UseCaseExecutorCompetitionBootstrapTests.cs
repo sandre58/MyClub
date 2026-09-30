@@ -41,7 +41,7 @@ public sealed class UseCaseExecutorCompetitionBootstrapTests
         var summary = await executor.CreateCompetitionAsync("Bootstrap Cup");
 
         added.Should().NotBeNull();
-        summary.Id.Should().Be(added!.Id.Value);
+        summary.Id.Should().Be(added.Id.Value);
         summary.Name.Should().Be("Bootstrap Cup");
         summary.Status.Should().Be(CompetitionStatus.Draft);
         summary.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueStructureCode);

@@ -160,7 +160,7 @@ public sealed class MatchReadAssemblerTests
         detail.FixtureId.Should().Be(fixture.Id.Value);
         detail.LegIndex.Should().Be(1);
         detail.Result.Should().NotBeNull();
-        detail.Result!.Type.Should().Be(ResultType.Played);
+        detail.Result.Type.Should().Be(ResultType.Played);
         detail.Result.HomeGoals.Should().Be(1);
         detail.Result.AwayGoals.Should().Be(1);
         detail.Result.ExtraTimePlayed.Should().BeTrue();

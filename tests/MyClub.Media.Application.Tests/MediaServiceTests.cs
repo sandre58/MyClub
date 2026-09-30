@@ -51,7 +51,7 @@ public sealed class MediaServiceTests
         await act.Should().ThrowAsync<InvalidOperationException>();
         savedKey.Should().NotBeNullOrWhiteSpace();
         storage.Verify(
-            candidate => candidate.DeleteAsync(savedKey!, It.IsAny<CancellationToken>()),
+            candidate => candidate.DeleteAsync(savedKey, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

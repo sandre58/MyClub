@@ -220,6 +220,32 @@ Data produced under that old model is **outside the supported contract**. Loadin
 
 For a local `*_dev` database that still holds such rows: **purge and reseed** with DevRunner (`--reset` + templates/scenarios). Do not add compatibility code in Host or Domain.
 
+## EF Core migrations (local Host DB)
+
+Restore the local tool first (`dotnet tool restore` — see `.config/dotnet-tools.json`).
+
+Apply pending migrations (Play’Up context; Host is the startup project so connection strings / User Secrets resolve):
+
+```bash
+dotnet ef database update --project src/PlayUp/MyClub.PlayUp.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host
+```
+
+Media (schema `media`):
+
+```bash
+dotnet ef database update --context MediaDbContext --project src/Media/MyClub.Media.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host
+```
+
+**EF Core 11:** create a migration and apply it in one step with `--add` (name required as the migration argument):
+
+```bash
+dotnet ef database update MigrationName --add --project src/PlayUp/MyClub.PlayUp.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host
+```
+
+Use `--add` only when you intentionally create a new migration; day-to-day “bring my local DB up to date” remains plain `database update` without `--add`.
+
+Runtime note (no code change required): projects targeting `net11.0` use the .NET 11 runtime-async implementation by default.
+
 ## Useful commands
 
 | Command | Purpose |

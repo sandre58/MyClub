@@ -120,7 +120,7 @@ public sealed record ProgressionRules
 
         var slotDestinationKeys = paths
             .Where(p => p.Destination.TargetsSlot)
-            .Select(p => (p.Destination.StageId, p.Destination.SlotKey!))
+            .Select(p => (p.Destination.StageId, p.Destination.SlotKey))
             .ToArray();
         return slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length
             ? throw new DomainException(

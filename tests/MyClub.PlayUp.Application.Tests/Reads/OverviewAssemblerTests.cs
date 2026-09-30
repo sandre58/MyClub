@@ -109,7 +109,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [early, late] });
 
         view.Period.Should().NotBeNull();
-        view.Period!.Start.Should().Be(start);
+        view.Period.Start.Should().Be(start);
         view.Period.End.Should().Be(end);
     }
 
@@ -557,7 +557,7 @@ public sealed class OverviewAssemblerTests
 
         var regulation = view.ConstructionDimensions.Regulation;
         regulation.Stage.Should().NotBeNull();
-        regulation.Stage!.StageId.Should().Be(configured.Stage.Id.Value);
+        regulation.Stage.StageId.Should().Be(configured.Stage.Id.Value);
         regulation.Stage.HasDrawRules.Should().BeFalse();
         regulation.Stage.HasQualificationRules.Should().BeFalse();
         regulation.Stage.HasProgressionRules.Should().BeFalse();
@@ -593,7 +593,7 @@ public sealed class OverviewAssemblerTests
 
         var regulation = view.ConstructionDimensions.Regulation;
         regulation.Stage.Should().NotBeNull();
-        regulation.Stage!.HasDrawRules.Should().BeTrue();
+        regulation.Stage.HasDrawRules.Should().BeTrue();
         regulation.Stage.NumberOfPots.Should().Be(2);
         regulation.TransitionReadiness.Should().Contain(item =>
             item.Transition == OverviewAssembler.TransitionDraw && item.Ready);
@@ -1045,7 +1045,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
 
         view.OperationalFocus.StandingCompact.Should().NotBeNull();
-        view.OperationalFocus.StandingCompact!.StageId.Should().Be(stage.Id.Value);
+        view.OperationalFocus.StandingCompact.StageId.Should().Be(stage.Id.Value);
         view.OperationalFocus.StandingCompact.Tables.Should().ContainSingle();
         var table = view.OperationalFocus.StandingCompact.Tables[0];
         table.Scope.Should().Be(ConsultationAssembler.ScopeOverall);
@@ -1054,13 +1054,13 @@ public sealed class OverviewAssemblerTests
         table.Rows.Should().OnlyContain(row =>
             !string.IsNullOrWhiteSpace(row.DisplayName) && row.Played >= 0);
         view.OperationalFocus.RecentUnit.Should().NotBeNull();
-        view.OperationalFocus.RecentUnit!.MatchdayNumber.Should().Be(1);
+        view.OperationalFocus.RecentUnit.MatchdayNumber.Should().Be(1);
         view.OperationalFocus.RecentUnit.MatchCount.Should().Be(3);
         view.OperationalFocus.RecentUnit.Matches.Should().OnlyContain(line =>
             line.Status == MatchStatus.Finished && line.Score != null);
         view.OperationalFocus.NextUnit.Should().BeNull();
         view.OperationalFocus.ReferenceStageGameRules.Should().NotBeNull();
-        view.OperationalFocus.ReferenceStageGameRules!.FormatKind.Should().Be("Championship");
+        view.OperationalFocus.ReferenceStageGameRules.FormatKind.Should().Be("Championship");
         view.OperationalFocus.ReferenceStageGameRules.WinPoints.Should().Be(3);
         view.OperationalFocus.ReferenceStageGameRules.NumberOfPeriods.Should().Be(2);
         view.CompetitionOutcome.Should().BeNull();
@@ -1106,7 +1106,7 @@ public sealed class OverviewAssemblerTests
 
         view.CycleReading.Code.Should().Be(OverviewAssembler.CycleCompleted);
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
+        view.CompetitionOutcome.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
         view.CompetitionOutcome.Places.Should().HaveCount(3);
         view.CompetitionOutcome.Places[0].Rank.Should().Be(1);
         view.CompetitionOutcome.Places[0].DisplayName.Should().Be("Alpha");
@@ -1158,7 +1158,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
+        view.CompetitionOutcome.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         view.CompetitionOutcome.Places.Should().HaveCount(2);
         view.CompetitionOutcome.Places[0].Should().Be(new FinalPlacementDto(1, alpha.Id.Value, "Alpha"));
         view.CompetitionOutcome.Places[1].Should().Be(new FinalPlacementDto(2, bravo.Id.Value, "Bravo"));
@@ -1215,7 +1215,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [finalMatch] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
+        view.CompetitionOutcome.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         view.CompetitionOutcome.Places.Select(p => p.Rank).Should().Equal(1, 2);
         view.CompetitionOutcome.Places.Should().NotContain(p => p.Rank == 3 || p.Rank == 4);
     }
@@ -1281,7 +1281,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [finalMatch, bronzeMatch] });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
+        view.CompetitionOutcome.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
         view.CompetitionOutcome.Places.Select(p => p.Rank).Should().Equal(1, 2, 3, 4);
     }
 
@@ -1416,7 +1416,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [m1] });
 
         view.OperationalFocus.StandingCompact.Should().NotBeNull();
-        view.OperationalFocus.StandingCompact!.Tables.Should().HaveCount(2);
+        view.OperationalFocus.StandingCompact.Tables.Should().HaveCount(2);
         view.OperationalFocus.StandingCompact.Tables.Should().OnlyContain(table =>
             table.Scope == ConsultationAssembler.ScopeGroup && table.GroupId != null);
     }
@@ -1518,7 +1518,7 @@ public sealed class OverviewAssemblerTests
 
         view.OperationalFocus.StandingCompact.Should().BeNull();
         view.OperationalFocus.RecentUnit.Should().NotBeNull();
-        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(OverviewAssembler.UnitKindRound);
+        view.OperationalFocus.RecentUnit.UnitKind.Should().Be(OverviewAssembler.UnitKindRound);
         view.OperationalFocus.RecentUnit.RoundName.Should().Be("R1");
         view.OperationalFocus.RecentUnit.Matches.Should().ContainSingle(line =>
             line.MatchId == match.Id.Value &&
@@ -1527,7 +1527,7 @@ public sealed class OverviewAssemblerTests
             line.Score.AwayGoals == 1);
         view.OperationalFocus.NextUnit.Should().BeNull();
         view.OperationalFocus.ReferenceStageGameRules.Should().NotBeNull();
-        view.OperationalFocus.ReferenceStageGameRules!.FormatKind.Should().Be("Cup");
+        view.OperationalFocus.ReferenceStageGameRules.FormatKind.Should().Be("Cup");
         view.OperationalFocus.ReferenceStageGameRules.NumberOfLegs.Should().Be(1);
     }
 
@@ -1579,7 +1579,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches });
 
         view.OperationalFocus.RecentUnit.Should().NotBeNull();
-        view.OperationalFocus.RecentUnit!.MatchdayNumber.Should().Be(5);
+        view.OperationalFocus.RecentUnit.MatchdayNumber.Should().Be(5);
         view.OperationalFocus.RecentUnit.MatchCount.Should().Be(3);
         view.OperationalFocus.RecentUnit.Matches.Should().Contain(line => line.Status == MatchStatus.Live);
         view.OperationalFocus.RecentUnit.Matches.Should().Contain(line => line.Status == MatchStatus.Scheduled);
@@ -1587,7 +1587,7 @@ public sealed class OverviewAssemblerTests
         view.OperationalFocus.RecentUnit.Matches[0].Status.Should().Be(MatchStatus.Live);
 
         view.OperationalFocus.NextUnit.Should().NotBeNull();
-        view.OperationalFocus.NextUnit!.MatchdayNumber.Should().Be(6);
+        view.OperationalFocus.NextUnit.MatchdayNumber.Should().Be(6);
         view.OperationalFocus.NextUnit.Matches.Should().OnlyContain(line => line.Status == MatchStatus.Scheduled);
     }
 
@@ -1615,7 +1615,7 @@ public sealed class OverviewAssemblerTests
 
         view.OperationalFocus.RecentUnit.Should().BeNull();
         view.OperationalFocus.NextUnit.Should().NotBeNull();
-        view.OperationalFocus.NextUnit!.MatchdayNumber.Should().Be(1);
+        view.OperationalFocus.NextUnit.MatchdayNumber.Should().Be(1);
         view.OperationalFocus.NextUnit.Matches.Should().ContainSingle(line =>
             line.MatchId == scheduled.Id.Value && line.Status == MatchStatus.Scheduled);
     }
@@ -1653,7 +1653,7 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = round1.CreatedMatches });
 
         view.OperationalFocus.RecentUnit.Should().NotBeNull();
-        view.OperationalFocus.RecentUnit!.UnitKind.Should().Be(OverviewAssembler.UnitKindMatchday);
+        view.OperationalFocus.RecentUnit.UnitKind.Should().Be(OverviewAssembler.UnitKindMatchday);
         view.OperationalFocus.RecentUnit.MatchdayNumber.Should().Be(1);
         view.OperationalFocus.NextUnit.Should().BeNull();
     }
@@ -1686,13 +1686,13 @@ public sealed class OverviewAssemblerTests
         view.Status.Should().Be(CompetitionStatus.Ready);
         view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusGeneratedCalendar);
         view.CalendarSummary.Should().NotBeNull();
-        view.CalendarSummary!.MatchCount.Should().Be(6);
+        view.CalendarSummary.MatchCount.Should().Be(6);
         view.CalendarSummary.MatchdayCount.Should().BeGreaterThan(0);
         view.CalendarSummary.Matchdays.Should().NotBeEmpty();
         view.CalendarSummary.Matchdays.Count.Should().BeLessThanOrEqualTo(
             OverviewAssembler.CalendarPreviewMatchdayLimit);
         view.CalendarSummary.NextMatch.Should().NotBeNull();
-        view.CalendarSummary.NextMatch!.HomeDisplayName.Should().NotBeNullOrWhiteSpace();
+        view.CalendarSummary.NextMatch.HomeDisplayName.Should().NotBeNullOrWhiteSpace();
         view.AvailableActions.Should().Contain(action =>
             action.Code == OverviewAssembler.ActionStartCompetition);
     }

@@ -69,7 +69,7 @@ public sealed class RegulationDemoConfrontationOrderTests(DevelopmentPostgresFix
         var view = StructureViewAssembler.Assemble(competition, loaded);
         var hub = view.Stages.Single(stage => stage.Name == "Phase finale");
         hub.ConfrontationSegments.Should().NotBeNull();
-        hub.ConfrontationSegments!.Should().HaveCount(2);
+        hub.ConfrontationSegments.Should().HaveCount(2);
         hub.ConfrontationSegments[0].Rounds.Select(round => round.Name).Should().Equal(
             "Quarts de finale",
             "Demis de finale");

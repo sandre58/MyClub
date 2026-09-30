@@ -57,7 +57,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
             new Dictionary<StageId, IReadOnlyList<Match>> { [scenario.Stage.Id] = scenario.Matches });
 
         view.CompetitionOutcome.Should().NotBeNull();
-        view.CompetitionOutcome!.Places.Should().HaveCount(12);
+        view.CompetitionOutcome.Places.Should().HaveCount(12);
         view.CompetitionOutcome.Places.Select(p => p.Rank).Should().Equal(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
 
         // Home always wins each pair → odd ranks = Team01,03,… even = Team02,04,…

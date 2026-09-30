@@ -41,7 +41,7 @@ public sealed class QualificationForFormDestinationTests
 
         var schematic = StageSchematicAssembler.Assemble(champ, competition, [source, champ]);
         schematic.ExpectedFormParticipants.Should().NotBeNull();
-        schematic.ExpectedFormParticipants!.Resolved.Should().HaveCount(2);
+        schematic.ExpectedFormParticipants.Resolved.Should().HaveCount(2);
         schematic.ExpectedFormParticipants.Pending.Should().HaveCount(2);
         schematic.ExpectedFormParticipants.Pending.Should().OnlyContain(f => f.Kind == FeedKind.Qualification);
         schematic.Cases.Count(c => c.Entry != null).Should().Be(2);

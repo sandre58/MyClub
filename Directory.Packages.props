@@ -9,7 +9,6 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="11.0.0-rc.1.26425.128" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-rc.1.26425.128" />
     <!-- Infrastructure (EF Core 11 + Npgsql EF 11 — same train; do not mix with 10.x) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.1.26425.128" />
@@ -17,7 +16,6 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.1.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.1.26425.128" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="11.0.0-rc.1.26425.128" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.1-dev-02312" />
     <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />

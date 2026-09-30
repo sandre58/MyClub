@@ -172,7 +172,7 @@ public sealed class PlacementAwardRulesTests
         stage.ReplacePlacementAwardRules(rules, _clock);
 
         stage.Regulation.PlacementAwardRules.Should().Be(rules);
-        stage.Regulation.PlacementAwardRules!.Paths.Select(p => p.SourcePairKey).Should().Equal(pairKey, pairKey);
+        stage.Regulation.PlacementAwardRules.Paths.Select(p => p.SourcePairKey).Should().Equal(pairKey, pairKey);
         stage.Rounds[0].Fixtures.Should().BeEmpty();
     }
 

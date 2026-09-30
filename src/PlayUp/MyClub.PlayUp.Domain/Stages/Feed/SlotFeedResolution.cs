@@ -32,7 +32,7 @@ public sealed record SlotFeedResolution
         }
 
         var isUnique = status == FeedResolutionStatus.Unique;
-        if (isUnique != source is not null)
+        if (isUnique != (source is not null))
         {
             throw new DomainException(
                 "Unique status requires a source, and a source is only allowed when status is Unique.",

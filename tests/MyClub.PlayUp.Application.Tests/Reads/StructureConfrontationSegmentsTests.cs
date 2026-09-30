@@ -45,7 +45,7 @@ public sealed class StructureConfrontationSegmentsTests
 
         hub.HasTieFormat.Should().BeTrue();
         hub.ConfrontationSegments.Should().NotBeNull();
-        hub.ConfrontationSegments!.Should().HaveCount(2);
+        hub.ConfrontationSegments.Should().HaveCount(2);
 
         var first = hub.ConfrontationSegments[0];
         first.Rounds.Select(round => round.Name).Should().Equal("Quarts de finale", "Demis de finale");
@@ -84,7 +84,7 @@ public sealed class StructureConfrontationSegmentsTests
 
         hub.HasTieFormat.Should().BeTrue();
         hub.ConfrontationSegments.Should().ContainSingle();
-        hub.ConfrontationSegments![0].Rounds.Should().HaveCount(3);
+        hub.ConfrontationSegments[0].Rounds.Should().HaveCount(3);
         hub.NumberOfLegs.Should().Be(1);
     }
 

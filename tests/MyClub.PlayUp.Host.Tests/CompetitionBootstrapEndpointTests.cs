@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +38,7 @@ public sealed class CompetitionBootstrapEndpointTests(HostPostgresFixture fixtur
         created.NextActionCode.Should().Be(WorkspaceSummaryAssembler.ContinueStructureCode);
         created.AttentionCount.Should().Be(0);
         createResponse.Headers.Location.Should().NotBeNull();
-        createResponse.Headers.Location!.ToString()
+        createResponse.Headers.Location.ToString()
             .Should().Be($"/competitions/{created.Id}/workspace");
 
         using var listResponse = await client.GetAsync("/competitions");

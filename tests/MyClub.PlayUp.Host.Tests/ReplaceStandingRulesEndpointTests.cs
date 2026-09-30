@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -50,7 +49,7 @@ public sealed class ReplaceStandingRulesEndpointTests(HostPostgresFixture fixtur
         stage.Should().NotBeNull();
         stage.Status.Should().Be(StageStatus.Running);
         stage.Regulation.StandingRules.Should().NotBeNull();
-        stage.Regulation.StandingRules!.Points.WinPoints.Should().Be(2);
+        stage.Regulation.StandingRules.Points.WinPoints.Should().Be(2);
         stage.Regulation.StandingRules.RankingCriteria.Should().Equal(
             RankingCriterion.Points,
             RankingCriterion.Wins);

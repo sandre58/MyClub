@@ -23,7 +23,7 @@ internal static class CompetitionStageIdsAccessor
         BindingFlags.Instance | BindingFlags.NonPublic)
         ?? throw new InvalidOperationException("Competition._stageIds backing field was not found.");
 
-    private static readonly ConditionalWeakTable<Competition, object> Hydrated = new();
+    private static readonly ConditionalWeakTable<Competition, object> Hydrated = [];
 
     internal static List<StageId> GetList(Competition competition)
     {

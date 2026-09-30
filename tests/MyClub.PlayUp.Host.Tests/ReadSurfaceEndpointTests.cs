@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -182,7 +181,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.ConstructionDimensions.Regulation.CompetitionRegulationMutable.Should().BeTrue();
         body.ConstructionDimensions.Regulation.TransitionReadiness.Should().NotBeEmpty();
         body.ConstructionDimensions.Regulation.Stage.Should().NotBeNull();
-        body.ConstructionDimensions.Regulation.Stage!.StageId.Should().Be(seed.StageId.Value);
+        body.ConstructionDimensions.Regulation.Stage.StageId.Should().Be(seed.StageId.Value);
         body.OperationalFocus.Stages.Should().Contain(stage => stage.StageId == seed.StageId.Value);
         body.OperationalFocus.Draws.Should().ContainSingle(draw => !draw.IsApplied);
         body.Situations.Should().NotBeNull();

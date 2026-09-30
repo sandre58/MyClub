@@ -425,7 +425,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         groups.Should().NotBeNull();
         quarter.Should().NotBeNull();
         groups.Regulation.QualificationRules.Should().NotBeNull();
-        groups.Regulation.QualificationRules!.Intents.Should().ContainSingle();
+        groups.Regulation.QualificationRules.Intents.Should().ContainSingle();
         groups.Regulation.QualificationRules.Intents.Should().OnlyContain(intent => !intent.TargetsPopulation);
         groups.Regulation.QualificationRules.Intents[0].DestinationSlotKeys.Should().HaveCount(4);
         groups.Regulation.QualificationRules.Paths.Should().OnlyContain(path => !path.Destination.TargetsPopulation);
@@ -453,7 +453,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         champ.Should().NotBeNull();
         groups.Groups.Should().HaveCount(2);
         groups.Regulation.QualificationRules.Should().NotBeNull();
-        groups.Regulation.QualificationRules!.Intents.Should().ContainSingle(intent => intent.TargetsForm);
+        groups.Regulation.QualificationRules.Intents.Should().ContainSingle(intent => intent.TargetsForm);
         groups.Regulation.QualificationRules.Paths.Should().HaveCount(2);
         groups.Regulation.QualificationRules.Paths.Should().OnlyContain(path => path.Destination.TargetsForm);
         champ.CompositionEntries.Should().HaveCount(2);
@@ -482,7 +482,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         groups.Should().NotBeNull();
         groups.Groups.Should().HaveCount(2);
         semi.Regulation.ProgressionRules.Should().NotBeNull();
-        semi.Regulation.ProgressionRules!.Paths.Should().HaveCount(2);
+        semi.Regulation.ProgressionRules.Paths.Should().HaveCount(2);
         semi.Regulation.ProgressionRules.Paths.Should().OnlyContain(path =>
             path.Destination.TargetsGroup && path.Outcome == ProgressionOutcome.Winner);
         groups.CompositionEntries.Should().BeEmpty();
@@ -636,7 +636,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var roundOf32 = loaded[0];
         roundOf32.Regulation.DrawRules.Should().NotBeNull();
         roundOf32.Regulation.ProgressionRules.Should().NotBeNull();
-        roundOf32.Regulation.ProgressionRules!.Intents.Should().ContainSingle();
+        roundOf32.Regulation.ProgressionRules.Intents.Should().ContainSingle();
         roundOf32.Regulation.ProgressionRules.Intents[0].TargetsPopulation.Should().BeTrue();
         roundOf32.Draws.Should().Contain(draw => draw.Kind == DrawResolutionKind.Slot);
 
@@ -647,7 +647,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var final = loaded[^1];
         final.Status.Should().Be(StageStatus.Completed);
         final.Regulation.PlacementAwardRules.Should().NotBeNull();
-        final.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
+        final.Regulation.PlacementAwardRules.Paths.Should().HaveCount(2);
 
         var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
         foreach (var stage in loaded)
@@ -674,7 +674,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
         overview.CompetitionOutcome.Should().NotBeNull();
-        overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
+        overview.CompetitionOutcome.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         overview.CompetitionOutcome.Places.Should().HaveCount(2);
         overview.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2]);
     }
@@ -706,7 +706,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var groups = loaded[0];
         groups.Groups.Should().HaveCount(6);
         groups.Regulation.QualificationRules.Should().NotBeNull();
-        groups.Regulation.QualificationRules!.Intents.Should().HaveCount(2);
+        groups.Regulation.QualificationRules.Intents.Should().HaveCount(2);
         groups.Regulation.QualificationRules.Intents.Should().Contain(intent =>
             intent.SourceKind == QualificationIntentSourceKind.EachGroup
             && intent.PositionFrom == 1
@@ -726,7 +726,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         var final = loaded[^1];
         final.Status.Should().Be(StageStatus.Completed);
         final.Regulation.PlacementAwardRules.Should().NotBeNull();
-        final.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
+        final.Regulation.PlacementAwardRules.Paths.Should().HaveCount(2);
 
         var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>();
         foreach (var stage in loaded)
@@ -738,7 +738,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
         overview.CompetitionOutcome.Should().NotBeNull();
-        overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
+        overview.CompetitionOutcome.Presentation.Should().Be(OverviewAssembler.OutcomePresentationWinner);
         overview.CompetitionOutcome.Places.Should().HaveCount(2);
 
         foreach (var knockout in loaded.Skip(1))
@@ -813,7 +813,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         var overview = OverviewAssembler.Assemble(competition, loaded, matchesByStage);
         overview.CompetitionOutcome.Should().NotBeNull();
-        overview.CompetitionOutcome!.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
+        overview.CompetitionOutcome.Presentation.Should().Be(OverviewAssembler.OutcomePresentationPodium);
         overview.CompetitionOutcome.Places.Should().HaveCount(4);
         overview.CompetitionOutcome.Places.Select(p => p.Rank).Should().BeEquivalentTo([1, 2, 3, 4]);
         overview.CompetitionOutcome.Places.Select(p => p.EntryId).Should().OnlyHaveUniqueItems();

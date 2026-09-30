@@ -119,7 +119,7 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
             && keysElement.ValueKind == JsonValueKind.Array)
         {
             var list = new List<string>(keysElement.GetArrayLength());
-            list.AddRange(from item in keysElement.EnumerateArray() where item.ValueKind == JsonValueKind.String select item.GetString()!);
+            list.AddRange(from item in keysElement.EnumerateArray() where item.ValueKind == JsonValueKind.String select item.GetString());
 
             return list.Count == 0 ? null : list;
         }

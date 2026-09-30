@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -96,7 +95,7 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         loaded.Should().NotBeNull();
         loaded.Status.Should().Be(MatchStatus.Finished);
         loaded.Result.Should().NotBeNull();
-        loaded.Result!.Type.Should().Be(ResultType.Played);
+        loaded.Result.Type.Should().Be(ResultType.Played);
         loaded.Result.Score.HomeGoals.Should().Be(2);
         loaded.Result.Score.AwayGoals.Should().Be(1);
         loaded.Result.ExtraTimePlayed.Should().BeFalse();

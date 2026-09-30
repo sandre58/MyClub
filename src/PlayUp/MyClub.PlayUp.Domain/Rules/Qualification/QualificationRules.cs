@@ -134,7 +134,7 @@ public sealed record QualificationRules
     {
         var slotDestinationKeys = paths
             .Where(p => p.Destination.TargetsSlot)
-            .Select(p => (p.Destination.StageId, p.Destination.SlotKey!))
+            .Select(p => (p.Destination.StageId, p.Destination.SlotKey))
             .ToArray();
         if (slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length)
         {

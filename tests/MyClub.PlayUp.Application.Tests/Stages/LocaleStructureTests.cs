@@ -43,7 +43,7 @@ public sealed class LocaleStructureTests
 
         rebuilt.StageCreated.Should().BeFalse();
         rebuilt.RebuildImpact.Should().NotBeNull();
-        rebuilt.RebuildImpact!.ClearedMatchdays.Should().Be(1);
+        rebuilt.RebuildImpact.ClearedMatchdays.Should().Be(1);
         rebuilt.Stage.Matchdays.Should().HaveCount(1);
         rebuilt.Stage.Name.Value.Should().Be("Saison");
     }

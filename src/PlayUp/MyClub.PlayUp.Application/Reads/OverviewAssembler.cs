@@ -1792,7 +1792,7 @@ public static class OverviewAssembler
 
         var attached = matchesByStage.TryGetValue(stage.Id, out var list)
             ? list.ToDictionary(match => match.Id)
-            : new Dictionary<MatchId, Match>();
+            : [];
 
         foreach (var fixture in matchday.Fixtures)
         {

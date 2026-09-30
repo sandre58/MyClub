@@ -51,6 +51,13 @@
         <VSTestSetting>$(RunSettingsFile)</VSTestSetting>
     </PropertyGroup>
 
+    <!-- Without XML docs, IDE0005 cannot run and CSC emits EnableGenerateDocumentationFile noise.
+         Disable IDE0005 only when docs generation is off (tests, DevRunner, etc.) — production
+         projects with GenerateDocumentationFile=true keep full style analysis. -->
+    <PropertyGroup Condition="'$(GenerateDocumentationFile)' != 'true'">
+        <NoWarn>$(NoWarn);IDE0005</NoWarn>
+    </PropertyGroup>
+
     <ItemGroup Condition="'$(IsTestProject)' == 'True' And Exists('$(RunSettingsFile)')">
         <None Include="$(RunSettingsFile)" Link=".runsettings" Visible="false" />
     </ItemGroup>

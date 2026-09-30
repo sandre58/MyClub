@@ -71,11 +71,11 @@ public sealed class ThinAuthoringTests
         competition.StageIds.Should().Contain([qf.Id, sf.Id]);
         qf.Rounds.Should().ContainSingle().Which.Name.Should().Be("QF");
         sfRound.TieFormat.Should().NotBeNull();
-        sfRound.TieFormat!.NumberOfLegs.Should().Be(2);
+        sfRound.TieFormat.NumberOfLegs.Should().Be(2);
         sfRound.TieFormat.AggregateScoring.Should().BeTrue();
         sf.Slots.Select(s => s.SlotKey).Should().BeEquivalentTo("SF1-A", "SF1-B");
         qf.Regulation.ProgressionRules.Should().NotBeNull();
-        qf.Regulation.ProgressionRules!.Paths.Should().HaveCount(2);
+        qf.Regulation.ProgressionRules.Paths.Should().HaveCount(2);
         qf.Regulation.ProgressionRules.Paths[0].Destination.StageId.Should().Be(sf.Id);
         qf.Regulation.ProgressionRules.Paths[0].Destination.SlotKey.Should().BeNull();
         qf.Regulation.ProgressionRules.Paths.Should().OnlyContain(p => p.Destination.TargetsPopulation);
@@ -102,7 +102,7 @@ public sealed class ThinAuthoringTests
             _clock);
 
         groups.Regulation.QualificationRules.Should().NotBeNull();
-        groups.Regulation.QualificationRules!.Paths.Should().ContainSingle();
+        groups.Regulation.QualificationRules.Paths.Should().ContainSingle();
         groups.Regulation.QualificationRules.Paths[0].Destination.StageId.Should().Be(ko.Id);
 
         ReplaceStageQualificationRules.Execute(groups, (IReadOnlyList<QualificationPathSpec>?)null, _clock);
@@ -174,7 +174,7 @@ public sealed class ThinAuthoringTests
             _clock);
 
         stage.Regulation.PlacementAwardRules.Should().NotBeNull();
-        stage.Regulation.PlacementAwardRules!.Paths.Should().HaveCount(2);
+        stage.Regulation.PlacementAwardRules.Paths.Should().HaveCount(2);
         stage.Regulation.PlacementAwardRules.Paths.Should().OnlyContain(p => p.SourcePairKey == "P1");
         stage.Regulation.PlacementAwardRules.Paths.Should().Contain(p =>
             p.Outcome == ProgressionOutcome.Winner && p.Rank == 1);

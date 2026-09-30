@@ -82,7 +82,7 @@ Without `Directory.Build.local.props`, behaviour matches CI (published NuGets on
 - Application tests live in `tests/MyClub.PlayUp.Application.Tests` and reference Application + Domain.
 - Infrastructure tests live in `tests/MyClub.PlayUp.Infrastructure.Tests` and reference Infrastructure + Application + Domain.
 - Tests marked `Category=Integration` require Docker (Testcontainers PostgreSQL). Skip them locally with `--filter Category!=Integration`. Do not point those tests at the Compose `myclub` database.
-- EF migrations live in `src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Migrations`. Restore `dotnet-ef` via `dotnet tool restore` (see `.config/dotnet-tools.json`). Apply with `dotnet ef database update --project src/PlayUp/MyClub.PlayUp.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host`.
+- EF migrations live in `src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Migrations` (Media: `src/Media/MyClub.Media.Infrastructure/Persistence/Migrations`). Restore `dotnet-ef` via `dotnet tool restore` (see `.config/dotnet-tools.json`). Apply with `dotnet ef database update --project …Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host`. To create and apply a new migration in one step (EF Core 11): `dotnet ef database update <Name> --add` with the same `--project` / `--startup-project`. Details: [docs/guides/local-persistence.md](docs/guides/local-persistence.md).
 - Never commit `.env`, User Secrets, or real connection strings. Use `.env.example` as the Compose template only.
 - Prefer `docker compose down` over `docker compose down -v` unless you intentionally want to delete the local `myclub-postgres-data` volume.
 

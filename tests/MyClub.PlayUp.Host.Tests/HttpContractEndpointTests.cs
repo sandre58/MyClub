@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Reads;

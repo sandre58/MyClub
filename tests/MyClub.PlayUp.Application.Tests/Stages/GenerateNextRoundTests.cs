@@ -80,7 +80,7 @@ public sealed class GenerateNextRoundTests
         result.ByeEntryId.Should().NotBeNull();
         result.CreatedMatches.Should().HaveCount(1);
         stage.SwissByeHistory.Should().ContainSingle()
-            .Which.Should().Be(new SwissBye(1, result.ByeEntryId!.Value));
+            .Which.Should().Be(new SwissBye(1, result.ByeEntryId.Value));
         stage.Matchdays[0].Fixtures.Should().HaveCount(1);
     }
 

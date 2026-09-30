@@ -6,7 +6,6 @@
 
 using System.Net;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Host.Contracts;
