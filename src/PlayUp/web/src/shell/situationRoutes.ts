@@ -1,8 +1,9 @@
-import type { OverviewSituation } from '../../types';
+import type { OverviewSituation } from '../types';
 
 /**
  * Resolve an Overview navigationHint / situation target to an existing SPA route.
  * Uses Host-provided matchId when present — no Fixture → Match join in React.
+ * Lives in shell/ so chrome (attention) and pages share routes without shell→pages.
  */
 export function overviewTargetHref(target: {
   targetType: string | null | undefined;

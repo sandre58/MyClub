@@ -4,7 +4,7 @@ import {
   resolveOverviewActionIntent,
 } from './overviewActions';
 import { overviewIds, overviewView } from '../../test/overviewFixtures';
-import { situationHref } from './overviewNavigation';
+import { situationHref } from '../../shell/situationRoutes';
 
 const { competitionId, stageId, drawId, matchId } = overviewIds;
 
