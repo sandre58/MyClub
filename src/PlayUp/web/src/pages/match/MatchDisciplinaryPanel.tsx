@@ -36,9 +36,7 @@ import {
 import { CloseIcon } from '../../design-system/icons/shellIcons';
 
 /** Domain CanMutateDisciplinaryEventsFreely — Create/Remove/Correct UI gate. */
-export function canMutateRecordedDisciplinaryEvents(
-  match: MatchDetail,
-): boolean {
+function canMutateRecordedDisciplinaryEvents(match: MatchDetail): boolean {
   if (
     match.status === 'Scheduled' ||
     match.status === 'Postponed' ||

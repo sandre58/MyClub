@@ -39,17 +39,21 @@ import {
 } from '../../ui';
 import type {
   DisciplinaryType,
+  RankingCriterion,
   StructureRegulationSummary,
   StructureStageHubSummary,
 } from '../../types';
 import { RegulationEditorDialog } from './RegulationEditorDialog';
 import { isPartOverridden, isStagePersonalized } from './regulationImpact';
 import { MatchRulesPanel, StandingRulesPanel } from './regulationRulePanels';
-import { criterionLabel } from './regulationRulePanels';
 import { structureDeepLink } from '../structure/structureNavigation';
 import './regulation.css';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
+
+function criterionLabel(criterion: RankingCriterion, t: Translate) {
+  return t(`criteria.${criterion}`, { defaultValue: criterion });
+}
 
 /**
  * Regulation — read hub + framework editing.

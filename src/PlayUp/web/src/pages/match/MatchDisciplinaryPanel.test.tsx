@@ -20,8 +20,20 @@ import type {
   RecordedDisciplinaryEvent,
   StageOverview,
 } from '../../types';
-import { canMutateRecordedDisciplinaryEvents } from './MatchDisciplinaryPanel';
 import { MatchPage } from './MatchPage';
+
+/** Mirrors MatchDisciplinaryPanel gate — kept local so the panel stays components-only. */
+function canMutateRecordedDisciplinaryEvents(match: MatchDetail): boolean {
+  if (
+    match.status === 'Scheduled' ||
+    match.status === 'Postponed' ||
+    match.status === 'Live'
+  ) {
+    return true;
+  }
+
+  return match.status === 'Finished' && !match.hasObservedLive;
+}
 
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
