@@ -9,7 +9,6 @@
   "create": {
     "cta": "Créer une compétition",
     "heading": "Nouvelle compétition",
-    "subtitle": "Un nom suffit. Vous configurerez équipes et format ensuite.",
     "nameLabel": "Nom",
     "namePlaceholder": "Ex. Tournoi printemps",
     "submit": "Créer",

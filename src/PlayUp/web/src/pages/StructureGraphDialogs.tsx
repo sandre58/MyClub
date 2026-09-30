@@ -12,7 +12,6 @@ import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { Field } from '../design-system/components/Field';
 import { TextInput } from '../design-system/components/TextInput';
-import { Tooltip } from '../design-system/components/Tooltip';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import {
   ChampionshipFormatIcon,
@@ -62,105 +61,6 @@ function addPhaseFormatIcon(format: StructureFormatKind) {
     case 'Swiss':
       return <SwissFormatIcon size="sm" />;
   }
-}
-
-function stageActions(stage: StructureStageHubSummary): string[] {
-  return stage.actions ?? [];
-}
-
-/** Remove-phase control for the phase card (N2) — not page-level chrome. */
-export function RemovePhaseAction({
-  data,
-  stage,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary;
-}) {
-  const { t } = useTranslation('structure');
-  const canRemove = stageActions(stage).includes('RemoveStage');
-  const [removeOpen, setRemoveOpen] = useState(false);
-
-  return (
-    <>
-      <Tooltip
-        content={
-          canRemove ? t('graph.removePhase') : t('graph.removePhaseDisabled')
-        }
-      >
-        <span>
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={!canRemove}
-            onClick={() => setRemoveOpen(true)}
-          >
-            <TrashIcon size="sm" />
-            {t('graph.removePhase')}
-          </button>
-        </span>
-      </Tooltip>
-      {canRemove && (
-        <RemovePhaseDialog
-          data={data}
-          stage={stage}
-          open={removeOpen}
-          onClose={() => setRemoveOpen(false)}
-        />
-      )}
-    </>
-  );
-}
-
-export function RelationEditors({
-  data,
-  stage,
-  section,
-}: {
-  data: StructureView;
-  stage: StructureStageHubSummary;
-  section: 'qualification' | 'progression';
-}) {
-  const { t } = useTranslation('structure');
-  const [open, setOpen] = useState(false);
-  const canEditQual = stageActions(stage).includes('ReplaceQualificationRules');
-  const canEditProg = stageActions(stage).includes('ReplaceProgressionRules');
-
-  if (section === 'qualification' && !canEditQual) {
-    return null;
-  }
-  if (section === 'progression' && !canEditProg) {
-    return null;
-  }
-
-  return (
-    <>
-      <button
-        type="button"
-        className="structure-action"
-        onClick={() => setOpen(true)}
-      >
-        {section === 'qualification'
-          ? t('graph.editQualification')
-          : t('graph.editProgression')}
-        <span aria-hidden="true">→</span>
-      </button>
-      {section === 'qualification' ? (
-        <QualificationRulesDialog
-          data={data}
-          stage={stage}
-          open={open}
-          onClose={() => setOpen(false)}
-        />
-      ) : (
-        <ProgressionRulesDialog
-          data={data}
-          stage={stage}
-          open={open}
-          onClose={() => setOpen(false)}
-        />
-      )}
-    </>
-  );
 }
 
 /** Thin wrapper — Progression authoring lives in StructureProgressionDialog. */

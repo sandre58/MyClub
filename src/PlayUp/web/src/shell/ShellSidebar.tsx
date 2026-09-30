@@ -10,7 +10,6 @@ import {
   SidebarCollapseIcon,
   SidebarExpandIcon,
   TeamsNavIcon,
-  VenuesNavIcon,
 } from '../design-system/icons/shellIcons';
 import { PlayUpLockupMark } from '../design-system/PlayUpLockupMark';
 import { PlayUpWordmark } from '../design-system/PlayUpWordmark';
@@ -18,7 +17,7 @@ import {
   resolveActiveDestination,
   shellDestinationHrefs,
   shellNavGroups,
-  type ShellNavItemKey,
+  type ShellDestinationKey,
 } from './shellDestinations';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import { Tooltip } from '../design-system/components/Tooltip';
@@ -31,7 +30,7 @@ type ShellSidebarProps = {
 };
 
 const navIcons: Record<
-  ShellNavItemKey,
+  ShellDestinationKey,
   ComponentType<SVGProps<SVGSVGElement>>
 > = {
   overview: OverviewNavIcon,
@@ -39,7 +38,6 @@ const navIcons: Record<
   matches: MatchesNavIcon,
   classements: ClassementsNavIcon,
   teams: TeamsNavIcon,
-  venues: VenuesNavIcon,
   regulation: RegulationNavIcon,
 };
 
@@ -92,54 +90,33 @@ export function ShellSidebar({
             {group.items.map((item) => {
               const Icon = navIcons[item.key];
               const label = t(`navigation.${item.key}`);
-              const isActive =
-                item.hrefKey !== undefined && item.hrefKey === activeKey;
-
-              if (item.hrefKey) {
-                const link = (
-                  <Link
-                    to={hrefs[item.hrefKey]}
-                    className="ds-shell-rail__link"
-                    data-active={isActive ? 'true' : 'false'}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <Icon className="ds-shell-rail__icon" />
-                    <span className="ds-shell-rail__label">{label}</span>
-                  </Link>
-                );
-                return collapsed ? (
-                  <Tooltip key={item.key} content={label}>
-                    {link}
-                  </Tooltip>
-                ) : (
-                  <Link
-                    key={item.key}
-                    to={hrefs[item.hrefKey]}
-                    className="ds-shell-rail__link"
-                    data-active={isActive ? 'true' : 'false'}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <Icon className="ds-shell-rail__icon" />
-                    <span className="ds-shell-rail__label">{label}</span>
-                  </Link>
-                );
-              }
-
-              return (
-                <Tooltip
-                  key={item.key}
-                  content={t('sidebar.comingSoon', { label })}
+              const isActive = item.key === activeKey;
+              const link = (
+                <Link
+                  to={hrefs[item.key]}
+                  className="ds-shell-rail__link"
+                  data-active={isActive ? 'true' : 'false'}
+                  aria-current={isActive ? 'page' : undefined}
                 >
-                  <button
-                    type="button"
-                    className="ds-shell-rail__link"
-                    disabled
-                    aria-label={t('sidebar.comingSoon', { label })}
-                  >
-                    <Icon className="ds-shell-rail__icon" />
-                    <span className="ds-shell-rail__label">{label}</span>
-                  </button>
+                  <Icon className="ds-shell-rail__icon" />
+                  <span className="ds-shell-rail__label">{label}</span>
+                </Link>
+              );
+              return collapsed ? (
+                <Tooltip key={item.key} content={label}>
+                  {link}
                 </Tooltip>
+              ) : (
+                <Link
+                  key={item.key}
+                  to={hrefs[item.key]}
+                  className="ds-shell-rail__link"
+                  data-active={isActive ? 'true' : 'false'}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon className="ds-shell-rail__icon" />
+                  <span className="ds-shell-rail__label">{label}</span>
+                </Link>
               );
             })}
           </div>

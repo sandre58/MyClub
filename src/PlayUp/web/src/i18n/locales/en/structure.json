@@ -311,23 +311,7 @@
       "Swiss": "Rounds with pairings that evolve with results."
     },
     "editTitle": "Edit form",
-    "editLede": "Rebuilds the phase form (same type). Does not create draw rules or relations.",
-    "editAction": "Edit form"
-  },
-  "locale": {
-    "heading": "Local adjustments (no rebuild)",
-    "rename": "Rename phase",
-    "renameTitle": "Rename phase",
-    "addMatchday": "Add matchday",
-    "addGroup": "Add group",
-    "addRound": "Add round",
-    "addSlot": "Add slot",
-    "editMatchGeneration": "Home-and-away mode",
-    "editMatchGenerationTitle": "Fixture generation",
-    "editSwiss": "Swiss rounds (K)",
-    "editSwissTitle": "Swiss round count",
-    "defaultRoundName": "Round",
-    "save": "Save"
+    "editLede": "Rebuilds the phase form (same type). Does not create draw rules or relations."
   },
   "graph": {
     "addPhase": "Add a phase",
@@ -343,10 +327,8 @@
     "removePhaseStructure": "Its structure and population will disappear with it.",
     "removePhaseImpact": "Impact: {{qualification}} qualification path(s) and {{progression}} progression path(s) targeting this phase will be cleared.",
     "removePhaseSubmit": "Remove",
-    "editQualification": "Edit qualification",
     "editQualificationTitle": "Qualification — {{phase}}",
     "editQualificationLede": "Outbound paths to another phase (not self). Draft remains persistable even if destinations are incomplete.",
-    "editProgression": "Edit progression",
     "editProgressionTitle": "Progression — {{phase}}",
     "editProgressionLede": "Winner/Loser paths from a fixture to another phase — target Population (no slot) or Place.",
     "editExitNeedsPeer": "Add at least one other phase to define an exit destination.",
@@ -381,8 +363,6 @@
   "regulation": {
     "personalizeMatch": "Customize match rules",
     "personalizeStanding": "Customize standings",
-    "editMatch": "Edit match rules",
-    "editStanding": "Edit standing rules",
     "followFrame": "Follow the general regulation",
     "followFrameMatchHint": "This phase’s match rules stay aligned with the competition frame.",
     "followFrameStandingHint": "This phase’s standing rules stay aligned with the competition frame.",
@@ -408,7 +388,6 @@
     "drawTitle": "Draw rules",
     "tieTitle": "Tie format",
     "editDraw": "Edit draw rules",
-    "editTie": "Edit tie format",
     "save": "Save",
     "saving": "Saving…",
     "matchSavedToast": "Match rules saved.",

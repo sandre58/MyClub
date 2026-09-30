@@ -1,5 +1,5 @@
 import i18n from './index';
-import { attentionSourceLabel, attentionTargetTypeLabel } from './enumLabels';
+import { attentionSourceLabel } from './enumLabels';
 
 /**
  * Situation / attention copy from wire `source` (+ optional params).
@@ -50,15 +50,4 @@ export function situationDescription(
     activeCount,
     minimumTeams,
   });
-}
-
-export function situationMeta(
-  source: string,
-  targetType?: string | null,
-): string {
-  const parts = [attentionSourceLabel(source)];
-  if (targetType) {
-    parts.push(attentionTargetTypeLabel(targetType));
-  }
-  return parts.join(' · ');
 }

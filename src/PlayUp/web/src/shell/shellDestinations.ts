@@ -6,15 +6,12 @@ export type ShellDestinationKey =
   | 'teams'
   | 'regulation';
 
-export type ShellNavItemKey = ShellDestinationKey | 'venues';
-
 export type ShellNavGroupId = 'pilotage' | 'competition' | 'referentiel';
 
 export type ShellDestinationHrefs = Record<ShellDestinationKey, string>;
 
 export type ShellNavItemSpec = {
-  key: ShellNavItemKey;
-  hrefKey?: ShellDestinationKey;
+  key: ShellDestinationKey;
 };
 
 export type ShellNavGroupSpec = {
@@ -22,24 +19,20 @@ export type ShellNavGroupSpec = {
   items: readonly ShellNavItemSpec[];
 };
 
-/** Visual SoT (Shell A). Venues has no product route yet. */
+/** Visual SoT (Shell A). */
 export const shellNavGroups: readonly ShellNavGroupSpec[] = [
-  { id: 'pilotage', items: [{ key: 'overview', hrefKey: 'overview' }] },
+  { id: 'pilotage', items: [{ key: 'overview' }] },
   {
     id: 'competition',
     items: [
-      { key: 'structure', hrefKey: 'structure' },
-      { key: 'matches', hrefKey: 'matches' },
-      { key: 'classements', hrefKey: 'classements' },
+      { key: 'structure' },
+      { key: 'matches' },
+      { key: 'classements' },
     ],
   },
   {
     id: 'referentiel',
-    items: [
-      { key: 'teams', hrefKey: 'teams' },
-      { key: 'venues' },
-      { key: 'regulation', hrefKey: 'regulation' },
-    ],
+    items: [{ key: 'teams' }, { key: 'regulation' }],
   },
 ];
 

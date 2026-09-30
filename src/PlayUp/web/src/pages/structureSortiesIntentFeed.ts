@@ -83,16 +83,6 @@ export function outboundSortiesFeeds(
   return feeds;
 }
 
-/** @deprecated Prefer {@link outboundSortiesFeeds}. */
-export function outboundIntentFeeds(
-  data: StructureView,
-  stage: StructureStageHubSummary,
-  locale: string,
-  t: Translate,
-): SortiesFeedRow[] {
-  return outboundSortiesFeeds(data, stage, locale, t, []);
-}
-
 export function qualificationIntentRow(
   data: StructureView,
   intent: StructureQualificationIntent,

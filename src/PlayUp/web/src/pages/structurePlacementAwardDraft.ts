@@ -283,34 +283,6 @@ export function hasNonContiguousRanks(
   return false;
 }
 
-export function summarizeCardWho(
-  card: PlacementAwardCardDraft,
-  sourceLabel: string | null,
-  t: (key: string, opts?: Record<string, unknown>) => string,
-): string {
-  if (!card.sourcePairKey.trim()) {
-    return t('attribution.newCard');
-  }
-  return sourceLabel?.trim() || t('attribution.unknownFixture');
-}
-
-export function summarizeCardWhere(
-  card: PlacementAwardCardDraft,
-  t: (key: string, opts?: Record<string, unknown>) => string,
-): string | null {
-  const winner = parseOptionalRank(card.winnerRank);
-  const loser = parseOptionalRank(card.loserRank);
-  const parts: string[] = [];
-  if (typeof winner === 'number') {
-    parts.push(t('attribution.summary.winnerRank', { rank: winner }));
-  }
-  if (typeof loser === 'number') {
-    parts.push(t('attribution.summary.loserRank', { rank: loser }));
-  }
-  if (parts.length === 0) return null;
-  return parts.join(' · ');
-}
-
 /**
  * Group attributed cards under round headings (overview order).
  * PairKeys on Cup mono-round → sole round;

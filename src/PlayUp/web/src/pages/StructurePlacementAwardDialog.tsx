@@ -484,6 +484,3 @@ function AttributionTile({
     </div>
   );
 }
-
-/** @deprecated Prefer StructurePlacementAwardDialog — kept as alias for imports. */
-export const PlacementAwardRulesDialog = StructurePlacementAwardDialog;
