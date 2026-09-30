@@ -358,7 +358,7 @@ function SubstitutionForm({
 
   return (
     <form
-      className="form match-subs__form"
+      className="match-subs__form"
       onSubmit={(event: SubmitEvent) => {
         event.preventDefault();
         if (outMemberId.length === 0 || inMemberId.length === 0 || pending) {
