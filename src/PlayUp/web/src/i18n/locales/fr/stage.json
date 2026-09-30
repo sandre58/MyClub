@@ -34,7 +34,7 @@
   },
   "confrontations": {
     "heading": "Confrontations",
-    "intro": "Matérialisez les confrontations à partir des paires de tableau (BracketPair) dont les deux emplacements sont occupés.",
+    "intro": "Matérialisez les confrontations à partir des paires de tableau dont les deux emplacements sont occupés.",
     "occupiedHint": "{{count}} emplacement(s) occupé(s).",
     "coveredHint": "{{count}} paire(s) déjà matérialisée(s).",
     "allCovered": "Toutes les confrontations possibles sont déjà générées pour les emplacements occupés.",

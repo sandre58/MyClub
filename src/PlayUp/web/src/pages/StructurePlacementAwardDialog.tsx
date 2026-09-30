@@ -4,25 +4,21 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  fetchStageOverview,
-  replaceStagePlacementAwardRules,
-} from '../api';
+import { fetchStageOverview, replaceStagePlacementAwardRules } from '../api';
 import { Alert } from '../design-system/components/Alert';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { Dialog } from '../design-system/components/Dialog';
 import { DropDownButton } from '../design-system/components/DropDownButton';
 import { InputNumber } from '../design-system/components/InputNumber';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { LucideIcon } from '../design-system/icons/Icon';
 import {
   CheckIcon,
   EmptySelectionIcon,
   PlusIcon,
   StructureIcon,
+  TrashIcon,
 } from '../design-system/icons/contentIcons';
 import { CloseIcon } from '../design-system/icons/shellIcons';
 import { ToastToneIcon } from '../design-system/icons/toastIcons';
@@ -150,14 +146,15 @@ export function StructurePlacementAwardDialog({
   const nonContiguous =
     sessionReady && cardsComplete && hasNonContiguousRanks(cards);
 
-  const firstIncompleteReason = useMemo((): PlacementIncompleteReason | null => {
-    if (!sessionReady) return null;
-    for (const card of cards) {
-      const reason = incompleteCardReason(card, cards, knownSourceKeys);
-      if (reason != null) return reason;
-    }
-    return null;
-  }, [cards, knownSourceKeys, sessionReady]);
+  const firstIncompleteReason =
+    useMemo((): PlacementIncompleteReason | null => {
+      if (!sessionReady) return null;
+      for (const card of cards) {
+        const reason = incompleteCardReason(card, cards, knownSourceKeys);
+        if (reason != null) return reason;
+      }
+      return null;
+    }, [cards, knownSourceKeys, sessionReady]);
 
   const saveBlockedReason =
     !sessionReady || mutation.isPending || mutation.isSuccess
@@ -203,7 +200,10 @@ export function StructurePlacementAwardDialog({
   );
 
   const canAdd =
-    sessionReady && canAuthor && freeSourceItems.length > 0 && !mutation.isPending;
+    sessionReady &&
+    canAuthor &&
+    freeSourceItems.length > 0 &&
+    !mutation.isPending;
 
   const sourceLabelById = useMemo(() => {
     const map = new Map<string, string>();
@@ -275,10 +275,7 @@ export function StructurePlacementAwardDialog({
         }
       >
         <div className="structure-qualification structure-attribution">
-          <div
-            className="structure-qualification__summary"
-            aria-live="polite"
-          >
+          <div className="structure-qualification__summary" aria-live="polite">
             <div className="structure-qualification__facts">
               <div className="structure-qualification__fact structure-qualification__fact--secondary">
                 <span className="structure-qualification__fact-value">
@@ -397,11 +394,7 @@ function AttributionTile({
   const winnerNum = typeof winnerValue === 'number' ? winnerValue : null;
   const loserNum = typeof loserValue === 'number' ? loserValue : null;
 
-  const incompleteReason = incompleteCardReason(
-    draft,
-    all,
-    knownSourceKeys,
-  );
+  const incompleteReason = incompleteCardReason(draft, all, knownSourceKeys);
   const statusMessage =
     incompleteReason == null
       ? null
@@ -479,11 +472,8 @@ function AttributionTile({
         disabled={disabled}
         onClick={onRemove}
       >
-        <LucideIcon icon={Trash2} size="sm" />
+        <TrashIcon size="sm" />
       </button>
     </div>
   );
 }
-
-/** @deprecated Prefer StructurePlacementAwardDialog — kept as alias for imports. */
-export const PlacementAwardRulesDialog = StructurePlacementAwardDialog;

@@ -1,7 +1,6 @@
 import type {
   StructureStageDefaultsBinding,
   StructureStageHubSummary,
-  StructureFormatKind,
 } from '../types';
 
 /** Domain-aligned section ids for Structure N2 (not artificial chrome groups). */
@@ -78,20 +77,4 @@ function stageNeedsDrawSection(stage: StructureStageHubSummary): boolean {
   // Engaged mechanism only (DrawRules). Format alone ≠ obligation / chrome.
   // Active Draw without rules = edge case handled on the stage card via overview fetch.
   return stage.hasDrawRules;
-}
-
-export function constructionSummaryFacts(stage: StructureStageHubSummary): {
-  formatKind: StructureFormatKind | null;
-  groupCount: number;
-  teamCount: number;
-  roundCount: number;
-  legs: number | null;
-} {
-  return {
-    formatKind: stage.formatKind ?? null,
-    groupCount: stage.groupCount ?? 0,
-    teamCount: stage.teamCount,
-    roundCount: stage.roundCount ?? 0,
-    legs: stage.hasTieFormat ? (stage.numberOfLegs ?? null) : null,
-  };
 }

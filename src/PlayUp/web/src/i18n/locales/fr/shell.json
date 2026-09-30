@@ -5,7 +5,6 @@
     "matches": "Calendrier & matchs",
     "classements": "Classements",
     "teams": "Équipes",
-    "venues": "Stades",
     "regulation": "Règlement"
   },
   "groups": {
@@ -20,8 +19,7 @@
     "collapse": "Réduire la barre latérale",
     "menuOpen": "Ouvrir le menu de navigation",
     "menuClose": "Fermer le menu de navigation",
-    "home": "Accueil Play’Up",
-    "comingSoon": "{{label}} — bientôt disponible"
+    "home": "Accueil Play’Up"
   },
   "competition": {
     "choose": "Choisir une compétition",
@@ -39,13 +37,11 @@
     "emptyHost": "Aucune compétition n'est disponible sur ce Host.",
     "noContext": "Ouvrez une compétition pour voir ce qui demande votre attention.",
     "loadError": "Impossible de charger les éléments à traiter.",
-    "emptyAria": "Aucun élément à traiter",
     "emptyTitle": "Rien à traiter pour l'instant",
-    "emptyHint": "Les éléments apparaissent ici lorsque le Host signale une étape bloquée ou en attente.",
+    "emptyHint": "Les éléments apparaissent ici lorsque le Host signale une situation bloquée ou en attente.",
     "lede": "Situations qui demandent une action.",
     "groupBlocking": "Bloquant",
-    "groupAttention": "À traiter",
-    "open": "Ouvrir →"
+    "groupAttention": "À traiter"
   },
   "preferences": {
     "open": "Ouvrir les préférences",

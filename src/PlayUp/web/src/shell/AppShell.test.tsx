@@ -137,7 +137,7 @@ describe('AppShell', () => {
     ).toHaveAttribute('href', '#main');
   });
 
-  it('renders grouped nav and upcoming référentiel items', () => {
+  it('renders grouped nav items', () => {
     renderWithShell('/');
 
     expect(screen.getByText('Pilotage')).toBeInTheDocument();
@@ -146,8 +146,8 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Équipes' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Règlement' })).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: /Stades/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('sends the Play’Up lockup to Accueil', () => {
@@ -394,7 +394,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: 'Équipes' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Règlement' })).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Stades — bientôt disponible' }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: /Stades/ }),
+    ).not.toBeInTheDocument();
   });
 });

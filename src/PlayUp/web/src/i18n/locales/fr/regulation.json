@@ -1,4 +1,4 @@
-﻿{
+{
   "capacity": {
     "aria": "Équipes : {{min}} à {{max}}",
     "exactAria": "Effectif obligatoire : {{count}} équipes",
@@ -213,7 +213,7 @@
     "tieExtraTimeTip": "Prolongations pour départager la confrontation",
     "tiePenalties": "TAB",
     "tiePenaltiesTip": "Tirs au but pour départager la confrontation",
-    "placement": "{{count}} classements",
+    "placement": "{{count}} attributions",
     "placementTip": "{{count}} attributions de place finale",
     "placementPathAria": "{{outcome}} → place {{rank}}",
     "placementRank": " → place {{rank}}",

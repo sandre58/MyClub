@@ -7,8 +7,11 @@ import {
   ChevronUp,
   FileText,
   Gauge,
+  Monitor,
+  Moon,
   Settings,
   Shield,
+  Sun,
   TriangleAlert,
   X,
 } from 'lucide-react';
@@ -38,16 +41,6 @@ export function StructureNavIcon({ size, ...props }: ShellIconProps) {
 /** Teams — shield. */
 export function TeamsNavIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={Shield} size={size} {...props} />;
-}
-
-/** Venues — venue / stand. */
-export function VenuesNavIcon({ size, ...props }: ShellIconProps) {
-  return (
-    <Icon size={size} {...props}>
-      <path d="M4 20V10l8-6 8 6v10" />
-      <path d="M9 20v-6h6v6" />
-    </Icon>
-  );
 }
 
 /** Regulation — document. */
@@ -139,4 +132,19 @@ export function ChevronUpIcon({ size, ...props }: ShellIconProps) {
 /** Situation mark — alert triangle (attention drawer rows). */
 export function AttentionMarkIcon({ size, ...props }: ShellIconProps) {
   return AttentionIcon({ size, ...props });
+}
+
+/** Theme preference — follow OS. */
+export function ThemeSystemIcon({ size, ...props }: ShellIconProps) {
+  return <LucideIcon icon={Monitor} size={size} {...props} />;
+}
+
+/** Theme preference — light. */
+export function ThemeLightIcon({ size, ...props }: ShellIconProps) {
+  return <LucideIcon icon={Sun} size={size} {...props} />;
+}
+
+/** Theme preference — dark. */
+export function ThemeDarkIcon({ size, ...props }: ShellIconProps) {
+  return <LucideIcon icon={Moon} size={size} {...props} />;
 }
