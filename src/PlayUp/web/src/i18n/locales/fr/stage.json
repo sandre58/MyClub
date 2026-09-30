@@ -44,7 +44,6 @@
     "pairLabel": "{{slotA}} ↔ {{slotB}}",
     "pairMaterialized": "déjà générée",
     "pairWaitingSlots": "emplacements incomplets",
-    "submit": "Générer les confrontations",
     "submitAll": "Générer les confrontations ({{count}})",
     "submitSelected": "Générer la sélection ({{count}})",
     "submitting": "Génération…",

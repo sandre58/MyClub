@@ -2,8 +2,7 @@
   "title": "Standings",
   "back": "Overview",
   "context": {
-    "format": "Format",
-    "status": "Status"
+    "format": "Format"
   },
   "loading": "Loading standings…",
   "error": "Unable to load standings.",
@@ -38,10 +37,6 @@
     "empty": "No results to display yet.",
     "pending": "—",
     "openMatches": "View all matches",
-    "columns": {
-      "match": "Match",
-      "score": "Score"
-    },
     "resultType": {
       "Forfeit": "Forfeit",
       "WalkOver": "Walk-over"

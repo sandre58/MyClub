@@ -44,7 +44,6 @@
     "pairLabel": "{{slotA}} ↔ {{slotB}}",
     "pairMaterialized": "already generated",
     "pairWaitingSlots": "slots incomplete",
-    "submit": "Generate fixtures",
     "submitAll": "Generate fixtures ({{count}})",
     "submitSelected": "Generate selection ({{count}})",
     "submitting": "Generating…",
