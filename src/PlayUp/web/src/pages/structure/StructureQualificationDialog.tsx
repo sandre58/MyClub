@@ -104,7 +104,6 @@ function listGroupsFromSchematic(cases: SchematicCase[]): {
   return order.map((id) => ({ id, name: map.get(id)! }));
 }
 
-
 function scopeKindIcon(
   kind: QualificationIntentSourceKind,
   size: 'sm' | 'md' | 'lg' = 'sm',
