@@ -200,6 +200,7 @@ public sealed class TestCompetition
     /// Explicit start-state shortcut for multi-stage / cup fixtures. Prefer
     /// <see cref="WithStructure"/> with <see cref="StructureIntent.Cup"/> when seeding a primary
     /// stage through the Application structure path.
+    /// Defaults to a non-classifying stage regulation (no standing seed) — same as DevSeed KO phases.
     /// </remarks>
     /// <param name="name">Stage display name.</param>
     /// <param name="roundName">Entry round name.</param>
@@ -215,9 +216,12 @@ public sealed class TestCompetition
         bool seedBracketPairs = true)
     {
         ArgumentNullException.ThrowIfNull(slotKeys);
+        var regulation = StageRegulation.MaterializeFrom(
+            Competition.Regulation,
+            isClassifyingPhase: false);
         var stage = stageId is { } id
-            ? Stage.Create(Competition.Id, new StageName(name), Competition.Regulation, id, Clock)
-            : Stage.Create(Competition.Id, new StageName(name), Competition.Regulation, Clock);
+            ? Stage.Create(Competition.Id, new StageName(name), regulation, id, Clock)
+            : Stage.Create(Competition.Id, new StageName(name), regulation, Clock);
         stage.AddRound(roundName, new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), Clock);
         foreach (var key in slotKeys)
         {
@@ -344,7 +348,7 @@ public sealed class TestCompetition
     /// <returns>This situation.</returns>
     public TestCompetition PrepareCompetition()
     {
-        MyClub.PlayUp.Application.Competitions.PrepareCompetition.Execute(Competition, Clock);
+        Application.Competitions.PrepareCompetition.Execute(Competition, Clock);
         return this;
     }
 

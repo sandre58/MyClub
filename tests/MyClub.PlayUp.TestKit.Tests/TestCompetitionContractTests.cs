@@ -8,7 +8,6 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
-using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.TestKit.Tests;

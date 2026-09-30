@@ -22,7 +22,7 @@ public sealed class StageSlotLifecycleTests
     {
         var stage = CreatePositionalKnockout();
         var qf = stage.Rounds[0];
-        var fixture = stage.AddFixture(qf.Id, _clock, "QF1-A", "QF1-B", "P1");
+        stage.AddFixture(qf.Id, _clock, "QF1-A", "QF1-B", "P1");
         stage.AddSlot("SF1-A");
         stage.ReplaceProgressionRules(
             new ProgressionRules(

@@ -276,8 +276,8 @@ public sealed class StageSchematicAssemblerTests
             new BracketPair("P1", "S1", "S2"),
             new BracketPair("P2", "S3", "S4")
         ]);
-        var early = source.AddFixture(source.Rounds[0].Id, _clock, "S1", "S2", "P1");
-        var late = source.AddFixture(source.Rounds[0].Id, _clock, "S3", "S4", "P2");
+        source.AddFixture(source.Rounds[0].Id, _clock, "S1", "S2", "P1");
+        source.AddFixture(source.Rounds[0].Id, _clock, "S3", "S4", "P2");
 
         var target = Stage.Create(competition.Id, new StageName("R16"), SampleRegulations.Standard(), _clock);
         target.AddRound("R16", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);

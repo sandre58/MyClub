@@ -196,7 +196,7 @@ public sealed class PrepareStageTests
             "QuarterFinal",
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
-        var fixture = source.AddFixture(round.Id, _clock);
+        source.AddFixture(round.Id, _clock);
         source.AddSlot("KO-A");
         source.AddSlot("KO-B");
         source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
@@ -254,7 +254,7 @@ public sealed class PrepareStageTests
             "Final",
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
-        var fixture = final.AddFixture(round.Id, _clock);
+        final.AddFixture(round.Id, _clock);
         final.AddSlot("KO-A");
         final.AddSlot("KO-B");
         final.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
@@ -318,7 +318,7 @@ public sealed class PrepareStageTests
             "QuarterFinal",
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
-        var fixture = source.AddFixture(round.Id, _clock);
+        source.AddFixture(round.Id, _clock);
         source.AddSlot("KO-A");
         source.AddSlot("KO-B");
         source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);

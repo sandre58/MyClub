@@ -111,7 +111,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
         StageId stageId;
         var groupId = GroupId.New();
         var destinationStageId = StageId.New();
-        var fixtureId = FixtureId.New();
+        FixtureId.New();
         var progressionStageId = StageId.New();
         var regulation = StageRegulation.MaterializeFrom(SampleRegulations.WithExtraTimeAndShootout())
             .WithTieFormat(new TieFormat(2, true, new AwayGoalsRule()))

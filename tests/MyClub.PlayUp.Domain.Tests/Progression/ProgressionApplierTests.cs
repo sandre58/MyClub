@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Domain.Tests.Progression;
 
 public sealed class ProgressionApplierTests
 {
-    private readonly string _sourcePairKey = "P1";
+    private const string SourcePairKey = "P1";
     private readonly StageId _destinationStageId = StageId.New();
     private readonly EntryId _winner = EntryId.New();
     private readonly EntryId _loser = EntryId.New();
@@ -26,7 +26,7 @@ public sealed class ProgressionApplierTests
         var path = Path(ProgressionOutcome.Winner, "SF1-A");
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var result = ProgressionApplier.Apply(path, _sourcePairKey, outcome);
+        var result = ProgressionApplier.Apply(path, SourcePairKey, outcome);
 
         result.StageId.Should().Be(_destinationStageId);
         result.SlotKey.Should().Be("SF1-A");
@@ -39,7 +39,7 @@ public sealed class ProgressionApplierTests
         var path = Path(ProgressionOutcome.Loser, "Consolante-1");
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var result = ProgressionApplier.Apply(path, _sourcePairKey, outcome);
+        var result = ProgressionApplier.Apply(path, SourcePairKey, outcome);
 
         result.StageId.Should().Be(_destinationStageId);
         result.SlotKey.Should().Be("Consolante-1");
@@ -63,8 +63,8 @@ public sealed class ProgressionApplierTests
         var path = Path(ProgressionOutcome.Winner, "SF1-A");
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var first = ProgressionApplier.Apply(path, _sourcePairKey, outcome);
-        var second = ProgressionApplier.Apply(path, _sourcePairKey, outcome);
+        var first = ProgressionApplier.Apply(path, SourcePairKey, outcome);
+        var second = ProgressionApplier.Apply(path, SourcePairKey, outcome);
 
         second.Should().Be(first);
     }
@@ -74,7 +74,7 @@ public sealed class ProgressionApplierTests
     {
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var act = () => ProgressionApplier.Apply(null!, _sourcePairKey, outcome);
+        var act = () => ProgressionApplier.Apply(null!, SourcePairKey, outcome);
 
         act.Should().Throw<ArgumentNullException>().Which.ParamName.Should().Be("path");
     }
@@ -84,7 +84,7 @@ public sealed class ProgressionApplierTests
     {
         var path = Path(ProgressionOutcome.Winner, "SF1-A");
 
-        var act = () => ProgressionApplier.Apply(path, _sourcePairKey, null!);
+        var act = () => ProgressionApplier.Apply(path, SourcePairKey, null!);
 
         act.Should().Throw<ArgumentNullException>().Which.ParamName.Should().Be("outcome");
     }
@@ -94,12 +94,12 @@ public sealed class ProgressionApplierTests
     {
         var remoteStageId = StageId.New();
         var path = new ProgressionPath(
-            _sourcePairKey,
+            SourcePairKey,
             ProgressionOutcome.Winner,
             ProgressionDestination.ForPopulation(remoteStageId));
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var result = ProgressionApplier.Apply(path, _sourcePairKey, outcome);
+        var result = ProgressionApplier.Apply(path, SourcePairKey, outcome);
 
         result.StageId.Should().Be(remoteStageId);
         result.SlotKey.Should().BeNull();
@@ -113,12 +113,12 @@ public sealed class ProgressionApplierTests
     {
         var remoteStageId = StageId.New();
         var path = new ProgressionPath(
-            _sourcePairKey,
+            SourcePairKey,
             ProgressionOutcome.Winner,
             ProgressionDestination.ForForm(remoteStageId));
         var outcome = new FixtureOutcome(_winner, _loser);
 
-        var result = ProgressionApplier.Apply(path, _sourcePairKey, outcome);
+        var result = ProgressionApplier.Apply(path, SourcePairKey, outcome);
 
         result.TargetsForm.Should().BeTrue();
         result.TargetsPopulation.Should().BeFalse();
@@ -129,7 +129,7 @@ public sealed class ProgressionApplierTests
 
     private ProgressionPath Path(ProgressionOutcome outcome, string slotKey) =>
         new(
-            _sourcePairKey,
+            SourcePairKey,
             outcome,
             new ProgressionDestination(_destinationStageId, slotKey));
 }

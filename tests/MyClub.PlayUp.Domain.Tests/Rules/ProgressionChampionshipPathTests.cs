@@ -151,6 +151,7 @@ public sealed class ProgressionChampionshipPathTests
         var stage = CreateCupWithRoundFixtures([2, 1], expandPairCount: 2);
         var peer = StageId.New();
         var pair = stage.BracketPairs[0];
+
         // Bind PairKey to the intermediate round so Winner terminal check can resolve ownership.
         stage.AddFixture(stage.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
 
@@ -190,20 +191,18 @@ public sealed class ProgressionChampionshipPathTests
 
         // Cup Expand identity = BracketPairs (PairKey), independent of fixture binding.
         var pairCount = expandPairCount ?? fixtureCountsPerRound.Sum();
-        if (pairCount > 0)
+        if (pairCount <= 0) return stage;
+        var pairs = new List<BracketPair>(pairCount);
+        for (var i = 0; i < pairCount; i++)
         {
-            var pairs = new List<BracketPair>(pairCount);
-            for (var i = 0; i < pairCount; i++)
-            {
-                var a = $"A{i + 1}";
-                var b = $"B{i + 1}";
-                stage.AddSlot(a);
-                stage.AddSlot(b);
-                pairs.Add(new BracketPair($"P{i + 1}", a, b));
-            }
-
-            stage.ReplaceBracketPairs(pairs);
+            var a = $"A{i + 1}";
+            var b = $"B{i + 1}";
+            stage.AddSlot(a);
+            stage.AddSlot(b);
+            pairs.Add(new BracketPair($"P{i + 1}", a, b));
         }
+
+        stage.ReplaceBracketPairs(pairs);
 
         return stage;
     }

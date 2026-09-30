@@ -66,7 +66,7 @@ public sealed class SlotFeedResolverTests
     [Fact]
     public void Progression_winner_resolves_unique()
     {
-        var fixtureId = FixtureId.New();
+        FixtureId.New();
         var snapshot = Snapshot(
             ["SF1-A"],
             progressions:

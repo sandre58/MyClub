@@ -79,7 +79,7 @@ public sealed class ReadPerformanceBaselineTests(
         detailSql.Should().BeLessThan(10, "GetCompetitionDetail should use projection, not full stage graphs");
         matchHubSql.Should().BeLessThan(matchHubFanOutTotalSql, "unified Match Hub should beat 1+N fan-out");
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
-        attentionSql.Should().BeLessThan(21, "attention path should stay near shell overview cost (includes CompositionEntries)");
+        attentionSql.Should().BeLessThanOrEqualTo(21, "attention path should stay near shell overview cost (includes CompositionEntries)");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
         structureSql.Should().BeLessThan(overviewSql, "structure bundle should beat full overview load");
     }

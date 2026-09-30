@@ -104,7 +104,12 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         list.Should().HaveCount(3);
         list.Should().OnlyContain(c => c.Status == CompetitionStatus.Draft);
 
-        async Task AssertCompositionAsync(string nameFragment, int expectedComposition, bool expectDrawRules)
+        await assertCompositionAsync("tirage en attente", expectedComposition: 0, expectDrawRules: true);
+        await assertCompositionAsync("composition partielle", expectedComposition: 10, expectDrawRules: false);
+        await assertCompositionAsync("composition complète", expectedComposition: 16, expectDrawRules: true);
+        return;
+
+        async Task assertCompositionAsync(string nameFragment, int expectedComposition, bool expectDrawRules)
         {
             var summary = list.Single(c => c.Name.Value.Contains(nameFragment, StringComparison.Ordinal));
             var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
@@ -117,10 +122,6 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
                 stage.Regulation.DrawRules.Should().NotBeNull();
             }
         }
-
-        await AssertCompositionAsync("tirage en attente", expectedComposition: 0, expectDrawRules: true);
-        await AssertCompositionAsync("composition partielle", expectedComposition: 10, expectDrawRules: false);
-        await AssertCompositionAsync("composition complète", expectedComposition: 16, expectDrawRules: true);
     }
 
     [Fact]

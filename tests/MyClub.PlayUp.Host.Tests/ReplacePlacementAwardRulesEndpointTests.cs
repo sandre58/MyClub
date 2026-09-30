@@ -27,7 +27,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 29, 16, 0, 0, TimeSpan.Zero));
 
-    private static string PathKey(FixtureId fixtureId) => "P1"; // structural PairKey (tests seed BracketPair P1)
+    private static string PathKey => "P1"; // structural PairKey (tests seed BracketPair P1)
 
     [IntegrationFact]
     public async Task Put_placement_award_rules_returns_204_and_persistsAsync()
@@ -40,8 +40,8 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
             RulesUri(seed.StageId),
             new ReplaceStagePlacementAwardRulesRequest(
             [
-                new PlacementAwardPathRequest(ProgressionOutcome.Winner, 1, SourcePairKey: PathKey(seed.FixtureId)),
-                new PlacementAwardPathRequest(ProgressionOutcome.Loser, 2, SourcePairKey: PathKey(seed.FixtureId))
+                new PlacementAwardPathRequest(ProgressionOutcome.Winner, 1, SourcePairKey: PathKey),
+                new PlacementAwardPathRequest(ProgressionOutcome.Loser, 2, SourcePairKey: PathKey)
             ]),
             HostJson.Options);
 
@@ -66,7 +66,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
             RulesUri(seed.StageId),
             new ReplaceStagePlacementAwardRulesRequest(
             [
-                new PlacementAwardPathRequest(ProgressionOutcome.Winner, 1, SourcePairKey: PathKey(seed.FixtureId))
+                new PlacementAwardPathRequest(ProgressionOutcome.Winner, 1, SourcePairKey: PathKey)
             ]),
             HostJson.Options);
 

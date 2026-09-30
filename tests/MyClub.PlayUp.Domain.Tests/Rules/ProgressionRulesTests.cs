@@ -22,7 +22,7 @@ public sealed class ProgressionRulesTests
     public void Constructor_accepts_winner_and_loser_paths()
     {
         // Arrange
-        var fixtureId = FixtureId.New();
+        FixtureId.New();
         var stageId = StageId.New();
         var paths = new[]
         {
@@ -73,7 +73,7 @@ public sealed class ProgressionRulesTests
     public void Constructor_rejects_duplicate_fixture_outcome_sources()
     {
         // Arrange — same FixtureId + Outcome cannot feed two destinations
-        var fixtureId = FixtureId.New();
+        FixtureId.New();
         var stageId = StageId.New();
         var paths = new[]
         {

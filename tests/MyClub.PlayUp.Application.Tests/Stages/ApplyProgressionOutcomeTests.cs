@@ -397,6 +397,7 @@ public sealed class ApplyProgressionOutcomeTests
     {
         var competitionId = CompetitionId.New();
         var stage = CreateKnockoutStage(competitionId, "QF", ["KO-A", "KO-B", "SF1-A", "Consolante-1"]);
+
         // Keep only confrontation pair — destinations must stay unpaired.
         stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
         var home = EntryId.New();

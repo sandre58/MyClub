@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Domain.Common;
@@ -18,21 +19,31 @@ namespace MyClub.PlayUp.Development.Orchestration;
 /// </summary>
 internal static class SeedLifecycle
 {
-    public static void PrepareAndStart(ScenarioContext context, Competition competition, Stage stage)
+    public static void PrepareAndStart(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
-        stage.Prepare(context.Clock);
-        competition.Prepare(context.Clock);
-        stage.Start(context.Clock);
+        var stages = competitionStages ?? [stage];
+        PrepareStage.Execute(stage, stages, context.Clock);
+        PrepareCompetition.Execute(competition, context.Clock);
+        StartStage.Execute(stage, context.Clock);
         competition.Start(context.Clock);
     }
 
     /// <summary>
     /// Transitions stage + competition to Ready without starting.
     /// </summary>
-    public static void PrepareOnly(ScenarioContext context, Competition competition, Stage stage)
+    public static void PrepareOnly(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
-        stage.Prepare(context.Clock);
-        competition.Prepare(context.Clock);
+        var stages = competitionStages ?? [stage];
+        PrepareStage.Execute(stage, stages, context.Clock);
+        PrepareCompetition.Execute(competition, context.Clock);
     }
 
     public static void CompleteRunning(ScenarioContext context, Competition competition, Stage stage) =>
@@ -228,9 +239,13 @@ internal static class SeedLifecycle
         return result.CreatedMatches;
     }
 
-    internal static void PrepareAndStartStage(ScenarioContext context, Stage stage)
+    internal static void PrepareAndStartStage(
+        ScenarioContext context,
+        Stage stage,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
-        stage.Prepare(context.Clock);
-        stage.Start(context.Clock);
+        var stages = competitionStages ?? [stage];
+        PrepareStage.Execute(stage, stages, context.Clock);
+        StartStage.Execute(stage, context.Clock);
     }
 }

@@ -40,7 +40,7 @@ public sealed class ThinAuthoringTests
         AddStageSlot.Execute(qf, "QF1-A");
         AddStageSlot.Execute(qf, "QF1-B");
         qf.SeedEntryRoundBracketPairs();
-        var qfFixture = qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B", "P1");
+        qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B", "P1");
 
         var sf = AddEmptyStage(competition, "Semi-Finals");
         var sfRound = AddStageRound.Execute(
@@ -236,7 +236,7 @@ public sealed class ThinAuthoringTests
         var competition = CreateCompetition.Execute("Cup-D1-ProgLock", _clock);
         var stage = AddEmptyStage(competition, "QF");
         var round = AddStageRound.Execute(stage, "R1", null, _clock);
-        var fixture = stage.AddFixture(round.Id, _clock);
+        stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
 

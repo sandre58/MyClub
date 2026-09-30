@@ -24,7 +24,7 @@ public sealed class PlacementAwardRulesTests
     [Fact]
     public void Constructor_accepts_winner_and_loser_ranks_for_same_source()
     {
-        var sourcePairKey = "P1";
+        const string sourcePairKey = "P1";
         var paths = new[]
         {
             new PlacementAwardPath(sourcePairKey, ProgressionOutcome.Winner, rank: 3),
@@ -63,7 +63,7 @@ public sealed class PlacementAwardRulesTests
     [Fact]
     public void Constructor_rejects_duplicate_source_outcome()
     {
-        var sourcePairKey = "P1";
+        const string sourcePairKey = "P1";
         var paths = new[]
         {
             new PlacementAwardPath(sourcePairKey, ProgressionOutcome.Winner, rank: 1),
