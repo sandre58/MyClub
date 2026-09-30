@@ -34,11 +34,11 @@
     "trigger_one": "Needs attention, {{count}} item",
     "trigger_other": "Needs attention, {{count}} items",
     "closeDrawer": "Close Needs attention",
-    "emptyHost": "No competition is available on this Host.",
+    "emptyHost": "No competition is available.",
     "noContext": "Open a competition to see what needs your attention.",
     "loadError": "Unable to load items needing attention.",
     "emptyTitle": "Nothing to handle for now",
-    "emptyHint": "Items appear here when the Host reports a blocked or pending situation.",
+    "emptyHint": "Items appear here when a blocked or pending situation is reported.",
     "lede": "Situations that need action.",
     "groupBlocking": "Blocking",
     "groupAttention": "Needs attention"
