@@ -1222,8 +1222,9 @@
 
 .regulation-editor__triple {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-12) var(--space-16);
+  /* Periods is a short digit; give duration fields (with « min ») more room. */
+  grid-template-columns: minmax(0, 0.65fr) minmax(0, 1.125fr) minmax(0, 1.125fr);
+  gap: var(--space-12);
   align-items: end;
 }
 

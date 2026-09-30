@@ -428,6 +428,7 @@
 .ds-input-number--split {
   padding-inline: 0;
   gap: 0;
+  overflow: hidden;
 }
 
 .ds-input-number--split .ds-input__leading {
@@ -447,13 +448,13 @@
   align-items: baseline;
   justify-content: center;
   gap: var(--space-4);
-  min-width: max-content;
+  min-width: 0;
   padding-inline: var(--space-4);
 }
 
 .ds-input-number--split .ds-input-number__value .ds-input__control {
-  flex: 0 0 auto;
-  width: 2.75ch;
+  flex: 0 1 auto;
+  width: 2.5ch;
   min-width: 0;
   padding-inline: 0;
   text-align: right;
@@ -462,7 +463,7 @@
 .ds-input-number--split .ds-input-number__step {
   flex: none;
   align-self: stretch;
-  width: 2.25rem;
+  width: 1.75rem;
   height: auto;
   min-height: 0;
   border-radius: 0;
