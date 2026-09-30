@@ -4,11 +4,15 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, fetchMatchHub } from '../../api';
-import type { CompetitionDetail, MatchHubView, MatchSummary } from '../../types';
+import type {
+  CompetitionDetail,
+  MatchHubView,
+  MatchSummary,
+} from '../../types';
 import { MatchHubPage } from './MatchHubPage';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
+vi.mock('../../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api')>();
   return {
     ...actual,
     fetchMatchHub: vi.fn(),

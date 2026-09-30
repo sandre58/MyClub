@@ -22,8 +22,8 @@ import type {
 import { getDrawUiProjection, isSlotDrawApplied } from '../structure/drawUi';
 import { StagePage } from './StagePage';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
+vi.mock('../../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api')>();
   return {
     ...actual,
     fetchStageOverview: vi.fn(),

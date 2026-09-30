@@ -34,7 +34,10 @@ import {
   TrashIcon,
   UnlockIcon,
 } from '../../design-system/icons/contentIcons';
-import { CloseIcon, SettingsNavIcon } from '../../design-system/icons/shellIcons';
+import {
+  CloseIcon,
+  SettingsNavIcon,
+} from '../../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import { notify } from '../../design-system/toastStore';
@@ -89,7 +92,10 @@ import {
 import { resolvePlacesN } from './structurePlaces';
 import { PhaseSchematic } from './phaseSchematic';
 import { listCupManualPlaces } from './manualPlacementUi';
-import { MatchRulesPanel, StandingRulesPanel } from '../regulation/regulationRulePanels';
+import {
+  MatchRulesPanel,
+  StandingRulesPanel,
+} from '../regulation/regulationRulePanels';
 import '../regulation/regulation.css';
 
 import {

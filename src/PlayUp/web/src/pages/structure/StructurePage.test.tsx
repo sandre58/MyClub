@@ -16,8 +16,8 @@ import type { StructureStageHubSummary, StructureView } from '../../types';
 import { StructurePage } from './StructurePage';
 import { relevantPhaseSections } from './structureHubSections';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
+vi.mock('../../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api')>();
   return {
     ...actual,
     fetchStructureView: vi.fn(),

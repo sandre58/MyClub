@@ -28,8 +28,8 @@ import {
 } from './matchGoalsHelpers';
 import { MatchPage } from './MatchPage';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
+vi.mock('../../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api')>();
   return {
     ...actual,
     fetchMatchDetail: vi.fn(),

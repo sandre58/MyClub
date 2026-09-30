@@ -11,8 +11,8 @@ import type {
 } from '../../types';
 import { ClassementsPage } from './ClassementsPage';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
+vi.mock('../../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api')>();
   return {
     ...actual,
     fetchConsultation: vi.fn(),

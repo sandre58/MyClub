@@ -41,7 +41,12 @@ import type {
   StructureEntry,
   StructureFormatKind,
 } from '../../types';
-import { ErrorState, LoadingState, MutationError, PendingLabel } from '../../ui';
+import {
+  ErrorState,
+  LoadingState,
+  MutationError,
+  PendingLabel,
+} from '../../ui';
 import {
   overviewActionKey,
   resolveOverviewActionIntent,

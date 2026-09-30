@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Meter, type MeterTone } from '../../design-system/components/Meter';
 import { Tooltip } from '../../design-system/components/Tooltip';
-import { MatchRulesIcon, TimerIcon } from '../../design-system/icons/contentIcons';
+import {
+  MatchRulesIcon,
+  TimerIcon,
+} from '../../design-system/icons/contentIcons';
 import type { RankingCriterion } from '../../types';
 import { criterionLabel } from './regulationCriterionLabel';
 import './regulation.css';

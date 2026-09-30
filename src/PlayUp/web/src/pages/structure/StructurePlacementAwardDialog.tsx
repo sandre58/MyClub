@@ -31,7 +31,12 @@ import type {
   StageBracketPair,
   StageRound,
 } from '../../types';
-import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui';
+import {
+  EmptyState,
+  LoadingState,
+  MutationError,
+  PendingLabel,
+} from '../../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { ordinalRankSuffix } from './structureQualificationDraft';
 import {

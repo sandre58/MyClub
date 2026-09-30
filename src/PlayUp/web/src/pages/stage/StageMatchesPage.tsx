@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { fetchMatchesByStage, fetchStageOverview } from '../../api';
-import { MatchRow, MatchRowScore } from '../../design-system/components/MatchRow';
+import {
+  MatchRow,
+  MatchRowScore,
+} from '../../design-system/components/MatchRow';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { queryKeys } from '../../queryKeys';
 import {

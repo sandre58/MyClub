@@ -11,7 +11,7 @@ import type {
   StructureView,
 } from '../../types';
 
-vi.mock('../api', () => ({
+vi.mock('../../api', () => ({
   fetchStructureView: vi.fn(),
   replaceCompetitionRegulation: vi.fn(),
 }));

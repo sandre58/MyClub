@@ -36,7 +36,10 @@ import {
   SwissFormatIcon,
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
-import { ChevronDownIcon, CloseIcon } from '../../design-system/icons/shellIcons';
+import {
+  ChevronDownIcon,
+  CloseIcon,
+} from '../../design-system/icons/shellIcons';
 import { notify } from '../../design-system/toastStore';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { queryKeys } from '../../queryKeys';
@@ -48,7 +51,12 @@ import type {
   StructureStageHubSummary,
   StructureView,
 } from '../../types';
-import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui';
+import {
+  EmptyState,
+  LoadingState,
+  MutationError,
+  PendingLabel,
+} from '../../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';

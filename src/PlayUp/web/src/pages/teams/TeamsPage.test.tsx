@@ -18,8 +18,8 @@ import { TOOLTIP_DELAY_OPEN_MS } from '../../design-system/components/Tooltip';
 import type { DeclaredMember, StructureView } from '../../types';
 import { TeamsPage } from './TeamsPage';
 
-vi.mock('../api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../api')>();
+vi.mock('../../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api')>();
   return {
     ...actual,
     fetchStructureView: vi.fn(),

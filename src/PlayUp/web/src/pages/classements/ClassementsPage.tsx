@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { fetchConsultation, fetchStructureView } from '../../api';
-import { MatchRow, MatchRowScore } from '../../design-system/components/MatchRow';
+import {
+  MatchRow,
+  MatchRowScore,
+} from '../../design-system/components/MatchRow';
 import { TextLink } from '../../design-system/components/TextLink';
 import { PageHead } from '../../design-system/components/PageHead';
 import { PanelHead } from '../../design-system/components/PanelHead';
