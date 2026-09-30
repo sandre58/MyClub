@@ -7,6 +7,7 @@
 using System.Globalization;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
@@ -40,7 +41,7 @@ public static class StructureViewAssembler
     /// <summary>Blocker: Cup slots not a power of two.</summary>
     public const string BlockerCupBracketInvalid = "CupBracketInvalid";
 
-    /// <summary>Blocker: Qualif/Prog graph has dangling destinations (Draft persistable; Ready/Prepare blocked).</summary>
+    /// <summary>Blocker: Qualif/Prog graph or inbound WhoFeeds conflicts (Draft persistable; Ready/Prepare blocked).</summary>
     public const string BlockerStructureGraphInvalid = "StructureGraphInvalid";
 
     /// <summary>Action: add participant.</summary>
@@ -135,6 +136,12 @@ public static class StructureViewAssembler
 
     /// <summary>Stage structure issue: progression destination group missing on target stage.</summary>
     public const string IssueMissingProgressionDestinationGroup = "MissingProgressionDestinationGroup";
+
+    /// <summary>
+    /// Stage structure issue: inbound WhoFeeds conflict (MultipleFeeds / InvalidFeed).
+    /// Distinct from empty slots (<c>Missing</c>), which remain Prepare mutation gates only in V1.
+    /// </summary>
+    public const string IssueSlotFeedsInvalid = "SlotFeedsInvalid";
 
     /// <summary>
     /// Builds the Structure view.
@@ -856,8 +863,19 @@ public static class StructureViewAssembler
                     continue;
                 }
 
-                if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
+                if (path.Destination.TargetsPopulation)
                 {
+                    continue;
+                }
+
+                if (path.Destination.TargetsForm)
+                {
+                    // Align with PrepareStage form gate (Champ / Swiss only).
+                    if (!IsFormPlacementEligible(destination))
+                    {
+                        issues.Add(IssueDanglingQualificationTarget);
+                    }
+
                     continue;
                 }
 
@@ -878,64 +896,113 @@ public static class StructureViewAssembler
             }
         }
 
-        if (stage.Regulation.ProgressionRules is not { } progression)
-            return [.. issues.Distinct(StringComparer.Ordinal)];
-
-        foreach (var path in progression.Paths)
+        if (stage.Regulation.ProgressionRules is { } progression)
         {
-            if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
+            foreach (var path in progression.Paths)
             {
+                if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
+                {
+                    if (path.Destination.StageId.Equals(stage.Id))
+                    {
+                        issues.Add(IssueDanglingProgressionTarget);
+                        continue;
+                    }
+
+                    if (!byId.TryGetValue(path.Destination.StageId, out var formOrPopulationDestination))
+                    {
+                        issues.Add(IssueDanglingProgressionTarget);
+                        continue;
+                    }
+
+                    if (path.Destination.TargetsForm && !IsFormPlacementEligible(formOrPopulationDestination))
+                    {
+                        issues.Add(IssueDanglingProgressionTarget);
+                    }
+
+                    continue;
+                }
+
                 if (path.Destination.StageId.Equals(stage.Id))
+                {
+                    if (path.Destination.TargetsGroup)
+                    {
+                        if (stage.FindGroup(path.Destination.GroupId!.Value) is null)
+                        {
+                            issues.Add(IssueMissingProgressionDestinationGroup);
+                        }
+                    }
+                    else if (stage.FindSlot(path.Destination.SlotKey!) is null)
+                    {
+                        issues.Add(IssueMissingProgressionDestinationSlot);
+                    }
+
+                    continue;
+                }
+
+                if (!byId.TryGetValue(path.Destination.StageId, out var destination))
                 {
                     issues.Add(IssueDanglingProgressionTarget);
                     continue;
                 }
 
-                if (!byId.ContainsKey(path.Destination.StageId))
-                {
-                    issues.Add(IssueDanglingProgressionTarget);
-                }
-
-                continue;
-            }
-
-            if (path.Destination.StageId.Equals(stage.Id))
-            {
                 if (path.Destination.TargetsGroup)
                 {
-                    if (stage.FindGroup(path.Destination.GroupId!.Value) is null)
+                    if (destination.FindGroup(path.Destination.GroupId!.Value) is null)
                     {
                         issues.Add(IssueMissingProgressionDestinationGroup);
                     }
                 }
-                else if (stage.FindSlot(path.Destination.SlotKey!) is null)
+                else if (destination.FindSlot(path.Destination.SlotKey!) is null)
                 {
                     issues.Add(IssueMissingProgressionDestinationSlot);
                 }
-
-                continue;
-            }
-
-            if (!byId.TryGetValue(path.Destination.StageId, out var destination))
-            {
-                issues.Add(IssueDanglingProgressionTarget);
-                continue;
-            }
-
-            if (path.Destination.TargetsGroup)
-            {
-                if (destination.FindGroup(path.Destination.GroupId!.Value) is null)
-                {
-                    issues.Add(IssueMissingProgressionDestinationGroup);
-                }
-            }
-            else if (destination.FindSlot(path.Destination.SlotKey!) is null)
-            {
-                issues.Add(IssueMissingProgressionDestinationSlot);
             }
         }
 
+        AppendInboundSlotFeedConflicts(stage, competitionStages, issues);
+
         return [.. issues.Distinct(StringComparer.Ordinal)];
+    }
+
+    /// <summary>
+    /// Form destinations are Prepare-gated to Championship / Swiss (same rule as <c>PrepareStage</c>).
+    /// </summary>
+    private static bool IsFormPlacementEligible(Stage destination) =>
+        destination.IsSwiss
+        || (destination.Matchdays.Count > 0 && destination.Groups.Count == 0);
+
+    /// <summary>
+    /// Projects persistent inbound WhoFeeds conflicts (not empty <c>Missing</c> slots) as structure issues.
+    /// </summary>
+    private static void AppendInboundSlotFeedConflicts(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        List<string> issues)
+    {
+        if (stage.Slots.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, competitionStages);
+            var resolutions = SlotFeedResolver.ResolveAll(snapshot);
+            if (resolutions.Any(resolution =>
+                    resolution.Status is FeedResolutionStatus.MultipleFeeds
+                        or FeedResolutionStatus.InvalidFeed))
+            {
+                issues.Add(IssueSlotFeedsInvalid);
+            }
+        }
+        catch (ApplicationFailureException)
+        {
+            // Outbound dangling / missing slot already projected on source paths.
+        }
+        catch (DomainException)
+        {
+            // Tolerant read — same spirit as StageSchematicAssembler.ResolveFeedsTolerant.
+        }
     }
 
     /// <summary>

@@ -44,6 +44,7 @@ import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
+import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
@@ -216,6 +217,7 @@ function StructureHub({ data }: { data: StructureView }) {
       {bootstrapEmpty ?? (
         <div className="structure-hub__layout">
           <TopologyPanel
+            competitionId={data.competitionId}
             stages={stages}
             selectedStageId={selectedStageId}
             onSelectStage={selectStage}
@@ -327,12 +329,14 @@ function sectionForStructureIssue(
 }
 
 function TopologyPanel({
+  competitionId,
   stages,
   selectedStageId,
   onSelectStage,
   anomalies,
   onFixRelation,
 }: {
+  competitionId: string;
   stages: StructureStageHubSummary[];
   selectedStageId: string | null;
   onSelectStage: (stageId: string) => void;
@@ -473,33 +477,40 @@ function TopologyPanel({
               {t('hub.structuralAnomaly', { count: anomalies.length })}
             </p>
             <ul className="structure-topology__alert-list">
-              {anomalies.map((anomaly) => (
-                <li
-                  key={anomaly.key}
-                  className="structure-topology__alert-item"
-                >
-                  <div className="structure-topology__alert-copy">
-                    <span className="structure-topology__alert-stage">
-                      {anomaly.stageName}
-                    </span>
-                    <span className="structure-topology__alert-issue">
-                      {t(`graph.issues.${anomaly.code}`, {
-                        defaultValue: anomaly.code,
-                      })}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="structure-topology__alert-fix"
-                    onClick={() =>
-                      onFixRelation(anomaly.stageId, anomaly.section)
-                    }
+              {anomalies.map((anomaly) => {
+                const presentation = structureIssuePresentation({
+                  code: anomaly.code,
+                  competitionId,
+                  stageId: anomaly.stageId,
+                });
+                return (
+                  <li
+                    key={anomaly.key}
+                    className="structure-topology__alert-item"
                   >
-                    {t('hub.fixRelation')}
-                    <span aria-hidden="true">→</span>
-                  </button>
-                </li>
-              ))}
+                    <div className="structure-topology__alert-copy">
+                      <span className="structure-topology__alert-stage">
+                        {anomaly.stageName}
+                      </span>
+                      <span className="structure-topology__alert-issue">
+                        {t(presentation.titleKey, {
+                          defaultValue: anomaly.code,
+                        })}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="structure-topology__alert-fix"
+                      onClick={() =>
+                        onFixRelation(anomaly.stageId, anomaly.section)
+                      }
+                    >
+                      {t('hub.fixRelation')}
+                      <span aria-hidden="true">→</span>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </Alert>

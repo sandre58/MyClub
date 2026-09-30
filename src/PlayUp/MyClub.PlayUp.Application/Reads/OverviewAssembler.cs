@@ -1351,7 +1351,8 @@ public static class OverviewAssembler
             StructureViewAssembler.BlockerMissingStage
                 or StructureViewAssembler.BlockerMissingStructure
                 or StructureViewAssembler.BlockerMissingPotRules
-                or StructureViewAssembler.BlockerCupBracketInvalid =>
+                or StructureViewAssembler.BlockerCupBracketInvalid
+                or StructureViewAssembler.BlockerStructureGraphInvalid =>
                 StructureViewAssembler.ActionConfigureStructure,
             _ => null
         };

@@ -260,6 +260,40 @@ public sealed class OverviewAssemblerTests
     }
 
     [Fact]
+    public void Assemble_StructureGraphInvalid_situation_is_actionable_ConfigureStructure()
+    {
+        var competition = Competition.Create(new CompetitionName("Graph"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        var source = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(source.Id, _clock);
+        source.AddGroup("A", _clock);
+        source.AddMatchday(1, _clock);
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForPopulation(StageId.New()))
+            ]),
+            _clock);
+
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [source],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var graph = view.Situations.Should().ContainSingle(item =>
+            item.Source == StructureViewAssembler.BlockerStructureGraphInvalid).Subject;
+        graph.Actionable.Should().BeTrue();
+        graph.ActionCode.Should().Be(StructureViewAssembler.ActionConfigureStructure);
+        graph.TargetType.Should().Be("Structure");
+        graph.ImpactCode.Should().Be(OverviewAssembler.ImpactBlocksConstruction);
+    }
+
+    [Fact]
     public void Assemble_does_not_project_org_blockers_as_situations_when_running()
     {
         var competition = Competition.Create(new CompetitionName("Running thin"), SampleRegulations.Standard(), _clock);
