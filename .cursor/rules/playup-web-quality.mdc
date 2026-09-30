@@ -11,19 +11,21 @@ alwaysApply: false
 | Concern | Tool | Notes |
 |---|---|---|
 | Format | **Prettier** | Not oxfmt/Biome |
-| Lint | **Oxlint** | Do **not** add ESLint in parallel |
+| Lint | **Oxlint** | `--deny-warnings`; do **not** add ESLint in parallel |
 | Types | `tsc -b` (`npm run typecheck`) | Strict via `tsconfig` |
-| CSS lint | none in CI | Stylelint deferred |
+| CSS lint | **Stylelint** | `lint:css` — `src/design-system/**/*.css` only |
+| Coverage | Vitest V8 | `test:coverage` — measurement only, no CI threshold |
 
 ```bash
 cd src/PlayUp/web
 npm run format:check
 npm run lint
+npm run lint:css
 npm run typecheck
 npm run test:run
 ```
 
-CI `web` fails on **errors** from those steps (plus `build`).
+CI `web` fails on **errors and Oxlint warnings** from those steps (plus `build` and Playwright smoke).
 
 ## Data path
 

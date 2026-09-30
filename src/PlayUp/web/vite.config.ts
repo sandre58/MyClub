@@ -53,5 +53,18 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.tsx'],
     css: false,
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+      ],
+      // Measurement only — no CI-blocking thresholds.
+    },
   },
 });

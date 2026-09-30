@@ -97,19 +97,21 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 
 ## Scripts
 
-| Script                 | Role                                |
-| ---------------------- | ----------------------------------- |
-| `npm run dev`          | Vite HMR server                     |
-| `npm run build`        | Typecheck + production bundle       |
-| `npm run format`       | Prettier write                      |
-| `npm run format:check` | Prettier check (CI)                 |
-| `npm run lint`         | Oxlint (React / TypeScript / oxc)   |
-| `npm run typecheck`    | `tsc -b`                            |
-| `npm run test`         | Vitest watch                        |
-| `npm run test:run`     | Vitest single run (CI)              |
-| `npm run test:e2e`     | Build + Playwright smoke (Chromium) |
-| `npm run test:e2e:ui`  | Same with Playwright UI             |
-| `npm run preview`      | Serve the production bundle         |
+| Script                 | Role                                              |
+| ---------------------- | ------------------------------------------------- |
+| `npm run dev`          | Vite HMR server                                   |
+| `npm run build`        | Typecheck + production bundle                     |
+| `npm run format`       | Prettier write                                    |
+| `npm run format:check` | Prettier check (CI)                               |
+| `npm run lint`         | Oxlint with `--deny-warnings` (React / TS / oxc)  |
+| `npm run lint:css`     | Stylelint on `src/design-system/**/*.css` (CI)    |
+| `npm run typecheck`    | `tsc -b`                                          |
+| `npm run test`         | Vitest watch                                      |
+| `npm run test:run`     | Vitest single run (CI)                            |
+| `npm run test:coverage`| Vitest + V8 coverage report (local / optional)    |
+| `npm run test:e2e`     | Build + Playwright smoke (Chromium)               |
+| `npm run test:e2e:ui`  | Same with Playwright UI                           |
+| `npm run preview`      | Serve the production bundle                       |
 
 First-time Playwright browser install (local): `npx playwright install chromium`.
 
@@ -117,10 +119,10 @@ E2E smokes stub Host JSON via Playwright routes (no Postgres / DevRunner require
 
 ### Quality gates (CI `web` job)
 
-Order: `format:check` → `lint` → `typecheck` → `test:run` → `build` → Playwright smoke.  
-**Errors fail CI.** Oxlint **warnings** do not fail CI today (no `--deny-warnings`). Rider/IDE CSS inspections are not gated. Stylelint is intentionally out of scope for now.
+Order: `format:check` → `lint` → `lint:css` → `typecheck` → `test:run` → `build` → Playwright smoke.  
+**Errors and Oxlint warnings fail CI** (`oxlint --deny-warnings`). Stylelint covers **design-system** CSS only (page/shell CSS deferred). Coverage (`test:coverage`) is available locally — **no** CI threshold.
 
-Config: `.prettierrc.json`, `.oxlintrc.json`. Format on save is an optional editor setting (Prettier); this package does **not** ship a committed `.vscode/` folder.
+Config: `.prettierrc.json`, `.oxlintrc.json`, `.stylelintrc.json`. Format on save is an optional editor setting (Prettier); this package does **not** ship a committed `.vscode/` folder.
 
 ## Conventions
 
