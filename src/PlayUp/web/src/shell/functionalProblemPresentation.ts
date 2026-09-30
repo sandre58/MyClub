@@ -212,13 +212,23 @@ export function functionalProblemPresentation(
       'occupiedSlots',
       'directAssignment',
     ]);
+    // Reuse Structure fiche i18n (no parallel draw.createBlock catalogue).
+    const configEcho =
+      source === 'missingPots'
+        ? { actionCode: 'ConfigureDrawParams' as const }
+        : source === 'belowMinimumTeams'
+          ? { actionCode: 'AddEntry' as const }
+          : null;
     return {
       tone: warningReasons.has(source) ? 'warning' : 'info',
-      titleKey: `createBlock.${source}`,
-      titleNs: 'draw',
+      titleKey: `fiche.drawWorkflow.createBlocked.short.${source}`,
+      titleNs: 'structure',
       descriptionParams,
-      sotHref: structureHref(competitionId, stageId),
-      cta: null,
+      sotHref:
+        source === 'belowMinimumTeams'
+          ? teamsHref(competitionId)
+          : structureHref(competitionId, stageId),
+      cta: configEcho,
       canal: 'draw-gate',
     };
   }

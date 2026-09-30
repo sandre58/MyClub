@@ -44,7 +44,10 @@ import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
-import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
+import {
+  functionalProblemPresentation,
+  structureIssuePresentation,
+} from '../../shell/functionalProblemPresentation';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
@@ -410,7 +413,22 @@ function TopologyPanel({
                   <span className="structure-topology__tile-status">
                     <StageStatusBadge status={stage.status} density="compact" />
                     {hasIssues && (
-                      <Tooltip content={t('hub.phaseStructuralAnomaly')}>
+                      <Tooltip
+                        content={
+                          (stage.structureIssues ?? [])
+                            .map((code) =>
+                              t(
+                                structureIssuePresentation({
+                                  code,
+                                  competitionId,
+                                  stageId: stage.stageId,
+                                }).titleKey,
+                                { defaultValue: code },
+                              ),
+                            )
+                            .join(' · ') || t('hub.phaseStructuralAnomaly')
+                        }
+                      >
                         <span className="structure-topology__issue">
                           <StructureIssueIcon size="sm" aria-hidden="true" />
                           <span className="ds-visually-hidden">
@@ -891,26 +909,22 @@ function IncompleteBlockerAction({
   competitionId: string;
   onConfigure: () => void;
 }) {
+  const presentation = functionalProblemPresentation({
+    source: code,
+    competitionId,
+  });
   const label = attentionSourceLabel(code);
 
-  if (code === 'InsufficientParticipants') {
+  if (presentation.sotHref && presentation.cta?.actionCode === 'AddEntry') {
     return (
-      <Link
-        className="structure-status__action"
-        to={`/competitions/${competitionId}/teams`}
-      >
+      <Link className="structure-status__action" to={presentation.sotHref}>
         {label}
         <span aria-hidden="true">→</span>
       </Link>
     );
   }
 
-  if (
-    code === 'MissingStage' ||
-    code === 'MissingStructure' ||
-    code === 'MissingPotRules' ||
-    code === 'CupBracketInvalid'
-  ) {
+  if (presentation.cta?.actionCode === 'ConfigureStructure') {
     return (
       <button
         type="button"

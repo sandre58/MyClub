@@ -47,6 +47,7 @@ import {
   LoadingState,
   MutationError,
   PendingLabel,
+  persistentStructureMutationSotHref,
 } from '../../ui';
 import { StructureQualificationIntentEditor } from './StructureQualificationIntentEditor';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
@@ -460,7 +461,13 @@ export function StructureQualificationDialog({
           saveBlockedReason ? (
             <>
               {mutation.isError ? (
-                <MutationError error={mutation.error} />
+                <MutationError
+                  error={mutation.error}
+                  sotHref={persistentStructureMutationSotHref(
+                    mutation.error,
+                    data.competitionId,
+                  )}
+                />
               ) : null}
               {saveBlockedReason ? (
                 <Alert tone="danger" role="alert">

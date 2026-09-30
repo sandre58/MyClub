@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   applyDraw,
   cancelDraw,
@@ -67,12 +68,14 @@ import {
 } from '../stage/lifecycleGates';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { resolvePlacesN } from './structurePlaces';
+import { functionalProblemPresentation } from '../../shell/functionalProblemPresentation';
 import {
   DrawResolutionBadge,
   DrawStatusBadge,
   EmptyState,
   MutationError,
   PendingLabel,
+  persistentStructureMutationSotHref,
 } from '../../ui';
 import './phase-schematic.css';
 
@@ -177,6 +180,8 @@ type StructureDrawDialogProps = {
   /** Competition EntryRules.MinimumTeams — gate belowMinimumTeams. */
   minimumTeams?: number | null;
   stage: StructureStageHubSummary;
+  /** Echo CTA when create is blocked by missing pots — open DrawRules params. */
+  onConfigureDrawParams?: () => void;
 };
 
 const EMPTY_DRAWS: StageDraw[] = [];
@@ -193,6 +198,7 @@ export function StructureDrawDialog({
   competitionStatus,
   minimumTeams = null,
   stage,
+  onConfigureDrawParams,
 }: StructureDrawDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tDraw } = useTranslation('draw');
@@ -275,6 +281,14 @@ export function StructureDrawDialog({
   const createBlockPresentation =
     createBlockedReason != null
       ? resolveDrawCreateBlockPresentation(createBlockedReason)
+      : null;
+  const createBlockEcho =
+    createBlockedReason != null
+      ? functionalProblemPresentation({
+          source: createBlockedReason,
+          competitionId,
+          stageId: stage.stageId,
+        })
       : null;
   const createBlockedShort =
     createBlockedReason != null
@@ -472,12 +486,47 @@ export function StructureDrawDialog({
                   {t('fiche.drawWorkflow.loadError')}
                 </Alert>
               ) : null}
-              {mutationError ? <MutationError error={mutationError} /> : null}
+              {mutationError ? (
+                <MutationError
+                  error={mutationError}
+                  sotHref={persistentStructureMutationSotHref(
+                    mutationError,
+                    competitionId,
+                  )}
+                />
+              ) : null}
               {!overviewQuery.isLoading &&
               createBlockedDetail != null &&
               createBlockPresentation?.kind === 'inline' ? (
                 <Alert tone={createBlockPresentation.tone} role="status">
                   <p className="ds-body">{createBlockedDetail}</p>
+                  {createBlockEcho?.cta?.actionCode === 'AddEntry' &&
+                  createBlockEcho.sotHref ? (
+                    <p className="ds-body">
+                      <Link
+                        className="ds-text-link"
+                        to={createBlockEcho.sotHref}
+                        onClick={onClose}
+                      >
+                        {t('fiche.drawWorkflow.createBlocked.echoTeams')}
+                      </Link>
+                    </p>
+                  ) : null}
+                  {createBlockEcho?.cta?.actionCode === 'ConfigureDrawParams' &&
+                  onConfigureDrawParams ? (
+                    <p className="ds-body">
+                      <button
+                        type="button"
+                        className="ds-text-link"
+                        onClick={() => {
+                          onClose();
+                          onConfigureDrawParams();
+                        }}
+                      >
+                        {t('fiche.drawWorkflow.createBlocked.echoDrawParams')}
+                      </button>
+                    </p>
+                  ) : null}
                 </Alert>
               ) : null}
             </>
@@ -599,7 +648,13 @@ export function StructureDrawDialog({
         confirmPendingLabel={tDraw('applying')}
         footerStatus={
           applyMutation.isError ? (
-            <MutationError error={applyMutation.error} />
+            <MutationError
+              error={applyMutation.error}
+              sotHref={persistentStructureMutationSotHref(
+                applyMutation.error,
+                competitionId,
+              )}
+            />
           ) : null
         }
         onCancel={() => {
@@ -634,7 +689,13 @@ export function StructureDrawDialog({
         confirmPendingLabel={tDraw('cancelling')}
         footerStatus={
           cancelMutation.isError ? (
-            <MutationError error={cancelMutation.error} />
+            <MutationError
+              error={cancelMutation.error}
+              sotHref={persistentStructureMutationSotHref(
+                cancelMutation.error,
+                competitionId,
+              )}
+            />
           ) : null
         }
         onCancel={() => {
@@ -664,7 +725,13 @@ export function StructureDrawDialog({
         confirmPendingLabel={tDraw('releasingPlacements')}
         footerStatus={
           releaseMutation.isError ? (
-            <MutationError error={releaseMutation.error} />
+            <MutationError
+              error={releaseMutation.error}
+              sotHref={persistentStructureMutationSotHref(
+                releaseMutation.error,
+                competitionId,
+              )}
+            />
           ) : null
         }
         onCancel={() => {
