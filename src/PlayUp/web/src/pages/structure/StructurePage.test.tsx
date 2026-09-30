@@ -487,7 +487,7 @@ describe('StructurePage Structure hub', () => {
       name: /Activer le tirage/i,
     });
     expect(activate).toHaveAttribute('data-tone', 'ghost');
-    expect(activate).toHaveTextContent(/remplir la forme/i);
+    expect(activate).toHaveTextContent(/placer les équipes/i);
     expect(
       screen.queryByRole('button', { name: /Paramètres du tirage/i }),
     ).not.toBeInTheDocument();
@@ -697,11 +697,15 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     await user.click(
-      await screen.findByRole('button', { name: /Modifier l['’]organisation/i }),
+      await screen.findByRole('button', {
+        name: /Modifier l['’]organisation/i,
+      }),
     );
     const dialog = await screen.findByRole('dialog');
     expect(
-      within(dialog).getByRole('heading', { name: /Modifier l['’]organisation/i }),
+      within(dialog).getByRole('heading', {
+        name: /Modifier l['’]organisation/i,
+      }),
     ).toBeInTheDocument();
     expect(
       within(dialog).getByText(
@@ -791,7 +795,7 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
     expect(
       within(createDialog).getByText(
-        /Choisissez un type pour définir la forme de la phase/i,
+        /Choisissez un type pour définir l['’]organisation de la phase/i,
       ),
     ).toBeInTheDocument();
 
@@ -1078,7 +1082,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/La compétition est prête à matérialiser/i),
+      await screen.findByText(/La compétition est prête à créer les matchs/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
@@ -1222,7 +1226,7 @@ describe('StructurePage Structure hub', () => {
       name: /Supprimer la phase/i,
     });
     expect(dialog).toHaveTextContent(/disparaîtra de la compétition/i);
-    expect(dialog).toHaveTextContent(/structure et sa population/i);
+    expect(dialog).toHaveTextContent(/structure et ses équipes/i);
   });
 
   it('hides empty Sorties without aval peer; hides Attribution on Championship', async () => {
