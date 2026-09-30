@@ -11,7 +11,7 @@ import {
   getThemePreference,
   setThemePreference,
 } from '../theme/setThemePreference';
-import { localeFlag } from './localeFlags';
+import { LocaleFlag } from './localeFlags';
 import { ThemePreferenceListbox } from './ThemePreferenceListbox';
 import './preferences-menu.css';
 
@@ -93,12 +93,12 @@ export function PreferencesMenu({ className = '' }: PreferencesMenuProps) {
               {
                 value: 'fr',
                 label: t('preferences.locale.fr'),
-                leading: localeFlag('fr'),
+                leading: <LocaleFlag locale="fr" />,
               },
               {
                 value: 'en',
                 label: t('preferences.locale.en'),
-                leading: localeFlag('en'),
+                leading: <LocaleFlag locale="en" />,
               },
             ]}
           />

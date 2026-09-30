@@ -111,6 +111,8 @@ type ProgRoundOption = {
   fixtures: StageFixture[];
 };
 
+const EMPTY_BRACKET_PAIRS: StageBracketPair[] = [];
+
 function stageFormatIcon(kind?: StructureFormatKind | null) {
   switch (kind) {
     case 'Cup':
@@ -264,7 +266,7 @@ export function StructureProgressionDialog({
       })),
     [overviewQuery.data?.rounds],
   );
-  const bracketPairs = overviewQuery.data?.bracketPairs ?? [];
+  const bracketPairs = overviewQuery.data?.bracketPairs ?? EMPTY_BRACKET_PAIRS;
   const expandSourceCount =
     bracketPairs.length > 0 ? bracketPairs.length : null; // null = derive from round fixtures
   const playableRounds = useMemo(() => roundsWithFixtures(rounds), [rounds]);
@@ -578,22 +580,19 @@ export function StructureProgressionDialog({
     [intents, sessionReady],
   );
 
-  const hasDuplicatePlaceTarget = useMemo(
-    () =>
-      sessionReady &&
-      intents.some(
-        (intent) =>
-          incompleteIntentReason(
-            intent,
-            intents,
-            placesLabeledFor(intent),
-            championshipTerminalRoundId,
-          ) === 'DuplicatePlace',
-      ),
-    [championshipTerminalRoundId, intents, sessionReady],
-  );
+  const hasDuplicatePlaceTarget =
+    sessionReady &&
+    intents.some(
+      (intent) =>
+        incompleteIntentReason(
+          intent,
+          intents,
+          placesLabeledFor(intent),
+          championshipTerminalRoundId,
+        ) === 'DuplicatePlace',
+    );
 
-  const firstIncompleteReason = useMemo(() => {
+  const firstIncompleteReason = (() => {
     if (!sessionReady) return null;
     for (const intent of intents) {
       const reason = incompleteIntentReason(
@@ -605,7 +604,7 @@ export function StructureProgressionDialog({
       if (reason != null) return reason;
     }
     return null;
-  }, [championshipTerminalRoundId, intents, sessionReady]);
+  })();
 
   const saveBlockedReason =
     !sessionReady || mutation.isPending || mutation.isSuccess

@@ -3,6 +3,7 @@ import { Meter, type MeterTone } from '../design-system/components/Meter';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { MatchRulesIcon, TimerIcon } from '../design-system/icons/contentIcons';
 import type { RankingCriterion } from '../types';
+import { criterionLabel } from './regulationCriterionLabel';
 import './regulation.css';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -387,10 +388,6 @@ function PointGauge({
       <Meter ratio={ratio} tone={meterTone} size="lg" clip aria-hidden="true" />
     </li>
   );
-}
-
-export function criterionLabel(criterion: RankingCriterion, t: Translate) {
-  return t(`criteria.${criterion}`, { defaultValue: criterion });
 }
 
 function periodLabel(n: number, t: Translate) {

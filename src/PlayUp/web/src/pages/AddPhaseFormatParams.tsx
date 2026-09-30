@@ -9,7 +9,7 @@ import type { MatchGenerationFormat } from '../types';
 import type { SkeletonFormState } from './structureSkeletonForm';
 
 /** Cup bracket sizes — Application bound [2, 64] powers of two. */
-export const CUP_BRACKET_SIZES = [2, 4, 8, 16, 32, 64] as const;
+const CUP_BRACKET_SIZES = [2, 4, 8, 16, 32, 64] as const;
 
 type Props = {
   state: SkeletonFormState;

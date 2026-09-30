@@ -389,22 +389,19 @@ export function StructureQualificationDialog({
     [intents, groups, sessionReady],
   );
 
-  const hasDuplicatePlaceTarget = useMemo(
-    () =>
-      sessionReady &&
-      intents.some(
-        (intent) =>
-          incompleteIntentReason(
-            intent,
-            groups,
-            placesLabeledFor(intent),
-            intents,
-          ) === 'DuplicatePlace',
-      ),
-    [intents, groups, sessionReady],
-  );
+  const hasDuplicatePlaceTarget =
+    sessionReady &&
+    intents.some(
+      (intent) =>
+        incompleteIntentReason(
+          intent,
+          groups,
+          placesLabeledFor(intent),
+          intents,
+        ) === 'DuplicatePlace',
+    );
 
-  const firstIncompleteReason = useMemo(() => {
+  const firstIncompleteReason = (() => {
     if (!sessionReady) return null;
     for (const intent of intents) {
       const reason = incompleteIntentReason(
@@ -416,7 +413,7 @@ export function StructureQualificationDialog({
       if (reason != null) return reason;
     }
     return null;
-  }, [intents, groups, sessionReady]);
+  })();
 
   const saveBlockedReason =
     !sessionReady || mutation.isPending || mutation.isSuccess

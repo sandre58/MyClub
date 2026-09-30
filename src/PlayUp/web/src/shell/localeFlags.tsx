@@ -4,7 +4,7 @@ import type { SupportedLocale } from '../i18n/config';
 type FlagProps = SVGProps<SVGSVGElement>;
 
 /** Decorative FR flag — 3:2, for Select leading only. */
-export function FranceFlagIcon(props: FlagProps) {
+function FranceFlagIcon(props: FlagProps) {
   return (
     <svg viewBox="0 0 3 2" focusable="false" {...props}>
       <rect width="1" height="2" fill="#002654" />
@@ -15,7 +15,7 @@ export function FranceFlagIcon(props: FlagProps) {
 }
 
 /** Decorative GB flag — aligned with en-GB product locale. */
-export function GreatBritainFlagIcon(props: FlagProps) {
+function GreatBritainFlagIcon(props: FlagProps) {
   return (
     <svg viewBox="0 0 60 40" focusable="false" {...props}>
       <rect width="60" height="40" fill="#012169" />
@@ -27,7 +27,8 @@ export function GreatBritainFlagIcon(props: FlagProps) {
   );
 }
 
-export function localeFlag(locale: SupportedLocale) {
+/** Locale leading icon for preferences Select. */
+export function LocaleFlag({ locale }: { locale: SupportedLocale }) {
   if (locale === 'en') {
     return <GreatBritainFlagIcon />;
   }
