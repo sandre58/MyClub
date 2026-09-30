@@ -97,21 +97,21 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 
 ## Scripts
 
-| Script                 | Role                                              |
-| ---------------------- | ------------------------------------------------- |
-| `npm run dev`          | Vite HMR server                                   |
-| `npm run build`        | Typecheck + production bundle                     |
-| `npm run format`       | Prettier write                                    |
-| `npm run format:check` | Prettier check (CI)                               |
-| `npm run lint`         | Oxlint with `--deny-warnings` (React / TS / oxc)  |
-| `npm run lint:css`     | Stylelint on `src/design-system/**/*.css` (CI)    |
-| `npm run typecheck`    | `tsc -b`                                          |
-| `npm run test`         | Vitest watch                                      |
-| `npm run test:run`     | Vitest single run (CI)                            |
-| `npm run test:coverage`| Vitest + V8 coverage report (local / optional)    |
-| `npm run test:e2e`     | Build + Playwright smoke (Chromium)               |
-| `npm run test:e2e:ui`  | Same with Playwright UI                           |
-| `npm run preview`      | Serve the production bundle                       |
+| Script                  | Role                                             |
+| ----------------------- | ------------------------------------------------ |
+| `npm run dev`           | Vite HMR server                                  |
+| `npm run build`         | Typecheck + production bundle                    |
+| `npm run format`        | Prettier write                                   |
+| `npm run format:check`  | Prettier check (CI)                              |
+| `npm run lint`          | Oxlint with `--deny-warnings` (React / TS / oxc) |
+| `npm run lint:css`      | Stylelint on `src/design-system/**/*.css` (CI)   |
+| `npm run typecheck`     | `tsc -b`                                         |
+| `npm run test`          | Vitest watch                                     |
+| `npm run test:run`      | Vitest single run (CI)                           |
+| `npm run test:coverage` | Vitest + V8 coverage report (local / optional)   |
+| `npm run test:e2e`      | Build + Playwright smoke (Chromium)              |
+| `npm run test:e2e:ui`   | Same with Playwright UI                          |
+| `npm run preview`       | Serve the production bundle                      |
 
 First-time Playwright browser install (local): `npx playwright install chromium`.
 
