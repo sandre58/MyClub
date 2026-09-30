@@ -16,7 +16,6 @@ import {
   PersonIcon,
   TrophyIcon,
 } from '../../design-system/icons/contentIcons';
-import { nextPowerOfTwo } from './structureFixtureLabels';
 import { placeChromeLabel } from './structurePlaceLabel';
 import { resolveManualPlaceMode } from './manualPlacementUi';
 import './phase-schematic.css';
@@ -28,6 +27,12 @@ type SchematicDensity = 'full' | 'crest' | 'compact';
 
 type PairLabel =
   { kind: 'fixture'; matchNumber: number } | { kind: 'pair'; pairKey: string };
+
+function nextPowerOfTwo(n: number): number {
+  let p = 1;
+  while (p < n) p *= 2;
+  return Math.max(p, 2);
+}
 
 /**
  * Phase form schematic driven by StageSchematic DTO.

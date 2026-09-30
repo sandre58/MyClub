@@ -36,7 +36,14 @@ import type {
   MatchSide,
   StructureEntry,
 } from '../../types';
-import { canMutateMatchSheet } from './matchSheetHelpers';
+
+function canMutateMatchSheet(match: MatchDetail): boolean {
+  if (match.status === 'Scheduled' || match.status === 'Postponed') {
+    return true;
+  }
+
+  return match.status === 'Finished' && !match.hasObservedLive;
+}
 
 /**
  * Championship match sheet — declared composition only.

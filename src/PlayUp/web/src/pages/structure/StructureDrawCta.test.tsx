@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { DrawCtaActionBody, StructureDrawCta } from './StructureDrawCta';
-import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
+import {
+  DrawCtaActionBody,
+  resolveDrawCtaPoolTone,
+  StructureDrawCta,
+} from './StructureDrawCta';
 
 describe('resolveDrawCtaPoolTone', () => {
   it('maps resolution states without implying Draw readiness', () => {

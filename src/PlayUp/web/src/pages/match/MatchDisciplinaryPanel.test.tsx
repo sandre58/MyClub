@@ -20,7 +20,7 @@ import type {
   RecordedDisciplinaryEvent,
   StageOverview,
 } from '../../types';
-import { canMutateRecordedDisciplinaryEvents } from './matchDisciplinaryHelpers';
+import { canMutateRecordedDisciplinaryEvents } from './MatchDisciplinaryPanel';
 import { MatchPage } from './MatchPage';
 
 vi.mock('../../api', async (importOriginal) => {

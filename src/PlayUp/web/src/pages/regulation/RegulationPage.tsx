@@ -45,7 +45,7 @@ import type {
 import { RegulationEditorDialog } from './RegulationEditorDialog';
 import { isPartOverridden, isStagePersonalized } from './regulationImpact';
 import { MatchRulesPanel, StandingRulesPanel } from './regulationRulePanels';
-import { criterionLabel } from './regulationCriterionLabel';
+import { criterionLabel } from './regulationRulePanels';
 import { structureDeepLink } from '../structure/structureNavigation';
 import './regulation.css';
 

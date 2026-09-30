@@ -10,7 +10,7 @@ import type {
   StructureQualificationIntent,
   StructureQualificationPath,
 } from '../../types';
-import { isPopulationDestination } from './structureProgression';
+import { isPopulationDestination } from './structureProgressionDraft';
 import {
   coerceDestinationGroupIds,
   coerceDestinationSlotKeys,
