@@ -81,10 +81,7 @@ export function DrawCtaActionBody({
 }) {
   return (
     <span className="structure-draw-cta__context">
-      <span
-        className="structure-draw-cta__readiness"
-        data-pool-tone={poolTone}
-      >
+      <span className="structure-draw-cta__readiness" data-pool-tone={poolTone}>
         <span className="structure-draw-cta__ratio">
           <span className="structure-draw-cta__ratio-filled">{filled}</span>
           <span className="structure-draw-cta__ratio-sep">/</span>

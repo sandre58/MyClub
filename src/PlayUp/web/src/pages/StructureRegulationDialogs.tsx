@@ -1,9 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  replaceStageDrawRules,
-} from '../api';
+import { replaceStageDrawRules } from '../api';
 import { Alert } from '../design-system/components/Alert';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
 import { ChoiceTile } from '../design-system/components/ChoiceTile';
@@ -70,7 +68,8 @@ export function DrawRulesDialog({
   const [baselineUsePots, setBaselineUsePots] = useState(false);
   const [baselinePots, setBaselinePots] = useState(defaultPots);
 
-  const normalizedPots = showPots && usePots ? normalizeDrawPots(numberOfPots) : null;
+  const normalizedPots =
+    showPots && usePots ? normalizeDrawPots(numberOfPots) : null;
   const isDirty =
     !rulesLocked &&
     showPots &&
@@ -128,9 +127,7 @@ export function DrawRulesDialog({
   });
 
   const title = isActivate ? t('fiche.activateDraw') : t('fiche.drawParams');
-  const saveLabel = isActivate
-    ? t('fiche.activateDraw')
-    : t('regulation.save');
+  const saveLabel = isActivate ? t('fiche.activateDraw') : t('regulation.save');
   const busy = saveMutation.isPending;
 
   function requestClose() {

@@ -34,7 +34,9 @@ export function ToggleButtonGroup<T extends string>({
 }: ToggleButtonGroupProps<T>) {
   return (
     <div
-      className={['ds-toggle-button-group', className].filter(Boolean).join(' ')}
+      className={['ds-toggle-button-group', className]
+        .filter(Boolean)
+        .join(' ')}
       role="radiogroup"
       aria-label={ariaLabel}
       data-disabled={disabled ? 'true' : 'false'}
@@ -67,7 +69,9 @@ export function ToggleButtonGroup<T extends string>({
                 {option.leading}
               </span>
             ) : null}
-            <span className="ds-toggle-button-group__label">{option.label}</span>
+            <span className="ds-toggle-button-group__label">
+              {option.label}
+            </span>
           </button>
         );
       })}

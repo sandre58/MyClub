@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,6 +14,7 @@ import {
   renameDeclaredMember,
   withdrawCompetitionEntry,
 } from '../api';
+import { TOOLTIP_DELAY_OPEN_MS } from '../design-system/components/Tooltip';
 import type { DeclaredMember, StructureView } from '../types';
 import { TeamsPage } from './TeamsPage';
 
@@ -313,22 +314,51 @@ describe('TeamsPage', () => {
   });
 
   it('disables member remove when already on a match sheet', async () => {
-    vi.mocked(fetchStructureView).mockResolvedValue(
-      structureView(
-        {},
-        {
-          declaredMembers: [player({ referencedOnMatchSheet: true })],
-        },
-      ),
-    );
-
-    renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`);
-
-    const remove = await screen.findByRole('button', {
-      name: 'Supprimer Dupont',
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: (query: string) => ({
+        matches:
+          query.includes('hover: hover') && query.includes('pointer: fine'),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
     });
-    expect(remove).toBeDisabled();
-    expect(remove).toHaveAttribute('title', 'Déjà sur une feuille de match');
+
+    try {
+      vi.mocked(fetchStructureView).mockResolvedValue(
+        structureView(
+          {},
+          {
+            declaredMembers: [player({ referencedOnMatchSheet: true })],
+          },
+        ),
+      );
+
+      renderTeamsPage(`/competitions/${competitionId}/teams/${entryId}`);
+
+      const remove = await screen.findByRole('button', {
+        name: 'Supprimer Dupont',
+      });
+      expect(remove).toBeDisabled();
+      const trigger = remove.closest('.ds-tooltip-trigger');
+      expect(trigger).toBeTruthy();
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      await user.hover(trigger!);
+      await act(async () => {
+        vi.advanceTimersByTime(TOOLTIP_DELAY_OPEN_MS);
+      });
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Déjà sur une feuille de match',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows a Forfait badge on a withdrawn team', async () => {

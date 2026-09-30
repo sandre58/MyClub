@@ -56,7 +56,9 @@ describe('Tooltip', () => {
 
     const tip = await screen.findByRole('tooltip');
     expect(tip).toHaveTextContent('Hint text');
-    expect(screen.getByText('Token').closest('[aria-describedby]')).toBeTruthy();
+    expect(
+      screen.getByText('Token').closest('[aria-describedby]'),
+    ).toBeTruthy();
   });
 
   it('opens immediately on keyboard focus', async () => {
@@ -147,7 +149,9 @@ describe('Tooltip', () => {
     await act(async () => {
       vi.advanceTimersByTime(TOOLTIP_DELAY_OPEN_MS);
     });
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Why disabled');
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'Why disabled',
+    );
   });
 
   it('opens on long-press when coarse pointer and primary action', async () => {

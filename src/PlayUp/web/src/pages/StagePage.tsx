@@ -33,7 +33,6 @@ import {
   type StageBracketPair,
   type StageDraw,
   type StageOverview,
-  type StageRound,
   type StageSlot,
 } from '../types';
 import {
@@ -281,7 +280,6 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         stageId={data.id}
         draws={data.draws}
         slots={data.slots}
-        rounds={data.rounds}
         bracketPairs={data.bracketPairs ?? []}
       />
     </div>
@@ -335,7 +333,9 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
     };
   });
 
-  const eligibleKeys = rows.filter((row) => row.eligible).map((row) => row.pairKey);
+  const eligibleKeys = rows
+    .filter((row) => row.eligible)
+    .map((row) => row.pairKey);
   const eligibleCount = eligibleKeys.length;
   const materializedCount = rows.filter((row) => row.materialized).length;
   const selectionValid = selectedPairKeys.every((key) =>
@@ -347,8 +347,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       : eligibleKeys;
 
   const materializeMutation = useMutation({
-    mutationFn: () =>
-      materializeCupFromOccupiedSlots(data.id, keysToSubmit),
+    mutationFn: () => materializeCupFromOccupiedSlots(data.id, keysToSubmit),
     onSuccess: async () => {
       setSelectedPairKeys([]);
       await queryClient.invalidateQueries({
@@ -399,9 +398,7 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       {schematicQuery.isLoading && (
         <p className="muted">{t('confrontations.loadingPairs')}</p>
       )}
-      {schematicQuery.isError && (
-        <MutationError error={schematicQuery.error} />
-      )}
+      {schematicQuery.isError && <MutationError error={schematicQuery.error} />}
 
       {schematicQuery.isSuccess && rows.length === 0 && (
         <p className="muted">{t('confrontations.noBracketPairs')}</p>
@@ -502,13 +499,11 @@ function DrawSection({
   stageId,
   draws,
   slots,
-  rounds,
   bracketPairs,
 }: {
   stageId: string;
   draws: StageDraw[];
   slots: StageSlot[];
-  rounds: StageRound[];
   bracketPairs: StageBracketPair[];
 }) {
   const { t } = useTranslation('stage');
@@ -529,7 +524,6 @@ function DrawSection({
                 stageId={stageId}
                 draw={draw}
                 slots={slots}
-                rounds={rounds}
                 bracketPairs={bracketPairs}
               />
             </li>
@@ -544,19 +538,17 @@ function DrawCard({
   stageId,
   draw,
   slots,
-  rounds,
   bracketPairs,
 }: {
   stageId: string;
   draw: StageDraw;
   slots: StageSlot[];
-  rounds: StageRound[];
   bracketPairs: StageBracketPair[];
 }) {
   const { t } = useTranslation('draw');
   const { t: tStructure } = useTranslation('structure');
   // DERIVED UI: computed each render from props (server state), never useState.
-  const ui = getDrawUiProjection(draw, slots, rounds);
+  const ui = getDrawUiProjection(draw, slots);
   const slotResult =
     draw.kind === 'Slot' && draw.slotPlacements.length > 0
       ? projectSlotDrawResult(draw.slotPlacements, bracketPairs, '?')
@@ -648,11 +640,7 @@ function DrawCard({
           </div>
         )}
 
-      <DrawActions
-        stageId={stageId}
-        draw={draw}
-        isApplied={ui.isApplied}
-      />
+      <DrawActions stageId={stageId} draw={draw} isApplied={ui.isApplied} />
     </article>
   );
 }
@@ -686,8 +674,7 @@ function DrawActions({
     (draw.kind === 'Slot' || draw.kind === 'Group');
 
   const publishAndApplyMutation = useMutation({
-    mutationFn: () =>
-      publishAndApplyDraw(stageId, draw.id),
+    mutationFn: () => publishAndApplyDraw(stageId, draw.id),
     onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.stages.detail(stageId),
@@ -706,8 +693,7 @@ function DrawActions({
   });
 
   const busy = publishAndApplyMutation.isPending || applyMutation.isPending;
-  const mutationError =
-    publishAndApplyMutation.error ?? applyMutation.error;
+  const mutationError = publishAndApplyMutation.error ?? applyMutation.error;
 
   function handlePublishAndApply() {
     publishAndApplyMutation.mutate();

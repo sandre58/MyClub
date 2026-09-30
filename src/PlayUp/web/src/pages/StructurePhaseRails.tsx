@@ -331,13 +331,7 @@ export function RootEntriesRail({
         ) : null}
       </div>
       <div className="structure-entries__footer">
-        <CompositionMeter
-          entries={meterEntries}
-          places={n}
-          assigned={fromAffectation}
-          expected={fromFeeds}
-          t={t}
-        />
+        <CompositionMeter entries={meterEntries} places={n} t={t} />
       </div>
     </div>
   );
@@ -347,16 +341,10 @@ export function RootEntriesRail({
 export function CompositionMeter({
   entries,
   places,
-  assigned,
-  expected,
   t,
 }: {
   entries: number;
   places: number | null;
-  /** Affectation count (Draft breakdown). */
-  assigned?: number;
-  /** Inbound rule volume (Draft breakdown). */
-  expected?: number;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const gap = places != null && places > 0 ? entries - places : null;

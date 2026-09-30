@@ -5,7 +5,6 @@ import type {
   StageDraw,
   StageDrawGroupPlacement,
   StageDrawSlotPlacement,
-  StageRound,
   StageSlot,
   StructureFormatKind,
 } from '../types';
@@ -100,9 +99,7 @@ export function projectSlotDrawResult(
   bracketPairs: ReadonlyArray<StageBracketPair>,
   unknownEntry: string,
 ): SlotDrawResultProjection {
-  const byKey = new Map(
-    placements.map((p) => [p.slotKey.trim(), p] as const),
-  );
+  const byKey = new Map(placements.map((p) => [p.slotKey.trim(), p] as const));
   const used = new Set<string>();
   const confrontations: SlotConfrontationRow[] = [];
 
@@ -166,8 +163,7 @@ export type DrawCreateBlockReason =
   | 'occupiedSlots';
 
 export type DrawCreateGate =
-  | { ok: true }
-  | { ok: false; reason: DrawCreateBlockReason };
+  { ok: true } | { ok: false; reason: DrawCreateBlockReason };
 
 /**
  * Client gate for Create+Generate (Rerun workflow start).
@@ -326,8 +322,14 @@ export type DrawChromeFlags = {
 
 /** Single master-rail chip — principal observable status only (or none). */
 export type DrawMasterChip =
-  | { kind: 'lifecycle'; status: Extract<DrawStatus, 'Cancelled' | 'Published'> }
-  | { kind: 'resolution'; state: Extract<DrawResolutionState, 'Resolved' | 'NoSolution'> }
+  | {
+      kind: 'lifecycle';
+      status: Extract<DrawStatus, 'Cancelled' | 'Published'>;
+    }
+  | {
+      kind: 'resolution';
+      state: Extract<DrawResolutionState, 'Resolved' | 'NoSolution'>;
+    }
   | { kind: 'applied' }
   | null;
 
@@ -350,10 +352,7 @@ export type DrawUiProjection = {
 
 /** Topology badge states — mirrors server StructureDrawExecutionBadge. */
 export type TopologyDrawExecutionBadge =
-  | 'ToLaunch'
-  | 'InProgress'
-  | 'ToApply'
-  | 'Applied';
+  'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied';
 
 /**
  * Draw ids are UUID v7 in production — lexicographic order ≈ creation order.
@@ -398,8 +397,7 @@ export function drawExecutionNumber(
  */
 export function areDrawRulesLockedByExecution(draws: StageDraw[]): boolean {
   return draws.some(
-    (d) =>
-      d.status !== 'Cancelled' && d.resolutionState !== 'NotResolved',
+    (d) => d.status !== 'Cancelled' && d.resolutionState !== 'NotResolved',
   );
 }
 
@@ -458,8 +456,14 @@ export function resolveDrawMasterChip(
  * Applied keeps "Publié" · "Appliqué" so Publish ≠ Apply stays readable in the detail.
  */
 export type DrawDetailHeaderChip =
-  | { kind: 'lifecycle'; status: Extract<DrawStatus, 'Published' | 'Cancelled'> }
-  | { kind: 'resolution'; state: Extract<DrawResolutionState, 'Resolved' | 'NoSolution'> }
+  | {
+      kind: 'lifecycle';
+      status: Extract<DrawStatus, 'Published' | 'Cancelled'>;
+    }
+  | {
+      kind: 'resolution';
+      state: Extract<DrawResolutionState, 'Resolved' | 'NoSolution'>;
+    }
   | { kind: 'applied' };
 
 export function resolveDrawDetailHeaderChips(
@@ -473,10 +477,7 @@ export function resolveDrawDetailHeaderChips(
     return [{ kind: 'resolution', state: 'NoSolution' }];
   }
   if (draw.status === 'Published' && isApplied) {
-    return [
-      { kind: 'lifecycle', status: 'Published' },
-      { kind: 'applied' },
-    ];
+    return [{ kind: 'lifecycle', status: 'Published' }, { kind: 'applied' }];
   }
   if (draw.status === 'Published') {
     return [{ kind: 'lifecycle', status: 'Published' }];
@@ -541,7 +542,6 @@ export function resolveTopologyDrawExecutionBadge(
   hasDrawRules: boolean,
   draw: StageDraw | null,
   slots: StageSlot[],
-  rounds: StageRound[] = [],
 ): TopologyDrawExecutionBadge | null {
   if (!hasDrawRules) {
     return null;
@@ -553,7 +553,7 @@ export function resolveTopologyDrawExecutionBadge(
     return 'InProgress';
   }
   if (draw.status === 'Published') {
-    const applied = getDrawUiProjection(draw, slots, rounds).isApplied;
+    const applied = getDrawUiProjection(draw, slots).isApplied;
     return applied ? 'Applied' : 'ToApply';
   }
   return 'ToLaunch';
@@ -569,7 +569,6 @@ export function resolveTopologyDrawExecutionBadge(
 export function getDrawUiProjection(
   draw: StageDraw,
   slots: StageSlot[],
-  rounds: StageRound[] = [],
 ): DrawUiProjection {
   const occupancyApplied =
     draw.resolutionState === 'Resolved' &&

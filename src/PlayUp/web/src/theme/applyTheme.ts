@@ -29,7 +29,9 @@ function onSystemThemeChange(): void {
  * Subscribe to OS theme changes. Call with null to unsubscribe.
  * Only active while user preference is `system` (orchestrated by setThemePreference).
  */
-export function subscribeToSystemTheme(listener: SystemThemeListener | null): void {
+export function subscribeToSystemTheme(
+  listener: SystemThemeListener | null,
+): void {
   if (typeof window === 'undefined') {
     return;
   }

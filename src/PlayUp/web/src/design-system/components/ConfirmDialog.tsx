@@ -61,8 +61,7 @@ export function ConfirmDialog({
   const busy = confirmPending;
   const confirmLocked = confirmDisabled || busy;
   const leadingIcon =
-    confirmIcon ??
-    (danger ? <TrashIcon size="sm" /> : <CheckIcon size="sm" />);
+    confirmIcon ?? (danger ? <TrashIcon size="sm" /> : <CheckIcon size="sm" />);
 
   return (
     <Dialog

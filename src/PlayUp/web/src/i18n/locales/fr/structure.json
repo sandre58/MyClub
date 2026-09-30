@@ -101,7 +101,7 @@
       "seeds": "Têtes de série",
       "yes": "Oui",
       "no": "Non",
-                  "qualificationLede_one": "{{count}} chemin de qualification pour {{teams}} équipes.",
+      "qualificationLede_one": "{{count}} chemin de qualification pour {{teams}} équipes.",
       "qualificationLede_other": "{{count}} chemins de qualification pour {{teams}} équipes.",
       "progressionLede_one": "{{count}} chemin de progression sortante.",
       "progressionLede_other": "{{count}} chemins de progression sortante.",

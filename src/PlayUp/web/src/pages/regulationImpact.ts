@@ -85,9 +85,7 @@ export function isPartOverridden(
   return entry != null && !entry.isBound;
 }
 
-export function isStagePersonalized(
-  stage: StructureStageHubSummary,
-): boolean {
+export function isStagePersonalized(stage: StructureStageHubSummary): boolean {
   const binding = stage.defaultsBinding;
   if (!binding) {
     return false;

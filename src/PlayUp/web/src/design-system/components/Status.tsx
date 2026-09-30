@@ -4,13 +4,7 @@ export type StatusDensity = 'context' | 'compact' | 'dense';
 export type StatusVariant = 'soft' | 'outline' | 'plain';
 export type StatusShape = 'rounded' | 'pill';
 export type StatusTone =
-  | 'neutral'
-  | 'info'
-  | 'success'
-  | 'live'
-  | 'done'
-  | 'attention'
-  | 'error';
+  'neutral' | 'info' | 'success' | 'live' | 'done' | 'attention' | 'error';
 
 type StatusProps = {
   density: StatusDensity;

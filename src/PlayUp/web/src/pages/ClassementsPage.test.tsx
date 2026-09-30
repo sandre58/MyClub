@@ -26,9 +26,7 @@ const entryB = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 const entryC = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 const stageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 
-function structureView(
-  overrides: Partial<StructureView> = {},
-): StructureView {
+function structureView(overrides: Partial<StructureView> = {}): StructureView {
   return {
     competitionId,
     name: 'Ligue Printemps',

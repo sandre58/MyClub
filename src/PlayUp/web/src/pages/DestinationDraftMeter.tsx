@@ -18,9 +18,14 @@ export function DestinationDraftMeter({
   draftLabel: string;
   ariaLabel: string;
 }) {
-  const tone = count === capacity ? 'exact' : count < capacity ? 'short' : 'over';
+  const tone =
+    count === capacity ? 'exact' : count < capacity ? 'short' : 'over';
   const ratio =
-    capacity > 0 ? Math.min(1, Math.max(0, count / capacity)) : count > 0 ? 1 : 0;
+    capacity > 0
+      ? Math.min(1, Math.max(0, count / capacity))
+      : count > 0
+        ? 1
+        : 0;
 
   return (
     <span
@@ -28,10 +33,16 @@ export function DestinationDraftMeter({
       role="img"
       aria-label={ariaLabel}
     >
-      <span className="structure-qualification__tile-meter-label" aria-hidden="true">
+      <span
+        className="structure-qualification__tile-meter-label"
+        aria-hidden="true"
+      >
         {label}
       </span>
-      <span className="structure-qualification__tile-meter-track" aria-hidden="true">
+      <span
+        className="structure-qualification__tile-meter-track"
+        aria-hidden="true"
+      >
         <span
           className="structure-qualification__tile-meter-fill"
           style={{ width: `${ratio * 100}%` }}
@@ -40,7 +51,9 @@ export function DestinationDraftMeter({
       <span
         className={[
           'structure-qualification__tile-meter-draft',
-          draft > 0 ? 'structure-qualification__tile-meter-draft--active' : null,
+          draft > 0
+            ? 'structure-qualification__tile-meter-draft--active'
+            : null,
         ]
           .filter(Boolean)
           .join(' ')}

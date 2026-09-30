@@ -1,10 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_THEME_PREFERENCE, THEME_STORAGE_KEY } from './config';
-import {
-  getStoredTheme,
-  resolvePreference,
-  setStoredTheme,
-} from './storage';
+import { getStoredTheme, resolvePreference, setStoredTheme } from './storage';
 
 describe('theme storage', () => {
   afterEach(() => {

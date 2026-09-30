@@ -53,9 +53,7 @@ describe('StructureDrawCta', () => {
     expect(
       container.querySelector('[data-pool-tone="neutral"]'),
     ).not.toBeNull();
-    expect(
-      container.querySelector('.structure-draw-cta__mode-row'),
-    ).toBeNull();
+    expect(container.querySelector('.structure-draw-cta__mode-row')).toBeNull();
 
     rerender(
       <DrawCtaActionBody

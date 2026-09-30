@@ -13,7 +13,12 @@ import {
   publishAndApplyDraw,
   startStage,
 } from '../api';
-import type { StageDraw, StageOverview, StageSchematic, StageSlot } from '../types';
+import type {
+  StageDraw,
+  StageOverview,
+  StageSchematic,
+  StageSlot,
+} from '../types';
 import { getDrawUiProjection, isSlotDrawApplied } from './drawUi';
 import { StagePage } from './StagePage';
 
@@ -87,9 +92,7 @@ async function confirmApplyInDialog(user: ReturnType<typeof userEvent.setup>) {
   const dialog = await screen.findByRole('dialog', {
     name: 'Appliquer le tirage ?',
   });
-  await user.click(
-    within(dialog).getByRole('button', { name: 'Appliquer' }),
-  );
+  await user.click(within(dialog).getByRole('button', { name: 'Appliquer' }));
 }
 
 function renderStagePage() {
@@ -493,7 +496,9 @@ describe('StagePage draws', () => {
       screen.getByRole('heading', { name: /Tirage Emplacement/i }),
     ).toBeInTheDocument();
     expect(screen.getByText('Résolu')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Résultat' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Résultat' }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('SF1-A').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Alpha').length).toBeGreaterThanOrEqual(1);
     expect(
@@ -520,9 +525,7 @@ describe('StagePage draws', () => {
     renderStagePage();
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Génération interrompue'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Génération interrompue')).toBeInTheDocument();
     });
     expect(screen.queryByText('Placements')).not.toBeInTheDocument();
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
@@ -550,9 +553,7 @@ describe('StagePage draws', () => {
     renderStagePage();
 
     expect(
-      await screen.findByText(
-        'Aucune résolution valide n’a pu être générée.',
-      ),
+      await screen.findByText('Aucune résolution valide n’a pu être générée.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Aucune solution')).toBeInTheDocument();
     expect(
@@ -610,7 +611,9 @@ describe('StagePage draws', () => {
     renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
+      expect(
+        screen.getByText('Résultat publié, en attente d’application.'),
+      ).toBeInTheDocument();
     });
     expect(screen.getByText('Publié')).toBeInTheDocument();
     expect(
@@ -642,9 +645,7 @@ describe('StagePage draws', () => {
       expect(screen.getByText('Appliqué')).toBeInTheDocument();
     });
     expect(
-      screen.getByText(
-        'Résultat appliqué à la phase.',
-      ),
+      screen.getByText('Résultat appliqué à la phase.'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Résultat' }),
@@ -674,7 +675,9 @@ describe('StagePage draws', () => {
     renderStagePage();
 
     await waitFor(() => {
-      expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
+      expect(
+        screen.getByText('Résultat publié, en attente d’application.'),
+      ).toBeInTheDocument();
     });
     expect(screen.queryByText('Appliqué')).not.toBeInTheDocument();
     expect(
@@ -696,9 +699,7 @@ describe('StagePage draws', () => {
             coveredByCompleteFixture: false,
           },
         ],
-        draws: [
-          slotDraw({ status: published ? 'Published' : 'Draft' }),
-        ],
+        draws: [slotDraw({ status: published ? 'Published' : 'Draft' })],
       }),
     );
     vi.mocked(publishAndApplyDraw).mockImplementation(async () => {
@@ -714,7 +715,9 @@ describe('StagePage draws', () => {
     await waitFor(() => {
       expect(publishAndApplyDraw).toHaveBeenCalledWith(stageId, slotDrawId);
       expect(screen.getByText('Publié')).toBeInTheDocument();
-      expect(screen.getByText("Résultat publié, en attente d’application.")).toBeInTheDocument();
+      expect(
+        screen.getByText('Résultat publié, en attente d’application.'),
+      ).toBeInTheDocument();
     });
   });
 
@@ -738,7 +741,9 @@ describe('StagePage draws', () => {
     await user.click(publishButton);
 
     expect(
-      await screen.findByRole('button', { name: 'Publication et application…' }),
+      await screen.findByRole('button', {
+        name: 'Publication et application…',
+      }),
     ).toBeDisabled();
 
     resolvePublish();
@@ -752,7 +757,9 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({ draws: [slotDraw({ status: 'Draft' })] }),
     );
-    vi.mocked(publishAndApplyDraw).mockRejectedValue(new Error('Publish blocked'));
+    vi.mocked(publishAndApplyDraw).mockRejectedValue(
+      new Error('Publish blocked'),
+    );
 
     renderStagePage();
     await user.click(
@@ -786,9 +793,7 @@ describe('StagePage draws', () => {
     });
 
     renderStagePage();
-    await user.click(
-      await screen.findByRole('button', { name: 'Appliquer' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'Appliquer' }));
     await confirmApplyInDialog(user);
 
     await waitFor(() => {
@@ -822,9 +827,7 @@ describe('StagePage draws', () => {
     );
 
     renderStagePage();
-    await user.click(
-      await screen.findByRole('button', { name: 'Appliquer' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'Appliquer' }));
     await confirmApplyInDialog(user);
 
     const confirmDialog = await screen.findByRole('dialog', {
@@ -859,14 +862,10 @@ describe('StagePage draws', () => {
     vi.mocked(applyDraw).mockRejectedValue(new Error('Apply blocked'));
 
     renderStagePage();
-    await user.click(
-      await screen.findByRole('button', { name: 'Appliquer' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'Appliquer' }));
     await confirmApplyInDialog(user);
 
-    expect(
-      await screen.findAllByText('Apply blocked'),
-    ).not.toHaveLength(0);
+    expect(await screen.findAllByText('Apply blocked')).not.toHaveLength(0);
   });
 
   it('cancelling Apply confirmation does not call applyDraw', async () => {
@@ -887,9 +886,7 @@ describe('StagePage draws', () => {
     );
 
     renderStagePage();
-    await user.click(
-      await screen.findByRole('button', { name: 'Appliquer' }),
-    );
+    await user.click(await screen.findByRole('button', { name: 'Appliquer' }));
 
     const dialog = await screen.findByRole('dialog', {
       name: 'Appliquer le tirage ?',

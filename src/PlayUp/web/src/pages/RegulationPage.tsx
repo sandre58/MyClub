@@ -50,7 +50,6 @@ import {
   criterionLabel,
 } from './regulationRulePanels';
 import { structureDeepLink } from './structureNavigation';
-import type { StructureSectionId } from './structureHubSections';
 import './regulation.css';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -275,10 +274,10 @@ function MatchTile({ regulation }: { regulation: StructureRegulationSummary }) {
         numberOfPeriods={regulation.numberOfPeriods}
         durationPerPeriod={regulation.durationPerPeriod}
         halfTimeDuration={regulation.halfTimeDuration}
-        hasExtraTime={regulation.hasExtraTime}
+        hasExtraTime={regulation.hasExtraTime === true}
         extraTimeNumberOfPeriods={regulation.extraTimeNumberOfPeriods}
         extraTimeDurationPerPeriod={regulation.extraTimeDurationPerPeriod}
-        hasPenaltyShootout={regulation.hasPenaltyShootout}
+        hasPenaltyShootout={regulation.hasPenaltyShootout === true}
         penaltyInitialKicksPerTeam={regulation.penaltyInitialKicksPerTeam}
       />
     </FrameCard>
@@ -391,7 +390,7 @@ function PhaseTile({
     competitionId,
     stageId: stage.stageId,
   });
-  const ruleColumns = buildPhaseRuleColumns(stage, t, competitionId);
+  const ruleColumns = buildPhaseRuleColumns(stage, t);
   const personalized = isStagePersonalized(stage);
 
   return (
@@ -622,15 +621,8 @@ function buildTiePropertyItems(
 function buildPhaseRuleColumns(
   stage: StructureStageHubSummary,
   t: Translate,
-  competitionId: string,
 ): PhaseRuleColumn[] {
   const columns: PhaseRuleColumn[] = [];
-  const sectionLink = (section: StructureSectionId) =>
-    structureDeepLink({
-      competitionId,
-      stageId: stage.stageId,
-      section,
-    });
   const matchDurationOverridden = isPartOverridden(stage, 'matchDuration');
   const extraTimeOverridden = isPartOverridden(stage, 'extraTime');
   const penaltiesOverridden = isPartOverridden(stage, 'penaltyShootout');

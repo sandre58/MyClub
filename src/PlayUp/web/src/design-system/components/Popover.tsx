@@ -116,8 +116,7 @@ export function Popover({
       left = Math.max(VIEWPORT_PAD_PX, left);
 
       const spaceBelow = window.innerHeight - rect.bottom - GAP_PX;
-      const preferBelow =
-        spaceBelow >= flipThreshold || spaceBelow >= rect.top;
+      const preferBelow = spaceBelow >= flipThreshold || spaceBelow >= rect.top;
       const side: PopoverSide = preferBelow ? 'below' : 'above';
 
       const anchorCenterX = rect.left + rect.width / 2;

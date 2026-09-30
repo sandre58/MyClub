@@ -62,9 +62,7 @@ describe('resolveManualPlaceMode', () => {
 
   it('blocks occupied places without Direct', () => {
     expect(
-      resolveManualPlaceMode(
-        cupCase('S1', { entry: { entryId: 'e1' } }),
-      ),
+      resolveManualPlaceMode(cupCase('S1', { entry: { entryId: 'e1' } })),
     ).toBe('unavailable');
   });
 });

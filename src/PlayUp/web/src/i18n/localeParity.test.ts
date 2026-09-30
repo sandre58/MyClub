@@ -17,8 +17,7 @@ function parseJson(path: string): unknown {
 function leafKeys(value: unknown, prefix = ''): string[] {
   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
     return Object.entries(value as Record<string, unknown>).flatMap(
-      ([key, child]) =>
-        leafKeys(child, prefix ? `${prefix}.${key}` : key),
+      ([key, child]) => leafKeys(child, prefix ? `${prefix}.${key}` : key),
     );
   }
   return prefix ? [prefix] : [];

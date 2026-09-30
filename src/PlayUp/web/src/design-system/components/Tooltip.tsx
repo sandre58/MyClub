@@ -75,7 +75,10 @@ type Placement = {
 };
 
 function isFinePointer(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.matchMedia !== 'function'
+  ) {
     return true;
   }
   return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -291,9 +294,7 @@ function TooltipActive({
           position: 'fixed',
           top: side === 'bottom' ? rect.bottom + GAP_PX : undefined,
           bottom:
-            side === 'top'
-              ? window.innerHeight - rect.top + GAP_PX
-              : undefined,
+            side === 'top' ? window.innerHeight - rect.top + GAP_PX : undefined,
           left,
           maxWidth: MAX_WIDTH_PX,
           zIndex: 60,
@@ -467,9 +468,10 @@ function TooltipActive({
 
   const describedBy = open || present ? tooltipId : undefined;
   const childDescribed = child.props as { 'aria-describedby'?: string };
-  const mergedDescribedBy = [childDescribed['aria-describedby'], describedBy]
-    .filter(Boolean)
-    .join(' ') || undefined;
+  const mergedDescribedBy =
+    [childDescribed['aria-describedby'], describedBy]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   return (
     <>

@@ -302,9 +302,7 @@ describe('StructureDrawDialog', () => {
       );
     });
     expect(
-      await screen.findByText(
-        'Aucune résolution valide n’a pu être générée.',
-      ),
+      await screen.findByText('Aucune résolution valide n’a pu être générée.'),
     ).toBeInTheDocument();
     expect(
       screen.queryByText('Nouvelle exécution créée.'),
@@ -399,10 +397,7 @@ describe('StructureDrawDialog', () => {
     await waitFor(() => {
       expect(createAndGenerateDraw).toHaveBeenCalledWith(stageId, 'Slot');
     });
-    expect(createAndGenerateDraw).not.toHaveBeenCalledWith(
-      stageId,
-      'Pairing',
-    );
+    expect(createAndGenerateDraw).not.toHaveBeenCalledWith(stageId, 'Pairing');
   });
 
   it('disables Cup Nouveau when composition does not match Places', async () => {
@@ -556,7 +551,11 @@ describe('StructureDrawDialog', () => {
     vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
       vi.mocked(fetchStageOverview).mockResolvedValue(
         overview([cancelled], {
-          slots: occupiedSlots.map((slot) => ({ ...slot, entryId: null, displayName: null })),
+          slots: occupiedSlots.map((slot) => ({
+            ...slot,
+            entryId: null,
+            displayName: null,
+          })),
         }),
       );
       return { releasedCount: 2 };
@@ -573,7 +572,9 @@ describe('StructureDrawDialog', () => {
       await screen.findByRole('button', { name: 'Nouveau tirage' }),
     ).toBeDisabled();
 
-    await user.click(await screen.findByRole('button', { name: 'Libérer 2/2' }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Libérer 2/2' }),
+    );
     const confirmDialog = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
@@ -681,9 +682,7 @@ describe('StructureDrawDialog', () => {
   });
 
   it('shows execution tiles and unified detail for a single draw', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([groupDraw()]),
-    );
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
 
     renderDialog();
 
@@ -774,9 +773,7 @@ describe('StructureDrawDialog', () => {
     expect(screen.getAllByText('vs').length).toBe(2);
     expect(screen.queryByText('#1')).not.toBeInTheDocument();
     expect(screen.queryByText('P1')).not.toBeInTheDocument();
-    expect(
-      document.querySelector('.regulation-schematic--cup'),
-    ).toBeNull();
+    expect(document.querySelector('.regulation-schematic--cup')).toBeNull();
   });
 
   it('does not fall back to flat Place → Entry when BracketPairs cover Cup S{n}', async () => {
@@ -791,9 +788,7 @@ describe('StructureDrawDialog', () => {
           }),
         ],
         {
-          bracketPairs: [
-            { pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' },
-          ],
+          bracketPairs: [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
         },
       ),
     );
@@ -834,10 +829,14 @@ describe('StructureDrawDialog', () => {
     // One chip only ("Résolu" for draft resolved) — not the full matrix
     expect(within(tiles[0]).getByText('Résolu')).toBeInTheDocument();
     expect(within(tiles[0]).queryByText('Brouillon')).not.toBeInTheDocument();
-    expect(within(tiles[0]).queryByText('Non appliqué')).not.toBeInTheDocument();
+    expect(
+      within(tiles[0]).queryByText('Non appliqué'),
+    ).not.toBeInTheDocument();
 
     await user.click(within(history).getByText('Exécution #1'));
-    const detail = await screen.findByRole('heading', { name: 'Tirage Groupe' });
+    const detail = await screen.findByRole('heading', {
+      name: 'Tirage Groupe',
+    });
     const detailSection = detail.closest('section');
     expect(
       detailSection?.querySelector('.structure-domain-tile__toolbar'),
@@ -852,9 +851,7 @@ describe('StructureDrawDialog', () => {
 
   it('publishes and applies the selected draft draw', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([groupDraw()]),
-    );
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
     vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
 
     renderDialog();
