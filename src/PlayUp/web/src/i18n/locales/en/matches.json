@@ -10,13 +10,8 @@
     "heading": "Match calendar",
     "meta_one": "{{matches}} match · {{days}} matchday · {{stages}} stage",
     "meta_other": "{{matches}} matches · {{days}} matchdays · {{stages}} stages",
-    "columns": {
-      "match": "Match",
-      "score": "Score"
-    },
     "pending": "—",
     "live": "In progress",
-    "upcoming": "Upcoming",
     "postponed": "Postponed",
     "cancelled": "Cancelled",
     "needsResult": "Result to enter",
@@ -38,9 +33,7 @@
   },
   "needsResult": {
     "heading": "Results to enter",
-    "clear": "All clear · every result is entered.",
-    "count_one": "{{count}} match without a result",
-    "count_other": "{{count}} matches without a result"
+    "clear": "All clear · every result is entered."
   },
   "classements": {
     "heading": "Current standings",
@@ -53,8 +46,7 @@
     "noStagesBody": "Configure the competition structure first.",
     "noMatchesTitle": "No matches",
     "noMatchesBody": "Open a stage to prepare draws and create matches.",
-    "matchday": "Matchday {{number}}",
-    "vs": "vs"
+    "matchday": "Matchday {{number}}"
   },
   "stageList": {
     "eyebrow": "Matches",
@@ -69,16 +61,13 @@
   "detail": {
     "titleVs": "{{home}} vs {{away}}",
     "backToMatches": "Matches",
-    "scoreboard": "Scoreboard",
     "scoreAria": "Score {{home}} {{homeGoals}} to {{away}} {{awayGoals}}",
     "scoreCaptionOfficial": "Official result",
     "scoreCaptionLive": "Observed counter",
     "home": "Home",
     "away": "Away",
-    "liveJob": "Open live",
     "start": "Start match",
     "starting": "Starting…",
-    "startHint": "Opens live (0–0 counter). Does not record the official result.",
     "runningScore": "Counter",
     "runningScoreHint": "Score observed during live. Distinct from the official result.",
     "runningScoreLegend": "Observed counter",

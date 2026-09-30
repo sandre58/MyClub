@@ -10,13 +10,8 @@
     "heading": "Calendrier des matchs",
     "meta_one": "{{matches}} match · {{days}} journée · {{stages}} phase",
     "meta_other": "{{matches}} matchs · {{days}} journées · {{stages}} phases",
-    "columns": {
-      "match": "Match",
-      "score": "Score"
-    },
     "pending": "—",
     "live": "En cours",
-    "upcoming": "À venir",
     "postponed": "Reporté",
     "cancelled": "Annulé",
     "needsResult": "Résultat à saisir",
@@ -38,9 +33,7 @@
   },
   "needsResult": {
     "heading": "Résultats à saisir",
-    "clear": "RAS · tous les résultats sont saisis.",
-    "count_one": "{{count}} match sans résultat",
-    "count_other": "{{count}} matchs sans résultat"
+    "clear": "RAS · tous les résultats sont saisis."
   },
   "classements": {
     "heading": "Classement actuel",
@@ -53,8 +46,7 @@
     "noStagesBody": "Configurez d’abord la structure de la compétition.",
     "noMatchesTitle": "Aucun match",
     "noMatchesBody": "Ouvrez une phase pour préparer les tirages et créer les matchs.",
-    "matchday": "Journée {{number}}",
-    "vs": "vs"
+    "matchday": "Journée {{number}}"
   },
   "stageList": {
     "eyebrow": "Matchs",
@@ -69,16 +61,13 @@
   "detail": {
     "titleVs": "{{home}} vs {{away}}",
     "backToMatches": "Matchs",
-    "scoreboard": "Tableau d’affichage",
     "scoreAria": "Score {{home}} {{homeGoals}} à {{away}} {{awayGoals}}",
     "scoreCaptionOfficial": "Résultat officiel",
     "scoreCaptionLive": "Compteur observé",
     "home": "Domicile",
     "away": "Extérieur",
-    "liveJob": "Ouvrir le live",
     "start": "Démarrer le match",
     "starting": "Démarrage…",
-    "startHint": "Ouvre le live (compteur 0–0). N’enregistre pas le résultat officiel.",
     "runningScore": "Compteur",
     "runningScoreHint": "Score observé pendant le live. Distinct du résultat officiel.",
     "runningScoreLegend": "Compteur observé",
