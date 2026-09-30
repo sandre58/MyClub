@@ -20,7 +20,6 @@ import {
   ListMinus,
   ListOrdered,
   ListPlus,
-  Lock,
   Minus,
   Medal,
   Network,
@@ -153,16 +152,6 @@ export function DrawPendingIcon({ size, ...props }: ContentIconProps) {
 /** Draw — configuration (aligned with Regulation Shuffle). */
 export function DrawConfigIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Shuffle} size={size} {...props} />;
-}
-
-/** Seeds. */
-export function SeedsIcon({ size, ...props }: ContentIconProps) {
-  return <LucideIcon icon={Medal} size={size} {...props} />;
-}
-
-/** Draw constraints. */
-export function DrawConstraintIcon({ size, ...props }: ContentIconProps) {
-  return <LucideIcon icon={Lock} size={size} {...props} />;
 }
 
 /** Random draw. */

@@ -30,8 +30,6 @@ export const I18N_NAMESPACES = [
   'errors',
 ] as const;
 
-export type I18nNamespace = (typeof I18N_NAMESPACES)[number];
-
 export function isSupportedLocale(value: string): value is SupportedLocale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }

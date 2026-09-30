@@ -93,10 +93,6 @@
   gap: var(--space-12);
 }
 
-.ds-stack--sections {
-  gap: var(--space-32);
-}
-
 .ds-row {
   display: flex;
   flex-wrap: wrap;

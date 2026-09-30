@@ -81,12 +81,6 @@ a:hover {
   gap: var(--space-24);
 }
 
-.lede {
-  max-width: 52ch;
-  color: var(--color-text-secondary);
-  font-size: 1.0625rem;
-}
-
 .caption {
   color: var(--color-text-secondary);
   font-size: var(--text-label);

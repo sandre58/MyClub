@@ -14,9 +14,7 @@ import type {
   OverviewView,
   RemoveCompetitionStageResponse,
   ReplaceRegulationRequest,
-  SetCompetitionScheduleRequest,
   StructureView,
-  UpdateCompetitionPresentationRequest,
   WorkspaceSummary,
 } from '../types';
 import { getJson, postNoContent, sendJson } from './http';
@@ -69,26 +67,6 @@ export function fetchNeedsAttention(
   competitionId: string,
 ): Promise<NeedsAttention> {
   return getJson(`/competitions/${competitionId}/attention`);
-}
-
-/** POST /competitions/{id}/presentation → StructureView */
-export function updateCompetitionPresentation(
-  competitionId: string,
-  request: UpdateCompetitionPresentationRequest,
-): Promise<StructureView> {
-  return sendJson(
-    'POST',
-    `/competitions/${competitionId}/presentation`,
-    request,
-  );
-}
-
-/** POST /competitions/{id}/schedule → StructureView */
-export function setCompetitionSchedule(
-  competitionId: string,
-  request: SetCompetitionScheduleRequest,
-): Promise<StructureView> {
-  return sendJson('POST', `/competitions/${competitionId}/schedule`, request);
 }
 
 /** PUT /competitions/{id}/regulation → StructureView */

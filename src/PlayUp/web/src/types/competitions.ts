@@ -113,18 +113,6 @@ export interface AddEntryRequest {
   secondaryColor?: string | null;
 }
 
-/** POST /competitions/{id}/presentation */
-export interface UpdateCompetitionPresentationRequest {
-  shortName: string | null;
-  logoMediaId: string | null;
-}
-
-/** POST /competitions/{id}/schedule */
-export interface SetCompetitionScheduleRequest {
-  scheduledStart: string | null;
-  scheduledEnd: string | null;
-}
-
 /** POST .../entries/{entryId}/presentation */
 export interface UpdateEntryPresentationRequest {
   shortName: string;

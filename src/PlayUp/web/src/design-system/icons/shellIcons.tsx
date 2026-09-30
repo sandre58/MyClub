@@ -129,11 +129,6 @@ export function ChevronUpIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={ChevronUp} size={size} {...props} />;
 }
 
-/** Situation mark — alert triangle (attention drawer rows). */
-export function AttentionMarkIcon({ size, ...props }: ShellIconProps) {
-  return AttentionIcon({ size, ...props });
-}
-
 /** Theme preference — follow OS. */
 export function ThemeSystemIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={Monitor} size={size} {...props} />;

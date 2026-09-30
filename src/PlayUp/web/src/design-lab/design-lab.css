@@ -536,23 +536,6 @@
   justify-content: flex-end;
 }
 
-.dlab-editor__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-16);
-  align-items: start;
-}
-
-.dlab-editor__triple {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-12) var(--space-16);
-}
-
-.dlab-editor__add {
-  margin-block-start: var(--space-12);
-}
-
 .dlab-editor__switch-row {
   display: flex;
   align-items: center;
@@ -571,13 +554,6 @@
   border: none;
   cursor: pointer;
   font: inherit;
-}
-
-@media (max-width: 960px) {
-  .dlab-editor__grid,
-  .dlab-editor__triple {
-    grid-template-columns: 1fr;
-  }
 }
 
 .dlab-dialog {

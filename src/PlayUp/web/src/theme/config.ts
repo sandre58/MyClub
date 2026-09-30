@@ -14,7 +14,3 @@ export type ResolvedTheme = (typeof RESOLVED_THEMES)[number];
 export function isThemePreference(value: string): value is ThemePreference {
   return (THEME_PREFERENCES as readonly string[]).includes(value);
 }
-
-export function isResolvedTheme(value: string): value is ResolvedTheme {
-  return (RESOLVED_THEMES as readonly string[]).includes(value);
-}

@@ -346,16 +346,6 @@
   gap: var(--space-16);
 }
 
-.overview-structure-format {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: 1.75rem;
-  font-weight: var(--font-weight-bold);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
 .overview-game-facts {
   margin: 0;
   padding: 0;

@@ -8,17 +8,6 @@
  * this stack is only for dismiss coordination.
  */
 
-export type DismissLayer = {
-  id: string;
-  onDismiss: () => void;
-  /**
-   * When false, skipped when resolving Escape (next enabled layer below wins).
-   * Prefer leaving enabled and no-opping `onDismiss` when Escape must be
-   * consumed without side effects (e.g. Dialog `closeDisabled`).
-   */
-  enabled?: boolean;
-};
-
 type StackEntry = {
   id: string;
   onDismiss: () => void;
@@ -110,9 +99,4 @@ export function __resetDismissStackForTests() {
 /** @internal — tests only */
 export function __dismissStackDepthForTests() {
   return stack.length;
-}
-
-/** @internal — tests only */
-export function __dismissStackEnabledDepthForTests() {
-  return stack.filter((entry) => entry.enabled).length;
 }

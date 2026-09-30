@@ -13,8 +13,6 @@ export {
   fetchStructureView,
   fetchConsultation,
   fetchNeedsAttention,
-  updateCompetitionPresentation,
-  setCompetitionSchedule,
   replaceCompetitionRegulation,
   configureStructure,
   addCompetitionStage,
