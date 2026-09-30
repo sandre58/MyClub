@@ -11,10 +11,7 @@ import {
 } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  fetchStageSchematic,
-  replaceStageQualificationRules,
-} from '../api';
+import { fetchStageSchematic, replaceStageQualificationRules } from '../api';
 import { Alert } from '../design-system/components/Alert';
 import { ChoiceTile } from '../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../design-system/components/ConfirmDialog';
@@ -39,10 +36,7 @@ import {
   SwissFormatIcon,
   TrashIcon,
 } from '../design-system/icons/contentIcons';
-import {
-  ChevronDownIcon,
-  CloseIcon,
-} from '../design-system/icons/shellIcons';
+import { ChevronDownIcon, CloseIcon } from '../design-system/icons/shellIcons';
 import { notify } from '../design-system/toastStore';
 import { useDiscardConfirm } from '../design-system/useDiscardConfirm';
 import { queryKeys } from '../queryKeys';
@@ -391,8 +385,7 @@ export function StructureQualificationDialog({
   const canSave = !mutation.isPending && intentsComplete;
 
   const unmappedPlaceSlots = useMemo(
-    () =>
-      sessionReady ? countUnmappedPlaceSlots(intents, groups) : 0,
+    () => (sessionReady ? countUnmappedPlaceSlots(intents, groups) : 0),
     [intents, groups, sessionReady],
   );
 
@@ -470,9 +463,7 @@ export function StructureQualificationDialog({
 
   function updateIntent(next: QualIntentDraft) {
     setIntents((prev) =>
-      prev.map((i) =>
-        i.id === next.id ? syncPlaceSlotKeys(next, groups) : i,
-      ),
+      prev.map((i) => (i.id === next.id ? syncPlaceSlotKeys(next, groups) : i)),
     );
   }
 
@@ -567,214 +558,213 @@ export function StructureQualificationDialog({
           </>
         }
       >
-      <div className="structure-qualification">
-        <div
-          className="structure-qualification__summary"
-          aria-live="polite"
-        >
-          <div className="structure-qualification__facts">
-            <div className="structure-qualification__fact structure-qualification__fact--secondary">
-              <span className="structure-qualification__fact-value">
-                {sessionReady ? intentCount : '—'}
-              </span>
-              <span className="structure-qualification__fact-label">
-                {t('qualification.factIntents', { count: intentCount })}
-              </span>
+        <div className="structure-qualification">
+          <div className="structure-qualification__summary" aria-live="polite">
+            <div className="structure-qualification__facts">
+              <div className="structure-qualification__fact structure-qualification__fact--secondary">
+                <span className="structure-qualification__fact-value">
+                  {sessionReady ? intentCount : '—'}
+                </span>
+                <span className="structure-qualification__fact-label">
+                  {t('qualification.factIntents', { count: intentCount })}
+                </span>
+              </div>
+              <span
+                className="structure-qualification__fact-rule"
+                aria-hidden="true"
+              />
+              <div className="structure-qualification__fact structure-qualification__fact--primary">
+                <span className="structure-qualification__fact-value">
+                  {sessionReady ? entryTotal : '—'}
+                </span>
+                <span className="structure-qualification__fact-label">
+                  {t('qualification.factEntries', { count: entryTotal })}
+                </span>
+              </div>
             </div>
-            <span
-              className="structure-qualification__fact-rule"
-              aria-hidden="true"
-            />
-            <div className="structure-qualification__fact structure-qualification__fact--primary">
-              <span className="structure-qualification__fact-value">
-                {sessionReady ? entryTotal : '—'}
-              </span>
-              <span className="structure-qualification__fact-label">
-                {t('qualification.factEntries', { count: entryTotal })}
-              </span>
-            </div>
+            <button
+              type="button"
+              className="ds-btn ds-btn--primary"
+              disabled={
+                !sessionReady || peerStages.length === 0 || mutation.isPending
+              }
+              onClick={addIntent}
+            >
+              <PlusIcon size="sm" />
+              <span>{t('qualification.add')}</span>
+            </button>
           </div>
-          <button
-            type="button"
-            className="ds-btn ds-btn--primary"
-            disabled={
-              !sessionReady || peerStages.length === 0 || mutation.isPending
-            }
-            onClick={addIntent}
-          >
-            <PlusIcon size="sm" />
-            <span>{t('qualification.add')}</span>
-          </button>
-        </div>
 
-        {!sessionReady ? (
-          <LoadingState size="region" />
-        ) : peerStages.length === 0 ? (
-          <EmptyState
-            variant="idle"
-            icon={<StructureIcon size="lg" />}
-            title={t('qualification.emptyNoPeerTitle')}
-          >
-            {t('qualification.emptyNoPeerBody')}
-          </EmptyState>
-        ) : intents.length === 0 ? (
-          <EmptyState
-            variant="idle"
-            icon={<EmptySelectionIcon size="lg" />}
-            title={t('qualification.emptyTitle')}
-          >
-            {t('qualification.emptyBody')}
-          </EmptyState>
-        ) : (
-        <ul className="structure-qualification__list">
-          {intents.map((intent) => {
-            const isExpanded = expandedId === intent.id;
-            const who =
-              summarizeIntentWho(intent, locale, t) ||
-              t('qualification.newPath');
-            const destName =
-              stageNameById.get(intent.destinationStageId) ??
-              intent.destinationStageId;
-            const occCount = expandOccurrences(intent, groups).length;
-            const filledSlots = (
-              placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
-            ).filter((k) => k.trim());
-            const where =
-              intent.targetKind === 'place' &&
-              intent.destinationStageId.trim()
-                ? t('qualification.summary.wherePlaceMapped', {
-                    phase: destName,
-                    filled: filledSlots.length,
-                    count: occCount,
-                  })
-                : intent.targetKind === 'place'
-                  ? t('qualification.summary.wherePlaceFallback')
-                  : intent.destinationStageId.trim() && occCount > 0
-                    ? t('qualification.summary.whereCount', {
+          {!sessionReady ? (
+            <LoadingState size="region" />
+          ) : peerStages.length === 0 ? (
+            <EmptyState
+              variant="idle"
+              icon={<StructureIcon size="lg" />}
+              title={t('qualification.emptyNoPeerTitle')}
+            >
+              {t('qualification.emptyNoPeerBody')}
+            </EmptyState>
+          ) : intents.length === 0 ? (
+            <EmptyState
+              variant="idle"
+              icon={<EmptySelectionIcon size="lg" />}
+              title={t('qualification.emptyTitle')}
+            >
+              {t('qualification.emptyBody')}
+            </EmptyState>
+          ) : (
+            <ul className="structure-qualification__list">
+              {intents.map((intent) => {
+                const isExpanded = expandedId === intent.id;
+                const who =
+                  summarizeIntentWho(intent, locale, t) ||
+                  t('qualification.newPath');
+                const destName =
+                  stageNameById.get(intent.destinationStageId) ??
+                  intent.destinationStageId;
+                const occCount = expandOccurrences(intent, groups).length;
+                const filledSlots = (
+                  placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
+                ).filter((k) => k.trim());
+                const where =
+                  intent.targetKind === 'place' &&
+                  intent.destinationStageId.trim()
+                    ? t('qualification.summary.wherePlaceMapped', {
                         phase: destName,
+                        filled: filledSlots.length,
                         count: occCount,
                       })
-                    : null;
-            const incompleteReason = incompleteIntentReason(
-              intent,
-              groups,
-              placesLabeledFor(intent),
-              intents,
-            );
-            const statusMessage =
-              incompleteReason == null
-                ? null
-                : t(`qualification.incompleteHint${incompleteReason}`);
-            const sourceDuplicate = hasDuplicateSourceOccurrence(
-              intent,
-              intents,
-              groups,
-            );
+                    : intent.targetKind === 'place'
+                      ? t('qualification.summary.wherePlaceFallback')
+                      : intent.destinationStageId.trim() && occCount > 0
+                        ? t('qualification.summary.whereCount', {
+                            phase: destName,
+                            count: occCount,
+                          })
+                        : null;
+                const incompleteReason = incompleteIntentReason(
+                  intent,
+                  groups,
+                  placesLabeledFor(intent),
+                  intents,
+                );
+                const statusMessage =
+                  incompleteReason == null
+                    ? null
+                    : t(`qualification.incompleteHint${incompleteReason}`);
+                const sourceDuplicate = hasDuplicateSourceOccurrence(
+                  intent,
+                  intents,
+                  groups,
+                );
 
-            return (
-              <li key={intent.id} className="structure-qualification__item">
-                <div
-                  className="structure-qualification__card ds-selectable-tile"
-                  data-selected={isExpanded ? 'true' : 'false'}
-                >
-                  <div className="structure-qualification__hit">
-                    <button
-                      type="button"
-                      className="structure-qualification__row"
-                      onClick={() => toggleRow(intent)}
-                      aria-expanded={isExpanded}
+                return (
+                  <li key={intent.id} className="structure-qualification__item">
+                    <div
+                      className="structure-qualification__card ds-selectable-tile"
+                      data-selected={isExpanded ? 'true' : 'false'}
                     >
-                      <span
-                        className="structure-qualification__scope-icon"
-                        aria-hidden="true"
-                      >
-                        {scopeKindIcon(intent.sourceKind, 'lg')}
-                      </span>
-                      <span className="structure-qualification__copy">
-                        <span className="structure-qualification__who-row">
-                          {incompleteReason != null && statusMessage ? (
-                            <Tooltip content={statusMessage}>
-                              <span
-                                className="structure-qualification__blocking-mark"
-                                aria-hidden="true"
-                              >
-                                <ToastToneIcon tone="error" size="sm" />
-                              </span>
-                            </Tooltip>
-                          ) : null}
-                          {sourceDuplicate ? (
-                            <Tooltip
-                              content={t('qualification.duplicateTooltip')}
-                            >
-                              <span
-                                className="structure-qualification__dup-mark"
-                                aria-hidden="true"
-                              >
-                                <OverviewAttentionIcon size="sm" />
-                              </span>
-                            </Tooltip>
-                          ) : null}
-                          <span className="structure-qualification__who">
-                            {who}
+                      <div className="structure-qualification__hit">
+                        <button
+                          type="button"
+                          className="structure-qualification__row"
+                          onClick={() => toggleRow(intent)}
+                          aria-expanded={isExpanded}
+                        >
+                          <span
+                            className="structure-qualification__scope-icon"
+                            aria-hidden="true"
+                          >
+                            {scopeKindIcon(intent.sourceKind, 'lg')}
                           </span>
-                        </span>
-                        {where ? (
-                          <span className="structure-qualification__where">
-                            {where}
+                          <span className="structure-qualification__copy">
+                            <span className="structure-qualification__who-row">
+                              {incompleteReason != null && statusMessage ? (
+                                <Tooltip content={statusMessage}>
+                                  <span
+                                    className="structure-qualification__blocking-mark"
+                                    aria-hidden="true"
+                                  >
+                                    <ToastToneIcon tone="error" size="sm" />
+                                  </span>
+                                </Tooltip>
+                              ) : null}
+                              {sourceDuplicate ? (
+                                <Tooltip
+                                  content={t('qualification.duplicateTooltip')}
+                                >
+                                  <span
+                                    className="structure-qualification__dup-mark"
+                                    aria-hidden="true"
+                                  >
+                                    <OverviewAttentionIcon size="sm" />
+                                  </span>
+                                </Tooltip>
+                              ) : null}
+                              <span className="structure-qualification__who">
+                                {who}
+                              </span>
+                            </span>
+                            {where ? (
+                              <span className="structure-qualification__where">
+                                {where}
+                              </span>
+                            ) : null}
                           </span>
-                        ) : null}
-                      </span>
-                      <span
-                        className={[
-                          'structure-qualification__chevron',
-                          isExpanded
-                            ? 'structure-qualification__chevron--open'
-                            : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                        aria-hidden="true"
-                      >
-                        <ChevronDownIcon size="sm" />
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      className="ds-btn ds-btn--ghost ds-btn--destructive ds-icon-button structure-qualification__trash"
-                      aria-label={t('qualification.remove')}
-                      disabled={mutation.isPending}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        removeIntent(intent.id);
-                      }}
-                    >
-                      <TrashIcon size="sm" />
-                    </button>
-                  </div>
+                          <span
+                            className={[
+                              'structure-qualification__chevron',
+                              isExpanded
+                                ? 'structure-qualification__chevron--open'
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                            aria-hidden="true"
+                          >
+                            <ChevronDownIcon size="sm" />
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost ds-btn--destructive ds-icon-button structure-qualification__trash"
+                          aria-label={t('qualification.remove')}
+                          disabled={mutation.isPending}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeIntent(intent.id);
+                          }}
+                        >
+                          <TrashIcon size="sm" />
+                        </button>
+                      </div>
 
-                  {isExpanded ? (
-                    <div className="structure-qualification__panel">
-                      <QualIntentEditor
-                        draft={intent}
-                        data={data}
-                        sourceStageId={stage.stageId}
-                        groups={groups}
-                        hasGroups={hasGroups}
-                        peerStages={peerStages}
-                        draftEntriesByDestination={draftEntriesByDestination}
-                        locale={locale}
-                        onChange={updateIntent}
-                      />
+                      {isExpanded ? (
+                        <div className="structure-qualification__panel">
+                          <QualIntentEditor
+                            draft={intent}
+                            data={data}
+                            sourceStageId={stage.stageId}
+                            groups={groups}
+                            hasGroups={hasGroups}
+                            peerStages={peerStages}
+                            draftEntriesByDestination={
+                              draftEntriesByDestination
+                            }
+                            locale={locale}
+                            onChange={updateIntent}
+                          />
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-        )}
-      </div>
-    </Dialog>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </Dialog>
 
       <ConfirmDialog
         open={discardOpen}
@@ -1043,453 +1033,482 @@ function QualIntentEditor({
         feedsLabel={t('qualification.feeds')}
         source={
           <>
-      <div
-        className="structure-qualification__scope-tiles"
-        data-count={String(scopeOptions.length)}
-        role="radiogroup"
-        aria-label={t('qualification.scope')}
-      >
-        {scopeOptions.map(({ value, labelKey, descriptionKey }) => {
-          const selected =
-            value === 'EachGroup'
-              ? groupTileSelected
-              : draft.sourceKind === value;
-          return (
-            <ChoiceTile
-              key={value}
-              label={t(`qualification.${labelKey}`)}
-              description={t(`qualification.${descriptionKey}`)}
-              leading={scopeKindIcon(value)}
-              selected={selected}
-              onChange={(sel) => {
-                if (!sel) return;
-                if (value === 'EachGroup') {
-                  onChange({
-                    ...draft,
-                    sourceKind: 'EachGroup',
-                    groupId: '',
-                    groupName: '',
-                  });
-                } else {
-                  onChange({
-                    ...draft,
-                    sourceKind: value,
-                    groupId: '',
-                    groupName: '',
-                  });
-                }
-              }}
-            />
-          );
-        })}
-      </div>
+            <div
+              className="structure-qualification__scope-tiles"
+              data-count={String(scopeOptions.length)}
+              role="radiogroup"
+              aria-label={t('qualification.scope')}
+            >
+              {scopeOptions.map(({ value, labelKey, descriptionKey }) => {
+                const selected =
+                  value === 'EachGroup'
+                    ? groupTileSelected
+                    : draft.sourceKind === value;
+                return (
+                  <ChoiceTile
+                    key={value}
+                    label={t(`qualification.${labelKey}`)}
+                    description={t(`qualification.${descriptionKey}`)}
+                    leading={scopeKindIcon(value)}
+                    selected={selected}
+                    onChange={(sel) => {
+                      if (!sel) return;
+                      if (value === 'EachGroup') {
+                        onChange({
+                          ...draft,
+                          sourceKind: 'EachGroup',
+                          groupId: '',
+                          groupName: '',
+                        });
+                      } else {
+                        onChange({
+                          ...draft,
+                          sourceKind: value,
+                          groupId: '',
+                          groupName: '',
+                        });
+                      }
+                    }}
+                  />
+                );
+              })}
+            </div>
 
-      {draft.sourceKind === 'AcrossGroups' ? (
-        <div className="structure-qualification__fields">
-          <Field
-            label={t('qualification.acrossPlace')}
-            message={t('qualification.acrossPlaceHint', {
-              place: ordinalRank(
-                Math.max(parsePositiveInt(draft.acrossGroupsPosition) ?? 1, 1),
-                locale,
-              ),
-            })}
-            htmlFor={acrossId}
-            className="structure-qualification__control-sm"
-          >
-            <InputNumber
-              id={acrossId}
-              min={1}
-              value={parsePositiveInt(draft.acrossGroupsPosition)}
-              controlsLayout="split"
-              onChange={(value) =>
-                onChange({
-                  ...draft,
-                  acrossGroupsPosition: value != null ? String(value) : '',
-                })
-              }
-            />
-          </Field>
-          <PositionFields
-            draft={draft}
-            fromId={fromId}
-            toId={toId}
-            onChange={onChange}
-            singleLabel={t('qualification.position')}
-            rangeLabel={t('qualification.positions')}
-            message={
-              draft.positionFrom === draft.positionTo
-                ? t('qualification.acrossAmongHintOne', {
-                    rank: ordinalRank(
-                      Math.max(parsePositiveInt(draft.positionFrom) ?? 1, 1),
+            {draft.sourceKind === 'AcrossGroups' ? (
+              <div className="structure-qualification__fields">
+                <Field
+                  label={t('qualification.acrossPlace')}
+                  message={t('qualification.acrossPlaceHint', {
+                    place: ordinalRank(
+                      Math.max(
+                        parsePositiveInt(draft.acrossGroupsPosition) ?? 1,
+                        1,
+                      ),
                       locale,
                     ),
-                  })
-                : t('qualification.acrossAmongHintRange', {
-                    from: ordinalRank(
-                      Math.max(parsePositiveInt(draft.positionFrom) ?? 1, 1),
-                      locale,
-                    ),
-                    to: ordinalRank(
-                      Math.max(parsePositiveInt(draft.positionTo) ?? 1, 1),
-                      locale,
-                    ),
-                  })
-            }
-          />
-        </div>
-      ) : groupTileSelected && hasGroups ? (
-        <div className="structure-qualification__fields">
-          <Field label={t('qualification.group')}>
-            <Select
-              options={[
-                {
-                  value: '',
-                  label: t('qualification.eachGroup'),
-                },
-                ...groups.map((g) => ({ value: g.id, label: g.name })),
-              ]}
-              value={
-                draft.sourceKind === 'SingleGroup' ? draft.groupId || null : ''
-              }
-              placeholder={t('qualification.eachGroup')}
-              onChange={(value) => {
-                const id = value ?? '';
-                if (!id) {
-                  onChange({
-                    ...draft,
-                    sourceKind: 'EachGroup',
-                    groupId: '',
-                    groupName: '',
-                  });
-                  return;
-                }
-                onChange({
-                  ...draft,
-                  sourceKind: 'SingleGroup',
-                  groupId: id,
-                  groupName: groups.find((g) => g.id === id)?.name ?? '',
-                });
-              }}
-            />
-          </Field>
-          <PositionFields
-            draft={draft}
-            fromId={fromId}
-            toId={toId}
-            onChange={onChange}
-          />
-        </div>
-      ) : (
-        <PositionFields
-          draft={draft}
-          fromId={fromId}
-          toId={toId}
-          onChange={onChange}
-        />
-      )}
+                  })}
+                  htmlFor={acrossId}
+                  className="structure-qualification__control-sm"
+                >
+                  <InputNumber
+                    id={acrossId}
+                    min={1}
+                    value={parsePositiveInt(draft.acrossGroupsPosition)}
+                    controlsLayout="split"
+                    onChange={(value) =>
+                      onChange({
+                        ...draft,
+                        acrossGroupsPosition:
+                          value != null ? String(value) : '',
+                      })
+                    }
+                  />
+                </Field>
+                <PositionFields
+                  draft={draft}
+                  fromId={fromId}
+                  toId={toId}
+                  onChange={onChange}
+                  singleLabel={t('qualification.position')}
+                  rangeLabel={t('qualification.positions')}
+                  message={
+                    draft.positionFrom === draft.positionTo
+                      ? t('qualification.acrossAmongHintOne', {
+                          rank: ordinalRank(
+                            Math.max(
+                              parsePositiveInt(draft.positionFrom) ?? 1,
+                              1,
+                            ),
+                            locale,
+                          ),
+                        })
+                      : t('qualification.acrossAmongHintRange', {
+                          from: ordinalRank(
+                            Math.max(
+                              parsePositiveInt(draft.positionFrom) ?? 1,
+                              1,
+                            ),
+                            locale,
+                          ),
+                          to: ordinalRank(
+                            Math.max(
+                              parsePositiveInt(draft.positionTo) ?? 1,
+                              1,
+                            ),
+                            locale,
+                          ),
+                        })
+                  }
+                />
+              </div>
+            ) : groupTileSelected && hasGroups ? (
+              <div className="structure-qualification__fields">
+                <Field label={t('qualification.group')}>
+                  <Select
+                    options={[
+                      {
+                        value: '',
+                        label: t('qualification.eachGroup'),
+                      },
+                      ...groups.map((g) => ({ value: g.id, label: g.name })),
+                    ]}
+                    value={
+                      draft.sourceKind === 'SingleGroup'
+                        ? draft.groupId || null
+                        : ''
+                    }
+                    placeholder={t('qualification.eachGroup')}
+                    onChange={(value) => {
+                      const id = value ?? '';
+                      if (!id) {
+                        onChange({
+                          ...draft,
+                          sourceKind: 'EachGroup',
+                          groupId: '',
+                          groupName: '',
+                        });
+                        return;
+                      }
+                      onChange({
+                        ...draft,
+                        sourceKind: 'SingleGroup',
+                        groupId: id,
+                        groupName: groups.find((g) => g.id === id)?.name ?? '',
+                      });
+                    }}
+                  />
+                </Field>
+                <PositionFields
+                  draft={draft}
+                  fromId={fromId}
+                  toId={toId}
+                  onChange={onChange}
+                />
+              </div>
+            ) : (
+              <PositionFields
+                draft={draft}
+                fromId={fromId}
+                toId={toId}
+                onChange={onChange}
+              />
+            )}
 
-      <div className="structure-qualification__fields">
-        <Field label={t('qualification.condition')}>
-          <Select
-            options={[
-              { value: 'none', label: t('qualification.conditionNone') },
-              { value: 'points', label: t('qualification.conditionPoints') },
-            ]}
-            value={draft.conditionKind}
-            onChange={(value) =>
-              onChange({
-                ...draft,
-                conditionKind: (value as 'none' | 'points') ?? 'none',
-                minimumPoints:
-                  value === 'points' ? draft.minimumPoints || '0' : '',
-              })
-            }
-          />
-        </Field>
-        {draft.conditionKind === 'points' ? (
-          <Field
-            label={t('qualification.minimumPoints')}
-            htmlFor={pointsId}
-            width="sm"
-          >
-            <InputNumber
-              id={pointsId}
-              min={0}
-              value={
-                draft.minimumPoints.trim() === ''
-                  ? null
-                  : Number(draft.minimumPoints)
-              }
-              controlsLayout="split"
-              onChange={(value) =>
-                onChange({
-                  ...draft,
-                  minimumPoints: value != null ? String(value) : '',
-                })
-              }
-            />
-          </Field>
-        ) : null}
-      </div>
+            <div className="structure-qualification__fields">
+              <Field label={t('qualification.condition')}>
+                <Select
+                  options={[
+                    { value: 'none', label: t('qualification.conditionNone') },
+                    {
+                      value: 'points',
+                      label: t('qualification.conditionPoints'),
+                    },
+                  ]}
+                  value={draft.conditionKind}
+                  onChange={(value) =>
+                    onChange({
+                      ...draft,
+                      conditionKind: (value as 'none' | 'points') ?? 'none',
+                      minimumPoints:
+                        value === 'points' ? draft.minimumPoints || '0' : '',
+                    })
+                  }
+                />
+              </Field>
+              {draft.conditionKind === 'points' ? (
+                <Field
+                  label={t('qualification.minimumPoints')}
+                  htmlFor={pointsId}
+                  width="sm"
+                >
+                  <InputNumber
+                    id={pointsId}
+                    min={0}
+                    value={
+                      draft.minimumPoints.trim() === ''
+                        ? null
+                        : Number(draft.minimumPoints)
+                    }
+                    controlsLayout="split"
+                    onChange={(value) =>
+                      onChange({
+                        ...draft,
+                        minimumPoints: value != null ? String(value) : '',
+                      })
+                    }
+                  />
+                </Field>
+              ) : null}
+            </div>
           </>
         }
         destination={
           <>
-      {peerStages.length === 0 ? (
-        <p className="structure-qualification__field-hint" role="status">
-          {t('qualification.emptyNoPeerBody')}
-        </p>
-      ) : (
-        <div
-          className="structure-qualification__scope-tiles"
-          data-count={String(Math.min(peerStages.length, 3))}
-          role="radiogroup"
-          aria-label={t('qualification.destinationPhase')}
-        >
-          {peerStages.map((peer) => {
-            const draftTotal =
-              draftEntriesByDestination.get(peer.stageId) ?? 0;
-            const draftThisIntent =
-              draft.destinationStageId.trim() === peer.stageId
-                ? expandOccurrences(draft, groups).length
-                : 0;
-            const capacity = peer.compositionCapacity;
-            const expected =
-              capacity != null && capacity > 0
-                ? expectedPopulationWithQualDraft({
-                    data,
-                    destination: peer,
-                    sourceStageId,
-                    draftQualVolume: draftTotal,
-                  })
-                : null;
-            const description =
-              expected != null && capacity != null && capacity > 0 ? (
-                <DestinationDraftMeter
-                  count={expected}
-                  capacity={capacity}
-                  draft={draftThisIntent}
-                  label={t('qualification.tileContribution', {
-                    count: expected,
-                    capacity,
-                  })}
-                  draftLabel={t('qualification.tileContributionDraft', {
-                    count: draftThisIntent,
-                  })}
-                  ariaLabel={t('qualification.tileContributionAria', {
-                    phase: peer.name,
-                    count: expected,
-                    capacity,
-                    draft: draftThisIntent,
-                  })}
-                />
-              ) : draftThisIntent > 0 ? (
-                t('qualification.tileContributionEntries', {
-                  count: draftThisIntent,
-                })
-              ) : undefined;
-            return (
-              <ChoiceTile
-                key={peer.stageId}
-                label={peer.name}
-                description={description}
-                leading={stageFormatIcon(peer.formatKind)}
-                selected={draft.destinationStageId === peer.stageId}
-                onChange={(selected) => {
-                  if (!selected) return;
-                  setDestination(peer);
-                }}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {showKindChoice && destStageId ? (
-      <div
-        className="structure-qualification__scope-tiles"
-        data-count="2"
-        role="radiogroup"
-        aria-label={t('qualification.destinationKind')}
-      >
-        <ChoiceTile
-          label={t('qualification.kindPopulation')}
-          description={t('qualification.kindPopulationHint')}
-          leading={<StructureIcon size="sm" />}
-          selected={draft.targetKind === 'population'}
-          onChange={(selected) => {
-            if (!selected) return;
-            setTargetKind('population');
-          }}
-        />
-        <ChoiceTile
-          label={t('qualification.kindPlace')}
-          description={t('qualification.kindPlaceHint')}
-          leading={<CupFormatIcon size="sm" />}
-          selected={draft.targetKind === 'place'}
-          onChange={(selected) => {
-            if (!selected) return;
-            setTargetKind('place');
-          }}
-        />
-      </div>
-      ) : null}
-
-      {draft.targetKind === 'place' &&
-      !formOnly &&
-      destStageId &&
-      placeGrain !== 'form' ? (
-        destSchematicQuery.isLoading ? (
-          <ul
-            className="structure-qualification__place-map structure-qualification__place-map--skeleton"
-            aria-busy="true"
-            aria-label={tCommon('loading')}
-          >
-            {Array.from({
-              length: Math.max(placeOccurrences.length, 3),
-            }).map((_, index) => (
-              <li key={`skel-${index}`} aria-hidden="true">
-                <span className="structure-qualification__place-map-skel-label" />
-                <span className="structure-qualification__place-map-skel-control" />
-              </li>
-            ))}
-          </ul>
-        ) : placeUnavailable || !placesLabeled ? (
-          <p className="structure-qualification__field-hint" role="status">
-            {t('qualification.emptyNoPlacePeerBody')}
-          </p>
-        ) : labeledPlaces.length === 0 ? (
-          <p className="structure-qualification__field-hint" role="status">
-            {t('qualification.placeEmpty')}
-          </p>
-        ) : placeOccurrences.length === 0 ? (
-          <p className="structure-qualification__field-hint" role="status">
-            {t('qualification.placeMapEmptySelection')}
-          </p>
-        ) : (
-          <div className="structure-qualification__place-map-block">
-            <div className="structure-qualification__place-map-toolbar">
-              {peerStages.length > 0 ? (
-                <p className="structure-qualification__place-map-heading">
-                  {t('qualification.placeMapHeading')}
-                </p>
-              ) : null}
-              <span className="structure-qualification__place-fill">
-                <span
-                  id={placeFillHintId}
-                  className="ds-visually-hidden"
-                >
-                  {t('qualification.placeFillHint')}
-                </span>
-                <Tooltip content={t('qualification.placeFillHint')}>
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--ghost"
-                    aria-describedby={placeFillHintId}
-                    disabled={(() => {
-                      const emptyCount = placeSlotKeys.filter(
-                        (k) => !k.trim(),
-                      ).length;
-                      if (emptyCount === 0) return true;
-                      if (labeledPlaces.length === 0) return true;
-                      if (placeGrain === 'group') return false;
-                      const used = new Set(
-                        placeSlotKeys
-                          .map((k) => k.trim())
-                          .filter((k) => k.length > 0),
-                      );
-                      return !labeledPlaces.some(
-                        (place) => !used.has(place.apiIdentity),
-                      );
-                    })()}
-                    onClick={() => {
-                      const ids = labeledPlaces.map(
-                        (place) => place.apiIdentity,
-                      );
-                      const next =
-                        placeGrain === 'group'
-                          ? fillEmptyPlaceKeysAllowingReuse(placeSlotKeys, ids)
-                          : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
-                      applyPlaceKeys(next);
-                    }}
-                  >
-                    <ListPlusIcon size="sm" />
-                    {t('qualification.placeFillEmpties')}
-                  </button>
-                </Tooltip>
-              </span>
-            </div>
-            <ul
-              className="structure-qualification__place-map"
-              aria-label={t('qualification.placeMapAria')}
-            >
-              {placeOccurrences.map((occ, index) => {
-                const selected = placeSlotKeys[index]?.trim() || null;
-                const rowId = `qual-place-${draft.id}-${index}`;
-                const rowInvalid = !selected;
-                return (
-                  <li
-                    key={`${occ.scope}:${occ.groupId ?? ''}:${occ.position}:${occ.acrossGroupsPosition ?? ''}:${index}`}
-                    data-invalid={rowInvalid ? 'true' : 'false'}
-                  >
-                    <label
-                      className="structure-qualification__place-map-label"
-                      htmlFor={rowId}
-                    >
-                      {occurrenceLabel(
-                        occ,
-                        (n) => ordinalRank(n, locale),
-                        t,
-                      )}
-                    </label>
-                    <div className="structure-qualification__place-map-control">
-                      <Select
-                        id={rowId}
-                        options={labeledPlaces.map((place) => ({
-                          value: place.apiIdentity,
-                          label: place.label,
-                          disabled:
-                            placeGrain === 'slot' &&
-                            placeSlotKeys.some(
-                              (key, j) =>
-                                j !== index &&
-                                key.trim() === place.apiIdentity,
-                            ),
-                        }))}
-                        value={selected}
-                        invalid={rowInvalid}
-                        placeholder={t('qualification.placeSlotPlaceholder')}
-                        allowClear
-                        aria-label={t('qualification.placeMapRowAria', {
-                          source: occurrenceLabel(
-                            occ,
-                            (n) => ordinalRank(n, locale),
-                            t,
-                          ),
+            {peerStages.length === 0 ? (
+              <p className="structure-qualification__field-hint" role="status">
+                {t('qualification.emptyNoPeerBody')}
+              </p>
+            ) : (
+              <div
+                className="structure-qualification__scope-tiles"
+                data-count={String(Math.min(peerStages.length, 3))}
+                role="radiogroup"
+                aria-label={t('qualification.destinationPhase')}
+              >
+                {peerStages.map((peer) => {
+                  const draftTotal =
+                    draftEntriesByDestination.get(peer.stageId) ?? 0;
+                  const draftThisIntent =
+                    draft.destinationStageId.trim() === peer.stageId
+                      ? expandOccurrences(draft, groups).length
+                      : 0;
+                  const capacity = peer.compositionCapacity;
+                  const expected =
+                    capacity != null && capacity > 0
+                      ? expectedPopulationWithQualDraft({
+                          data,
+                          destination: peer,
+                          sourceStageId,
+                          draftQualVolume: draftTotal,
+                        })
+                      : null;
+                  const description =
+                    expected != null && capacity != null && capacity > 0 ? (
+                      <DestinationDraftMeter
+                        count={expected}
+                        capacity={capacity}
+                        draft={draftThisIntent}
+                        label={t('qualification.tileContribution', {
+                          count: expected,
+                          capacity,
                         })}
-                        onChange={(value) => {
-                          const next = placeSlotKeys.slice();
-                          next[index] = value?.trim() ?? '';
-                          applyPlaceKeys(next);
-                        }}
+                        draftLabel={t('qualification.tileContributionDraft', {
+                          count: draftThisIntent,
+                        })}
+                        ariaLabel={t('qualification.tileContributionAria', {
+                          phase: peer.name,
+                          count: expected,
+                          capacity,
+                          draft: draftThisIntent,
+                        })}
                       />
-                      {rowInvalid ? (
-                        <span
-                          className="structure-qualification__place-map-error"
-                          aria-hidden="true"
+                    ) : draftThisIntent > 0 ? (
+                      t('qualification.tileContributionEntries', {
+                        count: draftThisIntent,
+                      })
+                    ) : undefined;
+                  return (
+                    <ChoiceTile
+                      key={peer.stageId}
+                      label={peer.name}
+                      description={description}
+                      leading={stageFormatIcon(peer.formatKind)}
+                      selected={draft.destinationStageId === peer.stageId}
+                      onChange={(selected) => {
+                        if (!selected) return;
+                        setDestination(peer);
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {showKindChoice && destStageId ? (
+              <div
+                className="structure-qualification__scope-tiles"
+                data-count="2"
+                role="radiogroup"
+                aria-label={t('qualification.destinationKind')}
+              >
+                <ChoiceTile
+                  label={t('qualification.kindPopulation')}
+                  description={t('qualification.kindPopulationHint')}
+                  leading={<StructureIcon size="sm" />}
+                  selected={draft.targetKind === 'population'}
+                  onChange={(selected) => {
+                    if (!selected) return;
+                    setTargetKind('population');
+                  }}
+                />
+                <ChoiceTile
+                  label={t('qualification.kindPlace')}
+                  description={t('qualification.kindPlaceHint')}
+                  leading={<CupFormatIcon size="sm" />}
+                  selected={draft.targetKind === 'place'}
+                  onChange={(selected) => {
+                    if (!selected) return;
+                    setTargetKind('place');
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {draft.targetKind === 'place' &&
+            !formOnly &&
+            destStageId &&
+            placeGrain !== 'form' ? (
+              destSchematicQuery.isLoading ? (
+                <ul
+                  className="structure-qualification__place-map structure-qualification__place-map--skeleton"
+                  aria-busy="true"
+                  aria-label={tCommon('loading')}
+                >
+                  {Array.from({
+                    length: Math.max(placeOccurrences.length, 3),
+                  }).map((_, index) => (
+                    <li key={`skel-${index}`} aria-hidden="true">
+                      <span className="structure-qualification__place-map-skel-label" />
+                      <span className="structure-qualification__place-map-skel-control" />
+                    </li>
+                  ))}
+                </ul>
+              ) : placeUnavailable || !placesLabeled ? (
+                <p
+                  className="structure-qualification__field-hint"
+                  role="status"
+                >
+                  {t('qualification.emptyNoPlacePeerBody')}
+                </p>
+              ) : labeledPlaces.length === 0 ? (
+                <p
+                  className="structure-qualification__field-hint"
+                  role="status"
+                >
+                  {t('qualification.placeEmpty')}
+                </p>
+              ) : placeOccurrences.length === 0 ? (
+                <p
+                  className="structure-qualification__field-hint"
+                  role="status"
+                >
+                  {t('qualification.placeMapEmptySelection')}
+                </p>
+              ) : (
+                <div className="structure-qualification__place-map-block">
+                  <div className="structure-qualification__place-map-toolbar">
+                    {peerStages.length > 0 ? (
+                      <p className="structure-qualification__place-map-heading">
+                        {t('qualification.placeMapHeading')}
+                      </p>
+                    ) : null}
+                    <span className="structure-qualification__place-fill">
+                      <span id={placeFillHintId} className="ds-visually-hidden">
+                        {t('qualification.placeFillHint')}
+                      </span>
+                      <Tooltip content={t('qualification.placeFillHint')}>
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost"
+                          aria-describedby={placeFillHintId}
+                          disabled={(() => {
+                            const emptyCount = placeSlotKeys.filter(
+                              (k) => !k.trim(),
+                            ).length;
+                            if (emptyCount === 0) return true;
+                            if (labeledPlaces.length === 0) return true;
+                            if (placeGrain === 'group') return false;
+                            const used = new Set(
+                              placeSlotKeys
+                                .map((k) => k.trim())
+                                .filter((k) => k.length > 0),
+                            );
+                            return !labeledPlaces.some(
+                              (place) => !used.has(place.apiIdentity),
+                            );
+                          })()}
+                          onClick={() => {
+                            const ids = labeledPlaces.map(
+                              (place) => place.apiIdentity,
+                            );
+                            const next =
+                              placeGrain === 'group'
+                                ? fillEmptyPlaceKeysAllowingReuse(
+                                    placeSlotKeys,
+                                    ids,
+                                  )
+                                : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
+                            applyPlaceKeys(next);
+                          }}
                         >
-                          <ToastToneIcon tone="error" size="sm" />
-                        </span>
-                      ) : null}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )
-      ) : null}
+                          <ListPlusIcon size="sm" />
+                          {t('qualification.placeFillEmpties')}
+                        </button>
+                      </Tooltip>
+                    </span>
+                  </div>
+                  <ul
+                    className="structure-qualification__place-map"
+                    aria-label={t('qualification.placeMapAria')}
+                  >
+                    {placeOccurrences.map((occ, index) => {
+                      const selected = placeSlotKeys[index]?.trim() || null;
+                      const rowId = `qual-place-${draft.id}-${index}`;
+                      const rowInvalid = !selected;
+                      return (
+                        <li
+                          key={`${occ.scope}:${occ.groupId ?? ''}:${occ.position}:${occ.acrossGroupsPosition ?? ''}:${index}`}
+                          data-invalid={rowInvalid ? 'true' : 'false'}
+                        >
+                          <label
+                            className="structure-qualification__place-map-label"
+                            htmlFor={rowId}
+                          >
+                            {occurrenceLabel(
+                              occ,
+                              (n) => ordinalRank(n, locale),
+                              t,
+                            )}
+                          </label>
+                          <div className="structure-qualification__place-map-control">
+                            <Select
+                              id={rowId}
+                              options={labeledPlaces.map((place) => ({
+                                value: place.apiIdentity,
+                                label: place.label,
+                                disabled:
+                                  placeGrain === 'slot' &&
+                                  placeSlotKeys.some(
+                                    (key, j) =>
+                                      j !== index &&
+                                      key.trim() === place.apiIdentity,
+                                  ),
+                              }))}
+                              value={selected}
+                              invalid={rowInvalid}
+                              placeholder={t(
+                                'qualification.placeSlotPlaceholder',
+                              )}
+                              allowClear
+                              aria-label={t('qualification.placeMapRowAria', {
+                                source: occurrenceLabel(
+                                  occ,
+                                  (n) => ordinalRank(n, locale),
+                                  t,
+                                ),
+                              })}
+                              onChange={(value) => {
+                                const next = placeSlotKeys.slice();
+                                next[index] = value?.trim() ?? '';
+                                applyPlaceKeys(next);
+                              }}
+                            />
+                            {rowInvalid ? (
+                              <span
+                                className="structure-qualification__place-map-error"
+                                aria-hidden="true"
+                              >
+                                <ToastToneIcon tone="error" size="sm" />
+                              </span>
+                            ) : null}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )
+            ) : null}
           </>
         }
       />

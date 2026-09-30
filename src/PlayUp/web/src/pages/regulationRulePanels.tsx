@@ -196,7 +196,9 @@ export function StandingRulesPanel({
             <p className="regulation-standing__heading">
               {t('forfeit.heading')}
             </p>
-            <p className="regulation-forfeit-score__hint">{t('forfeit.hint')}</p>
+            <p className="regulation-forfeit-score__hint">
+              {t('forfeit.hint')}
+            </p>
             <div className="regulation-forfeit-score__board" aria-hidden="true">
               <span className="regulation-forfeit-score__goals regulation-forfeit-score__goals--win">
                 {forfeitWinner}

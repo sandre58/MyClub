@@ -266,18 +266,11 @@ function EntriesTile({
 
 // —— Framework: Match ——
 
-function MatchTile({
-  regulation,
-}: {
-  regulation: StructureRegulationSummary;
-}) {
+function MatchTile({ regulation }: { regulation: StructureRegulationSummary }) {
   const { t } = useTranslation('regulation');
 
   return (
-    <FrameCard
-      icon={<MatchRulesIcon size="md" />}
-      title={t('families.match')}
-    >
+    <FrameCard icon={<MatchRulesIcon size="md" />} title={t('families.match')}>
       <MatchRulesPanel
         numberOfPeriods={regulation.numberOfPeriods}
         durationPerPeriod={regulation.durationPerPeriod}
@@ -712,10 +705,14 @@ function buildPhaseRuleColumns(
     const segments = [...(stage.confrontationSegments ?? [])].sort(
       (left, right) => {
         const leftOrder = Math.min(
-          ...left.rounds.map((round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER),
+          ...left.rounds.map(
+            (round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER,
+          ),
         );
         const rightOrder = Math.min(
-          ...right.rounds.map((round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER),
+          ...right.rounds.map(
+            (round) => round.sortOrder ?? Number.MAX_SAFE_INTEGER,
+          ),
         );
         return leftOrder - rightOrder;
       },

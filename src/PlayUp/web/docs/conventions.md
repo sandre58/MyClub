@@ -8,27 +8,27 @@ Preference for change: **suppression > simplification > factorisation > abstract
 
 ## Stack & tooling (facts, not promises)
 
-| Concern | Tool |
-| --- | --- |
-| Lint | **Oxlint** (`.oxlintrc.json`) — not ESLint |
-| Format | **Prettier** (`.prettierrc.json`, `npm run format` / `format:check`) |
-| Types | `tsc -b` (`npm run typecheck`) |
-| Tests | Vitest + Testing Library (`npm run test:run`) |
-| Editor | Rider/VS Code optional — **no** committed `.vscode/` folder in this package |
+| Concern | Tool                                                                        |
+| ------- | --------------------------------------------------------------------------- |
+| Lint    | **Oxlint** (`.oxlintrc.json`) — not ESLint                                  |
+| Format  | **Prettier** (`.prettierrc.json`, `npm run format` / `format:check`)        |
+| Types   | `tsc -b` (`npm run typecheck`)                                              |
+| Tests   | Vitest + Testing Library (`npm run test:run`)                               |
+| Editor  | Rider/VS Code optional — **no** committed `.vscode/` folder in this package |
 
 CI `web` job: `format:check` → `lint` → `typecheck` → `test:run` → `build`. Oxlint **warnings** do not fail CI today.
 
 ## Files
 
-| Kind | Convention | Examples |
-| --- | --- | --- |
-| React components / pages | `PascalCase.tsx` | `TeamsPage.tsx`, `StructurePhaseFiche.tsx` |
-| Helpers / pure modules | `camelCase.ts` | `structureInvalidation.ts`, `queryKeys.ts` |
-| Tests | colocated `Nom.test.ts(x)` | `TeamsPage.test.tsx` |
-| Page CSS (multi-component domain) | `domaine.css` | `structure.css`, `regulation.css` |
-| Page CSS (single isolated page) | `PageName.css` | `StagePage.css` |
-| DS foundations | `kebab-case.css` | `panels.css`, `selectable-tile.css` |
-| DS React | `PascalCase.tsx` | `Dialog.tsx`, `ChoiceTile.tsx` |
+| Kind                              | Convention                 | Examples                                   |
+| --------------------------------- | -------------------------- | ------------------------------------------ |
+| React components / pages          | `PascalCase.tsx`           | `TeamsPage.tsx`, `StructurePhaseFiche.tsx` |
+| Helpers / pure modules            | `camelCase.ts`             | `structureInvalidation.ts`, `queryKeys.ts` |
+| Tests                             | colocated `Nom.test.ts(x)` | `TeamsPage.test.tsx`                       |
+| Page CSS (multi-component domain) | `domaine.css`              | `structure.css`, `regulation.css`          |
+| Page CSS (single isolated page)   | `PageName.css`             | `StagePage.css`                            |
+| DS foundations                    | `kebab-case.css`           | `panels.css`, `selectable-tile.css`        |
+| DS React                          | `PascalCase.tsx`           | `Dialog.tsx`, `ChoiceTile.tsx`             |
 
 Do **not** invent app-level `hooks/`, `services/`, `features/`, or `components/` folders without an explicit architecture decision ([README](../README.md) out-of-scope table).
 
@@ -41,11 +41,11 @@ Do **not** invent app-level `hooks/`, `services/`, `features/`, or `components/`
 
 ## CSS
 
-| Layer | Prefix / tokens |
-| --- | --- |
-| Public tokens | `--color-*`, `--space-*`, type, geometry, density, motion |
-| DS foundations | `.ds-*` |
-| Page / domain | domain prefix (`structure-`, `teams-`, `overview-`, `regulation-`, …) |
+| Layer          | Prefix / tokens                                                       |
+| -------------- | --------------------------------------------------------------------- |
+| Public tokens  | `--color-*`, `--space-*`, type, geometry, density, motion             |
+| DS foundations | `.ds-*`                                                               |
+| Page / domain  | domain prefix (`structure-`, `teams-`, `overview-`, `regulation-`, …) |
 
 Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card farm” level. Tile/card families are documented separately in [design-system.md](./design-system.md) (Phase 4).
 
