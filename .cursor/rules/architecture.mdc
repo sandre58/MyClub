@@ -1,29 +1,36 @@
 ---
-description: Architecture principles for .NET projects in this ecosystem
+description: MyClub modular monolith — product boundaries, Host flow, tooling, anti-patterns
 alwaysApply: true
 ---
 
 # Architecture
 
-- Respect separation of concerns.
-- Keep responsibilities clearly defined.
-- Prefer composition over inheritance when appropriate.
-- Keep business logic independent from infrastructure concerns when building applications.
-- Dependencies must point toward abstractions when abstractions earn their keep.
-- Avoid unnecessary coupling between modules.
-- Design components to be testable.
+Default for product apps: **Modular Monolith** — Domain / Application / Infrastructure / Host.
+Shared NuGet-style libraries need a clear API, not invented D/A/I/Host layers.
+Do not introduce microservices, kitchen-sink shared libs, or a Platform layer without a real trigger.
 
-## Applications
+## Product boundaries
 
-Default style for **applications**: **Modular Monolith** with Domain / Application / Infrastructure / Host layers unless the project decides otherwise (document the exception in the Notion **Décisions** database).
+- **Domain** → nothing else in the product.
+- **Application** → Domain only.
+- **Infrastructure** → Application + Domain.
+- **Host** → Domain + Application + Infrastructure; may reference **Media.Infrastructure**. Host must **not** reference Development, DevRunner, or TestKit (enforced by tests + CI publish).
+- **Media** has Domain / Application / Infrastructure only (no Media Host); Play’Up Host composes it.
 
-## Libraries
+## Application / Host flow
 
-**NuGet / shared libraries** are not required to use D/A/I/Host. Prefer a clear public API surface, minimal dependencies, and package-focused cohesion. Do not invent application layers in a utility library.
+- Play’Up HTTP product surface: named methods on **`UseCaseExecutor`** (load via ports → static use case → one `SaveChanges` for commands; reads never save). Not a CQRS mediator / handler bus.
+- Static use cases hold orchestration over Domain; they do not call `SaveChanges`.
+- **Media** HTTP surface uses **`MediaService`** — do not force it through `UseCaseExecutor`.
 
-Before introducing a new architectural pattern:
-- Explain the problem it solves.
-- Evaluate whether the existing architecture can handle the requirement.
-- Prefer consistency with the existing codebase and ecosystem conventions.
+## Tooling boundaries
 
-Do not introduce microservices, shared "kitchen-sink" libraries, or premature Platform layers without a real trigger.
+- **TestKit** → Domain + Application only (situations for tests and Development). Never Infra/Host/Media/Development.
+- **Development** → Domain + Application + TestKit (+ Media.Application). Never Infra/Host. May persist via `IUnitOfWork` outside the executor (seed scenarios).
+- **DevRunner** → Development + Infrastructure (CLI composition root). Must not ship with Host.
+
+## Anti-patterns
+
+- Business logic in Host, Infrastructure, or tooling that belongs in Domain / Application use cases.
+- New global “application service” or MediatR-style dispatch without a demonstrated need.
+- TestKit depending on Infrastructure or Development; Host depending on Development/TestKit.

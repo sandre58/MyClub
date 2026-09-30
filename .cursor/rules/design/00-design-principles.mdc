@@ -11,45 +11,37 @@ alwaysApply: false
 | Source | Role | Documents |
 |---|---|---|
 | **Notion** | **Why** — intentions, product/UX decisions, constraints | rationale, trade-offs |
-| **Design Lab** (`/design-lab`) | **What** — the visual arbiter; what the product looks like | surfaces, patterns, proportions |
+| **Design Lab** (`/design-lab`) | **What** — the visual arbiter | surfaces, patterns, proportions |
 | **`.cursor/rules/design/`** | **How** — reproduction rules for agents | tokens, components, forbidden patterns |
-| **Code** | Implementation — never defines design; implements the Lab | `design-system/`, pages |
+| **Code** | Implementation — implements the Lab; does not redefine design | `design-system/`, pages |
 
-Notion must **not** become a second design system. If Notion and the Lab diverge, the Lab wins until Notion is updated to reflect a **new** arbitrated decision.
+If Notion and the Lab diverge, the Lab wins until Notion reflects a **new** arbitrated decision. Notion must not become a second design system.
 
-## Design Lab status: NORMATIVE (frozen)
+## Design Lab — normative reference
 
-The Lab completed its research phase (V1 → audit → V2 → Design System). It is now a **reference**, not a sandbox for new directions. Do not iterate the Lab unless extending it to cover a **new gap** flagged during product migration.
+The Lab is frozen as the visual reference. Extend it only for a **real gap** found during product work — not a new artistic direction, and not because a feature is hard to fit.
 
 ## Mandatory workflow for any UI creation or modification
 
 1. **Inspect `/design-lab`** for the closest existing surface or pattern.
-   Do not invent a visually equivalent pattern when a canonical one exists.
-2. **Read the matching `.cursor/rules/design/` rules** (attached when editing frontend).
-3. **Search for an existing component** (design system, shell, Design Lab) before creating one.
-4. **If the feature cannot be expressed with the current Design System**, do **not**
-   silently invent a new visual language. **Flag the gap** and propose an extension
-   to the Design Lab first — then validation → rules → product.
-   A feature must never modify the Lab simply because it is hard to integrate.
-   Ask: *does this feature reveal a real gap in the system?*
-   - Yes → feature → gap → Lab extension → validation → rules → product
-   - No → use existing patterns
-5. **Never introduce without explicit justification**: a new color, typographic size,
-   radius, shadow, spacing value, button style, or card pattern.
+2. **Use matching `.cursor/rules/design/` rules** (attached when editing frontend).
+3. **Search for an existing component** (design system, shell, Lab) before creating one.
+4. **If the Design System cannot express the feature** → flag the gap; propose Lab extension → validation → rules → product. Do not invent a parallel visual language in page CSS.
+5. **Never introduce without explicit justification**: a new color, type size, radius, shadow, spacing value, button style, or card pattern.
 
-## The acceptance test
+## Acceptance test
 
 > Could this have been designed naturally in the Design Lab?
 
 - **Yes** → implement in product code.
 - **No** → return to the Design Lab before coding.
 
-## Principles (in priority order)
+## Principles (priority order)
 
 1. **Lisible avant d'être lu** — hierarchy from scale and position, not color.
 2. **State before action** — "où en est-on ?" before "que faire ?". One primary action per surface.
 3. **Attention ≠ erreur** — `attention` for pending work; `error` for real failures.
-4. **Numbers are the identity** — tabular, bold, larger than surrounding text when sport-meaningful.
+4. **Numbers are the identity** — tabular, bold, larger when sport-meaningful.
 5. **No card farm** — typographic sectioning over nested boxes.
 6. **Grayscale test** — color confirms, never carries meaning alone.
 7. **Sport sans folklore** — personality through scale, numbers, angle system; no broadcast/gamified styling.

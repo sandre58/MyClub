@@ -26,11 +26,9 @@ Primitives (`palettes/slate.css`) feed semantic tokens (`tokens/*.css`).
 - `--text-score`, `--text-hero-num`, `--text-row-score`, `--text-standings-pts`, `--text-counter`
 - Classes: `ds-num`, `ds-num-score`, `ds-num-hero`, `ds-num-row-score`, `ds-num-pts`, `ds-num-counter`
 
-## Forbidden / legacy
+## Forbidden
 
-- The legacy palette in `src/index.css` (`#3452d8`, Segoe UI, pills, page
-  shadows) is **dead**: never reference it in new UI.
-- No new hex values, no `color-mix()` improvisations outside the token files.
+- No raw hex / abandoned palette values in components; no `color-mix()` improvisations outside token files.
 - No new spacing/radius/shadow values: use the existing scale
   (`--space-4/8/12/16/24/32`, `--radius-control/panel`, `--shadow-*`).
 

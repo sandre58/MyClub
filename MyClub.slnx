@@ -89,19 +89,34 @@
     <File Path=".github/ISSUE_TEMPLATE/feature.yml" />
   </Folder>
   <Folder Name="/cursor/" />
+  <Folder Name="/cursor/commands/">
+    <File Path=".cursor/commands/audit-before-pr.md" />
+    <File Path=".cursor/commands/cross-design-review.md" />
+  </Folder>
   <Folder Name="/cursor/rules/">
     <File Path=".cursor/rules/architecture.mdc" />
-    <File Path=".cursor/rules/cross-design-review.mdc" />
     <File Path=".cursor/rules/csharp.mdc" />
-    <File Path=".cursor/rules/developer-knowledge-profile.mdc" />
+    <File Path=".cursor/rules/design-system.mdc" />
     <File Path=".cursor/rules/documentation.mdc" />
     <File Path=".cursor/rules/general.mdc" />
-    <File Path=".cursor/rules/git.mdc" />
-    <File Path=".cursor/rules/knowledge-capitalization.mdc" />
-    <File Path=".cursor/rules/learning-mode.mdc" />
     <File Path=".cursor/rules/no-cargo-cult.mdc" />
-    <File Path=".cursor/rules/react-learning.mdc" />
+    <File Path=".cursor/rules/playup-web-quality.mdc" />
     <File Path=".cursor/rules/testing.mdc" />
     <File Path=".cursor/rules/workflow.mdc" />
   </Folder>
+  <Folder Name="/cursor/rules/design/">
+    <File Path=".cursor/rules/design/00-design-principles.mdc" />
+    <File Path=".cursor/rules/design/01-brand.mdc" />
+    <File Path=".cursor/rules/design/02-tokens.mdc" />
+    <File Path=".cursor/rules/design/03-typography.mdc" />
+    <File Path=".cursor/rules/design/04-layout.mdc" />
+    <File Path=".cursor/rules/design/05-surfaces.mdc" />
+    <File Path=".cursor/rules/design/06-components.mdc" />
+    <File Path=".cursor/rules/design/07-navigation.mdc" />
+    <File Path=".cursor/rules/design/08-data-display.mdc" />
+    <File Path=".cursor/rules/design/09-icons.mdc" />
+    <File Path=".cursor/rules/design/10-motion.mdc" />
+    <File Path=".cursor/rules/design/11-patterns.mdc" />
+  </Folder>
 </Solution>
+

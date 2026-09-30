@@ -1,60 +1,18 @@
 ---
-description: General development principles for this ecosystem
+description: Baseline agent behaviour for MyClub — minimal diffs, no unjustified complexity
 alwaysApply: true
 ---
 
-# General principles
+# General
 
-- Understand the existing architecture before making changes.
-- Preserve existing conventions and patterns unless there is a clear improvement.
-- Prefer simple and maintainable solutions over complex abstractions.
-- Avoid unnecessary code duplication.
-- Do not introduce new dependencies without a clear justification.
-- Keep changes focused and avoid unrelated modifications.
-- Do not rewrite existing code unless there is a clear improvement.
-
-# AI assistant behavior
-
-- Analyze before modifying.
-- Ask for clarification when requirements are ambiguous.
-- Explain important technical choices.
-- Mention potential risks before major changes.
-- Follow existing project conventions.
-- Do not create new patterns without justification.
+- Understand existing architecture and conventions before changing code.
+- Prefer the simplest solution that meets the need; do not invent patterns or abstractions without a demonstrated problem.
+- Keep changes focused — no unrelated refactors or drive-by rewrites.
 - Do not generate unnecessary files.
-- Keep modifications minimal.
-- Follow the development workflow protocol (`workflow.mdc` + Notion Workflow SoT): challenge early, decide explicitly, implement deliberately.
-- Never turn a technical hypothesis into a business decision; signal arbitration needs and wait for the decision maker (see `workflow.mdc`).
-- Respect Cursor modes: Ask = no edits; Plan = plan only; Agent = execute a validated plan.
-- For important business work, use reference business cases when pertinent (`workflow.mdc` / Notion Workflow).
-- Adapt pedagogy to the developer profile (`learning-mode.mdc`, `developer-knowledge-profile.mdc`); do not lecture on KNOWN stack.
-- Non-trivial patterns/libraries need a real problem and trade-off (`no-cargo-cult.mdc`).
-- Technology learning capitalizes only in Notion Connaissances — never into Play’Up docs (`knowledge-capitalization.mdc`).
-
-# Documentation
-
-Document:
-- important architectural decisions (Notion **Décisions** database for the project — never ADR Markdown in Git);
-- complex business rules;
-- non-obvious technical choices;
-- project-specific conventions.
-
-Do not duplicate information already maintained elsewhere (Git history, generated API docs, README, source). Prefer links to canonical sources.
-
-Technology knowledge (React, TypeScript, …) belongs in Notion **Connaissances / Technologies** (and linked Guides), not in Play’Up Domaine, Décisions, or Architecture technique as general learning material.
-
-**Source comments vs Notion:** source code documents the current implementation; Notion captures decisions, rationale, and history. Do not put decision provenance or Notion references in source comments — see `documentation.mdc`.
-
-## Language
-
-- Public GitHub documentation (`README.md`, `CONTRIBUTING.md`, `SECURITY.md`, contributor-facing `docs/**`) must be written in **English**.
-- Source-code comments must be written in **English** (see `documentation.mdc`).
-- Product vision, architecture narratives, and decisions may live in Notion in French; do not duplicate them as ADR Markdown in Git.
+- Ask when requirements are ambiguous; challenge risks and alternatives before major changes.
 
 # Dependencies
 
-Before adding a dependency:
-- Check if the functionality already exists.
-- Evaluate maintenance status and long-term impact.
-- Prefer lightweight and well-maintained libraries.
-- Add versions in `Directory.Packages.props` (CPM); do not pin versions in `.csproj` without justification.
+- Do not add a dependency unless the need is clear and existing code cannot cover it.
+- Prefer lightweight, maintained libraries.
+- Add package versions in `Directory.Packages.props` (CPM); do not pin versions in `.csproj` without justification.

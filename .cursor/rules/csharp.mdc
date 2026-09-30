@@ -8,11 +8,7 @@ alwaysApply: false
 
 ## Updating conventions
 
-When Domain / C# conventions change, update **all** of:
-1. This file (MyClub `.cursor/rules/csharp.mdc`)
-2. Forge `.cursor/rules/csharp.mdc` (scaffolds)
-3. Notion Architecture technique (§ conventions C#)
-4. The existing Notion Décision on C# Domain conventions (iterate the same page — do not create a duplicate for each tweak)
+When Domain / C# conventions change, update this file and the Notion Architecture technique / existing Décision on C# Domain conventions (iterate that Décision — do not create a duplicate). Sync Forge scaffolds outside this repo separately when applicable.
 
 ## Naming
 
