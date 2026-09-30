@@ -511,7 +511,7 @@
   flex-direction: column;
   gap: var(--space-8);
   padding-top: var(--space-12);
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 1px solid var(--color-border);
 }
 
 .match-discipline__list > li:first-child .match-discipline__row {
