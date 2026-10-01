@@ -3,6 +3,12 @@
  * Reuses existing i18n — no parallel catalogue, no Error Framework.
  *
  * Identity aligns with Overview DeduplicateSituations: source + targetType + targetId.
+ *
+ * Structure construction surfaces (E1–E5): détection ≠ diagnostic ≠ correction.
+ * - structureIssues = SoT liaisons (Sorties = correction; Topology pastille = detection)
+ * - Population shortfall = U1 volume helper (never Host blockers / never structureIssues)
+ * - MissingPotRules = only when draw engaged (HasDrawRules); PageHead = synthesis counts
+ * - AttentionDrawer = runtime only (construction denylist below)
  */
 
 import { situationHref } from './situationRoutes';

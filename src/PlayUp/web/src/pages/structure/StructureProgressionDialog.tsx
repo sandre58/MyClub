@@ -28,6 +28,7 @@ import {
   EmptySelectionIcon,
   PlusIcon,
   StructureIcon,
+  StructureIssueIcon,
   TrashIcon,
   TrophyIcon,
 } from '../../design-system/icons/contentIcons';
@@ -59,6 +60,8 @@ import {
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { isPopulationDestination } from './structureProgressionDraft';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
+import { isMissingDestinationStage } from './structureSortiesDestination';
+import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
 import {
   championshipTerminalRound,
   roundsWithFixtures,
@@ -467,6 +470,33 @@ export function StructureProgressionDialog({
     [intents],
   );
 
+  const missingDestinationCount = useMemo(
+    () =>
+      intents.filter((intent) =>
+        isMissingDestinationStage(intent.destinationStageId, stageById),
+      ).length,
+    [intents, stageById],
+  );
+
+  const hostDanglingEcho = useMemo(() => {
+    const codes = (stage.structureIssues ?? []).filter(
+      (code) =>
+        code === 'DanglingProgressionTarget' ||
+        code === 'MissingProgressionDestinationSlot' ||
+        code === 'MissingProgressionDestinationGroup',
+    );
+    return [...new Set(codes)].map((code) =>
+      t(
+        structureIssuePresentation({
+          code,
+          competitionId: data.competitionId,
+          stageId: stage.stageId,
+        }).titleKey,
+        { defaultValue: code },
+      ),
+    );
+  }, [data.competitionId, stage.stageId, stage.structureIssues, t]);
+
   const draftEntriesByDestination = useMemo(() => {
     const map = new Map<string, number>();
     for (const intent of intents) {
@@ -732,6 +762,21 @@ export function StructureProgressionDialog({
             </button>
           </div>
 
+          {sessionReady && missingDestinationCount > 0 ? (
+            <Alert tone="danger" role="status">
+              <p className="structure-qualification__hint-line">
+                {t('progression.missingDestinationsAlert', {
+                  count: missingDestinationCount,
+                })}
+              </p>
+              {hostDanglingEcho.length > 0 ? (
+                <p className="structure-qualification__hint-line structure-qualification__hint-echo">
+                  {hostDanglingEcho.join(' · ')}
+                </p>
+              ) : null}
+            </Alert>
+          ) : null}
+
           {!sessionReady ? (
             <LoadingState size="region" />
           ) : !canAuthor ? (
@@ -756,22 +801,25 @@ export function StructureProgressionDialog({
                 const isExpanded = expandedId === intent.id;
                 const who =
                   summarizeIntentWho(intent, t) || t('progression.newPath');
-                const destName =
-                  stageNameById.get(intent.destinationStageId) ??
-                  intent.destinationStageId;
+                const destId = intent.destinationStageId.trim();
+                const missingDest = isMissingDestinationStage(
+                  destId,
+                  stageById,
+                );
+                const destName = missingDest
+                  ? t('progression.missingDestinationPhase')
+                  : (stageNameById.get(destId) ?? destId);
                 const filledSlots = (
                   placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
                 ).filter((k) => k.trim());
                 const where =
-                  intent.targetKind === 'population' &&
-                  intent.destinationStageId.trim()
+                  intent.targetKind === 'population' && destId
                     ? t('progression.summary.whereCount', {
                         phase: destName,
                         count:
                           expandCount(intent) || expandContribution(intent),
                       })
-                    : intent.targetKind === 'place' &&
-                        intent.destinationStageId.trim()
+                    : intent.targetKind === 'place' && destId
                       ? t('progression.summary.wherePlaceMapped', {
                           phase: destName,
                           filled: filledSlots.length,
@@ -779,7 +827,9 @@ export function StructureProgressionDialog({
                         })
                       : intent.targetKind === 'place'
                         ? t('progression.summary.wherePlaceFallback')
-                        : null;
+                        : missingDest
+                          ? `→ ${destName}`
+                          : null;
                 const incompleteReason = incompleteIntentReason(
                   intent,
                   intents,
@@ -794,7 +844,15 @@ export function StructureProgressionDialog({
                 return (
                   <li key={intent.id} className="structure-qualification__item">
                     <div
-                      className="structure-qualification__tile ds-selectable-tile"
+                      className={[
+                        'structure-qualification__tile',
+                        'ds-selectable-tile',
+                        missingDest
+                          ? 'structure-qualification__tile--missing-dest'
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                       data-selected={isExpanded ? 'true' : 'false'}
                     >
                       <div className="structure-qualification__hit">
@@ -816,7 +874,21 @@ export function StructureProgressionDialog({
                           </span>
                           <span className="structure-qualification__copy">
                             <span className="structure-qualification__who-row">
-                              {incompleteReason != null && statusMessage ? (
+                              {missingDest ? (
+                                <Tooltip
+                                  content={t(
+                                    'progression.missingDestinationTooltip',
+                                    { id: destId },
+                                  )}
+                                >
+                                  <span
+                                    className="structure-qualification__blocking-mark"
+                                    aria-hidden="true"
+                                  >
+                                    <StructureIssueIcon size="sm" />
+                                  </span>
+                                </Tooltip>
+                              ) : incompleteReason != null && statusMessage ? (
                                 <Tooltip content={statusMessage}>
                                   <span
                                     className="structure-qualification__blocking-mark"
@@ -831,7 +903,16 @@ export function StructureProgressionDialog({
                               </span>
                             </span>
                             {where ? (
-                              <span className="structure-qualification__where">
+                              <span
+                                className={[
+                                  'structure-qualification__where',
+                                  missingDest
+                                    ? 'structure-qualification__where--missing'
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                              >
                                 {where}
                               </span>
                             ) : null}

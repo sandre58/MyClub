@@ -306,87 +306,6 @@
   color: var(--color-error);
 }
 
-.structure-topology__alert {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  min-width: 0;
-}
-
-.structure-topology__alert-title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--leading-tight);
-}
-
-.structure-topology__alert-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.structure-topology__alert-item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-8) var(--space-16);
-  padding: var(--space-8) 0;
-  border-top: var(--border-width) solid color-mix(in srgb, var(--color-error) 22%, var(--color-border));
-}
-
-.structure-topology__alert-item:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.structure-topology__alert-copy {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
-  flex: 1 1 12rem;
-}
-
-.structure-topology__alert-stage {
-  color: var(--color-text-primary);
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--leading-tight);
-}
-
-.structure-topology__alert-issue {
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  line-height: var(--leading-tight);
-}
-
-.structure-topology__alert-fix {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-error);
-  font: inherit;
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-  cursor: pointer;
-  flex: none;
-}
-
-.structure-topology__alert-fix:hover {
-  text-decoration: underline;
-}
-
 .structure-fiche__header {
   display: flex;
   flex-wrap: wrap;
@@ -794,6 +713,24 @@
   border-radius: var(--radius-panel);
   background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
+}
+
+.structure-phase-rail__issue {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: auto;
+  padding: 0;
+  color: var(--color-error);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-phase-rail__issue-icon {
+  flex: none;
+  line-height: 0;
 }
 
 /* Out column: filled rails absorb leftover height; empty rails hug header. */

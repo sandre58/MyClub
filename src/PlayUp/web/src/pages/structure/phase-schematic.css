@@ -67,7 +67,8 @@
 }
 
 /* DS Tooltip host — Cup absolute geometry on the host; flow formats stretch.
- * Host wraps Tooltip so `.ds-tooltip-trigger` does not steal absolute top/height. */
+ * Host wraps Tooltip so `.ds-tooltip-trigger` does not steal absolute top/height.
+ * Trigger is DS `inline-flex` by default — force full width or slots shrink-wrap. */
 .schematic-slot-tip {
   display: block;
   box-sizing: border-box;
@@ -75,15 +76,21 @@
   width: 100%;
 }
 
-.schematic-cup .schematic-slot-tip > .ds-tooltip-trigger {
+.schematic-slot-tip > .ds-tooltip-trigger {
   display: block;
   width: 100%;
-  height: 100%;
   max-width: none;
 }
 
-.schematic-cup .schematic-slot-tip .schematic-slot {
+.schematic-slot-tip .schematic-slot {
   width: 100%;
+}
+
+.schematic-cup .schematic-slot-tip > .ds-tooltip-trigger {
+  height: 100%;
+}
+
+.schematic-cup .schematic-slot-tip .schematic-slot {
   height: 100%;
   min-height: 0;
 }
@@ -321,8 +328,14 @@
 .regulation-schematic__card-slots {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--space-4);
+  width: 100%;
   min-width: 0;
+}
+
+.regulation-schematic__card-slots > .schematic-slot {
+  width: 100%;
 }
 
 /* -- Championship -- */

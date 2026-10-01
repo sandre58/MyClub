@@ -1256,16 +1256,21 @@ public static class StructureViewAssembler
                     readyForMaterialization = activeCount >= 2 && structure.MatchdayCount > 0;
                     break;
                 case StructureFormatKind.Groups:
-                    if (structure.NumberOfPots is null)
+                    // E1 — MissingPotRules only when draw is engaged; !HasDrawRules must not
+                    // open readyForDraw / readyForMaterialization.
+                    if (structure.HasDrawRules)
                     {
-                        blockers.Add(BlockerMissingPotRules);
-                    }
-                    else
-                    {
-                        readyForDraw = structure is { GroupCount: >= 2, MatchdayCount: >= 1 };
-                        var assigned = primary.Groups.Sum(group => group.EntryIds.Count);
-                        readyForMaterialization =
-                            assigned >= 2 && primary.Groups.All(group => group.EntryIds.Count >= 2);
+                        if (structure.NumberOfPots is null)
+                        {
+                            blockers.Add(BlockerMissingPotRules);
+                        }
+                        else
+                        {
+                            readyForDraw = structure is { GroupCount: >= 2, MatchdayCount: >= 1 };
+                            var assigned = primary.Groups.Sum(group => group.EntryIds.Count);
+                            readyForMaterialization =
+                                assigned >= 2 && primary.Groups.All(group => group.EntryIds.Count >= 2);
+                        }
                     }
 
                     break;

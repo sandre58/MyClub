@@ -3,6 +3,7 @@ import {
   applyDestinationToDraft,
   applyTargetKindToDraft,
   isFormOnlyDestination,
+  isMissingDestinationStage,
   normalizeFormOnlyDestinationDraft,
   showsPopulationPlaceChoice,
   type SortiesDestinationFields,
@@ -212,5 +213,13 @@ describe('save payload ForForm after Champ destination', () => {
       'Championship',
     );
     expect(toProgApiIntent(normalized, 1).destinationForm).toBe(true);
+  });
+
+  it('detects missing destination stages without Host structureIssues', () => {
+    const known = new Map([['alive', { stageId: 'alive' }]]);
+    expect(isMissingDestinationStage('gone', known)).toBe(true);
+    expect(isMissingDestinationStage('alive', known)).toBe(false);
+    expect(isMissingDestinationStage('', known)).toBe(false);
+    expect(isMissingDestinationStage('  ', known)).toBe(false);
   });
 });

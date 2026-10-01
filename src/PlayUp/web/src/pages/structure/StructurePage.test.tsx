@@ -309,14 +309,20 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Structure non prête/i)).toBeInTheDocument();
+    // Birth (0 phase): empty state owns UX — no readiness banner.
+    expect(screen.queryByText(/Structure à finaliser/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Voir les problèmes/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Créer la structure/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/équipes à compléter/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/forme à corriger/i)).not.toBeInTheDocument();
     expect(screen.getByText('Aucune phase')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Ajouter une phase/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /Créer la structure/i }),
-    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Sélectionnez une phase/i),
     ).not.toBeInTheDocument();
@@ -335,9 +341,6 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByRole('button', { name: /Modifier le règlement/i }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('link', { name: /Équipes à compléter/i }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/teams`);
   });
 
   it('shows flat phase fiche with match tile for a championship stage', async () => {
@@ -866,12 +869,12 @@ describe('StructurePage Structure hub', () => {
     });
   });
 
-  it('surfaces structural anomalies in topology with a Qual/Prog fix CTA', async () => {
+  it('shows graph ambient on topology tile; Sorties owns the fix', async () => {
     const user = userEvent.setup();
     const knockOutId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
-        actions: [],
+        actions: ['ReplaceQualificationRules'],
         stages: [
           groupesStage({
             structureIssues: ['DanglingQualificationTarget'],
@@ -879,6 +882,9 @@ describe('StructurePage Structure hub', () => {
             hasProgressionRules: false,
             progressionPathCount: 0,
             hasDrawRules: false,
+            compositionCapacity: 8,
+            affectationEntryCount: 0,
+            actions: ['ReplaceQualificationRules', 'ReplaceDrawRules'],
             qualificationPaths: [
               {
                 order: 1,
@@ -911,55 +917,63 @@ describe('StructurePage Structure hub', () => {
           readyForMatchOperation: false,
           readyForSchedulePath: false,
           attachedMatchCount: 0,
-          blockers: ['StructureGraphInvalid', 'MissingPotRules'],
+          // E1 — no MissingPotRules without engaged draw
+          blockers: ['StructureGraphInvalid'],
         },
       }),
     );
 
     renderStructurePage();
 
-    expect(await screen.findByText(/Structure non prête/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Pots de tirage manquants/i }),
+      await screen.findByText(/Structure à finaliser/i),
     ).toBeInTheDocument();
-    // Graph detail stays on Topology; PageHead only gets a short echo (D5 / anti-triple).
+    // Header synthesis: structural only (not pots; shortfall exclusive with graph)
+    const readinessStats = screen.getByRole('list', {
+      name: /Synthèse des écarts/i,
+    });
+    expect(within(readinessStats).getByText('1')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Liaisons entre phases/i }),
+      within(readinessStats).getByText(/^liaison à corriger$/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Pots de tirage manquants/i)).not.toBeInTheDocument();
+    expect(
+      within(readinessStats).queryByText(/phase incomplète/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /Liaisons entre phases à corriger/i }),
-    ).toHaveAttribute('href', '#topology');
-    expect(screen.queryByText(/points à lever/i)).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /Voir les problèmes/i }),
+    ).toBeInTheDocument();
 
     const topology = screen.getByRole('region', {
       name: /Topologie/i,
     });
     expect(
-      within(topology).getByText(/^1 liaison à corriger$/i),
-    ).toBeInTheDocument();
+      within(topology).queryByText(/^1 liaison à corriger$/i),
+    ).not.toBeInTheDocument();
+    expect(
+      within(topology).queryByRole('button', { name: /Voir la phase/i }),
+    ).not.toBeInTheDocument();
+    // Pastille ambient on the phase tile (detection), not an Alert list
     expect(
       within(topology).getByText(/Destination de qualification introuvable/i),
     ).toBeInTheDocument();
-    expect(
-      within(topology).getByText(/^Liaison entre phases à corriger$/i),
-    ).toBeInTheDocument();
-    expect(
-      within(topology).queryByText(/Affectation par tirage/i),
-    ).not.toBeInTheDocument();
-    expect(
-      within(topology).queryByText(
-        /Tirage (à lancer|en cours|à appliquer|appliqué)/i,
-      ),
-    ).not.toBeInTheDocument();
-    expect(
-      within(topology).queryByText(/Tirage (à définir|requis|configuré)/i),
-    ).not.toBeInTheDocument();
-    expect(
-      within(topology).getByText(/Qualification · 1 chemin/i),
-    ).toBeInTheDocument();
 
     await user.click(
-      within(topology).getByRole('button', { name: /Ouvrir l’éditeur/i }),
+      screen.getByRole('button', { name: /Voir les problèmes/i }),
+    );
+
+    // E3 — Sorties shows local echo; edit pencil opens the editor (no Corriger CTA).
+    const sorties = await screen.findByRole('complementary', {
+      name: /Sorties/i,
+    });
+    expect(
+      within(sorties).getByText(/1 liaison à corriger/i),
+    ).toBeInTheDocument();
+    expect(
+      within(sorties).queryByRole('button', { name: /^Corriger$/i }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      within(sorties).getByRole('button', { name: /Modifier les sorties/i }),
     );
 
     expect(
@@ -1047,7 +1061,19 @@ describe('StructurePage Structure hub', () => {
 
   it('disables add-phase when Host actions omit it', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
-      structureView({ actions: [] }),
+      structureView({
+        actions: [],
+        readiness: {
+          readyForNextSlice: false,
+          readyForDraw: false,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: false,
+          attachedMatchCount: 0,
+          blockers: ['InsufficientParticipants'],
+        },
+      }),
     );
 
     renderStructurePage();
@@ -1058,9 +1084,9 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('button', { name: /Ajouter une phase/i }),
     ).toBeDisabled();
-    expect(
-      screen.queryByRole('button', { name: /Créer la structure/i }),
-    ).not.toBeInTheDocument();
+    // Teams shortfall is not a Structure banner signal (Équipes owns correction).
+    expect(screen.queryByText(/Structure à finaliser/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/équipes à compléter/i)).not.toBeInTheDocument();
   });
 
   it('shows materialize readiness status without Overview CTA', async () => {
@@ -1151,8 +1177,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('routes MissingStructure incomplete CTA to configure dialog', async () => {
-    const user = userEvent.setup();
+  it('keeps birth empty state when Host reports MissingStructure', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         readiness: {
@@ -1170,11 +1195,14 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(await screen.findByText(/Structure non prête/i)).toBeInTheDocument();
-    await user.click(
-      screen.getByRole('button', { name: /Organisation de phase manquante/i }),
-    );
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByText('Aucune phase')).toBeInTheDocument();
+    expect(screen.queryByText(/Structure à finaliser/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Créer la structure/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Ajouter une phase/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows empty Sorties and Attribution rails with + when editable; phase toolbar has remove not add', async () => {

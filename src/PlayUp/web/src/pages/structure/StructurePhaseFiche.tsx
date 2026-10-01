@@ -34,6 +34,7 @@ import {
   RoundsStatIcon,
   StandingRulesIcon,
   StructureIcon,
+  StructureIssueIcon,
   SwissFormatIcon,
   TrashIcon,
   UnlockIcon,
@@ -477,6 +478,7 @@ export function StructurePhaseFiche({
   /** Attribution = KO/Cup only (gated by ReplacePlacementAwardRules). */
   const showAttributionRail = canEditPlacement;
   const showOutRail = showSortiesRail || showAttributionRail;
+  const structureIssueCount = (stage.structureIssues ?? []).length;
   const teamsLabel = (count: number) => t('fiche.teamsCount', { count });
   const formatLabel = stage.formatKind
     ? structureFormatKindLabel(stage.formatKind)
@@ -1170,7 +1172,25 @@ export function StructurePhaseFiche({
                   title={t('fiche.tiles.exits')}
                   icon={<ArrowRightIcon size="md" />}
                   editControl={sortiesEditControl}
-                  empty={!hasExits}
+                  empty={!hasExits && structureIssueCount === 0}
+                  attention={structureIssueCount > 0}
+                  attentionBanner={
+                    structureIssueCount > 0 ? (
+                      <p className="structure-phase-rail__issue" role="status">
+                        <span
+                          className="structure-phase-rail__issue-icon"
+                          aria-hidden="true"
+                        >
+                          <StructureIssueIcon size="sm" />
+                        </span>
+                        <span>
+                          {t('hub.sortiesIssue', {
+                            count: structureIssueCount,
+                          })}
+                        </span>
+                      </p>
+                    ) : undefined
+                  }
                 >
                   {hasExits ? (
                     <FluxGroupList

@@ -25,6 +25,18 @@ export function isFormOnlyDestination(
 }
 
 /**
+ * Live client detection for Sorties dialogs — destination points at a stage
+ * absent from the current graph. Not derived from Host structureIssues.
+ */
+export function isMissingDestinationStage(
+  destinationStageId: string | null | undefined,
+  stageById: ReadonlyMap<string, unknown>,
+): boolean {
+  const id = destinationStageId?.trim() ?? '';
+  return id.length > 0 && !stageById.has(id);
+}
+
+/**
  * SoT for destination change — single sync point (no React effect chains).
  * Form-only formats lock place + destinationForm; Cup/Groups clear form and maps.
  */

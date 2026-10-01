@@ -1,9 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { fetchStructureView } from '../../api';
-import { Alert } from '../../design-system/components/Alert';
 import { FormSection } from '../../design-system/components/FormSection';
 import { PageHead } from '../../design-system/components/PageHead';
 import { Tooltip } from '../../design-system/components/Tooltip';
@@ -11,8 +10,10 @@ import {
   ChampionshipFormatIcon,
   CheckIcon,
   CupFormatIcon,
+  DrawConfigIcon,
   DrawPendingIcon,
   GroupsFormatIcon,
+  LayersIcon,
   LegsStatIcon,
   MatchdayStatIcon,
   MatchesStatIcon,
@@ -22,12 +23,11 @@ import {
   StructureIcon,
   StructureIssueIcon,
   SwissFormatIcon,
-  LayersIcon, EmptySelectionIcon,
+  EmptySelectionIcon,
+  LinkIssueIcon,
+  IncompleteStageIssueIcon,
 } from '../../design-system/icons/contentIcons';
-import {
-  attentionSourceLabel,
-  structureFormatKindLabel,
-} from '../../i18n/enumLabels';
+import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import {
   EmptyState,
@@ -44,10 +44,13 @@ import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
+import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
 import {
-  functionalProblemPresentation,
-  structureIssuePresentation,
-} from '../../shell/functionalProblemPresentation';
+  computeStructureReadinessSummary,
+  stageAmbientKinds,
+  type StageAmbientKind,
+  type StructureReadinessSummary,
+} from './structureReadinessSummary';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
@@ -86,10 +89,6 @@ function StructureHub({ data }: { data: StructureView }) {
   const canAddPhase = data.actions.includes('AddCompetitionStage');
   const [addPhaseOpen, setAddPhaseOpen] = useState(false);
   const stages = useMemo(() => resolveStages(data), [data]);
-  const structuralAnomalies = useMemo(
-    () => collectStructuralAnomalies(stages),
-    [stages],
-  );
   const [selectedStageId, setSelectedStageId] = useState<string | null>(() => {
     if (
       deepLink.stageId &&
@@ -149,32 +148,29 @@ function StructureHub({ data }: { data: StructureView }) {
     );
   };
 
-  const openRelationFix = (
-    stageId: string,
-    section: 'qualification' | 'progression',
-  ) => {
-    setSelectedStageId(stageId);
-    setPendingEdit(section);
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.set(STRUCTURE_STAGE_PARAM, stageId);
-        next.set(STRUCTURE_SECTION_PARAM, section);
-        next.delete(STRUCTURE_ROUND_PARAM);
-        next.delete(STRUCTURE_COMPOSE_PARAM);
-        return next;
-      },
-      { replace: true },
-    );
-  };
+  const readinessSummary = useMemo(
+    () => computeStructureReadinessSummary(data, stages),
+    [data, stages],
+  );
 
-  /** Readiness blockers: birth first phase, or Forme on the selected phase. */
-  const openReadinessConfigure = () => {
-    if (stages.length === 0) {
-      setAddPhaseOpen(true);
-      return;
-    }
-    setPendingEdit('construction');
+  /** Header CTA: open first attention phase; Sorties when the signal is a liaison. */
+  const seeProblems = () => {
+    const target =
+      readinessSummary.firstAttentionStageId ??
+      selectedStageId ??
+      stages[0]?.stageId;
+    if (!target) return;
+    selectStage(target);
+    const stage = stages.find((s) => s.stageId === target);
+    const scrollToSorties = (stage?.structureIssues?.length ?? 0) > 0;
+    requestAnimationFrame(() => {
+      document
+        .getElementById(scrollToSorties ? 'rail-exits' : 'topology')
+        ?.scrollIntoView?.({
+          block: scrollToSorties ? 'nearest' : 'start',
+          behavior: 'smooth',
+        });
+    });
   };
 
   const addPhaseAction = (
@@ -214,18 +210,17 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={stages.length === 0 ? undefined : addPhaseAction}
-        note={readinessStatusNote(data, openReadinessConfigure)}
+        note={readinessStatusNote(data, readinessSummary, seeProblems)}
       />
 
       {bootstrapEmpty ?? (
         <div className="structure-hub__layout">
           <TopologyPanel
             competitionId={data.competitionId}
+            data={data}
             stages={stages}
             selectedStageId={selectedStageId}
             onSelectStage={selectStage}
-            anomalies={structuralAnomalies}
-            onFixRelation={openRelationFix}
           />
           <StructurePhaseFiche
             data={data}
@@ -299,55 +294,18 @@ function resolveStages(data: StructureView): StructureStageHubSummary[] {
   ];
 }
 
-type StructuralAnomaly = {
-  key: string;
-  stageId: string;
-  stageName: string;
-  code: string;
-  section: 'qualification' | 'progression';
-};
-
-function collectStructuralAnomalies(
-  stages: StructureStageHubSummary[],
-): StructuralAnomaly[] {
-  const anomalies: StructuralAnomaly[] = [];
-  for (const stage of stages) {
-    for (const code of stage.structureIssues ?? []) {
-      anomalies.push({
-        key: `${stage.stageId}:${code}`,
-        stageId: stage.stageId,
-        stageName: stage.name,
-        code,
-        section: sectionForStructureIssue(code),
-      });
-    }
-  }
-  return anomalies;
-}
-
-function sectionForStructureIssue(
-  code: string,
-): 'qualification' | 'progression' {
-  return code.includes('Progression') ? 'progression' : 'qualification';
-}
-
 function TopologyPanel({
   competitionId,
+  data,
   stages,
   selectedStageId,
   onSelectStage,
-  anomalies,
-  onFixRelation,
 }: {
   competitionId: string;
+  data: StructureView;
   stages: StructureStageHubSummary[];
   selectedStageId: string | null;
   onSelectStage: (stageId: string) => void;
-  anomalies: StructuralAnomaly[];
-  onFixRelation: (
-    stageId: string,
-    section: 'qualification' | 'progression',
-  ) => void;
 }) {
   const { t } = useTranslation('structure');
   const multiPhase = stages.length > 1;
@@ -374,7 +332,7 @@ function TopologyPanel({
           const next = stages[index + 1];
           const outbound = outboundDestinations(stage);
           const facts = topologyCardFacts(stage, t);
-          const hasIssues = (stage.structureIssues ?? []).length > 0;
+          const ambient = stageAmbientKinds(data, stage);
           const formatLabel = stage.formatKind
             ? structureFormatKindLabel(stage.formatKind)
             : t('structure.formatNotConfigured');
@@ -412,27 +370,24 @@ function TopologyPanel({
                   </span>
                   <span className="structure-topology__tile-status">
                     <StageStatusBadge status={stage.status} density="compact" />
-                    {hasIssues && (
+                    {ambient.length > 0 && (
                       <Tooltip
-                        content={
-                          (stage.structureIssues ?? [])
-                            .map((code) =>
-                              t(
-                                structureIssuePresentation({
-                                  code,
-                                  competitionId,
-                                  stageId: stage.stageId,
-                                }).titleKey,
-                                { defaultValue: code },
-                              ),
-                            )
-                            .join(' · ') || t('hub.phaseStructuralAnomaly')
-                        }
+                        content={ambientTooltipLabels(
+                          ambient,
+                          stage,
+                          competitionId,
+                          t,
+                        ).join(' · ')}
                       >
                         <span className="structure-topology__issue">
                           <StructureIssueIcon size="sm" aria-hidden="true" />
                           <span className="ds-visually-hidden">
-                            {t('hub.phaseStructuralAnomaly')}
+                            {ambientTooltipLabels(
+                              ambient,
+                              stage,
+                              competitionId,
+                              t,
+                            ).join(' · ')}
                           </span>
                         </span>
                       </Tooltip>
@@ -487,52 +442,6 @@ function TopologyPanel({
           );
         })}
       </ol>
-
-      {anomalies.length > 0 && (
-        <Alert tone="danger" role="status">
-          <div className="structure-topology__alert">
-            <p className="structure-topology__alert-title">
-              {t('hub.structuralAnomaly', { count: anomalies.length })}
-            </p>
-            <ul className="structure-topology__alert-list">
-              {anomalies.map((anomaly) => {
-                const presentation = structureIssuePresentation({
-                  code: anomaly.code,
-                  competitionId,
-                  stageId: anomaly.stageId,
-                });
-                return (
-                  <li
-                    key={anomaly.key}
-                    className="structure-topology__alert-item"
-                  >
-                    <div className="structure-topology__alert-copy">
-                      <span className="structure-topology__alert-stage">
-                        {anomaly.stageName}
-                      </span>
-                      <span className="structure-topology__alert-issue">
-                        {t(presentation.titleKey, {
-                          defaultValue: anomaly.code,
-                        })}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="structure-topology__alert-fix"
-                      onClick={() =>
-                        onFixRelation(anomaly.stageId, anomaly.section)
-                      }
-                    >
-                      {t('hub.fixRelation')}
-                      <span aria-hidden="true">→</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </Alert>
-      )}
     </FormSection>
   );
 }
@@ -586,6 +495,7 @@ function TopologyOutboundLinks({
 
 function TopologyDrawHint({ stage }: { stage: StructureStageHubSummary }) {
   const { t } = useTranslation('structure');
+  // E6 — execution state only (Draft/Published…). Never construction gaps (pots).
   if (!stage.hasDrawRules) {
     return null;
   }
@@ -784,17 +694,13 @@ function edgeLabelFromSource(
 
 function readinessStatusNote(
   data: StructureView,
-  onConfigure: () => void,
+  summary: StructureReadinessSummary,
+  onSeeProblems: () => void,
 ): ReactNode {
   const readiness = data.readiness;
   const formatKind = data.format.kind;
-  const blockers = readiness.blockers;
-  /** StructureGraphInvalid counted in readiness but listed only in Topology. */
-  const headerBlockers = blockers.filter(
-    (code) => code !== 'StructureGraphInvalid',
-  );
-  const showGraphEcho = blockers.includes('StructureGraphInvalid');
-  const incomplete = blockers.length > 0;
+  // Banner only for problems on an existing structure — never birth (0 phase).
+  const incomplete = summary.hasAny;
   const readyToMaterialize = readiness.readyForMaterialization;
   const readyNext =
     !incomplete && !readyToMaterialize && readiness.readyForNextSlice;
@@ -802,10 +708,8 @@ function readinessStatusNote(
   if (incomplete) {
     return (
       <ReadinessNotReadyStatus
-        competitionId={data.competitionId}
-        headerBlockers={headerBlockers}
-        showGraphEcho={showGraphEcho}
-        onConfigure={onConfigure}
+        summary={summary}
+        onSeeProblems={onSeeProblems}
       />
     );
   }
@@ -834,52 +738,104 @@ function readinessStatusNote(
 }
 
 function ReadinessNotReadyStatus({
-  competitionId,
-  headerBlockers,
-  showGraphEcho,
-  onConfigure,
+  summary,
+  onSeeProblems,
 }: {
-  competitionId: string;
-  headerBlockers: string[];
-  /** Short echo only — detail SoT remains Topology (D5). */
-  showGraphEcho: boolean;
-  onConfigure: () => void;
+  summary: StructureReadinessSummary;
+  onSeeProblems: () => void;
 }) {
   const { t } = useTranslation('structure');
+  const stats: {
+    key: string;
+    value?: number;
+    label: string;
+    icon: ReactNode;
+  }[] = [];
+  if (summary.structuralPhaseCount > 0) {
+    stats.push({
+      key: 'structural',
+      value: summary.structuralPhaseCount,
+      label: t('readiness.statStructural', {
+        count: summary.structuralPhaseCount,
+      }),
+      icon: <LinkIssueIcon size="sm" aria-hidden="true" />,
+    });
+  }
+  if (summary.incompletePhaseCount > 0) {
+    stats.push({
+      key: 'incomplete',
+      value: summary.incompletePhaseCount,
+      label: t('readiness.statIncomplete', {
+        count: summary.incompletePhaseCount,
+      }),
+      icon: <IncompleteStageIssueIcon size="sm" aria-hidden="true" />,
+    });
+  }
+  if (summary.missingPotsPhaseCount > 0) {
+    stats.push({
+      key: 'missingPots',
+      value: summary.missingPotsPhaseCount,
+      label: t('readiness.statMissingPots', {
+        count: summary.missingPotsPhaseCount,
+      }),
+      icon: <DrawConfigIcon size="sm" aria-hidden="true" />,
+    });
+  }
+  if (summary.shapeInvalid) {
+    stats.push({
+      key: 'shape',
+      label: t('readiness.statShape'),
+      icon: <StructureIcon size="sm" aria-hidden="true" />,
+    });
+  }
 
   return (
-    <div className="structure-status" role="status">
-      <p
-        id="readiness-heading"
-        className="structure-status__title structure-status__title--attention"
-      >
-        <OverviewAttentionIcon size="sm" aria-hidden="true" />
-        <span>{t('readiness.structureNotReady')}</span>
-      </p>
-      {(headerBlockers.length > 0 || showGraphEcho) && (
-        <ul
-          className="structure-status__actions"
-          aria-labelledby="readiness-heading"
+    <div
+      className="structure-status structure-status--banner"
+      data-tone={summary.headerTone === 'danger' ? 'danger' : 'attention'}
+      role="status"
+    >
+      <div className="structure-status__copy">
+        <div className="structure-status__headline">
+          {summary.headerTone === 'danger' ? (
+            <StructureIssueIcon size="sm" aria-hidden="true" />
+          ) : (
+            <OverviewAttentionIcon size="sm" aria-hidden="true" />
+          )}
+          <p id="readiness-heading" className="structure-status__title">
+            {t('readiness.structureNotReady')}
+          </p>
+        </div>
+        {stats.length > 0 ? (
+          <ul
+            className="structure-status__stats"
+            aria-label={t('readiness.statsAria')}
+          >
+            {stats.map((stat) => (
+              <li key={stat.key} className="structure-status__stat">
+                <span className="structure-status__stat-icon" aria-hidden="true">
+                  {stat.icon}
+                </span>
+                {stat.value != null ? (
+                  <span className="structure-status__stat-value">
+                    {stat.value}
+                  </span>
+                ) : null}
+                <span className="structure-status__stat-label">{stat.label}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+      <div className="structure-status__cta-row">
+        <button
+          type="button"
+          className="structure-status__btn"
+          onClick={onSeeProblems}
         >
-          {headerBlockers.map((code) => (
-            <li key={code}>
-              <IncompleteBlockerAction
-                code={code}
-                competitionId={competitionId}
-                onConfigure={onConfigure}
-              />
-            </li>
-          ))}
-          {showGraphEcho ? (
-            <li key="StructureGraphInvalid-echo">
-              <a className="structure-status__action" href="#topology">
-                {t('readiness.echoGraphInvalid')}
-                <span aria-hidden="true">→</span>
-              </a>
-            </li>
-          ) : null}
-        </ul>
-      )}
+          {t('readiness.seeProblems')}
+        </button>
+      </div>
     </div>
   );
 }
@@ -913,51 +869,35 @@ function ReadinessReadyStatus({
   );
 }
 
-function IncompleteBlockerAction({
-  code,
-  competitionId,
-  onConfigure,
-}: {
-  code: string;
-  competitionId: string;
-  onConfigure: () => void;
-}) {
-  const { t } = useTranslation('structure');
-  const presentation = functionalProblemPresentation({
-    source: code,
-    competitionId,
-  });
-  // Short echo for déficit (SoT = Équipes) — avoid repeating Teams plateau prose.
-  const label =
-    presentation.cta?.actionCode === 'AddEntry'
-      ? t('readiness.echoInsufficientParticipants')
-      : attentionSourceLabel(code);
-
-  if (presentation.sotHref && presentation.cta?.actionCode === 'AddEntry') {
-    return (
-      <Link className="structure-status__action" to={presentation.sotHref}>
-        {label}
-        <span aria-hidden="true">→</span>
-      </Link>
-    );
+function ambientTooltipLabels(
+  kinds: StageAmbientKind[],
+  stage: StructureStageHubSummary,
+  competitionId: string,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string[] {
+  const labels: string[] = [];
+  for (const kind of kinds) {
+    if (kind === 'graph') {
+      const issueLabels = (stage.structureIssues ?? []).map((code) =>
+        t(
+          structureIssuePresentation({
+            code,
+            competitionId,
+            stageId: stage.stageId,
+          }).titleKey,
+          { defaultValue: code },
+        ),
+      );
+      labels.push(
+        issueLabels.length > 0
+          ? issueLabels.join(' · ')
+          : t('hub.phaseStructuralAnomaly'),
+      );
+    } else if (kind === 'population') {
+      labels.push(t('hub.phaseIncompleteAmbient'));
+    } else {
+      labels.push(t('hub.phaseDrawPotsAmbient'));
+    }
   }
-
-  if (presentation.cta?.actionCode === 'ConfigureStructure') {
-    return (
-      <button
-        type="button"
-        className="structure-status__action"
-        onClick={onConfigure}
-      >
-        {label}
-        <span aria-hidden="true">→</span>
-      </button>
-    );
-  }
-
-  return (
-    <span className="structure-status__action structure-status__action--static">
-      {label}
-    </span>
-  );
+  return labels;
 }

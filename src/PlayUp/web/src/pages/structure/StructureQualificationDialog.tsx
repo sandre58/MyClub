@@ -25,6 +25,7 @@ import {
   PlusIcon,
   StandingRulesIcon,
   StructureIcon,
+  StructureIssueIcon,
   SwissFormatIcon,
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
@@ -52,8 +53,10 @@ import {
 import { StructureQualificationIntentEditor } from './StructureQualificationIntentEditor';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
+import { isMissingDestinationStage } from './structureSortiesDestination';
 import { areProgressionPlacesLabeled } from './structurePlaceLabel';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
+import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
 import {
   countUnmappedPlaceSlots,
   emptyQualIntent,
@@ -347,6 +350,33 @@ export function StructureQualificationDialog({
 
   const intentCount = intents.length;
 
+  const missingDestinationCount = useMemo(
+    () =>
+      intents.filter((intent) =>
+        isMissingDestinationStage(intent.destinationStageId, stageById),
+      ).length,
+    [intents, stageById],
+  );
+
+  const hostDanglingEcho = useMemo(() => {
+    const codes = (stage.structureIssues ?? []).filter(
+      (code) =>
+        code === 'DanglingQualificationTarget' ||
+        code === 'MissingQualificationDestinationSlot' ||
+        code === 'MissingQualificationDestinationGroup',
+    );
+    return [...new Set(codes)].map((code) =>
+      t(
+        structureIssuePresentation({
+          code,
+          competitionId: data.competitionId,
+          stageId: stage.stageId,
+        }).titleKey,
+        { defaultValue: code },
+      ),
+    );
+  }, [data.competitionId, stage.stageId, stage.structureIssues, t]);
+
   const intentsComplete =
     sessionReady &&
     intents.every((intent) =>
@@ -569,6 +599,21 @@ export function StructureQualificationDialog({
             </button>
           </div>
 
+          {sessionReady && missingDestinationCount > 0 ? (
+            <Alert tone="danger" role="status">
+              <p className="structure-qualification__hint-line">
+                {t('qualification.missingDestinationsAlert', {
+                  count: missingDestinationCount,
+                })}
+              </p>
+              {hostDanglingEcho.length > 0 ? (
+                <p className="structure-qualification__hint-line structure-qualification__hint-echo">
+                  {hostDanglingEcho.join(' · ')}
+                </p>
+              ) : null}
+            </Alert>
+          ) : null}
+
           {!sessionReady ? (
             <LoadingState size="region" />
           ) : peerStages.length === 0 ? (
@@ -594,16 +639,20 @@ export function StructureQualificationDialog({
                 const who =
                   summarizeIntentWho(intent, locale, t) ||
                   t('qualification.newPath');
-                const destName =
-                  stageNameById.get(intent.destinationStageId) ??
-                  intent.destinationStageId;
+                const destId = intent.destinationStageId.trim();
+                const missingDest = isMissingDestinationStage(
+                  destId,
+                  stageById,
+                );
+                const destName = missingDest
+                  ? t('qualification.missingDestinationPhase')
+                  : (stageNameById.get(destId) ?? destId);
                 const occCount = expandOccurrences(intent, groups).length;
                 const filledSlots = (
                   placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
                 ).filter((k) => k.trim());
                 const where =
-                  intent.targetKind === 'place' &&
-                  intent.destinationStageId.trim()
+                  intent.targetKind === 'place' && destId
                     ? t('qualification.summary.wherePlaceMapped', {
                         phase: destName,
                         filled: filledSlots.length,
@@ -611,12 +660,14 @@ export function StructureQualificationDialog({
                       })
                     : intent.targetKind === 'place'
                       ? t('qualification.summary.wherePlaceFallback')
-                      : intent.destinationStageId.trim() && occCount > 0
+                      : destId && occCount > 0
                         ? t('qualification.summary.whereCount', {
                             phase: destName,
                             count: occCount,
                           })
-                        : null;
+                        : missingDest
+                          ? `→ ${destName}`
+                          : null;
                 const incompleteReason = incompleteIntentReason(
                   intent,
                   groups,
@@ -636,7 +687,15 @@ export function StructureQualificationDialog({
                 return (
                   <li key={intent.id} className="structure-qualification__item">
                     <div
-                      className="structure-qualification__tile ds-selectable-tile"
+                      className={[
+                        'structure-qualification__tile',
+                        'ds-selectable-tile',
+                        missingDest
+                          ? 'structure-qualification__tile--missing-dest'
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                       data-selected={isExpanded ? 'true' : 'false'}
                     >
                       <div className="structure-qualification__hit">
@@ -654,7 +713,21 @@ export function StructureQualificationDialog({
                           </span>
                           <span className="structure-qualification__copy">
                             <span className="structure-qualification__who-row">
-                              {incompleteReason != null && statusMessage ? (
+                              {missingDest ? (
+                                <Tooltip
+                                  content={t(
+                                    'qualification.missingDestinationTooltip',
+                                    { id: destId },
+                                  )}
+                                >
+                                  <span
+                                    className="structure-qualification__blocking-mark"
+                                    aria-hidden="true"
+                                  >
+                                    <StructureIssueIcon size="sm" />
+                                  </span>
+                                </Tooltip>
+                              ) : incompleteReason != null && statusMessage ? (
                                 <Tooltip content={statusMessage}>
                                   <span
                                     className="structure-qualification__blocking-mark"
@@ -681,7 +754,16 @@ export function StructureQualificationDialog({
                               </span>
                             </span>
                             {where ? (
-                              <span className="structure-qualification__where">
+                              <span
+                                className={[
+                                  'structure-qualification__where',
+                                  missingDest
+                                    ? 'structure-qualification__where--missing'
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                              >
                                 {where}
                               </span>
                             ) : null}

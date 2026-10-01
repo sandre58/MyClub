@@ -548,6 +548,8 @@ export function FluxRail({
   children,
   side,
   empty = false,
+  attention = false,
+  attentionBanner,
 }: {
   id: string;
   title: string;
@@ -557,6 +559,9 @@ export function FluxRail({
   side: 'in' | 'out';
   /** When true: header only — body omitted so it consumes no vertical space. */
   empty?: boolean;
+  /** E3 — local echo when this rail owns the correction. */
+  attention?: boolean;
+  attentionBanner?: ReactNode;
 }) {
   const titleId = `${id}-title`;
   return (
@@ -566,6 +571,7 @@ export function FluxRail({
         'structure-phase-rail',
         `structure-phase-rail--${side}`,
         empty ? 'structure-phase-rail--empty' : null,
+        attention ? 'structure-phase-rail--attention' : null,
       ]
         .filter(Boolean)
         .join(' ')}
@@ -581,7 +587,10 @@ export function FluxRail({
         {editControl}
       </header>
       {empty ? null : (
-        <div className="structure-phase-rail__body">{children}</div>
+        <div className="structure-phase-rail__body">
+          {children}
+          {attentionBanner}
+        </div>
       )}
     </aside>
   );

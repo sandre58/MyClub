@@ -16,6 +16,7 @@ import {
   GripVertical,
   LayoutGrid,
   Layers,
+  Link,
   ListChecks,
   ListMinus,
   ListOrdered,
@@ -23,6 +24,7 @@ import {
   Minus,
   Medal,
   Network,
+  PackageOpen,
   Pencil,
   Pipette,
   PlayingCardsFan,
@@ -142,6 +144,16 @@ export function LegsStatIcon({ size, ...props }: ContentIconProps) {
 /** Compact structural anomaly (≠ draw / ops). */
 export function StructureIssueIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={CircleAlert} size={size} {...props} />;
+}
+
+/** Link anomaly. */
+export function LinkIssueIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Link} size={size} {...props} />;
+}
+
+/** Incomplete stage. */
+export function IncompleteStageIssueIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={PackageOpen} size={size} {...props} />;
 }
 
 /** Draw pending — shuffle / pots (≠ anomaly). */

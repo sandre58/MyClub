@@ -588,6 +588,21 @@
   color: var(--color-text-secondary);
 }
 
+.structure-qualification__where--missing {
+  color: color-mix(in srgb, var(--color-error) 75%, var(--color-ink));
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-qualification__tile--missing-dest {
+  border-color: color-mix(in srgb, var(--color-error) 35%, var(--color-border));
+}
+
+.structure-qualification__hint-echo {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
 .structure-qualification__chevron {
   display: flex;
   align-items: center;
