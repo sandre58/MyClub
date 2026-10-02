@@ -176,68 +176,9 @@
   color: var(--color-text-secondary);
 }
 
-.structure-status__cta-row {
-  display: inline-flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: var(--space-8);
-  flex: none;
-  align-self: center;
-}
-
-/* Tonal CTA — same gravity as the banner chrome. */
-.structure-status__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  align-self: center;
-  min-height: var(--control-height-compact);
-  padding: 0 var(--space-12);
-  border: var(--border-width) solid
-    color-mix(in srgb, var(--color-attention) 45%, var(--color-border));
-  border-radius: var(--radius-control);
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 22%,
-    var(--color-surface)
-  );
-  color: color-mix(in srgb, var(--color-attention) 70%, var(--color-ink));
-  font: inherit;
-  font-size: var(--text-label);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.structure-status__btn:hover {
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 32%,
-    var(--color-surface)
-  );
-}
-
-.structure-status--banner[data-tone='danger'] .structure-status__btn {
-  border-color: color-mix(in srgb, var(--color-error) 45%, var(--color-border));
-  background: color-mix(in srgb, var(--color-error) 22%, var(--color-surface));
-  color: color-mix(in srgb, var(--color-error) 70%, var(--color-ink));
-}
-
-.structure-status--banner[data-tone='danger'] .structure-status__btn:hover {
-  background: color-mix(in srgb, var(--color-error) 32%, var(--color-surface));
-}
-
 @media (max-width: 40rem) {
   .structure-status--banner {
     flex-wrap: wrap;
-  }
-
-  .structure-status__cta-row {
-    width: 100%;
-    justify-content: flex-end;
   }
 }
 

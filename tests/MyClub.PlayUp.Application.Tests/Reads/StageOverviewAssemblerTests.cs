@@ -55,6 +55,23 @@ public sealed class StageOverviewAssemblerTests
     }
 
     [Fact]
+    public void Assemble_projects_bracket_pairs_without_requiring_fixtures()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Finale"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("F", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.ReplaceBracketPairs([new BracketPair("FINAL", "F-A", "F-B")]);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+
+        overview.Rounds[0].Fixtures.Should().BeEmpty();
+        overview.BracketPairs.Should().ContainSingle(p =>
+            p.PairKey == "FINAL" && p.SlotAKey == "F-A" && p.SlotBKey == "F-B");
+    }
+
+    [Fact]
     public void Assemble_maps_resolved_slot_draw_and_populated_slots_with_display_names()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);

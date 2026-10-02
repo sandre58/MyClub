@@ -44,13 +44,12 @@ import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
-import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
 import {
   computeStructureReadinessSummary,
   stageAmbientKinds,
-  type StageAmbientKind,
   type StructureReadinessSummary,
 } from './structureReadinessSummary';
+import { type StructureDiagnosticFamily } from './structureDiagnosticPresentation';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
@@ -153,26 +152,6 @@ function StructureHub({ data }: { data: StructureView }) {
     [data, stages],
   );
 
-  /** Header CTA: open first attention phase; Sorties when the signal is a liaison. */
-  const seeProblems = () => {
-    const target =
-      readinessSummary.firstAttentionStageId ??
-      selectedStageId ??
-      stages[0]?.stageId;
-    if (!target) return;
-    selectStage(target);
-    const stage = stages.find((s) => s.stageId === target);
-    const scrollToSorties = (stage?.structureIssues?.length ?? 0) > 0;
-    requestAnimationFrame(() => {
-      document
-        .getElementById(scrollToSorties ? 'rail-exits' : 'topology')
-        ?.scrollIntoView?.({
-          block: scrollToSorties ? 'nearest' : 'start',
-          behavior: 'smooth',
-        });
-    });
-  };
-
   const addPhaseAction = (
     <Tooltip
       content={
@@ -210,13 +189,12 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={stages.length === 0 ? undefined : addPhaseAction}
-        note={readinessStatusNote(data, readinessSummary, seeProblems)}
+        note={readinessStatusNote(data, readinessSummary)}
       />
 
       {bootstrapEmpty ?? (
         <div className="structure-hub__layout">
           <TopologyPanel
-            competitionId={data.competitionId}
             data={data}
             stages={stages}
             selectedStageId={selectedStageId}
@@ -295,13 +273,11 @@ function resolveStages(data: StructureView): StructureStageHubSummary[] {
 }
 
 function TopologyPanel({
-  competitionId,
   data,
   stages,
   selectedStageId,
   onSelectStage,
 }: {
-  competitionId: string;
   data: StructureView;
   stages: StructureStageHubSummary[];
   selectedStageId: string | null;
@@ -371,26 +347,12 @@ function TopologyPanel({
                   <span className="structure-topology__tile-status">
                     <StageStatusBadge status={stage.status} density="compact" />
                     {ambient.length > 0 && (
-                      <Tooltip
-                        content={ambientTooltipLabels(
-                          ambient,
-                          stage,
-                          competitionId,
-                          t,
-                        ).join(' · ')}
+                      <span
+                        className="structure-topology__issue"
+                        aria-label={t('hub.phaseGapsAmbient')}
                       >
-                        <span className="structure-topology__issue">
-                          <StructureIssueIcon size="sm" aria-hidden="true" />
-                          <span className="ds-visually-hidden">
-                            {ambientTooltipLabels(
-                              ambient,
-                              stage,
-                              competitionId,
-                              t,
-                            ).join(' · ')}
-                          </span>
-                        </span>
-                      </Tooltip>
+                        <StructureIssueIcon size="sm" aria-hidden="true" />
+                      </span>
                     )}
                   </span>
                 </span>
@@ -695,7 +657,6 @@ function edgeLabelFromSource(
 function readinessStatusNote(
   data: StructureView,
   summary: StructureReadinessSummary,
-  onSeeProblems: () => void,
 ): ReactNode {
   const readiness = data.readiness;
   const formatKind = data.format.kind;
@@ -706,12 +667,7 @@ function readinessStatusNote(
     !incomplete && !readyToMaterialize && readiness.readyForNextSlice;
 
   if (incomplete) {
-    return (
-      <ReadinessNotReadyStatus
-        summary={summary}
-        onSeeProblems={onSeeProblems}
-      />
-    );
+    return <ReadinessNotReadyStatus summary={summary} />;
   }
 
   // Draw readiness is not a Structure-global status (draw optional).
@@ -739,10 +695,8 @@ function readinessStatusNote(
 
 function ReadinessNotReadyStatus({
   summary,
-  onSeeProblems,
 }: {
   summary: StructureReadinessSummary;
-  onSeeProblems: () => void;
 }) {
   const { t } = useTranslation('structure');
   const stats: {
@@ -751,24 +705,13 @@ function ReadinessNotReadyStatus({
     label: string;
     icon: ReactNode;
   }[] = [];
-  if (summary.structuralPhaseCount > 0) {
+
+  for (const row of summary.familyCounts) {
     stats.push({
-      key: 'structural',
-      value: summary.structuralPhaseCount,
-      label: t('readiness.statStructural', {
-        count: summary.structuralPhaseCount,
-      }),
-      icon: <LinkIssueIcon size="sm" aria-hidden="true" />,
-    });
-  }
-  if (summary.incompletePhaseCount > 0) {
-    stats.push({
-      key: 'incomplete',
-      value: summary.incompletePhaseCount,
-      label: t('readiness.statIncomplete', {
-        count: summary.incompletePhaseCount,
-      }),
-      icon: <IncompleteStageIssueIcon size="sm" aria-hidden="true" />,
+      key: row.family,
+      value: row.count,
+      label: t(`readiness.family.${row.family}`, { count: row.count }),
+      icon: familyStatIcon(row.family),
     });
   }
   if (summary.missingPotsPhaseCount > 0) {
@@ -803,7 +746,9 @@ function ReadinessNotReadyStatus({
             <OverviewAttentionIcon size="sm" aria-hidden="true" />
           )}
           <p id="readiness-heading" className="structure-status__title">
-            {t('readiness.structureNotReady')}
+            {t('readiness.problemsToHandle', {
+              count: summary.totalProblemCount,
+            })}
           </p>
         </div>
         {stats.length > 0 ? (
@@ -827,17 +772,23 @@ function ReadinessNotReadyStatus({
           </ul>
         ) : null}
       </div>
-      <div className="structure-status__cta-row">
-        <button
-          type="button"
-          className="structure-status__btn"
-          onClick={onSeeProblems}
-        >
-          {t('readiness.seeProblems')}
-        </button>
-      </div>
     </div>
   );
+}
+
+function familyStatIcon(family: StructureDiagnosticFamily): ReactNode {
+  switch (family) {
+    case 'graph':
+      return <LinkIssueIcon size="sm" aria-hidden="true" />;
+    case 'feed':
+      return <IncompleteStageIssueIcon size="sm" aria-hidden="true" />;
+    case 'capacity':
+      return <LayersIcon size="sm" aria-hidden="true" />;
+    case 'execution':
+      return <MatchesStatIcon size="sm" aria-hidden="true" />;
+    case 'result':
+      return <StructureIssueIcon size="sm" aria-hidden="true" />;
+  }
 }
 
 function ReadinessReadyStatus({
@@ -867,37 +818,4 @@ function ReadinessReadyStatus({
       ) : null}
     </div>
   );
-}
-
-function ambientTooltipLabels(
-  kinds: StageAmbientKind[],
-  stage: StructureStageHubSummary,
-  competitionId: string,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string[] {
-  const labels: string[] = [];
-  for (const kind of kinds) {
-    if (kind === 'graph') {
-      const issueLabels = (stage.structureIssues ?? []).map((code) =>
-        t(
-          structureIssuePresentation({
-            code,
-            competitionId,
-            stageId: stage.stageId,
-          }).titleKey,
-          { defaultValue: code },
-        ),
-      );
-      labels.push(
-        issueLabels.length > 0
-          ? issueLabels.join(' · ')
-          : t('hub.phaseStructuralAnomaly'),
-      );
-    } else if (kind === 'population') {
-      labels.push(t('hub.phaseIncompleteAmbient'));
-    } else {
-      labels.push(t('hub.phaseDrawPotsAmbient'));
-    }
-  }
-  return labels;
 }

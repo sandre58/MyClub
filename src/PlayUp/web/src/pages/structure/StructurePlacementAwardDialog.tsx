@@ -151,7 +151,8 @@ export function StructurePlacementAwardDialog({
     resetDiscard,
   ]);
 
-  const canAuthor = sourceOptions.length > 0;
+  const canAddNew = sourceOptions.length > 0;
+  const canRemediate = cards.length > 0;
   const cardsComplete =
     sessionReady && areCardsComplete(cards, knownSourceKeys);
   const canSave = !mutation.isPending && cardsComplete;
@@ -214,7 +215,7 @@ export function StructurePlacementAwardDialog({
 
   const canAdd =
     sessionReady &&
-    canAuthor &&
+    canAddNew &&
     freeSourceItems.length > 0 &&
     !mutation.isPending;
 
@@ -325,23 +326,7 @@ export function StructurePlacementAwardDialog({
 
           {!sessionReady ? (
             <LoadingState size="region" />
-          ) : !canAuthor ? (
-            <EmptyState
-              variant="idle"
-              icon={<StructureIcon size="lg" />}
-              title={t('attribution.emptyNoFixtureTitle')}
-            >
-              {t('attribution.emptyNoFixtureBody')}
-            </EmptyState>
-          ) : cards.length === 0 ? (
-            <EmptyState
-              variant="idle"
-              icon={<EmptySelectionIcon size="lg" />}
-              title={t('attribution.emptyTitle')}
-            >
-              {t('attribution.emptyBody')}
-            </EmptyState>
-          ) : (
+          ) : canRemediate ? (
             <div className="structure-attribution__body">
               <ul className="structure-attribution__tiles">
                 {cards.map((card) => (
@@ -362,6 +347,22 @@ export function StructurePlacementAwardDialog({
                 ))}
               </ul>
             </div>
+          ) : canAddNew ? (
+            <EmptyState
+              variant="idle"
+              icon={<EmptySelectionIcon size="lg" />}
+              title={t('attribution.emptyTitle')}
+            >
+              {t('attribution.emptyBody')}
+            </EmptyState>
+          ) : (
+            <EmptyState
+              variant="idle"
+              icon={<StructureIcon size="lg" />}
+              title={t('attribution.emptyNoPairTitle')}
+            >
+              {t('attribution.emptyNoPairBody')}
+            </EmptyState>
           )}
         </div>
       </Dialog>

@@ -5,18 +5,28 @@
  * Identity aligns with Overview DeduplicateSituations: source + targetType + targetId.
  *
  * Structure construction surfaces (E1–E5): détection ≠ diagnostic ≠ correction.
- * - structureIssues = SoT liaisons (Sorties = correction; Topology pastille = detection)
- * - Population shortfall = U1 volume helper (never Host blockers / never structureIssues)
- * - MissingPotRules = only when draw engaged (HasDrawRules); PageHead = synthesis counts
- * - AttentionDrawer = runtime only (construction denylist below)
+ * Diagnostic taxonomy → presentation via structureDiagnosticPresentation (family / tile / CTA).
+ * Population shortfall may also come from U1 volume helper (never Host blockers alone).
+ * MissingPotRules = only when draw engaged (HasDrawRules); PageHead = synthesis counts
+ * AttentionDrawer = runtime only (construction denylist below)
  */
 
 import { situationHref } from './situationRoutes';
 import type { OverviewSituation } from '../types';
+import {
+  structureDiagnosticMeta,
+  structureDiagnosticTitleKey,
+  structureDiagnosticTone,
+  type StructureDiagnosticTone,
+} from '../pages/structure/structureDiagnosticPresentation';
 
 /** Orthogonal signal tone (DS Alert / Status / toast mapping — design §6.3). */
 export type FunctionalProblemTone = 'danger' | 'warning' | 'info' | 'attention';
 
+function mapStructureTone(tone: StructureDiagnosticTone): FunctionalProblemTone {
+  if (tone === 'progress') return 'info';
+  return tone;
+}
 /**
  * Canal / surface SoT or echo — documents responsibility, not a router.
  * AttentionDrawer presents runtime only; construction stays Structure/Équipes.
@@ -45,6 +55,11 @@ export type FunctionalProblemIdentity = {
   stageId?: string | null;
   /** structureIssues child code when mapping Topology rows. */
   structureIssueCode?: string | null;
+  /**
+   * SlotFeedMissing Host context: draw engaged → silence UX (not shown via this helper
+   * when callers filter). Without draw → danger.
+   */
+  awaitingDraw?: boolean;
 };
 
 export type FunctionalProblemCta = {
@@ -68,16 +83,9 @@ const CONSTRUCTION_BLOCKERS = new Set([
   'MissingStructure',
   'MissingPotRules',
   'CupBracketInvalid',
-]);
-
-const STRUCTURE_GRAPH_ISSUES = new Set([
-  'DanglingQualificationTarget',
-  'DanglingProgressionTarget',
-  'MissingQualificationDestinationSlot',
-  'MissingQualificationDestinationGroup',
-  'MissingProgressionDestinationSlot',
-  'MissingProgressionDestinationGroup',
-  'SlotFeedsInvalid',
+  'ConfrontationUndecidable',
+  'OverCapacityEdge',
+  'OverExtraction',
 ]);
 
 const RUNTIME_ATTENTION = new Set([
@@ -137,17 +145,20 @@ export function functionalProblemPresentation(
       )
     : undefined;
 
-  // Topology child issue (structureIssues code)
-  if (structureIssueCode && STRUCTURE_GRAPH_ISSUES.has(structureIssueCode)) {
-    return {
-      tone: 'danger',
-      titleKey: `graph.issues.${structureIssueCode}`,
-      titleNs: 'structure',
-      descriptionParams,
-      sotHref: structureHref(competitionId, stageId),
-      cta: { actionCode: actionCode ?? 'ConfigureStructure' },
-      canal: 'structure-topology',
-    };
+  // Topology / fiche child issue (structureIssues code)
+  if (structureIssueCode) {
+    const meta = structureDiagnosticMeta(structureIssueCode);
+    if (meta) {
+      return {
+        tone: mapStructureTone(structureDiagnosticTone(structureIssueCode)),
+        titleKey: structureDiagnosticTitleKey(structureIssueCode),
+        titleNs: 'structure',
+        descriptionParams,
+        sotHref: structureHref(competitionId, stageId),
+        cta: { actionCode: actionCode ?? 'ConfigureStructure' },
+        canal: 'structure-topology',
+      };
+    }
   }
 
   if (source === 'StructureGraphInvalid') {
@@ -307,17 +318,19 @@ export function situationPresentation(
   });
 }
 
-/** Convenience: Topology structureIssues row → presentation. */
+/** Convenience: Topology / fiche structureIssues row → presentation. */
 export function structureIssuePresentation(input: {
   code: string;
   competitionId: string;
   stageId: string;
+  awaitingDraw?: boolean;
 }): FunctionalProblemPresentation {
   return functionalProblemPresentation({
     source: 'StructureGraphInvalid',
     structureIssueCode: input.code,
     competitionId: input.competitionId,
     stageId: input.stageId,
+    awaitingDraw: input.awaitingDraw,
     actionCode: 'ConfigureStructure',
   });
 }

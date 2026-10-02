@@ -38,6 +38,14 @@ public static class ReplaceRegulation
         ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
 
+        var occupying = competition.Entries.Count;
+        if (regulation.EntryRules.MaximumTeams < occupying)
+        {
+            throw new ApplicationFailureException(
+                $"Cannot lower maximum teams to {regulation.EntryRules.MaximumTeams}: {occupying} entries currently occupy places.",
+                ApplicationErrorCodes.EntryMaxBelowOccupying);
+        }
+
         competition.ReplaceRegulation(regulation, clock);
 
         foreach (var stage in stages)

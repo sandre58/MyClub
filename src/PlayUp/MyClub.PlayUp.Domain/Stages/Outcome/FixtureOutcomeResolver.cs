@@ -15,7 +15,9 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// <remarks>
 /// Referential frame is <see cref="EntryId"/> (never SlotA/B, never global Home/Away).
 /// Extra time / shootout of confrontation are allowed only on the last leg (otherwise Invalid).
-/// TAB without ET is allowed (orthogonal to ExtraTimePlayed).
+/// <see cref="TieFormat.ExtraTimeRule"/> authorizes ExtraTimePlayed; when configured, shootout
+/// is evaluated only after extra time has been played. TAB without ET remains allowed when
+/// ExtraTimeRule is absent.
 /// </remarks>
 public static class FixtureOutcomeResolver
 {
@@ -33,6 +35,7 @@ public static class FixtureOutcomeResolver
         var legs = ValidateAndOrderLegs(tieFormat, snapshot);
         EnsureFinishedWithScores(legs);
         EnsureNonFinalWithoutConfrontationResolution(tieFormat, legs);
+        EnsureExtraTimeAuthorization(tieFormat, legs);
         var (entryA, entryB) = ResolveEntryPair(legs);
 
         return tieFormat.NumberOfLegs == TieFormat.SingleLeg
@@ -109,6 +112,23 @@ public static class FixtureOutcomeResolver
         }
     }
 
+    private static void EnsureExtraTimeAuthorization(
+        TieFormat tieFormat,
+        IReadOnlyList<FixtureLegSnapshot> legs)
+    {
+        if (tieFormat.ExtraTimeRule is not null)
+        {
+            return;
+        }
+
+        if (legs.Any(leg => leg.ExtraTimePlayed))
+        {
+            throw new DomainException(
+                "Extra time was played but TieFormat does not allow extra time.",
+                StageErrorCodes.FixtureOutcomeInvalid);
+        }
+    }
+
     private static (EntryId EntryA, EntryId EntryB) ResolveEntryPair(IReadOnlyList<FixtureLegSnapshot> legs)
     {
         var entries = legs
@@ -134,7 +154,7 @@ public static class FixtureOutcomeResolver
             ? score.HomeGoals > score.AwayGoals
                 ? new FixtureOutcome(leg.HomeEntryId, leg.AwayEntryId)
                 : new FixtureOutcome(leg.AwayEntryId, leg.HomeEntryId)
-            : ResolveByShootout(tieFormat, leg);
+            : ResolveLevelScore(tieFormat, leg);
     }
 
     private static FixtureOutcome ResolveTwoLegAggregate(
@@ -170,9 +190,18 @@ public static class FixtureOutcomeResolver
         }
 
         // Aggregate (and away goals when enabled) still tied: ET goals are already in Score totals.
-        // Decide only via shootout on the last leg when configured.
-        return ResolveByShootout(tieFormat, legs[^1]);
+        return ResolveLevelScore(tieFormat, legs[^1]);
     }
+
+    /// <summary>
+    /// Resolves a still-level confrontation on the last leg (ET then TAB when configured).
+    /// </summary>
+    private static FixtureOutcome ResolveLevelScore(TieFormat tieFormat, FixtureLegSnapshot lastLeg) =>
+        tieFormat.ExtraTimeRule is not null && !lastLeg.ExtraTimePlayed
+            ? throw new DomainException(
+                "Fixture outcome is undecided: extra time is required but has not been played.",
+                StageErrorCodes.FixtureOutcomeUndecided)
+            : ResolveByShootout(tieFormat, lastLeg);
 
     private static void AddGoals(
         EntryId scorer,

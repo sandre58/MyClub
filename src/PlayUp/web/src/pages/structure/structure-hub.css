@@ -715,22 +715,44 @@
   border: var(--border-width) solid var(--color-border);
 }
 
-.structure-phase-rail__issue {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
+.structure-phase-rail__issues {
+  list-style: none;
+  margin: 0;
   margin-top: auto;
   padding: 0;
-  color: var(--color-error);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.structure-phase-rail__issue {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
+  color: var(--color-error);
+}
+
+.structure-phase-rail__issue[data-tone='attention'] {
+  color: var(--color-attention);
+}
+
+.structure-phase-rail__issue[data-tone='progress'] {
+  color: var(--color-info);
 }
 
 .structure-phase-rail__issue-icon {
   flex: none;
   line-height: 0;
+}
+
+.structure-schematic-viewport__issues {
+  margin-top: var(--space-8);
 }
 
 /* Out column: filled rails absorb leftover height; empty rails hug header. */
@@ -808,12 +830,6 @@
   align-items: flex-start;
   justify-content: stretch;
   gap: var(--space-12);
-}
-
-.structure-domain-tile--attention {
-  border-color: color-mix(in srgb, var(--color-attention) 55%, var(--color-border));
-  box-shadow: inset 3px 0 0 var(--color-attention);
-  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-surface));
 }
 
 .structure-domain-tile--reg .regulation-max {

@@ -43,6 +43,17 @@ public sealed record TieFormat
         tieFormat ?? DefaultOneLeg;
 
     /// <summary>
+    /// Returns whether a level score can always be decided to Winner/Loser under this format.
+    /// </summary>
+    /// <remarks>
+    /// Extra time alone is not decisive (a draw can remain after ET). A configured
+    /// <see cref="PenaltyShootoutRule"/> is the V1 always-decisive draw resolution.
+    /// Aligns with <c>FixtureOutcomeResolver</c> after ExtraTimeRule is honored.
+    /// </remarks>
+    public bool CanAlwaysDecideDraw() =>
+        PenaltyShootoutRule is not null;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="TieFormat"/> class.
     /// </summary>
     /// <param name="numberOfLegs">Number of legs (1 or 2).</param>

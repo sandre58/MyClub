@@ -864,6 +864,7 @@ internal static class ScenarioOrchestration
                     ProgressionDestination.ForGroup(groups.Id, orderedGroups[1].Id))
             ]),
             context.Clock);
+        EnsureDecisiveRoundTieFormats(semi, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -908,10 +909,13 @@ internal static class ScenarioOrchestration
 
         WireSemiToFinalAndBronzeAutoPlace(
             semi, final, bronze, sfFixtures, ["F-A", "F-B"], ["B-A", "B-B"], context.Clock);
+        EnsureDecisiveRoundTieFormats(semi, context.Clock);
 
         var finalFixture = AddRoundFixtures(final, count: 1, context.Clock)[0];
         var bronzeFixture = AddRoundFixtures(bronze, count: 1, context.Clock)[0];
         WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
+        EnsureDecisiveRoundTieFormats(final, context.Clock);
+        EnsureDecisiveRoundTieFormats(bronze, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1008,6 +1012,9 @@ internal static class ScenarioOrchestration
         WireSemiToFinalAndBronzeAutoPlace(
             semi, final, bronze, sfFixtures, ["F-A", "F-B"], ["B-A", "B-B"], context.Clock);
         WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
+        EnsureDecisiveRoundTieFormats(semi, context.Clock);
+        EnsureDecisiveRoundTieFormats(final, context.Clock);
+        EnsureDecisiveRoundTieFormats(bronze, context.Clock);
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1229,9 +1236,345 @@ internal static class ScenarioOrchestration
                     ProgressionDestination.ForPopulation(bronze.Id))
             ]),
             context.Clock);
+        EnsureDecisiveRoundTieFormats(barrages, context.Clock);
 
         SeedMaterialization.AssignGroupsRoundRobin(groups, entries);
         _ = SeedMaterialization.MaterializeGroupsMatches(context, competition, groups);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Invariants QA — SlotFeedMissing (Incomplete Signal) + PopulationShortfall on KO Places.
+    /// Groups root fed; QF places empty — Draft persistable, not StructureGraphInvalid.
+    /// </summary>
+    public static async Task BuildInvariantsFeedMissingAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Invariants — SlotFeedMissing",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            PlacesPerGroup = 4,
+            StageName = "Poules",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        _ = CreateKnockoutStage(
+            context,
+            competition,
+            "qf",
+            "Quarts",
+            "Quarts",
+            PairSlotKeys("QF", pairCount: 2));
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Invariants QA — EXEC-001 ConfrontationUndecidable (Prepare Gate).
+    /// Necessary Prog without TAB — Draft persistable; Prepare must refuse.
+    /// </summary>
+    public static async Task BuildInvariantsExecUndecidableAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Invariants — ConfrontationUndecidable",
+            Format = RecipeFormat.Cup,
+            TeamCount = 4,
+            BracketSize = 4,
+            StageName = "Demi-finales",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        var sfSlotKeys = PairSlotKeys("SF", pairCount: 2);
+        var semi = CreateKnockoutStage(
+            context, competition, "sf", "Demi-finales", "Demi-finales", sfSlotKeys);
+        AssignRootComposition(semi, entries, context.Clock);
+        var sfFixtures = AddRoundFixtures(semi, count: 2, context.Clock);
+
+        var final = CreateKnockoutStage(
+            context, competition, "final", "Finale", "Finale", ["F-A", "F-B"]);
+
+        // Intentionally no TAB — EXEC-001 on necessary Progression.
+        WireWinnerProgressionToSlots(
+            context.Ids,
+            semi,
+            final,
+            sfFixtures,
+            ["F-A", "F-B"],
+            context.Clock,
+            "prog-exec-undecidable");
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Invariants QA — FLOW-001 CycleDetected (Prepare Gate, Draft Signal).
+    /// </summary>
+    public static async Task BuildInvariantsFlowCycleAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Invariants — CycleDetected",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            PlacesPerGroup = 4,
+            StageName = "Phase A",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var phaseA = ConfigurePrimaryStage(context, competition, recipe);
+        phaseA.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(phaseA, entries, context.Clock);
+
+        var phaseB = Stage.Create(
+            competition.Id,
+            new StageName("Phase B"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            context.Ids.Stage("phase-b"),
+            context.Clock);
+        phaseB.AddGroup("B1", context.Clock);
+        phaseB.AddGroup("B2", context.Clock);
+        phaseB.SetPlacesPerGroup(4);
+        phaseB.AddMatchday(1, context.Clock);
+        competition.AddStage(phaseB.Id, context.Clock);
+        context.Stages.Add(phaseB);
+
+        phaseA.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Top, 2),
+                    QualificationDestination.ForPopulation(phaseB.Id))
+            ]),
+            context.Clock);
+        phaseB.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Top, 2),
+                    QualificationDestination.ForPopulation(phaseA.Id))
+            ]),
+            context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Invariants QA — FLOW-004 RoutingNondeterminism (duplicate Qual source → two Population destinations).
+    /// </summary>
+    public static async Task BuildInvariantsFlowRoutingAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Invariants — RoutingNondeterminism",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            PlacesPerGroup = 4,
+            StageName = "Poules",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        var destA = CreateChampionshipStage(context, competition, "dest-a", "Destination A");
+        var destB = CreateChampionshipStage(context, competition, "dest-b", "Destination B");
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForPopulation(destA.Id)),
+                new QualificationPath(
+                    2,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForPopulation(destB.Id))
+            ]),
+            context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Invariants QA — NUM-001 OverCapacityEdge (Prepare Gate) on Cup Places.
+    /// </summary>
+    public static async Task BuildInvariantsNumOverCapacityAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Invariants — OverCapacityEdge",
+            Format = RecipeFormat.Groups,
+            TeamCount = 8,
+            GroupCount = 2,
+            PlacesPerGroup = 4,
+            StageName = "Poules",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        // Destination capacity = 2 Places; Qual Top 4 → OverCapacityEdge on KO.
+        var ko = CreateKnockoutStage(
+            context, competition, "ko", "Barrages", "Barrages", ["KO-A", "KO-B"]);
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Top, 4),
+                    QualificationDestination.ForPopulation(ko.Id))
+            ]),
+            context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Invariants QA — NUM-002a OverExtraction (Prepare Gate): EachGroup Top 1–3
+    /// from PlacesPerGroup 2 (2×3 = 6 &gt; capacity 4).
+    /// </summary>
+    public static async Task BuildInvariantsNumOverExtractionAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Invariants — OverExtraction",
+            Format = RecipeFormat.Groups,
+            TeamCount = 4,
+            GroupCount = 2,
+            PlacesPerGroup = 2,
+            StageName = "Poules",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+        AssignRootComposition(groups, entries, context.Clock);
+
+        var next = CreateChampionshipStage(context, competition, "next", "Phase suivante");
+
+        // EachGroup positions 1–3 on groups of 2 → 6 extracted vs capacity 4.
+        WireEachGroupQualificationToPopulation(
+            context.Ids, groups, next, positionFrom: 1, positionTo: 3, context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Invariants QA — RESULT AuthoredAwardUnreachable (Signal hors Ready): award source pair missing.
+    /// </summary>
+    public static async Task BuildInvariantsResultUnreachableAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Invariants — AuthoredAwardUnreachable",
+            Format = RecipeFormat.Cup,
+            TeamCount = 2,
+            BracketSize = 2,
+            StageName = "Finale",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var final = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(final, entries, context.Clock);
+        EnsureDecisiveRoundTieFormats(final, context.Clock);
+
+        // Domain rejects award paths whose source is already missing; seed a reachable
+        // path then drop the confrontation so Analyzer reports AuthoredAwardUnreachable.
+        var pairKey = final.BracketPairs.Count > 0
+            ? final.BracketPairs[0].PairKey
+            : throw new InvalidOperationException("Finale seed expects a structural BracketPair.");
+        final.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(pairKey, ProgressionOutcome.Winner, rank: 1)
+            ]),
+            context.Clock);
+        final.ClearBracketPairs();
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -1965,7 +2308,8 @@ internal static class ScenarioOrchestration
         }
     }
 
-    private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock) =>
+    private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock)
+    {
         final.ReplacePlacementAwardRules(
             new PlacementAwardRules(
             [
@@ -1973,6 +2317,8 @@ internal static class ScenarioOrchestration
                 new PlacementAwardPath(ToSourcePairKey(finalFixture), ProgressionOutcome.Loser, rank: 2)
             ]),
             clock);
+        EnsureDecisiveRoundTieFormats(final, clock);
+    }
 
     private static void WireFinalAndBronzePlacementAwards(
         Stage final,
@@ -1989,6 +2335,7 @@ internal static class ScenarioOrchestration
                 new PlacementAwardPath(ToSourcePairKey(bronzeFixture), ProgressionOutcome.Loser, rank: 4)
             ]),
             clock);
+        EnsureDecisiveRoundTieFormats(bronze, clock);
     }
 
     private static Stage CreateKnockoutStage(
@@ -2382,6 +2729,7 @@ internal static class ScenarioOrchestration
                 source.Rounds,
                 source.BracketPairs),
             clock);
+        EnsureDecisiveRoundTieFormats(source, clock);
     }
 
     /// <summary>
@@ -2441,6 +2789,7 @@ internal static class ScenarioOrchestration
                 source.Rounds,
                 source.BracketPairs),
             clock);
+        EnsureDecisiveRoundTieFormats(source, clock);
     }
 
     /// <summary>
@@ -2475,6 +2824,7 @@ internal static class ScenarioOrchestration
             new(ToSourcePairKey(sfFixtures[1]), ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, bronzeSlotKeys[1]))
         };
         semi.ReplaceProgressionRules(new ProgressionRules(paths), clock);
+        EnsureDecisiveRoundTieFormats(semi, clock);
     }
 
     /// <summary>
@@ -2485,6 +2835,33 @@ internal static class ScenarioOrchestration
             ? fixture.BracketPairKey
             : throw new InvalidOperationException(
                 $"Fixture '{fixture.Id}' has no BracketPairKey; cannot author Progression Path.");
+
+    /// <summary>
+    /// Ensures every round can always decide a draw (TAB) when Progression / Placement makes the confrontation necessary.
+    /// Preserves legs / aggregate / away goals / ET when already authored.
+    /// </summary>
+    private static void EnsureDecisiveRoundTieFormats(Stage stage, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        foreach (var round in stage.Rounds)
+        {
+            var current = TieFormat.OrDefaultOneLeg(round.TieFormat ?? stage.Regulation.TieFormat);
+            if (current.CanAlwaysDecideDraw())
+            {
+                continue;
+            }
+
+            var decisive = new TieFormat(
+                current.NumberOfLegs,
+                current.AggregateScoring,
+                current.AwayGoalsRule is null ? null : new AwayGoalsRule(),
+                current.ExtraTimeRule is null ? null : new ExtraTimeRule(),
+                new PenaltyShootoutRule());
+            stage.ReplaceRoundTieFormat(round.Id, decisive, clock);
+        }
+    }
 
     private static Fixture[] OrderedFixtures(Stage stage, int expectedCount)
     {

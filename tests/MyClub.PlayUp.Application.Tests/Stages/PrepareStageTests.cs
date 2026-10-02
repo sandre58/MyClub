@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -100,7 +101,7 @@ public sealed class PrepareStageTests
     }
 
     [Fact]
-    public void Execute_prepares_when_progression_references_round_without_tie_format()
+    public void Execute_rejects_when_necessary_progression_confrontation_cannot_decide_draw()
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -121,7 +122,49 @@ public sealed class PrepareStageTests
         stage.ReplaceProgressionRules(
             new ProgressionRules(
             [
-                new ProgressionPath("P1",
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var act = () => PrepareStage.Execute(stage, [stage], _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ConfrontationUndecidable);
+        stage.Status.Should().Be(StageStatus.Draft);
+        round.TieFormat.Should().BeNull();
+    }
+
+    [Fact]
+    public void Execute_prepares_when_necessary_progression_has_penalty_shootout()
+    {
+        var stage = Stage.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        var tie = new TieFormat(
+            TieFormat.SingleLeg,
+            aggregateScoring: false,
+            penaltyShootoutRule: new PenaltyShootoutRule());
+        var round = stage.AddRound("QuarterFinal", tie, _clock);
+        stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
+        stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
+        stage.AssignEntryToSlot("KO-A", a);
+        stage.AssignEntryToSlot("KO-B", b);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P1",
                     ProgressionOutcome.Winner,
                     new ProgressionDestination(stage.Id, "SF1-A"))
             ]),
@@ -130,7 +173,69 @@ public sealed class PrepareStageTests
         PrepareStage.Execute(stage, [stage], _clock);
 
         stage.Status.Should().Be(StageStatus.Ready);
-        round.TieFormat.Should().BeNull();
+        round.TieFormat!.CanAlwaysDecideDraw().Should().BeTrue();
+    }
+
+    [Fact]
+    public void Execute_prepares_when_necessary_confrontation_has_extra_time_and_penalty_shootout()
+    {
+        var stage = Stage.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        var tie = new TieFormat(
+            TieFormat.SingleLeg,
+            aggregateScoring: false,
+            extraTimeRule: new ExtraTimeRule(),
+            penaltyShootoutRule: new PenaltyShootoutRule());
+        var round = stage.AddRound("Final", tie, _clock);
+        stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.ReplaceBracketPairs([new BracketPair("FINAL", "F-A", "F-B")]);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
+        stage.AssignEntryToSlot("F-A", a);
+        stage.AssignEntryToSlot("F-B", b);
+        stage.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath("FINAL", ProgressionOutcome.Winner, rank: 1),
+                new PlacementAwardPath("FINAL", ProgressionOutcome.Loser, rank: 2)
+            ]),
+            _clock);
+
+        PrepareStage.Execute(stage, [stage], _clock);
+
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Execute_does_not_apply_exec001_when_confrontation_is_ornamental()
+    {
+        var stage = Stage.Create(
+            CompetitionId.New(),
+            new StageName("Cup"),
+            SampleRegulations.Standard(),
+            _clock);
+        var round = stage.AddRound("QuarterFinal", tieFormat: null, _clock);
+        stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
+        stage.AssignEntryToSlot("KO-A", a);
+        stage.AssignEntryToSlot("KO-B", b);
+
+        CompetitionFlowAnalyzer.AnalyzeExecution([stage]).Should().BeEmpty();
+
+        PrepareStage.Execute(stage, [stage], _clock);
+
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
@@ -143,7 +248,10 @@ public sealed class PrepareStageTests
             _clock);
         var round = stage.AddRound(
             "QuarterFinal",
-            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            new TieFormat(
+                TieFormat.SingleLeg,
+                aggregateScoring: false,
+                penaltyShootoutRule: new PenaltyShootoutRule()),
             _clock);
         stage.AddFixture(round.Id, _clock);
         stage.AddSlot("KO-A");
@@ -316,7 +424,10 @@ public sealed class PrepareStageTests
         var semi = Stage.Create(competitionId, new StageName("SemiFinal"), SampleRegulations.Standard(), _clock);
         var round = source.AddRound(
             "QuarterFinal",
-            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            new TieFormat(
+                TieFormat.SingleLeg,
+                aggregateScoring: false,
+                penaltyShootoutRule: new PenaltyShootoutRule()),
             _clock);
         source.AddFixture(round.Id, _clock);
         source.AddSlot("KO-A");

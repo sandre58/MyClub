@@ -136,6 +136,36 @@ public static class ApplicationErrorCodes
     public const string EntryCapacityExceeded = "Application.EntryCapacityExceeded";
 
     /// <summary>
+    /// Gets the code when ReplaceRegulation would set <c>MaximumTeams</c> below the occupying entry count.
+    /// </summary>
+    public const string EntryMaxBelowOccupying = "Application.EntryMaxBelowOccupying";
+
+    /// <summary>
+    /// Gets the code when Prepare is refused because a necessary confrontation cannot always decide a draw.
+    /// </summary>
+    public const string ConfrontationUndecidable = "Application.ConfrontationUndecidable";
+
+    /// <summary>
+    /// Gets the code when Prepare is refused because the Qual/Prog graph contains a cycle.
+    /// </summary>
+    public const string StructureCycleDetected = "Application.StructureCycleDetected";
+
+    /// <summary>
+    /// Gets the code when Prepare is refused because Qual/Prog routing is nondeterministic.
+    /// </summary>
+    public const string RoutingNondeterminism = "Application.RoutingNondeterminism";
+
+    /// <summary>
+    /// Gets the code when Prepare is refused because inbound volume exceeds places capacity.
+    /// </summary>
+    public const string OverCapacityEdge = "Application.OverCapacityEdge";
+
+    /// <summary>
+    /// Gets the code when Prepare is refused because outbound extraction exceeds source capacity.
+    /// </summary>
+    public const string OverExtraction = "Application.OverExtraction";
+
+    /// <summary>
     /// Gets the code when a ConfigureStructure intent has invalid parameters.
     /// </summary>
     public const string InvalidStructureIntent = "Application.InvalidStructureIntent";

@@ -19,17 +19,24 @@ public sealed class FixtureOutcomeResolverTests
     private readonly EntryId _home = EntryId.New();
     private readonly EntryId _away = EntryId.New();
 
-    private static TieFormat SingleLeg(bool withShootout = false) =>
+    private static TieFormat SingleLeg(
+        bool withShootout = false,
+        bool withExtraTime = false) =>
         new(
             TieFormat.SingleLeg,
             aggregateScoring: false,
+            extraTimeRule: withExtraTime ? new ExtraTimeRule() : null,
             penaltyShootoutRule: withShootout ? new PenaltyShootoutRule() : null);
 
-    private static TieFormat TwoLeg(bool awayGoals = false, bool withShootout = false) =>
+    private static TieFormat TwoLeg(
+        bool awayGoals = false,
+        bool withShootout = false,
+        bool withExtraTime = false) =>
         new(
             TieFormat.TwoLegs,
             aggregateScoring: true,
             awayGoalsRule: awayGoals ? new AwayGoalsRule() : null,
+            extraTimeRule: withExtraTime ? new ExtraTimeRule() : null,
             penaltyShootoutRule: withShootout ? new PenaltyShootoutRule() : null);
 
     [Fact]
@@ -88,6 +95,55 @@ public sealed class FixtureOutcomeResolverTests
             OneLeg(new Score(0, 0), extraTimePlayed: false, shootout: new PenaltyShootoutScore(4, 3)));
 
         outcome.WinnerEntryId.Should().Be(_home);
+    }
+
+    [Fact]
+    public void Resolve_single_leg_draw_with_extra_time_required_but_not_played_is_undecided()
+    {
+        var act = () => FixtureOutcomeResolver.Resolve(
+            SingleLeg(withShootout: true, withExtraTime: true),
+            OneLeg(new Score(1, 1), extraTimePlayed: false));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeUndecided);
+    }
+
+    [Fact]
+    public void Resolve_single_leg_draw_after_extra_time_uses_shootout()
+    {
+        var outcome = FixtureOutcomeResolver.Resolve(
+            SingleLeg(withShootout: true, withExtraTime: true),
+            OneLeg(new Score(2, 2), extraTimePlayed: true, shootout: new PenaltyShootoutScore(5, 4)));
+
+        outcome.WinnerEntryId.Should().Be(_home);
+    }
+
+    [Fact]
+    public void Resolve_single_leg_extra_time_played_without_rule_is_invalid()
+    {
+        var act = () => FixtureOutcomeResolver.Resolve(
+            SingleLeg(withShootout: true),
+            OneLeg(new Score(1, 0), extraTimePlayed: true));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeInvalid);
+    }
+
+    [Fact]
+    public void Resolve_single_leg_draw_with_extra_time_only_still_undecided_after_et()
+    {
+        var act = () => FixtureOutcomeResolver.Resolve(
+            SingleLeg(withExtraTime: true),
+            OneLeg(new Score(1, 1), extraTimePlayed: true));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeUndecided);
+    }
+
+    [Fact]
+    public void CanAlwaysDecideDraw_requires_penalty_shootout_rule()
+    {
+        SingleLeg().CanAlwaysDecideDraw().Should().BeFalse();
+        SingleLeg(withExtraTime: true).CanAlwaysDecideDraw().Should().BeFalse();
+        SingleLeg(withShootout: true).CanAlwaysDecideDraw().Should().BeTrue();
+        SingleLeg(withShootout: true, withExtraTime: true).CanAlwaysDecideDraw().Should().BeTrue();
     }
 
     [Theory]
@@ -193,13 +249,25 @@ public sealed class FixtureOutcomeResolverTests
     {
         // Leg1 A 1-0 B; Leg2 after 90' B 1-0 A would be aggregate 1-1; ET makes Score 2-0 → aggregate A 1, B 2
         var outcome = FixtureOutcomeResolver.Resolve(
-            TwoLeg(),
+            TwoLeg(withExtraTime: true),
             Confrontation(
                 Leg(1, _home, _away, new Score(1, 0)),
                 Leg(2, _away, _home, new Score(2, 0), extraTimePlayed: true)));
 
         outcome.WinnerEntryId.Should().Be(_away);
         outcome.LoserEntryId.Should().Be(_home);
+    }
+
+    [Fact]
+    public void Resolve_two_leg_extra_time_played_without_rule_is_invalid()
+    {
+        var act = () => FixtureOutcomeResolver.Resolve(
+            TwoLeg(),
+            Confrontation(
+                Leg(1, _home, _away, new Score(1, 0)),
+                Leg(2, _away, _home, new Score(2, 0), extraTimePlayed: true)));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeInvalid);
     }
 
     [Fact]
@@ -218,12 +286,24 @@ public sealed class FixtureOutcomeResolverTests
     public void Resolve_two_leg_aggregate_tied_without_ag_uses_shootout_on_last_leg()
     {
         var outcome = FixtureOutcomeResolver.Resolve(
-            TwoLeg(withShootout: true),
+            TwoLeg(withShootout: true, withExtraTime: true),
             Confrontation(
                 Leg(1, _home, _away, new Score(1, 0)),
                 Leg(2, _away, _home, new Score(1, 0), extraTimePlayed: true, shootout: new PenaltyShootoutScore(5, 4))));
 
         outcome.WinnerEntryId.Should().Be(_away);
+    }
+
+    [Fact]
+    public void Resolve_two_leg_aggregate_tied_with_extra_time_required_but_not_played_is_undecided()
+    {
+        var act = () => FixtureOutcomeResolver.Resolve(
+            TwoLeg(withShootout: true, withExtraTime: true),
+            Confrontation(
+                Leg(1, _home, _away, new Score(1, 0)),
+                Leg(2, _away, _home, new Score(1, 0), extraTimePlayed: false)));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeUndecided);
     }
 
     [Fact]

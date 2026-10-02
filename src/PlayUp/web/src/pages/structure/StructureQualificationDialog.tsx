@@ -161,7 +161,6 @@ export function StructureQualificationDialog({
 
   const [intents, setIntents] = useState<QualIntentDraft[]>([]);
   const [baselineSerialized, setBaselineSerialized] = useState('');
-  const [needsIntentMigration, setNeedsIntentMigration] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   /** False until source schematic has settled for this open session. */
   const [sessionReady, setSessionReady] = useState(false);
@@ -179,9 +178,7 @@ export function StructureQualificationDialog({
   const hasGroups = groups.length > 0;
 
   const dirty =
-    sessionReady &&
-    (needsIntentMigration ||
-      serializeIntents(intents, groups) !== baselineSerialized);
+    sessionReady && serializeIntents(intents, groups) !== baselineSerialized;
   const {
     discardOpen,
     requestClose: requestDiscardClose,
@@ -273,9 +270,6 @@ export function StructureQualificationDialog({
     });
     setIntents(next);
     setBaselineSerialized(serializeIntents(next, groups));
-    setNeedsIntentMigration(
-      apiIntents.length === 0 && (stage.qualificationPaths?.length ?? 0) > 0,
-    );
     setExpandedId(null);
     setSessionReady(true);
     resetDiscard();

@@ -23,7 +23,7 @@ public sealed class FluxEmptyRelationsDraftScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Groups Affectation + QF slots, aucune arête — Draft. Overflow « Ajouter une sortie » / attribution.";
+        "Groups Affectation + QF slots sans arêtes — SlotFeedMissing / NonRootUnfed / PopulationShortfall (Signals). Overflow « Ajouter une sortie ».";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

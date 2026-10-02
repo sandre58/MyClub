@@ -476,7 +476,6 @@ export function DomainTile({
   footer,
   span = 'half',
   compact = false,
-  attention = false,
 }: {
   id: string;
   title: string;
@@ -488,7 +487,6 @@ export function DomainTile({
   footer?: ReactNode;
   span?: 'half' | 'full';
   compact?: boolean;
-  attention?: boolean;
 }) {
   const titleId = `${id}-title`;
   return (
@@ -499,7 +497,6 @@ export function DomainTile({
         'structure-domain-tile',
         span === 'full' ? 'structure-domain-tile--full' : null,
         compact ? 'structure-domain-tile--compact' : null,
-        attention ? 'structure-domain-tile--attention' : null,
       ]
         .filter(Boolean)
         .join(' ')}
@@ -548,7 +545,6 @@ export function FluxRail({
   children,
   side,
   empty = false,
-  attention = false,
   attentionBanner,
 }: {
   id: string;
@@ -559,8 +555,7 @@ export function FluxRail({
   side: 'in' | 'out';
   /** When true: header only — body omitted so it consumes no vertical space. */
   empty?: boolean;
-  /** E3 — local echo when this rail owns the correction. */
-  attention?: boolean;
+  /** Diagnostic banners owned by this rail (no container chrome). */
   attentionBanner?: ReactNode;
 }) {
   const titleId = `${id}-title`;
@@ -571,7 +566,6 @@ export function FluxRail({
         'structure-phase-rail',
         `structure-phase-rail--${side}`,
         empty ? 'structure-phase-rail--empty' : null,
-        attention ? 'structure-phase-rail--attention' : null,
       ]
         .filter(Boolean)
         .join(' ')}

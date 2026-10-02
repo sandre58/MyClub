@@ -78,6 +78,16 @@ import {
   resolveStageDrawCreateGate,
 } from './drawUi';
 import { canReleaseDrawAlignedPlacements } from '../stage/lifecycleGates';
+import {
+  isSlotFeedAwaitingDraw,
+  structureDiagnosticTitleKey,
+  structureDiagnosticTone,
+  structureIssueBannersForTile,
+  structureIssuesForTile,
+} from './structureDiagnosticPresentation';
+import {
+  stageHasPopulationShortfall,
+} from './structureReadinessSummary';
 import { DrawCtaActionBody, StructureDrawCta } from './StructureDrawCta';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 import { outboundSortiesFeeds } from './structureSortiesIntentFeed';
@@ -416,7 +426,6 @@ export function StructurePhaseFiche({
     createBlockPresentation?.kind === 'inline' &&
     !showReleaseCta &&
     !(createBlockedReason === 'countMismatch' && showPoolHint);
-  const showConfrontation = sections.includes('confrontation');
   const canEditProg = actions.includes('ReplaceProgressionRules');
   const canEditPlacement = actions.includes('ReplacePlacementAwardRules');
   const canEditTie =
@@ -474,15 +483,88 @@ export function StructurePhaseFiche({
   const canAddExit = data.stages.length >= 2;
   const canCreateExit = canAddExit && (canEditQualif || canEditProg);
   const canCreateAttribution = canEditPlacement;
-  const showSortiesRail = hasExits || canCreateExit;
-  /** Attribution = KO/Cup only (gated by ReplacePlacementAwardRules). */
-  const showAttributionRail = canEditPlacement;
+  const issueCodes = stage.structureIssues ?? [];
+  const awaitingDraw = isSlotFeedAwaitingDraw(stage);
+  /** Detection for rails visibility / attention chrome (all tile-owned codes). */
+  const placesIssues = structureIssuesForTile(issueCodes, 'places');
+  const exitsIssues = structureIssuesForTile(issueCodes, 'exits');
+  const capacityOwnedIssues = [
+    ...structureIssuesForTile(issueCodes, 'capacity'),
+    ...(stageHasPopulationShortfall(data, stage) &&
+    !issueCodes.includes('PopulationShortfall')
+      ? ['PopulationShortfall']
+      : []),
+  ];
+  const confrontationIssues = structureIssuesForTile(
+    issueCodes,
+    'confrontation',
+  );
+  const standingIssues = structureIssuesForTile(issueCodes, 'standing');
+  const attributionOwnedIssues = structureIssuesForTile(
+    issueCodes,
+    'attribution',
+  );
+  /** Banners only — meter owns shortfall/over-capacity/NonRootUnfed(+empty); RESULT merged. */
+  const placesBanners = structureIssueBannersForTile(issueCodes, 'places', {
+    silenceSlotFeedMissing: awaitingDraw,
+  });
+  const exitsBanners = structureIssueBannersForTile(issueCodes, 'exits');
+  const capacityBanners = structureIssueBannersForTile(
+    capacityOwnedIssues,
+    'capacity',
+    {
+      meterExpressesPopulationAbsence: stageHasPopulationShortfall(data, stage),
+    },
+  );
+  const confrontationBanners = structureIssueBannersForTile(
+    issueCodes,
+    'confrontation',
+  );
+  const standingBanners = structureIssueBannersForTile(issueCodes, 'standing');
+  const attributionBanners = structureIssueBannersForTile(
+    issueCodes,
+    'attribution',
+  );
+  const showConfrontation =
+    sections.includes('confrontation') || confrontationIssues.length > 0;
+  const showSortiesRail = hasExits || canCreateExit || exitsIssues.length > 0;
+  /** Attribution = KO/Cup only (gated by ReplacePlacementAwardRules), or RESULT diagnostics. */
+  const showAttributionRail =
+    canEditPlacement || attributionOwnedIssues.length > 0;
   const showOutRail = showSortiesRail || showAttributionRail;
-  const structureIssueCount = (stage.structureIssues ?? []).length;
   const teamsLabel = (count: number) => t('fiche.teamsCount', { count });
   const formatLabel = stage.formatKind
     ? structureFormatKindLabel(stage.formatKind)
     : null;
+
+  const issueBanner = (codes: string[]) =>
+    codes.length === 0 ? undefined : (
+      <ul className="structure-phase-rail__issues" role="list">
+        {codes.map((code) => {
+          const tone = structureDiagnosticTone(code);
+          return (
+            <li
+              key={code}
+              className="structure-phase-rail__issue"
+              data-tone={tone}
+              role="status"
+            >
+              <span
+                className="structure-phase-rail__issue-icon"
+                aria-hidden="true"
+              >
+                <StructureIssueIcon size="sm" />
+              </span>
+              <span>
+                {t(structureDiagnosticTitleKey(code), {
+                  defaultValue: code,
+                })}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    );
 
   const openCompose = (focusSearch = false) => {
     setComposeFocusSearch(focusSearch);
@@ -823,6 +905,7 @@ export function StructurePhaseFiche({
             side="in"
             title={t('fiche.tiles.population')}
             icon={<ArrowDownIcon size="md" />}
+            attentionBanner={issueBanner(capacityBanners)}
           >
             <RootEntriesRail
               stage={stage}
@@ -884,7 +967,10 @@ export function StructurePhaseFiche({
                 ) : null}
               </div>
             )}
-            <div className="structure-schematic-viewport">
+            <div
+              id="tile-places"
+              className="structure-schematic-viewport"
+            >
               <div className="structure-schematic-viewport__scale">
                 {schematicQuery.data ? (
                   <PhaseSchematic
@@ -914,6 +1000,11 @@ export function StructurePhaseFiche({
                   </div>
                 )}
               </div>
+              {placesBanners.length > 0 ? (
+                <div className="structure-schematic-viewport__issues">
+                  {issueBanner(placesBanners)}
+                </div>
+              ) : null}
             </div>
             {showPlacementBlock ? (
               <div className="structure-phase-hero__draw">
@@ -1172,25 +1263,8 @@ export function StructurePhaseFiche({
                   title={t('fiche.tiles.exits')}
                   icon={<ArrowRightIcon size="md" />}
                   editControl={sortiesEditControl}
-                  empty={!hasExits && structureIssueCount === 0}
-                  attention={structureIssueCount > 0}
-                  attentionBanner={
-                    structureIssueCount > 0 ? (
-                      <p className="structure-phase-rail__issue" role="status">
-                        <span
-                          className="structure-phase-rail__issue-icon"
-                          aria-hidden="true"
-                        >
-                          <StructureIssueIcon size="sm" />
-                        </span>
-                        <span>
-                          {t('hub.sortiesIssue', {
-                            count: structureIssueCount,
-                          })}
-                        </span>
-                      </p>
-                    ) : undefined
-                  }
+                  empty={!hasExits && exitsBanners.length === 0}
+                  attentionBanner={issueBanner(exitsBanners)}
                 >
                   {hasExits ? (
                     <FluxGroupList
@@ -1208,7 +1282,8 @@ export function StructurePhaseFiche({
                   title={t('fiche.tiles.attribution')}
                   icon={<AttributionIcon size="md" />}
                   editControl={attributionEditControl}
-                  empty={!hasAttribution}
+                  empty={!hasAttribution && attributionBanners.length === 0}
+                  attentionBanner={issueBanner(attributionBanners)}
                 >
                   {hasAttribution ? (
                     <ul className="structure-flux-group__rules">
@@ -1322,6 +1397,7 @@ export function StructurePhaseFiche({
                 forfeitLoserGoals={stage.forfeitLoserGoals}
               />
             </div>
+            {standingBanners.length > 0 ? issueBanner(standingBanners) : null}
           </DomainTile>
         ) : null}
 
@@ -1335,6 +1411,9 @@ export function StructurePhaseFiche({
             compact
           >
             <ConfrontationPanel stage={stage} />
+            {confrontationBanners.length > 0
+              ? issueBanner(confrontationBanners)
+              : null}
           </DomainTile>
         ) : null}
       </div>

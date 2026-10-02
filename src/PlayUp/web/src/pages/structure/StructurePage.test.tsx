@@ -883,7 +883,7 @@ describe('StructurePage Structure hub', () => {
             progressionPathCount: 0,
             hasDrawRules: false,
             compositionCapacity: 8,
-            affectationEntryCount: 0,
+            affectationEntryCount: 8,
             actions: ['ReplaceQualificationRules', 'ReplaceDrawRules'],
             qualificationPaths: [
               {
@@ -926,19 +926,19 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Structure à finaliser/i),
+      await screen.findByText(/1 problème à traiter/i),
     ).toBeInTheDocument();
-    // Header synthesis: structural only (not pots; shortfall exclusive with graph)
+    // Header synthesis: graph family (not pots; shortfall exclusive with graph)
     const readinessStats = screen.getByRole('list', {
       name: /Synthèse des écarts/i,
     });
     expect(within(readinessStats).getByText('1')).toBeInTheDocument();
     expect(
-      within(readinessStats).getByText(/^liaison à corriger$/i),
+      within(readinessStats).getByText(/^Graphe$/i),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Pots de tirage manquants/i)).not.toBeInTheDocument();
     expect(
-      within(readinessStats).queryByText(/phase incomplète/i),
+      within(readinessStats).queryByText(/Alimentation/i),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Voir les problèmes/i }),
@@ -953,22 +953,28 @@ describe('StructurePage Structure hub', () => {
     expect(
       within(topology).queryByRole('button', { name: /Voir la phase/i }),
     ).not.toBeInTheDocument();
-    // Pastille ambient on the phase tile (detection), not an Alert list
+    // Pastille ambient = detection only (no diagnostic tooltip / text in topology)
     expect(
-      within(topology).getByText(/Destination de qualification introuvable/i),
+      within(topology).getByLabelText(/Écarts sur cette phase/i),
     ).toBeInTheDocument();
+    expect(
+      within(topology).queryByText(/Destination de qualification introuvable/i),
+    ).not.toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: /Voir les problèmes/i }),
     );
 
-    // E3 — Sorties shows local echo; edit pencil opens the editor (no Corriger CTA).
+    // E3 — Sorties shows the graph diagnostic on its canonical tile.
     const sorties = await screen.findByRole('complementary', {
       name: /Sorties/i,
     });
     expect(
-      within(sorties).getByText(/1 liaison à corriger/i),
+      within(sorties).getByText(/Destination de qualification introuvable/i),
     ).toBeInTheDocument();
+    expect(
+      within(sorties).queryByText(/1 liaison à corriger/i),
+    ).not.toBeInTheDocument();
     expect(
       within(sorties).queryByRole('button', { name: /^Corriger$/i }),
     ).not.toBeInTheDocument();

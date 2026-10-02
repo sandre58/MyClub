@@ -56,7 +56,42 @@ public sealed class StructureViewAssemblerIssuesTests
     }
 
     [Fact]
-    public void Assemble_projects_SlotFeedsInvalid_for_MultipleFeeds_not_for_Missing()
+    public void Assemble_projects_SlotFeedMissing_without_StructureGraphInvalid()
+    {
+        var competition = CreateCompetition.Execute("Feeds missing", _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+
+        var source = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(source.Id, _clock);
+        source.AddGroup("A", _clock);
+        source.AddMatchday(1, _clock);
+
+        var target = Stage.Create(
+            competition.Id,
+            new StageName("KO"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(target.Id, _clock);
+        target.AddRound("QF", _clock);
+        target.AddSlot("SF1-A");
+        target.AddSlot("SF1-B");
+
+        var view = StructureViewAssembler.Assemble(competition, [source, target]);
+        var targetHub = view.Stages.Single(hub => hub.StageId == target.Id.Value);
+
+        targetHub.StructureIssues.Should().Contain(StructureViewAssembler.IssueSlotFeedMissing);
+        targetHub.StructureIssues.Should().NotContain(StructureViewAssembler.IssueSlotFeedInvalid);
+        targetHub.StructureIssues.Should().NotContain(StructureViewAssembler.IssueSlotFeedMultiple);
+        view.Readiness.Blockers.Should().NotContain(StructureViewAssembler.BlockerStructureGraphInvalid);
+    }
+
+    [Fact]
+    public void Assemble_projects_SlotFeedMultiple_as_StructureGraphInvalid()
     {
         var competition = CreateCompetition.Execute("Feeds conflict", _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
@@ -81,11 +116,6 @@ public sealed class StructureViewAssemblerIssuesTests
         target.AddSlot("SF1-A");
         target.AddSlot("SF1-B");
 
-        // Missing feeds only — not projected as SlotFeedsInvalid in V1.
-        var missingOnly = StructureViewAssembler.Assemble(competition, [source, target]);
-        missingOnly.Stages.Single(hub => hub.StageId == target.Id.Value)
-            .StructureIssues.Should().NotContain(StructureViewAssembler.IssueSlotFeedsInvalid);
-
         var directEntry = EntryId.New();
         target.ReplaceAffectationAuthoring([directEntry], _clock);
         target.AssignEntryToSlot("SF1-A", directEntry);
@@ -102,7 +132,70 @@ public sealed class StructureViewAssemblerIssuesTests
 
         var conflict = StructureViewAssembler.Assemble(competition, [source, target]);
         conflict.Stages.Single(hub => hub.StageId == target.Id.Value)
-            .StructureIssues.Should().Contain(StructureViewAssembler.IssueSlotFeedsInvalid);
+            .StructureIssues.Should().Contain(StructureViewAssembler.IssueSlotFeedMultiple);
         conflict.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerStructureGraphInvalid);
+    }
+
+    [Fact]
+    public void Assemble_projects_ConfrontationUndecidable_without_StructureGraphInvalid()
+    {
+        var competition = CreateCompetition.Execute("Exec undecidable", _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName("KO"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(stage.Id, _clock);
+        var round = stage.AddRound("QF", tieFormat: null, _clock);
+        stage.AddFixture(round.Id, _clock);
+        stage.AddSlot("KO-A");
+        stage.AddSlot("KO-B");
+        stage.AddSlot("SF1-A");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        var a = competition.Entries[0].Id;
+        var b = competition.Entries[1].Id;
+        stage.ReplaceAffectationAuthoring([a, b], _clock);
+        stage.AssignEntryToSlot("KO-A", a);
+        stage.AssignEntryToSlot("KO-B", b);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(stage.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var hub = view.Stages.Should().ContainSingle().Subject;
+
+        hub.StructureIssues.Should().Contain(StructureViewAssembler.IssueConfrontationUndecidable);
+        view.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerConfrontationUndecidable);
+        view.Readiness.Blockers.Should().NotContain(StructureViewAssembler.BlockerStructureGraphInvalid);
+    }
+
+    [Fact]
+    public void AnalyzeFeeds_emits_one_diagnostic_per_non_unique_slot()
+    {
+        var competition = CreateCompetition.Execute("Feed analyzer", _clock);
+        var target = Stage.Create(
+            competition.Id,
+            new StageName("KO"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(target.Id, _clock);
+        target.AddRound("QF", _clock);
+        target.AddSlot("S1");
+        target.AddSlot("S2");
+
+        var feeds = CompetitionFlowAnalyzer.AnalyzeFeeds([target]);
+
+        feeds.Should().HaveCount(2);
+        feeds.Should().OnlyContain(d => d.Code == CompetitionFlowAnalyzer.SlotFeedMissing);
+        feeds.Select(d => d.SlotKey).Should().BeEquivalentTo("S1", "S2");
     }
 }

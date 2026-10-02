@@ -8,6 +8,7 @@ import {
   groupCardsByRound,
   hasNonContiguousRanks,
   incompleteCardReason,
+  listPlacementSourceOptions,
   serializeCards,
   createNextPlacementCard,
 } from './structurePlacementAwardDraft';
@@ -15,6 +16,23 @@ import {
 const known = new Set(['fix-1', 'fix-2']);
 
 describe('structurePlacementAwardDraft', () => {
+  it('catalogues BracketPair keys only (fixtures are not required)', () => {
+    const options = listPlacementSourceOptions(
+      [
+        { pairKey: 'FINAL', slotAKey: 'F-A', slotBKey: 'F-B' },
+        { pairKey: 'BRONZE', slotAKey: 'B-A', slotBKey: 'B-B' },
+      ],
+      [],
+      (n) => `M${n}`,
+    );
+    expect(options.map((o) => o.id)).toEqual(['BRONZE', 'FINAL']);
+    expect(
+      listPlacementSourceOptions([], [{ id: 'r1', name: 'F', fixtures: [] }], (n) =>
+        `M${n}`,
+      ),
+    ).toEqual([]);
+  });
+
   it('groups Winner+Loser paths for the same fixture into one card', () => {
     const cards = cardsFromApiPaths([
       { sourcePairKey: 'fix-1', outcome: 'Winner', rank: 1 },
@@ -56,6 +74,24 @@ describe('structurePlacementAwardDraft', () => {
     a.winnerRank = '1';
     expect(incompleteCardReason(a, [a], known)).toBeNull();
     expect(areCardsComplete([a], known)).toBe(true);
+  });
+
+  it('rejects unknown source even when the catalogue is empty (orphan awards)', () => {
+    const emptyKnown = new Set<string>();
+    const a = emptyPlacementCard();
+    a.sourcePairKey = 'P2';
+    a.winnerRank = '1';
+    expect(incompleteCardReason(a, [a], emptyKnown)).toBe('UnknownFixture');
+    expect(areCardsComplete([a], emptyKnown)).toBe(false);
+    expect(areCardsComplete([], emptyKnown)).toBe(true);
+  });
+
+  it('rejects unknown source while other pairs remain (Cas B)', () => {
+    const knownPartial = new Set(['P1']);
+    const a = emptyPlacementCard();
+    a.sourcePairKey = 'P2';
+    a.winnerRank = '1';
+    expect(incompleteCardReason(a, [a], knownPartial)).toBe('UnknownFixture');
   });
 
   it('rejects invalid ranks and unknown fixtures', () => {

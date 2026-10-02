@@ -226,7 +226,8 @@ export function incompleteCardReason(
   const sourceKey = card.sourcePairKey.trim();
   if (!sourceKey) return 'Fixture';
 
-  if (knownSourceKeys.size > 0 && !knownSourceKeys.has(sourceKey)) {
+  // Orphan even when the catalogue is empty — empty known must not mask existing awards.
+  if (!knownSourceKeys.has(sourceKey)) {
     return 'UnknownFixture';
   }
 

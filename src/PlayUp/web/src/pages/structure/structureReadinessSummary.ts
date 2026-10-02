@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
-// Structure readiness summary (E1–E5) — phase-unit exclusive counts.
-// Detection ≠ diagnostic ≠ correction. Population shortfall never from Host blockers.
+// Structure readiness summary (E1–E5) — business-family synthesis.
+// Detection ≠ diagnostic ≠ correction.
 // Banner = problems on an existing structure (stages.length >= 1).
 // Birth (0 phase) = empty state only — MissingStage / InsufficientParticipants stay Host-only.
 // -----------------------------------------------------------------------
@@ -8,21 +8,41 @@
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import { resolvePlacesN } from './structurePlaces';
 import { inboundPopulationConfiguredVolume } from './structurePopulationVolume';
+import {
+  STRUCTURE_DIAGNOSTIC_FAMILIES,
+  countStructureIssuesByFamily,
+  isSlotFeedAwaitingDraw,
+  projectPresentedStageIssueCodes,
+  structureDiagnosticFamily,
+  structureDiagnosticMeta,
+  type StructureDiagnosticFamily,
+} from './structureDiagnosticPresentation';
 
 /** Ambient kinds on a topology tile (unified pastille). Not structureIssues. */
-export type StageAmbientKind = 'graph' | 'population' | 'drawPots';
+export type StageAmbientKind =
+  | 'graph'
+  | 'feed'
+  | 'capacity'
+  | 'execution'
+  | 'result'
+  | 'drawPots';
 
 /**
- * Header synthesis tone — functional gravity, not child CSS.
+ * Header synthesis tone — visual gravity only (vocabulary stays family-based).
  * Order: danger > attention > none.
  */
 export type StructureHeaderTone = 'danger' | 'attention' | 'none';
 
+export type StructureFamilyCount = {
+  family: StructureDiagnosticFamily;
+  count: number;
+};
+
 export type StructureReadinessSummary = {
-  /** Phases with ≥1 structureIssue. */
-  structuralPhaseCount: number;
-  /** Phases without structureIssue but U1 shortfall. */
-  incompletePhaseCount: number;
+  /** Issue counts by business family (header vocabulary). */
+  familyCounts: StructureFamilyCount[];
+  /** Total diagnostic occurrences across families (+ shape / missing pots). */
+  totalProblemCount: number;
   /** Phases without graph/shortfall but Groups + engaged draw + missing pots (E1/E6). */
   missingPotsPhaseCount: number;
   /** CupBracketInvalid on an existing structure. */
@@ -37,21 +57,36 @@ export type StructureReadinessSummary = {
   headerTone: StructureHeaderTone;
 };
 
-/** Explicit signal → gravity. Source of truth for headerTone. */
+/** Explicit signal → gravity. Source of truth for headerTone (not vocabulary). */
 export function classifyReadinessHeaderTone(args: {
-  structuralPhaseCount: number;
-  incompletePhaseCount: number;
+  codes: readonly string[];
   missingPotsPhaseCount: number;
   shapeInvalid: boolean;
 }): StructureHeaderTone {
-  // StructureIssue / shape → danger
-  if (args.structuralPhaseCount > 0 || args.shapeInvalid) {
-    return 'danger';
-  }
-  // PopulationShortfall / MissingPotRules → attention (never draw execution state)
-  if (args.incompletePhaseCount > 0 || args.missingPotsPhaseCount > 0) {
+  if (args.shapeInvalid) return 'danger';
+  const fromCodes = headerToneFromCodes(args.codes);
+  if (fromCodes === 'danger') return 'danger';
+  if (
+    fromCodes === 'attention' ||
+    args.missingPotsPhaseCount > 0 ||
+    args.codes.length > 0
+  ) {
     return 'attention';
   }
+  return 'none';
+}
+
+function headerToneFromCodes(codes: string[]): StructureHeaderTone {
+  let hasDanger = false;
+  let hasNonDanger = false;
+  for (const code of codes) {
+    const meta = structureDiagnosticMeta(code);
+    if (!meta) continue;
+    if (meta.tone === 'danger') hasDanger = true;
+    else hasNonDanger = true;
+  }
+  if (hasDanger) return 'danger';
+  if (hasNonDanger) return 'attention';
   return 'none';
 }
 
@@ -79,7 +114,6 @@ export function stageHasPopulationShortfall(
 /**
  * E1 / E6 — MissingPotRules construction gap.
  * Strictly aligned with Host: Groups && HasDrawRules && NumberOfPots == null.
- * Draw execution (Draft / Published) is never a header/ambient construction signal.
  */
 export function stageHasEngagedMissingPots(
   stage: StructureStageHubSummary,
@@ -91,17 +125,29 @@ export function stageHasEngagedMissingPots(
   );
 }
 
-/** Ambient signals for a tile — does not invent structureIssues. */
+/** Ambient signals for a tile — one kind per family present on the stage (UX-projected). */
 export function stageAmbientKinds(
   data: StructureView,
   stage: StructureStageHubSummary,
 ): StageAmbientKind[] {
   const kinds: StageAmbientKind[] = [];
-  if ((stage.structureIssues ?? []).length > 0) {
-    kinds.push('graph');
+  const seen = new Set<StructureDiagnosticFamily>();
+  const presented = projectPresentedStageIssueCodes(
+    stage.structureIssues ?? [],
+    stage,
+  );
+  for (const code of presented) {
+    const family = structureDiagnosticFamily(code);
+    if (!family || seen.has(family)) continue;
+    seen.add(family);
+    kinds.push(family);
   }
-  if (stageHasPopulationShortfall(data, stage)) {
-    kinds.push('population');
+  if (
+    !seen.has('capacity') &&
+    stageHasPopulationShortfall(data, stage) &&
+    !presented.includes('PopulationShortfall')
+  ) {
+    kinds.push('capacity');
   }
   if (stageHasEngagedMissingPots(stage)) {
     kinds.push('drawPots');
@@ -110,8 +156,7 @@ export function stageAmbientKinds(
 }
 
 /**
- * Exclusive phase buckets for PageHead synthesis.
- * A phase with structureIssues counts only as structural (not incomplete / draw).
+ * PageHead synthesis by business family (presented problems only).
  * Birth (0 phase) yields an empty summary — empty state owns that UX.
  */
 export function computeStructureReadinessSummary(
@@ -120,8 +165,8 @@ export function computeStructureReadinessSummary(
 ): StructureReadinessSummary {
   if (stages.length === 0) {
     return {
-      structuralPhaseCount: 0,
-      incompletePhaseCount: 0,
+      familyCounts: [],
+      totalProblemCount: 0,
       missingPotsPhaseCount: 0,
       shapeInvalid: false,
       hasAny: false,
@@ -130,22 +175,22 @@ export function computeStructureReadinessSummary(
     };
   }
 
-  let structuralPhaseCount = 0;
-  let incompletePhaseCount = 0;
+  const presentedCodes: string[] = [];
   let missingPotsPhaseCount = 0;
   let firstAttentionStageId: string | null = null;
 
   for (const stage of stages) {
-    const hasGraph = (stage.structureIssues ?? []).length > 0;
-    if (hasGraph) {
-      structuralPhaseCount += 1;
-      firstAttentionStageId ??= stage.stageId;
-      continue;
+    const raw = [...(stage.structureIssues ?? [])];
+    if (
+      stageHasPopulationShortfall(data, stage) &&
+      !raw.includes('PopulationShortfall')
+    ) {
+      raw.push('PopulationShortfall');
     }
-    if (stageHasPopulationShortfall(data, stage)) {
-      incompletePhaseCount += 1;
+    const presented = projectPresentedStageIssueCodes(raw, stage);
+    if (presented.length > 0) {
       firstAttentionStageId ??= stage.stageId;
-      continue;
+      presentedCodes.push(...presented);
     }
     if (stageHasEngagedMissingPots(stage)) {
       missingPotsPhaseCount += 1;
@@ -153,30 +198,34 @@ export function computeStructureReadinessSummary(
     }
   }
 
-  // Host birth/competition blockers (MissingStage, InsufficientParticipants, …)
-  // are not Structure banner signals — correction locus is elsewhere or empty state.
+  const byFamily = countStructureIssuesByFamily(presentedCodes);
+  const familyCounts: StructureFamilyCount[] = STRUCTURE_DIAGNOSTIC_FAMILIES.filter(
+    (family) => byFamily[family] > 0,
+  ).map((family) => ({ family, count: byFamily[family] }));
+
   const shapeInvalid = data.readiness.blockers.includes('CupBracketInvalid');
 
-  const hasAny =
-    structuralPhaseCount > 0 ||
-    incompletePhaseCount > 0 ||
-    missingPotsPhaseCount > 0 ||
-    shapeInvalid;
+  const totalProblemCount =
+    presentedCodes.length +
+    missingPotsPhaseCount +
+    (shapeInvalid ? 1 : 0);
 
-  const headerTone = classifyReadinessHeaderTone({
-    structuralPhaseCount,
-    incompletePhaseCount,
-    missingPotsPhaseCount,
-    shapeInvalid,
-  });
+  const hasAny = totalProblemCount > 0;
 
   return {
-    structuralPhaseCount,
-    incompletePhaseCount,
+    familyCounts,
+    totalProblemCount,
     missingPotsPhaseCount,
     shapeInvalid,
     hasAny,
     firstAttentionStageId,
-    headerTone,
+    headerTone: classifyReadinessHeaderTone({
+      codes: presentedCodes,
+      missingPotsPhaseCount,
+      shapeInvalid,
+    }),
   };
 }
+
+/** @deprecated — prefer isSlotFeedAwaitingDraw from diagnostic presentation. */
+export { isSlotFeedAwaitingDraw };

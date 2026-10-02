@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Diagnostics.CodeAnalysis;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -39,6 +40,7 @@ public static class PrepareStage
 
         EnsureStageInCompetition(target, competitionStages);
         EnsureOutboundPathDestinations(target, competitionStages);
+        EnsurePrepareGateDiagnostics(target, competitionStages);
 
         if (target.Slots.Count == 0)
         {
@@ -64,6 +66,48 @@ public static class PrepareStage
 
         target.Prepare(clock);
         return resolutions;
+    }
+
+    /// <summary>
+    /// Applies Prepare Gate policy on CompetitionFlowAnalyzer facts for the target stage.
+    /// </summary>
+    private static void EnsurePrepareGateDiagnostics(
+        Stage target,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        var execution = CompetitionFlowAnalyzer.AnalyzeExecution([target]);
+        var capacity = CompetitionFlowAnalyzer.AnalyzeCapacity(competitionStages);
+        var topology = CompetitionFlowAnalyzer.AnalyzeTopology(competitionStages);
+
+        var gateCodes = execution
+            .Concat(capacity)
+            .Concat(topology)
+            .Where(diagnostic =>
+                diagnostic.StageId == target.Id.Value
+                && CompetitionFlowAnalyzer.IsPrepareGateIssue(diagnostic.Code))
+            .Select(diagnostic => diagnostic.Code)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (gateCodes.Length == 0)
+        {
+            return;
+        }
+
+        var primary = gateCodes[0];
+        var code = primary switch
+        {
+            CompetitionFlowAnalyzer.ConfrontationUndecidable => ApplicationErrorCodes.ConfrontationUndecidable,
+            CompetitionFlowAnalyzer.CycleDetected => ApplicationErrorCodes.StructureCycleDetected,
+            CompetitionFlowAnalyzer.RoutingNondeterminism => ApplicationErrorCodes.RoutingNondeterminism,
+            CompetitionFlowAnalyzer.OverCapacityEdge => ApplicationErrorCodes.OverCapacityEdge,
+            CompetitionFlowAnalyzer.OverExtraction => ApplicationErrorCodes.OverExtraction,
+            _ => ApplicationErrorCodes.SlotFeedsInvalid
+        };
+
+        throw new ApplicationFailureException(
+            $"Stage '{target.Id}' prepare refused: {string.Join(", ", gateCodes)}.",
+            code);
     }
 
     private static void EnsureStageInCompetition(

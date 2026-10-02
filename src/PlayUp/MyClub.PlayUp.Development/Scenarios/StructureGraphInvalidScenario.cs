@@ -24,7 +24,7 @@ public sealed class StructureGraphInvalidScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Poules → Barrages → Finale/Bronze in Draft with dangling Qual population targets and multi-dest progression — Structure Topology QA.";
+        "Poules → Barrages → Finale/Bronze Draft — DanglingQualificationTarget → StructureGraphInvalid. Barrages Prog avec TAB (pas EXEC).";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Construction;

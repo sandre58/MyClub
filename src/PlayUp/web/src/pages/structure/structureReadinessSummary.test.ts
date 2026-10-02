@@ -114,7 +114,7 @@ describe('structureReadinessSummary', () => {
     expect(summary.headerTone).toBe('none');
   });
 
-  it('counts graph+shortfall as structural only (exclusive)', () => {
+  it('counts graph issues under the graph family', () => {
     const poules = stage({
       stageId: 'a',
       name: 'Poules',
@@ -123,14 +123,17 @@ describe('structureReadinessSummary', () => {
       compositionCapacity: 8,
     });
     const summary = computeStructureReadinessSummary(view([poules]), [poules]);
-    expect(summary.structuralPhaseCount).toBe(1);
-    expect(summary.incompletePhaseCount).toBe(0);
+    expect(summary.familyCounts).toEqual([
+      { family: 'graph', count: 1 },
+      { family: 'capacity', count: 1 },
+    ]);
     expect(summary.missingPotsPhaseCount).toBe(0);
     expect(summary.hasAny).toBe(true);
     expect(summary.headerTone).toBe('danger');
+    expect(summary.totalProblemCount).toBe(2);
   });
 
-  it('counts population shortfall as incomplete when no structureIssues', () => {
+  it('counts population shortfall under capacity when no structureIssues', () => {
     const poules = stage({
       stageId: 'a',
       name: 'Poules',
@@ -138,10 +141,59 @@ describe('structureReadinessSummary', () => {
       compositionCapacity: 8,
     });
     const summary = computeStructureReadinessSummary(view([poules]), [poules]);
-    expect(summary.structuralPhaseCount).toBe(0);
-    expect(summary.incompletePhaseCount).toBe(1);
+    expect(summary.familyCounts).toEqual([{ family: 'capacity', count: 1 }]);
     expect(summary.headerTone).toBe('attention');
     expect(stagePopulationGap(view([poules]), poules)).toBe(-8);
+  });
+
+  it('keeps OverCapacity and SlotFeedMissing as distinct family counts', () => {
+    const poules = stage({
+      stageId: 'a',
+      name: 'Poules',
+      structureIssues: ['OverCapacityEdge', 'SlotFeedMissing'],
+      affectationEntryCount: 8,
+      compositionCapacity: 8,
+      hasDrawRules: false,
+    });
+    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    expect(summary.familyCounts).toEqual([
+      { family: 'feed', count: 1 },
+      { family: 'capacity', count: 1 },
+    ]);
+    expect(summary.headerTone).toBe('danger');
+  });
+
+  it('silences SlotFeedMissing from header when draw is engaged', () => {
+    const poules = stage({
+      stageId: 'a',
+      name: 'Poules',
+      structureIssues: ['SlotFeedMissing'],
+      hasDrawRules: true,
+      drawExecutionBadge: 'ToLaunch',
+      numberOfPots: 2,
+      affectationEntryCount: 8,
+      compositionCapacity: 8,
+    });
+    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    expect(summary.hasAny).toBe(false);
+    expect(summary.familyCounts).toEqual([]);
+  });
+
+  it('counts RESULT under result family as one presented problem', () => {
+    const final = stage({
+      stageId: 'a',
+      name: 'Finale',
+      formatKind: 'Cup',
+      structureIssues: ['AuthoredAwardUnreachable', 'ExpectedRankUnreachable'],
+      hasStandingRules: false,
+      affectationEntryCount: 2,
+      compositionCapacity: 2,
+      groupCount: 0,
+    });
+    const summary = computeStructureReadinessSummary(view([final]), [final]);
+    expect(summary.familyCounts).toEqual([{ family: 'result', count: 1 }]);
+    expect(summary.totalProblemCount).toBe(1);
+    expect(summary.headerTone).toBe('attention');
   });
 
   it('counts engaged missing pots only for Groups when no graph/shortfall', () => {
@@ -156,7 +208,7 @@ describe('structureReadinessSummary', () => {
     });
     const summary = computeStructureReadinessSummary(view([poules]), [poules]);
     expect(summary.missingPotsPhaseCount).toBe(1);
-    expect(summary.incompletePhaseCount).toBe(0);
+    expect(summary.familyCounts).toEqual([]);
     expect(summary.headerTone).toBe('attention');
   });
 
@@ -194,7 +246,7 @@ describe('structureReadinessSummary', () => {
     expect(summary.headerTone).toBe('none');
   });
 
-  it('lists ambient kinds without inventing structureIssues', () => {
+  it('lists ambient kinds by business family without inventing structureIssues', () => {
     const poules = stage({
       stageId: 'a',
       name: 'Poules',
@@ -206,32 +258,29 @@ describe('structureReadinessSummary', () => {
     });
     expect(stageAmbientKinds(view([poules]), poules)).toEqual([
       'graph',
-      'population',
+      'capacity',
       'drawPots',
     ]);
   });
 
-  it('classifies header tone by functional gravity, not child chrome', () => {
+  it('classifies header tone by diagnostic gravity, not child chrome', () => {
     expect(
       classifyReadinessHeaderTone({
-        structuralPhaseCount: 0,
-        incompletePhaseCount: 2,
+        codes: ['PopulationShortfall'],
         missingPotsPhaseCount: 1,
         shapeInvalid: false,
       }),
     ).toBe('attention');
     expect(
       classifyReadinessHeaderTone({
-        structuralPhaseCount: 1,
-        incompletePhaseCount: 2,
+        codes: ['DanglingQualificationTarget', 'SlotFeedMissing'],
         missingPotsPhaseCount: 0,
         shapeInvalid: false,
       }),
     ).toBe('danger');
     expect(
       classifyReadinessHeaderTone({
-        structuralPhaseCount: 0,
-        incompletePhaseCount: 0,
+        codes: [],
         missingPotsPhaseCount: 0,
         shapeInvalid: true,
       }),

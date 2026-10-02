@@ -83,6 +83,45 @@ public sealed class StructureUseCaseTests
     }
 
     [Fact]
+    public void ReplaceRegulation_allows_maximum_equal_to_occupying_count()
+    {
+        var competition = CreateCompetition.Execute("Reg", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+
+        var replacement = new Regulation(
+            new EntryRules(2, 3),
+            SampleRegulations.Standard().MatchRules,
+            SampleRegulations.Standard().StandingRules);
+
+        ReplaceRegulation.Execute(competition, stages: [], replacement, _clock);
+
+        competition.Regulation.EntryRules.MaximumTeams.Should().Be(3);
+        competition.Entries.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public void ReplaceRegulation_rejects_maximum_below_occupying_count()
+    {
+        var competition = CreateCompetition.Execute("Reg", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        AddEntry.Execute(competition, "C", _clock);
+
+        var replacement = new Regulation(
+            new EntryRules(2, 2),
+            SampleRegulations.Standard().MatchRules,
+            SampleRegulations.Standard().StandingRules);
+
+        var act = () => ReplaceRegulation.Execute(competition, stages: [], replacement, _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.EntryMaxBelowOccupying);
+        competition.Regulation.EntryRules.MaximumTeams.Should().Be(64);
+    }
+
+    [Fact]
     public void ConfigureStructure_championship_builds_matchdays()
     {
         var situation = TestCompetition.Create("Champ", _clock)

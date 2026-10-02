@@ -86,6 +86,57 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toContain('stage=stage-9');
   });
 
+  it('contextualises SlotFeedMissing when draw is awaiting', () => {
+    const awaiting = structureIssuePresentation({
+      code: 'SlotFeedMissing',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+      awaitingDraw: true,
+    });
+    // Copy is no longer draw-specific — silence is handled by projection filters.
+    expect(awaiting.titleKey).toBe('graph.issues.SlotFeedMissing');
+    expect(awaiting.tone).toBe('danger');
+
+    const plain = structureIssuePresentation({
+      code: 'SlotFeedMissing',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+      awaitingDraw: false,
+    });
+    expect(plain.titleKey).toBe('graph.issues.SlotFeedMissing');
+    expect(plain.tone).toBe('danger');
+  });
+
+  it('maps RESULT codes with attention tone (path reachability)', () => {
+    const presentation = structureIssuePresentation({
+      code: 'AuthoredAwardUnreachable',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+    });
+    expect(presentation.tone).toBe('attention');
+    expect(presentation.titleKey).toBe('graph.issues.AuthoredAwardUnreachable');
+  });
+
+  it('maps SlotFeedMissing as danger (info only when silenced by draw projection)', () => {
+    const presentation = structureIssuePresentation({
+      code: 'SlotFeedMissing',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+    });
+    expect(presentation.tone).toBe('danger');
+    expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissing');
+  });
+
+  it('maps NonRootUnfed via feed family presentation (tile Équipes)', () => {
+    const presentation = structureIssuePresentation({
+      code: 'NonRootUnfed',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+    });
+    expect(presentation.tone).toBe('info');
+    expect(presentation.titleKey).toBe('graph.issues.NonRootUnfed');
+  });
+
   it('situationPresentation forwards Overview actionCode and matchId', () => {
     const presentation = situationPresentation(
       {

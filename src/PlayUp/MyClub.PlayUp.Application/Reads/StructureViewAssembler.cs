@@ -7,7 +7,6 @@
 using System.Globalization;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
@@ -43,6 +42,15 @@ public static class StructureViewAssembler
 
     /// <summary>Blocker: Qualif/Prog graph or inbound WhoFeeds conflicts (Draft persistable; Ready/Prepare blocked).</summary>
     public const string BlockerStructureGraphInvalid = "StructureGraphInvalid";
+
+    /// <summary>Blocker: necessary confrontation cannot always decide a draw (Prepare Gate; not GraphInvalid).</summary>
+    public const string BlockerConfrontationUndecidable = "ConfrontationUndecidable";
+
+    /// <summary>Blocker: structural over-capacity on a phase (Prepare Gate; not GraphInvalid).</summary>
+    public const string BlockerOverCapacityEdge = "OverCapacityEdge";
+
+    /// <summary>Blocker: outbound extraction exceeds source capacity (Prepare Gate; not GraphInvalid).</summary>
+    public const string BlockerOverExtraction = "OverExtraction";
 
     /// <summary>Action: add participant.</summary>
     public const string ActionAddEntry = "AddEntry";
@@ -137,11 +145,41 @@ public static class StructureViewAssembler
     /// <summary>Stage structure issue: progression destination group missing on target stage.</summary>
     public const string IssueMissingProgressionDestinationGroup = "MissingProgressionDestinationGroup";
 
-    /// <summary>
-    /// Stage structure issue: inbound WhoFeeds conflict (MultipleFeeds / InvalidFeed).
-    /// Distinct from empty slots (<c>Missing</c>), which remain Prepare mutation gates only in V1.
-    /// </summary>
-    public const string IssueSlotFeedsInvalid = "SlotFeedsInvalid";
+    /// <summary>Stage structure issue: inbound WhoFeeds InvalidFeed (same-kind duplication).</summary>
+    public const string IssueSlotFeedInvalid = CompetitionFlowAnalyzer.SlotFeedInvalid;
+
+    /// <summary>Stage structure issue: inbound WhoFeeds MultipleFeeds (cross-kind rivalry).</summary>
+    public const string IssueSlotFeedMultiple = CompetitionFlowAnalyzer.SlotFeedMultiple;
+
+    /// <summary>Stage structure issue: inbound WhoFeeds Missing (empty slot — Signal Incomplete, not GraphInvalid).</summary>
+    public const string IssueSlotFeedMissing = CompetitionFlowAnalyzer.SlotFeedMissing;
+
+    /// <summary>Stage structure issue: necessary confrontation undecidable (Prepare Gate; not GraphInvalid).</summary>
+    public const string IssueConfrontationUndecidable = CompetitionFlowAnalyzer.ConfrontationUndecidable;
+
+    /// <summary>Stage structure issue: Qual/Prog cycle.</summary>
+    public const string IssueCycleDetected = CompetitionFlowAnalyzer.CycleDetected;
+
+    /// <summary>Stage structure issue: non-root phase unfed (Signal).</summary>
+    public const string IssueNonRootUnfed = CompetitionFlowAnalyzer.NonRootUnfed;
+
+    /// <summary>Stage structure issue: routing nondeterminism outside WhoFeeds.</summary>
+    public const string IssueRoutingNondeterminism = CompetitionFlowAnalyzer.RoutingNondeterminism;
+
+    /// <summary>Stage structure issue: over-capacity (Prepare Gate; not GraphInvalid).</summary>
+    public const string IssueOverCapacityEdge = CompetitionFlowAnalyzer.OverCapacityEdge;
+
+    /// <summary>Stage structure issue: over-extraction (Prepare Gate; not GraphInvalid).</summary>
+    public const string IssueOverExtraction = CompetitionFlowAnalyzer.OverExtraction;
+
+    /// <summary>Stage structure issue: source population shortfall (Signal).</summary>
+    public const string IssueSourcePopulationShortfall = CompetitionFlowAnalyzer.SourcePopulationShortfall;
+
+    /// <summary>Stage structure issue: destination population shortfall (Signal).</summary>
+    public const string IssuePopulationShortfall = CompetitionFlowAnalyzer.PopulationShortfall;
+
+    /// <summary>Stage structure issue: authored award unreachable (Result Signal).</summary>
+    public const string IssueAuthoredAwardUnreachable = CompetitionFlowAnalyzer.AuthoredAwardUnreachable;
 
     /// <summary>
     /// Builds the Structure view.
@@ -198,6 +236,20 @@ public static class StructureViewAssembler
         Competition competition,
         IReadOnlyList<Stage> stages)
     {
+        var analysis = CompetitionFlowAnalyzer.Analyze(competition, stages);
+        var flowIssuesByStage = analysis.Feed
+            .Concat(analysis.Topology)
+            .Concat(analysis.Capacity)
+            .Concat(analysis.Execution)
+            .Concat(analysis.Result)
+            .Where(diagnostic => diagnostic.StageId is not null)
+            .GroupBy(diagnostic => diagnostic.StageId!.Value)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<string>)[.. group
+                    .Select(d => d.Code)
+                    .Distinct(StringComparer.Ordinal)]);
+
         var byId = stages.ToDictionary(stage => stage.Id);
         var ordered = new List<StructureStageHubSummaryDto>(competition.StageIds.Count);
         foreach (var stageId in competition.StageIds)
@@ -207,7 +259,8 @@ public static class StructureViewAssembler
                 continue;
             }
 
-            ordered.Add(BuildStageHubSummary(competition, stage, stages));
+            flowIssuesByStage.TryGetValue(stage.Id.Value, out var flowIssues);
+            ordered.Add(BuildStageHubSummary(competition, stage, stages, flowIssues ?? []));
         }
 
         return ordered;
@@ -216,7 +269,8 @@ public static class StructureViewAssembler
     private static StructureStageHubSummaryDto BuildStageHubSummary(
         Competition competition,
         Stage stage,
-        IReadOnlyList<Stage> competitionStages)
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<string> flowIssues)
     {
         var regulation = stage.Regulation;
         var match = regulation.MatchRules;
@@ -341,7 +395,7 @@ public static class StructureViewAssembler
             QualificationIntents: qualificationIntents,
             ProgressionPaths: progressionPaths,
             ProgressionIntents: progressionIntents,
-            StructureIssues: BuildStructureIssues(stage, competitionStages),
+            StructureIssues: BuildStructureIssues(stage, competitionStages, flowIssues),
             HalfTimeDuration: match.Duration.HalfTimeDuration,
             DirectAssignmentCount: stage.DirectAssignments.Count,
             CompositionEntryCount: composition.Count,
@@ -848,7 +902,8 @@ public static class StructureViewAssembler
 
     private static IReadOnlyList<string> BuildStructureIssues(
         Stage stage,
-        IReadOnlyList<Stage> competitionStages)
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<string> flowIssues)
     {
         var issues = new List<string>();
         var byId = competitionStages.ToDictionary(candidate => candidate.Id);
@@ -902,13 +957,7 @@ public static class StructureViewAssembler
             {
                 if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
                 {
-                    if (path.Destination.StageId.Equals(stage.Id))
-                    {
-                        issues.Add(IssueDanglingProgressionTarget);
-                        continue;
-                    }
-
-                    if (!byId.TryGetValue(path.Destination.StageId, out var formOrPopulationDestination))
+                    if (path.Destination.StageId.Equals(stage.Id) || !byId.TryGetValue(path.Destination.StageId, out var formOrPopulationDestination))
                     {
                         issues.Add(IssueDanglingProgressionTarget);
                         continue;
@@ -959,7 +1008,7 @@ public static class StructureViewAssembler
             }
         }
 
-        AppendInboundSlotFeedConflicts(stage, competitionStages, issues);
+        issues.AddRange(flowIssues);
 
         return [.. issues.Distinct(StringComparer.Ordinal)];
     }
@@ -970,40 +1019,6 @@ public static class StructureViewAssembler
     private static bool IsFormPlacementEligible(Stage destination) =>
         destination.IsSwiss
         || (destination.Matchdays.Count > 0 && destination.Groups.Count == 0);
-
-    /// <summary>
-    /// Projects persistent inbound WhoFeeds conflicts (not empty <c>Missing</c> slots) as structure issues.
-    /// </summary>
-    private static void AppendInboundSlotFeedConflicts(
-        Stage stage,
-        IReadOnlyList<Stage> competitionStages,
-        List<string> issues)
-    {
-        if (stage.Slots.Count == 0)
-        {
-            return;
-        }
-
-        try
-        {
-            var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, competitionStages);
-            var resolutions = SlotFeedResolver.ResolveAll(snapshot);
-            if (resolutions.Any(resolution =>
-                    resolution.Status is FeedResolutionStatus.MultipleFeeds
-                        or FeedResolutionStatus.InvalidFeed))
-            {
-                issues.Add(IssueSlotFeedsInvalid);
-            }
-        }
-        catch (ApplicationFailureException)
-        {
-            // Outbound dangling / missing slot already projected on source paths.
-        }
-        catch (DomainException)
-        {
-            // Tolerant read — same spirit as StageSchematicAssembler.ResolveFeedsTolerant.
-        }
-    }
 
     /// <summary>
     /// Groups consecutive rounds that share the same effective TieFormat signature.
@@ -1235,9 +1250,53 @@ public static class StructureViewAssembler
             blockers.Add(BlockerMissingStructure);
         }
 
-        if (stageHubs.Any(hub => hub.StructureIssues is { Count: > 0 }))
+        if (stageHubs.Any(hub =>
+                hub.StructureIssues is { Count: > 0 } issues
+                && issues.Any(CompetitionFlowAnalyzer.IsStructureGraphGateIssue)))
         {
             blockers.Add(BlockerStructureGraphInvalid);
+        }
+
+        if (stageHubs.Any(hub =>
+                hub.StructureIssues is { Count: > 0 } issues
+                && issues.Contains(IssueConfrontationUndecidable, StringComparer.Ordinal)))
+        {
+            blockers.Add(BlockerConfrontationUndecidable);
+        }
+
+        if (stageHubs.Any(hub =>
+                hub.StructureIssues is { Count: > 0 } issues
+                && issues.Contains(IssueOverCapacityEdge, StringComparer.Ordinal)))
+        {
+            blockers.Add(BlockerOverCapacityEdge);
+        }
+
+        if (stageHubs.Any(hub =>
+                hub.StructureIssues is { Count: > 0 } issues
+                && issues.Contains(IssueOverExtraction, StringComparer.Ordinal)))
+        {
+            blockers.Add(BlockerOverExtraction);
+        }
+
+        // Cup / Groups gates apply to every concerned phase, not only the primary hub.
+        foreach (var hub in stageHubs)
+        {
+            if (hub.FormatKind == StructureFormatKind.Cup)
+            {
+                var cupEntryPlaces = ResolveCupEntryPlacesFromHub(hub);
+                if (cupEntryPlaces is null or < 2 || !IsPowerOfTwo(cupEntryPlaces.Value))
+                {
+                    if (!blockers.Contains(BlockerCupBracketInvalid))
+                    {
+                        blockers.Add(BlockerCupBracketInvalid);
+                    }
+                }
+            }
+
+            if (hub is { FormatKind: StructureFormatKind.Groups, HasDrawRules: true, NumberOfPots: null } && !blockers.Contains(BlockerMissingPotRules))
+            {
+                blockers.Add(BlockerMissingPotRules);
+            }
         }
 
         var readyForDraw = false;
@@ -1262,7 +1321,7 @@ public static class StructureViewAssembler
                     {
                         if (structure.NumberOfPots is null)
                         {
-                            blockers.Add(BlockerMissingPotRules);
+                            // Already collected above for all Groups hubs.
                         }
                         else
                         {
@@ -1278,7 +1337,7 @@ public static class StructureViewAssembler
                     var cupEntryPlaces = ResolveCupEntryPlaces(primary);
                     if (cupEntryPlaces is null or < 2 || !IsPowerOfTwo(cupEntryPlaces.Value))
                     {
-                        blockers.Add(BlockerCupBracketInvalid);
+                        // Already collected above for all Cup hubs.
                     }
                     else
                     {
@@ -1306,12 +1365,16 @@ public static class StructureViewAssembler
         var readyForMatchOperation = attachedMatchCount > 0
                                      && competition.Status is not CompetitionStatus.Completed
                                          and not CompetitionStatus.Archived;
-        var constructionBlocked = blockers.Contains(BlockerInsufficientParticipants)
-                                  || blockers.Contains(BlockerMissingStage)
+
+        // InsufficientParticipants is Teams SoT — visible Signal, not Structure constructionBlocked.
+        var constructionBlocked = blockers.Contains(BlockerMissingStage)
                                   || blockers.Contains(BlockerMissingStructure)
                                   || blockers.Contains(BlockerMissingPotRules)
                                   || blockers.Contains(BlockerCupBracketInvalid)
-                                  || blockers.Contains(BlockerStructureGraphInvalid);
+                                  || blockers.Contains(BlockerStructureGraphInvalid)
+                                  || blockers.Contains(BlockerConfrontationUndecidable)
+                                  || blockers.Contains(BlockerOverCapacityEdge)
+                                  || blockers.Contains(BlockerOverExtraction);
         var readyForNext = !constructionBlocked && (readyForDraw || readyForSchedulePath);
 
         return new StructureReadinessDto(
@@ -1323,6 +1386,41 @@ public static class StructureViewAssembler
             readyForSchedulePath,
             attachedMatchCount,
             blockers);
+    }
+
+    private static int? ResolveCupEntryPlacesFromHub(StructureStageHubSummaryDto hub)
+    {
+        var slotCount = hub.SlotCount;
+        if (slotCount == 0)
+        {
+            return null;
+        }
+
+        var roundCount = hub.RoundCount;
+        if (roundCount <= 1)
+        {
+            return slotCount;
+        }
+
+        var fullTreeSlots = (1 << (roundCount + 1)) - 2;
+        if (slotCount == fullTreeSlots)
+        {
+            return 1 << roundCount;
+        }
+
+        var firstRoundSlots = 1 << roundCount;
+        if (slotCount == firstRoundSlots)
+        {
+            return firstRoundSlots;
+        }
+
+        if (slotCount < 2 || (slotCount + 2) % 2 != 0)
+        {
+            return null;
+        }
+
+        var entryPlaces = (slotCount + 2) / 2;
+        return IsPowerOfTwo(entryPlaces) && entryPlaces >= 2 ? entryPlaces : null;
     }
 
     private static IReadOnlyList<string> BuildActions(Competition competition) =>
