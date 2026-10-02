@@ -663,8 +663,14 @@ function readinessStatusNote(
   // Banner only for problems on an existing structure — never birth (0 phase).
   const incomplete = summary.hasAny;
   const readyToMaterialize = readiness.readyForMaterialization;
+  const lifecycleClosed =
+    data.status === 'Completed' || data.status === 'Archived';
+  // ReadyForNextSlice = user can still build next construction — not after lifecycle end.
   const readyNext =
-    !incomplete && !readyToMaterialize && readiness.readyForNextSlice;
+    !lifecycleClosed &&
+    !incomplete &&
+    !readyToMaterialize &&
+    readiness.readyForNextSlice;
 
   if (incomplete) {
     return <ReadinessNotReadyStatus summary={summary} />;
@@ -672,6 +678,10 @@ function readinessStatusNote(
 
   // Draw readiness is not a Structure-global status (draw optional).
   // CTA + topology badge carry execution; Hub stays construction-focused.
+
+  if (lifecycleClosed) {
+    return null;
+  }
 
   if (readyToMaterialize) {
     const isCup = formatKind === 'Cup';

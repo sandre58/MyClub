@@ -29,6 +29,7 @@ import type {
 } from '../../types';
 import { type ExitKind, type FeedGroup } from './structurePhaseFeeds';
 import { resolvePlacesN } from './structurePlaces';
+import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
@@ -349,45 +350,56 @@ export function CompositionMeter({
   places: number | null;
   t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
-  const gap = places != null && places > 0 ? entries - places : null;
-  const ratio =
-    places != null && places > 0
-      ? Math.min(1, Math.max(0, entries / places))
-      : entries > 0
-        ? 1
-        : 0;
-  const tone = gap == null || gap === 0 ? 'ok' : gap < 0 ? 'short' : 'over';
+  if (places == null || places <= 0) {
+    return (
+      <div className="structure-assembly" aria-label={t('entries.meterAria')}>
+        <div className="structure-assembly__row">
+          <span>{t('entries.meter.population')}</span>
+          <strong>{entries}</strong>
+        </div>
+        <div className="structure-assembly__row">
+          <span>{t('entries.meter.places')}</span>
+          <strong>—</strong>
+        </div>
+      </div>
+    );
+  }
+
+  const gap = entries - places;
+  const state = occupancyMeterState(entries, places);
 
   return (
-    <div
-      className={`structure-assembly structure-assembly--${tone}`}
-      aria-label={t('entries.meterAria')}
-    >
-      <div className="structure-assembly__row">
-        <span>{t('entries.meter.population')}</span>
-        <strong>{entries}</strong>
-      </div>
-      <div className="structure-assembly__track" aria-hidden="true">
-        <span
-          className="structure-assembly__fill"
-          style={{ width: `${ratio * 100}%` }}
-        />
-      </div>
-      <div className="structure-assembly__row">
-        <span>{t('entries.meter.places')}</span>
-        <strong>{places ?? '—'}</strong>
-      </div>
-      {gap != null && gap !== 0 ? (
-        <p className="structure-assembly__gap" role="status">
-          <span className="structure-assembly__gap-icon" aria-hidden="true">
-            <StructureIssueIcon size="sm" />
-          </span>
-          {gap < 0
-            ? t('entries.meter.shortfall', { count: Math.abs(gap) })
-            : t('entries.meter.surplus', { count: gap })}
-        </p>
-      ) : null}
-    </div>
+    <OccupancyMeter
+      current={entries}
+      capacity={places}
+      state={state}
+      ariaLabel={t('entries.meterAria')}
+      className="structure-assembly"
+      header={
+        <div className="structure-assembly__row">
+          <span>{t('entries.meter.population')}</span>
+          <strong>{entries}</strong>
+        </div>
+      }
+      footer={
+        <>
+          <div className="structure-assembly__row">
+            <span>{t('entries.meter.places')}</span>
+            <strong>{places}</strong>
+          </div>
+          {gap !== 0 ? (
+            <p className="structure-assembly__gap" role="status">
+              <span className="structure-assembly__gap-icon" aria-hidden="true">
+                <StructureIssueIcon size="sm" />
+              </span>
+              {gap < 0
+                ? t('entries.meter.shortfall', { count: Math.abs(gap) })
+                : t('entries.meter.surplus', { count: gap })}
+            </p>
+          ) : null}
+        </>
+      }
+    />
   );
 }
 

@@ -22,6 +22,7 @@ import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../../types';
 import { MutationError, PendingLabel } from '../../ui';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
 import { resolvePlacesN } from './structurePlaces';
 
 type StructureCompositionDialogProps = {
@@ -172,10 +173,10 @@ export function StructureCompositionDialog({
     selectableFiltered.length > 0 &&
     (affectationCap == null || k < affectationCap);
 
-  const ratio =
+  const meterState =
     placesN != null && placesN > 0
-      ? Math.min(1, Math.max(0, populationExpected / placesN))
-      : 0;
+      ? occupancyMeterState(populationExpected, placesN)
+      : null;
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -289,39 +290,44 @@ export function StructureCompositionDialog({
       >
         <div className="structure-composition">
           <div className="structure-composition__toolbar">
-            <div
-              className={[
-                'structure-composition__meter',
-                complete ? 'structure-composition__meter--complete' : null,
-                placesN != null && placesN > 0 && populationExpected < placesN
-                  ? 'structure-composition__meter--short'
-                  : null,
-                placesN != null && populationExpected > placesN
-                  ? 'structure-composition__meter--over'
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <p className="structure-composition__counter" aria-live="polite">
-                {counterLabel}
-              </p>
-              {placesN != null && placesN > 0 ? (
-                <div
-                  className="structure-composition__track"
-                  aria-hidden="true"
-                >
-                  <span
-                    className="structure-composition__fill"
-                    style={{ width: `${ratio * 100}%` }}
-                  />
-                </div>
-              ) : null}
-              {statusLabel ? (
-                <p className="structure-composition__status" role="status">
-                  {statusLabel}
-                </p>
-              ) : null}
+            <div className="structure-composition__meter">
+              {placesN != null && placesN > 0 && meterState != null ? (
+                <OccupancyMeter
+                  current={populationExpected}
+                  capacity={placesN}
+                  state={meterState}
+                  ariaLabel={counterLabel}
+                  header={
+                    <p
+                      className="structure-composition__counter"
+                      aria-live="polite"
+                    >
+                      {counterLabel}
+                    </p>
+                  }
+                  footer={
+                    statusLabel ? (
+                      <p className="structure-composition__status" role="status">
+                        {statusLabel}
+                      </p>
+                    ) : null
+                  }
+                />
+              ) : (
+                <>
+                  <p
+                    className="structure-composition__counter"
+                    aria-live="polite"
+                  >
+                    {counterLabel}
+                  </p>
+                  {statusLabel ? (
+                    <p className="structure-composition__status" role="status">
+                      {statusLabel}
+                    </p>
+                  ) : null}
+                </>
+              )}
             </div>
 
             <Tooltip content={t('composition.selectAll')}>

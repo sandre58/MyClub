@@ -812,24 +812,35 @@ export function StructureProgressionDialog({
                 const filledSlots = (
                   placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
                 ).filter((k) => k.trim());
+                const expandN =
+                  expandCount(intent) || expandContribution(intent);
+                // Form-only Champ/Swiss: no slot map — avoid filled/count "0/N places".
                 const where =
                   intent.targetKind === 'population' && destId
                     ? t('progression.summary.whereCount', {
                         phase: destName,
-                        count:
-                          expandCount(intent) || expandContribution(intent),
+                        count: expandN,
                       })
-                    : intent.targetKind === 'place' && destId
-                      ? t('progression.summary.wherePlaceMapped', {
-                          phase: destName,
-                          filled: filledSlots.length,
-                          count: expandCount(intent),
-                        })
-                      : intent.targetKind === 'place'
-                        ? t('progression.summary.wherePlaceFallback')
-                        : missingDest
-                          ? `→ ${destName}`
-                          : null;
+                    : intent.targetKind === 'place' &&
+                        intent.destinationForm &&
+                        destId
+                      ? expandN > 0
+                        ? t('progression.summary.whereCount', {
+                            phase: destName,
+                            count: expandN,
+                          })
+                        : `→ ${destName}`
+                      : intent.targetKind === 'place' && destId
+                        ? t('progression.summary.wherePlaceMapped', {
+                            phase: destName,
+                            filled: filledSlots.length,
+                            count: expandCount(intent),
+                          })
+                        : intent.targetKind === 'place'
+                          ? t('progression.summary.wherePlaceFallback')
+                          : missingDest
+                            ? `→ ${destName}`
+                            : null;
                 const incompleteReason = incompleteIntentReason(
                   intent,
                   intents,

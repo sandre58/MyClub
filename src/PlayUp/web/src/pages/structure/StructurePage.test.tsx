@@ -941,8 +941,8 @@ describe('StructurePage Structure hub', () => {
       within(readinessStats).queryByText(/Alimentation/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Voir les problèmes/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: /Voir les problèmes/i }),
+    ).not.toBeInTheDocument();
 
     const topology = screen.getByRole('region', {
       name: /Topologie/i,
@@ -961,11 +961,7 @@ describe('StructurePage Structure hub', () => {
       within(topology).queryByText(/Destination de qualification introuvable/i),
     ).not.toBeInTheDocument();
 
-    await user.click(
-      screen.getByRole('button', { name: /Voir les problèmes/i }),
-    );
-
-    // E3 — Sorties shows the graph diagnostic on its canonical tile.
+    // E3 — Sorties shows the graph diagnostic on its canonical tile (no header navigator).
     const sorties = await screen.findByRole('complementary', {
       name: /Sorties/i,
     });
@@ -1181,6 +1177,36 @@ describe('StructurePage Structure hub', () => {
         name: /Préparer|Démarrer|Publier|Appliquer/i,
       }),
     ).not.toBeInTheDocument();
+  });
+
+  it('hides Ready for next slice when competition lifecycle is closed', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        status: 'Completed',
+        format: {
+          kind: 'Groups',
+          primaryStageId: groupesStage().stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Completed',
+        },
+        stages: [groupesStage({ status: 'Completed' })],
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: false,
+          readyForMaterialization: false,
+          readyForSchedule: true,
+          readyForMatchOperation: false,
+          readyForSchedulePath: true,
+          attachedMatchCount: 4,
+          blockers: [],
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
+    expect(screen.queryByText(/Prêt pour la suite/i)).not.toBeInTheDocument();
   });
 
   it('keeps birth empty state when Host reports MissingStructure', async () => {

@@ -529,28 +529,79 @@
   font-variant-numeric: tabular-nums;
 }
 
-.structure-assembly__track {
+/* Shared X vs Places N track (Composition + Qual/Prog destination). */
+.structure-occupancy-meter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+  width: 100%;
+}
+
+.structure-occupancy-meter--compact {
+  gap: 0.2rem;
+}
+
+.structure-occupancy-meter__track {
+  display: block;
   height: 0.45rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-ink) 8%, var(--color-surface));
   overflow: hidden;
 }
 
-.structure-assembly__fill {
+.structure-occupancy-meter--compact .structure-occupancy-meter__track {
+  height: 0.45rem;
+}
+
+.structure-occupancy-meter__fill {
   display: block;
   height: 100%;
   border-radius: inherit;
   background: var(--color-brand);
+  transition: width 160ms ease;
 }
 
-/* shortfall (empty places) = danger */
-.structure-assembly--short .structure-assembly__fill {
+.structure-occupancy-meter--short .structure-occupancy-meter__fill {
   background: var(--color-error);
 }
 
-/* surplus = warning */
-.structure-assembly--over .structure-assembly__fill {
+.structure-occupancy-meter--exact .structure-occupancy-meter__fill {
+  background: var(--color-success, var(--color-brand));
+}
+
+.structure-occupancy-meter--over .structure-occupancy-meter__fill {
   background: var(--color-attention);
+}
+
+.structure-occupancy-meter__label {
+  font-size: 0.6875rem;
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.structure-occupancy-meter--short .structure-occupancy-meter__label {
+  color: var(--color-error);
+}
+
+.structure-occupancy-meter--exact .structure-occupancy-meter__label {
+  color: var(--color-success, var(--color-brand));
+}
+
+.structure-occupancy-meter--over .structure-occupancy-meter__label {
+  color: var(--color-attention);
+}
+
+.structure-occupancy-meter__draft {
+  font-size: 0.6875rem;
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+.structure-occupancy-meter__draft--active {
+  color: var(--color-brand);
 }
 
 .structure-assembly__gap {
@@ -880,30 +931,6 @@
   font-size: var(--text-body);
   font-weight: 600;
   color: var(--color-ink);
-}
-
-.structure-composition__track {
-  height: 0.375rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-ink) 10%, var(--color-surface));
-  overflow: hidden;
-}
-
-.structure-composition__fill {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--color-brand);
-  transition: width 160ms ease;
-}
-
-.structure-composition__meter--short .structure-composition__fill,
-.structure-composition__meter--over .structure-composition__fill {
-  background: var(--color-attention);
-}
-
-.structure-composition__meter--complete .structure-composition__fill {
-  background: var(--color-success, var(--color-brand));
 }
 
 .structure-composition__status {

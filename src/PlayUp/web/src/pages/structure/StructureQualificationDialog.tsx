@@ -249,8 +249,10 @@ export function StructureQualificationDialog({
     if (!open) {
       return;
     }
-    // Wait for groups before Expand/sync — avoids EachGroup → 0 flash.
-    if (sourceSchematicQuery.isLoading) {
+    // Schematic must succeed before Expand/sync. `isLoading` alone is insufficient:
+    // on error (and disabled-idle pending) it is false while `groups` stays [] —
+    // EachGroup would publish sessionReady with expandOccurrences = 0.
+    if (!sourceSchematicQuery.isSuccess) {
       return;
     }
     // Do not rehydrate from invalidate while saving / closing.
@@ -279,7 +281,7 @@ export function StructureQualificationDialog({
     stage.qualificationIntents,
     stage.qualificationPaths,
     groups,
-    sourceSchematicQuery.isLoading,
+    sourceSchematicQuery.isSuccess,
     mutation.isPending,
     mutation.isSuccess,
     resetDiscard,
@@ -609,7 +611,11 @@ export function StructureQualificationDialog({
           ) : null}
 
           {!sessionReady ? (
-            <LoadingState size="region" />
+            sourceSchematicQuery.isError ? (
+              <MutationError error={sourceSchematicQuery.error} />
+            ) : (
+              <LoadingState size="region" />
+            )
           ) : peerStages.length === 0 ? (
             <EmptyState
               variant="idle"
@@ -645,23 +651,34 @@ export function StructureQualificationDialog({
                 const filledSlots = (
                   placeMapKeys(intent)?.keys ?? intent.destinationSlotKeys
                 ).filter((k) => k.trim());
+                // Form-only Champ/Swiss: no slot map — never show filled/count "0/N places"
+                // (that string is Cup/Groups Place mapping progress, not destination occupancy).
                 const where =
-                  intent.targetKind === 'place' && destId
-                    ? t('qualification.summary.wherePlaceMapped', {
-                        phase: destName,
-                        filled: filledSlots.length,
-                        count: occCount,
-                      })
-                    : intent.targetKind === 'place'
-                      ? t('qualification.summary.wherePlaceFallback')
-                      : destId && occCount > 0
-                        ? t('qualification.summary.whereCount', {
-                            phase: destName,
-                            count: occCount,
-                          })
-                        : missingDest
-                          ? `→ ${destName}`
-                          : null;
+                  intent.targetKind === 'place' &&
+                  intent.destinationForm &&
+                  destId
+                    ? occCount > 0
+                      ? t('qualification.summary.whereCount', {
+                          phase: destName,
+                          count: occCount,
+                        })
+                      : `→ ${destName}`
+                    : intent.targetKind === 'place' && destId
+                      ? t('qualification.summary.wherePlaceMapped', {
+                          phase: destName,
+                          filled: filledSlots.length,
+                          count: occCount,
+                        })
+                      : intent.targetKind === 'place'
+                        ? t('qualification.summary.wherePlaceFallback')
+                        : destId && occCount > 0
+                          ? t('qualification.summary.whereCount', {
+                              phase: destName,
+                              count: occCount,
+                            })
+                          : missingDest
+                            ? `→ ${destName}`
+                            : null;
                 const incompleteReason = incompleteIntentReason(
                   intent,
                   groups,
