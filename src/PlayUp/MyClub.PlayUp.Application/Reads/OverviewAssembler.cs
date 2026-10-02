@@ -1161,7 +1161,7 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// AttentionSummary = Blocking situations only (subset of Situations — not a parallel list).
+    /// AttentionSummary = Blocking situations only — Needs Attention ensemble (same as GET /attention).
     /// </summary>
     private static OverviewAttentionSummaryDto BuildAttentionSummary(
         IReadOnlyList<OverviewSituationDto> situations)
@@ -1171,12 +1171,12 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Builds operational situations from Needs Attention + construction blockers + Suspended.
+    /// Builds operational situations from Needs Attention (+ Suspended informational).
     /// </summary>
     /// <remarks>
-    /// AttentionSummary = Blocking only (not a second calculation).
-    /// Structure readiness blockers become situations only during Draft/Ready (construction).
-    /// <c>InsufficientParticipants</c> is projected from Needs Attention (single SoT); other org blockers still merge here.
+    /// AttentionSummary = Blocking subset of Situations — same ensemble as GET /attention (Needs Attention).
+    /// Structure readiness / construction blockers stay on Structure readiness surfaces — never merged here (D-Align).
+    /// <c>InsufficientParticipants</c> is projected only from Needs Attention (single SoT).
     /// Completion blockers stay on ClosureHint — never merged here.
     /// Identity = Source + TargetType + TargetId; duplicates collapsed.
     /// </remarks>
@@ -1204,44 +1204,19 @@ public static class OverviewAssembler
             })
             .ToList();
 
-        switch (competition.Status)
+        if (competition.Status == CompetitionStatus.Suspended)
         {
-            case CompetitionStatus.Draft or CompetitionStatus.Ready:
-                items.AddRange(
-                    from blocker in structureView.Readiness.Blockers
-                    where blocker != StructureViewAssembler.BlockerInsufficientParticipants
-                    let actionCode = MapOrgBlockerAction(blocker)
-                    select CreateSituation(
-                        blocker,
-                        NatureBlocking,
-                        "Structure",
-                        competition.Id.Value.ToString(),
-                        null,
-                        actionCode,
-                        ImpactBlocksConstruction,
-                        new Dictionary<string, string>
-                        {
-                            ["minimumTeams"] = structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
-                            ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture)
-                        }));
-                break;
-            case CompetitionStatus.Suspended:
-                // Domain Resume exists; Host exposure OPEN — informational, not actionable.
-                items.Add(CreateSituation(
-                    SourceCompetitionSuspended,
-                    NatureInformational,
-                    "Competition",
-                    competition.Id.Value.ToString(),
-                    null,
-                    null,
-                    null,
-                    new Dictionary<string, string>()));
-                break;
-            case CompetitionStatus.Running:
-            case CompetitionStatus.Completed:
-            case CompetitionStatus.Archived:
-            default:
-                break;
+            // Domain Resume exists; Host exposure OPEN — informational, not actionable.
+            // Not Needs Attention / not AttentionSummary (Informational).
+            items.Add(CreateSituation(
+                SourceCompetitionSuspended,
+                NatureInformational,
+                "Competition",
+                competition.Id.Value.ToString(),
+                null,
+                null,
+                null,
+                new Dictionary<string, string>()));
         }
 
         return DeduplicateSituations(items);
@@ -1343,19 +1318,6 @@ public static class OverviewAssembler
 
         return parameters;
     }
-
-    private static string? MapOrgBlockerAction(string blocker) =>
-        blocker switch
-        {
-            StructureViewAssembler.BlockerInsufficientParticipants => StructureViewAssembler.ActionAddEntry,
-            StructureViewAssembler.BlockerMissingStage
-                or StructureViewAssembler.BlockerMissingStructure
-                or StructureViewAssembler.BlockerMissingPotRules
-                or StructureViewAssembler.BlockerCupBracketInvalid
-                or StructureViewAssembler.BlockerStructureGraphInvalid =>
-                StructureViewAssembler.ActionConfigureStructure,
-            _ => null
-        };
 
     private static IReadOnlyList<OverviewActionDto> BuildActions(
         Competition competition,

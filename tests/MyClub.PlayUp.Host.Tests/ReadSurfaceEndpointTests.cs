@@ -195,6 +195,24 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
                 situation.Source == item.Source
                 && situation.TargetType == item.TargetType
                 && situation.TargetId == item.TargetId));
+        body.AttentionSummary.Items.Should().NotContain(item =>
+            item.Source == "MissingStage"
+                || item.Source == "MissingStructure"
+                || item.Source == "MissingPotRules"
+                || item.Source == "CupBracketInvalid"
+                || item.Source == "StructureGraphInvalid"
+                || item.Source == "ConfrontationUndecidable"
+                || item.Source == "OverCapacityEdge"
+                || item.Source == "OverExtraction");
+
+        using var attentionResponse = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/attention");
+        attentionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var attention = await attentionResponse.Content.ReadFromJsonAsync<NeedsAttentionDto>(HostJson.Options);
+        attention.Should().NotBeNull();
+        body.AttentionSummary.Count.Should().Be(attention.Count);
+        body.AttentionSummary.Items.Select(item => item.Source).Should().BeEquivalentTo(
+            attention.Items.Select(item => item.Source));
+
         body.AvailableActions.Should().NotBeNull();
         body.NaturalProgression.Should().NotBeNull();
         body.ClosureHint.Should().NotBeNull();

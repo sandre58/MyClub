@@ -39,7 +39,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="ConstructionDimensions">Teams · Structure · Regulation · Matches.</param>
 /// <param name="OperationalFocus">Stages, draws, match counters, temporal sport units, compact standing.</param>
 /// <param name="Situations">Derived operational situations (not persisted alerts).</param>
-/// <param name="AttentionSummary">Attention subset derived from <paramref name="Situations"/>.</param>
+/// <param name="AttentionSummary">Blocking Needs Attention subset of <paramref name="Situations"/> (same ensemble as GET /attention).</param>
 /// <param name="AvailableActions">Semantic actions/transitions available from known state.</param>
 /// <param name="NaturalProgression">
 /// One structural tip to highlight, or null when none.

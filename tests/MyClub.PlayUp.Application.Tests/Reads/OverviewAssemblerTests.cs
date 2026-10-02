@@ -240,27 +240,101 @@ public sealed class OverviewAssemblerTests
     }
 
     [Fact]
-    public void Assemble_includes_org_blockers_as_blocking_situations_in_attention()
+    public void Assemble_attention_equals_needs_attention_insufficient_participants_only()
     {
         var competition = Competition.Create(new CompetitionName("Thin"), SampleRegulations.Standard(), _clock);
 
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
         var view = OverviewAssembler.Assemble(
             competition,
             [],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.Situations.Should().Contain(item =>
-            item.Source == StructureViewAssembler.BlockerInsufficientParticipants
+        attention.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
+        view.AttentionSummary.Count.Should().Be(attention.Count);
+        view.AttentionSummary.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants
             && item.Nature == OverviewAssembler.NatureBlocking
             && item.Actionable
             && item.ActionCode == StructureViewAssembler.ActionAddEntry
             && item.ImpactCode == OverviewAssembler.ImpactBlocksConstruction);
-        view.AttentionSummary.Count.Should().Be(view.AttentionSummary.Items.Count);
-        view.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == OverviewAssembler.NatureBlocking);
+        view.Situations.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
+
+        // Construction MissingStage stays on Structure readiness — not Attention.
+        view.ConstructionDimensions.Structure.Should().NotBeNull();
+        view.AttentionSummary.Items.Should().NotContain(item =>
+            item.Source == StructureViewAssembler.BlockerMissingStage);
     }
 
     [Fact]
-    public void Assemble_StructureGraphInvalid_situation_is_actionable_ConfigureStructure()
+    public void Assemble_construction_blockers_alone_do_not_enter_attention_summary()
+    {
+        var competition = Competition.Create(new CompetitionName("Ready teams"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        attention.Count.Should().Be(0);
+        view.AttentionSummary.Count.Should().Be(0);
+        view.AttentionSummary.Items.Should().BeEmpty();
+        view.Situations.Should().BeEmpty();
+        view.AttentionSummary.Items.Should().NotContain(item =>
+            item.Source == StructureViewAssembler.BlockerMissingStage
+            || item.Source == StructureViewAssembler.BlockerMissingStructure
+            || item.Source == StructureViewAssembler.BlockerMissingPotRules
+            || item.Source == StructureViewAssembler.BlockerCupBracketInvalid
+            || item.Source == StructureViewAssembler.BlockerStructureGraphInvalid
+            || item.Source == StructureViewAssembler.BlockerConfrontationUndecidable
+            || item.Source == StructureViewAssembler.BlockerOverCapacityEdge
+            || item.Source == StructureViewAssembler.BlockerOverExtraction);
+
+        // Readiness still reports construction gap (Structure surface SoT).
+        var structureView = StructureViewAssembler.Assemble(competition, []);
+        structureView.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerMissingStage);
+    }
+
+    [Fact]
+    public void Assemble_mixed_missing_stage_and_insufficient_participants_attention_is_participants_only()
+    {
+        var competition = Competition.Create(new CompetitionName("Mixed"), SampleRegulations.Standard(), _clock);
+
+        // 0 entries → InsufficientParticipants; no stage → MissingStage on readiness.
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+        var structureView = StructureViewAssembler.Assemble(competition, []);
+
+        attention.Items.Select(item => item.Source).Should().Equal(
+            NeedsAttentionAssembler.SourceInsufficientParticipants);
+        view.AttentionSummary.Count.Should().Be(attention.Count);
+        view.AttentionSummary.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
+        view.AttentionSummary.Items.Should().NotContain(item =>
+            item.Source == StructureViewAssembler.BlockerMissingStage);
+        structureView.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerMissingStage);
+        structureView.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerInsufficientParticipants);
+    }
+
+    [Fact]
+    public void Assemble_StructureGraphInvalid_stays_on_readiness_not_attention()
     {
         var competition = Competition.Create(new CompetitionName("Graph"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
@@ -280,21 +354,25 @@ public sealed class OverviewAssemblerTests
             ]),
             _clock);
 
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [source],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
         var view = OverviewAssembler.Assemble(
             competition,
             [source],
             new Dictionary<StageId, IReadOnlyList<Match>>());
+        var structureView = StructureViewAssembler.Assemble(competition, [source]);
 
-        var graph = view.Situations.Should().ContainSingle(item =>
-            item.Source == StructureViewAssembler.BlockerStructureGraphInvalid).Subject;
-        graph.Actionable.Should().BeTrue();
-        graph.ActionCode.Should().Be(StructureViewAssembler.ActionConfigureStructure);
-        graph.TargetType.Should().Be("Structure");
-        graph.ImpactCode.Should().Be(OverviewAssembler.ImpactBlocksConstruction);
+        attention.Count.Should().Be(0);
+        view.AttentionSummary.Count.Should().Be(0);
+        view.Situations.Should().NotContain(item =>
+            item.Source == StructureViewAssembler.BlockerStructureGraphInvalid);
+        structureView.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerStructureGraphInvalid);
     }
 
     [Fact]
-    public void Assemble_does_not_project_org_blockers_as_situations_when_running()
+    public void Assemble_does_not_project_insufficient_participants_as_situations_when_running()
     {
         var competition = Competition.Create(new CompetitionName("Running thin"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "Only", _clock);
@@ -310,6 +388,7 @@ public sealed class OverviewAssemblerTests
 
         view.Situations.Should().NotContain(item =>
             item.Source == StructureViewAssembler.BlockerInsufficientParticipants);
+        view.AttentionSummary.Count.Should().Be(0);
     }
 
     [Fact]
@@ -336,6 +415,11 @@ public sealed class OverviewAssemblerTests
         noSolution.TargetId.Should().Be(draw.Id.Value.ToString());
         view.AttentionSummary.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceDrawNoSolution);
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+        view.AttentionSummary.Count.Should().Be(attention.Count);
         view.OperationalFocus.Draws.Should().ContainSingle(item =>
             item.DrawId == draw.Id.Value
             && item.ResolutionState == DrawResolutionState.NoSolution
