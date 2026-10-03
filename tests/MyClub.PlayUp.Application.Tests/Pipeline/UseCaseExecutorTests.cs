@@ -302,6 +302,14 @@ public sealed class UseCaseExecutorTests
                 It.Is<IReadOnlyList<MatchId>>(ids => ids.Count == 1 && ids[0].Equals(scenario.Match.Id)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([scenario.Match]);
+        matchRepo
+            .Setup(repository => repository.ListByStageIdsForUpdateAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.Count == 1 && ids[0].Equals(scenario.Destination.Id)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<DomainMatch>>
+            {
+                [scenario.Destination.Id] = Array.Empty<DomainMatch>(),
+            });
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -399,6 +407,7 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(stage);
         SetupCompetitionLookup(competitions, competition);
+        SetupEmptyStageMatches(matches, stage.Id);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -425,6 +434,7 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(stage);
         SetupCompetitionLookup(competitions, competition);
+        SetupEmptyStageMatches(matchRepo, stage.Id);
 
         // First SaveChanges = Publish; second = Apply persistence — fail Apply save so Publish stays durable.
         var saveCount = 0;
@@ -739,6 +749,7 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
         SetupCompetitionLookup(competitions, scenario.Competition);
+        SetupEmptyStageMatches(matchRepo, scenario.Stage.Id);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -793,6 +804,7 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(stage);
         SetupCompetitionLookup(competitions, competition);
+        SetupEmptyStageMatches(matchRepo, stage.Id);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.ApplyDrawAsync(stage.Id, draw.Id);
@@ -808,6 +820,11 @@ public sealed class UseCaseExecutorTests
         competitions
             .Setup(repository => repository.GetByIdForUpdateAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
+
+    private static void SetupEmptyStageMatches(Mock<IMatchRepository> matchRepo, StageId stageId) =>
+        matchRepo
+            .Setup(repository => repository.ListByStageForUpdateAsync(stageId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<DomainMatch>());
 
     private UseCaseExecutor CreateExecutor(
         Mock<IStageRepository> stages,

@@ -66,18 +66,29 @@ public static class ApplyQualification
     /// <summary>
     /// Applies all qualification paths, including AcrossGroups derived standings when matches are provided.
     /// </summary>
+    /// <param name="sourceStage">Stage that owns qualification rules.</param>
+    /// <param name="overallStanding">Overall standing when required by paths.</param>
+    /// <param name="groupStandings">Per-group standings when required by paths.</param>
+    /// <param name="matches">Source-stage matches for AcrossGroups standing derivation.</param>
+    /// <param name="competitionStages">All competition stages (tracked).</param>
+    /// <param name="clock">Clock for domain events.</param>
+    /// <param name="destinationMatches">
+    /// Matches on destination stages for F1 determination coherence (may include all competition stages).
+    /// </param>
     public static IReadOnlyList<QualificationInstruction> Execute(
         Stage sourceStage,
         Standing? overallStanding,
         IReadOnlyDictionary<GroupId, Standing> groupStandings,
         IReadOnlyList<Match>? matches,
         IReadOnlyList<Stage> competitionStages,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Match>? destinationMatches = null)
     {
         ArgumentNullException.ThrowIfNull(sourceStage);
         ArgumentNullException.ThrowIfNull(groupStandings);
         ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(clock);
+        var coherenceMatches = destinationMatches ?? [];
 
         var canonicalSource = ResolveCanonicalStage(sourceStage.Id, competitionStages);
         var paths = canonicalSource.Regulation.QualificationRules?.Paths.ToArray() ?? [];
@@ -168,6 +179,9 @@ public static class ApplyQualification
                     instruction.EntryId);
             }
 
+            var destinationSnapshots = MaterializedParticipantSnapshots.FromMatches(
+                coherenceMatches.Where(match => match.StageId.Equals(destination.Id)));
+
             if (path.Destination.TargetsGroup)
             {
                 destination.ApplyResolvedGroupEntry(
@@ -176,7 +190,11 @@ public static class ApplyQualification
             }
             else if (path.Destination.TargetsSlot)
             {
-                destination.ApplyResolvedEntry(path.Destination.SlotKey!, instruction.EntryId, clock);
+                destination.ApplyResolvedEntry(
+                    path.Destination.SlotKey!,
+                    instruction.EntryId,
+                    clock,
+                    destinationSnapshots);
             }
 
             applied.Add(instruction);

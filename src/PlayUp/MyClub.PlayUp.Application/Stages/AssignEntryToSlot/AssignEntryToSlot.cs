@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -16,9 +17,13 @@ public static class AssignEntryToSlot
 {
     /// <summary>
     /// Pins <paramref name="entryId"/> on <paramref name="slotKey"/> (configuration + sync resolution).
-    /// Domain enforces population membership and feed conflicts.
+    /// Domain enforces population membership, feed conflicts, and Cup F1 coherence.
     /// </summary>
-    public static void Execute(Stage stage, string slotKey, EntryId entryId)
+    public static void Execute(
+        Stage stage,
+        string slotKey,
+        EntryId entryId,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
 
@@ -36,6 +41,9 @@ public static class AssignEntryToSlot
                 ApplicationErrorCodes.InvalidStructureIntent);
         }
 
-        stage.AssignEntryToSlot(slotKey, entryId);
+        stage.AssignEntryToSlot(
+            slotKey,
+            entryId,
+            MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []));
     }
 }

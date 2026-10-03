@@ -7,6 +7,7 @@
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Scheduling;
 using MyClub.PlayUp.Domain.Stages;
@@ -132,7 +133,23 @@ public sealed partial class UseCaseExecutor
                 ApplicationErrorCodes.MatchNotFound);
         }
 
-        ApplyProgressionOutcome.Execute(trackedSource, fixtureId, loadedMatches, competitionStages, clock);
+        var destinationStageIds = competitionStages
+            .Select(stage => stage.Id)
+            .Where(id => !id.Equals(sourceStageId))
+            .ToArray();
+        var destinationMatchesByStage = destinationStageIds.Length == 0
+            ? new Dictionary<StageId, IReadOnlyList<Match>>()
+            : await matches.ListByStageIdsForUpdateAsync(destinationStageIds, cancellationToken)
+                .ConfigureAwait(false);
+        var destinationMatches = destinationMatchesByStage.SelectMany(pair => pair.Value).ToArray();
+
+        ApplyProgressionOutcome.Execute(
+            trackedSource,
+            fixtureId,
+            loadedMatches,
+            competitionStages,
+            clock,
+            destinationMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -176,13 +193,24 @@ public sealed partial class UseCaseExecutor
             canonicalSource,
             stageMatches);
 
+        var destinationStageIds = competitionStages
+            .Select(stage => stage.Id)
+            .Where(id => !id.Equals(sourceStageId))
+            .ToArray();
+        var destinationMatchesByStage = destinationStageIds.Length == 0
+            ? new Dictionary<StageId, IReadOnlyList<Match>>()
+            : await matches.ListByStageIdsForUpdateAsync(destinationStageIds, cancellationToken)
+                .ConfigureAwait(false);
+        var destinationMatches = destinationMatchesByStage.SelectMany(pair => pair.Value).ToArray();
+
         var applied = ApplyQualification.Execute(
             canonicalSource,
             overall,
             groupStandings,
             stageMatches,
             competitionStages,
-            clock);
+            clock,
+            destinationMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return applied;
     }
@@ -278,7 +306,9 @@ public sealed partial class UseCaseExecutor
         await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
 
-        var result = ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock);
+        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        var result = ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         LogDrawAlignedPlacementsReleased(
             logger,
@@ -311,7 +341,9 @@ public sealed partial class UseCaseExecutor
         await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
 
-        var result = ApplyDraw.Execute(stage, drawId, clock);
+        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        var result = ApplyDraw.Execute(stage, drawId, clock, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         LogDrawApplied(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value, result.CreatedMatches.Count);
     }
@@ -359,7 +391,9 @@ public sealed partial class UseCaseExecutor
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
-        AssignEntryToSlot.Execute(stage, slotKey, entryId);
+        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        AssignEntryToSlot.Execute(stage, slotKey, entryId, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -374,7 +408,9 @@ public sealed partial class UseCaseExecutor
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
-        ClearSlotAssignment.Execute(stage, slotKey);
+        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        ClearSlotAssignment.Execute(stage, slotKey, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -30,22 +31,25 @@ public static class ApplyDraw
     /// <param name="stage">Stage that owns the Draw.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="stageMatches">Matches attached on the stage (F1 coherence); empty when none.</param>
     /// <returns>Slot instructions (Group returns empty instructions).</returns>
     public static ApplyDrawResult Execute(
         Stage stage,
         DrawId drawId,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
         var draw = stage.GetDraw(drawId);
         EnsureApplicable(draw);
+        var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
 
         return draw.Kind switch
         {
-            DrawResolutionKind.Slot => new ApplyDrawResult(ApplySlot(stage, draw, clock), []),
-            DrawResolutionKind.Group => new ApplyDrawResult(ApplyGroup(stage, draw), []),
+            DrawResolutionKind.Slot => new ApplyDrawResult(ApplySlot(stage, draw, clock, snapshots), []),
+            DrawResolutionKind.Group => new ApplyDrawResult(ApplyGroup(stage, draw, snapshots), []),
             _ => throw new ApplicationFailureException(
                 $"ApplyDraw does not support draw kind '{draw.Kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
@@ -86,7 +90,8 @@ public static class ApplyDraw
     private static IReadOnlyList<SlotAssignmentInstruction> ApplySlot(
         Stage stage,
         Draw draw,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot> snapshots)
     {
         var instructions = draw.ToSlotAssignmentInstructions(stage.Id);
         var pool = draw.Inputs!.Entries;
@@ -130,7 +135,7 @@ public static class ApplyDraw
 
         foreach (var instruction in instructions)
         {
-            stage.ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock);
+            stage.ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock, snapshots);
         }
 
         return instructions;
@@ -138,7 +143,8 @@ public static class ApplyDraw
 
     private static IReadOnlyList<SlotAssignmentInstruction> ApplyGroup(
         Stage stage,
-        Draw draw)
+        Draw draw,
+        IReadOnlyList<MatchParticipantSnapshot> snapshots)
     {
         if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
         {
@@ -173,7 +179,7 @@ public static class ApplyDraw
             var owningGroup = stage.Groups.FirstOrDefault(g => g.EntryIds.Contains(placement.EntryId));
             if (owningGroup?.Id.Equals(placement.GroupId) == false)
             {
-                stage.RemoveEntryFromGroup(owningGroup.Id, placement.EntryId);
+                stage.RemoveEntryFromGroup(owningGroup.Id, placement.EntryId, snapshots);
             }
 
             stage.AssignEntryToGroup(placement.GroupId, placement.EntryId);

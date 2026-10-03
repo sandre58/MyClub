@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -18,7 +19,10 @@ public static class ClearSlotAssignment
     /// Removes the direct assignment on <paramref name="slotKey"/> when present.
     /// Domain no-ops when no DirectAssignment owns the slot (does not wipe Draw/Qual occupants).
     /// </summary>
-    public static void Execute(Stage stage, string slotKey)
+    public static void Execute(
+        Stage stage,
+        string slotKey,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
 
@@ -36,6 +40,8 @@ public static class ClearSlotAssignment
                 ApplicationErrorCodes.InvalidStructureIntent);
         }
 
-        stage.ClearSlotAssignment(slotKey);
+        stage.ClearSlotAssignment(
+            slotKey,
+            MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []));
     }
 }

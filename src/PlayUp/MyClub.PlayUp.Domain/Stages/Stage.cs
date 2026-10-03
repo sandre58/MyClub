@@ -1252,7 +1252,13 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
-    public void RemoveEntryFromGroup(GroupId groupId, EntryId entryId)
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for C3 F1.
+    /// </param>
+    public void RemoveEntryFromGroup(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         EnsureStructureMutable();
 
@@ -1263,6 +1269,11 @@ public sealed class Stage : AggregateRoot<StageId>
                 $"Entry '{entryId}' was not found in group '{groupId}'.",
                 StageErrorCodes.EntryNotFound);
         }
+
+        MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
+            this,
+            entryId,
+            materializedParticipants ?? []);
 
         DemoteToDraftIfReady();
         group.Remove(entryId);
@@ -1583,7 +1594,13 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="entryId">Entry identity.</param>
-    public void AssignEntryToSlot(string slotKey, EntryId entryId)
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void AssignEntryToSlot(
+        string slotKey,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         EnsureStructureMutable();
 
@@ -1613,6 +1630,13 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.DuplicateEntry);
         }
 
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        proposed[key] = entryId;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
+
         DemoteToDraftIfReady();
 
         var existingIndex = _directAssignments.FindIndex(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal));
@@ -1633,7 +1657,12 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Clears a direct assignment and the slot's resolved entry.
     /// </summary>
     /// <param name="slotKey">Target slot key.</param>
-    public void ClearSlotAssignment(string slotKey)
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void ClearSlotAssignment(
+        string slotKey,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         EnsureStructureMutable();
 
@@ -1648,6 +1677,13 @@ public sealed class Stage : AggregateRoot<StageId>
             return;
         }
 
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        proposed[key] = null;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
+
         DemoteToDraftIfReady();
         _directAssignments.RemoveAt(index);
         slot.ClearEntry();
@@ -1660,11 +1696,19 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Resolution mutation (not structure): allowed in Draft, Ready, Running, and Suspended; forbidden when Completed.
     /// Does not demote Ready to Draft. A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
     /// When the entry already occupies another slot of this stage, it is moved (previous slot cleared without a separate event).
+    /// Cup F1: validates final simulated BracketPair occupants against attached match participants.
     /// </remarks>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="entryId">Resolved entry identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void ApplyResolvedEntry(string slotKey, EntryId entryId, IClock clock)
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void ApplyResolvedEntry(
+        string slotKey,
+        EntryId entryId,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureResolutionMutable();
@@ -1684,6 +1728,23 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             return;
         }
+
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        foreach (var other in _slots)
+        {
+            if (!ReferenceEquals(other, slot)
+                && other.EntryId is { } occupied
+                && occupied.Equals(entryId))
+            {
+                proposed[other.SlotKey] = null;
+            }
+        }
+
+        proposed[key] = entryId;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
 
         foreach (var other in _slots.Where(other => !ReferenceEquals(other, slot)))
         {
@@ -1741,7 +1802,13 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </remarks>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void ClearResolvedEntry(string slotKey, IClock clock)
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void ClearResolvedEntry(
+        string slotKey,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureResolutionMutable();
@@ -1761,6 +1828,13 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             return;
         }
+
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        proposed[key] = null;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
 
         var previousEntryId = slot.EntryId;
         slot.ClearEntry();

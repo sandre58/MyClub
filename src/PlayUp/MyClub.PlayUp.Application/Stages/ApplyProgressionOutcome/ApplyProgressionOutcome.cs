@@ -37,12 +37,14 @@ public static class ApplyProgressionOutcome
         FixtureId fixtureId,
         IReadOnlyList<Match> matches,
         IReadOnlyList<Stage> competitionStages,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Match>? destinationMatches = null)
     {
         ArgumentNullException.ThrowIfNull(sourceStage);
         ArgumentNullException.ThrowIfNull(matches);
         ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(clock);
+        var coherenceMatches = destinationMatches ?? [];
 
         var canonicalSource = ResolveCanonicalStage(sourceStage.Id, competitionStages);
         var fixture = canonicalSource.GetFixture(fixtureId);
@@ -126,6 +128,9 @@ public static class ApplyProgressionOutcome
                     instruction.EntryId);
             }
 
+            var destinationSnapshots = MaterializedParticipantSnapshots.FromMatches(
+                coherenceMatches.Where(match => match.StageId.Equals(destinations[i].Id)));
+
             if (instruction.TargetsGroup)
             {
                 destinations[i].ApplyResolvedGroupEntry(
@@ -134,7 +139,11 @@ public static class ApplyProgressionOutcome
             }
             else if (instruction.TargetsSlot)
             {
-                destinations[i].ApplyResolvedEntry(instruction.SlotKey!, instruction.EntryId, clock);
+                destinations[i].ApplyResolvedEntry(
+                    instruction.SlotKey!,
+                    instruction.EntryId,
+                    clock,
+                    destinationSnapshots);
             }
         }
 

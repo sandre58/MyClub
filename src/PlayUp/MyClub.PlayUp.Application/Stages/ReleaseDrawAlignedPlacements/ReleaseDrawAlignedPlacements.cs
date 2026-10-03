@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -27,17 +28,20 @@ public static class ReleaseDrawAlignedPlacements
     /// <param name="stage">Stage that owns the draw and slots.</param>
     /// <param name="drawId">Draw whose <see cref="DrawResolution.SlotResults"/> define the target pairs.</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="stageMatches">Matches attached on the stage (F1 coherence); empty when none.</param>
     /// <returns>How many slots were released vs skipped.</returns>
     public static ReleaseDrawAlignedPlacementsResult Execute(
         Stage stage,
         DrawId drawId,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
         var draw = stage.GetDraw(drawId);
         EnsureEligible(draw);
+        var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
 
         var released = 0;
         var skipped = 0;
@@ -58,7 +62,7 @@ public static class ReleaseDrawAlignedPlacements
                 continue;
             }
 
-            stage.ClearResolvedEntry(placement.SlotKey, clock);
+            stage.ClearResolvedEntry(placement.SlotKey, clock, snapshots);
             released++;
         }
 

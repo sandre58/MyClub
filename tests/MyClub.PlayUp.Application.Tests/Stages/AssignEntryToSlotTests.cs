@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -100,6 +101,34 @@ public sealed class AssignEntryToSlotTests
         stage.FindSlot("S1")!.EntryId.Should().NotBeNull();
     }
 
+    [Fact]
+    public void Assign_refuses_when_materialized_pair_would_diverge()
+    {
+        var (stage, entryA, entryB, match) = SeedMaterializedCupPair();
+        var other = stage.CompositionEntries.First(e => !e.EntryId.Equals(entryA) && !e.EntryId.Equals(entryB)).EntryId;
+
+        var act = () => AssignEntryToSlot.Execute(stage, "S1", other, [match]);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+        stage.FindSlot("S1")!.EntryId.Should().Be(entryA);
+        stage.FindSlot("S2")!.EntryId.Should().Be(entryB);
+    }
+
+    [Fact]
+    public void Clear_refuses_when_materialized_pair_would_diverge()
+    {
+        var (stage, entryA, entryB, match) = SeedMaterializedCupPair();
+        AssignEntryToSlot.Execute(stage, "S1", entryA, [match]);
+
+        var act = () => ClearSlotAssignment.Execute(stage, "S1", [match]);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+        stage.FindSlot("S1")!.EntryId.Should().Be(entryA);
+        stage.FindSlot("S2")!.EntryId.Should().Be(entryB);
+    }
+
     private (Stage Stage, EntryId EntryId) SeedCupWithPopulation()
     {
         var competition = CreateCompetition.Execute("Cup-Manual", _clock);
@@ -110,5 +139,33 @@ public sealed class AssignEntryToSlotTests
         var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
         ReplaceStageAffectationAuthoring.Execute(stage, competition, [entry.Id], _clock);
         return (stage, entry.Id);
+    }
+
+    private (Stage Stage, EntryId EntryA, EntryId EntryB, Match Match) SeedMaterializedCupPair()
+    {
+        var competition = CreateCompetition.Execute("Cup-F1", _clock);
+        var stage = AddCompetitionStage.Execute(
+            competition,
+            StructureIntent.Cup(4, "KO"),
+            _clock);
+        var entryA = competition.AddEntry(TeamId.New(), "Team A", _clock);
+        var entryB = competition.AddEntry(TeamId.New(), "Team B", _clock);
+        var entryC = competition.AddEntry(TeamId.New(), "Team C", _clock);
+        ReplaceStageAffectationAuthoring.Execute(
+            stage,
+            competition,
+            [entryA.Id, entryB.Id, entryC.Id],
+            _clock);
+
+        stage.SeedEntryRoundBracketPairs();
+        var round = stage.AddRound("Tour", _clock);
+        stage.ApplyResolvedEntry("S1", entryA.Id, _clock);
+        stage.ApplyResolvedEntry("S2", entryB.Id, _clock);
+
+        var fixture = stage.AddFixture(round.Id, _clock, "S1", "S2", "P1");
+        var match = Match.Create(competition.Id, stage.Id, entryA.Id, entryB.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        return (stage, entryA.Id, entryB.Id, match);
     }
 }

@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Stages.Events;
 using Xunit;
@@ -333,6 +334,58 @@ public sealed class ApplyDrawTests
         result.SlotInstructions.Should().BeEmpty();
         groupA.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
         groupB.EntryIds.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_group_move_refused_when_entry_on_attached_match()
+    {
+        var stage = CreateStage();
+        var groupA = stage.AddGroup("A", _clock);
+        var groupB = stage.AddGroup("B", _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        var entryA = EntryId.New();
+        var entryB = EntryId.New();
+        stage.AssignEntryToGroup(groupB.Id, entryA);
+        stage.AssignEntryToGroup(groupB.Id, entryB);
+
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(_competitionId, stage.Id, entryA, entryB, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        var draw = PublishGroupDraw(stage, entryA, groupA.Id);
+
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock, [match]);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+        groupB.EntryIds.Should().Contain(entryA);
+        groupA.EntryIds.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_group_add_allowed_after_partial_materialize()
+    {
+        var stage = CreateStage();
+        var group = stage.AddGroup("A", _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        var entryA = EntryId.New();
+        var entryB = EntryId.New();
+        var entryC = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, entryA);
+        stage.AssignEntryToGroup(group.Id, entryB);
+
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(_competitionId, stage.Id, entryA, entryB, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        var draw = PublishGroupDraw(stage, entryC, group.Id);
+
+        var result = ApplyDraw.Execute(stage, draw.Id, _clock, [match]);
+
+        result.SlotInstructions.Should().BeEmpty();
+        group.EntryIds.Should().Contain(entryA);
+        group.EntryIds.Should().Contain(entryB);
+        group.EntryIds.Should().Contain(entryC);
     }
 
     [Fact]

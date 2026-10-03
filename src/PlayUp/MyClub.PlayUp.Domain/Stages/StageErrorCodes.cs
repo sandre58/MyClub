@@ -122,6 +122,11 @@ public static class StageErrorCodes
     public const string SlotFeedConflict = "Stage.SlotFeedConflict";
 
     /// <summary>
+    /// Gets the code when a determination-source mutation would diverge from materialized match opponents (F1 / D4).
+    /// </summary>
+    public const string MaterializedOpponentConflict = "Stage.MaterializedOpponentConflict";
+
+    /// <summary>
     /// Gets the code when a slot has more than one local feed (Direct and/or Progression).
     /// </summary>
     public const string MultipleFeeds = "Stage.MultipleFeeds";
