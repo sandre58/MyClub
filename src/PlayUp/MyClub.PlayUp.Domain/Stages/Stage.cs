@@ -1130,6 +1130,38 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Removes one Swiss round (fixtures, matchday, optional bye) while Running.
+    /// Does not remove Match aggregates — Application deletes those.
+    /// </summary>
+    /// <param name="roundNumber">1-based Swiss round / matchday number.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>Distinct match identities that were attached on the removed round.</returns>
+    public IReadOnlyList<MatchId> RemoveSwissRoundMaterialization(int roundNumber, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+
+        var matchday = _matchdays.FirstOrDefault(candidate => candidate.Number == roundNumber)
+                       ?? throw new DomainException(
+                           $"Matchday for Swiss round {roundNumber} was not found.",
+                           StageErrorCodes.MatchdayNotFound);
+
+        var fixtureIds = matchday.Fixtures.Select(fixture => fixture.Id).ToArray();
+        var matchIds = matchday.Fixtures.SelectMany(fixture => fixture.MatchIds).Distinct().ToArray();
+
+        foreach (var fixtureId in fixtureIds)
+        {
+            RemoveSwissRoundFixture(fixtureId, clock);
+        }
+
+        _matchdays.Remove(matchday);
+        Raise(new StageMatchdayRemoved(Id, matchday.Id, clock));
+        RemoveSwissByeForRound(roundNumber);
+
+        return matchIds;
+    }
+
+    /// <summary>
     /// Clears Swiss Kind settings and bye history (Structure reconfigure). Draft/Ready only.
     /// </summary>
     public void ClearSwissConfiguration()
@@ -2704,6 +2736,34 @@ public sealed class Stage : AggregateRoot<StageId>
             throw new DomainException(
                 $"Swiss bye cannot be recorded when status is '{Status}'.",
                 StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void RemoveSwissRoundFixture(FixtureId fixtureId, IClock clock)
+    {
+        EnsureSwissProgressiveMutable();
+
+        var fixture = GetFixture(fixtureId);
+        var matchIds = fixture.MatchIds.ToArray();
+        ClearMatchPlacements(matchIds);
+
+        if (!_matchdays.Any(matchday => matchday.RemoveFixture(fixtureId)))
+        {
+            throw new DomainException(
+                $"Fixture '{fixtureId}' was not found on a matchday.",
+                StageErrorCodes.FixtureNotFound);
+        }
+
+        Raise(new StageFixtureRemoved(Id, fixtureId, clock));
+    }
+
+    private void RemoveSwissByeForRound(int roundNumber)
+    {
+        EnsureSwissProgressiveMutable();
+        var index = _swissByeHistory.FindIndex(bye => bye.RoundIndex == roundNumber);
+        if (index >= 0)
+        {
+            _swissByeHistory.RemoveAt(index);
         }
     }
 

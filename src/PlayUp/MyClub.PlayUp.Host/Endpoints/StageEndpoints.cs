@@ -671,6 +671,18 @@ internal static class StageEndpoints
             });
 
         app.MapPost(
+            "/stages/{stageId:guid}/matches/dematerialize",
+            async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+            {
+                var result = await executor
+                    .DematerializePhaseAsync(new StageId(stageId), cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.Ok(new DematerializePhaseResponse(
+                    result.RemovedMatchCount,
+                    result.RemovedRoundNumber));
+            });
+
+        app.MapPost(
             "/stages/{stageId:guid}/schedule/generate",
             async (
                 Guid stageId,

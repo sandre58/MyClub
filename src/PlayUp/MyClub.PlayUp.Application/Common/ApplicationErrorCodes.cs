@@ -294,4 +294,19 @@ public static class ApplicationErrorCodes
     /// Gets the code when RemoveCompetitionStage is refused because the competition has a single stage.
     /// </summary>
     public const string LastStageCannotBeRemoved = "Application.LastStageCannotBeRemoved";
+
+    /// <summary>
+    /// Gets the code when dematerialization is refused because a match in scope was already played.
+    /// </summary>
+    public const string DematerializationBlocked = "Application.DematerializationBlocked";
+
+    /// <summary>
+    /// Gets the code when dematerialization is refused because stage match topology is inconsistent (e.g. orphan matches).
+    /// </summary>
+    public const string MaterializationStateInconsistent = "Application.MaterializationStateInconsistent";
+
+    /// <summary>
+    /// Gets the code when dematerialization cannot run for the stage format or lifecycle.
+    /// </summary>
+    public const string DematerializationFailure = "Application.DematerializationFailure";
 }

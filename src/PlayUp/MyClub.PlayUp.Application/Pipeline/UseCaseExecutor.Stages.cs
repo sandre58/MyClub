@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
@@ -764,6 +765,43 @@ public sealed partial class UseCaseExecutor
         {
             matches.Add(created);
         }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
+    /// <summary>
+    /// Removes attached materialization for the stage format (Championship / Groups / Cup / Swiss last round).
+    /// </summary>
+    public async Task<DematerializePhaseResult> DematerializePhaseAsync(
+        StageId stageId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
+        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var format = StructureSkeleton.InferFormat(stage)
+                     ?? throw new ApplicationFailureException(
+                         "Dematerialization requires a structured stage.",
+                         ApplicationErrorCodes.DematerializationFailure);
+
+        DematerializePhaseResult result = format switch
+        {
+            StructureFormatKind.Championship or StructureFormatKind.Groups => new DematerializePhaseResult(
+                DematerializeChampionshipOrGroups.Execute(competition, stage, existing, matches, clock)
+                    .RemovedMatchCount,
+                RemovedRoundNumber: null),
+            StructureFormatKind.Cup => new DematerializePhaseResult(
+                DematerializeCup.Execute(competition, stage, existing, matches, clock).RemovedMatchCount,
+                RemovedRoundNumber: null),
+            StructureFormatKind.Swiss => DematerializeSwissLastRound.Execute(competition, stage, existing, matches, clock) switch
+            {
+                var swiss => new DematerializePhaseResult(swiss.RemovedMatchCount, swiss.RemovedRoundNumber)
+            },
+            _ => throw new ApplicationFailureException(
+                $"Dematerialization is not supported for format '{format}'.",
+                ApplicationErrorCodes.DematerializationFailure)
+        };
 
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return result;
