@@ -14,6 +14,8 @@
   "MaterializeMatchesComplete": "Complete matches",
   "MaterializeFromOccupiedSlots": "Create matches",
   "MaterializeFromOccupiedSlotsComplete": "Complete matches",
+  "DematerializePhase": "Remove matches",
+  "DematerializeLastSwissRound": "Remove last produced round",
   "GenerateNextRound": "Generate Swiss round {{roundIndex}} / {{plannedRounds}}",
   "GenerateSchedule": "Generate a schedule",
   "ApplySchedule": "Apply a schedule",

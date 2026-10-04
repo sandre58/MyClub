@@ -3,8 +3,8 @@ import { DrawPendingIcon } from '../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../design-system/icons/shellIcons';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 
-/** Ghost = Activate (subdued). Emphasis = Launch/Open (outlined). Never brand primary. */
-export type StructureDrawCtaTone = 'ghost' | 'emphasis';
+/** Ghost = Activate (subdued). Emphasis = Launch/Open (outlined). Destructive = remove (outlined danger). Never brand primary. */
+export type StructureDrawCtaTone = 'ghost' | 'emphasis' | 'destructive';
 
 /**
  * Draw stage-card CTA — gesture + minimal context.

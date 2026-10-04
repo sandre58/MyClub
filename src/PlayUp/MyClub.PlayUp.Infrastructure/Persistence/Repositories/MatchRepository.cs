@@ -155,7 +155,8 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
                 candidate.Status,
                 candidate.HomeEntryId,
                 candidate.AwayEntryId,
-                candidate.Result))
+                candidate.Result,
+                candidate.RunningScore != null))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -211,7 +212,8 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
                 candidate.Status,
                 candidate.HomeEntryId,
                 candidate.AwayEntryId,
-                candidate.Result))
+                candidate.Result,
+                candidate.RunningScore != null))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

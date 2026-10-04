@@ -39,7 +39,7 @@ internal static class ChampionshipOrGroupsMaterializationScope
 
         var matchesById = stageMatches.ToDictionary(match => match.Id);
         var matches = matchIds
-            .Select(id => matchesById.GetValueOrDefault(id))
+            .Select(matchesById.GetValueOrDefault)
             .Where(match => match is not null)
             .Cast<Match>()
             .ToList();

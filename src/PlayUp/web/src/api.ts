@@ -57,6 +57,7 @@ export {
   prepareStage,
   startStage,
   materializeMatches,
+  dematerializePhase,
   generateNextSwissRound,
   materializeCupFromOccupiedSlots,
   applyQualification,

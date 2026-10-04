@@ -18,10 +18,12 @@ namespace MyClub.PlayUp.Application.Abstractions;
 /// <param name="HomeEntryId">Home entry.</param>
 /// <param name="AwayEntryId">Away entry.</param>
 /// <param name="Result">Result when finished; otherwise <see langword="null"/>.</param>
+/// <param name="HasObservedLive">Whether Live was observed for this match.</param>
 public sealed record MatchSummaryRow(
     MatchId Id,
     StageId StageId,
     MatchStatus Status,
     EntryId HomeEntryId,
     EntryId AwayEntryId,
-    MatchResult? Result);
+    MatchResult? Result,
+    bool HasObservedLive = false);

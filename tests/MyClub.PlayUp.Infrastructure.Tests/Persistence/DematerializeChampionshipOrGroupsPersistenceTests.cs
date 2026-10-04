@@ -10,7 +10,6 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
 using Xunit;
@@ -62,7 +61,7 @@ public sealed class DematerializeChampionshipOrGroupsPersistenceTests
                 matches.Add(match);
             }
 
-            materializedMatchIds = materialized.CreatedMatches.Select(match => match.Id).ToArray();
+            materializedMatchIds = [.. materialized.CreatedMatches.Select(match => match.Id)];
             await unitOfWork.SaveChangesAsync();
         }
 
@@ -80,8 +79,8 @@ public sealed class DematerializeChampionshipOrGroupsPersistenceTests
 
             var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
             var result = DematerializeChampionshipOrGroups.Execute(
-                competition!,
-                stage!,
+                competition,
+                stage,
                 stageMatches,
                 matches,
                 _clock);
@@ -97,7 +96,7 @@ public sealed class DematerializeChampionshipOrGroupsPersistenceTests
 
             var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
-            stage!.Matchdays.Should().ContainSingle().Which.Number.Should().Be(1);
+            stage.Matchdays.Should().ContainSingle().Which.Number.Should().Be(1);
             stage.Matchdays[0].Fixtures.Should().BeEmpty();
 
             foreach (var matchId in materializedMatchIds)

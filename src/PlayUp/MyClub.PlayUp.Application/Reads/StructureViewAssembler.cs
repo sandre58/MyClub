@@ -430,7 +430,8 @@ public static class StructureViewAssembler
             PlacesPerGroup: stage.PlacesPerGroup,
             DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat),
             DrawExecutionBadge: ResolveDrawExecutionBadge(stage, draw is not null),
-            Materialize: StructureMaterializeAssembler.Assemble(competition, stage, summaries));
+            Materialize: StructureMaterializeAssembler.Assemble(competition, stage, summaries),
+            Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries));
     }
 
     /// <summary>

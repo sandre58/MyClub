@@ -71,6 +71,7 @@ import {
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
+import { StructureDematerializeHero } from './StructureDematerializeHero';
 import { StructureMaterializeHero } from './StructureMaterializeHero';
 import {
   classifyMaterializePresentation,
@@ -760,8 +761,9 @@ export function StructurePhaseFiche({
     !!stage.materialize &&
     !!materializePresentation &&
     showMaterializeActionBlock(materializePresentation);
+  const showDematerializeHeroBlock = !!stage.dematerialize;
   const showHeroStructureActions =
-    showPlacementBlock || showMaterializeHeroBlock;
+    showPlacementBlock || showMaterializeHeroBlock || showDematerializeHeroBlock;
   const heroMetaSeparated = showHeroMeta && showHeroStructureActions;
   const showFrozenRemainingBanner =
     stage.materialize &&
@@ -1334,14 +1336,29 @@ export function StructurePhaseFiche({
                     </div>
                   </div>
                 ) : null}
-                {showMaterializeHeroBlock ? (
+                {showMaterializeHeroBlock || showDematerializeHeroBlock ? (
                   <div className="structure-phase-hero__draw">
-                    <div className="structure-draw-block">
-                      <StructureMaterializeHero
-                        competitionId={data.competitionId}
-                        competitionStatus={data.status}
-                        stage={stage}
-                      />
+                    <div
+                      className={
+                        showMaterializeHeroBlock && showDematerializeHeroBlock
+                          ? 'structure-draw-block structure-draw-block--paired'
+                          : 'structure-draw-block'
+                      }
+                    >
+                      {showMaterializeHeroBlock ? (
+                        <StructureMaterializeHero
+                          competitionId={data.competitionId}
+                          competitionStatus={data.status}
+                          stage={stage}
+                        />
+                      ) : null}
+                      {showDematerializeHeroBlock ? (
+                        <StructureDematerializeHero
+                          competitionId={data.competitionId}
+                          stageId={stage.stageId}
+                          dematerialize={stage.dematerialize!}
+                        />
+                      ) : null}
                     </div>
                   </div>
                 ) : null}

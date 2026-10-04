@@ -255,6 +255,21 @@
       "successCreated": "{{count}} match(es) created.",
       "successAlreadyComplete": "Those matches were already created."
     },
+    "dematerialize": {
+      "hintFullPhase": "Removes produced matches on this phase. Structure is preserved.",
+      "hintLastSwissRound": "Removes only the last produced Swiss round (matches, fixtures, and any bye).",
+      "blockedGeneric": "Removing matches is not available right now.",
+      "submitting": "Removing…",
+      "successRemoved": "{{count}} match(es) removed.",
+      "successSwissRound": "Round {{round}} removed ({{count}} match(es)).",
+      "successNoOp": "No matches to remove.",
+      "disabledReason": {
+        "MatchLifecycleStarted": "A related match was already played or is live.",
+        "MaterializationStateInconsistent": "Materialization state is inconsistent — fix it before removing matches.",
+        "StageLifecycleNotSupported": "The current competition or phase lifecycle does not allow removing matches.",
+        "FormatNotSupported": "This phase shape does not support removing matches from Structure."
+      }
+    },
     "schematicTooltipFrom": "From",
     "schematicTooltipByDraw": "Placed by draw",
     "schematicTooltipByAffectation": "Manual assignment",

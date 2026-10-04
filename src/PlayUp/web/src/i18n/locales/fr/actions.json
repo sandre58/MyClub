@@ -14,6 +14,8 @@
   "MaterializeMatchesComplete": "Compléter les matchs",
   "MaterializeFromOccupiedSlots": "Créer les matchs",
   "MaterializeFromOccupiedSlotsComplete": "Compléter les matchs",
+  "DematerializePhase": "Retirer les matchs",
+  "DematerializeLastSwissRound": "Retirer le dernier tour produit",
   "GenerateNextRound": "Générer le tour Swiss {{roundIndex}} / {{plannedRounds}}",
   "GenerateSchedule": "Générer un calendrier",
   "ApplySchedule": "Appliquer un calendrier",

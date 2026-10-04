@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -36,7 +35,7 @@ internal static class SwissLastRoundMaterializationScope
 
         var matchesById = stageMatches.ToDictionary(match => match.Id);
         var matches = matchIds
-            .Select(id => matchesById.GetValueOrDefault(id))
+            .Select(matchesById.GetValueOrDefault)
             .Where(match => match is not null)
             .Cast<Match>()
             .ToList();

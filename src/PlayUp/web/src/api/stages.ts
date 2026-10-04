@@ -198,6 +198,14 @@ export function generateNextSwissRound(stageId: string): Promise<{
   return sendJson('POST', `/stages/${stageId}/swiss/generate-next-round`);
 }
 
+/** POST /stages/{stageId}/matches/dematerialize → DematerializePhaseResponse */
+export function dematerializePhase(stageId: string): Promise<{
+  removedMatchCount: number;
+  removedRoundNumber: number | null;
+}> {
+  return sendJson('POST', `/stages/${stageId}/matches/dematerialize`);
+}
+
 /** POST /stages/{stageId}/matches/materialize-from-slots → MaterializeMatchesResponse */
 export function materializeCupFromOccupiedSlots(
   stageId: string,

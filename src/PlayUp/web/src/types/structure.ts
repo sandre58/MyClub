@@ -226,6 +226,8 @@ export interface StructureStageHubSummary {
   qualificationIntents?: StructureQualificationIntent[] | null;
   /** Workspace materialize capability; omitted when the format has no Materialize command. */
   materialize?: StructureMaterialize | null;
+  /** Workspace dematerialize capability; omitted when not exposed for this phase. */
+  dematerialize?: StructureDematerialize | null;
 }
 
 /** One qualification authoring intent. */
@@ -478,6 +480,21 @@ export interface StructureMaterializeConfrontation {
   eligible: boolean;
   selectable?: boolean;
   groupName?: string | null;
+}
+
+export type StructureDematerializeScope = 'FullPhase' | 'LastSwissRound';
+
+export type DematerializeDisabledReason =
+  | 'MatchLifecycleStarted'
+  | 'MaterializationStateInconsistent'
+  | 'StageLifecycleNotSupported'
+  | 'FormatNotSupported';
+
+/** Structure workspace dematerialize capability (sibling of materialize). */
+export interface StructureDematerialize {
+  enabled: boolean;
+  disabledReason?: DematerializeDisabledReason | null;
+  scope: StructureDematerializeScope;
 }
 
 /** Round identity + display name inside a confrontation segment. */

@@ -255,6 +255,21 @@
       "successCreated": "{{count}} match(s) créé(s).",
       "successAlreadyComplete": "Ces matchs étaient déjà créés."
     },
+    "dematerialize": {
+      "hintFullPhase": "Retire les matchs produits sur cette phase. La structure est conservée.",
+      "hintLastSwissRound": "Retire uniquement le dernier tour Swiss produit (matchs, confrontations et éventuel bye).",
+      "blockedGeneric": "Le retrait des matchs n’est pas disponible pour le moment.",
+      "submitting": "Retrait…",
+      "successRemoved": "{{count}} match(s) retiré(s).",
+      "successSwissRound": "Tour {{round}} retiré ({{count}} match(s)).",
+      "successNoOp": "Aucun match à retirer.",
+      "disabledReason": {
+        "MatchLifecycleStarted": "Un match concerné a déjà été joué ou est en cours.",
+        "MaterializationStateInconsistent": "L’état de matérialisation est incohérent — corrigez avant de retirer les matchs.",
+        "StageLifecycleNotSupported": "Le cycle de vie actuel de la phase ou de la compétition ne permet pas de retirer les matchs.",
+        "FormatNotSupported": "Cette forme de phase ne permet pas de retirer les matchs depuis Structure."
+      }
+    },
     "schematicTooltipFrom": "Vient de",
     "schematicTooltipByDraw": "Placé par tirage",
     "schematicTooltipByAffectation": "Affectation manuelle",

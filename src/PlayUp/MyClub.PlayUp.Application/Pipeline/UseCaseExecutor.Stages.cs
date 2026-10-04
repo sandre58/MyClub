@@ -785,7 +785,7 @@ public sealed partial class UseCaseExecutor
                          "Dematerialization requires a structured stage.",
                          ApplicationErrorCodes.DematerializationFailure);
 
-        DematerializePhaseResult result = format switch
+        var result = format switch
         {
             StructureFormatKind.Championship or StructureFormatKind.Groups => new DematerializePhaseResult(
                 DematerializeChampionshipOrGroups.Execute(competition, stage, existing, matches, clock)

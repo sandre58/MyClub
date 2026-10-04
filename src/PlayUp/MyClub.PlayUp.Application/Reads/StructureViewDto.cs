@@ -236,6 +236,7 @@ public sealed record StructureReadinessDto(
 /// <param name="DefaultTieFormat">Stage regulation TieFormat (AddRound copy source); null when unset.</param>
 /// <param name="DrawExecutionBadge">Topology execution badge when DrawRules engaged; null otherwise.</param>
 /// <param name="Materialize">Workspace materialize capability (null when the format has no Materialize command).</param>
+/// <param name="Dematerialize">Workspace dematerialize capability (null when nothing is materialized or the format is unsupported).</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -304,7 +305,8 @@ public sealed record StructureStageHubSummaryDto(
     int? PlacesPerGroup = null,
     StructureTieFormatSummaryDto? DefaultTieFormat = null,
     StructureDrawExecutionBadge? DrawExecutionBadge = null,
-    StructureMaterializeDto? Materialize = null);
+    StructureMaterializeDto? Materialize = null,
+    StructureDematerializeDto? Dematerialize = null);
 
 /// <summary>
 /// Structure workspace projection of match materialization (not Overview opportunity).
@@ -327,6 +329,17 @@ public sealed record StructureMaterializeDto(
     bool CommandEnabled,
     IReadOnlyList<StructureMaterializeConfrontationDto> Confrontations,
     string? DisabledReason = null);
+
+/// <summary>
+/// Structure workspace dematerialization capability (sibling of materialize; not Overview).
+/// </summary>
+/// <param name="Enabled">When true, POST dematerialize may succeed (command remains authoritative).</param>
+/// <param name="DisabledReason">Stable code when exposed and disabled.</param>
+/// <param name="Scope">FullPhase or LastSwissRound — UI copy only.</param>
+public sealed record StructureDematerializeDto(
+    bool Enabled,
+    string? DisabledReason,
+    string Scope);
 
 /// <summary>One determined or structural confrontation for the Structure workspace.</summary>
 /// <param name="Key">Cup = BracketPair.PairKey; Groups = directed Home|Away.</param>

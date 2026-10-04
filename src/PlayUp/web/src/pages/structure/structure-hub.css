@@ -1265,6 +1265,34 @@
   transform: translateX(2px);
 }
 
+/* Destructive secondary — outlined danger, not a filled primary */
+.structure-draw-cta[data-tone='destructive'] {
+  background: transparent;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));
+  color: var(--color-error);
+}
+
+.structure-draw-cta[data-tone='destructive']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--color-error) 55%, var(--color-border));
+}
+
+.structure-draw-cta[data-tone='destructive'] .structure-draw-cta__leading {
+  color: var(--color-error);
+}
+
+.structure-draw-cta[data-tone='destructive'] .structure-draw-cta__body,
+.structure-draw-cta[data-tone='destructive'] .structure-draw-cta__caption {
+  color: var(--color-text-secondary);
+}
+
+.structure-draw-cta[data-tone='destructive']:hover:not(:disabled) .structure-draw-cta__chevron {
+  color: var(--color-error);
+  transform: translateX(2px);
+}
+
 /* Content column + chevron centred on the whole card */
 .structure-draw-cta__main {
   display: flex;
