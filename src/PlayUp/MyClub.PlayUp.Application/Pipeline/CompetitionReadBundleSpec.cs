@@ -36,7 +36,10 @@ public sealed record CompetitionReadBundleSpec(
         StageReadCapabilities.FromProfile(StageLoadProfile.Full),
         MatchLoadProfile.SummaryRow);
 
-    /// <summary>Gets structure hub — topology + slots + draws (execution badge), no match aggregates.</summary>
+    /// <summary>
+    /// Gets structure hub — topology + slots + draws; no match aggregates
+    /// (sheet member refs + summary rows loaded beside this spec).
+    /// </summary>
     public static CompetitionReadBundleSpec Structure { get; } = new(
         new StageReadCapabilities(
             StageLoadProfile.Structure,

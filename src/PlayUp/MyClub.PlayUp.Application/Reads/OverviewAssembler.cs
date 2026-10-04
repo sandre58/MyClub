@@ -122,11 +122,23 @@ public static class OverviewAssembler
     /// <summary>Apply draw.</summary>
     public const string ActionApplyDraw = "ApplyDraw";
 
-    /// <summary>Materialize matches.</summary>
+    /// <summary>Materialize matches when determined pairs remain uncovered (Championship / Groups).</summary>
     public const string ActionMaterializeMatches = "MaterializeMatches";
 
-    /// <summary>Materialize Cup confrontations from occupied slots (navigate to Stage pairing UI).</summary>
+    /// <summary>Materialize Cup confrontations from eligible occupied BracketPairs (Overview execute).</summary>
     public const string ActionMaterializeFromOccupiedSlots = "MaterializeFromOccupiedSlots";
+
+    /// <summary>Action param: create vs complete label (same Host command).</summary>
+    public const string ActionParamLabelVariant = "labelVariant";
+
+    /// <summary>Label variant when the stage has no attached matches yet.</summary>
+    public const string LabelVariantCreate = "create";
+
+    /// <summary>Label variant when some matches exist and uncovered determined pairs remain.</summary>
+    public const string LabelVariantComplete = "complete";
+
+    /// <summary>Action param: attached match count on the target stage.</summary>
+    public const string ActionParamAttachedMatchCount = "attachedMatchCount";
 
     /// <summary>Generate next Swiss round (pairings + Matchday) while Running.</summary>
     public const string ActionGenerateNextRound = "GenerateNextRound";
@@ -1412,10 +1424,18 @@ public static class OverviewAssembler
             && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
             && structureView.Format.PrimaryStageId is { } materializeStageId)
         {
-            actions.Add(new OverviewActionDto(
-                ActionMaterializeMatches,
-                Guaranteed: false,
-                materializeStageId));
+            var primary = stages.First(candidate => candidate.Id.Value == materializeStageId);
+            var existing = matchesByStage.TryGetValue(primary.Id, out var loaded)
+                ? loaded
+                : [];
+            if (MaterializeMatches.CountUncoveredDeterminedPairs(competition, primary, existing) > 0)
+            {
+                actions.Add(new OverviewActionDto(
+                    ActionMaterializeMatches,
+                    Guaranteed: false,
+                    materializeStageId,
+                    Params: MaterializeCommandParams(primary, extra: null)));
+            }
         }
 
         if (TryEvaluateSwissGenerateNextRound(
@@ -1455,11 +1475,12 @@ public static class OverviewAssembler
                 ActionMaterializeFromOccupiedSlots,
                 Guaranteed: false,
                 stage.Id.Value,
-                Params: new Dictionary<string, string>
-                {
-                    ["stageName"] = stage.Name.Value,
-                    ["occupiedSlotCount"] = occupiedSlotCount.ToString(CultureInfo.InvariantCulture)
-                }));
+                Params: MaterializeCommandParams(
+                    stage,
+                    extra: new Dictionary<string, string>
+                    {
+                        ["occupiedSlotCount"] = occupiedSlotCount.ToString(CultureInfo.InvariantCulture)
+                    })));
         }
 
         if (structureView.Readiness.ReadyForSchedule
@@ -1789,8 +1810,8 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// Opportunity for from-slots materialization: Cup stage Draft/Ready, enough occupied slots
-    /// not yet covered by a complete SlotA/B fixture. Does not invent pairing.
+    /// Opportunity for from-slots materialization: Cup stage Draft/Ready with at least one
+    /// eligible <see cref="BracketPair"/> (both slots occupied, no fixture bound yet).
     /// </summary>
     private static bool TryDescribeFromSlotsOpportunity(
         Competition competition,
@@ -1813,19 +1834,24 @@ public static class OverviewAssembler
             return false;
         }
 
-        var occupiedKeys = stage.Slots
-            .Where(slot => slot.EntryId is not null)
-            .Select(slot => slot.SlotKey)
-            .ToArray();
-        occupiedSlotCount = occupiedKeys.Length;
-        if (occupiedSlotCount < 2)
-        {
-            return false;
-        }
+        occupiedSlotCount = stage.Slots.Count(slot => slot.EntryId is not null);
+        return MaterializeCupFromOccupiedSlots.CountEligiblePairs(stage) > 0;
+    }
 
-        var covered = CupSlotCoverage.GetSlotsCoveredByCompleteFixtures(stage);
-        var uncoveredOccupied = occupiedKeys.Count(key => !covered.Contains(key));
-        return uncoveredOccupied >= 2;
+    private static Dictionary<string, string> MaterializeCommandParams(
+        Stage stage,
+        Dictionary<string, string>? extra)
+    {
+        var attached = stage.Matchdays.SelectMany(matchday => matchday.Fixtures)
+            .Concat(stage.Rounds.SelectMany(round => round.Fixtures))
+            .SelectMany(fixture => fixture.MatchIds)
+            .Distinct()
+            .Count();
+        var map = extra ?? [with(StringComparer.Ordinal)];
+        map["stageName"] = stage.Name.Value;
+        map[ActionParamAttachedMatchCount] = attached.ToString(CultureInfo.InvariantCulture);
+        map[ActionParamLabelVariant] = attached > 0 ? LabelVariantComplete : LabelVariantCreate;
+        return map;
     }
 
     private static bool IsCupStage(Stage stage) =>

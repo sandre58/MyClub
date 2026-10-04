@@ -4,8 +4,6 @@
 // Tone UX ≠ Analyzer Nature ≠ Prepare Gate/Signal.
 // -----------------------------------------------------------------------
 
-import type { StructureStageHubSummary } from '../../types';
-
 /** Business family for Structure header synthesis. */
 export type StructureDiagnosticFamily =
   | 'graph'

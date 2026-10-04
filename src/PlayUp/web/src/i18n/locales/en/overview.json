@@ -73,7 +73,9 @@
     "heading": "Next action",
     "codes": {
       "MaterializeMatches": "Create matches to progress (league / groups).",
-      "MaterializeFromOccupiedSlots": "Slots are occupied — open the stage to configure fixtures.",
+      "MaterializeMatchesComplete": "Some determined confrontations still have no match — complete the calendar.",
+      "MaterializeFromOccupiedSlots": "Occupied places can produce matches.",
+      "MaterializeFromOccupiedSlotsComplete": "Some determined confrontations still have no match — complete the calendar.",
       "GenerateNextRound": "Generate the next Swiss round (pairings + matches) — after current round results if needed.",
       "PublishDraw": "Publish the draw to lock the composition.",
       "PublishAndApplyDraw": "Publish and apply the draw to populate the stage.",

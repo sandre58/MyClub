@@ -131,6 +131,7 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `cup-composition-complete` | no | Cup 16, composition **16/16 (E2)** — Modifier + tirage pending |
 | `cup-qf-sf` | no | Multi-stage QF→SF: QF played, SF slots occupied, **stops before** `materialize-from-slots` |
 | `cup-sf-running` | no | QF done + SF materialized ~50% played — multi-phase Running |
+| `structure-materialize-recette` | no | Structure Materialize recette — G1–G3, C1–C3 (Cup 8: partial **slot draw** + SingleLeg TieFormat on C1/C2), R1–R3 |
 | `swiss-8x3` | yes | Swiss 8×3; Matchdays via `GenerateNextRound` |
 | `swiss-ready` | no | Swiss Ready (0 rounds yet) — also Règlement Swiss schematic |
 

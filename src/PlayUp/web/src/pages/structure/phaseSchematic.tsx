@@ -28,6 +28,9 @@ type SchematicDensity = 'full' | 'crest' | 'compact';
 type PairLabel =
   { kind: 'fixture'; matchNumber: number } | { kind: 'pair'; pairKey: string };
 
+/** Overlay from Structure materialize read (Cup only). */
+export type CupPairProductionState = 'eligible' | 'incomplete';
+
 function nextPowerOfTwo(n: number): number {
   let p = 1;
   while (p < n) p *= 2;
@@ -44,12 +47,14 @@ export function PhaseSchematic({
   terminal = false,
   /** Stage hub round count — used when schematic.cupRoundCount is absent (older Host). */
   cupRoundCount,
+  cupPairProductionStates,
   /** Cup manual placement — click a place to open the shared dialog. */
   onPlaceActivate,
 }: {
   schematic: StageSchematic;
   terminal?: boolean;
   cupRoundCount?: number | null;
+  cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   onPlaceActivate?: (place: SchematicCase) => void;
 }): ReactElement {
   const { t } = useTranslation(['regulation', 'structure']);
@@ -66,6 +71,7 @@ export function PhaseSchematic({
         t={t}
         terminal={terminal}
         roundHint={cupRoundCount}
+        cupPairProductionStates={cupPairProductionStates}
         onPlaceActivate={onPlaceActivate}
       />
     );
@@ -469,12 +475,14 @@ function CupSchematic({
   t,
   terminal,
   roundHint,
+  cupPairProductionStates,
   onPlaceActivate,
 }: {
   schematic: StageSchematic;
   t: Translate;
   terminal: boolean;
   roundHint?: number | null;
+  cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const roundCount = resolveCupRoundCount(
@@ -588,6 +596,7 @@ function CupSchematic({
       terminal={terminal}
       density={density}
       metrics={metrics}
+      cupPairProductionStates={cupPairProductionStates}
       onPlaceActivate={onPlaceActivate}
     />
   ) : (
@@ -598,6 +607,7 @@ function CupSchematic({
       wireRounds={roundCount}
       density={density}
       metrics={metrics}
+      cupPairProductionStates={cupPairProductionStates}
       onPlaceActivate={onPlaceActivate}
     />
   );
@@ -803,14 +813,22 @@ function PairOrdinalText({
   label,
   x,
   y,
+  productionState,
 }: {
   label: PairLabel;
   x: number;
   y: number;
+  productionState?: CupPairProductionState;
 }) {
   if (label.kind === 'fixture') {
     return (
-      <text x={x} y={y} textAnchor="start" className="schematic-cup__match-n">
+      <text
+        x={x}
+        y={y}
+        textAnchor="start"
+        className="schematic-cup__match-n"
+        data-production-state="materialized"
+      >
         {`#${label.matchNumber}`}
       </text>
     );
@@ -821,10 +839,21 @@ function PairOrdinalText({
       y={y}
       textAnchor="start"
       className="schematic-cup__pair-ordinal"
+      data-production-state={productionState}
     >
       {label.pairKey}
     </text>
   );
+}
+
+function pairProductionState(
+  label: PairLabel,
+  states?: Readonly<Record<string, CupPairProductionState>>,
+): CupPairProductionState | undefined {
+  if (label.kind !== 'pair' || !states) {
+    return undefined;
+  }
+  return states[label.pairKey];
 }
 
 function CupMultiRoundSchematic({
@@ -834,6 +863,7 @@ function CupMultiRoundSchematic({
   terminal,
   density,
   metrics: m,
+  cupPairProductionStates,
   onPlaceActivate,
 }: {
   columns: (SchematicCase | null)[][];
@@ -842,6 +872,7 @@ function CupMultiRoundSchematic({
   terminal: boolean;
   density: SchematicDensity;
   metrics: CupMetrics;
+  cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const leafCount = columns[0]?.length ?? 0;
@@ -966,6 +997,10 @@ function CupMultiRoundSchematic({
                           label={label}
                           x={xMid + 6}
                           y={mid - 5}
+                          productionState={pairProductionState(
+                            label,
+                            cupPairProductionStates,
+                          )}
                         />
                       ) : null}
                     </g>
@@ -1002,6 +1037,7 @@ function CupSingleRoundSchematic({
   wireRounds,
   density,
   metrics: m,
+  cupPairProductionStates,
   onPlaceActivate,
 }: {
   schematic: StageSchematic;
@@ -1010,6 +1046,7 @@ function CupSingleRoundSchematic({
   wireRounds: number;
   density: SchematicDensity;
   metrics: CupMetrics;
+  cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const roundOrders = [
@@ -1125,7 +1162,15 @@ function CupSingleRoundSchematic({
                   className="schematic-cup__wire-line"
                 />
                 {label ? (
-                  <PairOrdinalText label={label} x={xMid + 8} y={mid - 5} />
+                  <PairOrdinalText
+                    label={label}
+                    x={xMid + 8}
+                    y={mid - 5}
+                    productionState={pairProductionState(
+                      label,
+                      cupPairProductionStates,
+                    )}
+                  />
                 ) : null}
               </g>
             );

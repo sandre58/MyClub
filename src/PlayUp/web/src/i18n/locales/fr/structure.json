@@ -239,6 +239,22 @@
     "editStanding": "Modifier le classement",
     "occupantsUnavailable": "Composition indisponible pour le moment.",
     "schematicLoading": "Chargement de la schématique…",
+    "materialize": {
+      "ratioCaption": "matchs créés",
+      "frozenRemainingConfrontations_one": "Il reste {{count}} confrontation sans match créé.",
+      "frozenRemainingConfrontations_other": "Il reste {{count}} confrontations sans match créé.",
+      "blockedGeneric": "La production n’est pas disponible pour le moment.",
+      "disabledReason": {
+        "StructureNotMutable": "La structure ne permet plus de créer les matchs.",
+        "NoDeterminedConfrontations": "Aucune confrontation n’est prête à être matérialisée.",
+        "GroupsNotReady": "Les poules ne sont pas prêtes pour la production de matchs.",
+        "NoEligibleConfrontations": "Aucune confrontation ne peut être matérialisée pour le moment."
+      },
+      "viewPhaseMatches": "Voir les matchs de la phase",
+      "submitting": "Création…",
+      "successCreated": "{{count}} match(s) créé(s).",
+      "successAlreadyComplete": "Ces matchs étaient déjà créés."
+    },
     "schematicTooltipFrom": "Vient de",
     "schematicTooltipByDraw": "Placé par tirage",
     "schematicTooltipByAffectation": "Affectation manuelle",
@@ -313,7 +329,9 @@
       "matchdays_one": "journée",
       "matchdays_other": "journées",
       "places_one": "place",
-      "places_other": "places"
+      "places_other": "places",
+      "matches_one": "match",
+      "matches_other": "matchs"
     },
     "tiles": {
       "population": "Équipes",
@@ -321,7 +339,7 @@
       "match": "Match",
       "standing": "Classement",
       "tirage": "Tirage",
-      "confrontation": "Confrontation",
+      "confrontation": "Format de confrontation",
       "attribution": "Attribution des places"
     },
     "binding": {

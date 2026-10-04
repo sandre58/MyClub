@@ -73,6 +73,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, CupCompositionCompleteScenario>();
         services.AddSingleton<IScenario, CupQfSfScenario>();
         services.AddSingleton<IScenario, CupSfRunningScenario>();
+        services.AddSingleton<IScenario, StructureMaterializeRecetteScenario>();
         services.AddSingleton<IScenario, Swiss8X3Scenario>();
         services.AddSingleton<IScenario, SwissReadyScenario>();
         services.AddSingleton<IScenario, RandomScenario>();

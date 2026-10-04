@@ -76,7 +76,7 @@ export function classifyReadinessHeaderTone(args: {
   return 'none';
 }
 
-function headerToneFromCodes(codes: string[]): StructureHeaderTone {
+function headerToneFromCodes(codes: readonly string[]): StructureHeaderTone {
   let hasDanger = false;
   let hasNonDanger = false;
   for (const code of codes) {

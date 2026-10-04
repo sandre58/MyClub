@@ -224,6 +224,8 @@ export interface StructureStageHubSummary {
   defaultTieFormat?: StructureTieFormatSummary | null;
   /** Authoring intents (1 → N paths). Prefer over flat paths when present. */
   qualificationIntents?: StructureQualificationIntent[] | null;
+  /** Workspace materialize capability; omitted when the format has no Materialize command. */
+  materialize?: StructureMaterialize | null;
 }
 
 /** One qualification authoring intent. */
@@ -452,6 +454,30 @@ export interface StructureTieFormatSummary {
   hasAwayGoalsRule: boolean;
   hasTieExtraTime: boolean;
   hasTiePenaltyShootout: boolean;
+}
+
+/** Structure workspace materialize capability (not Overview opportunity). */
+export interface StructureMaterialize {
+  commandCode: 'MaterializeMatches' | 'MaterializeFromOccupiedSlots';
+  labelVariant: 'create' | 'complete' | 'exhausted' | 'idle';
+  determinedCount: number;
+  eligibleCount: number;
+  materializedCount: number;
+  commandEnabled: boolean;
+  confrontations: StructureMaterializeConfrontation[];
+  /** Minimal causal code when the command is disabled and not terminal. */
+  disabledReason?: string | null;
+}
+
+export interface StructureMaterializeConfrontation {
+  key: string;
+  sideA: string;
+  sideB: string;
+  determined: boolean;
+  materialized: boolean;
+  eligible: boolean;
+  selectable?: boolean;
+  groupName?: string | null;
 }
 
 /** Round identity + display name inside a confrontation segment. */

@@ -33,6 +33,7 @@ internal static class ScenarioOrchestration
         string? logoAsset = null,
         DateTimeOffset? scheduledStart = null,
         DateTimeOffset? scheduledEnd = null,
+        string competitionLocalKey = "competition",
         CancellationToken cancellationToken = default)
     {
         // Birth via TestKit (RegulationPacks + optional deterministic id); DevSeed adds presentation / logos.
@@ -40,7 +41,7 @@ internal static class ScenarioOrchestration
             name,
             context.Clock,
             MatchEnrichment.WithDiscipline(regulation ?? RegulationPacks.Standard()),
-            context.Ids.Competition());
+            context.Ids.Competition(competitionLocalKey));
         var competition = situation.Competition;
         var logoMediaId = await context.Logos.GetOrImportAsync(logoAsset, cancellationToken).ConfigureAwait(false);
         if (shortName is not null || logoMediaId is not null)
@@ -58,7 +59,8 @@ internal static class ScenarioOrchestration
         ScenarioContext context,
         CompetitionRecipe recipe,
         CancellationToken cancellationToken,
-        Regulation? regulation = null)
+        Regulation? regulation = null,
+        string competitionLocalKey = "competition")
     {
         if (recipe.TeamNames != TeamNameSource.Dataset
             || string.IsNullOrWhiteSpace(recipe.DatasetCompetitionKey))
@@ -67,6 +69,7 @@ internal static class ScenarioOrchestration
                     context,
                     recipe.DisplayName,
                     regulation: regulation,
+                    competitionLocalKey: competitionLocalKey,
                     cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -80,6 +83,7 @@ internal static class ScenarioOrchestration
             logoAsset: dataset.LogoAsset,
             scheduledStart: dataset.ScheduledStart,
             scheduledEnd: dataset.ScheduledEnd,
+            competitionLocalKey: competitionLocalKey,
             cancellationToken: cancellationToken).ConfigureAwait(false);
     }
 
@@ -88,11 +92,13 @@ internal static class ScenarioOrchestration
         Competition competition,
         CompetitionRecipe recipe,
         int? countOverride = null,
+        string? identityScope = null,
         CancellationToken cancellationToken = default)
     {
         var count = countOverride ?? recipe.TeamCount;
         var situation = TestCompetition.For(competition, context.Clock);
         var entries = new List<CompetitionEntry>(count);
+        var scopePrefix = string.IsNullOrEmpty(identityScope) ? string.Empty : $"{identityScope}-";
         for (var i = 0; i < count; i++)
         {
             context.Clock.Advance(TimeSpan.FromHours(2) + TimeSpan.FromMinutes(i));
@@ -109,8 +115,8 @@ internal static class ScenarioOrchestration
                 logoMediaId);
             situation.WithTeam(
                 displayName,
-                context.Ids.Team($"team-{i}"),
-                context.Ids.Entry($"entry-{i}"),
+                context.Ids.Team($"{scopePrefix}team-{i}"),
+                context.Ids.Entry($"{scopePrefix}entry-{i}"),
                 presentation);
             entries.Add(competition.Entries[^1]);
         }
@@ -145,11 +151,12 @@ internal static class ScenarioOrchestration
     public static Stage ConfigurePrimaryStage(
         ScenarioContext context,
         Competition competition,
-        CompetitionRecipe recipe)
+        CompetitionRecipe recipe,
+        string stageLocalKey = "stage")
     {
         var intent = CompetitionRecipeValidator.ToStructureIntent(recipe);
         var situation = TestCompetition.For(competition, context.Clock)
-            .WithStructure(intent, context.Ids.Stage());
+            .WithStructure(intent, context.Ids.Stage(stageLocalKey));
         var stage = situation.RequirePrimaryStage();
         context.Stages.Add(stage);
         return stage;
@@ -2894,5 +2901,310 @@ internal static class ScenarioOrchestration
                 competitionStages,
                 context.Clock);
         }
+    }
+
+    /// <summary>
+    /// Seeds Structure Materialize UI recette competitions (see <c>structure-materialize-recette</c> scenario).
+    /// </summary>
+    public static async Task BuildStructureMaterializeRecetteAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await BuildRecetteGroupsG1Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteGroupsG2Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteGroupsG3Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteCupC1Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteCupC2Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteCupC3Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteGroupsR1Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteGroupsR2Async(context, cancellationToken).ConfigureAwait(false);
+        await BuildRecetteGroupsR3Async(context, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteGroupsG1Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (_, stage, _) = await CreateRecetteGroups2X3Async(
+                context,
+                "RECETTE G1 — Groups 0/6 actionable",
+                "recette-g1",
+                cancellationToken)
+            .ConfigureAwait(false);
+        _ = stage;
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteGroupsG2Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, _) = await CreateRecetteGroups2X3Async(
+                context,
+                "RECETTE G2 — Groups 3/6 actionable",
+                "recette-g2",
+                cancellationToken)
+            .ConfigureAwait(false);
+        _ = SeedMaterialization.MaterializeGroupsMatchesUpTo(
+            context,
+            competition,
+            stage,
+            maxMatches: 3,
+            matchIdentityScope: "recette-g2");
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteGroupsG3Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, _) = await CreateRecetteGroups2X3Async(
+                context,
+                "RECETTE G3 — Groups 6/6 terminal",
+                "recette-g3",
+                cancellationToken)
+            .ConfigureAwait(false);
+        _ = SeedMaterialization.MaterializeGroupsMatches(
+            context,
+            competition,
+            stage,
+            matchIdentityScope: "recette-g3");
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteCupC1Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, entries) = await CreateRecetteCup8Async(
+                context,
+                "RECETTE C1 — Cup 0/1 actionable",
+                "recette-c1",
+                cancellationToken)
+            .ConfigureAwait(false);
+        PlaceRecetteCupBracketPairsViaSlotDraw(context, stage, entries, pairCount: 1);
+        _ = competition;
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteCupC2Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, entries) = await CreateRecetteCup8Async(
+                context,
+                "RECETTE C2 — Cup 1/2 partial",
+                "recette-c2",
+                cancellationToken)
+            .ConfigureAwait(false);
+        var firstPairKey = PlaceRecetteCupBracketPairsViaSlotDraw(
+            context,
+            stage,
+            entries,
+            pairCount: 2)[0];
+        _ = SeedMaterialization.MaterializeFromSlots(context, competition, stage, [firstPairKey]);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteCupC3Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, entries) = await CreateRecetteCup8Async(
+                context,
+                "RECETTE C3 — Cup 4/4 terminal",
+                "recette-c3",
+                cancellationToken)
+            .ConfigureAwait(false);
+        AssignRootComposition(stage, entries, context.Clock);
+        _ = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, stage);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteGroupsR1Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, _) = await CreateRecetteGroups2X3Async(
+                context,
+                "RECETTE R1 — Running 3/6 frozen",
+                "recette-r1",
+                cancellationToken)
+            .ConfigureAwait(false);
+        _ = SeedMaterialization.MaterializeGroupsMatchesUpTo(
+            context,
+            competition,
+            stage,
+            maxMatches: 3,
+            matchIdentityScope: "recette-r1");
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteGroupsR2Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, _) = await CreateRecetteGroups2X3Async(
+                context,
+                "RECETTE R2 — Running 0/6 blocked",
+                "recette-r2",
+                cancellationToken)
+            .ConfigureAwait(false);
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildRecetteGroupsR3Async(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, _) = await CreateRecetteGroups2X3Async(
+                context,
+                "RECETTE R3 — Running 6/6 terminal",
+                "recette-r3",
+                cancellationToken)
+            .ConfigureAwait(false);
+        _ = SeedMaterialization.MaterializeGroupsMatches(
+            context,
+            competition,
+            stage,
+            matchIdentityScope: "recette-r3");
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<(Competition Competition, Stage Stage, IReadOnlyList<CompetitionEntry> Entries)>
+        CreateRecetteGroups2X3Async(
+            ScenarioContext context,
+            string displayName,
+            string identityScope,
+            CancellationToken cancellationToken)
+    {
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = displayName,
+            Format = RecipeFormat.Groups,
+            TeamCount = 6,
+            GroupCount = 2,
+            PlacesPerGroup = 3,
+            StageName = "Groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(
+                context,
+                recipe,
+                cancellationToken,
+                competitionLocalKey: identityScope)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(
+                context,
+                competition,
+                recipe,
+                identityScope: identityScope,
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(
+            context,
+            competition,
+            recipe,
+            stageLocalKey: $"{identityScope}-stage");
+        SeedMaterialization.AssignGroupsRoundRobin(stage, entries);
+        return (competition, stage, entries);
+    }
+
+    private static async Task<(Competition Competition, Stage Stage, IReadOnlyList<CompetitionEntry> Entries)>
+        CreateRecetteCup8Async(
+            ScenarioContext context,
+            string displayName,
+            string identityScope,
+            CancellationToken cancellationToken)
+    {
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = displayName,
+            Format = RecipeFormat.Cup,
+            TeamCount = 8,
+            BracketSize = 8,
+            StageName = "Coupe",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(
+                context,
+                recipe,
+                cancellationToken,
+                competitionLocalKey: identityScope)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(
+                context,
+                competition,
+                recipe,
+                identityScope: identityScope,
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(
+            context,
+            competition,
+            recipe,
+            stageLocalKey: $"{identityScope}-stage");
+        AssignRootComposition(stage, entries, context.Clock);
+        SeedSlotDraw.EngageRandomDrawRules(stage, context.Clock);
+        EnsureRecetteCupTieFormat(stage, context.Clock);
+        return (competition, stage, entries);
+    }
+
+    private static void EnsureRecetteCupTieFormat(Stage stage, IClock clock)
+    {
+        var tie = new TieFormat(TieFormat.SingleLeg, aggregateScoring: false);
+        stage.ReplaceDefaultTieFormat(tie, clock);
+        if (stage.Rounds.Count > 0)
+        {
+            stage.ReplaceRoundTieFormat(stage.Rounds[0].Id, tie, clock);
+        }
+    }
+
+    /// <summary>
+    /// Fills the first <paramref name="pairCount"/> bracket pairs via a published slot draw (recette QA story).
+    /// </summary>
+    private static IReadOnlyList<string> PlaceRecetteCupBracketPairsViaSlotDraw(
+        ScenarioContext context,
+        Stage stage,
+        IReadOnlyList<CompetitionEntry> entries,
+        int pairCount)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(entries);
+
+        var pairs = stage.BracketPairs
+            .OrderBy(item => item.PairKey, StringComparer.Ordinal)
+            .Take(pairCount)
+            .ToArray();
+        if (pairs.Length != pairCount)
+        {
+            throw new InvalidOperationException(
+                $"Recette cup stage '{stage.Name.Value}' expected at least {pairCount} bracket pairs (got {pairs.Length}).");
+        }
+
+        var slotKeys = pairs
+            .SelectMany(pair => new[] { pair.SlotAKey, pair.SlotBKey })
+            .ToArray();
+        var pool = entries
+            .Take(slotKeys.Length)
+            .Select(entry => entry.Id)
+            .ToArray();
+        if (pool.Length != slotKeys.Length)
+        {
+            throw new InvalidOperationException(
+                $"Recette cup placement requires {slotKeys.Length} composition entries (got {pool.Length}).");
+        }
+
+        SeedSlotDraw.RecordAndApplySlotDraw(context, stage, pool, slotKeys);
+        return [.. pairs.Select(pair => pair.PairKey)];
     }
 }

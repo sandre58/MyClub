@@ -75,6 +75,70 @@ public static class MaterializeMatches
         };
     }
 
+    /// <summary>
+    /// Count of determined Home/Away pairs not yet attached on <paramref name="stage"/>.
+    /// Zero when Championship/Groups cannot run <see cref="Execute"/> yet (or Cup/Swiss).
+    /// </summary>
+    public static int CountUncoveredDeterminedPairs(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Match> existingMatches)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(existingMatches);
+
+        if (!stage.CompetitionId.Equals(competition.Id))
+        {
+            return 0;
+        }
+
+        var format = InferFormat(stage);
+        var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
+        return format switch
+        {
+            StructureFormatKind.Championship => CountUncoveredChampionship(competition, stage, existingByPair),
+            StructureFormatKind.Groups => CountUncoveredGroups(stage, existingByPair),
+            StructureFormatKind.Cup or StructureFormatKind.Swiss or null => 0,
+            _ => 0
+        };
+    }
+
+    private static int CountUncoveredChampionship(
+        Competition competition,
+        Stage stage,
+        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair)
+    {
+        var entries = GetActiveEntries(competition);
+        return entries.Count < 2 ? 0 : CountMissingPairs(BuildRoundRobinRounds(entries, stage.MatchGenerationFormat), existingByPair);
+    }
+
+    private static int CountUncoveredGroups(
+        Stage stage,
+        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair) =>
+        stage.Groups.Count == 0 || stage.Groups.Any(group => group.EntryIds.Count < 2)
+            ? 0
+            : stage.Groups.Sum(group => CountMissingPairs(BuildRoundRobinRounds([.. group.EntryIds], stage.MatchGenerationFormat), existingByPair));
+
+    private static int CountMissingPairs(
+        IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> rounds,
+        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair)
+    {
+        var missing = 0;
+        foreach (var round in rounds)
+        {
+            foreach (var (home, away) in round)
+            {
+                if (!existingByPair.ContainsKey(DirectedPair(home, away)))
+                {
+                    missing++;
+                }
+            }
+        }
+
+        return missing;
+    }
+
     private static MaterializeMatchesResult MaterializeChampionship(
         Competition competition,
         Stage stage,

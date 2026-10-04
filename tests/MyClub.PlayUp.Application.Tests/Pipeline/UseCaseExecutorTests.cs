@@ -308,7 +308,7 @@ public sealed class UseCaseExecutorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<DomainMatch>>
             {
-                [scenario.Destination.Id] = Array.Empty<DomainMatch>(),
+                [scenario.Destination.Id] = []
             });
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -824,7 +824,7 @@ public sealed class UseCaseExecutorTests
     private static void SetupEmptyStageMatches(Mock<IMatchRepository> matchRepo, StageId stageId) =>
         matchRepo
             .Setup(repository => repository.ListByStageForUpdateAsync(stageId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Array.Empty<DomainMatch>());
+            .ReturnsAsync([]);
 
     private UseCaseExecutor CreateExecutor(
         Mock<IStageRepository> stages,

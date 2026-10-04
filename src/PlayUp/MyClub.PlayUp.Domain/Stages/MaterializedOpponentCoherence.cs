@@ -141,7 +141,7 @@ public static class MaterializedOpponentCoherence
 
     private static HashSet<EntryId> ResolveAttachedOpponents(
         Fixture fixture,
-        IReadOnlyDictionary<MatchId, MatchParticipantSnapshot> byMatchId)
+        Dictionary<MatchId, MatchParticipantSnapshot> byMatchId)
     {
         var opponents = new HashSet<EntryId>();
         foreach (var attachment in fixture.Attachments)

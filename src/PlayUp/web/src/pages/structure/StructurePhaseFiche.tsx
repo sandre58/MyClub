@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -27,6 +27,7 @@ import {
   LayersIcon,
   MatchRulesIcon,
   MatchdayStatIcon,
+  MatchesStatIcon,
   PersonIcon,
   PlusIcon,
   PencilIcon,
@@ -70,6 +71,13 @@ import {
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
+import { StructureMaterializeHero } from './StructureMaterializeHero';
+import {
+  classifyMaterializePresentation,
+  materializeFrozenRemainingCount,
+  showMaterializeActionBlock,
+  showMaterializeFrozenRemainingBanner,
+} from './structureMaterializeCopy';
 import {
   areDrawRulesLockedByExecution,
   countAlignedSlotPlacements,
@@ -310,6 +318,28 @@ export function StructurePhaseFiche({
         Boolean(stage.hasDrawRules)),
   });
 
+  const cupPairProductionStates = useMemo(() => {
+    if (
+      !stage ||
+      stage.formatKind !== 'Cup' ||
+      !stage.materialize?.confrontations.length
+    ) {
+      return undefined;
+    }
+    const states: Record<string, 'eligible' | 'incomplete'> = {};
+    for (const row of stage.materialize.confrontations) {
+      if (row.materialized) {
+        continue;
+      }
+      if (row.eligible) {
+        states[row.key] = 'eligible';
+      } else if (!row.determined) {
+        states[row.key] = 'incomplete';
+      }
+    }
+    return Object.keys(states).length > 0 ? states : undefined;
+  }, [stage]);
+
   if (!stage) {
     return (
       <section className="structure-fiche" aria-labelledby="fiche-empty">
@@ -486,7 +516,6 @@ export function StructurePhaseFiche({
   const issueCodes = stage.structureIssues ?? [];
   const awaitingDraw = isSlotFeedAwaitingDraw(stage);
   /** Detection for rails visibility / attention chrome (all tile-owned codes). */
-  const placesIssues = structureIssuesForTile(issueCodes, 'places');
   const exitsIssues = structureIssuesForTile(issueCodes, 'exits');
   const capacityOwnedIssues = [
     ...structureIssuesForTile(issueCodes, 'capacity'),
@@ -499,7 +528,6 @@ export function StructurePhaseFiche({
     issueCodes,
     'confrontation',
   );
-  const standingIssues = structureIssuesForTile(issueCodes, 'standing');
   const attributionOwnedIssues = structureIssuesForTile(
     issueCodes,
     'attribution',
@@ -527,6 +555,7 @@ export function StructurePhaseFiche({
   );
   const showConfrontation =
     sections.includes('confrontation') || confrontationIssues.length > 0;
+
   const showSortiesRail = hasExits || canCreateExit || exitsIssues.length > 0;
   /** Attribution = KO/Cup only (gated by ReplacePlacementAwardRules), or RESULT diagnostics. */
   const showAttributionRail =
@@ -650,10 +679,19 @@ export function StructurePhaseFiche({
     return <ExitKindMenu label={t('fiche.editExits')} options={options} />;
   };
 
+  const materializePresentation = stage.materialize
+    ? classifyMaterializePresentation(
+        stage.materialize,
+        data.status,
+        stage.status,
+      )
+    : null;
+
   const heroFacts: {
     icon: ReactNode;
     value: string | number;
     label: string;
+    statKey: string;
   }[] = [];
   const kind = stage.formatKind;
   if (kind === 'Groups' && (stage.groupCount ?? 0) > 0) {
@@ -662,6 +700,7 @@ export function StructurePhaseFiche({
       icon: <GroupsFormatIcon size="sm" />,
       value: n,
       label: t('fiche.stat.groups', { count: n }),
+      statKey: 'groups',
     });
   } else if (kind === 'Cup' && (stage.roundCount ?? 0) > 0) {
     const n = stage.roundCount!;
@@ -669,6 +708,7 @@ export function StructurePhaseFiche({
       icon: <RoundsStatIcon size="sm" />,
       value: n,
       label: t('fiche.stat.rounds', { count: n }),
+      statKey: 'rounds',
     });
   } else if (kind === 'Championship' && (stage.matchdayCount ?? 0) > 0) {
     const n = stage.matchdayCount!;
@@ -676,6 +716,7 @@ export function StructurePhaseFiche({
       icon: <MatchdayStatIcon size="sm" />,
       value: n,
       label: t('fiche.stat.matchdays', { count: n }),
+      statKey: 'matchdays',
     });
   } else if (kind === 'Swiss' && (stage.swissRoundCount ?? 0) > 0) {
     const n = stage.swissRoundCount!;
@@ -683,6 +724,7 @@ export function StructurePhaseFiche({
       icon: <RoundsStatIcon size="sm" />,
       value: n,
       label: t('fiche.stat.rounds', { count: n }),
+      statKey: 'swiss-rounds',
     });
   }
   {
@@ -692,9 +734,45 @@ export function StructurePhaseFiche({
         icon: <LayersIcon size="sm" />,
         value: n,
         label: t('fiche.stat.places', { count: n }),
+        statKey: 'places',
       });
     }
   }
+  if (stage.materialize) {
+    const matchCount = stage.materialize.materializedCount;
+    heroFacts.push({
+      icon: <MatchesStatIcon size="sm" />,
+      value: matchCount,
+      label: t('fiche.stat.matches', { count: matchCount }),
+      statKey: 'matches',
+    });
+  }
+
+  const materializePhaseMatchesLink =
+    stage.materialize && stage.materialize.materializedCount > 0 ? (
+      <TextLink to={`/stages/${stage.stageId}/matches`}>
+        {t('fiche.materialize.viewPhaseMatches')}
+      </TextLink>
+    ) : null;
+
+  const showHeroMeta = heroFacts.length > 0 || canRebuild;
+  const showMaterializeHeroBlock =
+    !!stage.materialize &&
+    !!materializePresentation &&
+    showMaterializeActionBlock(materializePresentation);
+  const showHeroStructureActions =
+    showPlacementBlock || showMaterializeHeroBlock;
+  const heroMetaSeparated = showHeroMeta && showHeroStructureActions;
+  const showFrozenRemainingBanner =
+    stage.materialize &&
+    materializePresentation &&
+    showMaterializeFrozenRemainingBanner(
+      materializePresentation,
+      stage.materialize,
+    );
+  const frozenRemainingCount = stage.materialize
+    ? materializeFrozenRemainingCount(stage.materialize)
+    : 0;
 
   // Overflow removed — Edit/Delete live in the header toolbar.
 
@@ -927,46 +1005,348 @@ export function StructurePhaseFiche({
           </FluxRail>
 
           <div className="structure-phase-hero__center">
-            {(heroFacts.length > 0 || canRebuild) && (
-              <div className="structure-phase-hero__meta">
-                {heroFacts.length > 0 ? (
-                  <ul
-                    className="structure-phase-hero__stats"
-                    aria-label={t('fiche.statsAria')}
-                  >
-                    {heroFacts.map((fact) => (
-                      <li
-                        key={fact.label}
-                        className="structure-phase-hero__stat"
+            {showHeroMeta || showFrozenRemainingBanner ? (
+              <div
+                className={[
+                  'structure-phase-hero__meta-block',
+                  heroMetaSeparated
+                    ? 'structure-phase-hero__meta-block--separated'
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {showHeroMeta ? (
+                  <div className="structure-phase-hero__meta">
+                    {heroFacts.length > 0 ? (
+                      <ul
+                        className="structure-phase-hero__stats"
+                        aria-label={t('fiche.statsAria')}
                       >
-                        <span
-                          className="structure-phase-hero__stat-icon"
-                          aria-hidden="true"
-                        >
-                          {fact.icon}
-                        </span>
-                        <span className="structure-phase-hero__stat-value">
-                          {fact.value}
-                        </span>
-                        <span className="structure-phase-hero__stat-label">
-                          {fact.label}
-                        </span>
-                      </li>
-                    ))}
+                        {heroFacts.map((fact) => (
+                          <li
+                            key={fact.statKey}
+                            className="structure-phase-hero__stat"
+                          >
+                            <span
+                              className="structure-phase-hero__stat-icon"
+                              aria-hidden="true"
+                            >
+                              {fact.icon}
+                            </span>
+                            <span className="structure-phase-hero__stat-value">
+                              {fact.value}
+                            </span>
+                            <span className="structure-phase-hero__stat-label">
+                              {fact.label}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {canRebuild ? (
+                      <div className="structure-phase-hero__meta-toolbar">
+                        <Tooltip content={t('fiche.editForme')}>
+                          <button
+                            type="button"
+                            className={compactIcon}
+                            aria-label={t('fiche.editForme')}
+                            onClick={() => setSkeletonOpen(true)}
+                          >
+                            <PencilIcon size="sm" />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {showFrozenRemainingBanner ? (
+                  <ul
+                    className="structure-phase-rail__issues structure-phase-hero__frozen-issues"
+                    role="list"
+                  >
+                    <li
+                      className="structure-phase-rail__issue"
+                      data-tone="attention"
+                      role="status"
+                    >
+                      <span
+                        className="structure-phase-rail__issue-icon"
+                        aria-hidden="true"
+                      >
+                        <StructureIssueIcon size="sm" />
+                      </span>
+                      <span>
+                        {t('fiche.materialize.frozenRemainingConfrontations', {
+                          count: frozenRemainingCount,
+                        })}
+                      </span>
+                    </li>
                   </ul>
                 ) : null}
-                {canRebuild ? (
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--ghost structure-phase-hero__forme-cta"
-                    onClick={() => setSkeletonOpen(true)}
-                  >
-                    <StructureIcon size="sm" />
-                    {t('fiche.editForme')}
-                  </button>
+              </div>
+            ) : null}
+            {showHeroStructureActions ? (
+              <div className="structure-phase-hero__structure-actions">
+                {showPlacementBlock ? (
+                  <div className="structure-phase-hero__draw">
+                    <div
+                      className={[
+                        'structure-draw-block',
+                        (showDrawCta || showActivateDrawCta) && canManualPlace
+                          ? 'structure-draw-block--paired'
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      {showDrawCta || showActivateDrawCta ? (
+                        <div className="structure-draw-block__col">
+                          {showDrawCta ? (
+                            blockPerformDrawCta ? (
+                              <Tooltip content={createBlockedShort}>
+                                <span className="structure-draw-cta-wrap">
+                                  <StructureDrawCta
+                                    tone="emphasis"
+                                    title={t('fiche.performDraw')}
+                                    body={
+                                      showPoolHint && placesN != null ? (
+                                        <DrawCtaActionBody
+                                          filled={poolFilled}
+                                          capacity={placesN}
+                                          teamsCaption={t(
+                                            'fiche.drawCtaTeamsCaption',
+                                          )}
+                                          poolTone={drawCtaPoolTone}
+                                        />
+                                      ) : showCreateBlockedCaption ? (
+                                        <span className="structure-draw-cta__caption">
+                                          {createBlockedShort}
+                                          {createBlockedReason ===
+                                          'belowMinimumTeams' ? (
+                                            <>
+                                              {' '}
+                                              <Link
+                                                className="ds-text-link"
+                                                to={`/competitions/${data.competitionId}/teams`}
+                                              >
+                                                {t(
+                                                  'fiche.drawWorkflow.createBlocked.echoTeams',
+                                                )}
+                                              </Link>
+                                            </>
+                                          ) : null}
+                                          {createBlockedReason === 'missingPots' &&
+                                          canEditDraw ? (
+                                            <>
+                                              {' '}
+                                              <button
+                                                type="button"
+                                                className="ds-text-link"
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  setEdit('tirage-params');
+                                                }}
+                                              >
+                                                {t(
+                                                  'fiche.drawWorkflow.createBlocked.echoDrawParams',
+                                                )}
+                                              </button>
+                                            </>
+                                          ) : null}
+                                        </span>
+                                      ) : null
+                                    }
+                                    onClick={() => setDrawWorkflowOpen(true)}
+                                    disabled
+                                  />
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              <StructureDrawCta
+                                tone="emphasis"
+                                title={
+                                  activeDraw
+                                    ? t('fiche.openDrawWorkflow')
+                                    : t('fiche.performDraw')
+                                }
+                                body={
+                                  <>
+                                    {showPoolHint && placesN != null ? (
+                                      <DrawCtaActionBody
+                                        filled={poolFilled}
+                                        capacity={placesN}
+                                        teamsCaption={t(
+                                          'fiche.drawCtaTeamsCaption',
+                                        )}
+                                        poolTone={drawCtaPoolTone}
+                                      />
+                                    ) : null}
+                                    {showCreateBlockedCaption ? (
+                                      <span
+                                        className="structure-draw-cta__caption"
+                                        role="status"
+                                      >
+                                        {createBlockedShort}
+                                        {createBlockedReason ===
+                                        'belowMinimumTeams' ? (
+                                          <>
+                                            {' '}
+                                            <Link
+                                              className="ds-text-link"
+                                              to={`/competitions/${data.competitionId}/teams`}
+                                            >
+                                              {t(
+                                                'fiche.drawWorkflow.createBlocked.echoTeams',
+                                              )}
+                                            </Link>
+                                          </>
+                                        ) : null}
+                                        {createBlockedReason === 'missingPots' &&
+                                        canEditDraw ? (
+                                          <>
+                                            {' '}
+                                            <button
+                                              type="button"
+                                              className="ds-text-link"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                setEdit('tirage-params');
+                                              }}
+                                            >
+                                              {t(
+                                                'fiche.drawWorkflow.createBlocked.echoDrawParams',
+                                              )}
+                                            </button>
+                                          </>
+                                        ) : null}
+                                      </span>
+                                    ) : null}
+                                  </>
+                                }
+                                onClick={() => setDrawWorkflowOpen(true)}
+                              />
+                            )
+                          ) : (
+                            <StructureDrawCta
+                              tone="ghost"
+                              title={t('fiche.activateDraw')}
+                              body={t('fiche.activateDrawBody')}
+                              onClick={() => setEdit('tirage-activate')}
+                            />
+                          )}
+                          {showDrawCta && (canEditDraw || showReleaseCta) ? (
+                            <div className="structure-draw-actions">
+                              {canEditDraw ? (
+                                <button
+                                  type="button"
+                                  className="ds-btn ds-btn--ghost ds-btn--sm"
+                                  onClick={() => setEdit('tirage-params')}
+                                >
+                                  <SettingsNavIcon size="sm" />
+                                  {t('fiche.drawParamsAction')}
+                                </button>
+                              ) : null}
+                              {showReleaseCta || canEditDraw ? (
+                                <div className="structure-draw-actions__risk">
+                                  {showReleaseCta && releasableDraw ? (
+                                    <Tooltip
+                                      content={tDraw('releasePlacementsHint')}
+                                    >
+                                      <button
+                                        type="button"
+                                        className="ds-btn ds-btn--ghost ds-btn--sm"
+                                        disabled={releaseMutation.isPending}
+                                        onClick={() => setReleaseConfirmOpen(true)}
+                                      >
+                                        {releaseMutation.isPending ? (
+                                          <PendingLabel>
+                                            {tDraw('releasingPlacements')}
+                                          </PendingLabel>
+                                        ) : (
+                                          <>
+                                            <UnlockIcon size="sm" />
+                                            {tDraw('releasePlacementsCount', {
+                                              aligned: releasableAlignedCount,
+                                              total:
+                                                releasableDraw.slotPlacements
+                                                  .length,
+                                            })}
+                                          </>
+                                        )}
+                                      </button>
+                                    </Tooltip>
+                                  ) : null}
+                                  {canEditDraw ? (
+                                    hasNonCancelledDraw ? (
+                                      <Tooltip
+                                        content={t(
+                                          'regulation.deactivateDrawBlockedHint',
+                                        )}
+                                      >
+                                        <button
+                                          type="button"
+                                          className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
+                                          disabled
+                                          aria-label={t('fiche.deactivateDraw')}
+                                        >
+                                          <TrashIcon size="sm" />
+                                        </button>
+                                      </Tooltip>
+                                    ) : (
+                                      <Tooltip content={t('fiche.deactivateDraw')}>
+                                        <button
+                                          type="button"
+                                          className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
+                                          disabled={
+                                            deactivateDrawMutation.isPending
+                                          }
+                                          aria-label={t('fiche.deactivateDraw')}
+                                          onClick={() =>
+                                            setDeactivateDrawOpen(true)
+                                          }
+                                        >
+                                          <TrashIcon size="sm" />
+                                        </button>
+                                      </Tooltip>
+                                    )
+                                  ) : null}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      {canManualPlace ? (
+                        <div className="structure-draw-block__col">
+                          <StructureDrawCta
+                            tone="ghost"
+                            title={t('fiche.manualPlacementCta')}
+                            body={t('fiche.manualPlacementCtaBody')}
+                            leading={<PersonIcon size="sm" />}
+                            onClick={() => {
+                              setManualSlotKey(null);
+                              setManualOpen(true);
+                            }}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+                {showMaterializeHeroBlock ? (
+                  <div className="structure-phase-hero__draw">
+                    <div className="structure-draw-block">
+                      <StructureMaterializeHero
+                        competitionId={data.competitionId}
+                        competitionStatus={data.status}
+                        stage={stage}
+                      />
+                    </div>
+                  </div>
                 ) : null}
               </div>
-            )}
+            ) : null}
             <div
               id="tile-places"
               className="structure-schematic-viewport"
@@ -977,6 +1357,7 @@ export function StructurePhaseFiche({
                     schematic={schematicQuery.data}
                     terminal={!hasExits}
                     cupRoundCount={stage.roundCount}
+                    cupPairProductionStates={cupPairProductionStates}
                     onPlaceActivate={
                       canManualPlace
                         ? (place: SchematicCase) => {
@@ -1006,250 +1387,9 @@ export function StructurePhaseFiche({
                 </div>
               ) : null}
             </div>
-            {showPlacementBlock ? (
-              <div className="structure-phase-hero__draw">
-                <div
-                  className={[
-                    'structure-draw-block',
-                    (showDrawCta || showActivateDrawCta) && canManualPlace
-                      ? 'structure-draw-block--paired'
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {showDrawCta || showActivateDrawCta ? (
-                    <div className="structure-draw-block__col">
-                      {showDrawCta ? (
-                        blockPerformDrawCta ? (
-                          <Tooltip content={createBlockedShort}>
-                            <span className="structure-draw-cta-wrap">
-                              <StructureDrawCta
-                                tone="emphasis"
-                                title={t('fiche.performDraw')}
-                                body={
-                                  showPoolHint && placesN != null ? (
-                                    <DrawCtaActionBody
-                                      filled={poolFilled}
-                                      capacity={placesN}
-                                      teamsCaption={t(
-                                        'fiche.drawCtaTeamsCaption',
-                                      )}
-                                      poolTone={drawCtaPoolTone}
-                                    />
-                                  ) : showCreateBlockedCaption ? (
-                                    <span className="structure-draw-cta__caption">
-                                      {createBlockedShort}
-                                      {createBlockedReason ===
-                                      'belowMinimumTeams' ? (
-                                        <>
-                                          {' '}
-                                          <Link
-                                            className="ds-text-link"
-                                            to={`/competitions/${data.competitionId}/teams`}
-                                          >
-                                            {t(
-                                              'fiche.drawWorkflow.createBlocked.echoTeams',
-                                            )}
-                                          </Link>
-                                        </>
-                                      ) : null}
-                                      {createBlockedReason === 'missingPots' &&
-                                      canEditDraw ? (
-                                        <>
-                                          {' '}
-                                          <button
-                                            type="button"
-                                            className="ds-text-link"
-                                            onClick={(event) => {
-                                              event.stopPropagation();
-                                              setEdit('tirage-params');
-                                            }}
-                                          >
-                                            {t(
-                                              'fiche.drawWorkflow.createBlocked.echoDrawParams',
-                                            )}
-                                          </button>
-                                        </>
-                                      ) : null}
-                                    </span>
-                                  ) : null
-                                }
-                                onClick={() => setDrawWorkflowOpen(true)}
-                                disabled
-                              />
-                            </span>
-                          </Tooltip>
-                        ) : (
-                          <StructureDrawCta
-                            tone="emphasis"
-                            title={
-                              activeDraw
-                                ? t('fiche.openDrawWorkflow')
-                                : t('fiche.performDraw')
-                            }
-                            body={
-                              <>
-                                {showPoolHint && placesN != null ? (
-                                  <DrawCtaActionBody
-                                    filled={poolFilled}
-                                    capacity={placesN}
-                                    teamsCaption={t(
-                                      'fiche.drawCtaTeamsCaption',
-                                    )}
-                                    poolTone={drawCtaPoolTone}
-                                  />
-                                ) : null}
-                                {showCreateBlockedCaption ? (
-                                  <span
-                                    className="structure-draw-cta__caption"
-                                    role="status"
-                                  >
-                                    {createBlockedShort}
-                                    {createBlockedReason ===
-                                    'belowMinimumTeams' ? (
-                                      <>
-                                        {' '}
-                                        <Link
-                                          className="ds-text-link"
-                                          to={`/competitions/${data.competitionId}/teams`}
-                                        >
-                                          {t(
-                                            'fiche.drawWorkflow.createBlocked.echoTeams',
-                                          )}
-                                        </Link>
-                                      </>
-                                    ) : null}
-                                    {createBlockedReason === 'missingPots' &&
-                                    canEditDraw ? (
-                                      <>
-                                        {' '}
-                                        <button
-                                          type="button"
-                                          className="ds-text-link"
-                                          onClick={(event) => {
-                                            event.stopPropagation();
-                                            setEdit('tirage-params');
-                                          }}
-                                        >
-                                          {t(
-                                            'fiche.drawWorkflow.createBlocked.echoDrawParams',
-                                          )}
-                                        </button>
-                                      </>
-                                    ) : null}
-                                  </span>
-                                ) : null}
-                              </>
-                            }
-                            onClick={() => setDrawWorkflowOpen(true)}
-                          />
-                        )
-                      ) : (
-                        <StructureDrawCta
-                          tone="ghost"
-                          title={t('fiche.activateDraw')}
-                          body={t('fiche.activateDrawBody')}
-                          onClick={() => setEdit('tirage-activate')}
-                        />
-                      )}
-                      {showDrawCta && (canEditDraw || showReleaseCta) ? (
-                        <div className="structure-draw-actions">
-                          {canEditDraw ? (
-                            <button
-                              type="button"
-                              className="ds-btn ds-btn--ghost ds-btn--sm"
-                              onClick={() => setEdit('tirage-params')}
-                            >
-                              <SettingsNavIcon size="sm" />
-                              {t('fiche.drawParamsAction')}
-                            </button>
-                          ) : null}
-                          {showReleaseCta || canEditDraw ? (
-                            <div className="structure-draw-actions__risk">
-                              {showReleaseCta && releasableDraw ? (
-                                <Tooltip
-                                  content={tDraw('releasePlacementsHint')}
-                                >
-                                  <button
-                                    type="button"
-                                    className="ds-btn ds-btn--ghost ds-btn--sm"
-                                    disabled={releaseMutation.isPending}
-                                    onClick={() => setReleaseConfirmOpen(true)}
-                                  >
-                                    {releaseMutation.isPending ? (
-                                      <PendingLabel>
-                                        {tDraw('releasingPlacements')}
-                                      </PendingLabel>
-                                    ) : (
-                                      <>
-                                        <UnlockIcon size="sm" />
-                                        {tDraw('releasePlacementsCount', {
-                                          aligned: releasableAlignedCount,
-                                          total:
-                                            releasableDraw.slotPlacements
-                                              .length,
-                                        })}
-                                      </>
-                                    )}
-                                  </button>
-                                </Tooltip>
-                              ) : null}
-                              {canEditDraw ? (
-                                hasNonCancelledDraw ? (
-                                  <Tooltip
-                                    content={t(
-                                      'regulation.deactivateDrawBlockedHint',
-                                    )}
-                                  >
-                                    <button
-                                      type="button"
-                                      className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
-                                      disabled
-                                      aria-label={t('fiche.deactivateDraw')}
-                                    >
-                                      <TrashIcon size="sm" />
-                                    </button>
-                                  </Tooltip>
-                                ) : (
-                                  <Tooltip content={t('fiche.deactivateDraw')}>
-                                    <button
-                                      type="button"
-                                      className="ds-btn ds-btn--ghost ds-btn--destructive ds-btn--sm ds-icon-button"
-                                      disabled={
-                                        deactivateDrawMutation.isPending
-                                      }
-                                      aria-label={t('fiche.deactivateDraw')}
-                                      onClick={() =>
-                                        setDeactivateDrawOpen(true)
-                                      }
-                                    >
-                                      <TrashIcon size="sm" />
-                                    </button>
-                                  </Tooltip>
-                                )
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {canManualPlace ? (
-                    <div className="structure-draw-block__col">
-                      <StructureDrawCta
-                        tone="ghost"
-                        title={t('fiche.manualPlacementCta')}
-                        body={t('fiche.manualPlacementCtaBody')}
-                        leading={<PersonIcon size="sm" />}
-                        onClick={() => {
-                          setManualSlotKey(null);
-                          setManualOpen(true);
-                        }}
-                      />
-                    </div>
-                  ) : null}
-                </div>
+            {materializePhaseMatchesLink ? (
+              <div className="structure-schematic-matches-link">
+                {materializePhaseMatchesLink}
               </div>
             ) : null}
           </div>

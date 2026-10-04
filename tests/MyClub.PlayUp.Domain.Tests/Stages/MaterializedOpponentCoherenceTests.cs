@@ -46,7 +46,7 @@ public sealed class MaterializedOpponentCoherenceTests
     [Fact]
     public void Cup_move_from_materialized_pair_is_refused_on_final_pair_state()
     {
-        var (stage, entryA, entryB, snapshots) = CreateMaterializedCupPair(attachMatches: true);
+        var (stage, entryA, _, snapshots) = CreateMaterializedCupPair(attachMatches: true);
         stage.AddSlot("S3");
         stage.AddSlot("S4");
 

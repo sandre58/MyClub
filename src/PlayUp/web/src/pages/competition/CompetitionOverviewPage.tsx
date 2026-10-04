@@ -474,7 +474,10 @@ function useOverviewActionRunner(data: OverviewView) {
         queryKey: queryKeys.competitions.attention(data.competitionId),
       });
 
-      if (action.code === 'MaterializeMatches') {
+      if (
+        action.code === 'MaterializeMatches' ||
+        action.code === 'MaterializeFromOccupiedSlots'
+      ) {
         const materialize = result as MaterializeResult;
         await queryClient.invalidateQueries({
           queryKey: queryKeys.competitions.detail(data.competitionId),
@@ -1669,6 +1672,11 @@ function NaturalProgressionSection({
   const lifecycle = lifecycleActions[0];
   const hasPrimary = Boolean(code);
 
+  const whyKey =
+    matched?.params?.labelVariant === 'complete'
+      ? `progression.codes.${code}Complete`
+      : `progression.codes.${code}`;
+
   // Structural tip XOR lifecycle — never both.
   if (hasPrimary) {
     return (
@@ -1676,9 +1684,10 @@ function NaturalProgressionSection({
         headingId="overview-progression"
         heading={t('progression.heading')}
         icon={<NextActionIcon size="md" />}
-        title={actionLabel(code!)}
-        why={t(`progression.codes.${code}`, {
-          defaultValue: actionLabel(code!),
+        title={actionLabel(code!, matched?.params ?? undefined)}
+        why={t(whyKey, {
+          defaultValue: actionLabel(code!, matched?.params ?? undefined),
+          ...matched?.params,
         })}
         action={
           matched ? (

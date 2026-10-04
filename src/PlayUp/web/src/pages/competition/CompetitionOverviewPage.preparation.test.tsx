@@ -993,6 +993,31 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
     expect(screen.getByText('Match hub route')).toBeInTheDocument();
   });
 
+  it('labels remaining materialization as Compléter les matchs', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
+        availableActions: [
+          {
+            code: 'MaterializeMatches',
+            guaranteed: false,
+            stageId,
+            drawId: null,
+            matchId: null,
+            fixtureId: null,
+            params: { labelVariant: 'complete', attachedMatchCount: '2' },
+          },
+        ],
+        naturalProgression: { code: 'MaterializeMatches' },
+      }),
+    );
+
+    renderOverviewPage();
+
+    expect(
+      await screen.findAllByRole('button', { name: /Compléter les matchs/i }),
+    ).not.toHaveLength(0);
+  });
+
   it('composes GeneratedCalendar from preparationFocus without Structure', async () => {
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({

@@ -1091,6 +1091,65 @@ describe('StructurePage Structure hub', () => {
     expect(screen.queryByText(/équipes à compléter/i)).not.toBeInTheDocument();
   });
 
+  it('shows frozen materialize gap as attention issue in hero meta', async () => {
+    const groups = groupesStage({
+      status: 'Running',
+      hasDrawRules: false,
+      materialize: {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'exhausted',
+        determinedCount: 6,
+        eligibleCount: 0,
+        materializedCount: 3,
+        commandEnabled: false,
+        disabledReason: 'StructureNotMutable',
+        confrontations: [],
+      },
+    });
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        status: 'Running',
+        format: {
+          kind: 'Groups',
+          primaryStageId: groups.stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Running',
+        },
+        stages: [groups],
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: false,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: true,
+          attachedMatchCount: 3,
+          blockers: [],
+        },
+      }),
+    );
+    vi.mocked(fetchStageSchematic).mockResolvedValue({
+      stageId: groups.stageId,
+      competitionId,
+      name: 'Groupes',
+      status: 'Running',
+      formatKind: 'Groups',
+      cases: [],
+      connections: [],
+    });
+
+    renderStructurePage();
+
+    const message = await screen.findByText(
+      /Il reste 3 confrontations sans match créé/i,
+    );
+    const issue = message.closest('.structure-phase-rail__issue');
+    expect(issue).toHaveAttribute('data-tone', 'attention');
+    expect(
+      screen.queryByRole('button', { name: /Créer les matchs/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows materialize readiness status without Overview CTA', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
@@ -1100,7 +1159,19 @@ describe('StructurePage Structure hub', () => {
           primaryStageName: 'League',
           primaryStageStatus: 'Draft',
         },
-        stages: [championshipStage()],
+        stages: [
+          championshipStage({
+            materialize: {
+              commandCode: 'MaterializeMatches',
+              labelVariant: 'create',
+              determinedCount: 1,
+              eligibleCount: 1,
+              materializedCount: 0,
+              commandEnabled: true,
+              confrontations: [],
+            },
+          }),
+        ],
         participants: {
           activeCount: 2,
           occupyingCount: 2,
@@ -1132,12 +1203,10 @@ describe('StructurePage Structure hub', () => {
       await screen.findByText(/La compétition est prête à créer les matchs/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('link', { name: /Vue d’ensemble/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /Créer les matchs/i }),
+    ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', {
-        name: /Préparer|Démarrer|Tirer|Matérialiser/i,
-      }),
+      screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();
   });
 

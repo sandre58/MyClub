@@ -20,7 +20,7 @@
     <!-- Configuration -->
     <PropertyGroup>
         <TargetFramework Condition="'$(TargetFrameworks)' == '' and '$(TargetFramework)' == ''">net11.0</TargetFramework>
-        <LangVersion>latest</LangVersion>
+        <LangVersion>preview</LangVersion>
         <NeutralLanguage>fr</NeutralLanguage>
         <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
         <ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>

@@ -141,7 +141,7 @@ public sealed record StructureTopologySummaryDto(
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
 /// <param name="ReadyForNextSlice">True when structure is sufficient for the next construction step.</param>
 /// <param name="ReadyForDraw">True when a Draw path is identifiable.</param>
-/// <param name="ReadyForMaterialization">True when Fixtures/Matches can be materialized (Cup: primary skeleton fixtures incomplete; not from-slots).</param>
+/// <param name="ReadyForMaterialization">True when Championship/Groups structure can run MaterializeMatches (not an uncovered-pair opportunity). Overview CTA uses uncovered determined pairs.</param>
 /// <param name="ReadyForSchedule">True when attached Matches exist for scheduling.</param>
 /// <param name="ReadyForMatchOperation">True when match operations can start (Matches attached; schedule optional).</param>
 /// <param name="ReadyForSchedulePath">Structure hint: championship schedule path identifiable from structure.</param>
@@ -235,6 +235,7 @@ public sealed record StructureReadinessDto(
 /// <param name="PlacesPerGroup">Groups form fact: places per group (SoT for Places N). Independent of Draw <paramref name="NumberOfPots"/>.</param>
 /// <param name="DefaultTieFormat">Stage regulation TieFormat (AddRound copy source); null when unset.</param>
 /// <param name="DrawExecutionBadge">Topology execution badge when DrawRules engaged; null otherwise.</param>
+/// <param name="Materialize">Workspace materialize capability (null when the format has no Materialize command).</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -302,7 +303,49 @@ public sealed record StructureStageHubSummaryDto(
     bool IsRootComposition = true,
     int? PlacesPerGroup = null,
     StructureTieFormatSummaryDto? DefaultTieFormat = null,
-    StructureDrawExecutionBadge? DrawExecutionBadge = null);
+    StructureDrawExecutionBadge? DrawExecutionBadge = null,
+    StructureMaterializeDto? Materialize = null);
+
+/// <summary>
+/// Structure workspace projection of match materialization (not Overview opportunity).
+/// Championship lists counts only; Groups/Cup list determined confrontations.
+/// </summary>
+/// <param name="CommandCode">MaterializeMatches or MaterializeFromOccupiedSlots.</param>
+/// <param name="LabelVariant">create | complete | exhausted | idle.</param>
+/// <param name="DeterminedCount">Confrontations whose opponents are known.</param>
+/// <param name="EligibleCount">Confrontations the command can create now.</param>
+/// <param name="MaterializedCount">Determined confrontations that already have a Match.</param>
+/// <param name="CommandEnabled">True when the workspace command can run.</param>
+/// <param name="Confrontations">Exhaustive rows (empty for Championship phase grain).</param>
+/// <param name="DisabledReason">When command is disabled and not terminal — minimal causal code for UI copy.</param>
+public sealed record StructureMaterializeDto(
+    string CommandCode,
+    string LabelVariant,
+    int DeterminedCount,
+    int EligibleCount,
+    int MaterializedCount,
+    bool CommandEnabled,
+    IReadOnlyList<StructureMaterializeConfrontationDto> Confrontations,
+    string? DisabledReason = null);
+
+/// <summary>One determined or structural confrontation for the Structure workspace.</summary>
+/// <param name="Key">Cup = BracketPair.PairKey; Groups = directed Home|Away.</param>
+/// <param name="SideA">Home / slot A display name (or slot key when unoccupied).</param>
+/// <param name="SideB">Away / slot B display name (or slot key when unoccupied).</param>
+/// <param name="Determined">Both opponents known and distinct.</param>
+/// <param name="Materialized">A Match already covers this confrontation.</param>
+/// <param name="Eligible">The workspace command can create this confrontation now.</param>
+/// <param name="Selectable">True when the workspace may submit this key (Cup pairKeys).</param>
+/// <param name="GroupName">Groups poule name when applicable.</param>
+public sealed record StructureMaterializeConfrontationDto(
+    string Key,
+    string SideA,
+    string SideB,
+    bool Determined,
+    bool Materialized,
+    bool Eligible,
+    bool Selectable = false,
+    string? GroupName = null);
 
 /// <summary>Effective TieFormat flags for stage default or a confrontation segment.</summary>
 public sealed record StructureTieFormatSummaryDto(

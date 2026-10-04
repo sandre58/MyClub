@@ -239,6 +239,22 @@
     "editStanding": "Edit standings",
     "occupantsUnavailable": "Composition unavailable for now.",
     "schematicLoading": "Loading schematic…",
+    "materialize": {
+      "ratioCaption": "matches created",
+      "frozenRemainingConfrontations_one": "{{count}} determined confrontation still has no match.",
+      "frozenRemainingConfrontations_other": "{{count}} determined confrontations still have no match.",
+      "blockedGeneric": "Match production is not available right now.",
+      "disabledReason": {
+        "StructureNotMutable": "The structure no longer allows creating matches.",
+        "NoDeterminedConfrontations": "No confrontations are ready to materialize yet.",
+        "GroupsNotReady": "Groups are not ready for match production.",
+        "NoEligibleConfrontations": "No confrontations can be materialized right now."
+      },
+      "viewPhaseMatches": "View phase matches",
+      "submitting": "Creating…",
+      "successCreated": "{{count}} match(es) created.",
+      "successAlreadyComplete": "Those matches were already created."
+    },
     "schematicTooltipFrom": "From",
     "schematicTooltipByDraw": "Placed by draw",
     "schematicTooltipByAffectation": "Manual assignment",
@@ -313,7 +329,9 @@
       "matchdays_one": "matchday",
       "matchdays_other": "matchdays",
       "places_one": "place",
-      "places_other": "places"
+      "places_other": "places",
+      "matches_one": "match",
+      "matches_other": "matches"
     },
     "tiles": {
       "population": "Teams",
@@ -321,7 +339,7 @@
       "match": "Match",
       "standing": "Standings",
       "tirage": "Draw",
-      "confrontation": "Tie format",
+      "confrontation": "Confrontation format",
       "attribution": "Place awards"
     },
     "binding": {

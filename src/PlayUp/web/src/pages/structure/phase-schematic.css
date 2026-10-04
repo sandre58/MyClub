@@ -487,6 +487,20 @@
   font-variant-numeric: tabular-nums;
 }
 
+.schematic-cup__pair-ordinal[data-production-state='eligible'] {
+  fill: color-mix(in srgb, var(--color-brand) 85%, var(--color-ink));
+  font-weight: 600;
+}
+
+.schematic-cup__pair-ordinal[data-production-state='incomplete'] {
+  fill: var(--color-text-secondary);
+}
+
+.schematic-cup__match-n[data-production-state='materialized'] {
+  fill: color-mix(in srgb, var(--color-success) 75%, var(--color-ink));
+  font-weight: 600;
+}
+
 .schematic-cup__pair-ordinal {
   fill: var(--color-text-secondary);
   font-size: 10px;

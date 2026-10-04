@@ -205,6 +205,15 @@ public static class MaterializeCupFromOccupiedSlots
     }
 
     /// <summary>
+    /// Bracket pairs that <see cref="Execute"/> would materialize when <c>pairKeys</c> is empty.
+    /// </summary>
+    public static int CountEligiblePairs(Stage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        return stage.BracketPairs.Count(pair => IsEligible(stage, pair));
+    }
+
+    /// <summary>
     /// Eligible: both slots occupied with distinct entries, and no fixture already bound to this PairKey.
     /// </summary>
     private static bool IsEligible(Stage stage, BracketPair pair)

@@ -1,3 +1,5 @@
+import type { OverviewSituation } from '../types';
+
 /**
  * Construction blockers that must never appear in AttentionDrawer (Q1).
  * Host `/attention` does not emit them today — SPA denylist is a guardrail.

@@ -6,6 +6,7 @@ import {
   archiveCompetition,
   completeCompetition,
   generateNextSwissRound,
+  materializeCupFromOccupiedSlots,
   materializeMatches,
   prepareCompetition,
   prepareStage,
@@ -30,6 +31,7 @@ export type OverviewActionIntent =
 /**
  * Map a backend-projected action to execute vs navigate.
  * Availability is decided by the Read; this only chooses how to carry it out.
+ * Cup materialize executes all eligible pairs (empty pairKeys) — StagePage remains a technical fallback.
  */
 export function resolveOverviewActionIntent(
   action: OverviewAction,
@@ -95,7 +97,10 @@ export function resolveOverviewActionIntent(
 
     case 'MaterializeFromOccupiedSlots':
       return stageId
-        ? { kind: 'navigate', to: `/stages/${stageId}` }
+        ? {
+            kind: 'execute',
+            run: () => materializeCupFromOccupiedSlots(stageId),
+          }
         : { kind: 'unsupported' };
 
     case 'StartMatch':

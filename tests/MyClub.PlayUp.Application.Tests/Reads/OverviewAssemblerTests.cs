@@ -784,6 +784,7 @@ public sealed class OverviewAssemblerTests
         sf.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
         sf.AddSlot("SF1-A");
         sf.AddSlot("SF1-B");
+        sf.SeedEntryRoundBracketPairs();
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
         competition.AddStage(sf.Id, _clock);
@@ -798,6 +799,8 @@ public sealed class OverviewAssemblerTests
             && item.StageId == sf.Id.Value).Subject;
         action.Params.Should().ContainKey("occupiedSlotCount").WhoseValue.Should().Be("2");
         action.Params.Should().ContainKey("stageName").WhoseValue.Should().Be("Semi-Finals");
+        action.Params.Should().ContainKey(OverviewAssembler.ActionParamLabelVariant)
+            .WhoseValue.Should().Be(OverviewAssembler.LabelVariantCreate);
 
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
             item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
@@ -916,6 +919,7 @@ public sealed class OverviewAssemblerTests
         sf.AddRound("SF", _clock);
         sf.AddSlot("SF1-A");
         sf.AddSlot("SF1-B");
+        sf.SeedEntryRoundBracketPairs();
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
@@ -924,9 +928,11 @@ public sealed class OverviewAssemblerTests
             [sf],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
-        view.AvailableActions.Should().Contain(item =>
+        var action = view.AvailableActions.Should().ContainSingle(item =>
             item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
-            && item.StageId == sf.Id.Value);
+            && item.StageId == sf.Id.Value).Subject;
+        action.Params.Should().ContainKey(OverviewAssembler.ActionParamLabelVariant)
+            .WhoseValue.Should().Be(OverviewAssembler.LabelVariantCreate);
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
             item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
         view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionMaterializeFromOccupiedSlots);
@@ -1813,6 +1819,73 @@ public sealed class OverviewAssemblerTests
         view.CalendarSummary.NextMatch.HomeDisplayName.Should().NotBeNullOrWhiteSpace();
         view.AvailableActions.Should().Contain(action =>
             action.Code == OverviewAssembler.ActionStartCompetition);
+        view.AvailableActions.Should().NotContain(action =>
+            action.Code == OverviewAssembler.ActionMaterializeMatches);
+    }
+
+    [Fact]
+    public void Assemble_championship_projects_create_matches_when_pairs_uncovered()
+    {
+        var competition = CreateCompetition.Execute("Champ-Create", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [configured.Stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var action = view.AvailableActions.Should().ContainSingle(item =>
+            item.Code == OverviewAssembler.ActionMaterializeMatches).Subject;
+        action.Params.Should().ContainKey(OverviewAssembler.ActionParamLabelVariant)
+            .WhoseValue.Should().Be(OverviewAssembler.LabelVariantCreate);
+    }
+
+    [Fact]
+    public void Assemble_groups_partial_materialize_projects_complete_matches()
+    {
+        var competition = CreateCompetition.Execute("Groups-Partial", _clock);
+        var e1 = AddEntry.Execute(competition, "A", _clock);
+        var e2 = AddEntry.Execute(competition, "B", _clock);
+        var e3 = AddEntry.Execute(competition, "C", _clock);
+        var e4 = AddEntry.Execute(competition, "D", _clock);
+        var e5 = AddEntry.Execute(competition, "E", _clock);
+        var (stage, _, _) = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock);
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e1.Id);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
+
+        var first = MaterializeMatches.Execute(competition, stage, [], _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e5.Id);
+
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>
+            {
+                [stage.Id] = first.CreatedMatches
+            });
+
+        var action = view.AvailableActions.Should().ContainSingle(item =>
+            item.Code == OverviewAssembler.ActionMaterializeMatches).Subject;
+        action.Params.Should().ContainKey(OverviewAssembler.ActionParamLabelVariant)
+            .WhoseValue.Should().Be(OverviewAssembler.LabelVariantComplete);
+        view.Situations.Should().NotContain(item =>
+            item.Source.Contains("Materializ", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -1841,6 +1914,8 @@ public sealed class OverviewAssemblerTests
         view.Status.Should().Be(CompetitionStatus.Draft);
         view.PreparationFocus.Should().Be(OverviewAssembler.PreparationFocusSetup);
         view.CalendarSummary.Should().BeNull();
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == OverviewAssembler.ActionMaterializeMatches);
     }
 
     [Fact]

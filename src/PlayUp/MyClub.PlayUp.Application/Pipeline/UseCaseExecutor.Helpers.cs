@@ -110,7 +110,8 @@ public sealed partial class UseCaseExecutor
         return StructureViewAssembler.Assemble(
             bundle.Competition,
             bundle.Stages,
-            bundle.SheetMemberRefs);
+            bundle.SheetMemberRefs,
+            bundle.MatchSummariesByStage);
     }
 
     private async Task EnsureCompetitionAllowsMatchOperationAsync(
@@ -374,7 +375,15 @@ public sealed partial class UseCaseExecutor
                 .ListSheetMemberRefsByCompetitionReadOnlyAsync(competition.Id, cancellationToken)
                 .ConfigureAwait(false)
             : throw new InvalidOperationException("Structure bundle expects no match aggregate load.");
-        return new StructureReadBundle(competition, competitionStagesReadOnly, sheetMemberRefs);
+        var matchSummariesByStage = await LoadSummaryRowsByStageReadOnlyAsync(
+                competitionStagesReadOnly,
+                cancellationToken)
+            .ConfigureAwait(false);
+        return new StructureReadBundle(
+            competition,
+            competitionStagesReadOnly,
+            sheetMemberRefs,
+            matchSummariesByStage);
     }
 
     private async Task<CompetitionReadBundle> LoadCompetitionReadBundleAsync(

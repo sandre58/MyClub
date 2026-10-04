@@ -72,12 +72,12 @@ describe('resolveOverviewActionIntent', () => {
     expect(intent.kind).toBe('execute');
   });
 
-  it('navigates MaterializeFromOccupiedSlots to the stage pairing UI', () => {
+  it('executes MaterializeFromOccupiedSlots for all eligible Cup pairs', () => {
     const intent = resolveOverviewActionIntent(
       { code: 'MaterializeFromOccupiedSlots', guaranteed: false, stageId },
       overviewView(),
     );
-    expect(intent).toEqual({ kind: 'navigate', to: `/stages/${stageId}` });
+    expect(intent.kind).toBe('execute');
   });
 
   it('executes GenerateNextRound when stageId is provided', () => {

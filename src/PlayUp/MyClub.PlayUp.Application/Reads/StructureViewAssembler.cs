@@ -190,11 +190,15 @@ public static class StructureViewAssembler
     /// Optional sheet member references. When provided, declared members get
     /// <see cref="DeclaredMemberDto.ReferencedOnMatchSheet"/> without loading full matches.
     /// </param>
+    /// <param name="matchSummariesByStage">
+    /// Optional match list rows (home/away) for Structure materialize coverage. Empty when omitted.
+    /// </param>
     /// <returns>Structure view DTO.</returns>
     public static StructureViewDto Assemble(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyList<MatchSheetMemberRef>? sheetMemberRefs = null)
+        IReadOnlyList<MatchSheetMemberRef>? sheetMemberRefs = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -204,7 +208,7 @@ public static class StructureViewAssembler
         var structure = BuildStructureSummary(primary);
         var participants = BuildParticipants(competition, sheetMemberRefs ?? []);
         var regulation = BuildRegulation(competition);
-        var stageHubs = BuildStageHubSummaries(competition, stages);
+        var stageHubs = BuildStageHubSummaries(competition, stages, matchSummariesByStage);
         var attachedMatchCount = CountAttachedMatches(primary);
         var readiness = BuildReadiness(
             competition,
@@ -234,7 +238,8 @@ public static class StructureViewAssembler
 
     private static List<StructureStageHubSummaryDto> BuildStageHubSummaries(
         Competition competition,
-        IReadOnlyList<Stage> stages)
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
     {
         var analysis = CompetitionFlowAnalyzer.Analyze(competition, stages);
         var flowIssuesByStage = analysis.Feed
@@ -260,7 +265,13 @@ public static class StructureViewAssembler
             }
 
             flowIssuesByStage.TryGetValue(stage.Id.Value, out var flowIssues);
-            ordered.Add(BuildStageHubSummary(competition, stage, stages, flowIssues ?? []));
+            ordered.Add(
+                BuildStageHubSummary(
+                    competition,
+                    stage,
+                    stages,
+                    flowIssues ?? [],
+                    matchSummariesByStage));
         }
 
         return ordered;
@@ -270,7 +281,8 @@ public static class StructureViewAssembler
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyList<string> flowIssues)
+        IReadOnlyList<string> flowIssues,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
     {
         var regulation = stage.Regulation;
         var match = regulation.MatchRules;
@@ -343,6 +355,12 @@ public static class StructureViewAssembler
         var composition = BuildEntrySetProjection(competition, stage.CompositionEntries);
         var affectation = BuildEntrySetProjection(competition, stage.AffectationAuthoring);
         var compositionCapacity = ResolvePlaces(competition, stage);
+        IReadOnlyList<MatchSummaryRow> summaries = [];
+        if (matchSummariesByStage is not null
+            && matchSummariesByStage.TryGetValue(stage.Id, out var loadedSummaries))
+        {
+            summaries = loadedSummaries;
+        }
 
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
@@ -411,7 +429,8 @@ public static class StructureViewAssembler
             IsRootComposition: isRootComposition,
             PlacesPerGroup: stage.PlacesPerGroup,
             DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat),
-            DrawExecutionBadge: ResolveDrawExecutionBadge(stage, draw is not null));
+            DrawExecutionBadge: ResolveDrawExecutionBadge(stage, draw is not null),
+            Materialize: StructureMaterializeAssembler.Assemble(competition, stage, summaries));
     }
 
     /// <summary>

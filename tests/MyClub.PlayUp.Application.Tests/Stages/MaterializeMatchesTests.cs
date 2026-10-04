@@ -42,6 +42,11 @@ public sealed class MaterializeMatchesTests
         second.CreatedMatches.Should().BeEmpty();
         second.AlreadyComplete.Should().BeTrue();
         second.AttachedMatchIds.Should().HaveCount(6);
+        MaterializeMatches.CountUncoveredDeterminedPairs(
+                situation.Competition,
+                stage,
+                first.CreatedMatches)
+            .Should().Be(0);
 
         var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
         view.Readiness.ReadyForMatchOperation.Should().BeTrue();

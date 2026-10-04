@@ -39,7 +39,16 @@ internal static class SeedMaterialization
     public static IReadOnlyList<Match> MaterializeGroupsMatches(
         ScenarioContext context,
         Competition competition,
-        Stage stage)
+        Stage stage,
+        string matchIdentityScope = "") =>
+        MaterializeGroupsMatchesCore(context, competition, stage, maxMatches: null, matchIdentityScope);
+
+    private static List<Match> MaterializeGroupsMatchesCore(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        int? maxMatches,
+        string matchIdentityScope)
     {
         var created = new List<Match>();
         var maxRounds = 0;
@@ -48,6 +57,11 @@ internal static class SeedMaterialization
         for (var groupIndex = 0; groupIndex < stage.Groups.Count; groupIndex++)
         {
             var group = stage.Groups[groupIndex];
+            if (group.EntryIds.Count < 2)
+            {
+                continue;
+            }
+
             var rounds = MaterializeMatches.BuildRoundRobinRounds(
                 [.. group.EntryIds],
                 stage.MatchGenerationFormat);
@@ -55,6 +69,12 @@ internal static class SeedMaterialization
             maxRounds = Math.Max(maxRounds, rounds.Count);
         }
 
+        if (perGroupRounds.Count == 0)
+        {
+            return [];
+        }
+
+        var matchKeyPrefix = string.IsNullOrEmpty(matchIdentityScope) ? string.Empty : $"{matchIdentityScope}-";
         EnsureMatchdays(stage, Math.Max(1, maxRounds), context.Clock);
         var matchdays = stage.Matchdays.OrderBy(m => m.Number).ToList();
 
@@ -63,16 +83,26 @@ internal static class SeedMaterialization
             var matchOrdinal = 0;
             for (var roundIndex = 0; roundIndex < rounds.Count; roundIndex++)
             {
+                if (maxMatches is > 0 && created.Count >= maxMatches)
+                {
+                    break;
+                }
+
                 var matchday = matchdays[roundIndex];
                 foreach (var (home, away) in rounds[roundIndex])
                 {
+                    if (maxMatches is > 0 && created.Count >= maxMatches)
+                    {
+                        break;
+                    }
+
                     var fixture = stage.AddFixture(matchday.Id, context.Clock);
                     var match = Match.Create(
                         competition.Id,
                         stage.Id,
                         home,
                         away,
-                        context.Ids.Match($"g-{groupIndex}-m-{matchOrdinal}"),
+                        context.Ids.Match($"{matchKeyPrefix}g-{groupIndex}-m-{matchOrdinal}"),
                         context.Clock);
                     stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
                     context.Matches.Add(match);
@@ -85,6 +115,19 @@ internal static class SeedMaterialization
         MatchEnrichment.ApplyKickoffs(context, competition, stage, created);
         return created;
     }
+
+    /// <summary>
+    /// Creates at most <paramref name="maxMatches"/> group fixtures (stable pair order) for recette seeds.
+    /// </summary>
+    public static IReadOnlyList<Match> MaterializeGroupsMatchesUpTo(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        int maxMatches,
+        string matchIdentityScope = "") =>
+        maxMatches <= 0
+            ? []
+            : MaterializeGroupsMatchesCore(context, competition, stage, maxMatches, matchIdentityScope);
 
     public static IReadOnlyList<Match> MaterializeChampionshipMatches(
         ScenarioContext context,
