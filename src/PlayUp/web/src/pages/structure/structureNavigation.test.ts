@@ -33,6 +33,9 @@ describe('structureNavigation', () => {
       section: 'tirage',
       roundId: 'round-9',
       compose: false,
+      focus: null,
+      manual: false,
+      openDrawWorkflow: false,
     });
   });
 
@@ -42,6 +45,9 @@ describe('structureNavigation', () => {
       section: null,
       roundId: null,
       compose: true,
+      focus: null,
+      manual: false,
+      openDrawWorkflow: false,
     });
     expect(
       structureDeepLink({
@@ -50,6 +56,46 @@ describe('structureNavigation', () => {
         compose: true,
       }),
     ).toBe('/competitions/comp-1/structure?stage=stage-1&compose=1');
+  });
+
+  it('parses focus deep-link', () => {
+    expect(
+      parseStructureDeepLink('stage=stage-1&focus=operational-placement'),
+    ).toEqual({
+      stageId: 'stage-1',
+      section: null,
+      roundId: null,
+      compose: false,
+      focus: 'operational-placement',
+      manual: false,
+      openDrawWorkflow: false,
+    });
+    expect(
+      structureDeepLink({
+        competitionId: 'comp-1',
+        stageId: 'stage-1',
+        focus: 'rail-attribution',
+      }),
+    ).toBe('/competitions/comp-1/structure?stage=stage-1&focus=rail-attribution');
+  });
+
+  it('parses manual and draw workflow deep-links', () => {
+    expect(parseStructureDeepLink('stage=stage-1&manual=1')).toEqual({
+      stageId: 'stage-1',
+      section: null,
+      roundId: null,
+      compose: false,
+      focus: null,
+      manual: true,
+      openDrawWorkflow: false,
+    });
+    expect(
+      structureDeepLink({
+        competitionId: 'comp-1',
+        stageId: 'stage-1',
+        openDrawWorkflow: true,
+      }),
+    ).toBe('/competitions/comp-1/structure?stage=stage-1&draw=1');
   });
 
   it('rejects unknown sections', () => {

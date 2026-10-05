@@ -99,6 +99,7 @@ import {
   type StructureSectionId,
 } from './structureHubSections';
 import { resolvePlacesN } from './structurePlaces';
+import type { StructureFocusId } from './structureNavigation';
 import { PhaseSchematic } from './phaseSchematic';
 import { listCupManualPlaces } from './manualPlacementUi';
 import {
@@ -189,6 +190,9 @@ export function StructurePhaseFiche({
   onSelectStage,
   initialEdit,
   initialCompose,
+  initialFocus,
+  initialManual,
+  initialDrawWorkflow,
   onInitialEditConsumed,
 }: {
   data: StructureView;
@@ -196,6 +200,9 @@ export function StructurePhaseFiche({
   onSelectStage?: (stageId: string) => void;
   initialEdit?: StructureSectionId | null;
   initialCompose?: boolean;
+  initialFocus?: StructureFocusId | null;
+  initialManual?: boolean;
+  initialDrawWorkflow?: boolean;
   onInitialEditConsumed?: () => void;
 }) {
   const { t, i18n } = useTranslation('structure');
@@ -233,6 +240,8 @@ export function StructurePhaseFiche({
     setReleaseConfirmOpen(false);
     setComposeOpen(false);
     setComposeFocusSearch(false);
+    setManualOpen(false);
+    setManualSlotKey(null);
   }, [stage?.stageId]);
 
   const deactivateDrawMutation = useMutation({
@@ -265,6 +274,16 @@ export function StructurePhaseFiche({
 
   useEffect(() => {
     if (!stage) return;
+    if (initialManual) {
+      setManualOpen(true);
+      onInitialEditConsumed?.();
+      return;
+    }
+    if (initialDrawWorkflow && stage.hasDrawRules) {
+      setDrawWorkflowOpen(true);
+      onInitialEditConsumed?.();
+      return;
+    }
     if (initialCompose) {
       setComposeFocusSearch(true);
       setComposeOpen(true);
@@ -296,7 +315,39 @@ export function StructurePhaseFiche({
       }
     }
     onInitialEditConsumed?.();
-  }, [initialEdit, initialCompose, stage, onInitialEditConsumed]);
+  }, [
+    initialEdit,
+    initialCompose,
+    initialManual,
+    initialDrawWorkflow,
+    stage,
+    onInitialEditConsumed,
+  ]);
+
+  useEffect(() => {
+    if (!stage || !initialFocus) {
+      return;
+    }
+    const id = initialFocus;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+      if (!initialEdit && !initialCompose && !initialManual && !initialDrawWorkflow) {
+        onInitialEditConsumed?.();
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    stage?.stageId,
+    initialFocus,
+    initialEdit,
+    initialCompose,
+    initialManual,
+    initialDrawWorkflow,
+    onInitialEditConsumed,
+  ]);
 
   const schematicQuery = useQuery({
     queryKey: queryKeys.stages.schematic(stage?.stageId ?? ''),

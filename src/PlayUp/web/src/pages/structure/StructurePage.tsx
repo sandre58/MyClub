@@ -10,22 +10,18 @@ import {
   ChampionshipFormatIcon,
   CheckIcon,
   CupFormatIcon,
-  DrawConfigIcon,
   DrawPendingIcon,
   GroupsFormatIcon,
   LayersIcon,
   LegsStatIcon,
   MatchdayStatIcon,
   MatchesStatIcon,
-  OverviewAttentionIcon,
   PlusIcon,
   RoundsStatIcon,
   StructureIcon,
   StructureIssueIcon,
   SwissFormatIcon,
   EmptySelectionIcon,
-  LinkIssueIcon,
-  IncompleteStageIssueIcon,
 } from '../../design-system/icons/contentIcons';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
@@ -41,6 +37,7 @@ import {
   type StructureView,
 } from '../../types';
 import { AddPhaseDialog } from './StructureGraphDialogs';
+import { StructureReadinessBanner } from './StructureReadinessBanner';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
@@ -49,13 +46,16 @@ import {
   stageAmbientKinds,
   type StructureReadinessSummary,
 } from './structureReadinessSummary';
-import { type StructureDiagnosticFamily } from './structureDiagnosticPresentation';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
+  STRUCTURE_DRAW_PARAM,
+  STRUCTURE_FOCUS_PARAM,
+  STRUCTURE_MANUAL_PARAM,
   STRUCTURE_ROUND_PARAM,
   STRUCTURE_SECTION_PARAM,
   STRUCTURE_STAGE_PARAM,
+  type StructureFocusId,
 } from './structureNavigation';
 import './structure.css';
 
@@ -101,6 +101,13 @@ function StructureHub({ data }: { data: StructureView }) {
     () => deepLink.section,
   );
   const [pendingCompose, setPendingCompose] = useState(() => deepLink.compose);
+  const [pendingFocus, setPendingFocus] = useState<StructureFocusId | null>(
+    () => deepLink.focus,
+  );
+  const [pendingManual, setPendingManual] = useState(() => deepLink.manual);
+  const [pendingDrawWorkflow, setPendingDrawWorkflow] = useState(
+    () => deepLink.openDrawWorkflow,
+  );
 
   useEffect(() => {
     const parsed = parseStructureDeepLink(searchParams.toString());
@@ -108,6 +115,9 @@ function StructureHub({ data }: { data: StructureView }) {
       setSelectedStageId(null);
       setPendingEdit(null);
       setPendingCompose(false);
+      setPendingFocus(null);
+      setPendingManual(false);
+      setPendingDrawWorkflow(false);
       return;
     }
     if (
@@ -117,6 +127,9 @@ function StructureHub({ data }: { data: StructureView }) {
       setSelectedStageId(parsed.stageId);
       setPendingEdit(parsed.section);
       setPendingCompose(parsed.compose);
+      setPendingFocus(parsed.focus);
+      setPendingManual(parsed.manual);
+      setPendingDrawWorkflow(parsed.openDrawWorkflow);
       return;
     }
     setSelectedStageId((current) => {
@@ -134,6 +147,9 @@ function StructureHub({ data }: { data: StructureView }) {
     setSelectedStageId(stageId);
     setPendingEdit(null);
     setPendingCompose(false);
+    setPendingFocus(null);
+    setPendingManual(false);
+    setPendingDrawWorkflow(false);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -141,6 +157,9 @@ function StructureHub({ data }: { data: StructureView }) {
         next.delete(STRUCTURE_SECTION_PARAM);
         next.delete(STRUCTURE_ROUND_PARAM);
         next.delete(STRUCTURE_COMPOSE_PARAM);
+        next.delete(STRUCTURE_FOCUS_PARAM);
+        next.delete(STRUCTURE_MANUAL_PARAM);
+        next.delete(STRUCTURE_DRAW_PARAM);
         return next;
       },
       { replace: true },
@@ -189,7 +208,12 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={stages.length === 0 ? undefined : addPhaseAction}
-        note={readinessStatusNote(data, readinessSummary)}
+        note={readinessStatusNote(
+          data,
+          stages,
+          readinessSummary,
+          selectedStageId,
+        )}
       />
 
       {bootstrapEmpty ?? (
@@ -206,15 +230,24 @@ function StructureHub({ data }: { data: StructureView }) {
             onSelectStage={selectStage}
             initialEdit={pendingEdit}
             initialCompose={pendingCompose}
+            initialFocus={pendingFocus}
+            initialManual={pendingManual}
+            initialDrawWorkflow={pendingDrawWorkflow}
             onInitialEditConsumed={() => {
               setPendingEdit(null);
               setPendingCompose(false);
+              setPendingFocus(null);
+              setPendingManual(false);
+              setPendingDrawWorkflow(false);
               setSearchParams(
                 (prev) => {
                   const next = new URLSearchParams(prev);
                   next.delete(STRUCTURE_SECTION_PARAM);
                   next.delete(STRUCTURE_ROUND_PARAM);
                   next.delete(STRUCTURE_COMPOSE_PARAM);
+                  next.delete(STRUCTURE_FOCUS_PARAM);
+                  next.delete(STRUCTURE_MANUAL_PARAM);
+                  next.delete(STRUCTURE_DRAW_PARAM);
                   return next;
                 },
                 { replace: true },
@@ -656,7 +689,9 @@ function edgeLabelFromSource(
 
 function readinessStatusNote(
   data: StructureView,
+  stages: StructureStageHubSummary[],
   summary: StructureReadinessSummary,
+  selectedStageId: string | null,
 ): ReactNode {
   const readiness = data.readiness;
   const formatKind = data.format.kind;
@@ -673,7 +708,14 @@ function readinessStatusNote(
     readiness.readyForNextSlice;
 
   if (incomplete) {
-    return <ReadinessNotReadyStatus summary={summary} />;
+    return (
+      <StructureReadinessBanner
+        data={data}
+        stages={stages}
+        summary={summary}
+        selectedStageId={selectedStageId}
+      />
+    );
   }
 
   // Draw readiness is not a Structure-global status (draw optional).
@@ -701,104 +743,6 @@ function readinessStatusNote(
   }
 
   return null;
-}
-
-function ReadinessNotReadyStatus({
-  summary,
-}: {
-  summary: StructureReadinessSummary;
-}) {
-  const { t } = useTranslation('structure');
-  const stats: {
-    key: string;
-    value?: number;
-    label: string;
-    icon: ReactNode;
-  }[] = [];
-
-  for (const row of summary.familyCounts) {
-    stats.push({
-      key: row.family,
-      value: row.count,
-      label: t(`readiness.family.${row.family}`, { count: row.count }),
-      icon: familyStatIcon(row.family),
-    });
-  }
-  if (summary.missingPotsPhaseCount > 0) {
-    stats.push({
-      key: 'missingPots',
-      value: summary.missingPotsPhaseCount,
-      label: t('readiness.statMissingPots', {
-        count: summary.missingPotsPhaseCount,
-      }),
-      icon: <DrawConfigIcon size="sm" aria-hidden="true" />,
-    });
-  }
-  if (summary.shapeInvalid) {
-    stats.push({
-      key: 'shape',
-      label: t('readiness.statShape'),
-      icon: <StructureIcon size="sm" aria-hidden="true" />,
-    });
-  }
-
-  return (
-    <div
-      className="structure-status structure-status--banner"
-      data-tone={summary.headerTone === 'danger' ? 'danger' : 'attention'}
-      role="status"
-    >
-      <div className="structure-status__copy">
-        <div className="structure-status__headline">
-          {summary.headerTone === 'danger' ? (
-            <StructureIssueIcon size="sm" aria-hidden="true" />
-          ) : (
-            <OverviewAttentionIcon size="sm" aria-hidden="true" />
-          )}
-          <p id="readiness-heading" className="structure-status__title">
-            {t('readiness.problemsToHandle', {
-              count: summary.totalProblemCount,
-            })}
-          </p>
-        </div>
-        {stats.length > 0 ? (
-          <ul
-            className="structure-status__stats"
-            aria-label={t('readiness.statsAria')}
-          >
-            {stats.map((stat) => (
-              <li key={stat.key} className="structure-status__stat">
-                <span className="structure-status__stat-icon" aria-hidden="true">
-                  {stat.icon}
-                </span>
-                {stat.value != null ? (
-                  <span className="structure-status__stat-value">
-                    {stat.value}
-                  </span>
-                ) : null}
-                <span className="structure-status__stat-label">{stat.label}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function familyStatIcon(family: StructureDiagnosticFamily): ReactNode {
-  switch (family) {
-    case 'graph':
-      return <LinkIssueIcon size="sm" aria-hidden="true" />;
-    case 'feed':
-      return <IncompleteStageIssueIcon size="sm" aria-hidden="true" />;
-    case 'capacity':
-      return <LayersIcon size="sm" aria-hidden="true" />;
-    case 'execution':
-      return <MatchesStatIcon size="sm" aria-hidden="true" />;
-    case 'result':
-      return <StructureIssueIcon size="sm" aria-hidden="true" />;
-  }
 }
 
 function ReadinessReadyStatus({

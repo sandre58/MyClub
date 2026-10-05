@@ -79,6 +79,25 @@
     "statMissingPots_one": "pots manquants",
     "statMissingPots_other": "pots manquants",
     "statShape": "forme à corriger",
+    "issue": {
+      "missingPots": "Pots de tirage manquants"
+    },
+    "actionsAria": "Actions recommandées",
+    "actionRowWithPhase": "{{issue}} · {{phase}}",
+    "actionAria": "{{issue}} — {{phase}} : {{action}}",
+    "action": {
+      "placesManual": "Placer manuellement",
+      "placesOpenDraw": "Ouvrir le tirage",
+      "places": "Placer manuellement",
+      "affectation": "Compléter l’alimentation",
+      "qualification": "Corriger la qualification",
+      "progression": "Corriger la progression",
+      "sorties": "Corriger les sorties",
+      "tieFormat": "Configurer le format",
+      "standing": "Corriger le classement",
+      "attribution": "Voir l’attribution",
+      "structure": "Corriger la structure"
+    },
     "readyForNextSlice": "Prêt pour la suite",
     "readyForMaterialization": "La compétition est prête à créer les matchs",
     "readyForCupSkeleton": "La coupe est prête pour le squelette de confrontations (tirage)"

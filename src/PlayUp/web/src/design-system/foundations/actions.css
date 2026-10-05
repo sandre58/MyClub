@@ -80,6 +80,12 @@
   text-decoration: none;
 }
 
+.ds-root a.ds-btn--attention,
+.ds-root a.ds-btn--attention:hover {
+  color: var(--color-attention);
+  text-decoration: none;
+}
+
 .ds-btn--secondary {
   background: var(--color-surface);
   border-color: var(--color-border-strong);
@@ -114,6 +120,16 @@
 
 .ds-btn--destructive:hover:not(:disabled) {
   background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
+}
+
+.ds-btn--attention {
+  color: var(--color-attention);
+  border-color: color-mix(in srgb, var(--color-attention) 40%, var(--color-border));
+}
+
+.ds-btn--attention:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-attention) 8%, var(--color-canvas));
+  border-color: color-mix(in srgb, var(--color-attention) 55%, var(--color-border));
 }
 
 .ds-icon-button {

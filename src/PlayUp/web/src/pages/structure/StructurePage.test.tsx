@@ -942,18 +942,10 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByText(/1 problème à traiter/i),
     ).toBeInTheDocument();
-    // Header synthesis: graph family (not pots; shortfall exclusive with graph)
-    const readinessStats = screen.getByRole('list', {
-      name: /Synthèse des écarts/i,
-    });
-    expect(within(readinessStats).getByText('1')).toBeInTheDocument();
     expect(
-      within(readinessStats).getByText(/^Graphe$/i),
+      screen.getByRole('link', { name: /Corriger la qualification/i }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Pots de tirage manquants/i)).not.toBeInTheDocument();
-    expect(
-      within(readinessStats).queryByText(/Alimentation/i),
-    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Voir les problèmes/i }),
     ).not.toBeInTheDocument();

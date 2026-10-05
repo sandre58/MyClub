@@ -176,6 +176,148 @@
   color: var(--color-text-secondary);
 }
 
+.structure-status--banner-compact {
+  padding: var(--space-8) var(--space-12);
+}
+
+.structure-status__actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) max-content;
+  column-gap: var(--space-8);
+  row-gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.structure-status__action-row {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / -1;
+  align-items: center;
+  min-width: 0;
+  padding: var(--space-8) 0;
+  border-bottom: var(--border-width) solid
+    color-mix(in srgb, var(--color-border) 70%, transparent);
+}
+
+.structure-status__action-row[data-last='true'] {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.structure-status__action-row:first-child {
+  padding-top: var(--space-4);
+}
+
+.structure-status__action-body {
+  display: contents;
+}
+
+.structure-status__action-marker {
+  grid-column: 1;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: currentColor;
+  color: var(--color-text-primary);
+  opacity: 0.9;
+  justify-self: center;
+}
+
+.structure-status__action-summary {
+  grid-column: 2;
+  min-width: 0;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-regular);
+}
+
+.structure-status__action-link {
+  grid-column: 3;
+  justify-self: end;
+  align-self: center;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+@supports not (grid-template-columns: subgrid) {
+  .structure-status__actions {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .structure-status__action-row {
+    display: block;
+  }
+
+  .structure-status__action-body {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) max-content;
+    align-items: center;
+    column-gap: var(--space-8);
+  }
+}
+
+@media (max-width: 40rem) {
+  .structure-status__actions {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .structure-status__action-row {
+    grid-template-columns: subgrid;
+  }
+
+  .structure-status__action-link {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: var(--space-4);
+  }
+
+  @supports not (grid-template-columns: subgrid) {
+    .structure-status__action-body {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .structure-status__action-link {
+      grid-column: 2;
+    }
+  }
+}
+
+/* Banner tints inherited copy — reset CTA text/border to semantic tokens. */
+.structure-status--banner .structure-status__action-link.ds-btn--attention {
+  color: var(--color-attention);
+  background: var(--color-surface);
+  border-color: color-mix(in srgb, var(--color-attention) 40%, var(--color-border));
+}
+
+.structure-status--banner .structure-status__action-link.ds-btn--attention:hover:not(:disabled) {
+  color: var(--color-attention);
+  background: color-mix(in srgb, var(--color-attention) 8%, var(--color-canvas));
+  border-color: color-mix(in srgb, var(--color-attention) 55%, var(--color-border));
+}
+
+.structure-status--banner .structure-status__action-link.ds-btn--destructive {
+  color: var(--color-error);
+  background: var(--color-surface);
+  border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));
+}
+
+.structure-status--banner .structure-status__action-link.ds-btn--destructive:hover:not(:disabled) {
+  color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
+  border-color: color-mix(in srgb, var(--color-error) 55%, var(--color-border));
+}
+
+.structure-status--banner .structure-status__action-link svg {
+  color: currentColor;
+}
+
 @media (max-width: 40rem) {
   .structure-status--banner {
     flex-wrap: wrap;

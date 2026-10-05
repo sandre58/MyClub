@@ -210,6 +210,12 @@ export function structureDiagnosticTile(
   return structureDiagnosticMeta(code)?.tile ?? null;
 }
 
+export function structureDiagnosticCta(
+  code: string,
+): StructureDiagnosticCta | null {
+  return structureDiagnosticMeta(code)?.cta ?? null;
+}
+
 /**
  * Host: SlotFeedMissing is expected while draw is engaged and not published.
  * Analyzer still emits the code — UX projection is silenced.
