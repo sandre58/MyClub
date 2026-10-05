@@ -53,7 +53,7 @@ public static class ConsultationAssembler
         ArgumentNullException.ThrowIfNull(matchesByStage);
 
         var primary = ResolvePrimaryStage(competition, stages);
-        var formatKind = primary is null ? null : InferFormat(primary);
+        var formatKind = primary is null ? null : StructureSkeleton.InferFormat(primary);
         var formatLabel = FormatLabel(formatKind, primary);
         var names = EntryDisplayNames.ToMap(competition);
         var entries = EntryDisplayNames.ToEntries(competition);
@@ -91,7 +91,7 @@ public static class ConsultationAssembler
         ArgumentNullException.ThrowIfNull(matchesByStage);
 
         var primary = ResolvePrimaryStage(competition, stages);
-        var formatKind = primary is null ? null : InferFormat(primary);
+        var formatKind = primary is null ? null : StructureSkeleton.InferFormat(primary);
         var formatLabel = FormatLabel(formatKind, primary);
         var names = EntryDisplayNames.ToMap(competition);
         var entries = EntryDisplayNames.ToEntries(competition);
@@ -126,7 +126,7 @@ public static class ConsultationAssembler
         ArgumentNullException.ThrowIfNull(matchesByStage);
 
         var primary = ResolvePrimaryStage(competition, stages);
-        var formatKind = primary is null ? null : InferFormat(primary);
+        var formatKind = primary is null ? null : StructureSkeleton.InferFormat(primary);
         var names = EntryDisplayNames.ToMap(competition);
         return AssembleStandings(competition, stages, matchesByStage, names, formatKind);
     }
@@ -148,14 +148,14 @@ public static class ConsultationAssembler
         var rules = stage.Regulation.StandingRules;
         if (rules is null)
         {
-            var formatHint = InferFormat(stage);
+            var formatHint = StructureSkeleton.InferFormat(stage);
             var reason = formatHint is StructureFormatKind.Cup
                 ? NotApplicableCupFormat
                 : NotApplicableNoStructure;
             return new ConsultationStandingsSectionDto(false, reason, []);
         }
 
-        var format = InferFormat(stage);
+        var format = StructureSkeleton.InferFormat(stage);
         if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
         {
             return new ConsultationStandingsSectionDto(false, NotApplicableNoStructure, []);
@@ -211,17 +211,6 @@ public static class ConsultationAssembler
         var primaryId = competition.StageIds[0];
         return stages.FirstOrDefault(stage => stage.Id.Equals(primaryId));
     }
-
-    private static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.IsSwiss
-            ? StructureFormatKind.Swiss
-            : stage.Rounds.Count > 0
-            ? StructureFormatKind.Cup
-            : stage.Groups.Count > 0
-            ? StructureFormatKind.Groups
-            : stage.Matchdays.Count > 0
-            ? StructureFormatKind.Championship
-            : null;
 
     private static string FormatLabel(StructureFormatKind? kind, Stage? primary) =>
         kind switch
@@ -326,7 +315,7 @@ public static class ConsultationAssembler
             case null when stages.All(stage => stage.Regulation.StandingRules is null):
                 {
                     var onlyCup = stages.Count > 0 &&
-                                  stages.All(stage => InferFormat(stage) == StructureFormatKind.Cup);
+                                  stages.All(stage => StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup);
                     return new ConsultationStandingsSectionDto(
                         false,
                         onlyCup ? NotApplicableCupFormat : NotApplicableNoStructure,
@@ -346,7 +335,7 @@ public static class ConsultationAssembler
                 continue;
             }
 
-            var format = InferFormat(stage);
+            var format = StructureSkeleton.InferFormat(stage);
             if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
             {
                 continue;
@@ -399,7 +388,7 @@ public static class ConsultationAssembler
             case null when stages.All(stage => stage.Regulation.StandingRules is null):
                 {
                     var onlyCup = stages.Count > 0 &&
-                                  stages.All(stage => InferFormat(stage) == StructureFormatKind.Cup);
+                                  stages.All(stage => StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup);
                     return new ConsultationStandingsSectionDto(
                         false,
                         onlyCup ? NotApplicableCupFormat : NotApplicableNoStructure,
@@ -419,7 +408,7 @@ public static class ConsultationAssembler
                 continue;
             }
 
-            var format = InferFormat(stage);
+            var format = StructureSkeleton.InferFormat(stage);
             if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups or StructureFormatKind.Swiss))
             {
                 continue;
@@ -516,7 +505,7 @@ public static class ConsultationAssembler
     {
         var stageDtos = stages.Select(stage =>
         {
-            var format = InferFormat(stage);
+            var format = StructureSkeleton.InferFormat(stage);
             var groups = stage.Groups
                 .Select(group => new ConsultationGroupStructureDto(
                     group.Id.Value,

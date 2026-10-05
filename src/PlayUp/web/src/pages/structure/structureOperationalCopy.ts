@@ -1,0 +1,56 @@
+import type {
+  CompetitionStatus,
+  StageStatus,
+  StructureMaterialize,
+  StructureStageHubSummary,
+} from '../../types';
+import {
+  classifyMaterializePresentation,
+  materializeProductionTarget,
+  type MaterializePresentation,
+} from './structureMaterializeCopy';
+import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
+
+export function resolvePlacementPoolTone(
+  filled: number,
+  capacity: number | null,
+): 'neutral' | 'partial' | 'complete' {
+  if (capacity == null || capacity <= 0) {
+    return 'neutral';
+  }
+  return resolveDrawCtaPoolTone(filled, capacity);
+}
+
+export function materializePresentationForStage(
+  stage: StructureStageHubSummary,
+  competitionStatus: CompetitionStatus,
+  stageStatus: StageStatus,
+): MaterializePresentation | null {
+  if (!stage.materialize) {
+    return null;
+  }
+  return classifyMaterializePresentation(
+    stage.materialize,
+    competitionStatus,
+    stageStatus,
+  );
+}
+
+export function showProductionOperationalSection(
+  stage: StructureStageHubSummary,
+): boolean {
+  return Boolean(stage.materialize ?? stage.dematerialize);
+}
+
+export function productionRatio(
+  materialize: StructureMaterialize | undefined,
+): { filled: number; capacity: number } | null {
+  if (!materialize) {
+    return null;
+  }
+  const capacity = materializeProductionTarget(materialize);
+  if (capacity <= 0) {
+    return null;
+  }
+  return { filled: materialize.materializedCount, capacity };
+}

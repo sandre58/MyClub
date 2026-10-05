@@ -303,13 +303,13 @@ export function EmptyState({
   );
 }
 
-/** Spinner + label inside a button while its mutation runs. No DS component yet. */
+/** Inline spinner + label for pending mutations and short status lines. */
 export function PendingLabel({ children }: { children: ReactNode }) {
   return (
-    <>
-      <span className="ds-spinner" aria-hidden="true" />
-      {children}
-    </>
+    <span className="ds-pending-label">
+      <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
+      <span className="ds-pending-label__text">{children}</span>
+    </span>
   );
 }
 

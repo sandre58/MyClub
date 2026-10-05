@@ -240,9 +240,6 @@
     "occupantsUnavailable": "Composition unavailable for now.",
     "schematicLoading": "Loading schematic…",
     "materialize": {
-      "ratioCaption": "matches created",
-      "frozenRemainingConfrontations_one": "{{count}} determined confrontation still has no match.",
-      "frozenRemainingConfrontations_other": "{{count}} determined confrontations still have no match.",
       "blockedGeneric": "Match production is not available right now.",
       "disabledReason": {
         "StructureNotMutable": "The structure no longer allows creating matches.",
@@ -270,6 +267,27 @@
         "FormatNotSupported": "This phase shape does not support removing matches from Structure."
       }
     },
+    "operational": {
+      "overflowAria": "Produced matches actions",
+      "placementOverflowAria": "Place occupancy actions",
+      "syncing": "Updating…",
+      "placement": {
+        "title": "Place occupancy",
+        "groupPlacer": "Place",
+        "groupDraw": "Draw",
+        "poolMeterAria": "Teams resolved for the draw",
+        "meterAria": "Occupied bracket places",
+        "meterCaptionOccupied": "places occupied",
+        "occupancyLoading": "Loading occupancy…",
+        "deactivatingDraw": "Deactivating draw…"
+      },
+      "production": {
+        "titleMatches": "Matches",
+        "meterAria": "Match production progress",
+        "meterCaptionMatches": "matches created",
+        "statusUnknown": "Production status is unavailable."
+      }
+    },
     "schematicTooltipFrom": "From",
     "schematicTooltipByDraw": "Placed by draw",
     "schematicTooltipByAffectation": "Manual assignment",
@@ -281,9 +299,7 @@
     "openDrawWorkflow": "Open draw",
     "performDraw": "Run the draw",
     "activateDraw": "Activate draw",
-    "activateDrawBody": "Allows placing this phase’s teams by draw.",
     "manualPlacementCta": "Place manually",
-    "manualPlacementCtaBody": "Assign a team from this phase to a cup place.",
     "drawParams": "Draw settings",
     "drawParamsAction": "Settings",
     "deactivateDraw": "Deactivate draw",

@@ -48,6 +48,9 @@ public static class DematerializeCup
         DematerializationPreflight.EnsureNoOrphanMatches(stage, stageMatches);
 
         var scope = CupMaterializationScope.Collect(stage, stageMatches);
+        DematerializationScopeGuard.EnsureAllAttachedMatchesLoaded(
+            scope.AttachedMatchIds,
+            scope.Matches);
         if (scope.Matches.Count == 0)
         {
             return new DematerializeCupResult(RemovedMatchCount: 0);

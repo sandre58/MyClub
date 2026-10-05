@@ -240,9 +240,6 @@
     "occupantsUnavailable": "Composition indisponible pour le moment.",
     "schematicLoading": "Chargement de la schématique…",
     "materialize": {
-      "ratioCaption": "matchs créés",
-      "frozenRemainingConfrontations_one": "Il reste {{count}} confrontation sans match créé.",
-      "frozenRemainingConfrontations_other": "Il reste {{count}} confrontations sans match créé.",
       "blockedGeneric": "La production n’est pas disponible pour le moment.",
       "disabledReason": {
         "StructureNotMutable": "La structure ne permet plus de créer les matchs.",
@@ -270,6 +267,27 @@
         "FormatNotSupported": "Cette forme de phase ne permet pas de retirer les matchs depuis Structure."
       }
     },
+    "operational": {
+      "overflowAria": "Actions sur les matchs produits",
+      "placementOverflowAria": "Actions sur l’occupation des places",
+      "syncing": "Mise à jour…",
+      "placement": {
+        "title": "Occupation des places",
+        "groupPlacer": "Placer",
+        "groupDraw": "Tirage",
+        "poolMeterAria": "Équipes résolues pour le tirage",
+        "meterAria": "Places occupées sur le tableau",
+        "meterCaptionOccupied": "places occupées",
+        "occupancyLoading": "Calcul de l’occupation…",
+        "deactivatingDraw": "Désactivation du tirage…"
+      },
+      "production": {
+        "titleMatches": "Matchs",
+        "meterAria": "Avancement de la production des matchs",
+        "meterCaptionMatches": "match créés",
+        "statusUnknown": "État de production indisponible."
+      }
+    },
     "schematicTooltipFrom": "Vient de",
     "schematicTooltipByDraw": "Placé par tirage",
     "schematicTooltipByAffectation": "Affectation manuelle",
@@ -281,9 +299,7 @@
     "openDrawWorkflow": "Ouvrir le tirage",
     "performDraw": "Lancer le tirage",
     "activateDraw": "Activer le tirage",
-    "activateDrawBody": "Permet de placer les équipes de cette phase par tirage au sort.",
     "manualPlacementCta": "Placer manuellement",
-    "manualPlacementCtaBody": "Affecter une équipe de cette phase à une place de la coupe.",
     "drawParams": "Paramètres du tirage",
     "drawParamsAction": "Paramètres",
     "deactivateDraw": "Désactiver le tirage",

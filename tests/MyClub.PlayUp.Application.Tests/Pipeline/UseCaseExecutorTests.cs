@@ -202,7 +202,13 @@ public sealed class UseCaseExecutorTests
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var quarter = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
-        quarter.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        quarter.AddRound(
+            "R1",
+            new TieFormat(
+                TieFormat.SingleLeg,
+                aggregateScoring: false,
+                penaltyShootoutRule: new PenaltyShootoutRule()),
+            _clock);
         quarter.AddSlot("QF1-A");
         quarter.AddSlot("QF1-B");
         quarter.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);

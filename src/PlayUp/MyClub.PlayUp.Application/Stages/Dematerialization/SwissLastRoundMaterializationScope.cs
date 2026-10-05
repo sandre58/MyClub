@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -41,7 +42,7 @@ internal static class SwissLastRoundMaterializationScope
             .ToList();
 
         var hasBye = stage.SwissByeHistory.Any(bye => bye.RoundIndex == lastMatchday.Number);
-        return new SwissLastRoundScope(lastMatchday.Number, matches, hasBye);
+        return new SwissLastRoundScope(lastMatchday.Number, matchIds, matches, hasBye);
     }
 }
 
@@ -49,9 +50,11 @@ internal static class SwissLastRoundMaterializationScope
 /// Snapshot of the last Swiss round to dematerialize.
 /// </summary>
 /// <param name="RoundNumber">Swiss round / matchday number.</param>
+/// <param name="AttachedMatchIds">Match identities referenced on that round.</param>
 /// <param name="Matches">Matches attached on that round.</param>
 /// <param name="HasBye">Whether a Swiss bye exists for this round index.</param>
 internal sealed record SwissLastRoundScope(
     int RoundNumber,
+    IReadOnlyCollection<MatchId> AttachedMatchIds,
     IReadOnlyList<Match> Matches,
     bool HasBye);

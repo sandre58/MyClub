@@ -87,7 +87,8 @@ public sealed class PipelineCompositionTests
     public void Slot_Draw_Materialize_Match_Outcome_then_Progression_keeps_boundaries()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
-        var stage = CreateKnockout(competition.Id, "KO", ["KO-A", "KO-B", "SF1-A", "Consolante"]);
+        var stage = CreateKnockout(competition.Id, "KO", ["KO-A", "KO-B"]);
+        var sfStage = CreateKnockout(competition.Id, "SF", ["SF1-A", "Consolante"]);
         var home = EntryId.New();
         var away = EntryId.New();
 
@@ -120,17 +121,17 @@ public sealed class PipelineCompositionTests
             [
                 new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(stage.Id, "SF1-A")),
+                    new ProgressionDestination(sfStage.Id, "SF1-A")),
                 new ProgressionPath(PathKey(fixture),
                     ProgressionOutcome.Loser,
-                    new ProgressionDestination(stage.Id, "Consolante"))
+                    new ProgressionDestination(sfStage.Id, "Consolante"))
             ]),
             _clock);
 
-        ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage], _clock);
+        ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage, sfStage], _clock);
 
-        stage.FindSlot("SF1-A")!.EntryId.Should().Be(home);
-        stage.FindSlot("Consolante")!.EntryId.Should().Be(away);
+        sfStage.FindSlot("SF1-A")!.EntryId.Should().Be(home);
+        sfStage.FindSlot("Consolante")!.EntryId.Should().Be(away);
         draw.Status.Should().Be(DrawStatus.Published);
         draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
         fixture.MatchIds.Should().ContainSingle().Which.Should().Be(match.Id);

@@ -222,7 +222,13 @@ public sealed class TestCompetition
         var stage = stageId is { } id
             ? Stage.Create(Competition.Id, new StageName(name), regulation, id, Clock)
             : Stage.Create(Competition.Id, new StageName(name), regulation, Clock);
-        stage.AddRound(roundName, new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), Clock);
+        stage.AddRound(
+            roundName,
+            new TieFormat(
+                TieFormat.SingleLeg,
+                aggregateScoring: false,
+                penaltyShootoutRule: new PenaltyShootoutRule()),
+            Clock);
         foreach (var key in slotKeys)
         {
             stage.AddSlot(key);

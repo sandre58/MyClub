@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 // Structure diagnostic → presentation projection (family / tile / CTA).
 // Analyzer facts stay unchanged; Host only maps codes for Structure UX.
 // Tone UX ≠ Analyzer Nature ≠ Prepare Gate/Signal.
@@ -239,7 +239,7 @@ export function structureDiagnosticTileElementId(
 ): string {
   switch (tile) {
     case 'places':
-      return 'tile-places';
+      return 'operational-placement';
     case 'exits':
       return 'rail-exits';
     case 'capacity':

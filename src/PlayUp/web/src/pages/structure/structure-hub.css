@@ -768,8 +768,7 @@
 
 .structure-phase-rail__issues {
   list-style: none;
-  margin: 0;
-  margin-top: auto;
+  margin: auto 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -1128,247 +1127,77 @@
   width: 100%;
 }
 
-.structure-phase-hero__draw {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.structure-draw-block {
+.structure-phase-operational-bar {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-8);
+  gap: var(--space-12);
   width: 100%;
+  container-type: inline-size;
+  container-name: operational-bar;
 }
 
-.structure-draw-block__col {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-8);
-  min-width: 0;
-}
-
-@media (min-width: 40rem) {
-  .structure-draw-block {
-    width: min(100%, 22rem);
-  }
-
-  /* Draw + Placement side-by-side when both present. */
-  .structure-draw-block--paired {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    width: min(100%, 44rem);
-  }
-
-  .structure-draw-block--paired > .structure-draw-block__col {
-    flex: 1 1 calc(50% - var(--space-4));
-    min-width: 11rem;
-  }
-}
-
-.structure-schematic-matches-link {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  margin-top: var(--space-4);
-  padding-inline: var(--space-4);
-}
-
-.structure-draw-cta {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--space-8);
+.structure-phase-operational-bar .structure-operational-tile.ds-form-section {
   width: 100%;
   margin: 0;
-  padding: var(--space-8) var(--space-12);
-  border: var(--border-width) solid var(--color-border-strong);
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-12);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
   border-radius: var(--radius-control);
-  font-family: inherit;
-  text-align: start;
-  cursor: pointer;
-  transition:
-    border-color var(--motion-duration) var(--motion-easing),
-    box-shadow var(--motion-duration) var(--motion-easing),
-    background-color var(--motion-duration) var(--motion-easing);
+  box-shadow: none;
+  background: color-mix(in srgb, var(--color-surface) 96%, var(--color-brand) 4%);
 }
 
-.structure-draw-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: center;
-  gap: var(--space-4) var(--space-8);
+.structure-phase-operational-bar .structure-operational-tile .ds-form-section__body {
+  gap: var(--space-12);
 }
 
-.structure-draw-actions__risk {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4) var(--space-8);
-  margin-left: auto;
-}
-
-.structure-draw-cta:focus-visible {
-  box-shadow: var(--focus-halo);
-  outline: none;
-}
-
-.structure-draw-cta:disabled,
-.structure-draw-cta[aria-disabled='true'] {
-  cursor: not-allowed;
-  opacity: 0.64;
-  pointer-events: none;
-}
-
-.structure-draw-cta-wrap {
-  display: block;
-  width: 100%;
-}
-
-/* Activate — subdued / ghost (border = control) */
-.structure-draw-cta[data-tone='ghost'] {
-  background: transparent;
-  border-style: dashed;
-  border-color: var(--color-border);
-  color: var(--color-text-primary);
-}
-
-.structure-draw-cta[data-tone='ghost']:hover {
-  background: color-mix(in srgb, var(--color-ink) 6%, transparent);
-  border-style: solid;
-  border-color: var(--color-border-strong);
-}
-
-.structure-draw-cta[data-tone='ghost'] .structure-draw-cta__body {
-  color: var(--color-text-secondary);
-}
-
-/* Launch / Open — outlined emphasis (never brand primary) */
-.structure-draw-cta[data-tone='emphasis'] {
-  background: var(--color-surface);
-  border-style: solid;
-  border-color: var(--color-border-strong);
-  color: var(--color-text-primary);
-}
-
-.structure-draw-cta[data-tone='emphasis']:hover {
-  border-color: var(--color-brand);
-  background: var(--color-surface-secondary);
-}
-
-.structure-draw-cta[data-tone='emphasis']:hover .structure-draw-cta__chevron {
-  color: var(--color-brand);
-  transform: translateX(2px);
-}
-
-/* Destructive secondary — outlined danger, not a filled primary */
-.structure-draw-cta[data-tone='destructive'] {
-  background: transparent;
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));
-  color: var(--color-error);
-}
-
-.structure-draw-cta[data-tone='destructive']:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--color-error) 55%, var(--color-border));
-}
-
-.structure-draw-cta[data-tone='destructive'] .structure-draw-cta__leading {
-  color: var(--color-error);
-}
-
-.structure-draw-cta[data-tone='destructive'] .structure-draw-cta__body,
-.structure-draw-cta[data-tone='destructive'] .structure-draw-cta__caption {
-  color: var(--color-text-secondary);
-}
-
-.structure-draw-cta[data-tone='destructive']:hover:not(:disabled) .structure-draw-cta__chevron {
-  color: var(--color-error);
-  transform: translateX(2px);
-}
-
-/* Content column + chevron centred on the whole card */
-.structure-draw-cta__main {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--space-8);
-  min-width: 0;
-}
-
-/* Title row: leading + title */
-.structure-draw-cta__head {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  min-width: 0;
-}
-
-.structure-draw-cta__leading {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  line-height: 0;
-  color: var(--color-brand);
-}
-
-.structure-draw-cta__title {
-  flex: 1 1 auto;
-  min-width: 0;
+.structure-phase-operational-bar .structure-operational-tile .ds-form-section__title {
   font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-  line-height: 1;
-  color: var(--color-ink);
+  letter-spacing: normal;
+  text-transform: none;
 }
 
-.structure-draw-cta__chevron {
-  display: inline-flex;
-  flex: none;
+.structure-phase-operational-bar .structure-operational-tile .ds-form-section__icon .ds-icon {
+  color: var(--color-brand);
+}
+
+.structure-operational-tile__head {
   align-items: center;
-  align-self: center;
-  color: var(--color-text-secondary);
-  line-height: 0;
-  transition:
-    color var(--motion-duration) var(--motion-easing),
-    transform var(--motion-duration) var(--motion-easing);
 }
 
-.structure-draw-cta[data-tone='ghost']:hover .structure-draw-cta__chevron {
-  color: var(--color-text-primary);
-  transform: translateX(2px);
-}
-
-/* Body indented under the title (not under the leading) */
-.structure-draw-cta__body {
-  /* leading sm ≈ 1rem + gap 0.5rem */
-  padding-inline-start: calc(1rem + var(--space-8));
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-regular);
-  line-height: var(--leading-tight);
-}
-
-.structure-draw-cta__context {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
+.structure-operational-tile__state {
   min-width: 0;
 }
 
-.structure-draw-cta__readiness {
+.structure-operational-tile__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  flex-shrink: 0;
+  max-width: min(100%, 20rem);
+}
+
+.structure-operational-tile__toolbar-action {
+  display: inline-flex;
+}
+
+.structure-operational-gauge__readiness {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-4);
   min-width: 0;
+  width: 100%;
 }
 
-.structure-draw-cta__ratio {
+.structure-operational-gauge .structure-operational-gauge__readiness {
+  gap: 0.35rem;
+}
+
+.structure-operational-gauge__ratio {
   display: inline-flex;
   align-items: baseline;
   gap: 0.05em;
@@ -1380,40 +1209,231 @@
   letter-spacing: -0.02em;
 }
 
-.structure-draw-cta__ratio-sep {
+.structure-operational-gauge__ratio-sep,
+.structure-operational-gauge__ratio-cap {
   color: var(--color-text-secondary);
   font-weight: var(--font-weight-regular);
 }
 
-.structure-draw-cta__ratio-cap {
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-regular);
-}
-
-.structure-draw-cta__caption {
+.structure-operational-gauge__caption {
   color: var(--color-text-secondary);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-regular);
   line-height: var(--leading-tight);
 }
 
-/* Ratio color = pool resolution only */
-.structure-draw-cta__readiness[data-pool-tone='partial'] .structure-draw-cta__ratio-filled {
+.structure-operational-gauge__readiness[data-pool-tone='partial'] .structure-operational-gauge__ratio-filled {
   color: var(--color-attention);
 }
 
-.structure-draw-cta__readiness[data-pool-tone='complete'] .structure-draw-cta__ratio-filled {
+.structure-operational-gauge__readiness[data-pool-tone='complete'] .structure-operational-gauge__ratio-filled {
   color: var(--color-success);
 }
 
-.structure-draw-cta__mode-row {
-  display: inline-flex;
+.structure-operational-tile__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.structure-operational-tile__note {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+}
+
+.structure-operational-tile__actions {
+  display: flex;
+  justify-content: stretch;
+  padding-top: var(--space-8);
+}
+
+.structure-operational-tile__columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-16);
+  align-items: start;
+  flex-grow: 1;
+}
+
+@container operational-bar (min-width: 34rem) {
+  .structure-operational-tile__columns:has(> :nth-child(2)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-12) var(--space-16);
+  }
+}
+
+.structure-operational-tile__columns > :only-child {
+  grid-column: 1 / -1;
+}
+
+.structure-operational-tile__production-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.structure-operational-tile__matches-link {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-meta);
+  align-self: flex-end;
+}
+
+.structure-operational-tile__primary-action {
+  width: 100%;
+}
+
+.structure-operational-tile__primary-action .ds-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.structure-operational-tile__group-suffix {
+  min-width: 0;
+  margin-top: var(--space-8);
+}
+
+.structure-operational-gauge--dense .structure-operational-gauge__readiness {
+  font-size: var(--text-meta);
+}
+
+.structure-operational-gauge--dense .structure-operational-gauge__ratio {
+  font-size: var(--text-body);
+}
+
+.structure-operational-gauge--dense.structure-occupancy-meter--compact {
+  gap: 0.15rem;
+}
+
+.structure-operational-gauge--dense .structure-occupancy-meter__track {
+  height: 0.35rem;
+}
+
+.structure-operational-tile__group-row--tirage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  column-gap: var(--space-8);
+  row-gap: 0;
+}
+
+.structure-operational-tile__tirage-primary {
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.structure-operational-tile__tirage-primary .ds-btn--primary {
+  width: 100%;
+  max-width: 100%;
+}
+
+.structure-operational-tile__state-loading {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.structure-operational-tile__sync-status {
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.structure-operational-tile__inline-tools {
+  display: inline-flex;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0;
+}
+
+.structure-operational-tile .ds-icon-toolbar .ds-btn--destructive {
+  border: 0;
+}
+
+.structure-operational-tile__group {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-8);
   min-width: 0;
-  color: var(--color-text-primary);
+}
+
+.structure-operational-tile__group-label {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.structure-operational-tile__group-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.structure-operational-tile__group-row .ds-btn--primary {
+  flex-grow: 1;
+}
+
+.structure-operational-tile__state-empty {
+  display: block;
+  min-height: 0;
+}
+
+.structure-operational-tile__diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.structure-operational-tile__diagnostics-hint {
+  margin: 0;
   font-size: var(--text-meta);
-  line-height: var(--leading-tight);
+  color: var(--color-text-secondary);
+}
+
+.structure-operational-tile__diagnostics .structure-phase-rail__issues {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.structure-operational-tile__trail {
+  padding-top: var(--space-8);
+}
+
+.structure-operational-tile__action-wrap {
+  display: inline-flex;
+}
+
+.structure-operational-gauge__status {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+}
+
+.structure-overflow-menu__item--destructive {
+  color: var(--color-error);
+}
+
+.structure-overflow-menu__item--destructive:hover:not(:disabled),
+.structure-overflow-menu__item--destructive:focus-visible:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface));
+}
+
+.structure-overflow-menu__leading {
+  display: inline-flex;
+  margin-inline-end: var(--space-8);
+  line-height: 0;
 }
 
 .structure-flux-groups {

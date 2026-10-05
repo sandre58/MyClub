@@ -44,7 +44,7 @@ internal static class CupMaterializationScope
             .Cast<Match>()
             .ToList();
 
-        return new CupMaterializationSnapshot(fixtureIds, matches);
+        return new CupMaterializationSnapshot(fixtureIds, matchIds, matches);
     }
 }
 
@@ -52,7 +52,9 @@ internal static class CupMaterializationScope
 /// Snapshot of attached Cup materialization on a stage.
 /// </summary>
 /// <param name="FixtureIds">Fixtures to remove from rounds.</param>
+/// <param name="AttachedMatchIds">Match identities referenced on fixtures.</param>
 /// <param name="Matches">Match aggregates to delete from persistence.</param>
 internal sealed record CupMaterializationSnapshot(
     IReadOnlyList<FixtureId> FixtureIds,
+    IReadOnlyCollection<MatchId> AttachedMatchIds,
     IReadOnlyList<Match> Matches);

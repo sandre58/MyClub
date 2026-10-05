@@ -7,6 +7,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.SaveInterceptors;
@@ -76,7 +77,22 @@ internal sealed class StageOrderedCollectionsInterceptor : SaveChangesIntercepto
             }
         }
 
+        DeleteFixturesWithoutParent(context);
+
         context.ChangeTracker.DetectChanges();
+    }
+
+    /// <summary>
+    /// Domain <see cref="Stage.RemoveFixture"/> drops fixtures from Round/Matchday collections.
+    /// EF would null both shadow FKs (optional), violating CK_fixtures_round_xor_matchday on PostgreSQL.
+    /// Dematerialization and similar flows intend to delete the fixture row.
+    /// </summary>
+    private static void DeleteFixturesWithoutParent(DbContext context)
+    {
+        foreach (var entry in from entry in context.ChangeTracker.Entries<Fixture>().ToList() where entry.State is not (EntityState.Deleted or EntityState.Detached) let roundId = entry.Property<RoundId?>("round_id").CurrentValue let matchdayId = entry.Property<MatchdayId?>("matchday_id").CurrentValue where roundId is null && matchdayId is null select entry)
+        {
+            context.Remove(entry.Entity);
+        }
     }
 
     private static IEnumerable<Fixture> EnumerateFixtures(Stage stage) =>

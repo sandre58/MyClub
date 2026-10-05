@@ -39,6 +39,14 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             "championship-archived",
             "championship-structure-draft",
             "structure-graph-invalid",
+            "structure-materialize-recette",
+            "invariants-exec-undecidable",
+            "invariants-feed-missing",
+            "invariants-flow-cycle",
+            "invariants-flow-routing",
+            "invariants-num-overcapacity",
+            "invariants-num-overextraction",
+            "invariants-result-unreachable",
             "groups",
             "groups-suspended",
             "groups-draw-pending",
@@ -70,7 +78,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         catalog.All.Select(s => s.Id).OrderBy(id => id, StringComparer.Ordinal)
             .Should().Equal(expectedIds.OrderBy(id => id, StringComparer.Ordinal));
-        catalog.All.Should().HaveCount(35);
+        catalog.All.Should().HaveCount(43);
 
         foreach (var id in progressiveIds)
         {

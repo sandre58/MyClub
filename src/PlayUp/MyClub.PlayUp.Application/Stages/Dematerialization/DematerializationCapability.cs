@@ -7,7 +7,6 @@
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -45,33 +44,6 @@ public static class DematerializationCapability
             null => DematerializationCapabilityResult.NotExposed,
             _ => DematerializationCapabilityResult.NotExposed
         };
-    }
-
-    /// <summary>
-    /// Throws when execute preflight blocks dematerialization (command authority).
-    /// </summary>
-    public static void EnsureExecuteAllowed(
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<Match> stageMatches)
-    {
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stage);
-        ArgumentNullException.ThrowIfNull(stageMatches);
-
-        var gates = stageMatches.Select(DematerializationMatchGate.FromMatch).ToArray();
-        var result = Evaluate(competition, stage, gates);
-        if (!result.IsExposed)
-        {
-            throw new ApplicationFailureException(
-                "Dematerialization is not available for this stage.",
-                ApplicationErrorCodes.DematerializationFailure);
-        }
-
-        if (!result.Enabled)
-        {
-            ThrowForDisabledReason(result.DisabledReason!);
-        }
     }
 
     internal static bool BlocksDematerialization(DematerializationMatchGate match) =>

@@ -118,6 +118,39 @@ public sealed class DematerializeCupTests
     }
 
     [Fact]
+    public void Attached_match_missing_from_loaded_list_refuses_dematerialization()
+    {
+        var situation = TestCompetition.Create("Cup", _clock)
+            .WithTeams("Alpha", "Bravo")
+            .WithStructure(StructureIntent.Cup(2));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            [],
+            [],
+            _clock);
+        foreach (var match in materialized.CreatedMatches)
+        {
+            _matches.Track(match);
+        }
+
+        var act = () => DematerializeCup.Execute(
+            situation.Competition,
+            stage,
+            [],
+            _matches,
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.MaterializationStateInconsistent);
+        _matches.Removed.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Running_stage_blocks_dematerialization()
     {
         var situation = TestCompetition.Create("Cup", _clock)

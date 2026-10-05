@@ -51,7 +51,7 @@ public static class MaterializeMatches
 
         EnsureMutable(competition, stage);
 
-        var format = InferFormat(stage)
+        var format = StructureSkeleton.InferFormat(stage)
                      ?? throw new ApplicationFailureException(
                          "Stage has no recognised V1 structure for materialization.",
                          ApplicationErrorCodes.MaterializationFailure);
@@ -93,7 +93,7 @@ public static class MaterializeMatches
             return 0;
         }
 
-        var format = InferFormat(stage);
+        var format = StructureSkeleton.InferFormat(stage);
         var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
         return format switch
         {
@@ -428,17 +428,6 @@ public static class MaterializeMatches
 
     private static (EntryId Home, EntryId Away) CanonicalOrdered(EntryId a, EntryId b) =>
         a.Value.CompareTo(b.Value) <= 0 ? (a, b) : (b, a);
-
-    private static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.IsSwiss
-            ? StructureFormatKind.Swiss
-            : stage.Rounds.Count > 0
-                ? StructureFormatKind.Cup
-                : stage.Groups.Count > 0
-                    ? StructureFormatKind.Groups
-                    : stage.Matchdays.Count > 0
-                        ? StructureFormatKind.Championship
-                        : null;
 
     private static void EnsureMutable(Competition competition, Stage stage)
     {

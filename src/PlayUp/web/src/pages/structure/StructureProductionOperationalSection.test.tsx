@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { materializeMatches } from '../../api';
+
+import { dematerializePhase, materializeMatches } from '../../api';
 import type { StructureStageHubSummary } from '../../types';
-import { StructureMaterializeHero } from './StructureMaterializeHero';
+import { classifyMaterializePresentation } from './structureMaterializeCopy';
+import { StructureProductionOperationalSection } from './StructureProductionOperationalSection';
 
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
@@ -13,6 +15,7 @@ vi.mock('../../api', async (importOriginal) => {
     ...actual,
     materializeMatches: vi.fn(),
     materializeCupFromOccupiedSlots: vi.fn(),
+    dematerializePhase: vi.fn(),
   };
 });
 
@@ -34,39 +37,49 @@ const baseStage: StructureStageHubSummary = {
   hasTieFormat: false,
 };
 
-function renderHero(
+function renderSection(
   stage: StructureStageHubSummary,
   competitionStatus: 'Draft' | 'Running' = 'Draft',
 ) {
+  const materialize = stage.materialize;
+  const presentation =
+    materialize == null
+      ? null
+      : classifyMaterializePresentation(
+          materialize,
+          competitionStatus,
+          stage.status,
+        );
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
     <MemoryRouter>
       <QueryClientProvider client={queryClient}>
-        <StructureMaterializeHero
+        <StructureProductionOperationalSection
           competitionId="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
           competitionStatus={competitionStatus}
           stage={stage}
+          presentation={presentation}
         />
       </QueryClientProvider>
     </MemoryRouter>,
   );
 }
 
-describe('StructureMaterializeHero', () => {
+describe('StructureProductionOperationalSection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('executes global materialize from the hero CTA with ratio only', async () => {
+  it('executes global materialize from the tile primary action', async () => {
     vi.mocked(materializeMatches).mockResolvedValue({
       createdCount: 1,
       attachedMatchIds: ['m1'],
       alreadyComplete: false,
     });
     const user = userEvent.setup();
-    renderHero({
+    renderSection({
       ...baseStage,
       materialize: {
         commandCode: 'MaterializeMatches',
@@ -79,31 +92,13 @@ describe('StructureMaterializeHero', () => {
       },
     });
 
-    expect(screen.getByText('matchs créés')).toBeInTheDocument();
-    expect(screen.queryByText(/à créer/i)).not.toBeInTheDocument();
+    expect(screen.getByText('match créés')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Créer les matchs/i }));
     expect(materializeMatches).toHaveBeenCalledWith(baseStage.stageId);
   });
 
-  it('renders nothing for terminal (hero stat lives in phase meta)', () => {
-    const { container } = renderHero({
-      ...baseStage,
-      materialize: {
-        commandCode: 'MaterializeMatches',
-        labelVariant: 'exhausted',
-        determinedCount: 6,
-        eligibleCount: 0,
-        materializedCount: 6,
-        commandEnabled: false,
-        confrontations: [],
-      },
-    });
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it('renders nothing for frozen incomplete', () => {
-    const { container } = renderHero(
+  it('shows frozen gap in the gauge without a materialize primary action', () => {
+    renderSection(
       {
         ...baseStage,
         status: 'Running',
@@ -121,30 +116,15 @@ describe('StructureMaterializeHero', () => {
       'Running',
     );
 
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it('does not render a matches link in the production band', () => {
-    renderHero({
-      ...baseStage,
-      materialize: {
-        commandCode: 'MaterializeMatches',
-        labelVariant: 'complete',
-        determinedCount: 6,
-        eligibleCount: 2,
-        materializedCount: 4,
-        commandEnabled: true,
-        confrontations: [],
-      },
-    });
-
+    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('6')).toBeInTheDocument();
     expect(
-      screen.queryByRole('link', { name: /Voir les matchs de la phase/i }),
+      screen.queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();
   });
 
   it('shows blocked state with read disabledReason when present', () => {
-    renderHero({
+    renderSection({
       ...baseStage,
       materialize: {
         commandCode: 'MaterializeMatches',
@@ -164,6 +144,41 @@ describe('StructureMaterializeHero', () => {
     expect(
       screen.getByRole('button', { name: /Créer les matchs/i }),
     ).toBeDisabled();
-    expect(screen.queryByText(/Place pas encore alimentée/i)).not.toBeInTheDocument();
+  });
+
+  it('opens dematerialize confirm and calls dematerializePhase', async () => {
+    vi.mocked(dematerializePhase).mockResolvedValue({
+      removedMatchCount: 3,
+      removedRoundNumber: null,
+    });
+    const user = userEvent.setup();
+    renderSection({
+      ...baseStage,
+      dematerialize: { enabled: true, scope: 'FullPhase' },
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: /Retirer les matchs/i }),
+    );
+    const dialog = screen.getByRole('dialog');
+    await user.click(
+      within(dialog).getByRole('button', { name: /Retirer les matchs/i }),
+    );
+    expect(dematerializePhase).toHaveBeenCalledWith(baseStage.stageId);
+  });
+
+  it('disables dematerialize toolbar control when read blocks it', () => {
+    renderSection({
+      ...baseStage,
+      dematerialize: {
+        enabled: false,
+        scope: 'FullPhase',
+        disabledReason: 'MatchLifecycleStarted',
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: /Retirer les matchs/i }),
+    ).toBeDisabled();
   });
 });

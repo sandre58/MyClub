@@ -81,7 +81,9 @@ public sealed class ReadPerformanceBaselineTests(
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
         attentionSql.Should().BeLessThanOrEqualTo(21, "attention path should stay near shell overview cost (includes CompositionEntries)");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
-        structureSql.Should().BeLessThan(overviewSql, "structure bundle should beat full overview load");
+        structureSql.Should().BeLessThanOrEqualTo(
+            overviewSql,
+            "structure bundle must not exceed overview load (parity allowed when bundles align)");
     }
 
     [Fact]

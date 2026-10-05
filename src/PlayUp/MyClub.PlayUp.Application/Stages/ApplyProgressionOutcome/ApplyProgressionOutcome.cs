@@ -44,7 +44,9 @@ public static class ApplyProgressionOutcome
         ArgumentNullException.ThrowIfNull(matches);
         ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(clock);
-        var coherenceMatches = destinationMatches ?? [];
+        var coherenceMatches = destinationMatches is null or { Count: 0 }
+            ? matches
+            : destinationMatches;
 
         var canonicalSource = ResolveCanonicalStage(sourceStage.Id, competitionStages);
         var fixture = canonicalSource.GetFixture(fixtureId);

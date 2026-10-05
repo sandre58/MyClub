@@ -50,6 +50,10 @@ public static class DematerializeSwissLastRound
             return new DematerializeSwissLastRoundResult(RemovedMatchCount: 0, RemovedRoundNumber: null);
         }
 
+        DematerializationScopeGuard.EnsureAllAttachedMatchesLoaded(
+            scope.AttachedMatchIds,
+            scope.Matches);
+
         if (scope.Matches.Count == 0)
         {
             if (scope.HasBye)

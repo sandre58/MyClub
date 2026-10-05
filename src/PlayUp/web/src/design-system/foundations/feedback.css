@@ -138,6 +138,8 @@
 }
 
 .ds-spinner {
+  display: inline-block;
+  box-sizing: border-box;
   width: 1rem;
   height: 1rem;
   border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
@@ -145,6 +147,22 @@
   border-radius: 50%;
   animation: ds-spin 0.7s linear infinite;
   flex: none;
+}
+
+.ds-spinner--sm {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.ds-pending-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  vertical-align: middle;
+}
+
+.ds-pending-label__text {
+  min-width: 0;
 }
 
 @keyframes ds-spin {

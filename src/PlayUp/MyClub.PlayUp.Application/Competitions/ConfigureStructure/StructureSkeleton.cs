@@ -17,7 +17,8 @@ namespace MyClub.PlayUp.Application.Competitions;
 internal static class StructureSkeleton
 {
     /// <summary>
-    /// Infers the current format kind from topology (null when unstructured).
+    /// Single source of truth: infers format from stage topology (null when unstructured).
+    /// Use for read projections and command routing — do not duplicate this predicate elsewhere.
     /// </summary>
     public static StructureFormatKind? InferFormat(Stage stage) =>
         stage.IsSwiss

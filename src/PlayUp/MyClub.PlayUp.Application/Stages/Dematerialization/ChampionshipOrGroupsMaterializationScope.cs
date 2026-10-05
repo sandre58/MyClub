@@ -44,7 +44,7 @@ internal static class ChampionshipOrGroupsMaterializationScope
             .Cast<Match>()
             .ToList();
 
-        return new ChampionshipOrGroupsScope(fixtureIds, matches);
+        return new ChampionshipOrGroupsScope(fixtureIds, matchIds, matches);
     }
 }
 
@@ -52,7 +52,9 @@ internal static class ChampionshipOrGroupsMaterializationScope
 /// Snapshot of attached Championship / Groups materialization on a stage.
 /// </summary>
 /// <param name="FixtureIds">Fixtures to remove from matchdays.</param>
+/// <param name="AttachedMatchIds">Match identities referenced on fixtures.</param>
 /// <param name="Matches">Match aggregates to delete from persistence.</param>
 internal sealed record ChampionshipOrGroupsScope(
     IReadOnlyList<FixtureId> FixtureIds,
+    IReadOnlyCollection<MatchId> AttachedMatchIds,
     IReadOnlyList<Match> Matches);

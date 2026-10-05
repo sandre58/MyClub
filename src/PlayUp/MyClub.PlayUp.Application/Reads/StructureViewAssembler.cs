@@ -400,7 +400,7 @@ public static class StructureViewAssembler
             HasPlacementAwardRules: placement is not null,
             PlacementAwardCount: placement?.Paths.Count ?? 0,
             PlacementAwards: placementAwards,
-            FormatKind: InferFormat(stage),
+            FormatKind: StructureSkeleton.InferFormat(stage),
             SwissRoundCount: stage.SwissSettings?.RoundCount,
             ForfeitWinnerGoals: match.AdministrativeResultPolicy.ForfeitWinnerGoals,
             ForfeitLoserGoals: match.AdministrativeResultPolicy.ForfeitLoserGoals,
@@ -514,7 +514,7 @@ public static class StructureViewAssembler
     /// Cup: entry places (1st-round cardinality), not total <c>slotCount</c> when multi-round.
     /// </summary>
     private static int? ResolvePlaces(Competition competition, Stage stage) =>
-        InferFormat(stage) switch
+        StructureSkeleton.InferFormat(stage) switch
         {
             StructureFormatKind.Cup => ResolveCupEntryPlaces(stage),
             StructureFormatKind.Championship or StructureFormatKind.Swiss
@@ -861,7 +861,7 @@ public static class StructureViewAssembler
             }
         }
 
-        var format = InferFormat(stage);
+        var format = StructureSkeleton.InferFormat(stage);
         var attachedMatches = CountAttachedMatches(stage);
 
         if (attachedMatches == 0)
@@ -912,13 +912,13 @@ public static class StructureViewAssembler
             return true;
         }
 
-        var format = InferFormat(stage);
+        var format = StructureSkeleton.InferFormat(stage);
         return format is StructureFormatKind.Groups or StructureFormatKind.Cup;
     }
 
     private static bool StageNeedsTieFormatAction(Stage stage) =>
         stage.Regulation.TieFormat is not null || stage.Rounds.Any(round => round.TieFormat is not null) ||
-        InferFormat(stage) is StructureFormatKind.Cup;
+        StructureSkeleton.InferFormat(stage) is StructureFormatKind.Cup;
 
     private static IReadOnlyList<string> BuildStructureIssues(
         Stage stage,
@@ -1202,21 +1202,10 @@ public static class StructureViewAssembler
         primary is null
             ? new StructureFormatSummaryDto(null, null, null, null)
             : new StructureFormatSummaryDto(
-                InferFormat(primary),
+                StructureSkeleton.InferFormat(primary),
                 primary.Id.Value,
                 primary.Name.Value,
                 primary.Status);
-
-    private static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.IsSwiss
-            ? StructureFormatKind.Swiss
-            : stage.Rounds.Count > 0
-                ? StructureFormatKind.Cup
-                : stage.Groups.Count > 0
-                    ? StructureFormatKind.Groups
-                    : stage.Matchdays.Count > 0
-                        ? StructureFormatKind.Championship
-                        : null;
 
     private static StructureTopologySummaryDto BuildStructureSummary(Stage? primary)
     {

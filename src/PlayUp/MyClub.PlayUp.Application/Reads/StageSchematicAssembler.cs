@@ -41,7 +41,7 @@ public static class StageSchematicAssembler
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(competitionStages);
 
-        var format = InferFormat(stage);
+        var format = StructureSkeleton.InferFormat(stage);
         var entries = EntryDisplayNames.ToEntries(competition);
 
         return format switch
@@ -847,15 +847,4 @@ public static class StageSchematicAssembler
         var perGroup = stage.PlacesPerGroup;
         return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
     }
-
-    private static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.IsSwiss
-            ? StructureFormatKind.Swiss
-            : stage.Rounds.Count > 0
-                ? StructureFormatKind.Cup
-                : stage.Groups.Count > 0
-                    ? StructureFormatKind.Groups
-                    : stage.Matchdays.Count > 0
-                        ? StructureFormatKind.Championship
-                        : null;
 }

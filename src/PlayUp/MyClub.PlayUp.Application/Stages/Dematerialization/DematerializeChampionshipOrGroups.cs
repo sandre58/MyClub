@@ -48,6 +48,9 @@ public static class DematerializeChampionshipOrGroups
         DematerializationPreflight.EnsureNoOrphanMatches(stage, stageMatches);
 
         var scope = ChampionshipOrGroupsMaterializationScope.Collect(stage, stageMatches);
+        DematerializationScopeGuard.EnsureAllAttachedMatchesLoaded(
+            scope.AttachedMatchIds,
+            scope.Matches);
         if (scope.Matches.Count == 0)
         {
             return new DematerializeChampionshipOrGroupsResult(RemovedMatchCount: 0);

@@ -9,6 +9,7 @@ import {
   Gauge,
   Monitor,
   Moon,
+  MoreVertical,
   Settings,
   Shield,
   Sun,
@@ -127,6 +128,11 @@ export function ChevronDownIcon({ size, ...props }: ShellIconProps) {
 /** Stepper / expand — chevron up. */
 export function ChevronUpIcon({ size, ...props }: ShellIconProps) {
   return <LucideIcon icon={ChevronUp} size={size} {...props} />;
+}
+
+/** Overflow / more actions (vertical kebab). */
+export function OverflowMenuIcon({ size, ...props }: ShellIconProps) {
+  return <LucideIcon icon={MoreVertical} size={size} {...props} />;
 }
 
 /** Theme preference — follow OS. */

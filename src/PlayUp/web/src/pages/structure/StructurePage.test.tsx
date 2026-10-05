@@ -429,16 +429,15 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Groupes' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('heading', { name: /Tirage/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('heading', { level: 4, name: /^Tirage$/i }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/équipes résolues/i)).toBeInTheDocument();
     const launch = screen.getByRole('button', { name: /Lancer le tirage/i });
-    expect(launch).toHaveAttribute('data-tone', 'emphasis');
-    expect(launch).toHaveTextContent(/équipes résolues/i);
+    expect(launch).toHaveClass('ds-btn--primary');
     expect(launch).not.toHaveTextContent(/Tirage aléatoire/i);
-    expect(launch.querySelector('.structure-draw-cta__chevron')).not.toBeNull();
     expect(
       screen.getByRole('button', { name: /^Paramètres$/i }),
     ).toBeInTheDocument();
@@ -457,43 +456,58 @@ describe('StructurePage Structure hub', () => {
   });
 
   it('shows secondary activate-draw CTA when DrawRules are absent', async () => {
+    const groups = groupesStage({
+      hasDrawRules: false,
+      drawExecutionBadge: undefined,
+      numberOfPots: null,
+      actions: ['ReplaceDrawRules'],
+    });
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
           kind: 'Groups',
-          primaryStageId: groupesStage().stageId,
+          primaryStageId: groups.stageId,
           primaryStageName: 'Groupes',
           primaryStageStatus: 'Draft',
         },
-        stages: [
-          groupesStage({
-            hasDrawRules: false,
-            drawExecutionBadge: undefined,
-            numberOfPots: null,
-            actions: ['ReplaceDrawRules'],
-          }),
-        ],
+        stages: [groups],
       }),
     );
+    vi.mocked(fetchStageOverview).mockResolvedValue({
+      id: groups.stageId,
+      competitionId,
+      name: 'Groupes',
+      status: 'Draft',
+      rounds: [],
+      slots: [],
+      draws: [],
+    });
+    vi.mocked(fetchStageSchematic).mockResolvedValue({
+      stageId: groups.stageId,
+      competitionId,
+      name: 'Groupes',
+      status: 'Draft',
+      formatKind: 'Groups',
+      cases: [],
+      connections: [],
+    });
 
     renderStructurePage();
 
     expect(
-      await screen.findByRole('button', { name: /Activer le tirage/i }),
+      await screen.findByRole('heading', { name: /Occupation des places/i }),
     ).toBeInTheDocument();
+    const placementTile = document.getElementById('operational-placement');
+    expect(placementTile).not.toBeNull();
+    const activate = within(placementTile!).getByRole('button', {
+      name: /^Activer le tirage$/i,
+    });
     expect(
       screen.queryByRole('button', { name: /Lancer le tirage/i }),
     ).not.toBeInTheDocument();
-    const activate = screen.getByRole('button', {
-      name: /Activer le tirage/i,
-    });
-    expect(activate).toHaveAttribute('data-tone', 'ghost');
-    expect(activate).toHaveTextContent(/placer les équipes/i);
+    expect(activate).toHaveClass('ds-btn--primary');
     expect(
       screen.queryByRole('button', { name: /Paramètres du tirage/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /Désactiver le tirage/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -1091,7 +1105,7 @@ describe('StructurePage Structure hub', () => {
     expect(screen.queryByText(/équipes à compléter/i)).not.toBeInTheDocument();
   });
 
-  it('shows frozen materialize gap as attention issue in hero meta', async () => {
+  it('shows frozen materialize gap in Matchs tile gauge, not hero copy', async () => {
     const groups = groupesStage({
       status: 'Running',
       hasDrawRules: false,
@@ -1140,11 +1154,14 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    const message = await screen.findByText(
-      /Il reste 3 confrontations sans match créé/i,
-    );
-    const issue = message.closest('.structure-phase-rail__issue');
-    expect(issue).toHaveAttribute('data-tone', 'attention');
+    const matchsTile = await screen.findByRole('heading', { name: /^Matchs$/i });
+    expect(
+      screen.queryByText(/Il reste 3 confrontations sans match créé/i),
+    ).not.toBeInTheDocument();
+    const productionTile = matchsTile.closest('section');
+    expect(productionTile).toHaveTextContent(/match créés/i);
+    expect(productionTile).toHaveTextContent('3');
+    expect(productionTile).toHaveTextContent('6');
     expect(
       screen.queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();
