@@ -302,6 +302,11 @@
       "overflowAria": "Produced matches actions",
       "placementOverflowAria": "Place occupancy actions",
       "syncing": "Updating…",
+      "cluster": {
+        "places": "Places",
+        "draw": "Draw",
+        "matches": "Matches"
+      },
       "placement": {
         "title": "Place occupancy",
         "groupPlacer": "Place",

@@ -144,6 +144,7 @@ describe('StructureProductionOperationalSection', () => {
     expect(
       screen.queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();
+    expect(screen.queryByText(/match créés/i)).not.toBeInTheDocument();
   });
 
   it('opens dematerialize confirm and calls dematerializePhase', async () => {
@@ -165,6 +166,45 @@ describe('StructureProductionOperationalSection', () => {
       within(dialog).getByRole('button', { name: /Retirer les matchs/i }),
     );
     expect(dematerializePhase).toHaveBeenCalledWith(baseStage.stageId);
+  });
+
+  it('labels the Matches cluster when embedded in the operational bar', () => {
+    const materialize = {
+      commandCode: 'MaterializeMatches' as const,
+      labelVariant: 'create' as const,
+      determinedCount: 6,
+      eligibleCount: 6,
+      materializedCount: 0,
+      commandEnabled: true,
+      confrontations: [],
+    };
+    const presentation = classifyMaterializePresentation(
+      materialize,
+      'Draft',
+      'Draft',
+    );
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    render(
+      <MemoryRouter>
+        <QueryClientProvider client={queryClient}>
+          <StructureProductionOperationalSection
+            competitionId="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+            competitionStatus="Draft"
+            stage={{ ...baseStage, materialize }}
+            presentation={presentation}
+            embeddedInSection
+          />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    const matchesGroup = screen.getByRole('group', { name: 'Matchs' });
+    expect(within(matchesGroup).getByText('match créés')).toBeInTheDocument();
+    expect(
+      document.getElementById('operational-production'),
+    ).not.toBeInTheDocument();
   });
 
   it('hides dematerialize action when read blocks it', () => {

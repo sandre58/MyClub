@@ -302,6 +302,11 @@
       "overflowAria": "Actions sur les matchs produits",
       "placementOverflowAria": "Actions sur l’occupation des places",
       "syncing": "Mise à jour…",
+      "cluster": {
+        "places": "Places",
+        "draw": "Tirage",
+        "matches": "Matchs"
+      },
       "placement": {
         "title": "Occupation des places",
         "groupPlacer": "Placer",

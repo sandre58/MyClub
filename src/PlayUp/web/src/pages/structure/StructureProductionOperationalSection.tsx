@@ -28,6 +28,7 @@ import {
 } from './structureMaterializeCopy';
 import { dematerializeDisabledCaption } from './structureDematerializeCopy';
 import { productionRatio } from './structureOperationalCopy';
+import { StructureOperationalActionGroup } from './StructureOperationalActionGroup';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import { StructureOperationalTile } from './StructureOperationalTile';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
@@ -136,10 +137,10 @@ export function StructureProductionOperationalSection({
     return null;
   }
 
-  const ratio = productionRatio(materialize ?? undefined);
+  const gaugeRatio = productionRatio(materialize ?? undefined);
   const poolTone =
-    ratio != null
-      ? resolveDrawCtaPoolTone(ratio.filled, ratio.capacity)
+    gaugeRatio != null
+      ? resolveDrawCtaPoolTone(gaugeRatio.filled, gaugeRatio.capacity)
       : 'neutral';
   const showMaterializePrimary =
     materialize != null && presentation === 'actionable';
@@ -192,7 +193,7 @@ export function StructureProductionOperationalSection({
     </>
   ) : undefined;
 
-  const hasGauge = ratio != null;
+  const hasGauge = gaugeRatio != null;
   const meterCaption = t('fiche.operational.production.meterCaptionMatches');
 
   const dematerializeTooltip =
@@ -239,70 +240,92 @@ export function StructureProductionOperationalSection({
       ? t('fiche.operational.syncing')
       : null;
 
+  const gaugeBlock = hasGauge ? (
+    <div className="structure-operational-state__gauge-block">
+      <StructureOperationalRatioGauge
+        current={gaugeRatio!.filled}
+        capacity={gaugeRatio!.capacity}
+        caption={meterCaption}
+        ariaLabel={t('fiche.operational.production.meterAria')}
+        poolTone={materialize ? materializeRatioTone(materialize) : poolTone}
+      />
+      {productionGaugeSyncLabel ? (
+        <p className="structure-operational-tile__sync-status" role="status">
+          <PendingLabel>{productionGaugeSyncLabel}</PendingLabel>
+        </p>
+      ) : null}
+    </div>
+  ) : null;
+
+  const showProductionActions =
+    showMaterializePrimary ||
+    dematerializeActionButton != null ||
+    showViewMatchesLink;
+
+  const productionActions = showProductionActions ? (
+      <div className="structure-operational-production__footer">
+        <div className="structure-operational-state__cluster-actions structure-operational-production__footer-actions">
+          {showMaterializePrimary && materialize ? (
+            <button
+              type="button"
+              className="ds-btn ds-btn--primary ds-btn--sm"
+              disabled={materializeMutation.isPending}
+              onClick={() => materializeMutation.mutate()}
+            >
+              {materializeMutation.isPending ? (
+                <PendingLabel>{t('fiche.materialize.submitting')}</PendingLabel>
+              ) : (
+                <>
+                  <CreateMatchesIcon size="sm" />
+                  {materializeActionLabel(materialize, tActions)}
+                </>
+              )}
+            </button>
+          ) : null}
+          {dematerializeActionButton}
+        </div>
+        {showViewMatchesLink ? (
+          <TextLink to={`/stages/${stage.stageId}/matches`}>
+            {t('fiche.materialize.viewPhaseMatches')}
+          </TextLink>
+        ) : null}
+      </div>
+    ) : null;
+
+  const productionCluster = (
+    <div className="structure-operational-state__cluster">
+      <StructureOperationalActionGroup
+        label={t('fiche.operational.cluster.matches')}
+        labelId="operational-production-matches-label"
+      >
+        <>
+          {gaugeBlock}
+          {notes}
+          {productionActions}
+        </>
+      </StructureOperationalActionGroup>
+    </div>
+  );
+
   return (
     <>
-    <StructureOperationalTile
-      id="operational-production"
-      title={t('fiche.operational.production.titleMatches')}
-      icon={<MatchesStatIcon size="sm" />}
-      showHead={!embeddedInSection}
-      gauge={
-        <>
-          <div className="structure-operational-production__gauge-row">
-            <div className="structure-operational-production__gauge">
-              {hasGauge ? (
-                <StructureOperationalRatioGauge
-                  current={ratio.filled}
-                  capacity={ratio.capacity}
-                  caption={meterCaption}
-                  ariaLabel={t('fiche.operational.production.meterAria')}
-                  poolTone={
-                    materialize ? materializeRatioTone(materialize) : poolTone
-                  }
-                />
-              ) : null}
-            </div>
-          </div>
-          {productionGaugeSyncLabel ? (
-            <p className="structure-operational-tile__sync-status" role="status">
-              <PendingLabel>{productionGaugeSyncLabel}</PendingLabel>
-            </p>
-          ) : null}
-          {(showMaterializePrimary && materialize) ||
-          dematerializeActionButton ||
-          showViewMatchesLink ? (
-            <div className="structure-operational-production__footer">
-              <div className="structure-operational-production__footer-actions">
-                {showMaterializePrimary && materialize ? (
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--primary ds-btn--sm"
-                    disabled={materializeMutation.isPending || presentation === 'blocked'}
-                    onClick={() => materializeMutation.mutate()}
-                  >
-                    {materializeMutation.isPending ? (
-                      <PendingLabel>{t('fiche.materialize.submitting')}</PendingLabel>
-                    ) : (
-                      <>
-                        <CreateMatchesIcon size="sm" />
-                        {materializeActionLabel(materialize, tActions)}
-                      </>
-                    )}
-                  </button>
-                ) : null}
-                {dematerializeActionButton}
-              </div>
-              {showViewMatchesLink ? (
-                <TextLink to={`/stages/${stage.stageId}/matches`}>
-                  {t('fiche.materialize.viewPhaseMatches')}
-                </TextLink>
-              ) : null}
-            </div>
-          ) : null}
-        </>
-      }
-      notes={notes}
-    />
+    {embeddedInSection ? (
+      productionCluster
+    ) : (
+      <StructureOperationalTile
+        id="operational-production"
+        title={t('fiche.operational.production.titleMatches')}
+        icon={<MatchesStatIcon size="sm" />}
+        showHead
+        gauge={
+          <>
+            {gaugeBlock}
+            {productionActions}
+          </>
+        }
+        notes={notes}
+      />
+    )}
     {dematerialize ? (
       <ConfirmDialog
         open={dematerializeConfirmOpen}

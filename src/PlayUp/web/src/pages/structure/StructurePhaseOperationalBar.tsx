@@ -37,35 +37,39 @@ export function StructurePhaseOperationalBar({
     return null;
   }
 
+  const sectionAriaLabel =
+    showPlacement && showProduction
+      ? `${t('fiche.section.phaseState')} — ${t('fiche.section.phaseProduction')}`
+      : showPlacement
+        ? t('fiche.section.phaseState')
+        : t('fiche.section.phaseProduction');
+
   return (
     <div className="structure-phase-operational-bar">
-      {showPlacement && placement ? (
-        <section
-          className="structure-fiche-section structure-fiche-section--operational"
-          aria-label={t('fiche.section.phaseState')}
-        >
-          <StructurePlacementOperationalSection
-            {...placement}
-            embeddedInSection
-            structureHubRefreshing={structureHubRefreshing}
-          />
-        </section>
-      ) : null}
-      {showProduction ? (
-        <section
-          className="structure-fiche-section structure-fiche-section--operational"
-          aria-label={t('fiche.section.phaseProduction')}
-        >
-          <StructureProductionOperationalSection
-            competitionId={competitionId}
-            competitionStatus={competitionStatus}
-            stage={stage}
-            presentation={presentation}
-            embeddedInSection
-            structureHubRefreshing={structureHubRefreshing}
-          />
-        </section>
-      ) : null}
+      <section
+        className="structure-fiche-section structure-fiche-section--operational"
+        aria-label={sectionAriaLabel}
+      >
+        <div className="structure-operational-cluster-stack">
+          {showPlacement && placement ? (
+            <StructurePlacementOperationalSection
+              {...placement}
+              embeddedInSection
+              structureHubRefreshing={structureHubRefreshing}
+            />
+          ) : null}
+          {showProduction ? (
+            <StructureProductionOperationalSection
+              competitionId={competitionId}
+              competitionStatus={competitionStatus}
+              stage={stage}
+              presentation={presentation}
+              embeddedInSection
+              structureHubRefreshing={structureHubRefreshing}
+            />
+          ) : null}
+        </div>
+      </section>
     </div>
   );
 }

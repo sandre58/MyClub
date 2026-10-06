@@ -1158,11 +1158,10 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByText(/Il reste 3 confrontations sans match créé/i),
     ).not.toBeInTheDocument();
-    const productionTile = document.getElementById('operational-production');
-    expect(productionTile).not.toBeNull();
-    expect(productionTile).toHaveTextContent(/match créés/i);
-    expect(productionTile).toHaveTextContent('3');
-    expect(productionTile).toHaveTextContent('6');
+    const matchesGroup = screen.getByRole('group', { name: 'Matchs' });
+    expect(within(matchesGroup).getByText(/match créés/i)).toBeInTheDocument();
+    expect(within(matchesGroup).getByText('3')).toBeInTheDocument();
+    expect(within(matchesGroup).getByText('6')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();

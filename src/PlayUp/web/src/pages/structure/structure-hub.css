@@ -84,6 +84,13 @@
   margin-top: var(--space-4);
 }
 
+.structure-operational-cluster-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
 .structure-fiche {
   display: flex;
   flex-direction: column;
@@ -1268,6 +1275,11 @@
   min-width: 0;
 }
 
+.structure-operational-state__cluster .structure-operational-tile__group-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .structure-operational-state__gauge-block {
   min-width: 0;
 }
@@ -1640,10 +1652,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-8);
-}
-
-.structure-operational-tile__group-row .ds-btn--primary {
-  flex-grow: 1;
 }
 
 .structure-operational-tile__state-empty {

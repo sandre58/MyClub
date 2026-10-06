@@ -13,9 +13,9 @@ import {
 } from '../../design-system/icons/contentIcons';
 import { SettingsNavIcon } from '../../design-system/icons/shellIcons';
 import { PendingLabel } from '../../ui';
+import { StructureOperationalActionGroup } from './StructureOperationalActionGroup';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import { StructureOperationalTile } from './StructureOperationalTile';
-import { StructureOperationalOverflowMenu } from './StructureOperationalOverflowMenu';
 import {
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
@@ -77,11 +77,8 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
       ? resolvePlaceOccupancyTone(props.occupiedPlacesCount, capacity)
       : 'neutral';
 
-  const overflowItems = [];
-
   const showDrawOpen = props.showDrawCta;
   const showDrawActivate = props.showActivateDrawCta;
-  const showDrawActions = showDrawOpen || showDrawActivate;
   const deactivateBlocked = props.hasNonCancelledDraw || props.deactivateDrawPending;
 
   const drawPrimary = showDrawOpen || showDrawActivate;
@@ -284,8 +281,7 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
     drawPrimaryControl != null ||
     releaseControl != null ||
     settingsControl != null ||
-    deactivateControl != null ||
-    overflowItems.length > 0;
+    deactivateControl != null;
 
   const showOccupancyCluster = showOccupancyGauge || props.canManualPlace;
 
@@ -310,37 +306,47 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
       >
         {showOccupancyCluster ? (
           <div className="structure-operational-state__cluster">
-            {showOccupancyGauge ? (
-              <div className="structure-operational-state__gauge-block">
-                {occupancyGauge}
-                {occupancySyncNote}
-              </div>
-            ) : null}
-            {manualControl ? (
-              <div className="structure-operational-state__cluster-actions">
-                {manualControl}
-              </div>
-            ) : null}
+            <StructureOperationalActionGroup
+              label={t('fiche.operational.cluster.places')}
+              labelId="operational-placement-places-label"
+            >
+              <>
+                {showOccupancyGauge ? (
+                  <div className="structure-operational-state__gauge-block">
+                    {occupancyGauge}
+                    {occupancySyncNote}
+                  </div>
+                ) : null}
+                {manualControl ? (
+                  <div className="structure-operational-state__cluster-actions">
+                    {manualControl}
+                  </div>
+                ) : null}
+              </>
+            </StructureOperationalActionGroup>
           </div>
         ) : null}
         {showDrawCluster ? (
           <div className="structure-operational-state__cluster">
-            {showPoolState ? (
-              <div className="structure-operational-state__gauge-block">{drawPoolGauge}</div>
-            ) : null}
-            {drawBlockedNote}
-            <div className="structure-operational-state__cluster-actions structure-operational-state__cluster-actions--draw">
-              {drawPrimaryControl}
-              {releaseControl}
-              {settingsControl}
-              {deactivateControl}
-              {overflowItems.length > 0 ? (
-                <StructureOperationalOverflowMenu
-                  items={overflowItems}
-                  ariaLabel={t('fiche.operational.placementOverflowAria')}
-                />
-              ) : null}
-            </div>
+            <StructureOperationalActionGroup
+              label={t('fiche.operational.cluster.draw')}
+              labelId="operational-placement-draw-label"
+            >
+              <>
+                {showPoolState ? (
+                  <div className="structure-operational-state__gauge-block">
+                    {drawPoolGauge}
+                  </div>
+                ) : null}
+                {drawBlockedNote}
+                <div className="structure-operational-state__cluster-actions structure-operational-state__cluster-actions--draw">
+                  {drawPrimaryControl}
+                  {releaseControl}
+                  {settingsControl}
+                  {deactivateControl}
+                </div>
+              </>
+            </StructureOperationalActionGroup>
           </div>
         ) : null}
       </div>
@@ -350,12 +356,31 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
 
   const hasNotes = releaseNote || deactivateNote;
 
+  if (props.embeddedInSection) {
+    return (
+      <>
+        {stateGrid}
+        {hasNotes ? (
+          <div className="structure-operational-tile__notes">
+            {releaseNote}
+            {deactivateNote}
+          </div>
+        ) : null}
+        {props.placesDiagnostics ? (
+          <div className="structure-operational-tile__trail">
+            {props.placesDiagnostics}
+          </div>
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <StructureOperationalTile
       id="operational-placement"
       title={t('fiche.operational.placement.title')}
       icon={<LayersIcon size="sm" />}
-      showHead={!props.embeddedInSection}
+      showHead
       gauge={stateGrid}
       notes={
         hasNotes ? (
