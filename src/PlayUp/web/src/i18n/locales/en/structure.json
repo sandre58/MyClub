@@ -64,6 +64,12 @@
     "structureNotReady": "Structure to finalize",
     "problemsToHandle_one": "{{count}} problem to handle",
     "problemsToHandle_other": "{{count}} problems to handle",
+    "bannerProblemsIdentified_one": "{{count}} problem identified",
+    "bannerProblemsIdentified_other": "{{count}} problems identified",
+    "bannerPriorityActions_one": "{{count}} priority action",
+    "bannerPriorityActions_other": "{{count}} priority actions",
+    "viewAttentionPhase": "View {{name}}",
+    "viewAttentionPhaseAria": "Go to phase {{name}}",
     "statsAria": "Gap summary",
     "family": {
       "graph": "Graph",

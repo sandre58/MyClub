@@ -948,7 +948,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/1 problème à traiter/i),
+      await screen.findByText(/1 problème identifié · 1 action prioritaire/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Corriger la qualification/i }),

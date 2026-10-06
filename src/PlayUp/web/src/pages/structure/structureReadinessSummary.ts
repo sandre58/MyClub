@@ -17,6 +17,11 @@ import {
   structureDiagnosticMeta,
   type StructureDiagnosticFamily,
 } from './structureDiagnosticPresentation';
+import { collectAllStructureReadinessActionItems } from './structureReadinessActions';
+import {
+  stageHasEngagedMissingPots,
+  stagePresentedIssueCodes,
+} from './structureStagePresentedIssues';
 
 /** Ambient kinds on a topology tile (unified pastille). Not structureIssues. */
 export type StageAmbientKind =
@@ -41,7 +46,11 @@ export type StructureFamilyCount = {
 export type StructureReadinessSummary = {
   /** Issue counts by business family (header vocabulary). */
   familyCounts: StructureFamilyCount[];
-  /** Total diagnostic occurrences across families (+ shape / missing pots). */
+  /** Presented diagnostics visible on Structure (projection + synthèses). */
+  presentedProblemCount: number;
+  /** Diagnostics with a banner CTA (full list, not capped at 3). */
+  actionableCount: number;
+  /** @deprecated Use presentedProblemCount — kept for tests during transition. */
   totalProblemCount: number;
   /** Phases without graph/shortfall but Groups + engaged draw + missing pots (E1/E6). */
   missingPotsPhaseCount: number;
@@ -111,19 +120,7 @@ export function stageHasPopulationShortfall(
   return gap != null && gap < 0;
 }
 
-/**
- * E1 / E6 — MissingPotRules construction gap.
- * Strictly aligned with Host: Groups && HasDrawRules && NumberOfPots == null.
- */
-export function stageHasEngagedMissingPots(
-  stage: StructureStageHubSummary,
-): boolean {
-  return (
-    stage.formatKind === 'Groups' &&
-    stage.hasDrawRules &&
-    stage.numberOfPots == null
-  );
-}
+export { stageHasEngagedMissingPots } from './structureStagePresentedIssues';
 
 /** Ambient signals for a tile — one kind per family present on the stage (UX-projected). */
 export function stageAmbientKinds(
@@ -166,6 +163,8 @@ export function computeStructureReadinessSummary(
   if (stages.length === 0) {
     return {
       familyCounts: [],
+      presentedProblemCount: 0,
+      actionableCount: 0,
       totalProblemCount: 0,
       missingPotsPhaseCount: 0,
       shapeInvalid: false,
@@ -180,14 +179,7 @@ export function computeStructureReadinessSummary(
   let firstAttentionStageId: string | null = null;
 
   for (const stage of stages) {
-    const raw = [...(stage.structureIssues ?? [])];
-    if (
-      stageHasPopulationShortfall(data, stage) &&
-      !raw.includes('PopulationShortfall')
-    ) {
-      raw.push('PopulationShortfall');
-    }
-    const presented = projectPresentedStageIssueCodes(raw, stage);
+    const presented = stagePresentedIssueCodes(data, stage);
     if (presented.length > 0) {
       firstAttentionStageId ??= stage.stageId;
       presentedCodes.push(...presented);
@@ -205,16 +197,23 @@ export function computeStructureReadinessSummary(
 
   const shapeInvalid = data.readiness.blockers.includes('CupBracketInvalid');
 
-  const totalProblemCount =
+  const presentedProblemCount =
     presentedCodes.length +
     missingPotsPhaseCount +
     (shapeInvalid ? 1 : 0);
 
-  const hasAny = totalProblemCount > 0;
+  const hasAny = presentedProblemCount > 0;
+
+  const actionableCount = collectAllStructureReadinessActionItems(
+    data,
+    stages,
+  ).length;
 
   return {
     familyCounts,
-    totalProblemCount,
+    presentedProblemCount,
+    actionableCount,
+    totalProblemCount: presentedProblemCount,
     missingPotsPhaseCount,
     shapeInvalid,
     hasAny,

@@ -1,7 +1,6 @@
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import type { StructureSectionId } from './structureHubSections';
 import {
-  projectPresentedStageIssueCodes,
   structureDiagnosticMeta,
   structureDiagnosticTone,
   type StructureDiagnosticCta,
@@ -10,8 +9,8 @@ import {
 } from './structureDiagnosticPresentation';
 import {
   stageHasEngagedMissingPots,
-  stageHasPopulationShortfall,
-} from './structureReadinessSummary';
+  stagePresentedIssueCodes,
+} from './structureStagePresentedIssues';
 import {
   structureDeepLink,
   type StructureFocusId,
@@ -202,10 +201,10 @@ function pushSyntheticItem(
 }
 
 /**
- * Top priority correction entries for the hub banner (max 3).
+ * All banner-eligible correction entries (sorted, not capped).
  * Uses the same stage issue projection as readiness summary.
  */
-export function collectStructureReadinessActionItems(
+export function collectAllStructureReadinessActionItems(
   data: StructureView,
   stages: StructureStageHubSummary[],
 ): StructureReadinessActionItem[] {
@@ -217,14 +216,7 @@ export function collectStructureReadinessActionItems(
   const competitionId = data.competitionId;
 
   for (const stage of stages) {
-    const raw = [...(stage.structureIssues ?? [])];
-    if (
-      stageHasPopulationShortfall(data, stage) &&
-      !raw.includes('PopulationShortfall')
-    ) {
-      raw.push('PopulationShortfall');
-    }
-    const presented = projectPresentedStageIssueCodes(raw, stage);
+    const presented = stagePresentedIssueCodes(data, stage);
     for (const code of presented) {
       pushIssueItem(items, { competitionId, stage, code });
     }
@@ -267,5 +259,16 @@ export function collectStructureReadinessActionItems(
     return a.code.localeCompare(b.code);
   });
 
-  return items.slice(0, MAX_ACTION_ITEMS);
+  return items;
+}
+
+/** Top priority correction entries for the hub banner (max 3). */
+export function collectStructureReadinessActionItems(
+  data: StructureView,
+  stages: StructureStageHubSummary[],
+): StructureReadinessActionItem[] {
+  return collectAllStructureReadinessActionItems(data, stages).slice(
+    0,
+    MAX_ACTION_ITEMS,
+  );
 }

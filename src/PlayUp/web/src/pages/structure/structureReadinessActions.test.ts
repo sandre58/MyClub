@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import {
+  collectAllStructureReadinessActionItems,
   collectStructureReadinessActionItems,
   resolveStructureDiagnosticNavigation,
 } from './structureReadinessActions';
@@ -112,6 +113,9 @@ describe('structureReadinessActions', () => {
       'danger',
       'attention',
     ]);
+    expect(
+      collectAllStructureReadinessActionItems(baseView({ stages }), stages),
+    ).toHaveLength(4);
   });
 
   it('maps qualification issues to section deep-link', () => {

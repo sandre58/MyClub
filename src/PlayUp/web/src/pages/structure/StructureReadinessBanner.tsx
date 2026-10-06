@@ -13,7 +13,9 @@ import {
   collectStructureReadinessActionItems,
   type StructureReadinessActionItem,
 } from './structureReadinessActions';
+import { structureReadinessBannerHeadline } from './structureReadinessBannerCopy';
 import type { StructureReadinessSummary } from './structureReadinessSummary';
+import { structureDeepLink } from './structureNavigation';
 
 function actionButtonClass(tone: StructureDiagnosticTone): string {
   const base = 'ds-btn ds-btn--sm structure-status__action-link';
@@ -96,6 +98,24 @@ export function StructureReadinessBanner({
       selectedStageId != null &&
       actions.some((item) => item.stageId !== selectedStageId));
 
+  const attentionStage =
+    summary.firstAttentionStageId != null
+      ? stages.find((s) => s.stageId === summary.firstAttentionStageId)
+      : undefined;
+
+  const showViewAttentionPhase =
+    attentionStage != null &&
+    (actions.length === 0 ||
+      stages.length > 1 ||
+      (selectedStageId != null &&
+        selectedStageId !== summary.firstAttentionStageId));
+
+  const headline = structureReadinessBannerHeadline({
+    presentedProblemCount: summary.presentedProblemCount,
+    priorityActionsShown: actions.length,
+    t,
+  });
+
   return (
     <div
       className="structure-status structure-status--banner structure-status--banner-compact"
@@ -110,11 +130,26 @@ export function StructureReadinessBanner({
             <OverviewAttentionIcon size="sm" aria-hidden="true" />
           )}
           <p id="readiness-heading" className="structure-status__title">
-            {t('readiness.problemsToHandle', {
-              count: summary.totalProblemCount,
-            })}
+            {headline}
           </p>
         </div>
+
+        {showViewAttentionPhase && attentionStage ? (
+          <p className="structure-status__detail">
+            <Link
+              className="ds-text-link"
+              to={structureDeepLink({
+                competitionId: data.competitionId,
+                stageId: attentionStage.stageId,
+              })}
+              aria-label={t('readiness.viewAttentionPhaseAria', {
+                name: attentionStage.name,
+              })}
+            >
+              {t('readiness.viewAttentionPhase', { name: attentionStage.name })}
+            </Link>
+          </p>
+        ) : null}
 
         {actions.length > 0 ? (
           <ul

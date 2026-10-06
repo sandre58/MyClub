@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary, StructureView } from '../../types';
+import { collectAllStructureReadinessActionItems } from './structureReadinessActions';
 import {
   computeStructureReadinessSummary,
   classifyReadinessHeaderTone,
@@ -130,6 +131,7 @@ describe('structureReadinessSummary', () => {
     expect(summary.missingPotsPhaseCount).toBe(0);
     expect(summary.hasAny).toBe(true);
     expect(summary.headerTone).toBe('danger');
+    expect(summary.presentedProblemCount).toBe(2);
     expect(summary.totalProblemCount).toBe(2);
   });
 
@@ -261,6 +263,44 @@ describe('structureReadinessSummary', () => {
       'capacity',
       'drawPots',
     ]);
+  });
+
+  it('separates presented problem count from actionable count', () => {
+    const stages = [
+      stage({
+        stageId: 's1',
+        name: 'A',
+        structureIssues: ['SlotFeedMissing'],
+      }),
+      stage({
+        stageId: 's2',
+        name: 'B',
+        structureIssues: ['CycleDetected'],
+      }),
+      stage({
+        stageId: 's3',
+        name: 'C',
+        structureIssues: ['NonRootUnfed'],
+        affectationEntryCount: 8,
+        compositionCapacity: 8,
+      }),
+      stage({
+        stageId: 's4',
+        name: 'D',
+        structureIssues: ['AuthoredAwardUnreachable'],
+        formatKind: 'Cup',
+        hasStandingRules: false,
+        groupCount: 0,
+        affectationEntryCount: 2,
+        compositionCapacity: 2,
+      }),
+    ];
+    const data = view(stages);
+    const summary = computeStructureReadinessSummary(data, stages);
+    const actionable = collectAllStructureReadinessActionItems(data, stages).length;
+    expect(summary.presentedProblemCount).toBeGreaterThan(3);
+    expect(summary.actionableCount).toBe(actionable);
+    expect(summary.actionableCount).toBeGreaterThan(3);
   });
 
   it('classifies header tone by diagnostic gravity, not child chrome', () => {
