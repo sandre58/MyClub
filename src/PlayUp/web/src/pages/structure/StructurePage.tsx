@@ -38,7 +38,9 @@ import { type StructureSectionId } from './structureHubSections';
 import { topologyCardFacts } from './structureTopologyFacts';
 import {
   computeStructureReadinessSummary,
+  stageAmbientDetailLabels,
   stageAmbientKinds,
+  stageAmbientPastilleLabel,
   type StructureReadinessSummary,
 } from './structureReadinessSummary';
 import {
@@ -380,14 +382,18 @@ function TopologyPanel({
                   </span>
                   <span className="structure-topology__tile-status">
                     <StageStatusBadge status={stage.status} density="compact" />
-                    {ambient.length > 0 && (
-                      <span
-                        className="structure-topology__issue"
-                        aria-label={t('hub.phaseGapsAmbient')}
+                    {ambient.length > 0 ? (
+                      <Tooltip
+                        content={stageAmbientDetailLabels(t, ambient).join('\n')}
                       >
-                        <StructureIssueIcon size="sm" aria-hidden="true" />
-                      </span>
-                    )}
+                        <span
+                          className="structure-topology__issue"
+                          aria-label={stageAmbientPastilleLabel(t, ambient)}
+                        >
+                          <StructureIssueIcon size="sm" aria-hidden="true" />
+                        </span>
+                      </Tooltip>
+                    ) : null}
                   </span>
                 </span>
 

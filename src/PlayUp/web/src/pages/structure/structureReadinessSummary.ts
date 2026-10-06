@@ -152,6 +152,32 @@ export function stageAmbientKinds(
   return kinds;
 }
 
+export function stageAmbientKindLabel(
+  t: (key: string) => string,
+  kind: StageAmbientKind,
+): string {
+  if (kind === 'drawPots') {
+    return t('hub.phaseDrawPotsAmbient');
+  }
+  return t(`hub.phaseFamilyAmbient.${kind}`);
+}
+
+export function stageAmbientDetailLabels(
+  t: (key: string) => string,
+  kinds: StageAmbientKind[],
+): string[] {
+  return kinds.map((kind) => stageAmbientKindLabel(t, kind));
+}
+
+/** Accessible name + tooltip body for the topology ambient pastille. */
+export function stageAmbientPastilleLabel(
+  t: (key: string) => string,
+  kinds: StageAmbientKind[],
+): string {
+  const detail = stageAmbientDetailLabels(t, kinds).join(' · ');
+  return `${t('hub.phaseGapsAmbient')} — ${detail}`;
+}
+
 /**
  * PageHead synthesis by business family (presented problems only).
  * Birth (0 phase) yields an empty summary — empty state owns that UX.

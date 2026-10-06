@@ -966,9 +966,10 @@ describe('StructurePage Structure hub', () => {
     expect(
       within(topology).queryByRole('button', { name: /Voir la phase/i }),
     ).not.toBeInTheDocument();
-    // Pastille ambient = detection only (no diagnostic tooltip / text in topology)
     expect(
-      within(topology).getByLabelText(/Écarts sur cette phase/i),
+      within(topology).getByLabelText(
+        /Écarts sur cette phase — Graphe à corriger/i,
+      ),
     ).toBeInTheDocument();
     expect(
       within(topology).queryByText(/Destination de qualification introuvable/i),
