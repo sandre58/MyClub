@@ -33,7 +33,6 @@ import {
   RoundsStatIcon,
   StandingRulesIcon,
   StructureIcon,
-  StructureIssueIcon,
   SwissFormatIcon,
   TrashIcon,
   UnlockIcon,
@@ -68,12 +67,12 @@ import {
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
+import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { StructurePhaseOperationalBar } from './StructurePhaseOperationalBar';
 import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
-import { buildPhaseContextSummary } from './structureTopologyFacts';
 import {
   areDrawRulesLockedByExecution,
   drawResolutionPlacementCount,
@@ -406,14 +405,6 @@ export function StructurePhaseFiche({
     );
   }, [stage, schematicQuery.isSuccess, schematicQuery.data]);
 
-  const phaseContextSummary = useMemo(() => {
-    if (!singlePhaseHub || !stage) {
-      return null;
-    }
-    const summary = buildPhaseContextSummary(stage, t);
-    return summary.length > 0 ? summary : null;
-  }, [singlePhaseHub, stage, t]);
-
   if (!stage) {
     return (
       <section className="structure-fiche" aria-labelledby="fiche-empty">
@@ -661,7 +652,7 @@ export function StructurePhaseFiche({
                 className="structure-phase-rail__issue-icon"
                 aria-hidden="true"
               >
-                <StructureIssueIcon size="sm" />
+                <StructureDiagnosticIssueIcon tone={tone} />
               </span>
               <span>
                 {t(structureDiagnosticTitleKey(code), {
@@ -1019,9 +1010,6 @@ export function StructurePhaseFiche({
             )}
           </div>
         </div>
-        {phaseContextSummary ? (
-          <p className="structure-fiche__context">{phaseContextSummary}</p>
-        ) : null}
       </header>
 
       {showHeroStructureActions && stage ? (

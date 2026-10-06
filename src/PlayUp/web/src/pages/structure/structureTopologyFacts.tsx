@@ -7,7 +7,6 @@ import {
   MatchesStatIcon,
   RoundsStatIcon,
 } from '../../design-system/icons/contentIcons';
-import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import type { StructureStageHubSummary } from '../../types';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
 
@@ -95,6 +94,11 @@ export function topologyCardFacts(
           icon: <MatchdayStatIcon size="md" aria-hidden="true" />,
           value: matchdays,
         },
+        {
+          id: 'matches',
+          icon: <MatchesStatIcon size="md" aria-hidden="true" />,
+          value: matches,
+        },
         sizeFact,
         ...(placesFact ? [placesFact] : []),
       ];
@@ -118,22 +122,4 @@ export function topologyCardFacts(
     default:
       return placesFact ? [placesFact] : [];
   }
-}
-
-/** Single-phase hub: compact context under the fiche title (no topology column). */
-export function buildPhaseContextSummary(
-  stage: StructureStageHubSummary,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string {
-  const parts: string[] = [];
-  if (stage.formatKind) {
-    parts.push(structureFormatKindLabel(stage.formatKind));
-  }
-  if (stage.teamCount > 0) {
-    parts.push(t('fiche.phaseContextTeams', { count: stage.teamCount }));
-  }
-  for (const fact of topologyCardFacts(stage, t)) {
-    parts.push(fact.value);
-  }
-  return parts.join(' · ');
 }

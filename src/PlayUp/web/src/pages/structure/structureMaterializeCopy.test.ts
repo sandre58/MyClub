@@ -7,6 +7,7 @@ import {
   showMaterializeActionBlock,
   showMaterializeFrozenRemainingBanner,
   materializeFrozenRemainingCount,
+  showViewMaterializedMatchesLink,
 } from './structureMaterializeCopy';
 
 const base: StructureMaterialize = {
@@ -20,6 +21,30 @@ const base: StructureMaterialize = {
 };
 
 describe('structureMaterializeCopy', () => {
+  it('offers view matches link only when the stage has attached matches', () => {
+    expect(showViewMaterializedMatchesLink({ matchCount: 0 }, base)).toBe(false);
+    expect(
+      showViewMaterializedMatchesLink({ matchCount: 0 }, {
+        ...base,
+        materializedCount: 3,
+      }),
+    ).toBe(false);
+    expect(
+      showViewMaterializedMatchesLink({ matchCount: 4 }, {
+        ...base,
+        materializedCount: 0,
+      }),
+    ).toBe(false);
+    expect(
+      showViewMaterializedMatchesLink({ matchCount: 4 }, {
+        ...base,
+        materializedCount: 2,
+      }),
+    ).toBe(true);
+    expect(showViewMaterializedMatchesLink({ matchCount: 2 })).toBe(true);
+    expect(showViewMaterializedMatchesLink({ matchCount: 0 })).toBe(false);
+  });
+
   it('uses determinedCount as production target from the read', () => {
     expect(materializeProductionTarget({ ...base, materializedCount: 3 })).toBe(
       6,

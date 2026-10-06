@@ -93,6 +93,9 @@ describe('StructureProductionOperationalSection', () => {
     });
 
     expect(screen.getByText('match créés')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Voir les matchs/i }),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Créer les matchs/i }));
     expect(materializeMatches).toHaveBeenCalledWith(baseStage.stageId);
   });
@@ -102,6 +105,7 @@ describe('StructureProductionOperationalSection', () => {
       {
         ...baseStage,
         status: 'Running',
+        matchCount: 3,
         materialize: {
           commandCode: 'MaterializeMatches',
           labelVariant: 'exhausted',
@@ -121,11 +125,15 @@ describe('StructureProductionOperationalSection', () => {
     expect(
       screen.queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Voir les matchs/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows blocked state with read disabledReason when present', () => {
     renderSection({
       ...baseStage,
+      matchCount: 0,
       materialize: {
         commandCode: 'MaterializeMatches',
         labelVariant: 'idle',
@@ -145,6 +153,33 @@ describe('StructureProductionOperationalSection', () => {
       screen.queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/match créés/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Voir les matchs/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides view matches when materialize count is stale but stage has no attached matches', () => {
+    renderSection({
+      ...baseStage,
+      matchCount: 0,
+      materialize: {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'idle',
+        determinedCount: 0,
+        eligibleCount: 0,
+        materializedCount: 2,
+        commandEnabled: false,
+        disabledReason: 'NoDeterminedConfrontations',
+        confrontations: [],
+      },
+    });
+
+    expect(
+      screen.getByText(/Aucune confrontation n’est prête à être matérialisée/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Voir les matchs/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('opens dematerialize confirm and calls dematerializePhase', async () => {

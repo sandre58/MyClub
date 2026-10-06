@@ -9,9 +9,9 @@ import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   CreateMatchesIcon,
   MatchesStatIcon,
-  OverviewAttentionIcon,
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
+import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { notify } from '../../design-system/toastStore';
 import { MutationError, PendingLabel } from '../../ui';
 import { queryKeys } from '../../queryKeys';
@@ -24,6 +24,7 @@ import { invalidateAfterStructureMutation } from './structureInvalidation';
 import {
   materializeDisabledCaption,
   materializeRatioTone,
+  showViewMaterializedMatchesLink,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
 import { dematerializeDisabledCaption } from './structureDematerializeCopy';
@@ -173,11 +174,8 @@ export function StructureProductionOperationalSection({
               data-tone="attention"
               role="status"
             >
-              <span
-                className="structure-phase-rail__issue-icon"
-                aria-hidden="true"
-              >
-                <OverviewAttentionIcon size="sm" />
+              <span className="structure-phase-rail__issue-icon">
+                <StructureDiagnosticIssueIcon tone="attention" />
               </span>
               <span>{blockedCaption}</span>
             </li>
@@ -231,8 +229,7 @@ export function StructureProductionOperationalSection({
     </Tooltip>
     ) : null;
 
-  const showViewMatchesLink =
-    materialize != null && materialize.materializedCount > 0;
+  const showViewMatchesLink = showViewMaterializedMatchesLink(stage, materialize);
 
   const productionGaugeSyncLabel = dematerializeMutation.isPending
     ? t('fiche.dematerialize.submitting')

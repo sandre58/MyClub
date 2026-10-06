@@ -1,9 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { StructureIssueIcon } from '../../design-system/icons/contentIcons';
 import {
   structureDiagnosticTitleKey,
   structureDiagnosticTone,
 } from './structureDiagnosticPresentation';
+import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 
 export function StructureOperationalIssueBanner({ codes }: { codes: string[] }) {
   const { t } = useTranslation('structure');
@@ -28,7 +28,7 @@ export function StructureOperationalIssueBanner({ codes }: { codes: string[] }) 
                 className="structure-phase-rail__issue-icon"
                 aria-hidden="true"
               >
-                <StructureIssueIcon size="sm" />
+                <StructureDiagnosticIssueIcon tone={tone} />
               </span>
               <span>
                 {t(structureDiagnosticTitleKey(code), {

@@ -32,13 +32,6 @@
   }
 }
 
-.structure-fiche__context {
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-meta);
-  line-height: var(--leading-normal);
-  color: var(--color-text-secondary);
-}
-
 .structure-fiche__draw-hint {
   display: inline-flex;
   align-items: center;
@@ -876,6 +869,10 @@
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
+  color: var(--color-error);
+}
+
+.structure-phase-rail__issue[data-tone='danger'] {
   color: var(--color-error);
 }
 

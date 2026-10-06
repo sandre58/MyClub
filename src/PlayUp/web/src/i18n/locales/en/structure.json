@@ -245,8 +245,6 @@
       "phaseState": "Phase status",
       "phaseProduction": "Match production"
     },
-    "phaseContextTeams_one": "{{count}} team",
-    "phaseContextTeams_other": "{{count}} teams",
     "edit": "Edit",
     "editForme": "Edit organisation",
     "editPhase": "Rename phase",

@@ -1,4 +1,9 @@
-import type { CompetitionStatus, StageStatus, StructureMaterialize } from '../../types';
+import type {
+  CompetitionStatus,
+  StageStatus,
+  StructureMaterialize,
+  StructureStageHubSummary,
+} from '../../types';
 
 import {
   resolveDrawCtaPoolTone,
@@ -118,4 +123,22 @@ export function showMaterializeFrozenRemainingBanner(
   return (
     presentation === 'frozen' && materializeFrozenRemainingCount(materialize) > 0
   );
+}
+
+/**
+ * Phase matches list link — when the hub reports attached matches on this stage.
+ * Uses `stage.matchCount` (not materialize.materializedCount alone) so stale
+ * production read counts do not offer an empty matches route.
+ */
+export function showViewMaterializedMatchesLink(
+  stage: Pick<StructureStageHubSummary, 'matchCount'>,
+  materialize?: StructureMaterialize | null,
+): boolean {
+  if (stage.matchCount <= 0) {
+    return false;
+  }
+  if (materialize != null) {
+    return materialize.materializedCount > 0;
+  }
+  return true;
 }

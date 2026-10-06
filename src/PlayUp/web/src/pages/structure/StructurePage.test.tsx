@@ -1225,6 +1225,40 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows PageHead ready note when structure can advance and has no problems', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: groupesStage().stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [
+          groupesStage({
+            compositionCapacity: 8,
+            affectationEntryCount: 8,
+            structureIssues: [],
+          }),
+        ],
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: false,
+          readyForMaterialization: false,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: false,
+          attachedMatchCount: 0,
+          blockers: [],
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(await screen.findByText(/Prêt pour la suite/i)).toBeInTheDocument();
+  });
+
   it('does not promote draw readiness as Structure-global Hub status', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
