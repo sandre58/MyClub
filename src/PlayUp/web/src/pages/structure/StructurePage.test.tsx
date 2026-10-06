@@ -502,9 +502,8 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('region', { name: /État de la phase/i }),
     ).toBeInTheDocument();
-    const placementTile = document.getElementById('operational-placement');
-    expect(placementTile).not.toBeNull();
-    const activate = within(placementTile!).getByRole('button', {
+    const drawGroup = screen.getByRole('group', { name: 'Tirage' });
+    const activate = within(drawGroup).getByRole('button', {
       name: /^Activer le tirage$/i,
     });
     expect(

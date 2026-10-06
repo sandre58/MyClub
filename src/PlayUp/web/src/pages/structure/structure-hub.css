@@ -1219,14 +1219,6 @@
   margin: 0;
 }
 
-.structure-phase-hero__structure-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-8);
-  width: 100%;
-}
-
 .structure-phase-operational-bar {
   display: flex;
   flex-direction: column;
@@ -1298,39 +1290,6 @@
 
 .structure-operational-state__cluster-actions .ds-btn--primary,
 .structure-operational-state__cluster-actions .ds-btn--secondary {
-  width: auto;
-  max-width: 100%;
-  flex: 0 0 auto;
-}
-
-.structure-operational-production__gauge-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-8);
-}
-
-.structure-operational-production__gauge {
-  flex: 1 1 auto;
-  min-width: min(100%, 14rem);
-}
-
-.structure-operational-production__gauge-tools {
-  flex: none;
-  align-self: center;
-}
-
-.structure-operational-tile__production-actions--inline {
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--space-8);
-  padding-top: 0;
-}
-
-.structure-operational-tile__production-actions--inline .ds-btn {
   width: auto;
   max-width: 100%;
   flex: 0 0 auto;
@@ -1523,49 +1482,6 @@
   display: flex;
   justify-content: stretch;
   padding-top: var(--space-8);
-}
-
-.structure-operational-tile__columns {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-16);
-  align-items: start;
-  flex-grow: 1;
-}
-
-@container operational-bar (min-width: 34rem) {
-  .structure-operational-tile__columns:has(> :nth-child(2)) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-12) var(--space-16);
-  }
-}
-
-.structure-operational-tile__columns > :only-child {
-  grid-column: 1 / -1;
-}
-
-.structure-operational-tile__production-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-8);
-  width: 100%;
-}
-
-.structure-operational-tile__matches-link {
-  margin: 0;
-  text-align: center;
-  font-size: var(--text-meta);
-  align-self: flex-end;
-}
-
-.structure-operational-tile__primary-action {
-  width: 100%;
-}
-
-.structure-operational-tile__primary-action .ds-btn {
-  width: 100%;
-  justify-content: center;
 }
 
 .structure-operational-tile__group-suffix {
@@ -1876,20 +1792,6 @@ button.structure-flux-group__peer {
   align-items: center;
   gap: var(--space-8);
   width: 100%;
-}
-
-.structure-phase-hero__meta-block--separated {
-  padding-bottom: var(--space-12);
-  margin-bottom: var(--space-4);
-  border-bottom: var(--border-width) solid var(--color-border);
-  width: 100%;
-}
-
-.structure-phase-hero__frozen-issues {
-  margin-top: 0;
-  width: 100%;
-  max-width: 28rem;
-  align-items: center;
 }
 
 /* Meta chrome above schematic: stats centered, optional toolbar on the right */

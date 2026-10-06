@@ -73,6 +73,7 @@ import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
+import { buildPhaseContextSummary } from './structureTopologyFacts';
 import {
   areDrawRulesLockedByExecution,
   drawResolutionPlacementCount,
@@ -404,6 +405,14 @@ export function StructurePhaseFiche({
       placesNForOccupancy,
     );
   }, [stage, schematicQuery.isSuccess, schematicQuery.data]);
+
+  const phaseContextSummary = useMemo(() => {
+    if (!singlePhaseHub || !stage) {
+      return null;
+    }
+    const summary = buildPhaseContextSummary(stage, t);
+    return summary.length > 0 ? summary : null;
+  }, [singlePhaseHub, stage, t]);
 
   if (!stage) {
     return (
@@ -1010,6 +1019,9 @@ export function StructurePhaseFiche({
             )}
           </div>
         </div>
+        {phaseContextSummary ? (
+          <p className="structure-fiche__context">{phaseContextSummary}</p>
+        ) : null}
       </header>
 
       {showHeroStructureActions && stage ? (
