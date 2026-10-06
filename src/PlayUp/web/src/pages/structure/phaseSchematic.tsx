@@ -21,6 +21,7 @@ import { resolveManualPlaceMode } from './manualPlacementUi';
 import './phase-schematic.css';
 
 import { buildSchematicCaseTooltipModel } from './phaseSchematicTooltip';
+import { compareGroupLabels } from './drawUi';
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
 type SchematicDensity = 'full' | 'crest' | 'compact';
@@ -342,13 +343,15 @@ function GroupsSchematic({
     byGroup.set(id, list);
   }
 
-  const groups = [...byGroup.entries()].map(([id, cases]) => ({
-    id,
-    name: cases[0]?.formPosition.groupName ?? id,
-    cases: [...cases].sort(
-      (a, b) => (a.formPosition.index ?? 0) - (b.formPosition.index ?? 0),
-    ),
-  }));
+  const groups = [...byGroup.entries()]
+    .map(([id, cases]) => ({
+      id,
+      name: cases[0]?.formPosition.groupName ?? id,
+      cases: [...cases].sort(
+        (a, b) => (a.formPosition.index ?? 0) - (b.formPosition.index ?? 0),
+      ),
+    }))
+    .sort((a, b) => compareGroupLabels(a.name, b.name));
 
   return (
     <div

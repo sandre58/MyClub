@@ -142,8 +142,8 @@ describe('StructureProductionOperationalSection', () => {
       screen.getByText(/Aucune confrontation n’est prête à être matérialisée/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Créer les matchs/i }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: /Créer les matchs/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('opens dematerialize confirm and calls dematerializePhase', async () => {
@@ -167,7 +167,7 @@ describe('StructureProductionOperationalSection', () => {
     expect(dematerializePhase).toHaveBeenCalledWith(baseStage.stageId);
   });
 
-  it('disables dematerialize toolbar control when read blocks it', () => {
+  it('hides dematerialize action when read blocks it', () => {
     renderSection({
       ...baseStage,
       dematerialize: {
@@ -178,7 +178,7 @@ describe('StructureProductionOperationalSection', () => {
     });
 
     expect(
-      screen.getByRole('button', { name: /Retirer les matchs/i }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: /Retirer les matchs/i }),
+    ).not.toBeInTheDocument();
   });
 });

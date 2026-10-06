@@ -21,6 +21,34 @@ export function resolvePlacementPoolTone(
   return resolveDrawCtaPoolTone(filled, capacity);
 }
 
+/** Schematic places occupied (team or structural feed). Zero filled is actionable gap. */
+export function resolvePlaceOccupancyTone(
+  filled: number,
+  capacity: number | null,
+): 'neutral' | 'partial' | 'complete' {
+  if (capacity == null || capacity <= 0) {
+    return 'neutral';
+  }
+  if (filled <= 0) {
+    return 'partial';
+  }
+  return resolveDrawCtaPoolTone(filled, capacity);
+}
+
+/** Composition pool — resolved entries for draw; zero is normal before resolution. */
+export function resolveResolvedPoolTone(
+  filled: number,
+  capacity: number | null,
+): 'neutral' | 'partial' | 'complete' {
+  if (capacity == null || capacity <= 0) {
+    return 'neutral';
+  }
+  if (filled <= 0) {
+    return 'neutral';
+  }
+  return resolveDrawCtaPoolTone(filled, capacity);
+}
+
 export function materializePresentationForStage(
   stage: StructureStageHubSummary,
   competitionStatus: CompetitionStatus,

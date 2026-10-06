@@ -69,17 +69,19 @@ import {
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructurePhaseOperationalBar } from './StructurePhaseOperationalBar';
+import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
 import {
   areDrawRulesLockedByExecution,
-  countAlignedSlotPlacements,
+  drawResolutionPlacementCount,
+  pickReleasableCancelledDraw,
+  stageHasPublishedAppliedDraw,
   pickActiveDraw,
   resolveDrawCreateBlockPresentation,
   resolveStageDrawCreateGate,
 } from './drawUi';
-import { canReleaseDrawAlignedPlacements } from '../stage/lifecycleGates';
 import {
   isSlotFeedAwaitingDraw,
   structureDiagnosticTitleKey,
@@ -187,6 +189,7 @@ function FormatGlyph({
 export function StructurePhaseFiche({
   data,
   stage,
+  singlePhaseHub = false,
   onSelectStage,
   initialEdit,
   initialCompose,
@@ -197,6 +200,8 @@ export function StructurePhaseFiche({
 }: {
   data: StructureView;
   stage: StructureStageHubSummary | null;
+  /** Hub has a single phase — context lives in the fiche header (no topology column). */
+  singlePhaseHub?: boolean;
   onSelectStage?: (stageId: string) => void;
   initialEdit?: StructureSectionId | null;
   initialCompose?: boolean;
@@ -457,24 +462,26 @@ export function StructurePhaseFiche({
   const showPoolHint = showDrawCta && placesN != null && placesN > 0;
   const overviewSlots = drawOverviewQuery.data?.slots ?? [];
   const overviewDraws = drawOverviewQuery.data?.draws ?? [];
+  const overviewGroups = drawOverviewQuery.data?.groups ?? [];
   const drawGateReady =
     drawOverviewQuery.isSuccess ||
     stage.formatKind === 'Groups' ||
     !showDrawCta;
-  const createGate = drawGateReady
-    ? resolveStageDrawCreateGate({
-        formatKind: stage.formatKind,
-        draws: overviewDraws,
-        slots: overviewSlots,
-        compositionEntryCount: poolFilled,
-        isRootComposition: stage.isRootComposition,
-        numberOfPots: stage.numberOfPots,
-        groupCount: stage.groupCount,
-        placesN,
-        minimumTeams: data.regulation.minimumTeams,
-        directAssignmentCount: stage.directAssignmentCount,
-      })
-    : null;
+  const createGate =
+    drawGateReady && showDrawCta
+      ? resolveStageDrawCreateGate({
+          formatKind: stage.formatKind,
+          draws: overviewDraws,
+          slots: overviewSlots,
+          compositionEntryCount: poolFilled,
+          isRootComposition: stage.isRootComposition,
+          numberOfPots: stage.numberOfPots,
+          groupCount: stage.groupCount,
+          placesN,
+          minimumTeams: data.regulation.minimumTeams,
+          directAssignmentCount: stage.directAssignmentCount,
+        })
+      : null;
   const createBlockedReason =
     createGate != null && !createGate.ok ? createGate.reason : null;
   const createBlockPresentation =
@@ -485,23 +492,21 @@ export function StructurePhaseFiche({
     createBlockedReason != null
       ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
       : null;
-  const releasableDraw = overviewDraws.find((draw) =>
-    canReleaseDrawAlignedPlacements({
-      competitionStatus: data.status,
-      stageStatus: stage.status,
-      drawStatus: draw.status,
-      drawKind: draw.kind,
-      alignedPlacementCount: countAlignedSlotPlacements(draw, overviewSlots),
-    }),
-  );
-  const releasableAlignedCount =
-    releasableDraw != null
-      ? countAlignedSlotPlacements(releasableDraw, overviewSlots)
-      : 0;
+  const stageHasAppliedDraw = stageHasPublishedAppliedDraw(overviewDraws);
+  const schematicCases = schematicQuery.data?.cases;
+  const releasablePick = pickReleasableCancelledDraw({
+    draws: overviewDraws,
+    slots: overviewSlots,
+    groups: overviewGroups,
+    schematicCases,
+    competitionStatus: data.status,
+    stageStatus: stage.status,
+    stageHasPublishedAppliedDraw: stageHasAppliedDraw,
+  });
+  const releasableDraw = releasablePick?.draw ?? null;
+  const releasableAlignedCount = releasablePick?.aligned ?? 0;
   const showReleaseCta =
-    releasableDraw != null &&
-    createBlockPresentation?.kind === 'inline' &&
-    createBlockPresentation.action;
+    releasableDraw != null && releasableAlignedCount > 0;
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
     createBlockedShort != null && !activeDraw && overviewDraws.length === 0;
@@ -562,8 +567,15 @@ export function StructurePhaseFiche({
     canAssignEntryToSlot &&
     schematicQuery.isSuccess &&
     editableManualPlaceCount > 0;
+  const tracksSchematicPlaceMeters =
+    (stage.formatKind === 'Groups' || stage.formatKind === 'Cup') &&
+    placesN != null &&
+    placesN > 0;
   const showPlacementBlock =
-    showDrawCta || showActivateDrawCta || canManualPlace;
+    showDrawCta ||
+    showActivateDrawCta ||
+    canManualPlace ||
+    tracksSchematicPlaceMeters;
   const placementAwards = stage.placementAwards ?? [];
   const hasExits = outboundGroups.length > 0;
   const hasAttribution = placementAwards.length > 0;
@@ -800,7 +812,8 @@ export function StructurePhaseFiche({
     });
   }
 
-  const showHeroMeta = heroFacts.length > 0 || canRebuild;
+  const showHeroStats = heroFacts.length > 0;
+  const showHeroMeta = showHeroStats || canRebuild;
   const showHeroStructureActions =
     showPlacementBlock || showProductionOperationalBar;
   // Overflow removed — Edit/Delete live in the header toolbar.
@@ -864,9 +877,8 @@ export function StructurePhaseFiche({
       className="structure-fiche structure-fiche--flat"
       aria-labelledby="phase-overview-heading"
     >
-      <header className="structure-fiche__header">
-        <div className="structure-fiche__titles">
-          <div className="structure-fiche__title-row">
+      <header className="structure-fiche__header structure-fiche__header--toolbar">
+        <div className="structure-fiche__title-row structure-fiche__title-row--primary">
             {formatLabel ? (
               <Tooltip content={formatLabel}>
                 <span className="structure-fiche__format-icon">
@@ -962,15 +974,17 @@ export function StructurePhaseFiche({
                 ) : null}
               </>
             )}
-          </div>
-        </div>
-        <div className="structure-fiche__actions">
           <ul className="structure-fiche__pills">
             <li className="structure-fiche__pill structure-fiche__pill--status">
               <StageStatusBadge status={stage.status} />
             </li>
+            {singlePhaseHub && stage.hasDrawRules ? (
+              <li className="structure-fiche__pill">
+                <StructurePhaseDrawHint stage={stage} variant="fiche" />
+              </li>
+            ) : null}
           </ul>
-          <div className="ds-icon-toolbar">
+          <div className="structure-fiche__header-tools ds-icon-toolbar">
             {canRemove ? (
               <Tooltip content={t('graph.removePhase')}>
                 <button
@@ -998,7 +1012,61 @@ export function StructurePhaseFiche({
         </div>
       </header>
 
-      <div className="structure-phase-hero">
+      {showHeroStructureActions && stage ? (
+        <StructurePhaseOperationalBar
+          structureHubRefreshing={structureHubRefreshing}
+          showPlacement={showPlacementBlock}
+          placement={
+            showPlacementBlock
+              ? {
+                  competitionId: data.competitionId,
+                  placesN,
+                  poolFilled,
+                  occupiedPlacesCount,
+                  occupancyReady: schematicQuery.isSuccess,
+                  showDrawCta,
+                  showActivateDrawCta,
+                  showResolvedPoolGauge: showDrawCta || showActivateDrawCta,
+                  canManualPlace,
+                  canEditDraw,
+                  showReleaseCta,
+                  hasNonCancelledDraw,
+                  activeDraw: Boolean(activeDraw),
+                  blockPerformDrawCta,
+                  createBlockedShort,
+                  createBlockedReason,
+                  showCreateBlockedCaption,
+                  showPoolHint,
+                  releasableAlignedCount,
+                  releasableTotal:
+                    releasableDraw != null
+                      ? drawResolutionPlacementCount(releasableDraw)
+                      : 0,
+                  releasePending: releaseMutation.isPending,
+                  deactivateDrawPending: deactivateDrawMutation.isPending,
+                  onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
+                  onActivateDraw: () => setEdit('tirage-activate'),
+                  onEditDrawParams: () => setEdit('tirage-params'),
+                  onManualPlace: () => {
+                    setManualSlotKey(null);
+                    setManualOpen(true);
+                  },
+                  onReleasePlacements: () => setReleaseConfirmOpen(true),
+                  onDeactivateDraw: () => setDeactivateDrawOpen(true),
+                  placesDiagnostics:
+                    placesBanners.length > 0 ? (
+                      <StructureOperationalIssueBanner codes={placesBanners} />
+                    ) : undefined,
+                }
+              : null
+          }
+          competitionId={data.competitionId}
+          competitionStatus={data.status}
+          stage={stage}
+        />
+      ) : null}
+
+      <div className="structure-phase-hero structure-phase-hero--lite">
         <div
           className={[
             'structure-phase-hero__triptych',
@@ -1038,7 +1106,7 @@ export function StructurePhaseFiche({
               <div className="structure-phase-hero__meta-block">
                 {showHeroMeta ? (
                   <div className="structure-phase-hero__meta">
-                    {heroFacts.length > 0 ? (
+                    {showHeroStats ? (
                       <ul
                         className="structure-phase-hero__stats"
                         aria-label={t('fiche.statsAria')}
@@ -1080,58 +1148,6 @@ export function StructurePhaseFiche({
                     ) : null}
                   </div>
                 ) : null}
-              </div>
-            ) : null}
-            {showHeroStructureActions ? (
-              <div className="structure-phase-hero__structure-actions">
-                <StructurePhaseOperationalBar
-                  structureHubRefreshing={structureHubRefreshing}
-                  showPlacement={showPlacementBlock}
-                  placement={
-                    showPlacementBlock
-                      ? {
-                          competitionId: data.competitionId,
-                          placesN,
-                          poolFilled,
-                          occupiedPlacesCount,
-                          occupancyReady: schematicQuery.isSuccess,
-                          showDrawCta,
-                          showActivateDrawCta,
-                          canManualPlace,
-                          canEditDraw,
-                          showReleaseCta,
-                          hasNonCancelledDraw,
-                          activeDraw: Boolean(activeDraw),
-                          blockPerformDrawCta,
-                          createBlockedShort,
-                          createBlockedReason,
-                          showCreateBlockedCaption,
-                          showPoolHint,
-                          releasableAlignedCount,
-                          releasableTotal:
-                            releasableDraw?.slotPlacements.length ?? 0,
-                          releasePending: releaseMutation.isPending,
-                          deactivateDrawPending: deactivateDrawMutation.isPending,
-                          onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
-                          onActivateDraw: () => setEdit('tirage-activate'),
-                          onEditDrawParams: () => setEdit('tirage-params'),
-                          onManualPlace: () => {
-                            setManualSlotKey(null);
-                            setManualOpen(true);
-                          },
-                          onReleasePlacements: () => setReleaseConfirmOpen(true),
-                          onDeactivateDraw: () => setDeactivateDrawOpen(true),
-                          placesDiagnostics:
-                            placesBanners.length > 0 ? (
-                              <StructureOperationalIssueBanner codes={placesBanners} />
-                            ) : undefined,
-                        }
-                      : null
-                  }
-                  competitionId={data.competitionId}
-                  competitionStatus={data.status}
-                  stage={stage}
-                />
               </div>
             ) : null}
             <div
@@ -1443,7 +1459,6 @@ export function StructurePhaseFiche({
         stage={stage}
         open={drawWorkflowOpen}
         onClose={() => setDrawWorkflowOpen(false)}
-        onConfigureDrawParams={() => setEdit('tirage-params')}
       />
       <StructureCompositionDialog
         open={composeOpen}

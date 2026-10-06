@@ -65,7 +65,7 @@ describe('lifecycleGates', () => {
     ).toBe(false);
   });
 
-  it('canReleaseDrawAlignedPlacements requires Cancelled Slot with aligned count (D)', () => {
+  it('canReleaseDrawAlignedPlacements requires Cancelled Slot|Group with aligned count (D)', () => {
     expect(
       canReleaseDrawAlignedPlacements({
         competitionStatus: 'Running',
@@ -104,7 +104,7 @@ describe('lifecycleGates', () => {
         drawKind: 'Group',
         alignedPlacementCount: 2,
       }),
-    ).toBe(false);
+    ).toBe(true);
 
     expect(
       canReleaseDrawAlignedPlacements({
@@ -123,6 +123,17 @@ describe('lifecycleGates', () => {
         drawStatus: 'Cancelled',
         drawKind: 'Slot',
         alignedPlacementCount: 1,
+      }),
+    ).toBe(false);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Draft',
+        drawStatus: 'Cancelled',
+        drawKind: 'Group',
+        alignedPlacementCount: 6,
+        stageHasPublishedAppliedDraw: true,
       }),
     ).toBe(false);
   });

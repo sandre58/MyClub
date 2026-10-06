@@ -10,10 +10,7 @@ import {
   ChampionshipFormatIcon,
   CheckIcon,
   CupFormatIcon,
-  DrawPendingIcon,
   GroupsFormatIcon,
-  LayersIcon,
-  LegsStatIcon,
   MatchdayStatIcon,
   MatchesStatIcon,
   PlusIcon,
@@ -38,9 +35,10 @@ import {
 } from '../../types';
 import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructureReadinessBanner } from './StructureReadinessBanner';
+import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
-import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
+import { topologyCardFacts } from './structureTopologyFacts';
 import {
   computeStructureReadinessSummary,
   stageAmbientKinds,
@@ -88,6 +86,7 @@ function StructureHub({ data }: { data: StructureView }) {
   const canAddPhase = data.actions.includes('AddCompetitionStage');
   const [addPhaseOpen, setAddPhaseOpen] = useState(false);
   const stages = useMemo(() => resolveStages(data), [data]);
+  const multiPhase = stages.length > 1;
   const [selectedStageId, setSelectedStageId] = useState<string | null>(() => {
     if (
       deepLink.stageId &&
@@ -217,16 +216,21 @@ function StructureHub({ data }: { data: StructureView }) {
       />
 
       {bootstrapEmpty ?? (
-        <div className="structure-hub__layout">
-          <TopologyPanel
-            data={data}
-            stages={stages}
-            selectedStageId={selectedStageId}
-            onSelectStage={selectStage}
-          />
+        <div
+          className={`structure-hub__layout${multiPhase ? '' : ' structure-hub__layout--single-phase'}`}
+        >
+          {multiPhase ? (
+            <TopologyPanel
+              data={data}
+              stages={stages}
+              selectedStageId={selectedStageId}
+              onSelectStage={selectStage}
+            />
+          ) : null}
           <StructurePhaseFiche
             data={data}
             stage={selectedStage}
+            singlePhaseHub={!multiPhase}
             onSelectStage={selectStage}
             initialEdit={pendingEdit}
             initialCompose={pendingCompose}
@@ -489,39 +493,7 @@ function TopologyOutboundLinks({
 }
 
 function TopologyDrawHint({ stage }: { stage: StructureStageHubSummary }) {
-  const { t } = useTranslation('structure');
-  // E6 — execution state only (Draft/Published…). Never construction gaps (pots).
-  if (!stage.hasDrawRules) {
-    return null;
-  }
-  const badge = stage.drawExecutionBadge ?? 'ToLaunch';
-
-  const key =
-    badge === 'ToLaunch'
-      ? 'toLaunch'
-      : badge === 'InProgress'
-        ? 'inProgress'
-        : badge === 'ToApply'
-          ? 'toApply'
-          : 'applied';
-  const tone =
-    badge === 'ToLaunch'
-      ? 'info'
-      : badge === 'InProgress'
-        ? 'live'
-        : badge === 'ToApply'
-          ? 'attention'
-          : 'done';
-  return (
-    <Tooltip content={t(`hub.drawExecution.${key}Tooltip`)}>
-      <span
-        className={`structure-topology__signal structure-topology__signal--${tone}`}
-      >
-        <DrawPendingIcon size="sm" aria-hidden="true" />
-        <span>{t(`hub.drawExecution.${key}`)}</span>
-      </span>
-    </Tooltip>
-  );
+  return <StructurePhaseDrawHint stage={stage} variant="topology" />;
 }
 
 function StageFormatGlyph({
@@ -567,109 +539,6 @@ function outboundDestinations(stage: StructureStageHubSummary): string[] {
     }
   }
   return destinations;
-}
-
-function topologyCardFacts(
-  stage: StructureStageHubSummary,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): { id: string; icon: ReactNode; value: string }[] {
-  const kind = stage.formatKind;
-  const placesN = resolvePlacesN(stage);
-  const placesFact =
-    placesN != null
-      ? {
-          id: 'places',
-          icon: <LayersIcon size="md" aria-hidden="true" />,
-          value: t('hub.topologyStatPlaces', { count: placesN }),
-        }
-      : null;
-  const matchdays = t('hub.topologyStatMatchdays', {
-    count: stage.matchdayCount ?? 0,
-  });
-  const matches = t('hub.topologyStatMatches', { count: stage.matchCount });
-
-  switch (kind) {
-    case 'Cup': {
-      return [
-        {
-          id: 'rounds',
-          icon: <RoundsStatIcon size="md" aria-hidden="true" />,
-          value: t('hub.topologyStatRounds', {
-            count: stage.roundCount ?? 0,
-          }),
-        },
-        {
-          id: 'legs',
-          icon: <LegsStatIcon size="md" aria-hidden="true" />,
-          value:
-            (stage.numberOfLegs ?? 1) >= 2
-              ? t('hub.topologyLegsReturn')
-              : t('hub.topologyLegsSingle'),
-        },
-        ...(placesFact ? [placesFact] : []),
-      ];
-    }
-    case 'Championship':
-      return [
-        {
-          id: 'matchdays',
-          icon: <MatchdayStatIcon size="md" aria-hidden="true" />,
-          value: matchdays,
-        },
-        {
-          id: 'matches',
-          icon: <MatchesStatIcon size="md" aria-hidden="true" />,
-          value: matches,
-        },
-        ...(placesFact ? [placesFact] : []),
-      ];
-    case 'Groups': {
-      const groups = stage.groupCount ?? 0;
-      const perGroup = resolvePlacesPerGroup(stage);
-      const sizeFact =
-        groups > 0 && perGroup != null
-          ? {
-              id: 'grid',
-              icon: <GroupsFormatIcon size="md" aria-hidden="true" />,
-              value: t('hub.topologyStatGroupGrid', {
-                groups,
-                size: perGroup,
-              }),
-            }
-          : {
-              id: 'groups',
-              icon: <GroupsFormatIcon size="md" aria-hidden="true" />,
-              value: t('hub.topologyStatGroups', { count: groups }),
-            };
-      return [
-        {
-          id: 'matchdays',
-          icon: <MatchdayStatIcon size="md" aria-hidden="true" />,
-          value: matchdays,
-        },
-        sizeFact,
-        ...(placesFact ? [placesFact] : []),
-      ];
-    }
-    case 'Swiss':
-      return [
-        {
-          id: 'swiss',
-          icon: <RoundsStatIcon size="md" aria-hidden="true" />,
-          value: t('hub.topologyStatSwiss', {
-            count: stage.swissRoundCount ?? 0,
-          }),
-        },
-        {
-          id: 'matches',
-          icon: <MatchesStatIcon size="md" aria-hidden="true" />,
-          value: matches,
-        },
-        ...(placesFact ? [placesFact] : []),
-      ];
-    default:
-      return placesFact ? [placesFact] : [];
-  }
 }
 
 function edgeLabelFromSource(

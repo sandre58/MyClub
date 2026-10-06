@@ -378,9 +378,11 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByRole('button', { name: /League/i }),
+      await screen.findByRole('heading', { name: 'League' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'League' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: /Topologie/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /^Match$/i }),
     ).toBeInTheDocument();
@@ -429,7 +431,10 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Groupes' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { level: 4, name: /^Tirage$/i }),
+      screen.queryByRole('region', { name: /Topologie/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: /État de la phase/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Lancer le tirage/i }),
@@ -495,7 +500,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByRole('heading', { name: /Occupation des places/i }),
+      await screen.findByRole('region', { name: /État de la phase/i }),
     ).toBeInTheDocument();
     const placementTile = document.getElementById('operational-placement');
     expect(placementTile).not.toBeNull();
@@ -508,6 +513,9 @@ describe('StructurePage Structure hub', () => {
     expect(activate).toHaveClass('ds-btn--primary');
     expect(
       screen.queryByRole('button', { name: /Paramètres du tirage/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Désactiver le tirage/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -1146,11 +1154,12 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    const matchsTile = await screen.findByRole('heading', { name: /^Matchs$/i });
+    await screen.findByRole('region', { name: /Production des matchs/i });
     expect(
       screen.queryByText(/Il reste 3 confrontations sans match créé/i),
     ).not.toBeInTheDocument();
-    const productionTile = matchsTile.closest('section');
+    const productionTile = document.getElementById('operational-production');
+    expect(productionTile).not.toBeNull();
     expect(productionTile).toHaveTextContent(/match créés/i);
     expect(productionTile).toHaveTextContent('3');
     expect(productionTile).toHaveTextContent('6');

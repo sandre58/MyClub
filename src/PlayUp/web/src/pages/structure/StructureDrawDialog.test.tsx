@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { ApiError } from '../../api/http';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -846,6 +847,69 @@ describe('StructureDrawDialog', () => {
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
       ),
     ).not.toBeInTheDocument();
+  });
+
+  it('clears sticky publish-and-apply error when the dialog reopens', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
+    vi.mocked(publishAndApplyDraw).mockRejectedValue(
+      new ApiError(
+        409,
+        'Conflict',
+        'Entry appears on materialized match',
+        'MaterializedOpponentConflict',
+      ),
+    );
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <QueryClientProvider client={queryClient}>
+        <StructureDrawDialog
+          open
+          onClose={onClose}
+          competitionId={competitionId}
+          competitionStatus="Draft"
+          stage={groupsStage()}
+        />
+      </QueryClientProvider>,
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Publier et appliquer' }),
+    );
+    expect(
+      await screen.findByRole('alert'),
+    ).toHaveTextContent('Entry appears on materialized match');
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <StructureDrawDialog
+          open={false}
+          onClose={onClose}
+          competitionId={competitionId}
+          competitionStatus="Draft"
+          stage={groupsStage()}
+        />
+      </QueryClientProvider>,
+    );
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <StructureDrawDialog
+          open
+          onClose={onClose}
+          competitionId={competitionId}
+          competitionStatus="Draft"
+          stage={groupsStage()}
+        />
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
   });
 
   it('publishes and applies the selected draft draw', async () => {

@@ -26,7 +26,7 @@
   "cancelling": "Annulation…",
   "confirmCancelTitle": "Annuler l’exécution ?",
   "confirmCancel": "Cette action annule l’exécution du tirage. Pour refaire le tirage, vous pourrez lancer une nouvelle exécution.",
-  "confirmCancelApplied": "Cette action annule l’exécution du tirage. Elle ne retire pas les placements déjà appliqués à la phase. Pour refaire le tirage, vous pourrez lancer une nouvelle exécution.",
+  "confirmCancelApplied": "Cette action annule l’exécution du tirage. Elle ne retire pas les placements déjà appliqués à la phase. Après l’annulation, utilisez « Libérer les placements » pour vider les places encore alignées sur cette exécution.",
   "toastCreated": "Nouvelle exécution créée.",
   "toastCreatedNoSolution": "Exécution créée — aucune résolution valide.",
   "toastGenerationFailed": "Génération interrompue. L’exécution a été créée sans résultat.",

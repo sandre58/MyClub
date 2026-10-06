@@ -9,6 +9,7 @@ export function StructureOperationalTile({
   notes,
   actions,
   trail,
+  showHead = true,
 }: {
   id: string;
   title: string;
@@ -19,6 +20,8 @@ export function StructureOperationalTile({
   actions?: ReactNode;
   /** Diagnostics / issues below action groups. */
   trail?: ReactNode;
+  /** When false, parent section supplies the visible heading (fiche zones). */
+  showHead?: boolean;
 }) {
   const titleId = `${id}-title`;
   const showActions = actions != null && actions !== false;
@@ -27,21 +30,27 @@ export function StructureOperationalTile({
     <section
       id={id}
       className="ds-form-section structure-operational-tile"
-      aria-labelledby={titleId}
+      aria-labelledby={showHead ? titleId : undefined}
     >
-      <header className="ds-form-section__head structure-operational-tile__head">
-        <span className="ds-form-section__icon" aria-hidden="true">
-          {icon}
-        </span>
-        <div className="ds-form-section__copy">
-          <h3 id={titleId} className="ds-form-section__title">
-            {title}
-          </h3>
+      {showHead ? (
+        <header className="ds-form-section__head structure-operational-tile__head">
+          <span className="ds-form-section__icon" aria-hidden="true">
+            {icon}
+          </span>
+          <div className="ds-form-section__copy">
+            <h3 id={titleId} className="ds-form-section__title">
+              {title}
+            </h3>
+          </div>
+          {toolbar ? (
+            <div className="ds-icon-toolbar structure-operational-tile__toolbar">{toolbar}</div>
+          ) : null}
+        </header>
+      ) : toolbar ? (
+        <div className="structure-operational-tile__toolbar structure-operational-tile__toolbar--solo">
+          {toolbar}
         </div>
-        {toolbar ? (
-          <div className="ds-icon-toolbar structure-operational-tile__toolbar">{toolbar}</div>
-        ) : null}
-      </header>
+      ) : null}
       <div className="ds-form-section__body structure-operational-tile__state">
         {gauge}
       </div>

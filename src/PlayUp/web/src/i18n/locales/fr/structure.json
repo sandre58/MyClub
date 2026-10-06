@@ -250,6 +250,12 @@
     }
   },
   "fiche": {
+    "section": {
+      "phaseState": "État de la phase",
+      "phaseProduction": "Production des matchs"
+    },
+    "phaseContextTeams_one": "{{count}} équipe",
+    "phaseContextTeams_other": "{{count}} équipes",
     "edit": "Modifier",
     "editForme": "Modifier l’organisation",
     "editPhase": "Renommer la phase",
@@ -266,7 +272,7 @@
         "GroupsNotReady": "Les poules ne sont pas prêtes pour la production de matchs.",
         "NoEligibleConfrontations": "Aucune confrontation ne peut être matérialisée pour le moment."
       },
-      "viewPhaseMatches": "Voir les matchs de la phase",
+      "viewPhaseMatches": "Voir les matchs",
       "submitting": "Création…",
       "successCreated": "{{count}} match(s) créé(s).",
       "successAlreadyComplete": "Ces matchs étaient déjà créés."
@@ -298,13 +304,19 @@
         "meterAria": "Places occupées sur le tableau",
         "meterCaptionOccupied": "places occupées",
         "occupancyLoading": "Calcul de l’occupation…",
-        "deactivatingDraw": "Désactivation du tirage…"
+        "deactivatingDraw": "Désactivation du tirage…",
+        "drawLaunchShort": "Lancer",
+        "drawOpenShort": "Ouvrir",
+        "drawActivateShort": "Activer",
+        "manualShort": "Placer"
       },
       "production": {
         "titleMatches": "Matchs",
         "meterAria": "Avancement de la production des matchs",
         "meterCaptionMatches": "match créés",
-        "statusUnknown": "État de production indisponible."
+        "statusUnknown": "État de production indisponible.",
+        "createShort": "Créer",
+        "completeShort": "Compléter"
       }
     },
     "schematicTooltipFrom": "Vient de",
@@ -352,11 +364,10 @@
           "countMismatch": "Il faut {{places}} équipes pour {{places}} places ; la composition en a {{count}}.",
           "directAssignment": "Libérez les affectations directes avant de lancer un nouveau tirage.",
           "occupiedSlots": "Libérez les placements existants avant de lancer un nouveau tirage.",
-          "missingPots": "Configurez les pots (Paramètres) avant de générer le tirage.",
+          "missingPots": "Définissez le nombre de pots avant de générer le tirage.",
           "groupShape": "Le nombre d’équipes doit égaler pots × groupes."
         },
-        "echoTeams": "Ouvrir les équipes",
-        "echoDrawParams": "Configurer les pots"
+        "echoTeams": "Ouvrir les équipes"
       },
       "creating": "Tirage en cours…",
       "historyAria": "Historique des exécutions",

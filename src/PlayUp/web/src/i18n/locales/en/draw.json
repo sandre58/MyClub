@@ -26,7 +26,7 @@
   "cancelling": "Cancelling…",
   "confirmCancelTitle": "Cancel execution?",
   "confirmCancel": "This action cancels the draw execution. To redraw, you can start a new execution.",
-  "confirmCancelApplied": "This action cancels the draw execution. It does not remove placements already applied to the stage. To redraw, you can start a new execution.",
+  "confirmCancelApplied": "This action cancels the draw execution. It does not remove placements already applied to the stage. After cancelling, use “Release draw placements” to clear places still aligned with this execution.",
   "toastCreated": "New execution created.",
   "toastCreatedNoSolution": "Execution created — no valid resolution.",
   "toastGenerationFailed": "Generation interrupted. The execution was created without a result.",

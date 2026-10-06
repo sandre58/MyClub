@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { CompetitionStatus, StructureStageHubSummary } from '../../types';
 import {
   materializePresentationForStage,
@@ -24,6 +25,7 @@ export function StructurePhaseOperationalBar({
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
 }) {
+  const { t } = useTranslation('structure');
   const presentation = materializePresentationForStage(
     stage,
     competitionStatus,
@@ -38,19 +40,31 @@ export function StructurePhaseOperationalBar({
   return (
     <div className="structure-phase-operational-bar">
       {showPlacement && placement ? (
-        <StructurePlacementOperationalSection
-          {...placement}
-          structureHubRefreshing={structureHubRefreshing}
-        />
+        <section
+          className="structure-fiche-section structure-fiche-section--operational"
+          aria-label={t('fiche.section.phaseState')}
+        >
+          <StructurePlacementOperationalSection
+            {...placement}
+            embeddedInSection
+            structureHubRefreshing={structureHubRefreshing}
+          />
+        </section>
       ) : null}
       {showProduction ? (
-        <StructureProductionOperationalSection
-          competitionId={competitionId}
-          competitionStatus={competitionStatus}
-          stage={stage}
-          presentation={presentation}
-          structureHubRefreshing={structureHubRefreshing}
-        />
+        <section
+          className="structure-fiche-section structure-fiche-section--operational"
+          aria-label={t('fiche.section.phaseProduction')}
+        >
+          <StructureProductionOperationalSection
+            competitionId={competitionId}
+            competitionStatus={competitionStatus}
+            stage={stage}
+            presentation={presentation}
+            embeddedInSection
+            structureHubRefreshing={structureHubRefreshing}
+          />
+        </section>
       ) : null}
     </div>
   );

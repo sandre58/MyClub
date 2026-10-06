@@ -30,4 +30,21 @@ describe('countSchematicOccupiedPlaces', () => {
   it('returns null when places N is unknown', () => {
     expect(countSchematicOccupiedPlaces([], 'Cup', null)).toBeNull();
   });
+
+  it('counts Qual/Prog feed as occupied without resolved team', () => {
+    const cases: SchematicCase[] = [
+      {
+        formPosition: { kind: 'GroupPlace', groupId: 'g1', index: 1 },
+        feedOrigin: {
+          kind: 'Qualification',
+          selectionMode: 'Position',
+          selectionValue: 1,
+        },
+      },
+      {
+        formPosition: { kind: 'GroupPlace', groupId: 'g1', index: 2 },
+      },
+    ];
+    expect(countSchematicOccupiedPlaces(cases, 'Groups', 4)).toBe(1);
+  });
 });

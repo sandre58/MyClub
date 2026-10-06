@@ -77,7 +77,7 @@ public sealed class ReleaseDrawAlignedPlacementsTests
     }
 
     [Fact]
-    public void Execute_rejects_group_draw()
+    public void Execute_group_aligned_membership_is_cleared()
     {
         var stage = CreateStage();
         var group = stage.AddGroup("A", _clock);
@@ -90,12 +90,49 @@ public sealed class ReleaseDrawAlignedPlacementsTests
             DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, group.Id)]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        stage.CancelDraw(draw.Id, _clock);
         stage.ClearDomainEvents();
 
-        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+        var result = ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        result.ReleasedCount.Should().Be(1);
+        result.SkippedCount.Should().Be(0);
+        stage.FindGroup(group.Id)!.EntryIds.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_rejects_when_another_published_draw_is_applied_on_stage()
+    {
+        var stage = CreateStage();
+        var group = stage.AddGroup("A", _clock);
+        var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
+        var cancelled = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(cancelled.Id, DrawInputs.ForGroup([entry]));
+        stage.RecordDrawResolution(
+            cancelled.Id,
+            DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, group.Id)]),
+            _clock);
+        stage.PublishDraw(cancelled.Id, _clock);
+        ApplyDraw.Execute(stage, cancelled.Id, _clock);
+        stage.CancelDraw(cancelled.Id, _clock);
+
+        var active = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(active.Id, DrawInputs.ForGroup([entry]));
+        stage.RecordDrawResolution(
+            active.Id,
+            DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, group.Id)]),
+            _clock);
+        stage.PublishDraw(active.Id, _clock);
+        ApplyDraw.Execute(stage, active.Id, _clock);
+        stage.ClearDomainEvents();
+
+        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, cancelled.Id, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DrawKindNotSupported);
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+        stage.FindGroup(group.Id)!.EntryIds.Should().ContainSingle(id => id.Equals(entry));
         stage.DomainEvents.Should().BeEmpty();
     }
 

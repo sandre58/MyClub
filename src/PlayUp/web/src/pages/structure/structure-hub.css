@@ -22,10 +22,66 @@
     grid-template-columns: minmax(14rem, 0.34fr) minmax(0, 1fr);
   }
 
+  .structure-hub__layout--single-phase {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .structure-topology,
   .structure-fiche {
     height: 100%;
   }
+}
+
+.structure-fiche__context {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-meta);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.structure-fiche__draw-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-fiche__draw-hint.structure-phase-draw-hint--info {
+  color: var(--color-info);
+}
+
+.structure-fiche__draw-hint.structure-phase-draw-hint--live {
+  color: var(--color-live);
+}
+
+.structure-fiche__draw-hint.structure-phase-draw-hint--attention {
+  color: var(--color-attention);
+}
+
+.structure-fiche__draw-hint.structure-phase-draw-hint--done {
+  color: var(--color-success);
+}
+
+.structure-fiche-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-fiche-section__title {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.structure-fiche-section--operational + .structure-fiche-section--operational {
+  margin-top: var(--space-4);
 }
 
 .structure-fiche {
@@ -312,6 +368,32 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-12);
+}
+
+.structure-fiche__header--toolbar {
+  align-items: center;
+}
+
+.structure-fiche__title-row--primary {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+}
+
+.structure-fiche__title-row--primary .structure-fiche__title {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.structure-fiche__title-row--primary .structure-fiche__pills {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.structure-fiche__header-tools {
+  flex: none;
+  margin-left: var(--space-8);
 }
 
 .structure-fiche__titles {
@@ -726,6 +808,13 @@
   border: var(--border-width) solid var(--color-border);
 }
 
+.structure-phase-hero--lite {
+  padding: var(--space-12) 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
 .structure-phase-hero__triptych {
   display: grid;
   grid-template-columns: minmax(9rem, 1fr) minmax(0, 2.2fr) minmax(9rem, 1fr);
@@ -761,9 +850,13 @@
   gap: var(--space-8);
   min-width: 0;
   padding: var(--space-12);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-surface-secondary) 65%, var(--color-surface));
+  border: none;
+}
+
+.structure-phase-hero--lite .structure-phase-rail {
+  background: var(--color-surface-secondary);
 }
 
 .structure-phase-rail__issues {
@@ -865,8 +958,8 @@
   justify-content: center;
   min-height: 14rem;
   width: 100%;
-  border-radius: var(--radius-panel);
-  background: var(--color-surface-secondary);
+  border-radius: var(--radius-control);
+  background: transparent;
 }
 
 .structure-schematic-loading .ds-wait {
@@ -1140,11 +1233,172 @@
   width: 100%;
   margin: 0;
   gap: var(--space-12);
-  padding: var(--space-12) var(--space-12);
-  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
-  border-radius: var(--radius-control);
+  padding: 0;
+  border: none;
+  border-radius: 0;
   box-shadow: none;
-  background: color-mix(in srgb, var(--color-surface) 96%, var(--color-brand) 4%);
+  background: transparent;
+}
+
+.structure-operational-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  width: 100%;
+  min-width: 0;
+}
+
+@container operational-bar (min-width: 34rem) {
+  .structure-operational-state--dual {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-24);
+  }
+
+  .structure-operational-state--dual .structure-operational-state__cluster {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+.structure-operational-state__cluster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.structure-operational-state__gauge-block {
+  min-width: 0;
+}
+
+.structure-operational-state__cluster-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-8);
+}
+
+.structure-operational-state__cluster-actions--draw {
+  flex-wrap: wrap;
+}
+
+.structure-operational-state__cluster-actions .ds-btn--primary,
+.structure-operational-state__cluster-actions .ds-btn--secondary {
+  width: auto;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.structure-operational-production__gauge-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.structure-operational-production__gauge {
+  flex: 1 1 auto;
+  min-width: min(100%, 14rem);
+}
+
+.structure-operational-production__gauge-tools {
+  flex: none;
+  align-self: center;
+}
+
+.structure-operational-tile__production-actions--inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-8);
+  padding-top: 0;
+}
+
+.structure-operational-tile__production-actions--inline .ds-btn {
+  width: auto;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.structure-operational-production__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-12);
+  width: 100%;
+}
+
+.structure-operational-production__footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.structure-operational-production__footer .ds-btn {
+  width: auto;
+  max-width: 100%;
+  flex: 0 1 auto;
+}
+
+.structure-operational-production__footer .ds-text-link {
+  font-size: var(--text-meta);
+}
+
+.structure-operational-production__footer:not(:has(.ds-btn)) {
+  justify-content: flex-end;
+}
+
+.structure-schematic-viewport .regulation-schematic,
+.structure-schematic-viewport .schematic-cup-fit {
+  background: transparent;
+  box-shadow: none;
+}
+
+.structure-schematic-viewport .schematic-cup-fit {
+  padding: var(--space-8) 0;
+}
+
+.structure-schematic-viewport .regulation-schematic--groups {
+  align-items: center;
+  justify-content: center;
+}
+
+.structure-schematic-viewport .regulation-schematic__cards {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, max-content));
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Fiche tile uses --color-surface; slots need distinct fills without schematic chrome. */
+.structure-schematic-viewport .schematic-slot {
+  box-shadow: none;
+}
+
+.structure-schematic-viewport .schematic-slot:not(.schematic-slot--empty):not(.schematic-slot--ghost) {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--color-brand) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface-secondary) 40%, var(--color-surface));
+}
+
+.structure-schematic-viewport .schematic-slot--empty {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-border) 80%, var(--color-brand));
+  background: color-mix(in srgb, var(--color-surface-secondary) 80%, var(--color-surface));
+}
+
+.structure-operational-tile__toolbar--solo {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: calc(-1 * var(--space-4));
 }
 
 .structure-phase-operational-bar .structure-operational-tile .ds-form-section__body {
@@ -1242,6 +1496,15 @@
   font-size: var(--text-meta);
   color: var(--color-text-secondary);
   line-height: var(--leading-normal);
+}
+
+.structure-operational-tile__note--attention {
+  color: color-mix(in srgb, var(--color-attention) 78%, var(--color-ink));
+}
+
+.structure-operational-state__cluster > .structure-operational-tile__note--attention {
+  width: 100%;
+  min-width: 0;
 }
 
 .structure-operational-tile__actions {

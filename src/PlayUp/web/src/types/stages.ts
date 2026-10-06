@@ -72,6 +72,12 @@ export interface StageDraw {
   isApplied?: boolean;
 }
 
+export interface StageGroupOverview {
+  id: string;
+  name: string;
+  entryIds: string[];
+}
+
 export interface StageOverview {
   id: string;
   competitionId: string;
@@ -82,6 +88,8 @@ export interface StageOverview {
   draws: StageDraw[];
   /** Cup structural confrontations (P1 = S1↔S2). Empty for Groups; omit only in tests. */
   bracketPairs?: StageBracketPair[];
+  /** Current group membership; empty for non-Groups formats. */
+  groups?: StageGroupOverview[];
 }
 
 /** Structural Cup pair from StageOverview — drives Slot draw A vs B (not Fixture #). */

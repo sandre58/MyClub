@@ -250,6 +250,12 @@
     }
   },
   "fiche": {
+    "section": {
+      "phaseState": "Phase status",
+      "phaseProduction": "Match production"
+    },
+    "phaseContextTeams_one": "{{count}} team",
+    "phaseContextTeams_other": "{{count}} teams",
     "edit": "Edit",
     "editForme": "Edit organisation",
     "editPhase": "Rename phase",
@@ -266,7 +272,7 @@
         "GroupsNotReady": "Groups are not ready for match production.",
         "NoEligibleConfrontations": "No confrontations can be materialized right now."
       },
-      "viewPhaseMatches": "View phase matches",
+      "viewPhaseMatches": "View matches",
       "submitting": "Creating…",
       "successCreated": "{{count}} match(es) created.",
       "successAlreadyComplete": "Those matches were already created."
@@ -298,13 +304,19 @@
         "meterAria": "Occupied bracket places",
         "meterCaptionOccupied": "places occupied",
         "occupancyLoading": "Loading occupancy…",
-        "deactivatingDraw": "Deactivating draw…"
+        "deactivatingDraw": "Deactivating draw…",
+        "drawLaunchShort": "Launch",
+        "drawOpenShort": "Open",
+        "drawActivateShort": "Enable",
+        "manualShort": "Place"
       },
       "production": {
         "titleMatches": "Matches",
         "meterAria": "Match production progress",
         "meterCaptionMatches": "matches created",
-        "statusUnknown": "Production status is unavailable."
+        "statusUnknown": "Production status is unavailable.",
+        "createShort": "Create",
+        "completeShort": "Complete"
       }
     },
     "schematicTooltipFrom": "From",
@@ -352,11 +364,10 @@
           "countMismatch": "{{places}} teams are needed for {{places}} places; composition has {{count}}.",
           "directAssignment": "Clear direct assignments before starting a new draw.",
           "occupiedSlots": "Release existing placements before starting a new draw.",
-          "missingPots": "Configure pots (Settings) before generating the draw.",
+          "missingPots": "Set the number of pots before generating the draw.",
           "groupShape": "Team count must equal pots × groups."
         },
-        "echoTeams": "Open teams",
-        "echoDrawParams": "Configure pots"
+        "echoTeams": "Open teams"
       },
       "creating": "Drawing…",
       "historyAria": "Execution history",

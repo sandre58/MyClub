@@ -6,6 +6,7 @@ import {
   OverviewAttentionIcon,
   StructureIssueIcon,
 } from '../../design-system/icons/contentIcons';
+import { ChevronRightIcon } from '../../design-system/icons/shellIcons';
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import type { StructureDiagnosticTone } from './structureDiagnosticPresentation';
 import {
@@ -49,7 +50,9 @@ function ReadinessActionRow({
       data-last={isLast ? 'true' : undefined}
     >
       <div className="structure-status__action-body">
-        <span className="structure-status__action-marker" aria-hidden="true" />
+        <span className="structure-status__action-marker" aria-hidden="true">
+          <ChevronRightIcon size="sm" />
+        </span>
         <span className="structure-status__action-summary">{rowLabel}</span>
         <Link
           className={actionButtonClass(item.tone)}

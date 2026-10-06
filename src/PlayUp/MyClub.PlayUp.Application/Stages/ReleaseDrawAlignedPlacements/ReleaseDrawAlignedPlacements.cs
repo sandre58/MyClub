@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
@@ -11,25 +12,26 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: release slot occupants that still exactly match a Slot draw's
+/// Application use case: release stage occupants that still exactly match a draw's
 /// recorded resolution (explicit liberate — not Cancel rollback, not Apply replace).
 /// </summary>
 /// <remarks>
-/// For each <c>(SlotKey, EntryId)</c> in <see cref="DrawResolution.SlotResults"/>:
-/// release via <see cref="Stage.ClearResolvedEntry"/> only when the current occupant equals
-/// that EntryId and the slot has no <see cref="DirectAssignment"/>; otherwise skip.
+/// Slot: for each <c>(SlotKey, EntryId)</c> in <see cref="DrawResolution.SlotResults"/>,
+/// release via <see cref="Stage.ClearResolvedEntry"/> when aligned (skips DirectAssignment).
+/// Group: for each group placement in <see cref="DrawResolution.GroupResults"/>,
+/// <see cref="Stage.RemoveEntryFromGroup"/> when the entry is still in that group.
 /// Persistence: caller loads the Stage, invokes this use case, then saves once.
 /// </remarks>
 public static class ReleaseDrawAlignedPlacements
 {
     /// <summary>
-    /// Releases aligned slot occupants for <paramref name="drawId"/> on <paramref name="stage"/>.
+    /// Releases aligned occupants for <paramref name="drawId"/> on <paramref name="stage"/>.
     /// </summary>
-    /// <param name="stage">Stage that owns the draw and slots.</param>
-    /// <param name="drawId">Draw whose <see cref="DrawResolution.SlotResults"/> define the target pairs.</param>
+    /// <param name="stage">Stage that owns the draw.</param>
+    /// <param name="drawId">Draw whose resolution defines target pairs.</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="stageMatches">Matches attached on the stage (F1 coherence); empty when none.</param>
-    /// <returns>How many slots were released vs skipped.</returns>
+    /// <returns>How many placements were released vs skipped.</returns>
     public static ReleaseDrawAlignedPlacementsResult Execute(
         Stage stage,
         DrawId drawId,
@@ -41,8 +43,25 @@ public static class ReleaseDrawAlignedPlacements
 
         var draw = stage.GetDraw(drawId);
         EnsureEligible(draw);
+        EnsureNoPublishedAppliedDrawOnStage(stage);
         var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
 
+        return draw.Kind switch
+        {
+            DrawResolutionKind.Slot => ReleaseSlotPlacements(stage, draw, clock, snapshots),
+            DrawResolutionKind.Group => ReleaseGroupPlacements(stage, draw, snapshots),
+            _ => throw new ApplicationFailureException(
+                $"ReleaseDrawAlignedPlacements does not support draw kind '{draw.Kind}'.",
+                ApplicationErrorCodes.DrawKindNotSupported)
+        };
+    }
+
+    private static ReleaseDrawAlignedPlacementsResult ReleaseSlotPlacements(
+        Stage stage,
+        Draw draw,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+    {
         var released = 0;
         var skipped = 0;
 
@@ -69,12 +88,49 @@ public static class ReleaseDrawAlignedPlacements
         return new ReleaseDrawAlignedPlacementsResult(released, skipped);
     }
 
+    private static ReleaseDrawAlignedPlacementsResult ReleaseGroupPlacements(
+        Stage stage,
+        Draw draw,
+        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+    {
+        var released = 0;
+        var skipped = 0;
+
+        foreach (var placement in draw.Resolution.GroupResults)
+        {
+            var group = stage.FindGroup(placement.GroupId);
+            if (group?.EntryIds.Contains(placement.EntryId) != true)
+            {
+                skipped++;
+                continue;
+            }
+
+            stage.RemoveEntryFromGroup(placement.GroupId, placement.EntryId, snapshots);
+            released++;
+        }
+
+        return new ReleaseDrawAlignedPlacementsResult(released, skipped);
+    }
+
+    private static void EnsureNoPublishedAppliedDrawOnStage(Stage stage)
+    {
+        foreach (var other in stage.Draws)
+        {
+            if (other.Status == DrawStatus.Published && DrawAppliedState.IsApplied(other, stage))
+            {
+                throw new ApplicationFailureException(
+                    "Cannot release aligned placements while a published draw is applied on the stage.",
+                    ApplicationErrorCodes.DrawReleaseFailure);
+            }
+        }
+    }
+
     private static void EnsureEligible(Draw draw)
     {
-        if (draw.Kind != DrawResolutionKind.Slot)
+        if (draw.Kind is not DrawResolutionKind.Slot and not DrawResolutionKind.Group)
         {
             throw new ApplicationFailureException(
-                $"ReleaseDrawAlignedPlacements supports Slot draws only (kind is '{draw.Kind}').",
+                $"ReleaseDrawAlignedPlacements does not support draw kind '{draw.Kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported);
         }
 
@@ -90,6 +146,6 @@ public static class ReleaseDrawAlignedPlacements
 /// <summary>
 /// Outcome of <see cref="ReleaseDrawAlignedPlacements.Execute"/>.
 /// </summary>
-/// <param name="ReleasedCount">Slots cleared via <see cref="Stage.ClearResolvedEntry"/>.</param>
-/// <param name="SkippedCount">Placements left untouched (DA, vacant, or divergent occupant).</param>
+/// <param name="ReleasedCount">Placements cleared on the stage.</param>
+/// <param name="SkippedCount">Resolution rows left untouched (divergent or already vacant).</param>
 public sealed record ReleaseDrawAlignedPlacementsResult(int ReleasedCount, int SkippedCount);

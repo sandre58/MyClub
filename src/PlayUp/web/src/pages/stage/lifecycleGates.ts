@@ -52,12 +52,15 @@ export function canReleaseDrawAlignedPlacements(input: {
   drawStatus: DrawStatus;
   drawKind: 'Slot' | 'Group';
   alignedPlacementCount: number;
+  /** When true, occupancy is owned by a live Published+Applied execution — no release on Cancelled history. */
+  stageHasPublishedAppliedDraw?: boolean;
 }): boolean {
   return (
     allowsCompetitionLifecycleMutation(input.competitionStatus) &&
     allowsStageDraftOrReadyMutation(input.stageStatus) &&
+    !input.stageHasPublishedAppliedDraw &&
     input.drawStatus === 'Cancelled' &&
-    input.drawKind === 'Slot' &&
+    (input.drawKind === 'Slot' || input.drawKind === 'Group') &&
     input.alignedPlacementCount > 0
   );
 }

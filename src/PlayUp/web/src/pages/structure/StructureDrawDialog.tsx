@@ -40,6 +40,7 @@ import type {
   CompetitionStatus,
   StageBracketPair,
   StageDraw,
+  StageGroupOverview,
   StageSlot,
   StageStatus,
   StructureFormatKind,
@@ -56,6 +57,8 @@ import {
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
   countAlignedSlotPlacements,
+  drawResolutionPlacementCount,
+  stageHasPublishedAppliedDraw,
   projectSlotDrawResult,
   sortDrawsNewestFirst,
   type DrawDetailHeaderChip,
@@ -180,8 +183,6 @@ type StructureDrawDialogProps = {
   /** Competition EntryRules.MinimumTeams — gate belowMinimumTeams. */
   minimumTeams?: number | null;
   stage: StructureStageHubSummary;
-  /** Echo CTA when create is blocked by missing pots — open DrawRules params. */
-  onConfigureDrawParams?: () => void;
 };
 
 const EMPTY_DRAWS: StageDraw[] = [];
@@ -198,7 +199,6 @@ export function StructureDrawDialog({
   competitionStatus,
   minimumTeams = null,
   stage,
-  onConfigureDrawParams,
 }: StructureDrawDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tDraw } = useTranslation('draw');
@@ -215,7 +215,9 @@ export function StructureDrawDialog({
 
   const draws = overviewQuery.data?.draws;
   const slots = overviewQuery.data?.slots ?? [];
+  const overviewGroups = overviewQuery.data?.groups ?? [];
   const drawList = draws ?? EMPTY_DRAWS;
+  const stageHasAppliedDraw = stageHasPublishedAppliedDraw(drawList);
   const showHistory = drawList.length >= 1;
   const poolCount = stage.compositionEntryCount ?? 0;
   const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
@@ -389,6 +391,17 @@ export function StructureDrawDialog({
     },
   });
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    publishAndApplyMutation.reset();
+    applyMutation.reset();
+    cancelMutation.reset();
+    releaseMutation.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clear sticky footer errors when dialog opens
+  }, [open]);
+
   const busy =
     createMutation.isPending ||
     publishAndApplyMutation.isPending ||
@@ -512,21 +525,6 @@ export function StructureDrawDialog({
                       </Link>
                     </p>
                   ) : null}
-                  {createBlockEcho?.cta?.actionCode === 'ConfigureDrawParams' &&
-                  onConfigureDrawParams ? (
-                    <p className="ds-body">
-                      <button
-                        type="button"
-                        className="ds-text-link"
-                        onClick={() => {
-                          onClose();
-                          onConfigureDrawParams();
-                        }}
-                      >
-                        {t('fiche.drawWorkflow.createBlocked.echoDrawParams')}
-                      </button>
-                    </p>
-                  ) : null}
                 </Alert>
               ) : null}
             </>
@@ -615,13 +613,16 @@ export function StructureDrawDialog({
                 <DrawExecutionDetail
                   draw={selected}
                   slots={slots}
+                  groups={overviewGroups}
+                  stageHasPublishedAppliedDraw={stageHasAppliedDraw}
                   bracketPairs={overviewQuery.data?.bracketPairs ?? []}
                   competitionStatus={competitionStatus}
                   stageStatus={overviewQuery.data?.status ?? stage.status}
                   busy={busy}
-                  onPublishAndApply={() =>
-                    publishAndApplyMutation.mutate(selected)
-                  }
+                  onPublishAndApply={() => {
+                    applyMutation.reset();
+                    publishAndApplyMutation.mutate(selected);
+                  }}
                   onApply={() => setApplyConfirmOpen(true)}
                   onCancel={() => setCancelConfirmOpen(true)}
                   onRelease={() => setReleaseConfirmOpen(true)}
@@ -667,6 +668,7 @@ export function StructureDrawDialog({
           if (!selected || applyMutation.isPending) {
             return;
           }
+          publishAndApplyMutation.reset();
           applyMutation.mutate(selected);
         }}
       />
@@ -853,6 +855,8 @@ function DrawSectionTile({
 function DrawExecutionDetail({
   draw,
   slots,
+  groups,
+  stageHasPublishedAppliedDraw,
   bracketPairs,
   competitionStatus,
   stageStatus,
@@ -868,6 +872,8 @@ function DrawExecutionDetail({
 }: {
   draw: StageDraw;
   slots: StageSlot[];
+  groups: StageGroupOverview[];
+  stageHasPublishedAppliedDraw: boolean;
   bracketPairs: StageBracketPair[];
   competitionStatus: CompetitionStatus;
   stageStatus: StageStatus;
@@ -886,7 +892,7 @@ function DrawExecutionDetail({
   const { t: tStructure } = useTranslation('structure');
   const ui = getDrawUiProjection(draw, slots);
 
-  const alignedCount = countAlignedSlotPlacements(draw, slots);
+  const alignedCount = countAlignedSlotPlacements(draw, slots, groups);
   const canPublishAndApply =
     draw.status === 'Draft' &&
     draw.resolutionState === 'Resolved' &&
@@ -906,6 +912,7 @@ function DrawExecutionDetail({
     stageStatus,
     drawStatus: draw.status,
     drawKind: draw.kind,
+    stageHasPublishedAppliedDraw,
     alignedPlacementCount: alignedCount,
   });
 
@@ -990,7 +997,7 @@ function DrawExecutionDetail({
                   <UnlockIcon size="sm" />
                   {t('releasePlacementsCount', {
                     aligned: alignedCount,
-                    total: draw.slotPlacements.length,
+                    total: drawResolutionPlacementCount(draw),
                   })}
                 </>
               )}

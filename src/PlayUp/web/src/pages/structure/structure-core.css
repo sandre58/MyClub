@@ -191,6 +191,10 @@
   width: 100%;
 }
 
+.structure-status--banner .structure-status__actions {
+  padding-inline-start: var(--space-12);
+}
+
 .structure-status__action-row {
   display: grid;
   grid-template-columns: subgrid;
@@ -217,13 +221,17 @@
 
 .structure-status__action-marker {
   grid-column: 1;
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 999px;
-  background: currentColor;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  flex: none;
   color: var(--color-text-primary);
-  opacity: 0.9;
-  justify-self: center;
+}
+
+.structure-status__action-marker > svg,
+.structure-status__action-marker > .ds-icon {
+  display: block;
 }
 
 .structure-status__action-summary {

@@ -6,20 +6,25 @@ import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   DrawPendingIcon,
   LayersIcon,
+  OverviewAttentionIcon,
   PersonIcon,
   TrashIcon,
   UnlockIcon,
 } from '../../design-system/icons/contentIcons';
 import { SettingsNavIcon } from '../../design-system/icons/shellIcons';
 import { PendingLabel } from '../../ui';
-import { StructureOperationalActionGroup } from './StructureOperationalActionGroup';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import { StructureOperationalTile } from './StructureOperationalTile';
 import { StructureOperationalOverflowMenu } from './StructureOperationalOverflowMenu';
-import { resolvePlacementPoolTone } from './structureOperationalCopy';
+import {
+  resolvePlaceOccupancyTone,
+  resolveResolvedPoolTone,
+} from './structureOperationalCopy';
 
 const compactDangerIcon =
   'ds-btn ds-btn--destructive ds-icon-button ds-icon-button--compact';
+const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
+const secondaryBtn = 'ds-btn ds-btn--secondary ds-btn--sm';
 
 export type StructurePlacementOperationalSectionProps = {
   competitionId: string;
@@ -29,6 +34,7 @@ export type StructurePlacementOperationalSectionProps = {
   occupancyReady: boolean;
   showDrawCta: boolean;
   showActivateDrawCta: boolean;
+  showResolvedPoolGauge: boolean;
   canManualPlace: boolean;
   canEditDraw: boolean;
   showReleaseCta: boolean;
@@ -51,6 +57,7 @@ export type StructurePlacementOperationalSectionProps = {
   onReleasePlacements: () => void;
   onDeactivateDraw: () => void;
   structureHubRefreshing?: boolean;
+  embeddedInSection?: boolean;
 };
 
 export function StructurePlacementOperationalSection(props: StructurePlacementOperationalSectionProps) {
@@ -61,61 +68,63 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
   const unknownCapacity = capacity == null || capacity <= 0;
   const poolTone =
     !unknownCapacity && capacity != null
-      ? resolvePlacementPoolTone(props.poolFilled, capacity)
+      ? resolveResolvedPoolTone(props.poolFilled, capacity)
       : 'neutral';
   const occupancyTone =
     !unknownCapacity &&
     capacity != null &&
     props.occupiedPlacesCount != null
-      ? resolvePlacementPoolTone(props.occupiedPlacesCount, capacity)
+      ? resolvePlaceOccupancyTone(props.occupiedPlacesCount, capacity)
       : 'neutral';
 
   const overflowItems = [];
-  if (props.showReleaseCta) {
-    overflowItems.push({
-      id: 'release',
-      label: tDraw('releasePlacementsCount', {
-        aligned: props.releasableAlignedCount,
-        total: props.releasableTotal,
-      }),
-      disabled: props.releasePending,
-      leading: <UnlockIcon size="sm" />,
-      onSelect: props.onReleasePlacements,
-    });
-  }
 
   const showDrawOpen = props.showDrawCta;
   const showDrawActivate = props.showActivateDrawCta;
   const showDrawActions = showDrawOpen || showDrawActivate;
   const deactivateBlocked = props.hasNonCancelledDraw || props.deactivateDrawPending;
-  const primaryDrawClass = 'ds-btn ds-btn--primary ds-btn--sm';
-  const primaryManualClass = 'ds-btn ds-btn--primary ds-btn--sm';
 
-  const blockedNotes =
+  const drawPrimary = showDrawOpen || showDrawActivate;
+  const manualPrimary = props.canManualPlace && !drawPrimary;
+  const drawBtnClass = drawPrimary ? primaryBtn : secondaryBtn;
+  const manualBtnClass = manualPrimary ? primaryBtn : secondaryBtn;
+
+  const drawPrimaryLabel = props.activeDraw
+    ? t('fiche.openDrawWorkflow')
+    : t('fiche.performDraw');
+
+  const drawBlockedNote =
     props.showCreateBlockedCaption && props.createBlockedShort ? (
-      <p className="structure-operational-tile__note" role="status">
-        {props.createBlockedShort}
-        {props.createBlockedReason === 'belowMinimumTeams' ? (
-          <>
-            {' '}
-            <Link className="ds-text-link" to={`/competitions/${props.competitionId}/teams`}>
-              {t('fiche.drawWorkflow.createBlocked.echoTeams')}
-            </Link>
-          </>
-        ) : null}
-        {props.createBlockedReason === 'missingPots' && props.canEditDraw ? (
-          <>
-            {' '}
-            <button
-              type="button"
-              className="ds-text-link"
-              onClick={props.onEditDrawParams}
+      <div className="structure-operational-tile__diagnostics">
+        <ul className="structure-phase-rail__issues" role="list">
+          <li
+            className="structure-phase-rail__issue"
+            data-tone="attention"
+            role="status"
+          >
+            <span
+              className="structure-phase-rail__issue-icon"
+              aria-hidden="true"
             >
-              {t('fiche.drawWorkflow.createBlocked.echoDrawParams')}
-            </button>
-          </>
-        ) : null}
-      </p>
+              <OverviewAttentionIcon size="sm" />
+            </span>
+            <span>
+              {props.createBlockedShort}
+              {props.createBlockedReason === 'belowMinimumTeams' ? (
+                <>
+                  {' '}
+                  <Link
+                    className="ds-text-link"
+                    to={`/competitions/${props.competitionId}/teams`}
+                  >
+                    {t('fiche.drawWorkflow.createBlocked.echoTeams')}
+                  </Link>
+                </>
+              ) : null}
+            </span>
+          </li>
+        </ul>
+      </div>
     ) : null;
 
   const releaseNote = props.releasePending ? (
@@ -130,7 +139,7 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
     </p>
   ) : null;
 
-  const showPoolState = showDrawActions && !unknownCapacity;
+  const showPoolState = !unknownCapacity && props.showResolvedPoolGauge;
   const showOccupancyGauge =
     !unknownCapacity &&
     (props.occupancyReady
@@ -161,8 +170,6 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
       </p>
     ) : null;
 
-  const hasStateContent = showOccupancyGauge;
-
   const drawPoolGauge = showPoolState ? (
     <StructureOperationalRatioGauge
       current={props.poolFilled}
@@ -170,19 +177,14 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
       caption={t('fiche.drawCtaTeamsCaption')}
       ariaLabel={t('fiche.operational.placement.poolMeterAria')}
       poolTone={poolTone}
-      dense
     />
   ) : null;
 
-  const drawPrimaryLabel = props.activeDraw
-    ? t('fiche.openDrawWorkflow')
-    : t('fiche.performDraw');
-
   const drawPrimaryControl = showDrawOpen ? (
     props.blockPerformDrawCta ? (
-      <Tooltip content={props.createBlockedShort ?? ''}>
+      <Tooltip content={props.createBlockedShort ?? drawPrimaryLabel}>
         <span className="structure-operational-tile__action-wrap">
-          <button type="button" className={primaryDrawClass} disabled>
+          <button type="button" className={drawBtnClass} disabled>
             {props.activeDraw ? (
               <>
                 <DrawPendingIcon size="sm" />
@@ -197,7 +199,7 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
     ) : (
       <button
         type="button"
-        className={primaryDrawClass}
+        className={drawBtnClass}
         onClick={props.onOpenDrawWorkflow}
       >
         {props.activeDraw ? (
@@ -213,12 +215,35 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
   ) : showDrawActivate ? (
     <button
       type="button"
-      className={primaryDrawClass}
+      className={drawBtnClass}
       onClick={props.onActivateDraw}
     >
       <DrawPendingIcon size="sm" />
       {t('fiche.activateDraw')}
     </button>
+  ) : null;
+
+  const releaseControl = props.showReleaseCta ? (
+    <Tooltip content={tDraw('releasePlacementsHint')}>
+      <button
+        type="button"
+        className={secondaryBtn}
+        disabled={props.releasePending}
+        onClick={props.onReleasePlacements}
+      >
+        {props.releasePending ? (
+          <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
+        ) : (
+          <>
+            <UnlockIcon size="sm" />
+            {tDraw('releasePlacementsCount', {
+              aligned: props.releasableAlignedCount,
+              total: props.releasableTotal,
+            })}
+          </>
+        )}
+      </button>
+    </Tooltip>
   ) : null;
 
   const settingsControl = props.canEditDraw ? (
@@ -238,7 +263,7 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
     ? t('regulation.deactivateDrawBlockedHint')
     : t('fiche.deactivateDraw');
 
-  const deactivateControl = props.canEditDraw ? (
+  const deactivateControl = props.canEditDraw && props.showDrawCta ? (
     <Tooltip content={deactivateTooltip}>
       <span className="structure-operational-tile__action-wrap">
         <button
@@ -254,28 +279,59 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
     </Tooltip>
   ) : null;
 
-  const showTirageColumn =
+  const showDrawCluster =
     showPoolState ||
     drawPrimaryControl != null ||
+    releaseControl != null ||
     settingsControl != null ||
     deactivateControl != null ||
     overflowItems.length > 0;
-  const showPlacerColumn = props.canManualPlace;
 
-  const footer =
-    showTirageColumn || showPlacerColumn ? (
-      <div className="structure-operational-tile__columns">
-        {showTirageColumn ? (
-          <StructureOperationalActionGroup
-            label={t('fiche.operational.placement.groupDraw')}
-            labelId="operational-placement-draw-label"
-            suffix={drawPoolGauge}
-            rowClassName="structure-operational-tile__group-row--tirage"
-          >
-            <div className="structure-operational-tile__tirage-primary">
+  const showOccupancyCluster = showOccupancyGauge || props.canManualPlace;
+
+  const manualControl = props.canManualPlace ? (
+    <button type="button" className={manualBtnClass} onClick={props.onManualPlace}>
+      <PersonIcon size="sm" />
+      {t('fiche.manualPlacementCta')}
+    </button>
+  ) : null;
+
+  const stateGrid =
+    showOccupancyCluster || showDrawCluster ? (
+      <div
+        className={[
+          'structure-operational-state',
+          showOccupancyCluster && showDrawCluster
+            ? 'structure-operational-state--dual'
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {showOccupancyCluster ? (
+          <div className="structure-operational-state__cluster">
+            {showOccupancyGauge ? (
+              <div className="structure-operational-state__gauge-block">
+                {occupancyGauge}
+                {occupancySyncNote}
+              </div>
+            ) : null}
+            {manualControl ? (
+              <div className="structure-operational-state__cluster-actions">
+                {manualControl}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {showDrawCluster ? (
+          <div className="structure-operational-state__cluster">
+            {showPoolState ? (
+              <div className="structure-operational-state__gauge-block">{drawPoolGauge}</div>
+            ) : null}
+            {drawBlockedNote}
+            <div className="structure-operational-state__cluster-actions structure-operational-state__cluster-actions--draw">
               {drawPrimaryControl}
-            </div>
-            <div className="ds-icon-toolbar structure-operational-tile__inline-tools">
+              {releaseControl}
               {settingsControl}
               {deactivateControl}
               {overflowItems.length > 0 ? (
@@ -285,53 +341,30 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
                 />
               ) : null}
             </div>
-          </StructureOperationalActionGroup>
-        ) : null}
-        {showPlacerColumn ? (
-          <StructureOperationalActionGroup
-            label={t('fiche.operational.placement.groupPlacer')}
-            labelId="operational-placement-placer-label"
-          >
-            <button
-              type="button"
-              className={primaryManualClass}
-              onClick={props.onManualPlace}
-            >
-              <PersonIcon size="sm" />
-              {t('fiche.manualPlacementCta')}
-            </button>
-          </StructureOperationalActionGroup>
+          </div>
         ) : null}
       </div>
-    ) : null;
+    ) : (
+      <span className="structure-operational-tile__state-empty" />
+    );
 
-  const hasNotes = blockedNotes || releaseNote || deactivateNote;
+  const hasNotes = releaseNote || deactivateNote;
 
   return (
     <StructureOperationalTile
       id="operational-placement"
       title={t('fiche.operational.placement.title')}
       icon={<LayersIcon size="sm" />}
-      gauge={
-        hasStateContent ? (
-          <>
-            {occupancyGauge}
-            {occupancySyncNote}
-          </>
-        ) : (
-          <span className="structure-operational-tile__state-empty" />
-        )
-      }
+      showHead={!props.embeddedInSection}
+      gauge={stateGrid}
       notes={
         hasNotes ? (
           <>
-            {blockedNotes}
             {releaseNote}
             {deactivateNote}
           </>
         ) : undefined
       }
-      actions={footer ?? undefined}
       trail={props.placesDiagnostics}
     />
   );

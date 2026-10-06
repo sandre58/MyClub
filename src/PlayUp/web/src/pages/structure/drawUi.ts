@@ -1,13 +1,18 @@
 import type {
+  CompetitionStatus,
   DrawResolutionState,
   DrawStatus,
+  SchematicCase,
   StageBracketPair,
   StageDraw,
   StageDrawGroupPlacement,
   StageDrawSlotPlacement,
+  StageGroupOverview,
   StageSlot,
+  StageStatus,
   StructureFormatKind,
 } from '../../types';
+import { canReleaseDrawAlignedPlacements } from '../stage/lifecycleGates';
 
 export type GroupPlacementEntry = {
   entryId: string;
@@ -38,6 +43,14 @@ export type SlotConfrontationRow = {
   sideB: SlotConfrontationSide;
 };
 
+/** Stable group card order (A before B, numeric-aware). */
+export function compareGroupLabels(a: string, b: string): number {
+  return a.localeCompare(b, undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+}
+
 /** Collapse flat groupPlacements into one row per group (list density, not nested cards). */
 export function groupPlacementRows(
   placements: StageDrawGroupPlacement[],
@@ -63,10 +76,7 @@ export function groupPlacementRows(
     });
   }
   return [...byGroup.values()].sort((a, b) =>
-    a.groupLabel.localeCompare(b.groupLabel, undefined, {
-      numeric: true,
-      sensitivity: 'base',
-    }),
+    compareGroupLabels(a.groupLabel, b.groupLabel),
   );
 }
 
@@ -679,21 +689,158 @@ export function isSlotDrawApplied(
  * How many Places still carry exactly this draw's SlotResults.
  * Does not inspect DirectAssignment (server skips DA); SPA uses this for CTA visibility.
  */
-export function countAlignedSlotPlacements(
+/** True when any Published draw is applied on the stage (server DrawAppliedState). */
+export function stageHasPublishedAppliedDraw(
+  draws: ReadonlyArray<StageDraw>,
+): boolean {
+  return draws.some((d) => d.status === 'Published' && d.isApplied === true);
+}
+
+/** Resolved placement rows in this draw's resolution (Slot or Group). */
+export function drawResolutionPlacementCount(draw: StageDraw): number {
+  if (draw.kind === 'Group') {
+    return draw.groupPlacements?.length ?? 0;
+  }
+  return draw.slotPlacements.length;
+}
+
+function entityIdsEqual(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  if (a == null || b == null) {
+    return false;
+  }
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+function countAlignedGroupPlacements(
   draw: StageDraw,
-  slots: StageSlot[],
+  groups: ReadonlyArray<StageGroupOverview>,
+  schematicCases: ReadonlyArray<SchematicCase> | undefined,
 ): number {
-  if (draw.kind !== 'Slot' || draw.resolutionState !== 'Resolved') {
+  const placements = draw.groupPlacements ?? [];
+  if (placements.length === 0) {
     return 0;
   }
 
-  const byKey = new Map(slots.map((slot) => [slot.slotKey, slot]));
+  if (schematicCases != null && schematicCases.length > 0) {
+    let count = 0;
+    for (const placement of placements) {
+      const aligned = schematicCases.some((c) => {
+        if (c.formPosition.kind !== 'GroupPlace') {
+          return false;
+        }
+        if (!entityIdsEqual(c.formPosition.groupId, placement.groupId)) {
+          return false;
+        }
+        const occupant = c.assignment?.entryId ?? c.entry?.entryId;
+        return entityIdsEqual(occupant, placement.entryId);
+      });
+      if (aligned) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  const byGroup = new Map(
+    groups.map((group) => [
+      group.id.trim().toLowerCase(),
+      new Set((group.entryIds ?? []).map((id) => id.trim().toLowerCase())),
+    ]),
+  );
   let count = 0;
-  for (const placement of draw.slotPlacements) {
-    const slot = byKey.get(placement.slotKey);
-    if (slot?.entryId != null && slot.entryId === placement.entryId) {
+  for (const placement of placements) {
+    const members = byGroup.get(placement.groupId.trim().toLowerCase());
+    if (members?.has(placement.entryId.trim().toLowerCase())) {
       count += 1;
     }
   }
   return count;
+}
+
+/** Placements on stage that still match a cancelled draw resolution (Slot or Group). */
+export function countAlignedDrawPlacements(
+  draw: StageDraw,
+  slots: StageSlot[],
+  groups: ReadonlyArray<StageGroupOverview> = [],
+  schematicCases?: ReadonlyArray<SchematicCase>,
+): number {
+  if (draw.resolutionState !== 'Resolved') {
+    return 0;
+  }
+
+  if (draw.kind === 'Slot') {
+    const byKey = new Map(slots.map((slot) => [slot.slotKey, slot]));
+    let count = 0;
+    for (const placement of draw.slotPlacements) {
+      const slot = byKey.get(placement.slotKey);
+      if (slot?.entryId != null && entityIdsEqual(slot.entryId, placement.entryId)) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+
+  if (draw.kind === 'Group') {
+    return countAlignedGroupPlacements(draw, groups, schematicCases);
+  }
+
+  return 0;
+}
+
+/** Cancelled execution with the most aligned placements (then newest id). */
+export function pickReleasableCancelledDraw(input: {
+  draws: ReadonlyArray<StageDraw>;
+  slots: StageSlot[];
+  groups: ReadonlyArray<StageGroupOverview>;
+  schematicCases?: ReadonlyArray<SchematicCase>;
+  competitionStatus: CompetitionStatus;
+  stageStatus: StageStatus;
+  stageHasPublishedAppliedDraw: boolean;
+}): { draw: StageDraw; aligned: number } | null {
+  if (input.stageHasPublishedAppliedDraw) {
+    return null;
+  }
+
+  let best: { draw: StageDraw; aligned: number } | null = null;
+  for (const draw of input.draws) {
+    const aligned = countAlignedDrawPlacements(
+      draw,
+      input.slots,
+      input.groups,
+      input.schematicCases,
+    );
+    if (
+      !canReleaseDrawAlignedPlacements({
+        competitionStatus: input.competitionStatus,
+        stageStatus: input.stageStatus,
+        drawStatus: draw.status,
+        drawKind: draw.kind,
+        stageHasPublishedAppliedDraw: input.stageHasPublishedAppliedDraw,
+        alignedPlacementCount: aligned,
+      })
+    ) {
+      continue;
+    }
+    if (
+      !best ||
+      aligned > best.aligned ||
+      (aligned === best.aligned && draw.id > best.draw.id)
+    ) {
+      best = { draw, aligned };
+    }
+  }
+  return best;
+}
+
+/** @deprecated Prefer {@link countAlignedDrawPlacements}. */
+export function countAlignedSlotPlacements(
+  draw: StageDraw,
+  slots: StageSlot[],
+  groups: ReadonlyArray<StageGroupOverview> = [],
+  schematicCases?: ReadonlyArray<SchematicCase>,
+): number {
+  return countAlignedDrawPlacements(draw, slots, groups, schematicCases);
 }

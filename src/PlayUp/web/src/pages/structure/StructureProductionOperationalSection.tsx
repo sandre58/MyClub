@@ -6,7 +6,12 @@ import { dematerializePhase, materializeCupFromOccupiedSlots, materializeMatches
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
 import { TextLink } from '../../design-system/components/TextLink';
 import { Tooltip } from '../../design-system/components/Tooltip';
-import { CreateMatchesIcon, MatchesStatIcon, TrashIcon } from '../../design-system/icons/contentIcons';
+import {
+  CreateMatchesIcon,
+  MatchesStatIcon,
+  OverviewAttentionIcon,
+  TrashIcon,
+} from '../../design-system/icons/contentIcons';
 import { notify } from '../../design-system/toastStore';
 import { MutationError, PendingLabel } from '../../ui';
 import { queryKeys } from '../../queryKeys';
@@ -19,7 +24,6 @@ import { invalidateAfterStructureMutation } from './structureInvalidation';
 import {
   materializeDisabledCaption,
   materializeRatioTone,
-  showMaterializeActionBlock,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
 import { dematerializeDisabledCaption } from './structureDematerializeCopy';
@@ -49,12 +53,14 @@ export function StructureProductionOperationalSection({
   stage,
   presentation,
   structureHubRefreshing = false,
+  embeddedInSection = false,
 }: {
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
   presentation: MaterializePresentation | null;
   structureHubRefreshing?: boolean;
+  embeddedInSection?: boolean;
 }) {
   const materialize = stage.materialize;
   const dematerialize = stage.dematerialize;
@@ -136,9 +142,7 @@ export function StructureProductionOperationalSection({
       ? resolveDrawCtaPoolTone(ratio.filled, ratio.capacity)
       : 'neutral';
   const showMaterializePrimary =
-    materialize != null &&
-    presentation != null &&
-    showMaterializeActionBlock(presentation);
+    materialize != null && presentation === 'actionable';
   const dematerializeTitle =
     dematerialize?.scope === 'LastSwissRound'
       ? tActions('DematerializeLastSwissRound')
@@ -150,7 +154,7 @@ export function StructureProductionOperationalSection({
       : null;
 
   const blockedCaption =
-    showMaterializePrimary && presentation === 'blocked' && materialize
+    presentation === 'blocked' && materialize
       ? materializeDisabledCaption(materialize, t)
       : null;
 
@@ -161,9 +165,23 @@ export function StructureProductionOperationalSection({
   const notes = hasNotes ? (
     <>
       {blockedCaption ? (
-        <p className="structure-operational-tile__note" role="status">
-          {blockedCaption}
-        </p>
+        <div className="structure-operational-tile__diagnostics">
+          <ul className="structure-phase-rail__issues" role="list">
+            <li
+              className="structure-phase-rail__issue"
+              data-tone="attention"
+              role="status"
+            >
+              <span
+                className="structure-phase-rail__issue-icon"
+                aria-hidden="true"
+              >
+                <OverviewAttentionIcon size="sm" />
+              </span>
+              <span>{blockedCaption}</span>
+            </li>
+          </ul>
+        </div>
       ) : null}
       {materializeMutation.isError ? (
         <MutationError error={materializeMutation.error} />
@@ -189,29 +207,28 @@ export function StructureProductionOperationalSection({
       ? t('fiche.dematerialize.hintLastSwissRound')
       : t('fiche.dematerialize.hintFullPhase');
 
-  const dematerializeToolbarButton = dematerialize ? (
+  const dematerializeActionButton =
+    dematerialize?.enabled ? (
     <Tooltip content={dematerializeTooltip}>
       <span className="structure-operational-tile__toolbar-action">
         <button
           type="button"
-          className="ds-btn ds-btn--destructive ds-icon-button ds-icon-button--compact"
+          className="ds-btn ds-btn--destructive ds-btn--sm"
           disabled={!dematerialize.enabled || dematerializeMutation.isPending}
           onClick={() => setDematerializeConfirmOpen(true)}
-          aria-label={
-            dematerializeMutation.isPending
-              ? t('fiche.dematerialize.submitting')
-              : dematerializeTitle
-          }
         >
           {dematerializeMutation.isPending ? (
-            <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
+            <PendingLabel>{t('fiche.dematerialize.submitting')}</PendingLabel>
           ) : (
-            <TrashIcon size="sm" />
+            <>
+              <TrashIcon size="sm" />
+              {dematerializeTitle}
+            </>
           )}
         </button>
       </span>
     </Tooltip>
-  ) : null;
+    ) : null;
 
   const showViewMatchesLink =
     materialize != null && materialize.materializedCount > 0;
@@ -228,64 +245,63 @@ export function StructureProductionOperationalSection({
       id="operational-production"
       title={t('fiche.operational.production.titleMatches')}
       icon={<MatchesStatIcon size="sm" />}
-      toolbar={dematerializeToolbarButton}
+      showHead={!embeddedInSection}
       gauge={
         <>
-          {hasGauge ? (
-            <StructureOperationalRatioGauge
-              current={ratio.filled}
-              capacity={ratio.capacity}
-              caption={meterCaption}
-              ariaLabel={t('fiche.operational.production.meterAria')}
-              poolTone={
-                materialize ? materializeRatioTone(materialize) : poolTone
-              }
-            />
-          ) : (
-            <p className="structure-operational-gauge__status" role="status">
-              {t('fiche.operational.production.statusUnknown')}
-            </p>
-          )}
+          <div className="structure-operational-production__gauge-row">
+            <div className="structure-operational-production__gauge">
+              {hasGauge ? (
+                <StructureOperationalRatioGauge
+                  current={ratio.filled}
+                  capacity={ratio.capacity}
+                  caption={meterCaption}
+                  ariaLabel={t('fiche.operational.production.meterAria')}
+                  poolTone={
+                    materialize ? materializeRatioTone(materialize) : poolTone
+                  }
+                />
+              ) : null}
+            </div>
+          </div>
           {productionGaugeSyncLabel ? (
             <p className="structure-operational-tile__sync-status" role="status">
               <PendingLabel>{productionGaugeSyncLabel}</PendingLabel>
             </p>
           ) : null}
-        </>
-      }
-      notes={notes}
-      actions={
-        (showMaterializePrimary && materialize) || showViewMatchesLink ? (
-          <div className="structure-operational-tile__production-actions">
-            {showMaterializePrimary && materialize ? (
-              <div className="structure-operational-tile__primary-action">
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--primary ds-btn--sm"
-                  disabled={materializeMutation.isPending || presentation === 'blocked'}
-                  onClick={() => materializeMutation.mutate()}
-                >
-                  {materializeMutation.isPending ? (
-                    <PendingLabel>{t('fiche.materialize.submitting')}</PendingLabel>
-                  ) : (
-                    <>
-                      <CreateMatchesIcon size="sm" />
-                      {materializeActionLabel(materialize, tActions)}
-                    </>
-                  )}
-                </button>
+          {(showMaterializePrimary && materialize) ||
+          dematerializeActionButton ||
+          showViewMatchesLink ? (
+            <div className="structure-operational-production__footer">
+              <div className="structure-operational-production__footer-actions">
+                {showMaterializePrimary && materialize ? (
+                  <button
+                    type="button"
+                    className="ds-btn ds-btn--primary ds-btn--sm"
+                    disabled={materializeMutation.isPending || presentation === 'blocked'}
+                    onClick={() => materializeMutation.mutate()}
+                  >
+                    {materializeMutation.isPending ? (
+                      <PendingLabel>{t('fiche.materialize.submitting')}</PendingLabel>
+                    ) : (
+                      <>
+                        <CreateMatchesIcon size="sm" />
+                        {materializeActionLabel(materialize, tActions)}
+                      </>
+                    )}
+                  </button>
+                ) : null}
+                {dematerializeActionButton}
               </div>
-            ) : null}
-            {showViewMatchesLink ? (
-              <p className="structure-operational-tile__matches-link">
+              {showViewMatchesLink ? (
                 <TextLink to={`/stages/${stage.stageId}/matches`}>
                   {t('fiche.materialize.viewPhaseMatches')}
                 </TextLink>
-              </p>
-            ) : null}
-          </div>
-        ) : null
+              ) : null}
+            </div>
+          ) : null}
+        </>
       }
+      notes={notes}
     />
     {dematerialize ? (
       <ConfirmDialog

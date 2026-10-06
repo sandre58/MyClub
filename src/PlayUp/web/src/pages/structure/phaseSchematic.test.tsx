@@ -566,6 +566,49 @@ describe('PhaseSchematic', () => {
     expect(root!.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
   });
 
+  it('orders group cards by group name (A before B)', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={{
+          stageId: 'groups',
+          competitionId: 'c1',
+          name: 'Poules',
+          status: 'Draft',
+          formatKind: 'Groups',
+          cases: [
+            {
+              formPosition: {
+                kind: 'GroupPlace',
+                groupId: 'gb',
+                groupName: 'B',
+                index: 1,
+              },
+              entry: { entryId: 'e1', displayName: 'Bravo' },
+              assignment: { entryId: 'e1', displayName: 'Bravo' },
+            },
+            {
+              formPosition: {
+                kind: 'GroupPlace',
+                groupId: 'ga',
+                groupName: 'A',
+                index: 1,
+              },
+              entry: { entryId: 'e2', displayName: 'Alpha' },
+              assignment: { entryId: 'e2', displayName: 'Alpha' },
+            },
+          ],
+          connections: [],
+        }}
+      />,
+    );
+    const labels = container.querySelectorAll(
+      '.regulation-schematic__card-label',
+    );
+    expect(labels).toHaveLength(2);
+    expect(labels[0]).toHaveTextContent('Groupe A');
+    expect(labels[1]).toHaveTextContent('Groupe B');
+  });
+
   it('groups ForGroup WhoFeeds fills seats — no title chrome under poule name', () => {
     const { container } = render(
       <PhaseSchematic

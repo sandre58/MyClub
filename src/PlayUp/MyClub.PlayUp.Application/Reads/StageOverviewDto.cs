@@ -20,6 +20,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Slots">Bracket / destination slots.</param>
 /// <param name="Draws">Draw lifecycle and summarized resolution.</param>
 /// <param name="BracketPairs">Cup structural confrontations (empty for Groups).</param>
+/// <param name="Groups">Group membership snapshot (empty for non-Groups formats).</param>
 public sealed record StageOverviewDto(
     Guid Id,
     Guid CompetitionId,
@@ -28,7 +29,19 @@ public sealed record StageOverviewDto(
     IReadOnlyList<StageRoundDto> Rounds,
     IReadOnlyList<StageSlotDto> Slots,
     IReadOnlyList<StageDrawDto> Draws,
-    IReadOnlyList<StageBracketPairDto> BracketPairs);
+    IReadOnlyList<StageBracketPairDto> BracketPairs,
+    IReadOnlyList<StageGroupOverviewDto> Groups);
+
+/// <summary>
+/// Group membership line for stage overview (draw release / alignment checks).
+/// </summary>
+/// <param name="Id">Group identity.</param>
+/// <param name="Name">Group display name.</param>
+/// <param name="EntryIds">Entries currently assigned to the group.</param>
+public sealed record StageGroupOverviewDto(
+    Guid Id,
+    string Name,
+    IReadOnlyList<Guid> EntryIds);
 
 /// <summary>
 /// Structural Cup confrontation potential (PairKey P1… = SlotA ↔ SlotB).

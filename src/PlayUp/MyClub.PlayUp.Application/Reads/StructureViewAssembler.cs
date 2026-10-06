@@ -355,6 +355,7 @@ public static class StructureViewAssembler
         var composition = BuildEntrySetProjection(competition, stage.CompositionEntries);
         var affectation = BuildEntrySetProjection(competition, stage.AffectationAuthoring);
         var compositionCapacity = ResolvePlaces(competition, stage);
+        var drawExecutionBadge = ResolveDrawExecutionBadge(stage, draw is not null);
         IReadOnlyList<MatchSummaryRow> summaries = [];
         if (matchSummariesByStage is not null
             && matchSummariesByStage.TryGetValue(stage.Id, out var loadedSummaries))
@@ -413,7 +414,14 @@ public static class StructureViewAssembler
             QualificationIntents: qualificationIntents,
             ProgressionPaths: progressionPaths,
             ProgressionIntents: progressionIntents,
-            StructureIssues: BuildStructureIssues(stage, competitionStages, flowIssues),
+            StructureIssues: BuildStructureIssues(
+                competition,
+                stage,
+                competitionStages,
+                flowIssues,
+                draw is not null,
+                drawExecutionBadge,
+                compositionCapacity),
             HalfTimeDuration: match.Duration.HalfTimeDuration,
             DirectAssignmentCount: stage.DirectAssignments.Count,
             CompositionEntryCount: composition.Count,
@@ -429,7 +437,7 @@ public static class StructureViewAssembler
             IsRootComposition: isRootComposition,
             PlacesPerGroup: stage.PlacesPerGroup,
             DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat),
-            DrawExecutionBadge: ResolveDrawExecutionBadge(stage, draw is not null),
+            DrawExecutionBadge: drawExecutionBadge,
             Materialize: StructureMaterializeAssembler.Assemble(competition, stage, summaries),
             Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries));
     }
@@ -921,9 +929,13 @@ public static class StructureViewAssembler
         StructureSkeleton.InferFormat(stage) is StructureFormatKind.Cup;
 
     private static IReadOnlyList<string> BuildStructureIssues(
+        Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyList<string> flowIssues)
+        IReadOnlyList<string> flowIssues,
+        bool hasDrawRules,
+        StructureDrawExecutionBadge? drawExecutionBadge,
+        int? placesN)
     {
         var issues = new List<string>();
         var byId = competitionStages.ToDictionary(candidate => candidate.Id);
@@ -1029,6 +1041,15 @@ public static class StructureViewAssembler
         }
 
         issues.AddRange(flowIssues);
+
+        StructurePlaceOccupancyIssues.AppendSchematicPlaceOccupancyIssue(
+            issues,
+            competition,
+            stage,
+            competitionStages,
+            hasDrawRules,
+            drawExecutionBadge,
+            placesN);
 
         return [.. issues.Distinct(StringComparer.Ordinal)];
     }
