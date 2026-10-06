@@ -31,29 +31,14 @@
     "edgeGeneric": "Enchaînement",
     "multiDestinations_one": "{{count}} destination",
     "multiDestinations_other": "{{count}} destinations",
-    "phaseStructuralAnomaly": "Liaison entre phases à corriger",
-    "phaseIncompleteAmbient": "Phase incomplète",
-    "phaseCapacityAmbient": "Capacité insuffisante",
-    "phaseDrawPotsAmbient": "Pots manquants",
     "phaseGapsAmbient": "Écarts sur cette phase",
-    "phaseFamilyAmbient": {
-      "graph": "Graphe à corriger",
-      "feed": "Alimentation incomplète",
-      "capacity": "Capacité à corriger",
-      "execution": "Exécution à corriger",
-      "result": "Résultat non productible"
-    },
     "sortiesIssue_one": "{{count}} liaison à corriger",
     "sortiesIssue_other": "{{count}} liaisons à corriger",
     "drawExecution": {
       "toLaunch": "Tirage à lancer",
-      "toLaunchTooltip": "Mécanisme engagé — aucune exécution active",
       "inProgress": "Tirage en cours",
-      "inProgressTooltip": "Exécution ouverte — détail dans le dialog",
       "toApply": "Tirage à appliquer",
-      "toApplyTooltip": "Publié — en attente d’application",
-      "applied": "Tirage appliqué",
-      "appliedTooltip": "Exécution appliquée à la phase"
+      "applied": "Tirage appliqué"
     },
     "outboundTo": "→ {{name}}",
     "overview": {

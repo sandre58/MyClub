@@ -4,9 +4,7 @@ import { collectAllStructureReadinessActionItems } from './structureReadinessAct
 import {
   computeStructureReadinessSummary,
   classifyReadinessHeaderTone,
-  stageAmbientKindLabel,
   stageAmbientKinds,
-  stageAmbientPastilleLabel,
   stagePopulationGap,
 } from './structureReadinessSummary';
 
@@ -265,22 +263,6 @@ describe('structureReadinessSummary', () => {
       'capacity',
       'drawPots',
     ]);
-  });
-
-  it('maps ambient kinds to hub.phaseFamilyAmbient copy', () => {
-    const t = (key: string) =>
-      key === 'hub.phaseGapsAmbient'
-        ? 'Gaps'
-        : key === 'hub.phaseDrawPotsAmbient'
-          ? 'Missing pots'
-          : key === 'hub.phaseFamilyAmbient.graph'
-            ? 'Graph to fix'
-            : key;
-    expect(stageAmbientKindLabel(t, 'graph')).toBe('Graph to fix');
-    expect(stageAmbientKindLabel(t, 'drawPots')).toBe('Missing pots');
-    expect(stageAmbientPastilleLabel(t, ['graph', 'drawPots'])).toBe(
-      'Gaps — Graph to fix · Missing pots',
-    );
   });
 
   it('separates presented problem count from actionable count', () => {

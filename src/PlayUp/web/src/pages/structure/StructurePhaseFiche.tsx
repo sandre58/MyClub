@@ -987,7 +987,7 @@ export function StructurePhaseFiche({
             <li className="structure-fiche__pill structure-fiche__pill--status">
               <StageStatusBadge status={stage.status} />
             </li>
-            {singlePhaseHub && stage.hasDrawRules ? (
+            {stage.hasDrawRules ? (
               <li className="structure-fiche__pill">
                 <StructurePhaseDrawHint stage={stage} variant="fiche" />
               </li>

@@ -38,9 +38,7 @@ import { type StructureSectionId } from './structureHubSections';
 import { topologyCardFacts } from './structureTopologyFacts';
 import {
   computeStructureReadinessSummary,
-  stageAmbientDetailLabels,
   stageAmbientKinds,
-  stageAmbientPastilleLabel,
   type StructureReadinessSummary,
 } from './structureReadinessSummary';
 import {
@@ -383,16 +381,12 @@ function TopologyPanel({
                   <span className="structure-topology__tile-status">
                     <StageStatusBadge status={stage.status} density="compact" />
                     {ambient.length > 0 ? (
-                      <Tooltip
-                        content={stageAmbientDetailLabels(t, ambient).join('\n')}
+                      <span
+                        className="structure-topology__issue"
+                        aria-label={t('hub.phaseGapsAmbient')}
                       >
-                        <span
-                          className="structure-topology__issue"
-                          aria-label={stageAmbientPastilleLabel(t, ambient)}
-                        >
-                          <StructureIssueIcon size="sm" aria-hidden="true" />
-                        </span>
-                      </Tooltip>
+                        <StructureIssueIcon size="sm" aria-hidden="true" />
+                      </span>
                     ) : null}
                   </span>
                 </span>
@@ -410,7 +404,7 @@ function TopologyPanel({
                   ))}
                 </span>
 
-                <TopologyDrawHint stage={stage} />
+                <StructurePhaseDrawHint stage={stage} variant="topology" />
               </button>
 
               {index < stages.length - 1 && (
@@ -493,10 +487,6 @@ function TopologyOutboundLinks({
       ))}
     </div>
   );
-}
-
-function TopologyDrawHint({ stage }: { stage: StructureStageHubSummary }) {
-  return <StructurePhaseDrawHint stage={stage} variant="topology" />;
 }
 
 function StageFormatGlyph({

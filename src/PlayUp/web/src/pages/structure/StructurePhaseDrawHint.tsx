@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { DrawPendingIcon } from '../../design-system/icons/contentIcons';
-import { Tooltip } from '../../design-system/components/Tooltip';
 import type { StructureStageHubSummary } from '../../types';
 
-/** Draw execution badge (E6) — shown on topology tile or fiche header when single-phase. */
+/** Draw execution badge (E6) — fiche header and topology tile (label only, no tooltip). */
 export function StructurePhaseDrawHint({
   stage,
   variant = 'fiche',
@@ -36,15 +35,13 @@ export function StructurePhaseDrawHint({
 
   const className =
     variant === 'topology'
-      ? `structure-topology__signal structure-topology__signal--${tone}`
+      ? `structure-topology__draw-signal structure-topology__draw-signal--${tone}`
       : `structure-fiche__draw-hint structure-phase-draw-hint--${tone}`;
 
   return (
-    <Tooltip content={t(`hub.drawExecution.${key}Tooltip`)}>
-      <span className={className}>
-        <DrawPendingIcon size="sm" aria-hidden="true" />
-        <span>{t(`hub.drawExecution.${key}`)}</span>
-      </span>
-    </Tooltip>
+    <span className={className}>
+      <DrawPendingIcon size="sm" aria-hidden="true" />
+      <span>{t(`hub.drawExecution.${key}`)}</span>
+    </span>
   );
 }

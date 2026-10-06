@@ -31,29 +31,14 @@
     "edgeGeneric": "Sequence",
     "multiDestinations_one": "{{count}} destination",
     "multiDestinations_other": "{{count}} destinations",
-    "phaseStructuralAnomaly": "Phase connection to fix",
-    "phaseIncompleteAmbient": "Incomplete phase",
-    "phaseCapacityAmbient": "Insufficient capacity",
-    "phaseDrawPotsAmbient": "Missing pots",
     "phaseGapsAmbient": "Gaps on this phase",
-    "phaseFamilyAmbient": {
-      "graph": "Graph to fix",
-      "feed": "Incomplete feed",
-      "capacity": "Capacity to fix",
-      "execution": "Execution to fix",
-      "result": "Result cannot be produced"
-    },
     "sortiesIssue_one": "{{count}} connection to fix",
     "sortiesIssue_other": "{{count}} connections to fix",
     "drawExecution": {
       "toLaunch": "Draw to run",
-      "toLaunchTooltip": "Mechanism engaged — no active execution",
       "inProgress": "Draw in progress",
-      "inProgressTooltip": "Open execution — details in the dialog",
       "toApply": "Draw to apply",
-      "toApplyTooltip": "Published — waiting to apply",
-      "applied": "Draw applied",
-      "appliedTooltip": "Execution applied to the stage"
+      "applied": "Draw applied"
     },
     "outboundTo": "→ {{name}}",
     "overview": {

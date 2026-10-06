@@ -967,9 +967,7 @@ describe('StructurePage Structure hub', () => {
       within(topology).queryByRole('button', { name: /Voir la phase/i }),
     ).not.toBeInTheDocument();
     expect(
-      within(topology).getByLabelText(
-        /Écarts sur cette phase — Graphe à corriger/i,
-      ),
+      within(topology).getByLabelText(/Écarts sur cette phase/i),
     ).toBeInTheDocument();
     expect(
       within(topology).queryByText(/Destination de qualification introuvable/i),

@@ -334,39 +334,30 @@
   font-variant-numeric: tabular-nums;
 }
 
-.structure-topology__signal {
+.structure-topology__draw-signal {
   display: inline-flex;
   align-items: center;
   gap: var(--space-4);
   align-self: flex-start;
-  color: var(--color-text-secondary);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
 }
 
-.structure-topology__signal--info {
+.structure-topology__draw-signal--info {
   color: var(--color-info);
 }
 
-.structure-topology__signal--live {
+.structure-topology__draw-signal--live {
   color: var(--color-live);
 }
 
-.structure-topology__signal--attention {
+.structure-topology__draw-signal--attention {
   color: var(--color-attention);
 }
 
-.structure-topology__signal--done {
+.structure-topology__draw-signal--done {
   color: var(--color-success);
-}
-
-.structure-topology__signal--warning {
-  color: var(--color-attention);
-}
-
-.structure-topology__signal--danger {
-  color: var(--color-error);
 }
 
 .structure-fiche__header {
