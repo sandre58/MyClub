@@ -568,8 +568,9 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByRole('button', { name: /Paramètres du tirage/i }),
     ).not.toBeInTheDocument();
-    const remove = screen.getByRole('button', { name: /Supprimer la phase/i });
-    expect(remove).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: /Supprimer la phase/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows an error when structure read fails', async () => {
@@ -947,7 +948,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/1 problème identifié · 1 action prioritaire/i),
+      await screen.findByText(/1 problème identifié/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Corriger la qualification/i }),
@@ -1222,6 +1223,56 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not show materialization-ready banner when matches already exist', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        stages: [
+          championshipStage({
+            actions: ['MaterializeMatches'],
+            matchdayCount: 2,
+            compositionCapacity: 8,
+            materialize: {
+              commandCode: 'MaterializeMatches',
+              labelVariant: 'complete',
+              materializedCount: 4,
+              eligibleCount: 4,
+            },
+          }),
+        ],
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        participants: {
+          activeCount: 8,
+          occupyingCount: 8,
+          entries: [],
+        },
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: false,
+          readyForMaterialization: true,
+          readyForSchedule: true,
+          readyForMatchOperation: true,
+          readyForSchedulePath: true,
+          attachedMatchCount: 4,
+          blockers: [],
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('heading', { name: 'League' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/La compétition est prête à créer les matchs/i),
     ).not.toBeInTheDocument();
   });
 

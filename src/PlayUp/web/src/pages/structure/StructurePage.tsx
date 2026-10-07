@@ -550,7 +550,7 @@ function readinessStatusNote(
     return null;
   }
 
-  if (readyToMaterialize) {
+  if (readyToMaterialize && !readiness.readyForSchedule) {
     const isCup = formatKind === 'Cup';
     return (
       <ReadinessReadyStatus

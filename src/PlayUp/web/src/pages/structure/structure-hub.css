@@ -735,40 +735,32 @@
 }
 
 .structure-fiche__title-edit {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-8);
 }
 
 .structure-fiche__title-edit-field {
-  display: flex;
   flex: 1 1 auto;
   min-width: 0;
+  max-width: 18rem;
 }
 
-.structure-fiche__title-edit-field input {
-  width: 100%;
-  max-width: 24rem;
-  min-width: 0;
-  height: 1.75rem;
+.structure-fiche__title-edit-field .ds-input {
+  min-height: var(--control-height-compact);
   padding-inline: var(--space-8);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  color: var(--color-text-primary);
-  font-family: inherit;
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-bold);
-  line-height: 1;
 }
 
-.structure-fiche__title-edit-field input:focus {
-  outline: none;
-  border-color: var(--color-brand);
-  box-shadow: var(--focus-halo);
+.structure-fiche__title-edit-field .ds-input__control {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-fiche__title-edit .ds-icon-toolbar {
+  flex: none;
 }
 
 .structure-fiche__title-edit .ds-state {

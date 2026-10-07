@@ -1,12 +1,9 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import {
-  ArrowRightIcon,
-  OverviewAttentionIcon,
-  StructureIssueIcon,
-} from '../../design-system/icons/contentIcons';
-import { ChevronRightIcon } from '../../design-system/icons/shellIcons';
+import { TextLink } from '../../design-system/components/TextLink';
+import { ArrowRightIcon } from '../../design-system/icons/contentIcons';
+import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import type { StructureDiagnosticTone } from './structureDiagnosticPresentation';
 import {
@@ -22,28 +19,32 @@ function actionButtonClass(tone: StructureDiagnosticTone): string {
   if (tone === 'danger') {
     return `${base} ds-btn--destructive`;
   }
-  /* Banner CTAs: outline attention matches band chrome (progress ≠ neutral secondary). */
-  return `${base} ds-btn--attention`;
+
+  if (tone === 'attention') {
+    return `${base} ds-btn--destructive`;
+  }
+
+  return `${base} ds-btn--secondary`;
 }
 
 function ReadinessActionRow({
   item,
-  showStageName,
+  showPhaseLink,
+  competitionId,
   isLast,
 }: {
   item: StructureReadinessActionItem;
-  showStageName: boolean;
+  showPhaseLink: boolean;
+  competitionId: string;
   isLast: boolean;
 }) {
   const { t } = useTranslation('structure');
   const issueLabel = t(item.titleKey, { defaultValue: item.code });
   const actionLabel = t(item.actionLabelKey ?? `readiness.action.${item.cta}`);
-  const rowLabel = showStageName
-    ? t('readiness.actionRowWithPhase', {
-        issue: issueLabel,
-        phase: item.stageName,
-      })
-    : issueLabel;
+  const phaseHref = structureDeepLink({
+    competitionId,
+    stageId: item.stageId,
+  });
 
   return (
     <li
@@ -53,9 +54,16 @@ function ReadinessActionRow({
     >
       <div className="structure-status__action-body">
         <span className="structure-status__action-marker" aria-hidden="true">
-          <ChevronRightIcon size="sm" />
+          <StructureDiagnosticIssueIcon tone={item.tone} size="md" />
         </span>
-        <span className="structure-status__action-summary">{rowLabel}</span>
+        <span className="structure-status__action-copy">
+          <span className="structure-status__action-summary">{issueLabel}</span>
+          {showPhaseLink ? (
+            <TextLink to={phaseHref} className="structure-status__action-phase">
+              {item.stageName}
+            </TextLink>
+          ) : null}
+        </span>
         <Link
           className={actionButtonClass(item.tone)}
           data-tone={item.tone}
@@ -98,21 +106,8 @@ export function StructureReadinessBanner({
       selectedStageId != null &&
       actions.some((item) => item.stageId !== selectedStageId));
 
-  const attentionStage =
-    summary.firstAttentionStageId != null
-      ? stages.find((s) => s.stageId === summary.firstAttentionStageId)
-      : undefined;
-
-  const showViewAttentionPhase =
-    attentionStage != null &&
-    (actions.length === 0 ||
-      stages.length > 1 ||
-      (selectedStageId != null &&
-        selectedStageId !== summary.firstAttentionStageId));
-
   const headline = structureReadinessBannerHeadline({
     presentedProblemCount: summary.presentedProblemCount,
-    priorityActionsShown: actions.length,
     t,
   });
 
@@ -124,32 +119,16 @@ export function StructureReadinessBanner({
     >
       <div className="structure-status__copy">
         <div className="structure-status__headline">
-          {summary.headerTone === 'danger' ? (
-            <StructureIssueIcon size="sm" aria-hidden="true" />
-          ) : (
-            <OverviewAttentionIcon size="sm" aria-hidden="true" />
-          )}
+          <span className="structure-status__headline-icon" aria-hidden="true">
+            <StructureDiagnosticIssueIcon
+              tone={summary.headerTone === 'danger' ? 'danger' : 'attention'}
+              size="md"
+            />
+          </span>
           <p id="readiness-heading" className="structure-status__title">
             {headline}
           </p>
         </div>
-
-        {showViewAttentionPhase && attentionStage ? (
-          <p className="structure-status__detail">
-            <Link
-              className="ds-text-link"
-              to={structureDeepLink({
-                competitionId: data.competitionId,
-                stageId: attentionStage.stageId,
-              })}
-              aria-label={t('readiness.viewAttentionPhaseAria', {
-                name: attentionStage.name,
-              })}
-            >
-              {t('readiness.viewAttentionPhase', { name: attentionStage.name })}
-            </Link>
-          </p>
-        ) : null}
 
         {actions.length > 0 ? (
           <ul
@@ -160,7 +139,8 @@ export function StructureReadinessBanner({
               <ReadinessActionRow
                 key={item.id}
                 item={item}
-                showStageName={showStageOnRows}
+                showPhaseLink={showStageOnRows}
+                competitionId={data.competitionId}
                 isLast={index === actions.length - 1}
               />
             ))}

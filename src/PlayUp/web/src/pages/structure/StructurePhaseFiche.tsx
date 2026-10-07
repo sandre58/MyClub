@@ -13,6 +13,7 @@ import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
 import { Status } from '../../design-system/components/Status';
 import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import { WaitMark } from '../../design-system/components/WaitMark';
+import { TextInput } from '../../design-system/components/TextInput';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import { TextLink } from '../../design-system/components/TextLink';
 import {
@@ -149,20 +150,6 @@ const compactDangerIcon =
 
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
-}
-
-function removePhaseDisabledHint(
-  t: (key: string) => string,
-  data: StructureView,
-  stage: StructureStageHubSummary,
-): string {
-  if (data.stages.length <= 1) {
-    return t('graph.removePhaseDisabledLast');
-  }
-  if (stage.matchCount > 0) {
-    return t('graph.removePhaseDisabledMatches');
-  }
-  return t('graph.removePhaseDisabled');
 }
 
 function FormatGlyph({
@@ -531,7 +518,6 @@ export function StructurePhaseFiche({
   const canRename = actions.includes('RenameStage');
   const canRebuild = actions.includes('RebuildStructure');
   const canCompose = actions.includes('ReplaceAffectationAuthoring');
-  const removeDisabledHint = removePhaseDisabledHint(t, data, stage);
 
   const beginRename = () => {
     if (!canRename || renameMutation.isPending) return;
@@ -813,7 +799,7 @@ export function StructurePhaseFiche({
   }
 
   const showHeroStats = heroFacts.length > 0;
-  const showHeroMeta = showHeroStats || canRebuild;
+  const showHeroMeta = showHeroStats;
   const showHeroStructureActions =
     showPlacementBlock || showProductionOperationalBar;
   // Overflow removed — Edit/Delete live in the header toolbar.
@@ -898,11 +884,12 @@ export function StructurePhaseFiche({
                   commitRename();
                 }}
               >
-                <label className="structure-fiche__title-edit-field">
-                  <span className="ds-visually-hidden">
+                <div className="structure-fiche__title-edit-field">
+                  <label className="ds-visually-hidden" htmlFor="phase-rename-input">
                     {t('fiche.renamePhase')}
-                  </span>
-                  <input
+                  </label>
+                  <TextInput
+                    id="phase-rename-input"
                     value={nameDraft}
                     onChange={(event) => setNameDraft(event.target.value)}
                     onKeyDown={(event) => {
@@ -915,9 +902,9 @@ export function StructurePhaseFiche({
                     maxLength={100}
                     required
                     autoFocus
-                    aria-invalid={renameMutation.isError || undefined}
+                    invalid={renameMutation.isError}
                   />
-                </label>
+                </div>
                 <div className="ds-icon-toolbar">
                   <Tooltip content={t('fiche.confirmRename')}>
                     <button
@@ -974,17 +961,31 @@ export function StructurePhaseFiche({
                 ) : null}
               </>
             )}
-          <ul className="structure-fiche__pills">
-            <li className="structure-fiche__pill structure-fiche__pill--status">
-              <StageStatusBadge status={stage.status} />
-            </li>
-            {stage.hasDrawRules ? (
-              <li className="structure-fiche__pill">
-                <StructurePhaseDrawHint stage={stage} variant="fiche" />
+          {!editingName ? (
+            <ul className="structure-fiche__pills">
+              <li className="structure-fiche__pill structure-fiche__pill--status">
+                <StageStatusBadge status={stage.status} />
               </li>
-            ) : null}
-          </ul>
+              {stage.hasDrawRules ? (
+                <li className="structure-fiche__pill">
+                  <StructurePhaseDrawHint stage={stage} variant="fiche" />
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
           <div className="structure-fiche__header-tools ds-icon-toolbar">
+            {canRebuild ? (
+              <Tooltip content={t('fiche.editForme')}>
+                <button
+                  type="button"
+                  className={compactIcon}
+                  aria-label={t('fiche.editForme')}
+                  onClick={() => setSkeletonOpen(true)}
+                >
+                  <PencilIcon size="sm" />
+                </button>
+              </Tooltip>
+            ) : null}
             {canRemove ? (
               <Tooltip content={t('graph.removePhase')}>
                 <button
@@ -996,18 +997,7 @@ export function StructurePhaseFiche({
                   <TrashIcon size="sm" />
                 </button>
               </Tooltip>
-            ) : (
-              <Tooltip content={removeDisabledHint}>
-                <button
-                  type="button"
-                  className={compactDangerIcon}
-                  disabled
-                  aria-label={t('graph.removePhase')}
-                >
-                  <TrashIcon size="sm" />
-                </button>
-              </Tooltip>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
@@ -1131,20 +1121,6 @@ export function StructurePhaseFiche({
                           </li>
                         ))}
                       </ul>
-                    ) : null}
-                    {canRebuild ? (
-                      <div className="structure-phase-hero__meta-toolbar">
-                        <Tooltip content={t('fiche.editForme')}>
-                          <button
-                            type="button"
-                            className={compactIcon}
-                            aria-label={t('fiche.editForme')}
-                            onClick={() => setSkeletonOpen(true)}
-                          >
-                            <PencilIcon size="sm" />
-                          </button>
-                        </Tooltip>
-                      </div>
                     ) : null}
                   </div>
                 ) : null}

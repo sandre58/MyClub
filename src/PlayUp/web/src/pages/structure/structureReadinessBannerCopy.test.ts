@@ -7,40 +7,24 @@ describe('structureReadinessBannerHeadline', () => {
       const count = options?.count as number;
       return count === 1 ? '1 problème identifié' : `${count} problèmes identifiés`;
     }
-    if (key === 'readiness.bannerPriorityActions') {
-      const count = options?.count as number;
-      return count === 1 ? '1 action prioritaire' : `${count} actions prioritaires`;
-    }
     return key;
   };
 
-  it('combines problems and shown priority actions', () => {
+  it('uses plural problems label', () => {
     expect(
       structureReadinessBannerHeadline({
         presentedProblemCount: 5,
-        priorityActionsShown: 3,
         t,
       }),
-    ).toBe('5 problèmes identifiés · 3 actions prioritaires');
+    ).toBe('5 problèmes identifiés');
   });
 
-  it('uses singular forms when counts are one', () => {
+  it('uses singular problems label', () => {
     expect(
       structureReadinessBannerHeadline({
         presentedProblemCount: 1,
-        priorityActionsShown: 1,
         t,
       }),
-    ).toBe('1 problème identifié · 1 action prioritaire');
-  });
-
-  it('shows problems only when no actions are listed', () => {
-    expect(
-      structureReadinessBannerHeadline({
-        presentedProblemCount: 2,
-        priorityActionsShown: 0,
-        t,
-      }),
-    ).toBe('2 problèmes identifiés');
+    ).toBe('1 problème identifié');
   });
 });

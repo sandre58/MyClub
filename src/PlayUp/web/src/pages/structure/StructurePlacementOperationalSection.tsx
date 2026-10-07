@@ -182,14 +182,8 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
       <Tooltip content={props.createBlockedShort ?? drawPrimaryLabel}>
         <span className="structure-operational-tile__action-wrap">
           <button type="button" className={drawBtnClass} disabled>
-            {props.activeDraw ? (
-              <>
-                <DrawPendingIcon size="sm" />
-                {drawPrimaryLabel}
-              </>
-            ) : (
-              drawPrimaryLabel
-            )}
+            <DrawPendingIcon size="sm" />
+            {drawPrimaryLabel}
           </button>
         </span>
       </Tooltip>
@@ -199,14 +193,8 @@ export function StructurePlacementOperationalSection(props: StructurePlacementOp
         className={drawBtnClass}
         onClick={props.onOpenDrawWorkflow}
       >
-        {props.activeDraw ? (
-          <>
-            <DrawPendingIcon size="sm" />
-            {drawPrimaryLabel}
-          </>
-        ) : (
-          drawPrimaryLabel
-        )}
+        <DrawPendingIcon size="sm" />
+        {drawPrimaryLabel}
       </button>
     )
   ) : showDrawActivate ? (
