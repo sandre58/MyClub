@@ -101,6 +101,13 @@ export interface StructureTopologySummary {
   swissRoundCount?: number | null;
 }
 
+export type StructureNextConstructionStepHint =
+  | 'None'
+  | 'RunDraw'
+  | 'ApplyDraw'
+  | 'BuildSchedule'
+  | 'RunSwissRounds';
+
 export interface StructureReadiness {
   readyForNextSlice: boolean;
   readyForDraw: boolean;
@@ -110,6 +117,8 @@ export interface StructureReadiness {
   readyForSchedulePath: boolean;
   attachedMatchCount: number;
   blockers: string[];
+  /** Host-authored hub ready-band title; `None` when not applicable. */
+  nextConstructionStepHint?: StructureNextConstructionStepHint;
 }
 
 /** GET structure `stages[]` — Regulation hub stage row. */

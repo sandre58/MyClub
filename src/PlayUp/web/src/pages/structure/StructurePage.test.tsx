@@ -190,6 +190,7 @@ function structureView(overrides: Partial<StructureView> = {}): StructureView {
       readyForSchedulePath: false,
       attachedMatchCount: 0,
       blockers: ['InsufficientParticipants', 'MissingStage'],
+      nextConstructionStepHint: 'None',
     },
     stages: [],
     ...overrides,
@@ -371,6 +372,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: false,
           attachedMatchCount: 0,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -421,6 +423,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: false,
           attachedMatchCount: 0,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -502,8 +505,10 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('region', { name: /État de la phase/i }),
     ).toBeInTheDocument();
-    const drawGroup = screen.getByRole('group', { name: 'Tirage' });
-    const activate = within(drawGroup).getByRole('button', {
+    const drawSection = screen
+      .getByRole('heading', { name: 'Tirage' })
+      .closest('section') as HTMLElement;
+    const activate = within(drawSection).getByRole('button', {
       name: /^Activer le tirage$/i,
     });
     expect(
@@ -693,6 +698,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: false,
           attachedMatchCount: 0,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -1054,6 +1060,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: false,
           attachedMatchCount: 0,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -1138,6 +1145,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: true,
           attachedMatchCount: 3,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -1153,14 +1161,24 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    await screen.findByRole('region', { name: /Production des matchs/i });
+    await screen.findByRole('heading', { name: 'Matchs' });
     expect(
       screen.queryByText(/Il reste 3 confrontations sans match créé/i),
     ).not.toBeInTheDocument();
-    const matchesGroup = screen.getByRole('group', { name: 'Matchs' });
-    expect(within(matchesGroup).getByText(/match créés/i)).toBeInTheDocument();
-    expect(within(matchesGroup).getByText('3')).toBeInTheDocument();
-    expect(within(matchesGroup).getByText('6')).toBeInTheDocument();
+    const matchesSection = screen
+      .getByRole('heading', { name: 'Matchs' })
+      .closest('section') as HTMLElement;
+    expect(
+      within(matchesSection).getByLabelText(/Avancement de la production des matchs/i),
+    ).toBeInTheDocument();
+    expect(within(matchesSection).getByText(/Il reste 3 match/i)).toBeInTheDocument();
+    expect(within(matchesSection).getByText(/créés/i)).toBeInTheDocument();
+    expect(
+      within(matchesSection).getByText('3', { selector: '.structure-operational-strip__ratio-filled' }),
+    ).toBeInTheDocument();
+    expect(
+      within(matchesSection).getByText('6', { selector: '.structure-operational-strip__ratio-cap' }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();
@@ -1209,6 +1227,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: true,
           attachedMatchCount: 0,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -1262,6 +1281,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: true,
           attachedMatchCount: 4,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -1301,13 +1321,16 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: false,
           attachedMatchCount: 0,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
 
     renderStructurePage();
 
-    expect(await screen.findByText(/Prêt pour la suite/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Structure prête pour la prochaine étape/i),
+    ).toBeInTheDocument();
   });
 
   it('does not promote draw readiness as Structure-global Hub status', async () => {
@@ -1319,7 +1342,22 @@ describe('StructurePage Structure hub', () => {
           primaryStageName: 'Groupes',
           primaryStageStatus: 'Draft',
         },
-        stages: [groupesStage()],
+        stages: [
+          groupesStage({
+            compositionCapacity: 8,
+            affectationEntryCount: 8,
+            structureIssues: [],
+          }),
+        ],
+        participants: {
+          activeCount: 8,
+          occupyingCount: 8,
+          entries: Array.from({ length: 8 }, (_, index) => ({
+            entryId: `${index}0000000-0000-0000-0000-00000000000${index}`,
+            displayName: `Team ${index}`,
+            status: 'Active' as const,
+          })),
+        },
         readiness: {
           readyForNextSlice: true,
           readyForDraw: true,
@@ -1329,6 +1367,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: false,
           attachedMatchCount: 0,
           blockers: [],
+          nextConstructionStepHint: 'RunDraw',
         },
       }),
     );
@@ -1337,7 +1376,10 @@ describe('StructurePage Structure hub', () => {
 
     expect(screen.queryByText(/Prêt pour le tirage/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tirage requis/i)).not.toBeInTheDocument();
-    expect(await screen.findByText(/Tirage à lancer/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Tirage à lancer/i)).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: /Lancer le tirage/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();
@@ -1368,6 +1410,7 @@ describe('StructurePage Structure hub', () => {
           readyForSchedulePath: true,
           attachedMatchCount: 4,
           blockers: [],
+          nextConstructionStepHint: 'None',
         },
       }),
     );
@@ -1375,7 +1418,9 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
-    expect(screen.queryByText(/Prêt pour la suite/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Structure prête pour la prochaine étape/i),
+    ).not.toBeInTheDocument();
   });
 
   it('keeps birth empty state when Host reports MissingStructure', async () => {

@@ -37,6 +37,15 @@ public static class StructureViewAssembler
     /// <summary>Blocker: Groups format without PotRules.</summary>
     public const string BlockerMissingPotRules = "MissingPotRules";
 
+    /// <summary>Hub ready-band i18n segment when <see cref="StructureReadinessDto.ReadyForNextSlice"/> is true.</summary>
+    public const string NextStepNone = "None";
+
+    public const string NextStepRunDraw = "RunDraw";
+    public const string NextStepBuildSchedule = "BuildSchedule";
+    public const string NextStepRunSwissRounds = "RunSwissRounds";
+
+    public const string NextStepApplyDraw = "ApplyDraw";
+
     /// <summary>Blocker: Cup slots not a power of two.</summary>
     public const string BlockerCupBracketInvalid = "CupBracketInvalid";
 
@@ -1405,7 +1414,42 @@ public static class StructureViewAssembler
                                   || blockers.Contains(BlockerConfrontationUndecidable)
                                   || blockers.Contains(BlockerOverCapacityEdge)
                                   || blockers.Contains(BlockerOverExtraction);
-        var readyForNext = !constructionBlocked && (readyForDraw || readyForSchedulePath);
+        var primaryHub = primary is null
+            ? null
+            : stageHubs.FirstOrDefault(hub => hub.StageId == primary.Id.Value);
+
+        var drawLaunchOpen = primaryHub is
+        {
+            HasDrawRules: true,
+            DrawExecutionBadge: StructureDrawExecutionBadge.ToLaunch
+            or StructureDrawExecutionBadge.InProgress
+        };
+        var drawApplyOpen =
+            primaryHub?.DrawExecutionBadge == StructureDrawExecutionBadge.ToApply;
+
+        var readyForNext = !constructionBlocked
+                           && (drawLaunchOpen || drawApplyOpen || readyForSchedulePath);
+
+        var nextStepHint = NextStepNone;
+        if (readyForNext)
+        {
+            if (drawLaunchOpen)
+            {
+                nextStepHint = NextStepRunDraw;
+            }
+            else if (drawApplyOpen)
+            {
+                nextStepHint = NextStepApplyDraw;
+            }
+            else if (readyForSchedulePath && formatKind == StructureFormatKind.Swiss)
+            {
+                nextStepHint = NextStepRunSwissRounds;
+            }
+            else if (readyForSchedulePath)
+            {
+                nextStepHint = NextStepBuildSchedule;
+            }
+        }
 
         return new StructureReadinessDto(
             readyForNext,
@@ -1415,7 +1459,8 @@ public static class StructureViewAssembler
             readyForMatchOperation,
             readyForSchedulePath,
             attachedMatchCount,
-            blockers);
+            blockers,
+            nextStepHint);
     }
 
     private static int? ResolveCupEntryPlacesFromHub(StructureStageHubSummaryDto hub)

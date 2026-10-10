@@ -4,19 +4,19 @@ import {
   ArrowLeftRight,
   CalendarDays,
   CalendarPlus,
-  Check,
   CircleAlert,
   Clipboard,
   Copy,
   Dices,
   Equal,
+  Eye,
   Flag,
   GitBranch,
   Goal,
   GripVertical,
+  Info,
   LayoutGrid,
   Layers,
-  Link,
   ListChecks,
   ListMinus,
   ListOrdered,
@@ -43,6 +43,8 @@ import {
   Volleyball,
   X,
   Handshake,
+  CheckCircle2,
+  Check
 } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { Icon, LucideIcon, type IconSize } from './Icon';
@@ -60,6 +62,11 @@ type ContentIconProps = SVGProps<SVGSVGElement> & { size?: IconSize };
  * Same rules as shell chrome: stroke monocolor, currentColor, 24×24, sizes via Icon.
  * See foundations/icons.css · Icon.tsx
  */
+
+/** Info. */
+export function InfoIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Info} size={size} {...props} />;
+}
 
 /** Next action — flag (generic header). */
 export function NextActionIcon({ size, ...props }: ContentIconProps) {
@@ -146,11 +153,6 @@ export function StructureIssueIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={CircleAlert} size={size} {...props} />;
 }
 
-/** Link anomaly. */
-export function LinkIssueIcon({ size, ...props }: ContentIconProps) {
-  return <LucideIcon icon={Link} size={size} {...props} />;
-}
-
 /** Incomplete stage. */
 export function IncompleteStageIssueIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={PackageOpen} size={size} {...props} />;
@@ -159,6 +161,11 @@ export function IncompleteStageIssueIcon({ size, ...props }: ContentIconProps) {
 /** Draw pending — shuffle / pots (≠ anomaly). */
 export function DrawPendingIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Shuffle} size={size} {...props} />;
+}
+
+/** View / inspect — eye (read-only open). */
+export function ViewIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Eye} size={size} {...props} />;
 }
 
 /** Draw — configuration (aligned with Regulation Shuffle). */
@@ -280,6 +287,11 @@ export function OverviewAttentionIcon({ size, ...props }: ContentIconProps) {
 /** State confirmation — check (status pills). */
 export function CheckIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Check} size={size} {...props} />;
+}
+
+/** State confirmation — check (status pills). */
+export function CheckCircleIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={CheckCircle2} size={size} {...props} />;
 }
 
 /** Step not yet reached — dashed circle. */

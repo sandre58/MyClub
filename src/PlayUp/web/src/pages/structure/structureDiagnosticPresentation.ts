@@ -53,7 +53,7 @@ const BY_CODE: Record<string, StructureDiagnosticMeta> = {
     family: 'feed',
     tile: 'places',
     cta: 'places',
-    tone: 'danger',
+    tone: 'attention',
     titleKey: 'graph.issues.SlotFeedMissing',
   },
   SlotFeedInvalid: {

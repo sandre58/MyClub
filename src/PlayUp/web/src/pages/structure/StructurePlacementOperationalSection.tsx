@@ -49,6 +49,10 @@ export type StructurePlacementOperationalSectionProps = {
   releasableTotal: number;
   releasePending: boolean;
   deactivateDrawPending: boolean;
+  /** Host reports SlotFeedMissing — strip meter copy carries the gap (not the banner). */
+  slotFeedMissingActive?: boolean;
+  /** Draw pool / create gate needs draw overview (Cup) before showing Tirage strip body. */
+  drawOperationalReady?: boolean;
   placesDiagnostics?: ReactNode;
   onOpenDrawWorkflow: () => void;
   onActivateDraw: () => void;

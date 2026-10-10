@@ -367,6 +367,12 @@ export function CompositionMeter({
 
   const gap = entries - places;
   const state = occupancyMeterState(entries, places);
+  const assemblyClass = [
+    'structure-assembly',
+    gap < 0 ? 'structure-assembly--deficit' : gap > 0 ? 'structure-assembly--over' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <OccupancyMeter
@@ -374,7 +380,7 @@ export function CompositionMeter({
       capacity={places}
       state={state}
       ariaLabel={t('entries.meterAria')}
-      className="structure-assembly"
+      className={assemblyClass}
       header={
         <div className="structure-assembly__row">
           <span>{t('entries.meter.population')}</span>

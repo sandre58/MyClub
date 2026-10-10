@@ -42,8 +42,8 @@ function stage(
 }
 
 describe('structureDiagnosticPresentation', () => {
-  it('maps SlotFeedMissing without draw as danger', () => {
-    expect(structureDiagnosticTone('SlotFeedMissing')).toBe('danger');
+  it('maps SlotFeedMissing without draw as attention', () => {
+    expect(structureDiagnosticTone('SlotFeedMissing')).toBe('attention');
     expect(structureDiagnosticTile('SlotFeedMissing')).toBe('places');
   });
 

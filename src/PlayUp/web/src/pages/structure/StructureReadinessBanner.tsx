@@ -21,7 +21,7 @@ function actionButtonClass(tone: StructureDiagnosticTone): string {
   }
 
   if (tone === 'attention') {
-    return `${base} ds-btn--destructive`;
+    return `${base} ds-btn--attention`;
   }
 
   return `${base} ds-btn--secondary`;

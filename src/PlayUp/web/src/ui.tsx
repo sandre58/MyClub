@@ -279,12 +279,15 @@ export function EmptyState({
   children,
   action,
   icon,
+  iconAccessible = false,
   variant = 'default',
 }: {
   title?: string;
   children: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
+  /** When true, the icon slot is exposed to assistive tech (e.g. primary CTA). */
+  iconAccessible?: boolean;
   variant?: 'default' | 'idle';
 }) {
   const classes = variant === 'idle' ? 'ds-empty ds-empty--idle' : 'ds-empty';
@@ -292,7 +295,10 @@ export function EmptyState({
   return (
     <div className={classes}>
       {icon ? (
-        <span className="ds-empty__icon" aria-hidden="true">
+        <span
+          className="ds-empty__icon"
+          aria-hidden={iconAccessible ? undefined : true}
+        >
           {icon}
         </span>
       ) : null}

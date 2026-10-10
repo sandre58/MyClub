@@ -24,6 +24,7 @@ export function StructureOperationalRatioGauge({
   poolTone = 'neutral',
   unknownCapacity,
   dense = false,
+  layout = 'inline',
 }: {
   current: number;
   capacity: number | null;
@@ -32,6 +33,8 @@ export function StructureOperationalRatioGauge({
   poolTone?: DrawCtaPoolTone;
   unknownCapacity?: boolean;
   dense?: boolean;
+  /** `trackOnly` — progress track only; ratio and copy live outside (operational strip). */
+  layout?: 'inline' | 'trackOnly';
 }) {
   const gaugeClass = [
     'structure-operational-gauge',
@@ -66,14 +69,16 @@ export function StructureOperationalRatioGauge({
       ariaLabel={ariaLabel}
       className={gaugeClass}
       header={
-        <OperationalGaugeReadiness poolTone={poolTone}>
-          <span className="structure-operational-gauge__ratio">
-            <span className="structure-operational-gauge__ratio-filled">{current}</span>
-            <span className="structure-operational-gauge__ratio-sep">/</span>
-            <span className="structure-operational-gauge__ratio-cap">{capacity}</span>
-          </span>
-          <span className="structure-operational-gauge__caption">{caption}</span>
-        </OperationalGaugeReadiness>
+        layout === 'trackOnly' ? undefined : (
+          <OperationalGaugeReadiness poolTone={poolTone}>
+            <span className="structure-operational-gauge__ratio">
+              <span className="structure-operational-gauge__ratio-filled">{current}</span>
+              <span className="structure-operational-gauge__ratio-sep">/</span>
+              <span className="structure-operational-gauge__ratio-cap">{capacity}</span>
+            </span>
+            <span className="structure-operational-gauge__caption">{caption}</span>
+          </OperationalGaugeReadiness>
+        )
       }
     />
   );

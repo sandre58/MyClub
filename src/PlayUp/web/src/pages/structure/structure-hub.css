@@ -692,8 +692,20 @@
   line-height: 0;
 }
 
+.structure-assembly--deficit .structure-occupancy-meter__fill {
+  background: var(--color-error);
+}
+
+.structure-assembly--deficit .structure-occupancy-meter--short .structure-occupancy-meter__label {
+  color: var(--color-error);
+}
+
 .structure-assembly--over .structure-assembly__gap {
   color: var(--color-attention);
+}
+
+.structure-assembly--over .structure-occupancy-meter__fill {
+  background: var(--color-attention);
 }
 
 .structure-phase-rail__body > .structure-entries {
@@ -1206,6 +1218,315 @@
   width: 100%;
   container-type: inline-size;
   container-name: operational-bar;
+}
+
+.structure-operational-strip {
+  display: grid;
+  align-items: stretch;
+  column-gap: var(--space-16);
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+}
+
+.structure-operational-strip__separator {
+  width: var(--border-width);
+  height: 72%;
+  min-height: 4.5rem;
+  max-height: 10rem;
+  align-self: center;
+  justify-self: center;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
+    transparent 100%
+  );
+}
+
+.structure-operational-strip__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.structure-operational-strip__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.structure-operational-strip__section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-tight);
+}
+
+.structure-operational-strip__section-toolbar {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.structure-operational-strip__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.structure-operational-strip__section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  padding-top: var(--space-4);
+}
+
+.structure-operational-strip__metric-row {
+  display: grid;
+  grid-template-columns: minmax(3.5rem, auto) minmax(0, 1fr);
+  gap: var(--space-12) var(--space-16);
+  align-items: start;
+  min-width: 0;
+}
+
+.structure-operational-strip__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.structure-operational-strip__aside[data-pool-tone='partial'] .structure-operational-strip__ratio-filled {
+  color: var(--color-attention);
+}
+
+.structure-operational-strip__aside[data-pool-tone='complete'] .structure-operational-strip__ratio-filled {
+  color: var(--color-success);
+}
+
+.structure-operational-strip__ratio {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.02em;
+  font-size: 1.875rem;
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-text-primary);
+  letter-spacing: -0.03em;
+}
+
+.structure-operational-strip__ratio--unknown {
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+}
+
+.structure-operational-strip__ratio-sep {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+.structure-operational-strip__ratio-cap {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-operational-strip__ratio-label {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin: auto;
+}
+
+.structure-operational-strip__metric-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-operational-strip__message-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-operational-strip__message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+}
+
+.structure-operational-strip__message[data-kind='attention'],
+.structure-operational-strip__message[data-kind='danger'] {
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-operational-strip__message-icon {
+  flex-shrink: 0;
+  margin-top: 0.12em;
+  color: var(--color-text-secondary);
+}
+
+.structure-operational-strip__message[data-kind='success'] .structure-operational-strip__message-icon {
+  color: var(--color-success);
+}
+
+.structure-operational-strip__message[data-kind='attention'] .structure-operational-strip__message-icon {
+  color: var(--color-attention);
+}
+
+.structure-operational-strip__message[data-kind='danger'] .structure-operational-strip__message-icon {
+  color: var(--color-error);
+}
+
+.structure-operational-strip__message-text {
+  min-width: 0;
+  font-weight: inherit;
+  color: var(--color-text-primary);
+}
+
+.structure-operational-strip__message[data-kind='attention'] .structure-operational-strip__message-text {
+  color: color-mix(in srgb, var(--color-attention) 84%, var(--color-ink));
+}
+
+.structure-operational-strip__message[data-kind='danger'] .structure-operational-strip__message-text {
+  color: var(--color-error);
+}
+
+.structure-operational-strip__section-sync {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 6.5rem;
+  padding: var(--space-8) 0;
+}
+
+.structure-operational-strip__section-sync .ds-wait--region {
+  --wait-orbit: 2rem;
+  --wait-mark: 1.25rem;
+  --wait-ring: 2px;
+  --wait-gap: var(--space-4);
+  --wait-pad: 0;
+  font-size: var(--text-meta);
+}
+
+.structure-operational-strip__applied-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-16);
+  align-items: center;
+  min-width: 0;
+}
+
+.structure-operational-strip__applied-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-success);
+}
+
+.structure-operational-strip__applied-mark .ds-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.structure-operational-strip__applied-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.structure-operational-strip__status-line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-success);
+}
+
+.structure-operational-strip__empty {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) 0;
+}
+
+.structure-operational-strip__empty .ds-empty--idle {
+  width: 100%;
+  margin-inline: auto;
+  text-align: center;
+  padding: 0;
+}
+
+.structure-operational-strip .structure-operational-gauge.structure-occupancy-meter--compact {
+  gap: 0;
+}
+
+@container operational-bar (max-width: 42rem) {
+  .structure-operational-strip {
+    grid-template-columns: minmax(0, 1fr) !important;
+    row-gap: var(--space-16);
+    column-gap: 0;
+  }
+
+  .structure-operational-strip__separator {
+    display: none;
+  }
+
+  .structure-operational-strip__section:not(:first-child) {
+    position: relative;
+    padding-top: var(--space-16);
+    border-top: none;
+  }
+
+  .structure-operational-strip__section:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 14%;
+    right: 14%;
+    height: var(--border-width);
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
+      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
+      transparent 100%
+    );
+  }
 }
 
 .structure-phase-operational-bar .structure-operational-tile.ds-form-section {

@@ -147,6 +147,7 @@ public sealed record StructureTopologySummaryDto(
 /// <param name="ReadyForSchedulePath">Structure hint: championship schedule path identifiable from structure.</param>
 /// <param name="AttachedMatchCount">Matches attached to the primary stage.</param>
 /// <param name="Blockers">Machine-readable blocker codes (authoritative for SPA i18n).</param>
+/// <param name="NextConstructionStepHint">When <see cref="ReadyForNextSlice"/> is true, SPA title for the hub ready band (i18n key segment).</param>
 public sealed record StructureReadinessDto(
     bool ReadyForNextSlice,
     bool ReadyForDraw,
@@ -155,7 +156,8 @@ public sealed record StructureReadinessDto(
     bool ReadyForMatchOperation,
     bool ReadyForSchedulePath,
     int AttachedMatchCount,
-    IReadOnlyList<string> Blockers);
+    IReadOnlyList<string> Blockers,
+    string NextConstructionStepHint);
 
 /// <summary>
 /// Per-stage hub row for Structure / Regulation (topology + regulation tokens + graph authoring).

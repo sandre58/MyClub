@@ -4,26 +4,27 @@ import {
   materializePresentationForStage,
   showProductionOperationalSection,
 } from './structureOperationalCopy';
-import {
-  StructurePlacementOperationalSection,
-  type StructurePlacementOperationalSectionProps,
-} from './StructurePlacementOperationalSection';
-import { StructureProductionOperationalSection } from './StructureProductionOperationalSection';
+import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
+import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
 
 export function StructurePhaseOperationalBar({
   structureHubRefreshing,
-  showPlacement,
+  showPlaces,
+  showDraw,
   placement,
   competitionId,
   competitionStatus,
   stage,
+  drawApplied,
 }: {
   structureHubRefreshing: boolean;
-  showPlacement: boolean;
+  showPlaces: boolean;
+  showDraw: boolean;
   placement: StructurePlacementOperationalSectionProps | null;
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
+  drawApplied: boolean;
 }) {
   const { t } = useTranslation('structure');
   const presentation = materializePresentationForStage(
@@ -33,16 +34,13 @@ export function StructurePhaseOperationalBar({
   );
   const showProduction = showProductionOperationalSection(stage);
 
-  if (!showPlacement && !showProduction) {
+  const showMatches = showProduction || showPlaces || showDraw;
+
+  if (!showMatches) {
     return null;
   }
 
-  const sectionAriaLabel =
-    showPlacement && showProduction
-      ? `${t('fiche.section.phaseState')} — ${t('fiche.section.phaseProduction')}`
-      : showPlacement
-        ? t('fiche.section.phaseState')
-        : t('fiche.section.phaseProduction');
+  const sectionAriaLabel = t('fiche.section.phaseState');
 
   return (
     <div className="structure-phase-operational-bar">
@@ -50,25 +48,17 @@ export function StructurePhaseOperationalBar({
         className="structure-fiche-section structure-fiche-section--operational"
         aria-label={sectionAriaLabel}
       >
-        <div className="structure-operational-cluster-stack">
-          {showPlacement && placement ? (
-            <StructurePlacementOperationalSection
-              {...placement}
-              embeddedInSection
-              structureHubRefreshing={structureHubRefreshing}
-            />
-          ) : null}
-          {showProduction ? (
-            <StructureProductionOperationalSection
-              competitionId={competitionId}
-              competitionStatus={competitionStatus}
-              stage={stage}
-              presentation={presentation}
-              embeddedInSection
-              structureHubRefreshing={structureHubRefreshing}
-            />
-          ) : null}
-        </div>
+        <StructurePhaseOperationalStrip
+          placement={placement}
+          showPlaces={showPlaces}
+          showDraw={showDraw}
+          competitionId={competitionId}
+          competitionStatus={competitionStatus}
+          stage={stage}
+          presentation={presentation}
+          structureHubRefreshing={structureHubRefreshing}
+          drawApplied={drawApplied}
+        />
       </section>
     </div>
   );

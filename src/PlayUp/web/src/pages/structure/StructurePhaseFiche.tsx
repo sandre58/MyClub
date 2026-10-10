@@ -70,7 +70,6 @@ import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { StructurePhaseOperationalBar } from './StructurePhaseOperationalBar';
-import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
@@ -176,7 +175,7 @@ function FormatGlyph({
 export function StructurePhaseFiche({
   data,
   stage,
-  singlePhaseHub = false,
+  singlePhaseHub: _singlePhaseHub = false,
   onSelectStage,
   initialEdit,
   initialCompose,
@@ -571,6 +570,15 @@ export function StructurePhaseFiche({
   const canCreateAttribution = canEditPlacement;
   const issueCodes = stage.structureIssues ?? [];
   const awaitingDraw = isSlotFeedAwaitingDraw(stage);
+  const slotFeedMissingActive =
+    issueCodes.includes('SlotFeedMissing') && !awaitingDraw;
+  /** Banners only — meter owns shortfall/over-capacity/NonRootUnfed(+empty); RESULT merged. */
+  const placesBanners = structureIssueBannersForTile(issueCodes, 'places', {
+    silenceSlotFeedMissing: awaitingDraw,
+  });
+  const placesBannersForStrip = placesBanners.filter(
+    (code) => !(slotFeedMissingActive && code === 'SlotFeedMissing'),
+  );
   /** Detection for rails visibility / attention chrome (all tile-owned codes). */
   const exitsIssues = structureIssuesForTile(issueCodes, 'exits');
   const capacityOwnedIssues = [
@@ -588,10 +596,6 @@ export function StructurePhaseFiche({
     issueCodes,
     'attribution',
   );
-  /** Banners only — meter owns shortfall/over-capacity/NonRootUnfed(+empty); RESULT merged. */
-  const placesBanners = structureIssueBannersForTile(issueCodes, 'places', {
-    silenceSlotFeedMissing: awaitingDraw,
-  });
   const exitsBanners = structureIssueBannersForTile(issueCodes, 'exits');
   const capacityBanners = structureIssueBannersForTile(
     capacityOwnedIssues,
@@ -966,11 +970,6 @@ export function StructurePhaseFiche({
               <li className="structure-fiche__pill structure-fiche__pill--status">
                 <StageStatusBadge status={stage.status} />
               </li>
-              {stage.hasDrawRules ? (
-                <li className="structure-fiche__pill">
-                  <StructurePhaseDrawHint stage={stage} variant="fiche" />
-                </li>
-              ) : null}
             </ul>
           ) : null}
           <div className="structure-fiche__header-tools ds-icon-toolbar">
@@ -1005,9 +1004,11 @@ export function StructurePhaseFiche({
       {showHeroStructureActions && stage ? (
         <StructurePhaseOperationalBar
           structureHubRefreshing={structureHubRefreshing}
-          showPlacement={showPlacementBlock}
+          showPlaces={showPlacementBlock}
+          showDraw={showDrawCta || showActivateDrawCta}
+          drawApplied={stageHasAppliedDraw}
           placement={
-            showPlacementBlock
+            showPlacementBlock || showDrawCta || showActivateDrawCta
               ? {
                   competitionId: data.competitionId,
                   placesN,
@@ -1043,9 +1044,11 @@ export function StructurePhaseFiche({
                   },
                   onReleasePlacements: () => setReleaseConfirmOpen(true),
                   onDeactivateDraw: () => setDeactivateDrawOpen(true),
+                  slotFeedMissingActive,
+                  drawOperationalReady: drawGateReady,
                   placesDiagnostics:
-                    placesBanners.length > 0 ? (
-                      <StructureOperationalIssueBanner codes={placesBanners} />
+                    placesBannersForStrip.length > 0 ? (
+                      <StructureOperationalIssueBanner codes={placesBannersForStrip} />
                     ) : undefined,
                 }
               : null

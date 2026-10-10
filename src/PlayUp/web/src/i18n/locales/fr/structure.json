@@ -89,9 +89,15 @@
       "attribution": "Voir l’attribution",
       "structure": "Corriger la structure"
     },
-    "readyForNextSlice": "Prêt pour la suite",
+    "readyForNextSlice": "Structure prête pour la prochaine étape de construction",
     "readyForMaterialization": "La compétition est prête à créer les matchs",
-    "readyForCupSkeleton": "La coupe est prête pour le squelette de confrontations (tirage)"
+    "readyForCupSkeleton": "La coupe est prête pour le squelette de confrontations (tirage)",
+    "nextStep": {
+      "RunDraw": "Lancer le tirage au sort",
+      "ApplyDraw": "Appliquer le tirage publié",
+      "BuildSchedule": "Construire le calendrier des matchs",
+      "RunSwissRounds": "Générer la prochaine ronde suisse"
+    }
   },
   "roster": {
     "playersHeading": "Joueurs",
@@ -297,20 +303,50 @@
         "poolMeterAria": "Équipes résolues pour le tirage",
         "meterAria": "Places occupées sur le tableau",
         "meterCaptionOccupied": "places occupées",
+        "ratioLabel_one": "occupée",
+        "ratioLabel_other": "occupées",
         "occupancyLoading": "Calcul de l’occupation…",
         "deactivatingDraw": "Désactivation du tirage…",
         "drawLaunchShort": "Lancer",
         "drawOpenShort": "Ouvrir",
         "drawActivateShort": "Activer",
-        "manualShort": "Placer"
+        "manualShort": "Placer",
+        "stateMessage": {
+          "loading": "Calcul de l’occupation du tableau…",
+          "unknown": "Capacité du tableau indisponible.",
+          "empty": "Aucune place n’est encore occupée sur le tableau.",
+          "complete": "Toutes les places du tableau sont occupées.",
+          "partial_one": "Il reste {{count}} place à remplir sur le tableau.",
+          "partial_other": "Il reste {{count}} places à remplir sur le tableau."
+        }
+      },
+      "draw": {
+        "activateHint": "Affecter aléatoirement les équipes dans la phase.",
+        "appliedMessage": "Un tirage au sort a été appliqué pour cette phase.",
+        "unavailable": "Le tirage n’est pas disponible pour cette phase.",
+        "stateMessage": {
+          "unknown": "Capacité indisponible pour le vivier de tirage.",
+          "pool": "{{filled}} équipes résolues sur {{capacity}} pour le tirage.",
+          "poolReady": "Toutes les équipes de la phase sont prêtes. Le tirage peut être lancé."
+        },
+        "loading": "Chargement du tirage…"
       },
       "production": {
         "titleMatches": "Matchs",
         "meterAria": "Avancement de la production des matchs",
         "meterCaptionMatches": "match créés",
+        "ratioLabel_one": "créé",
+        "ratioLabel_other": "créés",
         "statusUnknown": "État de production indisponible.",
         "createShort": "Créer",
-        "completeShort": "Compléter"
+        "completeShort": "Compléter",
+        "emptyTitle": "Production des matchs",
+        "stateMessage": {
+          "unavailable": "Aucun match à produire pour cette phase.",
+          "complete": "Tous les matchs prévus sont créés.",
+          "partial_one": "Il reste {{count}} match à créer.",
+          "partial_other": "Il reste {{count}} matchs à créer."
+        }
       }
     },
     "schematicTooltipFrom": "Vient de",
@@ -322,13 +358,14 @@
     "teamsCount_other": "{{count}} équipes",
     "statsAria": "Faits de la phase",
     "openDrawWorkflow": "Ouvrir le tirage",
+    "viewDrawWorkflow": "Voir le tirage",
     "performDraw": "Lancer le tirage",
     "activateDraw": "Activer le tirage",
     "manualPlacementCta": "Placer manuellement",
     "drawParams": "Paramètres du tirage",
     "drawParamsAction": "Paramètres",
     "deactivateDraw": "Désactiver le tirage",
-    "drawCtaTeamsCaption": "équipes résolues",
+    "drawCtaTeamsCaption": "résolues",
     "drawModeRandomShort": "Aléatoire",
     "drawModeRandom": "Tirage aléatoire",
     "drawWorkflow": {

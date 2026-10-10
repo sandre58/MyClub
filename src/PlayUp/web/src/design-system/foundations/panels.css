@@ -99,6 +99,11 @@
   height: 2.75rem;
 }
 
+.ds-empty__icon .ds-btn .ds-icon {
+  width: auto;
+  height: auto;
+}
+
 .ds-empty__title {
   margin: 0;
   font-weight: var(--font-weight-bold);

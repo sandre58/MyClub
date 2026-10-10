@@ -564,7 +564,12 @@ function readinessStatusNote(
   }
 
   if (readyNext) {
-    return <ReadinessReadyStatus titleKey="readiness.readyForNextSlice" />;
+    const hint = readiness.nextConstructionStepHint ?? 'None';
+    const titleKey =
+      hint !== 'None'
+        ? (`readiness.nextStep.${hint}` as const)
+        : 'readiness.readyForNextSlice';
+    return <ReadinessReadyStatus titleKey={titleKey} />;
   }
 
   return null;
@@ -590,9 +595,11 @@ function ReadinessReadyStatus({
         <CheckIcon size="sm" aria-hidden="true" />
         <span>{t(titleKey)}</span>
       </p>
-      {detailKey != null && detailCount != null && detailCount > 0 ? (
+      {detailKey != null ? (
         <p className="structure-status__detail">
-          {t(detailKey, { count: detailCount })}
+          {detailCount != null && detailCount > 0
+            ? t(detailKey, { count: detailCount })
+            : t(detailKey)}
         </p>
       ) : null}
     </div>

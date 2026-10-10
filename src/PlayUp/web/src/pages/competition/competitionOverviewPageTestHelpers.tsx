@@ -177,6 +177,7 @@ export function defaultOrgView(): StructureView {
       readyForSchedulePath: false,
       attachedMatchCount: 0,
       blockers: [],
+      nextConstructionStepHint: 'None',
     },
     stages: [],
   };

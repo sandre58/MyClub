@@ -89,7 +89,13 @@
       "attribution": "View attribution",
       "structure": "Fix structure"
     },
-    "readyForNextSlice": "Ready for the next step",
+    "readyForNextSlice": "Structure is ready for the next construction step",
+    "nextStep": {
+      "RunDraw": "Run the random draw",
+      "ApplyDraw": "Apply the published draw",
+      "BuildSchedule": "Build the match schedule",
+      "RunSwissRounds": "Generate the next Swiss round"
+    },
     "readyForMaterialization": "The competition is ready to create matches",
     "readyForCupSkeleton": "The cup is ready for the fixture skeleton (draw)"
   },
@@ -297,20 +303,50 @@
         "poolMeterAria": "Teams resolved for the draw",
         "meterAria": "Occupied bracket places",
         "meterCaptionOccupied": "places occupied",
+        "ratioLabel_one": "occupied",
+        "ratioLabel_other": "occupied",
         "occupancyLoading": "Loading occupancy…",
         "deactivatingDraw": "Deactivating draw…",
         "drawLaunchShort": "Launch",
         "drawOpenShort": "Open",
         "drawActivateShort": "Enable",
-        "manualShort": "Place"
+        "manualShort": "Place",
+        "stateMessage": {
+          "loading": "Loading bracket occupancy…",
+          "unknown": "Bracket capacity is unavailable.",
+          "empty": "No bracket places are occupied yet.",
+          "complete": "Every bracket place is occupied.",
+          "partial_one": "{{count}} place left to fill on the bracket.",
+          "partial_other": "{{count}} places left to fill on the bracket."
+        }
+      },
+      "draw": {
+        "loading": "Loading draw state…",
+        "activateHint": "Enable the draw to resolve teams and run an execution.",
+        "appliedMessage": "A random draw has been applied for this phase.",
+        "unavailable": "Draw is not available for this phase.",
+        "stateMessage": {
+          "unknown": "Capacity unavailable for the draw pool.",
+          "pool": "{{filled}} teams resolved out of {{capacity}} for the draw.",
+          "poolReady": "Every team in the phase is ready. You can run the draw."
+        }
       },
       "production": {
         "titleMatches": "Matches",
         "meterAria": "Match production progress",
         "meterCaptionMatches": "matches created",
+        "ratioLabel_one": "created",
+        "ratioLabel_other": "created",
         "statusUnknown": "Production status is unavailable.",
         "createShort": "Create",
-        "completeShort": "Complete"
+        "completeShort": "Complete",
+        "emptyTitle": "Match production",
+        "stateMessage": {
+          "unavailable": "No matches to produce for this phase.",
+          "complete": "All planned matches are created.",
+          "partial_one": "{{count}} match left to create.",
+          "partial_other": "{{count}} matches left to create."
+        }
       }
     },
     "schematicTooltipFrom": "From",
@@ -322,6 +358,7 @@
     "teamsCount_other": "{{count}} teams",
     "statsAria": "Phase facts",
     "openDrawWorkflow": "Open draw",
+    "viewDrawWorkflow": "View draw",
     "performDraw": "Run the draw",
     "activateDraw": "Activate draw",
     "manualPlacementCta": "Place manually",

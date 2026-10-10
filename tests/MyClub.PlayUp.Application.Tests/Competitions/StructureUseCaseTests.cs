@@ -13,6 +13,7 @@ using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
 
@@ -229,6 +230,7 @@ public sealed class StructureUseCaseTests
         view.Readiness.ReadyForMaterialization.Should().BeFalse();
         view.Readiness.ReadyForDraw.Should().BeFalse();
         view.Readiness.ReadyForNextSlice.Should().BeTrue();
+        view.Readiness.NextConstructionStepHint.Should().Be(StructureViewAssembler.NextStepRunSwissRounds);
         view.Readiness.Blockers.Should().BeEmpty();
     }
 
@@ -238,6 +240,7 @@ public sealed class StructureUseCaseTests
         var competition = CreateCompetition.Execute("Ready", _clock);
         var empty = StructureViewAssembler.Assemble(competition, []);
         empty.Readiness.ReadyForNextSlice.Should().BeFalse();
+        empty.Readiness.NextConstructionStepHint.Should().Be(StructureViewAssembler.NextStepNone);
         empty.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerInsufficientParticipants);
         empty.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerMissingStage);
 
@@ -252,6 +255,7 @@ public sealed class StructureUseCaseTests
 
         view.Format.Kind.Should().Be(StructureFormatKind.Championship);
         view.Readiness.ReadyForNextSlice.Should().BeTrue();
+        view.Readiness.NextConstructionStepHint.Should().Be(StructureViewAssembler.NextStepBuildSchedule);
         view.Readiness.ReadyForSchedulePath.Should().BeTrue();
         view.Readiness.ReadyForDraw.Should().BeFalse();
         view.Readiness.Blockers.Should().BeEmpty();
@@ -276,6 +280,49 @@ public sealed class StructureUseCaseTests
 
         view.Readiness.ReadyForDraw.Should().BeTrue();
         view.Readiness.ReadyForNextSlice.Should().BeTrue();
+        view.Readiness.NextConstructionStepHint.Should().Be(StructureViewAssembler.NextStepRunDraw);
+    }
+
+    [Fact]
+    public void StructureView_groups_applied_draw_does_not_prompt_run_draw()
+    {
+        var competition = CreateCompetition.Execute("G Applied", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock);
+        var stage = configured.Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(e => e.Id)], _clock);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(group => group.Id)]);
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var hub = view.Stages.Single();
+
+        hub.DrawExecutionBadge.Should().Be(StructureDrawExecutionBadge.Applied);
+        view.Readiness.ReadyForNextSlice.Should().BeFalse();
+        view.Readiness.NextConstructionStepHint.Should().Be(StructureViewAssembler.NextStepNone);
     }
 
     [Fact]
