@@ -351,6 +351,25 @@
   width: 50%;
 }
 
+.regulation-standing-strip .regulation-rule-list {
+  gap: var(--space-4);
+}
+
+.regulation-standing-strip .regulation-rule-col__chips {
+  gap: var(--space-4);
+}
+
+.regulation-detail {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.regulation-standing-strip .regulation-detail {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-regular);
+}
+
 .regulation-match-strip__off {
   color: var(--color-text-secondary);
   font-size: var(--text-label);

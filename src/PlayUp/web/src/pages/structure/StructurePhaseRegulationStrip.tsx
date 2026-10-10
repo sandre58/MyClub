@@ -13,7 +13,7 @@ import {
 } from '../../design-system/icons/contentIcons';
 import {
   MatchRulesStripPanel,
-  StandingRulesPanel,
+  StandingRulesStripPanel,
 } from '../regulation/regulationRulePanels';
 import type { StructureStageHubSummary } from '../../types';
 import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
@@ -115,10 +115,6 @@ export function StructurePhaseRegulationStrip({
           </Status>
         );
 
-  const regulationFooter = (
-    <TextLink to={regulationHref}>{t('hub.overview.openRegulation')}</TextLink>
-  );
-
   type SectionKind = 'match' | 'standing' | 'confrontation';
   const visible: SectionKind[] = [
     'match',
@@ -137,7 +133,6 @@ export function StructurePhaseRegulationStrip({
       className="structure-regulation-strip__section"
       title={t('fiche.tiles.match')}
       titleIcon={<MatchRulesIcon size="sm" />}
-      footer={regulationFooter}
       toolbar={
         <RegulationEditToolbar
           editLabel={t('fiche.edit')}
@@ -170,7 +165,6 @@ export function StructurePhaseRegulationStrip({
       className="structure-regulation-strip__section"
       title={t('fiche.tiles.standing')}
       titleIcon={<StandingRulesIcon size="sm" />}
-      footer={regulationFooter}
       toolbar={
         <RegulationEditToolbar
           editLabel={t('fiche.editStanding')}
@@ -181,16 +175,14 @@ export function StructurePhaseRegulationStrip({
         />
       }
     >
-      <div className="structure-domain-tile--reg">
-        <StandingRulesPanel
-          winPoints={stage.winPoints ?? 0}
-          drawPoints={stage.drawPoints ?? 0}
-          lossPoints={stage.lossPoints ?? 0}
-          rankingCriteria={stage.rankingCriteria}
-          forfeitWinnerGoals={stage.forfeitWinnerGoals}
-          forfeitLoserGoals={stage.forfeitLoserGoals}
-        />
-      </div>
+      <StandingRulesStripPanel
+        winPoints={stage.winPoints ?? 0}
+        drawPoints={stage.drawPoints ?? 0}
+        lossPoints={stage.lossPoints ?? 0}
+        rankingCriteria={stage.rankingCriteria}
+        forfeitWinnerGoals={stage.forfeitWinnerGoals}
+        forfeitLoserGoals={stage.forfeitLoserGoals}
+      />
       {standingIssues}
     </StripSection>
   ) : null;
@@ -224,12 +216,21 @@ export function StructurePhaseRegulationStrip({
 
   return (
     <div className="structure-phase-regulation-bar">
+      <div
+        className="structure-regulation-divider"
+        role="separator"
+        aria-label={t('fiche.section.regulationFrame')}
+      >
+        <span className="structure-regulation-divider__label">
+          {t('fiche.regulationDividerLabel')}
+        </span>
+      </div>
       <section
-        className="structure-fiche-section structure-fiche-section--operational"
+        className="structure-fiche-section structure-fiche-section--regulation"
         aria-label={t('fiche.section.regulationFrame')}
       >
         <div
-          className="structure-operational-strip"
+          className="structure-operational-strip structure-operational-strip--regulation-readout"
           data-section-count={visible.length}
           style={{
             gridTemplateColumns: operationalStripGridColumns(visible.length),
@@ -238,6 +239,9 @@ export function StructurePhaseRegulationStrip({
           {stripSections}
         </div>
       </section>
+      <div className="structure-regulation-strip__bar-footer">
+        <TextLink to={regulationHref}>{t('hub.overview.openRegulation')}</TextLink>
+      </div>
     </div>
   );
 }

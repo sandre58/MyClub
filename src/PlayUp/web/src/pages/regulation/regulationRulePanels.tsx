@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Chip } from '../../design-system/components/Chip';
 import { Meter, type MeterTone } from '../../design-system/components/Meter';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
@@ -221,6 +222,103 @@ export type StandingRulesPanelProps = {
   forfeitWinnerGoals?: number | null;
   forfeitLoserGoals?: number | null;
 };
+
+/** Key–value rows for Structure regulation strip (phase-tile styling). */
+export function StandingRulesStripPanel({
+  winPoints = 0,
+  drawPoints = 0,
+  lossPoints = 0,
+  rankingCriteria,
+  forfeitWinnerGoals,
+  forfeitLoserGoals,
+}: StandingRulesPanelProps) {
+  const { t } = useTranslation('regulation');
+  const win = winPoints ?? 0;
+  const draw = drawPoints ?? 0;
+  const loss = lossPoints ?? 0;
+  const criteria = rankingCriteria ?? [];
+  const forfeitWinner = forfeitWinnerGoals;
+  const forfeitLoser = forfeitLoserGoals;
+  const showForfeit = forfeitWinner != null && forfeitLoser != null;
+
+  return (
+    <ul
+      className="regulation-match-strip regulation-standing-strip"
+      aria-label={t('points.aria')}
+    >
+      <li className="regulation-match-strip__row">
+        <span className="regulation-match-strip__label">{t('points.heading')}</span>
+        <div className="regulation-match-strip__value">
+          <div className="regulation-rule-col__chips">
+            <Tooltip content={t('tokens.standingWinTip', { value: win })}>
+              <Chip tone="win">{win}</Chip>
+            </Tooltip>
+            <Tooltip content={t('tokens.standingDrawTip', { value: draw })}>
+              <Chip tone="draw">{draw}</Chip>
+            </Tooltip>
+            <Tooltip content={t('tokens.standingLossTip', { value: loss })}>
+              <Chip tone="loss">{loss}</Chip>
+            </Tooltip>
+          </div>
+        </div>
+      </li>
+      {criteria.length > 0 ? (
+        <li className="regulation-match-strip__row">
+          <span className="regulation-match-strip__label">
+            {t('criteria.heading')}
+          </span>
+          <div className="regulation-match-strip__value">
+            <ul className="regulation-rule-list" aria-label={t('criteria.aria')}>
+              {criteria.map((criterion, index) => (
+                <li key={criterion} className="regulation-rule-list__item">
+                  <span className="regulation-rule-list__hit">
+                    <span
+                      className="ds-chip ds-chip--rounded ds-chip--soft"
+                      aria-hidden="true"
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="regulation-rule-list__label">
+                      {criterionLabel(criterion, t)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </li>
+      ) : null}
+      {showForfeit ? (
+        <li className="regulation-match-strip__row">
+          <span className="regulation-match-strip__label">
+            {t('forfeit.heading')}
+          </span>
+          <div className="regulation-match-strip__value">
+            <ul className="regulation-rule-list">
+              <li className="regulation-rule-list__item">
+                <span
+                  className="regulation-rule-list__hit"
+                  aria-label={t('forfeit.aria', {
+                    winner: forfeitWinner,
+                    loser: forfeitLoser,
+                  })}
+                >
+                  <span className="regulation-rule-list__label">
+                    <span className="regulation-rule-list__label-row">
+                      <span className="regulation-detail">
+                        {forfeitWinner}–{forfeitLoser}
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </li>
+      ) : null}
+    </ul>
+  );
+}
 
 export function StandingRulesPanel({
   winPoints = 0,

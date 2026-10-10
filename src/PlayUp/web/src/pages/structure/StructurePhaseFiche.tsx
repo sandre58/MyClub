@@ -791,7 +791,6 @@ export function StructurePhaseFiche({
   }
 
   const showHeroStats = heroFacts.length > 0;
-  const showHeroMeta = showHeroStats;
   const showHeroStructureActions =
     showPlacementBlock || showProductionOperationalBar;
   // Overflow removed — Edit/Delete live in the header toolbar.
@@ -969,7 +968,7 @@ export function StructurePhaseFiche({
                   aria-label={t('fiche.editForme')}
                   onClick={() => setSkeletonOpen(true)}
                 >
-                  <PencilIcon size="sm" />
+                  <StructureIcon size="sm" />
                 </button>
               </Tooltip>
             ) : null}
@@ -1083,39 +1082,28 @@ export function StructurePhaseFiche({
           </FluxRail>
 
           <div className="structure-phase-hero__center">
-            {showHeroMeta ? (
-              <div className="structure-phase-hero__meta-block">
-                {showHeroMeta ? (
-                  <div className="structure-phase-hero__meta">
-                    {showHeroStats ? (
-                      <ul
-                        className="structure-phase-hero__stats"
-                        aria-label={t('fiche.statsAria')}
-                      >
-                        {heroFacts.map((fact) => (
-                          <li
-                            key={fact.statKey}
-                            className="structure-phase-hero__stat"
-                          >
-                            <span
-                              className="structure-phase-hero__stat-icon"
-                              aria-hidden="true"
-                            >
-                              {fact.icon}
-                            </span>
-                            <span className="structure-phase-hero__stat-value">
-                              {fact.value}
-                            </span>
-                            <span className="structure-phase-hero__stat-label">
-                              {fact.label}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
+            {showHeroStats ? (
+              <ul
+                className="structure-phase-hero__stats"
+                aria-label={t('fiche.statsAria')}
+              >
+                {heroFacts.map((fact) => (
+                  <li key={fact.statKey} className="structure-phase-hero__stat">
+                    <span
+                      className="structure-phase-hero__stat-icon"
+                      aria-hidden="true"
+                    >
+                      {fact.icon}
+                    </span>
+                    <span className="structure-phase-hero__stat-value">
+                      {fact.value}
+                    </span>
+                    <span className="structure-phase-hero__stat-label">
+                      {fact.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             ) : null}
             <div
               id="tile-places"

@@ -252,6 +252,7 @@
       "phaseProduction": "Production des matchs",
       "regulationFrame": "Cadre réglementaire de la phase"
     },
+    "regulationDividerLabel": "Règlement",
     "edit": "Modifier",
     "editForme": "Modifier l’organisation",
     "editPhase": "Renommer la phase",

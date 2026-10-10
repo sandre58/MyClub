@@ -252,6 +252,7 @@
       "phaseProduction": "Match production",
       "regulationFrame": "Phase regulation frame"
     },
+    "regulationDividerLabel": "Regulation",
     "edit": "Edit",
     "editForme": "Edit organisation",
     "editPhase": "Rename phase",
