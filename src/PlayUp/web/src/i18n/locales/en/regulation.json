@@ -135,7 +135,8 @@
     "maxAria": "Maximum match duration {{minutes}} minutes, including regulation time and extra time",
     "maxLabel": "max.",
     "maxUnit": "min",
-    "maxHint": "Regulation + extra time"
+    "maxHint": "Regulation + extra time",
+    "featureOff": "No"
   },
   "openInStructure": "Go to phase",
   "phaseRegulationAria": "Stage regulations",

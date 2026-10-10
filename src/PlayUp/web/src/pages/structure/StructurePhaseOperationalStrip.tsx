@@ -52,6 +52,7 @@ import {
   resolveProductionMeterCopy,
 } from './structureOperationalStripMessages';
 import { ratioToneForOperationalMeter } from './structureOperationalStripRatioTone';
+import { StripSection } from './structureOperationalStripSection';
 import {
   StripDrawAppliedPanel,
   StripOperationalMessage,
@@ -97,47 +98,6 @@ function materializeActionLabel(
   return complete
     ? tActions('MaterializeMatchesComplete')
     : tActions('MaterializeMatches');
-}
-
-function StripSection({
-  index,
-  title,
-  toolbar,
-  children,
-  className,
-}: {
-  index: number;
-  title: string;
-  toolbar?: ReactNode;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={['structure-operational-strip__section', className]
-        .filter(Boolean)
-        .join(' ')}
-      aria-labelledby={`operational-strip-${index}-title`}
-    >
-      <header className="structure-operational-strip__section-head">
-        <h4
-          id={`operational-strip-${index}-title`}
-          className="structure-operational-strip__section-title"
-        >
-          <span className="ds-chip ds-chip--rounded ds-chip--soft" aria-hidden="true">
-            {index}
-          </span>
-          <span>{title}</span>
-        </h4>
-        {toolbar ? (
-          <div className="structure-operational-strip__section-toolbar ds-icon-toolbar">
-            {toolbar}
-          </div>
-        ) : null}
-      </header>
-      <div className="structure-operational-strip__section-body">{children}</div>
-    </section>
-  );
 }
 
 function RatioAside({

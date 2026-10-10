@@ -249,7 +249,8 @@
   "fiche": {
     "section": {
       "phaseState": "Phase status",
-      "phaseProduction": "Match production"
+      "phaseProduction": "Match production",
+      "regulationFrame": "Phase regulation frame"
     },
     "edit": "Edit",
     "editForme": "Edit organisation",

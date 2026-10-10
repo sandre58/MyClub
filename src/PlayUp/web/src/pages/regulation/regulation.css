@@ -304,6 +304,116 @@
   font-size: var(--text-meta);
 }
 
+/* Structure regulation strip — vertical match summary */
+.regulation-match-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.regulation-match-strip__row {
+  display: grid;
+  grid-template-columns: minmax(7.75rem, 9.25rem) minmax(0, 1fr);
+  column-gap: var(--space-16);
+  align-items: center;
+  padding: var(--space-8) 0;
+  min-width: 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.regulation-match-strip__row:first-child {
+  padding-top: 0;
+}
+
+.regulation-match-strip__row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.regulation-match-strip__label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+}
+
+.regulation-match-strip__value {
+  min-width: 0;
+  justify-self: stretch;
+}
+
+.regulation-match-strip__value--extra {
+  max-width: 50%;
+  width: 50%;
+}
+
+.regulation-match-strip__off {
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+}
+
+.regulation-match-strip__tab {
+  min-width: 0;
+}
+
+.regulation-clock--strip {
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.regulation-clock--strip .regulation-clock__row {
+  gap: var(--space-4);
+}
+
+.regulation-clock--strip .regulation-clock__piece {
+  grid-template-rows: auto 0.4rem auto;
+  gap: var(--space-4);
+}
+
+.regulation-clock--strip .regulation-clock__bar {
+  height: 0.25rem;
+  border-radius: 999px;
+}
+
+.regulation-clock--strip .regulation-clock__piece--break {
+  max-width: 2.75rem;
+  grid-template-rows: auto 0.22rem auto;
+}
+
+.regulation-clock--strip .regulation-clock__piece--break .regulation-clock__bar {
+  height: 0.15rem;
+  border-radius: 999px;
+  background: var(--color-text-secondary);
+  box-shadow: none;
+}
+
+.regulation-clock--strip .regulation-clock__piece--break .regulation-clock__label {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.regulation-clock--strip .regulation-clock__label,
+.regulation-clock--strip .regulation-clock__mins {
+  font-size: 0.6875rem;
+  line-height: var(--leading-tight);
+}
+
+.regulation-clock--strip-extra .regulation-clock__piece {
+  grid-template-rows: auto 0.26rem auto;
+  min-width: 1.75rem;
+}
+
+.regulation-clock--strip-extra .regulation-clock__bar {
+  height: 0.18rem;
+  border-radius: 999px;
+}
+
 .regulation-clock__row {
   display: flex;
   align-items: stretch;
@@ -327,7 +437,7 @@
 }
 
 .regulation-clock__label {
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
   line-height: 1;

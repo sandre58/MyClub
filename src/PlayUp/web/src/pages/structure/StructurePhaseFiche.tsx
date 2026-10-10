@@ -8,31 +8,24 @@ import {
   renameStage,
   replaceStageDrawRules,
 } from '../../api';
-import { Chip } from '../../design-system/components/Chip';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
-import { Status } from '../../design-system/components/Status';
-import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import { WaitMark } from '../../design-system/components/WaitMark';
 import { TextInput } from '../../design-system/components/TextInput';
 import { Tooltip } from '../../design-system/components/Tooltip';
-import { TextLink } from '../../design-system/components/TextLink';
 import {
   ArrowDownIcon,
   ArrowRightIcon,
   AttributionIcon,
   ChampionshipFormatIcon,
-  ConfrontationIcon,
   CupFormatIcon,
   GroupsFormatIcon,
   LayersIcon,
-  MatchRulesIcon,
   MatchdayStatIcon,
   MatchesStatIcon,
   PlusIcon,
   PencilIcon,
   CheckIcon,
   RoundsStatIcon,
-  StandingRulesIcon,
   StructureIcon,
   SwissFormatIcon,
   TrashIcon,
@@ -104,10 +97,6 @@ import { resolvePlacesN } from './structurePlaces';
 import type { StructureFocusId } from './structureNavigation';
 import { PhaseSchematic } from './phaseSchematic';
 import { listCupManualPlaces } from './manualPlacementUi';
-import {
-  MatchRulesPanel,
-  StandingRulesPanel,
-} from '../regulation/regulationRulePanels';
 import '../regulation/regulation.css';
 
 import {
@@ -120,14 +109,13 @@ import {
   type FeedGroup,
 } from './structurePhaseFeeds';
 import {
-  ConfrontationPanel,
-  DomainTile,
   ExitKindMenu,
   FluxGroupList,
   FluxRail,
   PlacementAwardRow,
   RootEntriesRail,
 } from './StructurePhaseRails';
+import { StructurePhaseRegulationStrip } from './StructurePhaseRegulationStrip';
 
 type EditTarget =
   | 'qualification'
@@ -1232,108 +1220,33 @@ export function StructurePhaseFiche({
         </div>
       </div>
 
-      <div className="structure-domain-tiles">
-        <DomainTile
-          id="tile-match"
-          title={t('fiche.tiles.match')}
-          icon={<MatchRulesIcon size="md" />}
-          editLabel={t('fiche.edit')}
-          badge={
-            matchBound ? (
-              <Chip tone="neutral">{t('fiche.binding.general')}</Chip>
-            ) : (
-              <Status density="compact" tone={statusToneFromBadgeTone('warn')}>
-                {t('fiche.binding.personalized')}
-              </Status>
-            )
-          }
-          onEdit={
-            canEditMatch || canRebind
-              ? () => setEdit(canEditMatch ? 'matchs' : 'rebind-match')
-              : undefined
-          }
-          compact
-          footer={
-            <TextLink to={regulationHref}>
-              {t('hub.overview.openRegulation')}
-            </TextLink>
-          }
-        >
-          <div className="structure-domain-tile--reg">
-            <MatchRulesPanel
-              numberOfPeriods={stage.numberOfPeriods}
-              durationPerPeriod={stage.durationPerPeriod}
-              halfTimeDuration={stage.halfTimeDuration}
-              hasExtraTime={stage.hasExtraTime}
-              extraTimeNumberOfPeriods={stage.extraTimeNumberOfPeriods}
-              extraTimeDurationPerPeriod={stage.extraTimeDurationPerPeriod}
-              hasPenaltyShootout={stage.hasPenaltyShootout}
-              penaltyInitialKicksPerTeam={stage.penaltyInitialKicksPerTeam}
-            />
-          </div>
-        </DomainTile>
-
-        {standingBound !== null ? (
-          <DomainTile
-            id="tile-standing"
-            title={t('fiche.tiles.standing')}
-            icon={<StandingRulesIcon size="md" />}
-            editLabel={t('fiche.editStanding')}
-            badge={
-              standingBound ? (
-                <Chip tone="neutral">{t('fiche.binding.general')}</Chip>
-              ) : (
-                <Status
-                  density="compact"
-                  tone={statusToneFromBadgeTone('warn')}
-                >
-                  {t('fiche.binding.personalized')}
-                </Status>
-              )
-            }
-            onEdit={
-              canEditStanding || canRebind
-                ? () =>
-                    setEdit(canEditStanding ? 'classement' : 'rebind-standing')
-                : undefined
-            }
-            compact
-            footer={
-              <TextLink to={regulationHref}>
-                {t('hub.overview.openRegulation')}
-              </TextLink>
-            }
-          >
-            <div className="structure-domain-tile--reg">
-              <StandingRulesPanel
-                winPoints={stage.winPoints ?? 0}
-                drawPoints={stage.drawPoints ?? 0}
-                lossPoints={stage.lossPoints ?? 0}
-                rankingCriteria={stage.rankingCriteria}
-                forfeitWinnerGoals={stage.forfeitWinnerGoals}
-                forfeitLoserGoals={stage.forfeitLoserGoals}
-              />
-            </div>
-            {standingBanners.length > 0 ? issueBanner(standingBanners) : null}
-          </DomainTile>
-        ) : null}
-
-        {showConfrontation ? (
-          <DomainTile
-            id="tile-confrontation"
-            title={t('fiche.tiles.confrontation')}
-            icon={<ConfrontationIcon size="md" />}
-            editLabel={t('fiche.edit')}
-            onEdit={canEditTie ? () => setEdit('confrontation') : undefined}
-            compact
-          >
-            <ConfrontationPanel stage={stage} />
-            {confrontationBanners.length > 0
-              ? issueBanner(confrontationBanners)
-              : null}
-          </DomainTile>
-        ) : null}
-      </div>
+      <StructurePhaseRegulationStrip
+        stage={stage}
+        regulationHref={regulationHref}
+        matchBound={matchBound}
+        standingBound={standingBound}
+        showStanding={standingBound !== null}
+        showConfrontation={showConfrontation}
+        canEditMatch={canEditMatch}
+        canRebind={canRebind}
+        canEditStanding={canEditStanding}
+        canEditTie={canEditTie}
+        onEditMatch={() =>
+          setEdit(canEditMatch ? 'matchs' : 'rebind-match')
+        }
+        onEditStanding={() =>
+          setEdit(canEditStanding ? 'classement' : 'rebind-standing')
+        }
+        onEditConfrontation={() => setEdit('confrontation')}
+        standingIssues={
+          standingBanners.length > 0 ? issueBanner(standingBanners) : undefined
+        }
+        confrontationIssues={
+          confrontationBanners.length > 0
+            ? issueBanner(confrontationBanners)
+            : undefined
+        }
+      />
 
       {canRemove && (
         <RemovePhaseDialog

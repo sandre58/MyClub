@@ -120,6 +120,99 @@ export function MatchRulesPanel({
   );
 }
 
+/** Compact vertical summary for Structure regulation strip (no max ring). */
+export function MatchRulesStripPanel(props: MatchRulesPanelProps) {
+  const { t } = useTranslation('regulation');
+  const {
+    numberOfPeriods,
+    durationPerPeriod,
+    halfTimeDuration,
+    hasExtraTime,
+    extraTimeNumberOfPeriods,
+    extraTimeDurationPerPeriod,
+    hasPenaltyShootout,
+    penaltyInitialKicksPerTeam,
+  } = props;
+
+  const halfTime = halfTimeDuration ?? 0;
+  const regulationPieces = buildPlayClockPieces({
+    periodCount: numberOfPeriods,
+    minutesPerPeriod: durationPerPeriod,
+    breakMinutes: halfTime,
+    periodLabel: (n) => periodLabel(n, t),
+    breakLabel: t('matchTimeline.break'),
+  });
+  const hasExtra =
+    hasExtraTime && (extraTimeNumberOfPeriods ?? 0) > 0;
+  const extraPieces = hasExtra
+    ? buildPlayClockPieces({
+        periodCount: extraTimeNumberOfPeriods ?? 0,
+        minutesPerPeriod: extraTimeDurationPerPeriod ?? 0,
+        breakMinutes: 0,
+        periodLabel: (n) => t('matchTimeline.extra', { n }),
+        breakLabel: t('matchTimeline.break'),
+      })
+    : [];
+  const kicks = penaltyInitialKicksPerTeam ?? null;
+  const offLabel = t('matchTimeline.featureOff');
+
+  return (
+    <ul className="regulation-match-strip" aria-label={t('matchTimeline.aria')}>
+      <li className="regulation-match-strip__row">
+        <span className="regulation-match-strip__label">
+          {t('matchTimeline.regulationHeading')}
+        </span>
+        <div className="regulation-match-strip__value">
+          <div className="regulation-clock regulation-clock--strip">
+            <ClockRow pieces={regulationPieces} />
+          </div>
+        </div>
+      </li>
+      <li className="regulation-match-strip__row">
+        <span className="regulation-match-strip__label">
+          {t('matchTimeline.extraHeading')}
+        </span>
+        <div className="regulation-match-strip__value regulation-match-strip__value--extra">
+          {hasExtra ? (
+            <div className="regulation-clock regulation-clock--strip regulation-clock--strip-extra">
+              <ClockRow pieces={extraPieces} />
+            </div>
+          ) : (
+            <span className="regulation-match-strip__off">{offLabel}</span>
+          )}
+        </div>
+      </li>
+      <li className="regulation-match-strip__row">
+        <span className="regulation-match-strip__label">
+          {t('matchTimeline.tabHeading')}
+        </span>
+        <div className="regulation-match-strip__value">
+          {hasPenaltyShootout ? (
+            <div
+              className="regulation-match-strip__tab"
+              aria-label={
+                kicks != null
+                  ? t('matchTimeline.tabAria', { count: kicks })
+                  : t('matchTimeline.tabHeading')
+              }
+            >
+              {kicks != null ? (
+                <span className="regulation-tab-row__dots" aria-hidden="true">
+                  {Array.from({ length: Math.max(kicks, 1) }, (_, i) => (
+                    <span key={i} className="regulation-tab__kick" />
+                  ))}
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            <span className="regulation-match-strip__off">{offLabel}</span>
+          )}
+        </div>
+      </li>
+    </ul>
+  );
+}
+
 export type StandingRulesPanelProps = {
   winPoints?: number | null;
   drawPoints?: number | null;

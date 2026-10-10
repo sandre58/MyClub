@@ -856,7 +856,7 @@
 
 .structure-phase-rail__issues {
   list-style: none;
-  margin: auto 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -1220,9 +1220,69 @@
   container-name: operational-bar;
 }
 
+.structure-phase-regulation-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  margin-top: var(--space-16);
+  container-type: inline-size;
+  container-name: regulation-bar;
+}
+
+.structure-regulation-strip__toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-12);
+  flex-shrink: 0;
+}
+
+.structure-regulation-strip__binding {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.structure-operational-strip__section-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  line-height: 0;
+}
+
+.structure-operational-strip__section-icon .ds-icon {
+  display: block;
+}
+
+.structure-phase-regulation-bar .structure-regulation-strip__section {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.structure-phase-regulation-bar .structure-operational-strip__section-icon {
+  color: var(--color-brand);
+}
+
+.structure-phase-regulation-bar .structure-operational-strip__section-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-phase-regulation-bar .structure-operational-strip__section-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: auto;
+  padding-top: var(--space-12);
+  width: 100%;
+}
+
 .structure-operational-strip {
   display: grid;
-  align-items: stretch;
+  align-items: start;
   column-gap: var(--space-16);
   width: 100%;
   min-width: 0;
@@ -1512,6 +1572,41 @@
   }
 
   .structure-operational-strip__section:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 14%;
+    right: 14%;
+    height: var(--border-width);
+    border-radius: 999px;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
+      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
+      transparent 100%
+    );
+  }
+}
+
+@container regulation-bar (max-width: 42rem) {
+  .structure-phase-regulation-bar .structure-operational-strip {
+    grid-template-columns: minmax(0, 1fr) !important;
+    row-gap: var(--space-16);
+    column-gap: 0;
+  }
+
+  .structure-phase-regulation-bar .structure-operational-strip__separator {
+    display: none;
+  }
+
+  .structure-phase-regulation-bar .structure-operational-strip__section:not(:first-child) {
+    position: relative;
+    padding-top: var(--space-16);
+    border-top: none;
+  }
+
+  .structure-phase-regulation-bar .structure-operational-strip__section:not(:first-child)::before {
     content: '';
     position: absolute;
     top: 0;

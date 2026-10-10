@@ -135,7 +135,8 @@
     "maxAria": "Durée maximale du match {{minutes}} minutes, temps réglementaire et prolongations inclus",
     "maxLabel": "max.",
     "maxUnit": "min",
-    "maxHint": "Réglementaire + prolongations"
+    "maxHint": "Réglementaire + prolongations",
+    "featureOff": "Non"
   },
   "openInStructure": "Aller à la phase",
   "phaseRegulationAria": "Règlement de la phase",

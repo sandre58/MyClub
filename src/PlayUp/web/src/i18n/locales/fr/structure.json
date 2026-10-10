@@ -249,7 +249,8 @@
   "fiche": {
     "section": {
       "phaseState": "État de la phase",
-      "phaseProduction": "Production des matchs"
+      "phaseProduction": "Production des matchs",
+      "regulationFrame": "Cadre réglementaire de la phase"
     },
     "edit": "Modifier",
     "editForme": "Modifier l’organisation",
