@@ -45,6 +45,12 @@ public sealed partial class UseCaseExecutor
     private static partial void LogStageStarted(ILogger logger, Guid stageId, Guid competitionId);
 
     [LoggerMessage(
+        EventId = 1012,
+        Level = LogLevel.Information,
+        Message = "Stage completed {StageId} {CompetitionId}")]
+    private static partial void LogStageCompleted(ILogger logger, Guid stageId, Guid competitionId);
+
+    [LoggerMessage(
         EventId = 1020,
         Level = LogLevel.Information,
         Message = "Draw published {StageId} {DrawId} {CompetitionId}")]

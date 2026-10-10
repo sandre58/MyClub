@@ -493,6 +493,14 @@ internal static class StageEndpoints
             });
 
         app.MapPost(
+            "/stages/{stageId:guid}/complete",
+            async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+            {
+                await executor.CompleteStageAsync(new StageId(stageId), cancellationToken).ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPost(
             "/stages/{stageId:guid}/fixtures/{fixtureId:guid}/apply-progression",
             async (Guid stageId, Guid fixtureId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {

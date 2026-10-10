@@ -216,6 +216,11 @@ public static class ApplicationErrorCodes
     public const string CompletionNotAllowed = "Application.CompletionNotAllowed";
 
     /// <summary>
+    /// Gets the code when <see cref="Stages.CompleteStage"/> is refused because stage matches are still open.
+    /// </summary>
+    public const string StageCompletionBlocked = "Application.StageCompletionBlocked";
+
+    /// <summary>
     /// Gets the code when the completion mode string cannot be parsed.
     /// </summary>
     public const string InvalidCompletionMode = "Application.InvalidCompletionMode";

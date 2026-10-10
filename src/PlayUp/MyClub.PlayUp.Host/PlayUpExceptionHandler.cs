@@ -86,6 +86,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Slot occupancy conflict", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.CompletionNotAllowed } application =>
                 (StatusCodes.Status409Conflict, "Completion not allowed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.StageCompletionBlocked } application =>
+                (StatusCodes.Status409Conflict, "Stage completion blocked", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.CompetitionClosed } application =>
                 (StatusCodes.Status409Conflict, "Competition closed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MediaNotFound } application =>

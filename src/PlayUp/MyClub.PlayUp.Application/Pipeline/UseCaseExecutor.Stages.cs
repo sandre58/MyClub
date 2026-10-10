@@ -86,6 +86,34 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
+    /// Loads a stage and its matches, runs <see cref="CompleteStage"/>, and saves changes.
+    /// </summary>
+    /// <param name="stageId">Stage identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the stage is completed and persisted.</returns>
+    /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist or completion is blocked.</exception>
+    public async Task CompleteStageAsync(StageId stageId, CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{stage.CompetitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+
+        var stageMatches =
+            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
+        CompleteStage.Execute(stage, stageMatches, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogStageCompleted(logger, stageId.Value, stage.CompetitionId.Value);
+    }
+
+    /// <summary>
     /// Loads competition stages and fixture matches, runs <see cref="ApplyProgressionOutcome"/>, and saves once.
     /// </summary>
     /// <param name="sourceStageId">Stage that owns the fixture.</param>
