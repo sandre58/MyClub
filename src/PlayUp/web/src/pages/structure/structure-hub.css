@@ -353,6 +353,74 @@
   align-items: center;
 }
 
+/* -- Flat phase card (N2) -- */
+.structure-fiche--flat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.structure-fiche--flat .structure-fiche__titles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+
+.structure-fiche__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.structure-fiche__title-edit {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.structure-fiche__title-edit-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 18rem;
+}
+
+.structure-fiche__title-edit-field .ds-input {
+  min-height: var(--control-height-compact);
+  padding-inline: var(--space-8);
+}
+
+.structure-fiche__title-edit-field .ds-input__control {
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-fiche__title-edit .ds-icon-toolbar {
+  flex: none;
+}
+
+.structure-fiche__title-edit .ds-state {
+  flex: 1 1 100%;
+}
+
+.structure-fiche__format-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-brand);
+  line-height: 0;
+}
+
+.structure-fiche--flat .structure-fiche__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  align-items: center;
+}
+
 .structure-fiche__title-row--primary {
   flex: 1 1 auto;
   flex-wrap: wrap;
@@ -556,6 +624,11 @@
   color: var(--color-attention);
 }
 
+.structure-phase-rail__body > .structure-entries {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .structure-assembly {
   display: flex;
   flex-direction: column;
@@ -738,6 +811,207 @@ button.structure-flux-group__peer {
 
 .structure-confrontation-list {
   margin: 0;
+}
+
+.structure-phase-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+  border: var(--border-width) solid var(--color-border);
+}
+
+.structure-phase-hero--lite {
+  padding: var(--space-12) 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.structure-phase-hero__triptych {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1fr) minmax(0, 2.2fr) minmax(9rem, 1fr);
+  gap: var(--space-12);
+  align-items: stretch;
+}
+
+.structure-phase-hero__triptych--no-out {
+  grid-template-columns: minmax(9rem, 1fr) minmax(0, 2.2fr);
+}
+
+.structure-phase-hero__out {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+  min-height: 0;
+  justify-content: flex-start;
+  align-self: stretch;
+}
+
+.structure-phase-hero__center {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.structure-phase-rail {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: var(--space-8);
+  min-width: 0;
+  padding: var(--space-12);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-surface-secondary) 65%, var(--color-surface));
+  border: none;
+}
+
+.structure-phase-hero--lite .structure-phase-rail {
+  background: var(--color-surface-secondary);
+}
+
+.structure-phase-rail__issues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.structure-phase-rail__issue {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-error);
+}
+
+.structure-phase-rail__issue[data-tone='danger'] {
+  color: var(--color-error);
+}
+
+.structure-phase-rail__issue[data-tone='attention'] {
+  color: var(--color-attention);
+}
+
+.structure-phase-rail__issue[data-tone='progress'] {
+  color: var(--color-info);
+}
+
+.structure-phase-rail__issue-icon {
+  flex: none;
+  line-height: 0;
+}
+
+.structure-schematic-viewport__issues {
+  margin-top: var(--space-8);
+}
+
+.structure-phase-hero__out > .structure-phase-rail:not(.structure-phase-rail--empty) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-phase-hero__out > .structure-phase-rail--empty {
+  flex: 0 0 auto;
+  gap: 0;
+}
+
+.structure-phase-rail__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.structure-phase-rail__title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.structure-phase-rail__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-schematic-viewport {
+  overflow-x: auto;
+  overflow-y: visible;
+  max-height: none;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.structure-schematic-viewport__scale {
+  transform-origin: top center;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-4) 0;
+}
+
+.structure-schematic-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14rem;
+  width: 100%;
+  border-radius: var(--radius-control);
+  background: transparent;
+}
+
+.structure-schematic-loading .ds-wait {
+  margin: 0;
+}
+
+.structure-domain-tiles {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: stretch;
+  gap: var(--space-12);
+}
+
+.structure-domain-tile--reg .regulation-max {
+  transform: scale(0.72);
+  transform-origin: top left;
+}
+
+.structure-domain-tile--reg .regulation-clock__label,
+.structure-domain-tile--reg .regulation-clock__mins,
+.structure-domain-tile--reg .regulation-gauge__label,
+.structure-domain-tile--reg .regulation-criteria__item {
+  font-size: var(--text-meta);
+}
+
+.structure-phase-rail .ds-empty--idle {
+  padding: var(--space-8) 0;
+}
+
+.structure-phase-rail__icon {
+  display: inline-flex;
+  color: var(--color-brand);
+  line-height: 0;
 }
 
 /* Stats centered above schematic (forme edit lives in fiche header). */
