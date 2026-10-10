@@ -240,6 +240,95 @@ All organizer-facing copy is owned by the SPA i18n layer. Read DTOs expose **cod
 
 Structure hub read (product name **Structure**). Wire DTO type: `StructureViewDto`.
 
+Each `stages[]` hub row includes **`lifecycle`** — Structure N2 cycle band (Prepare / Start / Complete). Organizer copy is SPA i18n; the wire carries **codes + facts** only.
+
+#### `stages[].lifecycle`
+
+| Field | When | Notes |
+| :--- | :--- | :--- |
+| `transition` | Always | Primary lifecycle command for the current `status` |
+| `prepareChecklist` | `status` = `Draft` | Horizontal Prepare checklist (replaces ops strip in Brouillon UI); otherwise omitted / null |
+| `matchProgress` | `Running` \| `Suspended` \| `Completed` | Match closure stats + `canComplete`; otherwise omitted / null |
+
+**`transition`**
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `code` | string \| null | `PrepareStage` \| `StartStage` \| `CompleteStage` when a lifecycle CTA applies; null when the band is read-only (e.g. `Completed`) |
+| `enabled` | boolean | When `code` is set and `false`, Host would reject the command |
+| `disabledReasonCode` | string \| null | Stable blocker (e.g. `ConstructionFrozen`, `OpenMatches`, flow / graph issue codes) |
+| `remediation` | object \| null | `{ "href": "/competitions/{id}/structure?stage=…", "labelKey": "<code>" }` — SPA may map `labelKey` under `structure.lifecycle.remediation.*` |
+
+**`prepareChecklist.items[].code`** (conditional rows): `Entries`, `Places`, `Draw`, `Matches`, `Exits`, `Attribution`. Each item has `applicable` and `satisfied`. `allSatisfied` summarizes applicable rows only (informational; Prepare `enabled` follows Prepare gates, not checklist alone).
+
+**`matchProgress`**: `total`, `finished`, `cancelled`, `open`, `canComplete`. `canComplete` is true when every stage match is `Finished` or `Cancelled` (including **0 matches** on a Running stage).
+
+Example (Draft championship):
+
+```json
+{
+  "stageId": "<guid>",
+  "name": "League",
+  "status": "Draft",
+  "lifecycle": {
+    "transition": {
+      "code": "PrepareStage",
+      "enabled": true,
+      "disabledReasonCode": null,
+      "remediation": null
+    },
+    "prepareChecklist": {
+      "items": [
+        { "code": "Entries", "applicable": true, "satisfied": true },
+        { "code": "Places", "applicable": true, "satisfied": true },
+        { "code": "Draw", "applicable": false, "satisfied": false },
+        { "code": "Matches", "applicable": true, "satisfied": false },
+        { "code": "Exits", "applicable": false, "satisfied": false },
+        { "code": "Attribution", "applicable": false, "satisfied": false }
+      ],
+      "allSatisfied": false
+    },
+    "matchProgress": null
+  }
+}
+```
+
+### Stage lifecycle commands
+
+Distinct from **competition** Prepare/Start/Complete. No request body on these routes.
+
+#### `POST /stages/{stageId}/prepare` → 204 No Content
+
+Application `PrepareStage`: Domain `Draft → Ready` (configuration gates + slot feeds when applicable).
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Prepared successfully |
+| **404** | Stage or competition not found |
+| **409** | Domain invalid transition, prepare / graph gates, slot feeds, or `Application.CompetitionClosed` |
+
+#### `POST /stages/{stageId}/start` → 204 No Content
+
+Application `StartStage`: Domain `Ready → Running`.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Started successfully |
+| **404** | Stage or competition not found |
+| **409** | Not Ready, initial KO not playable, or `Application.CompetitionClosed` (`Stage.NotReady`, `Stage.InvalidTransition`, …) |
+
+#### `POST /stages/{stageId}/complete` → 204 No Content
+
+Application `CompleteStage`: Domain `Running` \| `Suspended` → `Completed`. Requires every match on **that stage** to be `Finished` or `Cancelled` (empty match set allowed). Independent of other phases’ status.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Completed successfully |
+| **404** | Stage or competition not found |
+| **409** | Open matches (`Application.StageCompletionBlocked`, `reasons`: `["OpenMatches"]`), invalid transition, or `Application.CompetitionClosed` |
+
+Structure `lifecycle.transition` for `CompleteStage` mirrors this gate (`matchProgress.canComplete`).
+
 ### `POST /competitions/{competitionId}/structure` → 200 `ConfigureStructureResponse`
 
 Creates the primary skeleton (first time) or **explicitly rebuilds** it (clears topology then rebuilds). Rebuild is refused while matches are attached (`StructureNotMutable`). Response includes `stageCreated`, optional `rebuildImpact` counts, and refreshed `structure` (same `StructureViewDto` type).
@@ -408,7 +497,7 @@ Empty or null `paths` clears rules. Domain validates source fixture ownership an
 
 Empty or null `paths` clears rules. Optional: `groupId`, `acrossGroupsPosition`, `selectionEndValue`, `minimumPoints`. Rejected while stage is Running / Suspended / Completed (`StructureNotMutable`).
 
-Structure hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationPaths` / `progressionPaths`, and `structureIssues` (Draft-persistable graph validity). Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
+Structure hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationPaths` / `progressionPaths`, `structureIssues` (Draft-persistable graph validity), and `lifecycle` (see above). Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
 
 #### `PUT /stages/{stageId}/placement-award-rules` → 204 No Content
 
@@ -562,6 +651,7 @@ ProblemDetails extensions:
 - `Application.ConsequenceOperationNotAllowed`
 - `Application.SlotOccupancyConflict`
 - `Application.CompletionNotAllowed`
+- `Application.StageCompletionBlocked`
 - `Application.CompetitionClosed`
 
 ### Application codes mapped to 404
