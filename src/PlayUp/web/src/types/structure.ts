@@ -237,6 +237,51 @@ export interface StructureStageHubSummary {
   materialize?: StructureMaterialize | null;
   /** Workspace dematerialize capability; omitted when not exposed for this phase. */
   dematerialize?: StructureDematerialize | null;
+  /** Phase lifecycle band (Prepare / Start / Complete). */
+  lifecycle?: StructureStageLifecycle | null;
+}
+
+/** GET structure `stages[].lifecycle` — Structure N2 cycle band. */
+export interface StructureStageLifecycle {
+  transition: StructureStageLifecycleTransition;
+  prepareChecklist?: StructureStageLifecyclePrepareChecklist | null;
+  matchProgress?: StructureStageLifecycleMatchProgress | null;
+}
+
+export type StructureStageLifecycleTransitionCode =
+  | 'PrepareStage'
+  | 'StartStage'
+  | 'CompleteStage';
+
+export interface StructureStageLifecycleTransition {
+  code: StructureStageLifecycleTransitionCode | null;
+  enabled: boolean;
+  disabledReasonCode?: string | null;
+  remediation?: StructureStageLifecycleRemediation | null;
+}
+
+export interface StructureStageLifecycleRemediation {
+  href: string;
+  labelKey: string;
+}
+
+export interface StructureStageLifecyclePrepareChecklist {
+  items: StructureStageLifecyclePrepareChecklistItem[];
+  allSatisfied: boolean;
+}
+
+export interface StructureStageLifecyclePrepareChecklistItem {
+  code: string;
+  applicable: boolean;
+  satisfied: boolean;
+}
+
+export interface StructureStageLifecycleMatchProgress {
+  total: number;
+  finished: number;
+  cancelled: number;
+  open: number;
+  canComplete: boolean;
 }
 
 /** One qualification authoring intent. */

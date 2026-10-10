@@ -372,6 +372,34 @@ public static class StructureViewAssembler
             summaries = loadedSummaries;
         }
 
+        var structureIssues = BuildStructureIssues(
+            competition,
+            stage,
+            competitionStages,
+            flowIssues,
+            draw is not null,
+            drawExecutionBadge,
+            compositionCapacity);
+        var formatKind = StructureSkeleton.InferFormat(stage);
+        var materialize = StructureMaterializeAssembler.Assemble(competition, stage, summaries);
+        var lifecycle = StructureStageLifecycleAssembler.Assemble(
+            new StructureStageLifecycleInput(
+                competition,
+                stage,
+                competitionStages,
+                structureIssues,
+                summaries,
+                formatKind,
+                draw is not null,
+                regulation.QualificationRules is not null,
+                regulation.ProgressionRules is not null,
+                isRootComposition,
+                composition.Count,
+                compositionCapacity,
+                affectation.Count,
+                drawExecutionBadge,
+                materialize));
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -410,7 +438,7 @@ public static class StructureViewAssembler
             HasPlacementAwardRules: placement is not null,
             PlacementAwardCount: placement?.Paths.Count ?? 0,
             PlacementAwards: placementAwards,
-            FormatKind: StructureSkeleton.InferFormat(stage),
+            FormatKind: formatKind,
             SwissRoundCount: stage.SwissSettings?.RoundCount,
             ForfeitWinnerGoals: match.AdministrativeResultPolicy.ForfeitWinnerGoals,
             ForfeitLoserGoals: match.AdministrativeResultPolicy.ForfeitLoserGoals,
@@ -423,14 +451,7 @@ public static class StructureViewAssembler
             QualificationIntents: qualificationIntents,
             ProgressionPaths: progressionPaths,
             ProgressionIntents: progressionIntents,
-            StructureIssues: BuildStructureIssues(
-                competition,
-                stage,
-                competitionStages,
-                flowIssues,
-                draw is not null,
-                drawExecutionBadge,
-                compositionCapacity),
+            StructureIssues: structureIssues,
             HalfTimeDuration: match.Duration.HalfTimeDuration,
             DirectAssignmentCount: stage.DirectAssignments.Count,
             CompositionEntryCount: composition.Count,
@@ -447,8 +468,9 @@ public static class StructureViewAssembler
             PlacesPerGroup: stage.PlacesPerGroup,
             DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat),
             DrawExecutionBadge: drawExecutionBadge,
-            Materialize: StructureMaterializeAssembler.Assemble(competition, stage, summaries),
-            Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries));
+            Materialize: materialize,
+            Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries),
+            Lifecycle: lifecycle);
     }
 
     /// <summary>

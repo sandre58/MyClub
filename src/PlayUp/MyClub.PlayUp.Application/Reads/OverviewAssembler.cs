@@ -113,6 +113,9 @@ public static class OverviewAssembler
     /// <summary>Start stage.</summary>
     public const string ActionStartStage = "StartStage";
 
+    /// <summary>Complete stage (Running / Suspended → Completed).</summary>
+    public const string ActionCompleteStage = "CompleteStage";
+
     /// <summary>Publish draw.</summary>
     public const string ActionPublishDraw = "PublishDraw";
 

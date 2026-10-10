@@ -239,6 +239,7 @@ public sealed record StructureReadinessDto(
 /// <param name="DrawExecutionBadge">Topology execution badge when DrawRules engaged; null otherwise.</param>
 /// <param name="Materialize">Workspace materialize capability (null when the format has no Materialize command).</param>
 /// <param name="Dematerialize">Workspace dematerialize capability (null when nothing is materialized or the format is unsupported).</param>
+/// <param name="Lifecycle">Phase lifecycle band (Prepare / Start / Complete transition + checklist / match progress).</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -308,7 +309,8 @@ public sealed record StructureStageHubSummaryDto(
     StructureTieFormatSummaryDto? DefaultTieFormat = null,
     StructureDrawExecutionBadge? DrawExecutionBadge = null,
     StructureMaterializeDto? Materialize = null,
-    StructureDematerializeDto? Dematerialize = null);
+    StructureDematerializeDto? Dematerialize = null,
+    StructureStageLifecycleDto? Lifecycle = null);
 
 /// <summary>
 /// Structure workspace projection of match materialization (not Overview opportunity).
