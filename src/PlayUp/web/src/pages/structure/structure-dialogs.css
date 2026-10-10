@@ -678,7 +678,7 @@
   gap: var(--space-8) var(--space-12);
   min-width: 0;
   padding: var(--space-8) var(--space-12);
-  border: 1px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-ink) 10%, transparent);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
 }

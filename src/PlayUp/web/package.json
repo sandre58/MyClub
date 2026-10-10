@@ -12,6 +12,7 @@
     "i18n:check": "vitest run src/i18n/localeParity.test.ts",
     "i18n:audit": "node scripts/i18n-key-audit.mjs",
     "tile:check": "node scripts/tile-family-check.mjs",
+    "css:audit": "node scripts/frontend-audit.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",

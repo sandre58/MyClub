@@ -405,17 +405,6 @@
   min-width: 0;
 }
 
-.structure-operational-strip__status-line {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin: 0;
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-  color: var(--color-success);
-}
-
 .structure-operational-strip__empty {
   display: flex;
   flex: 1 1 auto;
@@ -746,15 +735,6 @@
   line-height: var(--leading-normal);
 }
 
-.structure-operational-tile__note--attention {
-  color: color-mix(in srgb, var(--color-attention) 78%, var(--color-ink));
-}
-
-.structure-operational-state__cluster > .structure-operational-tile__note--attention {
-  width: 100%;
-  min-width: 0;
-}
-
 .structure-operational-tile__actions {
   display: flex;
   justify-content: stretch;
@@ -782,24 +762,6 @@
   height: 0.35rem;
 }
 
-.structure-operational-tile__group-row--tirage {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: var(--space-8);
-  row-gap: 0;
-}
-
-.structure-operational-tile__tirage-primary {
-  min-width: 0;
-  flex-grow: 1;
-}
-
-.structure-operational-tile__tirage-primary .ds-btn--primary {
-  width: 100%;
-  max-width: 100%;
-}
-
 .structure-operational-tile__state-loading {
   margin: 0;
   font-size: var(--text-meta);
@@ -810,14 +772,6 @@
   margin: var(--space-8) 0 0;
   font-size: var(--text-meta);
   color: var(--color-text-secondary);
-}
-
-.structure-operational-tile__inline-tools {
-  display: inline-flex;
-  flex-shrink: 0;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0;
 }
 
 .structure-operational-tile .ds-icon-toolbar .ds-btn--destructive {
@@ -858,12 +812,6 @@
   gap: var(--space-4);
 }
 
-.structure-operational-tile__diagnostics-hint {
-  margin: 0;
-  font-size: var(--text-meta);
-  color: var(--color-text-secondary);
-}
-
 .structure-operational-tile__diagnostics .structure-phase-rail__issues {
   margin: 0;
   padding: 0;
@@ -876,13 +824,6 @@
 
 .structure-operational-tile__action-wrap {
   display: inline-flex;
-}
-
-.structure-operational-gauge__status {
-  margin: 0;
-  font-size: var(--text-meta);
-  color: var(--color-text-secondary);
-  line-height: var(--leading-normal);
 }
 
 .structure-overflow-menu__item--destructive {

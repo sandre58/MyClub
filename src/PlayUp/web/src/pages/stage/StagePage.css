@@ -73,7 +73,7 @@
   display: grid;
   gap: var(--space-12);
   padding: var(--space-16);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-panel);
   background: var(--color-surface-secondary);
 }

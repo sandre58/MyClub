@@ -511,7 +511,7 @@
   flex-direction: column;
   gap: var(--space-8);
   padding-top: var(--space-12);
-  border-top: 1px solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
 }
 
 .match-discipline__list > li:first-child .match-discipline__row {
@@ -551,4 +551,30 @@
 
 .match-discipline__form {
   margin-top: var(--space-12);
+}
+
+/* Match score / forfeit forms (formerly global in index.css). */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-12);
+}
+
+.fieldset {
+  display: grid;
+  gap: var(--space-12);
+  margin: 0;
+  padding: var(--space-16);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+}
+
+.fieldset__legend {
+  padding-inline: var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
