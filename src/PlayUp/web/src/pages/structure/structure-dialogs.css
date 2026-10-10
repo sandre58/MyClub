@@ -1065,6 +1065,12 @@
   }
 }
 
+.structure-issues__hint {
+  margin: var(--space-8) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
 @media (max-width: 36rem) {
   .structure-qualification__fields,
   .structure-qualification__scope-tiles,

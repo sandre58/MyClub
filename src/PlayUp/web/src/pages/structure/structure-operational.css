@@ -401,6 +401,7 @@
 .structure-operational-strip__applied-content {
   display: flex;
   flex-direction: column;
+  align-items: start;
   gap: var(--space-12);
   min-width: 0;
 }

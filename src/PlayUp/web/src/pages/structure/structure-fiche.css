@@ -349,6 +349,37 @@
   font-variant-numeric: tabular-nums;
 }
 
+.structure-assembly__gap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-error);
+}
+
+.structure-assembly__gap-icon {
+  flex: none;
+  line-height: 0;
+}
+
+.structure-assembly--deficit .structure-occupancy-meter__fill {
+  background: var(--color-error);
+}
+
+.structure-assembly--deficit .structure-occupancy-meter--short .structure-occupancy-meter__label {
+  color: var(--color-error);
+}
+
+.structure-assembly--over .structure-assembly__gap {
+  color: var(--color-attention);
+}
+
+.structure-assembly--over .structure-occupancy-meter__fill {
+  background: var(--color-attention);
+}
+
 /* Shared X vs Places N track (Composition + Qual/Prog destination). */
 
 .structure-flux-groups {
