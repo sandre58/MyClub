@@ -97,7 +97,7 @@ import { resolvePlacesN } from './structurePlaces';
 import type { StructureFocusId } from './structureNavigation';
 import { PhaseSchematic } from './phaseSchematic';
 import { listCupManualPlaces } from './manualPlacementUi';
-import '../regulation/regulation.css';
+import '../regulation/regulation-shared.css';
 
 import {
   exitKindsPresent,

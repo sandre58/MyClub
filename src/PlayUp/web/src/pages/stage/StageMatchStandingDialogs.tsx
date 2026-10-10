@@ -53,7 +53,7 @@ import {
   DEFAULT_RANKING_CRITERIA,
   normalizeCriteria,
 } from '../classements/standingCriteria';
-import '../regulation/regulation.css';
+import '../regulation/regulation-shared.css';
 
 function forfeitScoreWarning(
   winner: number | null | undefined,

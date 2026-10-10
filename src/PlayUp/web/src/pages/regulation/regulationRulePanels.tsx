@@ -7,7 +7,7 @@ import {
   TimerIcon,
 } from '../../design-system/icons/contentIcons';
 import type { RankingCriterion } from '../../types';
-import './regulation.css';
+import './regulation-shared.css';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 

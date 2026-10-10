@@ -28,7 +28,7 @@ import type {
   StructureTieFormatSummary,
 } from '../../types';
 import { invalidateAfterStructureMutation } from '../structure/structureInvalidation';
-import '../regulation/regulation.css';
+import '../regulation/regulation-shared.css';
 
 type TieFormState = {
   numberOfLegs: 1 | 2;
