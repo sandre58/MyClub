@@ -558,7 +558,7 @@ describe('StructureDrawDialog', () => {
           })),
         }),
       );
-      return { releasedCount: 2 };
+      return { releasedCount: 2, skippedCount: 0 };
     });
 
     renderDialog(

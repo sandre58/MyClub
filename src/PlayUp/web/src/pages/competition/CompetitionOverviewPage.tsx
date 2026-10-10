@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchCompetitionOverview, fetchStructureView } from '../../api';
 import { TeamCrest } from '../../design-system/TeamCrest';
+import { StatChipPanel } from '../../design-system/components/Chip';
 import { AttentionGroup } from '../../design-system/components/AttentionGroup';
 import { OverviewNextAction } from '../../design-system/components/OverviewNextAction';
 import { OverviewPodium } from '../../design-system/components/OverviewPodium';
@@ -1047,7 +1048,7 @@ function RegulationDimensionCard({
         />
         <div className="overview-regulation-game">
           {showPoints && (
-            <ul className="overview-chips overview-chips--game">
+            <ul className="ds-chip-panel-list ds-chip-panel-list--emphasis">
               <PointsChip
                 tone="win"
                 value={gameRules.winPoints}
@@ -1108,7 +1109,7 @@ function RegulationDimensionCard({
         title={t('dimensions.regulation.title')}
         icon={<RegulationIcon size="md" />}
       />
-      <ul className="overview-chips">
+      <ul className="ds-chip-panel-list">
         <PointsChip
           tone="win"
           value={competition.winPoints}
@@ -1151,12 +1152,11 @@ function PointsChip({
   const { t } = useTranslation('overview');
 
   return (
-    <li className={`overview-chip overview-chip--${tone}`}>
-      <span className="overview-chip__value">
-        {t('dimensions.regulation.pointsValue', { value })}
-      </span>
-      <span className="overview-chip__label">{label}</span>
-    </li>
+    <StatChipPanel
+      tone={tone}
+      value={t('dimensions.regulation.pointsValue', { value })}
+      label={label}
+    />
   );
 }
 

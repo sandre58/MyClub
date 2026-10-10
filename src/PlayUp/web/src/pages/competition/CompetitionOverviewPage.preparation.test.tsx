@@ -298,7 +298,12 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         drawPoints: 1,
         lossPoints: 0,
       },
-      format: { kind: 'Championship', primaryStageId: stageId },
+      format: {
+        kind: 'Championship',
+        primaryStageId: stageId,
+        primaryStageName: 'League',
+        primaryStageStatus: 'Draft',
+      },
       structure: {
         groupCount: 0,
         roundCount: 0,
@@ -308,6 +313,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
         numberOfPots: null,
         matchGenerationFormat: 'SingleRoundRobin',
       },
+      stages: [],
       actions: [],
       readiness: {
         readyForNextSlice: false,

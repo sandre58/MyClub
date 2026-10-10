@@ -11,17 +11,19 @@ const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 function baseView(
   partial: Partial<StructureView> & Pick<StructureView, 'stages'>,
 ): StructureView {
+  const { stages, ...rest } = partial;
   return {
     competitionId,
+    name: 'Comp',
     status: 'Draft',
     actions: [],
     format: {
       kind: 'Groups',
-      primaryStageId: partial.stages[0]?.stageId ?? null,
-      primaryStageName: partial.stages[0]?.name ?? null,
+      primaryStageId: stages[0]?.stageId ?? null,
+      primaryStageName: stages[0]?.name ?? null,
       primaryStageStatus: 'Draft',
     },
-    participants: { occupyingCount: 0, entries: [] },
+    participants: { activeCount: 0, occupyingCount: 0, entries: [] },
     structure: {
       groupCount: 0,
       roundCount: 0,
@@ -29,11 +31,16 @@ function baseView(
       slotCount: 0,
       hasDrawRules: false,
       numberOfPots: null,
-      matchGenerationFormat: null,
+      matchGenerationFormat: 'SingleRoundRobin',
     },
     regulation: {
+      minimumTeams: 2,
+      maximumTeams: 64,
       numberOfPeriods: 2,
       durationPerPeriod: 45,
+      winPoints: 3,
+      drawPoints: 1,
+      lossPoints: 0,
       hasExtraTime: false,
       hasPenaltyShootout: false,
     },
@@ -47,9 +54,9 @@ function baseView(
       attachedMatchCount: 0,
       blockers: [],
     },
-    stages: partial.stages,
-    ...partial,
-  } as StructureView;
+    stages,
+    ...rest,
+  };
 }
 
 function stage(

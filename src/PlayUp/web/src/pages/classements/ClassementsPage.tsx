@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { fetchConsultation, fetchStructureView } from '../../api';
+import { StatChipPanel } from '../../design-system/components/Chip';
 import {
   MatchRow,
   MatchRowScore,
@@ -380,7 +381,7 @@ function RegulationPanel({
           <p className="classements-panel__section-label">
             {t('regulation.pointsHeading')}
           </p>
-          <ul className="classements-chips">
+          <ul className="ds-chip-panel-list">
             <PointsChip
               tone="win"
               value={regulation.winPoints}
@@ -450,12 +451,11 @@ function PointsChip({
   const { t } = useTranslation('classements');
 
   return (
-    <li className={`classements-chip classements-chip--${tone}`}>
-      <span className="classements-chip__value">
-        {t('regulation.pointsValue', { value })}
-      </span>
-      <span className="classements-chip__label">{label}</span>
-    </li>
+    <StatChipPanel
+      tone={tone}
+      value={t('regulation.pointsValue', { value })}
+      label={label}
+    />
   );
 }
 

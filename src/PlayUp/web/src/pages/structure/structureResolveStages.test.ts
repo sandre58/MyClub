@@ -14,13 +14,21 @@ function minimalView(
     structure: {
       groupCount: 2,
       roundCount: 0,
+      matchdayCount: 0,
+      slotCount: 0,
       hasDrawRules: true,
       numberOfPots: 4,
+      matchGenerationFormat: 'SingleRoundRobin',
       swissRoundCount: 0,
     },
     regulation: {
+      minimumTeams: 2,
+      maximumTeams: 64,
       numberOfPeriods: 2,
       durationPerPeriod: 45,
+      winPoints: 3,
+      drawPoints: 1,
+      lossPoints: 0,
       hasExtraTime: false,
       hasPenaltyShootout: false,
     },
@@ -57,6 +65,7 @@ describe('resolveStructureHubStages', () => {
       hasProgressionRules: false,
       progressionPathCount: 0,
       hasTieFormat: false,
+      hasDrawRules: true,
     };
     const data = minimalView({
       format: {
@@ -90,7 +99,12 @@ describe('resolveStructureHubStages', () => {
 
   it('returns empty when there is no primary stage', () => {
     const data = minimalView({
-      format: { kind: 'Groups', primaryStageId: null },
+      format: {
+        kind: 'Groups',
+        primaryStageId: null,
+        primaryStageName: null,
+        primaryStageStatus: null,
+      },
     });
     expect(resolveStructureHubStages(data)).toEqual([]);
   });

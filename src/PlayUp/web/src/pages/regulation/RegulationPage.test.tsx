@@ -113,8 +113,8 @@ function finaleStage(
     hasPlacementAwardRules: true,
     placementAwardCount: 2,
     placementAwards: [
-      { rank: 1, outcome: 'Winner' },
-      { rank: 2, outcome: 'Loser' },
+      { rank: 1, outcome: 'Winner', sourcePairKey: 'FINAL-1' },
+      { rank: 2, outcome: 'Loser', sourcePairKey: 'FINAL-1' },
     ],
     formatKind: 'Cup',
     defaultsBinding: binding({
@@ -747,18 +747,18 @@ describe('RegulationPage', () => {
     const confirmDialog = confirmHeading.closest('[role="dialog"]');
     expect(confirmDialog).not.toBeNull();
     expect(
-      within(confirmDialog!).getByText('Mise à jour des phases'),
+      within(confirmDialog! as HTMLElement).getByText('Mise à jour des phases'),
     ).toBeInTheDocument();
     expect(
-      within(confirmDialog!).getByText(/Prolongations/),
+      within(confirmDialog! as HTMLElement).getByText(/Prolongations/),
     ).toBeInTheDocument();
     expect(
-      within(confirmDialog!).getByText(/1 phase sera mise à jour/),
+      within(confirmDialog! as HTMLElement).getByText(/1 phase sera mise à jour/),
     ).toBeInTheDocument();
     expect(replaceCompetitionRegulation).not.toHaveBeenCalled();
 
     await user.click(
-      within(confirmDialog!).getByRole('button', { name: 'Enregistrer' }),
+      within(confirmDialog! as HTMLElement).getByRole('button', { name: 'Enregistrer' }),
     );
 
     await waitFor(() => {
@@ -799,13 +799,13 @@ describe('RegulationPage', () => {
     const confirmDialog = confirmHeading.closest('[role="dialog"]');
     expect(confirmDialog).not.toBeNull();
     expect(
-      within(confirmDialog!).getByText('Mise à jour des phases'),
+      within(confirmDialog! as HTMLElement).getByText('Mise à jour des phases'),
     ).toBeInTheDocument();
     expect(
-      within(confirmDialog!).getByText(/phase sera mise à jour/),
+      within(confirmDialog! as HTMLElement).getByText(/phase sera mise à jour/),
     ).toBeInTheDocument();
     expect(
-      within(confirmDialog!).getByText(
+      within(confirmDialog! as HTMLElement).getByText(
         /phase personnalisée ne sera pas modifiée/i,
       ),
     ).toBeInTheDocument();
@@ -814,7 +814,7 @@ describe('RegulationPage', () => {
     ).not.toBeInTheDocument();
 
     await user.click(
-      within(confirmDialog!).getByRole('button', { name: 'Enregistrer' }),
+      within(confirmDialog! as HTMLElement).getByRole('button', { name: 'Enregistrer' }),
     );
     await waitFor(() => {
       expect(replaceCompetitionRegulation).toHaveBeenCalled();
@@ -898,10 +898,10 @@ describe('RegulationPage', () => {
     const confirmDialog = confirmHeading.closest('[role="dialog"]');
     expect(confirmDialog).not.toBeNull();
     expect(
-      within(confirmDialog!).getByText('Cadre de la compétition'),
+      within(confirmDialog! as HTMLElement).getByText('Cadre de la compétition'),
     ).toBeInTheDocument();
     expect(
-      within(confirmDialog!).getByText(
+      within(confirmDialog! as HTMLElement).getByText(
         /Mis à jour sur la compétition uniquement/,
       ),
     ).toBeInTheDocument();
@@ -990,7 +990,7 @@ describe('RegulationPage', () => {
     const confirmDialog = confirmHeading.closest('[role="dialog"]');
     expect(confirmDialog).not.toBeNull();
     await user.click(
-      within(confirmDialog!).getByRole('button', { name: 'Enregistrer' }),
+      within(confirmDialog! as HTMLElement).getByRole('button', { name: 'Enregistrer' }),
     );
 
     await waitFor(() => {

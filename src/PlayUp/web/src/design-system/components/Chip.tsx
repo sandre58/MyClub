@@ -2,6 +2,8 @@ import type { HTMLAttributes, ReactNode } from 'react';
 
 export type ChipTone = 'neutral' | 'soft' | 'accent' | 'win' | 'draw' | 'loss';
 
+export type StatChipTone = 'win' | 'draw' | 'loss';
+
 type ChipProps = {
   tone?: ChipTone;
   children: ReactNode;
@@ -25,5 +27,28 @@ export function Chip({
     <span className={classes} {...rest}>
       {children}
     </span>
+  );
+}
+
+/** Regulation points chip — value + caption in a panel tile (Overview, Classements). */
+export function StatChipPanel({
+  tone,
+  value,
+  label,
+  className,
+}: {
+  tone: StatChipTone;
+  value: ReactNode;
+  label: ReactNode;
+  className?: string;
+}) {
+  const classes = ['ds-chip-panel', `ds-chip-panel--${tone}`, className]
+    .filter(Boolean)
+    .join(' ');
+  return (
+    <li className={classes}>
+      <span className="ds-chip-panel__value">{value}</span>
+      <span className="ds-chip-panel__label">{label}</span>
+    </li>
   );
 }

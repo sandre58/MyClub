@@ -24,7 +24,7 @@ describe('setThemePreference', () => {
   });
 
   it('reacts to OS changes only when preference is system', () => {
-    let changeHandler: (() => void) | null = null;
+    let changeHandler: EventListener | null = null;
 
     vi.spyOn(window, 'matchMedia').mockReturnValue({
       matches: false,
@@ -32,8 +32,8 @@ describe('setThemePreference', () => {
       onchange: null,
       addListener: () => {},
       removeListener: () => {},
-      addEventListener: (_event, handler) => {
-        changeHandler = handler as () => void;
+      addEventListener: (_event: string, handler: EventListener) => {
+        changeHandler = handler;
       },
       removeEventListener: () => {
         changeHandler = null;
@@ -50,8 +50,8 @@ describe('setThemePreference', () => {
       onchange: null,
       addListener: () => {},
       removeListener: () => {},
-      addEventListener: (_event, handler) => {
-        changeHandler = handler as () => void;
+      addEventListener: (_event: string, handler: EventListener) => {
+        changeHandler = handler;
       },
       removeEventListener: () => {
         changeHandler = null;
@@ -59,11 +59,11 @@ describe('setThemePreference', () => {
       dispatchEvent: () => false,
     } as MediaQueryList);
 
-    changeHandler?.();
+    (changeHandler as EventListener | null)?.(new Event('change'));
     expect(document.documentElement.dataset.theme).toBe('dark');
 
     setThemePreference('light');
-    changeHandler?.();
+    (changeHandler as EventListener | null)?.(new Event('change'));
     expect(document.documentElement.dataset.theme).toBe('light');
   });
 });

@@ -4,7 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -14,6 +14,7 @@ import {
   removeDeclaredParticipation,
   setDeclaredParticipationJerseyNumber,
 } from '../../api';
+import { Field } from '../../design-system/components/Field';
 import { queryKeys } from '../../queryKeys';
 import {
   CheckIcon,
@@ -159,6 +160,9 @@ function SheetSideColumn({
 }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
+  const addPlayerFieldId = useId();
+  const addJerseyFieldId = useId();
+  const jerseyEditFieldId = useId();
   const rosterHref = entry
     ? `/competitions/${match.competitionId}/teams/${entry.entryId}`
     : `/competitions/${match.competitionId}/teams`;
@@ -360,9 +364,9 @@ function SheetSideColumn({
                       });
                     }}
                   >
-                    <label className="field">
-                      {t('sheet.jersey')}
+                    <Field label={t('sheet.jersey')} htmlFor={jerseyEditFieldId}>
                       <input
+                        id={jerseyEditFieldId}
                         inputMode="numeric"
                         value={jerseyEditValue}
                         onChange={(event) =>
@@ -371,7 +375,7 @@ function SheetSideColumn({
                         disabled={jerseyMutation.isPending}
                         placeholder={t('sheet.jerseyPlaceholder')}
                       />
-                    </label>
+                    </Field>
                     <div className="match-sheet__confirm-actions">
                       <button
                         type="submit"
@@ -480,9 +484,13 @@ function SheetSideColumn({
             </p>
           ) : (
             <>
-              <label className="field">
-                {t('sheet.addPlayer')}
+              <Field
+                label={t('sheet.addPlayer')}
+                htmlFor={addPlayerFieldId}
+                required
+              >
                 <select
+                  id={addPlayerFieldId}
                   value={memberId}
                   onChange={(event) => setMemberId(event.target.value)}
                   disabled={addMutation.isPending}
@@ -495,7 +503,7 @@ function SheetSideColumn({
                     </option>
                   ))}
                 </select>
-              </label>
+              </Field>
               <fieldset className="match-sheet__status-fieldset">
                 <legend>{t('sheet.composition')}</legend>
                 <label className="match-sheet__radio">
@@ -519,16 +527,16 @@ function SheetSideColumn({
                   {t('sheet.bench')}
                 </label>
               </fieldset>
-              <label className="field">
-                {t('sheet.jersey')}
+              <Field label={t('sheet.jersey')} htmlFor={addJerseyFieldId}>
                 <input
+                  id={addJerseyFieldId}
                   inputMode="numeric"
                   value={jerseyDraft}
                   onChange={(event) => setJerseyDraft(event.target.value)}
                   disabled={addMutation.isPending}
                   placeholder={t('sheet.jerseyPlaceholder')}
                 />
-              </label>
+              </Field>
               <button
                 type="submit"
                 className="ds-btn ds-btn--primary"

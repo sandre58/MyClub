@@ -262,11 +262,11 @@ describe('MatchPage discipline (Lot 1)', () => {
     const panel = heading.closest('section') as HTMLElement;
 
     await user.selectOptions(
-      await within(panel).findByLabelText(/^Personne$/i),
+      await within(panel).findByRole('combobox', { name: /Personne/i }),
       dupontId,
     );
     await user.selectOptions(
-      await within(panel).findByLabelText(/^Type$/i),
+      await within(panel).findByRole('combobox', { name: /Type/i }),
       'Yellow',
     );
     await user.click(
@@ -332,7 +332,9 @@ describe('MatchPage discipline (Lot 1)', () => {
 
     const heading = await screen.findByRole('heading', { name: 'Discipline' });
     const panel = heading.closest('section') as HTMLElement;
-    const typeSelect = await within(panel).findByLabelText(/^Type$/i);
+    const typeSelect = await within(panel).findByRole('combobox', {
+      name: /Type/i,
+    });
 
     expect(
       within(typeSelect).getByRole('option', { name: 'Jaune' }),
@@ -352,7 +354,9 @@ describe('MatchPage discipline (Lot 1)', () => {
 
     const heading = await screen.findByRole('heading', { name: 'Discipline' });
     const panel = heading.closest('section') as HTMLElement;
-    const memberSelect = await within(panel).findByLabelText(/^Personne$/i);
+    const memberSelect = await within(panel).findByRole('combobox', {
+      name: /Personne/i,
+    });
 
     expect(
       within(memberSelect).getByRole('option', { name: /Dupont/ }),

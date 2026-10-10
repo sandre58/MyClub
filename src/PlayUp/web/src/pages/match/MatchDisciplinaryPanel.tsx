@@ -4,7 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -13,6 +13,7 @@ import {
   recordDisciplinaryEvent,
   removeRecordedDisciplinaryEvent,
 } from '../../api';
+import { Field } from '../../design-system/components/Field';
 import { queryKeys } from '../../queryKeys';
 import {
   EmptyState,
@@ -365,6 +366,8 @@ function DisciplinaryForm({
 }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
+  const memberFieldId = useId();
+  const typeFieldId = useId();
   const SubmitIcon = submitIcon === 'plus' ? PlusIcon : CheckIcon;
 
   function handleSubmit(event: SubmitEvent) {
@@ -378,10 +381,9 @@ function DisciplinaryForm({
 
   return (
     <form className="match-discipline__form" onSubmit={handleSubmit}>
-      <label className="field">
-        <span className="field__label">{t('discipline.member')}</span>
+      <Field label={t('discipline.member')} htmlFor={memberFieldId} required>
         <select
-          className="field__control"
+          id={memberFieldId}
           value={memberId}
           required
           disabled={pending}
@@ -396,12 +398,11 @@ function DisciplinaryForm({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
-      <label className="field">
-        <span className="field__label">{t('discipline.type')}</span>
+      <Field label={t('discipline.type')} htmlFor={typeFieldId} required>
         <select
-          className="field__control"
+          id={typeFieldId}
           value={type}
           required
           disabled={pending}
@@ -416,7 +417,7 @@ function DisciplinaryForm({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
       <div className="button-row">
         <button

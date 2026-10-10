@@ -20,6 +20,7 @@ import {
   MatchHeroScore,
   MatchHeroScoreActions,
 } from '../../design-system/components/MatchHero';
+import { Field } from '../../design-system/components/Field';
 import { PageHead } from '../../design-system/components/PageHead';
 import { Status } from '../../design-system/components/Status';
 import { TeamCrest } from '../../design-system/TeamCrest';
@@ -565,8 +566,10 @@ function OfficialScoreForm({
       <fieldset className="fieldset" disabled={pending}>
         <legend className="fieldset__legend">{t('detail.finalScore')}</legend>
         <div className="form-row">
-          <label className="field" htmlFor={`${id}-official-home`}>
-            {t('detail.goalsOfficial', { name: homeName })}
+          <Field
+            label={t('detail.goalsOfficial', { name: homeName })}
+            htmlFor={`${id}-official-home`}
+          >
             <input
               id={`${id}-official-home`}
               type="number"
@@ -576,9 +579,11 @@ function OfficialScoreForm({
               value={homeGoals}
               onChange={(e) => setHomeGoals(e.target.value)}
             />
-          </label>
-          <label className="field" htmlFor={`${id}-official-away`}>
-            {t('detail.goalsOfficial', { name: awayName })}
+          </Field>
+          <Field
+            label={t('detail.goalsOfficial', { name: awayName })}
+            htmlFor={`${id}-official-away`}
+          >
             <input
               id={`${id}-official-away`}
               type="number"
@@ -588,7 +593,7 @@ function OfficialScoreForm({
               value={awayGoals}
               onChange={(e) => setAwayGoals(e.target.value)}
             />
-          </label>
+          </Field>
         </div>
       </fieldset>
 
@@ -661,8 +666,10 @@ function RunningScoreForm({
           {t('detail.runningScoreLegend')}
         </legend>
         <div className="form-row">
-          <label className="field" htmlFor={`${id}-running-home`}>
-            {t('detail.goalsRunning', { name: homeName })}
+          <Field
+            label={t('detail.goalsRunning', { name: homeName })}
+            htmlFor={`${id}-running-home`}
+          >
             <input
               id={`${id}-running-home`}
               type="number"
@@ -672,9 +679,11 @@ function RunningScoreForm({
               value={homeGoals}
               onChange={(e) => setHomeGoals(e.target.value)}
             />
-          </label>
-          <label className="field" htmlFor={`${id}-running-away`}>
-            {t('detail.goalsRunning', { name: awayName })}
+          </Field>
+          <Field
+            label={t('detail.goalsRunning', { name: awayName })}
+            htmlFor={`${id}-running-away`}
+          >
             <input
               id={`${id}-running-away`}
               type="number"
@@ -684,7 +693,7 @@ function RunningScoreForm({
               value={awayGoals}
               onChange={(e) => setAwayGoals(e.target.value)}
             />
-          </label>
+          </Field>
         </div>
       </fieldset>
 

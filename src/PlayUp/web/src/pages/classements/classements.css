@@ -132,63 +132,6 @@
   letter-spacing: 0.04em;
 }
 
-.classements-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-8);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.classements-chip {
-  flex: 1 1 4rem;
-  padding: var(--space-8) var(--space-12);
-  border-radius: var(--radius-panel);
-  text-align: center;
-}
-
-.classements-chip--win {
-  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
-}
-
-.classements-chip--win .classements-chip__value {
-  color: var(--color-success);
-}
-
-.classements-chip--draw {
-  background: color-mix(in srgb, var(--color-info) 10%, var(--color-surface));
-}
-
-.classements-chip--draw .classements-chip__value {
-  color: var(--color-info);
-}
-
-.classements-chip--loss {
-  background: color-mix(in srgb, var(--color-ink) 6%, var(--color-surface));
-}
-
-.classements-chip--loss .classements-chip__value {
-  color: var(--color-text-secondary);
-}
-
-.classements-chip__value {
-  display: block;
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  line-height: var(--leading-tight);
-}
-
-.classements-chip__label {
-  display: block;
-  margin-top: var(--space-4);
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  line-height: var(--leading-tight);
-}
-
 .classements-facts {
   display: flex;
   flex-direction: column;

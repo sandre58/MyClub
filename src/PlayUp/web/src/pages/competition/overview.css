@@ -225,63 +225,6 @@
 
 /* ---------- Regulation ---------- */
 
-.overview-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-8);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.overview-chip {
-  flex: 1 1 4rem;
-  padding: var(--space-8) var(--space-12);
-  border-radius: var(--radius-panel);
-  text-align: center;
-}
-
-.overview-chip--win {
-  background: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
-}
-
-.overview-chip--win .overview-chip__value {
-  color: var(--color-success);
-}
-
-.overview-chip--draw {
-  background: color-mix(in srgb, var(--color-info) 10%, var(--color-surface));
-}
-
-.overview-chip--draw .overview-chip__value {
-  color: var(--color-info);
-}
-
-.overview-chip--loss {
-  background: color-mix(in srgb, var(--color-ink) 6%, var(--color-surface));
-}
-
-.overview-chip--loss .overview-chip__value {
-  color: var(--color-text-secondary);
-}
-
-.overview-chip__value {
-  display: block;
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-  line-height: var(--leading-tight);
-}
-
-.overview-chip__label {
-  display: block;
-  margin-top: var(--space-4);
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  line-height: var(--leading-tight);
-}
-
 /* ---------- Structure (editorial surface) ---------- */
 
 .overview-rows {
@@ -395,22 +338,6 @@
   flex-direction: column;
   gap: var(--space-16);
   flex: 1;
-}
-
-.overview-chips--game {
-  gap: var(--space-8);
-}
-
-.overview-chips--game .overview-chip {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: var(--space-12) var(--space-8);
-}
-
-.overview-chips--game .overview-chip__value {
-  font-size: 1.35rem;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.02em;
 }
 
 .overview-game-facts--support {

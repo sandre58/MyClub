@@ -3,7 +3,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   correctRecordedSubstitution,
@@ -17,6 +17,7 @@ import {
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
+import { Field } from '../../design-system/components/Field';
 import { EmptyState, MutationError, PendingLabel } from '../../ui';
 import type {
   DeclaredParticipation,
@@ -355,6 +356,8 @@ function SubstitutionForm({
 }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
+  const outFieldId = useId();
+  const inFieldId = useId();
 
   return (
     <form
@@ -395,9 +398,9 @@ function SubstitutionForm({
         </label>
       </fieldset>
 
-      <label className="field">
-        {t('subs.out')}
+      <Field label={t('subs.out')} htmlFor={outFieldId} required>
         <select
+          id={outFieldId}
           value={outMemberId}
           onChange={(event) => onOutChange(event.target.value)}
           disabled={pending}
@@ -410,11 +413,11 @@ function SubstitutionForm({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
-      <label className="field">
-        {t('subs.in')}
+      <Field label={t('subs.in')} htmlFor={inFieldId} required>
         <select
+          id={inFieldId}
           value={inMemberId}
           onChange={(event) => onInChange(event.target.value)}
           disabled={pending || outMemberId.length === 0}
@@ -427,7 +430,7 @@ function SubstitutionForm({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
       {outOptions.length === 0 && (
         <p className="match-subs__hint">{t('subs.noOutEligible')}</p>

@@ -3,7 +3,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import { useState, type SubmitEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   correctRecordedGoal,
@@ -12,6 +12,7 @@ import {
   setRunningScore,
 } from '../../api';
 import { queryKeys } from '../../queryKeys';
+import { Field } from '../../design-system/components/Field';
 import { PanelHead } from '../../design-system/components/PanelHead';
 import {
   CheckIcon,
@@ -390,6 +391,8 @@ function GoalForm({
 }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
+  const scorerFieldId = useId();
+  const assisterFieldId = useId();
   const scorer = sheet.find((row) => row.memberId === scorerId);
   const isOwnGoal = scorer != null && scorer.side !== creditedSide;
   const assisters = sheet.filter((row) => row.memberId !== scorerId);
@@ -410,9 +413,9 @@ function GoalForm({
         });
       }}
     >
-      <label className="field">
-        {t('goals.scorer')}
+      <Field label={t('goals.scorer')} htmlFor={scorerFieldId} required>
         <select
+          id={scorerFieldId}
           value={scorerId}
           onChange={(event) => onScorerChange(event.target.value)}
           disabled={pending}
@@ -425,7 +428,7 @@ function GoalForm({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
       <fieldset className="match-goals__side-fieldset">
         <legend>{t('goals.creditedSide')}</legend>
@@ -455,9 +458,9 @@ function GoalForm({
         <p className="match-goals__csc">{t('goals.ownGoalHint')}</p>
       )}
 
-      <label className="field">
-        {t('goals.assister')}
+      <Field label={t('goals.assister')} htmlFor={assisterFieldId}>
         <select
+          id={assisterFieldId}
           value={isOwnGoal ? '' : assisterId}
           onChange={(event) => onAssisterChange(event.target.value)}
           disabled={pending || isOwnGoal}
@@ -469,7 +472,7 @@ function GoalForm({
             </option>
           ))}
         </select>
-      </label>
+      </Field>
 
       <div className="match-goals__confirm-actions">
         <button

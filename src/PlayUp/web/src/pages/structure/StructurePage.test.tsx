@@ -1256,8 +1256,11 @@ describe('StructurePage Structure hub', () => {
             materialize: {
               commandCode: 'MaterializeMatches',
               labelVariant: 'complete',
+              determinedCount: 4,
               materializedCount: 4,
               eligibleCount: 4,
+              commandEnabled: true,
+              confrontations: [],
             },
           }),
         ],

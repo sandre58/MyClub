@@ -578,7 +578,7 @@ export function resolveTopologyDrawExecutionBadge(
  */
 export function getDrawUiProjection(
   draw: StageDraw,
-  slots: StageSlot[],
+  slots: StageSlot[] = [],
 ): DrawUiProjection {
   const occupancyApplied =
     draw.resolutionState === 'Resolved' &&

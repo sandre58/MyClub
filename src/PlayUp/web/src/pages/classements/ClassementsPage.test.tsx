@@ -30,7 +30,7 @@ function structureView(overrides: Partial<StructureView> = {}): StructureView {
   return {
     competitionId,
     name: 'Ligue Printemps',
-    status: 'InProgress',
+    status: 'Running',
     participants: {
       activeCount: 2,
       occupyingCount: 2,
@@ -40,7 +40,7 @@ function structureView(overrides: Partial<StructureView> = {}): StructureView {
       kind: 'Championship',
       primaryStageId: stageId,
       primaryStageName: 'Phase 1',
-      primaryStageStatus: 'InProgress',
+      primaryStageStatus: 'Running',
     },
     regulation: {
       minimumTeams: 2,
@@ -99,7 +99,7 @@ function consultationView(
   return {
     competitionId,
     name: 'Ligue Printemps',
-    status: 'InProgress',
+    status: 'Running',
     completionMode: null,
     formatKind: 'Championship',
     formatLabel: 'Championnat',
@@ -115,7 +115,7 @@ function consultationView(
         home: { entryId: entryA, displayName: 'Alpha' },
         away: { entryId: entryB, displayName: 'Beta' },
         score: { homeGoals: 3, awayGoals: 1 },
-        resultType: 'Regular',
+        resultType: 'Played',
         scheduledAt: null,
       },
     ],

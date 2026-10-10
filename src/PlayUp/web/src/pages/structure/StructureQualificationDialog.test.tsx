@@ -59,20 +59,37 @@ function structureView(
 ): StructureView {
   return {
     competitionId,
-    competitionName: 'OverExtraction',
-    competitionStatus: 'Draft',
+    name: 'OverExtraction',
+    status: 'Draft',
+    participants: {
+      activeCount: 4,
+      occupyingCount: 4,
+      entries: [],
+    },
     format: {
       kind: 'Groups',
       primaryStageId: source.stageId,
       primaryStageName: source.name,
       primaryStageStatus: 'Draft',
     },
-    structure: {
-      stageCount: 2,
-      matchGenerationFormat: 'Unknown',
+    regulation: {
+      minimumTeams: 2,
+      maximumTeams: 64,
+      durationPerPeriod: 45,
+      numberOfPeriods: 2,
+      winPoints: 3,
+      drawPoints: 1,
+      lossPoints: 0,
     },
-    regulation: {},
-    participants: { entries: [], teamCount: 4 },
+    structure: {
+      groupCount: 2,
+      roundCount: 0,
+      matchdayCount: 0,
+      slotCount: 0,
+      hasDrawRules: true,
+      numberOfPots: 4,
+      matchGenerationFormat: 'SingleRoundRobin',
+    },
     stages: [source, destination],
     readiness: {
       readyForNextSlice: true,
