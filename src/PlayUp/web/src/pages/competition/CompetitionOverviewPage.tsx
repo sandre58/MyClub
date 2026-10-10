@@ -9,6 +9,7 @@ import { AttentionGroup } from '../../design-system/components/AttentionGroup';
 import { OverviewNextAction } from '../../design-system/components/OverviewNextAction';
 import { OverviewPodium } from '../../design-system/components/OverviewPodium';
 import { PanelHead } from '../../design-system/components/PanelHead';
+import { SelectableTile } from '../../design-system/components/SelectableTile';
 import { Status } from '../../design-system/components/Status';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
@@ -710,20 +711,17 @@ function StandingCompactPanel({
           aria-label={t('sport.groupNav')}
         >
           {tables.map((candidate, index) => (
-            <button
+            <SelectableTile
               key={candidate.groupId ?? `${candidate.scope}-${index}`}
               type="button"
               role="tab"
               aria-selected={index === safeIndex}
-              className={
-                index === safeIndex
-                  ? 'overview-standing-nav__tab overview-standing-nav__tab--active'
-                  : 'overview-standing-nav__tab'
-              }
+              className="overview-standing-nav__tab"
+              selected={index === safeIndex}
               onClick={() => setTableIndex(index)}
             >
               {candidate.groupName ?? t('sport.standingTitle')}
-            </button>
+            </SelectableTile>
           ))}
         </div>
       )}

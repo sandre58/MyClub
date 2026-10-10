@@ -401,18 +401,13 @@
 
 .overview-standing-nav__tab {
   padding: var(--space-4) var(--space-12);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: var(--text-label);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
 
-.overview-standing-nav__tab--active {
-  border-color: var(--color-brand);
-  background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface));
+.overview-standing-nav__tab[data-selected='true'] {
   color: var(--color-brand);
 }
 

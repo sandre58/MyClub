@@ -1045,6 +1045,20 @@
   min-width: 0;
 }
 
+.ds-form-section__toolbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-8);
+  margin-inline-start: auto;
+}
+
+.ds-form-section__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--space-8));
+}
+
 .ds-form-section__icon {
   display: inline-flex;
   flex: none;

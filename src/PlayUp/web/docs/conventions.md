@@ -73,7 +73,7 @@ Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card
 
 ## Out of scope here
 
-- DS tile/card unification → Phase 4.
+- DS tile/card unification → Phase 4 (`SelectableTile`, `npm run tile:check`; Stage `stage-draw-tile`).
 - Structure file splits → Phase 5.
 - Large CSS cleanup → Phase 6.
 

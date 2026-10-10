@@ -143,7 +143,7 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 | Schematic pots           | `.regulation-schematic__card*`         | Diagram cells — naming historical; not family B                            |
 | Disciplinary tokens      | `.regulation-card-token*`              | Literal “carton” glyphs — keep `card` in the name                          |
 | Overview config height   | `.overview-config-card` on `.ds-panel` | Layout helper on family **C**, not a card system                           |
-| Stage draw block         | `.draw-card`                           | Page-local Stage content — migrate naming when Stage is touched (Phase 6+) |
+| Stage draw block         | `.stage-draw-tile`                     | Page-local Stage content (family C-like block, not selection tile)         |
 
 ### Rules
 
@@ -157,8 +157,10 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 ### Selectable tile (family B) recipe
 
 - Canonical: `foundations/selectable-tile.css` (`.ds-selectable-tile`).
-- Compose: `className="<page-layout> ds-selectable-tile"` + `data-selected="true|false"`.
+- React: `SelectableTile` sets `data-selected` and merges page layout classes.
+- Compose: `className="<page-layout>"` + `selected` prop, or manual `ds-selectable-tile` + `data-selected="true|false"`.
 - Hover / selected recipes live only in the foundation file.
+- CI guard: `npm run tile:check`.
 
 ## Attention rows (two models — do not merge)
 

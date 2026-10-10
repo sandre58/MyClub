@@ -6,6 +6,9 @@ export type FormSectionProps = {
   description?: string;
   icon?: ReactNode;
   children: ReactNode;
+  /** Trailing header actions (edit, binding badge, …). */
+  toolbar?: ReactNode;
+  footer?: ReactNode;
   /** For aria-labelledby on dialogs / landmarks. */
   id?: string;
   className?: string;
@@ -20,6 +23,8 @@ export function FormSection({
   description,
   icon,
   children,
+  toolbar,
+  footer,
   id,
   className,
 }: FormSectionProps) {
@@ -45,8 +50,12 @@ export function FormSection({
             <p className="ds-form-section__description">{description}</p>
           ) : null}
         </div>
+        {toolbar ? (
+          <div className="ds-form-section__toolbar">{toolbar}</div>
+        ) : null}
       </header>
       <div className="ds-form-section__body">{children}</div>
+      {footer ? <div className="ds-form-section__footer">{footer}</div> : null}
     </section>
   );
 }

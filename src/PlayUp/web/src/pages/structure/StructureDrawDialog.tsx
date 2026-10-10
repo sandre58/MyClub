@@ -24,6 +24,7 @@ import { WaitMark } from '../../design-system/components/WaitMark';
 import { Status } from '../../design-system/components/Status';
 import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import { Dialog } from '../../design-system/components/Dialog';
+import { SelectableTile } from '../../design-system/components/SelectableTile';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   CheckIcon,
@@ -582,10 +583,10 @@ export function StructureDrawDialog({
                     const { masterChip } = getDrawUiProjection(draw, slots);
                     return (
                       <li key={draw.id}>
-                        <button
+                        <SelectableTile
                           type="button"
-                          className="structure-draw-master__tile ds-selectable-tile"
-                          data-selected={isCurrent ? 'true' : 'false'}
+                          className="structure-draw-master__tile"
+                          selected={isCurrent}
                           aria-current={isCurrent ? 'true' : undefined}
                           onClick={() => setSelectedId(draw.id)}
                         >
@@ -602,7 +603,7 @@ export function StructureDrawDialog({
                               <DrawMasterChipBadge chip={masterChip} />
                             </span>
                           </span>
-                        </button>
+                        </SelectableTile>
                       </li>
                     );
                   })}

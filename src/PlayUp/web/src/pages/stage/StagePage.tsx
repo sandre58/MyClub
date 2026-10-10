@@ -556,9 +556,9 @@ function DrawCard({
       : { confrontations: [], unpaired: [] };
 
   return (
-    <article className="draw-card">
+    <article className="stage-draw-tile">
       <header className="stack stack--tight">
-        <h3 className="draw-card__title">
+        <h3 className="stage-draw-tile__title">
           {t('title', { kind: drawResolutionKindLabel(draw.kind) })}
         </h3>
         <p className="badge-row">
@@ -576,7 +576,7 @@ function DrawCard({
         </p>
       </header>
 
-      <p className="draw-card__message" role="status">
+      <p className="stage-draw-tile__message" role="status">
         {t(ui.messageKey)}
       </p>
 
@@ -585,7 +585,7 @@ function DrawCard({
         (slotResult.confrontations.length > 0 ||
           slotResult.unpaired.length > 0) && (
           <div className="stack stack--tight">
-            <h4 className="draw-card__results-title">{t('result')}</h4>
+            <h4 className="stage-draw-tile__results-title">{t('result')}</h4>
             {slotResult.confrontations.length > 0 ? (
               <ul className="draw-pairing-list">
                 {slotResult.confrontations.map((row) => (
@@ -623,7 +623,7 @@ function DrawCard({
         draw.kind === 'Group' &&
         (draw.groupPlacements?.length ?? 0) > 0 && (
           <div className="stack stack--tight">
-            <h4 className="draw-card__results-title">{t('result')}</h4>
+            <h4 className="stage-draw-tile__results-title">{t('result')}</h4>
             <ul className="draw-group-list">
               {groupPlacementRows(
                 draw.groupPlacements!,

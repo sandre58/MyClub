@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { fetchStructureView } from '../../api';
 import { FormSection } from '../../design-system/components/FormSection';
+import { SelectableTile } from '../../design-system/components/SelectableTile';
 import { PageHead } from '../../design-system/components/PageHead';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
@@ -323,10 +324,10 @@ function TopologyPanel({
 
           return (
             <li key={stage.stageId} className="structure-topology__item">
-              <button
+              <SelectableTile
                 type="button"
-                className="structure-topology__tile ds-selectable-tile"
-                data-selected={selected ? 'true' : 'false'}
+                className="structure-topology__tile"
+                selected={selected}
                 aria-current={selected ? 'true' : undefined}
                 onClick={() => onSelectStage(stage.stageId)}
               >
@@ -368,7 +369,7 @@ function TopologyPanel({
                 </span>
 
                 <StructurePhaseDrawHint stage={stage} variant="topology" />
-              </button>
+              </SelectableTile>
 
               {index < stages.length - 1 && (
                 <div
