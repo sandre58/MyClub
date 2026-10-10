@@ -155,7 +155,9 @@ describe('StructurePlacementAwardDialog orphan remediation', () => {
         name: /Attribution des places/i,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Paire inconnue|Unknown pair/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Paire inconnue|Unknown pair/i),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText(/Aucune paire structurelle|No structural pairs/i),
     ).not.toBeInTheDocument();

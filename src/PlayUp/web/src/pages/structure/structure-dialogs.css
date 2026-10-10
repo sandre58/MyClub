@@ -345,10 +345,6 @@
 }
 
 @media (max-width: 40rem) {
-  .structure-domain-tiles {
-    grid-template-columns: 1fr;
-  }
-
   .structure-domain-tile--full {
     grid-column: auto;
   }

@@ -62,7 +62,10 @@ describe('StructurePlacementOperationalSection', () => {
     expect(within(placesGroup).getByText(/places occupées/i)).toBeInTheDocument();
     expect(within(placesGroup).getByRole('button', { name: /Placer/i })).toBeInTheDocument();
 
-    expect(within(drawGroup).getByText(/équipes résolues/i)).toBeInTheDocument();
+    expect(
+      within(drawGroup).getByRole('img', { name: /Équipes résolues pour le tirage/i }),
+    ).toBeInTheDocument();
+    expect(within(drawGroup).getByText('résolues')).toBeInTheDocument();
     expect(
       within(drawGroup).getByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();

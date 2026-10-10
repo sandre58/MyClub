@@ -1,13 +1,25 @@
 import type { ComponentProps } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { StructureStageHubSummary } from '../../types';
+import { dematerializePhase, materializeMatches } from '../../api';
+import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
 import { classifyMaterializePresentation } from './structureMaterializeCopy';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
 import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
+
+vi.mock('../../api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api')>();
+  return {
+    ...actual,
+    materializeMatches: vi.fn(),
+    materializeCupFromOccupiedSlots: vi.fn(),
+    dematerializePhase: vi.fn(),
+  };
+});
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
@@ -42,6 +54,16 @@ const basePlacement: StructurePlacementOperationalSectionProps = {
   onDeactivateDraw: vi.fn(),
 };
 
+const cupMaterializePartial: StructureMaterialize = {
+  commandCode: 'MaterializeFromOccupiedSlots',
+  labelVariant: 'create',
+  determinedCount: 2,
+  eligibleCount: 1,
+  materializedCount: 1,
+  commandEnabled: true,
+  confrontations: [],
+};
+
 const baseStage: StructureStageHubSummary = {
   stageId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
   name: 'Cup',
@@ -58,13 +80,25 @@ const baseStage: StructureStageHubSummary = {
   hasProgressionRules: false,
   progressionPathCount: 0,
   hasTieFormat: false,
-  materialize: {
-    commandCode: 'MaterializeFromOccupiedSlots',
-    enabled: true,
-    materializedCount: 1,
-    targetCount: 2,
-    labelVariant: 'partial',
-  },
+  materialize: cupMaterializePartial,
+};
+
+const leagueStageBase: StructureStageHubSummary = {
+  stageId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  name: 'League',
+  status: 'Draft',
+  teamCount: 2,
+  matchCount: 0,
+  numberOfPeriods: 2,
+  durationPerPeriod: 45,
+  hasExtraTime: false,
+  hasPenaltyShootout: false,
+  hasDrawRules: false,
+  hasQualificationRules: false,
+  qualificationPathCount: 0,
+  hasProgressionRules: false,
+  progressionPathCount: 0,
+  hasTieFormat: false,
 };
 
 function renderStrip(
@@ -74,14 +108,16 @@ function renderStrip(
     showDraw?: boolean;
     drawApplied?: boolean;
     stage?: StructureStageHubSummary;
+    competitionStatus?: 'Draft' | 'Running';
   } = {},
 ) {
   const stage = overrides.stage ?? baseStage;
+  const competitionStatus = overrides.competitionStatus ?? 'Draft';
   const materialize = stage.materialize;
   const presentation =
     materialize == null
       ? null
-      : classifyMaterializePresentation(materialize, 'Draft', stage.status);
+      : classifyMaterializePresentation(materialize, competitionStatus, stage.status);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -92,7 +128,7 @@ function renderStrip(
     showDraw: overrides.showDraw ?? true,
     drawApplied: overrides.drawApplied ?? false,
     competitionId,
-    competitionStatus: 'Draft',
+    competitionStatus,
     stage,
     presentation,
   };
@@ -106,7 +142,24 @@ function renderStrip(
   );
 }
 
+function renderMatchesStrip(
+  stage: StructureStageHubSummary,
+  competitionStatus: 'Draft' | 'Running' = 'Draft',
+) {
+  return renderStrip({
+    showPlaces: false,
+    showDraw: false,
+    placement: null,
+    stage,
+    competitionStatus,
+  });
+}
+
 describe('StructurePhaseOperationalStrip', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders three numbered sections when places, draw, and matches are visible', () => {
     renderStrip();
 
@@ -161,5 +214,123 @@ describe('StructurePhaseOperationalStrip', () => {
     expect(
       screen.getByRole('button', { name: /Activer le tirage/i }),
     ).toBeInTheDocument();
+  });
+
+  describe('matches cluster (materialize / dematerialize)', () => {
+    it('executes global materialize from the strip primary action', async () => {
+      vi.mocked(materializeMatches).mockResolvedValue({
+        createdCount: 1,
+        attachedMatchIds: ['m1'],
+        alreadyComplete: false,
+      });
+      const user = userEvent.setup();
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'create',
+        determinedCount: 6,
+        eligibleCount: 6,
+        materializedCount: 0,
+        commandEnabled: true,
+        confrontations: [],
+      };
+      renderMatchesStrip({ ...leagueStageBase, materialize });
+
+      expect(screen.getByText('créé')).toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: /Voir les matchs/i }),
+      ).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Créer les matchs/i }));
+      expect(materializeMatches).toHaveBeenCalledWith(leagueStageBase.stageId);
+    });
+
+    it('shows frozen gap in the gauge without a materialize primary action', () => {
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'exhausted',
+        determinedCount: 6,
+        eligibleCount: 0,
+        materializedCount: 3,
+        commandEnabled: false,
+        disabledReason: 'StructureNotMutable',
+        confrontations: [],
+      };
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Running',
+          matchCount: 3,
+          materialize,
+        },
+        'Running',
+      );
+
+      expect(screen.getByText('3')).toBeInTheDocument();
+      expect(screen.getByText('6')).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Créer les matchs/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('link', { name: /Voir les matchs/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('opens dematerialize confirm and calls dematerializePhase', async () => {
+      vi.mocked(dematerializePhase).mockResolvedValue({
+        removedMatchCount: 3,
+        removedRoundNumber: null,
+      });
+      const user = userEvent.setup();
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'exhausted',
+        determinedCount: 6,
+        eligibleCount: 0,
+        materializedCount: 3,
+        commandEnabled: false,
+        confrontations: [],
+      };
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          matchCount: 3,
+          materialize,
+          dematerialize: { enabled: true, scope: 'FullPhase' },
+        },
+        'Running',
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: /Retirer les matchs/i }),
+      );
+      const dialog = screen.getByRole('dialog');
+      await user.click(
+        within(dialog).getByRole('button', { name: /Retirer les matchs/i }),
+      );
+      expect(dematerializePhase).toHaveBeenCalledWith(leagueStageBase.stageId);
+    });
+
+    it('hides dematerialize action when read blocks it', () => {
+      renderMatchesStrip({
+        ...leagueStageBase,
+        materialize: {
+          commandCode: 'MaterializeMatches',
+          labelVariant: 'idle',
+          determinedCount: 0,
+          eligibleCount: 0,
+          materializedCount: 0,
+          commandEnabled: false,
+          confrontations: [],
+        },
+        dematerialize: {
+          enabled: false,
+          scope: 'FullPhase',
+          disabledReason: 'MatchLifecycleStarted',
+        },
+      });
+
+      expect(
+        screen.queryByRole('button', { name: /Retirer les matchs/i }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

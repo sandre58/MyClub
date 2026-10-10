@@ -4,4 +4,5 @@
  */
 @import './structure-core.css';
 @import './structure-hub.css';
+@import './structure-operational.css';
 @import './structure-dialogs.css';

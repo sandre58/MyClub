@@ -69,31 +69,3 @@
   width: 100%;
   min-width: 0;
 }
-
-/* Admin page-head alias — shared selectors for older admin surfaces. */
-.ds-admin-page-head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-
-.ds-admin-page-head__top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-12);
-}
-
-.ds-admin-page-head__title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-12) var(--space-16);
-}
-
-.ds-admin-page-head__title {
-  margin: 0;
-  font-size: var(--text-display);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--leading-tight);
-}
