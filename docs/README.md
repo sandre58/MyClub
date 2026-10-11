@@ -7,6 +7,7 @@ Contributor-facing documentation for **MyClub**. Product vision, detailed archit
 | [Guides](guides/README.md) | Developer guides (growing with the codebase) |
 | [Local persistence](guides/local-persistence.md) | PostgreSQL 18 via Docker Compose, secrets, migrations, Compose vs Testcontainers |
 | [HTTP API contract](guides/http-api-contract.md) | Phase 12.8 Host JSON conventions (string enums, named DTOs, ProblemDetails) |
+| [Structure phase lifecycle UI](guides/structure-phase-lifecycle-ui.md) | Structure status band spec appendix (verified against Host + SPA) |
 
 ## Canonical sources
 

@@ -139,9 +139,18 @@
   margin-left: auto;
 }
 
+.structure-fiche__header-end {
+  display: inline-flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  margin-inline-start: auto;
+}
+
 .structure-fiche__header-tools {
   flex: none;
-  margin-left: var(--space-8);
 }
 
 .structure-fiche__title {
@@ -779,3 +788,144 @@ button.structure-flux-group__peer {
   font-size: var(--text-label);
 }
 
+.structure-phase-status-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-12);
+  min-height: 3rem;
+  padding: var(--space-12) var(--space-16);
+  background: var(--color-surface-secondary);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  box-sizing: border-box;
+}
+
+.structure-phase-status-band[data-phase-status='Draft'] {
+  background: color-mix(in srgb, var(--color-border-strong) 6%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-border-strong) 55%, var(--color-border));
+}
+
+.structure-phase-status-band[data-phase-status='Ready'] {
+  background: color-mix(in srgb, var(--color-info) 12%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-info) 55%, var(--color-border));
+}
+
+.structure-phase-status-band[data-phase-status='Running'],
+.structure-phase-status-band[data-phase-status='Suspended'] {
+  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+}
+
+.structure-phase-status-band__copy {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.structure-phase-status-band__meta {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.structure-phase-status-band__action {
+  flex: none;
+  align-self: center;
+}
+
+.structure-phase-status-band__hero-stats {
+  justify-content: flex-start;
+  margin-top: var(--space-4);
+}
+
+.structure-phase-status-band__stepper {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-12) var(--space-8);
+  margin: 0;
+  padding: var(--space-16) 0 var(--space-4);
+  list-style: none;
+}
+
+.structure-phase-status-band__stepper::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--space-16) + 0.875rem);
+  right: 8%;
+  left: 8%;
+  height: 2px;
+  background: var(--color-border-strong);
+  z-index: 0;
+}
+
+.structure-phase-status-band__step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 4.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 4rem;
+  max-width: 6.5rem;
+  text-align: center;
+}
+
+.structure-phase-status-band__step-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-control);
+  border: 2px solid var(--color-border-strong);
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+
+.structure-phase-status-band__step[data-step-status='ok']
+  .structure-phase-status-band__step-mark {
+  color: var(--color-success);
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface));
+}
+
+.structure-phase-status-band__step[data-step-status='ko'] {
+  color: var(--color-error);
+}
+
+.structure-phase-status-band__step[data-step-status='ko']
+  .structure-phase-status-band__step-mark {
+  color: var(--color-error);
+  border-color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 12%, var(--color-surface));
+}
+
+.structure-phase-status-band__step[data-step-status='ko']
+  .structure-phase-status-band__step-label {
+  color: var(--color-error);
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-phase-status-band__step[data-step-status='na']
+  .structure-phase-status-band__step-mark {
+  color: var(--color-text-secondary);
+  border-style: dashed;
+}
+
+.structure-phase-status-band__step-na {
+  font-size: var(--text-meta);
+  line-height: 1;
+}
+
+.structure-phase-status-band__step-label {
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
+  color: var(--color-text-secondary);
+}

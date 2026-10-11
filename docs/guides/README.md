@@ -5,6 +5,7 @@
 | [Local persistence](local-persistence.md) | Docker Compose PostgreSQL for Host development; User Secrets; EF migrations; Compose vs Testcontainers |
 | [HTTP API contract](http-api-contract.md) | Phase 12.8 Host JSON conventions (string enums, named DTOs, ProblemDetails) |
 | [Media](media.md) | Transverse Media capability (schema `media`, local storage, `/media` endpoints) |
+| [Structure phase lifecycle UI](structure-phase-lifecycle-ui.md) | Structure fiche status band: lifecycle vs construction vs match stats (code-verified appendix; product SoT in Notion) |
 
 Also:
 

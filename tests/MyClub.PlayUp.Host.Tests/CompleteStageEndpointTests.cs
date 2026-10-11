@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -42,7 +43,7 @@ public sealed class CompleteStageEndpointTests(HostPostgresFixture fixture)
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var loaded = await stages.GetByIdForUpdateAsync(stageId);
         loaded.Should().NotBeNull();
-        loaded!.Status.Should().Be(StageStatus.Completed);
+        loaded.Status.Should().Be(StageStatus.Completed);
     }
 
     [IntegrationFact]

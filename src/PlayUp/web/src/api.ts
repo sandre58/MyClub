@@ -56,6 +56,7 @@ export {
   applyProgressionOutcome,
   prepareStage,
   startStage,
+  completeStage,
   materializeMatches,
   dematerializePhase,
   generateNextSwissRound,

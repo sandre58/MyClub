@@ -178,6 +178,11 @@ export function startStage(stageId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/start`);
 }
 
+/** POST /stages/{stageId}/complete → 204 (bodyless; Running → Completed) */
+export function completeStage(stageId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/complete`);
+}
+
 /** POST /stages/{stageId}/matches/materialize → MaterializeMatchesResponse */
 export function materializeMatches(stageId: string): Promise<{
   createdCount: number;

@@ -246,11 +246,94 @@
       "ExpectedRankUnreachable": "This competition rank cannot be produced by the attribution paths"
     }
   },
+  "lifecycle": {
+    "checklistAria": "Prepare checklist",
+    "actions": {
+      "prepare": "Prepare",
+      "start": "Start",
+      "complete": "Complete phase",
+      "preparing": "Preparing…",
+      "starting": "Starting…",
+      "completing": "Completing…"
+    },
+    "toast": {
+      "prepared": "Phase is ready for sporting operations.",
+      "started": "Phase is now live.",
+      "completed": "Phase completed.",
+      "updated": "Phase updated."
+    },
+    "checklist": {
+      "Entries": "Competition entries",
+      "Places": "Places and composition",
+      "Draw": "Draw",
+      "Matches": "Match production",
+      "Exits": "Qualification and progression",
+      "Attribution": "Population attribution"
+    },
+    "state": {
+      "Draft": {
+        "lead": "Draft",
+        "detail": "Complete the checklist, then mark the phase as ready."
+      },
+      "Ready": {
+        "lead": "Ready",
+        "detail": "Start the phase when sporting operations can begin."
+      },
+      "Running": {
+        "lead": "Live",
+        "detail": "Finish or cancel every match before completing the phase."
+      },
+      "Suspended": {
+        "lead": "Suspended",
+        "detail": "Resume matches, then complete the phase when everything is closed."
+      },
+      "Completed": {
+        "lead": "Completed",
+        "detail": ""
+      }
+    },
+    "draftStep": {
+      "Regulation": "Regulations",
+      "Teams": "Teams",
+      "Places": "Places",
+      "Draw": "Draw",
+      "Exits": "Exits",
+      "Matches": "Matches"
+    },
+    "statusBand": {
+      "readyHint": "The phase is ready to start.",
+      "viewOverview": "View overview",
+      "matchStatsAria": "Match progress",
+      "matchStatFinished": "Finished",
+      "matchStatCancelled": "Cancelled",
+      "matchStatRemaining": "Remaining",
+      "matchStatTotal": "Total"
+    },
+    "matchProgress": {
+      "summary": "{{finished}} of {{total}} matches finished · {{open}} open · {{cancelled}} cancelled",
+      "compact": "{{finished}} matches finished out of {{total}}.",
+      "none": "No matches are attached to this phase yet.",
+      "viewMatches": "View matches",
+      "viewStandings": "View standings"
+    },
+    "remediation": {
+      "default": "Go to the relevant section"
+    },
+    "disabled": {
+      "CompetitionClosed": "The competition is closed — phase lifecycle actions are unavailable.",
+      "ConstructionFrozen": "The competition is live — finish preparing this phase before the competition started, or adjust from Overview.",
+      "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
+      "StageNotReady": "This phase is not ready to be marked as ready.",
+      "StructureGraphInvalid": "Fix structure connections before preparing the phase.",
+      "OpenMatches": "Every match must be finished or cancelled before completing the phase."
+    }
+  },
   "fiche": {
     "section": {
       "phaseState": "Phase status",
       "phaseProduction": "Match production",
-      "regulationFrame": "Phase regulation frame"
+      "regulationFrame": "Phase regulation frame",
+      "lifecycle": "Phase lifecycle"
     },
     "regulationDividerLabel": "Regulation",
     "edit": "Edit",
@@ -296,7 +379,8 @@
       "cluster": {
         "places": "Places",
         "draw": "Draw",
-        "matches": "Matches"
+        "matches": "Matches",
+        "phase": "Phase"
       },
       "placement": {
         "title": "Place occupancy",

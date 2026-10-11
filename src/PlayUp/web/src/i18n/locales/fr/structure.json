@@ -246,11 +246,94 @@
       "ExpectedRankUnreachable": "Ce rang de compétition ne peut pas être produit par les chemins d’attribution"
     }
   },
+  "lifecycle": {
+    "checklistAria": "Checklist de préparation",
+    "actions": {
+      "prepare": "Préparer",
+      "start": "Démarrer",
+      "complete": "Terminer la phase",
+      "preparing": "Préparation…",
+      "starting": "Démarrage…",
+      "completing": "Finalisation…"
+    },
+    "toast": {
+      "prepared": "La phase est prête pour les opérations sportives.",
+      "started": "La phase est en cours.",
+      "completed": "Phase terminée.",
+      "updated": "Phase mise à jour."
+    },
+    "checklist": {
+      "Entries": "Inscriptions",
+      "Places": "Places et composition",
+      "Draw": "Tirage",
+      "Matches": "Production des matchs",
+      "Exits": "Qualification et progression",
+      "Attribution": "Attribution de la population"
+    },
+    "state": {
+      "Draft": {
+        "lead": "Brouillon",
+        "detail": "Complétez la checklist, puis marquez la phase comme prête."
+      },
+      "Ready": {
+        "lead": "Prête",
+        "detail": "Démarrez la phase lorsque les opérations sportives peuvent commencer."
+      },
+      "Running": {
+        "lead": "En cours",
+        "detail": "Terminez ou annulez chaque match avant de clôturer la phase."
+      },
+      "Suspended": {
+        "lead": "Suspendue",
+        "detail": "Reprenez les matchs, puis terminez la phase une fois tout clos."
+      },
+      "Completed": {
+        "lead": "Terminée",
+        "detail": ""
+      }
+    },
+    "draftStep": {
+      "Regulation": "Réglement",
+      "Teams": "Équipes",
+      "Places": "Places",
+      "Draw": "Tirage",
+      "Exits": "Sorties",
+      "Matches": "Matchs"
+    },
+    "statusBand": {
+      "readyHint": "La phase est prête à démarrer.",
+      "viewOverview": "Voir la synthèse",
+      "matchStatsAria": "Avancement des matchs",
+      "matchStatFinished": "Terminés",
+      "matchStatCancelled": "Annulés",
+      "matchStatRemaining": "Restants",
+      "matchStatTotal": "Total"
+    },
+    "matchProgress": {
+      "summary": "{{finished}} match(s) sur {{total}} terminé(s) · {{open}} en cours · {{cancelled}} annulé(s)",
+      "compact": "{{finished}} matchs terminés sur {{total}}.",
+      "none": "Aucun match rattaché à cette phase pour le moment.",
+      "viewMatches": "Voir les matchs",
+      "viewStandings": "Voir les classements"
+    },
+    "remediation": {
+      "default": "Aller à la section concernée"
+    },
+    "disabled": {
+      "CompetitionClosed": "La compétition est clôturée — les actions de cycle de phase sont indisponibles.",
+      "ConstructionFrozen": "La compétition est lancée — la préparation de cette phase est figée tant qu’elle reste en brouillon ou prête.",
+      "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
+      "StageNotReady": "Cette phase n’est pas prête à être marquée comme prête.",
+      "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
+      "OpenMatches": "Chaque match doit être terminé ou annulé avant de clôturer la phase."
+    }
+  },
   "fiche": {
     "section": {
       "phaseState": "État de la phase",
       "phaseProduction": "Production des matchs",
-      "regulationFrame": "Cadre réglementaire de la phase"
+      "regulationFrame": "Cadre réglementaire de la phase",
+      "lifecycle": "Cycle de vie de la phase"
     },
     "regulationDividerLabel": "Règlement",
     "edit": "Modifier",
@@ -296,7 +379,8 @@
       "cluster": {
         "places": "Places",
         "draw": "Tirage",
-        "matches": "Matchs"
+        "matches": "Matchs",
+        "phase": "Phase"
       },
       "placement": {
         "title": "Occupation des places",

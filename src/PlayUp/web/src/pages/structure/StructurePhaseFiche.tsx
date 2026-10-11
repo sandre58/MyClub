@@ -63,6 +63,7 @@ import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { StructurePhaseOperationalBar } from './StructurePhaseOperationalBar';
+import { StructurePhaseStatusBand } from './StructurePhaseStatusBand';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
@@ -953,40 +954,46 @@ export function StructurePhaseFiche({
               </>
             )}
           {!editingName ? (
-            <ul className="structure-fiche__pills">
-              <li className="structure-fiche__pill structure-fiche__pill--status">
-                <StageStatusBadge status={stage.status} />
-              </li>
-            </ul>
+            <div className="structure-fiche__header-end">
+              <StageStatusBadge status={stage.status} />
+              <div className="structure-fiche__header-tools ds-icon-toolbar">
+                {canRebuild ? (
+                  <Tooltip content={t('fiche.editForme')}>
+                    <button
+                      type="button"
+                      className={compactIcon}
+                      aria-label={t('fiche.editForme')}
+                      onClick={() => setSkeletonOpen(true)}
+                    >
+                      <StructureIcon size="sm" />
+                    </button>
+                  </Tooltip>
+                ) : null}
+                {canRemove ? (
+                  <Tooltip content={t('graph.removePhase')}>
+                    <button
+                      type="button"
+                      className={compactDangerIcon}
+                      aria-label={t('graph.removePhase')}
+                      onClick={() => setRemoveOpen(true)}
+                    >
+                      <TrashIcon size="sm" />
+                    </button>
+                  </Tooltip>
+                ) : null}
+              </div>
+            </div>
           ) : null}
-          <div className="structure-fiche__header-tools ds-icon-toolbar">
-            {canRebuild ? (
-              <Tooltip content={t('fiche.editForme')}>
-                <button
-                  type="button"
-                  className={compactIcon}
-                  aria-label={t('fiche.editForme')}
-                  onClick={() => setSkeletonOpen(true)}
-                >
-                  <StructureIcon size="sm" />
-                </button>
-              </Tooltip>
-            ) : null}
-            {canRemove ? (
-              <Tooltip content={t('graph.removePhase')}>
-                <button
-                  type="button"
-                  className={compactDangerIcon}
-                  aria-label={t('graph.removePhase')}
-                  onClick={() => setRemoveOpen(true)}
-                >
-                  <TrashIcon size="sm" />
-                </button>
-              </Tooltip>
-            ) : null}
-          </div>
         </div>
       </header>
+
+      {stage && stage.status !== 'Completed' ? (
+        <StructurePhaseStatusBand
+          competitionId={data.competitionId}
+          stage={stage}
+          structureHubRefreshing={structureHubRefreshing}
+        />
+      ) : null}
 
       {showHeroStructureActions && stage ? (
         <StructurePhaseOperationalBar
