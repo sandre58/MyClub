@@ -400,7 +400,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | :------ | :---------------- | :----- | :---------------- |
 | Structure mutable **Draft only** | **Incrément 1 (2026-10-12):** `EnsureStructureMutable` allows **Draft only**; `DemoteToDraftIfReady` removed. Application `StageStructureEditGuard` on structure use cases. Match **production** spine (materialize/dematerialize) uses `*ForMatchProduction` APIs in **Draft/Ready**. | **ALIGNED** | `Stage.cs`, `StageStructureEditGuard.cs` |
 | Materialize **Ready only** (not Draft) | **Incrément 2 (2026-10-12):** `StageMaterializeGuard` + read assembler mirror **Ready** only. | **ALIGNED** | `StageMaterializeGuard.cs`, `MaterializeMatches.cs`, `StructureMaterializeAssembler.cs` |
-| Faits sportifs **Running/Suspended only** | **Incrément 2:** `StagePhaseExploitationGuard` in `RequireMatchForOperationAsync`. Overview match actions still match-centric (UI follow-up). | **PARTIAL** | `StagePhaseExploitationGuard.cs`, `UseCaseExecutor.Helpers.cs` |
+| Faits sportifs **Running/Suspended only** | `StagePhaseExploitationGuard` via `RequireMatchForOperationAsync` (all match commands incl. Start/Finish). Overview match actions still match-centric (UI follow-up). | **ALIGNED** (executor) | `StagePhaseExploitationGuard.cs`, `UseCaseExecutor.Helpers.cs`, `UseCaseExecutor.Matches.cs` |
 | Planification in **Ready** | **Incrément 2:** `EnsureScheduleExploitation` on `GenerateScheduleAsync` / `ApplyScheduleAsync`. | **ALIGNED** | `UseCaseExecutor.Stages.cs` |
 | **Completed** strict (no planif/sportif) | **Incrément 2:** `StageExploitationClosed` on sportive + schedule guards when stage Completed. | **PARTIAL** (executor; Overview unchanged) | `StagePhaseExploitationGuard.cs` |
 | `RevertToDraft` / `RevertToReady` | **Incrément 2:** domain transitions, use cases, HTTP `revert-to-draft` / `revert-to-ready`, lifecycle `RevertTransition` projection. | **ALIGNED** | `RevertToDraft.cs`, `RevertToReady.cs`, `StructureStageLifecycleAssembler.cs` |
@@ -540,7 +540,7 @@ Parent stage must be loaded (or match carries stage id) for guard. **V2:** sport
 | Stage | Operation | Expected V2 | Code |
 | :---- | :---------- | :---------- | :--- |
 | Draft | `StartMatch` | Deny | **PROPOSED** `Application.StageExploitationNotOpen` |
-| Ready | `StartMatch` | **Deny** († today: allow) | **PROPOSED** `Application.StageExploitationNotOpen` |
+| Ready | `StartMatch` | **Deny** | `Application.StageExploitationNotOpen` |
 | Ready | `FinishMatch` / running score edit | Deny | Same |
 | Running / Suspended | `StartMatch` (Scheduled) | Allow | — |
 | Completed | **Any** sportive or planif mutation | **Deny** | **PROPOSED** `Application.StageExploitationClosed` |

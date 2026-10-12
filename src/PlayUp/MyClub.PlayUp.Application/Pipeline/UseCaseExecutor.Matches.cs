@@ -22,16 +22,10 @@ public sealed partial class UseCaseExecutor
     /// <param name="matchId">Match identity.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the match is started and persisted.</returns>
-    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist or the competition is closed.</exception>
+    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist, the competition is closed, or sportive exploitation is not open.</exception>
     public async Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default)
     {
-        var match = await matches.GetByIdForUpdateAsync(matchId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Match '{matchId}' was not found.",
-                        ApplicationErrorCodes.MatchNotFound);
-
-        await EnsureCompetitionAllowsMatchOperationAsync(match.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
+        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
 
         StartMatch.Execute(match, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -45,7 +39,7 @@ public sealed partial class UseCaseExecutor
     /// <param name="result">Domain match result.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the match is finished and persisted.</returns>
-    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist or the competition is closed.</exception>
+    /// <exception cref="ApplicationFailureException">Thrown when the match does not exist, the competition is closed, or sportive exploitation is not open.</exception>
     public async Task FinishMatchAsync(
         MatchId matchId,
         MatchResult result,
@@ -53,13 +47,7 @@ public sealed partial class UseCaseExecutor
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var match = await matches.GetByIdForUpdateAsync(matchId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Match '{matchId}' was not found.",
-                        ApplicationErrorCodes.MatchNotFound);
-
-        await EnsureCompetitionAllowsMatchOperationAsync(match.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
+        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
 
         FinishMatch.Execute(match, result, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
