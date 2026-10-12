@@ -1,6 +1,8 @@
 # Organizer problems — O4 drawer scope (G3 atelier)
 
-**Status:** O4 **D1 revision implemented** (2026-10-12) — Notion [Drawer catalogue revision (D1 revision)](https://app.notion.com/p/3f775fb92d1081c39938c0e423f593c9). **`GET /attention`** = T5 + **presented** Structure diagnostics; **`Severity`** `Blocking` \| `Warning`; Overview **`attentionSummary`** = blocking subset only; bell = all items.
+**Status:** O4 **D1 revision** + **D5 severity/presentation alignment** implemented (2026-10-12) — [Notion D5](https://app.notion.com/p/3f775fb92d10819e9105d84c43a390e6). **`GET /attention`** = T5 + **presented** Structure diagnostics; **`Severity`** `Blocking` \| `Warning`; Overview **`attentionSummary`** = blocking subset only; bell = all items.
+
+**D5 (product):** [Structure severity & presentation alignment](#decision-5--structure-severity--presentation-alignment-d5) — three notions (severity, lifecycle gate, UX presentation); A4 severity matrix **Acceptée** with `SlotFeedMissing` **Blocking when presented**; Structure surfaces MUST NOT visually downgrade `Blocking` (e.g. `progress` tone on `PopulationShortfall`, orange surplus meter for `OverCapacityEdge`).
 
 **Prerequisite question:** What user problem does each candidate fact solve that Structure, Overview, or lifecycle surfaces do not already address?
 
@@ -298,6 +300,58 @@ Future non-`Blocking` `Severity` values require an explicit product decision and
 
 ---
 
+## Decision 5 — Structure severity & presentation alignment (D5)
+
+**Status:** **DECIDED** (2026-10-12) — Notion [Structure severity & presentation alignment (D5)](https://app.notion.com/p/3f775fb92d10819e9105d84c43a390e6) **✅ Acceptée**. **Extends** [D3](#decision-3--severity-and-presentation-layers) for Structure catalogue codes; **does not replace** D3 layer separation.
+
+### Product contract — three notions (do not conflate)
+
+| Notion | Contract |
+| :----- | :------- |
+| **Product severity** | `Blocking` \| `Warning` — same meaning on `/attention`, drawer groups, bell aggregate colour, Structure diagnostic chrome when the **same code** is shown |
+| **Lifecycle gate** | Explicit rule per transition (Prepare, Start, Complete, …) — **may** block Prepare while severity is Warning for another fact; severity describes **functional gravity**, gates describe **forbidden transitions** |
+| **UX presentation** | Contextual copy (option **B**): drawer = **short triage title**; Structure fiche = **contextual detail** (counts, meter, strip). **MUST NOT** contradict product severity (no `Blocking` shown as informational orange) |
+
+### D5-P1 — Severity vs tone
+
+- **`tone` / `progress` on Structure** MAY express **incomplete workflow** only when product severity is **`Warning`** (or no catalogue line).
+- **`Blocking`** codes MUST use **danger** chrome on Structure bandeaux and **matching** meter/strip severity when the meter expresses the **same fact** as the wire code (e.g. `OverCapacityEdge` surplus, `PopulationShortfall` deficit).
+- Drawer row partition remains **`nature` from Host `Severity`** (D3 S2); drawer **title** uses short copy (enums / attentionSource or dedicated triage keys — not necessarily identical to fiche meter strings).
+
+### D5-P2 — Projection (draw engaged silence)
+
+When **`SlotFeedMissing`** is **silenced** because draw is engaged and not yet published ([Gate 3](#gate-3--structure-projection-parity), `isSlotFeedAwaitingDraw`):
+
+- MUST **omit** from `/attention`, bell count, PageHead **presented** counts, and Structure banners that depend on presented codes.
+- Silence MUST **not** hide independent codes or disable domain gates elsewhere.
+
+When **`SlotFeedMissing`** is **presented** (would block Prepare via [`StructurePreparePlacesGate`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePreparePlacesGate.cs)):
+
+- Host **`Severity` = `Blocking`** (not `Warning`).
+
+### D5-P3 — Chat-arbitrated codes (priority)
+
+| Code | Product severity | Gate / notes | Presentation |
+| :--- | :--------------- | :----------- | :----------- |
+| `OverCapacityEdge` | **Warning** | Prepare gate still applies (D5: severity ≠ gate) | Fiche: « N places en trop » **orange**; drawer: groupe **À traiter**, titre court |
+| `SlotFeedMissing` | **Blocking** when presented; **absent** when silenced | Prepare gate when present | Strip empty-tableau copy aligned with **Blocking** when `slotFeedMissingActive` |
+| `PopulationShortfall` | **Blocking** (incl. U1 synthetic) | Composition / occupancy (see Application gates) | No **`progress`** tone masking; deficit meter stays **red**; visible in Structure syntheses |
+| `NonRootUnfed` | **Warning** (default) | Not a Prepare graph gate by code alone | Monitor; upgrade to **Blocking** only with an **explicit** gate + tests — do not infer from name |
+
+### D5-P4 — Open verification (before code)
+
+- **`NonRootUnfed`**: confirm intermediate construction vs hard anomaly per competition shape (no automatic reclass to Blocking).
+- **`SlotFeedMissing`**: confirm Host can use global **`Blocking`** + presentation silence (preferred) vs conditional severity emission.
+
+### D5 — Implementation order (after Notion Acceptée)
+
+1. Host: [`StructurePresentedAttentionCollector`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePresentedAttentionCollector.cs) severity map + contract tests.
+2. SPA: shared severity → chrome mapping ([`structureDiagnosticPresentation.ts`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticPresentation.ts), meters, operational strip).
+3. Drawer triage titles (option B) vs fiche contextual keys.
+4. Visual QA: surplus, empty tableau, population deficit, draw-engaged silence.
+
+---
+
 ## Per-candidate decision rule (checklist)
 
 For each fact proposed for the drawer, answer:
@@ -391,14 +445,12 @@ Superseded for product target by [A4 revision (PROPOSED)](#a4-revision--per-code
 | `MissingStage` / `MissingStructure` | **Exclude** — birth |
 | All other A2/A3 codes | **Exclude** (conservative) — see A4 revision |
 
-### A4 revision — Per-code catalogue and severity (PROPOSED)
+### A4 revision — Per-code catalogue and severity (DECIDED — D1 revision + D5)
 
-**Not DECIDED.** Workshop defaults for [D1 revision](https://app.notion.com/p/3f775fb92d1081c39938c0e423f593c9). Validate each row at **Acceptée** (Exercise **B** recommended).
+**Include** = emit on `/attention` when projection rules say the anomaly is **presented** (Gate 3). **Severity** = Host `Severity` (`Blocking` \| `Warning`). **Presentation** rules: [D5](#decision-5--structure-severity--presentation-alignment-d5).
 
-**Include** = emit on `/attention` when projection rules say the anomaly is **presented** (Gate 3). **Severity** = proposed Host `Severity` (`Blocking` \| `Warning`).
-
-| Code | Include (proposal) | Severity (proposal) | Notes |
-| :--- | :----------------- | :------------------ | :---- |
+| Code | Include | Severity | Notes |
+| :--- | :------ | :------- | :---- |
 | `InsufficientParticipants` | Yes (T5) | Blocking | Draft / Ready only |
 | `DrawNoSolution` | Yes (T5) | Blocking | |
 | `QualificationPending` | Yes (T5) | Blocking | Dedup vs graph qual codes — explicit rule |
@@ -411,7 +463,7 @@ Superseded for product target by [A4 revision (PROPOSED)](#a4-revision--per-code
 | `CupBracketInvalid` | Yes | Blocking | Competition target |
 | `StructureGraphInvalid` | **No** | — | Aggregate when children listed |
 | `ConfrontationUndecidable` | Yes | Blocking | |
-| `OverCapacityEdge` | Yes | Blocking | Stage |
+| `OverCapacityEdge` | Yes | **Warning** | D5: surplus meter **orange**; Prepare may still refuse Ready |
 | `OverExtraction` | Yes | Blocking | Stage |
 | `CycleDetected` | Yes | Blocking | Stage |
 | `RoutingNondeterminism` | Yes | Blocking | Stage |
@@ -421,16 +473,16 @@ Superseded for product target by [A4 revision (PROPOSED)](#a4-revision--per-code
 | `MissingQualificationDestinationGroup` | Yes | Blocking | Stage |
 | `MissingProgressionDestinationSlot` | Yes | Blocking | Stage |
 | `MissingProgressionDestinationGroup` | Yes | Blocking | Stage |
-| `SlotFeedMissing` | Yes | Warning | May be silenced (draw engaged) |
+| `SlotFeedMissing` | Yes* | **Blocking*** | *Omit when draw-engaged silence (D5-P2); **Blocking** when presented |
 | `SlotFeedInvalid` | Yes | Blocking | Stage |
 | `SlotFeedMultiple` | Yes | Blocking | Stage |
-| `NonRootUnfed` | Yes | Warning | Stage |
-| `PopulationShortfall` | Yes | Blocking | Includes U1 synthetic when presented |
+| `NonRootUnfed` | Yes | Warning | D5: no Blocking without explicit gate |
+| `PopulationShortfall` | Yes | Blocking | U1 synthetic; D5: no `progress` masking |
 | `SourcePopulationShortfall` | Yes | Blocking | Stage |
 | `AuthoredAwardUnreachable` | Yes | Warning | Presented merge drops `ExpectedRank…` |
 | `ExpectedRankUnreachable` | Yes* | Warning | *Omit when `AuthoredAwardUnreachable` on same stage (presentation) |
 
-**T5 ↔ Structure dedup (PROPOSED):** never collapse graph destination codes with runtime `QualificationPending` / `ProgressionPending` solely because labels overlap; if both exist, **both lines** unless a future explicit merge rule documents the same organizer action.
+**T5 ↔ Structure dedup (DECIDED):** never collapse graph destination codes with runtime `QualificationPending` / `ProgressionPending` solely because labels overlap; if both exist, **both lines** unless a future explicit merge rule documents the same organizer action.
 
 Extended template (optional per row):
 
@@ -454,20 +506,20 @@ Product rules: **Decision 2** (E4–E5). Below is **behaviour before explicit D2
 
 ## If DECIDED — implementation checklist
 
-- Notion Décision row + update [pilot aliases](./organizer-problems-pilot-aliases.md)
-- `NeedsAttentionAssembler` extension (or dedicated projector) with SoT comments
-- Host `/attention` contract tests (parity with Overview `attentionSummary` policy)
-- SPA partition/denylist mirror — not guardrail-only
-- Revisit [`functionalProblemPresentation.ts`](../../src/PlayUp/web/src/shell/functionalProblemPresentation.ts) canal rules
+- Notion Décision row (D5) + update [pilot aliases](./organizer-problems-pilot-aliases.md) when copy keys added
+- Host: `StructurePresentedAttentionCollector` severity ([`SlotFeedMissing` Blocking when presented](#decision-5--structure-severity--presentation-alignment-d5))
+- Host `/attention` contract tests (severity per A4 + Overview `attentionSummary` blocking subset)
+- SPA: severity-aligned chrome (diagnostics, meters, strip); drawer triage titles (option B)
+- Revisit [`functionalProblemPresentation.ts`](../../src/PlayUp/web/src/shell/functionalProblemPresentation.ts) — titles vs `nature`
 
 ## Current contract (code today vs target)
 
-**Today (until D1 revision Acceptée):**
+**Shipped (D1 revision):**
 
-- **`GET /attention`:** **T5 only** (D1 2026-10-12). Exclusions E1–E6 (D2). Severity S1–S5 (D3). Dedup D4.
-- **No collector extension.**
+- **`GET /attention`:** T5 + presented Structure anomalies (A4). Exclusions E1–E6 (D2). Dedup D4.
+- **Bell:** all items; **`attentionSummary`:** blocking subset.
 
-**Target (D1 revision PROPOSED — after Acceptée + gates 1–4):**
+**D5 implementation (2026-10-12):**
 
-- **`GET /attention`:** T5 + **retained Structure anomalies** (A4 revision), **`Blocking` + `Warning`**.
-- **Bell:** all `/attention` lines; **`attentionSummary`:** blocking subset; **`CompetitionSuspended`:** unchanged (Informational only on Overview).
+- Host: `SlotFeedMissing` → **`Blocking`** when emitted (silence unchanged when draw engaged).
+- SPA: [`structureDiagnosticSeverity.ts`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticSeverity.ts) + tone derived from severity; surplus meter **red**; strip places **danger** when `slotFeedMissingActive`; drawer triage titles via `enums.attentionSource` ([`functionalProblemPresentation.ts`](../../src/PlayUp/web/src/shell/functionalProblemPresentation.ts) + `situationPresentation`).

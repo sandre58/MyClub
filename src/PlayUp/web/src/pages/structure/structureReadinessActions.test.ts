@@ -117,7 +117,7 @@ describe('structureReadinessActions', () => {
     expect(items).toHaveLength(3);
     expect(items.map((item) => item.tone)).toEqual([
       'danger',
-      'attention',
+      'danger',
       'attention',
     ]);
     expect(

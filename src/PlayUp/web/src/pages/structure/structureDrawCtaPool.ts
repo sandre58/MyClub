@@ -4,7 +4,8 @@ export type DrawCtaPoolTone =
   | 'partial'
   | 'complete'
   | 'brand'
-  | 'attention';
+  | 'attention'
+  | 'danger';
 
 export function resolveDrawCtaPoolTone(
   filled: number,

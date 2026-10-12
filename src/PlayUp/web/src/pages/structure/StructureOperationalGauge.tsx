@@ -63,14 +63,14 @@ export function StructureOperationalRatioGauge({
 
   const state = occupancyMeterState(current, capacity);
 
-  return (
+  const meter = (
     <OccupancyMeter
       current={current}
       capacity={capacity}
       state={state}
-      fillVariant={fillVariant}
+      fillVariant={poolTone === 'danger' ? 'default' : fillVariant}
       ariaLabel={ariaLabel}
-      className={gaugeClass}
+      className={layout === 'trackOnly' ? 'structure-operational-gauge__meter' : gaugeClass}
       header={
         layout === 'trackOnly' ? undefined : (
           <OperationalGaugeReadiness poolTone={poolTone}>
@@ -85,4 +85,14 @@ export function StructureOperationalRatioGauge({
       }
     />
   );
+
+  if (layout === 'trackOnly') {
+    return (
+      <div className={gaugeClass} data-pool-tone={poolTone}>
+        {meter}
+      </div>
+    );
+  }
+
+  return meter;
 }

@@ -41,7 +41,7 @@ describe('functionalProblemPresentation', () => {
     });
 
     expect(presentation.canal).toBe('structure-pagehead');
-    expect(presentation.tone).toBe('attention');
+    expect(presentation.tone).toBe('danger');
     expect(presentation.sotHref).toBe('/competitions/comp-1/structure');
   });
 
@@ -95,7 +95,7 @@ describe('functionalProblemPresentation', () => {
     });
     // Copy is no longer draw-specific — silence is handled by projection filters.
     expect(awaiting.titleKey).toBe('graph.issues.SlotFeedMissing');
-    expect(awaiting.tone).toBe('attention');
+    expect(awaiting.tone).toBe('danger');
 
     const plain = structureIssuePresentation({
       code: 'SlotFeedMissing',
@@ -104,7 +104,7 @@ describe('functionalProblemPresentation', () => {
       awaitingDraw: false,
     });
     expect(plain.titleKey).toBe('graph.issues.SlotFeedMissing');
-    expect(plain.tone).toBe('attention');
+    expect(plain.tone).toBe('danger');
   });
 
   it('maps RESULT codes with attention tone (path reachability)', () => {
@@ -117,13 +117,13 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleKey).toBe('graph.issues.AuthoredAwardUnreachable');
   });
 
-  it('maps SlotFeedMissing as attention (info only when silenced by draw projection)', () => {
+  it('maps SlotFeedMissing as danger when presented (D5)', () => {
     const presentation = structureIssuePresentation({
       code: 'SlotFeedMissing',
       competitionId: 'comp-1',
       stageId: 'stage-9',
     });
-    expect(presentation.tone).toBe('attention');
+    expect(presentation.tone).toBe('danger');
     expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissing');
   });
 
@@ -155,6 +155,25 @@ describe('functionalProblemPresentation', () => {
 
     expect(presentation.cta?.actionCode).toBe('ApplyProgression');
     expect(presentation.sotHref).toBe('/matches/match-9');
+  });
+
+  it('situationPresentation uses short enum title for structure drawer (D5 option B)', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'OverCapacityEdge',
+        nature: 'Blocking',
+        targetType: 'Stage',
+        targetId: 'stage-1',
+        matchId: null,
+        actionable: false,
+        actionCode: null,
+        impactCode: null,
+        params: { stageId: 'stage-1' },
+      },
+      'comp-1',
+    );
+    expect(presentation.titleKey).toBe('attentionSource.OverCapacityEdge');
+    expect(presentation.titleNs).toBe('enums');
   });
 
   it('situationPresentation maps StructureGraphInvalid to Structure SoT', () => {

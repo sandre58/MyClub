@@ -21,7 +21,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('info');
   });
 
-  it('uses attention for empty occupancy when SlotFeedMissing is active', () => {
+  it('uses danger for empty occupancy when SlotFeedMissing is active', () => {
     expect(
       resolvePlaceOccupancyMeterCopy({
         t,
@@ -31,7 +31,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
         occupiedPlacesCount: 0,
         slotFeedMissingActive: true,
       }).kind,
-    ).toBe('attention');
+    ).toBe('danger');
   });
 
   it('uses attention for partial match production gap', () => {
@@ -45,7 +45,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('attention');
   });
 
-  it('uses attention for partial occupancy when SlotFeedMissing is active', () => {
+  it('uses danger for partial occupancy when SlotFeedMissing is active', () => {
     expect(
       resolvePlaceOccupancyMeterCopy({
         t,
@@ -55,6 +55,6 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
         occupiedPlacesCount: 1,
         slotFeedMissingActive: true,
       }).kind,
-    ).toBe('attention');
+    ).toBe('danger');
   });
 });

@@ -300,6 +300,10 @@
   color: var(--color-attention);
 }
 
+.structure-operational-strip__aside[data-pool-tone='danger'] .structure-operational-strip__ratio-filled {
+  color: var(--color-error);
+}
+
 .structure-operational-strip__aside[data-pool-tone='complete'] .structure-operational-strip__ratio-filled {
   color: var(--color-success);
 }
@@ -760,8 +764,16 @@
   color: var(--color-attention);
 }
 
+.structure-operational-gauge__readiness[data-pool-tone='danger'] .structure-operational-gauge__ratio-filled {
+  color: var(--color-error);
+}
+
 .structure-operational-gauge__readiness[data-pool-tone='complete'] .structure-operational-gauge__ratio-filled {
   color: var(--color-success);
+}
+
+.structure-operational-gauge[data-pool-tone='danger'] .structure-occupancy-meter__fill {
+  background: var(--color-error);
 }
 
 .structure-operational-tile__notes {

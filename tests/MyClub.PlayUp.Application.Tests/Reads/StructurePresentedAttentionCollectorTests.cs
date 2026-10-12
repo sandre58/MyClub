@@ -63,7 +63,7 @@ public sealed class StructurePresentedAttentionCollectorTests
     }
 
     [Fact]
-    public void Collect_emits_SlotFeedMissing_as_warning_when_not_awaiting_draw()
+    public void Collect_emits_SlotFeedMissing_as_blocking_when_not_awaiting_draw()
     {
         var competition = CreateCompetition.Execute("Feeds", _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
@@ -94,7 +94,7 @@ public sealed class StructurePresentedAttentionCollectorTests
 
         items.Should().ContainSingle(item =>
             item.Source == CompetitionFlowAnalyzer.SlotFeedMissing
-            && item.Severity == NeedsAttentionAssembler.SeverityWarning
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking
             && item.TargetType == "Stage"
             && item.TargetId == target.Id.Value.ToString());
     }

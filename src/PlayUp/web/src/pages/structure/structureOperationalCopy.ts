@@ -4,6 +4,8 @@ import type {
   StructureMaterialize,
   StructureStageHubSummary,
 } from '../../types';
+import type { DrawCtaPoolTone } from './structureDrawCtaPool';
+import type { StripOperationalMessageKind } from './structureOperationalStripUi';
 import {
   classifyMaterializePresentation,
   materializeProductionTarget,
@@ -19,6 +21,29 @@ export function resolvePlacementPoolTone(
     return 'neutral';
   }
   return resolveDrawCtaPoolTone(filled, capacity);
+}
+
+/** Align ratio / gauge chrome with the operational strip message severity (D5). */
+export function operationalStripPoolTone(
+  messageKind: StripOperationalMessageKind,
+  ratioTone: 'neutral' | 'partial' | 'complete',
+): DrawCtaPoolTone {
+  if (messageKind === 'danger') {
+    return 'danger';
+  }
+  if (messageKind === 'attention') {
+    return 'attention';
+  }
+  if (messageKind === 'success') {
+    return 'complete';
+  }
+  if (ratioTone === 'complete') {
+    return 'complete';
+  }
+  if (ratioTone === 'partial') {
+    return 'partial';
+  }
+  return 'neutral';
 }
 
 /** Schematic places occupied (team or structural feed). Zero filled is actionable gap. */

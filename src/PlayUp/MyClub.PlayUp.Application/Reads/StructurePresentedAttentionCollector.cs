@@ -150,7 +150,7 @@ public static class StructurePresentedAttentionCollector
     private static readonly Dictionary<string, string> SeverityBySource =
         new(CodeComparer)
         {
-            [CompetitionFlowAnalyzer.SlotFeedMissing] = NeedsAttentionAssembler.SeverityWarning,
+            [CompetitionFlowAnalyzer.OverCapacityEdge] = NeedsAttentionAssembler.SeverityWarning,
             [CompetitionFlowAnalyzer.NonRootUnfed] = NeedsAttentionAssembler.SeverityWarning,
             [CompetitionFlowAnalyzer.AuthoredAwardUnreachable] = NeedsAttentionAssembler.SeverityWarning,
             [CompetitionFlowAnalyzer.ExpectedRankUnreachable] = NeedsAttentionAssembler.SeverityWarning,

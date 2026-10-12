@@ -61,6 +61,8 @@ export type FunctionalProblemIdentity = {
    * when callers filter). Without draw → danger.
    */
   awaitingDraw?: boolean;
+  /** When `attention-drawer`, structure issues use short triage copy (enums). */
+  canal?: FunctionalProblemCanal;
 };
 
 export type FunctionalProblemCta = {
@@ -121,6 +123,19 @@ function teamsHref(competitionId: string): string {
   return `/competitions/${competitionId}/teams`;
 }
 
+function structureIssueTitleFields(
+  code: string,
+  canal: FunctionalProblemCanal | undefined,
+): { titleKey: string; titleNs: string } {
+  if (canal === 'attention-drawer') {
+    return { titleKey: `attentionSource.${code}`, titleNs: 'enums' };
+  }
+  return {
+    titleKey: structureDiagnosticTitleKey(code),
+    titleNs: 'structure',
+  };
+}
+
 /**
  * Map a functional problem identity to presentation fields.
  * Callers compose DS Alert/Status/toast — this helper does not render.
@@ -138,6 +153,7 @@ export function functionalProblemPresentation(
     targetType,
     targetId,
     matchId,
+    canal,
   } = identity;
 
   const descriptionParams = params
@@ -161,6 +177,7 @@ export function functionalProblemPresentation(
       actionCode,
       stageId: stageFromTarget,
       structureIssueCode: source,
+      canal,
     });
   }
 
@@ -168,14 +185,15 @@ export function functionalProblemPresentation(
   if (structureIssueCode) {
     const meta = structureDiagnosticMeta(structureIssueCode);
     if (meta) {
+      const issueTitle = structureIssueTitleFields(structureIssueCode, canal);
       return {
         tone: mapStructureTone(structureDiagnosticTone(structureIssueCode)),
-        titleKey: structureDiagnosticTitleKey(structureIssueCode),
-        titleNs: 'structure',
+        titleKey: issueTitle.titleKey,
+        titleNs: issueTitle.titleNs,
         descriptionParams,
         sotHref: structureHref(competitionId, stageId),
         cta: { actionCode: actionCode ?? 'ConfigureStructure' },
-        canal: 'structure-topology',
+        canal: canal ?? 'structure-topology',
       };
     }
   }
@@ -206,7 +224,9 @@ export function functionalProblemPresentation(
 
   if (CONSTRUCTION_BLOCKERS.has(source)) {
     return {
-      tone: 'attention',
+      tone: structureDiagnosticMeta(source)
+        ? mapStructureTone(structureDiagnosticTone(source))
+        : 'danger',
       titleKey: `attentionSource.${source}`,
       titleNs: 'enums',
       descriptionParams,
@@ -339,6 +359,7 @@ export function situationPresentation(
     params: situation.params,
     actionCode: situation.actionCode,
     stageId: stageIdFromParams,
+    canal: 'attention-drawer',
   });
 }
 

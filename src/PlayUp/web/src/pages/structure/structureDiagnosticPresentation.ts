@@ -1,8 +1,10 @@
 // -----------------------------------------------------------------------
 // Structure diagnostic → presentation projection (family / tile / CTA).
 // Analyzer facts stay unchanged; Host only maps codes for Structure UX.
-// Tone UX ≠ Analyzer Nature ≠ Prepare Gate/Signal.
+// Product severity (D5) drives diagnostic tone; lifecycle gates stay in Host.
 // -----------------------------------------------------------------------
+
+import { structureProductSeverity } from './structureDiagnosticSeverity';
 
 /** Business family for Structure header synthesis. */
 export type StructureDiagnosticFamily =
@@ -234,10 +236,19 @@ export function structureDiagnosticTitleKey(code: string): string {
   return structureDiagnosticMeta(code)?.titleKey ?? `graph.issues.${code}`;
 }
 
-/** Effective UX tone. */
+/** Effective UX tone — derived from product severity (D5), not legacy meta.tone alone. */
 export function structureDiagnosticTone(code: string): StructureDiagnosticTone {
-  return structureDiagnosticMeta(code)?.tone ?? 'attention';
+  const severity = structureProductSeverity(code);
+  if (severity === 'blocking') {
+    return 'danger';
+  }
+  if (code === 'NonRootUnfed') {
+    return 'progress';
+  }
+  return 'attention';
 }
+
+export { structureProductSeverity } from './structureDiagnosticSeverity';
 
 /** Scroll / rail / domain-tile element id for a canonical tile. */
 export function structureDiagnosticTileElementId(

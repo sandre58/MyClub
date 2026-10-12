@@ -44,7 +44,7 @@ export function resolvePlaceOccupancyMeterCopy(input: {
   if (occupiedPlacesCount === 0) {
     return {
       text: t('fiche.operational.placement.stateMessage.empty'),
-      kind: slotFeedMissingActive ? 'attention' : 'info',
+      kind: slotFeedMissingActive ? 'danger' : 'info',
     };
   }
 
@@ -53,7 +53,7 @@ export function resolvePlaceOccupancyMeterCopy(input: {
     text: t('fiche.operational.placement.stateMessage.partial', {
       count: remaining,
     }),
-    kind: slotFeedMissingActive ? 'attention' : 'info',
+    kind: slotFeedMissingActive ? 'danger' : 'info',
   };
 }
 

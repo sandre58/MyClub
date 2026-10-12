@@ -32,7 +32,8 @@ describe('attentionPartition', () => {
       situation('CupBracketInvalid'),
       situation('DrawNoSolution'),
       situation('QualificationPending'),
-      situation('SlotFeedMissing', 'Warning'),
+      situation('SlotFeedMissing', 'Blocking'),
+      situation('NonRootUnfed', 'Warning'),
     ]);
 
     expect(blocking.map((item) => item.source)).toEqual([
@@ -40,8 +41,9 @@ describe('attentionPartition', () => {
       'CupBracketInvalid',
       'DrawNoSolution',
       'QualificationPending',
+      'SlotFeedMissing',
     ]);
-    expect(attention.map((item) => item.source)).toEqual(['SlotFeedMissing']);
+    expect(attention.map((item) => item.source)).toEqual(['NonRootUnfed']);
   });
 
   it('keeps InsufficientParticipants (presentation; SoT remains Teams)', () => {

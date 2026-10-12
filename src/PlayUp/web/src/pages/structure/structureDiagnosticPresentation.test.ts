@@ -42,8 +42,8 @@ function stage(
 }
 
 describe('structureDiagnosticPresentation', () => {
-  it('maps SlotFeedMissing without draw as attention', () => {
-    expect(structureDiagnosticTone('SlotFeedMissing')).toBe('attention');
+  it('maps SlotFeedMissing without draw as danger (D5 blocking)', () => {
+    expect(structureDiagnosticTone('SlotFeedMissing')).toBe('danger');
     expect(structureDiagnosticTile('SlotFeedMissing')).toBe('places');
   });
 
@@ -106,6 +106,7 @@ describe('structureDiagnosticPresentation', () => {
     expect(structureDiagnosticTone('AuthoredAwardUnreachable')).toBe(
       'attention',
     );
+    expect(structureDiagnosticTone('PopulationShortfall')).toBe('danger');
   });
 
   it('keeps OverCapacity and SlotFeedMissing on distinct tiles', () => {

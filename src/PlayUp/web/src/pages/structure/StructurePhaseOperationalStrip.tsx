@@ -30,6 +30,7 @@ import { queryKeys } from '../../queryKeys';
 import type { CompetitionStatus, StructureStageHubSummary } from '../../types';
 import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
+import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
 import {
   materializeDisabledCaption,
@@ -40,6 +41,7 @@ import {
 import { dematerializeDisabledCaption } from './structureDematerializeCopy';
 import {
   productionRatio,
+  operationalStripPoolTone,
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
 } from './structureOperationalCopy';
@@ -122,7 +124,7 @@ function RatioAside({
   current: number | null;
   capacity: number | null;
   label: string;
-  poolTone: 'neutral' | 'partial' | 'complete';
+  poolTone: DrawCtaPoolTone;
   loading?: boolean;
 }) {
   if (loading) {
@@ -437,6 +439,11 @@ function PlacesColumn(
     slotFeedMissingActive: props.slotFeedMissingActive ?? false,
   });
 
+  const placesPoolTone = operationalStripPoolTone(
+    placeMeter.kind,
+    occupancyTone,
+  );
+
   const placesUpdating =
     !props.occupancyReady ||
     Boolean(props.structureHubRefreshing && props.occupancyReady);
@@ -453,7 +460,7 @@ function PlacesColumn(
         capacity={capacity}
         caption={t('fiche.operational.placement.meterCaptionOccupied')}
         ariaLabel={t('fiche.operational.placement.meterAria')}
-        poolTone={occupancyTone}
+        poolTone={placesPoolTone}
         layout="trackOnly"
       />
     ) : null;
@@ -471,7 +478,7 @@ function PlacesColumn(
                 current={props.occupiedPlacesCount}
                 capacity={capacity}
                 label={ratioLabel}
-                poolTone={occupancyTone}
+                poolTone={placesPoolTone}
                 loading={!props.occupancyReady && !unknownCapacity}
               />
             }
