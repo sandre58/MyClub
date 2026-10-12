@@ -14,10 +14,12 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Transition">Primary lifecycle command for the current stage status.</param>
 /// <param name="PrepareChecklist">Draft-only horizontal Prepare checklist; otherwise <see langword="null"/>.</param>
 /// <param name="MatchProgress">Match closure stats when the phase is in play; otherwise <see langword="null"/>.</param>
+/// <param name="RevertTransition">Optional revert command (Ready → Draft or Running/Suspended → Ready).</param>
 public sealed record StructureStageLifecycleDto(
     StructureStageLifecycleTransitionDto Transition,
     StructureStageLifecyclePrepareChecklistDto? PrepareChecklist,
-    StructureStageLifecycleMatchProgressDto? MatchProgress);
+    StructureStageLifecycleMatchProgressDto? MatchProgress,
+    StructureStageLifecycleTransitionDto? RevertTransition = null);
 
 /// <summary>
 /// Projected lifecycle transition (Overview action codes + CompleteStage).

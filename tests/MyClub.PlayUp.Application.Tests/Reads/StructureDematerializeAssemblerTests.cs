@@ -27,7 +27,7 @@ public sealed class StructureDematerializeAssemblerTests
         var situation = TestCompetition.Create("Champ", _clock)
             .WithTeams("A", "B", "C")
             .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
+        var stage = situation.PreparePrimaryStageForMaterialization();
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         var summaries = materialized.CreatedMatches.Select(Summary).ToArray();
 
@@ -58,7 +58,7 @@ public sealed class StructureDematerializeAssemblerTests
         var situation = TestCompetition.Create("Champ", _clock)
             .WithTeams("A", "B")
             .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
+        var stage = situation.PreparePrimaryStageForMaterialization();
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         materialized.CreatedMatches[0].Finish(
             new MatchResult(ResultType.Played, new Score(1, 0)),
@@ -82,6 +82,7 @@ public sealed class StructureDematerializeAssemblerTests
         var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
         stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             situation.Competition,
             stage,
@@ -103,7 +104,7 @@ public sealed class StructureDematerializeAssemblerTests
         var situation = TestCompetition.Create("Champ", _clock)
             .WithTeams("A", "B", "C")
             .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
+        var stage = situation.PreparePrimaryStageForMaterialization();
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         var summariesByStage = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
         {

@@ -55,6 +55,7 @@ public sealed class Slice3DrawPipelineTests
         ApplyDraw.Execute(stage, draw.Id, _clock);
         stage.Groups.Sum(group => group.EntryIds.Count).Should().Be(4);
 
+        PrepareStage.Execute(stage, [stage], _clock);
         var materialized = MaterializeMatches.Execute(competition, stage, [], _clock);
         materialized.CreatedMatches.Should().HaveCount(2);
     }

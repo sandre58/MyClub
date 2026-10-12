@@ -276,16 +276,16 @@ internal static class StructureMaterializeAssembler
     /// <summary>
     /// Read-side eligibility mirrors command preflight in
     /// <see cref="MaterializeMatches"/> (Ch/G) and <see cref="MaterializeCupFromOccupiedSlots"/> (Cup).
-    /// Cup allows a Running competition; Ch/G require Draft/Ready. Dematerialization uses separate rules in
-    /// <see cref="DematerializationCapability"/> — intentionally not unified here.
+    /// Cup allows a Running competition; Ch/G require Draft/Ready competition. Stage must be Ready to materialize.
+    /// Dematerialization uses separate rules in <see cref="DematerializationCapability"/>.
     /// </summary>
     private static bool IsChampionshipOrGroupsMutable(Competition competition, Stage stage) =>
         competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
-        && stage.Status is StageStatus.Draft or StageStatus.Ready;
+        && stage.Status is StageStatus.Ready;
 
     private static bool IsCupMutable(Competition competition, Stage stage) =>
         competition.Status is not (CompetitionStatus.Suspended
             or CompetitionStatus.Completed
             or CompetitionStatus.Archived)
-        && stage.Status is StageStatus.Draft or StageStatus.Ready;
+        && stage.Status is StageStatus.Ready;
 }

@@ -116,6 +116,12 @@ public static class OverviewAssembler
     /// <summary>Complete stage (Running / Suspended → Completed).</summary>
     public const string ActionCompleteStage = "CompleteStage";
 
+    /// <summary>Revert Ready stage to Draft when no matches are attached.</summary>
+    public const string ActionRevertToDraftStage = "RevertToDraftStage";
+
+    /// <summary>Revert Running or Suspended stage to Ready (pause exploitation).</summary>
+    public const string ActionRevertToReadyStage = "RevertToReadyStage";
+
     /// <summary>Publish draw.</summary>
     public const string ActionPublishDraw = "PublishDraw";
 

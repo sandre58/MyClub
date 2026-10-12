@@ -114,6 +114,52 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
+    /// Loads a stage and reverts Ready → Draft when no matches are attached.
+    /// </summary>
+    public async Task RevertStageToDraftAsync(StageId stageId, CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{stage.CompetitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+
+        var stageMatches =
+            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
+        RevertToDraft.Execute(stage, stageMatches, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a stage and reverts Running or Suspended → Ready when sportive preflight passes.
+    /// </summary>
+    public async Task RevertStageToReadyAsync(StageId stageId, CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{stage.CompetitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+
+        var stageMatches =
+            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
+        RevertToReady.Execute(stage, stageMatches, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Loads competition stages and fixture matches, runs <see cref="ApplyProgressionOutcome"/>, and saves once.
     /// </summary>
     /// <param name="sourceStageId">Stage that owns the fixture.</param>
@@ -878,6 +924,7 @@ public sealed partial class UseCaseExecutor
         }
 
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StagePhaseExploitationGuard.EnsureScheduleExploitation(stage);
         var loadedMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
         var targets = ResolveScheduleTargets(stage, loadedMatches, targetMatchIds);
         var duration = new SchedulingDuration(matchDurationMinutes);
@@ -940,6 +987,7 @@ public sealed partial class UseCaseExecutor
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
+        StagePhaseExploitationGuard.EnsureScheduleExploitation(stage);
         var schedule = new Schedule(
         [
             .. assignments.Select(a => new ScheduleAssignment(

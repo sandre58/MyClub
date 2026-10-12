@@ -162,6 +162,7 @@ public sealed class StageOverviewAssemblerTests
         stage.ApplyResolvedEntry("SF1-B", b.Id, _clock);
         stage.ApplyResolvedEntry("SF2-A", c.Id, _clock);
         stage.ApplyResolvedEntry("SF2-B", d.Id, _clock);
+        stage.Prepare(_clock);
 
         MaterializeCupFromOccupiedSlots.Execute(
             competition,

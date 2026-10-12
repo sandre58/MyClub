@@ -60,6 +60,7 @@ public sealed class ApplyProgressionOutcomeRcPre1Tests
         var away = EntryId.New();
         source.ApplyResolvedEntry("S1", home, _clock);
         source.ApplyResolvedEntry("S2", away, _clock);
+        source.Prepare(_clock);
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             source,
@@ -164,6 +165,7 @@ public sealed class ApplyProgressionOutcomeRcPre1Tests
         var away = EntryId.New();
         source.ApplyResolvedEntry("S3", home, _clock);
         source.ApplyResolvedEntry("S4", away, _clock);
+        source.Prepare(_clock);
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             source,

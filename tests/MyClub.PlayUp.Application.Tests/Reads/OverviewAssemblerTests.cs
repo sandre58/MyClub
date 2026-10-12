@@ -14,6 +14,7 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Reads;
@@ -861,7 +862,7 @@ public sealed class OverviewAssemblerTests
 
         var act = () => MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.MaterializationFailure);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
         configured.Stage.Rounds[0].Fixtures.Should().BeEmpty();
 
         var view = OverviewAssembler.Assemble(
@@ -888,13 +889,13 @@ public sealed class OverviewAssemblerTests
         sf.SeedEntryRoundBracketPairs();
         sf.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         sf.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+        sf.Prepare(_clock);
         MaterializeCupFromOccupiedSlots.Execute(
             competition,
             sf,
             ["P1"],
             [],
             _clock);
-        sf.Prepare(_clock);
         sf.Start(_clock);
 
         var view = OverviewAssembler.Assemble(
@@ -1795,6 +1796,10 @@ public sealed class OverviewAssemblerTests
             null,
             StructureIntent.Championship(),
             _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            configured.Stage,
+            [configured.Stage],
+            _clock);
         var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
         competition.Prepare(_clock);
 
@@ -1868,9 +1873,10 @@ public sealed class OverviewAssemblerTests
         stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
-
-        var first = MaterializeMatches.Execute(competition, stage, [], _clock);
         stage.AssignEntryToGroup(stage.Groups[0].Id, e5.Id);
+
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        var first = MaterializeMatches.Execute(competition, stage, [], _clock);
 
         var view = OverviewAssembler.Assemble(
             competition,
@@ -1880,10 +1886,9 @@ public sealed class OverviewAssemblerTests
                 [stage.Id] = first.CreatedMatches
             });
 
-        var action = view.AvailableActions.Should().ContainSingle(item =>
-            item.Code == OverviewAssembler.ActionMaterializeMatches).Subject;
-        action.Params.Should().ContainKey(OverviewAssembler.ActionParamLabelVariant)
-            .WhoseValue.Should().Be(OverviewAssembler.LabelVariantComplete);
+        first.CreatedMatches.Should().NotBeEmpty();
+        view.AvailableActions.Should().NotContain(item =>
+            item.Code == OverviewAssembler.ActionMaterializeMatches);
         view.Situations.Should().NotContain(item =>
             item.Source.Contains("Materializ", StringComparison.Ordinal));
     }
@@ -1900,6 +1905,10 @@ public sealed class OverviewAssemblerTests
             competition,
             null,
             StructureIntent.Championship(),
+            _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            configured.Stage,
+            [configured.Stage],
             _clock);
         var materialize = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
 

@@ -314,4 +314,24 @@ public static class ApplicationErrorCodes
     /// Gets the code when dematerialization cannot run for the stage format or lifecycle.
     /// </summary>
     public const string DematerializationFailure = "Application.DematerializationFailure";
+
+    /// <summary>
+    /// Gets the code when sportive or schedule exploitation is refused because the phase is not open.
+    /// </summary>
+    public const string StageExploitationNotOpen = "Application.StageExploitationNotOpen";
+
+    /// <summary>
+    /// Gets the code when sportive or schedule exploitation is refused because the phase is Completed.
+    /// </summary>
+    public const string StageExploitationClosed = "Application.StageExploitationClosed";
+
+    /// <summary>
+    /// Gets the code when RevertToDraft is refused because matches are attached to the stage.
+    /// </summary>
+    public const string RevertToDraftBlocked = "Application.RevertToDraftBlocked";
+
+    /// <summary>
+    /// Gets the code when RevertToReady is refused because a match was sportively engaged.
+    /// </summary>
+    public const string RevertToReadyBlocked = "Application.RevertToReadyBlocked";
 }

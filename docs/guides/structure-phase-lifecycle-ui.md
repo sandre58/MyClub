@@ -398,12 +398,12 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 
 | V2 rule | Current behaviour | Status | Primary locations |
 | :------ | :---------------- | :----- | :---------------- |
-| Structure mutable **Draft only** | **Incrément 1 (2026-10-12):** `EnsureStructureMutable` allows **Draft only**; `DemoteToDraftIfReady` removed. Application `StageStructureEditGuard` on structure use cases. Materialize still **Draft+Ready** (incrément 2). | **PARTIAL** | `Stage.cs`, `StageStructureEditGuard.cs` |
-| Materialize **Ready only** (not Draft) | `MaterializeMatches.EnsureMutable` allows **Draft + Ready** (blocks Running+). `StructureMaterializeAssembler` same (`IsCupMutable`, `IsChampionshipOrGroupsMutable`). | **GAP** | `MaterializeMatches.cs`, `StructureMaterializeAssembler.cs` |
-| Faits sportifs **Running/Suspended only** | `StartMatch` / `FinishMatch` delegate to `Match.*` with **no stage-status guard**. Overview projects `StartMatch` / `FinishMatch` from **match status only** (Scheduled/Live), not stage Ready vs Running. | **GAP** | `StartMatch.cs`, `FinishMatch.cs`, `OverviewAssembler.cs`, `UseCaseExecutor.Matches.cs` |
-| Planification in **Ready** | `ApplySchedule` → `Stage.ApplyMatchPlacements` — **no** `EnsureStructureMutable` on placements path (works in Running today; also usable in Ready). | **PARTIAL** (allowed today; V2 wants Ready yes — OK) | `ApplySchedule.cs`, `Stage.ApplyMatchPlacements` |
-| **Completed** strict (no planif/sportif) | Structure hub actions collapse to rename when stage Completed (`StructureViewAssembler.BuildStageActions`). Match use cases **do not** check parent stage Completed. | **GAP** (structure UI partial; match ops open) | `StructureViewAssembler.cs`, match use cases |
-| `RevertToDraft` / `RevertToReady` | **Not implemented** (no domain methods, no HTTP, no read projection). | **GAP** | — |
+| Structure mutable **Draft only** | **Incrément 1 (2026-10-12):** `EnsureStructureMutable` allows **Draft only**; `DemoteToDraftIfReady` removed. Application `StageStructureEditGuard` on structure use cases. Match **production** spine (materialize/dematerialize) uses `*ForMatchProduction` APIs in **Draft/Ready**. | **ALIGNED** | `Stage.cs`, `StageStructureEditGuard.cs` |
+| Materialize **Ready only** (not Draft) | **Incrément 2 (2026-10-12):** `StageMaterializeGuard` + read assembler mirror **Ready** only. | **ALIGNED** | `StageMaterializeGuard.cs`, `MaterializeMatches.cs`, `StructureMaterializeAssembler.cs` |
+| Faits sportifs **Running/Suspended only** | **Incrément 2:** `StagePhaseExploitationGuard` in `RequireMatchForOperationAsync`. Overview match actions still match-centric (UI follow-up). | **PARTIAL** | `StagePhaseExploitationGuard.cs`, `UseCaseExecutor.Helpers.cs` |
+| Planification in **Ready** | **Incrément 2:** `EnsureScheduleExploitation` on `GenerateScheduleAsync` / `ApplyScheduleAsync`. | **ALIGNED** | `UseCaseExecutor.Stages.cs` |
+| **Completed** strict (no planif/sportif) | **Incrément 2:** `StageExploitationClosed` on sportive + schedule guards when stage Completed. | **PARTIAL** (executor; Overview unchanged) | `StagePhaseExploitationGuard.cs` |
+| `RevertToDraft` / `RevertToReady` | **Incrément 2:** domain transitions, use cases, HTTP `revert-to-draft` / `revert-to-ready`, lifecycle `RevertTransition` projection. | **ALIGNED** | `RevertToDraft.cs`, `RevertToReady.cs`, `StructureStageLifecycleAssembler.cs` |
 | `RevertToReady` ≠ dematerialize | Dematerialize full phase blocked in Running (`DematerializationCapability.TryFullPhaseLifecycleReason`). Swiss dematerialize last round **requires Running** — aligned with progressive model. | **PARTIAL** (separation exists de facto; revert missing) | `DematerializationCapability.cs` |
 
 ### Transitions
@@ -413,8 +413,8 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | Prepare | Draft → Ready, existing gates | Same | **ALIGNED** | `PrepareStage.cs`, `Stage.Prepare` |
 | Start readiness | Per-format initial scope (Ch/G: no eligible unmaterialized; Cup: first playable round materialized; Swiss: progressive, 0 match OK) | Domain: `EnsureInitialRoundPlayableWhenPositional` for **cup positional only**; no Ch/G eligible gate. Read: `ResolveStartTransition` mirrors cup playable check only. **Start from Ready with 0 matches** allowed for non-positional stages (tests). | **GAP** | `Stage.Start`, `StructureStageLifecycleAssembler.ResolveStartTransition` |
 | Complete | All matches Finished/Cancelled | Same (`CompleteStage.Execute`) | **ALIGNED** | `CompleteStage.cs` |
-| RevertToDraft | Explicit; no attached matches | Implicit demotion on structural edit in Ready | **GAP** | `DemoteToDraftIfReady` |
-| RevertToReady | Pause; keep Scheduled/Postponed; block sportive engagement | **Absent** | **GAP** | — |
+| RevertToDraft | Explicit; no attached matches | **Incrément 2** — `RevertToDraft` + `Application.RevertToDraftBlocked` | **ALIGNED** | `RevertToDraft.cs`, `Stage.RevertToDraft` |
+| RevertToReady | Pause; keep Scheduled/Postponed; block sportive engagement | **Incrément 2** — `RevertToReady` + dematerialize gate reuse | **ALIGNED** | `RevertToReady.cs`, `Stage.RevertToReady` |
 
 ### Format exceptions (Swiss — option A)
 

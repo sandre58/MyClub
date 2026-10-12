@@ -52,6 +52,12 @@ public static class StructureStageLifecycleAssembler
     /// <summary>Lifecycle disabled — structure graph invalid for Prepare.</summary>
     public const string DisabledStructureGraphInvalid = "StructureGraphInvalid";
 
+    /// <summary>Revert disabled — matches attached to the stage.</summary>
+    public const string DisabledProductionPresent = "ProductionPresent";
+
+    /// <summary>Revert disabled — match sportively engaged.</summary>
+    public const string DisabledMatchLifecycleStarted = "MatchLifecycleStarted";
+
     /// <summary>
     /// Assembles lifecycle projection for one stage hub row.
     /// </summary>
@@ -64,8 +70,9 @@ public static class StructureStageLifecycleAssembler
             ? BuildPrepareChecklist(input)
             : null;
         var transition = ResolveTransition(input, matchProgress);
+        var revert = ResolveRevertTransition(input);
 
-        return new StructureStageLifecycleDto(transition, checklist, matchProgress);
+        return new StructureStageLifecycleDto(transition, checklist, matchProgress, revert);
     }
 
     private static StructureStageLifecycleTransitionDto ResolveTransition(
@@ -153,6 +160,45 @@ public static class StructureStageLifecycleAssembler
             code,
             false,
             CompleteStage.ReasonOpenMatches);
+    }
+
+    private static StructureStageLifecycleTransitionDto? ResolveRevertTransition(StructureStageLifecycleInput input)
+    {
+        if (input.Competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            return null;
+        }
+
+        return input.Stage.Status switch
+        {
+            StageStatus.Ready => ResolveRevertToDraftTransition(input),
+            StageStatus.Running or StageStatus.Suspended => ResolveRevertToReadyTransition(input),
+            _ => null
+        };
+    }
+
+    private static StructureStageLifecycleTransitionDto ResolveRevertToDraftTransition(
+        StructureStageLifecycleInput input)
+    {
+        const string code = OverviewAssembler.ActionRevertToDraftStage;
+        var attached = input.MatchSummaries.Count(row => row.StageId.Equals(input.Stage.Id));
+        return attached == 0
+            ? new StructureStageLifecycleTransitionDto(code, true)
+            : new StructureStageLifecycleTransitionDto(code, false, DisabledProductionPresent);
+    }
+
+    private static StructureStageLifecycleTransitionDto ResolveRevertToReadyTransition(
+        StructureStageLifecycleInput input)
+    {
+        const string code = OverviewAssembler.ActionRevertToReadyStage;
+        var gates = input.MatchSummaries
+            .Where(row => row.StageId.Equals(input.Stage.Id))
+            .Select(DematerializationMatchGate.FromSummary)
+            .ToArray();
+
+        return DematerializationCapability.TryMatchLifecycleReason(gates) is not null
+            ? new StructureStageLifecycleTransitionDto(code, false, DisabledMatchLifecycleStarted)
+            : new StructureStageLifecycleTransitionDto(code, true);
     }
 
     private static StructureStageLifecycleTransitionDto BlockedTransition(

@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -143,6 +144,12 @@ public sealed partial class UseCaseExecutor
 
         await EnsureCompetitionAllowsMatchOperationAsync(match.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
+
+        var stage = await stages.GetByIdForUpdateAsync(match.StageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{match.StageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+        StagePhaseExploitationGuard.EnsureSportiveExploitation(stage);
         return match;
     }
 
@@ -161,11 +168,19 @@ public sealed partial class UseCaseExecutor
                               $"Competition '{match.CompetitionId}' was not found.",
                               ApplicationErrorCodes.CompetitionNotFound);
 
-        return competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived
-            ? throw new ApplicationFailureException(
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            throw new ApplicationFailureException(
                 $"Match operations are not allowed when competition is '{competition.Status}'.",
-                ApplicationErrorCodes.MatchOperationNotAllowed)
-            : (match, competition);
+                ApplicationErrorCodes.MatchOperationNotAllowed);
+        }
+
+        var stage = await stages.GetByIdForUpdateAsync(match.StageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{match.StageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+        StagePhaseExploitationGuard.EnsureSportiveExploitation(stage);
+        return (match, competition);
     }
 
     private async Task EnsureCompetitionAllowsLifecycleMutationAsync(

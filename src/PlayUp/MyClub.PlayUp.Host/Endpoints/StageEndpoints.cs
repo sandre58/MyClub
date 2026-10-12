@@ -501,6 +501,22 @@ internal static class StageEndpoints
             });
 
         app.MapPost(
+            "/stages/{stageId:guid}/revert-to-draft",
+            async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+            {
+                await executor.RevertStageToDraftAsync(new StageId(stageId), cancellationToken).ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPost(
+            "/stages/{stageId:guid}/revert-to-ready",
+            async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+            {
+                await executor.RevertStageToReadyAsync(new StageId(stageId), cancellationToken).ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPost(
             "/stages/{stageId:guid}/fixtures/{fixtureId:guid}/apply-progression",
             async (Guid stageId, Guid fixtureId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {

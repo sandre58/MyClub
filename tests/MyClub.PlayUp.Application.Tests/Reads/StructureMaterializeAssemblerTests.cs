@@ -27,7 +27,7 @@ public sealed class StructureMaterializeAssemblerTests
         var situation = TestCompetition.Create("Champ", _clock)
             .WithTeams("A", "B", "C")
             .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
+        var stage = situation.PreparePrimaryStageForMaterialization();
 
         var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
         var materialize = view.Stages.Should().ContainSingle().Subject.Materialize;
@@ -53,6 +53,7 @@ public sealed class StructureMaterializeAssemblerTests
         var fixture = stage.AddFixture(stage.Matchdays[0].Id, _clock);
         var match = Match.Create(situation.Competition.Id, stage.Id, ids[0], ids[1], _clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        situation.PreparePrimaryStageForMaterialization();
 
         var view = StructureViewAssembler.Assemble(
             situation.Competition,
@@ -89,6 +90,7 @@ public sealed class StructureMaterializeAssemblerTests
         stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
 
         var view = StructureViewAssembler.Assemble(competition, [stage]);
         var materialize = view.Stages[0].Materialize!;
@@ -110,6 +112,7 @@ public sealed class StructureMaterializeAssemblerTests
         var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
         stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
 
         var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
         var materialize = view.Stages[0].Materialize!;
@@ -136,6 +139,7 @@ public sealed class StructureMaterializeAssemblerTests
         var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
         stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
         var result = MaterializeCupFromOccupiedSlots.Execute(
             situation.Competition,
             stage,
@@ -213,7 +217,7 @@ public sealed class StructureMaterializeAssemblerTests
 
         materialize.CommandEnabled.Should().BeFalse();
         materialize.DeterminedCount.Should().Be(0);
-        materialize.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
+        materialize.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.StructureNotMutable);
     }
 
     [Fact]
@@ -222,7 +226,7 @@ public sealed class StructureMaterializeAssemblerTests
         var situation = TestCompetition.Create("Champ", _clock)
             .WithTeams("A", "B", "C")
             .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
+        var stage = situation.PreparePrimaryStageForMaterialization();
 
         var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
         var materialize = view.Stages[0].Materialize!;

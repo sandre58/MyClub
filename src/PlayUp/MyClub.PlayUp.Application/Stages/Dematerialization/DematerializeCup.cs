@@ -60,7 +60,7 @@ public static class DematerializeCup
 
         foreach (var fixtureId in scope.FixtureIds)
         {
-            stage.RemoveFixture(fixtureId, clock);
+            stage.RemoveFixtureForMatchProduction(fixtureId, clock);
         }
 
         foreach (var match in scope.Matches)

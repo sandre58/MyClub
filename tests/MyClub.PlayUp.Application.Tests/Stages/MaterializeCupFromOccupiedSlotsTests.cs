@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.TestKit;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
@@ -30,6 +31,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-A", a, _clock);
         stage.ApplyResolvedEntry("SF1-B", b, _clock);
 
+        EnsureCupMaterializeReady(stage);
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -61,6 +63,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-A", a, _clock);
         stage.ApplyResolvedEntry("SF1-B", b, _clock);
 
+        EnsureCupMaterializeReady(stage);
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -87,6 +90,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
         // P2 slots vacant → not eligible
+        EnsureCupMaterializeReady(stage);
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -108,6 +112,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-A", same, _clock);
         stage.ApplyResolvedEntry("SF1-B", same, _clock);
 
+        EnsureCupMaterializeReady(stage);
         var act = () => MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -132,6 +137,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF2-A", EntryId.New(), _clock);
         stage.ApplyResolvedEntry("SF2-B", EntryId.New(), _clock);
 
+        EnsureCupMaterializeReady(stage);
         MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock);
         var second = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock);
 
@@ -148,6 +154,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
+        EnsureCupMaterializeReady(stage);
         MaterializeCupFromOccupiedSlots.Execute(competition, stage, ["P1"], [], _clock);
 
         var act = () => MaterializeCupFromOccupiedSlots.Execute(
@@ -176,6 +183,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         var leg1 = Match.Create(competition.Id, stage.Id, a, b, _clock);
         stage.AttachMatch(fixture.Id, leg1.Id, legIndex: 1, _clock);
 
+        EnsureCupMaterializeReady(stage);
         var act = () => MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -194,6 +202,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         var stage = CreateSemiStage(competition.Id);
         stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
 
+        EnsureCupMaterializeReady(stage);
         var act = () => MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -213,6 +222,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
+        EnsureCupMaterializeReady(stage);
         var act = () => MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -233,13 +243,13 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         var b = EntryId.New();
         stage.ApplyResolvedEntry("SF1-A", a, _clock);
         stage.ApplyResolvedEntry("SF1-B", b, _clock);
+        EnsureCupMaterializeReady(stage);
         MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
             ["P1"],
             [],
             _clock);
-        stage.Prepare(_clock);
         stage.Start(_clock);
 
         var act = () => MaterializeCupFromOccupiedSlots.Execute(
@@ -268,6 +278,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-A", a, _clock);
         stage.ApplyResolvedEntry("SF1-B", b, _clock);
 
+        EnsureCupMaterializeReady(stage);
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -293,6 +304,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
+        EnsureCupMaterializeReady(stage);
         var act = () => MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
@@ -342,6 +354,7 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         sf.ApplyResolvedEntry("SF1-A", home, _clock);
         sf.ApplyResolvedEntry("SF1-B", away, _clock);
 
+        EnsureCupMaterializeReady(sf);
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             sf,
@@ -365,5 +378,15 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.AddSlot("SF2-B");
         stage.SeedEntryRoundBracketPairs();
         return stage;
+    }
+
+    private void EnsureCupMaterializeReady(Stage stage)
+    {
+        if (stage.Status is StageStatus.Ready)
+        {
+            return;
+        }
+
+        stage.Prepare(_clock);
     }
 }

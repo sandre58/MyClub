@@ -60,7 +60,7 @@ public static class DematerializeChampionshipOrGroups
 
         foreach (var fixtureId in scope.FixtureIds)
         {
-            stage.RemoveFixture(fixtureId, clock);
+            stage.RemoveFixtureForMatchProduction(fixtureId, clock);
         }
 
         foreach (var match in scope.Matches)
@@ -76,7 +76,7 @@ public static class DematerializeChampionshipOrGroups
 
         foreach (var matchdayId in matchdaysToRemove)
         {
-            stage.RemoveMatchday(matchdayId, clock);
+            stage.RemoveMatchdayForMatchProduction(matchdayId, clock);
         }
 
         return new DematerializeChampionshipOrGroupsResult(scope.Matches.Count);

@@ -1984,10 +1984,30 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="number">The 1-based matchday number.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created matchday.</returns>
-    public Matchday AddMatchday(int number, IClock clock)
+    public Matchday AddMatchday(int number, IClock clock) =>
+        AddMatchdayInternal(number, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Adds a matchday while materializing matches (Ready or Draft). Not for structure authoring.
+    /// </summary>
+    /// <param name="number">The 1-based matchday number.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created matchday.</returns>
+    public Matchday AddMatchdayForMatchProduction(int number, IClock clock) =>
+        AddMatchdayInternal(number, clock, forMatchProduction: true);
+
+    private Matchday AddMatchdayInternal(int number, IClock clock, bool forMatchProduction)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
         EnsureCanAddMatchday();
 
         var matchday = new Matchday(MatchdayId.New(), number);
@@ -2001,10 +2021,26 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="matchdayId">The matchday identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void RemoveMatchday(MatchdayId matchdayId, IClock clock)
+    public void RemoveMatchday(MatchdayId matchdayId, IClock clock) =>
+        RemoveMatchdayInternal(matchdayId, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Removes a matchday while dematerializing matches (Ready or Draft).
+    /// </summary>
+    public void RemoveMatchdayForMatchProduction(MatchdayId matchdayId, IClock clock) =>
+        RemoveMatchdayInternal(matchdayId, clock, forMatchProduction: true);
+
+    private void RemoveMatchdayInternal(MatchdayId matchdayId, IClock clock, bool forMatchProduction)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
 
         var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
                        ?? throw new DomainException(
@@ -2052,10 +2088,35 @@ public sealed class Stage : AggregateRoot<StageId>
         IClock clock,
         string? slotAKey = null,
         string? slotBKey = null,
-        string? bracketPairKey = null)
+        string? bracketPairKey = null) =>
+        AddFixtureOnRoundInternal(roundId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: false);
+
+    /// <inheritdoc cref="AddFixture(RoundId, IClock, string?, string?, string?)"/>
+    public Fixture AddFixtureForMatchProduction(
+        RoundId roundId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null) =>
+        AddFixtureOnRoundInternal(roundId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: true);
+
+    private Fixture AddFixtureOnRoundInternal(
+        RoundId roundId,
+        IClock clock,
+        string? slotAKey,
+        string? slotBKey,
+        string? bracketPairKey,
+        bool forMatchProduction)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
 
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
                     ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
@@ -2082,10 +2143,35 @@ public sealed class Stage : AggregateRoot<StageId>
         IClock clock,
         string? slotAKey = null,
         string? slotBKey = null,
-        string? bracketPairKey = null)
+        string? bracketPairKey = null) =>
+        AddFixtureOnMatchdayInternal(matchdayId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: false);
+
+    /// <inheritdoc cref="AddFixture(MatchdayId, IClock, string?, string?, string?)"/>
+    public Fixture AddFixtureForMatchProduction(
+        MatchdayId matchdayId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null) =>
+        AddFixtureOnMatchdayInternal(matchdayId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: true);
+
+    private Fixture AddFixtureOnMatchdayInternal(
+        MatchdayId matchdayId,
+        IClock clock,
+        string? slotAKey,
+        string? slotBKey,
+        string? bracketPairKey,
+        bool forMatchProduction)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
 
         var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
                        ?? throw new DomainException(
@@ -2120,10 +2206,27 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="fixtureId">The fixture identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void RemoveFixture(FixtureId fixtureId, IClock clock)
+    public void RemoveFixture(FixtureId fixtureId, IClock clock) =>
+        RemoveFixtureInternal(fixtureId, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Removes a fixture while dematerializing matches (Ready or Draft).
+    /// </summary>
+    public void RemoveFixtureForMatchProduction(FixtureId fixtureId, IClock clock) =>
+        RemoveFixtureInternal(fixtureId, clock, forMatchProduction: true);
+
+    private void RemoveFixtureInternal(FixtureId fixtureId, IClock clock, bool forMatchProduction)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
         var fixture = GetFixture(fixtureId);
         var matchIds = fixture.MatchIds.ToArray();
 
@@ -2148,10 +2251,35 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="matchId">The match identity.</param>
     /// <param name="legIndex">1-based confrontation leg index.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void AttachMatch(FixtureId fixtureId, MatchId matchId, int legIndex, IClock clock)
+    public void AttachMatch(FixtureId fixtureId, MatchId matchId, int legIndex, IClock clock) =>
+        AttachMatchInternal(fixtureId, matchId, legIndex, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Attaches a match while materializing (Ready or Draft).
+    /// </summary>
+    public void AttachMatchForMatchProduction(
+        FixtureId fixtureId,
+        MatchId matchId,
+        int legIndex,
+        IClock clock) =>
+        AttachMatchInternal(fixtureId, matchId, legIndex, clock, forMatchProduction: true);
+
+    private void AttachMatchInternal(
+        FixtureId fixtureId,
+        MatchId matchId,
+        int legIndex,
+        IClock clock,
+        bool forMatchProduction)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
 
         var fixture = GetFixture(fixtureId);
         if (fixture.Contains(matchId))
@@ -2176,10 +2304,30 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="fixtureId">The fixture identity.</param>
     /// <param name="matchId">The match identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void DetachMatch(FixtureId fixtureId, MatchId matchId, IClock clock)
+    public void DetachMatch(FixtureId fixtureId, MatchId matchId, IClock clock) =>
+        DetachMatchInternal(fixtureId, matchId, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Detaches a match while adjusting materialization (Ready or Draft).
+    /// </summary>
+    public void DetachMatchForMatchProduction(FixtureId fixtureId, MatchId matchId, IClock clock) =>
+        DetachMatchInternal(fixtureId, matchId, clock, forMatchProduction: true);
+
+    private void DetachMatchInternal(
+        FixtureId fixtureId,
+        MatchId matchId,
+        IClock clock,
+        bool forMatchProduction)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
 
         var fixture = GetFixture(fixtureId);
         if (!fixture.Contains(matchId))
@@ -2430,6 +2578,36 @@ public sealed class Stage : AggregateRoot<StageId>
         Raise(new StageCompleted(Id, clock));
     }
 
+    /// <summary>
+    /// Reverts the stage from Ready to Draft (structure authoring).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RevertToDraft(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Ready, "Stage can only revert to Draft from Ready.");
+        Status = StageStatus.Draft;
+        Raise(new StageRevertedToDraft(Id, clock));
+    }
+
+    /// <summary>
+    /// Reverts the stage from Running or Suspended to Ready (pause exploitation).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RevertToReady(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (Status is not (StageStatus.Running or StageStatus.Suspended))
+        {
+            throw new DomainException(
+                $"Stage cannot revert to Ready from '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+
+        Status = StageStatus.Ready;
+        Raise(new StageRevertedToReady(Id, clock));
+    }
+
     private static void EnsurePermutation<TId>(IReadOnlyList<TId> ordered, IReadOnlyList<TId> current)
         where TId : notnull
     {
@@ -2574,6 +2752,16 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Structure cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+    }
+
+    private void EnsureMatchProductionMutable()
+    {
+        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        {
+            throw new DomainException(
+                $"Match production cannot be modified when status is '{Status}'.",
                 StageErrorCodes.StructureLocked);
         }
     }

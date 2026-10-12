@@ -104,6 +104,18 @@ public sealed class PipelineCompositionTests
             _clock);
         stage.PublishDraw(draw.Id, _clock);
         ApplyDraw.Execute(stage, draw.Id, _clock);
+        stage.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath("P1",
+                    ProgressionOutcome.Winner,
+                    new ProgressionDestination(sfStage.Id, "SF1-A")),
+                new ProgressionPath("P1",
+                    ProgressionOutcome.Loser,
+                    new ProgressionDestination(sfStage.Id, "Consolante"))
+            ]),
+            _clock);
+        stage.Prepare(_clock);
 
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             competition,
@@ -114,19 +126,8 @@ public sealed class PipelineCompositionTests
         materialized.CreatedMatches.Should().ContainSingle();
         var match = materialized.CreatedMatches[0];
         var fixture = stage.Rounds[0].Fixtures.Should().ContainSingle().Subject;
+        stage.Start(_clock);
         Finish(match, homeGoals: 3, awayGoals: 1);
-
-        stage.ReplaceProgressionRules(
-            new ProgressionRules(
-            [
-                new ProgressionPath(PathKey(fixture),
-                    ProgressionOutcome.Winner,
-                    new ProgressionDestination(sfStage.Id, "SF1-A")),
-                new ProgressionPath(PathKey(fixture),
-                    ProgressionOutcome.Loser,
-                    new ProgressionDestination(sfStage.Id, "Consolante"))
-            ]),
-            _clock);
 
         ApplyProgressionOutcome.Execute(stage, fixture.Id, [match], [stage, sfStage], _clock);
 
@@ -278,6 +279,14 @@ public sealed class PipelineCompositionTests
                 new SlotDrawPlacement(d, "QF2-B")
             ]);
         ApplyDraw.Execute(qf, drawQf.Id, _clock);
+        qf.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath("P1", ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
+                new ProgressionPath("P2", ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
+            ]),
+            _clock);
+        qf.Prepare(_clock);
 
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             competition,
@@ -289,16 +298,10 @@ public sealed class PipelineCompositionTests
         var m2 = materialized.CreatedMatches[1];
         var fxQf1 = qf.Rounds[0].Fixtures[0];
         var fxQf2 = qf.Rounds[0].Fixtures[1];
+        qf.Start(_clock);
         Finish(m1, 2, 0);
         Finish(m2, 0, 1);
 
-        qf.ReplaceProgressionRules(
-            new ProgressionRules(
-            [
-                new ProgressionPath(PathKey(fxQf1), ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id)),
-                new ProgressionPath(PathKey(fxQf2), ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(bridge.Id))
-            ]),
-            _clock);
         ApplyProgressionOutcome.Execute(qf, fxQf1.Id, [m1], [qf, bridge], _clock);
         ApplyProgressionOutcome.Execute(qf, fxQf2.Id, [m2], [qf, bridge], _clock);
 

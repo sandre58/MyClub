@@ -385,6 +385,16 @@ public sealed class TestCompetition
     /// <returns>The primary stage.</returns>
     public Stage RequirePrimaryStage() => EnsurePrimaryStage();
 
+    /// <summary>
+    /// Prepares the primary stage when still Draft (phase V2 materialize gate).
+    /// </summary>
+    public Stage PreparePrimaryStageForMaterialization()
+    {
+        var stage = EnsurePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, _stages, Clock);
+        return stage;
+    }
+
     private void TrackStage(Stage stage)
     {
         if (!_stages.Exists(s => s.Id.Equals(stage.Id)))

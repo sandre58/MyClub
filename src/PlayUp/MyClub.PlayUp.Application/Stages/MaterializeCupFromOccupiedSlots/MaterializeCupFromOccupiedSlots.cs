@@ -81,7 +81,7 @@ public static class MaterializeCupFromOccupiedSlots
             .ToDictionary(match => match.Id);
 
         var resolved = new List<(BracketPair Pair, Fixture Fixture, EntryId Home, EntryId Away)>(targets.Count);
-        resolved.AddRange(from pair in targets let slotA = stage.FindSlot(pair.SlotAKey)! let slotB = stage.FindSlot(pair.SlotBKey)! let fixture = stage.FindFixtureByBracketPairKey(pair.PairKey) ?? stage.AddFixture(round.Id, clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey) select (pair, fixture, slotA.EntryId!.Value, slotB.EntryId!.Value));
+        resolved.AddRange(from pair in targets let slotA = stage.FindSlot(pair.SlotAKey)! let slotB = stage.FindSlot(pair.SlotBKey)! let fixture = stage.FindFixtureByBracketPairKey(pair.PairKey) ?? stage.AddFixtureForMatchProduction(round.Id, clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey) select (pair, fixture, slotA.EntryId!.Value, slotB.EntryId!.Value));
 
         var matchedIndexes = new HashSet<int>();
         var matchedMatchIds = new HashSet<MatchId>();
@@ -229,20 +229,7 @@ public static class MaterializeCupFromOccupiedSlots
     /// </summary>
     private static void EnsureMutable(Competition competition, Stage stage)
     {
-        if (competition.Status is CompetitionStatus.Suspended
-            or CompetitionStatus.Completed
-            or CompetitionStatus.Archived)
-        {
-            throw new ApplicationFailureException(
-                $"Matches cannot be materialized while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
-
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Matches cannot be materialized while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        StageMaterializeGuard.EnsureCupCompetition(competition);
+        StageMaterializeGuard.EnsureStageReadyForMaterialize(stage);
     }
 }

@@ -217,9 +217,9 @@ public static class MaterializeMatches
                         continue;
                     }
 
-                    var fixture = stage.AddFixture(matchday.Id, clock);
+                    var fixture = stage.AddFixtureForMatchProduction(matchday.Id, clock);
                     var match = Match.Create(competition.Id, stage.Id, home, away, clock);
-                    stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, clock);
+                    stage.AttachMatchForMatchProduction(fixture.Id, match.Id, legIndex: 1, clock);
                     created.Add(match);
                     existingByPair[key] = match;
                 }
@@ -269,9 +269,9 @@ public static class MaterializeMatches
                     continue;
                 }
 
-                var fixture = stage.AddFixture(matchday.Id, clock);
+                var fixture = stage.AddFixtureForMatchProduction(matchday.Id, clock);
                 var match = Match.Create(competition.Id, stage.Id, home, away, clock);
-                stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, clock);
+                stage.AttachMatchForMatchProduction(fixture.Id, match.Id, legIndex: 1, clock);
                 created.Add(match);
                 existingByPair[key] = match;
             }
@@ -412,7 +412,7 @@ public static class MaterializeMatches
             : stage.Matchdays.Max(matchday => matchday.Number) + 1;
         while (stage.Matchdays.Count < requiredCount)
         {
-            stage.AddMatchday(nextNumber++, clock);
+            stage.AddMatchdayForMatchProduction(nextNumber++, clock);
         }
     }
 
@@ -431,21 +431,7 @@ public static class MaterializeMatches
 
     private static void EnsureMutable(Competition competition, Stage stage)
     {
-        if (competition.Status is CompetitionStatus.Running
-            or CompetitionStatus.Suspended
-            or CompetitionStatus.Completed
-            or CompetitionStatus.Archived)
-        {
-            throw new ApplicationFailureException(
-                $"Matches cannot be materialized while competition status is '{competition.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
-
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Matches cannot be materialized while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        StageMaterializeGuard.EnsureChampionshipOrGroupsCompetition(competition);
+        StageMaterializeGuard.EnsureStageReadyForMaterialize(stage);
     }
 }

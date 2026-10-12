@@ -28,6 +28,7 @@ public sealed class DematerializeChampionshipOrGroupsTests
             .WithTeams("A", "B", "C", "D")
             .WithStructure(StructureIntent.Championship());
         var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         materialized.CreatedMatches.Should().HaveCount(6);
         foreach (var match in materialized.CreatedMatches)
@@ -77,6 +78,7 @@ public sealed class DematerializeChampionshipOrGroupsTests
             .WithTeams("A", "B", "C")
             .WithStructure(StructureIntent.Championship());
         var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         foreach (var match in materialized.CreatedMatches)
         {
@@ -107,6 +109,7 @@ public sealed class DematerializeChampionshipOrGroupsTests
             .WithTeams("A", "B", "C")
             .WithStructure(StructureIntent.Championship());
         var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         foreach (var match in materialized.CreatedMatches)
         {
@@ -140,6 +143,7 @@ public sealed class DematerializeChampionshipOrGroupsTests
             .WithTeams("A", "B", "C")
             .WithStructure(StructureIntent.Championship());
         var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         foreach (var match in materialized.CreatedMatches)
         {
@@ -169,6 +173,7 @@ public sealed class DematerializeChampionshipOrGroupsTests
             .WithTeams("A", "B")
             .WithStructure(StructureIntent.Championship());
         var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         foreach (var match in materialized.CreatedMatches)
         {

@@ -31,6 +31,7 @@ public sealed class DematerializeCupTests
         var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
         stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             situation.Competition,
             stage,
@@ -90,6 +91,7 @@ public sealed class DematerializeCupTests
         var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
         stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             situation.Competition,
             stage,
@@ -127,6 +129,7 @@ public sealed class DematerializeCupTests
         var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
         stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             situation.Competition,
             stage,
@@ -160,6 +163,7 @@ public sealed class DematerializeCupTests
         var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
         stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
         var materialized = MaterializeCupFromOccupiedSlots.Execute(
             situation.Competition,
             stage,
@@ -171,7 +175,6 @@ public sealed class DematerializeCupTests
             _matches.Track(match);
         }
 
-        stage.Prepare(_clock);
         stage.Start(_clock);
 
         var act = () => DematerializeCup.Execute(
