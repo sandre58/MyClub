@@ -1,6 +1,6 @@
 # Organizer problems — O4 drawer scope (G3 atelier)
 
-**Status:** **Pending product arbitration** — no Application or drawer payload change until **DECIDED** and written contract.
+**Status:** O4 **D1 revision implemented** (2026-10-12) — Notion [Drawer catalogue revision (D1 revision)](https://app.notion.com/p/3f775fb92d1081c39938c0e423f593c9). **`GET /attention`** = T5 + **presented** Structure diagnostics; **`Severity`** `Blocking` \| `Warning`; Overview **`attentionSummary`** = blocking subset only; bell = all items.
 
 **Prerequisite question:** What user problem does each candidate fact solve that Structure, Overview, or lifecycle surfaces do not already address?
 
@@ -17,7 +17,74 @@ Detecting a fact in the backend is **not** sufficient for a drawer line.
 
 Exercise **A** can proceed **without** a live export. Exercise **B** is required to interpret a concrete count (e.g. six Structure problems) and to validate dedup against real overlaps — not to decide whether the drawer should mirror the banner in general.
 
-**Code policy until Notion `DECIDED`:** `GET /attention` stays **T5 only**; no collector or payload extension.
+**Implementation:** [`StructurePresentedAttentionCollector`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePresentedAttentionCollector.cs) + [`NeedsAttentionAssembler`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/NeedsAttentionAssembler.cs).
+
+---
+
+## Decision 1 revision — Drawer = competition anomaly catalogue (PROPOSED)
+
+**Status:** **IMPLEMENTED** (2026-10-12) — Notion [Organizer problems O4 — Drawer catalogue revision (D1 revision)](https://app.notion.com/p/3f775fb92d1081c39938c0e423f593c9). Supersedes conservative [D1](https://app.notion.com/p/3f775fb92d1081d8909ac0a9eb199b69).
+
+### Validated product intent (exchange — not implementation gate alone)
+
+- **Drawer** = triage hub for **competition anomalies**: **Blocking** + **Warning**; organizer chooses whether to act.
+- **Bell badge** = **all retained lines** (after projection + dedup rules).
+- **`MissingStage` / `MissingStructure`** = creation paths + Overview — **not** drawer.
+- Requires **O4 revision** (catalogue, Overview contracts, collector) — not a collector-only patch.
+
+### Three surfaces (target contract)
+
+| Surface | Target contract |
+| :------ | :---------------- |
+| Drawer + bell | All **retained** anomalies (`Blocking` + `Warning`) |
+| `Overview.attentionSummary` | **Blocking only** (subset of `/attention`) |
+| `Overview.situations` | Business situations with own nature; **`CompetitionSuspended`** stays **Informational**, not in summary, not on `/attention` |
+
+### Proposals (workshop — validate at Acceptée)
+
+| Topic | Proposal |
+| :---- | :------- |
+| **Catalogue** | Include retained Structure diagnostics (Annex A3), hub blockers (A2), and targeted gates; exclude birth codes and **`StructureGraphInvalid`** aggregate when children are surfaced (E3). Keep existing **T5**. |
+| **Projection** | Drawer follows Structure **presented** semantics (`presentedProblemCount` rules), not raw analyzer output alone — see [Gate 3](#gate-3--structure-projection-parity). |
+| **Dedup** | Default **one line per stage × code**; merge only on explicit business rule (D4). **Do not** auto-merge graph qual/prog codes with runtime T5 `Qualification*` / `Progression*`. |
+| **Line identity** | `(Source, TargetType, TargetId)` — aligned with Overview `DeduplicateSituations`; Structure rows default `TargetType=Stage`, `TargetId=stageId`. |
+| **Competition status** | Structure diagnostics **MAY** on `/attention` when **Running** / **Suspended** (written rules TBD). **`InsufficientParticipants`** stays **Draft / Ready** only (E4). |
+| **Severity wire** | Contract values **`Blocking` \| `Warning`** (confirm at Acceptée). Per-code matrix: [Annex A4 revision (PROPOSED)](#a4-revision--per-code-catalogue-and-severity-proposed). |
+
+### Pre-implementation gates (must pass before collector work)
+
+**Gate 1 — Host Severity → Overview `Nature`**
+
+- Map `NeedsAttentionItemDto.Severity` in `BuildSituations` (today all attention items forced to `NatureBlocking`).
+- Preserve **`CompetitionSuspended`** as separately injected **Informational** (not via `/attention`).
+
+**Gate 2 — E1 revised (Overview vs `/attention`)**
+
+- Replace strict equality in [`ReadSurfaceEndpointTests`](../../tests/MyClub.PlayUp.Host.Tests/ReadSurfaceEndpointTests.cs) (`attentionSummary.Count` ≡ `attention.Count`, same sources) with:
+  - `attentionSummary` = blocking subset of `/attention` items;
+  - identity `(Source, TargetType, TargetId)` between summary and matching situations;
+  - **`NeedsAttentionDto.Count`** = all items (bell); Overview page keeps **`attentionSummary.count`** for blocking-only display.
+
+**Gate 3 — Structure projection parity**
+
+| Rule | SPA (presented) | Risk if collector uses Host raw `structureIssues[]` only |
+| :--- | :-------------- | :------------------------------------------------------- |
+| Silence `SlotFeedMissing` when draw engaged | [`projectPresentedStageIssueCodes`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticPresentation.ts) | Banner ≠ bell count |
+| Drop `ExpectedRankUnreachable` when `AuthoredAwardUnreachable` present | [`projectPresentedIssueCodes`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticPresentation.ts) | Extra drawer line |
+| Synthetic `PopulationShortfall` (U1) | [`StructurePopulationVolume`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePopulationVolume.cs) + SPA [`stagePresentedIssueCodes`](../../src/PlayUp/web/src/pages/structure/structureStagePresentedIssues.ts) | Aligned in Application (2026-10-12) |
+| `MissingPotRules` per phase | [`stageHasEngagedMissingPots`](../../src/PlayUp/web/src/pages/structure/structureStagePresentedIssues.ts) | Missing line |
+| `CupBracketInvalid` | `readiness.blockers` | Missing competition-level line |
+
+**Decision at Acceptée:** emit **presented-equivalent** items from Application **or** document + test Host ↔ SPA equivalence — do not assume factorization before comparing effective rules.
+
+**Gate 4 — Line identity and dedup**
+
+- Fix dedup and T5 ↔ graph cohabitation rules **before** locking severity matrix and bell line count.
+
+### If Acceptée — related contract amendments
+
+- **D2 E1, E2, E4** (and SPA denylist) must be updated to match extended catalogue; E5 (`CompetitionSuspended`) unchanged.
+- Implementation checklist: [If DECIDED — implementation checklist](#if-decided--implementation-checklist) below.
 
 ---
 
@@ -66,30 +133,62 @@ These rows capture recommended **discussion defaults** for the atelier. They do 
 
 ---
 
-## Decision 4 — Line unit and deduplication (priority proposal)
+## Decision 4 — Line unit and deduplication
 
-**Principle (to validate):** one drawer line = one **actionable business problem**, not a technical code, not a CTA label alone.
+**Status:** **DECIDED** (2026-10-12) — Notion [Organizer problems O4 — Drawer line unit & dedup (D4)](https://app.notion.com/p/3f775fb92d1081ff81a6dcdd40f33821) **✅ Acceptée**.
 
-| Situation | Proposal (not DECIDED) |
-| :-------- | :--------------------- |
-| Several codes, **same** correction | **One grouped line** when action and organizer context are genuinely identical. |
-| One code, **several phases** | Group **only** if the organizer can apply one shared correction; otherwise **one line per phase** (or explicit multi-target representation — TBD). |
-| Several symptoms, **different** corrections | **Several lines**, even if symptoms share a technical root cause. |
+### Principle (DECIDED)
 
-**Dedup key:** the **business action** the organizer can take — not wire code, not copy alone, not an assumed root cause.
+One drawer line represents one **business problem the organizer can act on**.
 
-**Open design points (require DECIDED answers before collector design):**
+- Several diagnostics may be **grouped** when the organizer can resolve them with the **same action** in the **same context**.
+- The same code on **several phases** does **not** automatically become one line.
+- **Independent** corrections stay **separate lines**, even when diagnostics share a technical root cause.
+- Dedup must **never hide** a problem that requires a **different** action.
 
-- How to represent **multiple phases** on a single line (params, primary stage, plural labels).
-- How to choose the **primary CTA** when grouping codes with the same intent but different deep links today on Structure.
+**Dedup criterion:** the **realizable business action**, with its **context** and **targets** — not wire code, display copy, or an assumed root cause.
+
+### Clarifications (part of the proposal)
+
+**1 — Multiple phases on one line**
+
+- Allow grouping **only** when a **shared correction** is genuinely possible.
+- A grouped line must carry **all affected phases** as **explicit targets** — not a redirect to an arbitrary single phase.
+- If the current `/attention` contract cannot represent multi-target rows cleanly → **prefer one line per phase** over an ambiguous payload.
+
+**2 — Primary CTA**
+
+- One **primary CTA** per grouped line, pointing to a destination where the **shared** correction can actually be executed.
+- If diagnostics imply **incompatible** destinations → **do not group** merely because labels look similar.
 
 ---
 
-## Decision 1 — Catalogue: initial family recommendations (drawer value — not inclusion)
+## Workshop sequence (O4)
 
-Conservative stance: the drawer is **not** a mirror of the Structure banner. A family enters `GET /attention` only if the organizer gains **new information or action**, especially when triaging from **another page** (Matches, Teams, Overview).
+| Step | Topic | Status |
+| :--- | :---- | :----- |
+| 4 | Line unit / dedup | **DECIDED** — Notion D4 |
+| 1 | Catalogue | **DECIDED** — Notion D1 (2026-10-12 conservative) |
+| 1′ | Catalogue revision | **PROPOSED** — Notion [D1 revision](https://app.notion.com/p/3f775fb92d1081c39938c0e423f593c9) |
+| 2 | Exclusions | **DECIDED** — Notion D2 (**E1/E2/E4 amend** if D1 revision Acceptée) |
+| 3 | Severity mapping | **DECIDED** — Notion D3 (**extend matrix** if D1 revision Acceptée) |
+| — | Collector / payload implementation | **Blocked** until D1 revision **Acceptée** + gates 1–4 |
 
-These rows are **initial workshop recommendations**, not decisions to extend `/attention`.
+---
+
+## Decision 1 — Catalogue (superseded when D1 revision Acceptée)
+
+**Status:** **DECIDED** (2026-10-12) — Notion [Organizer problems O4 — Drawer catalogue (D1)](https://app.notion.com/p/3f775fb92d1081d8909ac0a9eb199b69) **✅ Acceptée**. **Historical** conservative stance; see [Decision 1 revision](#decision-1-revision--drawer--competition-anomaly-catalogue-proposed) for target catalogue.
+
+**Outcome:**
+
+- **No bulk import** of Structure hub diagnostics (`structureIssues[]`, synthetic banner rows) into `GET /attention`.
+- **T5 unchanged** — only existing runtime sources remain on `/attention` until a **future** product decision adds a code.
+- **T2/T3/T4** (Annex A2/A3): **Exclude from drawer** by default; SoT stays **Structure** (Overview for birth: `MissingStage`, `MissingStructure`).
+- **`StructureGraphInvalid` aggregate:** never a drawer line when detailed child issues are already surfaced.
+- **“Individual review” families** (graph routing, destinations, capacity gates, population family): **Exclude by default**; reopen only via a **new** Notion decision documenting cross-page triage value.
+
+Conservative stance retained: the drawer is **not** a mirror of the Structure banner.
 
 | Problem family | Initial recommendation | Rationale |
 | :------------- | :--------------------- | :-------- |
@@ -107,28 +206,95 @@ Map codes → family via [Annex A](#annex-a--candidate-facts-inventory-from-git-
 
 ---
 
-## Decisions 2–3 — Exclusions and severity (proposal)
+## Decision 2 — Exclusions
 
-### Exclusions (formalize in O4 contract — not inferred from code)
+**Status:** **DECIDED** (2026-10-12) — Notion [Organizer problems O4 — Drawer exclusions (D2)](https://app.notion.com/p/3f775fb92d10817c8ff0fcb5e4fc87a9) **✅ Acceptée**.
 
-Product rules to write explicitly:
+**Scope:** what must **never** appear on `GET /attention` / drawer, and parity rules vs Overview — **in addition to** D1 catalogue (T2/T3/T4 excluded).
 
-- Structure (and related) diagnostics while competition is **`Running`**
-- Same while **`Suspended`**
-- Facts already in **Overview** `attentionSummary` / situations (no second triage)
-- **Aggregate vs detail** (e.g. `StructureGraphInvalid` vs child issue codes)
+### E1 — Overview and drawer parity (T5)
 
-[Annex B](#annex-b--running--suspended-facts-for-exclusion-rules--not-decisions) lists **current code behaviour** as input only.
+- **`GET /attention`** is the **only** catalogue for drawer lines (T5 under D1).
+- **`Overview.attentionSummary`** MUST remain the **same blocking ensemble** as `/attention` (same sources; Host contract test). No second triage catalogue on Overview for construction.
+- **Informational** Overview situations (e.g. `CompetitionSuspended`, nature Informational) MUST **NOT** be promoted to `/attention` or the drawer.
 
-### Severity (keep three layers)
+### E2 — Structure / construction (all competition statuses)
 
-| Layer | Role |
-| :---- | :--- |
-| Host `Severity` | Wire / contract on `NeedsAttentionItemDto` |
-| `semanticLevel` | Organizer-facing meaning (Gate / Signal / Attention / …) |
-| SPA drawer tone | Presentation only |
+- T2/T3/T4 facts (D1 Annex A2/A3) MUST **NOT** be collected on `/attention` when competition is **Draft, Ready, Running, Suspended, Completed, or Archived**.
+- SPA construction **denylist** ([`attentionPartition.ts`](../../src/PlayUp/web/src/shell/attentionPartition.ts)) stays a **guardrail** if Host regresses.
 
-Define an **explicit mapping** where needed; do **not** derive drawer colour or urgency directly from Host `Severity`.
+### E3 — Aggregates vs detail
+
+- MUST **NOT** emit a drawer/`/attention` line for **`StructureGraphInvalid`** (or other Prepare/readiness **aggregates**) when D1 excludes them.
+- If a **future** decision adds a **child** issue code to `/attention`, MUST **NOT** also emit the **parent aggregate** for the same organizer action (D4 dedup).
+
+### E4 — `Running`
+
+- **`InsufficientParticipants`**: MUST **NOT** appear on `/attention` when status is **not** Draft or Ready (preserve today).
+- Other **T5** sources (`DrawNoSolution`, `Qualification*`, `Progression*`) MAY appear when Running — runtime consequences are in scope.
+- No Running-specific **expansion** of catalogue beyond T5.
+
+### E5 — `Suspended`
+
+- MUST **NOT** add a **drawer-only** blocking line for “competition suspended”; Overview keeps the **informational** suspended situation (not in `attentionSummary`).
+- **T5** collection **unchanged** while Suspended (pending qual/prog/draw may still require organizer action unless a **separate** lifecycle rule blocks mutations).
+- Structure construction diagnostics remain **out of drawer** (D1 + E2).
+
+### E6 — Stage lifecycle (collector input, not drawer catalogue)
+
+- Stage status (Draft / Ready / Running / …) does **not** by itself add new `/attention` **source kinds** under D2. Eligibility of existing T5 rules follows domain evaluators (e.g. finished legs for progression).
+
+[Annex B](#annex-b--running--suspended-code-behaviour-reconciliation) records **pre-D2 code behaviour** for reconciliation.
+
+---
+
+## Decision 3 — Severity and presentation layers
+
+**Status:** **DECIDED** (2026-10-12) — Notion [Organizer problems O4 — Drawer severity layers (D3)](https://app.notion.com/p/3f775fb92d1081f59b0ff00bf957c243) **✅ Acceptée**.
+
+Three **independent** layers — no automatic collapse.
+
+| Layer | Wire / location | Role |
+| :---- | :-------------- | :--- |
+| **Host `Severity`** | `NeedsAttentionItemDto.Severity` → SPA `nature` | **Catalogue partition** for `/attention` and Overview `attentionSummary` (blocking vs non-blocking ensemble). |
+| **`semanticLevel`** | Optional `problem.semanticLevel` on read DTOs | **Meaning** for organizer-problem enrichment (Gate / Signal / Attention / Information) — copy, aliases, lifecycle/structure SoT — **not** the primary drawer group key today. |
+| **Drawer visual tone** | SPA `functionalProblemPresentation` / row chrome | **Presentation only** (warning vs attention vs danger) from **source + canal rules**, not from `Severity` alone. |
+
+### S1 — No implicit mapping
+
+- MUST **NOT** derive drawer **row colour** or **group** (`Bloquant` vs `À traiter`) from `problem.semanticLevel` alone.
+- MUST **NOT** derive `semanticLevel` from Host `Severity` automatically when emitting `problem` (explicit resolver rules only).
+
+### S2 — Host `Severity` → drawer / Overview groups
+
+- SPA maps `NeedsAttentionItem.severity` → `OverviewSituation.nature` ([`needsAttentionToSituation.ts`](../../src/PlayUp/web/src/shell/needsAttentionToSituation.ts)).
+- Drawer groups use `nature === 'Blocking'` vs else ([`attentionPartition.ts`](../../src/PlayUp/web/src/shell/attentionPartition.ts)) — same axis as Overview `attentionSummary`.
+- **Today (T5):** all emitted items use **`Blocking`**; non-blocking `/attention` items are **out of scope** until a future decision adds them with an explicit `Severity` value.
+
+### S3 — `semanticLevel` usage (optional `problem`)
+
+- Used for **canon / presentation** (`organizerProblemPresentationCode`, structure issue semantics) per Step 2 pilot — **not** for `/attention` item inclusion (D1).
+- **`Gate`**: lifecycle Prepare/Complete and structure gates — primarily **Structure / fiche**, not drawer catalogue under current T5.
+- **`Attention`**: runtime intervention (e.g. `QualificationPending` pilot on R2).
+- **`Signal` / `Information`**: diagnostics and echoes — **Structure** or Overview informational situations; **not** `/attention` unless a future catalogue decision says otherwise.
+
+### S4 — Drawer visual tone (SPA)
+
+- Tone comes from **`situationPresentation` / `functionalProblemPresentation`** (e.g. `DrawNoSolution` → warning; most T5 → attention).
+- When `problem` is present, tone MAY consider **source + canal**; **`semanticLevel` MAY inform copy** but MUST NOT replace S2 grouping.
+
+### S5 — T5 reference matrix (current contract)
+
+| T5 `source` | Host `Severity` | Typical `problem.semanticLevel` | Drawer group (`nature`) | Visual tone (SPA) |
+| :---------- | :-------------- | :------------------------------ | :---------------------- | :---------------- |
+| `InsufficientParticipants` | `Blocking` | (usually omitted) | Bloquant | attention / teams canal |
+| `DrawNoSolution` | `Blocking` | (omitted) | Bloquant | warning |
+| `QualificationPending` | `Blocking` | `Attention` (pilot) | Bloquant | attention |
+| `QualificationConflict` | `Blocking` | (omitted) | Bloquant | attention |
+| `ProgressionPending` | `Blocking` | (omitted) | Bloquant | attention |
+| `ProgressionConflict` | `Blocking` | (omitted) | Bloquant | attention |
+
+Future non-`Blocking` `Severity` values require an explicit product decision and updates to this matrix, Overview parity tests, and drawer copy.
 
 ---
 
@@ -212,36 +378,59 @@ Use columns **Proposal** / **Decision (validated)** during the atelier. French l
 
 CTA navigation: [`resolveStructureDiagnosticNavigation`](../../src/PlayUp/web/src/pages/structure/structureReadinessActions.ts) → deep link Structure (`section`, `focus`, dialog).
 
-### A4 — Per-code rows (generic **Proposal** from family table — **Decision** empty until atelier)
+### A4 — Per-code catalogue decisions (D1 DECIDED — historical conservative)
 
-Fill columns (1)–(5) in the atelier; **Decision** only after Notion `DECIDED`. For exercise **B**, add a companion sheet keyed by your export’s actual codes and phases.
+Superseded for product target by [A4 revision (PROPOSED)](#a4-revision--per-code-catalogue-and-severity-proposed) when D1 revision is **Acceptée**.
 
-| Code | Family default (Proposal) | Decision |
-| :--- | :------------------------ | :------- |
-| `MissingStage` | Keep Overview / birth SoT — not drawer | |
-| `MissingStructure` | Keep Overview / birth SoT — not drawer | |
-| `MissingPotRules` | Keep Structure SoT — not drawer | |
-| `CupBracketInvalid` | Keep Structure SoT — not drawer | |
-| `StructureGraphInvalid` | No aggregate drawer line; detail elsewhere | |
-| `ConfrontationUndecidable` | Keep Structure; individual drawer review only | |
-| `OverCapacityEdge` | Keep Structure; individual drawer review only | |
-| `OverExtraction` | Keep Structure; individual drawer review only | |
-| `CycleDetected` | No bulk import — per-code review | |
-| `RoutingNondeterminism` | No bulk import — per-code review | |
-| `DanglingQualificationTarget` | No bulk import — per-code review | |
-| `DanglingProgressionTarget` | No bulk import — per-code review | |
-| `MissingQualificationDestinationSlot` | No bulk import — per-code review | |
-| `MissingQualificationDestinationGroup` | No bulk import — per-code review | |
-| `MissingProgressionDestinationSlot` | No bulk import — per-code review | |
-| `MissingProgressionDestinationGroup` | No bulk import — per-code review | |
-| `SlotFeedMissing` | Keep Structure SoT — not drawer | |
-| `SlotFeedInvalid` | Keep Structure SoT — not drawer | |
-| `SlotFeedMultiple` | Keep Structure SoT — not drawer | |
-| `NonRootUnfed` | Review with population family — not presuming merge | |
-| `PopulationShortfall` | Review with population family — not presuming merge | |
-| `SourcePopulationShortfall` | Review with population family — not presuming merge | |
-| `AuthoredAwardUnreachable` | Keep Structure SoT — not drawer | |
-| `ExpectedRankUnreachable` | Keep Structure SoT — not drawer | |
+| Code | Decision (D1 2026-10-12) |
+| :--- | :------------------------- |
+| `InsufficientParticipants` | **Include (T5)** — Draft/Ready only |
+| `DrawNoSolution` | **Include (T5)** |
+| `QualificationPending` / `Conflict` | **Include (T5)** |
+| `ProgressionPending` / `Conflict` | **Include (T5)** |
+| `MissingStage` / `MissingStructure` | **Exclude** — birth |
+| All other A2/A3 codes | **Exclude** (conservative) — see A4 revision |
+
+### A4 revision — Per-code catalogue and severity (PROPOSED)
+
+**Not DECIDED.** Workshop defaults for [D1 revision](https://app.notion.com/p/3f775fb92d1081c39938c0e423f593c9). Validate each row at **Acceptée** (Exercise **B** recommended).
+
+**Include** = emit on `/attention` when projection rules say the anomaly is **presented** (Gate 3). **Severity** = proposed Host `Severity` (`Blocking` \| `Warning`).
+
+| Code | Include (proposal) | Severity (proposal) | Notes |
+| :--- | :----------------- | :------------------ | :---- |
+| `InsufficientParticipants` | Yes (T5) | Blocking | Draft / Ready only |
+| `DrawNoSolution` | Yes (T5) | Blocking | |
+| `QualificationPending` | Yes (T5) | Blocking | Dedup vs graph qual codes — explicit rule |
+| `QualificationConflict` | Yes (T5) | Blocking | |
+| `ProgressionPending` | Yes (T5) | Blocking | Dedup vs graph prog codes — explicit rule |
+| `ProgressionConflict` | Yes (T5) | Blocking | |
+| `MissingStage` | **No** | — | Birth |
+| `MissingStructure` | **No** | — | Birth |
+| `MissingPotRules` | Yes | Blocking | Synthetic per stage (presented) |
+| `CupBracketInvalid` | Yes | Blocking | Competition target |
+| `StructureGraphInvalid` | **No** | — | Aggregate when children listed |
+| `ConfrontationUndecidable` | Yes | Blocking | |
+| `OverCapacityEdge` | Yes | Blocking | Stage |
+| `OverExtraction` | Yes | Blocking | Stage |
+| `CycleDetected` | Yes | Blocking | Stage |
+| `RoutingNondeterminism` | Yes | Blocking | Stage |
+| `DanglingQualificationTarget` | Yes | Blocking | Stage; no auto-merge with T5 qual |
+| `DanglingProgressionTarget` | Yes | Blocking | Stage |
+| `MissingQualificationDestinationSlot` | Yes | Blocking | Stage |
+| `MissingQualificationDestinationGroup` | Yes | Blocking | Stage |
+| `MissingProgressionDestinationSlot` | Yes | Blocking | Stage |
+| `MissingProgressionDestinationGroup` | Yes | Blocking | Stage |
+| `SlotFeedMissing` | Yes | Warning | May be silenced (draw engaged) |
+| `SlotFeedInvalid` | Yes | Blocking | Stage |
+| `SlotFeedMultiple` | Yes | Blocking | Stage |
+| `NonRootUnfed` | Yes | Warning | Stage |
+| `PopulationShortfall` | Yes | Blocking | Includes U1 synthetic when presented |
+| `SourcePopulationShortfall` | Yes | Blocking | Stage |
+| `AuthoredAwardUnreachable` | Yes | Warning | Presented merge drops `ExpectedRank…` |
+| `ExpectedRankUnreachable` | Yes* | Warning | *Omit when `AuthoredAwardUnreachable` on same stage (presentation) |
+
+**T5 ↔ Structure dedup (PROPOSED):** never collapse graph destination codes with runtime `QualificationPending` / `ProgressionPending` solely because labels overlap; if both exist, **both lines** unless a future explicit merge rule documents the same organizer action.
 
 Extended template (optional per row):
 
@@ -250,9 +439,9 @@ Extended template (optional per row):
 
 ---
 
-## Annex B — Running / Suspended (facts for exclusion rules — not decisions)
+## Annex B — Running / Suspended (code behaviour reconciliation)
 
-Document exact product rules in O4 outcome; below is **code behaviour today** (input to discussion):
+Product rules: **Decision 2** (E4–E5). Below is **behaviour before explicit D2** — use for audit only:
 
 | Topic | Behaviour today |
 | :---- | :-------------- |
@@ -271,6 +460,14 @@ Document exact product rules in O4 outcome; below is **code behaviour today** (i
 - SPA partition/denylist mirror — not guardrail-only
 - Revisit [`functionalProblemPresentation.ts`](../../src/PlayUp/web/src/shell/functionalProblemPresentation.ts) canal rules
 
-## Default if no decision
+## Current contract (code today vs target)
 
-Drawer stays **T5**; construction remains Structure / Overview SoT.
+**Today (until D1 revision Acceptée):**
+
+- **`GET /attention`:** **T5 only** (D1 2026-10-12). Exclusions E1–E6 (D2). Severity S1–S5 (D3). Dedup D4.
+- **No collector extension.**
+
+**Target (D1 revision PROPOSED — after Acceptée + gates 1–4):**
+
+- **`GET /attention`:** T5 + **retained Structure anomalies** (A4 revision), **`Blocking` + `Warning`**.
+- **Bell:** all `/attention` lines; **`attentionSummary`:** blocking subset; **`CompetitionSuspended`:** unchanged (Informational only on Overview).

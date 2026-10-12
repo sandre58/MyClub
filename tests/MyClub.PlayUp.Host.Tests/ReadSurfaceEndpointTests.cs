@@ -187,6 +187,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.Situations.Should().NotBeNull();
         body.Situations.Should().OnlyContain(item =>
             item.Nature == OverviewAssembler.NatureBlocking
+            || item.Nature == OverviewAssembler.NatureWarning
             || item.Nature == OverviewAssembler.NatureInformational);
         body.AttentionSummary.Count.Should().Be(body.AttentionSummary.Items.Count);
         body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == OverviewAssembler.NatureBlocking);
@@ -198,20 +199,19 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.AttentionSummary.Items.Should().NotContain(item =>
             item.Source == "MissingStage"
                 || item.Source == "MissingStructure"
-                || item.Source == "MissingPotRules"
-                || item.Source == "CupBracketInvalid"
-                || item.Source == "StructureGraphInvalid"
-                || item.Source == "ConfrontationUndecidable"
-                || item.Source == "OverCapacityEdge"
-                || item.Source == "OverExtraction");
+                || item.Source == "StructureGraphInvalid");
 
         using var attentionResponse = await client.GetAsync($"/competitions/{seed.CompetitionId.Value}/attention");
         attentionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var attention = await attentionResponse.Content.ReadFromJsonAsync<NeedsAttentionDto>(HostJson.Options);
         attention.Should().NotBeNull();
-        body.AttentionSummary.Count.Should().Be(attention.Count);
+        var blockingAttention = attention!.Items
+            .Where(item => item.Severity == NeedsAttentionAssembler.SeverityBlocking)
+            .ToArray();
+        body.AttentionSummary.Count.Should().Be(blockingAttention.Length);
         body.AttentionSummary.Items.Select(item => item.Source).Should().BeEquivalentTo(
-            attention.Items.Select(item => item.Source));
+            blockingAttention.Select(item => item.Source));
+        attention.Count.Should().Be(attention.Items.Count);
 
         body.AvailableActions.Should().NotBeNull();
         body.NaturalProgression.Should().NotBeNull();

@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -95,4 +96,153 @@ public static class StructurePopulationVolume
 
         return source.Regulation.QualificationRules is not { } qualification ? 0 : qualification.Paths.Sum(QualificationPathVolume);
     }
+
+    /// <summary>
+    /// Volume promised by one qualification path on the Structure read DTO (SPA parity).
+    /// </summary>
+    public static int QualificationPathVolume(StructureQualificationPathDto path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+
+        return path.SelectionMode switch
+        {
+            SelectionMode.Position => 1,
+            SelectionMode.Range =>
+                Math.Max(1, (path.SelectionEndValue ?? path.SelectionValue) - path.SelectionValue + 1),
+            SelectionMode.Top or SelectionMode.Bottom => Math.Max(1, path.SelectionValue),
+            _ => Math.Max(1, path.SelectionValue)
+        };
+    }
+
+    /// <summary>
+    /// Inbound configured volume toward a destination (Structure view — SPA <c>inboundPopulationConfiguredVolume</c>).
+    /// </summary>
+    public static int InboundConfiguredVolume(StructureViewDto view, Guid destinationStageId)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+
+        var volume = 0;
+        foreach (var source in view.Stages)
+        {
+            if (source.QualificationPaths is { } qualificationPaths)
+            {
+                volume += qualificationPaths
+                    .Where(path => path.DestinationStageId == destinationStageId)
+                    .Sum(QualificationPathVolume);
+            }
+
+            if (source.ProgressionPaths is { } progressionPaths)
+            {
+                volume += progressionPaths.Count(path => path.DestinationStageId == destinationStageId);
+            }
+        }
+
+        return volume;
+    }
+
+    /// <summary>
+    /// Expected Places N occupancy for U1 meter (affectation + inbound qual/prog).
+    /// </summary>
+    public static int ExpectedOccupancy(StructureViewDto view, StructureStageHubSummaryDto destination)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        ArgumentNullException.ThrowIfNull(destination);
+
+        return destination.AffectationEntryCount
+            + InboundConfiguredVolume(view, destination.StageId);
+    }
+
+    /// <summary>
+    /// Places N for presentation (SPA <c>resolvePlacesN</c>) — prefers hub <see cref="StructureStageHubSummaryDto.CompositionCapacity"/>.
+    /// </summary>
+    public static int? ResolvePlacesN(StructureStageHubSummaryDto hub)
+    {
+        ArgumentNullException.ThrowIfNull(hub);
+
+        if (hub.CompositionCapacity is > 0)
+        {
+            return hub.CompositionCapacity;
+        }
+
+        var kind = hub.FormatKind;
+        if (kind == StructureFormatKind.Cup || (kind is null && hub.SlotCount > 0))
+        {
+            return ResolveCupEntryPlacesFromHub(hub);
+        }
+
+        if (kind == StructureFormatKind.Groups || hub.GroupCount > 0)
+        {
+            var groups = hub.GroupCount;
+            var perGroup = hub.PlacesPerGroup ?? hub.NumberOfPots;
+            if (groups > 0 && perGroup is >= 2)
+            {
+                return groups * perGroup.Value;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// SPA U1: synthesize <see cref="CompetitionFlowAnalyzer.PopulationShortfall"/> when occupancy &lt; Places N.
+    /// </summary>
+    public static bool ShouldSynthesizePopulationShortfall(
+        StructureViewDto view,
+        StructureStageHubSummaryDto stage,
+        IReadOnlyList<string> rawIssueCodes)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(rawIssueCodes);
+
+        if (rawIssueCodes.Contains(CompetitionFlowAnalyzer.PopulationShortfall, StringComparer.Ordinal))
+        {
+            return false;
+        }
+
+        var places = ResolvePlacesN(stage);
+        if (places is null or <= 0)
+        {
+            return false;
+        }
+
+        return ExpectedOccupancy(view, stage) - places.Value < 0;
+    }
+
+    private static int? ResolveCupEntryPlacesFromHub(StructureStageHubSummaryDto hub)
+    {
+        var slotCount = hub.SlotCount;
+        if (slotCount <= 0)
+        {
+            return null;
+        }
+
+        var roundCount = hub.RoundCount;
+        if (roundCount <= 1)
+        {
+            return slotCount;
+        }
+
+        var fullTreeSlots = (1 << (roundCount + 1)) - 2;
+        if (slotCount == fullTreeSlots)
+        {
+            return 1 << roundCount;
+        }
+
+        var firstRoundSlots = 1 << roundCount;
+        if (slotCount == firstRoundSlots)
+        {
+            return firstRoundSlots;
+        }
+
+        if (slotCount < 2 || (slotCount + 2) % 2 != 0)
+        {
+            return null;
+        }
+
+        var entryPlaces = (slotCount + 2) / 2;
+        return IsPowerOfTwo(entryPlaces) && entryPlaces >= 2 ? entryPlaces : null;
+    }
+
+    private static bool IsPowerOfTwo(int value) => value > 0 && (value & (value - 1)) == 0;
 }

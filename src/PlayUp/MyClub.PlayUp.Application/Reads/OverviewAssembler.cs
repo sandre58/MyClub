@@ -56,6 +56,9 @@ public static class OverviewAssembler
     /// <summary>Situation nature: blocking attention.</summary>
     public const string NatureBlocking = "Blocking";
 
+    /// <summary>Situation nature: non-blocking attention (warning).</summary>
+    public const string NatureWarning = "Warning";
+
     /// <summary>Situation nature: informational.</summary>
     public const string NatureInformational = "Informational";
 
@@ -1188,7 +1191,7 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// AttentionSummary = Blocking situations only — Needs Attention ensemble (same as GET /attention).
+    /// AttentionSummary = Blocking situations only — subset of GET /attention (D1 revision).
     /// </summary>
     private static OverviewAttentionSummaryDto BuildAttentionSummary(
         IReadOnlyList<OverviewSituationDto> situations)
@@ -1201,7 +1204,7 @@ public static class OverviewAssembler
     /// Builds operational situations from Needs Attention (+ Suspended informational).
     /// </summary>
     /// <remarks>
-    /// AttentionSummary = Blocking subset of Situations — same ensemble as GET /attention (Needs Attention).
+    /// AttentionSummary = Blocking subset of Situations — blocking items from GET /attention only.
     /// Structure readiness / construction blockers stay on Structure readiness surfaces — never merged here (D-Align).
     /// <c>InsufficientParticipants</c> is projected only from Needs Attention (single SoT).
     /// Completion blockers stay on ClosureHint — never merged here.
@@ -1221,7 +1224,7 @@ public static class OverviewAssembler
                 var parameters = BuildSituationParams(item, structureView);
                 return CreateSituation(
                     item.Source,
-                    NatureBlocking,
+                    MapAttentionNature(item.Severity),
                     item.TargetType,
                     item.TargetId,
                     ResolveMatchIdForAttentionItem(item, stages, fixtureToMatch),
@@ -1268,6 +1271,11 @@ public static class OverviewAssembler
             actionCode,
             impactCode,
             parameters);
+
+    private static string MapAttentionNature(string severity) =>
+        string.Equals(severity, NeedsAttentionAssembler.SeverityWarning, StringComparison.Ordinal)
+            ? NatureWarning
+            : NatureBlocking;
 
     private static string? MapAttentionAction(string source) =>
         source switch
@@ -1328,7 +1336,19 @@ public static class OverviewAssembler
                 };
         }
 
-        var parameters = new Dictionary<string, string>();
+        var parameters = item.Params is { Count: > 0 }
+            ? item.Params.ToDictionary(
+                pair => pair.Key,
+                pair => pair.Value,
+                StringComparer.Ordinal)
+            : new Dictionary<string, string>(StringComparer.Ordinal);
+
+        if (item is { TargetType: "Stage", TargetId: not null }
+            && !parameters.ContainsKey("stageId"))
+        {
+            parameters["stageId"] = item.TargetId;
+        }
+
         if (item is not { TargetType: "Slot", TargetId: not null })
         {
             return parameters;

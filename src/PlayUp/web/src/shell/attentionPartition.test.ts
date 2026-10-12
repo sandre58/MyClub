@@ -23,7 +23,7 @@ function situation(
 }
 
 describe('attentionPartition', () => {
-  it('drops construction blockers from the drawer (Q1 guardrail)', () => {
+  it('drops birth and aggregate sources from the drawer (guardrail)', () => {
     const { blocking, attention } = partitionAttentionItems([
       situation('StructureGraphInvalid'),
       situation('MissingStructure'),
@@ -32,13 +32,16 @@ describe('attentionPartition', () => {
       situation('CupBracketInvalid'),
       situation('DrawNoSolution'),
       situation('QualificationPending'),
+      situation('SlotFeedMissing', 'Warning'),
     ]);
 
     expect(blocking.map((item) => item.source)).toEqual([
+      'MissingPotRules',
+      'CupBracketInvalid',
       'DrawNoSolution',
       'QualificationPending',
     ]);
-    expect(attention).toEqual([]);
+    expect(attention.map((item) => item.source)).toEqual(['SlotFeedMissing']);
   });
 
   it('keeps InsufficientParticipants (presentation; SoT remains Teams)', () => {

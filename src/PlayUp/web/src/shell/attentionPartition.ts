@@ -1,14 +1,12 @@
 import type { OverviewSituation } from '../types';
 
 /**
- * Construction blockers that must never appear in AttentionDrawer (Q1).
- * Host `/attention` does not emit them today — SPA denylist is a guardrail.
+ * Sources that must never appear in AttentionDrawer (birth + aggregates).
+ * Host should not emit them — SPA denylist is a guardrail.
  */
 export const ATTENTION_DRAWER_CONSTRUCTION_DENYLIST = new Set([
   'MissingStage',
   'MissingStructure',
-  'MissingPotRules',
-  'CupBracketInvalid',
   'StructureGraphInvalid',
 ]);
 

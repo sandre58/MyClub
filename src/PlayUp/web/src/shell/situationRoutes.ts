@@ -1,4 +1,5 @@
 import type { OverviewSituation } from '../types';
+import { structureDiagnosticMeta } from '../pages/structure/structureDiagnosticPresentation';
 
 /**
  * Resolve an Overview navigationHint / situation target to an existing SPA route.
@@ -59,6 +60,20 @@ export function situationHref(
 ): string | null {
   if (situation.source === 'InsufficientParticipants') {
     return `/competitions/${competitionId}/teams`;
+  }
+
+  const stageId =
+    situation.params?.stageId?.trim() ||
+    (situation.targetType === 'Stage' ? situation.targetId?.trim() : null);
+  const isStructureCatalogueSource =
+    Boolean(structureDiagnosticMeta(situation.source)) ||
+    situation.source === 'CupBracketInvalid' ||
+    situation.source === 'MissingPotRules';
+
+  if (isStructureCatalogueSource) {
+    return `/competitions/${competitionId}/structure${
+      stageId ? `?stage=${encodeURIComponent(stageId)}` : ''
+    }`;
   }
 
   return (

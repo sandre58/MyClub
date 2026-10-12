@@ -55,6 +55,9 @@ public static class NeedsAttentionAssembler
     /// <summary>Blocking severity.</summary>
     public const string SeverityBlocking = "Blocking";
 
+    /// <summary>Non-blocking severity (drawer warning group).</summary>
+    public const string SeverityWarning = "Warning";
+
     /// <summary>
     /// Builds Needs Attention for a competition.
     /// </summary>
@@ -92,6 +95,12 @@ public static class NeedsAttentionAssembler
             var matches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
             CollectQualificationAttentions(stage, stages, matches, items);
             CollectProgressionAttentions(stage, stages, matches, items);
+        }
+
+        if (stages.Count > 0)
+        {
+            var structureView = StructureViewAssembler.Assemble(competition, stages);
+            StructurePresentedAttentionCollector.Collect(structureView, items);
         }
 
         return new NeedsAttentionDto(competition.Id.Value, items);

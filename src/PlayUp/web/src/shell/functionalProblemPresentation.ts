@@ -8,7 +8,7 @@
  * Diagnostic taxonomy → presentation via structureDiagnosticPresentation (family / tile / CTA).
  * Population shortfall may also come from U1 volume helper (never Host blockers alone).
  * MissingPotRules = only when draw engaged (HasDrawRules); PageHead = synthesis counts
- * AttentionDrawer = runtime only (construction denylist below)
+ * AttentionDrawer = T5 + Structure catalogue (D1 revision); birth denylist in attentionPartition.
  */
 
 import { situationHref } from './situationRoutes';
@@ -145,6 +145,24 @@ export function functionalProblemPresentation(
         Object.entries(params).map(([key, value]) => [key, value]),
       )
     : undefined;
+
+  const stageFromTarget =
+    stageId ??
+    (targetType === 'Stage' && targetId ? targetId : null);
+
+  if (!structureIssueCode && structureDiagnosticMeta(source)) {
+    return functionalProblemPresentation({
+      source,
+      targetType,
+      targetId,
+      matchId,
+      competitionId,
+      params,
+      actionCode,
+      stageId: stageFromTarget,
+      structureIssueCode: source,
+    });
+  }
 
   // Topology / fiche child issue (structureIssues code)
   if (structureIssueCode) {
