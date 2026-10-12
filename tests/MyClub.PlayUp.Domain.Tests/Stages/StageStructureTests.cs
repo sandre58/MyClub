@@ -20,41 +20,33 @@ public sealed class StageStructureTests
     private readonly CompetitionId _competitionId = CompetitionId.New();
 
     [Fact]
-    public void AddMatchday_demotes_Ready_to_Draft_and_raises_StageMatchdayAdded()
+    public void AddMatchday_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = CreateReadyChampionship();
         stage.ClearDomainEvents();
 
-        // Act
-        stage.AddMatchday(2, _clock);
+        var act = () => stage.AddMatchday(2, _clock);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchdayAdded>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
+        stage.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void AddGroup_demotes_Ready_poules_and_raises_StageGroupAdded()
+    public void AddGroup_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = CreateReadyPoules();
         stage.ClearDomainEvents();
 
-        // Act
-        var group = stage.AddGroup("B", _clock);
+        var act = () => stage.AddGroup("B", _clock);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Draft);
-        var added = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageGroupAdded>().Subject;
-        added.GroupId.Should().Be(group.Id);
-        added.OccurredOn.Should().Be(_clock.UtcNow);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
-    public void RemoveGroup_demotes_Ready_and_raises_StageGroupRemoved()
+    public void RemoveGroup_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
         var b = stage.AddGroup("B", _clock);
@@ -63,66 +55,52 @@ public sealed class StageStructureTests
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
-        stage.RemoveGroup(b.Id, _clock);
+        var act = () => stage.RemoveGroup(b.Id, _clock);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageGroupRemoved>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
-    public void RenameRound_real_change_keeps_Ready_without_event()
+    public void RenameRound_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = Stage.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("QF", _clock);
         stage.Prepare(_clock);
-        stage.ClearDomainEvents();
 
-        // Act
-        stage.RenameRound(round.Id, "Quarter-finals");
+        var act = () => stage.RenameRound(round.Id, "Quarter-finals");
 
-        // Assert
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
         stage.Status.Should().Be(StageStatus.Ready);
-        round.Name.Should().Be("Quarter-finals");
-        stage.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void RenameRound_same_name_is_noop()
+    public void RenameRound_same_name_is_noop_in_Draft()
     {
-        // Arrange
         var stage = Stage.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var round = stage.AddRound("Final", _clock);
-        stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.RenameRound(round.Id, "Final");
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Ready);
+        stage.Status.Should().Be(StageStatus.Draft);
         stage.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void RemoveMatchday_raises_StageMatchdayRemoved_and_demotes_Ready()
+    public void RemoveMatchday_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = Stage.Create(_competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
         var first = stage.AddMatchday(1, _clock);
         stage.AddMatchday(2, _clock);
         stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
-        stage.RemoveMatchday(first.Id, _clock);
+        var act = () => stage.RemoveMatchday(first.Id, _clock);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchdayRemoved>();
-        stage.HasMatchday(first.Id).Should().BeFalse();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
+        stage.HasMatchday(first.Id).Should().BeTrue();
     }
 
     [Fact]
@@ -265,36 +243,30 @@ public sealed class StageStructureTests
     }
 
     [Fact]
-    public void RenameGroup_same_name_is_noop_and_keeps_Ready()
+    public void RenameGroup_same_name_is_noop_in_Draft()
     {
-        // Arrange
-        var stage = CreateReadyPoules();
-        var group = stage.Groups[0];
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
+        stage.AddMatchday(1, _clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.RenameGroup(group.Id, group.Name);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Ready);
+        stage.Status.Should().Be(StageStatus.Draft);
         stage.DomainEvents.Should().BeEmpty();
     }
 
     [Fact]
-    public void RenameGroup_real_change_keeps_Ready_without_event()
+    public void RenameGroup_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = CreateReadyPoules();
         var group = stage.Groups[0];
-        stage.ClearDomainEvents();
 
-        // Act
-        stage.RenameGroup(group.Id, "Group Z");
+        var act = () => stage.RenameGroup(group.Id, "Group Z");
 
-        // Assert
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
         stage.Status.Should().Be(StageStatus.Ready);
-        group.Name.Should().Be("Group Z");
-        stage.DomainEvents.Should().BeEmpty();
     }
 
     private Stage CreateReadyChampionship()

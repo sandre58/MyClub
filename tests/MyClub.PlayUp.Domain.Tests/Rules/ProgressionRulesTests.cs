@@ -172,9 +172,8 @@ public sealed class ProgressionRulesTests
     }
 
     [Fact]
-    public void ReplaceProgressionRules_accepts_fixture_of_stage_and_demotes_ready()
+    public void ReplaceProgressionRules_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = Stage.Create(
             CompetitionId.New(),
             new StageName("Cup"),
@@ -188,7 +187,6 @@ public sealed class ProgressionRulesTests
         stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
-        stage.ClearDomainEvents();
 
         var rules = new ProgressionRules(
         [
@@ -197,13 +195,10 @@ public sealed class ProgressionRulesTests
                 new ProgressionDestination(stage.Id, "SF1-A"))
         ]);
 
-        // Act
-        stage.ReplaceProgressionRules(rules, _clock);
+        var act = () => stage.ReplaceProgressionRules(rules, _clock);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.Regulation.ProgressionRules.Should().Be(rules);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageRegulationReplaced>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]

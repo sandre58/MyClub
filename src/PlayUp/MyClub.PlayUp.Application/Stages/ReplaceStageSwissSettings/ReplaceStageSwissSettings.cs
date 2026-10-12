@@ -21,12 +21,7 @@ public static class ReplaceStageSwissSettings
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Swiss settings cannot be changed while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        StageStructureEditGuard.EnsureEditable(stage);
 
         if (roundCount < 1)
         {

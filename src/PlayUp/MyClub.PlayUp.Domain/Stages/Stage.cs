@@ -281,15 +281,13 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces the stage regulation as a whole (specialization). Unbinds heritable parts that change.
-    /// Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Allowed in Draft only (structure locked from Ready).
     /// </summary>
     public void ReplaceRegulation(StageRegulation regulation, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(regulation);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         UnbindChangedMatchParts(Regulation.MatchRules, regulation.MatchRules);
         UnbindChangedStandingParts(Regulation.StandingRules, regulation.StandingRules);
 
@@ -300,15 +298,13 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces match rules (specialization). Unbinds each Match part whose value changes.
-    /// Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Allowed in Draft only (structure locked from Ready).
     /// </summary>
     public void ReplaceMatchRules(MatchRules matchRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(matchRules);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         UnbindChangedMatchParts(Regulation.MatchRules, matchRules);
         Regulation = Regulation.WithMatchRules(matchRules);
         Raise(new StageRegulationReplaced(Id, clock));
@@ -348,7 +344,7 @@ public sealed class Stage : AggregateRoot<StageId>
         ArgumentNullException.ThrowIfNull(competitionRegulation);
         ArgumentNullException.ThrowIfNull(clock);
 
-        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        if (Status is not StageStatus.Draft)
         {
             return;
         }
@@ -402,7 +398,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(competitionRegulation);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         switch (part)
         {
@@ -463,15 +459,13 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Clears standing rules (Cup/KO alignment). Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Clears standing rules (Cup/KO alignment). Draft only.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
     public void ClearStandingRules(IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         if (Regulation.StandingRules is null)
         {
             return;
@@ -484,7 +478,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Seeds standing rules from competition defaults when absent (classifying phases).
-    /// Allowed in Draft or Ready; Ready is demoted to Draft. No-op when standing already present.
+    /// Allowed in Draft only (structure locked from Ready). No-op when standing already present.
     /// </summary>
     /// <param name="standingDefaults">Competition standing defaults (A4 seed).</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -492,21 +486,20 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(standingDefaults);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         if (Regulation.StandingRules is not null)
         {
             return;
         }
 
-        DemoteToDraftIfReady();
         Regulation = Regulation.WithStandingRules(standingDefaults);
         EnsureStandingRulesInvariant();
         Raise(new StageRegulationReplaced(Id, clock));
     }
 
     /// <summary>
-    /// Replaces draw rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Replaces draw rules. Draft only (structure locked from Ready).
     /// Clear is refused while any non-cancelled Draw exists.
     /// Replace (non-null) is refused once a non-cancelled Draw has left NotResolved
     /// (Generate consumed the rules for that execution — L2 lock).
@@ -516,9 +509,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ReplaceDrawRules(DrawRules? drawRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         if (drawRules is null && _draws.Any(draw => draw.Status != DrawStatus.Cancelled))
         {
             throw new DomainException(
@@ -609,9 +600,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public Draw CreateDraw(DrawResolutionKind kind, DrawId id, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         var draw = new Draw(id, kind);
         _draws.Add(draw);
         Raise(new StageDrawCreated(Id, draw.Id, kind, clock));
@@ -624,8 +613,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs)
     {
         ArgumentNullException.ThrowIfNull(inputs);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
+        EnsureStructureMutable();
         GetDraw(drawId).ConfigureInputs(inputs);
     }
 
@@ -636,9 +624,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(resolution);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         var draw = GetDraw(drawId);
         draw.RecordResolution(resolution);
         Raise(new StageDrawResolutionRecorded(Id, drawId, resolution.State, clock));
@@ -650,9 +636,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void MarkDrawNoSolution(DrawId drawId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         var draw = GetDraw(drawId);
         draw.MarkNoSolution();
         Raise(new StageDrawResolutionRecorded(Id, drawId, DrawResolutionState.NoSolution, clock));
@@ -664,7 +648,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void PublishDraw(DrawId drawId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         var draw = GetDraw(drawId);
         draw.Publish();
@@ -677,9 +661,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void CancelDraw(DrawId drawId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         var draw = GetDraw(drawId);
         if (draw.Status == DrawStatus.Cancelled)
         {
@@ -691,7 +673,7 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Replaces qualification rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Replaces qualification rules. Draft only (structure locked from Ready).
     /// Destinations target peer-stage population or Place — cannot target this stage.
     /// </summary>
     /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
@@ -699,7 +681,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ReplaceQualificationRules(QualificationRules? qualificationRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         if (qualificationRules is not null)
         {
@@ -711,13 +693,12 @@ public sealed class Stage : AggregateRoot<StageId>
             }
         }
 
-        DemoteToDraftIfReady();
         Regulation = Regulation.WithQualificationRules(qualificationRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }
 
     /// <summary>
-    /// Replaces progression rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Replaces progression rules. Draft only (structure locked from Ready).
     /// Each path source must be a known <see cref="BracketPair.PairKey"/> (Cup structural identity).
     /// Local Place destinations must reference an existing slot and must not conflict with a direct assignment.
     /// Cross-stage Place is allowed when SlotKey exists on the destination stage form (validated at Prepare/Apply).
@@ -727,7 +708,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ReplaceProgressionRules(ProgressionRules? progressionRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         if (progressionRules is not null)
         {
@@ -762,13 +743,12 @@ public sealed class Stage : AggregateRoot<StageId>
             }
         }
 
-        DemoteToDraftIfReady();
         Regulation = Regulation.WithProgressionRules(progressionRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }
 
     /// <summary>
-    /// Replaces placement award rules. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Replaces placement award rules. Draft only (structure locked from Ready).
     /// Each path fixture must belong to this stage.
     /// Distinct from <see cref="ReplaceProgressionRules"/> — awards final ranks, does not feed slots.
     /// </summary>
@@ -777,7 +757,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ReplacePlacementAwardRules(PlacementAwardRules? placementAwardRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         if (placementAwardRules is not null)
         {
@@ -789,7 +769,6 @@ public sealed class Stage : AggregateRoot<StageId>
             }
         }
 
-        DemoteToDraftIfReady();
         Regulation = Regulation.WithPlacementAwardRules(placementAwardRules);
         Raise(new StageRegulationReplaced(Id, clock));
     }
@@ -802,9 +781,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ReplaceDefaultTieFormat(TieFormat? tieFormat, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         Regulation = Regulation.WithTieFormat(tieFormat);
         Raise(new StageRegulationReplaced(Id, clock));
     }
@@ -955,7 +932,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="format">The match generation format.</param>
     public void SetMatchGenerationFormat(MatchGenerationFormat format)
     {
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         if (MatchGenerationFormat == format)
         {
@@ -979,7 +956,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="settings">Swiss settings, or <see langword="null"/> to clear.</param>
     public void SetSwissSettings(SwissSettings? settings)
     {
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         if (Equals(SwissSettings, settings))
         {
@@ -1166,7 +1143,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     public void ClearSwissConfiguration()
     {
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
         _swissByeHistory.Clear();
         SwissSettings = null;
     }
@@ -1182,7 +1159,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="placesPerGroup">Places per group (≥ 2), or <see langword="null"/> to clear.</param>
     public void SetPlacesPerGroup(int? placesPerGroup)
     {
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         switch (placesPerGroup)
         {
@@ -1218,7 +1195,6 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
         EnsureCanAddGroup();
 
-        DemoteToDraftIfReady();
         var group = new Group(GroupId.New(), name);
         _groups.Add(group);
         Raise(new StageGroupAdded(Id, group.Id, clock));
@@ -1236,7 +1212,6 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
 
         var group = GetGroup(groupId);
-        DemoteToDraftIfReady();
         _groups.Remove(group);
         Raise(new StageGroupRemoved(Id, groupId, clock));
     }
@@ -1248,7 +1223,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="name">The new name.</param>
     public void RenameGroup(GroupId groupId, string name)
     {
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
         GetGroup(groupId).Rename(name);
     }
 
@@ -1275,7 +1250,6 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         var group = GetGroup(groupId);
-        DemoteToDraftIfReady();
         group.Assign(entryId);
     }
 
@@ -1307,12 +1281,11 @@ public sealed class Stage : AggregateRoot<StageId>
             entryId,
             materializedParticipants ?? []);
 
-        DemoteToDraftIfReady();
         group.Remove(entryId);
     }
 
     /// <summary>
-    /// Adds a positional slot. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Adds a positional slot. Draft only.
     /// </summary>
     /// <param name="slotKey">Business slot key unique within the stage.</param>
     /// <returns>The created slot.</returns>
@@ -1329,7 +1302,6 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.DuplicateSlotKey);
         }
 
-        DemoteToDraftIfReady();
         var slot = new Slot(key);
         _slots.Add(slot);
         return slot;
@@ -1364,7 +1336,6 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.SlotReferenced);
         }
 
-        DemoteToDraftIfReady();
         _slots.Remove(slot);
     }
 
@@ -1380,7 +1351,7 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Replaces the stage bracket pairs. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Replaces the stage bracket pairs. Draft only (structure locked from Ready).
     /// Rejects when an existing fixture references a pair key that would be removed.
     /// </summary>
     /// <param name="pairs">The new pair set (may be empty).</param>
@@ -1420,13 +1391,12 @@ public sealed class Stage : AggregateRoot<StageId>
 
         EnsureNoReferencedBracketPairRemoved(pairKeys);
 
-        DemoteToDraftIfReady();
         _bracketPairs.Clear();
         _bracketPairs.AddRange(pairs);
     }
 
     /// <summary>
-    /// Clears all bracket pairs. Allowed in Draft or Ready; Ready is demoted to Draft.
+    /// Clears all bracket pairs. Draft only (structure locked from Ready).
     /// </summary>
     public void ClearBracketPairs() => ReplaceBracketPairs([]);
 
@@ -1485,7 +1455,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Replaces the Affectation authoring set and syncs runtime membership by diff.
     /// Never replaces <see cref="CompositionEntries"/> wholesale — Apply-resolved entries remain.
-    /// Allowed in Draft or Ready; Ready is demoted to Draft. Duplicates rejected; order preserved.
+    /// Allowed in Draft only (structure locked from Ready). Duplicates rejected; order preserved.
     /// </summary>
     /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -1493,7 +1463,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(entryIds);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         var distinct = new List<EntryId>(entryIds.Count);
         var seen = new HashSet<EntryId>();
@@ -1514,8 +1484,6 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             return;
         }
-
-        DemoteToDraftIfReady();
 
         var previous = _affectationAuthoring.Select(entry => entry.EntryId).ToHashSet();
         var next = distinct.ToHashSet();
@@ -1569,9 +1537,7 @@ public sealed class Stage : AggregateRoot<StageId>
             return;
         }
 
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
-
+        EnsureStructureMutable();
         var hadAffectation = _affectationAuthoring.Count > 0;
         var hadComposition = _compositionEntries.Count > 0;
         _affectationAuthoring.Clear();
@@ -1606,8 +1572,7 @@ public sealed class Stage : AggregateRoot<StageId>
             return;
         }
 
-        EnsureDraftOrReady();
-        DemoteToDraftIfReady();
+        EnsureStructureMutable();
         _formPathResolutions.RemoveAll(resolution => resolution.EntryId.Equals(entryId));
         if (hadAffectation)
         {
@@ -1669,8 +1634,6 @@ public sealed class Stage : AggregateRoot<StageId>
             proposed,
             materializedParticipants ?? []);
 
-        DemoteToDraftIfReady();
-
         var existingIndex = _directAssignments.FindIndex(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal));
         var assignment = new DirectAssignment(key, entryId);
         if (existingIndex >= 0)
@@ -1716,7 +1679,6 @@ public sealed class Stage : AggregateRoot<StageId>
             proposed,
             materializedParticipants ?? []);
 
-        DemoteToDraftIfReady();
         _directAssignments.RemoveAt(index);
         slot.ClearEntry();
     }
@@ -1899,7 +1861,6 @@ public sealed class Stage : AggregateRoot<StageId>
             return;
         }
 
-        DemoteToDraftIfReady();
         var map = _groups.ToDictionary(g => g.Id);
         _groups.Clear();
         foreach (var id in orderedGroupIds)
@@ -1930,7 +1891,6 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
         EnsureCanAddRound();
 
-        DemoteToDraftIfReady();
         var round = new Round(RoundId.New(), name, tieFormat?.Copy());
         _rounds.Add(round);
 
@@ -1960,7 +1920,6 @@ public sealed class Stage : AggregateRoot<StageId>
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
                     ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
 
-        DemoteToDraftIfReady();
         round.ReplaceTieFormat(tieFormat?.Copy());
         Raise(new StageRoundTieFormatReplaced(Id, roundId, clock));
     }
@@ -1978,7 +1937,6 @@ public sealed class Stage : AggregateRoot<StageId>
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
                     ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
 
-        DemoteToDraftIfReady();
         _rounds.Remove(round);
         Raise(new StageRoundRemoved(Id, roundId, clock));
     }
@@ -1990,7 +1948,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="name">The new name.</param>
     public void RenameRound(RoundId roundId, string name)
     {
-        EnsureDraftOrReady();
+        EnsureStructureMutable();
 
         var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
                     ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
@@ -2012,7 +1970,6 @@ public sealed class Stage : AggregateRoot<StageId>
             return;
         }
 
-        DemoteToDraftIfReady();
         var map = _rounds.ToDictionary(r => r.Id);
         _rounds.Clear();
         foreach (var id in orderedRoundIds)
@@ -2033,7 +1990,6 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureStructureMutable();
         EnsureCanAddMatchday();
 
-        DemoteToDraftIfReady();
         var matchday = new Matchday(MatchdayId.New(), number);
         _matchdays.Add(matchday);
         Raise(new StageMatchdayAdded(Id, matchday.Id, clock));
@@ -2055,7 +2011,6 @@ public sealed class Stage : AggregateRoot<StageId>
                            $"Matchday '{matchdayId}' was not found.",
                            StageErrorCodes.MatchdayNotFound);
 
-        DemoteToDraftIfReady();
         _matchdays.Remove(matchday);
         Raise(new StageMatchdayRemoved(Id, matchdayId, clock));
     }
@@ -2075,7 +2030,6 @@ public sealed class Stage : AggregateRoot<StageId>
             return;
         }
 
-        DemoteToDraftIfReady();
         var map = _matchdays.ToDictionary(m => m.Id);
         _matchdays.Clear();
         foreach (var id in orderedMatchdayIds)
@@ -2108,7 +2062,6 @@ public sealed class Stage : AggregateRoot<StageId>
 
         EnsureSlotKeysExist(slotAKey, slotBKey);
         EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
-        DemoteToDraftIfReady();
         var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey, bracketPairKey);
         round.AddFixture(fixture);
         Raise(new StageFixtureAdded(Id, fixture.Id, clock));
@@ -2141,7 +2094,6 @@ public sealed class Stage : AggregateRoot<StageId>
 
         EnsureSlotKeysExist(slotAKey, slotBKey);
         EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
-        DemoteToDraftIfReady();
         var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey, bracketPairKey);
         matchday.AddFixture(fixture);
         Raise(new StageFixtureAdded(Id, fixture.Id, clock));
@@ -2160,7 +2112,6 @@ public sealed class Stage : AggregateRoot<StageId>
 
         var fixture = GetFixture(fixtureId);
         EnsureSlotKeysExist(slotAKey, slotBKey);
-        DemoteToDraftIfReady();
         fixture.BindSlots(slotAKey, slotBKey);
     }
 
@@ -2176,7 +2127,6 @@ public sealed class Stage : AggregateRoot<StageId>
         var fixture = GetFixture(fixtureId);
         var matchIds = fixture.MatchIds.ToArray();
 
-        DemoteToDraftIfReady();
         if (_rounds.Any(round => round.RemoveFixture(fixtureId)))
         {
             ClearMatchPlacements(matchIds);
@@ -2216,7 +2166,6 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.MatchAlreadyAttached);
         }
 
-        DemoteToDraftIfReady();
         fixture.AttachMatch(matchId, legIndex);
         Raise(new StageMatchAttached(Id, fixtureId, matchId, legIndex, clock));
     }
@@ -2240,7 +2189,6 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.MatchNotAttached);
         }
 
-        DemoteToDraftIfReady();
         fixture.DetachMatch(matchId);
         ClearMatchPlacement(matchId);
         Raise(new StageMatchDetached(Id, fixtureId, matchId, clock));
@@ -2510,14 +2458,6 @@ public sealed class Stage : AggregateRoot<StageId>
     private static PointsPolicy ClonePoints(PointsPolicy source) =>
         new(source.WinPoints, source.DrawPoints, source.LossPoints);
 
-    private void DemoteToDraftIfReady()
-    {
-        if (Status == StageStatus.Ready)
-        {
-            Status = StageStatus.Draft;
-        }
-    }
-
     private void UnbindChangedMatchParts(MatchRules before, MatchRules after)
     {
         if (!before.Duration.Equals(after.Duration))
@@ -2577,16 +2517,6 @@ public sealed class Stage : AggregateRoot<StageId>
         }
     }
 
-    private void EnsureDraftOrReady()
-    {
-        if (Status is not (StageStatus.Draft or StageStatus.Ready))
-        {
-            throw new DomainException(
-                $"Operation is not allowed when status is '{Status}'.",
-                StageErrorCodes.InvalidTransition);
-        }
-    }
-
     private void EnsureStandingRulesMutable()
     {
         if (Status is StageStatus.Completed)
@@ -2640,7 +2570,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     private void EnsureStructureMutable()
     {
-        if (Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
+        if (Status is not StageStatus.Draft)
         {
             throw new DomainException(
                 $"Structure cannot be modified when status is '{Status}'.",

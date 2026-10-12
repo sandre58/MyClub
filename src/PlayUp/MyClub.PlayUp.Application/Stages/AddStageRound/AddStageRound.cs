@@ -62,13 +62,5 @@ public static class AddStageRound
         return new TieFormat(legs, aggregate);
     }
 
-    private static void EnsureStageMutable(Stage stage)
-    {
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Rounds cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
-    }
+    private static void EnsureStageMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 }

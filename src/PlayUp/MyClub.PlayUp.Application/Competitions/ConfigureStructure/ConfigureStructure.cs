@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
@@ -96,6 +97,7 @@ public static class ConfigureStructure
                 stage.Rename(new StageName(intent.StageName));
             }
 
+            StageStructureEditGuard.EnsureEditable(stage);
             rebuildImpact = StructureSkeleton.Clear(stage, clock);
         }
 

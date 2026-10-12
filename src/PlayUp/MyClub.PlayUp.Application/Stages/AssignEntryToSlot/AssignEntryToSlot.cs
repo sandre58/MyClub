@@ -27,12 +27,7 @@ public static class AssignEntryToSlot
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Slot assignments cannot change while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        StageStructureEditGuard.EnsureEditable(stage);
 
         if (string.IsNullOrWhiteSpace(slotKey))
         {

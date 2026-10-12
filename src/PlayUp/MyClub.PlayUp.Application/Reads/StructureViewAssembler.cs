@@ -852,7 +852,7 @@ public static class StructureViewAssembler
                 or CompetitionStatus.Archived
                 or CompetitionStatus.Running
                 or CompetitionStatus.Suspended ||
-            stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
+            stage.Status is not StageStatus.Draft)
         {
             return [ActionRenameStage];
         }

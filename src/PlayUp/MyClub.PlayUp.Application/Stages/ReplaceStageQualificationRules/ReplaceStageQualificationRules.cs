@@ -124,15 +124,7 @@ public static class ReplaceStageQualificationRules
             : QualificationDestination.ForPopulation(stageId);
     }
 
-    private static void EnsureMutable(Stage stage)
-    {
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Qualification rules cannot be replaced while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
-    }
+    private static void EnsureMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 
     private static QualificationIntent ToDomainIntent(QualificationIntentSpec spec) =>
         !Enum.IsDefined(spec.SourceKind)

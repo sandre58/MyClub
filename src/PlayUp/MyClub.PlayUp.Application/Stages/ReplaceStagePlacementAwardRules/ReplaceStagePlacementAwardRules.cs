@@ -57,17 +57,7 @@ public static class ReplaceStagePlacementAwardRules
         stage.ReplacePlacementAwardRules(new PlacementAwardRules(domainPaths), clock);
     }
 
-    private static void EnsureMutable(Stage stage)
-    {
-        if (stage.Status is StageStatus.Draft or StageStatus.Ready)
-        {
-            return;
-        }
-
-        throw new ApplicationFailureException(
-            $"Stage '{stage.Id}' structure is not mutable in status '{stage.Status}'.",
-            ApplicationErrorCodes.StructureNotMutable);
-    }
+    private static void EnsureMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 }
 
 /// <summary>

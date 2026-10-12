@@ -22,12 +22,7 @@ public static class AddStageGroup
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Groups cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        StageStructureEditGuard.EnsureEditable(stage);
 
         var resolved = string.IsNullOrWhiteSpace(name)
             ? DefaultGroupLabel(stage.Groups.Count)

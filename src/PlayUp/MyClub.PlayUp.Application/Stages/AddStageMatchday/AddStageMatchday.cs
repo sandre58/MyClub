@@ -22,12 +22,7 @@ public static class AddStageMatchday
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Matchdays cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        StageStructureEditGuard.EnsureEditable(stage);
 
         var resolved = number ?? (stage.Matchdays.Count == 0
             ? 1

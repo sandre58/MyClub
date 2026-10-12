@@ -21,11 +21,9 @@ public static class AddStageSlot
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        return stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed
-            ? throw new ApplicationFailureException(
-                $"Slots cannot be added while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable)
-            : string.IsNullOrWhiteSpace(slotKey)
+        StageStructureEditGuard.EnsureEditable(stage);
+
+        return string.IsNullOrWhiteSpace(slotKey)
             ? throw new ApplicationFailureException(
                 "Slot key must be non-empty.",
                 ApplicationErrorCodes.InvalidStructureIntent)

@@ -35,18 +35,18 @@ public sealed class StageDrawTests
     }
 
     [Fact]
-    public void CreateDraw_on_Ready_demotes_to_Draft()
+    public void CreateDraw_in_Ready_is_rejected()
     {
         var stage = CreateStage();
         stage.AddRound("R1", _clock);
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
 
-        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        var act = () => stage.CreateDraw(DrawResolutionKind.Slot, _clock);
 
-        stage.Status.Should().Be(StageStatus.Draft);
-        draw.Status.Should().Be(DrawStatus.Draft);
-        stage.DomainEvents.Should().Contain(e => e is StageDrawCreated);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Draws.Should().BeEmpty();
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public sealed class StageDrawTests
         var act = () => stage.CreateDraw(DrawResolutionKind.Slot, _clock);
 
         act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+            .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
         stage.Draws.Should().BeEmpty();
         stage.Status.Should().Be(StageStatus.Running);
     }

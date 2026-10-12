@@ -136,34 +136,27 @@ public sealed class StageRegulationIsolationTests
     }
 
     [Fact]
-    public void ReplaceRegulation_on_Ready_demotes_to_Draft()
+    public void ReplaceRegulation_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = CreateReady();
-        stage.ClearDomainEvents();
         var replacement = StageRegulation.MaterializeFrom(SampleRegulations.Standard());
 
-        // Act
-        stage.ReplaceRegulation(replacement, _clock);
+        var act = () => stage.ReplaceRegulation(replacement, _clock);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageRegulationReplaced>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
     public void ReplaceRegulation_after_Start_is_rejected()
     {
-        // Arrange
         var stage = CreateRunning();
 
-        // Act
         var act = () => stage.ReplaceRegulation(
             StageRegulation.MaterializeFrom(SampleRegulations.Standard()),
             _clock);
 
-        // Assert
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
     }
 
     [Fact]

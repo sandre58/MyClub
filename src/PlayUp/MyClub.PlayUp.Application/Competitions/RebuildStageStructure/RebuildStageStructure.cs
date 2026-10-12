@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
@@ -57,6 +58,8 @@ public static class RebuildStageStructure
                 $"Stage '{stage.Id}' cannot be rebuilt while matches are attached.",
                 ApplicationErrorCodes.StructureNotMutable);
         }
+
+        StageStructureEditGuard.EnsureEditable(stage);
 
         StructureSkeleton.EnsureSameKind(stage, intent.Format);
 

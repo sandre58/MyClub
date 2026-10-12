@@ -44,14 +44,11 @@ public sealed class StageGroupsTests
         var entryId = EntryId.New();
         stage.AssignEntryToGroup(group.Id, entryId);
         stage.AddMatchday(1, _clock);
-        stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
-        // Act
         stage.AssignEntryToGroup(group.Id, entryId);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Ready);
+        stage.Status.Should().Be(StageStatus.Draft);
         group.EntryIds.Should().ContainSingle();
         stage.DomainEvents.Should().BeEmpty();
     }
@@ -74,25 +71,20 @@ public sealed class StageGroupsTests
     }
 
     [Fact]
-    public void AssignEntryToGroup_demotes_Ready_when_new_assignment()
+    public void AssignEntryToGroup_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = CreateReadyPoules();
         var group = stage.Groups[0];
-        stage.ClearDomainEvents();
 
-        // Act
-        stage.AssignEntryToGroup(group.Id, EntryId.New());
+        var act = () => stage.AssignEntryToGroup(group.Id, EntryId.New());
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().BeEmpty();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
-    public void RemoveEntryFromGroup_removes_entry_and_demotes_Ready()
+    public void RemoveEntryFromGroup_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
         var entryId = EntryId.New();
@@ -100,14 +92,12 @@ public sealed class StageGroupsTests
         stage.AssignEntryToGroup(group.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
-        stage.ClearDomainEvents();
 
-        // Act
-        stage.RemoveEntryFromGroup(group.Id, entryId);
+        var act = () => stage.RemoveEntryFromGroup(group.Id, entryId);
 
-        // Assert
-        group.EntryIds.Should().NotContain(entryId);
-        stage.Status.Should().Be(StageStatus.Draft);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        group.EntryIds.Should().Contain(entryId);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
@@ -125,39 +115,36 @@ public sealed class StageGroupsTests
     }
 
     [Fact]
-    public void ArrangeGroups_permutation_reorders_and_demotes_Ready()
+    public void ArrangeGroups_permutation_in_Ready_is_rejected()
     {
-        // Arrange
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
         var b = stage.AddGroup("B", _clock);
         stage.AssignEntryToGroup(a.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
-        stage.ClearDomainEvents();
 
-        // Act
-        stage.ArrangeGroups([b.Id, a.Id]);
+        var act = () => stage.ArrangeGroups([b.Id, a.Id]);
 
-        // Assert
-        stage.Groups.Select(g => g.Id).Should().Equal(b.Id, a.Id);
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().BeEmpty();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Groups.Select(g => g.Id).Should().Equal(a.Id, b.Id);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
-    public void ArrangeGroups_identical_order_is_noop()
+    public void ArrangeGroups_identical_order_is_noop_in_Draft()
     {
-        // Arrange
-        var stage = CreateReadyPoules();
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var a = stage.AddGroup("A", _clock);
+        var b = stage.AddGroup("B", _clock);
+        stage.AssignEntryToGroup(a.Id, EntryId.New());
+        stage.AddMatchday(1, _clock);
         var order = stage.Groups.Select(g => g.Id).ToList();
         stage.ClearDomainEvents();
 
-        // Act
         stage.ArrangeGroups(order);
 
-        // Assert
-        stage.Status.Should().Be(StageStatus.Ready);
+        stage.Status.Should().Be(StageStatus.Draft);
         stage.DomainEvents.Should().BeEmpty();
     }
 
@@ -209,28 +196,24 @@ public sealed class StageGroupsTests
     [Fact]
     public void ArrangeRounds_and_Matchdays_follow_same_rules()
     {
-        // Arrange — rounds
         var cup = Stage.Create(_competitionId, new StageName("Cup"), SampleRegulations.Standard(), _clock);
         var r1 = cup.AddRound("QF", _clock);
         var r2 = cup.AddRound("SF", _clock);
         cup.Prepare(_clock);
-        cup.ClearDomainEvents();
-        cup.ArrangeRounds([r1.Id, r2.Id]);
         cup.Status.Should().Be(StageStatus.Ready);
-        cup.ArrangeRounds([r2.Id, r1.Id]);
-        cup.Status.Should().Be(StageStatus.Draft);
+        var reorderCup = () => cup.ArrangeRounds([r2.Id, r1.Id]);
+        reorderCup.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        cup.Status.Should().Be(StageStatus.Ready);
 
-        // Arrange — matchdays
         var league = Stage.Create(_competitionId, new StageName("League"), SampleRegulations.Standard(), _clock);
         var m1 = league.AddMatchday(1, _clock);
         var m2 = league.AddMatchday(2, _clock);
         league.Prepare(_clock);
-        league.ClearDomainEvents();
-        league.ArrangeMatchdays([m1.Id, m2.Id]);
         league.Status.Should().Be(StageStatus.Ready);
-        league.ArrangeMatchdays([m2.Id, m1.Id]);
-        league.Status.Should().Be(StageStatus.Draft);
-        league.Matchdays.Select(m => m.Id).Should().Equal(m2.Id, m1.Id);
+        var reorderLeague = () => league.ArrangeMatchdays([m2.Id, m1.Id]);
+        reorderLeague.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        league.Status.Should().Be(StageStatus.Ready);
+        league.Matchdays.Select(m => m.Id).Should().Equal(m1.Id, m2.Id);
     }
 
     private Stage CreateReadyPoules()

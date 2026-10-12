@@ -140,39 +140,39 @@ public sealed class ApplyDrawTests
     }
 
     [Fact]
-    public void Execute_slot_applies_when_stage_running()
+    public void Execute_slot_rejects_when_stage_running()
     {
         var stage = CreateStage();
         stage.AddRound("R1", _clock);
-        var (draw, entry) = PublishSlotDraw(stage, "A");
+        var (draw, _) = PublishSlotDraw(stage, "A");
         stage.Prepare(_clock);
         stage.Start(_clock);
         stage.ClearDomainEvents();
 
-        var result = ApplyDraw.Execute(stage, draw.Id, _clock);
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        result.SlotInstructions.Should().ContainSingle();
-        stage.Status.Should().Be(StageStatus.Running);
-        stage.FindSlot("A")!.EntryId.Should().Be(entry);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
+        stage.FindSlot("A")!.EntryId.Should().BeNull();
         draw.Status.Should().Be(DrawStatus.Published);
     }
 
     [Fact]
-    public void Execute_slot_applies_when_stage_suspended()
+    public void Execute_slot_rejects_when_stage_suspended()
     {
         var stage = CreateStage();
         stage.AddRound("R1", _clock);
-        var (draw, entry) = PublishSlotDraw(stage, "A");
+        var (draw, _) = PublishSlotDraw(stage, "A");
         stage.Prepare(_clock);
         stage.Start(_clock);
         stage.Suspend(_clock);
         stage.ClearDomainEvents();
 
-        var result = ApplyDraw.Execute(stage, draw.Id, _clock);
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        result.SlotInstructions.Should().ContainSingle();
-        stage.Status.Should().Be(StageStatus.Suspended);
-        stage.FindSlot("A")!.EntryId.Should().Be(entry);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
+        stage.FindSlot("A")!.EntryId.Should().BeNull();
         draw.Status.Should().Be(DrawStatus.Published);
     }
 
@@ -189,8 +189,8 @@ public sealed class ApplyDrawTests
 
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
         stage.FindSlot("A")!.EntryId.Should().BeNull();
         stage.DomainEvents.Should().BeEmpty();
         draw.Status.Should().Be(DrawStatus.Published);
@@ -449,7 +449,7 @@ public sealed class ApplyDrawTests
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DrawApplyFailure);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
         group.EntryIds.Should().Equal(prepareEntry);
         stage.DomainEvents.Should().BeEmpty();
         draw.Status.Should().Be(DrawStatus.Published);
@@ -475,7 +475,7 @@ public sealed class ApplyDrawTests
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DrawApplyFailure);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
         group.EntryIds.Should().Equal(prepareEntry);
         stage.DomainEvents.Should().BeEmpty();
         draw.Status.Should().Be(DrawStatus.Published);

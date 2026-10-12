@@ -2,7 +2,9 @@
 
 **Purpose:** Git-side design reference for the Structure phase fiche **status band**, stepper, and match stats. Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
-**Last code audit:** 2026-10-11 (repository `MyClub`, paths below).
+**Last code audit:** 2026-10-12 (V2 gap audit + verification matrix, § below). Prior audit: 2026-10-11.
+
+**Product SoT (V2 lifecycle contract):** [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca) — **Contrat cycle de phase V2** (2026-10-12, DECIDED). This appendix records **code facts** and **gaps vs that contract**; narrative contract lives in Notion only.
 
 **PR gate (DECIDED):** No SPA PR for 2b/2c until the **2b matrix** is arbitrated in Notion and **2c** is decided.
 
@@ -386,13 +388,266 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 
 ---
 
+## V2 contract — code gap audit (2026-10-12)
+
+**Scope:** Compare Notion **Contrat cycle de phase V2** (2026-10-12) to current repository behaviour. **No implementation plan** — input for test matrix and incremental work.
+
+**Legend:** **ALIGNED** = matches V2 today · **GAP** = change needed · **PARTIAL** = subset aligned · **N/A** = not applicable yet.
+
+### Cross-cutting
+
+| V2 rule | Current behaviour | Status | Primary locations |
+| :------ | :---------------- | :----- | :---------------- |
+| Structure mutable **Draft only** | **Incrément 1 (2026-10-12):** `EnsureStructureMutable` allows **Draft only**; `DemoteToDraftIfReady` removed. Application `StageStructureEditGuard` on structure use cases. Materialize still **Draft+Ready** (incrément 2). | **PARTIAL** | `Stage.cs`, `StageStructureEditGuard.cs` |
+| Materialize **Ready only** (not Draft) | `MaterializeMatches.EnsureMutable` allows **Draft + Ready** (blocks Running+). `StructureMaterializeAssembler` same (`IsCupMutable`, `IsChampionshipOrGroupsMutable`). | **GAP** | `MaterializeMatches.cs`, `StructureMaterializeAssembler.cs` |
+| Faits sportifs **Running/Suspended only** | `StartMatch` / `FinishMatch` delegate to `Match.*` with **no stage-status guard**. Overview projects `StartMatch` / `FinishMatch` from **match status only** (Scheduled/Live), not stage Ready vs Running. | **GAP** | `StartMatch.cs`, `FinishMatch.cs`, `OverviewAssembler.cs`, `UseCaseExecutor.Matches.cs` |
+| Planification in **Ready** | `ApplySchedule` → `Stage.ApplyMatchPlacements` — **no** `EnsureStructureMutable` on placements path (works in Running today; also usable in Ready). | **PARTIAL** (allowed today; V2 wants Ready yes — OK) | `ApplySchedule.cs`, `Stage.ApplyMatchPlacements` |
+| **Completed** strict (no planif/sportif) | Structure hub actions collapse to rename when stage Completed (`StructureViewAssembler.BuildStageActions`). Match use cases **do not** check parent stage Completed. | **GAP** (structure UI partial; match ops open) | `StructureViewAssembler.cs`, match use cases |
+| `RevertToDraft` / `RevertToReady` | **Not implemented** (no domain methods, no HTTP, no read projection). | **GAP** | — |
+| `RevertToReady` ≠ dematerialize | Dematerialize full phase blocked in Running (`DematerializationCapability.TryFullPhaseLifecycleReason`). Swiss dematerialize last round **requires Running** — aligned with progressive model. | **PARTIAL** (separation exists de facto; revert missing) | `DematerializationCapability.cs` |
+
+### Transitions
+
+| Transition | V2 | Current | Status | Locations |
+| :--------- | :--- | :------ | :----- | :-------- |
+| Prepare | Draft → Ready, existing gates | Same | **ALIGNED** | `PrepareStage.cs`, `Stage.Prepare` |
+| Start readiness | Per-format initial scope (Ch/G: no eligible unmaterialized; Cup: first playable round materialized; Swiss: progressive, 0 match OK) | Domain: `EnsureInitialRoundPlayableWhenPositional` for **cup positional only**; no Ch/G eligible gate. Read: `ResolveStartTransition` mirrors cup playable check only. **Start from Ready with 0 matches** allowed for non-positional stages (tests). | **GAP** | `Stage.Start`, `StructureStageLifecycleAssembler.ResolveStartTransition` |
+| Complete | All matches Finished/Cancelled | Same (`CompleteStage.Execute`) | **ALIGNED** | `CompleteStage.cs` |
+| RevertToDraft | Explicit; no attached matches | Implicit demotion on structural edit in Ready | **GAP** | `DemoteToDraftIfReady` |
+| RevertToReady | Pause; keep Scheduled/Postponed; block sportive engagement | **Absent** | **GAP** | — |
+
+### Format exceptions (Swiss — option A)
+
+| V2 | Current | Status | Locations |
+| :--- | :------ | :----- | :-------- |
+| Materialize progressive in **Running** | `GenerateNextRound` requires `StageStatus.Running` | **ALIGNED** | `GenerateNextRound.cs` |
+| Start without full calendar / 0 matches | Start allowed without materialize gate for Swiss | **ALIGNED** (by absence of gate) | `Stage.Start`, `StageLifecycleTests` |
+| Materialize in Draft | Allowed today for Ch/G/Cup | **GAP** vs V2 Draft ban (non-Swiss path) | Materialize use cases |
+
+### Read model & SPA
+
+| Surface | V2 direction | Shipped | Status |
+| :------ | :----------- | :------ | :----- |
+| Lifecycle transitions | Prepare / Start / Complete + **future** Revert* | Prepare, Start, Complete only (`StructureStageLifecycleAssembler`) | **GAP** (reverts) |
+| UI placement | Matchs section / mise en service; **no** stepper band | `StructurePhaseStatusBand` + stepper (Draft) | **GAP** (UX refactor later) |
+| Match progress gauge | Clos / total (finished + cancelled) | `finished`, `cancelled`, `open`, `total` — usable for clos/total copy | **PARTIAL** |
+| Competition Running + phase Draft/Ready | ConstructionFrozen on Prepare/Start | Projected | **ALIGNED** | `StructureStageLifecycleAssembler` |
+
+### Gardes réutilisables (audit — no new policy type yet)
+
+| Predicate | Already exists? | Reuse candidate for V2 |
+| :-------- | :-------------- | :--------------------- |
+| Match « engagé sportivement » (blocks dematerialize / RevertToReady) | Yes — `DematerializationCapability.BlocksDematerialization` / `TryMatchLifecycleReason` | **Yes** — shared preflight for `RevertToReady` |
+| Stage structure locked | Domain `EnsureStructureMutable` (Running+) vs app `StructureNotMutable` (Running+) | Extend to **Ready** in both layers |
+| Materialize allowed | Duplicated in materialize use cases + `StructureMaterializeAssembler` | Tighten to **Ready only** in same places |
+| Start initial scope Ch/G | Eligible/determined counts in `StructureMaterializeAssembler` | **Yes** — compose Start gate from existing materialize read inputs |
+
+### Gap prioritization (implementation order)
+
+| Tier | What | Examples from audit | Typical test home |
+| :--- | :--- | :------------------ | :---------------- |
+| **P0 — Domain invariants** | Aggregate rules; status transitions | Structure locked in **Ready**; remove `DemoteToDraftIfReady`; `RevertToDraft` / `RevertToReady` | `MyClub.PlayUp.Domain.Tests` (`StageLifecycleTests`, format fixtures) |
+| **P1 — Application guards** | Use-case preflight before domain | Materialize Ready-only; sportive ops require Running/Suspended; Completed blocks match mutations; Start readiness Ch/G/Cup | `MyClub.PlayUp.Application.Tests` (vertical slices per use case) |
+| **P2 — Read model** | Projected transitions and disabled reasons | `RevertToDraft` / `RevertToReady` on Structure lifecycle DTO; new Start disabled codes | `StructureStageLifecycleAssemblerTests` |
+| **P3 — UI** | Visibility must match API | Matchs-section CTAs; no stepper reliance; do not hide blocked ops without disabled reason | Vitest band / operational strip (later PR) |
+
+**Incrément 1 scope (P0 + part of P1):** freeze structure in Ready, remove implicit demotion, regression tests for Swiss / Cup / `ConstructionFrozen` **unchanged** unless contract explicitly changes them.
+
+---
+
+## V2 verification matrix (2026-10-12)
+
+**Purpose:** Turn Notion **Contrat cycle de phase V2** into **checkable expected behaviour** for automated tests. **Target = V2 contract**, not current code († = row known to **fail today** per § gap audit).
+
+**Axes:** `StageStatus` × operation × `StructureFormatKind` (Championship, Groups, Cup, Swiss) where relevant.
+
+**Code columns:**
+
+| Kind | Wire shape | Examples |
+| :--- | :--------- | :--------- |
+| Domain | `Stage.*` / `Match.*` | `Stage.StructureLocked`, `Stage.InvalidTransition`, `Stage.NotReady` |
+| Application | `Application.*` | `Application.StructureNotMutable`, `Application.StageCompletionBlocked` |
+| Read (Structure lifecycle) | short reason on DTO | `ConstructionFrozen`, `InitialRoundNotPlayable`, `OpenMatches` |
+| **PROPOSED** | not in repo yet — register before implement | See § Proposed error codes |
+
+**Competition context:** unless noted, competition is **Draft** or **Ready** (not Completed/Archived). Rows with competition **Running** and phase Draft/Ready use **`ConstructionFrozen`** on Prepare/Start (read), not a domain throw on arbitrary ops.
+
+---
+
+### A — Lifecycle transitions
+
+| From | Command | To (success) | Preconditions (V2) | Blocked — domain / app code | Read `disabledReasonCode` (anticipate) |
+| :--- | :------ | :------------- | :------------------- | :-------------------------- | :------------------------------------- |
+| Draft | `PrepareStage` | Ready | Existing Prepare gates pass | `Stage.NotReady`, `Stage.InvalidConfiguration`, Prepare gate `Application.*` | `StageNotReady`, `StructureGraphInvalid`, prepare-gate codes, `CompetitionClosed`, `ConstructionFrozen`† |
+| Ready | `RevertToDraft` | Draft | **Zero** stage-attached matches (same attachment notion as dematerialize scope) | **PROPOSED** `Stage.RevertBlockedProductionPresent` or `Application.RevertToDraftBlocked` | **PROPOSED** `ProductionPresent` |
+| Ready | `StartStage` | Running | Format Start readiness (§ H) | `Stage.InvalidTransition`, `Stage.NotReady` (cup positional), **PROPOSED** `Application.StartBlockedUnmaterialized` (Ch/G) | `InitialRoundNotPlayable`, **PROPOSED** `UnmaterializedConfrontations`, `ConstructionFrozen`, `CompetitionClosed` |
+| Running | `RevertToReady` | Ready | No match **sportively engaged** (Live, Finished, Cancelled+observed Live); **Scheduled/Postponed kept** | **PROPOSED** `Application.RevertToReadyBlocked` + reason `MatchLifecycleStarted` (reuse dematerialize predicate) | **PROPOSED** `MatchLifecycleStarted` |
+| Suspended | `RevertToReady` | Ready | Same as Running → Ready | Same | Same |
+| Running | `CompleteStage` | Completed | All matches Finished or Cancelled | `Application.StageCompletionBlocked` (`OpenMatches`) | `OpenMatches` |
+| Suspended | `CompleteStage` | Completed | Same | Same | Same |
+| Running | `Suspend` | Suspended | — | `Stage.InvalidTransition` | — |
+| Suspended | `Resume` | Running | — | `Stage.InvalidTransition` | — |
+| Completed | any lifecycle | — | — | `Stage.InvalidTransition` | `transition.code` null |
+
+---
+
+### B — Structure mutations (representative ops)
+
+Applies to: add matchday/round/group, slot assign, replace Qual/Prog/Draw rules, rebuild structure, etc.
+
+| Stage status | Expected V2 | Domain code | Application code (typical) | Notes |
+| :----------- | :---------- | :---------- | :------------------------- | :---- |
+| Draft | **Allow** (subject to format rules) | — | — | Status stays Draft |
+| Ready | **Deny** — no silent demotion | `Stage.StructureLocked` | `Application.StructureNotMutable` | † today: often **allows** + `DemoteToDraftIfReady` |
+| Running / Suspended | Deny | `Stage.StructureLocked` | `Application.StructureNotMutable` | ALIGNED |
+| Completed | Deny | `Stage.StructureLocked` | `Application.StructureNotMutable` | ALIGNED (app) |
+
+**Regression (incrément 1):** `Rename` same name / cosmetic rename in Ready → **still Ready**, no event († today: ALIGNED in `StageLifecycleTests.Rename_real_change_keeps_Ready`).
+
+**Regression:** competition **Running**, phase **Draft** — structural ops that today are blocked only via app/competition policy must **remain** blocked; Prepare/Start read **`ConstructionFrozen`**.
+
+---
+
+### C — Materialize / dematerialize
+
+| Stage | Operation | Ch / Groups | Cup | Swiss | Expected V2 | Code |
+| :---- | :-------- | :---------- | :-- | :---- | :---------- | :--- |
+| Draft | Materialize (batch) | Deny | Deny | Deny (no Swiss batch path) | No production in Draft | `Application.StructureNotMutable` |
+| Ready | Materialize | Allow if eligible>0 | Allow if eligible | N/A — use Running | Success | — |
+| Running | Materialize Ch/G/Cup | Deny | Deny | — | — | `Application.StructureNotMutable` |
+| Running | `GenerateNextRound` | N/A | N/A | **Allow** (option A) | Success | — |
+| Ready | Dematerialize full phase | Allow if gates pass | Allow if gates pass | N/A | Success / disabled | `Application.DematerializationBlocked`, `DematerializeDisabledReasons.*` |
+| Running | Dematerialize full phase Ch/G/Cup | Deny | Deny | — | — | `StageLifecycleNotSupported` → `Application.StructureNotMutable` |
+| Running | Dematerialize last Swiss round | N/A | N/A | Allow if gates pass | ALIGNED | Same dematerialize codes |
+
+---
+
+### D — Planification (schedule apply)
+
+| Stage | `ApplySchedule` / placements | Expected V2 |
+| :---- | :--------------------------- | :---------- |
+| Draft | No matches to place | N/A or no-op scope |
+| Ready | **Allow** on materialized Scheduled/Postponed targets | Success |
+| Running / Suspended | **Allow** | Success (ALIGNED) |
+| Completed | **Deny** | **PROPOSED** `Application.StageExploitationClosed` or `Application.StructureNotMutable` |
+
+---
+
+### E — Sportive match operations (application guard required)
+
+Parent stage must be loaded (or match carries stage id) for guard. **V2:** sportive = start live, finish, running score mutations, sheet changes that imply exploitation (align with existing `MatchErrorCodes` where domain already enforces match state).
+
+| Stage | Operation | Expected V2 | Code |
+| :---- | :---------- | :---------- | :--- |
+| Draft | `StartMatch` | Deny | **PROPOSED** `Application.StageExploitationNotOpen` |
+| Ready | `StartMatch` | **Deny** († today: allow) | **PROPOSED** `Application.StageExploitationNotOpen` |
+| Ready | `FinishMatch` / running score edit | Deny | Same |
+| Running / Suspended | `StartMatch` (Scheduled) | Allow | — |
+| Completed | **Any** sportive or planif mutation | **Deny** | **PROPOSED** `Application.StageExploitationClosed` |
+
+Domain may still throw `Match.InvalidTransition` if invoked without app guard — tests should assert **application** rejects first for Completed/Ready.
+
+---
+
+### F — Read model (Structure `lifecycle.transition`)
+
+| Stage | Projected primary `code` | `enabled: true` when |
+| :---- | :----------------------- | :------------------- |
+| Draft | `PrepareStage` | Prepare gates pass; not `ConstructionFrozen` / `CompetitionClosed` |
+| Ready | `StartStage` | Start readiness + not frozen/closed |
+| Ready | **PROPOSED** `RevertToDraftStage` | No attached matches |
+| Running / Suspended | `CompleteStage` | `open == 0` |
+| Running / Suspended | **PROPOSED** `RevertToReadyStage` | Revert preflight pass |
+| Completed | null | — |
+
+Secondary transitions (reverts) must not hide primary without explicit product layout (Matchs section — later P3).
+
+---
+
+### G — Reference scenarios (must-have tests)
+
+#### G1 — `RevertToReady` with planned matches only
+
+| Step | State | Action | Expected |
+| :--- | :---- | :----- | :------- |
+| 1 | Ready, Ch, all eligible materialized, matches **Scheduled** | `StartStage` | Running |
+| 2 | Running, only Scheduled/Postponed | `RevertToReady` | **Ready**, matches **unchanged**, placements preserved |
+| 3 | Ready, same matches Scheduled | `StartMatch` | **Reject** `Application.StageExploitationNotOpen` |
+| 4 | Ready | `ApplySchedule` (valid targets) | **Allow** |
+| 5 | Ready | `StartStage` | Running |
+| 6 | Running | `StartMatch` | Live allowed |
+
+#### G2 — `RevertToReady` blocked after engagement
+
+| Step | State | Action | Expected |
+| :--- | :---- | :----- | :------- |
+| 1 | Running, one match **Live** or **Finished** | `RevertToReady` | Reject — **PROPOSED** `Application.RevertToReadyBlocked` (reason aligns with `DematerializeDisabledReasons.MatchLifecycleStarted`) |
+| 2 | Running, Cancelled **with** observed Live | Same | Reject |
+
+#### G3 — `Completed` — application blocks match mutations
+
+| Step | State | Action | Expected |
+| :--- | :---- | :----- | :------- |
+| 1 | Completed, match Scheduled | `StartMatch` via executor | **Reject** `Application.StageExploitationClosed` |
+| 2 | Completed | `ApplySchedule` | **Reject** same |
+| 3 | Completed | `FinishMatch` | **Reject** same |
+| 4 | Completed | Structural hub | Only rename (read) — ALIGNED |
+
+#### G4 — Incrément 1 regression bundle
+
+| Case | Assert unchanged |
+| :--- | :----------------- |
+| Swiss | Prepare without matchdays → Start → `GenerateNextRound` still Running-only |
+| Cup | Start blocked when initial positional round not playable (`Stage.NotReady` / `InitialRoundNotPlayable`) |
+| Multi-phase | Complete poules while finale Draft — still allowed (Gate B) |
+| Competition Running | Phase Draft: Prepare/Start disabled with `ConstructionFrozen`; **no** accidental unlock of structure edit via domain |
+
+---
+
+### H — Start readiness by format (V2)
+
+| Format | Start **allowed** when | Start **blocked** — code |
+| :----- | :--------------------- | :----------------------- |
+| **Championship / Groups** | Every **eligible** confrontation materialized | **PROPOSED** read `UnmaterializedConfrontations`; app gate before `Stage.Start` |
+| **Championship / Groups** | **Zero** eligible confrontations | **Product edge:** Start **denied** if format implies matches (document per scenario); else explicit “empty exploitation” decision — default test: **deny** when `determined > 0` and `eligible > 0` |
+| **Cup** | First **playable** round fully materialized | `Stage.NotReady`, read `InitialRoundNotPlayable` (+ **PROPOSED** `InitialRoundIncomplete` if slotted but not materialized) |
+| **Swiss** | After Prepare; **0 matches OK** | No full-calendar gate; Start then GenerateNextRound in Running |
+
+---
+
+### Proposed error codes (register before P1)
+
+| Code | Layer | Use |
+| :--- | :---- | :-- |
+| `Application.StageExploitationNotOpen` | Application | Ready/Draft sportive ops |
+| `Application.StageExploitationClosed` | Application | Completed planif + sportive |
+| `Application.RevertToReadyBlocked` | Application | Revert when match engaged |
+| `Application.RevertToDraftBlocked` | Application | Revert when production present |
+| `Application.StartBlockedUnmaterialized` | Application | Ch/G Start gate |
+| `Stage.RevertBlocked` (or split Ready/Draft) | Domain | Optional if domain owns revert |
+| Read: `UnmaterializedConfrontations`, `ProductionPresent`, `MatchLifecycleStarted` (revert) | Structure lifecycle DTO | Anticipated disable on transitions |
+
+Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **reason detail** inside revert preflight where possible — avoid duplicate predicates.
+
+---
+
+### Matrix coverage checklist
+
+- [ ] All cells in § A executed as integration or domain tests  
+- [ ] § B sample: one op per category (matchday, slot, qual rules) × {Draft, Ready, Running}  
+- [ ] § C × four formats where applicable  
+- [ ] § G1–G4 as named reference tests (acceptance)  
+- [ ] † rows from gap audit flip to pass after incréments 1–2  
+
+---
+
 ## Notion sync
 
 | Artifact | Role |
 | :------- | :--- |
-| **Notion — Arbitrage matrice 2b** | [Arbitrage matrice 2b (2026-10-11)](https://app.notion.com/p/3f675fb92d1081dba56afcbfacbd32e7) — line-by-line decisions |
-| **Notion — Lifecycle phase UI Structure** | UX intent / double surface; may diverge from shipped SPA until reconciled |
-| **This Git appendix** | Code-verified facts + matrix draft + post-validation PR scope |
+| **Notion — Lifecycle phase UI Structure** | **SoT** — V2 contract (2026-10-12) + legacy UX sections (some superseded; see page callouts) |
+| **Notion — Arbitrage matrice 2b** | [Arbitrage matrice 2b (2026-10-11)](https://app.notion.com/p/3f675fb92d1081dba56afcbfacbd32e7) — band copy until Matchs-section UI |
+| **This Git appendix** | Code-verified facts + **V2 gap audit** + 2b matrix draft |
 
 **Implementation (2026-10-11):** SPA PR aligned with matrix defaults (product “Go”) — `StageNotReady` band, dedup Regulation/Exits/OpenMatches, prepare-gate `lifecycle.disabled.*`, lifecycle mutation copy + `_unknown` fallbacks, `errors:Application.StageCompletionBlocked`. **2c step label unchanged** (« Réglement »). Full Notion line-by-line sign-off still recommended.
 

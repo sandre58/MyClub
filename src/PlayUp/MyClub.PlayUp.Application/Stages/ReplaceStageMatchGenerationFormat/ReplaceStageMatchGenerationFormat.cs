@@ -21,12 +21,7 @@ public static class ReplaceStageMatchGenerationFormat
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Match generation format cannot be changed while stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
+        StageStructureEditGuard.EnsureEditable(stage);
 
         if (!Enum.IsDefined(format))
         {

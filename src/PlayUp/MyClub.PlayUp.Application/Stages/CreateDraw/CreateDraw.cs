@@ -42,13 +42,5 @@ public static class CreateDraw
             ApplicationErrorCodes.DrawRulesRequired);
     }
 
-    private static void EnsureStructureMutable(Stage stage)
-    {
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Draw cannot be created when stage status is '{stage.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
-        }
-    }
+    private static void EnsureStructureMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 }

@@ -116,7 +116,7 @@ public sealed class PlacementAwardRulesTests
     }
 
     [Fact]
-    public void ReplacePlacementAwardRules_accepts_fixture_of_stage_and_demotes_ready()
+    public void ReplacePlacementAwardRules_in_Ready_is_rejected()
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -130,7 +130,6 @@ public sealed class PlacementAwardRulesTests
         var fixture = stage.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
-        stage.ClearDomainEvents();
 
         var rules = new PlacementAwardRules(
         [
@@ -138,11 +137,10 @@ public sealed class PlacementAwardRulesTests
             new PlacementAwardPath(PathKey(fixture), ProgressionOutcome.Loser, rank: 2)
         ]);
 
-        stage.ReplacePlacementAwardRules(rules, _clock);
+        var act = () => stage.ReplacePlacementAwardRules(rules, _clock);
 
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.Regulation.PlacementAwardRules.Should().Be(rules);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageRegulationReplaced>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]

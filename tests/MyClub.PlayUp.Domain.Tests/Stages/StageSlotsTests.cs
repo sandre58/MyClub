@@ -204,16 +204,17 @@ public sealed class StageSlotsTests
     }
 
     [Fact]
-    public void AddSlot_demotes_ready_to_draft()
+    public void AddSlot_in_Ready_is_rejected()
     {
         var stage = CreateCup();
         stage.AddRound("QF", _clock);
         stage.Prepare(_clock);
         stage.Status.Should().Be(StageStatus.Ready);
 
-        stage.AddSlot("QF1-A");
+        var act = () => stage.AddSlot("QF1-A");
 
-        stage.Status.Should().Be(StageStatus.Draft);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]

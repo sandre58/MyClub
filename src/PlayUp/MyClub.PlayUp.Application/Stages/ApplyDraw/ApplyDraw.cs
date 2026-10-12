@@ -93,6 +93,8 @@ public static class ApplyDraw
         IClock clock,
         IReadOnlyList<MatchParticipantSnapshot> snapshots)
     {
+        StageStructureEditGuard.EnsureEditable(stage);
+
         var instructions = draw.ToSlotAssignmentInstructions(stage.Id);
         var pool = draw.Inputs!.Entries;
 
@@ -146,12 +148,7 @@ public static class ApplyDraw
         Draw draw,
         IReadOnlyList<MatchParticipantSnapshot> snapshots)
     {
-        if (stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed)
-        {
-            throw new ApplicationFailureException(
-                $"Group draw cannot be applied when stage structure is locked (status '{stage.Status}').",
-                ApplicationErrorCodes.DrawApplyFailure);
-        }
+        StageStructureEditGuard.EnsureEditable(stage);
 
         var placements = draw.Resolution.GroupResults;
         var pool = draw.Inputs!.Entries;

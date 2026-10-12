@@ -104,18 +104,17 @@ public sealed class StageFixtureTests
     }
 
     [Fact]
-    public void AttachMatch_same_fixture_twice_is_noop()
+    public void AttachMatch_same_fixture_twice_is_noop_in_Draft()
     {
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         var matchId = MatchId.New();
         stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
-        stage.Prepare(_clock);
         stage.ClearDomainEvents();
 
         stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
 
-        stage.Status.Should().Be(StageStatus.Ready);
+        stage.Status.Should().Be(StageStatus.Draft);
         fixture.MatchIds.Should().Equal(matchId);
         stage.DomainEvents.Should().BeEmpty();
     }
@@ -189,63 +188,45 @@ public sealed class StageFixtureTests
     }
 
     [Fact]
-    public void AddFixture_demotes_Ready_to_Draft()
+    public void AddFixture_in_Ready_is_rejected()
     {
         var stage = CreateCupWithRound(out var round);
         stage.Prepare(_clock);
-        stage.ClearDomainEvents();
 
-        stage.AddFixture(round.Id, _clock);
+        var act = () => stage.AddFixture(round.Id, _clock);
 
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureAdded>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
-    public void RemoveFixture_demotes_Ready_to_Draft()
+    public void RemoveFixture_in_Ready_is_rejected()
     {
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
-        stage.ClearDomainEvents();
 
-        stage.RemoveFixture(fixture.Id, _clock);
+        var act = () => stage.RemoveFixture(fixture.Id, _clock);
 
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageFixtureRemoved>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
-    public void AttachMatch_demotes_Ready_to_Draft()
+    public void AttachMatch_in_Ready_is_rejected()
     {
         var stage = CreateCupWithRound(out var round);
         var fixture = stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
-        stage.ClearDomainEvents();
 
-        stage.AttachMatch(fixture.Id, MatchId.New(), legIndex: 1, _clock);
+        var act = () => stage.AttachMatch(fixture.Id, MatchId.New(), legIndex: 1, _clock);
 
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchAttached>();
-    }
-
-    [Fact]
-    public void DetachMatch_demotes_Ready_to_Draft()
-    {
-        var stage = CreateCupWithRound(out var round);
-        var fixture = stage.AddFixture(round.Id, _clock);
-        var matchId = MatchId.New();
-        stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
-        stage.Prepare(_clock);
-        stage.ClearDomainEvents();
-
-        stage.DetachMatch(fixture.Id, matchId, _clock);
-
-        stage.Status.Should().Be(StageStatus.Draft);
-        stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageMatchDetached>();
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Theory]
+    [InlineData(StageStatus.Ready)]
     [InlineData(StageStatus.Running)]
     [InlineData(StageStatus.Suspended)]
     [InlineData(StageStatus.Completed)]
@@ -256,7 +237,11 @@ public sealed class StageFixtureTests
         var matchId = MatchId.New();
         stage.AttachMatch(fixture.Id, matchId, legIndex: 1, _clock);
         stage.Prepare(_clock);
-        stage.Start(_clock);
+        if (locked is not StageStatus.Ready)
+        {
+            stage.Start(_clock);
+        }
+
         switch (locked)
         {
             case StageStatus.Suspended:
