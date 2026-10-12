@@ -8,16 +8,15 @@
 
 ## Status: Paused
 
-**Generalization is suspended** pending Application semantic contract arbitration (audit step 2). See [organizer-problems-audit.md](./organizer-problems-audit.md) (non-normative).
+**Generalization remains suspended.** Step 2 is **PARTIALLY DECIDED** (2026-10-12): semantic **principles** are recorded in [organizer-problems-audit.md](./organizer-problems-audit.md); wire shape, alias equivalence, and drawer behaviour remain **VERIFY** / **DEFERRED** as stated there. The **Step 3 documentation phase** explicitly **excludes** this Matchs local pilot. Unpause requires a **separate** product decision — not implied by Step 2 principles or Step 3 planning.
 
-Until step 2 is **DECIDED** (`Gate` / `Signal` / `Attention` / `Information`, canonical codes, alias policy, `blocksAction`):
+While **Paused**:
 
-- The **Matchs column module** (`src/PlayUp/web/src/pages/structure/problems/`) remains a **local presentation prototype** only — not a cross-surface error framework.
-- **No** extension to Overview, the Needs attention drawer, or global mutation error handling based on this contract alone.
-- **No** required changes to Application, Host, or read-model DTOs as part of this document.
-- **Resuming** P4+ or transversal i18n consolidation depends on the adopted semantic contract and a pilot reconciling this module with wire semantics.
+- The **Matchs column module** (`src/PlayUp/web/src/pages/structure/problems/`), if present in the tree, is a **local presentation prototype** only — not a cross-surface error framework.
+- **No** extension to Overview, the Needs attention drawer, or global mutation error handling based on this document.
+- **No** Application, Host, or read-model DTO work under this contract until the Matchs pilot is explicitly included in an approved implementation brief.
 
-The sections below record **Matchs-column intent** from the 2026-10-12 product discussion. They are **not** a merge gate while status is Paused.
+The sections below record **Matchs-column intent** from the 2026-10-12 discussion. They are **not** a merge gate while status is Paused.
 
 ---
 

@@ -1,12 +1,12 @@
-# Organizer problems — transversal audit (working draft)
+# Organizer problems — transversal audit
 
-**Status:** **Working document — not normative.** Nothing in this file is product or HTTP contract until **step 2** (semantic contract arbitration) is **DECIDED** in Notion / team process. Safe to use for analysis, PR discussion, and gap identification; do not treat **PROPOSED** sections as shipped behaviour.
+**Document role:** Git-side **audit + semantic contract record**. Historical **VERIFIED** facts remain evidence from code; **Step 2** records product arbitration (2026-10-12). Step 2 **does not** authorize Application, Host, DTO, or SPA implementation until Step 3 is explicitly approved after doc review.
 
-**Scope:** Structure, Competition Overview, and the shell **Needs attention** drawer, plus synchronous command failures (`ProblemDetails`). **Last verified against code:** 2026-10-12.
+**Step 2 status:** **PARTIALLY DECIDED** (2026-10-12 product arbitration). Principles below are normative for **Step 3 planning** only. Wire shape, full alias registry, and exact drawer implementation require **VERIFY** or remain **DEFERRED** as stated per topic.
+
+**Scope:** Structure, Competition Overview, and the shell **Needs attention** drawer, plus synchronous command failures (`ProblemDetails`). **Last code audit:** 2026-10-12.
 
 **Related:** [Structure problems contract (Matchs column — paused)](./structure-problems-contract.md) · [Structure phase lifecycle UI](./structure-phase-lifecycle-ui.md) · SPA `functionalProblemPresentation.ts` (Phase 1 presentation contrat).
-
-**Target direction (discussion only, not adopted):** Application owns **business meaning** and **severity relative to actions**; each surface owns **channel policy** and **presentation**. See § [Three dimensions](#three-dimensions-discussion-frame).
 
 ---
 
@@ -15,8 +15,184 @@
 | Tag | Meaning |
 | :-- | :------ |
 | **VERIFIED** | Checked against current C# / TypeScript / i18n in Git (file references where useful). |
-| **PROPOSED** | Hypothesis for step 2 — canonical codes, alias tables, or semantic levels **not** decided. |
+| **DECIDED (Step 2)** | Product arbitration 2026-10-12 — normative for contract narrative; not implementation approval. |
+| **DEFERRED** | Explicitly not decided; owner and resolution condition listed under Step 2. |
+| **VERIFY** | Decision depends on code/API proof before claiming equivalence or behaviour. |
+| **PROPOSED** | Legacy menu / hypotheses **not** adopted — safe to ignore unless re-opened. |
 | **GAP** | Observed mismatch or missing wire field. |
+
+---
+
+## Step 2 — Semantic contract (2026-10-12 arbitration)
+
+Arbitration order used: **1 → 3 → 2 → 4 → 5**. Use **testable phrase shapes** for pilot codes (illustration only — not adopted assignments until VERIFY). Example shape: *« {code} blocks {ActionCode} »* — for `OpenMatches` / `CompleteStage`, action assignment remains **VERIFY (V1)**, not Step 2 DECIDED.
+
+### 1. Semantic levels — DECIDED (definitions); DEFERRED (wire shape)
+
+**DECIDED — definitions (contractual phrasing):**
+
+| Level | Meaning |
+| :---- | :------ |
+| **Gate** | Blocks one or more **specific** organizer actions (not “globally blocking” everywhere). |
+| **Signal** | Diagnosed fact worth surfacing; **not**, by itself, the same as blocking an action in this contract. |
+| **Attention** | Organizer intervention is expected; **does not** imply inclusion in the Needs attention drawer. |
+| **Information** | Context for the organizer; no remediation required **within this contract**. |
+
+These four terms are **not** assumed to be a single exclusive enum until wire shape is decided.
+
+**DEFERRED:** Wire representation (single enum vs paired fields such as fact kind + organizer priority). **Owner:** product + tech lead. **Resolved when:** Step 3 documentation phase mock documents consumer needs without duplicating SPA tone logic.
+
+**Rejected (for this perimeter):** Collapsing semantic level with UI severity (danger / warning) or with drawer visibility.
+
+---
+
+### 3. Action-relative blocking — DECIDED (principles); VERIFY (current contracts)
+
+**DECIDED — principles:**
+
+- Blocking is **relative to actions**, not a global “severity”.
+- **Same business rule** should apply between read-model anticipation and POST refusal where both exist.
+- **Distinct diagnostic causes** remain distinct (no silent merge of unrelated codes).
+- At **command execution**, **POST outcome is authoritative** when read and command diverge.
+
+**VERIFY before normative alias or DTO work:**
+
+- Read vs POST alignment for pilot codes (`OpenMatches`, `CycleDetected`, `QualificationPending`).
+- Documented behaviour for **abnormal** read/command divergence (support / retry policy — product if needed).
+
+**DEFERRED:** Exact wire field name and shape (e.g. `blocksAction` list vs per-action capability map). **Owner:** tech lead. **Resolved when:** Step 3 documentation phase work on lifecycle transition + attention item (documentation only).
+
+**Rejected:** A single global “Blocking” flag as the only semantic output.
+
+---
+
+### 2. Canonical codes and aliases — DECIDED (rule); DEFERRED (full registry); VERIFY (aliases)
+
+**DECIDED — rule:**
+
+- **Canonical code** = the **most precise, diagnostically useful** stable fact for the problem.
+- **Aggregates** (e.g. readiness summaries) stay **distinct** from canonical analyzer facts.
+- **Transport aliases** (HTTP `Application.*`, lifecycle disabled strings, `reasons[]` entries) are documented mappings — **not** separate business truths.
+- Canonical choice **does not** determine drawer inclusion (see point 5).
+
+**VERIFY (semantic equivalence — not DECIDED until checklist closes):**
+
+- **V1:** `Application.StageCompletionBlocked` + `OpenMatches` in `reasons` vs lifecycle `OpenMatches` — same business rule?
+- **V2:** `Application.StructureCycleDetected` vs `CycleDetected` on issues / Prepare disabled — same business rule?
+- Scope and mapping of aggregate `StructureGraphInvalid` vs underlying issue codes (**V5**).
+
+**DECIDED:** only the **canonicalization rule** above. **VERIFY:** which code is canon for each pilot row, and whether each POST alias is semantically equivalent (not merely string-related).
+
+**DEFERRED:** Complete alias registry and deprecation timeline. **Owner:** product + engineering. **Resolved when:** VERIFY complete for pilot trio + first DTO enrichment spec.
+
+**Rejected:** Big-bang rename of all wire strings; universal `OrganizerProblemDto`.
+
+---
+
+### 4. Read models and Step 3 investigation perimeter — DECIDED (scope)
+
+**DECIDED — Step 3 investigation perimeter (documentation phase only — no implementation authorization):**
+
+| Priority | Read surface (conceptual) | Pilot codes |
+| :------- | :------------------------ | :---------- |
+| Lifecycle transitions | Stage lifecycle projection (disabled / anticipated) | `OpenMatches`, `CycleDetected` |
+| Needs attention | Attention items | `QualificationPending` |
+| Structure issues | Hub `structureIssues` facts (detail preserved) | `CycleDetected` (and graph context as needed) |
+
+**Constraints (DECIDED):**
+
+- At most **three** read families in the first documentation phase.
+- **`ProblemDetails` unchanged** (HTTP contract frozen).
+- **No** universal problem DTO.
+- **Matchs column local pilot** (`structure.problems`) **excluded** from Step 3 documentation phase — [structure-problems-contract.md](./structure-problems-contract.md) stays **Paused**.
+
+**Does not authorize:** DTO/Application/Host/SPA changes, or any implementation work. Step 3 defines an **investigation and documentation perimeter** only, until a separate explicit approval after doc review + closed VERIFY.
+
+---
+
+### 5. Needs attention drawer — DECIDED (policy for current perimeter); VERIFY (implementation)
+
+**DECIDED — contractual phrasing:**
+
+> Application problem semantics **do not** automatically determine inclusion in the “Needs attention” drawer. For the **current arbitration perimeter**, **existing drawer selection policy is maintained**; any extension requires a **separate** product arbitration.
+
+**DECIDED — consequences (product policy intent):**
+
+- No drawer expansion in Step 3 documentation phase.
+- No new allowlist/denylist rules in this arbitration — **maintain current policy intent**.
+- **Attention** (semantic level) ≠ drawer placement.
+
+**DECIDED (intent):** maintaining existing drawer **selection policy** for this arbitration perimeter (see contractual phrasing above). This is **policy intent**, not a claim about exact runtime behaviour.
+
+**VERIFY (V4):** Exact current policy in code (`GET /attention` payload, `attentionPartition.ts`, `ATTENTION_DRAWER_CONSTRUCTION_DENYLIST`, Overview echo paths). Implementation details were **not** re-verified during the arbitration session; do not treat this Step 2 record as proof of code behaviour until V4 is closed.
+
+**DEFERRED:** Whether current policy is optimal long-term. **Owner:** product. **Resolved when:** dedicated drawer/Overview surface review (out of Step 3 scope).
+
+**Rejected:** Auto-including all Gate-level problems in the drawer based on Application semantics alone.
+
+---
+
+### Step 2 — What this session authorizes vs forbids
+
+**Authorizes (documentation / planning only):**
+
+- This Step 2 section and [Step 3 brief](#step-3-brief-documentation-only) below.
+- Technical VERIFY checklist execution (read-only code audit).
+- Notion decision page mirroring DECIDED principles (product SoT).
+
+**Does not authorize:**
+
+- Application, Host, DTO, or SPA changes.
+- `ProblemDetails` changes.
+- Resuming or generalizing the Matchs `structure.problems` pilot.
+- Declaring an alias **verified** without code evidence.
+
+---
+
+## Step 3 brief (documentation phase only — not approved for implementation)
+
+**Goal:** Specify how existing read models **would** expose Step 2 semantics for the pilot trio, plus POST ↔ canon documentation.
+
+**Not authorized by this brief:** Application, Host, DTO, or SPA changes; any implementation or “spike” coding. Investigation deliverables only, until explicit post-review approval.
+
+**Deliverables (planned):**
+
+1. VERIFY report for pilot codes (read disabled, issues, attention, POST codes/reasons).
+2. Conceptual field list per read family (names DEFERRED until wire shape DECIDED).
+3. Alias table for pilot only (canon ↔ lifecycle ↔ POST ↔ aggregate blockers).
+4. Explicit **non-goals**: drawer changes, Matchs pilot, ProblemDetails, SPA presentation refactor.
+
+**Exit gate for implementation:** Step 3 brief merged + VERIFY closed + product sign-off on DTO touch list.
+
+---
+
+## Technical VERIFY checklist (read-only — before alias claims)
+
+**How to use this checklist (three distinct levels):**
+
+1. **Observed (VERIFIED)** — What the code and tests actually emit (paths, fields, strings). No product interpretation yet.
+2. **Conclusion (engineering)** — Whether read and POST (or alias pair) appear to enforce the **same** business rule; gaps and anomalies noted.
+3. **Product DECIDED** — Only after (1) and (2) are written and reviewed (e.g. alias marked equivalent, canon chosen). **Filling the checklist does not auto-promote anything to DECIDED.**
+
+| Item | Question | Entry points |
+| :--- | :------- | :----------- |
+| V1 | Lifecycle `OpenMatches` vs POST `StageCompletionBlocked` + `reasons` | `CompleteStage.cs`, `StructureStageLifecycleAssembler`, Host stage complete tests |
+| V2 | `CycleDetected` on issue, Prepare disabled, POST `Application.StructureCycleDetected` | `CollectPrepareGateCodes`, `ApplicationErrorCodes`, Prepare use case |
+| V3 | `QualificationPending` attention vs blocked actions | `NeedsAttentionAssembler`, qual apply preconditions |
+| V4 | Drawer sources vs denylist vs `GET /attention` | `NeedsAttentionAssembler`, `attentionPartition.ts`, `AttentionDrawer.tsx` |
+| V5 | `StructureGraphInvalid` aggregate vs hub issues | `StructureViewAssembler.BuildReadiness`, `CompetitionFlowAnalyzer.IsStructureGraphGateIssue` |
+
+---
+
+## Three dimensions (DECIDED framing)
+
+| Dimension | Owner | Step 2 |
+| :-------- | :---- | :----- |
+| 1. Business semantics | Application | Levels + action-relative blocking (wire DEFERRED) |
+| 2. Surface policy | SPA per area | Drawer policy maintained; no auto-inclusion from semantics |
+| 3. Presentation | SPA | Unchanged in Step 2/3 planning |
+
+**VERIFIED nuance:** One code can block **one action** without being “globally blocking” (e.g. `OpenMatches` on `CompleteStage` — see lifecycle assembler and `CompleteStage.ReasonOpenMatches`).
 
 ---
 
@@ -31,20 +207,6 @@
 4. **Overview situations** are built mainly from **Needs Attention** (Blocking) plus **CompetitionSuspended** (Informational). Structure readiness blockers are **not** merged into that list (VERIFIED comment in `OverviewAssembler.BuildSituations`). Construction blockers are surfaced on Structure / Overview construction dimensions via other paths.
 
 5. **Drawer policy** excludes construction sources via SPA denylist even if they appeared on the wire (`attentionPartition.ts`, `ATTENTION_DRAWER_CONSTRUCTION_DENYLIST`). **VERIFIED:** `GET /attention` does not emit those construction blockers today — denylist is guardrail.
-
----
-
-## Three dimensions (discussion frame)
-
-**PROPOSED** framing for step 2 — aligns with team discussion, **not** an adopted architecture.
-
-| Dimension | Owner | Question |
-| :-------- | :---- | :------- |
-| 1. Business semantics | Application | What is the problem? Does it block a **specific** action, require attention, or inform only? |
-| 2. Surface policy | SPA per area | Should this appear on Structure, Overview, drawer? Dedup with another surface? |
-| 3. Presentation | SPA | Banner, inline diagnostic, tooltip, mutation alert, remediation link. |
-
-**VERIFIED nuance:** One code can block **one action** without being “globally blocking” (e.g. `OpenMatches` on `CompleteStage` only — `StructureStageLifecycleAssembler.ResolveCompleteTransition`, `CompleteStage.ReasonOpenMatches`, POST `Application.StageCompletionBlocked` with `reasons` containing `OpenMatches`).
 
 ---
 
@@ -206,22 +368,17 @@ Drawer: `partitionAttentionItems` skips `ATTENTION_DRAWER_CONSTRUCTION_DENYLIST`
 
 ---
 
-## PROPOSED — canonical registry (not adopted)
+## PROPOSED — legacy menu (superseded for principles)
 
-**Do not implement from this section without step 2 DECIDED.**
+**Superseded by [Step 2](#step-2--semantic-contract-2026-10-12-arbitration)** for semantic levels, blocking model, drawer policy, and Step 3 investigation perimeter. Remaining **PROPOSED** content: full alias registry beyond the pilot trio — **DEFERRED** until VERIFY completes.
 
-For discussion only: a **single stable code** per organizer problem (e.g. `CycleDetected`), with **documented aliases** on each transport:
+Pilot alias candidates (wire strings **VERIFIED** in code audit 2026-10-12; **canon choice VERIFY**; **POST semantic equivalence VERIFY V1/V2**):
 
-| PROPOSED canonical | Example aliases observed (VERIFIED strings only) |
-| :----------------- | :----------------------------------------------- |
-| `OpenMatches` | Lifecycle `OpenMatches`; POST reasons; not `Application.*` as canonical |
-| `CycleDetected` | `structureIssues[]`; lifecycle Prepare disabled; POST `Application.StructureCycleDetected` |
-| `OverCapacityEdge` | issue, blocker, lifecycle, POST `Application.OverCapacityEdge` |
-| `StructureGraphInvalid` | readiness blocker only; lifecycle `StructureGraphInvalid`; not a raw analyzer code |
-
-**PROPOSED semantic levels (step 2):** `Gate` | `Signal` | `Attention` | `Information` plus **`blocksAction`** (e.g. `{ "CompleteStage" }`) instead of a single global severity.
-
-**PROPOSED minimal Application enrichment (step 3):** extend existing DTOs (issues detail, attention item, lifecycle transition) — **no** universal `OrganizerProblemDto` until justified by pilot.
+| Hypothesized canon (canonicalization **rule** DECIDED; code choice **VERIFY**) | Aliases — document mapping; POST equivalence **VERIFY** |
+| :----------------------------------------------------------------------------- | :-------------------------------------------------------- |
+| `OpenMatches` (VERIFY) | Lifecycle; POST `Application.StageCompletionBlocked` + `reasons` (**V1**) |
+| `CycleDetected` (VERIFY) | `structureIssues[]`; Prepare disabled; POST `Application.StructureCycleDetected` (**V2**) |
+| `StructureGraphInvalid` (aggregate, VERIFY vs issues **V5**) | Readiness aggregate — **distinct from** single-issue canon |
 
 ---
 
@@ -235,13 +392,13 @@ For discussion only: a **single stable code** per organizer problem (e.g. `Cycle
 
 ---
 
-## Recommended sequence (discussion — not schedule commitment)
+## Recommended sequence
 
-1. **This audit** — persist as non-normative Git draft (current step).  
-2. **Arbitrate** semantic contract: levels, canonical codes, alias policy, `blocksAction` shape.  
-3. **Minimal Application projection** on 2–3 pilot codes.  
-4. **Reconcile Matchs pilot** with adopted semantics + i18n strategy.  
-5. **Overview + drawer + global mutations** only after pilot gate.
+1. **Audit + Step 2 record** — this document (2026-10-12).  
+2. **VERIFY checklist** — read-only code proof for pilot aliases and drawer policy.  
+3. **Step 3 brief approval** — documentation phase only; implementation only after separate explicit approval post-VERIFY.  
+4. **Matchs pilot** — only if explicitly unpaused in a future decision (currently excluded).  
+5. **Overview + drawer evolution** — separate product arbitration if policy change is desired.
 
 ---
 
