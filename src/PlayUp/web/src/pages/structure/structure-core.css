@@ -132,14 +132,21 @@
 }
 
 .structure-status__title--attention {
-  color: color-mix(in srgb, var(--color-attention) 75%, var(--color-ink));
+  color: var(--color-attention);
 }
 
 .structure-status__title--ready {
   display: inline-flex;
   align-items: center;
   gap: var(--space-8);
-  color: color-mix(in srgb, var(--color-success) 60%, var(--color-ink));
+  color: var(--color-success);
+}
+
+.structure-status__title--hint-negative {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-error);
 }
 
 .structure-status__detail {

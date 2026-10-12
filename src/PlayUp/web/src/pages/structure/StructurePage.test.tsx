@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addCompetitionStage,
   fetchStructureView,
+  fetchNeedsAttention,
   fetchStageOverview,
   fetchStageSchematic,
   renameStage,
@@ -20,6 +21,7 @@ vi.mock('../../api', async (importOriginal) => {
   return {
     ...actual,
     fetchStructureView: vi.fn(),
+    fetchNeedsAttention: vi.fn(),
     addCompetitionStage: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchStageSchematic: vi.fn(),
@@ -291,6 +293,11 @@ describe('StructurePage Structure hub', () => {
       formatKind: 'Championship',
       cases: [],
       connections: [],
+    });
+    vi.mocked(fetchNeedsAttention).mockResolvedValue({
+      competitionId,
+      count: 0,
+      items: [],
     });
   });
 
@@ -951,14 +958,29 @@ describe('StructurePage Structure hub', () => {
       }),
     );
 
+    vi.mocked(fetchNeedsAttention).mockResolvedValue({
+      competitionId,
+      count: 1,
+      items: [
+        {
+          source: 'DanglingQualificationTarget',
+          severity: 'Blocking',
+          targetType: 'Stage',
+          targetId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+          params: { stageId: 'dddddddd-dddd-dddd-dddd-dddddddddddd' },
+        },
+      ],
+    });
+
     renderStructurePage();
 
     expect(
-      await screen.findByText(/1 problème identifié/i),
+      await screen.findByText(/Des anomalies nécessitent votre attention/i),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/1 problème identifié/i)).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /Corriger la qualification/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole('link', { name: /Corriger la qualification/i }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Pots de tirage manquants/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Voir les problèmes/i }),

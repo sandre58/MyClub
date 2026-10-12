@@ -343,7 +343,28 @@ When **`SlotFeedMissing`** is **presented** (would block Prepare via [`Structure
 - **`NonRootUnfed`**: confirm intermediate construction vs hard anomaly per competition shape (no automatic reclass to Blocking).
 - **`SlotFeedMissing`**: confirm Host can use global **`Blocking`** + presentation silence (preferred) vs conditional severity emission.
 
-### D5 — Implementation order (after Notion Acceptée)
+### Structure PageHead — anomaly hint (DECIDED 2026-10-12, chat)
+
+**Intent:** Option **A** (no PageHead problem catalogue) + **minimal negative hint** so anomalies are not invisible on Structure.
+
+| Rule | Contract |
+| :--- | :------- |
+| **Placement** | Same `ds-page-head__note` slot and family as **positive** readiness messages (`structure-status`, not action banner). |
+| **Negative chrome** | Same layout as positive readiness: icon + label use **`--color-error`** (positive uses **`--color-success`**); **no** large danger panel, **no** corrective buttons in PageHead. |
+| **Content** | **One line** (title only); **no** lede, **no** issue list, **no** per-phase CTAs. |
+| **Count** | Bell / drawer keep the numeric catalogue; PageHead uses **sentence copy** (no « N anomalies recensées »). Hint visible when `GET /attention` `count` > 0 (or generic line on fetch error if synthesis had gaps). |
+| **Do not use** | `presentedProblemCount` alone for the displayed number (Structure synthesis ≠ drawer catalogue when T5 lines exist). |
+| **Removed** | `StructureReadinessBanner` action list (`MAX_ACTION_ITEMS = 3`), headline « N problèmes identifiés » as pseudo-catalogue. |
+
+**Copy (FR target):**
+
+- Single line: « Des anomalies nécessitent votre attention » (FR) when anomalies exist; count stays on the bell.
+
+**Implementation gate:** Structure PageHead loads or reuses `GET /attention` count for current competition before showing a numeric headline; else generic message. Positive readiness messages unchanged.
+
+---
+
+## D5 — Implementation order (after Notion Acceptée)
 
 1. Host: [`StructurePresentedAttentionCollector`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePresentedAttentionCollector.cs) severity map + contract tests.
 2. SPA: shared severity → chrome mapping ([`structureDiagnosticPresentation.ts`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticPresentation.ts), meters, operational strip).

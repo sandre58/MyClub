@@ -51,6 +51,7 @@
     "problemsToHandle_other": "{{count}} problèmes à traiter",
     "bannerProblemsIdentified_one": "{{count}} problème identifié",
     "bannerProblemsIdentified_other": "{{count}} problèmes identifiés",
+    "anomalyHintTitle": "Des anomalies nécessitent votre attention",
     "bannerPriorityActions_one": "{{count}} action prioritaire",
     "bannerPriorityActions_other": "{{count}} actions prioritaires",
     "viewAttentionPhase": "Voir {{name}}",

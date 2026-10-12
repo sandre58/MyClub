@@ -32,7 +32,7 @@ import {
   type StructureView,
 } from '../../types';
 import { AddPhaseDialog } from './StructureGraphDialogs';
-import { StructureReadinessBanner } from './StructureReadinessBanner';
+import { StructureAnomalyHint } from './StructureAnomalyHint';
 import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
@@ -517,63 +517,54 @@ function readinessStatusNote(
   data: StructureView,
   stages: StructureStageHubSummary[],
   summary: StructureReadinessSummary,
-  selectedStageId: string | null,
+  _selectedStageId: string | null,
 ): ReactNode {
   const readiness = data.readiness;
   const formatKind = data.format.kind;
-  // Banner only for problems on an existing structure — never birth (0 phase).
   const incomplete = summary.hasAny;
   const readyToMaterialize = readiness.readyForMaterialization;
   const lifecycleClosed =
     data.status === 'Completed' || data.status === 'Archived';
-  // ReadyForNextSlice = user can still build next construction — not after lifecycle end.
   const readyNext =
     !lifecycleClosed &&
     !incomplete &&
     !readyToMaterialize &&
     readiness.readyForNextSlice;
 
-  if (incomplete) {
-    return (
-      <StructureReadinessBanner
-        data={data}
-        stages={stages}
-        summary={summary}
-        selectedStageId={selectedStageId}
-      />
-    );
-  }
-
-  // Draw readiness is not a Structure-global status (draw optional).
-  // CTA + topology badge carry execution; Hub stays construction-focused.
-
-  if (lifecycleClosed) {
+  if (lifecycleClosed || stages.length === 0) {
     return null;
   }
 
-  if (readyToMaterialize && !readiness.readyForSchedule) {
-    const isCup = formatKind === 'Cup';
-    return (
-      <ReadinessReadyStatus
-        titleKey={
-          isCup
-            ? 'readiness.readyForCupSkeleton'
-            : 'readiness.readyForMaterialization'
-        }
-      />
-    );
+  if (!incomplete) {
+    if (readyToMaterialize && !readiness.readyForSchedule) {
+      const isCup = formatKind === 'Cup';
+      return (
+        <ReadinessReadyStatus
+          titleKey={
+            isCup
+              ? 'readiness.readyForCupSkeleton'
+              : 'readiness.readyForMaterialization'
+          }
+        />
+      );
+    }
+
+    if (readyNext) {
+      const hint = readiness.nextConstructionStepHint ?? 'None';
+      const titleKey =
+        hint !== 'None'
+          ? (`readiness.nextStep.${hint}` as const)
+          : 'readiness.readyForNextSlice';
+      return <ReadinessReadyStatus titleKey={titleKey} />;
+    }
   }
 
-  if (readyNext) {
-    const hint = readiness.nextConstructionStepHint ?? 'None';
-    const titleKey =
-      hint !== 'None'
-        ? (`readiness.nextStep.${hint}` as const)
-        : 'readiness.readyForNextSlice';
-    return <ReadinessReadyStatus titleKey={titleKey} />;
-  }
-
-  return null;
+  return (
+    <StructureAnomalyHint
+      competitionId={data.competitionId}
+      allowGenericOnError={incomplete}
+    />
+  );
 }
 
 function ReadinessReadyStatus({
