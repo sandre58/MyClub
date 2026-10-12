@@ -184,6 +184,52 @@ These four terms are **not** assumed to be a single exclusive enum until wire sh
 
 ---
 
+## VERIFY report (2026-10-12 — read-only code review)
+
+**Status:** Engineering conclusions only. Does **not** extend Step 2 DECIDED. Alias/canonical rows move to normative contract only after product review of this report.
+
+### V1 — `OpenMatches` vs `Application.StageCompletionBlocked`
+
+| Level | Finding |
+| :---- | :------ |
+| **Observed (VERIFIED)** | Lifecycle: `ResolveCompleteTransition` sets `disabledReasonCode` to `CompleteStage.ReasonOpenMatches` (`"OpenMatches"`) when `CanComplete` is false; `CanComplete` when Running/Suspended and `open == 0` (matches not Finished/Cancelled). POST: `CompleteStage.Execute` throws `ApplicationFailureException` with `ApplicationErrorCodes.StageCompletionBlocked` and `Reasons` containing `"OpenMatches"` when any match status is not Finished/Cancelled. Host tests assert ProblemDetails code + reasons (`CompleteStageEndpointTests`, `HttpContractEndpointTests`). |
+| **Conclusion (engineering)** | Same predicate (open matches block complete) on read anticipation and command. POST code is a **transport alias**; machine reason `"OpenMatches"` is the shared fact. **Candidate canon:** `OpenMatches`. **blocksAction (candidate):** `CompleteStage`. |
+| **Product DECIDED** | Not extended by this report. Step 2 already treats POST/read alignment as VERIFY — this checklist item is **closed** for equivalence at engineering level; product may adopt canon/alias in Step 3 doc. |
+
+### V2 — `CycleDetected` vs `Application.StructureCycleDetected`
+
+| Level | Finding |
+| :---- | :------ |
+| **Observed (VERIFIED)** | `structureIssues[]` can contain `CycleDetected`. POST Prepare: `PrepareStage.EnsurePrepareGateDiagnostics` throws `Application.StructureCycleDetected` when `CycleDetected` is among prepare gate codes. Lifecycle Prepare: if `HasStructureGraphGate` (any issue where `IsStructureGraphGateIssue` — **includes** `CycleDetected`), transition uses `disabledReasonCode` **`StructureGraphInvalid`**, not `CycleDetected`, **before** `CollectPrepareGateCodes` runs. Gate-only issues such as `OverCapacityEdge` (graph gate false, prepare gate true) can show **`OverCapacityEdge`** on lifecycle and `Application.OverCapacityEdge` on POST. |
+| **Conclusion (engineering)** | **Not** a single stable string alias across all read surfaces for `CycleDetected`: lifecycle often **aggregates** to `StructureGraphInvalid` while POST emits **`Application.StructureCycleDetected`**. Underlying prepare refusal still uses `CompetitionFlowAnalyzer` gate facts. Document **three** wire shapes (issue fact, lifecycle disabled, POST code) in Step 3 alias table — do not assume lifecycle disabled equals canon. |
+| **Product DECIDED** | Open: whether `StructureGraphInvalid` on lifecycle and `StructureCycleDetected` on POST should be documented as one problem with aliases, or two presentation layers. **Owner:** product + tech. **Condition:** Step 3 documentation phase alias table review. |
+
+### V3 — `QualificationPending` vs blocked actions
+
+| Level | Finding |
+| :---- | :------ |
+| **Observed (VERIFIED)** | `NeedsAttentionAssembler` emits `QualificationPending` with `SeverityBlocking` when qualification destination is pending (`DestinationSatisfaction.Kind.Pending`) or destination stage missing. Overview maps source → `actionCode` `ApplyQualification`, impact `BlocksProgression`. Attention item is **not** a lifecycle disabled code; drawer shows items from `GET /attention` mapped via `needsAttentionItemsToSituations` (`nature` = severity, typically `Blocking`). |
+| **Conclusion (engineering)** | Attention item signals **pending qualification work** and suggests **ApplyQualification** — it is **not** the same shape as lifecycle `disabledReasonCode`. Apply may be the **remediation**, not a blocked action in the CompleteStage sense. **Candidate semantic level (Step 2 defs):** **Attention**, not Gate on a single named transition. |
+| **Product DECIDED** | Open: explicit `blocksAction` list for qualification (if any) vs “actionable attention only”. **Owner:** product. **Condition:** Step 3 doc for attention item semantics. |
+
+### V4 — Drawer policy vs `GET /attention`
+
+| Level | Finding |
+| :---- | :------ |
+| **Observed (VERIFIED)** | `NeedsAttentionAssembler` emits: `InsufficientParticipants`, `DrawNoSolution`, `QualificationPending` / `Conflict`, `ProgressionPending` / `Conflict` — **not** readiness blockers (`MissingStage`, `StructureGraphInvalid`, etc.). `AttentionDrawer` loads `fetchNeedsAttention`, maps to situations, then `partitionAttentionItems`: drops sources in `ATTENTION_DRAWER_CONSTRUCTION_DENYLIST`; splits remaining by `nature === 'Blocking'` vs else. All attention DTOs use `SeverityBlocking` today → mapped `Blocking` nature. |
+| **Conclusion (engineering)** | Step 2 **policy intent** (semantics ≠ drawer; construction not in drawer payload) **matches current code**. Denylist is **defence in depth** if construction sources ever appeared on situations. Drawer does **not** auto-include Gate-level structure problems from structure read model. |
+| **Product DECIDED** | Step 2 drawer maintenance **DECIDED** (intent) — **aligned with V4 observed behaviour**. Long-term optimality remains **DEFERRED** per Step 2 §5. |
+
+### V5 — `StructureGraphInvalid` aggregate vs hub issues
+
+| Level | Finding |
+| :---- | :------ |
+| **Observed (VERIFIED)** | `BuildReadiness` adds blocker `StructureGraphInvalid` when any hub has any `structureIssues` entry with `IsStructureGraphGateIssue(code)` (default true except e.g. `SlotFeedMissing`, `OverCapacityEdge`, population shortfalls, …). Hub rows still expose full `structureIssues[]` list. Lifecycle Prepare uses same `IsStructureGraphGateIssue` helper for early block with disabled `StructureGraphInvalid`. |
+| **Conclusion (engineering)** | **Aggregate** `StructureGraphInvalid` is a **readiness/lifecycle summary** over a **subset** of issue codes; **canon fact** for a cycle remains **`CycleDetected`** on the hub. Multiple distinct graph gate issues collapse to one blocker string on readiness. |
+| **Product DECIDED** | Step 2 rule “aggregates distinct from canon” **supported**. Open: remediation copy when lifecycle disabled is aggregate but remediation uses first graph gate issue code. **Owner:** product/UX. **Condition:** optional follow-up, not blocking Step 3 doc. |
+
+---
+
 ## Three dimensions (DECIDED framing)
 
 | Dimension | Owner | Step 2 |
