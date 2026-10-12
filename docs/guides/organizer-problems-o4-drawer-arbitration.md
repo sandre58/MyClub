@@ -351,16 +351,18 @@ When **`SlotFeedMissing`** is **presented** (would block Prepare via [`Structure
 | :--- | :------- |
 | **Placement** | Same `ds-page-head__note` slot and family as **positive** readiness messages (`structure-status`, not action banner). |
 | **Negative chrome** | Same layout as positive readiness: icon + label use **`--color-error`** (positive uses **`--color-success`**); **no** large danger panel, **no** corrective buttons in PageHead. |
-| **Content** | **One line** (title only); **no** lede, **no** issue list, **no** per-phase CTAs. |
-| **Count** | Bell / drawer keep the numeric catalogue; PageHead uses **sentence copy** (no « N anomalies recensées »). Hint visible when `GET /attention` `count` > 0 (or generic line on fetch error if synthesis had gaps). |
-| **Do not use** | `presentedProblemCount` alone for the displayed number (Structure synthesis ≠ drawer catalogue when T5 lines exist). |
+| **Content** | **One line** (title only); **no** lede, **no** issue list, **no** per-phase CTAs, **no** number in PageHead (D1). |
+| **Visibility (D2)** | Show negative hint when **either** Structure synthesis `hasAny` **or** `/attention` has **presentable** drawer rows (union). Never show positive readiness while either signal is active. Do not show positive while `/attention` is still pending. |
+| **Do not use** | `presentedProblemCount` for PageHead copy or a second catalogue; `NeedsAttentionDto.Count` alone for shell badge (SPA uses presentable count). |
 | **Removed** | `StructureReadinessBanner` action list (`MAX_ACTION_ITEMS = 3`), headline « N problèmes identifiés » as pseudo-catalogue. |
 
 **Copy (FR target):**
 
-- Single line: « Des anomalies nécessitent votre attention » (FR) when anomalies exist; count stays on the bell.
+- Single line: « Des anomalies nécessitent votre attention » when `showNegative`; no count in PageHead.
 
-**Implementation gate:** Structure PageHead loads or reuses `GET /attention` count for current competition before showing a numeric headline; else generic message. Positive readiness messages unchanged.
+**Shell count (D3):** SPA badge and drawer header use **`presentableAttentionCount`** (map → dedupe → denylist → blocking + warning rows). API `Count => Items.Count` unchanged.
+
+**Implementation gate:** [`structurePageHeadReadiness.ts`](../../src/PlayUp/web/src/pages/structure/structurePageHeadReadiness.ts) + [`attentionPartition.ts`](../../src/PlayUp/web/src/shell/attentionPartition.ts) presentable helpers.
 
 ---
 

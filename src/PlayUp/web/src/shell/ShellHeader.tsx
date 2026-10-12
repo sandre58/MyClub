@@ -17,7 +17,11 @@ import { PreferencesMenu } from './PreferencesMenu';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import type { ShellViewport } from './useShellViewport';
 import { Tooltip } from '../design-system/components/Tooltip';
-import { attentionSeverityToneFromItems } from './attentionSeverityTone';
+import {
+  presentableAttentionCount,
+  presentableAttentionSituations,
+} from './attentionPartition';
+import { attentionSeverityToneFromSituations } from './attentionSeverityTone';
 
 type ShellHeaderProps = {
   viewport?: ShellViewport;
@@ -63,10 +67,11 @@ export function ShellHeader({
     staleTime: 0,
   });
 
-  const attentionItems = attentionQuery.data?.items ?? [];
-  const attentionCount =
-    attentionQuery.data?.count ?? attentionItems.length ?? 0;
-  const attentionTone = attentionSeverityToneFromItems(attentionItems);
+  const attentionWireItems = attentionQuery.data?.items ?? [];
+  const attentionCount = presentableAttentionCount(attentionWireItems);
+  const attentionTone = attentionSeverityToneFromSituations(
+    presentableAttentionSituations(attentionWireItems),
+  );
   const competitionStatus = status;
   const periodLabel = formatCompetitionPeriod(
     scheduledStart,

@@ -39,7 +39,13 @@ public sealed class NeedsAttentionAssemblerTests
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
-        attention.Count.Should().Be(0);
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceDrawNoSolution
+            || item.Source == NeedsAttentionAssembler.SourceQualificationPending
+            || item.Source == NeedsAttentionAssembler.SourceQualificationConflict
+            || item.Source == NeedsAttentionAssembler.SourceProgressionPending
+            || item.Source == NeedsAttentionAssembler.SourceProgressionConflict
+            || item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
     }
 
     [Fact]
@@ -158,10 +164,11 @@ public sealed class NeedsAttentionAssemblerTests
             [source, champ],
             new Dictionary<StageId, IReadOnlyList<Match>> { [source.Id] = matches });
 
-        attention.Items.Should().HaveCount(2);
-        attention.Items.Should().OnlyContain(item =>
-            item.Source == NeedsAttentionAssembler.SourceQualificationPending
-            && item.TargetType == "Form");
+        var qualificationPending = attention.Items
+            .Where(item => item.Source == NeedsAttentionAssembler.SourceQualificationPending)
+            .ToArray();
+        qualificationPending.Should().HaveCount(2);
+        qualificationPending.Should().OnlyContain(item => item.TargetType == "Form");
 
         champ.AddResolvedPopulationEntry(tops[0], _clock);
         champ.RecordFormPathResolution(
@@ -175,9 +182,10 @@ public sealed class NeedsAttentionAssemblerTests
             [source, champ],
             new Dictionary<StageId, IReadOnlyList<Match>> { [source.Id] = matches });
 
-        attention.Items.Should().ContainSingle(item =>
-            item.Source == NeedsAttentionAssembler.SourceQualificationPending
-            && item.TargetType == "Form");
+        attention.Items
+            .Where(item => item.Source == NeedsAttentionAssembler.SourceQualificationPending)
+            .Should()
+            .ContainSingle(item => item.TargetType == "Form");
     }
 
     [Fact]
@@ -217,9 +225,10 @@ public sealed class NeedsAttentionAssemblerTests
             [cup, groups],
             new Dictionary<StageId, IReadOnlyList<Match>> { [cup.Id] = [match] });
 
-        attention.Items.Should().ContainSingle(item =>
-            item.Source == NeedsAttentionAssembler.SourceProgressionPending
-            && item.TargetType == "Group");
+        attention.Items
+            .Where(item => item.Source == NeedsAttentionAssembler.SourceProgressionPending)
+            .Should()
+            .ContainSingle(item => item.TargetType == "Group");
 
         groups.AddResolvedPopulationEntry(home.Id, _clock);
         groups.ApplyResolvedGroupEntry(groupA.Id, home.Id);

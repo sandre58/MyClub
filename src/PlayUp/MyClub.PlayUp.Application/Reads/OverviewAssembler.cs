@@ -1341,7 +1341,7 @@ public static class OverviewAssembler
                 pair => pair.Key,
                 pair => pair.Value,
                 StringComparer.Ordinal)
-            : new Dictionary<string, string>(StringComparer.Ordinal);
+            : [with(StringComparer.Ordinal)];
 
         if (item is { TargetType: "Stage", TargetId: not null }
             && !parameters.ContainsKey("stageId"))

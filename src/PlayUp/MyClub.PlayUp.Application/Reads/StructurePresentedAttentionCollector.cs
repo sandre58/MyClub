@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
 
@@ -19,7 +18,7 @@ public static class StructurePresentedAttentionCollector
     private static readonly StringComparer CodeComparer = StringComparer.Ordinal;
 
     /// <summary>Collects presented structure anomalies for the attention catalogue (D1 revision).</summary>
-    public static void Collect(StructureViewDto structureView, List<NeedsAttentionItemDto> items)
+    public static void Collect(StructureViewDto structureView, IList<NeedsAttentionItemDto> items)
     {
         ArgumentNullException.ThrowIfNull(structureView);
         ArgumentNullException.ThrowIfNull(items);
@@ -31,15 +30,9 @@ public static class StructurePresentedAttentionCollector
 
         foreach (var stage in structureView.Stages)
         {
-            foreach (var code in StagePresentedIssueCodes(structureView, stage))
-            {
-                if (IsExcludedSource(code))
-                {
-                    continue;
-                }
-
-                items.Add(CreateStageItem(code, stage.StageId));
-            }
+            StagePresentedIssueCodes(structureView, stage)
+                .Where(code => !IsExcludedSource(code))
+                .Select(code => CreateStageItem(code, stage.StageId)).ToList().ForEach(items.Add);
 
             if (StageHasEngagedMissingPots(stage))
             {
@@ -60,7 +53,7 @@ public static class StructurePresentedAttentionCollector
                 new Dictionary<string, string>
                 {
                     ["stageId"] = structureView.Format.PrimaryStageId?.ToString()
-                        ?? string.Empty,
+                        ?? string.Empty
                 }));
         }
     }
@@ -98,33 +91,19 @@ public static class StructurePresentedAttentionCollector
     }
 
     /// <summary>SPA: <c>projectPresentedIssueCodes</c>.</summary>
-    internal static IReadOnlyList<string> ProjectPresentedIssueCodes(IReadOnlyList<string> codes)
-    {
-        if (codes.Contains(CompetitionFlowAnalyzer.AuthoredAwardUnreachable, CodeComparer))
-        {
-            return [.. codes.Where(code => code != CompetitionFlowAnalyzer.ExpectedRankUnreachable)];
-        }
-
-        return codes;
-    }
+    internal static IReadOnlyList<string> ProjectPresentedIssueCodes(IReadOnlyList<string> codes) => codes.Contains(CompetitionFlowAnalyzer.AuthoredAwardUnreachable, CodeComparer) ? [.. codes.Where(code => code != CompetitionFlowAnalyzer.ExpectedRankUnreachable)] : codes;
 
     /// <summary>SPA: <c>isSlotFeedAwaitingDraw</c>.</summary>
-    internal static bool IsSlotFeedAwaitingDraw(StructureStageHubSummaryDto stage)
-    {
-        if (!stage.HasDrawRules)
+    internal static bool IsSlotFeedAwaitingDraw(StructureStageHubSummaryDto stage) =>
+        stage is
         {
-            return false;
-        }
-
-        return stage.DrawExecutionBadge is not (
-            StructureDrawExecutionBadge.ToApply or StructureDrawExecutionBadge.Applied);
-    }
+            HasDrawRules: true, DrawExecutionBadge: not (
+            StructureDrawExecutionBadge.ToApply or StructureDrawExecutionBadge.Applied)
+        };
 
     /// <summary>SPA: <c>stageHasEngagedMissingPots</c>.</summary>
     internal static bool StageHasEngagedMissingPots(StructureStageHubSummaryDto stage) =>
-        stage.FormatKind == StructureFormatKind.Groups
-        && stage.HasDrawRules
-        && stage.NumberOfPots is null;
+        stage is { FormatKind: StructureFormatKind.Groups, HasDrawRules: true, NumberOfPots: null };
 
     private static NeedsAttentionItemDto CreateStageItem(
         string source,
@@ -137,14 +116,12 @@ public static class StructurePresentedAttentionCollector
             stageId.ToString(),
             new Dictionary<string, string>
             {
-                ["stageId"] = stageId.ToString(),
+                ["stageId"] = stageId.ToString()
             },
             Problem: OrganizerProblemSemanticsResolver.TryFromStructureIssue(source));
 
     private static string ResolveSeverity(string source) =>
-        SeverityBySource.TryGetValue(source, out var severity)
-            ? severity
-            : NeedsAttentionAssembler.SeverityBlocking;
+        SeverityBySource.GetValueOrDefault(source, NeedsAttentionAssembler.SeverityBlocking);
 
     /// <summary>Workshop default matrix (D1 revision Annex A4 PROPOSED).</summary>
     private static readonly Dictionary<string, string> SeverityBySource =
@@ -153,6 +130,6 @@ public static class StructurePresentedAttentionCollector
             [CompetitionFlowAnalyzer.OverCapacityEdge] = NeedsAttentionAssembler.SeverityWarning,
             [CompetitionFlowAnalyzer.NonRootUnfed] = NeedsAttentionAssembler.SeverityWarning,
             [CompetitionFlowAnalyzer.AuthoredAwardUnreachable] = NeedsAttentionAssembler.SeverityWarning,
-            [CompetitionFlowAnalyzer.ExpectedRankUnreachable] = NeedsAttentionAssembler.SeverityWarning,
+            [CompetitionFlowAnalyzer.ExpectedRankUnreachable] = NeedsAttentionAssembler.SeverityWarning
         };
 }

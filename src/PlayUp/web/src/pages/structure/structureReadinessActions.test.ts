@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import {
   collectAllStructureReadinessActionItems,
-  collectStructureReadinessActionItems,
   resolveStructureDiagnosticNavigation,
 } from './structureReadinessActions';
 
@@ -110,19 +109,16 @@ describe('structureReadinessActions', () => {
         structureIssues: ['AuthoredAwardUnreachable'],
       }),
     ];
-    const items = collectStructureReadinessActionItems(
+    const all = collectAllStructureReadinessActionItems(
       baseView({ stages }),
       stages,
     );
-    expect(items).toHaveLength(3);
-    expect(items.map((item) => item.tone)).toEqual([
+    expect(all).toHaveLength(4);
+    expect(all.slice(0, 3).map((item) => item.tone)).toEqual([
       'danger',
       'danger',
       'attention',
     ]);
-    expect(
-      collectAllStructureReadinessActionItems(baseView({ stages }), stages),
-    ).toHaveLength(4);
   });
 
   it('maps qualification issues to section deep-link', () => {

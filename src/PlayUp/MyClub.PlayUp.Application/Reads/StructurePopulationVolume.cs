@@ -170,17 +170,10 @@ public static class StructurePopulationVolume
             return ResolveCupEntryPlacesFromHub(hub);
         }
 
-        if (kind == StructureFormatKind.Groups || hub.GroupCount > 0)
-        {
-            var groups = hub.GroupCount;
-            var perGroup = hub.PlacesPerGroup ?? hub.NumberOfPots;
-            if (groups > 0 && perGroup is >= 2)
-            {
-                return groups * perGroup.Value;
-            }
-        }
-
-        return null;
+        if (kind != StructureFormatKind.Groups && hub.GroupCount <= 0) return null;
+        var groups = hub.GroupCount;
+        var perGroup = hub.PlacesPerGroup ?? hub.NumberOfPots;
+        return groups > 0 && perGroup is >= 2 ? groups * perGroup.Value : null;
     }
 
     /// <summary>
@@ -201,12 +194,7 @@ public static class StructurePopulationVolume
         }
 
         var places = ResolvePlacesN(stage);
-        if (places is null or <= 0)
-        {
-            return false;
-        }
-
-        return ExpectedOccupancy(view, stage) - places.Value < 0;
+        return places is not (null or <= 0) && ExpectedOccupancy(view, stage) < places.Value;
     }
 
     private static int? ResolveCupEntryPlacesFromHub(StructureStageHubSummaryDto hub)

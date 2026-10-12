@@ -205,7 +205,7 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         attentionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var attention = await attentionResponse.Content.ReadFromJsonAsync<NeedsAttentionDto>(HostJson.Options);
         attention.Should().NotBeNull();
-        var blockingAttention = attention!.Items
+        var blockingAttention = attention.Items
             .Where(item => item.Severity == NeedsAttentionAssembler.SeverityBlocking)
             .ToArray();
         body.AttentionSummary.Count.Should().Be(blockingAttention.Length);

@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { type UseQueryResult, useQuery } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { fetchStructureView } from '../../api';
+import { fetchNeedsAttention, fetchStructureView } from '../../api';
+import { presentableAttentionCount } from '../../shell/attentionPartition';
 import { FormSection } from '../../design-system/components/FormSection';
 import { SelectableTile } from '../../design-system/components/SelectableTile';
 import { PageHead } from '../../design-system/components/PageHead';
@@ -29,8 +30,13 @@ import {
 import {
   type StructureFormatKind,
   type StructureStageHubSummary,
+  type NeedsAttention,
   type StructureView,
 } from '../../types';
+import {
+  resolveStructurePageHeadNoteKind,
+  type AttentionQueryPhase,
+} from './structurePageHeadReadiness';
 import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructureAnomalyHint } from './StructureAnomalyHint';
 import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
@@ -169,6 +175,13 @@ function StructureHub({ data }: { data: StructureView }) {
     [data, stages],
   );
 
+  const attentionQuery = useQuery({
+    queryKey: queryKeys.competitions.attention(data.competitionId),
+    queryFn: () => fetchNeedsAttention(data.competitionId),
+    enabled: data.competitionId.length > 0 && stages.length > 0,
+    staleTime: 0,
+  });
+
   const addPhaseAction = (
     <Tooltip
       content={
@@ -206,12 +219,7 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={stages.length === 0 ? undefined : addPhaseAction}
-        note={readinessStatusNote(
-          data,
-          stages,
-          readinessSummary,
-          selectedStageId,
-        )}
+        note={readinessStatusNote(data, stages, readinessSummary, attentionQuery)}
       />
 
       {bootstrapEmpty ?? (
@@ -513,58 +521,72 @@ function edgeLabelFromSource(
   return t('hub.edgeGeneric');
 }
 
+function attentionQueryPhase(
+  query: UseQueryResult<NeedsAttention>,
+): AttentionQueryPhase {
+  if (query.isPending) {
+    return 'pending';
+  }
+  if (query.isError) {
+    return 'error';
+  }
+  return 'success';
+}
+
 function readinessStatusNote(
   data: StructureView,
   stages: StructureStageHubSummary[],
   summary: StructureReadinessSummary,
-  _selectedStageId: string | null,
+  attentionQuery: UseQueryResult<NeedsAttention>,
 ): ReactNode {
   const readiness = data.readiness;
   const formatKind = data.format.kind;
-  const incomplete = summary.hasAny;
-  const readyToMaterialize = readiness.readyForMaterialization;
   const lifecycleClosed =
     data.status === 'Completed' || data.status === 'Archived';
-  const readyNext =
-    !lifecycleClosed &&
-    !incomplete &&
-    !readyToMaterialize &&
-    readiness.readyForNextSlice;
+  const attentionPhase = attentionQueryPhase(attentionQuery);
+  const presentableCount =
+    attentionPhase === 'success'
+      ? presentableAttentionCount(attentionQuery.data?.items ?? [])
+      : 0;
 
-  if (lifecycleClosed || stages.length === 0) {
-    return null;
+  const noteKind = resolveStructurePageHeadNoteKind({
+    lifecycleClosed,
+    stagesEmpty: stages.length === 0,
+    hasAny: summary.hasAny,
+    attentionPhase,
+    presentableAttentionCount: presentableCount,
+    readyToMaterialize: readiness.readyForMaterialization,
+    readyForSchedule: readiness.readyForSchedule,
+    readyForNextSlice: readiness.readyForNextSlice,
+  });
+
+  if (noteKind === 'negative') {
+    return <StructureAnomalyHint />;
   }
 
-  if (!incomplete) {
-    if (readyToMaterialize && !readiness.readyForSchedule) {
-      const isCup = formatKind === 'Cup';
-      return (
-        <ReadinessReadyStatus
-          titleKey={
-            isCup
-              ? 'readiness.readyForCupSkeleton'
-              : 'readiness.readyForMaterialization'
-          }
-        />
-      );
-    }
-
-    if (readyNext) {
-      const hint = readiness.nextConstructionStepHint ?? 'None';
-      const titleKey =
-        hint !== 'None'
-          ? (`readiness.nextStep.${hint}` as const)
-          : 'readiness.readyForNextSlice';
-      return <ReadinessReadyStatus titleKey={titleKey} />;
-    }
+  if (noteKind === 'positiveMaterialization') {
+    const isCup = formatKind === 'Cup';
+    return (
+      <ReadinessReadyStatus
+        titleKey={
+          isCup
+            ? 'readiness.readyForCupSkeleton'
+            : 'readiness.readyForMaterialization'
+        }
+      />
+    );
   }
 
-  return (
-    <StructureAnomalyHint
-      competitionId={data.competitionId}
-      allowGenericOnError={incomplete}
-    />
-  );
+  if (noteKind === 'positiveNextSlice') {
+    const hint = readiness.nextConstructionStepHint ?? 'None';
+    const titleKey =
+      hint !== 'None'
+        ? (`readiness.nextStep.${hint}` as const)
+        : 'readiness.readyForNextSlice';
+    return <ReadinessReadyStatus titleKey={titleKey} />;
+  }
+
+  return null;
 }
 
 function ReadinessReadyStatus({

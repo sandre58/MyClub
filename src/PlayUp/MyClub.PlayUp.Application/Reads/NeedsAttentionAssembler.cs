@@ -97,11 +97,9 @@ public static class NeedsAttentionAssembler
             CollectProgressionAttentions(stage, stages, matches, items);
         }
 
-        if (stages.Count > 0)
-        {
-            var structureView = StructureViewAssembler.Assemble(competition, stages);
-            StructurePresentedAttentionCollector.Collect(structureView, items);
-        }
+        if (stages.Count == 0) return new NeedsAttentionDto(competition.Id.Value, items);
+        var structureView = StructureViewAssembler.Assemble(competition, stages);
+        StructurePresentedAttentionCollector.Collect(structureView, items);
 
         return new NeedsAttentionDto(competition.Id.Value, items);
     }
@@ -149,7 +147,7 @@ public static class NeedsAttentionAssembler
                 draw.Id.Value.ToString(),
                 new Dictionary<string, string>
                 {
-                    ["stageId"] = stage.Id.Value.ToString(),
+                    ["stageId"] = stage.Id.Value.ToString()
                 }));
 
     private static void CollectQualificationAttentions(

@@ -365,9 +365,13 @@ public sealed class OverviewAssemblerTests
             new Dictionary<StageId, IReadOnlyList<Match>>());
         var structureView = StructureViewAssembler.Assemble(competition, [source]);
 
-        attention.Count.Should().Be(0);
-        view.AttentionSummary.Count.Should().Be(0);
+        attention.Items.Should().NotContain(item =>
+            item.Source == StructureViewAssembler.BlockerStructureGraphInvalid
+            || item.Source == StructureViewAssembler.BlockerMissingStage
+            || item.Source == StructureViewAssembler.BlockerMissingStructure);
         view.Situations.Should().NotContain(item =>
+            item.Source == StructureViewAssembler.BlockerStructureGraphInvalid);
+        view.AttentionSummary.Items.Should().NotContain(item =>
             item.Source == StructureViewAssembler.BlockerStructureGraphInvalid);
         structureView.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerStructureGraphInvalid);
     }
@@ -546,8 +550,20 @@ public sealed class OverviewAssemblerTests
             [stage],
             new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
 
-        view.Situations.Should().BeEmpty();
-        view.AttentionSummary.Count.Should().Be(0);
+        view.Situations.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceDrawNoSolution
+            || item.Source == NeedsAttentionAssembler.SourceQualificationPending
+            || item.Source == NeedsAttentionAssembler.SourceQualificationConflict
+            || item.Source == NeedsAttentionAssembler.SourceProgressionPending
+            || item.Source == NeedsAttentionAssembler.SourceProgressionConflict
+            || item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
+        view.AttentionSummary.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceDrawNoSolution
+            || item.Source == NeedsAttentionAssembler.SourceQualificationPending
+            || item.Source == NeedsAttentionAssembler.SourceQualificationConflict
+            || item.Source == NeedsAttentionAssembler.SourceProgressionPending
+            || item.Source == NeedsAttentionAssembler.SourceProgressionConflict
+            || item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants);
     }
 
     [Fact]

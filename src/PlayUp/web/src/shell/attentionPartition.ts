@@ -1,4 +1,5 @@
-import type { OverviewSituation } from '../types';
+import type { NeedsAttentionItem, OverviewSituation } from '../types';
+import { needsAttentionItemsToSituations } from './needsAttentionToSituation';
 
 /**
  * Sources that must never appear in AttentionDrawer (birth + aggregates).
@@ -33,4 +34,50 @@ export function partitionAttentionItems(items: OverviewSituation[]): {
   }
 
   return { blocking, attention };
+}
+
+function attentionSituationKey(item: OverviewSituation): string {
+  return `${item.source}\0${item.targetType ?? ''}\0${item.targetId ?? ''}`;
+}
+
+/** Aligns with OverviewAssembler.DeduplicateSituations (Source + TargetType + TargetId). */
+export function dedupeAttentionSituations(
+  items: OverviewSituation[],
+): OverviewSituation[] {
+  const seen = new Set<string>();
+  const out: OverviewSituation[] = [];
+  for (const item of items) {
+    const key = attentionSituationKey(item);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
+
+/** Drawer-visible rows: map wire → dedupe → drop construction denylist. */
+export function presentableAttentionSituations(
+  wireItems: NeedsAttentionItem[],
+): OverviewSituation[] {
+  const mapped = needsAttentionItemsToSituations(wireItems);
+  const deduped = dedupeAttentionSituations(mapped);
+  return deduped.filter(
+    (item) => !isAttentionDrawerForbiddenSource(item.source),
+  );
+}
+
+export function presentableAttentionCount(
+  wireItems: NeedsAttentionItem[],
+): number {
+  return presentableAttentionSituations(wireItems).length;
+}
+
+/** Blocking vs warning groups for already-presentable situations. */
+export function partitionPresentableAttention(wireItems: NeedsAttentionItem[]): {
+  blocking: OverviewSituation[];
+  attention: OverviewSituation[];
+} {
+  return partitionAttentionItems(presentableAttentionSituations(wireItems));
 }

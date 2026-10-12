@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  dedupeAttentionSituations,
   isAttentionDrawerForbiddenSource,
   partitionAttentionItems,
+  presentableAttentionCount,
+  presentableAttentionSituations,
 } from './attentionPartition';
+import type { NeedsAttentionItem } from '../types';
 import type { OverviewSituation } from '../types';
 
 function situation(
@@ -58,5 +62,42 @@ describe('attentionPartition', () => {
       true,
     );
     expect(isAttentionDrawerForbiddenSource('DrawNoSolution')).toBe(false);
+  });
+
+  it('dedupeAttentionSituations collapses identical source and target', () => {
+    const a = situation('QualificationPending');
+    const b = { ...a };
+    expect(dedupeAttentionSituations([a, b])).toHaveLength(1);
+  });
+
+  it('presentableAttentionCount is zero when only denylisted sources remain', () => {
+    const wire: NeedsAttentionItem[] = [
+      {
+        source: 'MissingStage',
+        severity: 'Blocking',
+        targetType: 'Competition',
+        targetId: 'c1',
+      },
+    ];
+    expect(presentableAttentionCount(wire)).toBe(0);
+    expect(presentableAttentionSituations(wire)).toEqual([]);
+  });
+
+  it('presentableAttentionCount includes blocking and warning rows', () => {
+    const wire: NeedsAttentionItem[] = [
+      {
+        source: 'DrawNoSolution',
+        severity: 'Blocking',
+        targetType: 'Stage',
+        targetId: 's1',
+      },
+      {
+        source: 'NonRootUnfed',
+        severity: 'Warning',
+        targetType: 'Stage',
+        targetId: 's2',
+      },
+    ];
+    expect(presentableAttentionCount(wire)).toBe(2);
   });
 });

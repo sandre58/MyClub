@@ -9,11 +9,14 @@ import { Tooltip } from '../design-system/components/Tooltip';
 import { useDismissLayer } from '../design-system/useDismissLayer';
 import { useFocusTrap } from '../design-system/useFocusTrap';
 import { queryKeys } from '../queryKeys';
-import type { OverviewSituation } from '../types';
+import type { NeedsAttentionItem, OverviewSituation } from '../types';
 import { AttentionSituationRow } from './AttentionSituationRow';
-import { partitionAttentionItems } from './attentionPartition';
+import {
+  partitionPresentableAttention,
+  presentableAttentionCount,
+  presentableAttentionSituations,
+} from './attentionPartition';
 import { attentionSeverityToneFromSituations } from './attentionSeverityTone';
-import { needsAttentionItemsToSituations } from './needsAttentionToSituation';
 import { attentionLoadErrorMessage } from './attentionLoadError';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import { SHELL_MOTION_EXIT_MS } from './shellMotion';
@@ -65,9 +68,11 @@ export function AttentionDrawer({
     void refetchAttention();
   }, [open, competitionId, refetchAttention]);
 
-  const items = needsAttentionItemsToSituations(attentionData?.items ?? []);
-  const count = attentionData?.count ?? items.length;
-  const severityTone = attentionSeverityToneFromSituations(items);
+  const wireItems = attentionData?.items ?? [];
+  const count = presentableAttentionCount(wireItems);
+  const severityTone = attentionSeverityToneFromSituations(
+    presentableAttentionSituations(wireItems),
+  );
   const titleLabel = t('shell:attention.label');
   const showCount = !attentionPending && count > 0;
 
@@ -181,7 +186,8 @@ export function AttentionDrawer({
             competitionId={competitionId}
             pending={Boolean(competitionId) && attentionPending}
             error={attentionError}
-            items={items}
+            wireItems={wireItems}
+            presentableCount={count}
             stages={stages}
             onRetry={() => void refetchAttention()}
             onNavigate={onClose}
@@ -197,7 +203,8 @@ function AttentionDrawerContent({
   competitionId,
   pending,
   error,
-  items,
+  wireItems,
+  presentableCount,
   stages,
   onRetry,
   onNavigate,
@@ -206,7 +213,8 @@ function AttentionDrawerContent({
   competitionId?: string;
   pending: boolean;
   error: unknown;
-  items: OverviewSituation[];
+  wireItems: NeedsAttentionItem[];
+  presentableCount: number;
   stages: ReturnType<typeof useShellCompetitionContext>['stages'];
   onRetry: () => void;
   onNavigate: () => void;
@@ -262,7 +270,7 @@ function AttentionDrawerContent({
     );
   }
 
-  if (items.length === 0) {
+  if (presentableCount === 0) {
     return (
       <EmptyState variant="idle" title={t('attention.emptyTitle')}>
         {t('attention.emptyHint')}{' '}
@@ -277,7 +285,7 @@ function AttentionDrawerContent({
     );
   }
 
-  const { blocking, attention } = partitionAttentionItems(items);
+  const { blocking, attention } = partitionPresentableAttention(wireItems);
 
   return (
     <div className="shell-attention-drawer__groups">

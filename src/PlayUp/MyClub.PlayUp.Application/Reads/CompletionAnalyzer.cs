@@ -77,6 +77,12 @@ public static class CompletionAnalyzer
                 continue;
             }
 
+            // U1 population signal on Structure — not an unresolved sporting operation.
+            if (item.Source == CompetitionFlowAnalyzer.PopulationShortfall)
+            {
+                continue;
+            }
+
             if (reasons.Exists(reason => reason.Code == item.Source))
             {
                 continue;

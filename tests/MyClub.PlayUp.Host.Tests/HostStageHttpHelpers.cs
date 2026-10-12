@@ -7,8 +7,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Host.Tests;
 

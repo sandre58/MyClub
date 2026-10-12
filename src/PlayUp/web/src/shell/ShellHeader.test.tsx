@@ -191,6 +191,26 @@ describe('ShellHeader', () => {
     expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 
+  it('shows zero presentable count when only denylisted items are on the wire', async () => {
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(
+      needsAttention([
+        {
+          source: 'MissingStage',
+          severity: 'Blocking',
+          targetType: 'Competition',
+          targetId: competitionId,
+        },
+      ]),
+    );
+    renderWithShell(`/competitions/${competitionId}`);
+
+    const trigger = await screen.findByRole('button', {
+      name: 'À traiter, aucun élément',
+    });
+    expect(trigger).toBeDisabled();
+    expect(screen.queryByText('1')).not.toBeInTheDocument();
+  });
+
   it('shows attention state when count is greater than 0', async () => {
     vi.mocked(fetchNeedsAttention).mockResolvedValue(
       needsAttention([

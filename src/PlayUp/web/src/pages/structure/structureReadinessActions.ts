@@ -42,7 +42,6 @@ const TONE_RANK: Record<StructureDiagnosticTone, number> = {
   progress: 2,
 };
 
-const MAX_ACTION_ITEMS = 3;
 
 function ctaToSection(cta: StructureDiagnosticCta): StructureSectionId | null {
   switch (cta) {
@@ -262,13 +261,3 @@ export function collectAllStructureReadinessActionItems(
   return items;
 }
 
-/** Top priority correction entries for the hub banner (max 3). */
-export function collectStructureReadinessActionItems(
-  data: StructureView,
-  stages: StructureStageHubSummary[],
-): StructureReadinessActionItem[] {
-  return collectAllStructureReadinessActionItems(data, stages).slice(
-    0,
-    MAX_ACTION_ITEMS,
-  );
-}

@@ -1426,6 +1426,52 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows PageHead negative hint when attention has items but structure synthesis is clean', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        stages: [
+          championshipStage({
+            structureIssues: [],
+            compositionCapacity: 8,
+            affectationEntryCount: 8,
+          }),
+        ],
+        readiness: {
+          readyForNextSlice: true,
+          readyForDraw: false,
+          readyForMaterialization: true,
+          readyForSchedule: false,
+          readyForMatchOperation: false,
+          readyForSchedulePath: true,
+          attachedMatchCount: 0,
+          blockers: [],
+          nextConstructionStepHint: 'None',
+        },
+      }),
+    );
+    vi.mocked(fetchNeedsAttention).mockResolvedValue({
+      competitionId,
+      count: 1,
+      items: [
+        {
+          source: 'QualificationPending',
+          severity: 'Blocking',
+          targetType: 'Stage',
+          targetId: stageId,
+        },
+      ],
+    });
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByText(/Des anomalies nécessitent votre attention/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/La compétition est prête à créer les matchs/i),
+    ).not.toBeInTheDocument();
+  });
+
   it('does not promote draw readiness as Structure-global Hub status', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({

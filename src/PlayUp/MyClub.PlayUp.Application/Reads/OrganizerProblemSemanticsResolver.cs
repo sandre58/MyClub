@@ -23,41 +23,35 @@ public static class OrganizerProblemSemanticsResolver
             return null;
         }
 
-        if (transitionCode == OverviewAssembler.ActionCompleteStage
-            && disabledReasonCode == CompleteStage.ReasonOpenMatches)
+        switch (transitionCode)
         {
-            return new OrganizerProblemReadDto(
-                CompleteStage.ReasonOpenMatches,
-                OrganizerProblemSemanticLevels.Gate,
-                [OverviewAssembler.ActionCompleteStage],
-                TransportCode: CompleteStage.ReasonOpenMatches);
-        }
-
-        if (transitionCode == OverviewAssembler.ActionPrepareStage)
-        {
-            if (disabledReasonCode == StructureStageLifecycleAssembler.DisabledStructureGraphInvalid)
-            {
-                var canon = ResolveFirstGraphGateIssue(structureIssues)
-                    ?? StructureViewAssembler.BlockerStructureGraphInvalid;
+            case OverviewAssembler.ActionCompleteStage
+                when disabledReasonCode == CompleteStage.ReasonOpenMatches:
                 return new OrganizerProblemReadDto(
-                    canon,
+                    CompleteStage.ReasonOpenMatches,
                     OrganizerProblemSemanticLevels.Gate,
-                    [OverviewAssembler.ActionPrepareStage],
-                    TransportCode: StructureStageLifecycleAssembler.DisabledStructureGraphInvalid);
-            }
+                    [OverviewAssembler.ActionCompleteStage],
+                    TransportCode: CompleteStage.ReasonOpenMatches);
+            case OverviewAssembler.ActionPrepareStage
+                when disabledReasonCode == StructureStageLifecycleAssembler.DisabledStructureGraphInvalid:
+                {
+                    var canon = ResolveFirstGraphGateIssue(structureIssues)
+                                ?? StructureViewAssembler.BlockerStructureGraphInvalid;
+                    return new OrganizerProblemReadDto(
+                        canon,
+                        OrganizerProblemSemanticLevels.Gate,
+                        [OverviewAssembler.ActionPrepareStage],
+                        TransportCode: StructureStageLifecycleAssembler.DisabledStructureGraphInvalid);
+                }
 
-            if (disabledReasonCode == CompetitionFlowAnalyzer.CycleDetected)
-            {
+            case OverviewAssembler.ActionPrepareStage when disabledReasonCode == CompetitionFlowAnalyzer.CycleDetected:
                 return PrepareGate(CycleDetectedCanon, disabledReasonCode);
-            }
-
-            if (disabledReasonCode == CompetitionFlowAnalyzer.OverCapacityEdge)
-            {
+            case OverviewAssembler.ActionPrepareStage
+                when disabledReasonCode == CompetitionFlowAnalyzer.OverCapacityEdge:
                 return PrepareGate(CompetitionFlowAnalyzer.OverCapacityEdge, disabledReasonCode);
-            }
+            default:
+                return null;
         }
-
-        return null;
     }
 
     public static OrganizerProblemReadDto? TryFromAttentionSource(string source) =>
@@ -72,40 +66,21 @@ public static class OrganizerProblemSemanticsResolver
             _ => null
         };
 
-    public static OrganizerProblemReadDto? TryFromStructureIssue(string issueCode)
-    {
-        if (issueCode == CompetitionFlowAnalyzer.CycleDetected)
-        {
-            return new OrganizerProblemReadDto(
+    public static OrganizerProblemReadDto? TryFromStructureIssue(string issueCode) =>
+        issueCode == CompetitionFlowAnalyzer.CycleDetected
+            ? new OrganizerProblemReadDto(
                 CycleDetectedCanon,
                 OrganizerProblemSemanticLevels.Gate,
                 [OverviewAssembler.ActionPrepareStage],
-                TransportCode: issueCode);
-        }
-
-        return null;
-    }
+                TransportCode: issueCode)
+            : null;
 
     public static IReadOnlyList<OrganizerProblemReadDto> CollectStructureIssueSemantics(
-        IReadOnlyList<string>? structureIssues)
-    {
-        if (structureIssues is not { Count: > 0 })
-        {
-            return [];
-        }
-
-        var list = new List<OrganizerProblemReadDto>();
-        foreach (var code in structureIssues.Distinct(StringComparer.Ordinal))
-        {
-            var semantics = TryFromStructureIssue(code);
-            if (semantics is not null)
-            {
-                list.Add(semantics);
-            }
-        }
-
-        return list;
-    }
+        IReadOnlyList<string>? structureIssues) =>
+        structureIssues is not { Count: > 0 }
+            ? []
+            : structureIssues.Distinct(StringComparer.Ordinal).Select(TryFromStructureIssue)
+                .OfType<OrganizerProblemReadDto>().ToList();
 
     private const string CycleDetectedCanon = CompetitionFlowAnalyzer.CycleDetected;
 
