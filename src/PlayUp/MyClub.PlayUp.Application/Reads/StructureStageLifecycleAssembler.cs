@@ -79,41 +79,30 @@ public static class StructureStageLifecycleAssembler
 
     private static StructureStageLifecycleTransitionDto ResolveTransition(
         StructureStageLifecycleInput input,
-        StructureStageLifecycleMatchProgressDto? matchProgress)
-    {
-        if (input.Competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
-        {
-            return BlockedTransition(
+        StructureStageLifecycleMatchProgressDto? matchProgress) =>
+        input.Competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived
+            ? BlockedTransition(
                 ResolveTransitionCode(input.Stage.Status),
                 DisabledCompetitionClosed,
                 input,
-                remediationCode: DisabledCompetitionClosed);
-        }
-
-        if (input.Stage.Status == StageStatus.Draft)
-        {
-            return ResolvePrepareTransition(input);
-        }
-
-        if (input.Competition.Status == CompetitionStatus.Running
-            && input.Stage.Status == StageStatus.Ready
-            && IsConstructionFrozenWhileCompetitionRunning(input))
-        {
-            return BlockedTransition(
-                OverviewAssembler.ActionStartStage,
-                DisabledConstructionFrozen,
-                input,
-                DisabledConstructionFrozen);
-        }
-
-        return input.Stage.Status switch
-        {
-            StageStatus.Ready => ResolveStartTransition(input),
-            StageStatus.Running or StageStatus.Suspended => ResolveCompleteTransition(matchProgress),
-            StageStatus.Completed => new StructureStageLifecycleTransitionDto(null, false),
-            _ => new StructureStageLifecycleTransitionDto(null, false)
-        };
-    }
+                remediationCode: DisabledCompetitionClosed)
+            : input.Stage.Status == StageStatus.Draft
+                ? ResolvePrepareTransition(input)
+                : input.Competition.Status == CompetitionStatus.Running
+                  && input.Stage.Status == StageStatus.Ready
+                  && IsConstructionFrozenWhileCompetitionRunning(input)
+                    ? BlockedTransition(
+                        OverviewAssembler.ActionStartStage,
+                        DisabledConstructionFrozen,
+                        input,
+                        DisabledConstructionFrozen)
+                    : input.Stage.Status switch
+                    {
+                        StageStatus.Ready => ResolveStartTransition(input),
+                        StageStatus.Running or StageStatus.Suspended => ResolveCompleteTransition(matchProgress),
+                        StageStatus.Completed or StageStatus.Draft => new StructureStageLifecycleTransitionDto(null, false),
+                        _ => new StructureStageLifecycleTransitionDto(null, false)
+                    };
 
     /// <summary>
     /// Freezes Prepare/Start on a lone Draft/Ready phase left behind when the competition went live.

@@ -678,7 +678,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         SeedSlotDraw.EngageRandomDrawRules(quarter, context.Clock);
-        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, quarter);
 
         var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
         var situation = TestCompetition.For(competition, context.Clock, quarter);
@@ -1060,7 +1060,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         SeedSlotDraw.EngageRandomDrawRules(quarter, context.Clock);
-        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, quarter);
 
         var situation = TestCompetition.For(competition, context.Clock, quarter);
         var semi = situation.AddKnockoutStage(
@@ -1634,7 +1634,7 @@ internal static class ScenarioOrchestration
 
         // Engage DrawRules so Structure chrome (badge + CTA) matches the seeded Slot draw execution.
         quarter.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, quarter);
 
         var situation = TestCompetition.For(competition, context.Clock, quarter);
         var semi = situation.AddKnockoutStage(
@@ -1713,7 +1713,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         roundOf32.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, roundOf32);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, roundOf32);
 
         var r16SlotKeys = PairSlotKeys("R16", pairCount: 8);
         var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
