@@ -35,6 +35,8 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             .Structure;
         var stageId = org.Format.PrimaryStageId!.Value;
 
+        await HostStageHttpHelpers.FillRootCompositionFromActiveEntriesAsync(factory, competitionId, stageId);
+
         using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
         {
             prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);

@@ -33,6 +33,8 @@ public sealed class DematerializeEndpointTests(HostPostgresFixture fixture)
         var stageId = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure.Format.PrimaryStageId!.Value;
 
+        await HostStageHttpHelpers.FillRootCompositionFromActiveEntriesAsync(factory, competitionId, stageId);
+
         using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
         {
             prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);

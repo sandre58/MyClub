@@ -63,6 +63,8 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
             .Structure;
         var stageId = org.Format.PrimaryStageId!.Value;
 
+        await HostStageHttpHelpers.FillRootCompositionFromActiveEntriesAsync(factory, competitionId, stageId);
+
         using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
         {
             prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -99,6 +101,9 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
             $"/competitions/{competitionId}/structure",
             new ConfigureStructureRequest("Championship"));
         structureResponse.EnsureSuccessStatusCode();
+        var stageId = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
+            .Structure.Format.PrimaryStageId!.Value;
+        await HostStageHttpHelpers.FillRootCompositionFromActiveEntriesAsync(factory, competitionId, stageId);
 
         using var getResponse = await client.GetAsync($"/competitions/{competitionId}/structure");
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
