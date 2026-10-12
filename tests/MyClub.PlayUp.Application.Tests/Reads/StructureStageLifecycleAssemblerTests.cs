@@ -139,7 +139,7 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
-    public void Assemble_competition_Running_allows_Draft_Prepare_per_stage_gates()
+    public void Assemble_competition_Running_freezes_lone_Draft_phase_Prepare()
     {
         var competition = Competition.Create(new CompetitionName("Running multi"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
@@ -161,7 +161,9 @@ public sealed class StructureStageLifecycleAssemblerTests
         var hub = view.Stages.Single();
 
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
-        hub.Lifecycle.Transition.Enabled.Should().BeTrue();
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledConstructionFrozen);
     }
 
     [Fact]
@@ -305,7 +307,7 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
-    public void Assemble_Running_omits_cancel_start_when_a_match_is_finished()
+    public void Assemble_Running_projects_cancel_start_disabled_when_a_match_is_finished()
     {
         var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Finished);
         var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
@@ -315,7 +317,26 @@ public sealed class StructureStageLifecycleAssemblerTests
         var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
         var hub = view.Stages.Single();
 
-        hub.Lifecycle!.CancelStartTransition.Should().BeNull();
+        hub.Lifecycle!.CancelStartTransition.Should().NotBeNull();
+        hub.Lifecycle.CancelStartTransition!.Enabled.Should().BeFalse();
+        hub.Lifecycle.CancelStartTransition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledMatchLifecycleStarted);
+    }
+
+    [Fact]
+    public void Assemble_Suspended_projects_cancel_start_when_not_sportively_engaged()
+    {
+        var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Scheduled);
+        stage.Suspend(_clock);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = [ToSummaryRow(match)]
+        };
+        var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.CancelStartTransition.Should().NotBeNull();
+        hub.Lifecycle.CancelStartTransition!.Enabled.Should().BeTrue();
     }
 
     [Fact]
@@ -333,7 +354,14 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     private static MatchSummaryRow ToSummaryRow(Match match) =>
-        new(match.Id, match.StageId, match.Status, match.HomeEntryId, match.AwayEntryId, match.Result);
+        new(
+            match.Id,
+            match.StageId,
+            match.Status,
+            match.HomeEntryId,
+            match.AwayEntryId,
+            match.Result,
+            match.HasObservedLive);
 
     private (Competition Competition, Stage Stage, Match Match) CreateRunningWithMatch(MatchStatus status)
     {

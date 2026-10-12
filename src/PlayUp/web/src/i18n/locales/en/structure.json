@@ -341,7 +341,7 @@
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
-      "MatchLifecycleStarted": "Finish or cancel live matches before pausing the phase.",
+      "MatchLifecycleStarted": "Finish or cancel engaged matches before reverting the start or pausing the phase.",
       "MatchLiveInProgress": "A match is live — finish or cancel it before suspending the phase."
     },
     "mutation": {

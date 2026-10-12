@@ -12,6 +12,7 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: revert Running or Suspended stage to Ready (pause exploitation).
+/// Sportive engagement preflight lives here (category B policy); Domain <see cref="Stage.RevertToReady"/> does not re-check match facts.
 /// </summary>
 public static class RevertToReady
 {
@@ -35,7 +36,7 @@ public static class RevertToReady
         if (DematerializationCapability.TryRevertToReadyReason(gates) is not null)
         {
             throw new ApplicationFailureException(
-                "RevertToReady is blocked because a match is live.",
+                "RevertToReady is blocked because a match was sportively engaged.",
                 ApplicationErrorCodes.RevertToReadyBlocked);
         }
 

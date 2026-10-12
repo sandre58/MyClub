@@ -161,6 +161,42 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
     expect(revertStageToReady).toHaveBeenCalledWith(baseStage.stageId);
   });
 
+  it('shows disabled cancel start when sportive engagement blocks revert', () => {
+    renderBlock({
+      ...baseStage,
+      status: 'Running',
+      lifecycle: {
+        transition: { code: 'CompleteStage', enabled: true },
+        cancelStartTransition: {
+          code: 'RevertToReadyStage',
+          enabled: false,
+          disabledReasonCode: 'MatchLifecycleStarted',
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: /annuler le démarrage/i }),
+    ).toBeDisabled();
+  });
+
+  it('calls resumeStage when resume is enabled', async () => {
+    const user = userEvent.setup();
+    vi.mocked(resumeStage).mockResolvedValue(undefined);
+
+    renderBlock({
+      ...baseStage,
+      status: 'Suspended',
+      lifecycle: {
+        transition: { code: 'CompleteStage', enabled: false },
+        revertTransition: { code: 'ResumeStage', enabled: true },
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /reprendre la phase/i }));
+    expect(resumeStage).toHaveBeenCalledWith(baseStage.stageId);
+  });
+
   it('calls suspendStage when suspend is enabled', async () => {
     const user = userEvent.setup();
     vi.mocked(suspendStage).mockResolvedValue(undefined);

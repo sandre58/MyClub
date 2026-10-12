@@ -102,6 +102,26 @@ public sealed class RevertStageLifecycleTests
     }
 
     [Fact]
+    public void RevertToReady_blocked_when_match_is_finished()
+    {
+        var situation = TestCompetition.Create("R", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
+        stage.Start(_clock);
+        materialized.CreatedMatches[0].Start(_clock);
+        materialized.CreatedMatches[0].Finish(
+            new MatchResult(ResultType.Played, new Score(1, 0)),
+            _clock);
+
+        var act = () => RevertToReady.Execute(stage, materialized.CreatedMatches, _clock);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.RevertToReadyBlocked);
+    }
+
+    [Fact]
     public void RevertToReady_from_Running_sets_Ready_when_matches_scheduled()
     {
         var situation = TestCompetition.Create("R", _clock)

@@ -4,6 +4,8 @@
 
 **Last code audit:** 2026-10-12 (V2 gap audit + verification matrix, § below). Prior audit: 2026-10-11.
 
+**Notion validation:** 2026-10-12 — [Arbitrage Structure — cycle de vie et gel construction](https://app.notion.com/p/3f775fb92d10817eb795ddb5fc52dd9c).
+
 **Product SoT (V2 lifecycle contract):** [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca) — **Contrat cycle de phase V2** (2026-10-12, DECIDED). This appendix records **code facts** and **gaps vs that contract**; narrative contract lives in Notion only.
 
 **PR gate (DECIDED):** No SPA PR for 2b/2c until the **2b matrix** is arbitrated in Notion and **2c** is decided.
@@ -42,7 +44,7 @@ These must stay **separate** in copy and layout; none replaces another.
 
 1. **Cycle de vie** — domain `StageStatus`: `Draft`, `Ready`, `Running`, `Suspended`, `Completed`.
 2. **État de construction sportive** — structure, équipes, places, tirage, sorties, matérialisation (read-model checklist + structure issues).
-3. **Actions organisateur** — `PrepareStage`, `StartStage`, `CompleteStage`, reverts (Matchs operational column); suspend/resume/competition-level actions live elsewhere.
+3. **Actions organisateur** — `PrepareStage`, `StartStage`, `CompleteStage`, `SuspendStage` / `ResumeStage`, reverts (Matchs operational column); competition-level actions may also appear on Overview.
 
 **Presentation rule (DECIDED, shipped 2026-10-12):**
 
@@ -67,7 +69,7 @@ These must stay **separate** in copy and layout; none replaces another.
 | **Draft** | Still configuring; Prepare not (yet) acquired. | `Stage.Prepare` only from Draft (`Stage.cs`). Many structural edits call `DemoteToDraftIfReady()` when status was Ready. |
 | **Ready** | Configuration passed **Prepare** at time T. | `PrepareStage.Execute` then `Stage.Prepare` → Ready. **Not** “matches started” or “exploitation opened”. |
 | **Running** | Exploitation **opened** via Start. | `Stage.Start` Ready → Running; `EnsureStructureMutable` blocks structural mutation (`Stage.cs`). |
-| **Suspended** | Paused; not closed. | Domain suspend/resume exists; **Structure lifecycle read does not project Suspend/Resume actions** (only Complete while Running/Suspended). |
+| **Suspended** | Paused; not closed. | Domain suspend/resume exists; Structure read projects `SuspendStage` / `ResumeStage` on `lifecycle.revertTransition` (icon actions in Matchs column). |
 | **Completed** | Phase closed. | `CompleteStage` requires every match Finished or Cancelled (Application); domain allows Complete with **zero** matches (assembler test). |
 
 ### Actions (Structure read model today)
@@ -85,7 +87,9 @@ These must stay **separate** in copy and layout; none replaces another.
 - **Ready:** “Configuration validée pour lancer la phase” — distinct from exploitation opened.
 - **Start:** Opens sportive phase and **locks structure** for that phase.
 
-Suspend/Resume for **stages** are out of scope for the Matchs lifecycle block unless added to the read model later.
+**Secondary transitions (VERIFIED):** `RevertToDraftStage`, `SuspendStage`, `ResumeStage` on `lifecycle.revertTransition`; `RevertToReadyStage` on `lifecycle.cancelStartTransition` (Running / Suspended, engagement gate = dematerialize predicate).
+
+**Action order in Matchs column (VERIFIED DOM):** primary transition (Prepare / Start / Complete) → Suspend / Resume icons → cancel start → Revert to draft. Manual browser pass on desktop and narrow viewport recommended before release.
 
 ---
 
@@ -407,7 +411,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | Planification in **Ready** | **Incrément 2:** `EnsureScheduleExploitation` on `GenerateScheduleAsync` / `ApplyScheduleAsync`. | **ALIGNED** | `UseCaseExecutor.Stages.cs` |
 | **Completed** strict (no planif/sportif) | **Incrément 2:** `StageExploitationClosed` on sportive + schedule guards when stage Completed. | **PARTIAL** (executor; Overview unchanged) | `StagePhaseExploitationGuard.cs` |
 | `RevertToDraft` / `RevertToReady` | **Incrément 2:** domain transitions, use cases, HTTP `revert-to-draft` / `revert-to-ready`, lifecycle `RevertTransition` projection. | **ALIGNED** | `RevertToDraft.cs`, `RevertToReady.cs`, `StructureStageLifecycleAssembler.cs` |
-| `RevertToReady` ≠ dematerialize | Dematerialize full phase blocked in Running (`DematerializationCapability.TryFullPhaseLifecycleReason`). Swiss dematerialize last round **requires Running** — aligned with progressive model. | **PARTIAL** (separation exists de facto; revert missing) | `DematerializationCapability.cs` |
+| `RevertToReady` ≠ dematerialize | Revert preflight uses `TryMatchLifecycleReason` (same engagement as dematerialize); does not remove planned matches. | **ALIGNED** (2026-10-12 remediation) | `DematerializationCapability.cs`, `RevertToReady.cs`, `StructureStageLifecycleAssembler.ResolveCancelStartTransition` |
 
 ### Transitions
 
@@ -417,7 +421,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | Start readiness | Per-format initial scope (Ch/G: no eligible unmaterialized; Cup: first playable round materialized; Swiss: progressive, 0 match OK) | `StageStartReadinessGuard` + `StageConfrontationMaterializationState` before `Stage.Start`; read via `TryGetDisabledReasonCode`. Cup positional still enforced in Domain. | **ALIGNED** | `StageStartReadinessGuard.cs`, `UseCaseExecutor.Stages.cs`, `StructureStageLifecycleAssembler.ResolveStartTransition` |
 | Complete | All matches Finished/Cancelled | Same (`CompleteStage.Execute`) | **ALIGNED** | `CompleteStage.cs` |
 | RevertToDraft | Explicit; no attached matches | **Incrément 2** — `RevertToDraft` + `Application.RevertToDraftBlocked` | **ALIGNED** | `RevertToDraft.cs`, `Stage.RevertToDraft` |
-| RevertToReady | Pause; keep Scheduled/Postponed; block sportive engagement | **Incrément 2** — `RevertToReady` + dematerialize gate reuse | **ALIGNED** | `RevertToReady.cs`, `Stage.RevertToReady` |
+| RevertToReady | Pause; block sportive engagement (Live, Finished, Cancelled+observed Live) | `TryMatchLifecycleReason`; cancel-start projected disabled when blocked; **Suspended** included | **ALIGNED** | `RevertToReady.cs`, `StructureStageLifecycleAssembler` |
 
 ### Format exceptions (Swiss — option A)
 
@@ -434,7 +438,17 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | Lifecycle transitions | Prepare / Start / Complete + Revert* | Prepare, Start, Complete + `revertTransition` (`StructureStageLifecycleAssembler`) | **ALIGNED** |
 | UI placement | Matchs section / mise en service; **no** stepper band | `StructurePhaseMatchsLifecycleBlock` in operational Matchs column | **ALIGNED** (2026-10-12) |
 | Match progress gauge | Clos / total (finished + cancelled) | `finished`, `cancelled`, `open`, `total` — usable for clos/total copy | **PARTIAL** |
-| Competition Running + phase Draft/Ready | ConstructionFrozen on Prepare/Start | Projected | **ALIGNED** | `StructureStageLifecycleAssembler` |
+| Competition Running + phase Draft/Ready (orphan) | ConstructionFrozen on **Prepare** and **Start** | Orphan = no peer Running/Suspended/Completed | **ALIGNED** | `StructureStageLifecycleAssembler.ResolvePrepareTransition`, `IsConstructionFrozenWhileCompetitionRunning` |
+
+### Domain vs Application boundaries (2026-10-12, DECIDED)
+
+| Category | Role | Examples |
+| :------- | :--- | :------- |
+| **A — Domain invariants** | Must hold for any entry point | Invalid status transitions; structural integrity of aggregates |
+| **B — Application use-case policy** | Orchestration, loaded context, cross-phase gates | `RevertToReady` engagement preflight; `CompleteStage` open matches; materialize Ready-only |
+| **C — Read / HTTP** | Project actions + disabled reasons; not source of truth | `StructureStageLifecycleAssembler`, ProblemDetails codes |
+
+**Remediation default:** keep **RevertToReady** and **Complete** engagement checks in Application (category B) with integration tests; extend Domain (category A) only when a seed or tool bypass is demonstrated.
 
 ### Gardes réutilisables (audit — no new policy type yet)
 
@@ -636,11 +650,12 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 
 ### Matrix coverage checklist
 
-- [ ] All cells in § A executed as integration or domain tests  
+- [x] § A — RevertToReady / ConstructionFrozen (Structure remediation 2026-10-12)  
 - [ ] § B sample: one op per category (matchday, slot, qual rules) × {Draft, Ready, Running}  
 - [ ] § C × four formats where applicable  
-- [ ] § G1–G4 as named reference tests (acceptance)  
-- [ ] † rows from gap audit flip to pass after incréments 1–2  
+- [x] § G1–G2 — RevertToReady scheduled vs engaged (`RevertStageLifecycleTests`, assembler cancel-start)  
+- [ ] § G3–G4 full bundle  
+- [x] RevertToReady / ConstructionFrozen † rows aligned post-remediation  
 
 ---
 

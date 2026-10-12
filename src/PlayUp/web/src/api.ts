@@ -14,7 +14,6 @@ export {
   fetchConsultation,
   fetchNeedsAttention,
   replaceCompetitionRegulation,
-  configureStructure,
   addCompetitionStage,
   removeCompetitionStage,
   prepareCompetition,

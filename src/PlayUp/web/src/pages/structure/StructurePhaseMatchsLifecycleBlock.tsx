@@ -317,11 +317,18 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const cancelStart = lifecycle?.cancelStartTransition;
   const cancelStartCode =
     isLifecycleRevertCode(cancelStart?.code) &&
-    cancelStart.code === 'RevertToReadyStage' &&
-    (cancelStart.enabled ?? false)
+    cancelStart.code === 'RevertToReadyStage'
       ? cancelStart.code
       : null;
+  const cancelStartEnabled = cancelStart?.enabled ?? false;
   const showCancelStartControl = cancelStartCode != null;
+  const cancelStartDisabledReason = cancelStart?.disabledReasonCode ?? null;
+  const cancelStartTooltip =
+    showCancelStartControl && !cancelStartEnabled && cancelStartDisabledReason
+      ? lifecycleDisabledMessage(t, cancelStartDisabledReason)
+      : cancelStartCode
+        ? revertActionLabel(t, cancelStartCode)
+        : null;
 
   const revert = lifecycle?.revertTransition;
   const revertCode = isLifecycleRevertCode(revert?.code) ? revert.code : null;
@@ -493,12 +500,12 @@ function StructurePhaseMatchsLifecycleBlockBody({
               {showCancelStartControl && cancelStartCode ? (
                 <LifecycleRevertIconButton
                   code={cancelStartCode}
-                  enabled
+                  enabled={cancelStartEnabled}
                   busy={busy}
                   pending={
                     transitionMutation.isPending && pendingCode === cancelStartCode
                   }
-                  tooltip={revertActionLabel(t, cancelStartCode)}
+                  tooltip={cancelStartTooltip ?? revertActionLabel(t, cancelStartCode)}
                   onActivate={() => transitionMutation.mutate(cancelStartCode)}
                   t={t}
                 />

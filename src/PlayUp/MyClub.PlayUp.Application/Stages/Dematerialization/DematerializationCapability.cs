@@ -50,7 +50,7 @@ public static class DematerializationCapability
         match.Status is MatchStatus.Live or MatchStatus.Finished
         || (match.Status is MatchStatus.Cancelled && match.HasObservedLive);
 
-    internal static bool BlocksRevertToReady(DematerializationMatchGate match) =>
+    internal static bool BlocksLiveMatch(DematerializationMatchGate match) =>
         match.Status is MatchStatus.Live;
 
     internal static string? TryOrphanReason(Stage stage, IReadOnlyList<DematerializationMatchGate> stageMatchGates) => stageMatchGates.Any(gate => !stage.HasMatch(gate.Id)) ? DematerializeDisabledReasons.MaterializationStateInconsistent : null;
@@ -61,7 +61,10 @@ public static class DematerializationCapability
             : null;
 
     internal static string? TryRevertToReadyReason(IReadOnlyList<DematerializationMatchGate> scopeGates) =>
-        scopeGates.Any(BlocksRevertToReady)
+        TryMatchLifecycleReason(scopeGates);
+
+    internal static string? TrySuspendBlockedByLiveReason(IReadOnlyList<DematerializationMatchGate> scopeGates) =>
+        scopeGates.Any(BlocksLiveMatch)
             ? DematerializeDisabledReasons.MatchLiveInProgress
             : null;
 

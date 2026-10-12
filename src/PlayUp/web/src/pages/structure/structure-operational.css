@@ -273,20 +273,6 @@
   color: var(--color-text-secondary);
 }
 
-.structure-operational-strip__lifecycle-stats {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.structure-operational-strip__lifecycle-stats-heading {
-  font-weight: var(--font-weight-semibold);
-}
-
-.structure-operational-strip__lifecycle-hero-stats {
-  justify-content: flex-start;
-}
-
 .structure-operational-strip__metric-row {
   display: grid;
   grid-template-columns: minmax(3.5rem, auto) minmax(0, 1fr);

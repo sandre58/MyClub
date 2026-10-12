@@ -32,7 +32,7 @@ public static class SuspendStage
             .Select(DematerializationMatchGate.FromMatch)
             .ToArray();
 
-        if (DematerializationCapability.TryRevertToReadyReason(gates) is not null)
+        if (DematerializationCapability.TrySuspendBlockedByLiveReason(gates) is not null)
         {
             throw new ApplicationFailureException(
                 "SuspendStage is blocked because a match is live.",
