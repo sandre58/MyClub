@@ -107,7 +107,7 @@ Track resolution of:
 
 | ID | Topic | Owner | Blocks |
 | :- | :---- | :---- | :----- |
-| O1 | V2: one problem vs presentation layers for cycle prepare | Product + tech | Final alias row for `CycleDetected` |
+| O1 | V2: one problem vs presentation layers for cycle prepare | Product + tech | **DECIDED 2026-10-12 — Option B (layered)** |
 | O2 | V3: `blocksAction` for qualification attention | Product | D2 row for R2 |
 | O3 | Wire shape (enum vs dual fields) | Product + tech lead | Implementation proposal |
 
@@ -125,14 +125,16 @@ After D1–D4 approved:
 
 ## 5. Product decisions required during Step 3 doc work
 
-### 5.1 V2 — Cycle prepare (blocking D1 completion)
+### 5.1 V2 — Cycle prepare — **DECIDED (2026-10-12, O1 Option B)**
 
-Choose **one** documentation strategy (product DECIDED):
+**Layered model (retained):**
 
-- **Option A — Single problem, multiple aliases:** One canon `CycleDetected`; lifecycle `StructureGraphInvalid` and POST `Application.StructureCycleDetected` documented as **presentation/transport aliases** for the same prepare gate when a graph gate issue is present.
-- **Option B — Layered model:** Canon `CycleDetected` on hub; **aggregate disabled** `StructureGraphInvalid` documented as a **read projection**; POST code documented as **command transport** — SPA must not assume one string everywhere.
+- **Canon:** `CycleDetected` on hub `structureIssues[]` (most precise diagnostic fact).
+- **Lifecycle read projection:** Prepare transition `disabledReasonCode` **`StructureGraphInvalid`** when any graph-gate issue is present — **not** interchangeable with canon for copy or equality checks.
+- **Command transport:** POST Prepare **`Application.StructureCycleDetected`** when cycle is among prepare gate codes.
+- **Consumer rule:** Same underlying prepare gate; **do not assume one string across surfaces** — prefer optional `problem.canonCode` + `problem.transportCode` on lifecycle when populated (Phase 1).
 
-Neither option authorizes code change by itself; both must match VERIFY observations in D1.
+Option A (single problem, flat aliases) **rejected** for this pilot — it understates the lifecycle aggregate vs hub fact distinction (VERIFY V2/V5).
 
 ### 5.2 V3 — Qualification attention
 
@@ -164,7 +166,8 @@ Choose whether `QualificationPending` carries:
 Step 3 documentation phase is **complete** when:
 
 - [ ] D1–D4 merged and linked from [organizer-problems-audit.md](./organizer-problems-audit.md)
-- [ ] O1 and O2 **DECIDED** (or explicitly DEFERRED with owner + date)
+- [x] O1 **DECIDED** (2026-10-12 — V2 Option B layered model)
+- [ ] O2 **DECIDED** (or explicitly DEFERRED with owner + date)
 - [ ] D5 approved as **proposal** (or explicitly deferred)
 - [ ] Product + tech sign-off recorded (Notion decision link optional; Git commit message or brief header)
 - [ ] `structure-problems-contract.md` remains **Paused** unless a **separate** decision includes Matchs in implementation scope

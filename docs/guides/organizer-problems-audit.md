@@ -155,7 +155,7 @@ These four terms are **not** assumed to be a single exclusive enum until wire sh
 
 **Phase 1 (implemented 2026-10-12):** Optional **`OrganizerProblemReadDto`** on R1 lifecycle transitions and R2 attention items; **`StructureIssueSemantics`** on R3 hub issues — populated via **`OrganizerProblemSemanticsResolver`** for pilot codes only. Alias table: [organizer-problems-pilot-aliases.md](./organizer-problems-pilot-aliases.md). TS mirrors: `web/src/types/organizerProblem.ts` (optional fields on structure/attention DTOs). **Not in Phase 1:** Host/ProblemDetails changes, drawer/Overview UI branching, Matchs `structure.problems` unpause.
 
-**Documentation still open:** V2/V3 product choices (O1/O2 in brief) for final alias registry; wire shape DEFERRED.
+**Documentation still open:** **O2** (V3 qualification); wire shape **O3** DEFERRED. **O1 (V2 cycle prepare):** DECIDED Option B (layered model) — 2026-10-12.
 
 ---
 
@@ -195,7 +195,7 @@ These four terms are **not** assumed to be a single exclusive enum until wire sh
 | :---- | :------ |
 | **Observed (VERIFIED)** | `structureIssues[]` can contain `CycleDetected`. POST Prepare: `PrepareStage.EnsurePrepareGateDiagnostics` throws `Application.StructureCycleDetected` when `CycleDetected` is among prepare gate codes. Lifecycle Prepare: if `HasStructureGraphGate` (any issue where `IsStructureGraphGateIssue` — **includes** `CycleDetected`), transition uses `disabledReasonCode` **`StructureGraphInvalid`**, not `CycleDetected`, **before** `CollectPrepareGateCodes` runs. Gate-only issues such as `OverCapacityEdge` (graph gate false, prepare gate true) can show **`OverCapacityEdge`** on lifecycle and `Application.OverCapacityEdge` on POST. |
 | **Conclusion (engineering)** | **Not** a single stable string alias across all read surfaces for `CycleDetected`: lifecycle often **aggregates** to `StructureGraphInvalid` while POST emits **`Application.StructureCycleDetected`**. Underlying prepare refusal still uses `CompetitionFlowAnalyzer` gate facts. Document **three** wire shapes (issue fact, lifecycle disabled, POST code) in Step 3 alias table — do not assume lifecycle disabled equals canon. |
-| **Product DECIDED** | Open: whether `StructureGraphInvalid` on lifecycle and `StructureCycleDetected` on POST should be documented as one problem with aliases, or two presentation layers. **Owner:** product + tech. **Condition:** Step 3 documentation phase alias table review. |
+| **Product DECIDED (O1, 2026-10-12)** | **Option B — layered model:** canon **`CycleDetected`** on hub `structureIssues[]`; lifecycle **`StructureGraphInvalid`** = **read projection** (aggregate disabled on Prepare); POST **`Application.StructureCycleDetected`** = **command transport**. Same underlying prepare gate rule; **consumers must not assume one wire string everywhere** — use `problem.canonCode` / `problem.transportCode` when present. |
 
 ### V3 — `QualificationPending` vs blocked actions
 
