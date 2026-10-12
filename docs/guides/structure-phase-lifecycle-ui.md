@@ -1,6 +1,8 @@
 # Structure — phase lifecycle UI (spec appendix)
 
-**Purpose:** Git-side design reference for Structure phase **lifecycle UI in the Matchs operational column** and match stats during exploitation. Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
+**Purpose:** Git-side design reference for Structure phase **lifecycle UI in the Matchs operational column** and match stats during exploitation.
+
+**Problems messaging (Matchs column):** [structure-problems-contract.md](./structure-problems-contract.md) (**paused** — local pilot). Transversal audit: [organizer-problems-audit.md](./organizer-problems-audit.md) (working draft). Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
 **Last code audit:** 2026-10-12 (V2 gap audit + verification matrix, § below). Prior audit: 2026-10-11.
 
