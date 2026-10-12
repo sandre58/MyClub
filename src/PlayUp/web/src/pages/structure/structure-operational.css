@@ -39,8 +39,7 @@
   background: var(--color-attention);
 }
 
-.structure-occupancy-meter--brand-fill.structure-occupancy-meter--short
-  .structure-occupancy-meter__fill {
+.structure-occupancy-meter--brand-fill.structure-occupancy-meter--short .structure-occupancy-meter__fill {
   background: var(--color-brand);
 }
 
