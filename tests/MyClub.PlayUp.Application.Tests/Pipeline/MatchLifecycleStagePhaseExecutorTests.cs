@@ -115,7 +115,8 @@ public sealed class MatchLifecycleStagePhaseExecutorTests
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    private (DomainMatch Match, Stage Stage, Competition Competition) CreateScheduledMatchOnStage(StageStatus targetStatus)
+    private (DomainMatch Match, Stage Stage, Competition Competition) CreateScheduledMatchOnStage(
+        StageStatus targetStatus)
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
         var stage = Stage.Create(competition.Id, new StageName("MD1"), SampleRegulations.Standard(), _clock);
@@ -131,19 +132,27 @@ public sealed class MatchLifecycleStagePhaseExecutorTests
 
     private (DomainMatch Match, Stage Stage, Competition Competition) CreateLiveMatchOnStage(StageStatus targetStatus)
     {
-        if (targetStatus is StageStatus.Draft or StageStatus.Ready)
+        switch (targetStatus)
         {
-            var draftOrReady = CreateScheduledMatchOnStage(targetStatus);
-            draftOrReady.Match.Start(_clock);
-            return draftOrReady;
-        }
+            case StageStatus.Draft or StageStatus.Ready:
+                {
+                    var draftOrReady = CreateScheduledMatchOnStage(targetStatus);
+                    draftOrReady.Match.Start(_clock);
+                    return draftOrReady;
+                }
 
-        if (targetStatus == StageStatus.Completed)
-        {
-            var running = CreateScheduledMatchOnStage(StageStatus.Running);
-            running.Match.Start(_clock);
-            running.Stage.Complete(_clock);
-            return running;
+            case StageStatus.Completed:
+                {
+                    var running = CreateScheduledMatchOnStage(StageStatus.Running);
+                    running.Match.Start(_clock);
+                    running.Stage.Complete(_clock);
+                    return running;
+                }
+
+            case StageStatus.Running:
+            case StageStatus.Suspended:
+            default:
+                break;
         }
 
         var open = CreateScheduledMatchOnStage(targetStatus);
@@ -165,20 +174,18 @@ public sealed class MatchLifecycleStagePhaseExecutorTests
         }
 
         stage.Start(_clock);
-        if (targetStatus == StageStatus.Running)
+        switch (targetStatus)
         {
-            return;
-        }
-
-        if (targetStatus == StageStatus.Suspended)
-        {
-            stage.Suspend(_clock);
-            return;
-        }
-
-        if (targetStatus == StageStatus.Completed)
-        {
-            stage.Complete(_clock);
+            case StageStatus.Running:
+                return;
+            case StageStatus.Suspended:
+                stage.Suspend(_clock);
+                return;
+            case StageStatus.Completed:
+                stage.Complete(_clock);
+                break;
+            default:
+                break;
         }
     }
 

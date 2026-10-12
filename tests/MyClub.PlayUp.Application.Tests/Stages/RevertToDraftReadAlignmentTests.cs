@@ -61,7 +61,7 @@ public sealed class RevertToDraftReadAlignmentTests
         var revert = view.Stages.Single().Lifecycle!.RevertTransition;
 
         revert.Should().NotBeNull();
-        revert!.Code.Should().Be(OverviewAssembler.ActionRevertToDraftStage);
+        revert.Code.Should().Be(OverviewAssembler.ActionRevertToDraftStage);
         revert.Enabled.Should().BeTrue();
     }
 

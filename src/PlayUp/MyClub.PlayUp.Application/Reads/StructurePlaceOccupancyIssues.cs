@@ -96,18 +96,6 @@ internal static class StructurePlaceOccupancyIssues
             (c.FormPosition.RoundOrder ?? 0) == entryRound && CasePlaceIsOccupied(c));
     }
 
-    private static bool CasePlaceIsOccupied(SchematicCaseDto place)
-    {
-        if (place.Entry?.EntryId is { } entryId && entryId != Guid.Empty)
-        {
-            return true;
-        }
-
-        if (place.Assignment?.EntryId is { } assignmentEntryId && assignmentEntryId != Guid.Empty)
-        {
-            return true;
-        }
-
-        return place.FeedOrigin is not null;
-    }
+    private static bool CasePlaceIsOccupied(SchematicCaseDto place) =>
+        (place.Entry?.EntryId is { } entryId && entryId != Guid.Empty) || (place.Assignment?.EntryId is { } assignmentEntryId && assignmentEntryId != Guid.Empty) || place.FeedOrigin is not null;
 }

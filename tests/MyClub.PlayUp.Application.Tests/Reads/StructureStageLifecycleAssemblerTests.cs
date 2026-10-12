@@ -32,7 +32,7 @@ public sealed class StructureStageLifecycleAssemblerTests
         var hub = view.Stages.Single();
 
         hub.Lifecycle.Should().NotBeNull();
-        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        hub.Lifecycle.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
         hub.Lifecycle.Transition.Enabled.Should().BeTrue();
         hub.Lifecycle.MatchProgress.Should().BeNull();
     }

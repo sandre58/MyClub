@@ -25,11 +25,9 @@ internal static class SeedSlotDraw
     /// </summary>
     public static void ApplyCupSlotDrawDeterministic(
         ScenarioContext context,
-        Competition competition,
         Stage stage)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
         EnsureDrawRulesEngaged(stage);
 
@@ -73,7 +71,7 @@ internal static class SeedSlotDraw
         Stage stage,
         IReadOnlyList<Stage> competitionStages)
     {
-        ApplyCupSlotDrawDeterministic(context, competition, stage);
+        ApplyCupSlotDrawDeterministic(context, stage);
         return SeedMaterialization.MaterializeFromSlots(context, competition, stage, pairKeys: null, competitionStages);
     }
 

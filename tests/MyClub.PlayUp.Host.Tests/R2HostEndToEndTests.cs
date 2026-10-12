@@ -105,7 +105,7 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
 
             var match = await matches.GetByIdForUpdateAsync(matchId);
             match.Should().NotBeNull();
-            match!.Status.Should().Be(MatchStatus.Scheduled);
+            match.Status.Should().Be(MatchStatus.Scheduled);
             match.HomeEntryId.Should().Be(seed.Home);
             match.AwayEntryId.Should().Be(seed.Away);
             match.StageId.Should().Be(seed.QuarterStageId);
