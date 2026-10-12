@@ -35,11 +35,38 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
         hub.Lifecycle.Transition.Enabled.Should().BeTrue();
         hub.Lifecycle.PrepareChecklist.Should().NotBeNull();
-        hub.Lifecycle.PrepareChecklist!.Items.Should().Contain(item =>
-            item.Code == StructureStageLifecycleAssembler.ChecklistMatches
-            && item.Applicable
-            && !item.Satisfied);
+        hub.Lifecycle.PrepareChecklist!.Items.Should().NotContain(item =>
+            item.Code == StructureStageLifecycleAssembler.ChecklistMatches);
+        hub.Lifecycle.PrepareChecklist.Items.Should().Contain(item =>
+            item.Code == StructureStageLifecycleAssembler.ChecklistPlaces);
         hub.Lifecycle.MatchProgress.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_Draft_root_Places_unsatisfied_when_expected_occupancy_below_Places_N()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        for (var i = 0; i < 8; i++)
+        {
+            competition.AddEntry(TeamId.New(), $"T{i + 1}", _clock);
+        }
+
+        var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("R1", _clock);
+        for (var slot = 0; slot < 8; slot++)
+        {
+            stage.AddSlot($"S{slot + 1}");
+        }
+
+        competition.AddStage(stage.Id, _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var hub = view.Stages.Single();
+        var places = hub.Lifecycle!.PrepareChecklist!.Items.Single(item =>
+            item.Code == StructureStageLifecycleAssembler.ChecklistPlaces);
+
+        places.Applicable.Should().BeTrue();
+        places.Satisfied.Should().BeFalse();
     }
 
     [Fact]

@@ -4,7 +4,9 @@ import type { StructureStageHubSummary } from '../../types';
 import {
   matchProgressRemaining,
   remediationHref,
+  resolveDraftPrepareStepIds,
   resolveDraftPrepareStepStatus,
+  shouldShowLifecycleRemediationLink,
   shouldShowPrimaryBlockMessage,
 } from './structurePhaseStatusBandModel';
 
@@ -43,14 +45,55 @@ describe('structurePhaseStatusBandModel', () => {
     ).toBe('ko');
   });
 
-  it('hides redundant block messages for draft and running', () => {
-    expect(shouldShowPrimaryBlockMessage('Draft', 'StageNotReady')).toBe(false);
+  it('hides StageNotReady band (stepper + ops tile own population signals)', () => {
+    expect(shouldShowPrimaryBlockMessage('Draft', 'StageNotReady', null)).toBe(
+      false,
+    );
+  });
+
+  it('hides redundant block messages when stepper already explains the gate', () => {
+    const checklist = {
+      allSatisfied: false,
+      items: [
+        { code: 'Exits', applicable: true, satisfied: false },
+      ],
+    };
     expect(
-      shouldShowPrimaryBlockMessage('Running', 'OpenMatches'),
+      shouldShowPrimaryBlockMessage(
+        'Draft',
+        'StructureGraphInvalid',
+        checklist,
+      ),
     ).toBe(false);
     expect(
-      shouldShowPrimaryBlockMessage('Draft', 'ConstructionFrozen'),
+      shouldShowPrimaryBlockMessage(
+        'Draft',
+        'ConfrontationUndecidable',
+        checklist,
+      ),
+    ).toBe(false);
+    expect(
+      shouldShowPrimaryBlockMessage('Running', 'OpenMatches', null),
+    ).toBe(false);
+    expect(
+      shouldShowPrimaryBlockMessage('Draft', 'ConstructionFrozen', null),
     ).toBe(true);
+  });
+
+  it('inserts Attribution step when checklist row is applicable', () => {
+    expect(resolveDraftPrepareStepIds(null)).not.toContain('Attribution');
+    expect(
+      resolveDraftPrepareStepIds({
+        allSatisfied: false,
+        items: [{ code: 'Attribution', applicable: true, satisfied: false }],
+      }),
+    ).toContain('Attribution');
+  });
+
+  it('hides remediation link for StageNotReady', () => {
+    expect(
+      shouldShowLifecycleRemediationLink('StageNotReady', '/competitions/x/structure'),
+    ).toBe(false);
   });
 
   it('computes remaining matches', () => {

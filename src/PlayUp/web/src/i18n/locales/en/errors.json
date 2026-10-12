@@ -28,6 +28,7 @@
     "ScheduleApplyFailure": "Unable to apply the schedule.",
     "MaterializationFailure": "Unable to create matches.",
     "SwissRoundGenerationFailure": "Unable to generate the Swiss round.",
+    "StageCompletionBlocked": "Every match must be finished or cancelled before completing the phase.",
     "InvalidCompletionMode": "Invalid completion mode.",
     "SlotFeedsInvalid": "Slot feeds are invalid.",
     "FixtureInvalid": "The fixture is inconsistent.",

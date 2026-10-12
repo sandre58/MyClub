@@ -294,8 +294,9 @@
     },
     "draftStep": {
       "Regulation": "Réglement",
-      "Teams": "Équipes",
+      "Teams": "Inscriptions",
       "Places": "Places",
+      "Attribution": "Affectation",
       "Draw": "Tirage",
       "Exits": "Sorties",
       "Matches": "Matchs"
@@ -303,6 +304,7 @@
     "statusBand": {
       "readyHint": "La phase est prête à démarrer.",
       "viewOverview": "Voir la synthèse",
+      "matchStatsHeading": "Matchs de la phase",
       "matchStatsAria": "Avancement des matchs",
       "matchStatFinished": "Terminés",
       "matchStatCancelled": "Annulés",
@@ -320,12 +322,24 @@
       "default": "Aller à la section concernée"
     },
     "disabled": {
+      "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",
       "CompetitionClosed": "La compétition est clôturée — les actions de cycle de phase sont indisponibles.",
       "ConstructionFrozen": "La compétition est lancée — la préparation de cette phase est figée tant qu’elle reste en brouillon ou prête.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
-      "StageNotReady": "Cette phase n’est pas prête à être marquée comme prête.",
+      "StageNotReady": "La préparation est bloquée — complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
-      "OpenMatches": "Chaque match doit être terminé ou annulé avant de clôturer la phase."
+      "OpenMatches": "Chaque match doit être terminé ou annulé avant de clôturer la phase.",
+      "ConfrontationUndecidable": "Une confrontation nécessaire ne peut pas toujours départager — vérifiez le format de match et les sorties.",
+      "OverCapacityEdge": "Le volume entrant dépasse la capacité de places — ajustez la structure ou les affectations.",
+      "OverExtraction": "L’extraction sortante dépasse la capacité de la source — vérifiez les sorties.",
+      "SlotFeedMissing": "Un emplacement requis n’est pas alimenté — complétez les liaisons entre phases.",
+      "SlotFeedInvalid": "Une alimentation d’emplacement est invalide — vérifiez les liaisons.",
+      "SlotFeedMultiple": "Des alimentations d’emplacement entrent en conflit — vérifiez les liaisons.",
+      "CycleDetected": "Les liaisons entre phases forment un cycle — corrigez qualification ou progression.",
+      "RoutingNondeterminism": "Le routage entre phases est ambigu — corrigez qualification ou progression."
+    },
+    "mutation": {
+      "_unknown": "Impossible d’effectuer cette action de cycle de phase pour le moment."
     }
   },
   "fiche": {

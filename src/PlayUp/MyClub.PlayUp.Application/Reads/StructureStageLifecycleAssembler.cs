@@ -189,15 +189,12 @@ public static class StructureStageLifecycleAssembler
             entriesApplicable,
             entriesSatisfied));
 
-        var placesApplicable = input.CompositionCapacity is > 0;
-        var placesFilled = input.CompositionEntryCount;
-        if (input.FormatKind is StructureFormatKind.Championship or StructureFormatKind.Swiss)
-        {
-            placesFilled = Math.Max(placesFilled, activeEntries);
-        }
-
+        var placesN = input.CompositionCapacity is > 0
+            ? input.CompositionCapacity
+            : StructurePopulationVolume.ResolvePlacesCapacity(input.Stage);
+        var placesApplicable = placesN is > 0;
         var placesSatisfied = !placesApplicable
-                              || placesFilled >= input.CompositionCapacity!.Value;
+                              || EvaluatePlacesSatisfied(input, placesN!.Value);
         items.Add(new StructureStageLifecyclePrepareChecklistItemDto(
             ChecklistPlaces,
             placesApplicable,
@@ -210,17 +207,6 @@ public static class StructureStageLifecycleAssembler
             ChecklistDraw,
             drawApplicable,
             drawSatisfied));
-
-        var matchesApplicable = input.Materialize is not null;
-        var matchesSatisfied = !matchesApplicable
-                               || string.Equals(
-                                   input.Materialize!.LabelVariant,
-                                   "complete",
-                                   StringComparison.Ordinal);
-        items.Add(new StructureStageLifecyclePrepareChecklistItemDto(
-            ChecklistMatches,
-            matchesApplicable,
-            matchesSatisfied));
 
         var exitsApplicable = input.HasQualificationRules || input.HasProgressionRules;
         var exitsSatisfied = !exitsApplicable || !HasExitStructureIssues(input.StructureIssues);
@@ -242,6 +228,25 @@ public static class StructureStageLifecycleAssembler
 
         var allSatisfied = items.Where(item => item.Applicable).All(item => item.Satisfied);
         return new StructureStageLifecyclePrepareChecklistDto(items, allSatisfied);
+    }
+
+    /// <summary>
+    /// Places row — root: expected occupancy (affectation + inbound) vs Places N (Équipes meter).
+    /// Non-root: composition pool fill vs capacity.
+    /// </summary>
+    private static bool EvaluatePlacesSatisfied(
+        StructureStageLifecycleInput input,
+        int placesN)
+    {
+        if (input.IsRootComposition)
+        {
+            var expected = StructurePopulationVolume.ExpectedOccupancy(
+                input.Stage,
+                input.CompetitionStages);
+            return expected >= placesN;
+        }
+
+        return input.CompositionEntryCount >= placesN;
     }
 
     private static StructureStageLifecycleMatchProgressDto? BuildMatchProgress(

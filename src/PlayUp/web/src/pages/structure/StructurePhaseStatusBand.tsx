@@ -9,18 +9,22 @@ import {
   RoundsStatIcon,
 } from '../../design-system/icons/contentIcons';
 import type { StructureStageHubSummary } from '../../types';
-import { MutationError, PendingLabel } from '../../ui';
+import { Alert } from '../../design-system/components/Alert';
+import { PendingLabel } from '../../ui';
 import {
   lifecycleDisabledMessage,
+  lifecycleMutationMessage,
   transitionActionLabel,
   transitionPendingLabel,
 } from './structurePhaseLifecycleActions';
 import {
-  DRAFT_PREPARE_STEP_IDS,
   isLifecycleActionCode,
   remediationHref,
+  resolveDraftPrepareStepIds,
   resolveDraftPrepareStepStatus,
+  shouldShowLifecycleRemediationLink,
   shouldShowPrimaryBlockMessage,
+  type DraftPrepareStepId,
   type DraftPrepareStepStatus,
 } from './structurePhaseStatusBandModel';
 import { useStructureStageLifecycleMutation } from './useStructureStageLifecycleMutation';
@@ -54,12 +58,13 @@ function DraftPrepareStepper({
       className="structure-phase-status-band__stepper"
       aria-label={t('lifecycle.checklistAria')}
     >
-      {DRAFT_PREPARE_STEP_IDS.map((stepId) => {
+      {resolveDraftPrepareStepIds(checklist).map((stepId) => {
         const status = resolveDraftPrepareStepStatus(
           stepId,
           checklist,
           disabledReason,
         );
+        const checklistHint = checklistCodeForStep(stepId);
         return (
           <li
             key={stepId}
@@ -69,7 +74,14 @@ function DraftPrepareStepper({
             <span className="structure-phase-status-band__step-mark">
               <DraftStepMark status={status} />
             </span>
-            <span className="structure-phase-status-band__step-label">
+            <span
+              className="structure-phase-status-band__step-label"
+              title={
+                checklistHint
+                  ? t(`lifecycle.checklist.${checklistHint}`)
+                  : undefined
+              }
+            >
               {t(`lifecycle.draftStep.${stepId}`)}
             </span>
           </li>
@@ -77,6 +89,23 @@ function DraftPrepareStepper({
       })}
     </ol>
   );
+}
+
+function checklistCodeForStep(stepId: DraftPrepareStepId): string | null {
+  switch (stepId) {
+    case 'Teams':
+      return 'Entries';
+    case 'Places':
+      return 'Places';
+    case 'Attribution':
+      return 'Attribution';
+    case 'Draw':
+      return 'Draw';
+    case 'Exits':
+      return 'Exits';
+    default:
+      return null;
+  }
 }
 
 function DraftStepMark({ status }: { status: DraftPrepareStepStatus }) {
@@ -93,20 +122,22 @@ function RunningMatchStats({
   finished,
   open,
   cancelled,
-  total,
 }: {
   finished: number;
   open: number;
   cancelled: number;
-  total: number;
 }) {
   const { t } = useTranslation('structure');
 
   return (
-    <ul
-      className="structure-phase-hero__stats structure-phase-status-band__hero-stats"
-      aria-label={t('lifecycle.statusBand.matchStatsAria')}
-    >
+    <div className="structure-phase-status-band__match-block">
+      <p className="structure-phase-status-band__match-heading">
+        {t('lifecycle.statusBand.matchStatsHeading')}
+      </p>
+      <ul
+        className="structure-phase-hero__stats structure-phase-status-band__hero-stats"
+        aria-label={t('lifecycle.statusBand.matchStatsAria')}
+      >
       <li className="structure-phase-hero__stat">
         <span className="structure-phase-hero__stat-icon" aria-hidden="true">
           <CheckIcon size="sm" />
@@ -136,16 +167,8 @@ function RunningMatchStats({
           {t('lifecycle.statusBand.matchStatRemaining')}
         </span>
       </li>
-      <li className="structure-phase-hero__stat">
-        <span className="structure-phase-hero__stat-icon" aria-hidden="true">
-          <RoundsStatIcon size="sm" />
-        </span>
-        <span className="structure-phase-hero__stat-value">{total}</span>
-        <span className="structure-phase-hero__stat-label">
-          {t('lifecycle.statusBand.matchStatTotal')}
-        </span>
-      </li>
-    </ul>
+      </ul>
+    </div>
   );
 }
 
@@ -200,7 +223,11 @@ function StructurePhaseStatusBandBody({
   const showBlockMessage =
     projectedAction != null &&
     !actionEnabled &&
-    shouldShowPrimaryBlockMessage(stage.status, disabledReason);
+    shouldShowPrimaryBlockMessage(
+      stage.status,
+      disabledReason,
+      lifecycle?.prepareChecklist,
+    );
 
   const bandAriaLabel = t(`lifecycle.state.${stage.status}.lead`);
   const busy = transitionMutation.isPending || Boolean(structureHubRefreshing);
@@ -214,13 +241,15 @@ function StructurePhaseStatusBandBody({
   const matchProgress = lifecycle?.matchProgress;
   const showRunningStats =
     (stage.status === 'Running' || stage.status === 'Suspended') &&
-    matchProgress != null &&
-    matchProgress.total > 0;
+    matchProgress != null;
 
   const remediationTarget = showBlockMessage
     ? remediationHref(competitionId, stage)
     : null;
   const remediationLabelKey = transition?.remediation?.labelKey ?? null;
+  const showRemediationLink =
+    showBlockMessage &&
+    shouldShowLifecycleRemediationLink(disabledReason, remediationTarget);
 
   const runningStats =
     showRunningStats && matchProgress ? (
@@ -228,35 +257,27 @@ function StructurePhaseStatusBandBody({
         finished={matchProgress.finished}
         open={matchProgress.open}
         cancelled={matchProgress.cancelled}
-        total={matchProgress.total}
       />
-    ) : (stage.status === 'Running' || stage.status === 'Suspended') &&
-      matchProgress != null &&
-      matchProgress.total === 0 ? (
-      <p className="structure-phase-status-band__meta">
-        {t('lifecycle.matchProgress.none')}
-      </p>
     ) : null;
 
   return (
     <div
       className="structure-phase-status-band"
       aria-label={bandAriaLabel}
-      data-phase-status={stage.status}
     >
       <div className="structure-phase-status-band__copy">
         {showBlockMessage && disabledReason ? (
           <p className="structure-phase-status-band__meta">
             {lifecycleDisabledMessage(t, disabledReason)}
-            {remediationTarget ? (
+            {showRemediationLink && remediationTarget ? (
               <>
                 {' '}
                 <Link className="ds-text-link" to={remediationTarget}>
-                  {remediationLabelKey
-                    ? t(`lifecycle.remediation.${remediationLabelKey}`, {
-                        defaultValue: t('lifecycle.statusBand.viewOverview'),
-                      })
-                    : t('lifecycle.statusBand.viewOverview')}
+                  {disabledReason === 'ConstructionFrozen'
+                    ? t('lifecycle.statusBand.viewOverview')
+                    : t(`lifecycle.remediation.${remediationLabelKey ?? 'default'}`, {
+                        defaultValue: t('lifecycle.remediation.default'),
+                      })}
                 </Link>
               </>
             ) : null}
@@ -270,7 +291,9 @@ function StructurePhaseStatusBandBody({
         {showDraftStepper ? <DraftPrepareStepper stage={stage} /> : null}
         {runningStats}
         {transitionMutation.isError ? (
-          <MutationError error={transitionMutation.error} />
+          <Alert tone="danger" role="alert">
+            {lifecycleMutationMessage(t, transitionMutation.error)}
+          </Alert>
         ) : null}
       </div>
 

@@ -66,7 +66,7 @@ describe('StructurePhaseStatusBand', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows draft stepper labels without stage-not-ready banner', () => {
+  it('shows draft stepper without stage-not-ready band when prepare is blocked', () => {
     renderBand({
       ...baseStage,
       lifecycle: {
@@ -83,11 +83,31 @@ describe('StructurePhaseStatusBand', () => {
     });
 
     expect(screen.getByText(/^réglement$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^équipes$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^inscriptions$/i)).toBeInTheDocument();
     expect(
-      screen.queryByText(/n’est pas prête à être marquée comme prête/i),
+      screen.queryByText(/la préparation est bloquée/i),
     ).toBeNull();
     expect(screen.getByRole('button', { name: /préparer/i })).toBeDisabled();
+  });
+
+  it('shows match stats with heading when phase has zero matches', () => {
+    renderBand({
+      ...baseStage,
+      status: 'Running',
+      lifecycle: {
+        transition: { code: 'CompleteStage', enabled: true },
+        matchProgress: {
+          total: 0,
+          finished: 0,
+          open: 0,
+          cancelled: 0,
+          canComplete: true,
+        },
+      },
+    });
+
+    expect(screen.getByText(/matchs de la phase/i)).toBeInTheDocument();
+    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows running hero stats without open-matches banner', () => {
@@ -110,9 +130,11 @@ describe('StructurePhaseStatusBand', () => {
       },
     });
 
+    expect(screen.getByText(/matchs de la phase/i)).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getByText(/^terminés$/i)).toBeInTheDocument();
     expect(screen.getByText(/^restants$/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^total$/i)).toBeNull();
     expect(screen.queryByText(/matchs en cours/i)).toBeNull();
     expect(
       screen.queryByText(/chaque match doit être terminé ou annulé/i),

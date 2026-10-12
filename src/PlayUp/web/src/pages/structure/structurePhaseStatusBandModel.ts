@@ -15,16 +15,51 @@ export function isLifecycleActionCode(
   );
 }
 
-export const DRAFT_PREPARE_STEP_IDS = [
+const DRAFT_PREPARE_STEP_CORE = [
   'Regulation',
   'Teams',
   'Places',
   'Draw',
   'Exits',
-  'Matches',
 ] as const;
 
-export type DraftPrepareStepId = (typeof DRAFT_PREPARE_STEP_IDS)[number];
+export type DraftPrepareStepId =
+  | (typeof DRAFT_PREPARE_STEP_CORE)[number]
+  | 'Attribution';
+
+/** @deprecated use {@link resolveDraftPrepareStepIds} */
+export const DRAFT_PREPARE_STEP_IDS = DRAFT_PREPARE_STEP_CORE;
+
+/**
+ * Prepare checklist rows (Host `BuildPrepareChecklist`) — SPA step mapping:
+ * - Regulation: `StructureGraphInvalid` on transition (not a checklist row).
+ * - Teams → Entries: root phase only; competition Active entries ≥ MinimumTeams.
+ * - Places → Places: expected occupancy (affectation + inbound) vs Places N at root; else composition pool.
+ * - Attribution → Attribution: root Groups/Cup; affectation or full composition pool.
+ * - Draw → Draw: when draw engaged; badge Applied.
+ * - Exits → Exits: qual/prog without exit structure issues.
+ * - Matches: not projected — materialization is not required for Prepare (Ready).
+ *
+ * Inscriptions (Entries) = minimum compétition ; Places = jauge Population vs Places N.
+ */
+export function resolveDraftPrepareStepIds(
+  checklist: StructureStageLifecyclePrepareChecklist | null | undefined,
+): DraftPrepareStepId[] {
+  const attributionApplicable = checklist?.items.some(
+    (item) => item.code === 'Attribution' && item.applicable,
+  );
+  if (attributionApplicable) {
+    return [
+      'Regulation',
+      'Teams',
+      'Places',
+      'Attribution',
+      'Draw',
+      'Exits',
+    ];
+  }
+  return [...DRAFT_PREPARE_STEP_CORE];
+}
 
 const STEP_CHECKLIST_CODES: Record<
   DraftPrepareStepId,
@@ -33,9 +68,9 @@ const STEP_CHECKLIST_CODES: Record<
   Regulation: [],
   Teams: ['Entries'],
   Places: ['Places'],
+  Attribution: ['Attribution'],
   Draw: ['Draw'],
   Exits: ['Exits'],
-  Matches: ['Matches'],
 };
 
 export type DraftPrepareStepStatus = 'ok' | 'ko' | 'na';
@@ -61,23 +96,40 @@ export function resolveDraftPrepareStepStatus(
 export function shouldShowPrimaryBlockMessage(
   status: StageStatus,
   disabledReasonCode: string | null | undefined,
+  prepareChecklist?: StructureStageLifecyclePrepareChecklist | null,
 ): boolean {
   if (!disabledReasonCode) {
     return false;
   }
+
+  if (status === 'Draft') {
+    if (disabledReasonCode === 'StageNotReady') {
+      return false;
+    }
+    if (disabledReasonCode === 'StructureGraphInvalid') {
+      return (
+        resolveDraftPrepareStepStatus(
+          'Regulation',
+          prepareChecklist,
+          disabledReasonCode,
+        ) !== 'ko'
+      );
+    }
+    if (disabledReasonCode === 'ConfrontationUndecidable') {
+      return (
+        resolveDraftPrepareStepStatus('Exits', prepareChecklist, disabledReasonCode) !==
+        'ko'
+      );
+    }
+  }
+
   if (
-    status === 'Draft' &&
-    (disabledReasonCode === 'StageNotReady' ||
-      disabledReasonCode === 'StructureGraphInvalid')
+    (status === 'Running' || status === 'Suspended') &&
+    disabledReasonCode === 'OpenMatches'
   ) {
     return false;
   }
-  if (status === 'Running' && disabledReasonCode === 'OpenMatches') {
-    return false;
-  }
-  if (status === 'Suspended' && disabledReasonCode === 'OpenMatches') {
-    return false;
-  }
+
   return true;
 }
 
@@ -95,6 +147,19 @@ export function remediationHref(
     return `/competitions/${competitionId}/overview`;
   }
   return null;
+}
+
+export function shouldShowLifecycleRemediationLink(
+  disabledReasonCode: string | null | undefined,
+  remediationHrefValue: string | null,
+): boolean {
+  if (!remediationHrefValue || !disabledReasonCode) {
+    return false;
+  }
+  if (disabledReasonCode === 'StageNotReady') {
+    return false;
+  }
+  return true;
 }
 
 export function matchProgressRemaining(total: number, finished: number, cancelled: number): number {

@@ -1,16 +1,43 @@
 import type { TFunction } from 'i18next';
 
+import { ApiError } from '../../api';
+import { apiErrorLabel } from '../../i18n/apiErrorLabel';
 import type { StructureStageLifecycleTransitionCode } from '../../types';
+
+const STAGE_COMPLETION_BLOCKED = 'Application.StageCompletionBlocked';
 
 export function lifecycleDisabledMessage(
   t: TFunction<'structure'>,
   code: string | null | undefined,
-  fallback?: string | null,
 ): string {
   if (!code) {
-    return fallback ?? '';
+    return '';
   }
-  return t(`lifecycle.disabled.${code}`, { defaultValue: fallback ?? code });
+  const specific = t(`lifecycle.disabled.${code}`, { defaultValue: '' });
+  if (specific.length > 0) {
+    return specific;
+  }
+  return t('lifecycle.disabled._unknown');
+}
+
+export function lifecycleMutationMessage(
+  tStructure: TFunction<'structure'>,
+  error: unknown,
+): string {
+  if (error instanceof ApiError) {
+    if (error.code === STAGE_COMPLETION_BLOCKED) {
+      return tStructure('lifecycle.disabled.OpenMatches');
+    }
+    const localized = apiErrorLabel(error);
+    if (localized) {
+      return localized;
+    }
+    return tStructure('lifecycle.mutation._unknown');
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return tStructure('lifecycle.mutation._unknown');
 }
 
 export function transitionActionLabel(

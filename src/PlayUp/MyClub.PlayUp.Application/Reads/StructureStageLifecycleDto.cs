@@ -51,7 +51,7 @@ public sealed record StructureStageLifecyclePrepareChecklistDto(
 /// <summary>
 /// One Prepare checklist row.
 /// </summary>
-/// <param name="Code">Stable item code (Entries, Places, Draw, Matches, Exits, Attribution).</param>
+/// <param name="Code">Stable item code (Entries, Places, Draw, Exits, Attribution).</param>
 /// <param name="Applicable">When false, the SPA hides the row.</param>
 /// <param name="Satisfied">When applicable, whether the row is complete.</param>
 public sealed record StructureStageLifecyclePrepareChecklistItemDto(
