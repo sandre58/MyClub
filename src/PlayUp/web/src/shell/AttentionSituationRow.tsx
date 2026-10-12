@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
-import { attentionTargetTypeLabel } from '../i18n/enumLabels';
-import { situationDescription, situationTitle } from '../i18n/situationCopy';
 import { situationPresentation } from './functionalProblemPresentation';
+import { attentionSituationMeta, attentionSituationTitle } from './attentionRowCopy';
 import { organizerProblemPresentationCode } from './organizerProblemRead';
-import type { OverviewSituation } from '../types';
+import type { CompetitionStageSummary, OverviewSituation } from '../types';
 
 type AttentionSituationRowProps = {
   item: OverviewSituation;
   competitionId: string;
+  stages?: readonly CompetitionStageSummary[];
   onNavigate?: () => void;
 };
 
@@ -22,6 +22,7 @@ type AttentionSituationRowProps = {
 export function AttentionSituationRow({
   item,
   competitionId,
+  stages = [],
   onNavigate,
 }: AttentionSituationRowProps) {
   const presentation = situationPresentation(item, competitionId);
@@ -31,11 +32,7 @@ export function AttentionSituationRow({
     item.problem,
     item.source,
   );
-  const description = situationDescription(titleSource, item.params);
-  const targetLabel = item.targetType
-    ? attentionTargetTypeLabel(item.targetType)
-    : null;
-  const meta = description ?? targetLabel;
+  const meta = attentionSituationMeta(item, stages);
   const toneClass = isBlocking
     ? 'shell-attention-drawer__row--blocking'
     : 'shell-attention-drawer__row--attention';
@@ -44,7 +41,7 @@ export function AttentionSituationRow({
     <>
       <span className="shell-attention-drawer__row-main">
         <span className="shell-attention-drawer__row-title">
-          {situationTitle(titleSource, item.params)}
+          {attentionSituationTitle(presentation, titleSource, item.params)}
         </span>
         {meta ? (
           <span className="shell-attention-drawer__row-meta ds-meta">

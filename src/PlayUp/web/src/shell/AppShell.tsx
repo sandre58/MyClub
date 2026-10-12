@@ -79,6 +79,7 @@ export function AppShell() {
 
   useEffect(() => {
     setPhoneNavOpen(false);
+    setAttentionDrawerOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -155,9 +156,9 @@ export function AppShell() {
     setDesktopCollapsed((value) => !value);
   };
 
-  const openAttention = () => {
+  const toggleAttention = () => {
     setPhoneNavOpen(false);
-    setAttentionDrawerOpen(true);
+    setAttentionDrawerOpen((open) => !open);
   };
 
   const togglePhoneNav = () => {
@@ -180,7 +181,7 @@ export function AppShell() {
         {t('skipToContent')}
       </a>
 
-      <div className="shell__frame" inert={attentionDrawerOpen || undefined}>
+      <div className="shell__frame">
         <ShellSidebar
           collapsed={collapsed}
           hideCollapse={viewport === 'phone'}
@@ -197,7 +198,7 @@ export function AppShell() {
             attentionDrawerId={SHELL_ATTENTION_DRAWER_PANEL_ID}
             attentionDrawerOpen={attentionDrawerOpen}
             attentionTriggerRef={attentionTriggerRef}
-            onAttentionClick={openAttention}
+            onAttentionClick={toggleAttention}
           />
           {viewport === 'phone' ? (
             <button
@@ -212,22 +213,25 @@ export function AppShell() {
               }}
             />
           ) : null}
-          <div className="shell__workspace" inert={phoneNavOpen || undefined}>
+          <div
+            className="shell__workspace"
+            inert={phoneNavOpen || undefined}
+            data-attention-drawer-open={attentionDrawerOpen ? 'true' : 'false'}
+          >
             <ShellMain>
               <PageErrorBoundary>
                 <Outlet />
               </PageErrorBoundary>
             </ShellMain>
+            <AttentionDrawer
+              open={attentionDrawerOpen}
+              panelId={SHELL_ATTENTION_DRAWER_PANEL_ID}
+              onClose={() => setAttentionDrawerOpen(false)}
+              returnFocusRef={attentionTriggerRef}
+            />
           </div>
         </div>
       </div>
-
-      <AttentionDrawer
-        open={attentionDrawerOpen}
-        panelId={SHELL_ATTENTION_DRAWER_PANEL_ID}
-        onClose={() => setAttentionDrawerOpen(false)}
-        returnFocusRef={attentionTriggerRef}
-      />
     </div>
   );
 }

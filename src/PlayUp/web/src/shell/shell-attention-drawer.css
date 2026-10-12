@@ -1,5 +1,5 @@
 /*
- * Attention drawer — workspace overlay under chrome L.
+ * Attention drawer — overlay scoped to `.shell__workspace` (chrome stays interactive).
  * Lignes A: no rest fill; hover via .ds-interactive-row.
  */
 
@@ -10,9 +10,9 @@
   --shell-attention-row-gap: var(--space-12);
   --shell-attention-row-sep: var(--space-8);
 
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 6;
+  z-index: 4;
   overflow: hidden;
   contain: paint;
   pointer-events: none;
@@ -24,10 +24,7 @@
 
 .shell-attention-drawer__backdrop {
   position: absolute;
-  inset-block-start: var(--shell-chrome-end, var(--shell-header-min-height));
-  inset-block-end: 0;
-  inset-inline-start: var(--shell-rail-end, 0);
-  inset-inline-end: 0;
+  inset: 0;
   border: 0;
   background: color-mix(in srgb, var(--color-ink) 28%, transparent);
   cursor: default;
@@ -41,8 +38,7 @@
 
 .shell-attention-drawer__panel {
   position: absolute;
-  inset-block-start: var(--shell-chrome-end, var(--shell-header-min-height));
-  inset-block-end: 0;
+  inset-block: 0;
   inset-inline-end: 0;
   display: flex;
   flex-direction: column;
@@ -118,6 +114,14 @@
   font-weight: var(--font-weight-bold);
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+
+.shell-attention-drawer__count--blocking {
+  color: var(--color-error);
+}
+
+.shell-attention-drawer__count--warning {
+  color: var(--color-attention);
 }
 
 .shell-attention-drawer__close {

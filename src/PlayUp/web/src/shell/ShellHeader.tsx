@@ -17,6 +17,7 @@ import { PreferencesMenu } from './PreferencesMenu';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import type { ShellViewport } from './useShellViewport';
 import { Tooltip } from '../design-system/components/Tooltip';
+import { attentionSeverityToneFromItems } from './attentionSeverityTone';
 
 type ShellHeaderProps = {
   viewport?: ShellViewport;
@@ -62,8 +63,10 @@ export function ShellHeader({
     staleTime: 0,
   });
 
+  const attentionItems = attentionQuery.data?.items ?? [];
   const attentionCount =
-    attentionQuery.data?.count ?? attentionQuery.data?.items.length ?? 0;
+    attentionQuery.data?.count ?? attentionItems.length ?? 0;
+  const attentionTone = attentionSeverityToneFromItems(attentionItems);
   const competitionStatus = status;
   const periodLabel = formatCompetitionPeriod(
     scheduledStart,
@@ -109,6 +112,7 @@ export function ShellHeader({
         <AttentionTrigger
           buttonRef={attentionTriggerRef}
           count={attentionCount}
+          severityTone={attentionTone}
           drawerId={attentionDrawerId}
           drawerOpen={attentionDrawerOpen}
           onClick={onAttentionClick}
@@ -237,12 +241,14 @@ function ShellHeaderCompetitionContext({
 
 function AttentionTrigger({
   count,
+  severityTone,
   drawerId,
   drawerOpen,
   onClick,
   buttonRef,
 }: {
   count: number;
+  severityTone: 'blocking' | 'warning';
   drawerId?: string;
   drawerOpen: boolean;
   onClick?: () => void;
@@ -272,7 +278,10 @@ function AttentionTrigger({
           aria-hidden="true"
         />
         {hasAttention && (
-          <span className="ds-shell-header__badge ds-num" aria-hidden="true">
+          <span
+            className={`ds-shell-header__badge ds-num ds-shell-header__badge--${severityTone}`}
+            aria-hidden="true"
+          >
             {count}
           </span>
         )}

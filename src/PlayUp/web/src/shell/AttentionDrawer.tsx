@@ -12,6 +12,7 @@ import { queryKeys } from '../queryKeys';
 import type { OverviewSituation } from '../types';
 import { AttentionSituationRow } from './AttentionSituationRow';
 import { partitionAttentionItems } from './attentionPartition';
+import { attentionSeverityToneFromSituations } from './attentionSeverityTone';
 import { needsAttentionItemsToSituations } from './needsAttentionToSituation';
 import { attentionLoadErrorMessage } from './attentionLoadError';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
@@ -42,7 +43,8 @@ export function AttentionDrawer({
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
 
-  const { competitionId, state: contextState } = useShellCompetitionContext();
+  const { competitionId, stages, state: contextState } =
+    useShellCompetitionContext();
 
   const {
     data: attentionData,
@@ -65,6 +67,7 @@ export function AttentionDrawer({
 
   const items = needsAttentionItemsToSituations(attentionData?.items ?? []);
   const count = attentionData?.count ?? items.length;
+  const severityTone = attentionSeverityToneFromSituations(items);
   const titleLabel = t('shell:attention.label');
   const showCount = !attentionPending && count > 0;
 
@@ -144,7 +147,11 @@ export function AttentionDrawer({
         <header className="shell-attention-drawer__head">
           <h2 id={titleId} className="shell-attention-drawer__lockup">
             {showCount ? (
-              <span className="shell-attention-drawer__count">{count}</span>
+              <span
+                className={`shell-attention-drawer__count shell-attention-drawer__count--${severityTone}`}
+              >
+                {count}
+              </span>
             ) : null}
             <span className="shell-attention-drawer__copy">
               <span className="shell-attention-drawer__title">
@@ -175,6 +182,7 @@ export function AttentionDrawer({
             pending={Boolean(competitionId) && attentionPending}
             error={attentionError}
             items={items}
+            stages={stages}
             onRetry={() => void refetchAttention()}
             onNavigate={onClose}
           />
@@ -190,6 +198,7 @@ function AttentionDrawerContent({
   pending,
   error,
   items,
+  stages,
   onRetry,
   onNavigate,
 }: {
@@ -198,6 +207,7 @@ function AttentionDrawerContent({
   pending: boolean;
   error: unknown;
   items: OverviewSituation[];
+  stages: ReturnType<typeof useShellCompetitionContext>['stages'];
   onRetry: () => void;
   onNavigate: () => void;
 }) {
@@ -276,6 +286,7 @@ function AttentionDrawerContent({
           label={t('attention.groupBlocking')}
           items={blocking}
           competitionId={competitionId}
+          stages={stages}
           onNavigate={onNavigate}
         />
       ) : null}
@@ -284,6 +295,7 @@ function AttentionDrawerContent({
           label={t('attention.groupAttention')}
           items={attention}
           competitionId={competitionId}
+          stages={stages}
           onNavigate={onNavigate}
         />
       ) : null}
@@ -295,11 +307,13 @@ function AttentionDrawerGroup({
   label,
   items,
   competitionId,
+  stages,
   onNavigate,
 }: {
   label: string;
   items: OverviewSituation[];
   competitionId: string;
+  stages: ReturnType<typeof useShellCompetitionContext>['stages'];
   onNavigate: () => void;
 }) {
   return (
@@ -311,6 +325,7 @@ function AttentionDrawerGroup({
             key={`${item.source}:${item.targetType}:${item.targetId}:${item.matchId}`}
             item={item}
             competitionId={competitionId}
+            stages={stages}
             onNavigate={onNavigate}
           />
         ))}

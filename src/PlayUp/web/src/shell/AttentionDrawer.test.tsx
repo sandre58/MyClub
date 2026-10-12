@@ -179,7 +179,7 @@ describe('AttentionDrawer', () => {
     expect(
       screen.getByRole('heading', { name: 'Bloquant' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Phase/i)).toBeInTheDocument();
+    expect(screen.getByText('Group stage')).toBeInTheDocument();
     expect(
       screen.getByText('Situations qui demandent une action.'),
     ).toBeInTheDocument();
@@ -341,21 +341,23 @@ describe('AttentionDrawer', () => {
     });
   });
 
-  it('isolates the shell frame while open', async () => {
+  it('keeps shell chrome interactive while the drawer is open', async () => {
     const user = userEvent.setup();
     renderWithShell(`/competitions/${competitionId}`);
-
-    expect(document.querySelector('.shell__frame')).not.toHaveAttribute(
-      'inert',
-    );
 
     await user.click(
       await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
     );
 
-    expect(document.querySelector('.shell__frame')).toHaveAttribute('inert');
+    expect(document.querySelector('.shell__frame')).not.toHaveAttribute(
+      'inert',
+    );
+    expect(
+      document.querySelector('.shell__workspace')?.getAttribute(
+        'data-attention-drawer-open',
+      ),
+    ).toBe('true');
     expect(document.body.style.overflow).toBe('');
-    expect(document.querySelector('.shell')?.scrollLeft).toBe(0);
   });
 
   it('does not introduce a new /attention route', async () => {

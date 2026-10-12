@@ -352,6 +352,14 @@
   line-height: 1;
 }
 
+.ds-shell-header__badge--blocking {
+  background: var(--color-error);
+}
+
+.ds-shell-header__badge--warning {
+  background: var(--color-attention);
+}
+
 /* --- Workspace ----------------------------------------------------------- */
 
 .ds-shell-workspace {
