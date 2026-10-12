@@ -17,7 +17,7 @@
 
 1. **Document** how Step 2 semantic principles would map onto **three existing read families** for **three pilot problems**, without inventing a universal DTO.
 2. **Produce a pilot alias registry** (canon ↔ wire transports), grounded in VERIFY observations — especially POST ↔ read equivalence where it holds, and **documented divergence** where it does not (V2).
-3. **Draft conceptual enrichment** per read family (what Application *would* expose later: semantic level, action-relative blocking, canon code). **Wire field names remain DEFERRED** until product resolves Step 2 wire shape.
+3. **Document read enrichment** per family — **O3 DECIDED:** optional `problem` / `structureIssueSemantics[]` (Phase 1 wire).
 4. **Prepare an implementation proposal** (DTO touch list, migration notes) as a **separate appendix** — submitted for explicit approval; **not** executed under this brief.
 
 ---
@@ -109,7 +109,7 @@ Track resolution of:
 | :- | :---- | :---- | :----- |
 | O1 | V2: one problem vs presentation layers for cycle prepare | Product + tech | **DECIDED 2026-10-12 — Option B (layered)** |
 | O2 | V3: `blocksAction` for qualification attention | Product | **DECIDED 2026-10-12 — Option A (Attention + remediation)** |
-| O3 | Wire shape (enum vs dual fields) | Product + tech lead | Implementation proposal |
+| O3 | Wire shape (enum vs dual fields) | Product + tech lead | **DECIDED 2026-10-12 — Option A structured `problem`** |
 
 ### D5 — Implementation proposal (appendix — proposal only)
 
@@ -144,6 +144,21 @@ Option A (single problem, flat aliases) **rejected** for this pilot — it under
 
 Option B (explicit blocked-action list) **not adopted** for the pilot; revisit only if product needs parity with command-level refusals on qualification paths.
 
+### 5.3 O3 — Wire shape — **DECIDED (2026-10-12, Option A)**
+
+**Normative pilot JSON (additive):**
+
+- R1 / R2: optional **`problem`** on the existing DTO.
+- R3: optional **`structureIssueSemantics[]`** (same field set per entry).
+
+**Fields:** `semanticLevel` (four Step 2 values as strings), `canonCode`, `blockedActions`, optional `transportCode`, optional `suggestedActionCode`.
+
+**Out of scope on Application wire:** UI severity, drawer flags, `factKind` + `organizerPriority` dual enum (Option B **rejected**). Presentation stays SPA (`functionalProblemPresentation`, attention `nature`, etc.).
+
+**Illustrative only (not wire today):** D2 `sourceKind` (`anticipated` \| `attention` \| …) — document mapping in audit; add to wire only under a future decision.
+
+Phase 1 implementation **is** the O3 contract for the pilot perimeter.
+
 ---
 
 ## 6. Work plan (documentation phase)
@@ -169,6 +184,7 @@ Step 3 documentation phase is **complete** when:
 - [ ] D1–D4 merged and linked from [organizer-problems-audit.md](./organizer-problems-audit.md)
 - [x] O1 **DECIDED** (2026-10-12 — V2 Option B layered model)
 - [x] O2 **DECIDED** (2026-10-12 — V3 Option A Attention + remediation)
+- [x] O3 **DECIDED** (2026-10-12 — structured `problem` object, Phase 1 wire)
 - [ ] D5 approved as **proposal** (or explicitly deferred)
 - [ ] Product + tech sign-off recorded (Notion decision link optional; Git commit message or brief header)
 - [ ] `structure-problems-contract.md` remains **Paused** unless a **separate** decision includes Matchs in implementation scope

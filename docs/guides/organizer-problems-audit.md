@@ -2,7 +2,7 @@
 
 **Document role:** Git-side **audit + semantic contract record**. Historical **VERIFIED** facts remain evidence from code; **Step 2** records product arbitration (2026-10-12). **Step 3 Phase 1** (2026-10-12) adds optional `problem` / `structureIssueSemantics` on three read families — additive only; **ProblemDetails** and Matchs pilot unchanged.
 
-**Step 2 status:** **PARTIALLY DECIDED** (2026-10-12 product arbitration). **Step 3 Phase 1 status:** **IMPLEMENTED** (Application read models + TS types + pilot alias doc; SPA presentation not wired). Wire shape (single enum vs paired fields), full alias registry, and drawer/Overview consumption remain **DEFERRED** / **VERIFY** as stated per topic.
+**Step 2 status:** **PARTIALLY DECIDED** (2026-10-12 product arbitration). **Step 3 Phase 1 status:** **IMPLEMENTED** (Application read models + TS types + pilot alias doc; SPA presentation not wired). **O3 wire shape DECIDED** (2026-10-12 — structured `problem` object). Full alias registry beyond pilot trio and drawer/Overview consumption remain **DEFERRED** / optional.
 
 **Scope:** Structure, Competition Overview, and the shell **Needs attention** drawer, plus synchronous command failures (`ProblemDetails`). **Last code audit:** 2026-10-12.
 
@@ -27,7 +27,7 @@
 
 Arbitration order used: **1 → 3 → 2 → 4 → 5**. Use **testable phrase shapes** for pilot codes (illustration only — not adopted assignments until VERIFY). Example shape: *« {code} blocks {ActionCode} »* — for `OpenMatches` / `CompleteStage`, action assignment remains **VERIFY (V1)**, not Step 2 DECIDED.
 
-### 1. Semantic levels — DECIDED (definitions); DEFERRED (wire shape)
+### 1. Semantic levels — DECIDED (definitions + wire shape O3)
 
 **DECIDED — definitions (contractual phrasing):**
 
@@ -38,11 +38,19 @@ Arbitration order used: **1 → 3 → 2 → 4 → 5**. Use **testable phrase sha
 | **Attention** | Organizer intervention is expected; **does not** imply inclusion in the Needs attention drawer. |
 | **Information** | Context for the organizer; no remediation required **within this contract**. |
 
-These four terms are **not** assumed to be a single exclusive enum until wire shape is decided.
+**DECIDED (O3, 2026-10-12) — pilot read wire:** Optional nested **`problem`** (`OrganizerProblemReadDto` / TS `OrganizerProblemRead`) with:
 
-**DEFERRED:** Wire representation (single enum vs paired fields such as fact kind + organizer priority). **Owner:** product + tech lead. **Resolved when:** Step 3 documentation phase mock documents consumer needs without duplicating SPA tone logic.
+| Field | Role |
+| :---- | :--- |
+| `semanticLevel` | Single string enum: `Gate` \| `Signal` \| `Attention` \| `Information` (Step 2 definitions) |
+| `canonCode` | Most precise stable fact |
+| `blockedActions` | Action-relative gate (may be empty — see O2) |
+| `transportCode` | Surface alias / aggregate when ≠ canon (see O1) |
+| `suggestedActionCode` | Remediation hint for Attention (not a block) |
 
-**Rejected (for this perimeter):** Collapsing semantic level with UI severity (danger / warning) or with drawer visibility.
+Hub structure issues: parallel **`structureIssueSemantics[]`** entries with the same field shape for pilot codes. **Not on wire:** UI severity, drawer visibility, or a second `factKind` + `organizerPriority` pair (Option B rejected for pilot).
+
+**Rejected (for this perimeter):** Collapsing semantic level with UI severity (danger / warning) or with drawer visibility; dual-field priority enum on Application reads for the pilot.
 
 ---
 
@@ -155,7 +163,7 @@ These four terms are **not** assumed to be a single exclusive enum until wire sh
 
 **Phase 1 (implemented 2026-10-12):** Optional **`OrganizerProblemReadDto`** on R1 lifecycle transitions and R2 attention items; **`StructureIssueSemantics`** on R3 hub issues — populated via **`OrganizerProblemSemanticsResolver`** for pilot codes only. Alias table: [organizer-problems-pilot-aliases.md](./organizer-problems-pilot-aliases.md). TS mirrors: `web/src/types/organizerProblem.ts` (optional fields on structure/attention DTOs). **Not in Phase 1:** Host/ProblemDetails changes, drawer/Overview UI branching, Matchs `structure.problems` unpause.
 
-**Documentation still open:** wire shape **O3** DEFERRED. **O1 (V2):** Option B layered — 2026-10-12. **O2 (V3):** Option A Attention + remediation — 2026-10-12.
+**Pilot arbitrations (2026-10-12):** **O1** V2 layered · **O2** V3 Attention + remediation · **O3** structured `problem` object. **Still open:** registry beyond pilot trio; SPA consumption; Matchs pilot (Paused).
 
 ---
 

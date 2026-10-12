@@ -8,4 +8,4 @@
 | `CycleDetected` | Gate | `PrepareStage` | **Canon:** hub `structureIssues[]`. **Lifecycle transport:** `StructureGraphInvalid` (aggregate disabled). **POST transport:** `Application.StructureCycleDetected` | **O1 DECIDED (layered):** one prepare gate fact; three wire layers — do not merge strings in SPA |
 | `QualificationPending` | Attention | *(empty — normative)* | Attention `source`; **`suggestedActionCode` `ApplyQualification`** (remediation, not blocksAction) | **O2 DECIDED (Option A):** intervention expected; no lifecycle-style gate list |
 
-Wire field: `problem` on lifecycle transition and attention item; `structureIssueSemantics[]` on structure hub (pilot codes only in resolver today).
+**Wire (O3 DECIDED):** Optional `problem` on lifecycle transition and attention item; `structureIssueSemantics[]` on structure hub. Shape: `canonCode`, `semanticLevel`, `blockedActions`, optional `transportCode`, optional `suggestedActionCode`. Resolver populates pilot trio only today.
