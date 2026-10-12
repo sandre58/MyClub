@@ -247,21 +247,21 @@ Each `stages[]` hub row includes **`lifecycle`** — Structure N2 cycle band (Pr
 | Field | When | Notes |
 | :--- | :--- | :--- |
 | `transition` | Always | Primary lifecycle command for the current `status` |
-| `prepareChecklist` | `status` = `Draft` | Horizontal Prepare checklist (replaces ops strip in Brouillon UI); otherwise omitted / null |
 | `matchProgress` | `Running` \| `Suspended` \| `Completed` | Match closure stats + `canComplete`; otherwise omitted / null |
+| `revertTransition` | `Ready` \| `Running` \| `Suspended` | Optional revert CTA (`RevertToDraftStage` / `RevertToReadyStage`); omitted when unavailable |
 
 **`transition`**
 
 | Field | Type | Notes |
 | :--- | :--- | :--- |
-| `code` | string \| null | `PrepareStage` \| `StartStage` \| `CompleteStage` when a lifecycle CTA applies; null when the band is read-only (e.g. `Completed`) |
+| `code` | string \| null | `PrepareStage` \| `StartStage` \| `CompleteStage` (primary) or revert codes on `revertTransition`; null when read-only (e.g. `Completed`) |
 | `enabled` | boolean | When `code` is set and `false`, Host would reject the command |
 | `disabledReasonCode` | string \| null | Stable blocker (e.g. `ConstructionFrozen`, `OpenMatches`, flow / graph issue codes) |
 | `remediation` | object \| null | `{ "href": "/competitions/{id}/structure?stage=…", "labelKey": "<code>" }` — SPA may map `labelKey` under `structure.lifecycle.remediation.*` |
 
-**`prepareChecklist.items[].code`** (conditional rows): `Entries`, `Places`, `Draw`, `Matches`, `Exits`, `Attribution`. Each item has `applicable` and `satisfied`. `allSatisfied` summarizes applicable rows only (informational; Prepare `enabled` follows Prepare gates, not checklist alone).
-
 **`matchProgress`**: `total`, `finished`, `cancelled`, `open`, `canComplete`. `canComplete` is true when every stage match is `Finished` or `Cancelled` (including **0 matches** on a Running stage).
+
+**`revertTransition`**: same shape as `transition`. Typical disabled codes: `ProductionPresent`, `MatchLifecycleStarted`.
 
 Example (Draft championship):
 
@@ -277,18 +277,8 @@ Example (Draft championship):
       "disabledReasonCode": null,
       "remediation": null
     },
-    "prepareChecklist": {
-      "items": [
-        { "code": "Entries", "applicable": true, "satisfied": true },
-        { "code": "Places", "applicable": true, "satisfied": true },
-        { "code": "Draw", "applicable": false, "satisfied": false },
-        { "code": "Matches", "applicable": true, "satisfied": false },
-        { "code": "Exits", "applicable": false, "satisfied": false },
-        { "code": "Attribution", "applicable": false, "satisfied": false }
-      ],
-      "allSatisfied": false
-    },
-    "matchProgress": null
+    "matchProgress": null,
+    "revertTransition": null
   }
 }
 ```
@@ -315,6 +305,7 @@ Application `StartStage`: Domain `Ready → Running`.
 | :--- | :--- |
 | **204** | Started successfully |
 | **404** | Stage or competition not found |
+| **400** | Start readiness (`Application.StartBlockedUnmaterialized`) |
 | **409** | Not Ready, initial KO not playable, or `Application.CompetitionClosed` (`Stage.NotReady`, `Stage.InvalidTransition`, …) |
 
 #### `POST /stages/{stageId}/complete` → 204 No Content
@@ -328,6 +319,28 @@ Application `CompleteStage`: Domain `Running` \| `Suspended` → `Completed`. Re
 | **409** | Open matches (`Application.StageCompletionBlocked`, `reasons`: `["OpenMatches"]`), invalid transition, or `Application.CompetitionClosed` |
 
 Structure `lifecycle.transition` for `CompleteStage` mirrors this gate (`matchProgress.canComplete`).
+
+#### `POST /stages/{stageId}/revert-to-draft` → 204 No Content
+
+Application `RevertToDraft`: Domain `Ready → Draft` when no matches are attached to the stage graph.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Reverted successfully |
+| **404** | Stage or competition not found |
+| **400** | Matches attached (`Application.RevertToDraftBlocked`) |
+| **409** | Invalid transition or `Application.CompetitionClosed` |
+
+#### `POST /stages/{stageId}/revert-to-ready` → 204 No Content
+
+Application `RevertToReady`: Domain `Running` \| `Suspended` → `Ready` when no match was sportively engaged.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Reverted successfully |
+| **404** | Stage or competition not found |
+| **400** | Match engaged (`Application.RevertToReadyBlocked`) |
+| **409** | Invalid transition or `Application.CompetitionClosed` |
 
 ### `POST /competitions/{competitionId}/structure` → 200 `ConfigureStructureResponse`
 

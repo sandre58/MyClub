@@ -183,6 +183,16 @@ export function completeStage(stageId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/complete`);
 }
 
+/** POST /stages/{stageId}/revert-to-draft → 204 (Ready → Draft when allowed) */
+export function revertStageToDraft(stageId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/revert-to-draft`);
+}
+
+/** POST /stages/{stageId}/revert-to-ready → 204 (Running/Suspended → Ready when allowed) */
+export function revertStageToReady(stageId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/revert-to-ready`);
+}
+
 /** POST /stages/{stageId}/matches/materialize → MaterializeMatchesResponse */
 export function materializeMatches(stageId: string): Promise<{
   createdCount: number;

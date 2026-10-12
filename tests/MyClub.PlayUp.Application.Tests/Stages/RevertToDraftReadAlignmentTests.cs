@@ -5,16 +5,13 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
 

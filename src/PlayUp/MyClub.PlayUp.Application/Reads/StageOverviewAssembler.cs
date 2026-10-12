@@ -56,7 +56,7 @@ public static class StageOverviewAssembler
             .Select(group => new StageGroupOverviewDto(
                 group.Id.Value,
                 group.Name,
-                group.EntryIds.Select(entryId => entryId.Value).ToArray()))
+                [.. group.EntryIds.Select(entryId => entryId.Value)]))
             .ToArray();
 
         return new StageOverviewDto(

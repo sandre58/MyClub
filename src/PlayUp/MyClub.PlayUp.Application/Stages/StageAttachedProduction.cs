@@ -29,7 +29,7 @@ internal static class StageAttachedProduction
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
         return matchSummaries
-            .Where(row => row.StageId.Equals(stage.Id))
-            .Any(row => stage.HasMatch(row.Id));
+            .Any(row => row.StageId.Equals(stage.Id) && stage.HasMatch(row.Id))
+;
     }
 }

@@ -57,6 +57,8 @@ export {
   prepareStage,
   startStage,
   completeStage,
+  revertStageToDraft,
+  revertStageToReady,
   materializeMatches,
   dematerializePhase,
   generateNextSwissRound,

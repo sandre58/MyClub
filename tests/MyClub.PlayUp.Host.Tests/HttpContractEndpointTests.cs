@@ -18,7 +18,6 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
-using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -109,14 +108,7 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
         transition.GetProperty("code").GetString().Should().Be(OverviewAssembler.ActionPrepareStage);
         transition.GetProperty("enabled").GetBoolean().Should().BeTrue();
 
-        var checklist = lifecycle.GetProperty("prepareChecklist");
-        checklist.GetProperty("allSatisfied").ValueKind.Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
-        var items = checklist.GetProperty("items");
-        items.GetArrayLength().Should().BeGreaterThan(0);
-        var first = items[0];
-        first.GetProperty("code").GetString().Should().NotBeNullOrEmpty();
-        first.GetProperty("applicable").GetBoolean().Should().BeTrue();
-        first.GetProperty("satisfied").ValueKind.Should().BeOneOf(JsonValueKind.True, JsonValueKind.False);
+        lifecycle.TryGetProperty("prepareChecklist", out _).Should().BeFalse();
 
         lifecycle.TryGetProperty("matchProgress", out var progress).Should().BeTrue();
         progress.ValueKind.Should().Be(JsonValueKind.Null);
@@ -149,8 +141,8 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
-        GetProblemCode(problem!).Should().Be(ApplicationErrorCodes.StageCompletionBlocked);
-        GetProblemReasons(problem!).Should().Contain(CompleteStage.ReasonOpenMatches);
+        GetProblemCode(problem).Should().Be(ApplicationErrorCodes.StageCompletionBlocked);
+        GetProblemReasons(problem).Should().Contain(CompleteStage.ReasonOpenMatches);
     }
 
     [IntegrationFact]

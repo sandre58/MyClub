@@ -136,7 +136,7 @@ public sealed class StageGroupsTests
     {
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var a = stage.AddGroup("A", _clock);
-        var b = stage.AddGroup("B", _clock);
+        stage.AddGroup("B", _clock);
         stage.AssignEntryToGroup(a.Id, EntryId.New());
         stage.AddMatchday(1, _clock);
         var order = stage.Groups.Select(g => g.Id).ToList();

@@ -24,7 +24,7 @@ public sealed class StructureStageLifecycleAssemblerTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 10, 14, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Assemble_Draft_championship_projects_Prepare_enabled_and_checklist()
+    public void Assemble_Draft_championship_projects_Prepare_enabled()
     {
         var situation = TestCompetition.Create("Lifecycle Draft", _clock)
             .WithStructure(StructureIntent.Championship(stageName: "League"));
@@ -34,39 +34,7 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle.Should().NotBeNull();
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
         hub.Lifecycle.Transition.Enabled.Should().BeTrue();
-        hub.Lifecycle.PrepareChecklist.Should().NotBeNull();
-        hub.Lifecycle.PrepareChecklist!.Items.Should().NotContain(item =>
-            item.Code == StructureStageLifecycleAssembler.ChecklistMatches);
-        hub.Lifecycle.PrepareChecklist.Items.Should().Contain(item =>
-            item.Code == StructureStageLifecycleAssembler.ChecklistPlaces);
         hub.Lifecycle.MatchProgress.Should().BeNull();
-    }
-
-    [Fact]
-    public void Assemble_Draft_root_Places_unsatisfied_when_expected_occupancy_below_Places_N()
-    {
-        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
-        for (var i = 0; i < 8; i++)
-        {
-            competition.AddEntry(TeamId.New(), $"T{i + 1}", _clock);
-        }
-
-        var stage = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
-        stage.AddRound("R1", _clock);
-        for (var slot = 0; slot < 8; slot++)
-        {
-            stage.AddSlot($"S{slot + 1}");
-        }
-
-        competition.AddStage(stage.Id, _clock);
-
-        var view = StructureViewAssembler.Assemble(competition, [stage]);
-        var hub = view.Stages.Single();
-        var places = hub.Lifecycle!.PrepareChecklist!.Items.Single(item =>
-            item.Code == StructureStageLifecycleAssembler.ChecklistPlaces);
-
-        places.Applicable.Should().BeTrue();
-        places.Satisfied.Should().BeFalse();
     }
 
     [Fact]
@@ -80,7 +48,21 @@ public sealed class StructureStageLifecycleAssemblerTests
 
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
         hub.Lifecycle.Transition.Enabled.Should().BeTrue();
-        hub.Lifecycle.PrepareChecklist.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_Ready_with_unmaterialized_championship_blocks_Start()
+    {
+        var situation = TestCompetition.Create("Lifecycle Ready Ch", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship(stageName: "League"))
+            .PreparePrimaryStage();
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
     }
 
     [Fact]
@@ -155,6 +137,20 @@ public sealed class StructureStageLifecycleAssemblerTests
             .Be(StructureStageLifecycleAssembler.DisabledConstructionFrozen);
     }
 
+    [Fact]
+    public void Assemble_Ready_projects_RevertToDraft_when_no_attached_matches()
+    {
+        var situation = TestCompetition.Create("Revert draft", _clock)
+            .WithStructure(StructureIntent.Championship(stageName: "League"))
+            .PreparePrimaryStage();
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.RevertTransition.Should().NotBeNull();
+        hub.Lifecycle.RevertTransition!.Code.Should().Be(OverviewAssembler.ActionRevertToDraftStage);
+        hub.Lifecycle.RevertTransition.Enabled.Should().BeTrue();
+    }
+
     private static MatchSummaryRow ToSummaryRow(Match match) =>
         new(match.Id, match.StageId, match.Status, match.HomeEntryId, match.AwayEntryId, match.Result);
 
@@ -169,11 +165,9 @@ public sealed class StructureStageLifecycleAssemblerTests
         PrepareStage.Execute(stage, [stage], _clock);
         StartStage.Execute(stage, _clock);
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
-        if (status == MatchStatus.Finished)
-        {
-            match.Start(_clock);
-            match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
-        }
+        if (status != MatchStatus.Finished) return (competition, stage, match);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
 
         return (competition, stage, match);
     }

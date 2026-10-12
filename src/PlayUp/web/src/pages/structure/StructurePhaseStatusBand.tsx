@@ -14,22 +14,22 @@ import { PendingLabel } from '../../ui';
 import {
   lifecycleDisabledMessage,
   lifecycleMutationMessage,
+  mutationPendingLabel,
+  revertActionLabel,
   transitionActionLabel,
-  transitionPendingLabel,
 } from './structurePhaseLifecycleActions';
 import {
   isLifecycleActionCode,
+  isLifecycleRevertCode,
   remediationHref,
-  resolveDraftPrepareStepIds,
-  resolveDraftPrepareStepStatus,
   shouldShowLifecycleRemediationLink,
   shouldShowPrimaryBlockMessage,
-  type DraftPrepareStepId,
-  type DraftPrepareStepStatus,
+  shouldShowRevertBlockMessage,
 } from './structurePhaseStatusBandModel';
 import { useStructureStageLifecycleMutation } from './useStructureStageLifecycleMutation';
 
 const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
+const secondaryBtn = 'ds-btn ds-btn--secondary ds-btn--sm';
 
 function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteStage') {
   switch (code) {
@@ -42,80 +42,6 @@ function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteSta
     default:
       return null;
   }
-}
-
-function DraftPrepareStepper({
-  stage,
-}: {
-  stage: StructureStageHubSummary;
-}) {
-  const { t } = useTranslation('structure');
-  const checklist = stage.lifecycle?.prepareChecklist;
-  const disabledReason = stage.lifecycle?.transition?.disabledReasonCode;
-
-  return (
-    <ol
-      className="structure-phase-status-band__stepper"
-      aria-label={t('lifecycle.checklistAria')}
-    >
-      {resolveDraftPrepareStepIds(checklist).map((stepId) => {
-        const status = resolveDraftPrepareStepStatus(
-          stepId,
-          checklist,
-          disabledReason,
-        );
-        const checklistHint = checklistCodeForStep(stepId);
-        return (
-          <li
-            key={stepId}
-            className="structure-phase-status-band__step"
-            data-step-status={status}
-          >
-            <span className="structure-phase-status-band__step-mark">
-              <DraftStepMark status={status} />
-            </span>
-            <span
-              className="structure-phase-status-band__step-label"
-              title={
-                checklistHint
-                  ? t(`lifecycle.checklist.${checklistHint}`)
-                  : undefined
-              }
-            >
-              {t(`lifecycle.draftStep.${stepId}`)}
-            </span>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-function checklistCodeForStep(stepId: DraftPrepareStepId): string | null {
-  switch (stepId) {
-    case 'Teams':
-      return 'Entries';
-    case 'Places':
-      return 'Places';
-    case 'Attribution':
-      return 'Attribution';
-    case 'Draw':
-      return 'Draw';
-    case 'Exits':
-      return 'Exits';
-    default:
-      return null;
-  }
-}
-
-function DraftStepMark({ status }: { status: DraftPrepareStepStatus }) {
-  if (status === 'na') {
-    return <span className="structure-phase-status-band__step-na">—</span>;
-  }
-  if (status === 'ok') {
-    return <CheckIcon size="sm" aria-hidden="true" />;
-  }
-  return <CrossIcon size="sm" aria-hidden="true" />;
 }
 
 function RunningMatchStats({
@@ -131,42 +57,42 @@ function RunningMatchStats({
 
   return (
     <div className="structure-phase-status-band__match-block">
-      <p className="structure-phase-status-band__match-heading">
+      <p className="structure-phase-status-band__meta structure-phase-status-band__match-heading">
         {t('lifecycle.statusBand.matchStatsHeading')}
       </p>
       <ul
         className="structure-phase-hero__stats structure-phase-status-band__hero-stats"
         aria-label={t('lifecycle.statusBand.matchStatsAria')}
       >
-      <li className="structure-phase-hero__stat">
-        <span className="structure-phase-hero__stat-icon" aria-hidden="true">
-          <CheckIcon size="sm" />
-        </span>
-        <span className="structure-phase-hero__stat-value">{finished}</span>
-        <span className="structure-phase-hero__stat-label">
-          {t('lifecycle.statusBand.matchStatFinished')}
-        </span>
-      </li>
-      {cancelled > 0 ? (
         <li className="structure-phase-hero__stat">
           <span className="structure-phase-hero__stat-icon" aria-hidden="true">
-            <CrossIcon size="sm" />
+            <CheckIcon size="sm" />
           </span>
-          <span className="structure-phase-hero__stat-value">{cancelled}</span>
+          <span className="structure-phase-hero__stat-value">{finished}</span>
           <span className="structure-phase-hero__stat-label">
-            {t('lifecycle.statusBand.matchStatCancelled')}
+            {t('lifecycle.statusBand.matchStatFinished')}
           </span>
         </li>
-      ) : null}
-      <li className="structure-phase-hero__stat">
-        <span className="structure-phase-hero__stat-icon" aria-hidden="true">
-          <MatchesStatIcon size="sm" />
-        </span>
-        <span className="structure-phase-hero__stat-value">{open}</span>
-        <span className="structure-phase-hero__stat-label">
-          {t('lifecycle.statusBand.matchStatRemaining')}
-        </span>
-      </li>
+        {cancelled > 0 ? (
+          <li className="structure-phase-hero__stat">
+            <span className="structure-phase-hero__stat-icon" aria-hidden="true">
+              <CrossIcon size="sm" />
+            </span>
+            <span className="structure-phase-hero__stat-value">{cancelled}</span>
+            <span className="structure-phase-hero__stat-label">
+              {t('lifecycle.statusBand.matchStatCancelled')}
+            </span>
+          </li>
+        ) : null}
+        <li className="structure-phase-hero__stat">
+          <span className="structure-phase-hero__stat-icon" aria-hidden="true">
+            <MatchesStatIcon size="sm" />
+          </span>
+          <span className="structure-phase-hero__stat-value">{open}</span>
+          <span className="structure-phase-hero__stat-label">
+            {t('lifecycle.statusBand.matchStatRemaining')}
+          </span>
+        </li>
       </ul>
     </div>
   );
@@ -219,21 +145,26 @@ function StructurePhaseStatusBandBody({
   const actionEnabled = transition?.enabled ?? false;
   const showActionButton = projectedAction != null;
 
+  const revert = lifecycle?.revertTransition;
+  const revertCode = isLifecycleRevertCode(revert?.code) ? revert.code : null;
+  const showRevertButton = revertCode != null;
+  const revertEnabled = revert?.enabled ?? false;
+
   const disabledReason = transition?.disabledReasonCode ?? null;
   const showBlockMessage =
     projectedAction != null &&
     !actionEnabled &&
-    shouldShowPrimaryBlockMessage(
-      stage.status,
-      disabledReason,
-      lifecycle?.prepareChecklist,
-    );
+    shouldShowPrimaryBlockMessage(stage.status, disabledReason);
+
+  const revertDisabledReason = revert?.disabledReasonCode ?? null;
+  const showRevertBlockMessage =
+    showRevertButton &&
+    !revertEnabled &&
+    shouldShowRevertBlockMessage(revertDisabledReason);
 
   const bandAriaLabel = t(`lifecycle.state.${stage.status}.lead`);
   const busy = transitionMutation.isPending || Boolean(structureHubRefreshing);
-
-  const showDraftStepper =
-    stage.status === 'Draft' && lifecycle?.prepareChecklist != null;
+  const pendingCode = transitionMutation.variables;
 
   const showReadyHint =
     stage.status === 'Ready' && !showBlockMessage;
@@ -283,12 +214,16 @@ function StructurePhaseStatusBandBody({
             ) : null}
           </p>
         ) : null}
+        {showRevertBlockMessage && revertDisabledReason ? (
+          <p className="structure-phase-status-band__meta">
+            {lifecycleDisabledMessage(t, revertDisabledReason)}
+          </p>
+        ) : null}
         {showReadyHint ? (
           <p className="structure-phase-status-band__meta">
             {t('lifecycle.statusBand.readyHint')}
           </p>
         ) : null}
-        {showDraftStepper ? <DraftPrepareStepper stage={stage} /> : null}
         {runningStats}
         {transitionMutation.isError ? (
           <Alert tone="danger" role="alert">
@@ -297,25 +232,41 @@ function StructurePhaseStatusBandBody({
         ) : null}
       </div>
 
-      {showActionButton && projectedAction ? (
-        <div className="structure-phase-status-band__action">
-          <button
-            type="button"
-            className={primaryBtn}
-            disabled={busy || !actionEnabled}
-            onClick={() => transitionMutation.mutate(projectedAction)}
-          >
-            {transitionMutation.isPending ? (
-              <PendingLabel>
-                {transitionPendingLabel(t, projectedAction)}
-              </PendingLabel>
-            ) : (
-              <>
-                {transitionActionIcon(projectedAction)}
-                <span>{transitionActionLabel(t, projectedAction)}</span>
-              </>
-            )}
-          </button>
+      {showActionButton || showRevertButton ? (
+        <div className="structure-phase-status-band__actions">
+          {showActionButton && projectedAction ? (
+            <button
+              type="button"
+              className={primaryBtn}
+              disabled={busy || !actionEnabled}
+              onClick={() => transitionMutation.mutate(projectedAction)}
+            >
+              {transitionMutation.isPending && pendingCode === projectedAction ? (
+                <PendingLabel>
+                  {mutationPendingLabel(t, projectedAction)}
+                </PendingLabel>
+              ) : (
+                <>
+                  {transitionActionIcon(projectedAction)}
+                  <span>{transitionActionLabel(t, projectedAction)}</span>
+                </>
+              )}
+            </button>
+          ) : null}
+          {showRevertButton && revertCode ? (
+            <button
+              type="button"
+              className={secondaryBtn}
+              disabled={busy || !revertEnabled}
+              onClick={() => transitionMutation.mutate(revertCode)}
+            >
+              {transitionMutation.isPending && pendingCode === revertCode ? (
+                <PendingLabel>{mutationPendingLabel(t, revertCode)}</PendingLabel>
+              ) : (
+                revertActionLabel(t, revertCode)
+              )}
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

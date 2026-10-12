@@ -95,28 +95,13 @@ internal static class StageConfrontationMaterializationState
         }
 
         var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
-        var eligible = 0;
-        foreach (var group in stage.Groups)
-        {
-            if (group.EntryIds.Count < 2)
-            {
-                continue;
-            }
 
-            var pairs = MaterializeMatches.BuildRoundRobinRounds(
-                    [.. group.EntryIds],
-                    stage.MatchGenerationFormat)
-                .SelectMany(round => round);
-            foreach (var pair in pairs)
-            {
-                if (!covered.Contains(pair))
-                {
-                    eligible++;
-                }
-            }
-        }
-
-        return eligible;
+        return (from @group in stage.Groups
+            where @group.EntryIds.Count >= 2
+            select MaterializeMatches.BuildRoundRobinRounds([.. @group.EntryIds], stage.MatchGenerationFormat)
+                .SelectMany(round => round)
+            into pairs
+            select pairs.Count(pair => !covered.Contains(pair))).Sum();
     }
 
     private static int CountCupEligible(Stage stage)

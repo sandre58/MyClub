@@ -2,7 +2,11 @@ import type { TFunction } from 'i18next';
 
 import { ApiError } from '../../api';
 import { apiErrorLabel } from '../../i18n/apiErrorLabel';
-import type { StructureStageLifecycleTransitionCode } from '../../types';
+import type {
+  StructureStageLifecycleMutationCode,
+  StructureStageLifecycleRevertCode,
+  StructureStageLifecycleTransitionCode,
+} from '../../types';
 
 const STAGE_COMPLETION_BLOCKED = 'Application.StageCompletionBlocked';
 
@@ -56,9 +60,23 @@ export function transitionActionLabel(
   }
 }
 
-export function transitionPendingLabel(
+export function revertActionLabel(
   t: TFunction<'structure'>,
-  code: StructureStageLifecycleTransitionCode,
+  code: StructureStageLifecycleRevertCode,
+): string {
+  switch (code) {
+    case 'RevertToDraftStage':
+      return t('lifecycle.actions.revertToDraft');
+    case 'RevertToReadyStage':
+      return t('lifecycle.actions.revertToReady');
+    default:
+      return code;
+  }
+}
+
+export function mutationPendingLabel(
+  t: TFunction<'structure'>,
+  code: StructureStageLifecycleMutationCode,
 ): string {
   switch (code) {
     case 'PrepareStage':
@@ -67,14 +85,18 @@ export function transitionPendingLabel(
       return t('lifecycle.actions.starting');
     case 'CompleteStage':
       return t('lifecycle.actions.completing');
+    case 'RevertToDraftStage':
+      return t('lifecycle.actions.revertingToDraft');
+    case 'RevertToReadyStage':
+      return t('lifecycle.actions.revertingToReady');
     default:
       return t('working');
   }
 }
 
-export function transitionSuccessToast(
+export function mutationSuccessToast(
   t: TFunction<'structure'>,
-  code: StructureStageLifecycleTransitionCode,
+  code: StructureStageLifecycleMutationCode,
 ): string {
   switch (code) {
     case 'PrepareStage':
@@ -83,7 +105,17 @@ export function transitionSuccessToast(
       return t('lifecycle.toast.started');
     case 'CompleteStage':
       return t('lifecycle.toast.completed');
+    case 'RevertToDraftStage':
+      return t('lifecycle.toast.revertedToDraft');
+    case 'RevertToReadyStage':
+      return t('lifecycle.toast.revertedToReady');
     default:
       return t('lifecycle.toast.updated');
   }
 }
+
+/** @deprecated use {@link mutationPendingLabel} */
+export const transitionPendingLabel = mutationPendingLabel;
+
+/** @deprecated use {@link mutationSuccessToast} */
+export const transitionSuccessToast = mutationSuccessToast;

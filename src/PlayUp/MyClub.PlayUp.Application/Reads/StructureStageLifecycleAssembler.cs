@@ -9,13 +9,12 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Projects Structure phase lifecycle (transition, Prepare checklist, match progress).
+/// Projects Structure phase lifecycle (transition, match progress, optional revert).
 /// </summary>
 public static class StructureStageLifecycleAssembler
 {
@@ -69,13 +68,10 @@ public static class StructureStageLifecycleAssembler
         ArgumentNullException.ThrowIfNull(input);
 
         var matchProgress = BuildMatchProgress(input.Stage, input.MatchSummaries);
-        var checklist = input.Stage.Status == StageStatus.Draft
-            ? BuildPrepareChecklist(input)
-            : null;
         var transition = ResolveTransition(input, matchProgress);
         var revert = ResolveRevertTransition(input);
 
-        return new StructureStageLifecycleDto(transition, checklist, matchProgress, revert);
+        return new StructureStageLifecycleDto(transition, matchProgress, revert);
     }
 
     private static StructureStageLifecycleTransitionDto ResolveTransition(
@@ -91,23 +87,23 @@ public static class StructureStageLifecycleAssembler
                 remediationCode: DisabledCompetitionClosed);
         }
 
-        if (input.Competition.Status == CompetitionStatus.Running
-            && input.Stage.Status is StageStatus.Draft or StageStatus.Ready)
+        if (input.Competition.Status != CompetitionStatus.Running
+            || input.Stage.Status is not (StageStatus.Draft or StageStatus.Ready))
         {
-            var code = input.Stage.Status == StageStatus.Draft
-                ? OverviewAssembler.ActionPrepareStage
-                : OverviewAssembler.ActionStartStage;
-            return BlockedTransition(code, DisabledConstructionFrozen, input, DisabledConstructionFrozen);
+            return input.Stage.Status switch
+            {
+                StageStatus.Draft => ResolvePrepareTransition(input),
+                StageStatus.Ready => ResolveStartTransition(input),
+                StageStatus.Running or StageStatus.Suspended => ResolveCompleteTransition(matchProgress),
+                StageStatus.Completed => new StructureStageLifecycleTransitionDto(null, false),
+                _ => new StructureStageLifecycleTransitionDto(null, false)
+            };
         }
 
-        return input.Stage.Status switch
-        {
-            StageStatus.Draft => ResolvePrepareTransition(input),
-            StageStatus.Ready => ResolveStartTransition(input),
-            StageStatus.Running or StageStatus.Suspended => ResolveCompleteTransition(matchProgress),
-            StageStatus.Completed => new StructureStageLifecycleTransitionDto(null, false),
-            _ => new StructureStageLifecycleTransitionDto(null, false)
-        };
+        var code = input.Stage.Status == StageStatus.Draft
+            ? OverviewAssembler.ActionPrepareStage
+            : OverviewAssembler.ActionStartStage;
+        return BlockedTransition(code, DisabledConstructionFrozen, input, DisabledConstructionFrozen);
     }
 
     private static StructureStageLifecycleTransitionDto ResolvePrepareTransition(
@@ -130,58 +126,43 @@ public static class StructureStageLifecycleAssembler
         }
 
         var prepareGate = CollectPrepareGateCodes(input.Stage, input.CompetitionStages);
-        if (prepareGate.Length > 0)
-        {
-            return BlockedTransition(code, prepareGate[0], input, prepareGate[0]);
-        }
-
-        return new StructureStageLifecycleTransitionDto(code, true);
+        return prepareGate.Length > 0 ? BlockedTransition(code, prepareGate[0], input, prepareGate[0]) : new StructureStageLifecycleTransitionDto(code, true);
     }
 
     private static StructureStageLifecycleTransitionDto ResolveStartTransition(StructureStageLifecycleInput input)
     {
         const string code = OverviewAssembler.ActionStartStage;
 
-        if (StageStartReadinessGuard.TryGetDisabledReasonCode(
+        return StageStartReadinessGuard.TryGetDisabledReasonCode(
                 input.Stage,
                 input.Competition,
-                input.MatchSummaries) is { } disabledReason)
-        {
-            return BlockedTransition(code, disabledReason, input, disabledReason);
-        }
-
-        return new StructureStageLifecycleTransitionDto(code, true);
+                input.MatchSummaries) is { } disabledReason
+            ? BlockedTransition(code, disabledReason, input, disabledReason)
+            : new StructureStageLifecycleTransitionDto(code, true);
     }
 
     private static StructureStageLifecycleTransitionDto ResolveCompleteTransition(
         StructureStageLifecycleMatchProgressDto? matchProgress)
     {
         const string code = OverviewAssembler.ActionCompleteStage;
-        if (matchProgress is { CanComplete: true })
-        {
-            return new StructureStageLifecycleTransitionDto(code, true);
-        }
-
-        return new StructureStageLifecycleTransitionDto(
+        return matchProgress is { CanComplete: true }
+            ? new StructureStageLifecycleTransitionDto(code, true)
+            : new StructureStageLifecycleTransitionDto(
             code,
             false,
             CompleteStage.ReasonOpenMatches);
     }
 
-    private static StructureStageLifecycleTransitionDto? ResolveRevertTransition(StructureStageLifecycleInput input)
-    {
-        if (input.Competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
-        {
-            return null;
-        }
-
-        return input.Stage.Status switch
-        {
-            StageStatus.Ready => ResolveRevertToDraftTransition(input),
-            StageStatus.Running or StageStatus.Suspended => ResolveRevertToReadyTransition(input),
-            _ => null
-        };
-    }
+    private static StructureStageLifecycleTransitionDto? ResolveRevertTransition(StructureStageLifecycleInput input) => input.Competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived
+            ? null
+            : input.Stage.Status switch
+            {
+                StageStatus.Ready => ResolveRevertToDraftTransition(input),
+                StageStatus.Running or StageStatus.Suspended => ResolveRevertToReadyTransition(input),
+                StageStatus.Draft => null,
+                StageStatus.Completed => null,
+                _ => null
+            };
 
     private static StructureStageLifecycleTransitionDto ResolveRevertToDraftTransition(
         StructureStageLifecycleInput input)
@@ -223,82 +204,9 @@ public static class StructureStageLifecycleAssembler
             StageStatus.Draft => OverviewAssembler.ActionPrepareStage,
             StageStatus.Ready => OverviewAssembler.ActionStartStage,
             StageStatus.Running or StageStatus.Suspended => OverviewAssembler.ActionCompleteStage,
+            StageStatus.Completed => null,
             _ => null
         };
-
-    private static StructureStageLifecyclePrepareChecklistDto BuildPrepareChecklist(
-        StructureStageLifecycleInput input)
-    {
-        var items = new List<StructureStageLifecyclePrepareChecklistItemDto>();
-        var minimumTeams = input.Competition.Regulation.EntryRules.MinimumTeams;
-        var activeEntries = input.Competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
-
-        var entriesApplicable = input.IsRootComposition;
-        var entriesSatisfied = activeEntries >= minimumTeams;
-        items.Add(new StructureStageLifecyclePrepareChecklistItemDto(
-            ChecklistEntries,
-            entriesApplicable,
-            entriesSatisfied));
-
-        var placesN = input.CompositionCapacity is > 0
-            ? input.CompositionCapacity
-            : StructurePopulationVolume.ResolvePlacesCapacity(input.Stage);
-        var placesApplicable = placesN is > 0;
-        var placesSatisfied = !placesApplicable
-                              || EvaluatePlacesSatisfied(input, placesN!.Value);
-        items.Add(new StructureStageLifecyclePrepareChecklistItemDto(
-            ChecklistPlaces,
-            placesApplicable,
-            placesSatisfied));
-
-        var drawApplicable = input.HasDrawRules;
-        var drawSatisfied = !drawApplicable
-                            || input.DrawExecutionBadge == StructureDrawExecutionBadge.Applied;
-        items.Add(new StructureStageLifecyclePrepareChecklistItemDto(
-            ChecklistDraw,
-            drawApplicable,
-            drawSatisfied));
-
-        var exitsApplicable = input.HasQualificationRules || input.HasProgressionRules;
-        var exitsSatisfied = !exitsApplicable || !HasExitStructureIssues(input.StructureIssues);
-        items.Add(new StructureStageLifecyclePrepareChecklistItemDto(
-            ChecklistExits,
-            exitsApplicable,
-            exitsSatisfied));
-
-        var attributionApplicable = input.IsRootComposition
-                                    && input.FormatKind is StructureFormatKind.Groups or StructureFormatKind.Cup;
-        var attributionSatisfied = !attributionApplicable
-                                   || input.AffectationEntryCount > 0
-                                   || (input.CompositionCapacity is > 0
-                                       && input.CompositionEntryCount >= input.CompositionCapacity.Value);
-        items.Add(new StructureStageLifecyclePrepareChecklistItemDto(
-            ChecklistAttribution,
-            attributionApplicable,
-            attributionSatisfied));
-
-        var allSatisfied = items.Where(item => item.Applicable).All(item => item.Satisfied);
-        return new StructureStageLifecyclePrepareChecklistDto(items, allSatisfied);
-    }
-
-    /// <summary>
-    /// Places row — root: expected occupancy (affectation + inbound) vs Places N (Équipes meter).
-    /// Non-root: composition pool fill vs capacity.
-    /// </summary>
-    private static bool EvaluatePlacesSatisfied(
-        StructureStageLifecycleInput input,
-        int placesN)
-    {
-        if (input.IsRootComposition)
-        {
-            var expected = StructurePopulationVolume.ExpectedOccupancy(
-                input.Stage,
-                input.CompetitionStages);
-            return expected >= placesN;
-        }
-
-        return input.CompositionEntryCount >= placesN;
-    }
 
     private static StructureStageLifecycleMatchProgressDto? BuildMatchProgress(
         Stage stage,
@@ -322,97 +230,55 @@ public static class StructureStageLifecycleAssembler
         structureIssues is { Count: > 0 }
         && structureIssues.Any(CompetitionFlowAnalyzer.IsStructureGraphGateIssue);
 
-    private static bool HasExitStructureIssues(IReadOnlyList<string>? structureIssues)
-    {
-        if (structureIssues is not { Count: > 0 })
-        {
-            return false;
-        }
-
-        return structureIssues.Any(code =>
-            code.Contains("Qualification", StringComparison.Ordinal)
-            || code.Contains("Progression", StringComparison.Ordinal)
-            || string.Equals(code, StructureViewAssembler.IssueConfrontationUndecidable, StringComparison.Ordinal));
-    }
-
     private static string[] CollectPrepareGateCodes(Stage target, IReadOnlyList<Stage> competitionStages)
     {
         var execution = CompetitionFlowAnalyzer.AnalyzeExecution([target]);
         var capacity = CompetitionFlowAnalyzer.AnalyzeCapacity(competitionStages);
         var topology = CompetitionFlowAnalyzer.AnalyzeTopology(competitionStages);
 
-        return execution
-            .Concat(capacity)
-            .Concat(topology)
-            .Where(diagnostic =>
-                diagnostic.StageId == target.Id.Value
-                && CompetitionFlowAnalyzer.IsPrepareGateIssue(diagnostic.Code))
-            .Select(diagnostic => diagnostic.Code)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
+        return
+        [
+            .. execution
+                .Concat(capacity)
+                .Concat(topology)
+                .Where(diagnostic =>
+                    diagnostic.StageId == target.Id.Value
+                    && CompetitionFlowAnalyzer.IsPrepareGateIssue(diagnostic.Code))
+                .Select(diagnostic => diagnostic.Code)
+                .Distinct(StringComparer.Ordinal)
+        ];
     }
 
-    private static bool DomainAllowsPrepare(Stage stage, StructureFormatKind? formatKind)
-    {
-        if (formatKind == StructureFormatKind.Swiss)
-        {
-            return stage.SwissSettings is not null;
-        }
-
-        if (stage.Groups.Count > 0)
-        {
-            return stage.Matchdays.Count > 0 && stage.Groups.Any(group => group.EntryIds.Count > 0);
-        }
-
-        if (stage.Rounds.Count > 0)
-        {
-            return true;
-        }
-
-        return stage.Matchdays.Count > 0;
-    }
+    private static bool DomainAllowsPrepare(Stage stage, StructureFormatKind? formatKind) =>
+        formatKind == StructureFormatKind.Swiss
+            ? stage.SwissSettings is not null
+            : stage.Groups.Count > 0
+                ? stage.Matchdays.Count > 0 && stage.Groups.Any(group => group.EntryIds.Count > 0)
+                : stage.Rounds.Count > 0 || stage.Matchdays.Count > 0;
 
     private static (string? Section, string? Focus, bool Manual, bool OpenDraw) MapRemediationDeepLink(
         string remediationCode)
     {
-        if (remediationCode is ChecklistDraw or StructureViewAssembler.BlockerMissingPotRules)
+        switch (remediationCode)
         {
-            return ("tirage", null, false, true);
-        }
-
-        if (remediationCode is ChecklistPlaces or DisabledInitialRoundNotPlayable)
-        {
-            return (null, "operational-placement", true, false);
-        }
-
-        if (remediationCode is ChecklistMatches or DisabledUnmaterializedConfrontations)
-        {
-            return ("matchs", null, false, false);
-        }
-
-        if (remediationCode is ChecklistExits or StructureViewAssembler.IssueConfrontationUndecidable)
-        {
-            return ("qualification", null, false, false);
-        }
-
-        if (remediationCode == ChecklistAttribution)
-        {
-            return (null, "rail-entries", false, true);
-        }
-
-        if (remediationCode == ChecklistEntries)
-        {
-            return (null, "rail-entries", false, false);
-        }
-
-        if (remediationCode == DisabledStructureGraphInvalid)
-        {
-            return ("construction", null, false, false);
-        }
-
-        if (remediationCode is DisabledConstructionFrozen or DisabledCompetitionClosed)
-        {
-            return (null, null, false, false);
+            case ChecklistDraw or StructureViewAssembler.BlockerMissingPotRules:
+                return ("tirage", null, false, true);
+            case ChecklistPlaces or DisabledInitialRoundNotPlayable:
+                return (null, "operational-placement", true, false);
+            case ChecklistMatches or DisabledUnmaterializedConfrontations:
+                return ("matchs", null, false, false);
+            case ChecklistExits or StructureViewAssembler.IssueConfrontationUndecidable:
+                return ("qualification", null, false, false);
+            case ChecklistAttribution:
+                return (null, "rail-entries", false, true);
+            case ChecklistEntries:
+                return (null, "rail-entries", false, false);
+            case DisabledStructureGraphInvalid:
+                return ("construction", null, false, false);
+            case DisabledConstructionFrozen or DisabledCompetitionClosed:
+                return (null, null, false, false);
+            default:
+                break;
         }
 
         if (remediationCode.Contains("Qualification", StringComparison.Ordinal))
@@ -425,11 +291,6 @@ public static class StructureStageLifecycleAssembler
             return ("progression", null, false, false);
         }
 
-        if (remediationCode.Contains("SlotFeed", StringComparison.Ordinal))
-        {
-            return ("construction", null, false, false);
-        }
-
         return ("construction", null, false, false);
     }
 
@@ -438,11 +299,7 @@ public static class StructureStageLifecycleAssembler
         StageId stageId,
         string remediationCode)
     {
-        var link = MapRemediationDeepLink(remediationCode);
-        var section = link.Section;
-        var focus = link.Focus;
-        var manual = link.Manual;
-        var openDraw = link.OpenDraw;
+        var (section, focus, manual, openDraw) = MapRemediationDeepLink(remediationCode);
 
         if (section is null && focus is null && !manual && !openDraw
             && remediationCode is DisabledConstructionFrozen or DisabledCompetitionClosed)

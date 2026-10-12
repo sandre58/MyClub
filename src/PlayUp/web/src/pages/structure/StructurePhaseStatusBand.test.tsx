@@ -4,7 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import { prepareStage, startStage } from '../../api';
+import {
+  prepareStage,
+  revertStageToReady,
+  startStage,
+} from '../../api';
 import type { StructureStageHubSummary } from '../../types';
 import { StructurePhaseStatusBand } from './StructurePhaseStatusBand';
 
@@ -15,6 +19,8 @@ vi.mock('../../api', async (importOriginal) => {
     prepareStage: vi.fn(),
     startStage: vi.fn(),
     completeStage: vi.fn(),
+    revertStageToDraft: vi.fn(),
+    revertStageToReady: vi.fn(),
   };
 });
 
@@ -66,7 +72,7 @@ describe('StructurePhaseStatusBand', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('shows draft stepper without stage-not-ready band when prepare is blocked', () => {
+  it('shows stage-not-ready band when prepare is blocked', () => {
     renderBand({
       ...baseStage,
       lifecycle: {
@@ -75,18 +81,12 @@ describe('StructurePhaseStatusBand', () => {
           enabled: false,
           disabledReasonCode: 'StageNotReady',
         },
-        prepareChecklist: {
-          allSatisfied: false,
-          items: [{ code: 'Entries', applicable: true, satisfied: false }],
-        },
       },
     });
 
-    expect(screen.getByText(/^réglement$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^inscriptions$/i)).toBeInTheDocument();
     expect(
-      screen.queryByText(/la préparation est bloquée/i),
-    ).toBeNull();
+      screen.getByText(/la préparation est bloquée/i),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /préparer/i })).toBeDisabled();
   });
 
@@ -130,12 +130,7 @@ describe('StructurePhaseStatusBand', () => {
       },
     });
 
-    expect(screen.getByText(/matchs de la phase/i)).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
-    expect(screen.getByText(/^terminés$/i)).toBeInTheDocument();
-    expect(screen.getByText(/^restants$/i)).toBeInTheDocument();
-    expect(screen.queryByText(/^total$/i)).toBeNull();
-    expect(screen.queryByText(/matchs en cours/i)).toBeNull();
     expect(
       screen.queryByText(/chaque match doit être terminé ou annulé/i),
     ).toBeNull();
@@ -166,14 +161,26 @@ describe('StructurePhaseStatusBand', () => {
       ...baseStage,
       lifecycle: {
         transition: { code: 'PrepareStage', enabled: true },
-        prepareChecklist: {
-          allSatisfied: true,
-          items: [{ code: 'Entries', applicable: true, satisfied: true }],
-        },
       },
     });
 
     await user.click(screen.getByRole('button', { name: /préparer/i }));
     expect(prepareStage).toHaveBeenCalledWith(baseStage.stageId);
+  });
+
+  it('calls revert to ready when enabled', async () => {
+    vi.mocked(revertStageToReady).mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    renderBand({
+      ...baseStage,
+      status: 'Running',
+      lifecycle: {
+        transition: { code: 'CompleteStage', enabled: false },
+        revertTransition: { code: 'RevertToReadyStage', enabled: true },
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: /mettre en pause/i }));
+    expect(revertStageToReady).toHaveBeenCalledWith(baseStage.stageId);
   });
 });

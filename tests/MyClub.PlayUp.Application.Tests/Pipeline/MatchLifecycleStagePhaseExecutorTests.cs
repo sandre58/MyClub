@@ -7,14 +7,11 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 using DomainMatch = MyClub.PlayUp.Domain.Matches.Match;

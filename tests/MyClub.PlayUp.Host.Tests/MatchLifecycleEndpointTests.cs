@@ -467,20 +467,15 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         }
 
         stage.Start(_clock);
-        if (targetStatus == StageStatus.Running)
-        {
-            return;
-        }
 
-        if (targetStatus == StageStatus.Suspended)
+        switch (targetStatus)
         {
-            stage.Suspend(_clock);
-            return;
-        }
-
-        if (targetStatus == StageStatus.Completed)
-        {
-            stage.Complete(_clock);
+            case StageStatus.Suspended:
+                stage.Suspend(_clock);
+                break;
+            case StageStatus.Completed:
+                stage.Complete(_clock);
+                break;
         }
     }
 

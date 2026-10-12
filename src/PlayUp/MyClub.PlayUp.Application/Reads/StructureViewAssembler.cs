@@ -1453,24 +1453,35 @@ public static class StructureViewAssembler
                            && (drawLaunchOpen || drawApplyOpen || readyForSchedulePath);
 
         var nextStepHint = NextStepNone;
-        if (readyForNext)
+        if (!readyForNext)
         {
-            if (drawLaunchOpen)
-            {
-                nextStepHint = NextStepRunDraw;
-            }
-            else if (drawApplyOpen)
-            {
-                nextStepHint = NextStepApplyDraw;
-            }
-            else if (readyForSchedulePath && formatKind == StructureFormatKind.Swiss)
-            {
-                nextStepHint = NextStepRunSwissRounds;
-            }
-            else if (readyForSchedulePath)
-            {
-                nextStepHint = NextStepBuildSchedule;
-            }
+            return new StructureReadinessDto(
+                readyForNext,
+                readyForDraw,
+                readyForMaterialization,
+                readyForSchedule,
+                readyForMatchOperation,
+                readyForSchedulePath,
+                attachedMatchCount,
+                blockers,
+                nextStepHint);
+        }
+
+        if (drawLaunchOpen)
+        {
+            nextStepHint = NextStepRunDraw;
+        }
+        else if (drawApplyOpen)
+        {
+            nextStepHint = NextStepApplyDraw;
+        }
+        else if (readyForSchedulePath && formatKind == StructureFormatKind.Swiss)
+        {
+            nextStepHint = NextStepRunSwissRounds;
+        }
+        else if (readyForSchedulePath)
+        {
+            nextStepHint = NextStepBuildSchedule;
         }
 
         return new StructureReadinessDto(

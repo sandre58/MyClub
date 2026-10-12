@@ -4,27 +4,23 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Domain.Stages;
-
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
 /// Per-phase lifecycle projection for Structure N2 (Prepare / Start / Complete band).
 /// </summary>
 /// <param name="Transition">Primary lifecycle command for the current stage status.</param>
-/// <param name="PrepareChecklist">Draft-only horizontal Prepare checklist; otherwise <see langword="null"/>.</param>
 /// <param name="MatchProgress">Match closure stats when the phase is in play; otherwise <see langword="null"/>.</param>
 /// <param name="RevertTransition">Optional revert command (Ready → Draft or Running/Suspended → Ready).</param>
 public sealed record StructureStageLifecycleDto(
     StructureStageLifecycleTransitionDto Transition,
-    StructureStageLifecyclePrepareChecklistDto? PrepareChecklist,
     StructureStageLifecycleMatchProgressDto? MatchProgress,
     StructureStageLifecycleTransitionDto? RevertTransition = null);
 
 /// <summary>
 /// Projected lifecycle transition (Overview action codes + CompleteStage).
 /// </summary>
-/// <param name="Code"><c>PrepareStage</c>, <c>StartStage</c>, <c>CompleteStage</c>, or <see langword="null"/>.</param>
+/// <param name="Code"><c>PrepareStage</c>, <c>StartStage</c>, <c>CompleteStage</c>, revert codes, or <see langword="null"/>.</param>
 /// <param name="Enabled">When <see langword="true"/>, Host accepts the command for this phase.</param>
 /// <param name="DisabledReasonCode">Stable machine code when <paramref name="Code"/> is set and <paramref name="Enabled"/> is false.</param>
 /// <param name="Remediation">Optional deep-link for the first corrective step.</param>
@@ -40,26 +36,6 @@ public sealed record StructureStageLifecycleTransitionDto(
 /// <param name="Href">Relative URL (e.g. <c>/competitions/{id}/structure?stage=…&amp;section=…</c>).</param>
 /// <param name="LabelKey">i18n key segment under <c>structure.lifecycle.remediation</c>.</param>
 public sealed record StructureStageLifecycleRemediationDto(string Href, string LabelKey);
-
-/// <summary>
-/// Draft Prepare checklist (replaces operational strip in Brouillon).
-/// </summary>
-/// <param name="Items">Conditional rows in display order.</param>
-/// <param name="AllSatisfied">True when every applicable item is satisfied.</param>
-public sealed record StructureStageLifecyclePrepareChecklistDto(
-    IReadOnlyList<StructureStageLifecyclePrepareChecklistItemDto> Items,
-    bool AllSatisfied);
-
-/// <summary>
-/// One Prepare checklist row.
-/// </summary>
-/// <param name="Code">Stable item code (Entries, Places, Draw, Exits, Attribution).</param>
-/// <param name="Applicable">When false, the SPA hides the row.</param>
-/// <param name="Satisfied">When applicable, whether the row is complete.</param>
-public sealed record StructureStageLifecyclePrepareChecklistItemDto(
-    string Code,
-    bool Applicable,
-    bool Satisfied);
 
 /// <summary>
 /// Match closure stats for Running / Suspended / Completed bands.

@@ -97,7 +97,7 @@ Suspend/Resume for **stages** are out of scope for the current Structure band un
 | SPA band | `StructurePhaseStatusBand.tsx`, `structurePhaseStatusBandModel.ts` |
 | Transition copy keys | `structure.json` → `lifecycle.disabled.*`, `lifecycle.draftStep.*` |
 
-HTTP: structure hub includes `lifecycle.transition`, `lifecycle.prepareChecklist` (Draft only), `lifecycle.matchProgress` (Running / Suspended / Completed).
+HTTP: structure hub includes `lifecycle.transition`, optional `lifecycle.revertTransition`, and `lifecycle.matchProgress` (Running / Suspended / Completed). **Prepare stepper / `prepareChecklist` removed** (band uses transition + disabled reasons only).
 
 ---
 

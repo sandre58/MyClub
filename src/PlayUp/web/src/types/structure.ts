@@ -244,8 +244,8 @@ export interface StructureStageHubSummary {
 /** GET structure `stages[].lifecycle` — Structure N2 cycle band. */
 export interface StructureStageLifecycle {
   transition: StructureStageLifecycleTransition;
-  prepareChecklist?: StructureStageLifecyclePrepareChecklist | null;
   matchProgress?: StructureStageLifecycleMatchProgress | null;
+  revertTransition?: StructureStageLifecycleTransition | null;
 }
 
 export type StructureStageLifecycleTransitionCode =
@@ -253,8 +253,19 @@ export type StructureStageLifecycleTransitionCode =
   | 'StartStage'
   | 'CompleteStage';
 
+export type StructureStageLifecycleRevertCode =
+  | 'RevertToDraftStage'
+  | 'RevertToReadyStage';
+
+export type StructureStageLifecycleMutationCode =
+  | StructureStageLifecycleTransitionCode
+  | StructureStageLifecycleRevertCode;
+
 export interface StructureStageLifecycleTransition {
-  code: StructureStageLifecycleTransitionCode | null;
+  code:
+    | StructureStageLifecycleTransitionCode
+    | StructureStageLifecycleRevertCode
+    | null;
   enabled: boolean;
   disabledReasonCode?: string | null;
   remediation?: StructureStageLifecycleRemediation | null;
@@ -263,17 +274,6 @@ export interface StructureStageLifecycleTransition {
 export interface StructureStageLifecycleRemediation {
   href: string;
   labelKey: string;
-}
-
-export interface StructureStageLifecyclePrepareChecklist {
-  items: StructureStageLifecyclePrepareChecklistItem[];
-  allSatisfied: boolean;
-}
-
-export interface StructureStageLifecyclePrepareChecklistItem {
-  code: string;
-  applicable: boolean;
-  satisfied: boolean;
 }
 
 export interface StructureStageLifecycleMatchProgress {

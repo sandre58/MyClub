@@ -70,7 +70,7 @@ public sealed class StartStageEndpointTests(HostPostgresFixture fixture)
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
-        GetCode(problem).Should().Be(ApplicationErrorCodes.StartBlockedUnmaterialized);
+        GetCode(problem!).Should().Be(ApplicationErrorCodes.StartBlockedUnmaterialized);
     }
 
     [IntegrationFact]

@@ -89,7 +89,7 @@ public sealed class CompleteStageEndpointTests(HostPostgresFixture fixture)
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
-        GetCode(problem!).Should().Be(ApplicationErrorCodes.StageCompletionBlocked);
+        GetCode(problem).Should().Be(ApplicationErrorCodes.StageCompletionBlocked);
         GetReasons(problem!).Should().Contain(CompleteStage.ReasonOpenMatches);
 
         using var scope = factory.Services.CreateScope();

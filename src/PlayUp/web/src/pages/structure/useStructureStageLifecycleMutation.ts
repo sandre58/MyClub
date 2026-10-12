@@ -3,14 +3,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   completeStage,
   prepareStage,
+  revertStageToDraft,
+  revertStageToReady,
   startStage,
 } from '../../api';
 import { notify } from '../../design-system/toastStore';
-import type { StructureStageLifecycleTransitionCode } from '../../types';
+import type { StructureStageLifecycleMutationCode } from '../../types';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
-import {
-  transitionSuccessToast,
-} from './structurePhaseLifecycleActions';
+import { mutationSuccessToast } from './structurePhaseLifecycleActions';
 import type { TFunction } from 'i18next';
 
 export function useStructureStageLifecycleMutation(
@@ -21,7 +21,7 @@ export function useStructureStageLifecycleMutation(
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (code: StructureStageLifecycleTransitionCode) => {
+    mutationFn: async (code: StructureStageLifecycleMutationCode) => {
       switch (code) {
         case 'PrepareStage':
           await prepareStage(stageId);
@@ -32,12 +32,18 @@ export function useStructureStageLifecycleMutation(
         case 'CompleteStage':
           await completeStage(stageId);
           break;
+        case 'RevertToDraftStage':
+          await revertStageToDraft(stageId);
+          break;
+        case 'RevertToReadyStage':
+          await revertStageToReady(stageId);
+          break;
         default:
           break;
       }
     },
     onSuccess: async (_data, code) => {
-      notify.success(transitionSuccessToast(t, code));
+      notify.success(mutationSuccessToast(t, code));
       await invalidateAfterStructureMutation(queryClient, competitionId, {
         stageId,
       });

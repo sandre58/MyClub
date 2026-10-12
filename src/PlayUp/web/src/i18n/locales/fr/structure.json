@@ -247,33 +247,30 @@
     }
   },
   "lifecycle": {
-    "checklistAria": "Checklist de préparation",
     "actions": {
       "prepare": "Préparer",
       "start": "Démarrer",
       "complete": "Terminer la phase",
+      "revertToDraft": "Revenir en brouillon",
+      "revertToReady": "Mettre en pause",
       "preparing": "Préparation…",
       "starting": "Démarrage…",
-      "completing": "Finalisation…"
+      "completing": "Finalisation…",
+      "revertingToDraft": "Retour en brouillon…",
+      "revertingToReady": "Mise en pause…"
     },
     "toast": {
       "prepared": "La phase est prête pour les opérations sportives.",
       "started": "La phase est en cours.",
       "completed": "Phase terminée.",
+      "revertedToDraft": "La phase est de nouveau en brouillon.",
+      "revertedToReady": "Phase en pause — les matchs sont conservés.",
       "updated": "Phase mise à jour."
-    },
-    "checklist": {
-      "Entries": "Inscriptions",
-      "Places": "Places et composition",
-      "Draw": "Tirage",
-      "Matches": "Production des matchs",
-      "Exits": "Qualification et progression",
-      "Attribution": "Attribution de la population"
     },
     "state": {
       "Draft": {
         "lead": "Brouillon",
-        "detail": "Complétez la checklist, puis marquez la phase comme prête."
+        "detail": "Complétez la structure, puis marquez la phase comme prête."
       },
       "Ready": {
         "lead": "Prête",
@@ -291,15 +288,6 @@
         "lead": "Terminée",
         "detail": ""
       }
-    },
-    "draftStep": {
-      "Regulation": "Réglement",
-      "Teams": "Inscriptions",
-      "Places": "Places",
-      "Attribution": "Affectation",
-      "Draw": "Tirage",
-      "Exits": "Sorties",
-      "Matches": "Matchs"
     },
     "statusBand": {
       "readyHint": "La phase est prête à démarrer.",
@@ -336,7 +324,10 @@
       "SlotFeedInvalid": "Une alimentation d’emplacement est invalide — vérifiez les liaisons.",
       "SlotFeedMultiple": "Des alimentations d’emplacement entrent en conflit — vérifiez les liaisons.",
       "CycleDetected": "Les liaisons entre phases forment un cycle — corrigez qualification ou progression.",
-      "RoutingNondeterminism": "Le routage entre phases est ambigu — corrigez qualification ou progression."
+      "RoutingNondeterminism": "Le routage entre phases est ambigu — corrigez qualification ou progression.",
+      "UnmaterializedConfrontations": "Matérialisez toutes les confrontations éligibles avant de démarrer la phase.",
+      "ProductionPresent": "Retirez les matchs rattachés avant de revenir en brouillon.",
+      "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant de mettre la phase en pause."
     },
     "mutation": {
       "_unknown": "Impossible d’effectuer cette action de cycle de phase pour le moment."

@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Competitions;
@@ -55,16 +54,12 @@ internal static class StageStartReadinessGuard
         }
 
         var format = StructureSkeleton.InferFormat(stage);
-        if (format == StructureFormatKind.Cup && !IsInitialRoundPlayable(stage))
-        {
-            return DisabledInitialRoundNotPlayable;
-        }
-
-        return null;
+        return format == StructureFormatKind.Cup && !IsInitialRoundPlayable(stage) ? DisabledInitialRoundNotPlayable : null;
     }
 
     internal static IReadOnlyList<MatchSummaryRow> ToSummaryRows(IReadOnlyList<Match> stageMatches) =>
-        stageMatches
+    [
+        .. stageMatches
             .Select(match => new MatchSummaryRow(
                 match.Id,
                 match.StageId,
@@ -73,7 +68,7 @@ internal static class StageStartReadinessGuard
                 match.AwayEntryId,
                 match.Result,
                 match.HasObservedLive))
-            .ToArray();
+    ];
 
     private static bool IsInitialRoundPlayable(Stage stage)
     {

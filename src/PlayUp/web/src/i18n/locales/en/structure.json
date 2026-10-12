@@ -247,33 +247,30 @@
     }
   },
   "lifecycle": {
-    "checklistAria": "Prepare checklist",
     "actions": {
       "prepare": "Prepare",
       "start": "Start",
       "complete": "Complete phase",
+      "revertToDraft": "Back to draft",
+      "revertToReady": "Pause phase",
       "preparing": "Preparing…",
       "starting": "Starting…",
-      "completing": "Completing…"
+      "completing": "Completing…",
+      "revertingToDraft": "Reverting…",
+      "revertingToReady": "Pausing…"
     },
     "toast": {
       "prepared": "Phase is ready for sporting operations.",
       "started": "Phase is now live.",
       "completed": "Phase completed.",
+      "revertedToDraft": "Phase is back in draft.",
+      "revertedToReady": "Phase is paused — matches are kept.",
       "updated": "Phase updated."
-    },
-    "checklist": {
-      "Entries": "Competition entries",
-      "Places": "Places and composition",
-      "Draw": "Draw",
-      "Matches": "Match production",
-      "Exits": "Qualification and progression",
-      "Attribution": "Population attribution"
     },
     "state": {
       "Draft": {
         "lead": "Draft",
-        "detail": "Complete the checklist, then mark the phase as ready."
+        "detail": "Complete the structure, then mark the phase as ready."
       },
       "Ready": {
         "lead": "Ready",
@@ -291,15 +288,6 @@
         "lead": "Completed",
         "detail": ""
       }
-    },
-    "draftStep": {
-      "Regulation": "Regulations",
-      "Teams": "Entries",
-      "Places": "Places",
-      "Attribution": "Assignment",
-      "Draw": "Draw",
-      "Exits": "Exits",
-      "Matches": "Matches"
     },
     "statusBand": {
       "readyHint": "The phase is ready to start.",
@@ -336,7 +324,10 @@
       "SlotFeedInvalid": "A slot feed is invalid — check links between phases.",
       "SlotFeedMultiple": "Conflicting slot feeds — check links between phases.",
       "CycleDetected": "Links between phases form a cycle — fix qualification or progression.",
-      "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression."
+      "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
+      "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
+      "ProductionPresent": "Remove attached matches before reverting to draft.",
+      "MatchLifecycleStarted": "Finish or cancel live matches before pausing the phase."
     },
     "mutation": {
       "_unknown": "This phase lifecycle action could not be completed right now."

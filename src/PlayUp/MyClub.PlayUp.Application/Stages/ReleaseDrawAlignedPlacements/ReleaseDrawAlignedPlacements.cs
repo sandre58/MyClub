@@ -114,14 +114,11 @@ public static class ReleaseDrawAlignedPlacements
 
     private static void EnsureNoPublishedAppliedDrawOnStage(Stage stage)
     {
-        foreach (var other in stage.Draws)
+        if (stage.Draws.Any(other => other.Status == DrawStatus.Published && DrawAppliedState.IsApplied(other, stage)))
         {
-            if (other.Status == DrawStatus.Published && DrawAppliedState.IsApplied(other, stage))
-            {
-                throw new ApplicationFailureException(
-                    "Cannot release aligned placements while a published draw is applied on the stage.",
-                    ApplicationErrorCodes.DrawReleaseFailure);
-            }
+            throw new ApplicationFailureException(
+                "Cannot release aligned placements while a published draw is applied on the stage.",
+                ApplicationErrorCodes.DrawReleaseFailure);
         }
     }
 
