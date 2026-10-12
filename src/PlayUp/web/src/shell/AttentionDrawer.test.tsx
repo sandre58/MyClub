@@ -120,6 +120,24 @@ describe('AttentionDrawer', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('lists attention while competition detail is still reloading', async () => {
+    vi.mocked(fetchCompetitionDetail).mockImplementation(
+      () => new Promise(() => {}),
+    );
+    vi.mocked(fetchNeedsAttention).mockResolvedValue(needsAttention([oneItem]));
+
+    const user = userEvent.setup();
+    renderWithShell(`/competitions/${competitionId}`);
+
+    await user.click(
+      await screen.findByRole('button', { name: 'À traiter, 1 élément' }),
+    );
+
+    expect(
+      await screen.findByText('Progression en attente'),
+    ).toBeInTheDocument();
+  });
+
   it('disables the header trigger when count is 0', async () => {
     vi.mocked(fetchNeedsAttention).mockResolvedValue(needsAttention());
     renderWithShell(`/competitions/${competitionId}`);

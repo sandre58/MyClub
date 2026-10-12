@@ -137,7 +137,11 @@ public static class NeedsAttentionAssembler
                 SourceDrawNoSolution,
                 SeverityBlocking,
                 "Draw",
-                draw.Id.Value.ToString()));
+                draw.Id.Value.ToString(),
+                new Dictionary<string, string>
+                {
+                    ["stageId"] = stage.Id.Value.ToString(),
+                }));
 
     private static void CollectQualificationAttentions(
         Stage source,

@@ -44,18 +44,29 @@ export function AttentionDrawer({
 
   const { competitionId, state: contextState } = useShellCompetitionContext();
 
-  const attentionQuery = useQuery({
+  const {
+    data: attentionData,
+    error: attentionError,
+    isPending: attentionPending,
+    refetch: refetchAttention,
+  } = useQuery({
     queryKey: queryKeys.competitions.attention(competitionId ?? ''),
     queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: (open || mounted) && Boolean(competitionId),
+    staleTime: 0,
   });
 
-  const items = needsAttentionItemsToSituations(
-    attentionQuery.data?.items ?? [],
-  );
-  const count = attentionQuery.data?.count ?? items.length;
+  useEffect(() => {
+    if (!open || !competitionId) {
+      return;
+    }
+    void refetchAttention();
+  }, [open, competitionId, refetchAttention]);
+
+  const items = needsAttentionItemsToSituations(attentionData?.items ?? []);
+  const count = attentionData?.count ?? items.length;
   const titleLabel = t('shell:attention.label');
-  const showCount = !attentionQuery.isPending && count > 0;
+  const showCount = !attentionPending && count > 0;
 
   useEffect(() => {
     if (open) {
@@ -161,10 +172,10 @@ export function AttentionDrawer({
           <AttentionDrawerContent
             contextState={contextState}
             competitionId={competitionId}
-            pending={Boolean(competitionId) && attentionQuery.isPending}
-            error={attentionQuery.error}
+            pending={Boolean(competitionId) && attentionPending}
+            error={attentionError}
             items={items}
-            onRetry={() => void attentionQuery.refetch()}
+            onRetry={() => void refetchAttention()}
             onNavigate={onClose}
           />
         </div>
@@ -216,7 +227,7 @@ function AttentionDrawerContent({
     );
   }
 
-  if (contextState === 'loading' || pending) {
+  if (pending) {
     return (
       <p className="shell-attention-drawer__message" aria-busy="true">
         {t('competition.loading')}

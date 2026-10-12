@@ -63,9 +63,14 @@ export function needsAttentionItemToSituation(
       : item.problem?.suggestedActionCode?.trim() ||
         mapAttentionAction(item.source);
 
+  const severity =
+    item.severity?.trim() ||
+    (item as { Severity?: string }).Severity?.trim() ||
+    'Blocking';
+
   return {
     source: item.source,
-    nature: item.severity,
+    nature: severity,
     targetType: item.targetType,
     targetId: item.targetId,
     matchId: null,

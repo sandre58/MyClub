@@ -17,6 +17,9 @@ export async function invalidateAfterStructureMutation(
       queryKey: queryKeys.competitions.overview(competitionId),
     }),
     queryClient.invalidateQueries({
+      queryKey: queryKeys.competitions.attention(competitionId),
+    }),
+    queryClient.invalidateQueries({
       queryKey: queryKeys.competitions.consultation(competitionId),
     }),
     ...(options?.stageId

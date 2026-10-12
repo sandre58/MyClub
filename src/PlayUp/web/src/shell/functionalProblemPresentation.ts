@@ -308,6 +308,10 @@ export function situationPresentation(
   situation: OverviewSituation,
   competitionId: string,
 ): FunctionalProblemPresentation {
+  const stageIdFromParams =
+    situation.params?.stageId?.trim() ||
+    situation.params?.destinationStageId?.trim() ||
+    null;
   return functionalProblemPresentation({
     source: situation.source,
     targetType: situation.targetType,
@@ -316,6 +320,7 @@ export function situationPresentation(
     competitionId,
     params: situation.params,
     actionCode: situation.actionCode,
+    stageId: stageIdFromParams,
   });
 }
 

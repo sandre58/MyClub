@@ -42,7 +42,12 @@ export function overviewTargetHref(target: {
     case 'Structure':
       return `/competitions/${targetId}/structure`;
     case 'Draw':
-      return stageId ? `/stages/${stageId}` : null;
+      if (!stageId) {
+        return null;
+      }
+      return competitionId
+        ? `/competitions/${competitionId}/structure?stage=${encodeURIComponent(stageId)}`
+        : `/stages/${stageId}`;
     default:
       return null;
   }

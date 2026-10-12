@@ -59,6 +59,7 @@ export function ShellHeader({
     queryKey: queryKeys.competitions.attention(competitionId ?? ''),
     queryFn: () => fetchNeedsAttention(competitionId!),
     enabled: Boolean(competitionId),
+    staleTime: 0,
   });
 
   const attentionCount =

@@ -63,10 +63,22 @@ export function fetchConsultation(
 }
 
 /** Relative URL → Vite proxy → Host GET /competitions/{id}/attention */
-export function fetchNeedsAttention(
+export async function fetchNeedsAttention(
   competitionId: string,
 ): Promise<NeedsAttention> {
-  return getJson(`/competitions/${competitionId}/attention`);
+  const raw = await getJson<
+    NeedsAttention & {
+      Items?: NeedsAttention['items'];
+      Count?: number;
+    }
+  >(`/competitions/${competitionId}/attention`);
+  const items = raw.items ?? raw.Items ?? [];
+  const count = raw.count ?? raw.Count ?? items.length;
+  return {
+    competitionId: raw.competitionId,
+    items,
+    count,
+  };
 }
 
 /** PUT /competitions/{id}/regulation → StructureView */
