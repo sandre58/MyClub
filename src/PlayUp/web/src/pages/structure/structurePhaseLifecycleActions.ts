@@ -1,15 +1,16 @@
 import type { TFunction } from 'i18next';
 
-import { ApiError } from '../../api';
-import { apiErrorLabel } from '../../i18n/apiErrorLabel';
 import type {
   StructureStageLifecycleMutationCode,
   StructureStageLifecycleRevertCode,
   StructureStageLifecycleTransitionCode,
 } from '../../types';
+import {
+  resolveLifecycleAnticipatedMessage,
+  resolveLifecycleMutationMessage,
+} from './problems';
 
-const STAGE_COMPLETION_BLOCKED = 'Application.StageCompletionBlocked';
-
+/** @deprecated Prefer {@link resolveLifecycleAnticipatedMessage} from `./problems`. */
 export function lifecycleDisabledMessage(
   t: TFunction<'structure'>,
   code: string | null | undefined,
@@ -17,31 +18,15 @@ export function lifecycleDisabledMessage(
   if (!code) {
     return '';
   }
-  const specific = t(`lifecycle.disabled.${code}`, { defaultValue: '' });
-  if (specific.length > 0) {
-    return specific;
-  }
-  return t('lifecycle.disabled._unknown');
+  return resolveLifecycleAnticipatedMessage(t, code);
 }
 
+/** @deprecated Prefer {@link resolveLifecycleMutationMessage} from `./problems`. */
 export function lifecycleMutationMessage(
   tStructure: TFunction<'structure'>,
   error: unknown,
 ): string {
-  if (error instanceof ApiError) {
-    if (error.code === STAGE_COMPLETION_BLOCKED) {
-      return tStructure('lifecycle.disabled.OpenMatches');
-    }
-    const localized = apiErrorLabel(error);
-    if (localized) {
-      return localized;
-    }
-    return tStructure('lifecycle.mutation._unknown');
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return tStructure('lifecycle.mutation._unknown');
+  return resolveLifecycleMutationMessage(tStructure, error);
 }
 
 export function transitionActionLabel(

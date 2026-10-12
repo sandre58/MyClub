@@ -15,19 +15,23 @@ import { Alert } from '../../design-system/components/Alert';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import { EmptyState, PendingLabel } from '../../ui';
 import {
-  lifecycleDisabledMessage,
-  lifecycleMutationMessage,
   mutationPendingLabel,
   revertActionLabel,
   transitionActionLabel,
 } from './structurePhaseLifecycleActions';
 import {
-  isLifecycleActionCode,
-  isLifecycleRevertCode,
   remediationHref,
+  resolveDraftPrepareBodyMessage,
+  resolveLifecycleAnticipatedMessage,
+  resolveLifecycleMutationMessage,
+  shouldShowDraftPrepareDisabledTooltip,
   shouldShowLifecycleRemediationLink,
   shouldShowPrimaryBlockMessage,
   shouldShowRevertDisabledParagraph,
+} from './problems';
+import {
+  isLifecycleActionCode,
+  isLifecycleRevertCode,
 } from './structurePhaseStatusBandModel';
 import { useStructureStageLifecycleMutation } from './useStructureStageLifecycleMutation';
 
@@ -136,24 +140,6 @@ function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteSta
   }
 }
 
-function draftPrepareBodyMessage(
-  t: ReturnType<typeof useTranslation<'structure'>>['t'],
-  showBlockMessage: boolean,
-  disabledReason: string | null,
-  actionEnabled: boolean,
-): string {
-  if (showBlockMessage && disabledReason) {
-    if (disabledReason === 'StageNotReady') {
-      return t('lifecycle.state.Draft.detail');
-    }
-    return lifecycleDisabledMessage(t, disabledReason);
-  }
-  if (actionEnabled) {
-    return t('lifecycle.state.Draft.detail');
-  }
-  return t('lifecycle.state.Draft.detail');
-}
-
 /** Draft — single Prepare surface (empty state); no production, no duplicate CTA. */
 export function StructurePhaseDraftMatchsPrepare({
   competitionId,
@@ -183,16 +169,13 @@ export function StructurePhaseDraftMatchsPrepare({
   const busy = transitionMutation.isPending || Boolean(structureHubRefreshing);
   const prepareDisabledTooltip =
     prepareProjected &&
-    !actionEnabled &&
-    disabledReason &&
-    disabledReason !== 'ConstructionFrozen'
-      ? lifecycleDisabledMessage(t, disabledReason)
+    shouldShowDraftPrepareDisabledTooltip(disabledReason, actionEnabled)
+      ? resolveLifecycleAnticipatedMessage(t, disabledReason!)
       : null;
-  const statusMessage = draftPrepareBodyMessage(
+  const statusMessage = resolveDraftPrepareBodyMessage(
     t,
     showBlockMessage,
     disabledReason,
-    actionEnabled,
   );
 
   const prepareButtonInner = (
@@ -243,7 +226,7 @@ export function StructurePhaseDraftMatchsPrepare({
       </div>
       {transitionMutation.isError ? (
         <Alert tone="danger" role="alert">
-          {lifecycleMutationMessage(t, transitionMutation.error)}
+          {resolveLifecycleMutationMessage(t, transitionMutation.error)}
         </Alert>
       ) : null}
     </div>
@@ -325,7 +308,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const cancelStartDisabledReason = cancelStart?.disabledReasonCode ?? null;
   const cancelStartTooltip =
     showCancelStartControl && !cancelStartEnabled && cancelStartDisabledReason
-      ? lifecycleDisabledMessage(t, cancelStartDisabledReason)
+      ? resolveLifecycleAnticipatedMessage(t, cancelStartDisabledReason)
       : cancelStartCode
         ? revertActionLabel(t, cancelStartCode)
         : null;
@@ -351,7 +334,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const revertDisabledReason = revert?.disabledReasonCode ?? null;
   const pauseResumeTooltip =
     showPauseResumeControl && !revertEnabled && revertDisabledReason
-      ? lifecycleDisabledMessage(t, revertDisabledReason)
+      ? resolveLifecycleAnticipatedMessage(t, revertDisabledReason)
       : null;
   const showRevertParagraph =
     showPauseResumeControl &&
@@ -387,7 +370,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
     projectedAction &&
     !actionEnabled &&
     disabledReason
-      ? lifecycleDisabledMessage(t, disabledReason)
+      ? resolveLifecycleAnticipatedMessage(t, disabledReason)
       : null;
 
   const hasLifecycleActionsEnd =
@@ -411,7 +394,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
         <div className="structure-operational-strip__message-stack">
           {showBlockMessage && disabledReason ? (
             <p className="structure-operational-strip__lifecycle-meta">
-              {lifecycleDisabledMessage(t, disabledReason)}
+              {resolveLifecycleAnticipatedMessage(t, disabledReason)}
               {showRemediationLink && remediationTarget ? (
                 <>
                   {' '}
@@ -428,12 +411,12 @@ function StructurePhaseMatchsLifecycleBlockBody({
           ) : null}
           {showRevertParagraph && revertDisabledReason ? (
             <p className="structure-operational-strip__lifecycle-meta">
-              {lifecycleDisabledMessage(t, revertDisabledReason)}
+              {resolveLifecycleAnticipatedMessage(t, revertDisabledReason)}
             </p>
           ) : null}
           {transitionMutation.isError ? (
             <Alert tone="danger" role="alert">
-              {lifecycleMutationMessage(t, transitionMutation.error)}
+              {resolveLifecycleMutationMessage(t, transitionMutation.error)}
             </Alert>
           ) : null}
         </div>
