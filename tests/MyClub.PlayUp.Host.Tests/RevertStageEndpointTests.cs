@@ -40,20 +40,20 @@ public sealed class RevertStageEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Revert_to_ready_from_Running_keeps_attached_matchesAsync()
+    public async Task Suspend_from_Running_keeps_attached_matchesAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var (stageId, matchCount) = await SeedRunningWithMaterializedMatchesAsync(factory);
 
         using var client = factory.CreateClient();
-        using var response = await client.PostAsync(RevertToReadyUri(stageId), content: null);
+        using var response = await client.PostAsync(SuspendUri(stageId), content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var scope = factory.Services.CreateScope();
         var loaded = await scope.ServiceProvider.GetRequiredService<IStageRepository>()
             .GetByIdForUpdateAsync(stageId);
-        loaded!.Status.Should().Be(StageStatus.Ready);
+        loaded!.Status.Should().Be(StageStatus.Suspended);
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
         stageMatches.Should().HaveCount(matchCount);
@@ -62,8 +62,8 @@ public sealed class RevertStageEndpointTests(HostPostgresFixture fixture)
     private static Uri RevertToDraftUri(StageId stageId) =>
         new($"/stages/{stageId.Value}/revert-to-draft", UriKind.Relative);
 
-    private static Uri RevertToReadyUri(StageId stageId) =>
-        new($"/stages/{stageId.Value}/revert-to-ready", UriKind.Relative);
+    private static Uri SuspendUri(StageId stageId) =>
+        new($"/stages/{stageId.Value}/suspend", UriKind.Relative);
 
     private async Task<StageId> SeedReadyWithoutMatchesAsync(PlayUpWebApplicationFactory factory)
     {

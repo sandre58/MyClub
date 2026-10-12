@@ -188,6 +188,16 @@ export function revertStageToDraft(stageId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/revert-to-draft`);
 }
 
+/** POST /stages/{stageId}/suspend → 204 (Running → Suspended when allowed) */
+export function suspendStage(stageId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/suspend`);
+}
+
+/** POST /stages/{stageId}/resume → 204 (Suspended → Running) */
+export function resumeStage(stageId: string): Promise<void> {
+  return postNoContent(`/stages/${stageId}/resume`);
+}
+
 /** POST /stages/{stageId}/revert-to-ready → 204 (Running/Suspended → Ready when allowed) */
 export function revertStageToReady(stageId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/revert-to-ready`);

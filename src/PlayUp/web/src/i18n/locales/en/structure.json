@@ -248,23 +248,32 @@
   },
   "lifecycle": {
     "actions": {
-      "prepare": "Prepare",
-      "start": "Start",
+      "prepare": "Prepare phase",
+      "start": "Start phase",
       "complete": "Complete phase",
       "revertToDraft": "Back to draft",
-      "revertToReady": "Pause phase",
+      "cancelStart": "Cancel start",
+      "revertToReady": "Suspend",
+      "suspend": "Suspend phase",
+      "resume": "Resume phase",
       "preparing": "Preparing…",
       "starting": "Starting…",
       "completing": "Completing…",
       "revertingToDraft": "Reverting…",
-      "revertingToReady": "Pausing…"
+      "cancelStarting": "Cancelling…",
+      "revertingToReady": "Suspending…",
+      "suspending": "Suspending…",
+      "resuming": "Resuming…"
     },
     "toast": {
       "prepared": "Phase is ready for sporting operations.",
       "started": "Phase is now live.",
       "completed": "Phase completed.",
       "revertedToDraft": "Phase is back in draft.",
+      "cancelledStart": "Phase is ready again.",
       "revertedToReady": "Phase is paused — matches are kept.",
+      "suspended": "Phase suspended — matches are kept.",
+      "resumed": "Phase is live again.",
       "updated": "Phase updated."
     },
     "state": {
@@ -302,6 +311,10 @@
     "matchProgress": {
       "summary": "{{finished}} of {{total}} matches finished · {{open}} open · {{cancelled}} cancelled",
       "compact": "{{finished}} matches finished out of {{total}}.",
+      "allComplete": "All matches are finished",
+      "ratioLabel": "Finished",
+      "inProgress": "The phase is live. Some matches still need to be played.",
+      "inProgressSuspended": "The phase is suspended. Some matches still need to be played.",
       "none": "No matches are attached to this phase yet.",
       "viewMatches": "View matches",
       "viewStandings": "View standings"
@@ -313,8 +326,9 @@
       "_unknown": "This phase lifecycle action is unavailable right now.",
       "CompetitionClosed": "The competition is closed — phase lifecycle actions are unavailable.",
       "ConstructionFrozen": "The competition is live — finish preparing this phase before the competition started, or adjust from Overview.",
+      "Places": "Fill every place before preparing the phase.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
-      "StageNotReady": "Prepare is blocked — complete this phase’s structure before marking it ready.",
+      "StageNotReady": "Complete this phase’s structure before marking it ready.",
       "StructureGraphInvalid": "Fix structure connections before preparing the phase.",
       "OpenMatches": "Every match must be finished or cancelled before completing the phase.",
       "ConfrontationUndecidable": "A necessary confrontation cannot always decide a draw — check match format and exits.",
@@ -327,7 +341,8 @@
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
-      "MatchLifecycleStarted": "Finish or cancel live matches before pausing the phase."
+      "MatchLifecycleStarted": "Finish or cancel live matches before pausing the phase.",
+      "MatchLiveInProgress": "A match is live — finish or cancel it before suspending the phase."
     },
     "mutation": {
       "_unknown": "This phase lifecycle action could not be completed right now."

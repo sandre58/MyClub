@@ -1,6 +1,6 @@
 # Structure — phase lifecycle UI (spec appendix)
 
-**Purpose:** Git-side design reference for the Structure phase fiche **status band**, stepper, and match stats. Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
+**Purpose:** Git-side design reference for Structure phase **lifecycle UI in the Matchs operational column** and match stats during exploitation. Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
 **Last code audit:** 2026-10-12 (V2 gap audit + verification matrix, § below). Prior audit: 2026-10-11.
 
@@ -8,7 +8,7 @@
 
 **PR gate (DECIDED):** No SPA PR for 2b/2c until the **2b matrix** is arbitrated in Notion and **2c** is decided.
 
-**Notion arbitration (product):** [Arbitrage matrice 2b — bandeau cycle Structure (2026-10-11)](https://app.notion.com/p/3f675fb92d1081dba56afcbfacbd32e7) (under [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca)). Record validation date in § Notion sync when signed off.
+**Notion arbitration (product):** [Arbitrage matrice 2b — bandeau cycle Structure (2026-10-11)](https://app.notion.com/p/3f675fb92d1081dba56afcbfacbd32e7) — **superseded** by Matchs-column lifecycle UI (2026-10-12). Update [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca) after merge.
 
 ---
 
@@ -42,16 +42,19 @@ These must stay **separate** in copy and layout; none replaces another.
 
 1. **Cycle de vie** — domain `StageStatus`: `Draft`, `Ready`, `Running`, `Suspended`, `Completed`.
 2. **État de construction sportive** — structure, équipes, places, tirage, sorties, matérialisation (read-model checklist + structure issues).
-3. **Actions organisateur** — `PrepareStage`, `StartStage`, `CompleteStage` (Structure band today); suspend/resume/competition-level actions live elsewhere.
+3. **Actions organisateur** — `PrepareStage`, `StartStage`, `CompleteStage`, reverts (Matchs operational column); suspend/resume/competition-level actions live elsewhere.
 
-**Presentation rule (DECIDED):**
+**Presentation rule (DECIDED, shipped 2026-10-12):**
 
 | Surface | Role |
 | :------ | :--- |
 | Header **badge** | Official lifecycle status only. |
-| **Band** stepper (Draft) | Construction criteria toward Prepare — not a fake status enum. |
-| **Band** match stats (Running / Suspended) | Match activity (`finished`, `cancelled`, `open`, `total`) — not lifecycle status. |
-| **Band** primary button | One projected lifecycle transition from the read model. |
+| **Matchs** operational column | Lifecycle transition + revert buttons, disabled-reason copy, remediation links; match stats in Running/Suspended. |
+| **Matchs** operational column (same) | Match **production** (materialize/dematerialize gauge) — construction sportive, not lifecycle status. |
+
+**Removed:** header status band and Prepare stepper (false-green checklist).
+
+**Matchs column by status (2026-10-12):** Draft — Prepare-only empty state, no production. Ready — production gauge then lifecycle (Start) then materialize (secondary when Start shown). Running/Suspended — exploitation stats + Complete/pause; production gauge only when read `presentation === 'actionable'` or dematerialize enabled. Completed — match progress + view link when matches exist. Visibility helpers: `structureMatchsSectionUi.ts`.
 
 ---
 
@@ -82,7 +85,7 @@ These must stay **separate** in copy and layout; none replaces another.
 - **Ready:** “Configuration validée pour lancer la phase” — distinct from exploitation opened.
 - **Start:** Opens sportive phase and **locks structure** for that phase.
 
-Suspend/Resume for **stages** are out of scope for the current Structure band unless added to the read model later.
+Suspend/Resume for **stages** are out of scope for the Matchs lifecycle block unless added to the read model later.
 
 ---
 
@@ -94,10 +97,10 @@ Suspend/Resume for **stages** are out of scope for the current Structure band un
 | Per-hub assembly inputs | `StructureViewAssembler.cs` → `StructureStageLifecycleInput` |
 | Prepare execution (gates + slot feeds + domain) | `PrepareStage/PrepareStage.cs` |
 | Flow facts / gate vs graph policy | `CompetitionFlowAnalyzer.cs` (`IsStructureGraphGateIssue`, `IsPrepareGateIssue`) |
-| SPA band | `StructurePhaseStatusBand.tsx`, `structurePhaseStatusBandModel.ts` |
-| Transition copy keys | `structure.json` → `lifecycle.disabled.*`, `lifecycle.draftStep.*` |
+| SPA Matchs lifecycle UI | `StructurePhaseMatchsLifecycleBlock.tsx`, `StructurePhaseOperationalStrip.tsx` (`MatchesColumn`), `structurePhaseStatusBandModel.ts` |
+| Transition copy keys | `structure.json` → `lifecycle.disabled.*`, `lifecycle.statusBand.*` (legacy key prefix) |
 
-HTTP: structure hub includes `lifecycle.transition`, optional `lifecycle.revertTransition`, and `lifecycle.matchProgress` (Running / Suspended / Completed). **Prepare stepper / `prepareChecklist` removed** (band uses transition + disabled reasons only).
+HTTP: structure hub includes `lifecycle.transition`, optional `lifecycle.revertTransition`, and `lifecycle.matchProgress` (Running / Suspended / Completed). **Prepare stepper / `prepareChecklist` removed** (transition + disabled reasons only).
 
 ---
 
@@ -428,8 +431,8 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 
 | Surface | V2 direction | Shipped | Status |
 | :------ | :----------- | :------ | :----- |
-| Lifecycle transitions | Prepare / Start / Complete + **future** Revert* | Prepare, Start, Complete only (`StructureStageLifecycleAssembler`) | **GAP** (reverts) |
-| UI placement | Matchs section / mise en service; **no** stepper band | `StructurePhaseStatusBand` + stepper (Draft) | **GAP** (UX refactor later) |
+| Lifecycle transitions | Prepare / Start / Complete + Revert* | Prepare, Start, Complete + `revertTransition` (`StructureStageLifecycleAssembler`) | **ALIGNED** |
+| UI placement | Matchs section / mise en service; **no** stepper band | `StructurePhaseMatchsLifecycleBlock` in operational Matchs column | **ALIGNED** (2026-10-12) |
 | Match progress gauge | Clos / total (finished + cancelled) | `finished`, `cancelled`, `open`, `total` — usable for clos/total copy | **PARTIAL** |
 | Competition Running + phase Draft/Ready | ConstructionFrozen on Prepare/Start | Projected | **ALIGNED** | `StructureStageLifecycleAssembler` |
 
@@ -646,7 +649,7 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 | Artifact | Role |
 | :------- | :--- |
 | **Notion — Lifecycle phase UI Structure** | **SoT** — V2 contract (2026-10-12) + legacy UX sections (some superseded; see page callouts) |
-| **Notion — Arbitrage matrice 2b** | [Arbitrage matrice 2b (2026-10-11)](https://app.notion.com/p/3f675fb92d1081dba56afcbfacbd32e7) — band copy until Matchs-section UI |
+| **Notion — Arbitrage matrice 2b** | Superseded — copy lives in Matchs column; sync Notion Lifecycle UI page |
 | **This Git appendix** | Code-verified facts + **V2 gap audit** + 2b matrix draft |
 
 **Implementation (2026-10-11):** SPA PR aligned with matrix defaults (product “Go”) — `StageNotReady` band, dedup Regulation/Exits/OpenMatches, prepare-gate `lifecycle.disabled.*`, lifecycle mutation copy + `_unknown` fallbacks, `errors:Application.StageCompletionBlocked`. **2c step label unchanged** (« Réglement »). Full Notion line-by-line sign-off still recommended.

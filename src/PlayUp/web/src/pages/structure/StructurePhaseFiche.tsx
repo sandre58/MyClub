@@ -63,7 +63,7 @@ import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { StructurePhaseOperationalBar } from './StructurePhaseOperationalBar';
-import { StructurePhaseStatusBand } from './StructurePhaseStatusBand';
+import { shouldShowMatchsSection } from './structureMatchsSectionUi';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
@@ -368,11 +368,21 @@ export function StructurePhaseFiche({
   }, [stage]);
 
   const occupiedPlacesCount = useMemo(() => {
-    if (!stage || !schematicQuery.isSuccess || !schematicQuery.data) {
+    if (!stage) {
       return null;
     }
     const placesNForOccupancy =
       stage.compositionCapacity ?? resolvePlacesN(stage);
+    if (
+      (stage.formatKind === 'Championship' || stage.formatKind === 'Swiss') &&
+      placesNForOccupancy != null &&
+      placesNForOccupancy > 0
+    ) {
+      return stage.compositionEntryCount ?? 0;
+    }
+    if (!schematicQuery.isSuccess || !schematicQuery.data) {
+      return null;
+    }
     return countSchematicOccupiedPlaces(
       schematicQuery.data.cases,
       stage.formatKind,
@@ -541,15 +551,21 @@ export function StructurePhaseFiche({
     canAssignEntryToSlot &&
     schematicQuery.isSuccess &&
     editableManualPlaceCount > 0;
-  const tracksSchematicPlaceMeters =
-    (stage.formatKind === 'Groups' || stage.formatKind === 'Cup') &&
+  const cupLikePlaces =
+    stage.formatKind === 'Cup' ||
+    (stage.formatKind == null && (stage.slotCount ?? 0) > 0);
+  const tracksOperationalPlaces =
     placesN != null &&
-    placesN > 0;
+    placesN > 0 &&
+    (stage.formatKind === 'Championship' ||
+      stage.formatKind === 'Swiss' ||
+      stage.formatKind === 'Groups' ||
+      cupLikePlaces);
   const showPlacementBlock =
     showDrawCta ||
     showActivateDrawCta ||
     canManualPlace ||
-    tracksSchematicPlaceMeters;
+    tracksOperationalPlaces;
   const placementAwards = stage.placementAwards ?? [];
   const hasExits = outboundGroups.length > 0;
   const hasAttribution = placementAwards.length > 0;
@@ -793,7 +809,9 @@ export function StructurePhaseFiche({
 
   const showHeroStats = heroFacts.length > 0;
   const showHeroStructureActions =
-    showPlacementBlock || showProductionOperationalBar;
+    showPlacementBlock ||
+    showProductionOperationalBar ||
+    (stage != null && shouldShowMatchsSection(stage));
   // Overflow removed — Edit/Delete live in the header toolbar.
 
   const sortiesEditControl = (() => {
@@ -987,14 +1005,6 @@ export function StructurePhaseFiche({
         </div>
       </header>
 
-      {stage && stage.status !== 'Completed' ? (
-        <StructurePhaseStatusBand
-          competitionId={data.competitionId}
-          stage={stage}
-          structureHubRefreshing={structureHubRefreshing}
-        />
-      ) : null}
-
       {showHeroStructureActions && stage ? (
         <StructurePhaseOperationalBar
           structureHubRefreshing={structureHubRefreshing}
@@ -1008,7 +1018,10 @@ export function StructurePhaseFiche({
                   placesN,
                   poolFilled,
                   occupiedPlacesCount,
-                  occupancyReady: schematicQuery.isSuccess,
+                  occupancyReady:
+                    stage.formatKind === 'Championship' ||
+                    stage.formatKind === 'Swiss' ||
+                    schematicQuery.isSuccess,
                   showDrawCta,
                   showActivateDrawCta,
                   showResolvedPoolGauge: showDrawCta || showActivateDrawCta,

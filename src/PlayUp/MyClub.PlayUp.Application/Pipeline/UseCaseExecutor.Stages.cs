@@ -54,6 +54,7 @@ public sealed partial class UseCaseExecutor
 
         // Prefer the tracked instance from the competition list (same identity as StageIds load).
         var target = competitionStages.First(candidate => candidate.Id.Equals(stageId));
+        StructurePreparePlacesGate.Ensure(competition, target, competitionStages);
         PrepareStage.Execute(target, competitionStages, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         LogStagePrepared(logger, stageId.Value, stage.CompetitionId.Value);
@@ -143,7 +144,51 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
-    /// Loads a stage and reverts Running or Suspended → Ready when sportive preflight passes.
+    /// Loads a stage and suspends it (Running → Suspended) when no match is live.
+    /// </summary>
+    public async Task SuspendStageAsync(StageId stageId, CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{stage.CompetitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+
+        var stageMatches =
+            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
+        SuspendStage.Execute(stage, stageMatches, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a stage and resumes it (Suspended → Running).
+    /// </summary>
+    public async Task ResumeStageAsync(StageId stageId, CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+
+        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{stage.CompetitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+
+        ResumeStage.Execute(stage, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads a stage and reverts it to Ready (Running or Suspended → Ready) when allowed.
     /// </summary>
     public async Task RevertStageToReadyAsync(StageId stageId, CancellationToken cancellationToken = default)
     {

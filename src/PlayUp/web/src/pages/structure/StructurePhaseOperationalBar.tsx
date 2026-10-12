@@ -4,6 +4,7 @@ import {
   materializePresentationForStage,
   showProductionOperationalSection,
 } from './structureOperationalCopy';
+import { shouldShowMatchsSection } from './structureMatchsSectionUi';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
 import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
 
@@ -33,8 +34,8 @@ export function StructurePhaseOperationalBar({
     stage.status,
   );
   const showProduction = showProductionOperationalSection(stage);
-
-  const showMatches = showProduction || showPlaces || showDraw;
+  const showMatches =
+    showProduction || showPlaces || showDraw || shouldShowMatchsSection(stage);
 
   if (!showMatches) {
     return null;

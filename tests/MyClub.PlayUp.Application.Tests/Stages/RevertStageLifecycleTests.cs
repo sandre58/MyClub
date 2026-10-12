@@ -49,7 +49,7 @@ public sealed class RevertStageLifecycleTests
     }
 
     [Fact]
-    public void RevertToReady_keeps_scheduled_matches()
+    public void SuspendStage_keeps_scheduled_matches()
     {
         var situation = TestCompetition.Create("R", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -59,14 +59,14 @@ public sealed class RevertStageLifecycleTests
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         stage.Start(_clock);
 
-        RevertToReady.Execute(stage, materialized.CreatedMatches, _clock);
+        SuspendStage.Execute(stage, materialized.CreatedMatches, _clock);
 
-        stage.Status.Should().Be(StageStatus.Ready);
+        stage.Status.Should().Be(StageStatus.Suspended);
         materialized.CreatedMatches.Should().OnlyContain(m => stage.HasMatch(m.Id));
     }
 
     [Fact]
-    public void RevertToReady_blocked_when_match_finished()
+    public void SuspendStage_succeeds_when_some_matches_finished_and_others_scheduled()
     {
         var situation = TestCompetition.Create("R", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -79,8 +79,58 @@ public sealed class RevertStageLifecycleTests
             new MatchResult(ResultType.Played, new Score(1, 0)),
             _clock);
 
-        var act = () => RevertToReady.Execute(stage, materialized.CreatedMatches, _clock);
+        SuspendStage.Execute(stage, materialized.CreatedMatches, _clock);
+
+        stage.Status.Should().Be(StageStatus.Suspended);
+    }
+
+    [Fact]
+    public void SuspendStage_blocked_when_match_is_live()
+    {
+        var situation = TestCompetition.Create("R", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
+        stage.Start(_clock);
+        materialized.CreatedMatches[0].Start(_clock);
+
+        var act = () => SuspendStage.Execute(stage, materialized.CreatedMatches, _clock);
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.RevertToReadyBlocked);
+    }
+
+    [Fact]
+    public void RevertToReady_from_Running_sets_Ready_when_matches_scheduled()
+    {
+        var situation = TestCompetition.Create("R", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
+        stage.Start(_clock);
+
+        RevertToReady.Execute(stage, materialized.CreatedMatches, _clock);
+
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void ResumeStage_from_Suspended_sets_Running()
+    {
+        var situation = TestCompetition.Create("R", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
+        stage.Start(_clock);
+        stage.Suspend(_clock);
+
+        ResumeStage.Execute(stage, _clock);
+
+        stage.Status.Should().Be(StageStatus.Running);
     }
 }

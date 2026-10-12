@@ -248,23 +248,32 @@
   },
   "lifecycle": {
     "actions": {
-      "prepare": "Préparer",
-      "start": "Démarrer",
+      "prepare": "Préparer la phase",
+      "start": "Démarrer la phase",
       "complete": "Terminer la phase",
       "revertToDraft": "Revenir en brouillon",
-      "revertToReady": "Mettre en pause",
+      "cancelStart": "Annuler le démarrage",
+      "revertToReady": "Suspendre la phase",
+      "suspend": "Suspendre la phase",
+      "resume": "Reprendre la phase",
       "preparing": "Préparation…",
       "starting": "Démarrage…",
       "completing": "Finalisation…",
       "revertingToDraft": "Retour en brouillon…",
-      "revertingToReady": "Mise en pause…"
+      "cancelStarting": "Annulation…",
+      "revertingToReady": "Suspension…",
+      "suspending": "Suspension…",
+      "resuming": "Reprise…"
     },
     "toast": {
       "prepared": "La phase est prête pour les opérations sportives.",
       "started": "La phase est en cours.",
       "completed": "Phase terminée.",
       "revertedToDraft": "La phase est de nouveau en brouillon.",
-      "revertedToReady": "Phase en pause — les matchs sont conservés.",
+      "cancelledStart": "La phase est de nouveau prête.",
+      "revertedToReady": "Phase suspendue — les matchs sont conservés.",
+      "suspended": "Phase suspendue — les matchs sont conservés.",
+      "resumed": "La phase est de nouveau en cours.",
       "updated": "Phase mise à jour."
     },
     "state": {
@@ -302,6 +311,10 @@
     "matchProgress": {
       "summary": "{{finished}} match(s) sur {{total}} terminé(s) · {{open}} en cours · {{cancelled}} annulé(s)",
       "compact": "{{finished}} matchs terminés sur {{total}}.",
+      "allComplete": "Tous les matchs sont terminés",
+      "ratioLabel": "Terminés",
+      "inProgress": "La phase est en cours. Il reste des matchs à jouer.",
+      "inProgressSuspended": "La phase est suspendue. Il reste des matchs à jouer.",
       "none": "Aucun match rattaché à cette phase pour le moment.",
       "viewMatches": "Voir les matchs",
       "viewStandings": "Voir les classements"
@@ -312,9 +325,9 @@
     "disabled": {
       "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",
       "CompetitionClosed": "La compétition est clôturée — les actions de cycle de phase sont indisponibles.",
-      "ConstructionFrozen": "La compétition est lancée — la préparation de cette phase est figée tant qu’elle reste en brouillon ou prête.",
+      "Places": "Remplissez toutes les places avant de préparer la phase.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
-      "StageNotReady": "La préparation est bloquée — complétez la structure de cette phase avant de la marquer comme prête.",
+      "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
       "OpenMatches": "Chaque match doit être terminé ou annulé avant de clôturer la phase.",
       "ConfrontationUndecidable": "Une confrontation nécessaire ne peut pas toujours départager — vérifiez le format de match et les sorties.",
@@ -327,7 +340,8 @@
       "RoutingNondeterminism": "Le routage entre phases est ambigu — corrigez qualification ou progression.",
       "UnmaterializedConfrontations": "Matérialisez toutes les confrontations éligibles avant de démarrer la phase.",
       "ProductionPresent": "Retirez les matchs rattachés avant de revenir en brouillon.",
-      "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant de mettre la phase en pause."
+      "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant de mettre la phase en pause.",
+      "MatchLiveInProgress": "Un match est en cours — terminez-le ou annulez-le avant de suspendre la phase."
     },
     "mutation": {
       "_unknown": "Impossible d’effectuer cette action de cycle de phase pour le moment."

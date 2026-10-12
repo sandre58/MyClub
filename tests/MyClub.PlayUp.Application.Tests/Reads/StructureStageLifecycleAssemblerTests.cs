@@ -13,6 +13,7 @@ using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
@@ -35,6 +36,27 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
         hub.Lifecycle.Transition.Enabled.Should().BeTrue();
         hub.Lifecycle.MatchProgress.Should().BeNull();
+    }
+
+    [Fact]
+    public void Assemble_Draft_championship_with_partial_composition_blocks_Prepare()
+    {
+        var situation = TestCompetition.Create("Lifecycle Draft partial", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship(stageName: "League"));
+        var stage = situation.PrimaryStage!;
+        stage.ClearCompositionEntries(_clock);
+        foreach (var entry in situation.Competition.Entries.Take(2))
+        {
+            stage.AddResolvedPopulationEntry(entry.Id, _clock);
+        }
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.ChecklistPlaces);
     }
 
     [Fact]
@@ -117,14 +139,21 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
-    public void Assemble_competition_Running_freezes_Draft_phase_Prepare()
+    public void Assemble_competition_Running_allows_Draft_Prepare_per_stage_gates()
     {
-        var competition = Competition.Create(new CompetitionName("Frozen"), SampleRegulations.Standard(), _clock);
+        var competition = Competition.Create(new CompetitionName("Running multi"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
         competition.AddEntry(TeamId.New(), "B", _clock);
+        competition.AddEntry(TeamId.New(), "C", _clock);
+        competition.AddEntry(TeamId.New(), "D", _clock);
         var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         stage.AddMatchday(1, _clock);
         competition.AddStage(stage.Id, _clock);
+        foreach (var entry in competition.Entries)
+        {
+            stage.AddResolvedPopulationEntry(entry.Id, _clock);
+        }
+
         competition.Prepare(_clock);
         competition.Start(_clock);
 
@@ -132,9 +161,161 @@ public sealed class StructureStageLifecycleAssemblerTests
         var hub = view.Stages.Single();
 
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Assemble_competition_Running_freezes_lone_Ready_phase_Start()
+    {
+        var competition = Competition.Create(new CompetitionName("Frozen start"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        stage.Prepare(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
         hub.Lifecycle.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledConstructionFrozen);
+    }
+
+    [Fact]
+    public void Assemble_flux_qualif_wired_quarters_prepare_without_composition_entries()
+    {
+        var situation = TestCompetition.Create("Flux QF prepare", _clock)
+            .WithTeams("A", "B", "C", "D", "E", "F", "G", "H")
+            .WithStructure(StructureIntent.Groups(2, 4, "Phase de groupes"));
+        var groups = situation.PrimaryStage!;
+        var entries = situation.Competition.Entries.ToList();
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        for (var i = 0; i < entries.Count; i++)
+        {
+            groups.AssignEntryToGroup(orderedGroups[i / 4].Id, entries[i].Id);
+        }
+
+        var slotKeys = new[] { "QF1-A", "QF1-B", "QF2-A", "QF2-B" };
+        var quarter = situation.AddKnockoutStage(
+            "Quarts de finale",
+            "Quarts de finale",
+            slotKeys);
+
+        ReplaceStageQualificationRules.Execute(
+            groups,
+            [
+                new QualificationIntentSpec(
+                    Guid.NewGuid(),
+                    1,
+                    QualificationIntentSourceKind.EachGroup,
+                    1,
+                    2,
+                    quarter.Id.Value,
+                    DestinationSlotKeys: slotKeys)
+            ],
+            _clock);
+
+        quarter.CompositionEntries.Should().BeEmpty();
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var qfHub = view.Stages.Single(h => h.StageId == quarter.Id.Value);
+
+        qfHub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        qfHub.Lifecycle.Transition.Enabled.Should().BeTrue();
+
+        PrepareStage.Execute(quarter, situation.Stages, _clock);
+        quarter.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Assemble_flux_like_clean_primary_prepares_while_broken_ko_stays_blocked()
+    {
+        var situation = TestCompetition.Create("Flux split prepare", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship(stageName: "Phase propre"));
+        var clean = situation.PrimaryStage!;
+        foreach (var entry in situation.Competition.Entries)
+        {
+            clean.AddResolvedPopulationEntry(entry.Id, _clock);
+        }
+
+        var qf = situation.AddKnockoutStage(
+            "Quarts de finale",
+            "Quarts de finale",
+            ["QF1-A", "QF1-B", "QF2-A", "QF2-B"]);
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var cleanHub = view.Stages.Single(h => h.StageId == clean.Id.Value);
+        var qfHub = view.Stages.Single(h => h.StageId == qf.Id.Value);
+
+        cleanHub.Lifecycle!.Transition.Enabled.Should().BeTrue();
+        qfHub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        qfHub.Lifecycle.Transition.Enabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Assemble_competition_Running_allows_Prepare_on_downstream_Draft_when_peer_is_Running()
+    {
+        var situation = TestCompetition.Create("Downstream prepare", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship(stageName: "Phase aller"));
+        var semi = situation.AddKnockoutStage(
+            "Demi-finale",
+            "Demi-finales",
+            ["SF1-A", "SF1-B", "SF2-A", "SF2-B"]);
+        foreach (var entry in situation.Competition.Entries)
+        {
+            semi.AddResolvedPopulationEntry(entry.Id, _clock);
+        }
+
+        situation
+            .PreparePrimaryStage()
+            .StartPrimaryStage()
+            .PrepareCompetition()
+            .StartCompetition();
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var sfHub = view.Stages.Single(h => h.StageId == semi.Id.Value);
+
+        sfHub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        sfHub.Lifecycle.Transition.DisabledReasonCode.Should().NotBe(
+            StructureStageLifecycleAssembler.DisabledConstructionFrozen);
+    }
+
+    [Fact]
+    public void Assemble_Running_projects_cancel_start_when_all_matches_scheduled()
+    {
+        var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Scheduled);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = [ToSummaryRow(match)]
+        };
+        var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.CancelStartTransition.Should().NotBeNull();
+        hub.Lifecycle.CancelStartTransition!.Code.Should()
+            .Be(OverviewAssembler.ActionRevertToReadyStage);
+        hub.Lifecycle.CancelStartTransition.Enabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Assemble_Running_omits_cancel_start_when_a_match_is_finished()
+    {
+        var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Finished);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = [ToSummaryRow(match)]
+        };
+        var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.CancelStartTransition.Should().BeNull();
     }
 
     [Fact]

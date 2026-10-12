@@ -119,7 +119,13 @@ public static class OverviewAssembler
     /// <summary>Revert Ready stage to Draft when no matches are attached.</summary>
     public const string ActionRevertToDraftStage = "RevertToDraftStage";
 
-    /// <summary>Revert Running or Suspended stage to Ready (pause exploitation).</summary>
+    /// <summary>Suspend a running stage (Running → Suspended).</summary>
+    public const string ActionSuspendStage = "SuspendStage";
+
+    /// <summary>Resume a suspended stage (Suspended → Running).</summary>
+    public const string ActionResumeStage = "ResumeStage";
+
+    /// <summary>Legacy action id — use <see cref="ActionSuspendStage"/>.</summary>
     public const string ActionRevertToReadyStage = "RevertToReadyStage";
 
     /// <summary>Publish draw.</summary>

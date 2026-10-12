@@ -38,13 +38,16 @@ import {
   Timer,
   Trash2,
   Trophy,
+  Undo2,
   Unlock,
   UsersRound,
   Volleyball,
   X,
   Handshake,
   CheckCircle2,
-  Check
+  Check,
+  Pause,
+  Play,
 } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { Icon, LucideIcon, type IconSize } from './Icon';
@@ -292,6 +295,21 @@ export function CheckIcon({ size, ...props }: ContentIconProps) {
 /** State confirmation — check (status pills). */
 export function CheckCircleIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={CheckCircle2} size={size} {...props} />;
+}
+
+/** Pause / suspend sporting operations. */
+export function PauseIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Pause} size={size} {...props} />;
+}
+
+/** Play / resume sporting operations. */
+export function PlayIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Play} size={size} {...props} />;
+}
+
+/** Revert / undo a workflow step. */
+export function UndoIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Undo2} size={size} {...props} />;
 }
 
 /** Step not yet reached — dashed circle. */

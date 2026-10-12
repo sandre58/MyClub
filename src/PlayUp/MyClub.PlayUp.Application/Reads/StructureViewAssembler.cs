@@ -476,6 +476,14 @@ public static class StructureViewAssembler
     /// <summary>
     /// Topology signal only: DrawRules engaged → four execution states (not pots / "configured").
     /// </summary>
+    internal static StructureDrawExecutionBadge? GetDrawExecutionBadge(
+        Stage stage,
+        bool hasDrawRules) =>
+        ResolveDrawExecutionBadge(stage, hasDrawRules);
+
+    internal static int? GetCompositionCapacity(Competition competition, Stage stage) =>
+        ResolvePlaces(competition, stage);
+
     private static StructureDrawExecutionBadge? ResolveDrawExecutionBadge(
         Stage stage,
         bool hasDrawRules)

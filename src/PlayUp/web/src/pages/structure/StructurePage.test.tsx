@@ -1111,7 +1111,7 @@ describe('StructurePage Structure hub', () => {
     expect(screen.queryByText(/équipes à compléter/i)).not.toBeInTheDocument();
   });
 
-  it('shows frozen materialize gap in Matchs tile gauge, not hero copy', async () => {
+  it('hides production gauge when Running materialize is frozen and shows match progress', async () => {
     const groups = groupesStage({
       status: 'Running',
       hasDrawRules: false,
@@ -1124,6 +1124,16 @@ describe('StructurePage Structure hub', () => {
         commandEnabled: false,
         disabledReason: 'StructureNotMutable',
         confrontations: [],
+      },
+      lifecycle: {
+        transition: { code: 'CompleteStage', enabled: false },
+        matchProgress: {
+          total: 6,
+          finished: 3,
+          open: 3,
+          cancelled: 0,
+          canComplete: false,
+        },
       },
     });
     vi.mocked(fetchStructureView).mockResolvedValue(
@@ -1169,15 +1179,22 @@ describe('StructurePage Structure hub', () => {
       .getByRole('heading', { name: 'Matchs' })
       .closest('section') as HTMLElement;
     expect(
-      within(matchesSection).getByLabelText(/Avancement de la production des matchs/i),
-    ).toBeInTheDocument();
-    expect(within(matchesSection).getByText(/Il reste 3 match/i)).toBeInTheDocument();
-    expect(within(matchesSection).getByText(/créés/i)).toBeInTheDocument();
+      within(matchesSection).queryByLabelText(
+        /Avancement de la production des matchs/i,
+      ),
+    ).not.toBeInTheDocument();
     expect(
-      within(matchesSection).getByText('3', { selector: '.structure-operational-strip__ratio-filled' }),
+      within(matchesSection).getByLabelText(/Avancement des matchs/i),
     ).toBeInTheDocument();
     expect(
-      within(matchesSection).getByText('6', { selector: '.structure-operational-strip__ratio-cap' }),
+      within(matchesSection).getByText('3', {
+        selector: '.structure-operational-strip__ratio-filled',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(matchesSection).getByText('6', {
+        selector: '.structure-operational-strip__ratio-cap',
+      }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Créer les matchs/i }),
@@ -1191,10 +1208,14 @@ describe('StructurePage Structure hub', () => {
           kind: 'Championship',
           primaryStageId: stageId,
           primaryStageName: 'League',
-          primaryStageStatus: 'Draft',
+          primaryStageStatus: 'Ready',
         },
         stages: [
           championshipStage({
+            status: 'Ready',
+            lifecycle: {
+              transition: { code: 'StartStage', enabled: true },
+            },
             materialize: {
               commandCode: 'MaterializeMatches',
               labelVariant: 'create',
@@ -1243,6 +1264,53 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows phase lifecycle in Matchs section without a status band', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [
+          championshipStage({
+            lifecycle: {
+              transition: {
+                code: 'PrepareStage',
+                enabled: false,
+                disabledReasonCode: 'StageNotReady',
+              },
+            },
+          }),
+        ],
+      }),
+    );
+    vi.mocked(fetchStageSchematic).mockResolvedValue({
+      stageId,
+      competitionId,
+      name: 'League',
+      status: 'Draft',
+      formatKind: 'Championship',
+      cases: [],
+      connections: [],
+    });
+
+    renderStructurePage();
+
+    expect(document.querySelector('.structure-phase-status-band')).toBeNull();
+    await screen.findByRole('heading', { name: 'Matchs' });
+    const matchesSection = document.getElementById('operational-matchs')!;
+    expect(
+      within(matchesSection).getByRole('button', {
+        name: /préparer la phase/i,
+      }),
+    ).toBeDisabled();
+    expect(
+      within(matchesSection).getByText(/complétez la structure/i),
+    ).toBeInTheDocument();
   });
 
   it('does not show materialization-ready banner when matches already exist', async () => {

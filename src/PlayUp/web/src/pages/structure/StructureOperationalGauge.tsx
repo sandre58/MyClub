@@ -25,6 +25,7 @@ export function StructureOperationalRatioGauge({
   unknownCapacity,
   dense = false,
   layout = 'inline',
+  fillVariant = 'default',
 }: {
   current: number;
   capacity: number | null;
@@ -35,6 +36,7 @@ export function StructureOperationalRatioGauge({
   dense?: boolean;
   /** `trackOnly` — progress track only; ratio and copy live outside (operational strip). */
   layout?: 'inline' | 'trackOnly';
+  fillVariant?: 'default' | 'brand' | 'attention';
 }) {
   const gaugeClass = [
     'structure-operational-gauge',
@@ -66,6 +68,7 @@ export function StructureOperationalRatioGauge({
       current={current}
       capacity={capacity}
       state={state}
+      fillVariant={fillVariant}
       ariaLabel={ariaLabel}
       className={gaugeClass}
       header={

@@ -246,6 +246,8 @@ export interface StructureStageLifecycle {
   transition: StructureStageLifecycleTransition;
   matchProgress?: StructureStageLifecycleMatchProgress | null;
   revertTransition?: StructureStageLifecycleTransition | null;
+  /** Running → Ready when no match has started; omitted when unavailable. */
+  cancelStartTransition?: StructureStageLifecycleTransition | null;
 }
 
 export type StructureStageLifecycleTransitionCode =
@@ -255,7 +257,9 @@ export type StructureStageLifecycleTransitionCode =
 
 export type StructureStageLifecycleRevertCode =
   | 'RevertToDraftStage'
-  | 'RevertToReadyStage';
+  | 'RevertToReadyStage'
+  | 'SuspendStage'
+  | 'ResumeStage';
 
 export type StructureStageLifecycleMutationCode =
   | StructureStageLifecycleTransitionCode

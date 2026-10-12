@@ -45,6 +45,15 @@ import {
 } from './structureOperationalCopy';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { StructureMatchPhaseProgressGauge } from './StructureMatchPhaseProgressGauge';
+import {
+  StructurePhaseDraftMatchsPrepare,
+  StructurePhaseMatchsLifecycleBlock,
+} from './StructurePhaseMatchsLifecycleBlock';
+import {
+  shouldShowMatchExploitationProgress,
+  shouldShowProductionInMatchsSection,
+} from './structureMatchsSectionUi';
 import {
   joinOperationalStripSections,
   operationalStripGridColumns,
@@ -752,6 +761,7 @@ function DrawColumn(
 
 function MatchesColumn({
   index,
+  competitionId,
   stage,
   presentation,
   structureHubRefreshing,
@@ -818,10 +828,10 @@ function MatchesColumn({
         ? materializeRatioTone(materialize)
         : poolTone;
 
-  const matchesUpdating =
-    materializeMutation.isPending ||
-    dematerializeMutation.isPending ||
-    Boolean(structureHubRefreshing);
+  const productionBusy =
+    materializeMutation.isPending || dematerializeMutation.isPending;
+
+  const matchesUpdating = productionBusy || Boolean(structureHubRefreshing);
   const matchesUpdatingLabel = dematerializeMutation.isPending
     ? t('fiche.dematerialize.submitting')
     : materializeMutation.isPending
@@ -838,48 +848,53 @@ function MatchesColumn({
     </TextLink>
   ) : null;
 
+  const showProduction = shouldShowProductionInMatchsSection(
+    stage,
+    presentation,
+  );
   const canShowMetric =
-    gaugeRatio != null && (materialize != null || dematerialize != null);
+    showProduction &&
+    gaugeRatio != null &&
+    (materialize != null || dematerialize != null);
 
-  const matchesContent = canShowMetric ? (
-    <>
-      <MetricRow
-        aside={
-          <RatioAside
-            current={gaugeRatio!.filled}
-            capacity={gaugeRatio!.capacity}
-            label={ratioLabel}
-            poolTone={productionRatioTone}
-          />
-        }
-        meter={
-          <MetricGaugeBlock
-            message={matchMeter.text}
-            messageKind={matchMeter.kind}
-            gauge={
-              <StructureOperationalRatioGauge
-                current={gaugeRatio!.filled}
-                capacity={gaugeRatio!.capacity}
-                caption={t('fiche.operational.production.meterCaptionMatches')}
-                ariaLabel={t('fiche.operational.production.meterAria')}
-                poolTone={productionRatioTone}
-                layout="trackOnly"
-              />
-            }
-          />
-        }
-      />
-      {materializeMutation.isError ? (
-        <MutationError error={materializeMutation.error} />
-      ) : null}
-      {dematerializeMutation.isError ? (
-        <MutationError error={dematerializeMutation.error} />
-      ) : null}
-      <div className="structure-operational-strip__section-actions">
+  const materializeBtnClass = primaryBtn;
+
+  const productionGauge = canShowMetric ? (
+    <MetricRow
+      aside={
+        <RatioAside
+          current={gaugeRatio!.filled}
+          capacity={gaugeRatio!.capacity}
+          label={ratioLabel}
+          poolTone={productionRatioTone}
+        />
+      }
+      meter={
+        <MetricGaugeBlock
+          message={matchMeter.text}
+          messageKind={matchMeter.kind}
+          gauge={
+            <StructureOperationalRatioGauge
+              current={gaugeRatio!.filled}
+              capacity={gaugeRatio!.capacity}
+              caption={t('fiche.operational.production.meterCaptionMatches')}
+              ariaLabel={t('fiche.operational.production.meterAria')}
+              poolTone={productionRatioTone}
+              layout="trackOnly"
+            />
+          }
+        />
+      }
+    />
+  ) : null;
+
+  const productionLeadingActions =
+    showProduction && (showMaterializePrimary || dematerialize?.enabled) ? (
+      <>
         {showMaterializePrimary && materialize ? (
           <button
             type="button"
-            className={primaryBtn}
+            className={materializeBtnClass}
             disabled={materializeMutation.isPending}
             onClick={() => materializeMutation.mutate(undefined)}
           >
@@ -890,46 +905,109 @@ function MatchesColumn({
           </button>
         ) : null}
         {dematerialize?.enabled ? (
-          <Tooltip
-            content={
-              !dematerialize.enabled && dematerializeCaption
-                ? dematerializeCaption
-                : dematerializeTitle
-            }
-          >
+          <Tooltip content={dematerializeTitle}>
             <span className="structure-operational-tile__action-wrap">
               <button
                 type="button"
-                className="ds-btn ds-btn--destructive ds-btn--sm"
-                disabled={!dematerialize.enabled || dematerializeMutation.isPending}
+                className="ds-btn ds-btn--destructive ds-btn--sm ds-icon-button"
+                disabled={dematerializeMutation.isPending}
+                aria-label={dematerializeTitle}
                 onClick={() => setDematerializeConfirmOpen(true)}
               >
-                <>
-                  <TrashIcon size="sm" />
-                  {dematerializeTitle}
-                </>
+                {dematerializeMutation.isPending ? (
+                  <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
+                ) : (
+                  <TrashIcon size="sm" aria-hidden="true" />
+                )}
               </button>
             </span>
           </Tooltip>
         ) : null}
-      </div>
-    </>
-  ) : (
-    <div className="structure-operational-strip__empty">
-      <EmptyState
-        variant="idle"
-        icon={<MatchesStatIcon size="lg" aria-hidden="true" />}
-      >
-        {matchMeter.text}
-      </EmptyState>
-    </div>
-  );
+      </>
+    ) : null;
+
+  const productionErrors =
+    showProduction &&
+    (materializeMutation.isError || dematerializeMutation.isError) ? (
+      <>
+        {materializeMutation.isError ? (
+          <MutationError error={materializeMutation.error} />
+        ) : null}
+        {dematerializeMutation.isError ? (
+          <MutationError error={dematerializeMutation.error} />
+        ) : null}
+      </>
+    ) : null;
+
+  let matchesContent: ReactNode;
+
+  if (stage.status === 'Draft') {
+    matchesContent = (
+      <StructurePhaseDraftMatchsPrepare
+        competitionId={competitionId}
+        stage={stage}
+        structureHubRefreshing={structureHubRefreshing}
+      />
+    );
+  } else if (stage.status === 'Completed') {
+    const progress = stage.lifecycle?.matchProgress;
+    matchesContent =
+      shouldShowMatchExploitationProgress(stage) && progress ? (
+        <StructureMatchPhaseProgressGauge
+          finished={progress.finished}
+          total={progress.total}
+          open={progress.open}
+          cancelled={progress.cancelled}
+          layout="finishedTotal"
+          phaseStatus={stage.status}
+        />
+      ) : null;
+  } else {
+    const progress = stage.lifecycle?.matchProgress;
+    const exploitationGauge =
+      shouldShowMatchExploitationProgress(stage) && progress ? (
+        <StructureMatchPhaseProgressGauge
+          finished={progress.finished}
+          total={progress.total}
+          open={progress.open}
+          cancelled={progress.cancelled}
+          layout="finishedTotal"
+          phaseStatus={stage.status}
+        />
+      ) : null;
+
+    matchesContent = (
+      <>
+        {productionGauge}
+        {productionErrors}
+        {exploitationGauge}
+        <StructurePhaseMatchsLifecycleBlock
+          competitionId={competitionId}
+          stage={stage}
+          structureHubRefreshing={structureHubRefreshing}
+          productionBusy={productionBusy}
+          leadingActions={productionLeadingActions}
+        />
+      </>
+    );
+  }
+
+  const effectiveToolbar =
+    stage.status === 'Completed' &&
+    showViewMaterializedMatchesLink(stage, materialize ?? undefined)
+      ? (
+        <TextLink to={`/stages/${stage.stageId}/matches`}>
+          {t('fiche.materialize.viewPhaseMatches')}
+        </TextLink>
+      )
+      : toolbar;
 
   return (
     <StripSection
       index={index}
+      sectionId="operational-matchs"
       title={t('fiche.operational.cluster.matches')}
-      toolbar={toolbar}
+      toolbar={effectiveToolbar}
     >
       <SectionUpdatingBody updating={matchesUpdating} label={matchesUpdatingLabel}>
         {matchesContent}

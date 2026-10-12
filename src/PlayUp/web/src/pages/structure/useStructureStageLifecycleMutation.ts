@@ -5,7 +5,9 @@ import {
   prepareStage,
   revertStageToDraft,
   revertStageToReady,
+  resumeStage,
   startStage,
+  suspendStage,
 } from '../../api';
 import { notify } from '../../design-system/toastStore';
 import type { StructureStageLifecycleMutationCode } from '../../types';
@@ -35,8 +37,14 @@ export function useStructureStageLifecycleMutation(
         case 'RevertToDraftStage':
           await revertStageToDraft(stageId);
           break;
+        case 'SuspendStage':
+          await suspendStage(stageId);
+          break;
         case 'RevertToReadyStage':
           await revertStageToReady(stageId);
+          break;
+        case 'ResumeStage':
+          await resumeStage(stageId);
           break;
         default:
           break;

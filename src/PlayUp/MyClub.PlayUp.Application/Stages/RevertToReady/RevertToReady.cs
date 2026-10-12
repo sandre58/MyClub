@@ -32,10 +32,10 @@ public static class RevertToReady
             .Select(DematerializationMatchGate.FromMatch)
             .ToArray();
 
-        if (DematerializationCapability.TryMatchLifecycleReason(gates) is not null)
+        if (DematerializationCapability.TryRevertToReadyReason(gates) is not null)
         {
             throw new ApplicationFailureException(
-                "RevertToReady is blocked because a match was already played or is live.",
+                "RevertToReady is blocked because a match is live.",
                 ApplicationErrorCodes.RevertToReadyBlocked);
         }
 

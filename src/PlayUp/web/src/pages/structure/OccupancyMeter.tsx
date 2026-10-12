@@ -29,6 +29,8 @@ type OccupancyMeterProps = {
   capacity: number;
   /** Defaults from current vs capacity. */
   state?: OccupancyMeterState;
+  /** Normal progress uses brand fill even when below capacity (not an alert). */
+  fillVariant?: 'default' | 'brand' | 'attention';
   header?: ReactNode;
   footer?: ReactNode;
   ariaLabel: string;
@@ -40,6 +42,7 @@ export function OccupancyMeter({
   current,
   capacity,
   state: stateProp,
+  fillVariant = 'default',
   header,
   footer,
   ariaLabel,
@@ -53,6 +56,11 @@ export function OccupancyMeter({
       className={[
         'structure-occupancy-meter',
         `structure-occupancy-meter--${state}`,
+        fillVariant === 'brand'
+          ? 'structure-occupancy-meter--brand-fill'
+          : fillVariant === 'attention'
+            ? 'structure-occupancy-meter--attention-fill'
+            : null,
         className,
       ]
         .filter(Boolean)

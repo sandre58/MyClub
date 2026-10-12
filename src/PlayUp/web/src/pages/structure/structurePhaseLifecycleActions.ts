@@ -68,7 +68,11 @@ export function revertActionLabel(
     case 'RevertToDraftStage':
       return t('lifecycle.actions.revertToDraft');
     case 'RevertToReadyStage':
-      return t('lifecycle.actions.revertToReady');
+      return t('lifecycle.actions.cancelStart');
+    case 'SuspendStage':
+      return t('lifecycle.actions.suspend');
+    case 'ResumeStage':
+      return t('lifecycle.actions.resume');
     default:
       return code;
   }
@@ -88,7 +92,11 @@ export function mutationPendingLabel(
     case 'RevertToDraftStage':
       return t('lifecycle.actions.revertingToDraft');
     case 'RevertToReadyStage':
-      return t('lifecycle.actions.revertingToReady');
+      return t('lifecycle.actions.cancelStarting');
+    case 'SuspendStage':
+      return t('lifecycle.actions.suspending');
+    case 'ResumeStage':
+      return t('lifecycle.actions.resuming');
     default:
       return t('working');
   }
@@ -108,7 +116,11 @@ export function mutationSuccessToast(
     case 'RevertToDraftStage':
       return t('lifecycle.toast.revertedToDraft');
     case 'RevertToReadyStage':
-      return t('lifecycle.toast.revertedToReady');
+      return t('lifecycle.toast.cancelledStart');
+    case 'SuspendStage':
+      return t('lifecycle.toast.suspended');
+    case 'ResumeStage':
+      return t('lifecycle.toast.resumed');
     default:
       return t('lifecycle.toast.updated');
   }

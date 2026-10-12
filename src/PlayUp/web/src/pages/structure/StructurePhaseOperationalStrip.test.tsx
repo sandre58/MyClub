@@ -233,7 +233,12 @@ describe('StructurePhaseOperationalStrip', () => {
         commandEnabled: true,
         confrontations: [],
       };
-      renderMatchesStrip({ ...leagueStageBase, materialize });
+      renderMatchesStrip({
+        ...leagueStageBase,
+        status: 'Ready',
+        lifecycle: { transition: { code: 'StartStage', enabled: true } },
+        materialize,
+      });
 
       expect(screen.getByText('créé')).toBeInTheDocument();
       expect(
@@ -260,18 +265,67 @@ describe('StructurePhaseOperationalStrip', () => {
           status: 'Running',
           matchCount: 3,
           materialize,
+          lifecycle: {
+            transition: { code: 'CompleteStage', enabled: false },
+            matchProgress: {
+              total: 3,
+              finished: 3,
+              open: 0,
+              cancelled: 0,
+              canComplete: true,
+            },
+          },
         },
         'Running',
       );
 
-      expect(screen.getByText('3')).toBeInTheDocument();
-      expect(screen.getByText('6')).toBeInTheDocument();
       expect(
-        screen.queryByRole('button', { name: /Créer les matchs/i }),
+        screen.queryByLabelText(/Avancement de la production des matchs/i),
       ).not.toBeInTheDocument();
       expect(
         screen.getByRole('link', { name: /Voir les matchs/i }),
       ).toBeInTheDocument();
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByLabelText(/Avancement des matchs/i),
+      ).toBeInTheDocument();
+      expect(
+        within(matchesSection).getByText(/Tous les matchs sont terminés/i),
+      ).toBeInTheDocument();
+      expect(
+        within(matchesSection).queryByText(/matchs terminés sur/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows in-progress copy instead of match stat summary', () => {
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Running',
+          matchCount: 14,
+          lifecycle: {
+            transition: { code: 'CompleteStage', enabled: false },
+            matchProgress: {
+              total: 28,
+              finished: 14,
+              open: 14,
+              cancelled: 0,
+              canComplete: false,
+            },
+          },
+        },
+        'Running',
+      );
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByText(
+          /La phase est en cours\. Il reste des matchs à jouer\./i,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        within(matchesSection).queryByText(/14 en cours/i),
+      ).not.toBeInTheDocument();
     });
 
     it('opens dematerialize confirm and calls dematerializePhase', async () => {
@@ -292,9 +346,20 @@ describe('StructurePhaseOperationalStrip', () => {
       renderMatchesStrip(
         {
           ...leagueStageBase,
+          status: 'Running',
           matchCount: 3,
           materialize,
           dematerialize: { enabled: true, scope: 'FullPhase' },
+          lifecycle: {
+            transition: { code: 'CompleteStage', enabled: false },
+            matchProgress: {
+              total: 3,
+              finished: 0,
+              open: 3,
+              cancelled: 0,
+              canComplete: false,
+            },
+          },
         },
         'Running',
       );
@@ -307,6 +372,43 @@ describe('StructurePhaseOperationalStrip', () => {
         within(dialog).getByRole('button', { name: /Retirer les matchs/i }),
       );
       expect(dematerializePhase).toHaveBeenCalledWith(leagueStageBase.stageId);
+    });
+
+    it('shows draft prepare empty state in the Matchs section without production gauge', () => {
+      renderMatchesStrip({
+        ...leagueStageBase,
+        materialize: {
+          commandCode: 'MaterializeMatches',
+          labelVariant: 'create',
+          determinedCount: 1,
+          eligibleCount: 1,
+          materializedCount: 0,
+          commandEnabled: true,
+          confrontations: [],
+        },
+        lifecycle: {
+          transition: {
+            code: 'PrepareStage',
+            enabled: false,
+            disabledReasonCode: 'StageNotReady',
+          },
+        },
+      });
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByText(/complétez la structure/i),
+      ).toBeInTheDocument();
+      expect(
+        within(matchesSection).getByRole('button', {
+          name: /préparer la phase/i,
+        }),
+      ).toBeDisabled();
+      expect(
+        within(matchesSection).queryByLabelText(
+          /Avancement de la production des matchs/i,
+        ),
+      ).not.toBeInTheDocument();
     });
 
     it('hides dematerialize action when read blocks it', () => {

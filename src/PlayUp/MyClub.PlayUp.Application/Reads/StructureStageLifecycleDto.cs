@@ -11,11 +11,13 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 /// <param name="Transition">Primary lifecycle command for the current stage status.</param>
 /// <param name="MatchProgress">Match closure stats when the phase is in play; otherwise <see langword="null"/>.</param>
-/// <param name="RevertTransition">Optional revert command (Ready → Draft or Running/Suspended → Ready).</param>
+/// <param name="RevertTransition">Optional secondary command (Ready → Draft, Running → Suspend, Suspended → Resume).</param>
+/// <param name="CancelStartTransition">Running → Ready when no match has started; omitted when unavailable.</param>
 public sealed record StructureStageLifecycleDto(
     StructureStageLifecycleTransitionDto Transition,
     StructureStageLifecycleMatchProgressDto? MatchProgress,
-    StructureStageLifecycleTransitionDto? RevertTransition = null);
+    StructureStageLifecycleTransitionDto? RevertTransition = null,
+    StructureStageLifecycleTransitionDto? CancelStartTransition = null);
 
 /// <summary>
 /// Projected lifecycle transition (Overview action codes + CompleteStage).

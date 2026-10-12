@@ -19,7 +19,12 @@ export function isLifecycleActionCode(
 export function isLifecycleRevertCode(
   code: string | null | undefined,
 ): code is StructureStageLifecycleRevertCode {
-  return code === 'RevertToDraftStage' || code === 'RevertToReadyStage';
+  return (
+    code === 'RevertToDraftStage' ||
+    code === 'RevertToReadyStage' ||
+    code === 'SuspendStage' ||
+    code === 'ResumeStage'
+  );
 }
 
 export function isLifecycleMutationCode(
@@ -39,6 +44,13 @@ export function shouldShowPrimaryBlockMessage(
   if (
     (status === 'Running' || status === 'Suspended') &&
     disabledReasonCode === 'OpenMatches'
+  ) {
+    return false;
+  }
+
+  if (
+    disabledReasonCode === 'ConstructionFrozen' ||
+    disabledReasonCode === 'UnmaterializedConfrontations'
   ) {
     return false;
   }
@@ -71,13 +83,56 @@ export function remediationHref(
 export function shouldShowLifecycleRemediationLink(
   disabledReasonCode: string | null | undefined,
   remediationHrefValue: string | null,
+  remediationLabelKey?: string | null,
 ): boolean {
   if (!remediationHrefValue || !disabledReasonCode) {
     return false;
   }
-  return true;
+  if (disabledReasonCode === 'ConstructionFrozen') {
+    return true;
+  }
+  return Boolean(remediationLabelKey && remediationLabelKey !== 'default');
+}
+
+/** Inline revert-disable hints shown on the control, not as paragraph copy. */
+export function shouldShowRevertDisabledParagraph(
+  disabledReasonCode: string | null | undefined,
+): boolean {
+  if (!disabledReasonCode) {
+    return false;
+  }
+  return (
+    disabledReasonCode !== 'ProductionPresent' &&
+    disabledReasonCode !== 'MatchLifecycleStarted' &&
+    disabledReasonCode !== 'MatchLiveInProgress'
+  );
 }
 
 export function matchProgressRemaining(total: number, finished: number, cancelled: number): number {
   return Math.max(0, total - finished - cancelled);
+}
+
+/** Lifecycle UI in the Matchs operational column (replaces the former header band). */
+export function shouldShowMatchsLifecycle(
+  stage: StructureStageHubSummary,
+): boolean {
+  if (stage.status === 'Completed') {
+    return false;
+  }
+  const lifecycle = stage.lifecycle;
+  if (!lifecycle) {
+    return true;
+  }
+  const transition = lifecycle.transition;
+  const revert = lifecycle.revertTransition;
+  if (transition?.code || revert?.code) {
+    return true;
+  }
+  if (
+    (stage.status === 'Running' || stage.status === 'Suspended') &&
+    lifecycle.matchProgress != null
+  ) {
+    return true;
+  }
+  return stage.status === 'Draft' || stage.status === 'Ready';
 }
