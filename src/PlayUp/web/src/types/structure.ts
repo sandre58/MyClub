@@ -203,6 +203,8 @@ export interface StructureStageHubSummary {
   progressionIntents?: StructureProgressionIntent[] | null;
   /** Machine-readable graph validity codes (Draft-persistable). */
   structureIssues?: string[];
+  /** Pilot organizer-problem semantics for selected structure issues. */
+  structureIssueSemantics?: OrganizerProblemRead[] | null;
   /** Configured DirectAssignment count (slot → entry). */
   directAssignmentCount?: number;
   /** Runtime population membership size (Draw / Live pool). */
@@ -265,6 +267,10 @@ export type StructureStageLifecycleMutationCode =
   | StructureStageLifecycleTransitionCode
   | StructureStageLifecycleRevertCode;
 
+import type { OrganizerProblemRead } from './organizerProblem';
+
+export type { OrganizerProblemRead } from './organizerProblem';
+
 export interface StructureStageLifecycleTransition {
   code:
     | StructureStageLifecycleTransitionCode
@@ -273,6 +279,7 @@ export interface StructureStageLifecycleTransition {
   enabled: boolean;
   disabledReasonCode?: string | null;
   remediation?: StructureStageLifecycleRemediation | null;
+  problem?: OrganizerProblemRead | null;
 }
 
 export interface StructureStageLifecycleRemediation {

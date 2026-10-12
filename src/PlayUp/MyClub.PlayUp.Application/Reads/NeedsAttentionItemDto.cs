@@ -17,9 +17,11 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="TargetType">Optional target kind (Stage, Draw, Fixture, Slot…).</param>
 /// <param name="TargetId">Optional target identity as string.</param>
 /// <param name="Params">Optional structured params for SPA templates (e.g. activeCount, minimumTeams).</param>
+/// <param name="Problem">Optional Step 2 semantics for organizer problems (pilot).</param>
 public sealed record NeedsAttentionItemDto(
     string Source,
     string Severity,
     string? TargetType,
     string? TargetId,
-    IReadOnlyDictionary<string, string>? Params = null);
+    IReadOnlyDictionary<string, string>? Params = null,
+    OrganizerProblemReadDto? Problem = null);

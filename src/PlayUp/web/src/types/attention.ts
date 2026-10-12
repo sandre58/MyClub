@@ -10,6 +10,8 @@ export interface NeedsAttention {
   count?: number;
 }
 
+import type { OrganizerProblemRead } from './organizerProblem';
+
 export interface NeedsAttentionItem {
   source: string;
   severity: string;
@@ -17,4 +19,5 @@ export interface NeedsAttentionItem {
   targetId: string | null;
   /** Optional structured params for SPA templates (e.g. activeCount, minimumTeams). */
   params?: Record<string, string> | null;
+  problem?: OrganizerProblemRead | null;
 }

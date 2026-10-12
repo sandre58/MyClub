@@ -99,7 +99,7 @@ public static class StructureStageLifecycleAssembler
                     : input.Stage.Status switch
                     {
                         StageStatus.Ready => ResolveStartTransition(input),
-                        StageStatus.Running or StageStatus.Suspended => ResolveCompleteTransition(matchProgress),
+                        StageStatus.Running or StageStatus.Suspended => ResolveCompleteTransition(input, matchProgress),
                         StageStatus.Completed or StageStatus.Draft => new StructureStageLifecycleTransitionDto(null, false),
                         _ => new StructureStageLifecycleTransitionDto(null, false)
                     };
@@ -168,15 +168,18 @@ public static class StructureStageLifecycleAssembler
     }
 
     private static StructureStageLifecycleTransitionDto ResolveCompleteTransition(
+        StructureStageLifecycleInput input,
         StructureStageLifecycleMatchProgressDto? matchProgress)
     {
         const string code = OverviewAssembler.ActionCompleteStage;
         return matchProgress is { CanComplete: true }
             ? new StructureStageLifecycleTransitionDto(code, true)
-            : new StructureStageLifecycleTransitionDto(
-            code,
-            false,
-            CompleteStage.ReasonOpenMatches);
+            : AttachProblem(
+                new StructureStageLifecycleTransitionDto(
+                    code,
+                    false,
+                    CompleteStage.ReasonOpenMatches),
+                input);
     }
 
     private static StructureStageLifecycleTransitionDto? ResolveRevertTransition(StructureStageLifecycleInput input) => input.Competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived
@@ -246,11 +249,24 @@ public static class StructureStageLifecycleAssembler
         string disabledReasonCode,
         StructureStageLifecycleInput input,
         string remediationCode) =>
-        new(
-            code,
-            false,
-            disabledReasonCode,
-            ResolveRemediation(input.Competition.Id, input.Stage.Id, remediationCode));
+        AttachProblem(
+            new StructureStageLifecycleTransitionDto(
+                code,
+                false,
+                disabledReasonCode,
+                ResolveRemediation(input.Competition.Id, input.Stage.Id, remediationCode)),
+            input);
+
+    private static StructureStageLifecycleTransitionDto AttachProblem(
+        StructureStageLifecycleTransitionDto dto,
+        StructureStageLifecycleInput input)
+    {
+        var problem = OrganizerProblemSemanticsResolver.TryFromLifecycleTransition(
+            dto.Code,
+            dto.DisabledReasonCode,
+            input.StructureIssues);
+        return problem is null ? dto : dto with { Problem = problem };
+    }
 
     private static string? ResolveTransitionCode(StageStatus status) =>
         status switch

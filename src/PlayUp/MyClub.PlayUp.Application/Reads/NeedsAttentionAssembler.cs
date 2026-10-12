@@ -193,9 +193,7 @@ public static class NeedsAttentionAssembler
             var destination = stages.FirstOrDefault(stage => stage.Id.Equals(path.Destination.StageId));
             if (destination is null)
             {
-                items.Add(new NeedsAttentionItemDto(
-                    SourceQualificationPending,
-                    SeverityBlocking,
+                items.Add(QualificationPendingItem(
                     "Stage",
                     path.Destination.StageId.Value.ToString()));
                 continue;
@@ -208,9 +206,7 @@ public static class NeedsAttentionAssembler
                         instruction.EntryId))
             {
                 case DestinationSatisfaction.Kind.Pending:
-                    items.Add(new NeedsAttentionItemDto(
-                        SourceQualificationPending,
-                        SeverityBlocking,
+                    items.Add(QualificationPendingItem(
                         ResolveAttentionTargetType(path.Destination),
                         ResolveAttentionTargetId(destination, path.Destination)));
                     break;
@@ -457,4 +453,14 @@ public static class NeedsAttentionAssembler
                       ?? throw new InvalidOperationException("Group id missing.");
         return groupStandings[groupId];
     }
+
+    private static NeedsAttentionItemDto QualificationPendingItem(
+        string? targetType,
+        string? targetId) =>
+        new(
+            SourceQualificationPending,
+            SeverityBlocking,
+            targetType,
+            targetId,
+            Problem: OrganizerProblemSemanticsResolver.TryFromAttentionSource(SourceQualificationPending));
 }

@@ -217,6 +217,7 @@ public sealed record StructureReadinessDto(
 /// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
 /// <param name="ProgressionIntents">Authoring projection of progression intents when present.</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
+/// <param name="StructureIssueSemantics">Pilot organizer-problem semantics for selected issue codes.</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 /// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
 /// <param name="CompositionEntryCount">Runtime population membership size (Draw / Live pool).</param>
@@ -292,6 +293,7 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<StructureProgressionPathDto>? ProgressionPaths = null,
     IReadOnlyList<StructureProgressionIntentDto>? ProgressionIntents = null,
     IReadOnlyList<string>? StructureIssues = null,
+    IReadOnlyList<OrganizerProblemReadDto>? StructureIssueSemantics = null,
     int HalfTimeDuration = 0,
     int DirectAssignmentCount = 0,
     int CompositionEntryCount = 0,

@@ -98,11 +98,11 @@ public sealed class StructureStageLifecycleAssemblerTests
         var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
         var hub = view.Stages.Single();
 
-        hub.Lifecycle!.Transition.Should().BeEquivalentTo(
-            new StructureStageLifecycleTransitionDto(
-                OverviewAssembler.ActionCompleteStage,
-                false,
-                CompleteStage.ReasonOpenMatches));
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionCompleteStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should().Be(CompleteStage.ReasonOpenMatches);
+        hub.Lifecycle.Transition.Problem.Should().NotBeNull();
+        hub.Lifecycle.Transition.Problem!.CanonCode.Should().Be(CompleteStage.ReasonOpenMatches);
         hub.Lifecycle.MatchProgress!.Open.Should().Be(1);
         hub.Lifecycle.MatchProgress.CanComplete.Should().BeFalse();
     }

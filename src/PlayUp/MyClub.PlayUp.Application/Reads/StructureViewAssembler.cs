@@ -452,6 +452,8 @@ public static class StructureViewAssembler
             ProgressionPaths: progressionPaths,
             ProgressionIntents: progressionIntents,
             StructureIssues: structureIssues,
+            StructureIssueSemantics: OrganizerProblemSemanticsResolver.CollectStructureIssueSemantics(
+                structureIssues),
             HalfTimeDuration: match.Duration.HalfTimeDuration,
             DirectAssignmentCount: stage.DirectAssignments.Count,
             CompositionEntryCount: composition.Count,

@@ -1,12 +1,12 @@
 # Organizer problems — transversal audit
 
-**Document role:** Git-side **audit + semantic contract record**. Historical **VERIFIED** facts remain evidence from code; **Step 2** records product arbitration (2026-10-12). Step 2 **does not** authorize Application, Host, DTO, or SPA implementation until Step 3 is explicitly approved after doc review.
+**Document role:** Git-side **audit + semantic contract record**. Historical **VERIFIED** facts remain evidence from code; **Step 2** records product arbitration (2026-10-12). **Step 3 Phase 1** (2026-10-12) adds optional `problem` / `structureIssueSemantics` on three read families — additive only; **ProblemDetails** and Matchs pilot unchanged.
 
-**Step 2 status:** **PARTIALLY DECIDED** (2026-10-12 product arbitration). Principles below are normative for **Step 3 planning** only. Wire shape, full alias registry, and exact drawer implementation require **VERIFY** or remain **DEFERRED** as stated per topic.
+**Step 2 status:** **PARTIALLY DECIDED** (2026-10-12 product arbitration). **Step 3 Phase 1 status:** **IMPLEMENTED** (Application read models + TS types + pilot alias doc; SPA presentation not wired). Wire shape (single enum vs paired fields), full alias registry, and drawer/Overview consumption remain **DEFERRED** / **VERIFY** as stated per topic.
 
 **Scope:** Structure, Competition Overview, and the shell **Needs attention** drawer, plus synchronous command failures (`ProblemDetails`). **Last code audit:** 2026-10-12.
 
-**Related:** [Structure problems contract (Matchs column — paused)](./structure-problems-contract.md) · [Structure phase lifecycle UI](./structure-phase-lifecycle-ui.md) · SPA `functionalProblemPresentation.ts` (Phase 1 presentation contrat).
+**Related:** [Structure problems contract (Matchs column — paused)](./structure-problems-contract.md) · [Step 3 brief](./organizer-problems-step3-brief.md) · [Pilot aliases (D1)](./organizer-problems-pilot-aliases.md) · [Structure phase lifecycle UI](./structure-phase-lifecycle-ui.md) · SPA `functionalProblemPresentation.ts` (Phase 1 presentation contrat).
 
 ---
 
@@ -149,20 +149,13 @@ These four terms are **not** assumed to be a single exclusive enum until wire sh
 
 ---
 
-## Step 3 brief (documentation phase only — not approved for implementation)
+## Step 3 — documentation phase + Phase 1 read enrichment
 
-**Goal:** Specify how existing read models **would** expose Step 2 semantics for the pilot trio, plus POST ↔ canon documentation.
+**Full brief:** [organizer-problems-step3-brief.md](./organizer-problems-step3-brief.md).
 
-**Not authorized by this brief:** Application, Host, DTO, or SPA changes; any implementation or “spike” coding. Investigation deliverables only, until explicit post-review approval.
+**Phase 1 (implemented 2026-10-12):** Optional **`OrganizerProblemReadDto`** on R1 lifecycle transitions and R2 attention items; **`StructureIssueSemantics`** on R3 hub issues — populated via **`OrganizerProblemSemanticsResolver`** for pilot codes only. Alias table: [organizer-problems-pilot-aliases.md](./organizer-problems-pilot-aliases.md). TS mirrors: `web/src/types/organizerProblem.ts` (optional fields on structure/attention DTOs). **Not in Phase 1:** Host/ProblemDetails changes, drawer/Overview UI branching, Matchs `structure.problems` unpause.
 
-**Deliverables (planned):**
-
-1. VERIFY report for pilot codes (read disabled, issues, attention, POST codes/reasons).
-2. Conceptual field list per read family (names DEFERRED until wire shape DECIDED).
-3. Alias table for pilot only (canon ↔ lifecycle ↔ POST ↔ aggregate blockers).
-4. Explicit **non-goals**: drawer changes, Matchs pilot, ProblemDetails, SPA presentation refactor.
-
-**Exit gate for implementation:** Step 3 brief merged + VERIFY closed + product sign-off on DTO touch list.
+**Documentation still open:** V2/V3 product choices (O1/O2 in brief) for final alias registry; wire shape DEFERRED.
 
 ---
 
@@ -442,7 +435,7 @@ Pilot alias candidates (wire strings **VERIFIED** in code audit 2026-10-12; **ca
 
 1. **Audit + Step 2 record** — this document (2026-10-12).  
 2. **VERIFY checklist** — read-only code proof for pilot aliases and drawer policy.  
-3. **Step 3 brief approval** — documentation phase only; implementation only after separate explicit approval post-VERIFY.  
+3. **Step 3 documentation phase** — [organizer-problems-step3-brief.md](./organizer-problems-step3-brief.md); implementation only after brief + proposal sign-off.  
 4. **Matchs pilot** — only if explicitly unpaused in a future decision (currently excluded).  
 5. **Overview + drawer evolution** — separate product arbitration if policy change is desired.
 
