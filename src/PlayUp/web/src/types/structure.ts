@@ -312,8 +312,6 @@ export interface StructureQualificationIntent {
    * Wire camelCase matches Domain DestinationSlotKeys.
    */
   destinationSlotKeys?: string[] | null;
-  /** @deprecated Dual-read only (legacy singular wire); writes use destinationSlotKeys. */
-  destinationSlotKey?: string | null;
   /**
    * Groups A1 Place group ids (Expand index ↔ group). Duplicates allowed.
    * Mutually exclusive with destinationSlotKeys and destinationForm.
@@ -369,8 +367,6 @@ export interface StructureProgressionIntent {
    * Mutually exclusive with destinationGroupIds. Both empty = Population.
    */
   destinationSlotKeys?: string[] | null;
-  /** @deprecated Dual-read only (legacy singular wire); writes use destinationSlotKeys. */
-  destinationSlotKey?: string | null;
   /**
    * Groups A1 Place group ids (fixture index ↔ group). Duplicates allowed.
    * Mutually exclusive with destinationSlotKeys and destinationForm.

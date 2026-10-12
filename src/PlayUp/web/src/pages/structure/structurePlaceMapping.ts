@@ -6,6 +6,20 @@
 // stay in each draft module.
 // -----------------------------------------------------------------------
 
+/** Legacy singular `destinationSlotKey` on API JSON (dual-read with `destinationSlotKeys`). */
+export function wireLegacyDestinationSlotKey(
+  wire: object,
+): string | null | undefined {
+  if (!('destinationSlotKey' in wire)) {
+    return undefined;
+  }
+  const value = (wire as { destinationSlotKey?: unknown }).destinationSlotKey;
+  if (value === null) {
+    return null;
+  }
+  return typeof value === 'string' ? value : undefined;
+}
+
 /** Prefer destinationSlotKeys; coerce legacy singular to a one-element list. */
 export function coerceDestinationSlotKeys(
   keys?: string[] | null,

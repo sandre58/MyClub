@@ -5,29 +5,6 @@ import type {
   StructureStageLifecycleRevertCode,
   StructureStageLifecycleTransitionCode,
 } from '../../types';
-import {
-  resolveLifecycleAnticipatedMessage,
-  resolveLifecycleMutationMessage,
-} from './problems';
-
-/** @deprecated Prefer {@link resolveLifecycleAnticipatedMessage} from `./problems`. */
-export function lifecycleDisabledMessage(
-  t: TFunction<'structure'>,
-  code: string | null | undefined,
-): string {
-  if (!code) {
-    return '';
-  }
-  return resolveLifecycleAnticipatedMessage(t, code);
-}
-
-/** @deprecated Prefer {@link resolveLifecycleMutationMessage} from `./problems`. */
-export function lifecycleMutationMessage(
-  tStructure: TFunction<'structure'>,
-  error: unknown,
-): string {
-  return resolveLifecycleMutationMessage(tStructure, error);
-}
 
 export function transitionActionLabel(
   t: TFunction<'structure'>,
@@ -110,9 +87,3 @@ export function mutationSuccessToast(
       return t('lifecycle.toast.updated');
   }
 }
-
-/** @deprecated use {@link mutationPendingLabel} */
-export const transitionPendingLabel = mutationPendingLabel;
-
-/** @deprecated use {@link mutationSuccessToast} */
-export const transitionSuccessToast = mutationSuccessToast;

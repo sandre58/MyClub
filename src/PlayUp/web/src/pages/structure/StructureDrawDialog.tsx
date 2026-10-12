@@ -57,7 +57,7 @@ import {
   resolveStageDrawCreateGate,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
-  countAlignedSlotPlacements,
+  countAlignedDrawPlacements,
   drawResolutionPlacementCount,
   stageHasPublishedAppliedDraw,
   projectSlotDrawResult,
@@ -893,7 +893,7 @@ function DrawExecutionDetail({
   const { t: tStructure } = useTranslation('structure');
   const ui = getDrawUiProjection(draw, slots);
 
-  const alignedCount = countAlignedSlotPlacements(draw, slots, groups);
+  const alignedCount = countAlignedDrawPlacements(draw, slots, groups);
   const canPublishAndApply =
     draw.status === 'Draft' &&
     draw.resolutionState === 'Resolved' &&

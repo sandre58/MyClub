@@ -132,7 +132,7 @@ describe('structureReadinessSummary', () => {
     expect(summary.hasAny).toBe(true);
     expect(summary.headerTone).toBe('danger');
     expect(summary.presentedProblemCount).toBe(2);
-    expect(summary.totalProblemCount).toBe(2);
+    expect(summary.presentedProblemCount).toBe(2);
   });
 
   it('counts population shortfall under capacity when no structureIssues', () => {
@@ -194,7 +194,7 @@ describe('structureReadinessSummary', () => {
     });
     const summary = computeStructureReadinessSummary(view([final]), [final]);
     expect(summary.familyCounts).toEqual([{ family: 'result', count: 1 }]);
-    expect(summary.totalProblemCount).toBe(1);
+    expect(summary.presentedProblemCount).toBe(1);
     expect(summary.headerTone).toBe('attention');
   });
 

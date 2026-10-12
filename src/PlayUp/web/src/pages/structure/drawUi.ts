@@ -834,13 +834,3 @@ export function pickReleasableCancelledDraw(input: {
   }
   return best;
 }
-
-/** @deprecated Prefer {@link countAlignedDrawPlacements}. */
-export function countAlignedSlotPlacements(
-  draw: StageDraw,
-  slots: StageSlot[],
-  groups: ReadonlyArray<StageGroupOverview> = [],
-  schematicCases?: ReadonlyArray<SchematicCase>,
-): number {
-  return countAlignedDrawPlacements(draw, slots, groups, schematicCases);
-}

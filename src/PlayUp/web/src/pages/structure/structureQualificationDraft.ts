@@ -14,6 +14,7 @@ import { isPopulationDestination } from './structureProgressionDraft';
 import {
   coerceDestinationGroupIds,
   coerceDestinationSlotKeys,
+  wireLegacyDestinationSlotKey,
   countEmptyPlaceSlots,
   placeMappingGap,
   resizeDestinationSlotKeys,
@@ -22,6 +23,7 @@ import {
 export {
   coerceDestinationGroupIds,
   coerceDestinationSlotKeys,
+  wireLegacyDestinationSlotKey,
   fillEmptyPlaceKeysAllowingReuse,
   fillEmptyPlaceSlotKeys,
   resizeDestinationSlotKeys,
@@ -205,7 +207,7 @@ export function intentFromApi(
   const groupIds = coerceDestinationGroupIds(intent.destinationGroupIds);
   const keys = coerceDestinationSlotKeys(
     intent.destinationSlotKeys,
-    intent.destinationSlotKey,
+    wireLegacyDestinationSlotKey(intent),
   );
   const form = !!intent.destinationForm;
   const population = !form && groupIds.length === 0 && keys.length === 0;

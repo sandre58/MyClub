@@ -11,7 +11,6 @@ import { inboundPopulationConfiguredVolume } from './structurePopulationVolume';
 import {
   STRUCTURE_DIAGNOSTIC_FAMILIES,
   countStructureIssuesByFamily,
-  isSlotFeedAwaitingDraw,
   projectPresentedStageIssueCodes,
   structureDiagnosticFamily,
   structureDiagnosticMeta,
@@ -50,8 +49,6 @@ export type StructureReadinessSummary = {
   presentedProblemCount: number;
   /** Diagnostics with a banner CTA (full list, not capped at 3). */
   actionableCount: number;
-  /** @deprecated Use presentedProblemCount — kept for tests during transition. */
-  totalProblemCount: number;
   /** Phases without graph/shortfall but Groups + engaged draw + missing pots (E1/E6). */
   missingPotsPhaseCount: number;
   /** CupBracketInvalid on an existing structure. */
@@ -165,7 +162,6 @@ export function computeStructureReadinessSummary(
       familyCounts: [],
       presentedProblemCount: 0,
       actionableCount: 0,
-      totalProblemCount: 0,
       missingPotsPhaseCount: 0,
       shapeInvalid: false,
       hasAny: false,
@@ -213,7 +209,6 @@ export function computeStructureReadinessSummary(
     familyCounts,
     presentedProblemCount,
     actionableCount,
-    totalProblemCount: presentedProblemCount,
     missingPotsPhaseCount,
     shapeInvalid,
     hasAny,
@@ -225,6 +220,3 @@ export function computeStructureReadinessSummary(
     }),
   };
 }
-
-/** @deprecated — prefer isSlotFeedAwaitingDraw from diagnostic presentation. */
-export { isSlotFeedAwaitingDraw };
