@@ -155,7 +155,7 @@ These four terms are **not** assumed to be a single exclusive enum until wire sh
 
 **Phase 1 (implemented 2026-10-12):** Optional **`OrganizerProblemReadDto`** on R1 lifecycle transitions and R2 attention items; **`StructureIssueSemantics`** on R3 hub issues — populated via **`OrganizerProblemSemanticsResolver`** for pilot codes only. Alias table: [organizer-problems-pilot-aliases.md](./organizer-problems-pilot-aliases.md). TS mirrors: `web/src/types/organizerProblem.ts` (optional fields on structure/attention DTOs). **Not in Phase 1:** Host/ProblemDetails changes, drawer/Overview UI branching, Matchs `structure.problems` unpause.
 
-**Documentation still open:** **O2** (V3 qualification); wire shape **O3** DEFERRED. **O1 (V2 cycle prepare):** DECIDED Option B (layered model) — 2026-10-12.
+**Documentation still open:** wire shape **O3** DEFERRED. **O1 (V2):** Option B layered — 2026-10-12. **O2 (V3):** Option A Attention + remediation — 2026-10-12.
 
 ---
 
@@ -203,7 +203,7 @@ These four terms are **not** assumed to be a single exclusive enum until wire sh
 | :---- | :------ |
 | **Observed (VERIFIED)** | `NeedsAttentionAssembler` emits `QualificationPending` with `SeverityBlocking` when qualification destination is pending (`DestinationSatisfaction.Kind.Pending`) or destination stage missing. Overview maps source → `actionCode` `ApplyQualification`, impact `BlocksProgression`. Attention item is **not** a lifecycle disabled code; drawer shows items from `GET /attention` mapped via `needsAttentionItemsToSituations` (`nature` = severity, typically `Blocking`). |
 | **Conclusion (engineering)** | Attention item signals **pending qualification work** and suggests **ApplyQualification** — it is **not** the same shape as lifecycle `disabledReasonCode`. Apply may be the **remediation**, not a blocked action in the CompleteStage sense. **Candidate semantic level (Step 2 defs):** **Attention**, not Gate on a single named transition. |
-| **Product DECIDED** | Open: explicit `blocksAction` list for qualification (if any) vs “actionable attention only”. **Owner:** product. **Condition:** Step 3 doc for attention item semantics. |
+| **Product DECIDED (O2, 2026-10-12)** | **Option A — Attention + remediation hint:** `QualificationPending` = **Attention** (not lifecycle Gate). **`ApplyQualification`** = **suggested remediation** (`suggestedActionCode` / Overview `actionCode`), **not** a mandatory `blocksAction` list. Empty `blockedActions` on optional `problem` is normative for this code. Drawer inclusion remains **policy**, not implied by semantic level. |
 
 ### V4 — Drawer policy vs `GET /attention`
 

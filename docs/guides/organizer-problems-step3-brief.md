@@ -108,7 +108,7 @@ Track resolution of:
 | ID | Topic | Owner | Blocks |
 | :- | :---- | :---- | :----- |
 | O1 | V2: one problem vs presentation layers for cycle prepare | Product + tech | **DECIDED 2026-10-12 — Option B (layered)** |
-| O2 | V3: `blocksAction` for qualification attention | Product | D2 row for R2 |
+| O2 | V3: `blocksAction` for qualification attention | Product | **DECIDED 2026-10-12 — Option A (Attention + remediation)** |
 | O3 | Wire shape (enum vs dual fields) | Product + tech lead | Implementation proposal |
 
 ### D5 — Implementation proposal (appendix — proposal only)
@@ -136,12 +136,13 @@ After D1–D4 approved:
 
 Option A (single problem, flat aliases) **rejected** for this pilot — it understates the lifecycle aggregate vs hub fact distinction (VERIFY V2/V5).
 
-### 5.2 V3 — Qualification attention
+### 5.2 V3 — Qualification attention — **DECIDED (2026-10-12, O2 Option A)**
 
-Choose whether `QualificationPending` carries:
+- **Semantic level:** **Attention** only — not a lifecycle `disabledReasonCode` Gate.
+- **Remediation:** **`ApplyQualification`** as **suggested action** (`suggestedActionCode` on optional `problem`; Overview `actionCode` unchanged).
+- **`blockedActions`:** **Empty** for this code — do **not** invent a gate list without a future engineering audit (Option B **deferred** unless product reopens).
 
-- **Option A:** `semanticLevel: Attention` only; `actionCode: ApplyQualification` as remediation hint (current Overview mapping).
-- **Option B:** Explicit `blocksAction` listing actions that are unsafe or unavailable until qualification is applied (requires engineering audit of ApplyQualification preconditions).
+Option B (explicit blocked-action list) **not adopted** for the pilot; revisit only if product needs parity with command-level refusals on qualification paths.
 
 ---
 
@@ -167,7 +168,7 @@ Step 3 documentation phase is **complete** when:
 
 - [ ] D1–D4 merged and linked from [organizer-problems-audit.md](./organizer-problems-audit.md)
 - [x] O1 **DECIDED** (2026-10-12 — V2 Option B layered model)
-- [ ] O2 **DECIDED** (or explicitly DEFERRED with owner + date)
+- [x] O2 **DECIDED** (2026-10-12 — V3 Option A Attention + remediation)
 - [ ] D5 approved as **proposal** (or explicitly deferred)
 - [ ] Product + tech sign-off recorded (Notion decision link optional; Git commit message or brief header)
 - [ ] `structure-problems-contract.md` remains **Paused** unless a **separate** decision includes Matchs in implementation scope
