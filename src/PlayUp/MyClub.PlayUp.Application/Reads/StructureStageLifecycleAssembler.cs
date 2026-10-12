@@ -55,6 +55,9 @@ public static class StructureStageLifecycleAssembler
     /// <summary>Revert disabled — matches attached to the stage.</summary>
     public const string DisabledProductionPresent = "ProductionPresent";
 
+    /// <summary>Start disabled — eligible confrontations not fully materialized.</summary>
+    public const string DisabledUnmaterializedConfrontations = "UnmaterializedConfrontations";
+
     /// <summary>Revert disabled — match sportively engaged.</summary>
     public const string DisabledMatchLifecycleStarted = "MatchLifecycleStarted";
 
@@ -139,9 +142,12 @@ public static class StructureStageLifecycleAssembler
     {
         const string code = OverviewAssembler.ActionStartStage;
 
-        if (!IsInitialRoundPlayable(input.Stage))
+        if (StageStartReadinessGuard.TryGetDisabledReasonCode(
+                input.Stage,
+                input.Competition,
+                input.MatchSummaries) is { } disabledReason)
         {
-            return BlockedTransition(code, DisabledInitialRoundNotPlayable, input, DisabledInitialRoundNotPlayable);
+            return BlockedTransition(code, disabledReason, input, disabledReason);
         }
 
         return new StructureStageLifecycleTransitionDto(code, true);
@@ -181,10 +187,9 @@ public static class StructureStageLifecycleAssembler
         StructureStageLifecycleInput input)
     {
         const string code = OverviewAssembler.ActionRevertToDraftStage;
-        var attached = input.MatchSummaries.Count(row => row.StageId.Equals(input.Stage.Id));
-        return attached == 0
-            ? new StructureStageLifecycleTransitionDto(code, true)
-            : new StructureStageLifecycleTransitionDto(code, false, DisabledProductionPresent);
+        return StageAttachedProduction.HasAttachedMatches(input.Stage, input.MatchSummaries)
+            ? new StructureStageLifecycleTransitionDto(code, false, DisabledProductionPresent)
+            : new StructureStageLifecycleTransitionDto(code, true);
     }
 
     private static StructureStageLifecycleTransitionDto ResolveRevertToReadyTransition(
@@ -367,37 +372,6 @@ public static class StructureStageLifecycleAssembler
         return stage.Matchdays.Count > 0;
     }
 
-    private static bool IsInitialRoundPlayable(Stage stage)
-    {
-        if (stage.Rounds.Count == 0)
-        {
-            return true;
-        }
-
-        var hasSlottedFixtures = stage.Rounds
-            .SelectMany(round => round.Fixtures)
-            .Any(fixture => fixture.SlotAKey is not null || fixture.SlotBKey is not null);
-        if (!hasSlottedFixtures)
-        {
-            return true;
-        }
-
-        var initialRound = stage.Rounds[0];
-        return initialRound.Fixtures.Any(fixture => IsFixturePlayable(stage, fixture));
-    }
-
-    private static bool IsFixturePlayable(Stage stage, Fixture fixture)
-    {
-        if (fixture.SlotAKey is null || fixture.SlotBKey is null)
-        {
-            return false;
-        }
-
-        var slotA = stage.Slots.FirstOrDefault(slot => slot.SlotKey == fixture.SlotAKey);
-        var slotB = stage.Slots.FirstOrDefault(slot => slot.SlotKey == fixture.SlotBKey);
-        return slotA?.EntryId is not null && slotB?.EntryId is not null;
-    }
-
     private static (string? Section, string? Focus, bool Manual, bool OpenDraw) MapRemediationDeepLink(
         string remediationCode)
     {
@@ -411,7 +385,7 @@ public static class StructureStageLifecycleAssembler
             return (null, "operational-placement", true, false);
         }
 
-        if (remediationCode == ChecklistMatches)
+        if (remediationCode is ChecklistMatches or DisabledUnmaterializedConfrontations)
         {
             return ("matchs", null, false, false);
         }

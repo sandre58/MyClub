@@ -70,7 +70,7 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
-    public void Assemble_Ready_projects_Start_enabled()
+    public void Assemble_Ready_without_teams_projects_Start_enabled()
     {
         var situation = TestCompetition.Create("Lifecycle Ready", _clock)
             .WithStructure(StructureIntent.Championship(stageName: "League"))

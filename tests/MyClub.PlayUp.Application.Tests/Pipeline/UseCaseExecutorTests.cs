@@ -142,6 +142,9 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
         SetupCompetitionLookup(competitions, scenario.Competition);
+        matches
+            .Setup(repository => repository.ListByStageForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -190,6 +193,9 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
         SetupCompetitionLookup(competitions, scenario.Competition);
+        matches
+            .Setup(repository => repository.ListByStageForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
         var act = async () => await executor.StartStageAsync(scenario.Stage.Id);

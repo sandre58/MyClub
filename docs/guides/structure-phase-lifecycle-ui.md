@@ -411,7 +411,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | Transition | V2 | Current | Status | Locations |
 | :--------- | :--- | :------ | :----- | :-------- |
 | Prepare | Draft → Ready, existing gates | Same | **ALIGNED** | `PrepareStage.cs`, `Stage.Prepare` |
-| Start readiness | Per-format initial scope (Ch/G: no eligible unmaterialized; Cup: first playable round materialized; Swiss: progressive, 0 match OK) | Domain: `EnsureInitialRoundPlayableWhenPositional` for **cup positional only**; no Ch/G eligible gate. Read: `ResolveStartTransition` mirrors cup playable check only. **Start from Ready with 0 matches** allowed for non-positional stages (tests). | **GAP** | `Stage.Start`, `StructureStageLifecycleAssembler.ResolveStartTransition` |
+| Start readiness | Per-format initial scope (Ch/G: no eligible unmaterialized; Cup: first playable round materialized; Swiss: progressive, 0 match OK) | `StageStartReadinessGuard` + `StageConfrontationMaterializationState` before `Stage.Start`; read via `TryGetDisabledReasonCode`. Cup positional still enforced in Domain. | **ALIGNED** | `StageStartReadinessGuard.cs`, `UseCaseExecutor.Stages.cs`, `StructureStageLifecycleAssembler.ResolveStartTransition` |
 | Complete | All matches Finished/Cancelled | Same (`CompleteStage.Execute`) | **ALIGNED** | `CompleteStage.cs` |
 | RevertToDraft | Explicit; no attached matches | **Incrément 2** — `RevertToDraft` + `Application.RevertToDraftBlocked` | **ALIGNED** | `RevertToDraft.cs`, `Stage.RevertToDraft` |
 | RevertToReady | Pause; keep Scheduled/Postponed; block sportive engagement | **Incrément 2** — `RevertToReady` + dematerialize gate reuse | **ALIGNED** | `RevertToReady.cs`, `Stage.RevertToReady` |

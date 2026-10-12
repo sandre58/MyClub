@@ -334,4 +334,9 @@ public static class ApplicationErrorCodes
     /// Gets the code when RevertToReady is refused because a match was sportively engaged.
     /// </summary>
     public const string RevertToReadyBlocked = "Application.RevertToReadyBlocked";
+
+    /// <summary>
+    /// Gets the code when Start is refused because eligible confrontations are not fully materialized.
+    /// </summary>
+    public const string StartBlockedUnmaterialized = "Application.StartBlockedUnmaterialized";
 }

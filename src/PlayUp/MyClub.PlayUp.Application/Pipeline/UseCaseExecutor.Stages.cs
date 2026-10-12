@@ -80,6 +80,12 @@ public sealed partial class UseCaseExecutor
                               ApplicationErrorCodes.CompetitionNotFound);
         EnsureCompetitionAllowsLifecycleMutation(competition);
 
+        var stageMatches = await matches
+            .ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        var summaries = StageStartReadinessGuard.ToSummaryRows(stageMatches);
+        StageStartReadinessGuard.EnsureReadyToStart(stage, competition, summaries);
+
         StartStage.Execute(stage, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         LogStageStarted(logger, stageId.Value, stage.CompetitionId.Value);

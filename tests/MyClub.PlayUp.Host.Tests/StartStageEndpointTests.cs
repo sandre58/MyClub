@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
@@ -59,6 +60,20 @@ public sealed class StartStageEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
+    public async Task Start_when_unmaterialized_returns_400_StartBlockedUnmaterializedAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var stageId = await SeedReadyUnmaterializedChampionshipAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsync(StartUri(stageId), content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        GetCode(problem).Should().Be(ApplicationErrorCodes.StartBlockedUnmaterialized);
+    }
+
+    [IntegrationFact]
     public async Task Start_when_Draft_returns_409_ProblemDetailsAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -98,6 +113,25 @@ public sealed class StartStageEndpointTests(HostPostgresFixture fixture)
     {
         using var scope = factory.Services.CreateScope();
         var situation = TestCompetition.Create("Championnat Start Ready", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship(stageName: "League"))
+            .PreparePrimaryStage();
+        var stage = situation.RequirePrimaryStage();
+        var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
+        foreach (var match in materialized.CreatedMatches)
+        {
+            situation.TrackMatch(match);
+        }
+
+        await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
+        return stage.Id;
+    }
+
+    private async Task<StageId> SeedReadyUnmaterializedChampionshipAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var situation = TestCompetition.Create("Championnat Start Blocked", _clock)
+            .WithTeams("A", "B", "C", "D")
             .WithStructure(StructureIntent.Championship(stageName: "League"))
             .PreparePrimaryStage();
         await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);

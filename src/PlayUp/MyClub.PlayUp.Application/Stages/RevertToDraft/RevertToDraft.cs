@@ -28,7 +28,7 @@ public static class RevertToDraft
         ArgumentNullException.ThrowIfNull(stageMatches);
         ArgumentNullException.ThrowIfNull(clock);
 
-        if (stageMatches.Any(match => stage.HasMatch(match.Id)))
+        if (StageAttachedProduction.HasAttachedMatches(stage, stageMatches))
         {
             throw new ApplicationFailureException(
                 "RevertToDraft is blocked because matches are attached to the stage.",
