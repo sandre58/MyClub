@@ -11,6 +11,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 
 namespace MyClub.PlayUp.Development.Orchestration;
 
@@ -26,7 +27,7 @@ internal static class SeedLifecycle
         IReadOnlyList<Stage>? competitionStages = null)
     {
         var stages = competitionStages ?? [stage];
-        PrepareStage.Execute(stage, stages, context.Clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
         PrepareCompetition.Execute(competition, context.Clock);
         StartStage.Execute(stage, context.Clock);
         StartCompetition.Execute(competition, context.Clock);
@@ -42,7 +43,7 @@ internal static class SeedLifecycle
         IReadOnlyList<Stage>? competitionStages = null)
     {
         var stages = competitionStages ?? [stage];
-        PrepareStage.Execute(stage, stages, context.Clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
         PrepareCompetition.Execute(competition, context.Clock);
     }
 
@@ -245,7 +246,7 @@ internal static class SeedLifecycle
         IReadOnlyList<Stage>? competitionStages = null)
     {
         var stages = competitionStages ?? [stage];
-        PrepareStage.Execute(stage, stages, context.Clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
         StartStage.Execute(stage, context.Clock);
     }
 }

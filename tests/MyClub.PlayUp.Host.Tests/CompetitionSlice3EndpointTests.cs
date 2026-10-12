@@ -35,6 +35,11 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
             .Structure;
         var stageId = org.Format.PrimaryStageId!.Value;
 
+        using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
         using var materializeResponse = await client.PostAsync(
             $"/stages/{stageId}/matches/materialize",
             null);
@@ -121,6 +126,11 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         using var apply = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/apply", null);
         apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
+        using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
         using var materialize = await client.PostAsync(
             $"/stages/{stageId}/matches/materialize",
             null);
@@ -174,6 +184,11 @@ public sealed class CompetitionSlice3EndpointTests(HostPostgresFixture fixture)
         publish.EnsureSuccessStatusCode();
         using var apply = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/apply", null);
         apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
 
         using var materialize = await client.PostAsJsonAsync(
             $"/stages/{stageId}/matches/materialize-from-slots",

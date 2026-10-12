@@ -33,6 +33,11 @@ public sealed class DematerializeEndpointTests(HostPostgresFixture fixture)
         var stageId = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
             .Structure.Format.PrimaryStageId!.Value;
 
+        using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
         using (var materialize = await client.PostAsync($"/stages/{stageId}/matches/materialize", null))
         {
             materialize.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -104,6 +109,11 @@ public sealed class DematerializeEndpointTests(HostPostgresFixture fixture)
         using (var apply = await client.PostAsync($"/stages/{stageId}/draws/{draw.DrawId}/apply", null))
         {
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
         using (var materialize = await client.PostAsJsonAsync(

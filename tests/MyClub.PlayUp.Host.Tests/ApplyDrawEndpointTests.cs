@@ -93,11 +93,21 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
+        using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, seed.StageId.Value))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
         using (var materialize = await client.PostAsJsonAsync(
                    MaterializeUri(seed.StageId),
                    new MaterializeCupFromOccupiedSlotsRequest(["P1"])))
         {
             materialize.StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
+        using (var startStage = await HostStageHttpHelpers.PostStartAsync(client, seed.StageId.Value))
+        {
+            startStage.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
         MatchId matchId;

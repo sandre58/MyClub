@@ -53,12 +53,35 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             draw.Resolution.State.Should().Be(DrawResolutionState.Resolved);
         }
 
-        // ApplyDraw (Slot occupancy) then materialize confrontations.
+        // ApplyDraw (Slot occupancy) then author progression while Draft.
         using (var apply = await client.PostAsync(
                    ApplyDrawUri(seed.QuarterStageId, seed.DrawId),
                    content: null))
         {
             apply.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var quarter = await stages.GetByIdForUpdateAsync(seed.QuarterStageId);
+            quarter!.ReplaceProgressionRules(
+                new ProgressionRules(
+                [
+                    new ProgressionPath(
+                        "P1",
+                        ProgressionOutcome.Winner,
+                        ProgressionDestination.ForPopulation(seed.SemiStageId))
+                ]),
+                _clock);
+            await unitOfWork.SaveChangesAsync();
+        }
+
+        // Prepare (Draft → Ready) then materialize confrontations.
+        using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
         using (var materialize = await client.PostAsJsonAsync(
@@ -74,38 +97,20 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
         {
             var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
             var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
             var quarter = await stages.GetByIdForUpdateAsync(seed.QuarterStageId);
             var pairFixture = quarter!.FindFixtureByBracketPairKey("P1");
             pairFixture.Should().NotBeNull();
             fixtureId = pairFixture.Id;
             matchId = pairFixture.MatchIds.Should().ContainSingle().Subject;
 
-            quarter.ReplaceProgressionRules(
-                new ProgressionRules(
-                [
-                    new ProgressionPath(
-                        pairFixture.BracketPairKey!,
-                        ProgressionOutcome.Winner,
-                        ProgressionDestination.ForPopulation(seed.SemiStageId))
-                ]),
-                _clock);
-            await unitOfWork.SaveChangesAsync();
-
             var match = await matches.GetByIdForUpdateAsync(matchId);
             match.Should().NotBeNull();
-            match.Status.Should().Be(MatchStatus.Scheduled);
+            match!.Status.Should().Be(MatchStatus.Scheduled);
             match.HomeEntryId.Should().Be(seed.Home);
             match.AwayEntryId.Should().Be(seed.Away);
             match.StageId.Should().Be(seed.QuarterStageId);
             match.CompetitionId.Should().Be(seed.CompetitionId);
             match.Result.Should().BeNull();
-        }
-
-        // Prepare after fixtures + progression exist (Draft → Ready).
-        using (var prepare = await client.PostAsync(PrepareUri(seed.QuarterStageId), content: null))
-        {
-            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
         using (var scope = factory.Services.CreateScope())
@@ -123,6 +128,11 @@ public sealed class R2HostEndToEndTests(HostPostgresFixture fixture)
             semiOverview.Should().NotBeNull();
             semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().BeNull();
             semiOverview.Slots.Single(slot => slot.SlotKey == "SF1-B").EntryId.Should().BeNull();
+        }
+
+        using (var startStage = await HostStageHttpHelpers.PostStartAsync(client, seed.QuarterStageId.Value))
+        {
+            startStage.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
         // StartMatch

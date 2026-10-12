@@ -19,7 +19,11 @@ namespace MyClub.PlayUp.Development.Orchestration;
 /// </summary>
 internal static class SeedSlotDraw
 {
-    public static IReadOnlyList<Match> ApplyCupSlotDrawDeterministic(
+    /// <summary>
+    /// Occupies slots from a deterministic draw. Does not materialize — call
+    /// <see cref="SeedMaterialization.MaterializeFromSlots"/> after progression authoring while Draft.
+    /// </summary>
+    public static void ApplyCupSlotDrawDeterministic(
         ScenarioContext context,
         Competition competition,
         Stage stage)
@@ -52,7 +56,25 @@ internal static class SeedSlotDraw
         }
 
         RecordAndApplySlotDraw(context, stage, entries, slotKeys);
-        return SeedMaterialization.MaterializeFromSlots(context, competition, stage, pairKeys: null);
+    }
+
+    /// <summary>
+    /// Slot draw then materialize when no post-draw structure authoring is required.
+    /// </summary>
+    public static IReadOnlyList<Match> ApplyCupSlotDrawAndMaterialize(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage) =>
+        ApplyCupSlotDrawAndMaterialize(context, competition, stage, [stage]);
+
+    internal static IReadOnlyList<Match> ApplyCupSlotDrawAndMaterialize(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        ApplyCupSlotDrawDeterministic(context, competition, stage);
+        return SeedMaterialization.MaterializeFromSlots(context, competition, stage, pairKeys: null, competitionStages);
     }
 
     /// <summary>

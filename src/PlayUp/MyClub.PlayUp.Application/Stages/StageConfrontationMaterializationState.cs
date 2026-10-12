@@ -97,11 +97,11 @@ internal static class StageConfrontationMaterializationState
         var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
 
         return (from @group in stage.Groups
-            where @group.EntryIds.Count >= 2
-            select MaterializeMatches.BuildRoundRobinRounds([.. @group.EntryIds], stage.MatchGenerationFormat)
+                where @group.EntryIds.Count >= 2
+                select MaterializeMatches.BuildRoundRobinRounds([.. @group.EntryIds], stage.MatchGenerationFormat)
                 .SelectMany(round => round)
             into pairs
-            select pairs.Count(pair => !covered.Contains(pair))).Sum();
+                select pairs.Count(pair => !covered.Contains(pair))).Sum();
     }
 
     private static int CountCupEligible(Stage stage)
@@ -132,9 +132,11 @@ internal static class StageConfrontationMaterializationState
     private static HashSet<(EntryId Home, EntryId Away)> CoveredDirectedPairs(
         StageId stageId,
         IReadOnlyList<MatchSummaryRow> matchSummaries) =>
-        [.. matchSummaries
+    [
+        .. matchSummaries
             .Where(row => row.StageId.Equals(stageId))
-            .Select(row => (row.HomeEntryId, row.AwayEntryId))];
+            .Select(row => (row.HomeEntryId, row.AwayEntryId))
+    ];
 
     private static IReadOnlyList<EntryId> ActiveEntries(Competition competition) =>
     [

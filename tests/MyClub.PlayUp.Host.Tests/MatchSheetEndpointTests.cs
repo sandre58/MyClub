@@ -299,7 +299,10 @@ public sealed class MatchSheetEndpointTests(HostPostgresFixture fixture)
         competitions.Add(competition);
 
         var stage = Stage.Create(competition.Id, new StageName("Stage 1"), regulation, _clock);
+        stage.AddMatchday(1, _clock);
         competition.AddStage(stage.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
         stages.Add(stage);
 
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
@@ -332,7 +335,10 @@ public sealed class MatchSheetEndpointTests(HostPostgresFixture fixture)
         competitions.Add(competition);
 
         var stage = Stage.Create(competition.Id, new StageName("Stage 1"), regulation, _clock);
+        stage.AddMatchday(1, _clock);
         competition.AddStage(stage.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
         stages.Add(stage);
 
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
@@ -368,7 +374,10 @@ public sealed class MatchSheetEndpointTests(HostPostgresFixture fixture)
         competitions.Add(competition);
 
         var stage = Stage.Create(competition.Id, new StageName("Stage 1"), regulation, _clock);
+        stage.AddMatchday(1, _clock);
         competition.AddStage(stage.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
         stages.Add(stage);
 
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);

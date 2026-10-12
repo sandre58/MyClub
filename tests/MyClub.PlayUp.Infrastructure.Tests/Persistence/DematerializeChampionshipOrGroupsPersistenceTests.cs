@@ -54,6 +54,7 @@ public sealed class DematerializeChampionshipOrGroupsPersistenceTests
             stages.Add(configured.Stage);
             await unitOfWork.SaveChangesAsync();
 
+            PrepareStage.Execute(configured.Stage, [configured.Stage], _clock);
             var materialized = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
             materialized.CreatedMatches.Should().HaveCount(3);
             foreach (var match in materialized.CreatedMatches)

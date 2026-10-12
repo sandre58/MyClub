@@ -11,6 +11,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 
 namespace MyClub.PlayUp.Development.Orchestration;
 
@@ -176,7 +177,7 @@ internal static class SeedMaterialization
         => recipe.Format switch
         {
             RecipeFormat.Groups => AssignThenMaterializeGroups(context, competition, stage, entries),
-            RecipeFormat.Cup => SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, stage),
+            RecipeFormat.Cup => SeedSlotDraw.ApplyCupSlotDrawAndMaterialize(context, competition, stage, [stage]),
             RecipeFormat.Championship => MaterializeChampionshipMatches(context, competition, stage),
             RecipeFormat.Swiss => throw new InvalidOperationException(
                 "Swiss does not use MaterializeForFormat — ApplySwissProgress after PrepareAndStart."),
@@ -197,8 +198,24 @@ internal static class SeedMaterialization
         ScenarioContext context,
         Competition competition,
         Stage stage,
-        IReadOnlyList<string>? pairKeys)
+        IReadOnlyList<string>? pairKeys,
+        IReadOnlyList<Stage>? competitionStages = null,
+        bool domainPrepareForPartialSlotDrawRecette = false)
     {
+        if (domainPrepareForPartialSlotDrawRecette)
+        {
+            if (stage.Status is StageStatus.Draft)
+            {
+                // Structure Materialize recette (C2): partial slot draw — PrepareStage requires all slot feeds.
+                stage.Prepare(context.Clock);
+            }
+        }
+        else
+        {
+            var stages = competitionStages ?? [stage];
+            StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
+        }
+
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,

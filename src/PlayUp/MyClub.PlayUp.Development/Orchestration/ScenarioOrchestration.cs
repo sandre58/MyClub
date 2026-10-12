@@ -678,7 +678,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         SeedSlotDraw.EngageRandomDrawRules(quarter, context.Clock);
-        var qfMatches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
         var situation = TestCompetition.For(competition, context.Clock, quarter);
@@ -688,6 +688,12 @@ internal static class ScenarioOrchestration
             destinationKeys,
             context.Ids.Stage("sf"));
         context.Stages.Add(semi);
+
+        WireWinnerProgressionToSlotsPreMaterialize(
+            context.Ids, quarter, semi, destinationKeys, context.Clock);
+
+        var qfMatches = SeedMaterialization.MaterializeFromSlots(
+            context, competition, quarter, pairKeys: null, situation.Stages);
 
         var qfFixtures = quarter.Rounds[0].Fixtures
             .OrderBy(fixture => fixture.Id.Value)
@@ -699,10 +705,7 @@ internal static class ScenarioOrchestration
                 $"Expected 4 QF fixtures for prog-auto-place-mid, found {qfFixtures.Length}.");
         }
 
-        WireWinnerProgressionToSlots(context.Ids, quarter, semi, qfFixtures, destinationKeys, context.Clock);
-
         situation
-            .PreparePrimaryStage()
             .PrepareCompetition()
             .StartPrimaryStage()
             .StartCompetition();
@@ -1057,7 +1060,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         SeedSlotDraw.EngageRandomDrawRules(quarter, context.Clock);
-        var qfMatches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var situation = TestCompetition.For(competition, context.Clock, quarter);
         var semi = situation.AddKnockoutStage(
@@ -1066,6 +1069,13 @@ internal static class ScenarioOrchestration
             ["SF1-A", "SF1-B", "SF2-A", "SF2-B"],
             context.Ids.Stage("sf"));
         context.Stages.Add(semi);
+
+        var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
+        WireWinnerProgressionToSlotsPreMaterialize(
+            context.Ids, quarter, semi, destinationKeys, context.Clock);
+
+        var qfMatches = SeedMaterialization.MaterializeFromSlots(
+            context, competition, quarter, pairKeys: null, situation.Stages);
 
         var qfFixtures = quarter.Rounds[0].Fixtures
             .OrderBy(fixture => fixture.Id.Value)
@@ -1077,12 +1087,7 @@ internal static class ScenarioOrchestration
                 $"Expected 4 QF fixtures for cup-sf-running, found {qfFixtures.Length}.");
         }
 
-        var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
-        WireWinnerProgressionToSlots(
-            context.Ids, quarter, semi, qfFixtures, destinationKeys, context.Clock);
-
         situation
-            .PreparePrimaryStage()
             .PrepareCompetition()
             .StartPrimaryStage()
             .StartCompetition();
@@ -1092,7 +1097,12 @@ internal static class ScenarioOrchestration
 
         quarter.Complete(context.Clock);
 
-        var sfMatches = SeedMaterialization.MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
+        var sfMatches = SeedMaterialization.MaterializeFromSlots(
+            context,
+            competition,
+            semi,
+            AdjacentPairKeys(pairCount: 2),
+            situation.Stages);
         SeedLifecycle.PrepareAndStartStage(context, semi, situation.Stages);
         PlayMatches(context, competition, sfMatches, count: Math.Max(1, sfMatches.Count / 2));
 
@@ -1624,7 +1634,7 @@ internal static class ScenarioOrchestration
 
         // Engage DrawRules so Structure chrome (badge + CTA) matches the seeded Slot draw execution.
         quarter.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        var qfMatches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, quarter);
 
         var situation = TestCompetition.For(competition, context.Clock, quarter);
         var semi = situation.AddKnockoutStage(
@@ -1633,6 +1643,15 @@ internal static class ScenarioOrchestration
             ["SF1-A", "SF1-B", "SF2-A", "SF2-B"],
             context.Ids.Stage("sf"));
         context.Stages.Add(semi);
+
+        var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
+
+        // Prog Auto Place → SF Places (WhoFeeds = Progression). Intent expand stays DevSeed helper.
+        WireWinnerProgressionToSlotsPreMaterialize(
+            context.Ids, quarter, semi, destinationKeys, context.Clock);
+
+        var qfMatches = SeedMaterialization.MaterializeFromSlots(
+            context, competition, quarter, pairKeys: null, situation.Stages);
 
         var qfFixtures = quarter.Rounds[0].Fixtures
             .OrderBy(fixture => fixture.Id.Value)
@@ -1644,15 +1663,8 @@ internal static class ScenarioOrchestration
                 $"Expected 4 QF fixtures for cup-qf-sf, found {qfFixtures.Length}.");
         }
 
-        var destinationKeys = new[] { "SF1-A", "SF1-B", "SF2-A", "SF2-B" };
-
-        // Prog Auto Place → SF Places (WhoFeeds = Progression). Intent expand stays DevSeed helper.
-        WireWinnerProgressionToSlots(
-            context.Ids, quarter, semi, qfFixtures, destinationKeys, context.Clock);
-
         // SF stays Draft (from-slots opportunity). PrepareStage gates over situation.Stages.
         situation
-            .PreparePrimaryStage()
             .PrepareCompetition()
             .StartPrimaryStage()
             .StartCompetition();
@@ -1701,7 +1713,7 @@ internal static class ScenarioOrchestration
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             context.Clock);
         roundOf32.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
-        var r32Matches = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, roundOf32);
+        SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, roundOf32);
 
         var r16SlotKeys = PairSlotKeys("R16", pairCount: 8);
         var qfSlotKeys = PairSlotKeys("QF", pairCount: 4);
@@ -1727,6 +1739,12 @@ internal static class ScenarioOrchestration
 
         Stage[] allStages = [roundOf32, roundOf16, quarter, semi, final];
 
+        WireWinnerProgressionToPopulationPreMaterialize(
+            context.Ids, roundOf32, roundOf16, context.Clock, intentKey: "prog-cdf-r32");
+
+        var r32Matches = SeedMaterialization.MaterializeFromSlots(
+            context, competition, roundOf32, pairKeys: null, allStages);
+
         var r32Fixtures = roundOf32.Rounds[0].Fixtures
             .OrderBy(fixture => fixture.Id.Value)
             .Take(16)
@@ -1736,9 +1754,6 @@ internal static class ScenarioOrchestration
             throw new InvalidOperationException(
                 $"Expected 16 R32 fixtures for coupe-de-france, found {r32Fixtures.Length}.");
         }
-
-        WireWinnerProgressionToPopulation(
-            context.Ids, roundOf32, roundOf16, r32Fixtures, context.Clock, intentKey: "prog-cdf-r32");
 
         SeedLifecycle.PrepareAndStart(context, competition, roundOf32, allStages);
 
@@ -1780,9 +1795,13 @@ internal static class ScenarioOrchestration
             placeViaSlotDraw: true,
             intentKey: "prog-cdf-sf");
 
-        var finalMatches = SeedMaterialization.MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
-        var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
-        WireFinalPlacementAwards(final, finalFixture, context.Clock);
+        WireFinalPlacementAwardsPreMaterialize(final, context.Clock);
+        var finalMatches = SeedMaterialization.MaterializeFromSlots(
+            context,
+            competition,
+            final,
+            AdjacentPairKeys(pairCount: 1),
+            allStages);
         SeedLifecycle.PrepareAndStartStage(context, final, allStages);
         PlayDecisiveMatches(context, competition, finalMatches);
 
@@ -1909,9 +1928,13 @@ internal static class ScenarioOrchestration
             placeViaSlotDraw: true,
             intentKey: "prog-euro-sf");
 
-        var finalMatches = SeedMaterialization.MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
-        var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
-        WireFinalPlacementAwards(final, finalFixture, context.Clock);
+        WireFinalPlacementAwardsPreMaterialize(final, context.Clock);
+        var finalMatches = SeedMaterialization.MaterializeFromSlots(
+            context,
+            competition,
+            final,
+            AdjacentPairKeys(pairCount: 1),
+            allStages);
         SeedLifecycle.PrepareAndStartStage(context, final, allStages);
         PlayDecisiveMatches(context, competition, finalMatches);
 
@@ -2023,19 +2046,32 @@ internal static class ScenarioOrchestration
             nextSlotKeys: sfSlotKeys,
             allStages);
 
-        var sfMatches = SeedMaterialization.MaterializeFromSlots(context, competition, semi, AdjacentPairKeys(pairCount: 2));
+        WireSemiToFinalAndBronzeAutoPlacePreMaterialize(
+            semi, final, bronze, finalSlotKeys, bronzeSlotKeys, context.Clock);
+        WireFinalAndBronzePlacementAwardsPreMaterialize(final, bronze, context.Clock);
+        var sfMatches = SeedMaterialization.MaterializeFromSlots(
+            context,
+            competition,
+            semi,
+            AdjacentPairKeys(pairCount: 2),
+            allStages);
         var sfFixtures = OrderedFixtures(semi, expectedCount: 2);
-        WireSemiToFinalAndBronzeAutoPlace(
-            semi, final, bronze, sfFixtures, finalSlotKeys, bronzeSlotKeys, context.Clock);
         SeedLifecycle.PrepareAndStartStage(context, semi, allStages);
         PlayDecisiveMatches(context, competition, sfMatches);
         ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
 
-        var finalMatches = SeedMaterialization.MaterializeFromSlots(context, competition, final, AdjacentPairKeys(pairCount: 1));
-        var bronzeMatches = SeedMaterialization.MaterializeFromSlots(context, competition, bronze, AdjacentPairKeys(pairCount: 1));
-        var finalFixture = OrderedFixtures(final, expectedCount: 1)[0];
-        var bronzeFixture = OrderedFixtures(bronze, expectedCount: 1)[0];
-        WireFinalAndBronzePlacementAwards(final, finalFixture, bronze, bronzeFixture, context.Clock);
+        var finalMatches = SeedMaterialization.MaterializeFromSlots(
+            context,
+            competition,
+            final,
+            AdjacentPairKeys(pairCount: 1),
+            allStages);
+        var bronzeMatches = SeedMaterialization.MaterializeFromSlots(
+            context,
+            competition,
+            bronze,
+            AdjacentPairKeys(pairCount: 1),
+            allStages);
         SeedLifecycle.PrepareAndStartStage(context, final, allStages);
         SeedLifecycle.PrepareAndStartStage(context, bronze, allStages);
         PlayDecisiveMatches(context, competition, finalMatches);
@@ -2293,18 +2329,19 @@ internal static class ScenarioOrchestration
         bool placeViaSlotDraw = false,
         string intentKey = "prog-winner")
     {
-        var matches = SeedMaterialization.MaterializeFromSlots(context, competition, stage, pairKeys);
-        var fixtures = OrderedFixtures(stage, expectedFixtures);
         if (placeViaSlotDraw)
         {
-            WireWinnerProgressionToPopulation(
-                context.Ids, stage, nextStage, fixtures, context.Clock, intentKey);
+            WireWinnerProgressionToPopulationPreMaterialize(
+                context.Ids, stage, nextStage, context.Clock, intentKey);
         }
         else
         {
-            WireWinnerProgressionToSlots(
-                context.Ids, stage, nextStage, fixtures, nextSlotKeys, context.Clock, intentKey);
+            WireWinnerProgressionToSlotsPreMaterialize(
+                context.Ids, stage, nextStage, nextSlotKeys, context.Clock, intentKey);
         }
+
+        var matches = SeedMaterialization.MaterializeFromSlots(context, competition, stage, pairKeys, allStages);
+        var fixtures = OrderedFixtures(stage, expectedFixtures);
 
         SeedLifecycle.PrepareAndStartStage(context, stage, allStages);
         PlayDecisiveMatches(context, competition, matches);
@@ -2313,6 +2350,39 @@ internal static class ScenarioOrchestration
         {
             SeedSlotDraw.PlacePopulationIntoSlotsViaDraw(context, competition, nextStage, nextSlotKeys);
         }
+    }
+
+    private static string PrimaryBracketPairKey(Stage stage) =>
+        stage.BracketPairs.OrderBy(pair => pair.PairKey, StringComparer.Ordinal).First().PairKey;
+
+    private static void WireFinalPlacementAwardsPreMaterialize(Stage final, IClock clock)
+    {
+        var pairKey = PrimaryBracketPairKey(final);
+        final.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(pairKey, ProgressionOutcome.Winner, rank: 1),
+                new PlacementAwardPath(pairKey, ProgressionOutcome.Loser, rank: 2)
+            ]),
+            clock);
+        EnsureDecisiveRoundTieFormats(final, clock);
+    }
+
+    private static void WireFinalAndBronzePlacementAwardsPreMaterialize(
+        Stage final,
+        Stage bronze,
+        IClock clock)
+    {
+        WireFinalPlacementAwardsPreMaterialize(final, clock);
+        var bronzePairKey = PrimaryBracketPairKey(bronze);
+        bronze.ReplacePlacementAwardRules(
+            new PlacementAwardRules(
+            [
+                new PlacementAwardPath(bronzePairKey, ProgressionOutcome.Winner, rank: 3),
+                new PlacementAwardPath(bronzePairKey, ProgressionOutcome.Loser, rank: 4)
+            ]),
+            clock);
+        EnsureDecisiveRoundTieFormats(bronze, clock);
     }
 
     private static void WireFinalPlacementAwards(Stage final, Fixture finalFixture, IClock clock)
@@ -2694,35 +2764,21 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Prog Sorties: Winner of each fixture in one round → destination Population (Intents SoT).
+    /// Winner→Population authoring while the source stage is still Draft (before cup materialize).
     /// </summary>
-    private static void WireWinnerProgressionToPopulation(
+    private static void WireWinnerProgressionToPopulationPreMaterialize(
         DeterministicIdFactory ids,
         Stage source,
         Stage destination,
-        Fixture[] fixtures,
         IClock clock,
         string intentKey = "prog-winner")
     {
         ArgumentNullException.ThrowIfNull(ids);
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(destination);
-        ArgumentNullException.ThrowIfNull(fixtures);
         ArgumentNullException.ThrowIfNull(clock);
 
-        if (fixtures.Length == 0)
-        {
-            throw new InvalidOperationException("Winner→Population progression requires at least one fixture.");
-        }
-
-        var round = source.Rounds.FirstOrDefault(candidate =>
-            fixtures.All(fixture => candidate.Fixtures.Any(rf => rf.Id.Equals(fixture.Id))));
-        if (round is null || round.Fixtures.Count != fixtures.Length)
-        {
-            throw new InvalidOperationException(
-                "Winner→Population fixtures must be exactly the fixtures of one source round.");
-        }
-
+        var round = source.Rounds[0];
         source.ReplaceProgressionRules(
             ProgressionRules.FromIntents(
                 [
@@ -2732,6 +2788,46 @@ internal static class ScenarioOrchestration
                         round.Id,
                         ProgressionOutcome.Winner,
                         destination.Id)
+                ],
+                source.Rounds,
+                source.BracketPairs),
+            clock);
+        EnsureDecisiveRoundTieFormats(source, clock);
+    }
+
+    /// <summary>
+    /// Prog Auto Place authoring while the source stage is still Draft (before cup materialize).
+    /// </summary>
+    private static void WireWinnerProgressionToSlotsPreMaterialize(
+        DeterministicIdFactory ids,
+        Stage source,
+        Stage destination,
+        string[] slotKeys,
+        IClock clock,
+        string intentKey = "prog-winner")
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(slotKeys);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        if (slotKeys.Length == 0)
+        {
+            throw new InvalidOperationException("Prog Auto Place requires at least one destination slot key.");
+        }
+
+        var round = source.Rounds[0];
+        source.ReplaceProgressionRules(
+            ProgressionRules.FromIntents(
+                [
+                    new ProgressionIntent(
+                        ids.Intent(intentKey),
+                        order: 1,
+                        round.Id,
+                        ProgressionOutcome.Winner,
+                        destination.Id,
+                        slotKeys)
                 ],
                 source.Rounds,
                 source.BracketPairs),
@@ -2797,6 +2893,45 @@ internal static class ScenarioOrchestration
                 source.BracketPairs),
             clock);
         EnsureDecisiveRoundTieFormats(source, clock);
+    }
+
+    /// <summary>
+    /// SF→Final/Bronze Auto Place authoring while the semi stage is still Draft (before cup materialize).
+    /// </summary>
+    private static void WireSemiToFinalAndBronzeAutoPlacePreMaterialize(
+        Stage semi,
+        Stage final,
+        Stage bronze,
+        string[] finalSlotKeys,
+        string[] bronzeSlotKeys,
+        IClock clock)
+    {
+        if (finalSlotKeys.Length != 2 || bronzeSlotKeys.Length != 2)
+        {
+            throw new InvalidOperationException(
+                "Final and Bronze Auto Place each require exactly 2 slot keys.");
+        }
+
+        var pairKeys = semi.BracketPairs
+            .OrderBy(pair => pair.PairKey, StringComparer.Ordinal)
+            .Select(pair => pair.PairKey)
+            .Take(2)
+            .ToArray();
+        if (pairKeys.Length != 2)
+        {
+            throw new InvalidOperationException(
+                $"Expected 2 semi bracket pairs for Final+Bronze Auto Place, found {pairKeys.Length}.");
+        }
+
+        var paths = new ProgressionPath[]
+        {
+            new(pairKeys[0], ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, finalSlotKeys[0])),
+            new(pairKeys[1], ProgressionOutcome.Winner, ProgressionDestination.ForSlot(final.Id, finalSlotKeys[1])),
+            new(pairKeys[0], ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, bronzeSlotKeys[0])),
+            new(pairKeys[1], ProgressionOutcome.Loser, ProgressionDestination.ForSlot(bronze.Id, bronzeSlotKeys[1]))
+        };
+        semi.ReplaceProgressionRules(new ProgressionRules(paths), clock);
+        EnsureDecisiveRoundTieFormats(semi, clock);
     }
 
     /// <summary>
@@ -3005,7 +3140,13 @@ internal static class ScenarioOrchestration
             stage,
             entries,
             pairCount: 2)[0];
-        _ = SeedMaterialization.MaterializeFromSlots(context, competition, stage, [firstPairKey]);
+        _ = SeedMaterialization.MaterializeFromSlots(
+            context,
+            competition,
+            stage,
+            [firstPairKey],
+            [stage],
+            domainPrepareForPartialSlotDrawRecette: true);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -3020,7 +3161,7 @@ internal static class ScenarioOrchestration
                 cancellationToken)
             .ConfigureAwait(false);
         AssignRootComposition(stage, entries, context.Clock);
-        _ = SeedSlotDraw.ApplyCupSlotDrawDeterministic(context, competition, stage);
+        _ = SeedSlotDraw.ApplyCupSlotDrawAndMaterialize(context, competition, stage);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
