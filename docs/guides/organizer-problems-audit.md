@@ -2,11 +2,11 @@
 
 **Document role:** Git-side **audit + semantic contract record**. Historical **VERIFIED** facts remain evidence from code; **Step 2** records product arbitration (2026-10-12). **Step 3 Phase 1** (2026-10-12) adds optional `problem` / `structureIssueSemantics` on three read families — additive only; **ProblemDetails** and Matchs pilot unchanged.
 
-**Step 2 status:** **PARTIALLY DECIDED** (2026-10-12 product arbitration). **Step 3 Phase 1 status:** **IMPLEMENTED** (Application read models + TS types + pilot alias doc; SPA presentation not wired). **O3 wire shape DECIDED** (2026-10-12 — structured `problem` object). Full alias registry beyond pilot trio and drawer/Overview consumption remain **DEFERRED** / optional.
+**Step 2 status:** **PARTIALLY DECIDED** (2026-10-12 product arbitration). **Post-pilot SPA (2026-10-12):** Drawer P1A/P1B (attention `problem` on rows, load retry, empty Structure link); P2B qual/progression dialogs; Matchs lifecycle `problem` copy. **Drawer selection policy unchanged** (T5). O4 expansion **pending** — [organizer-problems-o4-drawer-arbitration.md](./organizer-problems-o4-drawer-arbitration.md). **O3 wire shape DECIDED** (2026-10-12 — structured `problem` object). Full alias registry beyond pilot trio and drawer/Overview consumption remain **DEFERRED** / optional.
 
 **Scope:** Structure, Competition Overview, and the shell **Needs attention** drawer, plus synchronous command failures (`ProblemDetails`). **Last code audit:** 2026-10-12.
 
-**Related:** [Structure problems contract (Matchs column — paused)](./structure-problems-contract.md) · [Step 3 brief](./organizer-problems-step3-brief.md) · [Pilot aliases (D1)](./organizer-problems-pilot-aliases.md) · [Structure phase lifecycle UI](./structure-phase-lifecycle-ui.md) · SPA `functionalProblemPresentation.ts` (Phase 1 presentation contrat).
+**Related:** [Structure problems contract (Matchs column — paused)](./structure-problems-contract.md) · [Step 3 brief](./organizer-problems-step3-brief.md) · [G0 report](./organizer-problems-g0-report.md) · [O4 drawer atelier](./organizer-problems-o4-drawer-arbitration.md) · [P2B Structure audit](./organizer-problems-p2b-structure-audit.md) · [Pilot aliases (D1)](./organizer-problems-pilot-aliases.md) · [Structure phase lifecycle UI](./structure-phase-lifecycle-ui.md) · SPA `functionalProblemPresentation.ts`.
 
 ---
 

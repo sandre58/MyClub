@@ -62,6 +62,7 @@ import { isPopulationDestination } from './structureProgressionDraft';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { isMissingDestinationStage } from './structureSortiesDestination';
 import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
+import { findStructureIssueProblem } from '../../shell/organizerProblemRead';
 import {
   championshipTerminalRound,
   roundsWithFixtures,
@@ -491,6 +492,7 @@ export function StructureProgressionDialog({
           code,
           competitionId: data.competitionId,
           stageId: stage.stageId,
+          problem: findStructureIssueProblem(stage, code),
         }).titleKey,
         { defaultValue: code },
       ),

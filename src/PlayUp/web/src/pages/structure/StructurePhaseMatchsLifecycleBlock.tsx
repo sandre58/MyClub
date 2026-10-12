@@ -161,6 +161,7 @@ export function StructurePhaseDraftMatchsPrepare({
   const prepareProjected = transition?.code === 'PrepareStage';
   const actionEnabled = transition?.enabled ?? false;
   const disabledReason = transition?.disabledReasonCode ?? null;
+  const lifecycleProblem = transition?.problem ?? null;
   const showBlockMessage =
     prepareProjected &&
     !actionEnabled &&
@@ -170,12 +171,13 @@ export function StructurePhaseDraftMatchsPrepare({
   const prepareDisabledTooltip =
     prepareProjected &&
     shouldShowDraftPrepareDisabledTooltip(disabledReason, actionEnabled)
-      ? resolveLifecycleAnticipatedMessage(t, disabledReason!)
+      ? resolveLifecycleAnticipatedMessage(t, disabledReason!, lifecycleProblem)
       : null;
   const statusMessage = resolveDraftPrepareBodyMessage(
     t,
     showBlockMessage,
     disabledReason,
+    lifecycleProblem,
   );
 
   const prepareButtonInner = (
@@ -308,7 +310,11 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const cancelStartDisabledReason = cancelStart?.disabledReasonCode ?? null;
   const cancelStartTooltip =
     showCancelStartControl && !cancelStartEnabled && cancelStartDisabledReason
-      ? resolveLifecycleAnticipatedMessage(t, cancelStartDisabledReason)
+      ? resolveLifecycleAnticipatedMessage(
+          t,
+          cancelStartDisabledReason,
+          cancelStart?.problem ?? null,
+        )
       : cancelStartCode
         ? revertActionLabel(t, cancelStartCode)
         : null;
@@ -326,6 +332,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const showBackwardRevertControl = backwardRevertCode != null;
 
   const disabledReason = transition?.disabledReasonCode ?? null;
+  const lifecycleProblem = transition?.problem ?? null;
   const showBlockMessage =
     projectedAction != null &&
     !actionEnabled &&
@@ -334,7 +341,11 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const revertDisabledReason = revert?.disabledReasonCode ?? null;
   const pauseResumeTooltip =
     showPauseResumeControl && !revertEnabled && revertDisabledReason
-      ? resolveLifecycleAnticipatedMessage(t, revertDisabledReason)
+      ? resolveLifecycleAnticipatedMessage(
+          t,
+          revertDisabledReason,
+          revert?.problem ?? null,
+        )
       : null;
   const showRevertParagraph =
     showPauseResumeControl &&
@@ -370,7 +381,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
     projectedAction &&
     !actionEnabled &&
     disabledReason
-      ? resolveLifecycleAnticipatedMessage(t, disabledReason)
+      ? resolveLifecycleAnticipatedMessage(t, disabledReason, lifecycleProblem)
       : null;
 
   const hasLifecycleActionsEnd =
@@ -394,7 +405,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
         <div className="structure-operational-strip__message-stack">
           {showBlockMessage && disabledReason ? (
             <p className="structure-operational-strip__lifecycle-meta">
-              {resolveLifecycleAnticipatedMessage(t, disabledReason)}
+              {resolveLifecycleAnticipatedMessage(t, disabledReason, lifecycleProblem)}
               {showRemediationLink && remediationTarget ? (
                 <>
                   {' '}
@@ -411,7 +422,11 @@ function StructurePhaseMatchsLifecycleBlockBody({
           ) : null}
           {showRevertParagraph && revertDisabledReason ? (
             <p className="structure-operational-strip__lifecycle-meta">
-              {resolveLifecycleAnticipatedMessage(t, revertDisabledReason)}
+              {resolveLifecycleAnticipatedMessage(
+                t,
+                revertDisabledReason,
+                revert?.problem ?? null,
+              )}
             </p>
           ) : null}
           {transitionMutation.isError ? (

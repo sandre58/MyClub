@@ -30,6 +30,40 @@ describe('needsAttentionItemToSituation', () => {
       },
     });
   });
+
+  it('uses suggestedActionCode from optional problem payload', () => {
+    const situation = needsAttentionItemToSituation({
+      source: 'QualificationPending',
+      severity: 'Blocking',
+      targetType: 'Slot',
+      targetId: 'stage:slot-a',
+      problem: {
+        canonCode: 'QualificationPending',
+        semanticLevel: 'Attention',
+        blockedActions: [],
+        suggestedActionCode: 'ApplyQualification',
+      },
+    });
+
+    expect(situation.actionCode).toBe('ApplyQualification');
+  });
+
+  it('keeps DrawNoSolution non-actionable even with problem payload', () => {
+    const situation = needsAttentionItemToSituation({
+      source: 'DrawNoSolution',
+      severity: 'Blocking',
+      targetType: 'Draw',
+      targetId: 'draw-1',
+      problem: {
+        canonCode: 'DrawNoSolution',
+        semanticLevel: 'Attention',
+        blockedActions: [],
+      },
+    });
+    expect(situation.actionable).toBe(false);
+    expect(situation.actionCode).toBeNull();
+    expect(situation.problem?.canonCode).toBe('DrawNoSolution');
+  });
 });
 
 describe('situationDescription', () => {

@@ -63,6 +63,16 @@ describe('resolveLifecycleAnticipatedMessage', () => {
       'unavailable',
     );
   });
+
+  it('uses problem canon when lifecycle transport is an aggregate', () => {
+    const msg = resolveLifecycleAnticipatedMessage(t, 'StructureGraphInvalid', {
+      canonCode: 'CycleDetected',
+      semanticLevel: 'Gate',
+      blockedActions: ['PrepareStage'],
+      transportCode: 'StructureGraphInvalid',
+    });
+    expect(msg).toBe(enStructure.problems.lifecycle.CycleDetected);
+  });
 });
 
 describe('resolveDraftPrepareBodyMessage', () => {

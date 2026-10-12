@@ -1,6 +1,6 @@
 # Organizer problems — Step 3 brief (documentation phase)
 
-**Status:** **Phase 1 implemented (Application read models + tests).** SPA consumption and further codes remain optional. Matchs pilot **still Paused.**
+**Status:** **Phase 1–2 implemented** (Application + SPA consumption of optional `problem` for pilot surfaces). Further resolver codes optional. Matchs contract doc **still Paused** (local module only; no cross-surface generalization).
 
 **Purpose:** Record Step 2 follow-up: documentation perimeter, alias registry, and **Phase 1** additive read-model enrichment (approved 2026-10-12). Phase 1 **does not** change ProblemDetails, drawer policy, or the Paused Matchs pilot.
 
@@ -177,19 +177,18 @@ Phase 1 implementation **is** the O3 contract for the pilot perimeter.
 
 ---
 
-## 7. Exit gate (implementation)
+## 7. Exit gate (pilote Step 3)
 
-Step 3 documentation phase is **complete** when:
+**Pilote status (2026-10-12):** **closed** — Application trio + O1–O3 + [G0 report](./organizer-problems-g0-report.md). **Post-pilot** work (drawer P1, G2–G5) tracked in organizer errors roadmap — not Step 3 doc phase.
 
-- [ ] D1–D4 merged and linked from [organizer-problems-audit.md](./organizer-problems-audit.md)
-- [x] O1 **DECIDED** (2026-10-12 — V2 Option B layered model)
-- [x] O2 **DECIDED** (2026-10-12 — V3 Option A Attention + remediation)
-- [x] O3 **DECIDED** (2026-10-12 — structured `problem` object, Phase 1 wire)
-- [ ] D5 approved as **proposal** (or explicitly deferred)
-- [ ] Product + tech sign-off recorded (Notion decision link optional; Git commit message or brief header)
-- [ ] `structure-problems-contract.md` remains **Paused** unless a **separate** decision includes Matchs in implementation scope
+- [x] D1 pilot alias registry linked from audit
+- [x] O1–O3 **DECIDED** (Notion + Git)
+- [x] Phase 1 Application read enrichment shipped (`4194102e`)
+- [ ] D5 implementation proposal — **DEFERRED** (owner: product + tech lead; condition: new phase needs scoped DTO/Host/SPA contract beyond pilote; **no** `organizer-problems-implementation-proposal.md` until arbitrated)
+- [ ] Product + tech sign-off on **post-pilot** drawer/Structure tranches (optional)
+- [x] `structure-problems-contract.md` remains **Paused**
 
-**Implementation start** requires a **new** explicit authorization referencing approved D5 — not this brief alone.
+Follow-on SPA/host changes are **post-pilot increments**, not retroactive approval via D5.
 
 ---
 

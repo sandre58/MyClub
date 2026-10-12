@@ -37,8 +37,12 @@
     "emptyHost": "Aucune compétition n’est disponible.",
     "noContext": "Ouvrez une compétition pour voir ce qui demande votre attention.",
     "loadError": "Impossible de charger les éléments à traiter.",
+    "loadErrorAuth": "Vous n’avez pas accès à cette liste.",
+    "loadErrorServer": "Le service est momentanément indisponible. Réessayez dans un instant.",
+    "retry": "Réessayer",
     "emptyTitle": "Rien à traiter pour l'instant",
     "emptyHint": "Les éléments apparaissent ici lorsqu’une situation bloquée ou en attente est signalée.",
+    "emptyStructureLink": "Ouvrir Structure",
     "lede": "Situations qui demandent une action.",
     "groupBlocking": "Bloquant",
     "groupAttention": "À traiter"

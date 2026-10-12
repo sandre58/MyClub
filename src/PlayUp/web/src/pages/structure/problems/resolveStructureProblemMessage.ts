@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 
 import { apiErrorLabel } from '../../../i18n/apiErrorLabel';
 import { ApiError } from '../../../api';
+import type { OrganizerProblemRead } from '../../../types';
 import { LIFECYCLE_UNKNOWN_KEY, MUTATION_UNKNOWN_KEY } from './constants';
 import { normalizeLifecycleAnticipated } from './normalizeLifecycleAnticipated';
 import { normalizeLifecycleMutationError } from './normalizeLifecycleMutation';
@@ -9,8 +10,9 @@ import { normalizeLifecycleMutationError } from './normalizeLifecycleMutation';
 export function resolveLifecycleAnticipatedMessage(
   t: TFunction<'structure'>,
   wireCode: string,
+  problem?: OrganizerProblemRead | null,
 ): string {
-  const { messageKey } = normalizeLifecycleAnticipated(wireCode);
+  const { messageKey } = normalizeLifecycleAnticipated(wireCode, problem);
   const specific = t(messageKey, { defaultValue: '' });
   if (specific.length > 0) {
     return specific;
@@ -49,12 +51,13 @@ export function resolveDraftPrepareBodyMessage(
   t: TFunction<'structure'>,
   showBlockMessage: boolean,
   disabledReason: string | null,
+  problem?: OrganizerProblemRead | null,
 ): string {
   if (showBlockMessage && disabledReason) {
     if (disabledReason === 'StageNotReady') {
       return t(DRAFT_DETAIL_KEY);
     }
-    return resolveLifecycleAnticipatedMessage(t, disabledReason);
+    return resolveLifecycleAnticipatedMessage(t, disabledReason, problem);
   }
   return t(DRAFT_DETAIL_KEY);
 }

@@ -3,6 +3,7 @@ import { ChevronRightIcon } from '../design-system/icons/shellIcons';
 import { attentionTargetTypeLabel } from '../i18n/enumLabels';
 import { situationDescription, situationTitle } from '../i18n/situationCopy';
 import { situationPresentation } from './functionalProblemPresentation';
+import { organizerProblemPresentationCode } from './organizerProblemRead';
 import type { OverviewSituation } from '../types';
 
 type AttentionSituationRowProps = {
@@ -26,7 +27,11 @@ export function AttentionSituationRow({
   const presentation = situationPresentation(item, competitionId);
   const href = presentation.sotHref;
   const isBlocking = item.nature === 'Blocking';
-  const description = situationDescription(item.source, item.params);
+  const titleSource = organizerProblemPresentationCode(
+    item.problem,
+    item.source,
+  );
+  const description = situationDescription(titleSource, item.params);
   const targetLabel = item.targetType
     ? attentionTargetTypeLabel(item.targetType)
     : null;
@@ -39,7 +44,7 @@ export function AttentionSituationRow({
     <>
       <span className="shell-attention-drawer__row-main">
         <span className="shell-attention-drawer__row-title">
-          {situationTitle(item.source, item.params)}
+          {situationTitle(titleSource, item.params)}
         </span>
         {meta ? (
           <span className="shell-attention-drawer__row-meta ds-meta">

@@ -57,6 +57,7 @@ import { isMissingDestinationStage } from './structureSortiesDestination';
 import { areProgressionPlacesLabeled } from './structurePlaceLabel';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
 import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
+import { findStructureIssueProblem } from '../../shell/organizerProblemRead';
 import {
   countUnmappedPlaceSlots,
   emptyQualIntent,
@@ -367,6 +368,7 @@ export function StructureQualificationDialog({
           code,
           competitionId: data.competitionId,
           stageId: stage.stageId,
+          problem: findStructureIssueProblem(stage, code),
         }).titleKey,
         { defaultValue: code },
       ),

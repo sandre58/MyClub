@@ -8,6 +8,8 @@
 
 ## Status: Paused
 
+**G5 (2026-10-12):** No active implementation tasks — unpause requires explicit product decision. Matchs SPA changes in tree remain local module only.
+
 **Generalization remains suspended.** Step 2 is **PARTIALLY DECIDED** (2026-10-12): semantic **principles** are recorded in [organizer-problems-audit.md](./organizer-problems-audit.md); wire shape, alias equivalence, and drawer behaviour remain **VERIFY** / **DEFERRED** as stated there. The **Step 3 documentation phase** explicitly **excludes** this Matchs local pilot. Unpause requires a **separate** product decision — not implied by Step 2 principles or Step 3 planning.
 
 While **Paused**:

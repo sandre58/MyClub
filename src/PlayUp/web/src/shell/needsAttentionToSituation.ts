@@ -57,7 +57,11 @@ function buildSituationParams(
 export function needsAttentionItemToSituation(
   item: NeedsAttentionItem,
 ): OverviewSituation {
-  const actionCode = mapAttentionAction(item.source);
+  const actionCode =
+    item.source === 'DrawNoSolution'
+      ? null
+      : item.problem?.suggestedActionCode?.trim() ||
+        mapAttentionAction(item.source);
 
   return {
     source: item.source,
@@ -69,6 +73,7 @@ export function needsAttentionItemToSituation(
     actionCode,
     impactCode: mapAttentionImpact(item.source),
     params: buildSituationParams(item),
+    problem: item.problem ?? null,
   };
 }
 

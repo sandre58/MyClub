@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type RefObject } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchNeedsAttention } from '../api';
 import { CloseIcon } from '../design-system/icons/shellIcons';
@@ -12,6 +13,7 @@ import type { OverviewSituation } from '../types';
 import { AttentionSituationRow } from './AttentionSituationRow';
 import { partitionAttentionItems } from './attentionPartition';
 import { needsAttentionItemsToSituations } from './needsAttentionToSituation';
+import { attentionLoadErrorMessage } from './attentionLoadError';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import { SHELL_MOTION_EXIT_MS } from './shellMotion';
 
@@ -162,6 +164,7 @@ export function AttentionDrawer({
             pending={Boolean(competitionId) && attentionQuery.isPending}
             error={attentionQuery.error}
             items={items}
+            onRetry={() => void attentionQuery.refetch()}
             onNavigate={onClose}
           />
         </div>
@@ -176,6 +179,7 @@ function AttentionDrawerContent({
   pending,
   error,
   items,
+  onRetry,
   onNavigate,
 }: {
   contextState: ReturnType<typeof useShellCompetitionContext>['state'];
@@ -183,6 +187,7 @@ function AttentionDrawerContent({
   pending: boolean;
   error: unknown;
   items: OverviewSituation[];
+  onRetry: () => void;
   onNavigate: () => void;
 }) {
   const { t } = useTranslation('shell');
@@ -221,16 +226,32 @@ function AttentionDrawerContent({
 
   if (error) {
     return (
-      <p className="shell-attention-drawer__message" role="alert">
-        {t('attention.loadError')}
-      </p>
+      <div className="shell-attention-drawer__message-stack" role="alert">
+        <p className="shell-attention-drawer__message">
+          {attentionLoadErrorMessage(t, error)}
+        </p>
+        <button
+          type="button"
+          className="ds-btn ds-btn--secondary ds-btn--sm"
+          onClick={onRetry}
+        >
+          {t('attention.retry')}
+        </button>
+      </div>
     );
   }
 
   if (items.length === 0) {
     return (
       <EmptyState variant="idle" title={t('attention.emptyTitle')}>
-        {t('attention.emptyHint')}
+        {t('attention.emptyHint')}{' '}
+        <Link
+          className="ds-text-link"
+          to={`/competitions/${competitionId}/structure`}
+          onClick={onNavigate}
+        >
+          {t('attention.emptyStructureLink')}
+        </Link>
       </EmptyState>
     );
   }

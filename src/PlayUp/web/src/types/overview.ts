@@ -276,6 +276,8 @@ export interface OverviewSituation {
   /** Optional impact code for i18n; omit/null when not provided. */
   impactCode: string | null;
   params: Record<string, string>;
+  /** Populated from GET /attention only — not on Overview API situations today. */
+  problem?: import('./organizerProblem').OrganizerProblemRead | null;
 }
 
 export interface OverviewAttentionSummary {

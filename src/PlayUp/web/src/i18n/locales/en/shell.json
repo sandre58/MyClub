@@ -37,8 +37,12 @@
     "emptyHost": "No competition is available.",
     "noContext": "Open a competition to see what needs your attention.",
     "loadError": "Unable to load items needing attention.",
+    "loadErrorAuth": "You do not have access to load this list.",
+    "loadErrorServer": "The service is temporarily unavailable. Try again in a moment.",
+    "retry": "Try again",
     "emptyTitle": "Nothing to handle for now",
     "emptyHint": "Items appear here when a blocked or pending situation is reported.",
+    "emptyStructureLink": "Open Structure",
     "lede": "Situations that need action.",
     "groupBlocking": "Blocking",
     "groupAttention": "Needs attention"

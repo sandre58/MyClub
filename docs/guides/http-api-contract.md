@@ -232,7 +232,7 @@ All organizer-facing copy is owned by the SPA i18n layer. Read DTOs expose **cod
 
 - Workspace: `nextActionCode` (no `nextActionLabel`)
 - Structure: `format.kind`, `structure.matchGenerationFormat`, `readiness.blockers` (no `format.label`, no `hints`)
-- Needs Attention: `source` / `severity` / targets (no `reason`)
+- Needs Attention: `source` / `severity` / targets (no `reason`); optional additive `problem` (organizer semantics pilot — see [organizer-problems-pilot-aliases.md](./organizer-problems-pilot-aliases.md))
 - Completion: reason `code` only (no `message`)
 - Overview: codes + facts only (already)
 
@@ -258,6 +258,9 @@ Each `stages[]` hub row includes **`lifecycle`** — Structure N2 cycle band (Pr
 | `enabled` | boolean | When `code` is set and `false`, Host would reject the command |
 | `disabledReasonCode` | string \| null | Stable blocker (e.g. `ConstructionFrozen`, `OpenMatches`, flow / graph issue codes) |
 | `remediation` | object \| null | `{ "href": "/competitions/{id}/structure?stage=…", "labelKey": "<code>" }` — SPA may map `labelKey` under `structure.lifecycle.remediation.*` |
+| `problem` | object \| null | Optional pilot semantics: `canonCode`, `semanticLevel`, `blockedActions`, optional `transportCode`, optional `suggestedActionCode` |
+
+Hub rows may include optional `structureIssueSemantics[]` (same object shape) for pilot issue codes alongside `structureIssues[]`.
 
 **`matchProgress`**: `total`, `finished`, `cancelled`, `open`, `canComplete`. `canComplete` is true when every stage match is `Finished` or `Cancelled` (including **0 matches** on a Running stage).
 

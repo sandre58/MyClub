@@ -12,7 +12,8 @@
  */
 
 import { situationHref } from './situationRoutes';
-import type { OverviewSituation } from '../types';
+import { organizerProblemPresentationCode } from './organizerProblemRead';
+import type { OrganizerProblemRead, OverviewSituation } from '../types';
 import {
   structureDiagnosticMeta,
   structureDiagnosticTitleKey,
@@ -324,10 +325,12 @@ export function structureIssuePresentation(input: {
   competitionId: string;
   stageId: string;
   awaitingDraw?: boolean;
+  problem?: OrganizerProblemRead | null;
 }): FunctionalProblemPresentation {
+  const issueCode = organizerProblemPresentationCode(input.problem, input.code);
   return functionalProblemPresentation({
     source: 'StructureGraphInvalid',
-    structureIssueCode: input.code,
+    structureIssueCode: issueCode,
     competitionId: input.competitionId,
     stageId: input.stageId,
     awaitingDraw: input.awaitingDraw,
