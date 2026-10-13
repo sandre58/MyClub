@@ -12,6 +12,7 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
 
@@ -20,6 +21,24 @@ namespace MyClub.PlayUp.Application.Tests.Reads;
 public sealed class StructureMaterializeAssemblerTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 12, 0, 0, TimeSpan.Zero));
+
+    [Fact]
+    public void Championship_materialize_command_disabled_while_stage_is_Draft()
+    {
+        var situation = TestCompetition.Create("Champ draft", _clock)
+            .WithTeams("A", "B", "C")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        stage.Status.Should().Be(StageStatus.Draft);
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
+        var hub = view.Stages.Should().ContainSingle().Subject;
+
+        var materialize = hub.Materialize;
+        materialize.Should().NotBeNull();
+        materialize.CommandEnabled.Should().BeFalse();
+        materialize.EligibleCount.Should().Be(0);
+    }
 
     [Fact]
     public void Championship_create_is_counts_only_without_pair_rows()

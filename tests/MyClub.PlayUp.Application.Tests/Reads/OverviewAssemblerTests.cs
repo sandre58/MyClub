@@ -1427,6 +1427,32 @@ public sealed class OverviewAssemblerTests
     }
 
     [Fact]
+    public void Assemble_completed_stage_does_not_surface_prepare_or_start_actions()
+    {
+        var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "A", _clock);
+        var e2 = competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        var match = Match.Create(competition.Id, stage.Id, e1.Id, e2.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        stage.Complete(_clock);
+
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = [match] });
+
+        view.AvailableActions.Should().NotContain(action =>
+            action.Code == OverviewAssembler.ActionPrepareStage
+            || action.Code == OverviewAssembler.ActionStartStage);
+    }
+
+    [Fact]
     public void Assemble_completed_cup_without_placement_rules_has_no_outcome()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);

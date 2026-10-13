@@ -324,6 +324,56 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
+    public void Assemble_Running_projects_Suspend_enabled_when_no_live_match()
+    {
+        var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Scheduled);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = [ToSummaryRow(match)]
+        };
+        var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.RevertTransition.Should().NotBeNull();
+        hub.Lifecycle.RevertTransition!.Code.Should().Be(OverviewAssembler.ActionSuspendStage);
+        hub.Lifecycle.RevertTransition.Enabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Assemble_Running_projects_Suspend_disabled_when_a_match_is_live()
+    {
+        var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Scheduled);
+        match.Start(_clock);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = [ToSummaryRow(match)]
+        };
+        var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.RevertTransition!.Code.Should().Be(OverviewAssembler.ActionSuspendStage);
+        hub.Lifecycle.RevertTransition.Enabled.Should().BeFalse();
+        hub.Lifecycle.RevertTransition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledMatchLiveInProgress);
+    }
+
+    [Fact]
+    public void Assemble_Suspended_projects_Resume_enabled()
+    {
+        var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Scheduled);
+        stage.Suspend(_clock);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = [ToSummaryRow(match)]
+        };
+        var view = StructureViewAssembler.Assemble(competition, [stage], matchSummariesByStage: summaries);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.RevertTransition!.Code.Should().Be(OverviewAssembler.ActionResumeStage);
+        hub.Lifecycle.RevertTransition.Enabled.Should().BeTrue();
+    }
+
+    [Fact]
     public void Assemble_Suspended_projects_cancel_start_when_not_sportively_engaged()
     {
         var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Scheduled);

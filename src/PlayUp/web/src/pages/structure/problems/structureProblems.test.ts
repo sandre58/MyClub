@@ -127,6 +127,9 @@ describe('resolveLifecycleMutationMessageKey', () => {
     expect(resolveLifecycleMutationMessageKey('Application.StartBlockedUnmaterialized')).toBe(
       'problems.lifecycle.UnmaterializedConfrontations',
     );
+    expect(resolveLifecycleMutationMessageKey('Application.StageExploitationClosed')).toBe(
+      'problems.lifecycle.CompetitionClosed',
+    );
   });
 });
 

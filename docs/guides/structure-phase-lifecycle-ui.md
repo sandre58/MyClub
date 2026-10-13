@@ -431,13 +431,14 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | :--- | :------ | :----- | :-------- |
 | Materialize progressive in **Running** | `GenerateNextRound` requires `StageStatus.Running` | **ALIGNED** | `GenerateNextRound.cs` |
 | Start without full calendar / 0 matches | Start allowed without materialize gate for Swiss | **ALIGNED** (by absence of gate) | `Stage.Start`, `StageLifecycleTests` |
-| Materialize in Draft | Allowed today for Ch/G/Cup | **GAP** vs V2 Draft ban (non-Swiss path) | Materialize use cases |
+| Materialize in Draft (Ch/G/Cup) | **Read + command:** `StageMaterializeGuard` / `StructureMaterializeAssembler` — **Ready** only; Draft → `CommandEnabled` false | **ALIGNED** (2026-10-13 audit) | `StageMaterializeGuard.cs`, `StructureMaterializeAssemblerTests` |
+| Materialize in Draft (legacy / bypass) | Any host path that skips the guard | **Audit** before domain change — no known bypass in product Host | — |
 
 ### Read model & SPA
 
 | Surface | V2 direction | Shipped | Status |
 | :------ | :----------- | :------ | :----- |
-| Lifecycle transitions | Prepare / Start / Complete + Revert* | Prepare, Start, Complete + `revertTransition` (`StructureStageLifecycleAssembler`) | **ALIGNED** |
+| Lifecycle transitions | Prepare / Start / Complete + Revert* + Suspend / Resume | Prepare, Start, Complete, Revert*, Suspend, Resume on `revertTransition` | **ALIGNED** (Suspend/Resume tests 2026-10-13) |
 | UI placement | Matchs section / mise en service; **no** stepper band | `StructurePhaseMatchsLifecycleBlock` in operational Matchs column | **ALIGNED** (2026-10-12) |
 | Match progress gauge | Clos / total (finished + cancelled) | `finished`, `cancelled`, `open`, `total` — usable for clos/total copy | **PARTIAL** |
 | Competition Running + phase Draft/Ready (orphan) | ConstructionFrozen on **Prepare** and **Start** | Orphan = no peer Running/Suspended/Completed | **ALIGNED** | `StructureStageLifecycleAssembler.ResolvePrepareTransition`, `IsConstructionFrozenWhileCompetitionRunning` |
@@ -471,6 +472,16 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | **P3 — UI** | Visibility must match API | Matchs-section CTAs; no stepper reliance; do not hide blocked ops without disabled reason | Vitest band / operational strip (later PR) |
 
 **Incrément 1 scope (P0 + part of P1):** freeze structure in Ready, remove implicit demotion, regression tests for Swiss / Cup / `ConstructionFrozen` **unchanged** unless contract explicitly changes them.
+
+### Still open (2026-10-13 — no domain / product change without arbitration)
+
+| Topic | Status | Next step |
+| :---- | :----- | :-------- |
+| **Attribution** (`ChecklistAttribution`) | **GAP** — remediation deep link only; Prepare not disabled when placement awards incomplete | Business rule + read projection (or explicit “not a Prepare gate”) |
+| **2c** compositionCapacity vs Places N | **Bloqué** Notion | Métier |
+| **Completed** strict on Overview lifecycle actions | **ALIGNED** for Prepare/Start (none projected); sportive match ops guarded by executor | `OverviewAssemblerTests.Assemble_completed_stage_does_not_surface_prepare_or_start_actions` |
+| **Prepare checklist codes** (`Draw`, `Entries`, `Matches`, `Exits`) | Not emitted on lifecycle DTO today | Only if product reintroduces stepper/checklist surface |
+| **Outbound execute-only** (e.g. `DanglingFeedTarget`) | Partially covered when topology emits graph issues; else POST + `errors.json` | Extend read only with proven parity tests |
 
 ---
 
