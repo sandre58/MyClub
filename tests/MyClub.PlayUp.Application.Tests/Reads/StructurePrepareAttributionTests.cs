@@ -68,6 +68,8 @@ public sealed class StructurePrepareAttributionTests
         hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.ChecklistAttribution);
+        hub.Lifecycle.Transition.Remediation.Should().NotBeNull();
+        hub.Lifecycle.Transition.Remediation!.Href.Should().Contain("focus=rail-attribution");
         hub.StructureIssues.Should().Contain(CompetitionFlowAnalyzer.AuthoredAwardUnreachable);
 
         var act = () => PrepareStage.Execute(stage, [stage], _clock);

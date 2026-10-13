@@ -4,7 +4,7 @@
 
 **Problems messaging (Matchs column):** [structure-problems-contract.md](./structure-problems-contract.md) (**paused** — local pilot). Transversal audit: [organizer-problems-audit.md](./organizer-problems-audit.md) (working draft). Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
-**Last code audit:** 2026-10-13 (mutation → `problems.lifecycle` mapping, checklist i18n, read test for dangling qual). Prior: 2026-10-12 (V2 gap audit + verification matrix, § below).
+**Last code audit:** 2026-10-13 (Lifecycle V2 reste: matrice 2b copy `problems.lifecycle`, `StageNotReady` draft detail, mutation `_unknown`, Materialize Draft read, Attribution gate + cross-surface tests). Prior: 2026-10-12 (V2 gap audit + verification matrix).
 
 **Notion validation:** 2026-10-12 — [Arbitrage Structure — cycle de vie et gel construction](https://app.notion.com/p/3f775fb92d10817eb795ddb5fc52dd9c).
 
@@ -23,8 +23,8 @@
 | Lifecycle — five domain statuses | **DECIDED** |
 | UX separation — badge / stepper / match stats | **DECIDED** |
 | Rename « Réglement » (step `Regulation`) | **OPEN** — confirm exact scope of `StructureGraphInvalid` first (§ below) |
-| Prepare gates absent from stepper (false green) | **GAP** — must not imply Prepare is available |
-| Error fallback (2b) | **OPEN** — matrix below; implement only after review |
+| Prepare gates absent from stepper (false green) | **ALIGNED** — Matchs column `disabledReasonCode` + copy (no stepper) |
+| Error fallback (2b) | **ALIGNED** (2026-10-13) — `problems.lifecycle.*` + `problems.mutation._unknown` |
 | Read-model extension (2a) | **CONDITIONAL** — after 2b limits evaluated in use |
 
 ---
@@ -156,7 +156,7 @@ Read model may show `enabled: true` only when gates pass; execution can still fa
 | `Application.ConfrontationUndecidable` | Tie format cannot decide necessary confrontation |
 | Domain `StageErrorCodes.NotReady` / `InvalidConfiguration` | Local structure rules inside `Stage.Prepare` after Application gates |
 
-SPA mutation surfaces failures via generic `MutationError` (`useStructureStageLifecycleMutation.ts`) — **no** dedicated Prepare error → i18n mapping in the band yet (GAP for 2b).
+SPA lifecycle mutations map ProblemDetails via `normalizeLifecycleMutationError` → `problems.lifecycle.*` (prepare gates + `Application.Attribution`) or `errors:*`, else `problems.mutation._unknown` (**ALIGNED** 2026-10-13).
 
 ---
 
@@ -219,7 +219,7 @@ Two channels must stay distinct:
 | :------ | :-------- | :---- |
 | Band anticipated block | `structure:lifecycle.disabled.{disabledReasonCode}` | Six keys exist today; prepare-gate codes missing |
 | Band mutation error | `errors:{ProblemDetails.code}` via `apiErrorLabel` | Full wire code, e.g. `Application.SlotFeedsInvalid` → `errors:Application.SlotFeedsInvalid` |
-| Unknown mutation | Falls back to English `detail` inside `common:errorWithStatus` | **GAP** — no dedicated generic lifecycle mutation fallback yet |
+| Unknown mutation | `problems.mutation._unknown` (then `errors:*` if mapped) | **ALIGNED** |
 
 **Proposed generic fallbacks (OPEN — keys not implemented):**
 
@@ -239,7 +239,7 @@ Action code on wire: `PrepareStage`.
 | :------------------- | :-------------------------- | :-------------------------------- | :---------------- | :----------------------------- | :-------------- |
 | `CompetitionClosed` | No | Competition closed — lifecycle actions unavailable | `lifecycle.disabled.CompetitionClosed` | Show band only | **VERIFIED** today |
 | `ConstructionFrozen` | No | Competition live — phase prep frozen | `lifecycle.disabled.ConstructionFrozen` | Show band + overview link | **VERIFIED** today |
-| `StageNotReady` | **No** — aggregate `DomainAllowsPrepare` only; no sub-facts on wire | **Honest** band: preparation blocked; optional link to construction remediation — **must not** pretend to name the exact rule | `lifecycle.disabled.StageNotReady` and/or OPEN `lifecycle.disabled.PrepareBlocked` (generic) | **Reject** “healthy UI” (suppress band + green stepper). **Target:** show band or 2a | Suppressed today (**GAP**) |
+| `StageNotReady` | **No** — aggregate `DomainAllowsPrepare` only | Draft Matchs body uses `lifecycle.state.Draft.detail` (honest aggregate); other surfaces use `problems.lifecycle.StageNotReady` | `problems.lifecycle.StageNotReady` | Show band / draft detail | **ALIGNED** |
 | `StructureGraphInvalid` | Yes — step `Regulation` KO | (use stepper + remediation link) | `lifecycle.disabled.StructureGraphInvalid` | **Suppress band** | **VERIFIED** today |
 | `ConfrontationUndecidable` | Yes — step `Exits` KO (issue in exit set) | Tie format / exits | `lifecycle.disabled.ConfrontationUndecidable` or reuse `errors:Application.ConfrontationUndecidable` | **Suppress band** (to add) | Today: band may show **raw code** |
 | `OverCapacityEdge` | No | Capacity / places | `lifecycle.disabled.OverCapacityEdge` or `errors:Application.OverCapacityEdge` | Show band | Today: **raw code** |
@@ -681,18 +681,17 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 | **Notion — Arbitrage matrice 2b** | Superseded — copy lives in Matchs column; sync Notion Lifecycle UI page |
 | **This Git appendix** | Code-verified facts + **V2 gap audit** + 2b matrix draft |
 
-**Implementation (2026-10-11):** SPA PR aligned with matrix defaults (product “Go”) — `StageNotReady` band, dedup Regulation/Exits/OpenMatches, prepare-gate `lifecycle.disabled.*`, lifecycle mutation copy + `_unknown` fallbacks, `errors:Application.StageCompletionBlocked`. **2c step label unchanged** (« Réglement »). Full Notion line-by-line sign-off still recommended.
+**Implementation (2026-10-13):** Lifecycle V2 Matchs column — anticipated + mutation copy (`structureProblems/*`), prepare gates on read (`StructureStageLifecycleAssembler` + `StructurePrepareAttributionGate`), Materialize **Ready-only** read mirror, tests (`StructureStageLifecycleAssemblerTests`, `StructurePrepareAttributionTests`, `StructurePage` cross-surface). **2c** Places N label still **blocked** métier.
 
 **After formal Notion validation:** add `Notion validation: YYYY-MM-DD` and list any deviations from shipped behaviour.
 
 ---
 
-## Post-validation PR scope (template — do not implement until gate)
+## Post-validation PR scope (Lifecycle V2 — shipped 2026-10-13)
 
-- [ ] Notion matrix signed (`StageNotReady`, gates without stepper, dedup table)
-- [ ] 2c label decided
-- [ ] `_unknown` keys approved or explicitly deferred
-- [ ] SPA: band visibility / dedup only for **approved** rows
-- [ ] SPA: no read-model invention in copy layer
-- [ ] `errors:Application.StageCompletionBlocked` if Complete POST in scope
-- [ ] Tests: model helpers for dedup + one band test per critical row
+- [x] Matchs column lifecycle (no stepper); prepare gates projected on `disabledReasonCode`
+- [x] `StageNotReady` honest draft copy; prepare-gate `problems.lifecycle.*`
+- [x] `_unknown` keys (`problems.lifecycle` / `problems.mutation`)
+- [x] `errors:Application.StageCompletionBlocked`
+- [x] Tests: assembler reverts/suspend, materialize Draft, Attribution R1–R5, SPA cross-surface
+- [ ] **2c** compositionCapacity vs Places N — métier Notion (unchanged)

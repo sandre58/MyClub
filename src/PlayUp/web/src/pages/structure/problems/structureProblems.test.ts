@@ -62,6 +62,12 @@ describe('matchsColumnVisibility', () => {
 });
 
 describe('resolveLifecycleAnticipatedMessage', () => {
+  it('resolves Attribution prepare gate copy', () => {
+    expect(resolveLifecycleAnticipatedMessage(t, 'Attribution')).toContain(
+      'attribution',
+    );
+  });
+
   it('resolves known wire codes from problems.lifecycle', () => {
     expect(resolveLifecycleAnticipatedMessage(t, 'Places')).toContain('place');
     expect(resolveLifecycleAnticipatedMessage(t, 'NotInInventory')).toContain(

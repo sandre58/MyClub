@@ -336,7 +336,8 @@
       "UnmaterializedConfrontations": "Matérialisez toutes les confrontations éligibles avant de démarrer la phase.",
       "ProductionPresent": "Retirez les matchs rattachés avant de revenir en brouillon.",
       "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant d’annuler le démarrage ou de mettre la phase en pause.",
-      "MatchLiveInProgress": "Un match est en cours — terminez-le ou annulez-le avant de suspendre la phase."
+      "MatchLiveInProgress": "Un match est en cours — terminez-le ou annulez-le avant de suspendre la phase.",
+      "Attribution": "Les chemins d’attribution ne correspondent plus au tableau de cette phase — corrigez l’attribution avant de préparer."
     },
     "mutation": {
       "_unknown": "Impossible d’effectuer cette action de cycle de phase pour le moment."
@@ -352,7 +353,7 @@
       "Draw": "Terminez la configuration et l’exécution du tirage avant de préparer la phase.",
       "Matches": "Produisez les matchs requis avant de préparer la phase.",
       "Exits": "Complétez les sorties (qualification / progression) avant de préparer la phase.",
-      "Attribution": "Complétez l’attribution des places avant de préparer la phase.",
+      "Attribution": "Les chemins d’attribution ne correspondent plus au tableau de cette phase — corrigez l’attribution avant de préparer.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",

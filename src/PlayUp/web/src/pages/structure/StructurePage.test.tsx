@@ -1927,6 +1927,59 @@ describe('StructurePage Structure hub', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('blocks Prepare with Attribution copy when placement paths are structurally unreachable', async () => {
+      vi.mocked(fetchStructureView).mockResolvedValue(
+        structureView({
+          format: {
+            kind: 'Cup',
+            primaryStageId: stageId,
+            primaryStageName: 'Finale',
+            primaryStageStatus: 'Draft',
+          },
+          stages: [
+            cupStage({
+              structureIssues: ['AuthoredAwardUnreachable'],
+              lifecycle: {
+                transition: {
+                  code: 'PrepareStage',
+                  enabled: false,
+                  disabledReasonCode: 'Attribution',
+                  remediation: {
+                    href: `/competitions/${competitionId}/structure?stage=${stageId}&focus=rail-attribution`,
+                    labelKey: 'Attribution',
+                  },
+                },
+              },
+            }),
+          ],
+        }),
+      );
+      vi.mocked(fetchStageSchematic).mockResolvedValue({
+        stageId,
+        competitionId,
+        name: 'Finale',
+        status: 'Draft',
+        formatKind: 'Cup',
+        cases: [],
+        connections: [],
+      });
+
+      renderStructurePage();
+
+      await screen.findByRole('heading', { name: 'Finale' });
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByRole('button', {
+          name: /préparer la phase/i,
+        }),
+      ).toBeDisabled();
+      expect(
+        within(matchesSection).getByText(
+          /ne correspondent plus au tableau de cette phase/i,
+        ),
+      ).toBeInTheDocument();
+    });
+
     it('silences SlotFeedMissing on fiche while draw is engaged but keeps other diagnostics', async () => {
       vi.mocked(fetchStructureView).mockResolvedValue(
         structureView({
