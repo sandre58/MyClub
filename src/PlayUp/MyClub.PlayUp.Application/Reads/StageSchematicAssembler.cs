@@ -520,7 +520,7 @@ public static class StageSchematicAssembler
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
         var expected = ResolveExpectedFormParticipants(stage, competitionStages, entries);
-        var places = ResolvePlaces(competition, stage, format);
+        var places = ResolvePlaces(competition, stage, format, competitionStages);
         if (places is null or < 1)
         {
             return Empty(stage, format) with { ExpectedFormParticipants = expected };
@@ -790,14 +790,13 @@ public static class StageSchematicAssembler
     private static int? ResolvePlaces(
         Competition competition,
         Stage stage,
-        StructureFormatKind format) =>
+        StructureFormatKind format,
+        IReadOnlyList<Stage> competitionStages) =>
         format switch
         {
             StructureFormatKind.Cup => ResolveCupEntryPlaces(stage),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
-                competition.Entries.Count(entry => entry.Status == EntryStatus.Active) is var n and > 0
-                    ? n
-                    : null,
+                ChampionshipSwissPhasePlaces.ResolvePlacesN(competition, stage, competitionStages),
             StructureFormatKind.Groups => ResolveGroupsPlaces(stage),
             _ => null
         };

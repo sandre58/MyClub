@@ -1839,6 +1839,7 @@ public sealed class OverviewAssemblerTests
             StructureIntent.Championship(),
             _clock);
         StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
             configured.Stage,
             [configured.Stage],
             _clock);
@@ -1917,7 +1918,7 @@ public sealed class OverviewAssemblerTests
         stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
         stage.AssignEntryToGroup(stage.Groups[0].Id, e5.Id);
 
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
         var first = MaterializeMatches.Execute(competition, stage, [], _clock);
 
         var view = OverviewAssembler.Assemble(
@@ -1949,6 +1950,7 @@ public sealed class OverviewAssemblerTests
             StructureIntent.Championship(),
             _clock);
         StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
             configured.Stage,
             [configured.Stage],
             _clock);

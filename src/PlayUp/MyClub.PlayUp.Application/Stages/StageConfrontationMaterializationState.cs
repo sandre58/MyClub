@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
@@ -24,7 +25,8 @@ internal static class StageConfrontationMaterializationState
     internal static int CountEligibleUnmaterialized(
         Competition competition,
         Stage stage,
-        IReadOnlyList<MatchSummaryRow> matchSummaries)
+        IReadOnlyList<MatchSummaryRow> matchSummaries,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
@@ -35,10 +37,11 @@ internal static class StageConfrontationMaterializationState
             return 0;
         }
 
+        var stages = competitionStages ?? [stage];
         var format = StructureSkeleton.InferFormat(stage);
         return format switch
         {
-            StructureFormatKind.Championship => CountChampionshipEligible(competition, stage, matchSummaries),
+            StructureFormatKind.Championship => CountChampionshipEligible(competition, stage, stages, matchSummaries),
             StructureFormatKind.Groups => CountGroupsEligible(competition, stage, matchSummaries),
             StructureFormatKind.Cup => CountCupEligible(stage),
             StructureFormatKind.Swiss => 0,
@@ -50,6 +53,7 @@ internal static class StageConfrontationMaterializationState
     private static int CountChampionshipEligible(
         Competition competition,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<MatchSummaryRow> matchSummaries)
     {
         if (!IsChampionshipOrGroupsMutable(competition, stage))
@@ -57,7 +61,12 @@ internal static class StageConfrontationMaterializationState
             return 0;
         }
 
-        var entries = ActiveEntries(competition);
+        if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages))
+        {
+            return 0;
+        }
+
+        var entries = ChampionshipSwissPhasePlaces.ResolveCompositionRoster(competition, stage);
         if (entries.Count < 2)
         {
             return 0;
@@ -136,14 +145,6 @@ internal static class StageConfrontationMaterializationState
         .. matchSummaries
             .Where(row => row.StageId.Equals(stageId))
             .Select(row => (row.HomeEntryId, row.AwayEntryId))
-    ];
-
-    private static IReadOnlyList<EntryId> ActiveEntries(Competition competition) =>
-    [
-        .. competition.Entries
-            .Where(entry => entry.Status == EntryStatus.Active)
-            .Select(entry => entry.Id)
-            .OrderBy(id => id.Value)
     ];
 
     private static bool IsChampionshipOrGroupsMutable(Competition competition, Stage stage) =>

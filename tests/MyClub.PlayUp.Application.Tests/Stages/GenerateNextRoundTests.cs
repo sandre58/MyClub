@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -159,6 +160,7 @@ public sealed class GenerateNextRoundTests
         var stage = Stage.Create(competition.Id, new StageName("Swiss"), SampleRegulations.Standard(), _clock);
         stage.SetSwissSettings(new SwissSettings(roundCount));
         competition.AddStage(stage.Id, _clock);
+        ChampionshipSwissPhasePlaces.FillCompositionToPlacesCapacity(competition, stage, [stage], _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
         competition.Prepare(_clock);

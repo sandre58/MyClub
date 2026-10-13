@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Prepare gate: composition (Champ / Groups root) or schematic cup/group places before Draft → Ready.
+/// Prepare gate: Groups composition pool; Cup/Groups/Champ/Swiss schematic places (Champ/Swiss allow unresolved feeders).
 /// </summary>
 internal static class StructurePreparePlacesGate
 {
@@ -20,7 +20,7 @@ internal static class StructurePreparePlacesGate
 
     internal static void Ensure(Competition competition, Stage stage, IReadOnlyList<Stage> competitionStages)
     {
-        if (HasCompositionGap(competition, stage))
+        if (HasCompositionGap(competition, stage, competitionStages))
         {
             throw new ApplicationFailureException(
                 $"Stage '{stage.Id}' prepare refused: places not filled.",
@@ -30,7 +30,7 @@ internal static class StructurePreparePlacesGate
         var issues = new List<string>();
         var hasDrawRules = stage.Regulation.DrawRules is not null;
         var badge = StructureViewAssembler.GetDrawExecutionBadge(stage, hasDrawRules);
-        var placesN = StructureViewAssembler.GetCompositionCapacity(competition, stage);
+        var placesN = StructureViewAssembler.GetCompositionCapacity(competition, stage, competitionStages);
         StructurePlaceOccupancyIssues.AppendSchematicPlaceOccupancyIssue(
             issues,
             competition,
@@ -49,17 +49,24 @@ internal static class StructurePreparePlacesGate
     }
 
     private static bool HasCompositionGap(StructureStageLifecycleInput input) =>
-        HasCompositionGap(input.Competition, input.Stage);
+        HasCompositionGap(input.Competition, input.Stage, input.CompetitionStages);
 
-    private static bool HasCompositionGap(Competition competition, Stage stage)
+    private static bool HasCompositionGap(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
     {
-        // Cup entry places are slot-fed (qualification / progression / draw), not CompositionEntries.
-        if (StructureSkeleton.InferFormat(stage) is StructureFormatKind.Cup)
+        var format = StructureSkeleton.InferFormat(stage);
+
+        // Cup: slot-fed. Championship/Swiss: structural occupancy (Prepare); composition gates Materialize only.
+        if (format is StructureFormatKind.Cup
+            or StructureFormatKind.Championship
+            or StructureFormatKind.Swiss)
         {
             return false;
         }
 
-        var capacity = StructureViewAssembler.GetCompositionCapacity(competition, stage);
+        var capacity = StructureViewAssembler.GetCompositionCapacity(competition, stage, competitionStages);
         return capacity is > 0 && stage.CompositionEntries.Count < capacity.Value;
     }
 

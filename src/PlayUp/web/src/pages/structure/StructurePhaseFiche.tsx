@@ -386,13 +386,6 @@ export function StructurePhaseFiche({
     }
     const placesNForOccupancy =
       stage.compositionCapacity ?? resolvePlacesN(stage);
-    if (
-      (stage.formatKind === 'Championship' || stage.formatKind === 'Swiss') &&
-      placesNForOccupancy != null &&
-      placesNForOccupancy > 0
-    ) {
-      return stage.compositionEntryCount ?? 0;
-    }
     if (!schematicQuery.isSuccess || !schematicQuery.data) {
       return null;
     }
@@ -782,8 +775,8 @@ export function StructurePhaseFiche({
       label: t('fiche.stat.rounds', { count: n }),
       statKey: 'rounds',
     });
-  } else if (kind === 'Championship' && (stage.matchdayCount ?? 0) > 0) {
-    const n = stage.matchdayCount!;
+  } else if (kind === 'Championship') {
+    const n = stage.matchdayCount ?? 0;
     heroFacts.push({
       icon: <MatchdayStatIcon size="sm" />,
       value: n,
@@ -1037,7 +1030,11 @@ export function StructurePhaseFiche({
                     schematicQuery.isSuccess,
                   showDrawCta,
                   showActivateDrawCta,
-                  showResolvedPoolGauge: showDrawCta || showActivateDrawCta,
+                  showResolvedPoolGauge:
+                    showDrawCta ||
+                    showActivateDrawCta ||
+                    stage.formatKind === 'Championship' ||
+                    stage.formatKind === 'Swiss',
                   canManualPlace,
                   canEditDraw,
                   showReleaseCta,

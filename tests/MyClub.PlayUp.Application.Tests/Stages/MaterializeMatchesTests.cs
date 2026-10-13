@@ -30,7 +30,7 @@ public sealed class MaterializeMatchesTests
 
         stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.SingleRoundRobin);
 
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(situation.Competition, stage, [stage], _clock);
         var first = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
         first.CreatedMatches.Should().HaveCount(6); // 4*3/2
         first.AlreadyComplete.Should().BeFalse();
@@ -78,7 +78,11 @@ public sealed class MaterializeMatchesTests
 
         configured.Stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.DoubleRoundRobin);
 
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(configured.Stage, [configured.Stage], _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
+            configured.Stage,
+            [configured.Stage],
+            _clock);
         var result = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
         var matches = result.CreatedMatches;
         matches.Should().HaveCount(teamCount * (teamCount - 1));
@@ -122,7 +126,11 @@ public sealed class MaterializeMatchesTests
             StructureIntent.Championship(matchGenerationFormat: MatchGenerationFormat.DoubleRoundRobin),
             _clock);
 
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(configured.Stage, [configured.Stage], _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
+            configured.Stage,
+            [configured.Stage],
+            _clock);
         var full = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
         full.CreatedMatches.Should().HaveCount(2);
 
@@ -161,7 +169,7 @@ public sealed class MaterializeMatchesTests
         stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
 
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
         var result = MaterializeMatches.Execute(competition, stage, [], _clock);
 
         // 2 groups × 2 teams → 2 directed matches per group = 4
@@ -188,7 +196,7 @@ public sealed class MaterializeMatchesTests
         stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
 
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
         var result = MaterializeMatches.Execute(competition, stage, [], _clock);
         result.CreatedMatches.Should().HaveCount(2); // 1 pair per group of 2
     }

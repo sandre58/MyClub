@@ -6,28 +6,23 @@
 
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.TestKit;
 
 /// <summary>
-/// Phase V2: batch materialization requires <see cref="StageStatus.Ready"/>.
+/// Phase V2: batch materialization requires <see cref="StageStatus.Ready"/> and Host Prepare gates.
 /// </summary>
 public static class StageMaterializationTestSupport
 {
     /// <summary>
-    /// Runs <see cref="PrepareStage"/> when the stage is still Draft.
+    /// Runs composition fill + Prepare places gate + <see cref="PrepareStage"/> when still Draft.
     /// </summary>
     public static void EnsureReadyForMaterialize(
+        Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IClock clock)
-    {
-        if (stage.Status is StageStatus.Ready)
-        {
-            return;
-        }
-
-        PrepareStage.Execute(stage, competitionStages, clock);
-    }
+        IClock clock) =>
+        StageLifecycleTestSupport.EnsureReadyForMaterialize(competition, stage, competitionStages, clock);
 }

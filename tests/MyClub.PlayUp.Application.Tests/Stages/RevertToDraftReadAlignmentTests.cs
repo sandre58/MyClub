@@ -72,7 +72,11 @@ public sealed class RevertToDraftReadAlignmentTests
             .WithTeams("A", "B", "C", "D")
             .WithStructure(StructureIntent.Championship());
         var stage = situation.RequirePrimaryStage();
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, situation.Stages, _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            situation.Competition,
+            stage,
+            situation.Stages,
+            _clock);
         var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
 
         var act = () => RevertToDraft.Execute(stage, materialized.CreatedMatches, _clock);

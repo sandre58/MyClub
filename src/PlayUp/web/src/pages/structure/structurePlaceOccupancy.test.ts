@@ -47,4 +47,25 @@ describe('countSchematicOccupiedPlaces', () => {
     ];
     expect(countSchematicOccupiedPlaces(cases, 'Groups', 4)).toBe(1);
   });
+
+  it('counts Championship roster feed or entry as structural occupancy', () => {
+    const cases: SchematicCase[] = [
+      {
+        formPosition: { kind: 'RosterPlace', index: 1 },
+        entry: { entryId: 'e1', displayName: 'A' },
+      },
+      {
+        formPosition: { kind: 'RosterPlace', index: 2 },
+        feedOrigin: {
+          kind: 'Qualification',
+          selectionMode: 'Position',
+          selectionValue: 1,
+        },
+      },
+      {
+        formPosition: { kind: 'RosterPlace', index: 3 },
+      },
+    ];
+    expect(countSchematicOccupiedPlaces(cases, 'Championship', 6)).toBe(2);
+  });
 });

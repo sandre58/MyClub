@@ -171,7 +171,8 @@ public static class StructureStageLifecycleAssembler
         return StageStartReadinessGuard.TryGetDisabledReasonCode(
                 input.Stage,
                 input.Competition,
-                input.MatchSummaries) is { } disabledReason
+                input.MatchSummaries,
+                input.CompetitionStages) is { } disabledReason
             ? BlockedTransition(code, disabledReason, input, disabledReason)
             : new StructureStageLifecycleTransitionDto(code, true);
     }

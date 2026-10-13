@@ -27,16 +27,22 @@ internal static class StructureMaterializeAssembler
     public static StructureMaterializeDto? Assemble(
         Competition competition,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<MatchSummaryRow> matchSummaries)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
         var format = StructureSkeleton.InferFormat(stage);
         return format switch
         {
-            StructureFormatKind.Championship => AssembleChampionship(competition, stage, matchSummaries),
+            StructureFormatKind.Championship => AssembleChampionship(
+                competition,
+                stage,
+                competitionStages,
+                matchSummaries),
             StructureFormatKind.Groups => AssembleGroups(competition, stage, matchSummaries),
             StructureFormatKind.Cup => AssembleCup(competition, stage),
             StructureFormatKind.Swiss => null,
@@ -48,9 +54,13 @@ internal static class StructureMaterializeAssembler
     private static StructureMaterializeDto AssembleChampionship(
         Competition competition,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<MatchSummaryRow> matchSummaries)
     {
-        var entries = ActiveEntries(competition);
+        var rosterReady = ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages);
+        var entries = rosterReady
+            ? ChampionshipSwissPhasePlaces.ResolveCompositionRoster(competition, stage)
+            : [];
         var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
         var pairs = entries.Count < 2
             ? []
@@ -61,7 +71,7 @@ internal static class StructureMaterializeAssembler
         var materialized = pairs.Count(covered.Contains);
 
         var mutable = IsChampionshipOrGroupsMutable(competition, stage);
-        var eligible = mutable && determined > 0 ? determined - materialized : 0;
+        var eligible = mutable && rosterReady && determined > 0 ? determined - materialized : 0;
         return Pack(
             competition,
             stage,
@@ -71,7 +81,8 @@ internal static class StructureMaterializeAssembler
             eligible,
             materialized,
             commandEnabled: eligible > 0,
-            groupsReady: true);
+            groupsReady: true,
+            phaseRosterComplete: rosterReady);
     }
 
     private static StructureMaterializeDto AssembleGroups(
@@ -180,7 +191,8 @@ internal static class StructureMaterializeAssembler
         int materialized,
         bool commandEnabled,
         bool groupsReady,
-        IReadOnlyList<StructureMaterializeConfrontationDto>? confrontations = null)
+        IReadOnlyList<StructureMaterializeConfrontationDto>? confrontations = null,
+        bool phaseRosterComplete = true)
     {
         var disabledReason = ResolveDisabledReason(
             competition,
@@ -190,7 +202,8 @@ internal static class StructureMaterializeAssembler
             eligible,
             materialized,
             commandEnabled,
-            groupsReady);
+            groupsReady,
+            phaseRosterComplete);
         return new StructureMaterializeDto(
             commandCode,
             LabelVariant(determined, eligible, materialized),
@@ -210,7 +223,8 @@ internal static class StructureMaterializeAssembler
         int eligible,
         int materialized,
         bool commandEnabled,
-        bool groupsReady)
+        bool groupsReady,
+        bool phaseRosterComplete)
     {
         if (commandEnabled)
         {
@@ -232,13 +246,27 @@ internal static class StructureMaterializeAssembler
             _ => false
         };
 
-        return !mutable
-            ? StructureMaterializeDisabledReasons.StructureNotMutable
-            : determined == 0
-            ? StructureMaterializeDisabledReasons.NoDeterminedConfrontations
-            : format == StructureFormatKind.Groups && !groupsReady
-            ? StructureMaterializeDisabledReasons.GroupsNotReady
-            : eligible == 0 ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null;
+        if (!mutable)
+        {
+            return StructureMaterializeDisabledReasons.StructureNotMutable;
+        }
+
+        if (format == StructureFormatKind.Championship && !phaseRosterComplete)
+        {
+            return StructureMaterializeDisabledReasons.PhaseRosterIncomplete;
+        }
+
+        if (format == StructureFormatKind.Groups && !groupsReady)
+        {
+            return StructureMaterializeDisabledReasons.GroupsNotReady;
+        }
+
+        if (determined == 0)
+        {
+            return StructureMaterializeDisabledReasons.NoDeterminedConfrontations;
+        }
+
+        return eligible == 0 ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null;
     }
 
     private static string LabelVariant(int determined, int eligible, int materialized) =>
@@ -256,14 +284,6 @@ internal static class StructureMaterializeAssembler
         [.. matchSummaries
             .Where(row => row.StageId.Equals(stageId))
             .Select(row => (row.HomeEntryId, row.AwayEntryId))];
-
-    private static IReadOnlyList<EntryId> ActiveEntries(Competition competition) =>
-    [
-        .. competition.Entries
-            .Where(entry => entry.Status == EntryStatus.Active)
-            .Select(entry => entry.Id)
-            .OrderBy(id => id.Value)
-    ];
 
     private static string SideLabel(
         Slot? slot,

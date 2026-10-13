@@ -251,6 +251,78 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(materializeMatches).toHaveBeenCalledWith(leagueStageBase.stageId);
     });
 
+    it('shows roster-incomplete empty state when phase composition is partial', () => {
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'idle',
+        determinedCount: 0,
+        eligibleCount: 0,
+        materializedCount: 0,
+        commandEnabled: false,
+        disabledReason: 'PhaseRosterIncomplete',
+        confrontations: [],
+      };
+      renderMatchesStrip({
+        ...leagueStageBase,
+        status: 'Ready',
+        materialize,
+        lifecycle: {
+          transition: {
+            code: 'StartStage',
+            enabled: false,
+            disabledReasonCode: 'UnmaterializedConfrontations',
+          },
+        },
+      });
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByText(
+          /La composition de la phase est incomplète/i,
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it('shows blocked production empty state when confrontations are not determined yet', () => {
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'idle',
+        determinedCount: 0,
+        eligibleCount: 0,
+        materializedCount: 0,
+        commandEnabled: false,
+        disabledReason: 'NoDeterminedConfrontations',
+        confrontations: [],
+      };
+      renderMatchesStrip({
+        ...leagueStageBase,
+        status: 'Ready',
+        materialize,
+        lifecycle: {
+          transition: {
+            code: 'StartStage',
+            enabled: false,
+            disabledReasonCode: 'UnmaterializedConfrontations',
+          },
+        },
+      });
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByText(
+          /Aucune confrontation n’est encore déterminée/i,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        matchesSection.querySelector('.structure-operational-strip__empty'),
+      ).not.toBeNull();
+      expect(
+        within(matchesSection).getByRole('button', {
+          name: /Démarrer la phase/i,
+        }),
+      ).toBeDisabled();
+    });
+
     it('shows frozen gap in the gauge without a materialize primary action', () => {
       const materialize: StructureMaterialize = {
         commandCode: 'MaterializeMatches',

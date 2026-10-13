@@ -893,6 +893,14 @@ function MatchesColumn({
         />
       }
     />
+  ) : showProduction && (materialize != null || dematerialize != null) ? (
+    <div className="structure-operational-strip__empty">
+      <EmptyState variant="idle">
+        {presentation === 'blocked' && materialize
+          ? materializeDisabledCaption(materialize, t)
+          : matchMeter.text}
+      </EmptyState>
+    </div>
   ) : null;
 
   const productionLeadingActions =

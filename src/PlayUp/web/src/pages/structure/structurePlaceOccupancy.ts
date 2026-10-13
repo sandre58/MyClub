@@ -51,5 +51,10 @@ export function countSchematicOccupiedPlaces(
   if (formatKind === 'Groups') {
     return countGroupPlacesOccupied(cases);
   }
+  if (formatKind === 'Championship' || formatKind === 'Swiss') {
+    return cases.filter(
+      (c) => c.formPosition.kind === 'RosterPlace' && casePlaceIsOccupied(c),
+    ).length;
+  }
   return null;
 }

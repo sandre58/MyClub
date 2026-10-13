@@ -13,6 +13,7 @@ public static class StructureMaterializeDisabledReasons
 {
     public const string StructureNotMutable = "StructureNotMutable";
     public const string NoDeterminedConfrontations = "NoDeterminedConfrontations";
+    public const string PhaseRosterIncomplete = "PhaseRosterIncomplete";
     public const string GroupsNotReady = "GroupsNotReady";
     public const string NoEligibleConfrontations = "NoEligibleConfrontations";
 }

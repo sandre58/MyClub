@@ -1103,7 +1103,7 @@ internal static class ScenarioOrchestration
             semi,
             AdjacentPairKeys(pairCount: 2),
             situation.Stages);
-        SeedLifecycle.PrepareAndStartStage(context, semi, situation.Stages);
+        SeedLifecycle.PrepareAndStartStage(context, competition, semi, situation.Stages);
         PlayMatches(context, competition, sfMatches, count: Math.Max(1, sfMatches.Count / 2));
 
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -1802,7 +1802,7 @@ internal static class ScenarioOrchestration
             final,
             AdjacentPairKeys(pairCount: 1),
             allStages);
-        SeedLifecycle.PrepareAndStartStage(context, final, allStages);
+        SeedLifecycle.PrepareAndStartStage(context, competition, final, allStages);
         PlayDecisiveMatches(context, competition, finalMatches);
 
         SeedLifecycle.CompleteAllRunning(context, competition, allStages);
@@ -1935,7 +1935,7 @@ internal static class ScenarioOrchestration
             final,
             AdjacentPairKeys(pairCount: 1),
             allStages);
-        SeedLifecycle.PrepareAndStartStage(context, final, allStages);
+        SeedLifecycle.PrepareAndStartStage(context, competition, final, allStages);
         PlayDecisiveMatches(context, competition, finalMatches);
 
         SeedLifecycle.CompleteAllRunning(context, competition, allStages);
@@ -2056,7 +2056,7 @@ internal static class ScenarioOrchestration
             AdjacentPairKeys(pairCount: 2),
             allStages);
         var sfFixtures = OrderedFixtures(semi, expectedCount: 2);
-        SeedLifecycle.PrepareAndStartStage(context, semi, allStages);
+        SeedLifecycle.PrepareAndStartStage(context, competition, semi, allStages);
         PlayDecisiveMatches(context, competition, sfMatches);
         ApplyAllProgressions(context, semi, sfFixtures, sfMatches, allStages);
 
@@ -2072,8 +2072,8 @@ internal static class ScenarioOrchestration
             bronze,
             AdjacentPairKeys(pairCount: 1),
             allStages);
-        SeedLifecycle.PrepareAndStartStage(context, final, allStages);
-        SeedLifecycle.PrepareAndStartStage(context, bronze, allStages);
+        SeedLifecycle.PrepareAndStartStage(context, competition, final, allStages);
+        SeedLifecycle.PrepareAndStartStage(context, competition, bronze, allStages);
         PlayDecisiveMatches(context, competition, finalMatches);
         PlayDecisiveMatches(context, competition, bronzeMatches);
 
@@ -2343,7 +2343,7 @@ internal static class ScenarioOrchestration
         var matches = SeedMaterialization.MaterializeFromSlots(context, competition, stage, pairKeys, allStages);
         var fixtures = OrderedFixtures(stage, expectedFixtures);
 
-        SeedLifecycle.PrepareAndStartStage(context, stage, allStages);
+        SeedLifecycle.PrepareAndStartStage(context, competition, stage, allStages);
         PlayDecisiveMatches(context, competition, matches);
         ApplyAllProgressions(context, stage, fixtures, matches, allStages);
         if (placeViaSlotDraw)

@@ -72,6 +72,6 @@ public sealed class StructurePlacesContractTests
         var champHub = view.Stages.Single(h => h.StageId == league.Id.Value);
 
         champHub.IsRootComposition.Should().BeFalse();
-        champHub.CompositionCapacity.Should().Be(8);
+        champHub.CompositionCapacity.Should().Be(4);
     }
 }

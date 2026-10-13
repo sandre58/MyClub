@@ -170,7 +170,7 @@ public sealed record StructureReadinessDto(
 /// <param name="MatchCount">Topology: attached matches in this phase.</param>
 /// <param name="GroupCount">Topology: groups in this phase.</param>
 /// <param name="RoundCount">Topology: cup rounds in this phase.</param>
-/// <param name="MatchdayCount">Topology: matchdays in this phase.</param>
+/// <param name="MatchdayCount">Topology: matchdays with at least one attached match (not skeleton seed).</param>
 /// <param name="SlotCount">Slots.</param>
 /// <param name="NumberOfPeriods">MatchRules periods.</param>
 /// <param name="DurationPerPeriod">MatchRules duration.</param>

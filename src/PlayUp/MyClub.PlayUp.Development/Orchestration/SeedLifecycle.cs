@@ -27,7 +27,11 @@ internal static class SeedLifecycle
         IReadOnlyList<Stage>? competitionStages = null)
     {
         var stages = competitionStages ?? [stage];
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
+            stage,
+            stages,
+            context.Clock);
         PrepareCompetition.Execute(competition, context.Clock);
         StartStage.Execute(stage, context.Clock);
         StartCompetition.Execute(competition, context.Clock);
@@ -43,7 +47,11 @@ internal static class SeedLifecycle
         IReadOnlyList<Stage>? competitionStages = null)
     {
         var stages = competitionStages ?? [stage];
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
+            stage,
+            stages,
+            context.Clock);
         PrepareCompetition.Execute(competition, context.Clock);
     }
 
@@ -242,11 +250,16 @@ internal static class SeedLifecycle
 
     internal static void PrepareAndStartStage(
         ScenarioContext context,
+        Competition competition,
         Stage stage,
         IReadOnlyList<Stage>? competitionStages = null)
     {
         var stages = competitionStages ?? [stage];
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
+            stage,
+            stages,
+            context.Clock);
         StartStage.Execute(stage, context.Clock);
     }
 }

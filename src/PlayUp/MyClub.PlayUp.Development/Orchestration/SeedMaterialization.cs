@@ -213,7 +213,11 @@ internal static class SeedMaterialization
         else
         {
             var stages = competitionStages ?? [stage];
-            StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, stages, context.Clock);
+            StageMaterializationTestSupport.EnsureReadyForMaterialize(
+                competition,
+                stage,
+                stages,
+                context.Clock);
         }
 
         var result = MaterializeCupFromOccupiedSlots.Execute(

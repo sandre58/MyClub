@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -35,12 +36,15 @@ public static class MaterializeMatches
         Competition competition,
         Stage stage,
         IReadOnlyList<Match> existingMatches,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(existingMatches);
         ArgumentNullException.ThrowIfNull(clock);
+
+        var stages = competitionStages ?? [stage];
 
         if (!stage.CompetitionId.Equals(competition.Id))
         {
@@ -58,7 +62,7 @@ public static class MaterializeMatches
 
         return format switch
         {
-            StructureFormatKind.Championship => MaterializeChampionship(competition, stage, existingMatches, clock),
+            StructureFormatKind.Championship => MaterializeChampionship(competition, stage, stages, existingMatches, clock),
             StructureFormatKind.Groups => MaterializeGroups(competition, stage, existingMatches, clock),
             StructureFormatKind.Cup => throw new ApplicationFailureException(
                 "Cup stages use MaterializeCupFromOccupiedSlots (BracketPair → Fixture) — MaterializeMatches is not applicable.",
@@ -82,11 +86,14 @@ public static class MaterializeMatches
     public static int CountUncoveredDeterminedPairs(
         Competition competition,
         Stage stage,
-        IReadOnlyList<Match> existingMatches)
+        IReadOnlyList<Match> existingMatches,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(existingMatches);
+
+        var stages = competitionStages ?? [stage];
 
         if (!stage.CompetitionId.Equals(competition.Id))
         {
@@ -97,7 +104,7 @@ public static class MaterializeMatches
         var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
         return format switch
         {
-            StructureFormatKind.Championship => CountUncoveredChampionship(competition, stage, existingByPair),
+            StructureFormatKind.Championship => CountUncoveredChampionship(competition, stage, stages, existingByPair),
             StructureFormatKind.Groups => CountUncoveredGroups(stage, existingByPair),
             StructureFormatKind.Cup or StructureFormatKind.Swiss or null => 0,
             _ => 0
@@ -107,10 +114,18 @@ public static class MaterializeMatches
     private static int CountUncoveredChampionship(
         Competition competition,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair)
     {
-        var entries = GetActiveEntries(competition);
-        return entries.Count < 2 ? 0 : CountMissingPairs(BuildRoundRobinRounds(entries, stage.MatchGenerationFormat), existingByPair);
+        if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages))
+        {
+            return 0;
+        }
+
+        var entries = ChampionshipSwissPhasePlaces.ResolveCompositionRoster(competition, stage);
+        return entries.Count < 2
+            ? 0
+            : CountMissingPairs(BuildRoundRobinRounds(entries, stage.MatchGenerationFormat), existingByPair);
     }
 
     private static int CountUncoveredGroups(
@@ -142,14 +157,22 @@ public static class MaterializeMatches
     private static MaterializeMatchesResult MaterializeChampionship(
         Competition competition,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<Match> existingMatches,
         IClock clock)
     {
-        var entries = GetActiveEntries(competition);
+        if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages))
+        {
+            throw new ApplicationFailureException(
+                "Championship materialization requires a complete phase composition.",
+                ApplicationErrorCodes.MaterializationFailure);
+        }
+
+        var entries = ChampionshipSwissPhasePlaces.ResolveCompositionRoster(competition, stage);
         if (entries.Count < 2)
         {
             throw new ApplicationFailureException(
-                "Championship materialization requires at least two active entries.",
+                "Championship materialization requires at least two active composition entries.",
                 ApplicationErrorCodes.MaterializationFailure);
         }
 
@@ -415,14 +438,6 @@ public static class MaterializeMatches
             stage.AddMatchdayForMatchProduction(nextNumber++, clock);
         }
     }
-
-    private static IReadOnlyList<EntryId> GetActiveEntries(Competition competition) =>
-    [
-        .. competition.Entries
-            .Where(entry => entry.Status == EntryStatus.Active)
-            .Select(entry => entry.Id)
-            .OrderBy(id => id.Value)
-    ];
 
     private static (EntryId Home, EntryId Away) DirectedPair(EntryId home, EntryId away) => (home, away);
 

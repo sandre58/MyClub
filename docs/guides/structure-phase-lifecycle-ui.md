@@ -4,7 +4,7 @@
 
 **Problems messaging (Matchs column):** [structure-problems-contract.md](./structure-problems-contract.md) (**paused** — local pilot). Transversal audit: [organizer-problems-audit.md](./organizer-problems-audit.md) (working draft). Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
-**Last code audit:** 2026-10-13 (Lifecycle V2 reste: matrice 2b copy `problems.lifecycle`, `StageNotReady` draft detail, mutation `_unknown`, Materialize Draft read, Attribution gate + cross-surface tests). Prior: 2026-10-12 (V2 gap audit + verification matrix).
+**Last code audit:** 2026-10-13 (Championship/Swiss **Prepare** = schematic Places N full, feeders pending OK; **Materialize/Start/Swiss** = full phase **composition**; Places N via `ChampionshipSwissPhasePlaces`; PLACES structural vs resolved on fiche). Prior: Lifecycle V2 reste.
 
 **Notion validation:** 2026-10-12 — [Arbitrage Structure — cycle de vie et gel construction](https://app.notion.com/p/3f775fb92d10817eb795ddb5fc52dd9c).
 

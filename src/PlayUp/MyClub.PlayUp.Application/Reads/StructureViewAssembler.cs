@@ -360,10 +360,10 @@ public static class StructureViewAssembler
                 constraint.MaxPerGroup))
             .ToArray();
 
-        var isRootComposition = IsRootCompositionStage(stage, competitionStages);
+        var isRootComposition = StructureStageInboundTopology.IsRootComposition(stage, competitionStages);
         var composition = BuildEntrySetProjection(competition, stage.CompositionEntries);
         var affectation = BuildEntrySetProjection(competition, stage.AffectationAuthoring);
-        var compositionCapacity = ResolvePlaces(competition, stage);
+        var compositionCapacity = ResolvePlaces(competition, stage, competitionStages);
         var drawExecutionBadge = ResolveDrawExecutionBadge(stage, draw is not null);
         IReadOnlyList<MatchSummaryRow> summaries = [];
         if (matchSummariesByStage is not null
@@ -381,7 +381,7 @@ public static class StructureViewAssembler
             drawExecutionBadge,
             compositionCapacity);
         var formatKind = StructureSkeleton.InferFormat(stage);
-        var materialize = StructureMaterializeAssembler.Assemble(competition, stage, summaries);
+        var materialize = StructureMaterializeAssembler.Assemble(competition, stage, competitionStages, summaries);
         var lifecycle = StructureStageLifecycleAssembler.Assemble(
             new StructureStageLifecycleInput(
                 competition,
@@ -408,7 +408,7 @@ public static class StructureViewAssembler
             CountAttachedMatches(stage),
             stage.Groups.Count,
             stage.Rounds.Count,
-            stage.Matchdays.Count,
+            CountMatchdaysWithAttachedMatches(stage),
             stage.Slots.Count,
             match.Duration.NumberOfPeriods,
             match.Duration.DurationPerPeriod,
@@ -483,8 +483,14 @@ public static class StructureViewAssembler
         bool hasDrawRules) =>
         ResolveDrawExecutionBadge(stage, hasDrawRules);
 
+    internal static int? GetCompositionCapacity(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages) =>
+        ResolvePlaces(competition, stage, competitionStages);
+
     internal static int? GetCompositionCapacity(Competition competition, Stage stage) =>
-        ResolvePlaces(competition, stage);
+        ResolvePlaces(competition, stage, [stage]);
 
     private static StructureDrawExecutionBadge? ResolveDrawExecutionBadge(
         Stage stage,
@@ -562,12 +568,15 @@ public static class StructureViewAssembler
     /// DTO name compositionCapacity retained temporarily = target Places, not current k.
     /// Cup: entry places (1st-round cardinality), not total <c>slotCount</c> when multi-round.
     /// </summary>
-    private static int? ResolvePlaces(Competition competition, Stage stage) =>
+    private static int? ResolvePlaces(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages) =>
         StructureSkeleton.InferFormat(stage) switch
         {
             StructureFormatKind.Cup => ResolveCupEntryPlaces(stage),
             StructureFormatKind.Championship or StructureFormatKind.Swiss
-                => CountActiveEntries(competition),
+                => ChampionshipSwissPhasePlaces.ResolvePlacesN(competition, stage, competitionStages),
             StructureFormatKind.Groups => ResolveGroupsPlaces(stage),
             _ => stage.Slots.Count > 0 ? stage.Slots.Count : null
         };
@@ -610,9 +619,6 @@ public static class StructureViewAssembler
         return IsPowerOfTwo(entryPlaces) && entryPlaces >= 2 ? entryPlaces : null;
     }
 
-    private static int CountActiveEntries(Competition competition) =>
-        competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
-
     /// <summary>
     /// Groups Places N = groupCount × <see cref="Stage.PlacesPerGroup"/> (form fact).
     /// Draw <c>NumberOfPots</c> is never used here — pots are draw-only.
@@ -626,31 +632,6 @@ public static class StructureViewAssembler
 
         var perGroup = stage.PlacesPerGroup;
         return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
-    }
-
-    private static bool IsRootCompositionStage(Stage stage, IReadOnlyList<Stage> competitionStages)
-    {
-        foreach (var other in competitionStages)
-        {
-            if (other.Id.Equals(stage.Id))
-            {
-                continue;
-            }
-
-            var qualification = other.Regulation.QualificationRules;
-            if (qualification?.Paths.Any(path => path.Destination.StageId.Equals(stage.Id)) == true)
-            {
-                return false;
-            }
-
-            var progression = other.Regulation.ProgressionRules;
-            if (progression?.Paths.Any(path => path.Destination.StageId.Equals(stage.Id)) == true)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private static IReadOnlyList<StructureQualificationIntentDto>? MapQualificationIntents(
@@ -1177,6 +1158,13 @@ public static class StructureViewAssembler
             .SelectMany(fixture => fixture.MatchIds)
             .Distinct()
             .Count() ?? 0;
+
+    /// <summary>
+    /// Product matchday count for Structure hub topology (excludes skeleton seed matchdays with no matches).
+    /// </summary>
+    private static int CountMatchdaysWithAttachedMatches(Stage stage) =>
+        stage.Matchdays.Count(matchday =>
+            matchday.Fixtures.Any(fixture => fixture.MatchIds.Count > 0));
 
     private static Stage? ResolvePrimaryStage(Competition competition, IReadOnlyList<Stage> stages)
     {

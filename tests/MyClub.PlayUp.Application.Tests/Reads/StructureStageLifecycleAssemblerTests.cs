@@ -60,7 +60,7 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
-    public void Assemble_Ready_without_teams_projects_Start_enabled()
+    public void Assemble_Ready_without_teams_blocks_Start_until_roster_and_matches()
     {
         var situation = TestCompetition.Create("Lifecycle Ready", _clock)
             .WithStructure(StructureIntent.Championship(stageName: "League"))
@@ -69,7 +69,9 @@ public sealed class StructureStageLifecycleAssemblerTests
         var hub = view.Stages.Single();
 
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
-        hub.Lifecycle.Transition.Enabled.Should().BeTrue();
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
     }
 
     [Fact]

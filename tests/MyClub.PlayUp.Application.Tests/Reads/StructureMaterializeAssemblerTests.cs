@@ -11,7 +11,9 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
@@ -38,6 +40,72 @@ public sealed class StructureMaterializeAssemblerTests
         materialize.Should().NotBeNull();
         materialize.CommandEnabled.Should().BeFalse();
         materialize.EligibleCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void Championship_ready_incomplete_roster_projects_PhaseRosterIncomplete()
+    {
+        var competition = CreateCompetition.Execute("Form partial", _clock);
+        var source = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(source.Id, _clock);
+        _ = source.AddGroup("A", _clock);
+        _ = source.AddGroup("B", _clock);
+        source.AddMatchday(1, _clock);
+
+        var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);
+        champ.AddMatchday(1, _clock);
+        competition.AddStage(champ.Id, _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "E1", _clock).Id;
+        var e2 = competition.AddEntry(TeamId.New(), "E2", _clock).Id;
+        champ.ReplaceAffectationAuthoring([e1, e2], _clock);
+
+        ReplaceStageQualificationRules.Execute(
+            source,
+            [
+                new QualificationIntentSpec(
+                    Guid.NewGuid(),
+                    1,
+                    QualificationIntentSourceKind.EachGroup,
+                    1,
+                    2,
+                    champ.Id.Value,
+                    DestinationForm: true)
+            ],
+            _clock);
+
+        StructurePreparePlacesGate.Ensure(competition, champ, [source, champ]);
+        PrepareStage.Execute(champ, [source, champ], _clock);
+        champ.Status.Should().Be(StageStatus.Ready);
+
+        var materialize = StructureMaterializeAssembler.Assemble(
+            competition,
+            champ,
+            [source, champ],
+            [])!;
+
+        materialize.CommandEnabled.Should().BeFalse();
+        materialize.DeterminedCount.Should().Be(0);
+        materialize.DisabledReason.Should()
+            .Be(StructureMaterializeDisabledReasons.PhaseRosterIncomplete);
+    }
+
+    [Fact]
+    public void Hub_championship_ready_before_materialize_exposes_zero_matchdays()
+    {
+        var situation = TestCompetition.Create("Champ", _clock)
+            .WithTeams("A", "B", "C")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.PreparePrimaryStageForMaterialization();
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages.Single();
+
+        hub.MatchCount.Should().Be(0);
+        hub.MatchdayCount.Should().Be(0);
+        stage.Matchdays.Count.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -109,7 +177,7 @@ public sealed class StructureMaterializeAssemblerTests
         stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, [stage], _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
 
         var view = StructureViewAssembler.Assemble(competition, [stage]);
         var materialize = view.Stages[0].Materialize!;

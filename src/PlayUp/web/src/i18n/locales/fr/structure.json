@@ -395,7 +395,8 @@
       "blockedGeneric": "La production n’est pas disponible pour le moment.",
       "disabledReason": {
         "StructureNotMutable": "La structure ne permet plus de créer les matchs.",
-        "NoDeterminedConfrontations": "Aucune confrontation n’est prête à être matérialisée.",
+        "NoDeterminedConfrontations": "Aucune confrontation n’est encore déterminée. Les équipes de la phase ne sont peut‑être pas toutes connues.",
+        "PhaseRosterIncomplete": "La composition de la phase est incomplète : toutes les places ne sont pas encore résolues.",
         "GroupsNotReady": "Les poules ne sont pas prêtes pour la production de matchs.",
         "NoEligibleConfrontations": "Aucune confrontation ne peut être matérialisée pour le moment."
       },

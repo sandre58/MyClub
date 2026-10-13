@@ -334,7 +334,7 @@ public sealed class TestCompetition
     /// <returns>This situation.</returns>
     public TestCompetition PreparePrimaryStage()
     {
-        PrepareStage.Execute(EnsurePrimaryStage(), Stages, Clock);
+        StageLifecycleTestSupport.EnsureReadyForMaterialize(Competition, EnsurePrimaryStage(), Stages, Clock);
         return this;
     }
 
@@ -391,7 +391,7 @@ public sealed class TestCompetition
     public Stage PreparePrimaryStageForMaterialization()
     {
         var stage = EnsurePrimaryStage();
-        StageMaterializationTestSupport.EnsureReadyForMaterialize(stage, _stages, Clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(Competition, stage, _stages, Clock);
         return stage;
     }
 

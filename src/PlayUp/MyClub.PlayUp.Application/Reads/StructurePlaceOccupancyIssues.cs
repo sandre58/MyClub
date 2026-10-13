@@ -54,7 +54,11 @@ internal static class StructurePlaceOccupancyIssues
         }
 
         var format = StructureSkeleton.InferFormat(stage);
-        if (format is not StructureFormatKind.Groups and not StructureFormatKind.Cup)
+        if (format is not (
+            StructureFormatKind.Groups
+            or StructureFormatKind.Cup
+            or StructureFormatKind.Championship
+            or StructureFormatKind.Swiss))
         {
             return;
         }
@@ -76,8 +80,9 @@ internal static class StructurePlaceOccupancyIssues
             StructureFormatKind.Groups => schematic.Cases.Count(c =>
                 c.FormPosition.Kind == StageSchematicAssembler.FormKindGroupPlace
                 && CasePlaceIsOccupied(c)),
-            StructureFormatKind.Championship => 0,
-            StructureFormatKind.Swiss => 0,
+            StructureFormatKind.Championship or StructureFormatKind.Swiss => schematic.Cases.Count(c =>
+                c.FormPosition.Kind == StageSchematicAssembler.FormKindRosterPlace
+                && CasePlaceIsOccupied(c)),
             _ => 0
         };
 

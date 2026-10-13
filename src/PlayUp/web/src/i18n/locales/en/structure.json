@@ -395,7 +395,8 @@
       "blockedGeneric": "Match production is not available right now.",
       "disabledReason": {
         "StructureNotMutable": "The structure no longer allows creating matches.",
-        "NoDeterminedConfrontations": "No confrontations are ready to materialize yet.",
+        "NoDeterminedConfrontations": "No confrontations are determined yet. Phase teams may still be unresolved.",
+        "PhaseRosterIncomplete": "Phase composition is incomplete: not every place is resolved yet.",
         "GroupsNotReady": "Groups are not ready for match production.",
         "NoEligibleConfrontations": "No confrontations can be materialized right now."
       },

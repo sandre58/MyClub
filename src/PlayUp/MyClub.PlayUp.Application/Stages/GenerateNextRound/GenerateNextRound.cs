@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -34,12 +35,15 @@ public static class GenerateNextRound
         Competition competition,
         Stage stage,
         IReadOnlyList<Match> existingMatches,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(existingMatches);
         ArgumentNullException.ThrowIfNull(clock);
+
+        var stages = competitionStages ?? [stage];
 
         if (!stage.CompetitionId.Equals(competition.Id))
         {
@@ -51,11 +55,18 @@ public static class GenerateNextRound
         EnsureSwissRunning(competition, stage);
 
         var settings = stage.SwissSettings!;
-        var participants = GetActiveEntries(competition);
+        if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages))
+        {
+            throw new ApplicationFailureException(
+                "Swiss GenerateNextRound requires a complete phase composition.",
+                ApplicationErrorCodes.SwissRoundGenerationFailure);
+        }
+
+        var participants = ChampionshipSwissPhasePlaces.ResolveCompositionRoster(competition, stage);
         if (participants.Count < 2)
         {
             throw new ApplicationFailureException(
-                "Swiss GenerateNextRound requires at least two active entries.",
+                "Swiss GenerateNextRound requires at least two active composition entries.",
                 ApplicationErrorCodes.SwissRoundGenerationFailure);
         }
 
@@ -222,14 +233,6 @@ public static class GenerateNextRound
             }
         }
     }
-
-    private static IReadOnlyList<EntryId> GetActiveEntries(Competition competition) =>
-    [
-        .. competition.Entries
-            .Where(entry => entry.Status == EntryStatus.Active)
-            .Select(entry => entry.Id)
-            .OrderBy(id => id.Value)
-    ];
 
     private static Dictionary<MatchId, Match> IndexAttachedMatches(
         Stage stage,

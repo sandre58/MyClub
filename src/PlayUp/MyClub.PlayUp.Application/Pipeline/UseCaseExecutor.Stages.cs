@@ -85,7 +85,9 @@ public sealed partial class UseCaseExecutor
             .ListByStageForUpdateAsync(stageId, cancellationToken)
             .ConfigureAwait(false);
         var summaries = StageStartReadinessGuard.ToSummaryRows(stageMatches);
-        StageStartReadinessGuard.EnsureReadyToStart(stage, competition, summaries);
+        var competitionStages =
+            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        StageStartReadinessGuard.EnsureReadyToStart(stage, competition, summaries, competitionStages);
 
         StartStage.Execute(stage, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -864,7 +866,9 @@ public sealed partial class UseCaseExecutor
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
         var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var result = MaterializeMatches.Execute(competition, stage, existing, clock);
+        var competitionStages =
+            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        var result = MaterializeMatches.Execute(competition, stage, existing, clock, competitionStages);
         foreach (var created in result.CreatedMatches)
         {
             matches.Add(created);
@@ -942,7 +946,9 @@ public sealed partial class UseCaseExecutor
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
         var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var result = GenerateNextRound.Execute(competition, stage, existing, clock);
+        var competitionStages =
+            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        var result = GenerateNextRound.Execute(competition, stage, existing, clock, competitionStages);
         foreach (var created in result.CreatedMatches)
         {
             matches.Add(created);

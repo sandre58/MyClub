@@ -6,6 +6,8 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
@@ -25,13 +27,14 @@ internal static class StageStartReadinessGuard
     internal static void EnsureReadyToStart(
         Stage stage,
         Competition competition,
-        IReadOnlyList<MatchSummaryRow> matchSummaries)
+        IReadOnlyList<MatchSummaryRow> matchSummaries,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
-        if (StageConfrontationMaterializationState.CountEligibleUnmaterialized(competition, stage, matchSummaries) > 0)
+        if (HasMaterializationGapBeforeStart(competition, stage, matchSummaries, competitionStages))
         {
             throw new ApplicationFailureException(
                 "Start is blocked because eligible confrontations are not fully materialized.",
@@ -42,19 +45,60 @@ internal static class StageStartReadinessGuard
     internal static string? TryGetDisabledReasonCode(
         Stage stage,
         Competition competition,
-        IReadOnlyList<MatchSummaryRow> matchSummaries)
+        IReadOnlyList<MatchSummaryRow> matchSummaries,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
-        if (StageConfrontationMaterializationState.CountEligibleUnmaterialized(competition, stage, matchSummaries) > 0)
+        if (HasMaterializationGapBeforeStart(competition, stage, matchSummaries, competitionStages))
         {
             return DisabledUnmaterializedConfrontations;
         }
 
         var format = StructureSkeleton.InferFormat(stage);
         return format == StructureFormatKind.Cup && !IsInitialRoundPlayable(stage) ? DisabledInitialRoundNotPlayable : null;
+    }
+
+    private static bool HasMaterializationGapBeforeStart(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<MatchSummaryRow> matchSummaries,
+        IReadOnlyList<Stage>? competitionStages)
+    {
+        if (stage.Status is not StageStatus.Ready)
+        {
+            return false;
+        }
+
+        if (StageConfrontationMaterializationState.CountEligibleUnmaterialized(
+                competition,
+                stage,
+                matchSummaries,
+                competitionStages) > 0)
+        {
+            return true;
+        }
+
+        var stages = competitionStages ?? [stage];
+        var format = StructureSkeleton.InferFormat(stage);
+        if (format == StructureFormatKind.Championship
+            && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
+            && !ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages))
+        {
+            return true;
+        }
+
+        if (format == StructureFormatKind.Groups
+            && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
+            && (stage.Groups.Count == 0
+                || stage.Groups.Any(group => group.EntryIds.Count < 2)))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     internal static IReadOnlyList<MatchSummaryRow> ToSummaryRows(IReadOnlyList<Match> stageMatches) =>
