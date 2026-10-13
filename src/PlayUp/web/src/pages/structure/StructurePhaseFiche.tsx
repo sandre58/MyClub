@@ -9,7 +9,6 @@ import {
   replaceStageDrawRules,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
-import { WaitMark } from '../../design-system/components/WaitMark';
 import { TextInput } from '../../design-system/components/TextInput';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
@@ -101,6 +100,7 @@ import {
 import { resolvePlacesN } from './structurePlaces';
 import type { StructureFocusId } from './structureNavigation';
 import { PhaseSchematic } from './phaseSchematic';
+import { StructureSchematicViewport } from './StructureSchematicViewport';
 import { listCupManualPlaces } from './manualPlacementUi';
 import '../regulation/regulation-shared.css';
 
@@ -1142,10 +1142,16 @@ export function StructurePhaseFiche({
               id="tile-places"
               className="structure-schematic-viewport"
             >
-              <div className="structure-schematic-viewport__scale">
-                {schematicQuery.data ? (
+              <StructureSchematicViewport
+                schematic={schematicQuery.data}
+                isError={schematicQuery.isError}
+                isFetching={schematicQuery.isFetching}
+                loadingLabel={t('fiche.schematicLoading')}
+                unavailableLabel={t('fiche.occupantsUnavailable')}
+              >
+                {(schematic) => (
                   <PhaseSchematic
-                    schematic={schematicQuery.data}
+                    schematic={schematic}
                     terminal={!hasExits}
                     cupRoundCount={stage.roundCount}
                     cupPairProductionStates={cupPairProductionStates}
@@ -1160,18 +1166,8 @@ export function StructurePhaseFiche({
                         : undefined
                     }
                   />
-                ) : schematicQuery.isError ? (
-                  <p className="structure-panel__muted">
-                    {t('fiche.occupantsUnavailable')}
-                  </p>
-                ) : (
-                  <div className="structure-schematic-loading">
-                    <WaitMark size="region">
-                      {t('fiche.schematicLoading')}
-                    </WaitMark>
-                  </div>
                 )}
-              </div>
+              </StructureSchematicViewport>
               {!showPlacementBlock && placesBanners.length > 0 ? (
                 <div className="structure-schematic-viewport__issues">
                   {issueBanner(placesBanners)}

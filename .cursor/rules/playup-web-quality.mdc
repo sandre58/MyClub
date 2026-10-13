@@ -34,6 +34,10 @@ CI `web` fails on **errors and Oxlint warnings** from those steps (plus `build` 
 - Query keys → **`queryKeys.ts`** factory; do not invent parallel key shapes.
 - Do not add a second HTTP client or a global client-state library without a demonstrated need.
 
+## Loading UX
+
+Section/tile **initial load** vs **background refresh** → see `loading-states.mdc`.
+
 ## Conventions
 
 - Prettier: single quotes, trailing commas, semis, `printWidth` 80 (CSS 120).

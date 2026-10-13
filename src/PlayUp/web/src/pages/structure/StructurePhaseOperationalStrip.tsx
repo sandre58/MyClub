@@ -575,7 +575,11 @@ function DrawColumn(
               aria-label={t('fiche.deactivateDraw')}
               onClick={props.onDeactivateDraw}
             >
-              <TrashIcon size="sm" />
+              {props.deactivateDrawPending ? (
+                <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
+              ) : (
+                <TrashIcon size="sm" />
+              )}
             </button>
           </span>
         </Tooltip>
@@ -601,11 +605,8 @@ function DrawColumn(
     ) : null;
 
   const drawNeedsOverview = props.showDrawCta && props.drawOperationalReady === false;
-  const drawMutationOrInitialLoading =
-    props.deactivateDrawPending || drawNeedsOverview;
-  const drawUpdatingLabel = props.deactivateDrawPending
-    ? t('fiche.operational.placement.deactivatingDraw')
-    : t('fiche.operational.draw.loading');
+  const drawInitialLoading = drawNeedsOverview;
+  const drawUpdatingLabel = t('fiche.operational.draw.loading');
 
   let body: ReactNode;
 
@@ -765,10 +766,7 @@ function DrawColumn(
       titleChipRefreshing={props.titleChipRefreshing}
       toolbar={toolbar}
     >
-      <SectionUpdatingBody
-        updating={drawMutationOrInitialLoading}
-        label={drawUpdatingLabel}
-      >
+      <SectionUpdatingBody updating={drawInitialLoading} label={drawUpdatingLabel}>
         {body}
       </SectionUpdatingBody>
     </StripSection>
@@ -847,10 +845,6 @@ function MatchesColumn({
   const productionBusy =
     materializeMutation.isPending || dematerializeMutation.isPending;
 
-  const matchesUpdating = productionBusy;
-  const matchesUpdatingLabel = dematerializeMutation.isPending
-    ? t('fiche.dematerialize.submitting')
-    : t('fiche.materialize.submitting');
   const ratioLabel = t('fiche.operational.production.ratioLabel', {
     count: gaugeRatio?.filled ?? 0,
   });
@@ -911,10 +905,16 @@ function MatchesColumn({
             disabled={materializeMutation.isPending}
             onClick={() => materializeMutation.mutate(undefined)}
           >
-            <>
-              <CreateMatchesIcon size="sm" />
-              {materializeActionLabel(materialize, tActions)}
-            </>
+            {materializeMutation.isPending ? (
+              <PendingLabel>
+                {materializeActionLabel(materialize, tActions)}
+              </PendingLabel>
+            ) : (
+              <>
+                <CreateMatchesIcon size="sm" />
+                {materializeActionLabel(materialize, tActions)}
+              </>
+            )}
           </button>
         ) : null}
         {dematerialize?.enabled ? (
@@ -1021,9 +1021,7 @@ function MatchesColumn({
       titleChipRefreshing={titleChipRefreshing}
       toolbar={effectiveToolbar}
     >
-      <SectionUpdatingBody updating={matchesUpdating} label={matchesUpdatingLabel}>
-        {matchesContent}
-      </SectionUpdatingBody>
+      {matchesContent}
     </StripSection>
   );
 }

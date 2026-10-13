@@ -46,6 +46,7 @@ const basePlacement: StructurePlacementOperationalSectionProps = {
   releasableTotal: 0,
   releasePending: false,
   deactivateDrawPending: false,
+  drawOperationalReady: true,
   onOpenDrawWorkflow: vi.fn(),
   onActivateDraw: vi.fn(),
   onEditDrawParams: vi.fn(),
@@ -410,6 +411,75 @@ describe('StructurePhaseOperationalStrip', () => {
         within(matchesSection).queryByLabelText(
           /Avancement de la production des matchs/i,
         ),
+      ).not.toBeInTheDocument();
+    });
+
+    it('keeps matches section content visible while materialize is pending', async () => {
+      vi.mocked(materializeMatches).mockImplementation(
+        () => new Promise(() => {}),
+      );
+      const user = userEvent.setup();
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'create',
+        determinedCount: 6,
+        eligibleCount: 6,
+        materializedCount: 0,
+        commandEnabled: true,
+        confrontations: [],
+      };
+      const { container } = renderMatchesStrip({
+        ...leagueStageBase,
+        status: 'Ready',
+        lifecycle: { transition: { code: 'StartStage', enabled: true } },
+        materialize,
+      });
+
+      await user.click(screen.getByRole('button', { name: /Créer les matchs/i }));
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByLabelText(/Avancement de la production des matchs/i),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector('.structure-operational-strip__section-sync'),
+      ).toBeNull();
+    });
+
+    it('keeps draw section content visible while deactivate is pending', () => {
+      const { container } = renderStrip({
+        placement: {
+          ...basePlacement,
+          deactivateDrawPending: true,
+          drawOperationalReady: true,
+        },
+      });
+
+      expect(
+        screen.getByRole('button', { name: /Lancer le tirage/i }),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector('.structure-operational-strip__section-sync'),
+      ).toBeNull();
+      const deactivateBtn = screen.getByRole('button', {
+        name: /Désactiver le tirage/i,
+      });
+      expect(deactivateBtn.querySelector('.ds-spinner')).not.toBeNull();
+    });
+
+    it('shows regional loader while draw overview is initially loading', () => {
+      const { container } = renderStrip({
+        placement: {
+          ...basePlacement,
+          drawOperationalReady: false,
+        },
+      });
+
+      expect(
+        container.querySelector('.structure-operational-strip__section-sync'),
+      ).not.toBeNull();
+      expect(
+        screen.queryByRole('button', { name: /Lancer le tirage/i }),
       ).not.toBeInTheDocument();
     });
 

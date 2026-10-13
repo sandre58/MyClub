@@ -1,0 +1,33 @@
+---
+description: Section/tile loading vs background refresh (Play’Up web)
+globs: src/PlayUp/web/**/*.{tsx,ts,css}
+alwaysApply: false
+---
+
+# Loading — sections and tiles
+
+Two distinct UX modes; do not mix them.
+
+## Initial load (no cached data for that surface)
+
+- Use the design system **regional loader** (`LoadingState` with `size="region"`, or equivalent documented wait mark for large viewports when already standardized on that page).
+- **Center** it in the section or tile body.
+- Replace section/tile **content** until the first successful fetch (or explicit error/empty).
+
+## Background refresh (data already shown; query refetch / invalidation)
+
+- **Do not** swap the section body for a regional loader (no layout shift, no hiding metrics/CTAs).
+- Replace only the **section marker** in the header: numbered chip, rail icon, or tile icon — with a **`ds-spinner` in the same footprint** (fixed width/height matching the chip or icon slot).
+- Keep **`aria-busy`** on the section/tile (or strip) and a **visually hidden** `role="status"` message for screen readers.
+- **Mutations** (button submit): spinner on the control (`PendingLabel` / inline `ds-spinner`), not a full-section loader, unless the entire section truly has no stable content yet.
+
+## Reference implementation
+
+- Operational strip sections: `StripSection` + `titleChipRefreshing` (`structureOperationalStripSection.tsx`), driven by hub background refetch in `StructurePhaseFiche`.
+- Schematic tile: `StructureSchematicViewport` — initial load and schematic-query refetch both show centered `WaitMark` in the viewport (schematic hidden until fetch settles).
+
+## Anti-patterns
+
+- Per-column “updating…” text rows that grow layout.
+- Full-section `LoadingState` during hub refetch when children can stay visible.
+- Using `PendingLabel` in the tile body for **server refetch** (reserve for **in-flight mutations**).

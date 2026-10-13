@@ -16,6 +16,8 @@ Use a multi-phase Cup or Groups competition.
 
 1. During background structure refetch after activate draw: operational strip columns and schematic stay visible (no full-section regional loader).
 2. Hub background refresh: no per-column « Mise à jour… » text; numbered chip replaced by a same-size spinner in each section title (no layout shift).
+3. Materialize / dematerialize / deactivate draw: strip section body stays visible; spinner on the action control only.
+4. Schematic refetch: viewport shows centered WaitMark only (diagram hidden until fetch settles).
 
 ## After PR3 (optimistic, if shipped)
 
