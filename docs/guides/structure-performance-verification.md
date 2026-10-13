@@ -26,3 +26,15 @@ Use a multi-phase Cup or Groups competition.
 ## After PR4 (schematic SQL)
 
 1. Multi-phase Qual/Prog feeds on schematic unchanged vs baseline snapshot test in CI.
+
+## Integration — D5 + lifecycle (2026-10-13)
+
+**Manual:** four D5 visual scenarios (surplus, empty tableau, population deficit, draw-engaged SlotFeed silence) — validated on Structure + drawer + PageHead.
+
+**Automated (Vitest `StructurePage.test.tsx`, block `integration — cross-surface`):**
+
+1. Negative PageHead + Matchs Prepare (`Places`) + strip + schematic viewport on population shortfall.
+2. Negative PageHead + fiche copy for `OverCapacityEdge` (no positive materialization note).
+3. Fiche silences `SlotFeedMissing` when draw is engaged; other diagnostics (e.g. `CycleDetected`) and PageHead negative hint remain.
+
+**Related:** hub background refresh chip spinner — `StructurePhaseOperationalStrip.test.tsx`; schematic WaitMark — `StructureSchematicViewport.test.tsx`.

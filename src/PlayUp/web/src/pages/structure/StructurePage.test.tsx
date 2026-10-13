@@ -1818,4 +1818,156 @@ describe('StructurePage Structure hub', () => {
       expect(renameStage).toHaveBeenCalledWith(stageId, 'Saison');
     });
   });
+
+  describe('integration — cross-surface (PageHead, fiche, strip, Matchs)', () => {
+    it('aligns negative PageHead with population shortfall and Prepare blocked (Places)', async () => {
+      vi.mocked(fetchStructureView).mockResolvedValue(
+        structureView({
+          format: {
+            kind: 'Groups',
+            primaryStageId: groupesStage().stageId,
+            primaryStageName: 'Groupes',
+            primaryStageStatus: 'Draft',
+          },
+          stages: [
+            groupesStage({
+              compositionCapacity: 8,
+              affectationEntryCount: 4,
+              structureIssues: [],
+              lifecycle: {
+                transition: {
+                  code: 'PrepareStage',
+                  enabled: false,
+                  disabledReasonCode: 'Places',
+                },
+              },
+            }),
+          ],
+          readiness: {
+            readyForNextSlice: false,
+            readyForDraw: false,
+            readyForMaterialization: false,
+            readyForSchedule: false,
+            readyForMatchOperation: false,
+            readyForSchedulePath: false,
+            attachedMatchCount: 0,
+            blockers: [],
+            nextConstructionStepHint: 'None',
+          },
+        }),
+      );
+      vi.mocked(fetchStageSchematic).mockResolvedValue({
+        stageId: groupesStage().stageId,
+        competitionId,
+        name: 'Groupes',
+        status: 'Draft',
+        formatKind: 'Groups',
+        cases: [],
+        connections: [],
+      });
+
+      renderStructurePage();
+
+      expect(
+        await screen.findByText(/Des anomalies nécessitent votre attention/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/Structure prête pour la prochaine étape/i),
+      ).not.toBeInTheDocument();
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByRole('button', {
+          name: /préparer la phase/i,
+        }),
+      ).toBeDisabled();
+      expect(
+        within(matchesSection).getByText(/Remplissez toutes les places/i),
+      ).toBeInTheDocument();
+
+      expect(
+        document.querySelector('.structure-operational-strip'),
+      ).toBeInTheDocument();
+      expect(
+        document.querySelector('.structure-schematic-viewport'),
+      ).toBeInTheDocument();
+    });
+
+    it('shows negative PageHead when structure synthesis reports OverCapacityEdge', async () => {
+      vi.mocked(fetchStructureView).mockResolvedValue(
+        structureView({
+          stages: [
+            championshipStage({
+              structureIssues: ['OverCapacityEdge'],
+              compositionCapacity: 8,
+              affectationEntryCount: 8,
+            }),
+          ],
+          readiness: {
+            readyForNextSlice: true,
+            readyForDraw: false,
+            readyForMaterialization: true,
+            readyForSchedule: false,
+            readyForMatchOperation: false,
+            readyForSchedulePath: true,
+            attachedMatchCount: 0,
+            blockers: [],
+            nextConstructionStepHint: 'None',
+          },
+        }),
+      );
+
+      renderStructurePage();
+
+      expect(
+        await screen.findByText(/Des anomalies nécessitent votre attention/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/La compétition est prête à créer les matchs/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('silences SlotFeedMissing on fiche while draw is engaged but keeps other diagnostics', async () => {
+      vi.mocked(fetchStructureView).mockResolvedValue(
+        structureView({
+          format: {
+            kind: 'Groups',
+            primaryStageId: groupesStage().stageId,
+            primaryStageName: 'Groupes',
+            primaryStageStatus: 'Draft',
+          },
+          stages: [
+            groupesStage({
+              compositionCapacity: 8,
+              affectationEntryCount: 8,
+              drawExecutionBadge: 'InProgress',
+              structureIssues: ['SlotFeedMissing', 'CycleDetected'],
+            }),
+          ],
+        }),
+      );
+      vi.mocked(fetchStageSchematic).mockResolvedValue({
+        stageId: groupesStage().stageId,
+        competitionId,
+        name: 'Groupes',
+        status: 'Draft',
+        formatKind: 'Groups',
+        cases: [],
+        connections: [],
+      });
+
+      renderStructurePage();
+
+      await screen.findByRole('heading', { name: 'Groupes' });
+      expect(
+        screen.queryByText(/Place pas encore alimentée/i),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(/Liaison circulaire entre phases/i),
+      ).toBeInTheDocument();
+      expect(
+        await screen.findByText(/Des anomalies nécessitent votre attention/i),
+      ).toBeInTheDocument();
+    });
+  });
 });

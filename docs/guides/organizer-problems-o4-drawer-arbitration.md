@@ -371,7 +371,7 @@ When **`SlotFeedMissing`** is **presented** (would block Prepare via [`Structure
 1. Host: [`StructurePresentedAttentionCollector`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePresentedAttentionCollector.cs) severity map + contract tests.
 2. SPA: shared severity → chrome mapping ([`structureDiagnosticPresentation.ts`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticPresentation.ts), meters, operational strip).
 3. Drawer triage titles (option B) vs fiche contextual keys.
-4. Visual QA: surplus, empty tableau, population deficit, draw-engaged silence.
+4. Visual QA: surplus, empty tableau, population deficit, draw-engaged silence — **done** (2026-10-13, Structure + drawer + PageHead).
 
 ---
 
