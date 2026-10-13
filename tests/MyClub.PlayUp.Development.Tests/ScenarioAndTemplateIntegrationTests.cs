@@ -61,6 +61,9 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             "flux-empty-relations-draft",
             "flux-full-graph-draft",
             "qual-form-to-champ-mid",
+            "qual-form-champ-ready-partial",
+            "qual-form-champ-ready-full",
+            "qual-form-champ-running",
             "regulation-demo",
             "regulation-tie-homogeneous",
             "confrontation-multi-round",
@@ -78,7 +81,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         catalog.All.Select(s => s.Id).OrderBy(id => id, StringComparer.Ordinal)
             .Should().Equal(expectedIds.OrderBy(id => id, StringComparer.Ordinal));
-        catalog.All.Should().HaveCount(43);
+        catalog.All.Should().HaveCount(46);
 
         foreach (var id in progressiveIds)
         {
@@ -494,6 +497,107 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
         semi.Regulation.ProgressionRules.Paths.Should().OnlyContain(path =>
             path.Destination.TargetsGroup && path.Outcome == ProgressionOutcome.Winner);
         groups.CompositionEntries.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Qual_form_champ_ready_partial_projects_lifecycle_and_materialize_gatesAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("qual-form-champ-ready-partial")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        competition.Should().NotBeNull();
+        var allStages = await stages.GetByIdsForUpdateAsync(competition.StageIds);
+        var champ = allStages.Single(s => s.Name.Value == "Championnat");
+
+        champ.Status.Should().Be(StageStatus.Ready);
+        champ.CompositionEntries.Should().HaveCount(2);
+
+        var view = StructureViewAssembler.Assemble(competition, allStages);
+        var hub = view.Stages.Single(s => s.StageId == champ.Id.Value);
+        hub.MatchdayCount.Should().Be(0);
+        hub.MatchCount.Should().Be(0);
+        hub.Materialize.Should().NotBeNull();
+        hub.Materialize!.CommandEnabled.Should().BeFalse();
+        hub.Materialize.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.PhaseRosterIncomplete);
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+    }
+
+    [Fact]
+    public async Task Qual_form_champ_ready_full_allows_materialize_blocks_startAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("qual-form-champ-ready-full")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        competition.Should().NotBeNull();
+        competition.Status.Should().Be(CompetitionStatus.Ready);
+        var allStages = await stages.GetByIdsForUpdateAsync(competition.StageIds);
+        var champ = allStages.Single(s => s.Name.Value == "Championnat");
+
+        champ.CompositionEntries.Should().HaveCount(4);
+
+        var view = StructureViewAssembler.Assemble(competition, allStages);
+        var hub = view.Stages.Single(s => s.StageId == champ.Id.Value);
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        hub.Materialize.DeterminedCount.Should().Be(6);
+        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Qual_form_champ_running_has_materialized_matchesAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("qual-form-champ-running")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
+        var allStages = await stages.GetByIdsForUpdateAsync(competition!.StageIds);
+        var champ = allStages.Single(s => s.Name.Value == "Championnat");
+
+        champ.Status.Should().Be(StageStatus.Running);
+        competition.Status.Should().Be(CompetitionStatus.Running);
+
+        var stageMatches = await matches.ListByStageForUpdateAsync(champ.Id);
+        stageMatches.Should().HaveCount(6);
+
+        var matchRows = stageMatches
+            .Select(match => new MatchSummaryRow(
+                match.Id,
+                match.StageId,
+                match.Status,
+                match.HomeEntryId,
+                match.AwayEntryId,
+                match.Result,
+                match.HasObservedLive))
+            .ToList();
+        var view = StructureViewAssembler.Assemble(
+            competition,
+            allStages,
+            matchSummariesByStage: new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+            {
+                [champ.Id] = matchRows
+            });
+        var hub = view.Stages.Single(s => s.StageId == champ.Id.Value);
+        hub.MatchCount.Should().Be(6);
+        hub.MatchdayCount.Should().BeGreaterThan(0);
+        hub.Materialize!.CommandEnabled.Should().BeFalse();
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionCompleteStage);
     }
 
     [Fact]

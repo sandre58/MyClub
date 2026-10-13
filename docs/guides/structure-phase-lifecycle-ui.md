@@ -4,13 +4,13 @@
 
 **Problems messaging (Matchs column):** [structure-problems-contract.md](./structure-problems-contract.md) (**paused** — local pilot). Transversal audit: [organizer-problems-audit.md](./organizer-problems-audit.md) (working draft). Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
-**Last code audit:** 2026-10-13 (Championship/Swiss **Prepare** = schematic Places N full, feeders pending OK; **Materialize/Start/Swiss** = full phase **composition**; Places N via `ChampionshipSwissPhasePlaces`; PLACES structural vs resolved on fiche). Prior: Lifecycle V2 reste.
+**Last code audit:** 2026-10-13 — Lifecycle V2 **aligned** (Matchs column, reverts, Start unmaterialized, materialize Ready-only, exploitation gauge **clos/total**). Places N Qual→Forme: **Acceptée** Notion (`ChampionshipSwissPhasePlaces`, B′2 Prepare, A3 PLACES). **Residual:** stepper/2b matrix **N/A** (UI removed).
 
 **Notion validation:** 2026-10-12 — [Arbitrage Structure — cycle de vie et gel construction](https://app.notion.com/p/3f775fb92d10817eb795ddb5fc52dd9c).
 
 **Product SoT (V2 lifecycle contract):** [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca) — **Contrat cycle de phase V2** (2026-10-12, DECIDED). This appendix records **code facts** and **gaps vs that contract**; narrative contract lives in Notion only.
 
-**PR gate (DECIDED):** No SPA PR for 2b/2c until the **2b matrix** is arbitrated in Notion and **2c** is decided.
+**PR gate (2026-10-13):** Lifecycle V2 SPA **shipped**; matrice 2b **superseded** (stepper removed). **2c** destination meter **delivered**.
 
 **Notion arbitration (product):** [Arbitrage matrice 2b — bandeau cycle Structure (2026-10-11)](https://app.notion.com/p/3f675fb92d1081dba56afcbfacbd32e7) — **superseded** by Matchs-column lifecycle UI (2026-10-12). Update [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca) after merge.
 
@@ -449,7 +449,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | :------ | :----------- | :------ | :----- |
 | Lifecycle transitions | Prepare / Start / Complete + Revert* + Suspend / Resume | Prepare, Start, Complete, Revert*, Suspend, Resume on `revertTransition` | **ALIGNED** (Suspend/Resume tests 2026-10-13) |
 | UI placement | Matchs section / mise en service; **no** stepper band | `StructurePhaseMatchsLifecycleBlock` in operational Matchs column | **ALIGNED** (2026-10-12) |
-| Match progress gauge | Clos / total (finished + cancelled) | `finished`, `cancelled`, `open`, `total` — usable for clos/total copy | **PARTIAL** |
+| Match progress gauge | Clos / total (finished + cancelled) | `StructureMatchPhaseProgressGauge` + `lifecycle.matchProgress.*` | **ALIGNED** (2026-10-13) |
 | Competition Running + phase Draft/Ready (orphan) | ConstructionFrozen on **Prepare** and **Start** | Orphan = no peer Running/Suspended/Completed | **ALIGNED** | `StructureStageLifecycleAssembler.ResolvePrepareTransition`, `IsConstructionFrozenWhileCompetitionRunning` |
 
 ### Domain vs Application boundaries (2026-10-12, DECIDED)

@@ -64,6 +64,9 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, FluxEmptyRelationsDraftScenario>();
         services.AddSingleton<IScenario, FluxFullGraphDraftScenario>();
         services.AddSingleton<IScenario, QualFormToChampMidScenario>();
+        services.AddSingleton<IScenario, QualFormChampReadyPartialScenario>();
+        services.AddSingleton<IScenario, QualFormChampReadyFullScenario>();
+        services.AddSingleton<IScenario, QualFormChampRunningScenario>();
         services.AddSingleton<IScenario, RegulationDemoScenario>();
         services.AddSingleton<IScenario, RegulationTieHomogeneousScenario>();
         services.AddSingleton<IScenario, ConfrontationMultiRoundScenario>();

@@ -38,6 +38,24 @@ internal static class SeedLifecycle
     }
 
     /// <summary>
+    /// Prepares and starts a stage without transitioning the competition (keeps Draft for later Prepare).
+    /// </summary>
+    public static void PrepareAndStartStageOnly(
+        ScenarioContext context,
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage>? competitionStages = null)
+    {
+        var stages = competitionStages ?? [stage];
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
+            stage,
+            stages,
+            context.Clock);
+        StartStage.Execute(stage, context.Clock);
+    }
+
+    /// <summary>
     /// Transitions stage + competition to Ready without starting.
     /// </summary>
     public static void PrepareOnly(

@@ -372,6 +372,37 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('shows closed ratio when matches are finished or cancelled', () => {
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Running',
+          matchCount: 3,
+          lifecycle: {
+            transition: { code: 'CompleteStage', enabled: true },
+            matchProgress: {
+              total: 3,
+              finished: 1,
+              open: 0,
+              cancelled: 2,
+              canComplete: true,
+            },
+          },
+        },
+        'Running',
+      );
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      const ratioFilled = matchesSection.querySelector(
+        '.structure-operational-strip__ratio-filled',
+      );
+      expect(ratioFilled?.textContent).toBe('3');
+      expect(
+        within(matchesSection).getByText(/Tous les matchs sont terminés/i),
+      ).toBeInTheDocument();
+      expect(within(matchesSection).getByText(/^Terminés$/i)).toBeInTheDocument();
+    });
+
     it('shows in-progress copy instead of match stat summary', () => {
       renderMatchesStrip(
         {

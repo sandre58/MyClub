@@ -577,6 +577,144 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
+    /// Flux Qual→Forme: Championnat <see cref="StageStatus.Ready"/> with partial composition (2 directs, qualifiés en attente).
+    /// Recette colonne Matchs — <c>PhaseRosterIncomplete</c>, Start bloqué.
+    /// </summary>
+    public static async Task BuildQualFormChampReadyPartialAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var (_, groups, champ) = await SeedQualFormSixTeamDraftGraphAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+
+        PrepareStage.Execute(champ, [groups, champ], context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Qual appliquée, composition complète (4), Prêt sans matérialisation — recette Materialize + Start bloqué.
+    /// </summary>
+    public static async Task BuildQualFormChampReadyFullAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var (competition, groups, champ) = await SeedQualFormSixTeamDraftGraphAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+
+        await FinishGroupsAndApplyQualFormAsync(context, competition, groups, champ)
+            .ConfigureAwait(false);
+
+        SeedLifecycle.PrepareOnly(context, competition, champ, [groups, champ]);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Championnat matérialisé et démarré après flux Qual→Forme (poules terminées).
+    /// </summary>
+    public static async Task BuildQualFormChampRunningAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var (competition, groups, champ) = await SeedQualFormSixTeamDraftGraphAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+
+        await FinishGroupsAndApplyQualFormAsync(context, competition, groups, champ)
+            .ConfigureAwait(false);
+
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition, champ, [groups, champ], context.Clock);
+        var materialized = MaterializeMatches.Execute(
+            competition,
+            champ,
+            [],
+            context.Clock,
+            [groups, champ]);
+        foreach (var match in materialized.CreatedMatches)
+        {
+            context.Matches.Add(match);
+        }
+
+        PrepareCompetition.Execute(competition, context.Clock);
+        StartStage.Execute(champ, context.Clock);
+        StartCompetition.Execute(competition, context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<(Competition Competition, Stage Groups, Stage Champ)> SeedQualFormSixTeamDraftGraphAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "Qual Forme → Championnat",
+            Format = RecipeFormat.Groups,
+            TeamCount = 4,
+            GroupCount = 2,
+            PlacesPerGroup = 2,
+            StageName = "Phase de groupes",
+            TeamNames = TeamNameSource.Generated
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(
+                context, competition, recipe, countOverride: 6, cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        groups.ReplaceDrawRules(null, context.Clock);
+
+        var ordered = entries.OrderBy(entry => entry.Id.Value).ToList();
+        var groupPool = ordered.Take(4).ToList();
+        var directs = ordered.Skip(4).Take(2).ToList();
+        SeedMaterialization.AssignGroupsRoundRobin(groups, groupPool);
+        AssignRootComposition(groups, groupPool, context.Clock);
+
+        var champ = CreateChampionshipStage(context, competition, "champ", "Championnat");
+        AssignRootComposition(champ, directs, context.Clock);
+
+        WireEachGroupQualificationToForm(
+            context.Ids, groups, champ, positionFrom: 1, positionTo: 1, context.Clock);
+
+        return (competition, groups, champ);
+    }
+
+    private static async Task FinishGroupsAndApplyQualFormAsync(
+        ScenarioContext context,
+        Competition competition,
+        Stage groups,
+        Stage champ)
+    {
+        var groupMatches = SeedMaterialization.MaterializeGroupsMatches(context, competition, groups);
+        SeedLifecycle.PrepareAndStartStageOnly(context, competition, groups, [groups, champ]);
+        PlayMatches(context, competition, groupMatches, count: groupMatches.Count);
+
+        var groupStandings = new Dictionary<GroupId, Standing>();
+        foreach (var group in groups.Groups)
+        {
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                groupMatches,
+                groups.Regulation.StandingRules ?? BootstrapRegulation.Standard().StandingRules);
+        }
+
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            groupStandings,
+            [groups, champ],
+            context.Clock);
+
+        groups.Complete(context.Clock);
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Case 7 hybrid mid-state: Groups 2×4 finished → Top1 Auto Place + Top2 Population;
     /// remaining QF Places filled by Slot Draw from leftover Population pool. KO Draft.
     /// WhoFeeds: Auto slots = Qual; drawn slots = Draw.

@@ -57,7 +57,7 @@ Applies to **templates** and most **structured scenarios** (`championship`, `gro
 
 Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`, `swiss-8x3:running`).
 
-Fixed UX / Structure / Règlement scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `qual-auto-place-mid`, `qual-hybrid-auto-draw-mid`, `prog-auto-place-mid`, `qual-form-to-champ-mid`, `flux-qualif-draft`, `flux-qual-form-draft`, `flux-prog-placement-draft`, `flux-prog-group-draft`, `flux-empty-relations-draft`, `flux-full-graph-draft`, `regulation-demo`, `regulation-tie-homogeneous`, `confrontation-multi-round`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
+Fixed UX / Structure / Règlement scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `qual-auto-place-mid`, `qual-hybrid-auto-draw-mid`, `prog-auto-place-mid`, `qual-form-to-champ-mid`, `qual-form-champ-ready-partial`, `qual-form-champ-ready-full`, `qual-form-champ-running`, `flux-qualif-draft`, `flux-qual-form-draft`, `flux-prog-placement-draft`, `flux-prog-group-draft`, `flux-empty-relations-draft`, `flux-full-graph-draft`, `regulation-demo`, `regulation-tie-homogeneous`, `confrontation-multi-round`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
 
 ### Aliases (compat — do not change silently)
 
@@ -117,6 +117,9 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `qual-hybrid-auto-draw-mid` | no | Qual Top1 Auto + Top2 population + Draw mid |
 | `prog-auto-place-mid` | no | Prog Auto Place into SF mid |
 | `qual-form-to-champ-mid` | no | Qual ForForm → Championship FormPathResolutions mid |
+| `qual-form-champ-ready-partial` | no | Qual ForForm — Champ **Prêt**, roster 2/4 (`PhaseRosterIncomplete`, Matchs empty state) |
+| `qual-form-champ-ready-full` | no | Poules terminées — Champ **Prêt**, roster 4/4, Materialize actif, Start bloqué sans production |
+| `qual-form-champ-running` | no | Qual ForForm — Champ **En cours**, 6 matchs matérialisés |
 | `flux-qualif-draft` | no | Structure flux: Groups Affectation + Qualif → QF Places — Draft |
 | `flux-qual-form-draft` | no | Structure flux: Groups + directs → Champ ForForm — Draft |
 | `flux-prog-placement-draft` | no | Structure flux: Demi Affectation → Finale/Bronze Prog + Attribution 1–4 — Draft |

@@ -303,9 +303,9 @@
       "matchStatTotal": "Total"
     },
     "matchProgress": {
-      "summary": "{{finished}} of {{total}} matches finished · {{open}} open · {{cancelled}} cancelled",
-      "compact": "{{finished}} matches finished out of {{total}}.",
-      "allComplete": "All matches are finished",
+      "summary": "{{closed}} of {{total}} matches finished · {{open}} open · {{cancelled}} cancelled",
+      "compact": "{{closed}} of {{total}} matches finished.",
+      "allClosed": "All matches are finished",
       "ratioLabel": "Finished",
       "inProgress": "The phase is live. Some matches still need to be played.",
       "inProgressSuspended": "The phase is suspended. Some matches still need to be played.",

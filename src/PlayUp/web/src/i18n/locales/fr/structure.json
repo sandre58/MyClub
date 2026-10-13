@@ -303,9 +303,9 @@
       "matchStatTotal": "Total"
     },
     "matchProgress": {
-      "summary": "{{finished}} match(s) sur {{total}} terminé(s) · {{open}} en cours · {{cancelled}} annulé(s)",
-      "compact": "{{finished}} matchs terminés sur {{total}}.",
-      "allComplete": "Tous les matchs sont terminés",
+      "summary": "{{closed}} match(s) sur {{total}} terminé(s) · {{open}} ouverts · {{cancelled}} annulé(s)",
+      "compact": "{{closed}} match(s) sur {{total}} terminé(s).",
+      "allClosed": "Tous les matchs sont terminés",
       "ratioLabel": "Terminés",
       "inProgress": "La phase est en cours. Il reste des matchs à jouer.",
       "inProgressSuspended": "La phase est suspendue. Il reste des matchs à jouer.",

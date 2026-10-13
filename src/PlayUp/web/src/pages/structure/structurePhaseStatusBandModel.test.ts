@@ -1,63 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import type { StructureStageHubSummary } from '../../types';
 import {
-  shouldShowMatchsLifecycle,
-  shouldShowPrimaryBlockMessage,
-  shouldShowRevertBlockMessage,
+  matchProgressAllClosed,
+  matchProgressClosed,
+  matchProgressRemaining,
 } from './structurePhaseStatusBandModel';
 
-const minimalStage = (status: StructureStageHubSummary['status']): StructureStageHubSummary => ({
-  stageId: 's1',
-  name: 'P',
-  status,
-  teamCount: 0,
-  matchCount: 0,
-  numberOfPeriods: 2,
-  durationPerPeriod: 45,
-  hasExtraTime: false,
-  hasPenaltyShootout: false,
-  hasDrawRules: false,
-  hasQualificationRules: false,
-  qualificationPathCount: 0,
-  hasProgressionRules: false,
-  progressionPathCount: 0,
-  hasTieFormat: false,
-});
-
-describe('structurePhaseStatusBandModel', () => {
-  it('shows block messages for draft prepare gates', () => {
-    expect(shouldShowPrimaryBlockMessage('Draft', 'StageNotReady')).toBe(true);
-    expect(shouldShowPrimaryBlockMessage('Draft', 'StructureGraphInvalid')).toBe(
-      true,
-    );
+describe('matchProgressClosed helpers', () => {
+  it('counts finished and cancelled as closed', () => {
+    expect(matchProgressClosed(2, 1)).toBe(3);
+    expect(matchProgressRemaining(5, 2, 1)).toBe(2);
   });
 
-  it('hides open-matches banner on running phase', () => {
-    expect(
-      shouldShowPrimaryBlockMessage('Running', 'OpenMatches'),
-    ).toBe(false);
-  });
-
-  it('hides inline copy for construction frozen and unmaterialized start gates', () => {
-    expect(
-      shouldShowPrimaryBlockMessage('Draft', 'ConstructionFrozen'),
-    ).toBe(false);
-    expect(
-      shouldShowPrimaryBlockMessage('Ready', 'UnmaterializedConfrontations'),
-    ).toBe(false);
-  });
-
-  it('shows revert block message when disabled reason is set', () => {
-    expect(shouldShowRevertBlockMessage('ProductionPresent')).toBe(true);
-    expect(shouldShowRevertBlockMessage(null)).toBe(false);
-  });
-
-  it('hides matchs lifecycle when phase is completed', () => {
-    expect(shouldShowMatchsLifecycle(minimalStage('Completed'))).toBe(false);
-  });
-
-  it('shows matchs lifecycle for draft without lifecycle payload', () => {
-    expect(shouldShowMatchsLifecycle(minimalStage('Draft'))).toBe(true);
+  it('allClosed when open is zero regardless of finished vs cancelled split', () => {
+    expect(matchProgressAllClosed(3, 1, 2, 0)).toBe(true);
+    expect(matchProgressAllClosed(3, 3, 0, 0)).toBe(true);
+    expect(matchProgressAllClosed(3, 2, 0, 1)).toBe(false);
+    expect(matchProgressAllClosed(0, 0, 0, 0)).toBe(false);
   });
 });

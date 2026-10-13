@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 
 import type { StageStatus } from '../../types';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
+import {
+  matchProgressAllClosed,
+  matchProgressClosed,
+} from './structurePhaseStatusBandModel';
 import { StripOperationalMessage } from './structureOperationalStripUi';
 
 function RatioAside({
@@ -40,21 +44,12 @@ function MetricRow({ aside, meter }: { aside: ReactNode; meter: ReactNode }) {
   );
 }
 
-function allMatchesFinished(
-  finished: number,
-  total: number,
-  open: number,
-): boolean {
-  return total > 0 && open === 0 && finished >= total;
-}
-
 function exploitationAsideTone(
-  finished: number,
   total: number,
   open: number,
   phaseStatus?: StageStatus,
 ): 'brand' | 'complete' | 'attention' {
-  if (allMatchesFinished(finished, total, open)) {
+  if (total > 0 && open === 0) {
     return 'complete';
   }
   if (phaseStatus === 'Suspended') {
@@ -63,12 +58,12 @@ function exploitationAsideTone(
   return 'brand';
 }
 
-/** Match exploitation progress — same gauge pattern as production, not hero stats. */
+/** Match exploitation progress — terminés / total (finished + cancelled), same gauge pattern as production. */
 export function StructureMatchPhaseProgressGauge({
   finished,
   total,
   open,
-  cancelled: _cancelled,
+  cancelled,
   layout = 'full',
   phaseStatus,
 }: {
@@ -76,27 +71,28 @@ export function StructureMatchPhaseProgressGauge({
   total: number;
   open: number;
   cancelled: number;
-  /** Running/Suspended/Completed: finished-vs-total gauge labels. */
+  /** Running/Suspended/Completed: closed-vs-total gauge labels. */
   layout?: 'full' | 'finishedTotal';
   phaseStatus?: StageStatus;
 }) {
   const { t } = useTranslation('structure');
+  const closed = matchProgressClosed(finished, cancelled);
   const exploitationGauge = layout === 'finishedTotal';
+  const allClosed = matchProgressAllClosed(total, finished, cancelled, open);
 
   const ratioLabel = exploitationGauge
     ? t('lifecycle.matchProgress.ratioLabel')
     : t('fiche.operational.production.ratioLabel', { count: finished });
 
-  const everyMatchFinished = allMatchesFinished(finished, total, open);
   const asideTone = exploitationGauge
-    ? exploitationAsideTone(finished, total, open, phaseStatus)
+    ? exploitationAsideTone(total, open, phaseStatus)
     : 'neutral';
 
   let caption: ReactNode;
-  if (everyMatchFinished) {
+  if (allClosed) {
     caption = (
       <StripOperationalMessage kind="success">
-        {t('lifecycle.matchProgress.allComplete')}
+        {t('lifecycle.matchProgress.allClosed')}
       </StripOperationalMessage>
     );
   } else if (exploitationGauge) {
@@ -112,7 +108,7 @@ export function StructureMatchPhaseProgressGauge({
   } else {
     caption = (
       <StripOperationalMessage kind="info">
-        {t('lifecycle.matchProgress.compact', { finished, total })}
+        {t('lifecycle.matchProgress.compact', { closed, total })}
       </StripOperationalMessage>
     );
   }
@@ -125,11 +121,13 @@ export function StructureMatchPhaseProgressGauge({
     );
   }
 
+  const gaugeCurrent = exploitationGauge ? closed : finished;
+
   return (
     <MetricRow
       aside={
         <RatioAside
-          current={finished}
+          current={gaugeCurrent}
           capacity={total}
           label={ratioLabel}
           poolTone={asideTone}
@@ -139,14 +137,14 @@ export function StructureMatchPhaseProgressGauge({
         <>
           {caption}
           <StructureOperationalRatioGauge
-            current={finished}
+            current={gaugeCurrent}
             capacity={total}
             caption={t('lifecycle.statusBand.matchStatsAria')}
             ariaLabel={t('lifecycle.statusBand.matchStatsAria')}
             poolTone={asideTone}
             fillVariant={
               exploitationGauge
-                ? phaseStatus === 'Suspended' && !everyMatchFinished
+                ? phaseStatus === 'Suspended' && !allClosed
                   ? 'attention'
                   : 'brand'
                 : 'default'
