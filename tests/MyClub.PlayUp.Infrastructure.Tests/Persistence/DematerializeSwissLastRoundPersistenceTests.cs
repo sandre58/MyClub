@@ -50,6 +50,11 @@ public sealed class DematerializeSwissLastRoundPersistenceTests
             var stage = Stage.Create(competition.Id, new StageName("Swiss"), SampleRegulations.Standard(), _clock);
             stage.SetSwissSettings(new SwissSettings(3));
             competition.AddStage(stage.Id, _clock);
+            foreach (var entry in competition.Entries.Where(entry => entry.Status == EntryStatus.Active))
+            {
+                stage.AddResolvedPopulationEntry(entry.Id, _clock);
+            }
+
             stage.Prepare(_clock);
             stage.Start(_clock);
             competition.Prepare(_clock);
@@ -58,7 +63,7 @@ public sealed class DematerializeSwissLastRoundPersistenceTests
             stages.Add(stage);
             await unitOfWork.SaveChangesAsync();
 
-            var round1 = GenerateNextRound.Execute(competition, stage, [], _clock);
+            var round1 = GenerateNextRound.Execute(competition, stage, [], _clock, [stage]);
             foreach (var match in round1.CreatedMatches)
             {
                 match.Start(_clock);
@@ -71,7 +76,8 @@ public sealed class DematerializeSwissLastRoundPersistenceTests
                 competition,
                 stage,
                 [.. round1.CreatedMatches],
-                _clock);
+                _clock,
+                [stage]);
             foreach (var match in round2.CreatedMatches)
             {
                 matches.Add(match);

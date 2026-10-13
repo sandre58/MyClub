@@ -792,7 +792,9 @@ public static class OverviewAssembler
             ? StructureFormatKind.Swiss
             : competitionFormatKind ?? (stage.Rounds.Count > 0 && stage.Matchdays.Count == 0
                 ? StructureFormatKind.Cup
-                : stage.Groups.Count > 0 ? StructureFormatKind.Groups : StructureFormatKind.Championship);
+                : stage.Groups.Count > 0
+                    ? StructureFormatKind.Groups
+                    : StructureFormatKind.Championship);
 
     /// <summary>
     /// Recent / Upcoming on ReferenceStage only — full Matchday or Round units (no caps).
@@ -858,9 +860,12 @@ public static class OverviewAssembler
         }
 
         if (stage.Rounds.Count == 0) return [];
-        var slices = new List<SportUnitSlice>(stage.Rounds.Count);
-        slices.AddRange(stage.Rounds.Select((round, index) => new SportUnitSlice(index + 1, UnitKindRound, round.Id.Value.ToString(), MatchdayNumber: null, round.Name, CollectUnitMatches(round.Fixtures, matchesById))));
 
+        List<SportUnitSlice> slices =
+        [
+            with(stage.Rounds.Count),
+            .. stage.Rounds.Select((round, index) => new SportUnitSlice(index + 1, UnitKindRound, round.Id.Value.ToString(), MatchdayNumber: null, round.Name, CollectUnitMatches(round.Fixtures, matchesById)))
+        ];
         return slices;
     }
 
@@ -1024,17 +1029,18 @@ public static class OverviewAssembler
         var instructions = ResolvePlacementAwards.Execute(stages, matchesByStage);
         return instructions.Count == 0
             ? []
-            : [
-            .. instructions.Select(instruction =>
-            {
-                var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId)
-                    ?? instruction.EntryId.Value.ToString();
-                return new FinalPlacementDto(
-                    instruction.Rank,
-                    instruction.EntryId.Value,
-                    displayName);
-            })
-        ];
+            :
+            [
+                .. instructions.Select(instruction =>
+                {
+                    var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId)
+                                      ?? instruction.EntryId.Value.ToString();
+                    return new FinalPlacementDto(
+                        instruction.Rank,
+                        instruction.EntryId.Value,
+                        displayName);
+                })
+            ];
     }
 
     private static IReadOnlyList<FinalPlacementDto>? ProjectStandingOutcomePlaces(
@@ -1059,12 +1065,13 @@ public static class OverviewAssembler
             string.Equals(table.Scope, ConsultationAssembler.ScopeOverall, StringComparison.Ordinal));
         return overall is null || overall.Rows.Count == 0
             ? null
-            : [
-            .. overall.Rows.Select(row => new FinalPlacementDto(
-                row.Position,
-                row.EntryId,
-                row.DisplayName))
-        ];
+            :
+            [
+                .. overall.Rows.Select(row => new FinalPlacementDto(
+                    row.Position,
+                    row.EntryId,
+                    row.DisplayName))
+            ];
     }
 
     private static OverviewStandingCompactDto? BuildStandingCompact(
@@ -1093,22 +1100,22 @@ public static class OverviewAssembler
         return !section.Applicable || section.Tables.Count == 0
             ? null
             : new OverviewStandingCompactDto(
-            reference.Id.Value,
-            reference.Name.Value,
-            [
-                .. section.Tables.Select(table => new OverviewStandingCompactTableDto(
-                    table.Scope,
-                    table.GroupId,
-                    table.GroupName,
-                    [
-                        .. table.Rows.Select(row => new OverviewStandingCompactRowDto(
-                            row.Position,
-                            row.EntryId,
-                            row.DisplayName,
-                            row.Played,
-                            row.Points))
-                    ]))
-            ]);
+                reference.Id.Value,
+                reference.Name.Value,
+                [
+                    .. section.Tables.Select(table => new OverviewStandingCompactTableDto(
+                        table.Scope,
+                        table.GroupId,
+                        table.GroupName,
+                        [
+                            .. table.Rows.Select(row => new OverviewStandingCompactRowDto(
+                                row.Position,
+                                row.EntryId,
+                                row.DisplayName,
+                                row.Played,
+                                row.Points))
+                        ]))
+                ]);
     }
 
     /// <summary>
@@ -1330,9 +1337,9 @@ public static class OverviewAssembler
                     ["minimumTeams"] = structureView.Regulation.MinimumTeams.ToString(CultureInfo.InvariantCulture),
                     ["activeCount"] = structureView.Participants.ActiveCount.ToString(CultureInfo.InvariantCulture),
                     ["missingCount"] = Math.Max(
-                        0,
-                        structureView.Regulation.MinimumTeams - structureView.Participants.ActiveCount)
-                    .ToString(CultureInfo.InvariantCulture)
+                            0,
+                            structureView.Regulation.MinimumTeams - structureView.Participants.ActiveCount)
+                        .ToString(CultureInfo.InvariantCulture)
                 };
         }
 
@@ -1341,7 +1348,7 @@ public static class OverviewAssembler
                 pair => pair.Key,
                 pair => pair.Value,
                 StringComparer.Ordinal)
-            : [with(StringComparer.Ordinal)];
+            : [];
 
         if (item is { TargetType: "Stage", TargetId: not null }
             && !parameters.ContainsKey("stageId"))
@@ -1434,7 +1441,11 @@ public static class OverviewAssembler
 
             foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
             {
-                if (draw is { Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group })
+                if (draw is
+                    {
+                        Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved,
+                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
+                    })
                 {
                     actions.Add(new OverviewActionDto(
                         ActionPublishAndApplyDraw,
@@ -1443,7 +1454,11 @@ public static class OverviewAssembler
                         draw.Id.Value));
                 }
 
-                if (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved, Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group }
+                if (draw is
+                    {
+                        Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved,
+                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
+                    }
                     && !DrawAppliedState.IsApplied(draw, stage))
                 {
                     actions.Add(new OverviewActionDto(
@@ -1734,7 +1749,9 @@ public static class OverviewAssembler
     /// </summary>
     internal static OverviewNaturalProgressionDto? ResolveConstructionStructuralProgression(
         IReadOnlyList<OverviewActionDto> actions) =>
-        (from code in ConstructionStructuralProgressionPriority where actions.Any(action => action.Code == code) select new OverviewNaturalProgressionDto(code)).FirstOrDefault();
+        (from code in ConstructionStructuralProgressionPriority
+         where actions.Any(action => action.Code == code)
+         select new OverviewNaturalProgressionDto(code)).FirstOrDefault();
 
     /// <summary>
     /// Picks the highest-priority structural transition among projected actions.
@@ -1742,7 +1759,9 @@ public static class OverviewAssembler
     /// </summary>
     internal static OverviewNaturalProgressionDto? ResolveInProgressStructuralProgression(
         IReadOnlyList<OverviewActionDto> actions) =>
-        (from code in InProgressStructuralProgressionPriority where actions.Any(action => action.Code == code) select new OverviewNaturalProgressionDto(code)).FirstOrDefault();
+        (from code in InProgressStructuralProgressionPriority
+         where actions.Any(action => action.Code == code)
+         select new OverviewNaturalProgressionDto(code)).FirstOrDefault();
 
     /// <summary>
     /// Evaluates whether Swiss <see cref="ActionGenerateNextRound"/> is an opportunity.
@@ -1882,7 +1901,7 @@ public static class OverviewAssembler
             .SelectMany(fixture => fixture.MatchIds)
             .Distinct()
             .Count();
-        var map = extra ?? [with(StringComparer.Ordinal)];
+        var map = extra ?? [];
         map["stageName"] = stage.Name.Value;
         map[ActionParamAttachedMatchCount] = attached.ToString(CultureInfo.InvariantCulture);
         map[ActionParamLabelVariant] = attached > 0 ? LabelVariantComplete : LabelVariantCreate;
@@ -1898,13 +1917,12 @@ public static class OverviewAssembler
         IReadOnlyList<Stage> stages,
         Dictionary<Guid, Guid> fixtureToMatch)
     {
-        var hints = new List<OverviewNavigationHintDto>
-        {
+        List<OverviewNavigationHintDto> hints =
+        [
             new("Competition", competition.Id.Value.ToString(), null, null, competition.Id.Value),
-            new("Structure", competition.Id.Value.ToString(), null, null, competition.Id.Value)
-        };
-        hints.AddRange(stages.Select(stage =>
-            new OverviewNavigationHintDto("Stage", stage.Id.Value.ToString(), null, stage.Id.Value, competition.Id.Value)));
+            new("Structure", competition.Id.Value.ToString(), null, null, competition.Id.Value),
+            .. stages.Select(stage => new OverviewNavigationHintDto("Stage", stage.Id.Value.ToString(), null, stage.Id.Value, competition.Id.Value))
+        ];
 
         foreach (var situation in situations)
         {

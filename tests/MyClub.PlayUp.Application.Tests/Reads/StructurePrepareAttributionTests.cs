@@ -161,7 +161,7 @@ public sealed class StructurePrepareAttributionTests
             .Should().BeFalse();
     }
 
-    private StructureStageHubSummaryDto AssembleHub(Competition competition, Stage stage)
+    private static StructureStageHubSummaryDto AssembleHub(Competition competition, Stage stage)
     {
         var view = StructureViewAssembler.Assemble(competition, [stage]);
         return view.Stages.Single();

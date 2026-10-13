@@ -44,16 +44,14 @@ internal static class ChampionshipSwissPhasePlaces
     /// </summary>
     internal static IReadOnlyList<EntryId> ResolveCompositionRoster(Competition competition, Stage stage)
     {
-        var roster = new List<EntryId>(stage.CompositionEntries.Count);
-        foreach (var compositionEntry in stage.CompositionEntries)
-        {
-            var entry = competition.Entries.FirstOrDefault(candidate => candidate.Id.Equals(compositionEntry.EntryId));
-            if (entry?.Status == EntryStatus.Active)
-            {
-                roster.Add(compositionEntry.EntryId);
-            }
-        }
-
+        List<EntryId> roster =
+        [
+            with(stage.CompositionEntries.Count),
+            .. from compositionEntry in stage.CompositionEntries
+            let entry = competition.Entries.FirstOrDefault(candidate => candidate.Id.Equals(compositionEntry.EntryId))
+            where entry?.Status == EntryStatus.Active
+            select compositionEntry.EntryId
+        ];
         return roster;
     }
 

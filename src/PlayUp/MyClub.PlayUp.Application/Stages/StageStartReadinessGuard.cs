@@ -83,22 +83,19 @@ internal static class StageStartReadinessGuard
 
         var stages = competitionStages ?? [stage];
         var format = StructureSkeleton.InferFormat(stage);
-        if (format == StructureFormatKind.Championship
-            && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
-            && !ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages))
+        switch (format)
         {
-            return true;
+            case StructureFormatKind.Championship
+                when competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
+                     && !ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages):
+            case StructureFormatKind.Groups
+                when competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
+                     && (stage.Groups.Count == 0
+                         || stage.Groups.Any(group => group.EntryIds.Count < 2)):
+                return true;
+            default:
+                return false;
         }
-
-        if (format == StructureFormatKind.Groups
-            && competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
-            && (stage.Groups.Count == 0
-                || stage.Groups.Any(group => group.EntryIds.Count < 2)))
-        {
-            return true;
-        }
-
-        return false;
     }
 
     internal static IReadOnlyList<MatchSummaryRow> ToSummaryRows(IReadOnlyList<Match> stageMatches) =>

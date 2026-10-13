@@ -1006,6 +1006,7 @@ public sealed class OverviewAssemblerTests
             StructureIntent.Swiss(2),
             _clock);
         var stage = configured.Stage;
+        ChampionshipSwissPhasePlaces.FillCompositionToPlacesCapacity(competition, stage, [stage], _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
         competition.Prepare(_clock);
@@ -1802,6 +1803,7 @@ public sealed class OverviewAssemblerTests
             StructureIntent.Swiss(3),
             _clock);
         var stage = configured.Stage;
+        ChampionshipSwissPhasePlaces.FillCompositionToPlacesCapacity(competition, stage, [stage], _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
         competition.Prepare(_clock);
@@ -1882,10 +1884,16 @@ public sealed class OverviewAssemblerTests
             null,
             StructureIntent.Championship(),
             _clock);
+        var stage = configured.Stage;
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition,
+            stage,
+            [stage],
+            _clock);
 
         var view = OverviewAssembler.Assemble(
             competition,
-            [configured.Stage],
+            [stage],
             new Dictionary<StageId, IReadOnlyList<Match>>());
 
         var action = view.AvailableActions.Should().ContainSingle(item =>

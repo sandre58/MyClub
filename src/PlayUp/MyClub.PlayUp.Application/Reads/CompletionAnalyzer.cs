@@ -71,16 +71,13 @@ public static class CompletionAnalyzer
                 continue;
             }
 
-            // Construction deficit is Needs Attention for Shell / Overview, not a sporting completion reason.
-            if (item.Source == NeedsAttentionAssembler.SourceInsufficientParticipants)
+            switch (item.Source)
             {
-                continue;
-            }
-
-            // U1 population signal on Structure — not an unresolved sporting operation.
-            if (item.Source == CompetitionFlowAnalyzer.PopulationShortfall)
-            {
-                continue;
+                // Construction deficit is Needs Attention for Shell / Overview, not a sporting completion reason.
+                case NeedsAttentionAssembler.SourceInsufficientParticipants:
+                // U1 population signal on Structure — not an unresolved sporting operation.
+                case CompetitionFlowAnalyzer.PopulationShortfall:
+                    continue;
             }
 
             if (reasons.Exists(reason => reason.Code == item.Source))

@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
-using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;

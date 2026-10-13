@@ -36,11 +36,7 @@ public sealed class DrawResolutionGeneratorTests
     {
         var entries = NewEntries(6);
         var targets = new[] { "S1", "S2", "S3", "S4", "S5", "S6" };
-        var fixedSlots = new[]
-        {
-            new SlotDrawPlacement(entries[0], "S1"),
-            new SlotDrawPlacement(entries[1], "S2")
-        };
+        var fixedSlots = new[] { new SlotDrawPlacement(entries[0], "S1"), new SlotDrawPlacement(entries[1], "S2") };
         var request = SlotRequest(entries, targets, fixedSlots, [], seed: 7);
 
         var result = DrawResolutionGenerator.Generate(request);
@@ -187,16 +183,17 @@ public sealed class DrawResolutionGeneratorTests
         pots[entries[7]] = 4;
         var fixedGroups = new[]
         {
-            new GroupDrawPlacement(entries[0], groups[0]),
-            new GroupDrawPlacement(entries[2], groups[0])
+            new GroupDrawPlacement(entries[0], groups[0]), new GroupDrawPlacement(entries[2], groups[0])
         };
 
         var result = DrawResolutionGenerator.Generate(
             GroupRequest(entries, groups, pots, 4, fixedGroups, seed: 12));
 
         result.IsResolved.Should().BeTrue();
-        result.Resolution!.GroupResults.Should().Contain(p => p.EntryId.Equals(entries[0]) && p.GroupId.Equals(groups[0]));
-        result.Resolution.GroupResults.Should().Contain(p => p.EntryId.Equals(entries[2]) && p.GroupId.Equals(groups[0]));
+        result.Resolution!.GroupResults.Should()
+            .Contain(p => p.EntryId.Equals(entries[0]) && p.GroupId.Equals(groups[0]));
+        result.Resolution.GroupResults.Should()
+            .Contain(p => p.EntryId.Equals(entries[2]) && p.GroupId.Equals(groups[0]));
         AssertGroupResolution(result.Resolution.GroupResults, entries, groups, pots, capacity: 4);
     }
 
@@ -210,8 +207,7 @@ public sealed class DrawResolutionGeneratorTests
         pots[entries[1]] = 1;
         var fixedGroups = new[]
         {
-            new GroupDrawPlacement(entries[0], groups[0]),
-            new GroupDrawPlacement(entries[1], groups[0])
+            new GroupDrawPlacement(entries[0], groups[0]), new GroupDrawPlacement(entries[1], groups[0])
         };
 
         var act = () => DrawResolutionGenerator.Generate(
@@ -286,10 +282,8 @@ public sealed class DrawResolutionGeneratorTests
         // Group 0 fully filled by Fixed (one of each pot) — capacity 4.
         var fixedGroups = new[]
         {
-            new GroupDrawPlacement(entries[0], groups[0]),
-            new GroupDrawPlacement(entries[2], groups[0]),
-            new GroupDrawPlacement(entries[4], groups[0]),
-            new GroupDrawPlacement(entries[6], groups[0])
+            new GroupDrawPlacement(entries[0], groups[0]), new GroupDrawPlacement(entries[2], groups[0]),
+            new GroupDrawPlacement(entries[4], groups[0]), new GroupDrawPlacement(entries[6], groups[0])
         };
 
         var result = DrawResolutionGenerator.Generate(
@@ -310,10 +304,8 @@ public sealed class DrawResolutionGeneratorTests
         // With MaxSameAssociation, NoSolution becomes a real business case (see dedicated RC).
         var scenarios = new[]
         {
-            (Entries: 4, Groups: 2, Pots: 2, Seed: 1),
-            (Entries: 9, Groups: 3, Pots: 3, Seed: 2),
-            (Entries: 16, Groups: 4, Pots: 4, Seed: 3),
-            (Entries: 8, Groups: 2, Pots: 4, Seed: 4)
+            (Entries: 4, Groups: 2, Pots: 2, Seed: 1), (Entries: 9, Groups: 3, Pots: 3, Seed: 2),
+            (Entries: 16, Groups: 4, Pots: 4, Seed: 3), (Entries: 8, Groups: 2, Pots: 4, Seed: 4)
         };
 
         foreach (var (entryCount, groupCount, potCount, seed) in scenarios)
@@ -444,7 +436,8 @@ public sealed class DrawResolutionGeneratorTests
                 2,
                 [],
                 seed: 1,
-                constraints: [new DrawConstraint(DrawConstraintType.SameGroupAvoidance, ConstraintEnforcement.Required)],
+                constraints:
+                [new DrawConstraint(DrawConstraintType.SameGroupAvoidance, ConstraintEnforcement.Required)],
                 context: DrawConstraintContext.Empty));
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
@@ -461,8 +454,7 @@ public sealed class DrawResolutionGeneratorTests
         var associations = entries.ToDictionary(e => e, _ => association);
         var fixedGroups = new[]
         {
-            new GroupDrawPlacement(entries[0], groups[0]),
-            new GroupDrawPlacement(entries[2], groups[0])
+            new GroupDrawPlacement(entries[0], groups[0]), new GroupDrawPlacement(entries[2], groups[0])
         };
 
         var result = DrawResolutionGenerator.Generate(
@@ -506,8 +498,7 @@ public sealed class DrawResolutionGeneratorTests
         // G0 has pot1=A; G1 has pot2=B → remaining pot2 A must join G0 → 2×A in G0.
         var fixedGroups = new[]
         {
-            new GroupDrawPlacement(entries[0], groups[0]),
-            new GroupDrawPlacement(entries[3], groups[1])
+            new GroupDrawPlacement(entries[0], groups[0]), new GroupDrawPlacement(entries[3], groups[1])
         };
 
         var result = DrawResolutionGenerator.Generate(
@@ -583,7 +574,8 @@ public sealed class DrawResolutionGeneratorTests
                 context: new DrawConstraintContext(null, null, associations)));
 
         result.IsResolved.Should().BeTrue();
-        result.Resolution!.GroupResults.Should().Contain(p => p.EntryId.Equals(entries[0]) && p.GroupId.Equals(groups[0]));
+        result.Resolution!.GroupResults.Should()
+            .Contain(p => p.EntryId.Equals(entries[0]) && p.GroupId.Equals(groups[0]));
         AssertMaxAssociation(result.Resolution.GroupResults, associations, maxPerGroup: 2);
     }
 
@@ -709,10 +701,7 @@ public sealed class DrawResolutionGeneratorTests
 
     private static Dictionary<EntryId, AssociationId> FourAssociationsTwice(EntryId[] entries)
     {
-        var associations = new[]
-        {
-            AssociationId.New(), AssociationId.New(), AssociationId.New(), AssociationId.New()
-        };
+        var associations = new[] { AssociationId.New(), AssociationId.New(), AssociationId.New(), AssociationId.New() };
 
         // Per pot of size 2: distinct associations; each association appears twice overall.
         return new Dictionary<EntryId, AssociationId>
@@ -760,11 +749,14 @@ public sealed class DrawResolutionGeneratorTests
         }
     }
 
-    private static List<(Guid Entry, Guid Group)> NormalizeGroupPlacements(IReadOnlyList<GroupDrawPlacement> placements) =>
-        [..placements
+    private static List<(Guid Entry, Guid Group)>
+        NormalizeGroupPlacements(IReadOnlyList<GroupDrawPlacement> placements) =>
+    [
+        .. placements
             .Select(p => (Entry: p.EntryId.Value, Group: p.GroupId.Value))
             .OrderBy(t => t.Entry)
-            .ThenBy(t => t.Group)];
+            .ThenBy(t => t.Group)
+    ];
 
     private static EntryId[] NewEntries(int count) =>
         [.. Enumerable.Range(0, count).Select(_ => EntryId.New())];

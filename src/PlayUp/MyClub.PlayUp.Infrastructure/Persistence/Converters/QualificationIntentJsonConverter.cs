@@ -118,9 +118,13 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
         if (root.TryGetProperty("DestinationSlotKeys", out var keysElement)
             && keysElement.ValueKind == JsonValueKind.Array)
         {
-            var list = new List<string>(keysElement.GetArrayLength());
-            list.AddRange(from item in keysElement.EnumerateArray() where item.ValueKind == JsonValueKind.String select item.GetString());
-
+            List<string> list =
+            [
+                with(keysElement.GetArrayLength()),
+                .. from item in keysElement.EnumerateArray()
+                where item.ValueKind == JsonValueKind.String
+                select item.GetString()
+            ];
             return list.Count == 0 ? null : list;
         }
 
@@ -145,8 +149,13 @@ internal sealed class QualificationIntentJsonConverter : JsonConverter<Qualifica
             return null;
         }
 
-        var list = new List<GroupId>(keysElement.GetArrayLength());
-        list.AddRange(from item in keysElement.EnumerateArray() where item.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined) select JsonSerializer.Deserialize<GroupId>(item.GetRawText(), options));
+        List<GroupId> list =
+        [
+            with(keysElement.GetArrayLength()),
+            .. from item in keysElement.EnumerateArray()
+            where item.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined)
+            select JsonSerializer.Deserialize<GroupId>(item.GetRawText(), options)
+        ];
 
         return list.Count == 0 ? null : list;
     }

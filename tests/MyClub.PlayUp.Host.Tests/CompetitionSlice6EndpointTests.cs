@@ -211,6 +211,8 @@ public sealed class CompetitionSlice6EndpointTests(HostPostgresFixture fixture)
 
         var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
         stage.AddMatchday(1, _clock);
+        stage.AddResolvedPopulationEntry(home.Id, _clock);
+        stage.AddResolvedPopulationEntry(away.Id, _clock);
         competition.AddStage(stage.Id, _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);

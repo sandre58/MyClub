@@ -46,7 +46,7 @@ public sealed class DeclaredMemberEndpointTests(HostPostgresFixture fixture)
         view.Should().NotBeNull();
         var entry = view.Participants.Entries.Should().ContainSingle(e => e.EntryId == seed.EntryId.Value).Subject;
         entry.DeclaredMembers.Should().ContainSingle();
-        var memberId = entry.DeclaredMembers![0].MemberId;
+        var memberId = entry.DeclaredMembers[0].MemberId;
         entry.DeclaredMembers[0].DisplayName.Should().Be("Dupont");
         entry.DeclaredMembers[0].Role.Should().Be(DeclaredMemberRole.Player);
 

@@ -31,6 +31,7 @@ public static class MaterializeMatches
     /// <param name="stage">Primary stage.</param>
     /// <param name="existingMatches">Matches already loaded for the stage (idempotence).</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="competitionStages">Competition stages.</param>
     /// <returns>Created matches and attached identities.</returns>
     public static MaterializeMatchesResult Execute(
         Competition competition,

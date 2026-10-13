@@ -52,8 +52,17 @@ public sealed class DematerializeChampionshipPostgresPersistenceTests(PostgresFi
             stages.Add(configured.Stage);
             await unitOfWork.SaveChangesAsync();
 
-            PrepareStage.Execute(configured.Stage, [configured.Stage], _clock);
-            var materialized = MaterializeMatches.Execute(competition, configured.Stage, [], _clock);
+            StageLifecycleTestSupport.EnsureReadyForMaterialize(
+                competition,
+                configured.Stage,
+                [configured.Stage],
+                _clock);
+            var materialized = MaterializeMatches.Execute(
+                competition,
+                configured.Stage,
+                [],
+                _clock,
+                [configured.Stage]);
             materialized.CreatedMatches.Should().HaveCount(3);
             foreach (var match in materialized.CreatedMatches)
             {

@@ -230,9 +230,11 @@ public sealed class CrossGroupStandingAssemblerTests
         Assign(stage, groupA.Id, entriesA);
         Assign(stage, groupB.Id, entriesB);
 
-        var matches = new List<Match>();
-        matches.AddRange(BuildRoundRobin(stage, entriesA));
-        matches.AddRange(BuildRoundRobin(stage, entriesB));
+        List<Match> matches =
+        [
+            .. BuildRoundRobin(stage, entriesA),
+            .. BuildRoundRobin(stage, entriesB)
+        ];
 
         var standingA = CalculateStanding.Execute(
             entriesA, matches, stage.Regulation.StandingRules.OrThrow());

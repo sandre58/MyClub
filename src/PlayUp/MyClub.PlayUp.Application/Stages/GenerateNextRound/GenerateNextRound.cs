@@ -30,6 +30,7 @@ public static class GenerateNextRound
     /// <param name="stage">Swiss stage.</param>
     /// <param name="existingMatches">Matches already loaded for the stage.</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="competitionStages">Competition stages.</param>
     /// <returns>Created matches and round metadata.</returns>
     public static GenerateNextRoundResult Execute(
         Competition competition,

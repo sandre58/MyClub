@@ -5,8 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
-using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
@@ -32,8 +30,8 @@ public sealed class StructurePreparePlacesGateTests
             StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
             _clock);
         competition.AddStage(source.Id, _clock);
-        var groupA = source.AddGroup("A", _clock);
-        var groupB = source.AddGroup("B", _clock);
+        source.AddGroup("A", _clock);
+        source.AddGroup("B", _clock);
         source.AddMatchday(1, _clock);
 
         var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);

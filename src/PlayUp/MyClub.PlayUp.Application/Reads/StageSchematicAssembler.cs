@@ -526,11 +526,14 @@ public static class StageSchematicAssembler
             return Empty(stage, format) with { ExpectedFormParticipants = expected };
         }
 
-        var bag = new List<(EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin)>(
-            expected.Resolved.Count + expected.Pending.Count);
-        bag.AddRange(stage.CompositionEntries.Select(compositionEntry => ((EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin))(compositionEntry.EntryId, null)));
-
-        bag.AddRange(expected.Pending.Select(pending => ((EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin))(null, pending)));
+        List<(EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin)> bag =
+        [
+            with(expected.Resolved.Count + expected.Pending.Count),
+            .. stage.CompositionEntries.Select(compositionEntry =>
+                    ((EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin))(compositionEntry.EntryId, null))
+                .Union(expected.Pending.Select(pending =>
+                    ((EntryId? EntryId, SchematicFeedOriginDto? PendingOrigin))(null, pending)))
+        ];
 
         var cases = Enumerable
             .Range(1, places.Value)
@@ -593,7 +596,11 @@ public static class StageSchematicAssembler
         {
             if (source.Regulation.QualificationRules is { } qualification)
             {
-                pending.AddRange(from path in qualification.Paths where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm let fingerprint = FormPathResolutionKey.FromQualification(source.Id, path) where !applied.Contains(fingerprint) select MapQualificationPathOrigin(path, source, destinationGroupId: null));
+                pending.AddRange(from path in qualification.Paths
+                                 where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm
+                                 let fingerprint = FormPathResolutionKey.FromQualification(source.Id, path)
+                                 where !applied.Contains(fingerprint)
+                                 select MapQualificationPathOrigin(path, source, destinationGroupId: null));
             }
 
             if (source.Regulation.ProgressionRules is not { } progression)
@@ -601,7 +608,11 @@ public static class StageSchematicAssembler
                 continue;
             }
 
-            pending.AddRange(from path in progression.Paths where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm let fingerprint = FormPathResolutionKey.FromProgression(source.Id, path) where !applied.Contains(fingerprint) select MapProgressionPathOrigin(path, source, competitionStages, destinationGroupId: null));
+            pending.AddRange(from path in progression.Paths
+                             where path.Destination.StageId.Equals(stage.Id) && path.Destination.TargetsForm
+                             let fingerprint = FormPathResolutionKey.FromProgression(source.Id, path)
+                             where !applied.Contains(fingerprint)
+                             select MapProgressionPathOrigin(path, source, competitionStages, destinationGroupId: null));
         }
 
         var orderedPending =

@@ -16,6 +16,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 using DomainMatch = MyClub.PlayUp.Domain.Matches.Match;
 using DomainMatchResult = MyClub.PlayUp.Domain.Matches.MatchResult;
@@ -128,7 +129,19 @@ public sealed class UseCaseExecutorTests
     public async Task StartStageAsync_loads_starts_and_saves_onceAsync()
     {
         var scenario = CreateDraftChampionshipOnCompetition();
-        PrepareStage.Execute(scenario.Stage, [scenario.Stage], _clock);
+        scenario.Competition.AddEntry(TeamId.New(), "H", _clock);
+        scenario.Competition.AddEntry(TeamId.New(), "A", _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            scenario.Competition,
+            scenario.Stage,
+            [scenario.Stage],
+            _clock);
+        var materialized = MaterializeMatches.Execute(
+            scenario.Competition,
+            scenario.Stage,
+            [],
+            _clock,
+            [scenario.Stage]);
         scenario.Stage.Status.Should().Be(StageStatus.Ready);
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
@@ -139,10 +152,11 @@ public sealed class UseCaseExecutorTests
         stages
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
+        SetupCompetitionStagesLookup(stages, scenario.Competition, scenario.Stage);
         SetupCompetitionLookup(competitions, scenario.Competition);
         matches
             .Setup(repository => repository.ListByStageForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+            .ReturnsAsync(materialized.CreatedMatches);
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -190,6 +204,7 @@ public sealed class UseCaseExecutorTests
         stages
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
+        SetupCompetitionStagesLookup(stages, scenario.Competition, scenario.Stage);
         SetupCompetitionLookup(competitions, scenario.Competition);
         matches
             .Setup(repository => repository.ListByStageForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
@@ -944,6 +959,16 @@ public sealed class UseCaseExecutorTests
         competitions
             .Setup(repository => repository.GetByIdForUpdateAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
+
+    private static void SetupCompetitionStagesLookup(
+        Mock<IStageRepository> stages,
+        Competition competition,
+        Stage stage) =>
+        stages
+            .Setup(repository => repository.GetByIdsForUpdateAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.SequenceEqual(competition.StageIds)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([stage]);
 
     private static void SetupEmptyStageMatches(Mock<IMatchRepository> matchRepo, StageId stageId) =>
         matchRepo

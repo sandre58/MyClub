@@ -111,5 +111,6 @@ public static class QualificationApplier
         int to) =>
         [.. rows.Where(r => r.Position >= from && r.Position <= to)
             .OrderBy(r => r.Position)
-            .Select(r => r.EntryId)];
+            .Select(r => r.EntryId)
+        ];
 }

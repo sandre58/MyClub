@@ -246,27 +246,16 @@ internal static class StructureMaterializeAssembler
             _ => false
         };
 
-        if (!mutable)
-        {
-            return StructureMaterializeDisabledReasons.StructureNotMutable;
-        }
-
-        if (format == StructureFormatKind.Championship && !phaseRosterComplete)
-        {
-            return StructureMaterializeDisabledReasons.PhaseRosterIncomplete;
-        }
-
-        if (format == StructureFormatKind.Groups && !groupsReady)
-        {
-            return StructureMaterializeDisabledReasons.GroupsNotReady;
-        }
-
-        if (determined == 0)
-        {
-            return StructureMaterializeDisabledReasons.NoDeterminedConfrontations;
-        }
-
-        return eligible == 0 ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null;
+        return !mutable
+            ? StructureMaterializeDisabledReasons.StructureNotMutable
+            : format switch
+            {
+                StructureFormatKind.Championship when !phaseRosterComplete => StructureMaterializeDisabledReasons
+                    .PhaseRosterIncomplete,
+                StructureFormatKind.Groups when !groupsReady => StructureMaterializeDisabledReasons.GroupsNotReady,
+                _ => determined == 0 ? StructureMaterializeDisabledReasons.NoDeterminedConfrontations :
+                    eligible == 0 ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null
+            };
     }
 
     private static string LabelVariant(int determined, int eligible, int materialized) =>
@@ -281,9 +270,11 @@ internal static class StructureMaterializeAssembler
     private static HashSet<(EntryId Home, EntryId Away)> CoveredDirectedPairs(
         StageId stageId,
         IReadOnlyList<MatchSummaryRow> matchSummaries) =>
-        [.. matchSummaries
+    [
+        .. matchSummaries
             .Where(row => row.StageId.Equals(stageId))
-            .Select(row => (row.HomeEntryId, row.AwayEntryId))];
+            .Select(row => (row.HomeEntryId, row.AwayEntryId))
+    ];
 
     private static string SideLabel(
         Slot? slot,
