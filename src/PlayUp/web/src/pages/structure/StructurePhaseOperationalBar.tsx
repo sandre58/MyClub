@@ -9,7 +9,7 @@ import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip
 import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
 
 export function StructurePhaseOperationalBar({
-  structureHubRefreshing,
+  structureHubBackgroundRefresh,
   showPlaces,
   showDraw,
   placement,
@@ -18,7 +18,7 @@ export function StructurePhaseOperationalBar({
   stage,
   drawApplied,
 }: {
-  structureHubRefreshing: boolean;
+  structureHubBackgroundRefresh: boolean;
   showPlaces: boolean;
   showDraw: boolean;
   placement: StructurePlacementOperationalSectionProps | null;
@@ -57,7 +57,7 @@ export function StructurePhaseOperationalBar({
           competitionStatus={competitionStatus}
           stage={stage}
           presentation={presentation}
-          structureHubRefreshing={structureHubRefreshing}
+          structureHubBackgroundRefresh={structureHubBackgroundRefresh}
           drawApplied={drawApplied}
         />
       </section>

@@ -21,7 +21,7 @@ import { notify } from '../../design-system/toastStore';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../../types';
 import { MutationError, PendingLabel } from '../../ui';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
 import { resolvePlacesN } from './structurePlaces';
 
@@ -181,10 +181,10 @@ export function StructureCompositionDialog({
   const saveMutation = useMutation({
     mutationFn: () =>
       replaceStageAffectationAuthoring(stage.stageId, [...selected]),
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, competitionId);
-      notify.success(t('composition.toastUpdated'));
+    onSuccess: () => {
       onClose();
+      notify.success(t('composition.toastUpdated'));
+      scheduleStructureRefresh(queryClient, competitionId, ['graph']);
     },
   });
 

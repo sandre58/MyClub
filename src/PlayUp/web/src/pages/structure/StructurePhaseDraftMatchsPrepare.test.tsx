@@ -46,7 +46,6 @@ function renderDraft(stage: StructureStageHubSummary) {
         <StructurePhaseDraftMatchsPrepare
           competitionId={competitionId}
           stage={stage}
-          structureHubRefreshing={false}
         />
       </MemoryRouter>
     </QueryClientProvider>,

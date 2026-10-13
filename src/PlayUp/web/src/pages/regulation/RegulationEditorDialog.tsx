@@ -52,7 +52,7 @@ import type {
   RankingCriterion,
   ReplaceRegulationRequest,
 } from '../../types';
-import { invalidateAfterStructureMutation } from '../structure/structureInvalidation';
+import { scheduleStructureRefresh } from '../structure/structureInvalidation';
 import {
   buildRegulationImpactPreview,
   type FamilyImpactLine,
@@ -331,12 +331,14 @@ export function RegulationEditorDialog({
       };
       return replaceCompetitionRegulation(data.competitionId, body);
     },
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
+    onSuccess: () => {
       setConfirmOpen(false);
       setPendingPreview(null);
-      notify.success(t('editor.savedToast'));
       onClose();
+      notify.success(t('editor.savedToast'));
+      scheduleStructureRefresh(queryClient, data.competitionId, [
+        'competitionReads',
+      ]);
     },
   });
 

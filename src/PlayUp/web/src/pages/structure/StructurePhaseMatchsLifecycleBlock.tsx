@@ -144,11 +144,9 @@ function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteSta
 export function StructurePhaseDraftMatchsPrepare({
   competitionId,
   stage,
-  structureHubRefreshing,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
-  structureHubRefreshing?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const transitionMutation = useStructureStageLifecycleMutation(
@@ -167,7 +165,7 @@ export function StructurePhaseDraftMatchsPrepare({
     !actionEnabled &&
     shouldShowPrimaryBlockMessage(stage.status, disabledReason);
 
-  const busy = transitionMutation.isPending || Boolean(structureHubRefreshing);
+  const busy = transitionMutation.isPending;
   const prepareDisabledTooltip =
     prepareProjected &&
     shouldShowDraftPrepareDisabledTooltip(disabledReason, actionEnabled)
@@ -239,13 +237,11 @@ export function StructurePhaseDraftMatchsPrepare({
 export function StructurePhaseMatchsLifecycleBlock({
   competitionId,
   stage,
-  structureHubRefreshing,
   productionBusy = false,
   leadingActions,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
-  structureHubRefreshing?: boolean;
   productionBusy?: boolean;
   /** Materialize / dematerialize — leftmost on the lifecycle action row. */
   leadingActions?: ReactNode;
@@ -263,7 +259,6 @@ export function StructurePhaseMatchsLifecycleBlock({
     <StructurePhaseMatchsLifecycleBlockBody
       competitionId={competitionId}
       stage={stage}
-      structureHubRefreshing={structureHubRefreshing}
       productionBusy={productionBusy}
       leadingActions={leadingActions}
     />
@@ -273,13 +268,11 @@ export function StructurePhaseMatchsLifecycleBlock({
 function StructurePhaseMatchsLifecycleBlockBody({
   competitionId,
   stage,
-  structureHubRefreshing,
   productionBusy,
   leadingActions,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
-  structureHubRefreshing?: boolean;
   productionBusy: boolean;
   leadingActions?: ReactNode;
 }) {
@@ -353,10 +346,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
     shouldShowRevertDisabledParagraph(revertDisabledReason);
 
   const blockAriaLabel = t(`lifecycle.state.${stage.status}.lead`);
-  const busy =
-    transitionMutation.isPending ||
-    Boolean(structureHubRefreshing) ||
-    productionBusy;
+  const busy = transitionMutation.isPending || productionBusy;
   const pendingCode = transitionMutation.variables;
 
   const remediationTarget = showBlockMessage

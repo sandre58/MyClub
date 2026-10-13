@@ -18,7 +18,8 @@ import type {
   StructureStageHubSummary,
   ReplaceStageDrawRulesRequest,
 } from '../../types';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
+import { patchDrawRulesActivatedOptimistic } from './structureQueryCache';
 import {
   MatchRulesDialog,
   StandingRulesDialog,
@@ -110,10 +111,8 @@ export function DrawRulesDialog({
       await replaceStageDrawRules(stage.stageId, body);
       return { demoted, activated: isActivate };
     },
-    onSuccess: async (result) => {
-      await invalidateAfterStructureMutation(queryClient, competitionId, {
-        stageId: stage.stageId,
-      });
+    onSuccess: (result) => {
+      onClose();
       notify.success(
         result.activated
           ? t('regulation.drawActivatedToast')
@@ -122,7 +121,18 @@ export function DrawRulesDialog({
       if (result.demoted) {
         notify.attention(t('regulation.drawSavedDemotedToast'));
       }
-      onClose();
+      if (result.activated) {
+        patchDrawRulesActivatedOptimistic(
+          queryClient,
+          competitionId,
+          stage.stageId,
+          normalizedPots,
+        );
+      } else {
+        scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
+          stageId: stage.stageId,
+        });
+      }
     },
   });
 

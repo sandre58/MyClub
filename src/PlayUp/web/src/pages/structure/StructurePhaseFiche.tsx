@@ -38,7 +38,11 @@ import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import { notify } from '../../design-system/toastStore';
 import { MutationError, StageStatusBadge } from '../../ui';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
+import {
+  patchDrawRulesDeactivatedOptimistic,
+  patchStageNameOptimistic,
+} from './structureQueryCache';
 import type {
   SchematicCase,
   StructureFormatKind,
@@ -189,7 +193,7 @@ export function StructurePhaseFiche({
   const { t: tCommon } = useTranslation('common');
   const { t: tDraw } = useTranslation('draw');
   const queryClient = useQueryClient();
-  const structureHubRefreshing =
+  const structureHubBackgroundRefresh =
     useIsFetching({
       queryKey: queryKeys.competitions.structure(data.competitionId),
     }) > 0;
@@ -226,29 +230,38 @@ export function StructurePhaseFiche({
 
   const deactivateDrawMutation = useMutation({
     mutationFn: () => replaceStageDrawRules(stage!.stageId, { clear: true }),
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
+    onSuccess: () => {
       setDeactivateDrawOpen(false);
+      patchDrawRulesDeactivatedOptimistic(
+        queryClient,
+        data.competitionId,
+        stage!.stageId,
+      );
     },
   });
 
   const renameMutation = useMutation({
     mutationFn: (name: string) => renameStage(stage!.stageId, name),
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
+    onSuccess: (_data, name) => {
       setEditingName(false);
+      patchStageNameOptimistic(
+        queryClient,
+        data.competitionId,
+        stage!.stageId,
+        name,
+      );
     },
   });
 
   const releaseMutation = useMutation({
     mutationFn: (drawId: string) =>
       releaseDrawAlignedPlacements(stage!.stageId, drawId),
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       setReleaseConfirmOpen(false);
-      await invalidateAfterStructureMutation(queryClient, data.competitionId, {
+      notify.success(tDraw('toastReleased', { count: result.releasedCount }));
+      scheduleStructureRefresh(queryClient, data.competitionId, ['hubStageShell'], {
         stageId: stage!.stageId,
       });
-      notify.success(tDraw('toastReleased', { count: result.releasedCount }));
     },
   });
 
@@ -1007,7 +1020,7 @@ export function StructurePhaseFiche({
 
       {showHeroStructureActions && stage ? (
         <StructurePhaseOperationalBar
-          structureHubRefreshing={structureHubRefreshing}
+          structureHubBackgroundRefresh={structureHubBackgroundRefresh}
           showPlaces={showPlacementBlock}
           showDraw={showDrawCta || showActivateDrawCta}
           drawApplied={stageHasAppliedDraw}

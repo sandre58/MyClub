@@ -37,7 +37,7 @@ import {
   MutationError,
   PendingLabel,
 } from '../../ui';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { ordinalRankSuffix } from './structureQualificationDraft';
 import {
   areCardsComplete,
@@ -117,10 +117,10 @@ export function StructurePlacementAwardDialog({
         paths: cardsToApiPaths(cards),
       });
     },
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
-      notify.success(t('attribution.toastUpdated'));
+    onSuccess: () => {
       onClose();
+      notify.success(t('attribution.toastUpdated'));
+      scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });
 

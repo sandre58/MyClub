@@ -32,7 +32,7 @@ import {
   occupiedEntryIds,
   type ManualPlaceMode,
 } from './manualPlacementUi';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 
 type StructureManualPlacementDialogProps = {
   open: boolean;
@@ -184,16 +184,16 @@ export function StructureManualPlacementDialog({
       await clearSlotAssignment(stage.stageId, slotKey);
       return 'clear';
     },
-    onSuccess: async (kind) => {
-      await invalidateAfterStructureMutation(queryClient, competitionId, {
-        stageId: stage.stageId,
-      });
+    onSuccess: (kind) => {
+      onClose();
       notify.success(
         kind === 'clear'
           ? t('manualPlacement.toastCleared')
           : t('manualPlacement.toastSaved'),
       );
-      onClose();
+      scheduleStructureRefresh(queryClient, competitionId, ['hubStage'], {
+        stageId: stage.stageId,
+      });
     },
   });
 

@@ -16,6 +16,14 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// </content>
 public sealed partial class UseCaseExecutor
 {
+    private static readonly StageReadCapabilities SchematicTargetCapabilities = new(
+        StageLoadProfile.Structure,
+        IncludeDraws: true,
+        IncludeSlots: true);
+
+    private static readonly StageReadCapabilities SchematicPeerCapabilities =
+        StageReadCapabilities.FromProfile(StageLoadProfile.Structure);
+
     /// <summary>
     /// Assembles <see cref="StructureViewDto"/> for the Structure hub.
     /// </summary>
@@ -228,17 +236,23 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Full, cancellationToken)
-                        .ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+        var targetLoaded = await stages
+            .GetByIdsReadOnlyAsync([stageId], SchematicTargetCapabilities, cancellationToken)
+            .ConfigureAwait(false);
+        if (targetLoaded.Count != 1)
+        {
+            throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+        }
+
+        var stage = targetLoaded[0];
 
         var competition = await competitions.GetByIdReadOnlyAsync(stage.CompetitionId, cancellationToken)
                               .ConfigureAwait(false)
                           ?? throw new ApplicationFailureException(
                               $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
+                              ApplicationErrorCodes.StageNotFound);
 
         IReadOnlyList<Stage> competitionStages;
         if (competition.StageIds.Count == 0)
@@ -247,21 +261,22 @@ public sealed partial class UseCaseExecutor
         }
         else
         {
-            var loaded = await stages.GetByIdsReadOnlyAsync(
-                    competition.StageIds,
-                    StageLoadProfile.Full,
-                    cancellationToken)
-                .ConfigureAwait(false);
-            if (loaded.Count != competition.StageIds.Count)
+            var peerIds = competition.StageIds.Where(id => !id.Equals(stageId)).ToList();
+            var peers = peerIds.Count == 0
+                ? []
+                : await stages
+                    .GetByIdsReadOnlyAsync(peerIds, SchematicPeerCapabilities, cancellationToken)
+                    .ConfigureAwait(false);
+            if (peers.Count != peerIds.Count)
             {
                 throw new ApplicationFailureException(
                     "One or more competition stages were not found.",
                     ApplicationErrorCodes.StageNotFound);
             }
 
-            competitionStages = loaded.All(candidate => !candidate.Id.Equals(stage.Id))
-                ? [.. loaded, stage]
-                : loaded;
+            var byId = peers.ToDictionary(candidate => candidate.Id);
+            byId[stage.Id] = stage;
+            competitionStages = [.. competition.StageIds.Select(id => byId[id])];
         }
 
         // Match rows enrich cup fixture connections when sides are already attached.

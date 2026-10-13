@@ -40,7 +40,6 @@ function renderBlock(stage: StructureStageHubSummary) {
         <StructurePhaseMatchsLifecycleBlock
           competitionId={competitionId}
           stage={stage}
-          structureHubRefreshing={false}
         />
       </MemoryRouter>
     </QueryClientProvider>,

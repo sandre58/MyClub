@@ -51,7 +51,7 @@ import {
   persistentStructureMutationSotHref,
 } from '../../ui';
 import { StructureQualificationIntentEditor } from './StructureQualificationIntentEditor';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { isMissingDestinationStage } from './structureSortiesDestination';
 import { areProgressionPlacesLabeled } from './structurePlaceLabel';
@@ -228,10 +228,10 @@ export function StructureQualificationDialog({
         intents: payload,
       });
     },
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
-      notify.success(t('qualification.toastUpdated'));
+    onSuccess: () => {
       onClose();
+      notify.success(t('qualification.toastUpdated'));
+      scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });
 

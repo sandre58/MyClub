@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -116,6 +117,65 @@ public sealed class UseCaseExecutorReadTests
 
         summaries.Should().ContainSingle();
         summaries[0].Home.DisplayName.Should().Be("Home");
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetStageSchematicAsync_loads_target_with_draws_and_peers_with_structure_onlyAsync()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var source = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
+        source.AddRound("R32", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("S1");
+        var target = Stage.Create(competition.Id, new StageName("R16"), SampleRegulations.Standard(), _clock);
+        target.AddRound("R16", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        target.AddSlot("R16-A");
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(target.Id, _clock);
+
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.Single().Equals(target.Id)),
+                It.Is<StageReadCapabilities>(capabilities =>
+                    capabilities.Profile == StageLoadProfile.Structure
+                    && capabilities.IncludeDraws
+                    && capabilities.IncludeSlots),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([target]);
+        stages
+            .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                It.Is<IReadOnlyList<StageId>>(ids => ids.Single().Equals(source.Id)),
+                It.Is<StageReadCapabilities>(capabilities =>
+                    capabilities.Profile == StageLoadProfile.Structure
+                    && !capabilities.IncludeDraws
+                    && !capabilities.IncludeSlots),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([source]);
+        competitions
+            .Setup(repository => repository.GetByIdReadOnlyAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition);
+        matches
+            .Setup(repository => repository.ListSummaryRowsByStageReadOnlyAsync(target.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([]);
+
+        var executor = new UseCaseExecutor(
+            stages.Object,
+            matches.Object,
+            competitions.Object,
+            unitOfWork.Object,
+            _clock,
+            AlwaysExistingMedia.Instance,
+            NullLogger<UseCaseExecutor>.Instance);
+
+        var schematic = await executor.GetStageSchematicAsync(target.Id);
+
+        schematic.StageId.Should().Be(target.Id.Value);
+        schematic.Cases.Should().ContainSingle(c => c.FormPosition.SlotKey == "R16-A");
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }

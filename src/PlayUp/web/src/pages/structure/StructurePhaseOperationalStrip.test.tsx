@@ -109,6 +109,7 @@ function renderStrip(
     drawApplied?: boolean;
     stage?: StructureStageHubSummary;
     competitionStatus?: 'Draft' | 'Running';
+    structureHubBackgroundRefresh?: boolean;
   } = {},
 ) {
   const stage = overrides.stage ?? baseStage;
@@ -127,6 +128,7 @@ function renderStrip(
     showPlaces: overrides.showPlaces ?? true,
     showDraw: overrides.showDraw ?? true,
     drawApplied: overrides.drawApplied ?? false,
+    structureHubBackgroundRefresh: overrides.structureHubBackgroundRefresh ?? false,
     competitionId,
     competitionStatus,
     stage,
@@ -409,6 +411,23 @@ describe('StructurePhaseOperationalStrip', () => {
           /Avancement de la production des matchs/i,
         ),
       ).not.toBeInTheDocument();
+    });
+
+    it('keeps placement metrics visible during hub background refresh', () => {
+      const { container } = renderStrip({ structureHubBackgroundRefresh: true });
+
+      expect(
+        screen.getByRole('button', { name: /placer manuellement/i }),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector('.structure-operational-strip__section-sync'),
+      ).toBeNull();
+      expect(
+        container.querySelectorAll('.structure-operational-strip__section-chip-spinner'),
+      ).toHaveLength(3);
+      expect(
+        container.querySelector('.structure-operational-tile__sync-status'),
+      ).toBeNull();
     });
 
     it('hides dematerialize action when read blocks it', () => {

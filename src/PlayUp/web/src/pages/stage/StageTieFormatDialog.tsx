@@ -27,7 +27,7 @@ import type {
   StructureStageHubSummary,
   StructureTieFormatSummary,
 } from '../../types';
-import { invalidateAfterStructureMutation } from '../structure/structureInvalidation';
+import { scheduleStructureRefresh } from '../structure/structureInvalidation';
 import '../regulation/regulation-shared.css';
 
 type TieFormState = {
@@ -353,16 +353,16 @@ export function TieFormatDialog({
         demoted: stage.status === 'Ready' && tasks.length > 0,
       };
     },
-    onSuccess: async (result) => {
-      await invalidateAfterStructureMutation(queryClient, competitionId, {
-        stageId: stage.stageId,
-      });
+    onSuccess: (result) => {
+      onClose();
       if (result.demoted) {
         notify.attention(t('regulation.tieSavedDemotedToast'));
       } else {
         notify.success(t('regulation.tieSavedToast'));
       }
-      onClose();
+      scheduleStructureRefresh(queryClient, competitionId, ['hubStage'], {
+        stageId: stage.stageId,
+      });
     },
   });
 

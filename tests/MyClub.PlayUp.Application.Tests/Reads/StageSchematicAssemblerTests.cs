@@ -462,4 +462,41 @@ public sealed class StageSchematicAssemblerTests
         schematic.Cases[0].Entry!.DisplayName.Should().Be("A");
         schematic.Cases[1].Entry!.DisplayName.Should().Be("B");
     }
+
+    [Fact]
+    public void Schematic_multi_phase_progression_matches_full_stage_graph_reference()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var source = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
+        source.AddRound("R32", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("S1");
+        source.AddSlot("S2");
+        source.AddSlot("S3");
+        source.AddSlot("S4");
+        source.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "S1", "S2"),
+            new BracketPair("P2", "S3", "S4")
+        ]);
+
+        var target = Stage.Create(competition.Id, new StageName("R16"), SampleRegulations.Standard(), _clock);
+        target.AddRound("R16", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        target.AddSlot("R16-A");
+        target.AddSlot("R16-B");
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForPopulation(target.Id))
+            ]),
+            _clock);
+
+        var allStages = new[] { source, target };
+        var reference = StageSchematicAssembler.Assemble(target, competition, allStages);
+        var peerStructureOnly = StageSchematicAssembler.Assemble(target, competition, allStages);
+
+        peerStructureOnly.Should().BeEquivalentTo(reference);
+    }
 }

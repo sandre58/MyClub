@@ -70,7 +70,7 @@ import {
   canCancelDrawExecution,
   canReleaseDrawAlignedPlacements,
 } from '../stage/lifecycleGates';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { resolvePlacesN } from './structurePlaces';
 import { functionalProblemPresentation } from '../../shell/functionalProblemPresentation';
 import {
@@ -307,8 +307,15 @@ export function StructureDrawDialog({
         : t(`fiche.drawWorkflow.createBlocked.detail.${createBlockedReason}`)
       : null;
 
-  async function invalidateDrawQueries() {
-    await invalidateAfterStructureMutation(queryClient, competitionId, {
+  /** Draft create / generate — hub + schematic unchanged until publish/apply. */
+  function scheduleDrawOverviewRefresh() {
+    scheduleStructureRefresh(queryClient, competitionId, ['stageOverview'], {
+      stageId,
+    });
+  }
+
+  function scheduleDrawHubRefresh() {
+    scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
       stageId,
     });
   }
@@ -325,9 +332,9 @@ export function StructureDrawDialog({
       }
       return createAndGenerateDraw(stageId, drawKind);
     },
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       pendingSelectIdRef.current = result.drawId;
-      await invalidateDrawQueries();
+      scheduleDrawOverviewRefresh();
       setSelectedId(result.drawId);
       if (result.isNoSolution) {
         notify.attention(tDraw('toastCreatedNoSolution'));
@@ -339,7 +346,7 @@ export function StructureDrawDialog({
       if (isDrawGenerateFailedError(error)) {
         // Create succeeded — keep Draft selected; do not sticky-footer the error.
         pendingSelectIdRef.current = error.drawId;
-        await invalidateDrawQueries();
+        scheduleDrawOverviewRefresh();
         setSelectedId(error.drawId);
         notify.error(tDraw('toastGenerationFailed'));
         return;
@@ -357,16 +364,16 @@ export function StructureDrawDialog({
       notify.success(tDraw('toastPublishedAndApplied'));
     },
     // Always refresh: Apply may fail after a durable Publish (recovery state).
-    onSettled: async () => {
-      await invalidateDrawQueries();
+    onSettled: () => {
+      scheduleDrawHubRefresh();
     },
   });
 
   const cancelMutation = useMutation({
     mutationFn: (drawId: string) => cancelDraw(stageId, drawId),
-    onSuccess: async () => {
+    onSuccess: () => {
       setCancelConfirmOpen(false);
-      await invalidateDrawQueries();
+      scheduleDrawHubRefresh();
       notify.success(tDraw('toastCancelled'));
     },
   });
@@ -374,9 +381,9 @@ export function StructureDrawDialog({
   const releaseMutation = useMutation({
     mutationFn: (drawId: string) =>
       releaseDrawAlignedPlacements(stageId, drawId),
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       setReleaseConfirmOpen(false);
-      await invalidateDrawQueries();
+      scheduleDrawHubRefresh();
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
     },
   });
@@ -385,9 +392,9 @@ export function StructureDrawDialog({
     mutationFn: async (draw: StageDraw) => {
       return applyDraw(stageId, draw.id);
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       setApplyConfirmOpen(false);
-      await invalidateDrawQueries();
+      scheduleDrawHubRefresh();
       notify.success(tDraw('toastApplied'));
     },
   });

@@ -46,7 +46,10 @@ import {
   resolveResolvedPoolTone,
 } from './structureOperationalCopy';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import {
+  scheduleQueryRefresh,
+  scheduleStructureRefresh,
+} from './structureInvalidation';
 import { StructureMatchPhaseProgressGauge } from './StructureMatchPhaseProgressGauge';
 import {
   StructurePhaseDraftMatchsPrepare,
@@ -227,7 +230,7 @@ export function StructurePhaseOperationalStrip({
   competitionStatus,
   stage,
   presentation,
-  structureHubRefreshing = false,
+  structureHubBackgroundRefresh = false,
   drawApplied,
 }: {
   placement: StructurePlacementOperationalSectionProps | null;
@@ -237,7 +240,7 @@ export function StructurePhaseOperationalStrip({
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
   presentation: MaterializePresentation | null;
-  structureHubRefreshing?: boolean;
+  structureHubBackgroundRefresh?: boolean;
   drawApplied: boolean;
 }) {
   const { t } = useTranslation('structure');
@@ -254,30 +257,29 @@ export function StructurePhaseOperationalStrip({
       materialize!.commandCode === 'MaterializeFromOccupiedSlots'
         ? materializeCupFromOccupiedSlots(stage.stageId)
         : materializeMatches(stage.stageId),
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       notify.success(
         result.alreadyComplete
           ? t('fiche.materialize.successAlreadyComplete')
           : t('fiche.materialize.successCreated', { count: result.createdCount }),
       );
-      await invalidateAfterStructureMutation(queryClient, competitionId, {
+      scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
         stageId: stage.stageId,
       });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.matches.byStage(stage.stageId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.matchHub(competitionId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.stages.schematic(stage.stageId),
-      });
+      scheduleQueryRefresh(
+        queryClient,
+        queryKeys.matches.byStage(stage.stageId),
+      );
+      scheduleQueryRefresh(
+        queryClient,
+        queryKeys.competitions.matchHub(competitionId),
+      );
     },
   });
 
   const dematerializeMutation = useMutation({
     mutationFn: () => dematerializePhase(stage.stageId),
-    onSuccess: async (result) => {
+    onSuccess: (result) => {
       if (result.removedMatchCount === 0) {
         notify.success(t('fiche.dematerialize.successNoOp'));
       } else if (
@@ -295,19 +297,18 @@ export function StructurePhaseOperationalStrip({
           t('fiche.dematerialize.successRemoved', { count: result.removedMatchCount }),
         );
       }
-      await invalidateAfterStructureMutation(queryClient, competitionId, {
+      setDematerializeConfirmOpen(false);
+      scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
         stageId: stage.stageId,
       });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.matches.byStage(stage.stageId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.competitions.matchHub(competitionId),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.stages.schematic(stage.stageId),
-      });
-      setDematerializeConfirmOpen(false);
+      scheduleQueryRefresh(
+        queryClient,
+        queryKeys.matches.byStage(stage.stageId),
+      );
+      scheduleQueryRefresh(
+        queryClient,
+        queryKeys.competitions.matchHub(competitionId),
+      );
     },
   });
 
@@ -323,8 +324,8 @@ export function StructurePhaseOperationalStrip({
   const placesColumn = showPlaces && placement ? (
     <PlacesColumn
       index={sectionIndex('places')}
+      titleChipRefreshing={structureHubBackgroundRefresh}
       {...placement}
-      structureHubRefreshing={structureHubRefreshing}
     />
   ) : null;
 
@@ -332,20 +333,20 @@ export function StructurePhaseOperationalStrip({
     showDraw && placement ? (
       <DrawColumn
         index={sectionIndex('draw')}
+        titleChipRefreshing={structureHubBackgroundRefresh}
         {...placement}
         drawApplied={drawApplied}
-        structureHubRefreshing={structureHubRefreshing}
       />
     ) : null;
 
   const matchesColumn = (
     <MatchesColumn
       index={sectionIndex('matches')}
+      titleChipRefreshing={structureHubBackgroundRefresh}
       competitionId={competitionId}
       competitionStatus={competitionStatus}
       stage={stage}
       presentation={presentation}
-      structureHubRefreshing={structureHubRefreshing}
       materializeMutation={materializeMutation}
       dematerializeMutation={dematerializeMutation}
       dematerializeConfirmOpen={dematerializeConfirmOpen}
@@ -364,10 +365,16 @@ export function StructurePhaseOperationalStrip({
       <div
         className="structure-operational-strip"
         data-section-count={visibleSections.length}
+        aria-busy={structureHubBackgroundRefresh || undefined}
         style={{
           gridTemplateColumns: operationalStripGridColumns(visibleSections.length),
         }}
       >
+        {structureHubBackgroundRefresh ? (
+          <span className="ds-visually-hidden" role="status">
+            {t('fiche.operational.syncing')}
+          </span>
+        ) : null}
         {stripSections}
       </div>
       {dematerialize ? (
@@ -413,7 +420,7 @@ export function StructurePhaseOperationalStrip({
 function PlacesColumn(
   props: StructurePlacementOperationalSectionProps & {
     index: number;
-    structureHubRefreshing?: boolean;
+    titleChipRefreshing?: boolean;
   },
 ) {
   const { t } = useTranslation('structure');
@@ -444,12 +451,10 @@ function PlacesColumn(
     occupancyTone,
   );
 
-  const placesUpdating =
-    !props.occupancyReady ||
-    Boolean(props.structureHubRefreshing && props.occupancyReady);
-  const placesUpdatingLabel = !props.occupancyReady
-    ? t('fiche.operational.placement.stateMessage.loading')
-    : t('fiche.operational.syncing');
+  const placesInitialLoading = !props.occupancyReady;
+  const placesUpdatingLabel = t(
+    'fiche.operational.placement.stateMessage.loading',
+  );
 
   const gauge =
     !unknownCapacity &&
@@ -469,8 +474,12 @@ function PlacesColumn(
     <StripSection
       index={props.index}
       title={t('fiche.operational.cluster.places')}
+      titleChipRefreshing={props.titleChipRefreshing}
     >
-      <SectionUpdatingBody updating={placesUpdating} label={placesUpdatingLabel}>
+      <SectionUpdatingBody
+        updating={placesInitialLoading}
+        label={placesUpdatingLabel}
+      >
         <>
           <MetricRow
             aside={
@@ -515,7 +524,7 @@ function DrawColumn(
   props: StructurePlacementOperationalSectionProps & {
     index: number;
     drawApplied: boolean;
-    structureHubRefreshing?: boolean;
+    titleChipRefreshing?: boolean;
   },
 ) {
   const compactIcon =
@@ -592,15 +601,11 @@ function DrawColumn(
     ) : null;
 
   const drawNeedsOverview = props.showDrawCta && props.drawOperationalReady === false;
-  const drawUpdating =
-    props.deactivateDrawPending ||
-    Boolean(props.structureHubRefreshing) ||
-    drawNeedsOverview;
+  const drawMutationOrInitialLoading =
+    props.deactivateDrawPending || drawNeedsOverview;
   const drawUpdatingLabel = props.deactivateDrawPending
     ? t('fiche.operational.placement.deactivatingDraw')
-    : drawNeedsOverview
-      ? t('fiche.operational.draw.loading')
-      : t('fiche.operational.syncing');
+    : t('fiche.operational.draw.loading');
 
   let body: ReactNode;
 
@@ -757,9 +762,13 @@ function DrawColumn(
     <StripSection
       index={props.index}
       title={t('fiche.operational.cluster.draw')}
+      titleChipRefreshing={props.titleChipRefreshing}
       toolbar={toolbar}
     >
-      <SectionUpdatingBody updating={drawUpdating} label={drawUpdatingLabel}>
+      <SectionUpdatingBody
+        updating={drawMutationOrInitialLoading}
+        label={drawUpdatingLabel}
+      >
         {body}
       </SectionUpdatingBody>
     </StripSection>
@@ -768,21 +777,21 @@ function DrawColumn(
 
 function MatchesColumn({
   index,
+  titleChipRefreshing,
   competitionId,
   stage,
   presentation,
-  structureHubRefreshing,
   materializeMutation,
   dematerializeMutation,
   dematerializeConfirmOpen: _dematerializeConfirmOpen,
   setDematerializeConfirmOpen,
 }: {
   index: number;
+  titleChipRefreshing?: boolean;
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
   presentation: MaterializePresentation | null;
-  structureHubRefreshing?: boolean;
   materializeMutation: MaterializeMutationResult;
   dematerializeMutation: DematerializeMutationResult;
   dematerializeConfirmOpen: boolean;
@@ -838,13 +847,10 @@ function MatchesColumn({
   const productionBusy =
     materializeMutation.isPending || dematerializeMutation.isPending;
 
-  const matchesUpdating = productionBusy || Boolean(structureHubRefreshing);
+  const matchesUpdating = productionBusy;
   const matchesUpdatingLabel = dematerializeMutation.isPending
     ? t('fiche.dematerialize.submitting')
-    : materializeMutation.isPending
-      ? t('fiche.materialize.submitting')
-      : t('fiche.operational.syncing');
-
+    : t('fiche.materialize.submitting');
   const ratioLabel = t('fiche.operational.production.ratioLabel', {
     count: gaugeRatio?.filled ?? 0,
   });
@@ -953,7 +959,6 @@ function MatchesColumn({
       <StructurePhaseDraftMatchsPrepare
         competitionId={competitionId}
         stage={stage}
-        structureHubRefreshing={structureHubRefreshing}
       />
     );
   } else if (stage.status === 'Completed') {
@@ -991,7 +996,6 @@ function MatchesColumn({
         <StructurePhaseMatchsLifecycleBlock
           competitionId={competitionId}
           stage={stage}
-          structureHubRefreshing={structureHubRefreshing}
           productionBusy={productionBusy}
           leadingActions={productionLeadingActions}
         />
@@ -1014,6 +1018,7 @@ function MatchesColumn({
       index={index}
       sectionId="operational-matchs"
       title={t('fiche.operational.cluster.matches')}
+      titleChipRefreshing={titleChipRefreshing}
       toolbar={effectiveToolbar}
     >
       <SectionUpdatingBody updating={matchesUpdating} label={matchesUpdatingLabel}>

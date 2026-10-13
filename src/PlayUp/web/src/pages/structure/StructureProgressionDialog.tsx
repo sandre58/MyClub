@@ -57,7 +57,7 @@ import {
   StructureProgressionIntentEditor,
   type ProgRoundOption,
 } from './StructureProgressionIntentEditor';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { isPopulationDestination } from './structureProgressionDraft';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { isMissingDestinationStage } from './structureSortiesDestination';
@@ -248,10 +248,10 @@ export function StructureProgressionDialog({
         intents: intents.map((draft, index) => toApiIntent(draft, index + 1)),
       });
     },
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
-      notify.success(t('progression.toastUpdated'));
+    onSuccess: () => {
       onClose();
+      notify.success(t('progression.toastUpdated'));
+      scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });
 

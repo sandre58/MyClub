@@ -11,7 +11,7 @@ import {
 } from '../../api';
 import { notify } from '../../design-system/toastStore';
 import type { StructureStageLifecycleMutationCode } from '../../types';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { mutationSuccessToast } from './structurePhaseLifecycleActions';
 import type { TFunction } from 'i18next';
 
@@ -50,9 +50,9 @@ export function useStructureStageLifecycleMutation(
           break;
       }
     },
-    onSuccess: async (_data, code) => {
+    onSuccess: (_data, code) => {
       notify.success(mutationSuccessToast(t, code));
-      await invalidateAfterStructureMutation(queryClient, competitionId, {
+      scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
         stageId,
       });
     },

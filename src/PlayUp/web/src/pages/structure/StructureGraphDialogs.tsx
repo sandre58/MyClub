@@ -34,7 +34,7 @@ import type {
   StructureView,
 } from '../../types';
 import { AddPhaseFormatParams } from './AddPhaseFormatParams';
-import { invalidateAfterStructureMutation } from './structureInvalidation';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { StructureProgressionDialog } from './StructureProgressionDialog';
 import { StructureQualificationDialog } from './StructureQualificationDialog';
 import {
@@ -135,14 +135,14 @@ export function AddPhaseDialog({
         name: name.trim(),
         ...skeletonPayload(skeleton),
       }),
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(competitionId),
         response.structure,
       );
-      await invalidateAfterStructureMutation(queryClient, competitionId);
       onClose();
       onCreated?.(response.stageId);
+      scheduleStructureRefresh(queryClient, competitionId, ['graph']);
     },
   });
 
@@ -327,13 +327,13 @@ export function EditSkeletonDialog({
         stageName: null,
         ...skeletonPayload(skeleton),
       }),
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(data.competitionId),
         response.structure,
       );
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
       onClose();
+      scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });
 
@@ -504,13 +504,13 @@ export function RemovePhaseDialog({
 
   const mutation = useMutation({
     mutationFn: () => removeCompetitionStage(data.competitionId, stage.stageId),
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(data.competitionId),
         response.structure,
       );
-      await invalidateAfterStructureMutation(queryClient, data.competitionId);
       onClose();
+      scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });
 

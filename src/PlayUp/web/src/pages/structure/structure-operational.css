@@ -178,6 +178,22 @@
   background: transparent;
 }
 
+/* Same footprint as .ds-chip.ds-chip--rounded (hub background refetch). */
+.structure-operational-strip__section-chip-slot {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.structure-operational-strip__section-chip-spinner {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-brand);
+}
+
 .structure-operational-strip__separator {
   width: var(--border-width);
   height: 72%;

@@ -18,6 +18,16 @@ import type {
   StructureStageHubSummary,
 } from '../../types';
 import { StructureDrawDialog } from './StructureDrawDialog';
+import { scheduleStructureRefresh } from './structureInvalidation';
+
+vi.mock('./structureInvalidation', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('./structureInvalidation')>();
+  return {
+    ...actual,
+    scheduleStructureRefresh: vi.fn(actual.scheduleStructureRefresh),
+  };
+});
 
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
@@ -268,6 +278,18 @@ describe('StructureDrawDialog', () => {
         'Nouvelle exécution créée.',
       );
     });
+    expect(scheduleStructureRefresh).toHaveBeenCalledWith(
+      expect.anything(),
+      competitionId,
+      ['stageOverview'],
+      { stageId },
+    );
+    expect(scheduleStructureRefresh).not.toHaveBeenCalledWith(
+      expect.anything(),
+      competitionId,
+      ['hubStageShell'],
+      expect.anything(),
+    );
   });
 
   it('toasts warning when Create+Generate returns NoSolution', async () => {

@@ -43,7 +43,7 @@ import type {
   StructureStageHubSummary,
   StructureView,
 } from '../../types';
-import { invalidateAfterStructureMutation } from '../structure/structureInvalidation';
+import { scheduleStructureRefresh } from '../structure/structureInvalidation';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -231,16 +231,16 @@ export function MatchRulesDialog({
       await replaceStageMatchRules(stage.stageId, stableMatchForm(form));
       return { demoted };
     },
-    onSuccess: async (result) => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId, {
-        stageId: stage.stageId,
-      });
+    onSuccess: (result) => {
+      onClose();
       if (result.demoted) {
         notify.attention(t('regulation.matchSavedDemotedToast'));
       } else {
         notify.success(t('regulation.matchSavedToast'));
       }
-      onClose();
+      scheduleStructureRefresh(queryClient, data.competitionId, ['hubStage'], {
+        stageId: stage.stageId,
+      });
     },
   });
 
@@ -585,12 +585,12 @@ export function StandingRulesDialog({
         rankingCriteria: normalizeCriteria(form.rankingCriteria),
       });
     },
-    onSuccess: async () => {
-      await invalidateAfterStructureMutation(queryClient, data.competitionId, {
+    onSuccess: () => {
+      onClose();
+      notify.success(t('regulation.standingSavedToast'));
+      scheduleStructureRefresh(queryClient, data.competitionId, ['hubStage'], {
         stageId: stage.stageId,
       });
-      notify.success(t('regulation.standingSavedToast'));
-      onClose();
     },
   });
 

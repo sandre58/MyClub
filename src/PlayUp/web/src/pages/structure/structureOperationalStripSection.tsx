@@ -4,6 +4,7 @@ export function StripSection({
   index,
   title,
   titleIcon,
+  titleChipRefreshing = false,
   toolbar,
   children,
   footer,
@@ -15,6 +16,8 @@ export function StripSection({
   title: string;
   /** When set, shown instead of the numbered chip (regulation strip). */
   titleIcon?: ReactNode;
+  /** Hub background refetch: spinner in the chip slot (same footprint as the puce). */
+  titleChipRefreshing?: boolean;
   toolbar?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -37,7 +40,14 @@ export function StripSection({
           id={titleId}
           className="structure-operational-strip__section-title"
         >
-          {titleIcon ? (
+          {titleChipRefreshing ? (
+            <span
+              className="structure-operational-strip__section-chip-slot"
+              aria-hidden="true"
+            >
+              <span className="ds-spinner structure-operational-strip__section-chip-spinner" />
+            </span>
+          ) : titleIcon ? (
             <span
               className="structure-operational-strip__section-icon"
               aria-hidden="true"

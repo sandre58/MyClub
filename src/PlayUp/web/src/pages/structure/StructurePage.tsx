@@ -179,7 +179,7 @@ function StructureHub({ data }: { data: StructureView }) {
     queryKey: queryKeys.competitions.attention(data.competitionId),
     queryFn: () => fetchNeedsAttention(data.competitionId),
     enabled: data.competitionId.length > 0 && stages.length > 0,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
   const addPhaseAction = (
