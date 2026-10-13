@@ -4,7 +4,7 @@
 
 **Problems messaging (Matchs column):** [structure-problems-contract.md](./structure-problems-contract.md) (**paused** — local pilot). Transversal audit: [organizer-problems-audit.md](./organizer-problems-audit.md) (working draft). Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
-**Last code audit:** 2026-10-12 (V2 gap audit + verification matrix, § below). Prior audit: 2026-10-11.
+**Last code audit:** 2026-10-13 (mutation → `problems.lifecycle` mapping, checklist i18n, read test for dangling qual). Prior: 2026-10-12 (V2 gap audit + verification matrix, § below).
 
 **Notion validation:** 2026-10-12 — [Arbitrage Structure — cycle de vie et gel construction](https://app.notion.com/p/3f775fb92d10817eb795ddb5fc52dd9c).
 
@@ -259,7 +259,7 @@ Action code on wire: `PrepareStage`.
 | `Draw` | Draw | Step KO; button may still enable |
 | `Matches` | Matches | Step KO; button may still enable (championship test) |
 | `Exits` | Exits | Step KO; button may still enable if issues empty |
-| `Attribution` | *(not in stepper)* | **No step**; button may enable — **GAP** |
+| `Attribution` | *(not in stepper)* | **No read projection yet** (`ChecklistAttribution` exists for remediation only); button may enable — **GAP** |
 
 ---
 

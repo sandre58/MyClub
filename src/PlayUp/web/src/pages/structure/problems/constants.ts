@@ -29,3 +29,13 @@ export const MATCHS_LIFECYCLE_WIRE_CODES = [
   'MatchLifecycleStarted',
   'MatchLiveInProgress',
 ] as const;
+
+/** Prepare checklist disabled reasons (read model) — `problems.lifecycle` copy. */
+export const LIFECYCLE_CHECKLIST_WIRE_CODES = [
+  'Entries',
+  'Places',
+  'Draw',
+  'Matches',
+  'Exits',
+  'Attribution',
+] as const;

@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { ApiError } from '../../../api';
 import enStructure from '../../../i18n/locales/en/structure.json';
 import frStructure from '../../../i18n/locales/fr/structure.json';
-import { MATCHS_LIFECYCLE_WIRE_CODES, STAGE_COMPLETION_BLOCKED } from './constants';
+import {
+  LIFECYCLE_CHECKLIST_WIRE_CODES,
+  MATCHS_LIFECYCLE_WIRE_CODES,
+  STAGE_COMPLETION_BLOCKED,
+} from './constants';
+import { resolveLifecycleMutationMessageKey } from './lifecycleMutationMessageKey';
 import {
   shouldShowDraftPrepareDisabledTooltip,
   shouldShowPrimaryBlockMessage,
@@ -103,6 +108,26 @@ describe('normalizeLifecycleMutationError', () => {
     expect(normalized.wireCode).toBe('Application.SomeFutureCode');
     expect(normalized.messageKey).toBe('problems.mutation.Application.SomeFutureCode');
   });
+
+  it('maps prepare gate Application codes to problems.lifecycle copy', () => {
+    const normalized = normalizeLifecycleMutationError(
+      new ApiError(
+        400,
+        'cycle',
+        undefined,
+        'Application.StructureCycleDetected',
+      ),
+    );
+    expect(normalized.messageKey).toBe('problems.lifecycle.CycleDetected');
+  });
+});
+
+describe('resolveLifecycleMutationMessageKey', () => {
+  it('maps known lifecycle Application failures to lifecycle keys', () => {
+    expect(resolveLifecycleMutationMessageKey('Application.StartBlockedUnmaterialized')).toBe(
+      'problems.lifecycle.UnmaterializedConfrontations',
+    );
+  });
 });
 
 describe('resolveLifecycleMutationMessage', () => {
@@ -122,6 +147,23 @@ describe('resolveLifecycleMutationMessage', () => {
     expect(msg).toBe(enStructure.problems.mutation._unknown);
   });
 
+  it('uses lifecycle copy for mapped prepare POST failures', () => {
+    const msg = resolveLifecycleMutationMessage(
+      t,
+      new ApiError(400, 'cycle', undefined, 'Application.StructureCycleDetected'),
+    );
+    expect(msg).toBe(enStructure.problems.lifecycle.CycleDetected);
+  });
+
+  it('falls back to errors namespace when lifecycle and mutation keys are absent', () => {
+    const msg = resolveLifecycleMutationMessage(
+      t,
+      new ApiError(400, 'feed', undefined, 'Application.DanglingFeedTarget'),
+    );
+    expect(msg).not.toBe(enStructure.problems.mutation._unknown);
+    expect(msg.length).toBeGreaterThan(0);
+  });
+
   it('returns client Error message for non-ApiError', () => {
     expect(resolveLifecycleMutationMessage(t, new Error('network'))).toBe('network');
   });
@@ -130,6 +172,10 @@ describe('resolveLifecycleMutationMessage', () => {
 describe('problems i18n parity', () => {
   it('has matching FR/EN keys for Matchs lifecycle inventory', () => {
     for (const code of MATCHS_LIFECYCLE_WIRE_CODES) {
+      expect(enStructure.problems.lifecycle).toHaveProperty(code);
+      expect(frStructure.problems.lifecycle).toHaveProperty(code);
+    }
+    for (const code of LIFECYCLE_CHECKLIST_WIRE_CODES) {
       expect(enStructure.problems.lifecycle).toHaveProperty(code);
       expect(frStructure.problems.lifecycle).toHaveProperty(code);
     }

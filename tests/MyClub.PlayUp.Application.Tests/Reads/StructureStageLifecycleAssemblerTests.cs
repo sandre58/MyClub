@@ -353,6 +353,47 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle.RevertTransition.Enabled.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Dangling qualification destination is visible on the read model and blocks Prepare before POST.
+    /// </summary>
+    [Fact]
+    public void Assemble_Draft_prepare_disabled_when_qualification_targets_missing_stage()
+    {
+        var competition = Competition.Create(new CompetitionName("Outbound gap"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        var source = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(source.Id, _clock);
+        var group = source.AddGroup("A", _clock);
+        source.AddMatchday(1, _clock);
+        foreach (var entry in competition.Entries)
+        {
+            source.AssignEntryToGroup(group.Id, entry.Id);
+        }
+
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForPopulation(StageId.New()))
+            ]),
+            _clock);
+
+        var act = () => PrepareStage.Execute(source, [source], _clock);
+        act.Should().Throw<ApplicationFailureException>();
+
+        var view = StructureViewAssembler.Assemble(competition, [source]);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledStructureGraphInvalid);
+    }
+
     private static MatchSummaryRow ToSummaryRow(Match match) =>
         new(
             match.Id,

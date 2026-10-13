@@ -4,6 +4,7 @@ import {
   PROBLEMS_LIFECYCLE_PREFIX,
   STAGE_COMPLETION_BLOCKED,
 } from './constants';
+import { resolveLifecycleMutationMessageKey } from './lifecycleMutationMessageKey';
 import type { NormalizedLifecycleMutation } from './types';
 
 export function normalizeLifecycleMutationError(
@@ -22,7 +23,7 @@ export function normalizeLifecycleMutationError(
       return {
         source: 'lifecycle.mutation.api',
         wireCode,
-        messageKey: `problems.mutation.${wireCode}`,
+        messageKey: resolveLifecycleMutationMessageKey(wireCode),
       };
     }
     return {
