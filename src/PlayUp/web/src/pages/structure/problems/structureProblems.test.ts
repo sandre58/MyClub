@@ -130,6 +130,9 @@ describe('resolveLifecycleMutationMessageKey', () => {
     expect(resolveLifecycleMutationMessageKey('Application.StageExploitationClosed')).toBe(
       'problems.lifecycle.CompetitionClosed',
     );
+    expect(resolveLifecycleMutationMessageKey('Application.Attribution')).toBe(
+      'problems.lifecycle.Attribution',
+    );
   });
 });
 

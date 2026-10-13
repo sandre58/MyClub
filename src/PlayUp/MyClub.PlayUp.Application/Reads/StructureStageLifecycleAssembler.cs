@@ -151,6 +151,15 @@ public static class StructureStageLifecycleAssembler
                 ChecklistPlaces);
         }
 
+        if (StructurePrepareAttributionGate.BlocksPrepare(input))
+        {
+            return BlockedTransition(
+                code,
+                ChecklistAttribution,
+                input,
+                ChecklistAttribution);
+        }
+
         var prepareGate = CollectPrepareGateCodes(input.Stage, input.CompetitionStages);
         return prepareGate.Length > 0 ? BlockedTransition(code, prepareGate[0], input, prepareGate[0]) : new StructureStageLifecycleTransitionDto(code, true);
     }
@@ -340,7 +349,7 @@ public static class StructureStageLifecycleAssembler
             case ChecklistExits or StructureViewAssembler.IssueConfrontationUndecidable:
                 return ("qualification", null, false, false);
             case ChecklistAttribution:
-                return (null, "rail-entries", false, true);
+                return (null, "rail-attribution", false, false);
             case ChecklistEntries:
                 return (null, "rail-entries", false, false);
             case DisabledStructureGraphInvalid:

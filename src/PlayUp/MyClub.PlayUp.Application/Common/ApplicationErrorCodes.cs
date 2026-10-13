@@ -146,6 +146,11 @@ public static class ApplicationErrorCodes
     public const string ConfrontationUndecidable = "Application.ConfrontationUndecidable";
 
     /// <summary>
+    /// Gets the code when Prepare is refused because authored placement award paths are structurally unreachable.
+    /// </summary>
+    public const string AttributionUnreachable = "Application.Attribution";
+
+    /// <summary>
     /// Gets the code when Prepare is refused because the Qual/Prog graph contains a cycle.
     /// </summary>
     public const string StructureCycleDetected = "Application.StructureCycleDetected";

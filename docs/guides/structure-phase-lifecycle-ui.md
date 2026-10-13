@@ -259,7 +259,7 @@ Action code on wire: `PrepareStage`.
 | `Draw` | Draw | Step KO; button may still enable |
 | `Matches` | Matches | Step KO; button may still enable (championship test) |
 | `Exits` | Exits | Step KO; button may still enable if issues empty |
-| `Attribution` | *(not in stepper)* | **No read projection yet** (`ChecklistAttribution` exists for remediation only); button may enable — **GAP** |
+| `Attribution` | *(not in stepper)* | Prepare **disabled** when `AuthoredAwardUnreachable` on non-classifying Cup/KO (`StructurePrepareAttributionGate`) |
 
 ---
 
@@ -275,6 +275,7 @@ When `transition.enabled` was true (or stale client). ProblemDetails `code` (VER
 | `Application.OverCapacityEdge` | In `structureIssues`, not stepper | No | `errors:Application.OverCapacityEdge` | MutationError; refresh should set `disabledReasonCode` |
 | `Application.OverExtraction` | Same | No | `errors:Application.OverExtraction` | Same |
 | `Application.ConfrontationUndecidable` | Exits step | Exits KO | `errors:Application.ConfrontationUndecidable` | Do not duplicate if Exits already KO |
+| `Application.Attribution` | `disabledReasonCode` `Attribution` | No | `problems.lifecycle.Attribution` (mapped) | Refresh should match read; fiche keeps RESULT diagnostic |
 | `Application.DanglingFeedTarget` | May be missing on read (authoring vs execute) | Exits partial | `errors:Application.DanglingFeedTarget` | MutationError + Structure link |
 | `Application.StageNotInCompetition` | Rare | No | `errors:Application.StageNotInCompetition` | MutationError |
 | `Stage.NotReady` | Partial (`StageNotReady`) | No | `errors:Stage.NotReady` | MutationError |
@@ -477,7 +478,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 
 | Topic | Status | Next step |
 | :---- | :----- | :-------- |
-| **Attribution** (`ChecklistAttribution`) | **GAP** — remediation deep link only; Prepare not disabled when placement awards incomplete | Business rule + read projection (or explicit “not a Prepare gate”) |
+| **Attribution** (`ChecklistAttribution`) | **ALIGNED** — gate on `AuthoredAwardUnreachable` only (R1–R5) ; tests `StructurePrepareAttributionTests` | Décision [Acceptée](https://app.notion.com/p/3f875fb92d108110a0a9d3fb904a3d37) (2026-10-13) |
 | **2c** compositionCapacity vs Places N | **Bloqué** Notion | Métier |
 | **Completed** strict on Overview lifecycle actions | **ALIGNED** for Prepare/Start (none projected); sportive match ops guarded by executor | `OverviewAssemblerTests.Assemble_completed_stage_does_not_surface_prepare_or_start_actions` |
 | **Prepare checklist codes** (`Draw`, `Entries`, `Matches`, `Exits`) | Not emitted on lifecycle DTO today | Only if product reintroduces stepper/checklist surface |

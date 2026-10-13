@@ -10,6 +10,7 @@ const APPLICATION_PREFIX = 'Application.';
 const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
   'Application.CompetitionClosed': 'CompetitionClosed',
   'Application.ConfrontationUndecidable': 'ConfrontationUndecidable',
+  'Application.Attribution': 'Attribution',
   'Application.OverCapacityEdge': 'OverCapacityEdge',
   'Application.OverExtraction': 'OverExtraction',
   'Application.RevertToDraftBlocked': 'ProductionPresent',

@@ -40,6 +40,7 @@ public static class PrepareStage
 
         EnsureStageInCompetition(target, competitionStages);
         EnsureOutboundPathDestinations(target, competitionStages);
+        StructurePrepareAttributionGate.Ensure(target);
         EnsurePrepareGateDiagnostics(target, competitionStages);
 
         if (target.Slots.Count == 0)
