@@ -351,9 +351,17 @@ The Host exposes a **single** `disabledReasonCode` (`StageNotReady`) when `Domai
 | `StageCompletionBlocked` + `reasons: ["OpenMatches"]` | **Yes** with open-match copy |
 | OverCapacity / SlotFeed* ↔ Exits or Regulation | **No** |
 
-### 2c — First step label (OPEN)
+### 2c — compositionCapacity vs destination meter (ALIGNED 2026-10-13)
 
-Step id remains `Regulation` in code until renamed. The label must describe what the step **measures today**: KO when `disabledReasonCode === 'StructureGraphInvalid'`, i.e. at least one `structureIssues` entry with `IsStructureGraphGateIssue` (see § What `StructureGraphInvalid` covers). **Do not** label it « Réglement » in final copy. The candidate « Graphe & flux » is **unapproved**.
+**Problem:** Hub `compositionCapacity` for Championship/Swiss = competition Active (`ResolvePlaces`). On Qual/Prog **destination** tiles, that roster is not « Places N of the destination phase » — misleading X/Y meter.
+
+**Decision:** Keep hub `compositionCapacity` for the **phase fiche** (Places N = Active on root Championship per décision Places N). For **destination draft meters only**, SPA uses `resolveDestinationMeterCapacity` → `null` when `formatKind` is Championship/Swiss and `isRootComposition === false` (no meter; prefer honest silence over false 0/N).
+
+**Code:** `structurePlaces.ts` · Qual/Prog intent editors + over-capacity warnings in dialogs · tests `structurePlaces.test.ts`, `StructurePlacesContractTests`.
+
+### 2c (legacy) — First step label (N/A — stepper removed)
+
+Step id `Regulation` only mattered for the removed Prepare stepper. Matchs column lifecycle does not use step labels.
 
 ### 2a — Conditional read-model extension
 
@@ -479,7 +487,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | Topic | Status | Next step |
 | :---- | :----- | :-------- |
 | **Attribution** (`ChecklistAttribution`) | **ALIGNED** — gate on `AuthoredAwardUnreachable` only (R1–R5) ; tests `StructurePrepareAttributionTests` | Décision [Acceptée](https://app.notion.com/p/3f875fb92d108110a0a9d3fb904a3d37) (2026-10-13) |
-| **2c** compositionCapacity vs Places N | **Bloqué** Notion | Métier |
+| **2c** compositionCapacity vs Places N | **ALIGNED** — `resolveDestinationMeterCapacity` (Qual/Prog tiles); hub `compositionCapacity` unchanged on fiche | [Tâche 2c](https://app.notion.com/p/3ed75fb92d10817f9601ca0490b12430) |
 | **Completed** strict on Overview lifecycle actions | **ALIGNED** for Prepare/Start (none projected); sportive match ops guarded by executor | `OverviewAssemblerTests.Assemble_completed_stage_does_not_surface_prepare_or_start_actions` |
 | **Prepare checklist codes** (`Draw`, `Entries`, `Matches`, `Exits`) | Not emitted on lifecycle DTO today | Only if product reintroduces stepper/checklist surface |
 | **Outbound execute-only** (e.g. `DanglingFeedTarget`) | Partially covered when topology emits graph issues; else POST + `errors.json` | Extend read only with proven parity tests |
@@ -694,4 +702,4 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 - [x] `_unknown` keys (`problems.lifecycle` / `problems.mutation`)
 - [x] `errors:Application.StageCompletionBlocked`
 - [x] Tests: assembler reverts/suspend, materialize Draft, Attribution R1–R5, SPA cross-surface
-- [ ] **2c** compositionCapacity vs Places N — métier Notion (unchanged)
+- [x] **2c** compositionCapacity vs Places N — `resolveDestinationMeterCapacity` (SPA Qual/Prog)

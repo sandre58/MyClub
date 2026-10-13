@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary } from '../../types';
-import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
+import {
+  resolveDestinationMeterCapacity,
+  resolvePlacesN,
+  resolvePlacesPerGroup,
+} from './structurePlaces';
 
 function stage(
   overrides: Partial<StructureStageHubSummary>,
@@ -39,6 +43,52 @@ function stage(
     ...overrides,
   };
 }
+
+describe('resolveDestinationMeterCapacity (2c)', () => {
+  it('hides meter capacity for fed Championship/Swiss destinations', () => {
+    expect(
+      resolveDestinationMeterCapacity(
+        stage({
+          formatKind: 'Championship',
+          compositionCapacity: 6,
+          isRootComposition: false,
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      resolveDestinationMeterCapacity(
+        stage({
+          formatKind: 'Swiss',
+          compositionCapacity: 8,
+          isRootComposition: false,
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it('keeps capacity for root Championship and for Groups/Cup destinations', () => {
+    expect(
+      resolveDestinationMeterCapacity(
+        stage({
+          formatKind: 'Championship',
+          compositionCapacity: 6,
+          isRootComposition: true,
+        }),
+      ),
+    ).toBe(6);
+    expect(
+      resolveDestinationMeterCapacity(
+        stage({
+          formatKind: 'Groups',
+          groupCount: 2,
+          placesPerGroup: 4,
+          compositionCapacity: 8,
+          isRootComposition: false,
+        }),
+      ),
+    ).toBe(8);
+  });
+});
 
 describe('resolvePlacesN', () => {
   it('prefers compositionCapacity', () => {

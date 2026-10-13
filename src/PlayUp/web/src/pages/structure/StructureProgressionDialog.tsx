@@ -90,6 +90,7 @@ import {
 } from './structureProgressionDraft';
 import { areProgressionPlacesLabeled } from './structurePlaceLabel';
 import { expectedPopulationWithProgDraft } from './structurePopulationVolume';
+import { resolveDestinationMeterCapacity } from './structurePlaces';
 
 type StructureProgressionDialogProps = {
   data: StructureView;
@@ -524,8 +525,8 @@ export function StructureProgressionDialog({
     for (const stageId of destinations) {
       const dest = stageById.get(stageId);
       if (!dest) continue;
-      const capacity = dest.compositionCapacity;
-      if (capacity == null || capacity <= 0) continue;
+      const capacity = resolveDestinationMeterCapacity(dest);
+      if (capacity == null) continue;
       const draft = draftEntriesByDestination.get(stageId) ?? 0;
       const expected = expectedPopulationWithProgDraft({
         data,

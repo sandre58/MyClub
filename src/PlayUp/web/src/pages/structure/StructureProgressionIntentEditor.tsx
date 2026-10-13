@@ -33,6 +33,7 @@ import type {
 } from '../../types';
 import { EmptyState } from '../../ui';
 import { DestinationDraftMeter } from './DestinationDraftMeter';
+import { resolveDestinationMeterCapacity } from './structurePlaces';
 import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
@@ -270,7 +271,7 @@ export function StructureProgressionIntentEditor({
       draft.destinationStageId.trim() === dest.stageId
         ? expandContribution(draft)
         : 0;
-    const capacity = dest.compositionCapacity;
+    const capacity = resolveDestinationMeterCapacity(dest);
     const expected =
       capacity != null && capacity > 0
         ? expectedPopulationWithProgDraft({

@@ -7,6 +7,25 @@ import type { StructureStageHubSummary } from '../../types';
  *
  * Cup: entry places (1st-round). Multi-round total slotCount is form units, not Places.
  */
+/**
+ * Places N (Y) for Qual / Prog destination tiles only (arbitrage 2c).
+ * Fed Championship/Swiss destinations: competition Active on the hub is not destination Places — hide meter.
+ * Root phases and Cup/Groups keep hub {@link resolvePlacesN}.
+ */
+export function resolveDestinationMeterCapacity(
+  stage: StructureStageHubSummary,
+): number | null {
+  if (
+    (stage.formatKind === 'Championship' || stage.formatKind === 'Swiss') &&
+    stage.isRootComposition === false
+  ) {
+    return null;
+  }
+
+  const places = resolvePlacesN(stage);
+  return places != null && places > 0 ? places : null;
+}
+
 export function resolvePlacesN(stage: StructureStageHubSummary): number | null {
   if (stage.compositionCapacity != null && stage.compositionCapacity > 0) {
     return stage.compositionCapacity;

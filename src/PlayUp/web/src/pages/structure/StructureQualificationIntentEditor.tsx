@@ -31,6 +31,7 @@ import type {
   StructureView,
 } from '../../types';
 import { DestinationDraftMeter } from './DestinationDraftMeter';
+import { resolveDestinationMeterCapacity } from './structurePlaces';
 import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
@@ -566,7 +567,7 @@ export function StructureQualificationIntentEditor({
                     draft.destinationStageId.trim() === peer.stageId
                       ? expandOccurrences(draft, groups).length
                       : 0;
-                  const capacity = peer.compositionCapacity;
+                  const capacity = resolveDestinationMeterCapacity(peer);
                   const expected =
                     capacity != null && capacity > 0
                       ? expectedPopulationWithQualDraft({

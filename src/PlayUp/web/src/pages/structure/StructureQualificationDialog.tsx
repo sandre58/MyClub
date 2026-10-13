@@ -56,6 +56,7 @@ import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { isMissingDestinationStage } from './structureSortiesDestination';
 import { areProgressionPlacesLabeled } from './structurePlaceLabel';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
+import { resolveDestinationMeterCapacity } from './structurePlaces';
 import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
 import { findStructureIssueProblem } from '../../shell/organizerProblemRead';
 import {
@@ -324,8 +325,8 @@ export function StructureQualificationDialog({
     for (const stageId of destinations) {
       const dest = stageById.get(stageId);
       if (!dest) continue;
-      const capacity = dest.compositionCapacity;
-      if (capacity == null || capacity <= 0) continue;
+      const capacity = resolveDestinationMeterCapacity(dest);
+      if (capacity == null) continue;
       const draft = draftEntriesByDestination.get(stageId) ?? 0;
       const expected = expectedPopulationWithQualDraft({
         data,

@@ -5,6 +5,7 @@ import {
 } from './OccupancyMeter';
 import { expandOccurrences } from './structureQualificationDraft';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
+import { resolveDestinationMeterCapacity } from './structurePlaces';
 import type {
   StructureStageHubSummary,
   StructureView,
@@ -78,6 +79,18 @@ describe('OverExtraction DestinationDraftMeter Hub inputs', () => {
       ],
     );
     expect(occurrences).toHaveLength(6);
+  });
+
+  it('fed Championship destination hides meter Y (2c) even when hub compositionCapacity is roster', () => {
+    const destination = stage({
+      stageId: 'next',
+      name: 'Phase suivante',
+      formatKind: 'Championship',
+      compositionCapacity: 4,
+      isRootComposition: false,
+      affectationEntryCount: 0,
+    });
+    expect(resolveDestinationMeterCapacity(destination)).toBeNull();
   });
 
   it('with Championship Y = roster (4), hydrated draft yields X=6 → meter 6/4 not 0/6', () => {
