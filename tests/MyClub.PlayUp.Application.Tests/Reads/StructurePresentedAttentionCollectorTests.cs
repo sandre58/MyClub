@@ -63,6 +63,138 @@ public sealed class StructurePresentedAttentionCollectorTests
     }
 
     [Fact]
+    public void ProjectPresentedStageIssueCodes_drops_SlotFeedMissing_when_draw_awaiting_apply()
+    {
+        var competition = CreateCompetition.Execute("Draw awaiting", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            competition.AddEntry(TeamId.New(), $"Team {i + 1}", _clock);
+        }
+
+        var groups = Stage.Create(
+            competition.Id,
+            new StageName("Groupes"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(groups.Id, _clock);
+        groups.AddGroup("A", _clock);
+        groups.SetPlacesPerGroup(4);
+        groups.AddMatchday(1, _clock);
+        groups.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        groups.CreateDraw(DrawResolutionKind.Group, _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [groups]);
+        var hub = view.Stages.Single();
+        hub.DrawExecutionBadge.Should().Be(StructureDrawExecutionBadge.InProgress);
+
+        var presented = StructurePresentedAttentionCollector.ProjectPresentedStageIssueCodes(
+            [CompetitionFlowAnalyzer.SlotFeedMissing],
+            hub);
+
+        presented.Should().NotContain(CompetitionFlowAnalyzer.SlotFeedMissing);
+    }
+
+    [Fact]
+    public void ProjectPresentedStageIssueCodes_keeps_SlotFeedMissing_on_stage_without_awaiting_draw()
+    {
+        var competition = CreateCompetition.Execute("Feeds", _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+
+        var source = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(source.Id, _clock);
+        source.AddGroup("A", _clock);
+        source.AddMatchday(1, _clock);
+
+        var target = Stage.Create(
+            competition.Id,
+            new StageName("KO"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(target.Id, _clock);
+        target.AddRound("QF", _clock);
+        target.AddSlot("SF1-A");
+        target.AddSlot("SF1-B");
+
+        var view = StructureViewAssembler.Assemble(competition, [source, target]);
+        var koHub = view.Stages.Single(s => s.Name == "KO");
+
+        var presented = StructurePresentedAttentionCollector.ProjectPresentedStageIssueCodes(
+            [CompetitionFlowAnalyzer.SlotFeedMissing],
+            koHub);
+
+        presented.Should().ContainSingle(CompetitionFlowAnalyzer.SlotFeedMissing);
+    }
+
+    [Fact]
+    public void Assemble_omits_SlotFeedMissing_when_draw_awaiting_on_groups()
+    {
+        var competition = CreateCompetition.Execute("Draw awaiting attention", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            competition.AddEntry(TeamId.New(), $"Team {i + 1}", _clock);
+        }
+
+        var groups = Stage.Create(
+            competition.Id,
+            new StageName("Groupes"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(groups.Id, _clock);
+        groups.AddGroup("A", _clock);
+        groups.SetPlacesPerGroup(4);
+        groups.AddMatchday(1, _clock);
+        groups.ReplaceDrawRules(
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        groups.CreateDraw(DrawResolutionKind.Group, _clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [groups],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        attention.Items.Should().NotContain(item =>
+            item.Source == CompetitionFlowAnalyzer.SlotFeedMissing);
+    }
+
+    [Fact]
+    public void Collect_emits_NonRootUnfed_as_warning()
+    {
+        var competition = CreateCompetition.Execute("Unfed", _clock);
+        var root = Stage.Create(
+            competition.Id,
+            new StageName("Root"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        var leaf = Stage.Create(
+            competition.Id,
+            new StageName("Leaf"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(root.Id, _clock);
+        competition.AddStage(leaf.Id, _clock);
+        root.AddGroup("A", _clock);
+        root.AddMatchday(1, _clock);
+        leaf.AddRound("F", _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [root, leaf]);
+        var items = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(view, items);
+
+        items.Should().ContainSingle(item =>
+            item.Source == CompetitionFlowAnalyzer.NonRootUnfed
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
+            && item.TargetId == leaf.Id.Value.ToString());
+    }
+
+    [Fact]
     public void Collect_emits_SlotFeedMissing_as_blocking_when_not_awaiting_draw()
     {
         var competition = CreateCompetition.Execute("Feeds", _clock);

@@ -14,6 +14,7 @@ import {
   projectPresentedStageIssueCodes,
   structureDiagnosticFamily,
   structureDiagnosticMeta,
+  structureDiagnosticTone,
   type StructureDiagnosticFamily,
 } from './structureDiagnosticPresentation';
 import { collectAllStructureReadinessActionItems } from './structureReadinessActions';
@@ -86,9 +87,9 @@ function headerToneFromCodes(codes: readonly string[]): StructureHeaderTone {
   let hasDanger = false;
   let hasNonDanger = false;
   for (const code of codes) {
-    const meta = structureDiagnosticMeta(code);
-    if (!meta) continue;
-    if (meta.tone === 'danger') hasDanger = true;
+    if (!structureDiagnosticMeta(code)) continue;
+    const tone = structureDiagnosticTone(code);
+    if (tone === 'danger') hasDanger = true;
     else hasNonDanger = true;
   }
   if (hasDanger) return 'danger';

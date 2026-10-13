@@ -45,6 +45,9 @@ export type StructureDiagnosticMeta = {
   family: StructureDiagnosticFamily;
   tile: StructureDiagnosticTile;
   cta: StructureDiagnosticCta;
+  /**
+   * Legacy default tone for tile routing only — chrome uses {@link structureDiagnosticTone} (D5).
+   */
   tone: StructureDiagnosticTone;
   /** Default i18n key under structure.graph.issues.* (may be overridden for context). */
   titleKey: string;

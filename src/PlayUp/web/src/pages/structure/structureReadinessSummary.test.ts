@@ -144,7 +144,7 @@ describe('structureReadinessSummary', () => {
     });
     const summary = computeStructureReadinessSummary(view([poules]), [poules]);
     expect(summary.familyCounts).toEqual([{ family: 'capacity', count: 1 }]);
-    expect(summary.headerTone).toBe('attention');
+    expect(summary.headerTone).toBe('danger');
     expect(stagePopulationGap(view([poules]), poules)).toBe(-8);
   });
 
@@ -310,7 +310,7 @@ describe('structureReadinessSummary', () => {
         missingPotsPhaseCount: 1,
         shapeInvalid: false,
       }),
-    ).toBe('attention');
+    ).toBe('danger');
     expect(
       classifyReadinessHeaderTone({
         codes: ['DanglingQualificationTarget', 'SlotFeedMissing'],
