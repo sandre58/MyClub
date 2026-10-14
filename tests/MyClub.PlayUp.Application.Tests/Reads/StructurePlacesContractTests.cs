@@ -36,6 +36,20 @@ public sealed class StructurePlacesContractTests
     }
 
     [Fact]
+    public void Assemble_root_swiss_exposes_active_roster_as_compositionCapacity()
+    {
+        var situation = TestCompetition.Create("Swiss root", _clock)
+            .WithTeams("A", "B", "C", "D", "E", "F", "G", "H")
+            .WithStructure(StructureIntent.Swiss(3, stageName: "Swiss"));
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
+
+        hub.IsRootComposition.Should().BeTrue();
+        hub.CompositionCapacity.Should().Be(8);
+        hub.SwissRoundCount.Should().Be(3);
+    }
+
+    [Fact]
     public void Assemble_championship_fed_by_qual_is_not_root_but_keeps_compositionCapacity_for_own_fiche()
     {
         var situation = TestCompetition.Create("Groups to champ", _clock)

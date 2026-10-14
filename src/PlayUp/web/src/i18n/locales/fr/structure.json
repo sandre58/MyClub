@@ -14,8 +14,9 @@
     "topologyStatGroupGrid": "{{groups}}×{{size}}",
     "topologyStatRounds_one": "{{count}} tour",
     "topologyStatRounds_other": "{{count}} tours",
-    "topologyStatSwiss_one": "{{count}} tour",
-    "topologyStatSwiss_other": "{{count}} tours",
+    "topologyStatSwissProgress": "{{generated}} / {{planned}} tours générés",
+    "topologyStatSwissGeneratedOnly_one": "{{count}} tour généré",
+    "topologyStatSwissGeneratedOnly_other": "{{count}} tours générés",
     "topologyStatMatchdays_one": "{{count}} journée",
     "topologyStatMatchdays_other": "{{count}} journées",
     "topologyStatMatches_one": "{{count}} match",
@@ -557,7 +558,17 @@
       "places_one": "place",
       "places_other": "places",
       "matches_one": "match",
-      "matches_other": "matchs"
+      "matches_other": "matchs",
+      "swissRoundsGeneratedCaption": "tours générés"
+    },
+    "swissGuidance": {
+      "readyNoRounds": "Les tours seront générés progressivement après le démarrage de la phase.",
+      "plannedRoundsHint": "{{planned}} tours prévus au format.",
+      "runningNoRounds": "Aucun tour généré pour le moment.",
+      "awaitingRoundResults": "Finalisez les résultats du tour en cours avant de générer le suivant.",
+      "roundCompleteMoreToGenerate": "Tour terminé.",
+      "allRoundsGenerated": "Tous les tours prévus ont été générés.",
+      "neutral": "Consultez la vue d'ensemble pour poursuivre le pilotage sportif."
     },
     "tiles": {
       "population": "Équipes",

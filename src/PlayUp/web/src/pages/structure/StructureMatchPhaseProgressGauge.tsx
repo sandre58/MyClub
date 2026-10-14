@@ -7,6 +7,10 @@ import {
   matchProgressAllClosed,
   matchProgressClosed,
 } from './structurePhaseStatusBandModel';
+import {
+  formatSwissMatchProgressCaption,
+  type SwissMatchsGuidanceView,
+} from './swissMatchsGuidance';
 import { StripOperationalMessage } from './structureOperationalStripUi';
 
 function RatioAside({
@@ -66,6 +70,7 @@ export function StructureMatchPhaseProgressGauge({
   cancelled,
   layout = 'full',
   phaseStatus,
+  swissProgressCaption,
 }: {
   finished: number;
   total: number;
@@ -74,11 +79,18 @@ export function StructureMatchPhaseProgressGauge({
   /** Running/Suspended/Completed: closed-vs-total gauge labels. */
   layout?: 'full' | 'finishedTotal';
   phaseStatus?: StageStatus;
+  /** When set, replaces generic lifecycle copy above the gauge (Swiss guidance). */
+  swissProgressCaption?: SwissMatchsGuidanceView | null;
 }) {
   const { t } = useTranslation('structure');
   const closed = matchProgressClosed(finished, cancelled);
   const exploitationGauge = layout === 'finishedTotal';
   const allClosed = matchProgressAllClosed(total, finished, cancelled, open);
+
+  const swissCaptionText =
+    swissProgressCaption != null
+      ? formatSwissMatchProgressCaption(t, swissProgressCaption)
+      : null;
 
   const ratioLabel = exploitationGauge
     ? t('lifecycle.matchProgress.ratioLabel')
@@ -89,7 +101,21 @@ export function StructureMatchPhaseProgressGauge({
     : 'neutral';
 
   let caption: ReactNode;
-  if (allClosed) {
+  if (swissCaptionText != null) {
+    caption = (
+      <StripOperationalMessage
+        kind={
+          allClosed && swissProgressCaption?.kind !== 'D'
+            ? 'success'
+            : phaseStatus === 'Suspended'
+              ? 'attention'
+              : 'info'
+        }
+      >
+        {swissCaptionText}
+      </StripOperationalMessage>
+    );
+  } else if (allClosed) {
     caption = (
       <StripOperationalMessage kind="success">
         {t('lifecycle.matchProgress.allClosed')}
@@ -116,7 +142,7 @@ export function StructureMatchPhaseProgressGauge({
   if (total <= 0) {
     return (
       <StripOperationalMessage kind="info">
-        {t('lifecycle.matchProgress.none')}
+        {swissCaptionText ?? t('lifecycle.matchProgress.none')}
       </StripOperationalMessage>
     );
   }

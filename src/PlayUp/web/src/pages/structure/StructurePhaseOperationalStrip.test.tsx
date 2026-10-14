@@ -603,6 +603,38 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeNull();
     });
 
+    it('shows Swiss guidance above gauge without separate banner or generate CTA', () => {
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          formatKind: 'Swiss',
+          status: 'Running',
+          swissRoundCount: 3,
+          matchdayCount: 0,
+          materialize: undefined,
+          lifecycle: {
+            transition: { code: 'CompleteStage', enabled: false },
+            matchProgress: {
+              total: 0,
+              finished: 0,
+              cancelled: 0,
+              open: 0,
+              canComplete: false,
+            },
+          },
+        },
+        'Running',
+      );
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByText(/Aucun tour généré pour le moment/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Générer la prochaine ronde/i }),
+      ).not.toBeInTheDocument();
+    });
+
     it('hides dematerialize action when read blocks it', () => {
       renderMatchesStrip({
         ...leagueStageBase,

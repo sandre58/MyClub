@@ -51,6 +51,7 @@ import {
   scheduleStructureRefresh,
 } from './structureInvalidation';
 import { StructureMatchPhaseProgressGauge } from './StructureMatchPhaseProgressGauge';
+import { resolveSwissMatchsGuidance } from './swissMatchsGuidance';
 import {
   StructurePhaseDraftMatchsPrepare,
   StructurePhaseMatchsLifecycleBlock,
@@ -984,6 +985,8 @@ function MatchesColumn({
       ) : null;
   } else {
     const progress = stage.lifecycle?.matchProgress;
+    const swissProgressCaption =
+      stage.formatKind === 'Swiss' ? resolveSwissMatchsGuidance(stage) : null;
     const exploitationGauge =
       shouldShowMatchExploitationProgress(stage) && progress ? (
         <StructureMatchPhaseProgressGauge
@@ -993,6 +996,7 @@ function MatchesColumn({
           cancelled={progress.cancelled}
           layout="finishedTotal"
           phaseStatus={stage.status}
+          swissProgressCaption={swissProgressCaption}
         />
       ) : null;
 

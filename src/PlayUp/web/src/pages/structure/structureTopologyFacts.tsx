@@ -9,6 +9,7 @@ import {
 } from '../../design-system/icons/contentIcons';
 import type { StructureStageHubSummary } from '../../types';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
+import { formatSwissRoundsProgress, swissRoundCounts } from './swissRoundCounts';
 
 export type TopologyCardFact = {
   id: string;
@@ -103,14 +104,13 @@ export function topologyCardFacts(
         ...(placesFact ? [placesFact] : []),
       ];
     }
-    case 'Swiss':
+    case 'Swiss': {
+      const { generated, planned } = swissRoundCounts(stage);
       return [
         {
           id: 'swiss',
           icon: <RoundsStatIcon size="md" aria-hidden="true" />,
-          value: t('hub.topologyStatSwiss', {
-            count: stage.swissRoundCount ?? 0,
-          }),
+          value: formatSwissRoundsProgress(t, generated, planned),
         },
         {
           id: 'matches',
@@ -119,6 +119,7 @@ export function topologyCardFacts(
         },
         ...(placesFact ? [placesFact] : []),
       ];
+    }
     default:
       return placesFact ? [placesFact] : [];
   }

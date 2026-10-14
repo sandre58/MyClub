@@ -14,8 +14,9 @@
     "topologyStatGroupGrid": "{{groups}}×{{size}}",
     "topologyStatRounds_one": "{{count}} round",
     "topologyStatRounds_other": "{{count}} rounds",
-    "topologyStatSwiss_one": "{{count}} Swiss round",
-    "topologyStatSwiss_other": "{{count}} Swiss rounds",
+    "topologyStatSwissProgress": "{{generated}} / {{planned}} rounds generated",
+    "topologyStatSwissGeneratedOnly_one": "{{count}} round generated",
+    "topologyStatSwissGeneratedOnly_other": "{{count}} rounds generated",
     "topologyStatMatchdays_one": "{{count}} matchday",
     "topologyStatMatchdays_other": "{{count}} matchdays",
     "topologyStatMatches_one": "{{count}} match",
@@ -557,7 +558,17 @@
       "places_one": "place",
       "places_other": "places",
       "matches_one": "match",
-      "matches_other": "matches"
+      "matches_other": "matches",
+      "swissRoundsGeneratedCaption": "rounds generated"
+    },
+    "swissGuidance": {
+      "readyNoRounds": "Rounds will be created progressively after the stage starts.",
+      "plannedRoundsHint": "{{planned}} rounds planned for this format.",
+      "runningNoRounds": "No rounds have been generated yet.",
+      "awaitingRoundResults": "Finalize results for the current round before generating the next one.",
+      "roundCompleteMoreToGenerate": "Round complete.",
+      "allRoundsGenerated": "All planned rounds have been generated.",
+      "neutral": "See the overview to continue managing the competition."
     },
     "tiles": {
       "population": "Teams",

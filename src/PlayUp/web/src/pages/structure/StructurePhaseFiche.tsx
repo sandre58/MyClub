@@ -98,6 +98,7 @@ import {
   type StructureSectionId,
 } from './structureHubSections';
 import { resolvePlacesN } from './structurePlaces';
+import { swissRoundCounts } from './swissRoundCounts';
 import type { StructureFocusId } from './structureNavigation';
 import { PhaseSchematic } from './phaseSchematic';
 import { StructureSchematicViewport } from './StructureSchematicViewport';
@@ -783,14 +784,22 @@ export function StructurePhaseFiche({
       label: t('fiche.stat.matchdays', { count: n }),
       statKey: 'matchdays',
     });
-  } else if (kind === 'Swiss' && (stage.swissRoundCount ?? 0) > 0) {
-    const n = stage.swissRoundCount!;
-    heroFacts.push({
-      icon: <RoundsStatIcon size="sm" />,
-      value: n,
-      label: t('fiche.stat.rounds', { count: n }),
-      statKey: 'swiss-rounds',
-    });
+  } else if (kind === 'Swiss') {
+    const { generated, planned } = swissRoundCounts(stage);
+    if ((planned != null && planned > 0) || generated > 0) {
+      heroFacts.push({
+        icon: <RoundsStatIcon size="sm" />,
+        value:
+          planned != null && planned > 0
+            ? `${generated}/${planned}`
+            : generated,
+        label:
+          planned != null && planned > 0
+            ? t('fiche.stat.swissRoundsGeneratedCaption')
+            : t('fiche.stat.rounds', { count: generated }),
+        statKey: 'swiss-rounds',
+      });
+    }
   }
   if (!showPlacementBlock) {
     const n = resolvePlacesN(stage);
