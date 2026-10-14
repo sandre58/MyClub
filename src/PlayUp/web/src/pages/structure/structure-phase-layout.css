@@ -1,0 +1,163 @@
+/*
+ * Structure phase fiche — band-3 layout (composition tile, schematic, aside).
+ * Column chrome: base .structure-fiche in structure-fiche.css (hub parity with Topology).
+ * Loaded via structure.css.
+ */
+
+/* Inset work zones inside the flat fiche shell */
+.structure-fiche--flat .structure-phase-tile:not(.structure-phase-tile--schematic) {
+  padding: var(--space-12);
+  background: color-mix(in srgb, var(--color-surface-secondary) 65%, var(--color-surface));
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--color-border) 42%, transparent);
+  border-radius: var(--radius-control);
+  box-shadow: none;
+}
+
+.structure-fiche--flat .structure-phase-tile--schematic {
+  background: transparent;
+  border-width: var(--border-width);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-border) 75%, transparent);
+  display: flex;
+  flex-direction: column;
+  min-height: 14rem;
+}
+
+.structure-fiche--flat .structure-phase-tile--schematic .structure-schematic-viewport {
+  flex: 1 1 auto;
+  min-height: 12rem;
+}
+
+.structure-fiche--flat .structure-phase-main {
+  align-items: stretch;
+}
+
+.structure-fiche--flat .structure-phase-regulation-bar {
+  margin-top: 0;
+  padding-top: var(--space-16);
+  border-top: var(--border-width) solid
+    color-mix(in srgb, var(--color-border) 50%, transparent);
+}
+
+.structure-phase-tile {
+  min-width: 0;
+  padding: var(--space-16);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  box-sizing: border-box;
+}
+
+.structure-phase-tile--schematic {
+  border-style: dashed;
+}
+
+.structure-phase-tile__head {
+  margin-bottom: var(--space-12);
+}
+
+.structure-phase-composition {
+  container-type: inline-size;
+  container-name: phase-composition;
+}
+
+.structure-phase-composition__grid {
+  display: grid;
+  gap: var(--space-16);
+  align-items: start;
+}
+
+@container phase-composition (min-width: 56rem) {
+  .structure-phase-composition__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .structure-phase-composition__grid--two-cols {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@container phase-composition (min-width: 34rem) and (max-width: 55.99rem) {
+  .structure-phase-composition__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .structure-phase-composition__section--affectation {
+    grid-column: 1 / -1;
+  }
+}
+
+@container phase-composition (max-width: 33.99rem) {
+  .structure-phase-composition__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.structure-phase-composition__section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.structure-phase-composition__section .structure-phase-operational-bar {
+  margin: 0;
+}
+
+.structure-phase-composition__section .structure-fiche-section--operational {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-phase-main {
+  display: grid;
+  gap: var(--space-16);
+  align-items: start;
+  min-width: 0;
+}
+
+@media (min-width: 48rem) {
+  .structure-phase-main {
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.38fr);
+  }
+}
+
+.structure-phase-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.structure-phase-aside .structure-phase-operational-bar {
+  margin: 0;
+}
+
+.structure-phase-aside .structure-fiche-section--operational {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-phase-tile--flux .structure-phase-hero__out {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.structure-phase-tile--flux .structure-phase-rail {
+  border: none;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.structure-phase-tile--schematic .structure-phase-hero__stats {
+  margin-bottom: var(--space-8);
+}
+
+.structure-phase-tile--schematic .structure-schematic-viewport {
+  border-radius: var(--radius-control);
+}

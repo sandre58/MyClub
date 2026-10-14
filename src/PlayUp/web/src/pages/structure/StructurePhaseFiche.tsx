@@ -9,10 +9,10 @@ import {
   replaceStageDrawRules,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { PanelHead } from '../../design-system/components/PanelHead';
 import { TextInput } from '../../design-system/components/TextInput';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
-  ArrowDownIcon,
   ArrowRightIcon,
   AttributionIcon,
   ChampionshipFormatIcon,
@@ -65,7 +65,8 @@ import {
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
-import { StructurePhaseOperationalBar } from './StructurePhaseOperationalBar';
+import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
+import { materializePresentationForStage } from './structureOperationalCopy';
 import { shouldShowMatchsSection } from './structureMatchsSectionUi';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
@@ -823,10 +824,83 @@ export function StructurePhaseFiche({
   }
 
   const showHeroStats = heroFacts.length > 0;
-  const showHeroStructureActions =
-    showPlacementBlock ||
+  const showAsideMatchsSection =
     showProductionOperationalBar ||
-    (stage != null && shouldShowMatchsSection(stage));
+    showPlacementBlock ||
+    showDrawCta ||
+    showActivateDrawCta ||
+    shouldShowMatchsSection(stage);
+  const showAffectationSection =
+    showPlacementBlock || showDrawCta || showActivateDrawCta;
+  const showQualifiersSection = feedGroups.length > 0;
+  const qualifiersConfiguredVolume = feedGroups.reduce(
+    (sum, group) => sum + group.volume,
+    0,
+  );
+  const teamsEyebrowCount = stage.affectationEntryCount ?? 0;
+  const materializePresentation = materializePresentationForStage(
+    stage,
+    data.status,
+    stage.status,
+  );
+  const placementOperationalProps =
+    showAffectationSection
+      ? {
+          competitionId: data.competitionId,
+          placesN,
+          poolFilled,
+          occupiedPlacesCount,
+          occupancyReady:
+            stage.formatKind === 'Championship' ||
+            stage.formatKind === 'Swiss' ||
+            schematicQuery.isSuccess,
+          showDrawCta,
+          showActivateDrawCta,
+          showResolvedPoolGauge:
+            showDrawCta ||
+            showActivateDrawCta ||
+            stage.formatKind === 'Championship' ||
+            stage.formatKind === 'Swiss',
+          canManualPlace,
+          canEditDraw,
+          showReleaseCta,
+          hasNonCancelledDraw,
+          activeDraw: Boolean(activeDraw),
+          blockPerformDrawCta,
+          createBlockedShort,
+          createBlockedReason,
+          showCreateBlockedCaption,
+          showPoolHint,
+          releasableAlignedCount,
+          releasableTotal:
+            releasableDraw != null
+              ? drawResolutionPlacementCount(releasableDraw)
+              : 0,
+          releasePending: releaseMutation.isPending,
+          deactivateDrawPending: deactivateDrawMutation.isPending,
+          onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
+          onActivateDraw: () => setEdit('tirage-activate'),
+          onEditDrawParams: () => setEdit('tirage-params'),
+          onManualPlace: () => {
+            setManualSlotKey(null);
+            setManualOpen(true);
+          },
+          onReleasePlacements: () => setReleaseConfirmOpen(true),
+          onDeactivateDraw: () => setDeactivateDrawOpen(true),
+          slotFeedMissingActive,
+          drawOperationalReady: drawGateReady,
+          placesDiagnostics:
+            placesBannersForStrip.length > 0 ? (
+              <StructureOperationalIssueBanner codes={placesBannersForStrip} />
+            ) : undefined,
+        }
+      : null;
+  const compositionGridClass = [
+    'structure-phase-composition__grid',
+    !showQualifiersSection ? 'structure-phase-composition__grid--two-cols' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
   // Overflow removed — Edit/Delete live in the header toolbar.
 
   const sortiesEditControl = (() => {
@@ -1020,227 +1094,224 @@ export function StructurePhaseFiche({
         </div>
       </header>
 
-      {showHeroStructureActions && stage ? (
-        <StructurePhaseOperationalBar
-          structureHubBackgroundRefresh={structureHubBackgroundRefresh}
-          showPlaces={showPlacementBlock}
-          showDraw={showDrawCta || showActivateDrawCta}
-          drawApplied={stageHasAppliedDraw}
-          placement={
-            showPlacementBlock || showDrawCta || showActivateDrawCta
-              ? {
-                  competitionId: data.competitionId,
-                  placesN,
-                  poolFilled,
-                  occupiedPlacesCount,
-                  occupancyReady:
-                    stage.formatKind === 'Championship' ||
-                    stage.formatKind === 'Swiss' ||
-                    schematicQuery.isSuccess,
-                  showDrawCta,
-                  showActivateDrawCta,
-                  showResolvedPoolGauge:
-                    showDrawCta ||
-                    showActivateDrawCta ||
-                    stage.formatKind === 'Championship' ||
-                    stage.formatKind === 'Swiss',
-                  canManualPlace,
-                  canEditDraw,
-                  showReleaseCta,
-                  hasNonCancelledDraw,
-                  activeDraw: Boolean(activeDraw),
-                  blockPerformDrawCta,
-                  createBlockedShort,
-                  createBlockedReason,
-                  showCreateBlockedCaption,
-                  showPoolHint,
-                  releasableAlignedCount,
-                  releasableTotal:
-                    releasableDraw != null
-                      ? drawResolutionPlacementCount(releasableDraw)
-                      : 0,
-                  releasePending: releaseMutation.isPending,
-                  deactivateDrawPending: deactivateDrawMutation.isPending,
-                  onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
-                  onActivateDraw: () => setEdit('tirage-activate'),
-                  onEditDrawParams: () => setEdit('tirage-params'),
-                  onManualPlace: () => {
-                    setManualSlotKey(null);
-                    setManualOpen(true);
-                  },
-                  onReleasePlacements: () => setReleaseConfirmOpen(true),
-                  onDeactivateDraw: () => setDeactivateDrawOpen(true),
-                  slotFeedMissingActive,
-                  drawOperationalReady: drawGateReady,
-                  placesDiagnostics:
-                    placesBannersForStrip.length > 0 ? (
-                      <StructureOperationalIssueBanner codes={placesBannersForStrip} />
-                    ) : undefined,
-                }
-              : null
-          }
-          competitionId={data.competitionId}
-          competitionStatus={data.status}
-          stage={stage}
-        />
-      ) : null}
-
-      <div className="structure-phase-hero structure-phase-hero--lite">
-        <div
-          className={[
-            'structure-phase-hero__triptych',
-            showOutRail ? null : 'structure-phase-hero__triptych--no-out',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          <FluxRail
+      <div className="structure-phase-tile structure-phase-tile--composition structure-phase-composition">
+        <div className={compositionGridClass}>
+          <section
             id="rail-entries"
-            side="in"
-            title={t('fiche.tiles.population')}
-            icon={<ArrowDownIcon size="md" />}
-            attentionBanner={issueBanner(capacityBanners)}
+            className="structure-phase-composition__section"
+            aria-labelledby="composition-teams-heading"
           >
+            <PanelHead
+              id="composition-teams-heading"
+              title={t('population.sectionAffectation')}
+              aside={teamsEyebrowCount}
+            />
+            {issueBanner(capacityBanners)}
             <RootEntriesRail
               stage={stage}
               entries={data.participants.entries}
               sourcesConfiguredVolume={populationFeedVolume}
               canCompose={canCompose}
               onEditCompose={() => openCompose(false)}
-              sources={
-                feedGroups.length > 0 ? (
-                  <FluxGroupList
-                    groups={feedGroups}
-                    onOpenPeer={onSelectStage}
-                    teamsLabel={teamsLabel}
-                    renderGroupAction={renderAvalSourceAction}
-                  />
-                ) : undefined
-              }
             />
-          </FluxRail>
+          </section>
 
-          <div className="structure-phase-hero__center">
-            {showHeroStats ? (
-              <ul
-                className="structure-phase-hero__stats"
-                aria-label={t('fiche.statsAria')}
-              >
-                {heroFacts.map((fact) => (
-                  <li key={fact.statKey} className="structure-phase-hero__stat">
-                    <span
-                      className="structure-phase-hero__stat-icon"
-                      aria-hidden="true"
-                    >
-                      {fact.icon}
-                    </span>
-                    <span className="structure-phase-hero__stat-value">
-                      {fact.value}
-                    </span>
-                    <span className="structure-phase-hero__stat-label">
-                      {fact.label}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <div
-              id="tile-places"
-              className="structure-schematic-viewport"
+          {showQualifiersSection ? (
+            <section
+              className="structure-phase-composition__section"
+              aria-labelledby="composition-qualifiers-heading"
             >
-              <StructureSchematicViewport
-                schematic={schematicQuery.data}
-                isError={schematicQuery.isError}
-                isFetching={schematicQuery.isFetching}
-                loadingLabel={t('fiche.schematicLoading')}
-                unavailableLabel={t('fiche.occupantsUnavailable')}
-              >
-                {(schematic) => (
-                  <PhaseSchematic
-                    schematic={schematic}
-                    terminal={!hasExits}
-                    cupRoundCount={stage.roundCount}
-                    cupPairProductionStates={cupPairProductionStates}
-                    onPlaceActivate={
-                      canManualPlace
-                        ? (place: SchematicCase) => {
-                            const key = place.formPosition.slotKey?.trim();
-                            if (!key) return;
-                            setManualSlotKey(key);
-                            setManualOpen(true);
-                          }
-                        : undefined
-                    }
-                  />
-                )}
-              </StructureSchematicViewport>
-              {!showPlacementBlock && placesBanners.length > 0 ? (
-                <div className="structure-schematic-viewport__issues">
-                  {issueBanner(placesBanners)}
-                </div>
-              ) : null}
-            </div>
-          </div>
+              <PanelHead
+                id="composition-qualifiers-heading"
+                title={t('population.sectionSources')}
+                aside={qualifiersConfiguredVolume}
+              />
+              <FluxGroupList
+                groups={feedGroups}
+                onOpenPeer={onSelectStage}
+                teamsLabel={teamsLabel}
+                renderGroupAction={renderAvalSourceAction}
+              />
+            </section>
+          ) : null}
 
-          {showOutRail ? (
-            <div className="structure-phase-hero__out">
-              {showSortiesRail ? (
-                <FluxRail
-                  id="rail-exits"
-                  side="out"
-                  title={t('fiche.tiles.exits')}
-                  icon={<ArrowRightIcon size="md" />}
-                  editControl={sortiesEditControl}
-                  empty={!hasExits && exitsBanners.length === 0}
-                  attentionBanner={issueBanner(exitsBanners)}
+          {showAffectationSection ? (
+            <section
+              className="structure-phase-composition__section structure-phase-composition__section--affectation"
+            >
+              <div className="structure-phase-operational-bar">
+                <section
+                  className="structure-fiche-section structure-fiche-section--operational"
+                  aria-label={t('fiche.section.phaseState')}
                 >
-                  {hasExits ? (
-                    <FluxGroupList
-                      groups={outboundGroups}
-                      onOpenPeer={onSelectStage}
-                      teamsLabel={teamsLabel}
-                    />
-                  ) : null}
-                </FluxRail>
-              ) : null}
-              {showAttributionRail ? (
-                <FluxRail
-                  id="rail-attribution"
-                  side="out"
-                  title={t('fiche.tiles.attribution')}
-                  icon={<AttributionIcon size="md" />}
-                  editControl={attributionEditControl}
-                  empty={!hasAttribution && attributionBanners.length === 0}
-                  attentionBanner={issueBanner(attributionBanners)}
-                >
-                  {hasAttribution ? (
-                    <ul className="structure-flux-group__rules">
-                      {[...placementAwards]
-                        .sort((a, b) => a.rank - b.rank)
-                        .map((award) => {
-                          const parts = placementRuleParts(award, t);
-                          return (
-                            <li
-                              key={`${award.rank}-${award.outcome}-${award.sourcePairKey}`}
-                              className="structure-flux-group__rule"
-                            >
-                              <PlacementAwardRow
-                                rank={parts.rank}
-                                medal={parts.medal}
-                                badge={parts.badge}
-                                badgeTone={parts.badgeTone}
-                                context={parts.context}
-                              />
-                            </li>
-                          );
-                        })}
-                    </ul>
-                  ) : null}
-                </FluxRail>
-              ) : null}
-            </div>
+                  <StructurePhaseOperationalStrip
+                    layoutVariant="composition"
+                    placement={placementOperationalProps}
+                    showPlaces={showPlacementBlock}
+                    showDraw={showDrawCta || showActivateDrawCta}
+                    competitionId={data.competitionId}
+                    competitionStatus={data.status}
+                    stage={stage}
+                    presentation={materializePresentation}
+                    structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+                    drawApplied={stageHasAppliedDraw}
+                  />
+                </section>
+              </div>
+            </section>
           ) : null}
         </div>
+      </div>
+
+      <div className="structure-phase-main">
+        <div
+          className="structure-phase-tile structure-phase-tile--schematic"
+          id="tile-places"
+        >
+          {showHeroStats ? (
+            <ul
+              className="structure-phase-hero__stats"
+              aria-label={t('fiche.statsAria')}
+            >
+              {heroFacts.map((fact) => (
+                <li key={fact.statKey} className="structure-phase-hero__stat">
+                  <span
+                    className="structure-phase-hero__stat-icon"
+                    aria-hidden="true"
+                  >
+                    {fact.icon}
+                  </span>
+                  <span className="structure-phase-hero__stat-value">
+                    {fact.value}
+                  </span>
+                  <span className="structure-phase-hero__stat-label">
+                    {fact.label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="structure-schematic-viewport">
+            <StructureSchematicViewport
+              schematic={schematicQuery.data}
+              isError={schematicQuery.isError}
+              isFetching={schematicQuery.isFetching}
+              loadingLabel={t('fiche.schematicLoading')}
+              unavailableLabel={t('fiche.occupantsUnavailable')}
+            >
+              {(schematic) => (
+                <PhaseSchematic
+                  schematic={schematic}
+                  terminal={!hasExits}
+                  cupRoundCount={stage.roundCount}
+                  cupPairProductionStates={cupPairProductionStates}
+                  onPlaceActivate={
+                    canManualPlace
+                      ? (place: SchematicCase) => {
+                          const key = place.formPosition.slotKey?.trim();
+                          if (!key) return;
+                          setManualSlotKey(key);
+                          setManualOpen(true);
+                        }
+                      : undefined
+                  }
+                />
+              )}
+            </StructureSchematicViewport>
+            {!showPlacementBlock && placesBanners.length > 0 ? (
+              <div className="structure-schematic-viewport__issues">
+                {issueBanner(placesBanners)}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <aside className="structure-phase-aside">
+          {showAsideMatchsSection ? (
+            <div className="structure-phase-tile structure-phase-tile--matchs">
+              <div className="structure-phase-operational-bar">
+                <section
+                  className="structure-fiche-section structure-fiche-section--operational"
+                  aria-label={t('fiche.operational.cluster.matches')}
+                >
+                  <StructurePhaseOperationalStrip
+                    layoutVariant="aside-matchs"
+                    placement={placementOperationalProps}
+                    showPlaces={showPlacementBlock}
+                    showDraw={showDrawCta || showActivateDrawCta}
+                    competitionId={data.competitionId}
+                    competitionStatus={data.status}
+                    stage={stage}
+                    presentation={materializePresentation}
+                    structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+                    drawApplied={stageHasAppliedDraw}
+                  />
+                </section>
+              </div>
+            </div>
+          ) : null}
+
+          {showOutRail ? (
+            <div className="structure-phase-tile structure-phase-tile--flux">
+              <div className="structure-phase-hero__out">
+                {showSortiesRail ? (
+                  <FluxRail
+                    id="rail-exits"
+                    side="out"
+                    title={t('fiche.tiles.exits')}
+                    icon={<ArrowRightIcon size="md" />}
+                    editControl={sortiesEditControl}
+                    empty={!hasExits && exitsBanners.length === 0}
+                    attentionBanner={issueBanner(exitsBanners)}
+                  >
+                    {hasExits ? (
+                      <FluxGroupList
+                        groups={outboundGroups}
+                        onOpenPeer={onSelectStage}
+                        teamsLabel={teamsLabel}
+                      />
+                    ) : null}
+                  </FluxRail>
+                ) : null}
+                {showAttributionRail ? (
+                  <FluxRail
+                    id="rail-attribution"
+                    side="out"
+                    title={t('fiche.tiles.attribution')}
+                    icon={<AttributionIcon size="md" />}
+                    editControl={attributionEditControl}
+                    empty={!hasAttribution && attributionBanners.length === 0}
+                    attentionBanner={issueBanner(attributionBanners)}
+                  >
+                    {hasAttribution ? (
+                      <ul className="structure-flux-group__rules">
+                        {[...placementAwards]
+                          .sort((a, b) => a.rank - b.rank)
+                          .map((award) => {
+                            const parts = placementRuleParts(award, t);
+                            return (
+                              <li
+                                key={`${award.rank}-${award.outcome}-${award.sourcePairKey}`}
+                                className="structure-flux-group__rule"
+                              >
+                                <PlacementAwardRow
+                                  rank={parts.rank}
+                                  medal={parts.medal}
+                                  badge={parts.badge}
+                                  badgeTone={parts.badgeTone}
+                                  context={parts.context}
+                                />
+                              </li>
+                            );
+                          })}
+                      </ul>
+                    ) : null}
+                  </FluxRail>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </aside>
       </div>
 
       <StructurePhaseRegulationStrip

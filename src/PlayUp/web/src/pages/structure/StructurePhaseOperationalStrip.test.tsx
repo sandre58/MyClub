@@ -1,9 +1,9 @@
 import type { ComponentProps } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { dematerializePhase, materializeMatches } from '../../api';
 import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
@@ -111,6 +111,9 @@ function renderStrip(
     stage?: StructureStageHubSummary;
     competitionStatus?: 'Draft' | 'Running';
     structureHubBackgroundRefresh?: boolean;
+    layoutVariant?: ComponentProps<
+      typeof StructurePhaseOperationalStrip
+    >['layoutVariant'];
   } = {},
 ) {
   const stage = overrides.stage ?? baseStage;
@@ -130,6 +133,7 @@ function renderStrip(
     showDraw: overrides.showDraw ?? true,
     drawApplied: overrides.drawApplied ?? false,
     structureHubBackgroundRefresh: overrides.structureHubBackgroundRefresh ?? false,
+    layoutVariant: overrides.layoutVariant,
     competitionId,
     competitionStatus,
     stage,
@@ -161,6 +165,30 @@ function renderMatchesStrip(
 describe('StructurePhaseOperationalStrip', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('composition layout variant omits the matchs column', () => {
+    const { container } = renderStrip({ layoutVariant: 'composition' });
+    const strip = container.querySelector('.structure-operational-strip');
+    expect(strip).toHaveAttribute('data-layout-variant', 'composition');
+    expect(strip).toHaveAttribute('data-section-count', '2');
+    expect(
+      screen.queryByRole('heading', { name: /Matchs/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('aside-matchs layout variant omits placement and draw columns', () => {
+    const { container } = renderStrip({ layoutVariant: 'aside-matchs' });
+    const strip = container.querySelector('.structure-operational-strip');
+    expect(strip).toHaveAttribute('data-layout-variant', 'aside-matchs');
+    expect(strip).toHaveAttribute('data-section-count', '1');
+    expect(
+      screen.queryByRole('heading', { name: /Tirage/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('renders three numbered sections when places, draw, and matches are visible', () => {

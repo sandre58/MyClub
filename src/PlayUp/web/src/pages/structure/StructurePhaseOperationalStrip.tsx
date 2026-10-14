@@ -18,7 +18,6 @@ import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   CreateMatchesIcon,
   DrawPendingIcon,
-  MatchesStatIcon,
   PersonIcon,
   TrashIcon,
   UnlockIcon,
@@ -38,12 +37,12 @@ import {
   showViewMaterializedMatchesLink,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
-import { dematerializeDisabledCaption } from './structureDematerializeCopy';
 import {
   productionRatio,
   operationalStripPoolTone,
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
+  showProductionOperationalSection,
 } from './structureOperationalCopy';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 import {
@@ -58,6 +57,7 @@ import {
 } from './StructurePhaseMatchsLifecycleBlock';
 import {
   shouldShowMatchExploitationProgress,
+  shouldShowMatchsSection,
   shouldShowProductionInMatchsSection,
 } from './structureMatchsSectionUi';
 import {
@@ -76,6 +76,7 @@ import {
   StripOperationalMessage,
   type StripOperationalMessageKind,
 } from './structureOperationalStripUi';
+import {Link} from "react-router-dom";
 
 const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
 const secondaryBtn = 'ds-btn ds-btn--secondary ds-btn--sm';
@@ -87,8 +88,7 @@ type MaterializeMutationResult = UseMutationResult<
     alreadyComplete: boolean;
   },
   Error,
-  void,
-  unknown
+  void
 >;
 
 type DematerializeMutationResult = UseMutationResult<
@@ -97,11 +97,15 @@ type DematerializeMutationResult = UseMutationResult<
     removedRoundNumber: number | null;
   },
   Error,
-  void,
-  unknown
+  void
 >;
 
 type StripSectionKind = 'places' | 'draw' | 'matches';
+
+export type StructureOperationalStripLayoutVariant =
+  | 'full'
+  | 'composition'
+  | 'aside-matchs';
 
 function materializeActionLabel(
   materialize: NonNullable<StructureStageHubSummary['materialize']>,
@@ -233,6 +237,7 @@ export function StructurePhaseOperationalStrip({
   presentation,
   structureHubBackgroundRefresh = false,
   drawApplied,
+  layoutVariant = 'full',
 }: {
   placement: StructurePlacementOperationalSectionProps | null;
   showPlaces: boolean;
@@ -243,6 +248,7 @@ export function StructurePhaseOperationalStrip({
   presentation: MaterializePresentation | null;
   structureHubBackgroundRefresh?: boolean;
   drawApplied: boolean;
+  layoutVariant?: StructureOperationalStripLayoutVariant;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
@@ -313,11 +319,32 @@ export function StructurePhaseOperationalStrip({
     },
   });
 
-  const visibleSections: StripSectionKind[] = [
-    ...(showPlaces ? (['places'] as const) : []),
-    ...(showDraw ? (['draw'] as const) : []),
-    'matches',
-  ];
+  const showProductionOperational = showProductionOperationalSection(stage);
+  const showMatchesSection =
+    showProductionOperational ||
+    showPlaces ||
+    showDraw ||
+    shouldShowMatchsSection(stage);
+
+  const visibleSections: StripSectionKind[] =
+    layoutVariant === 'composition'
+      ? [
+          ...(showPlaces ? (['places'] as const) : []),
+          ...(showDraw ? (['draw'] as const) : []),
+        ]
+      : layoutVariant === 'aside-matchs'
+        ? showMatchesSection
+          ? (['matches'] as const)
+          : []
+        : [
+            ...(showPlaces ? (['places'] as const) : []),
+            ...(showDraw ? (['draw'] as const) : []),
+            'matches',
+          ];
+
+  if (visibleSections.length === 0) {
+    return null;
+  }
 
   const sectionIndex = (kind: StripSectionKind) =>
     visibleSections.indexOf(kind) + 1;
@@ -356,15 +383,16 @@ export function StructurePhaseOperationalStrip({
   );
 
   const stripSections = joinOperationalStripSections([
-    placesColumn,
-    drawColumn,
-    matchesColumn,
+    visibleSections.includes('places') ? placesColumn : null,
+    visibleSections.includes('draw') ? drawColumn : null,
+    visibleSections.includes('matches') ? matchesColumn : null,
   ]);
 
   return (
     <>
       <div
         className="structure-operational-strip"
+        data-layout-variant={layoutVariant}
         data-section-count={visibleSections.length}
         aria-busy={structureHubBackgroundRefresh || undefined}
         style={{
@@ -605,8 +633,7 @@ function DrawColumn(
       </StripOperationalMessage>
     ) : null;
 
-  const drawNeedsOverview = props.showDrawCta && props.drawOperationalReady === false;
-  const drawInitialLoading = drawNeedsOverview;
+  const drawInitialLoading = props.showDrawCta && props.drawOperationalReady === false;
   const drawUpdatingLabel = t('fiche.operational.draw.loading');
 
   let body: ReactNode;
@@ -819,11 +846,6 @@ function MatchesColumn({
     dematerialize?.scope === 'LastSwissRound'
       ? tActions('DematerializeLastSwissRound')
       : tActions('DematerializePhase');
-
-  const dematerializeCaption =
-    dematerialize && !dematerialize.enabled
-      ? dematerializeDisabledCaption(dematerialize, t)
-      : null;
 
   const matchMeter = resolveProductionMeterCopy({
     t,
