@@ -15,7 +15,6 @@ import {
   GroupsFormatIcon,
   PlusIcon,
   StructureIcon,
-  StructureIssueIcon,
   SwissFormatIcon,
   EmptySelectionIcon,
 } from '../../design-system/icons/contentIcons';
@@ -38,7 +37,7 @@ import {
   type AttentionQueryPhase,
 } from './structurePageHeadReadiness';
 import { AddPhaseDialog } from './StructureGraphDialogs';
-import { StructureAnomalyHint } from './StructureAnomalyHint';
+import { StructureReadinessHint } from './StructureReadinessHint';
 import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
@@ -49,6 +48,7 @@ import {
   computeStructureReadinessSummary,
   type StructureReadinessSummary,
 } from './structureReadinessSummary';
+import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { stageWorstPresentedDiagnosticTone } from './structureStageTopologyPresentation';
 import {
   parseStructureDeepLink,
@@ -363,7 +363,10 @@ function TopologyPanel({
                         data-tone={topologyIssueTone}
                         aria-label={t('hub.phaseGapsAmbient')}
                       >
-                        <StructureIssueIcon size="sm" aria-hidden="true" />
+                        <StructureDiagnosticIssueIcon
+                          tone={topologyIssueTone}
+                          size="sm"
+                        />
                       </span>
                     ) : null}
                   </span>
@@ -530,11 +533,17 @@ function readinessStatusNote(
   const lifecycleClosed =
     data.status === 'Completed' || data.status === 'Archived';
   const attentionPhase = attentionQueryPhase(attentionQuery);
-  const presentableBlockingCount =
+  const attentionStages = stages.map((stage) => ({
+    stageId: stage.stageId,
+    name: stage.name,
+    status: stage.status,
+  }));
+  const attentionPartition =
     attentionPhase === 'success'
-      ? partitionPresentableAttention(attentionQuery.data?.items ?? [])
-          .blocking.length
-      : 0;
+      ? partitionPresentableAttention(attentionQuery.data?.items ?? [], {
+          stages: attentionStages,
+        })
+      : { blocking: [], attention: [] };
 
   const noteKind = resolveStructurePageHeadNoteKind({
     lifecycleClosed,
@@ -542,14 +551,19 @@ function readinessStatusNote(
     structurePresentedDanger: summary.showPageHeadNegative,
     structureHasPresentedProblems: summary.hasAny,
     attentionPhase,
-    presentableBlockingAttentionCount: presentableBlockingCount,
+    presentableBlockingAttentionCount: attentionPartition.blocking.length,
+    presentableNonBlockingAttentionCount: attentionPartition.attention.length,
     readyToMaterialize: readiness.readyForMaterialization,
     readyForSchedule: readiness.readyForSchedule,
     readyForNextSlice: readiness.readyForNextSlice,
   });
 
   if (noteKind === 'negative') {
-    return <StructureAnomalyHint />;
+    return <StructureReadinessHint severity="error" />;
+  }
+
+  if (noteKind === 'warning') {
+    return <StructureReadinessHint severity="warning" />;
   }
 
   if (noteKind === 'positiveMaterialization') {

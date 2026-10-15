@@ -45,6 +45,25 @@ public sealed class StructureDiagnosticPresentationTests
     }
 
     [Fact]
+    public void ResolveSeverity_SlotFeedMissing_warning_in_Draft_blocking_in_Ready()
+    {
+        var (view, hub) = GroupsStageWithShortfall();
+
+        StructureDiagnosticPresentation.ResolveSeverity(
+                CompetitionFlowAnalyzer.SlotFeedMissing,
+                hub,
+                view)
+            .Should().Be(StructureDiagnosticPresentation.PresentationSeverity.Warning);
+
+        var readyHub = hub with { Status = StageStatus.Ready };
+        StructureDiagnosticPresentation.ResolveSeverity(
+                CompetitionFlowAnalyzer.SlotFeedMissing,
+                readyHub,
+                view)
+            .Should().Be(StructureDiagnosticPresentation.PresentationSeverity.Blocking);
+    }
+
+    [Fact]
     public void ResolveSeverity_OverCapacityEdge_always_warning()
     {
         var (view, hub) = GroupsStageWithShortfall();

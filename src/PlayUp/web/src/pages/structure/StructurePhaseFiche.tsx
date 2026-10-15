@@ -851,28 +851,17 @@ export function StructurePhaseFiche({
     showTeamsSection;
   const populationMeterCurrent = expectedPopulationOccupancy(data, stage);
   const stageDiagnosticContext = structureDiagnosticContextFromStage(data, stage);
-  const populationShortfallMessageKind =
-    stageHasPopulationShortfall(data, stage)
-      ? (() => {
-          const tone = structureDiagnosticPresentation(
-            'PopulationShortfall',
-            {
-              formatKind: stageDiagnosticContext.formatKind,
-              stageStatus: stageDiagnosticContext.stageStatus,
-              isEntryBaselineStage: stageDiagnosticContext.isEntryBaselineStage,
-              hasInboundQualProgFeed:
-                stageDiagnosticContext.hasInboundQualProgFeed,
-              affectationEntryCount: stageDiagnosticContext.affectationEntryCount,
-            },
-          ).tone;
-          return tone === 'danger' || tone === 'attention' ? tone : null;
-        })()
-      : null;
   const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
     <CompositionPopulationGauge
       current={populationMeterCurrent}
       capacity={placesN!}
-      populationShortfallMessageKind={populationShortfallMessageKind}
+      presentationContext={{
+        formatKind: stageDiagnosticContext.formatKind,
+        stageStatus: stageDiagnosticContext.stageStatus,
+        isEntryBaselineStage: stageDiagnosticContext.isEntryBaselineStage,
+        hasInboundQualProgFeed: stageDiagnosticContext.hasInboundQualProgFeed,
+        affectationEntryCount: stageDiagnosticContext.affectationEntryCount,
+      }}
       className={
         sharedCompositionPopulationGauge
           ? 'structure-phase-composition__population-gauge--span-sources'
@@ -936,6 +925,11 @@ export function StructurePhaseFiche({
           onReleasePlacements: () => setReleaseConfirmOpen(true),
           onDeactivateDraw: () => setDeactivateDrawOpen(true),
           slotFeedMissingActive,
+          stageStatus: stage.status,
+          slotFeedPresentationContext: {
+            formatKind: stageDiagnosticContext.formatKind,
+            stageStatus: stageDiagnosticContext.stageStatus,
+          },
           drawOperationalReady: drawGateReady,
           drawReadinessChecklist,
           placesDiagnostics:

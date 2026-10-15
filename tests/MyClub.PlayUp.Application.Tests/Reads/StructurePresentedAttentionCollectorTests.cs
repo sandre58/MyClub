@@ -234,7 +234,7 @@ public sealed class StructurePresentedAttentionCollectorTests
 
         items.Should().ContainSingle(item =>
             item.Source == CompetitionFlowAnalyzer.SlotFeedMissing
-            && item.Severity == NeedsAttentionAssembler.SeverityBlocking
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
             && item.TargetType == "Stage"
             && item.TargetId == target.Id.Value.ToString());
     }

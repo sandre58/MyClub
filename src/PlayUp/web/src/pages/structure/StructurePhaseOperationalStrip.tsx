@@ -46,6 +46,7 @@ import {
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
 } from './structureOperationalCopy';
+import { isDraftLikeStageStatus } from './structureOperationalMeterPresentation';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 import {
   scheduleQueryRefresh,
@@ -494,11 +495,21 @@ function PlacesColumn(
     capacity,
     occupiedPlacesCount: props.occupiedPlacesCount,
     slotFeedMissingActive: props.slotFeedMissingActive ?? false,
+    stageStatus: props.stageStatus,
+    slotFeedPresentationContext: props.slotFeedPresentationContext,
   });
+
+  const occupancyToneForPool =
+    isDraftLikeStageStatus(props.stageStatus) && placeMeter.kind !== 'danger'
+      ? operationalStripPoolTone(
+          placeMeter.kind,
+          placeMeter.kind === 'attention' ? 'attention' : 'neutral',
+        )
+      : operationalStripPoolTone(placeMeter.kind, occupancyTone);
 
   const placesPoolTone = operationalStripPoolTone(
     placeMeter.kind,
-    occupancyTone,
+    occupancyToneForPool,
   );
 
   const placesInitialLoading = !props.occupancyReady;

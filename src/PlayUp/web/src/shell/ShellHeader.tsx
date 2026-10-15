@@ -58,6 +58,7 @@ export function ShellHeader({
     scheduledStart,
     scheduledEnd,
     state,
+    stages,
   } = useShellCompetitionContext();
 
   const attentionQuery = useQuery({
@@ -68,9 +69,13 @@ export function ShellHeader({
   });
 
   const attentionWireItems = attentionQuery.data?.items ?? [];
-  const attentionCount = presentableAttentionCount(attentionWireItems);
+  const attentionPresentation = { stages };
+  const attentionCount = presentableAttentionCount(
+    attentionWireItems,
+    attentionPresentation,
+  );
   const attentionTone = attentionSeverityToneFromSituations(
-    presentableAttentionSituations(attentionWireItems),
+    presentableAttentionSituations(attentionWireItems, attentionPresentation),
   );
   const competitionStatus = status;
   const periodLabel = formatCompetitionPeriod(

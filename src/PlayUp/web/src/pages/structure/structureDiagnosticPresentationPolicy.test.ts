@@ -98,6 +98,22 @@ describe('structureDiagnosticPresentationPolicy (R-Pres)', () => {
     expect(p.tone).toBeNull();
   });
 
+  it('R-Pres-SFM-1 Draft SlotFeedMissing is attention', () => {
+    const p = structureDiagnosticPresentation('SlotFeedMissing', {
+      stageStatus: 'Draft',
+    });
+    expect(p.severity).toBe('warning');
+    expect(p.tone).toBe('attention');
+  });
+
+  it('R-Pres-SFM-2 Ready SlotFeedMissing is danger', () => {
+    const p = structureDiagnosticPresentation('SlotFeedMissing', {
+      stageStatus: 'Ready',
+    });
+    expect(p.severity).toBe('blocking');
+    expect(p.tone).toBe('danger');
+  });
+
   it('R-Pres-ST-2 Suspended uses Running bucket (attention for OC)', () => {
     expect(structurePresentationPhaseBucket('Suspended')).toBe('Running');
     const p = structureDiagnosticPresentation('OverCapacityEdge', {

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Application.Reads;
 
@@ -30,8 +31,13 @@ public static class StructurePresentedAttentionCollector
 
         foreach (var stage in structureView.Stages)
         {
+            if (stage.Status == StageStatus.Completed)
+            {
+                continue;
+            }
+
             StagePresentedIssueCodes(structureView, stage)
-                .Where(code => !IsExcludedSource(code))
+                .Where(code => !IsExcludedSource(code) && ShouldEmitAttention(code, stage, structureView))
                 .Select(code => CreateStageItem(code, stage, structureView)).ToList().ForEach(items.Add);
 
             if (StageHasEngagedMissingPots(stage))
@@ -58,6 +64,13 @@ public static class StructurePresentedAttentionCollector
                 }));
         }
     }
+
+    private static bool ShouldEmitAttention(
+        string code,
+        StructureStageHubSummaryDto stage,
+        StructureViewDto view) =>
+        StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
+            != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
 
     private static bool IsExcludedSource(string code) =>
         code is StructureViewAssembler.BlockerMissingStage

@@ -8,8 +8,11 @@ describe('structureDiagnosticSeverity (D5)', () => {
       'warning',
     );
     expect(structureProductSeverity('SlotFeedMissing', { stageStatus: 'Draft' })).toBe(
-      'blocking',
+      'warning',
     );
+    expect(
+      structureProductSeverity('SlotFeedMissing', { stageStatus: 'Ready' }),
+    ).toBe('blocking');
     expect(
       structureProductSeverity('PopulationShortfall', { stageStatus: 'Draft' }),
     ).toBe('warning');

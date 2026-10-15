@@ -8,6 +8,7 @@ const base = {
   structureHasPresentedProblems: false,
   attentionPhase: 'success' as const,
   presentableBlockingAttentionCount: 0,
+  presentableNonBlockingAttentionCount: 0,
   readyToMaterialize: false,
   readyForSchedule: false,
   readyForNextSlice: false,
@@ -33,13 +34,33 @@ describe('resolveStructurePageHeadNoteKind', () => {
     ).toBe('negative');
   });
 
-  it('does not show negative for warning-only structure problems', () => {
+  it('shows warning for warning-only structure problems', () => {
     expect(
       resolveStructurePageHeadNoteKind({
         ...base,
         structureHasPresentedProblems: true,
       }),
-    ).toBe('none');
+    ).toBe('warning');
+  });
+
+  it('shows negative when errors and warnings are both present', () => {
+    expect(
+      resolveStructurePageHeadNoteKind({
+        ...base,
+        structurePresentedDanger: true,
+        structureHasPresentedProblems: true,
+        presentableNonBlockingAttentionCount: 2,
+      }),
+    ).toBe('negative');
+  });
+
+  it('shows warning for non-blocking attention only', () => {
+    expect(
+      resolveStructurePageHeadNoteKind({
+        ...base,
+        presentableNonBlockingAttentionCount: 1,
+      }),
+    ).toBe('warning');
   });
 
   it('does not show positive while attention is pending', () => {

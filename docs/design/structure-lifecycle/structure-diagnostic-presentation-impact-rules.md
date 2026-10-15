@@ -70,7 +70,7 @@ Presentation only. `S` = `stageStatus` bucket (§3). `FK` = `formatKind` where n
 | `OverExtraction` | danger | danger | danger | |
 | `Dangling*` / `Missing*` qual/prog | danger | danger | danger | |
 | `SlotFeedInvalid` / `SlotFeedMultiple` | danger | danger | danger | Unlisted in contract — unchanged blocking |
-| `SlotFeedMissing` | danger¹ | danger¹ | danger¹ | ¹ hide when draw awaiting |
+| `SlotFeedMissing` | attention¹ | danger¹ | danger¹ | ¹ hide when draw awaiting; Draft = expected fill-in-progress |
 | `OverCapacityEdge` | attention | attention | attention | No impact promotion (§1.2) |
 | `PopulationShortfall` | attention | **danger** | attention | U1 synth uses same row |
 | `SourcePopulationShortfall` | attention | **danger** | attention | |

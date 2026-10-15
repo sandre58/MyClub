@@ -51,6 +51,7 @@
     "problemsToHandle_one": "{{count}} problème à traiter",
     "problemsToHandle_other": "{{count}} problèmes à traiter",
     "anomalyHintTitle": "Des anomalies nécessitent votre attention",
+    "warningHintTitle": "La structure reste à finaliser",
     "statStructural_one": "liaison à corriger",
     "statStructural_other": "liaisons à corriger",
     "statIncomplete_one": "phase incomplète",

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import type { StageStatus } from '../../types';
+import type { StructureDiagnosticPresentationContext } from './structureDiagnosticPresentationPolicy';
 import type { DrawReadinessChecklistItem } from './drawUi';
 
 /** Props for Places / Draw columns in `StructurePhaseOperationalStrip`. */
@@ -28,6 +30,8 @@ export type StructurePlacementOperationalSectionProps = {
   deactivateDrawPending: boolean;
   /** Host reports SlotFeedMissing — strip meter copy carries the gap (not the banner). */
   slotFeedMissingActive?: boolean;
+  stageStatus?: StageStatus;
+  slotFeedPresentationContext?: StructureDiagnosticPresentationContext;
   /** Draw pool / create gate needs draw overview (Cup) before showing Tirage strip body. */
   drawOperationalReady?: boolean;
   drawReadinessChecklist?: readonly DrawReadinessChecklistItem[] | null;

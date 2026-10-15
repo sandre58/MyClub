@@ -42,8 +42,13 @@ function stage(
 }
 
 describe('structureDiagnosticPresentation', () => {
-  it('maps SlotFeedMissing without draw as danger (D5 blocking)', () => {
-    expect(structureDiagnosticTone('SlotFeedMissing')).toBe('danger');
+  it('maps SlotFeedMissing as attention in Draft and danger when Ready', () => {
+    expect(
+      structureDiagnosticTone('SlotFeedMissing', { stageStatus: 'Draft' }),
+    ).toBe('attention');
+    expect(
+      structureDiagnosticTone('SlotFeedMissing', { stageStatus: 'Ready' }),
+    ).toBe('danger');
     expect(structureDiagnosticTile('SlotFeedMissing')).toBe('places');
   });
 

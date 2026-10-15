@@ -368,6 +368,14 @@
   line-height: 0;
 }
 
+.structure-assembly--incomplete .structure-occupancy-meter__fill {
+  background: var(--color-brand);
+}
+
+.structure-assembly--incomplete .structure-assembly__gap--expected {
+  color: var(--color-text-secondary);
+}
+
 .structure-assembly--deficit .structure-occupancy-meter__fill {
   background: var(--color-error);
 }

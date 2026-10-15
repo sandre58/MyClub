@@ -95,13 +95,14 @@ describe('functionalProblemPresentation', () => {
     });
     // Copy is no longer draw-specific — silence is handled by projection filters.
     expect(awaiting.titleKey).toBe('graph.issues.SlotFeedMissing');
-    expect(awaiting.tone).toBe('danger');
+    expect(awaiting.tone).toBe('attention');
 
     const plain = structureIssuePresentation({
       code: 'SlotFeedMissing',
       competitionId: 'comp-1',
       stageId: 'stage-9',
       awaitingDraw: false,
+      structureDiagnosticContext: { stageStatus: 'Ready' },
     });
     expect(plain.titleKey).toBe('graph.issues.SlotFeedMissing');
     expect(plain.tone).toBe('danger');
@@ -118,13 +119,22 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleKey).toBe('graph.issues.AuthoredAwardUnreachable');
   });
 
-  it('maps SlotFeedMissing as danger when presented (D5)', () => {
-    const presentation = structureIssuePresentation({
+  it('maps SlotFeedMissing as attention in Draft and danger when Ready', () => {
+    const draft = structureIssuePresentation({
       code: 'SlotFeedMissing',
       competitionId: 'comp-1',
       stageId: 'stage-9',
+      structureDiagnosticContext: { stageStatus: 'Draft' },
     });
-    expect(presentation.tone).toBe('danger');
+    expect(draft.tone).toBe('attention');
+    const ready = structureIssuePresentation({
+      code: 'SlotFeedMissing',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+      structureDiagnosticContext: { stageStatus: 'Ready' },
+    });
+    expect(ready.tone).toBe('danger');
+    const presentation = draft;
     expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissing');
   });
 

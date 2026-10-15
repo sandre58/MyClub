@@ -51,6 +51,7 @@
     "problemsToHandle_one": "{{count}} problem to handle",
     "problemsToHandle_other": "{{count}} problems to handle",
     "anomalyHintTitle": "Anomalies need your attention",
+    "warningHintTitle": "The structure still needs finishing",
     "statStructural_one": "connection to fix",
     "statStructural_other": "connections to fix",
     "statIncomplete_one": "incomplete phase",

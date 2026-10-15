@@ -6,8 +6,8 @@ import {
   EmptySelectionIcon,
   PencilIcon,
   PlusIcon,
-  StructureIssueIcon,
 } from '../../design-system/icons/contentIcons';
+import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import {
   EntryCell,
   entryCellListItemClassName,
@@ -25,7 +25,9 @@ import {
   showPerEntryPlacement,
 } from './structureEntryPlacementProjection';
 import { resolvePlacesN } from './structurePlaces';
+import { structureDiagnosticPresentation } from './structureDiagnosticPresentationPolicy';
 import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
+import { isDraftLikeStageStatus } from './structureOperationalMeterPresentation';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
@@ -48,15 +50,17 @@ export function listComposedAffectationEntries(
     );
 }
 
-/** Cardinality gauge — expected Population vs Places N; shortfall = danger. */
+/** Cardinality gauge — expected Population vs Places N (D5 phase-aware chrome). */
 export function CompositionMeter({
   entries,
   places,
   t,
+  stage,
 }: {
   entries: number;
   places: number | null;
   t: (key: string, opts?: Record<string, unknown>) => string;
+  stage?: import('../../types').StructureStageHubSummary;
 }) {
   if (places == null || places <= 0) {
     return (
@@ -75,9 +79,28 @@ export function CompositionMeter({
 
   const gap = entries - places;
   const state = occupancyMeterState(entries, places);
+  const gapDiagnosticTone =
+    gap < 0
+      ? structureDiagnosticPresentation('PopulationShortfall', {
+          formatKind: stage?.formatKind,
+          stageStatus: stage?.status,
+          affectationEntryCount: stage?.affectationEntryCount ?? 0,
+        }).tone
+      : gap > 0
+        ? structureDiagnosticPresentation('OverCapacityEdge', {
+            formatKind: stage?.formatKind,
+            stageStatus: stage?.status,
+          }).tone
+        : null;
+  const shortfallTone = gap < 0 ? gapDiagnosticTone : null;
+  const showDeficitChrome = gap < 0 && shortfallTone === 'danger';
+  const draftIncomplete =
+    gap < 0 && isDraftLikeStageStatus(stage?.status);
   const assemblyClass = [
     'structure-assembly',
-    gap < 0 ? 'structure-assembly--deficit' : gap > 0 ? 'structure-assembly--over' : null,
+    showDeficitChrome ? 'structure-assembly--deficit' : null,
+    gap > 0 ? 'structure-assembly--over' : null,
+    draftIncomplete ? 'structure-assembly--incomplete' : null,
   ]
     .filter(Boolean)
     .join(' ');
@@ -87,6 +110,7 @@ export function CompositionMeter({
       current={entries}
       capacity={places}
       state={state}
+      fillVariant={draftIncomplete ? 'brand' : 'default'}
       ariaLabel={t('entries.meterAria')}
       className={assemblyClass}
       header={
@@ -102,10 +126,25 @@ export function CompositionMeter({
             <strong>{places}</strong>
           </div>
           {gap !== 0 ? (
-            <p className="structure-assembly__gap" role="status">
-              <span className="structure-assembly__gap-icon" aria-hidden="true">
-                <StructureIssueIcon size="sm" />
-              </span>
+            <p
+              className={
+                draftIncomplete
+                  ? 'structure-assembly__gap structure-assembly__gap--expected'
+                  : 'structure-assembly__gap'
+              }
+              role="status"
+            >
+              {!draftIncomplete && gapDiagnosticTone != null ? (
+                <span
+                  className="structure-assembly__gap-icon"
+                  aria-hidden="true"
+                >
+                  <StructureDiagnosticIssueIcon
+                    tone={gapDiagnosticTone}
+                    size="sm"
+                  />
+                </span>
+              ) : null}
               {gap < 0
                 ? t('entries.meter.shortfall', { count: Math.abs(gap) })
                 : t('entries.meter.surplus', { count: gap })}
@@ -358,7 +397,7 @@ export function RootEntriesRail({
         ) : null}
       </div>
       <div className="structure-entries__footer">
-        <CompositionMeter entries={meterEntries} places={n} t={t} />
+        <CompositionMeter entries={meterEntries} places={n} t={t} stage={stage} />
       </div>
     </div>
   );

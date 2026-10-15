@@ -83,7 +83,11 @@ public static class StructureDiagnosticPresentation
                 ? bucket == PresentationPhaseBucket.Ready
                     ? MatrixCell.Danger
                     : MatrixCell.Attention
-                : code != CompetitionFlowAnalyzer.NonRootUnfed
+                : code == CompetitionFlowAnalyzer.SlotFeedMissing
+                    ? bucket == PresentationPhaseBucket.Draft
+                        ? MatrixCell.Attention
+                        : MatrixCell.Danger
+                    : code != CompetitionFlowAnalyzer.NonRootUnfed
                     ? code == CompetitionFlowAnalyzer.AuthoredAwardUnreachable
                         ? stage.FormatKind == StructureFormatKind.Cup
                             ? MatrixCell.Danger

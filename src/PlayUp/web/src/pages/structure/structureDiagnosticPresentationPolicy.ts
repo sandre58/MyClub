@@ -124,6 +124,10 @@ function resolveMatrixCell(
     return 'danger';
   }
 
+  if (code === 'SlotFeedMissing') {
+    return bucket === 'Draft' ? 'attention' : 'danger';
+  }
+
   if (DANGER_MATRIX_CODES.has(code)) {
     return 'danger';
   }

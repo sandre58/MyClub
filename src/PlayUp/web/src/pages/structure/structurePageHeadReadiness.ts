@@ -9,6 +9,7 @@ export type StructurePageHeadReadinessInput = {
   structureHasPresentedProblems: boolean;
   attentionPhase: AttentionQueryPhase;
   presentableBlockingAttentionCount: number;
+  presentableNonBlockingAttentionCount: number;
   readyToMaterialize: boolean;
   readyForSchedule: boolean;
   readyForNextSlice: boolean;
@@ -17,8 +18,27 @@ export type StructurePageHeadReadinessInput = {
 export type StructurePageHeadNoteKind =
   | 'none'
   | 'negative'
+  | 'warning'
   | 'positiveMaterialization'
   | 'positiveNextSlice';
+
+function pageHeadHasErrors(input: StructurePageHeadReadinessInput): boolean {
+  return (
+    input.structurePresentedDanger ||
+    (input.attentionPhase === 'success' &&
+      input.presentableBlockingAttentionCount > 0) ||
+    (input.attentionPhase === 'error' && input.structurePresentedDanger)
+  );
+}
+
+function pageHeadHasWarnings(input: StructurePageHeadReadinessInput): boolean {
+  const structureWarnings =
+    input.structureHasPresentedProblems && !input.structurePresentedDanger;
+  const attentionWarnings =
+    input.attentionPhase === 'success' &&
+    input.presentableNonBlockingAttentionCount > 0;
+  return structureWarnings || attentionWarnings;
+}
 
 export function resolveStructurePageHeadNoteKind(
   input: StructurePageHeadReadinessInput,
@@ -27,14 +47,12 @@ export function resolveStructurePageHeadNoteKind(
     return 'none';
   }
 
-  const showNegative =
-    input.structurePresentedDanger ||
-    (input.attentionPhase === 'success' &&
-      input.presentableBlockingAttentionCount > 0) ||
-    (input.attentionPhase === 'error' && input.structurePresentedDanger);
-
-  if (showNegative) {
+  if (pageHeadHasErrors(input)) {
     return 'negative';
+  }
+
+  if (pageHeadHasWarnings(input)) {
+    return 'warning';
   }
 
   if (input.attentionPhase !== 'success') {
@@ -43,6 +61,7 @@ export function resolveStructurePageHeadNoteKind(
 
   if (
     input.presentableBlockingAttentionCount === 0 &&
+    input.presentableNonBlockingAttentionCount === 0 &&
     !input.structureHasPresentedProblems &&
     input.readyToMaterialize &&
     !input.readyForSchedule
@@ -52,6 +71,7 @@ export function resolveStructurePageHeadNoteKind(
 
   if (
     input.presentableBlockingAttentionCount === 0 &&
+    input.presentableNonBlockingAttentionCount === 0 &&
     !input.structureHasPresentedProblems &&
     !input.readyToMaterialize &&
     input.readyForNextSlice

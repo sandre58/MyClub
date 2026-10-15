@@ -21,7 +21,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('info');
   });
 
-  it('uses danger for empty occupancy when SlotFeedMissing is active', () => {
+  it('uses danger for empty occupancy when SlotFeedMissing is active in Ready', () => {
     expect(
       resolvePlaceOccupancyMeterCopy({
         t,
@@ -30,6 +30,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
         capacity: 8,
         occupiedPlacesCount: 0,
         slotFeedMissingActive: true,
+        stageStatus: 'Ready',
       }).kind,
     ).toBe('danger');
   });
@@ -45,7 +46,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('attention');
   });
 
-  it('uses danger for partial occupancy when SlotFeedMissing is active', () => {
+  it('uses attention for partial occupancy in Draft when SlotFeedMissing is active', () => {
     expect(
       resolvePlaceOccupancyMeterCopy({
         t,
@@ -54,7 +55,50 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
         capacity: 8,
         occupiedPlacesCount: 1,
         slotFeedMissingActive: true,
+        stageStatus: 'Draft',
       }).kind,
-    ).toBe('danger');
+    ).toBe('attention');
+  });
+
+  it('uses attention for empty occupancy when SlotFeedMissing is active in Draft', () => {
+    expect(
+      resolvePlaceOccupancyMeterCopy({
+        t,
+        occupancyReady: true,
+        unknownCapacity: false,
+        capacity: 8,
+        occupiedPlacesCount: 0,
+        slotFeedMissingActive: true,
+        stageStatus: 'Draft',
+      }).kind,
+    ).toBe('attention');
+  });
+
+  it('uses attention for partial bracket fill in Draft without SlotFeedMissing', () => {
+    expect(
+      resolvePlaceOccupancyMeterCopy({
+        t,
+        occupancyReady: true,
+        unknownCapacity: false,
+        capacity: 8,
+        occupiedPlacesCount: 3,
+        slotFeedMissingActive: false,
+        stageStatus: 'Draft',
+      }).kind,
+    ).toBe('attention');
+  });
+
+  it('uses attention for partial bracket fill in Ready', () => {
+    expect(
+      resolvePlaceOccupancyMeterCopy({
+        t,
+        occupancyReady: true,
+        unknownCapacity: false,
+        capacity: 8,
+        occupiedPlacesCount: 3,
+        slotFeedMissingActive: false,
+        stageStatus: 'Ready',
+      }).kind,
+    ).toBe('attention');
   });
 });

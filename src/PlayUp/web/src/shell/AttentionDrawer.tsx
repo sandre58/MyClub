@@ -69,9 +69,10 @@ export function AttentionDrawer({
   }, [open, competitionId, refetchAttention]);
 
   const wireItems = attentionData?.items ?? [];
-  const count = presentableAttentionCount(wireItems);
+  const attentionPresentation = { stages };
+  const count = presentableAttentionCount(wireItems, attentionPresentation);
   const severityTone = attentionSeverityToneFromSituations(
-    presentableAttentionSituations(wireItems),
+    presentableAttentionSituations(wireItems, attentionPresentation),
   );
   const titleLabel = t('shell:attention.label');
   const showCount = !attentionPending && count > 0;
@@ -285,7 +286,9 @@ function AttentionDrawerContent({
     );
   }
 
-  const { blocking, attention } = partitionPresentableAttention(wireItems);
+  const { blocking, attention } = partitionPresentableAttention(wireItems, {
+    stages,
+  });
 
   return (
     <div className="shell-attention-drawer__groups">
