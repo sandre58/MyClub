@@ -32,7 +32,7 @@ public sealed class ApplyProgressionOutcomeRcPre1Tests
         competition.AddStage(source.Id, _clock);
         competition.AddStage(destination.Id, _clock);
 
-        source.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddRound("Tour", SampleRegulations.KnockoutTieDecidable(), _clock);
         source.AddSlot("S1");
         source.AddSlot("S2");
         source.AddSlot("S3");
@@ -100,7 +100,7 @@ public sealed class ApplyProgressionOutcomeRcPre1Tests
         competition.AddStage(source.Id, _clock);
         competition.AddStage(destination.Id, _clock);
 
-        source.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddRound("Tour", SampleRegulations.KnockoutTieDecidable(), _clock);
         source.AddSlot("S1");
         source.AddSlot("S2");
 
@@ -144,7 +144,7 @@ public sealed class ApplyProgressionOutcomeRcPre1Tests
         competition.AddStage(source.Id, _clock);
         competition.AddStage(destination.Id, _clock);
 
-        source.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddRound("Tour", SampleRegulations.KnockoutTieDecidable(), _clock);
         source.AddSlot("S1");
         source.AddSlot("S2");
         source.AddSlot("S3");

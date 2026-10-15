@@ -15,4 +15,13 @@ namespace MyClub.PlayUp.Application.Tests.Common;
 internal static class SampleRegulations
 {
     public static Regulation Standard() => RegulationPacks.Standard();
+
+    /// <summary>
+    /// Single-leg cup tie that can always decide a draw (G-MAT1 / necessary progression exits).
+    /// </summary>
+    public static TieFormat KnockoutTieDecidable() =>
+        new(
+            TieFormat.SingleLeg,
+            aggregateScoring: false,
+            penaltyShootoutRule: new PenaltyShootoutRule());
 }

@@ -9,7 +9,6 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -67,7 +66,7 @@ public sealed class ReplaceStageProgressionRulesGOpsTests
     [Fact]
     public void ReplaceProgressionRules_allows_narrowing_when_downstream_draft()
     {
-        var (_, quarter, final, stages) = CreateCupQuarterAndFinal();
+        var (quarter, final, stages) = CreateCupQuarterAndFinal();
         quarter.Prepare(_clock);
         quarter.Status.Should().Be(StageStatus.Ready);
         final.Status.Should().Be(StageStatus.Draft);
@@ -88,7 +87,7 @@ public sealed class ReplaceStageProgressionRulesGOpsTests
     [Fact]
     public void ReplaceProgressionRules_refuses_when_ready_consumer_has_more_entries_than_inbound_volume()
     {
-        var (_, quarter, final, stages) = CreateCupQuarterAndFinal();
+        var (quarter, final, stages) = CreateCupQuarterAndFinal();
         var e1 = EntryId.New();
         var e2 = EntryId.New();
         final.AddResolvedPopulationEntry(e1, _clock);
@@ -118,7 +117,7 @@ public sealed class ReplaceStageProgressionRulesGOpsTests
     [Fact]
     public void ReplaceProgressionRules_refuses_when_intents_cleared_on_ready_consumer()
     {
-        var (_, quarter, final, stages) = CreateCupQuarterAndFinal();
+        var (quarter, final, stages) = CreateCupQuarterAndFinal();
         final.AddResolvedPopulationEntry(EntryId.New(), _clock);
         final.AddResolvedPopulationEntry(EntryId.New(), _clock);
         quarter.Prepare(_clock);
@@ -137,7 +136,7 @@ public sealed class ReplaceStageProgressionRulesGOpsTests
             .Which.Reasons.Should().Contain(final.Id.Value.ToString());
     }
 
-    private (Competition Competition, Stage Quarter, Stage Final, List<Stage> Stages) CreateCupQuarterAndFinal()
+    private (Stage Quarter, Stage Final, List<Stage> Stages) CreateCupQuarterAndFinal()
     {
         var competition = CreateCompetition.Execute("G-OPS-prog", _clock);
         var quarter = Stage.Create(
@@ -181,6 +180,6 @@ public sealed class ReplaceStageProgressionRulesGOpsTests
             ]),
             _clock);
 
-        return (competition, quarter, final, [quarter, final]);
+        return (quarter, final, [quarter, final]);
     }
 }
