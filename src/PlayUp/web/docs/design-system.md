@@ -123,6 +123,17 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 - Prefer `Alert` over bare `.ds-notice` when an icon helps scan. Soft-fill tone recipes in `feedback.css`.
 
+## EmptyState
+
+- React: `EmptyState` in `ui.tsx`; styles in `foundations/panels.css` (`.ds-empty*`).
+- **variant** — `default` (left-aligned list empty) or `idle` (centered region empty: icon + title + optional hint/actions).
+- **size** — pick by vertical budget, not by page:
+  - `default` — full list / panel empty (padding `space-24`, large icon when present).
+  - `compact` — nested sub-regions (Flux rails, composition hints): horizontal icon + copy via `.ds-empty__copy`, meta-sized title, minimal padding. Pair with `variant="idle"` and `iconSize="sm"` when an icon is shown.
+  - `comfortable` — drawer / hub idle zones that need more air than default idle.
+- **iconSize** — `sm` | `md` | `lg` on the icon slot (`.ds-empty__icon--*`); defaults to `sm` when `size="compact"`. Omit to keep the legacy default idle icon scale (2.75rem) on non-compact empties.
+- Do not shrink empty states with page-local padding overrides when `size="compact"` fits; reserve local CSS for layout containers only (e.g. `.structure-phase-rail__empty`).
+
 ## Surfaces / tiles / panels (three families)
 
 There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New UI must pick one of the families below — do not invent a fourth “card” chrome.
@@ -132,6 +143,8 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 | **A. Choice tile**     | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`) | Parameter / option choice inside a **form**                  | Structure dialogs scope, Regulation discipline, AddPhase format         |
 | **B. Selectable tile** | `.ds-selectable-tile` + page layout classes          | **Entity** selectable in a list/grid (selection chrome only) | `teams-tile`, `structure-topology__tile`, qualif/prog rows, draw master |
 | **C. Panel**           | `.ds-panel` (+ `PanelHead`)                          | Content container (not decorative card farm)                 | Overview, Classements, Matches hub, Stage                               |
+
+**PanelHead** — leading section icon uses `color-brand` (`.ds-panel-head__icon`). Do not recolor section icons to neutral gray.
 
 **Also page-local (not a fourth family):**
 

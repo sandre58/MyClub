@@ -68,9 +68,12 @@ import {
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
+import { StructurePhaseFicheHeaderLifecycle } from './StructurePhaseFicheHeaderLifecycle';
+import { StructurePhaseMatchTilePanel } from './StructurePhaseMatchTilePanel';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
 import { materializePresentationForStage } from './structureOperationalCopy';
-import { shouldShowMatchsSection } from './structureMatchsSectionUi';
+import { shouldShowAsideMatchsTile } from './structureMatchsSectionUi';
+import { CompositionPlacementAwardLabel } from './CompositionPlacementAwardLabel';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import {
   entryPlaceProjectionFromSchematic,
@@ -130,7 +133,6 @@ import {
   ExitKindMenu,
   FluxGroupList,
   FluxRail,
-  PlacementAwardRow,
   listComposedAffectationEntries,
   RootEntriesRail,
 } from './StructurePhaseRails';
@@ -697,7 +699,6 @@ export function StructurePhaseFiche({
   const showAttributionRail =
     canEditPlacement || attributionOwnedIssues.length > 0;
   const showOutRail = showSortiesRail || showAttributionRail;
-  const teamsLabel = (count: number) => t('fiche.teamsCount', { count });
   const formatLabel = stage.formatKind
     ? structureFormatKindLabel(stage.formatKind)
     : null;
@@ -887,12 +888,12 @@ export function StructurePhaseFiche({
   }
 
   const showHeroStats = heroFacts.length > 0;
-  const showAsideMatchsSection =
-    showProductionOperationalBar ||
-    showPlacementBlock ||
-    showDrawCta ||
-    showActivateDrawCta ||
-    shouldShowMatchsSection(stage);
+  const showAsideMatchsSection = shouldShowAsideMatchsTile(stage, {
+    showProductionOperationalBar,
+    showPlacementBlock,
+    showDrawCta,
+    showActivateDrawCta,
+  });
   const showAffectationSection =
     showPlacementBlock || showDrawCta || showActivateDrawCta;
   const showQualifiersSection = feedGroups.length > 0;
@@ -1199,6 +1200,13 @@ export function StructurePhaseFiche({
           {!editingName ? (
             <div className="structure-fiche__header-end">
               <StageStatusBadge status={stage.status} />
+              <div className="structure-fiche__header-lifecycle">
+                <StructurePhaseFicheHeaderLifecycle
+                  competitionId={data.competitionId}
+                  stage={stage}
+                  part="toolbar"
+                />
+              </div>
               <div className="structure-fiche__header-tools ds-icon-toolbar">
                 {canRebuild ? (
                   <Tooltip content={t('fiche.editForme')}>
@@ -1228,6 +1236,13 @@ export function StructurePhaseFiche({
             </div>
           ) : null}
         </div>
+        {!editingName ? (
+          <StructurePhaseFicheHeaderLifecycle
+            competitionId={data.competitionId}
+            stage={stage}
+            part="messages"
+          />
+        ) : null}
       </header>
 
       <div
@@ -1245,7 +1260,8 @@ export function StructurePhaseFiche({
         {showCompositionBandEmpty ? (
           <EmptyState
             variant="idle"
-            icon={<EmptySelectionIcon size="lg" />}
+            iconSize="lg"
+            icon={<EmptySelectionIcon />}
             action={compositionEmptyAction}
           >
             {t('entries.emptyCompositionBandHint')}
@@ -1484,10 +1500,11 @@ export function StructurePhaseFiche({
         <aside className="structure-phase-aside">
           {showAsideMatchsSection ? (
             <div className="structure-phase-tile structure-phase-tile--matchs">
+              <StructurePhaseMatchTilePanel stage={stage} />
               <div className="structure-phase-operational-bar">
                 <section
                   className="structure-fiche-section structure-fiche-section--operational"
-                  aria-label={t('fiche.operational.cluster.matches')}
+                  aria-labelledby="aside-matchs-heading"
                 >
                   <StructurePhaseOperationalStrip
                     layoutVariant="aside-matchs"
@@ -1514,32 +1531,57 @@ export function StructurePhaseFiche({
                     id="rail-exits"
                     side="out"
                     title={t('fiche.tiles.exits')}
-                    icon={<ArrowRightIcon size="md" />}
+                    icon={<ArrowRightIcon size="sm" />}
                     editControl={sortiesEditControl}
-                    empty={!hasExits && exitsBanners.length === 0}
+                    contentEmpty={!hasExits}
+                    emptyState={
+                      <EmptyState
+                        variant="idle"
+                        size="compact"
+                        iconSize="lg"
+                        icon={<EmptySelectionIcon />}
+                        title={t('fiche.flux.sortiesEmptyTitle')}
+                        hint={t('fiche.flux.sortiesEmptyHint')}
+                      />
+                    }
                     attentionBanner={issueBanner(exitsBanners)}
                   >
                     {hasExits ? (
                       <FluxGroupList
                         groups={outboundGroups}
                         onOpenPeer={onSelectStage}
-                        teamsLabel={teamsLabel}
                       />
                     ) : null}
                   </FluxRail>
+                ) : null}
+                {showSortiesRail && showAttributionRail ? (
+                  <GradientSeparator
+                    orientation="horizontal"
+                    className="structure-phase-flux__sep"
+                  />
                 ) : null}
                 {showAttributionRail ? (
                   <FluxRail
                     id="rail-attribution"
                     side="out"
                     title={t('fiche.tiles.attribution')}
-                    icon={<AttributionIcon size="md" />}
+                    icon={<AttributionIcon size="sm" />}
                     editControl={attributionEditControl}
-                    empty={!hasAttribution && attributionBanners.length === 0}
+                    contentEmpty={!hasAttribution}
+                    emptyState={
+                      <EmptyState
+                        variant="idle"
+                        size="compact"
+                        iconSize="lg"
+                        icon={<EmptySelectionIcon />}
+                        title={t('fiche.flux.attributionEmptyTitle')}
+                        hint={t('fiche.flux.attributionEmptyHint')}
+                      />
+                    }
                     attentionBanner={issueBanner(attributionBanners)}
                   >
                     {hasAttribution ? (
-                      <ul className="structure-flux-group__rules">
+                      <ul className="structure-feed-group__rules">
                         {[...placementAwards]
                           .sort((a, b) => a.rank - b.rank)
                           .map((award) => {
@@ -1547,14 +1589,21 @@ export function StructurePhaseFiche({
                             return (
                               <li
                                 key={`${award.rank}-${award.outcome}-${award.sourcePairKey}`}
-                                className="structure-flux-group__rule"
+                                className="structure-feed-group__rule-line"
                               >
-                                <PlacementAwardRow
+                                <CompositionPlacementAwardLabel
                                   rank={parts.rank}
                                   medal={parts.medal}
-                                  badge={parts.badge}
-                                  badgeTone={parts.badgeTone}
-                                  context={parts.context}
+                                  rule={{
+                                    key: `${award.rank}-${award.outcome}-${award.sourcePairKey}`,
+                                    badge: parts.badge,
+                                    badgeTone: parts.badgeTone,
+                                    context: parts.context,
+                                    volume: 1,
+                                    family: 'result',
+                                    sortPrimary: award.outcome === 'Winner' ? 0 : 1,
+                                    sortSecondary: award.sourcePairKey ?? '',
+                                  }}
                                 />
                               </li>
                             );

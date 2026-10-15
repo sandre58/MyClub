@@ -83,7 +83,7 @@
 
 .ds-panel-head__icon {
   display: inline-flex;
-  color: var(--color-text-secondary);
+  color: var(--color-brand);
 }
 
 .ds-panel-head__icon svg {
@@ -266,6 +266,84 @@
 
 .ds-empty--idle .ds-empty__actions {
   justify-content: center;
+}
+
+/* Compact — nested rails, composition hints (low height). */
+.ds-empty--compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-4) 0;
+  text-align: start;
+}
+
+.ds-empty--compact.ds-empty--idle {
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--space-4) 0;
+  text-align: start;
+}
+
+.ds-empty--compact .ds-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: none;
+  color: var(--color-text-secondary);
+  opacity: 0.85;
+}
+
+.ds-empty__icon--sm .ds-icon {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+.ds-empty__icon--md .ds-icon {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+}
+
+.ds-empty__icon--lg .ds-icon {
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
+}
+
+.ds-empty:not(.ds-empty--compact) .ds-empty__icon--lg .ds-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.ds-empty--compact .ds-empty__title {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.ds-empty--compact .ds-empty__hint {
+  font-size: 0.6875rem;
+  line-height: var(--leading-tight);
+  max-width: none;
+  text-align: start;
+}
+
+.ds-empty--compact .ds-empty__body {
+  font-size: var(--text-meta);
+  max-width: none;
+}
+
+.ds-empty__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Comfortable — full-page / drawer idle (more air than default idle). */
+.ds-empty--comfortable.ds-empty--idle {
+  padding: var(--space-24) var(--space-16);
 }
 
 /* Admin pages (Stage) — prefer PageHead; keep back-link recipe here. */

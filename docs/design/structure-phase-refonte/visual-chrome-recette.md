@@ -13,8 +13,8 @@ Related: [truth sources](./truth-sources.md), [container measurements](./contain
 | **Fiche column** | Base `.structure-fiche` in `structure-fiche.css` — `surface`, border, `shadow-page`, padding `24` (visual parity with Topology `FormSection`) |
 | **Band-3 layout** | `.structure-fiche--flat` in `structure-phase-layout.css` |
 | **Composition / Matchs / Flux** | Inset tiles: secondary mix background, hairline border (~42% border mix), `radius-control`, no shadow |
-| **Schematic** | Dashed frame, transparent viewport on fiche surface |
-| **Regulation** | Hairline top separator on fiche foot — strip behaviour unchanged |
+| **Schematic** | No tile frame — viewport on fiche surface |
+| **Regulation** | Compact foot readout (no inset tile), gradient separators (`StructurePhaseRegulationStrip`) |
 
 Phase header lives inside the fiche shell (identity bar, not a separate hub card).
 

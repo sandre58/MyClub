@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { StructureStageHubSummary } from '../../types';
 import {
+  shouldShowAsideMatchsTile,
   shouldShowMatchExploitationProgress,
   shouldShowMatchsSection,
   shouldShowProductionInMatchsSection,
@@ -28,7 +29,21 @@ const baseStage = (
   ...overrides,
 });
 
+const asideSignals = {
+  showProductionOperationalBar: false,
+  showPlacementBlock: false,
+  showDrawCta: false,
+  showActivateDrawCta: false,
+};
+
 describe('structureMatchsSectionUi', () => {
+  it('hides aside Matchs tile in Draft even when lifecycle applies', () => {
+    expect(
+      shouldShowAsideMatchsTile(baseStage({ status: 'Draft' }), asideSignals),
+    ).toBe(false);
+    expect(shouldShowMatchsSection(baseStage({ status: 'Draft' }))).toBe(true);
+  });
+
   it('shows Matchs section for Completed when matches exist', () => {
     expect(
       shouldShowMatchsSection(

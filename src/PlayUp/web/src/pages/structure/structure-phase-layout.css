@@ -16,12 +16,11 @@
 
 .structure-fiche--flat .structure-phase-tile--schematic {
   background: transparent;
-  border-width: var(--border-width);
-  border-style: dashed;
-  border-color: color-mix(in srgb, var(--color-border) 75%, transparent);
+  border: none;
   display: flex;
   flex-direction: column;
   min-height: 14rem;
+  padding: 0;
 }
 
 .structure-fiche--flat .structure-phase-tile--schematic .structure-schematic-viewport {
@@ -35,9 +34,186 @@
 
 .structure-fiche--flat .structure-phase-regulation-bar {
   margin-top: 0;
-  padding-top: var(--space-16);
-  border-top: var(--border-width) solid
-    color-mix(in srgb, var(--color-border) 50%, transparent);
+  padding-top: 0;
+  border-top: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-phase-regulation {
+  display: grid;
+  align-items: start;
+  column-gap: var(--space-16);
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-phase-regulation__top-sep {
+  margin-bottom: var(--space-12);
+}
+
+.structure-regulation-digest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: var(--space-16) var(--space-24);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-regulation-digest__sep {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: var(--border-width);
+  min-height: 3.5rem;
+  height: auto;
+  max-height: none;
+}
+
+.structure-regulation-digest__section {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-16);
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.structure-regulation-digest__hero-icon {
+  display: flex;
+  flex: none;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-brand);
+  line-height: 0;
+}
+
+.structure-regulation-digest__hero-icon .ds-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.structure-regulation-digest__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-regulation-digest__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
+  margin-bottom: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-regulation-digest__title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+  min-width: 0;
+}
+
+.structure-regulation-digest__actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.structure-regulation-digest__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) var(--space-24);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-regulation-digest__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-regulation-digest__fact-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: none;
+  color: var(--color-brand);
+  line-height: 1;
+}
+
+.structure-regulation-digest__fact-content {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.structure-regulation-digest__chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.structure-regulation-digest__segment {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+@container regulation-bar (max-width: 40rem) {
+  .structure-regulation-digest__section {
+    flex: 1 1 100%;
+  }
+
+  .structure-regulation-digest__sep {
+    display: none;
+  }
+}
+
+.structure-phase-flux__sep {
+  margin: var(--space-4) 0;
+}
+
+.structure-phase-rail__empty .ds-empty--compact {
+  padding-block: var(--space-4);
+}
+
+.structure-phase-regulation__sep {
+  align-self: stretch;
+}
+
+.structure-feed-group__placement-rule {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-feed-group__placement-rank {
+  flex: none;
 }
 
 .structure-phase-tile {
@@ -50,7 +226,9 @@
 }
 
 .structure-phase-tile--schematic {
-  border-style: dashed;
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .structure-phase-tile__head {
@@ -97,15 +275,13 @@
 
   .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
       .structure-phase-composition__grid--without-teams
-    )
-    .structure-phase-composition__section--affectation {
+    ) .structure-phase-composition__section--affectation {
     grid-row: 1 / span 2;
   }
 
   .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
       .structure-phase-composition__grid--without-teams
-    )
-    .structure-phase-composition__sep--before-affectation {
+    ) .structure-phase-composition__sep--before-affectation {
     grid-row: 1 / span 2;
   }
 
@@ -310,7 +486,7 @@
   font-size: 0.625rem;
 }
 
-.structure-composition-qualifiers__phase-head {
+.structure-feed-group__phase-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -318,14 +494,14 @@
   margin-bottom: var(--space-8);
 }
 
-.structure-composition-qualifiers__phase-trail {
+.structure-feed-group__phase-trail {
   display: flex;
   align-items: center;
   gap: var(--space-4);
   flex-shrink: 0;
 }
 
-.structure-composition-qualifiers__phase-title {
+.structure-feed-group__phase-title {
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
@@ -334,23 +510,26 @@
   color: var(--color-text-primary);
 }
 
-.structure-composition-qualifiers__phase-actions {
+.structure-feed-group__phase-actions {
   flex-shrink: 0;
 }
 
-.structure-composition-qualifiers__rules {
+.structure-feed-group__rules {
+  list-style: none;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   padding: 0;
 }
 
-.structure-composition-qualifiers__rule-line {
+.structure-feed-group__rule-line {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: var(--space-8);
   min-width: 0;
+  margin: 0;
 }
 
 .structure-composition-qualifiers__rule-feed {
@@ -358,7 +537,7 @@
   min-width: 0;
 }
 
-.structure-composition-qualifiers__rule-label {
+.structure-feed-group__rule-label {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -369,23 +548,23 @@
   color: var(--color-text-secondary);
 }
 
-.structure-composition-qualifiers__rule-lead--win {
+.structure-feed-group__rule-lead--win {
   color: var(--color-success);
 }
 
-.structure-composition-qualifiers__rule-lead--loss {
+.structure-feed-group__rule-lead--loss {
   color: var(--color-error);
 }
 
-.structure-composition-qualifiers__rule-lead--primary {
+.structure-feed-group__rule-lead--primary {
   color: var(--color-text-primary);
 }
 
-.structure-composition-qualifiers__rule-sep {
+.structure-feed-group__rule-sep {
   color: var(--color-text-secondary);
 }
 
-.structure-composition-qualifiers__rule-tail {
+.structure-feed-group__rule-tail {
   min-width: 0;
   color: var(--color-text-secondary);
 }
@@ -512,6 +691,44 @@
   padding: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.structure-phase-tile--flux .structure-phase-rail--empty .structure-flux-rail__head {
+  margin-bottom: 0;
+}
+
+.structure-phase-tile--matchs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.structure-phase-tile--matchs .structure-phase-operational-bar {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-phase-tile--matchs .structure-fiche-section--operational {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-phase-match-tile__head-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+.structure-operational-strip__production-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 
 .structure-phase-tile--schematic .structure-phase-hero__stats {

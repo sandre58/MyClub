@@ -73,7 +73,7 @@ Tests: `drawUi.test.ts` (`resolveDrawCreateGate`). **Gap:** no dedicated test th
 | Indicator | Authority | Rule | Consumers | Missing / conflict |
 |-----------|-----------|------|-----------|-------------------|
 | Status badge | `stage.status` | `StageStatusBadge` | Fiche header | — |
-| Prepare / Start / Complete CTAs | `stage.lifecycle.transition` (+ revert codes) | `StructurePhaseMatchsLifecycleBlock`, `useStructureStageLifecycleMutation` | Operational bar / header (post-refonte header) | Disabled reasons from `problems/*` |
+| Prepare / Start / Complete CTAs | `stage.lifecycle.transition` (+ revert codes) | `StructurePhaseMatchsLifecycleBlock`, `useStructureStageLifecycleMutation` | Fiche header toolbar (`StructurePhaseFicheHeaderLifecycle`) | Disabled reasons from `problems/*` |
 | Match progress | `lifecycle.matchProgress` | Shown when Running/Suspended/Completed per `structureMatchsSectionUi.ts` | Matchs column | — |
 
 ### Matchs (aside)
@@ -96,7 +96,7 @@ Tests: `drawUi.test.ts` (`resolveDrawCreateGate`). **Gap:** no dedicated test th
 
 | Indicator | Authority | Rule | Consumers | Missing / conflict |
 |-----------|-----------|------|-----------|-------------------|
-| Match / standing / tie panels | Hub stage fields + `regulationRulePanels.tsx` | Same inputs as `StructurePhaseRegulationStrip` | Fiche footer strip | Refonte must project, not re-derive rules |
+| Match / standing / tie panels | Hub stage fields + `regulationRulePanels.tsx` | Same inputs as `StructurePhaseRegulationStrip` | Fiche foot compact strip (no tile) | Refonte must project, not re-derive rules |
 | Edit / rebind | `canEditMatch`, `canEditStanding`, `canEditTie`, `canRebind` | Opens section editors or rebind flow | Strip callbacks | — |
 
 ### Schéma

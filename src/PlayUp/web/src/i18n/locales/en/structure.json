@@ -140,6 +140,8 @@
     "legsOne": "1 leg",
     "legsTwo": "2 legs",
     "tieSelectRoundEmpty": "No editable tie format.",
+    "tieSingleRoundDriftHint": "The stored format for this round differs from the stage default. It was not changed automatically.",
+    "tieRealignToPhase": "Realign to stage format",
     "drawModeLabel": "Mode",
     "drawActivatedToast": "Draw activated",
     "drawParamsSavedToast": "Draw settings saved",
@@ -553,6 +555,12 @@
     },
     "addExit": "Add exit",
     "addAttribution": "Add place awards",
+    "flux": {
+      "sortiesEmptyTitle": "No exits",
+      "sortiesEmptyHint": "Add qualification or progression toward a downstream phase.",
+      "attributionEmptyTitle": "No place awards",
+      "attributionEmptyHint": "Award final places from a structural pair in this phase."
+    },
     "editExits": "Edit exits",
     "exitKind": {
       "qualification": "Qualification",

@@ -140,13 +140,17 @@ function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteSta
   }
 }
 
+type LifecycleChromePart = 'full' | 'actions' | 'messages';
+
 /** Draft — single Prepare surface (empty state); no production, no duplicate CTA. */
 export function StructurePhaseDraftMatchsPrepare({
   competitionId,
   stage,
+  part = 'full',
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
+  part?: LifecycleChromePart;
 }) {
   const { t } = useTranslation('structure');
   const transitionMutation = useStructureStageLifecycleMutation(
@@ -208,7 +212,34 @@ export function StructurePhaseDraftMatchsPrepare({
       prepareButtonInner
     );
 
-  const body = <>{statusMessage}</>;
+  const errorAlert = transitionMutation.isError ? (
+    <Alert tone="danger" role="alert">
+      {resolveLifecycleMutationMessage(t, transitionMutation.error)}
+    </Alert>
+  ) : null;
+
+  if (part === 'actions') {
+    return prepareProjected ? prepareButton : null;
+  }
+
+  if (part === 'messages') {
+    if (!statusMessage && !errorAlert) {
+      return null;
+    }
+    return (
+      <div
+        className="structure-operational-strip__lifecycle"
+        aria-label={t('lifecycle.state.Draft.lead')}
+      >
+        {statusMessage ? (
+          <p className="structure-operational-strip__lifecycle-meta">
+            {statusMessage}
+          </p>
+        ) : null}
+        {errorAlert}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -221,14 +252,10 @@ export function StructurePhaseDraftMatchsPrepare({
           icon={prepareProjected ? prepareButton : undefined}
           iconAccessible={prepareProjected}
         >
-          {body}
+          {statusMessage}
         </EmptyState>
       </div>
-      {transitionMutation.isError ? (
-        <Alert tone="danger" role="alert">
-          {resolveLifecycleMutationMessage(t, transitionMutation.error)}
-        </Alert>
-      ) : null}
+      {errorAlert}
     </div>
   );
 }
@@ -239,12 +266,14 @@ export function StructurePhaseMatchsLifecycleBlock({
   stage,
   productionBusy = false,
   leadingActions,
+  part = 'full',
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
   productionBusy?: boolean;
   /** Materialize / dematerialize — leftmost on the lifecycle action row. */
   leadingActions?: ReactNode;
+  part?: LifecycleChromePart;
 }) {
   const status = stage.status;
   if (
@@ -261,6 +290,7 @@ export function StructurePhaseMatchsLifecycleBlock({
       stage={stage}
       productionBusy={productionBusy}
       leadingActions={leadingActions}
+      part={part}
     />
   );
 }
@@ -270,11 +300,13 @@ function StructurePhaseMatchsLifecycleBlockBody({
   stage,
   productionBusy,
   leadingActions,
+  part,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
   productionBusy: boolean;
   leadingActions?: ReactNode;
+  part: LifecycleChromePart;
 }) {
   const { t } = useTranslation('structure');
   const transitionMutation = useStructureStageLifecycleMutation(
@@ -382,6 +414,158 @@ function StructurePhaseMatchsLifecycleBlockBody({
 
   const hasActions = hasLifecycleActionsEnd || leadingActions != null;
 
+  const messageStack = hasCopy ? (
+    <div className="structure-operational-strip__message-stack">
+      {showBlockMessage && disabledReason ? (
+        <p className="structure-operational-strip__lifecycle-meta">
+          {resolveLifecycleAnticipatedMessage(t, disabledReason, lifecycleProblem)}
+          {showRemediationLink && remediationTarget ? (
+            <>
+              {' '}
+              <Link className="ds-text-link" to={remediationTarget}>
+                {disabledReason === 'ConstructionFrozen'
+                  ? t('lifecycle.statusBand.viewOverview')
+                  : t(`lifecycle.remediation.${remediationLabelKey}`, {
+                      defaultValue: '',
+                    })}
+              </Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+      {showRevertParagraph && revertDisabledReason ? (
+        <p className="structure-operational-strip__lifecycle-meta">
+          {resolveLifecycleAnticipatedMessage(
+            t,
+            revertDisabledReason,
+            revert?.problem ?? null,
+          )}
+        </p>
+      ) : null}
+      {transitionMutation.isError ? (
+        <Alert tone="danger" role="alert">
+          {resolveLifecycleMutationMessage(t, transitionMutation.error)}
+        </Alert>
+      ) : null}
+    </div>
+  ) : null;
+
+  const lifecycleActionsEnd = hasLifecycleActionsEnd ? (
+    <div className="structure-operational-strip__section-actions-end">
+      {showPrimaryButton && projectedAction ? (
+        (() => {
+          const primaryInner = (
+            <button
+              type="button"
+              className={primaryBtn}
+              disabled={busy || !actionEnabled}
+              aria-label={transitionActionLabel(t, projectedAction)}
+              onClick={() => transitionMutation.mutate(projectedAction)}
+            >
+              {transitionMutation.isPending && pendingCode === projectedAction ? (
+                <PendingLabel>
+                  {mutationPendingLabel(t, projectedAction)}
+                </PendingLabel>
+              ) : (
+                <>
+                  {transitionActionIcon(projectedAction)}
+                  <span>{transitionActionLabel(t, projectedAction)}</span>
+                </>
+              )}
+            </button>
+          );
+          return primaryDisabledTooltip && !actionEnabled ? (
+            <Tooltip content={primaryDisabledTooltip}>
+              <span className="structure-operational-tile__action-wrap">
+                {primaryInner}
+              </span>
+            </Tooltip>
+          ) : (
+            primaryInner
+          );
+        })()
+      ) : null}
+      {showPauseResumeControl && pauseResumeCode ? (
+        <LifecycleRevertIconButton
+          code={pauseResumeCode}
+          enabled={revertEnabled}
+          busy={busy}
+          pending={
+            transitionMutation.isPending && pendingCode === pauseResumeCode
+          }
+          tooltip={pauseResumeTooltip ?? revertActionLabel(t, pauseResumeCode)}
+          onActivate={() => transitionMutation.mutate(pauseResumeCode)}
+          t={t}
+        />
+      ) : null}
+      {showCancelStartControl && cancelStartCode ? (
+        <LifecycleRevertIconButton
+          code={cancelStartCode}
+          enabled={cancelStartEnabled}
+          busy={busy}
+          pending={
+            transitionMutation.isPending && pendingCode === cancelStartCode
+          }
+          tooltip={cancelStartTooltip ?? revertActionLabel(t, cancelStartCode)}
+          onActivate={() => transitionMutation.mutate(cancelStartCode)}
+          t={t}
+        />
+      ) : null}
+      {showBackwardRevertControl && backwardRevertCode ? (
+        <LifecycleRevertIconButton
+          code={backwardRevertCode}
+          enabled={revertEnabled}
+          busy={busy}
+          pending={
+            transitionMutation.isPending && pendingCode === backwardRevertCode
+          }
+          tooltip={revertActionLabel(t, backwardRevertCode)}
+          onActivate={() => transitionMutation.mutate(backwardRevertCode)}
+          t={t}
+        />
+      ) : null}
+    </div>
+  ) : null;
+
+  const actionsRow = hasActions ? (
+    <div className="structure-operational-strip__section-actions">
+      {leadingActions ? (
+        <div className="structure-operational-strip__section-actions-start">
+          {leadingActions}
+        </div>
+      ) : null}
+      {lifecycleActionsEnd}
+    </div>
+  ) : null;
+
+  if (part === 'actions') {
+    if (!hasLifecycleActionsEnd) {
+      return null;
+    }
+    return (
+      <div
+        className="structure-fiche__header-lifecycle-toolbar"
+        aria-label={blockAriaLabel}
+      >
+        {lifecycleActionsEnd}
+      </div>
+    );
+  }
+
+  if (part === 'messages') {
+    if (!messageStack) {
+      return null;
+    }
+    return (
+      <div
+        className="structure-operational-strip__lifecycle"
+        aria-label={blockAriaLabel}
+      >
+        {messageStack}
+      </div>
+    );
+  }
+
   if (!hasCopy && !hasActions) {
     return null;
   }
@@ -391,131 +575,8 @@ function StructurePhaseMatchsLifecycleBlockBody({
       className="structure-operational-strip__lifecycle"
       aria-label={blockAriaLabel}
     >
-      {hasCopy ? (
-        <div className="structure-operational-strip__message-stack">
-          {showBlockMessage && disabledReason ? (
-            <p className="structure-operational-strip__lifecycle-meta">
-              {resolveLifecycleAnticipatedMessage(t, disabledReason, lifecycleProblem)}
-              {showRemediationLink && remediationTarget ? (
-                <>
-                  {' '}
-                  <Link className="ds-text-link" to={remediationTarget}>
-                    {disabledReason === 'ConstructionFrozen'
-                      ? t('lifecycle.statusBand.viewOverview')
-                      : t(`lifecycle.remediation.${remediationLabelKey}`, {
-                          defaultValue: '',
-                        })}
-                  </Link>
-                </>
-              ) : null}
-            </p>
-          ) : null}
-          {showRevertParagraph && revertDisabledReason ? (
-            <p className="structure-operational-strip__lifecycle-meta">
-              {resolveLifecycleAnticipatedMessage(
-                t,
-                revertDisabledReason,
-                revert?.problem ?? null,
-              )}
-            </p>
-          ) : null}
-          {transitionMutation.isError ? (
-            <Alert tone="danger" role="alert">
-              {resolveLifecycleMutationMessage(t, transitionMutation.error)}
-            </Alert>
-          ) : null}
-        </div>
-      ) : null}
-
-      {hasActions ? (
-        <div className="structure-operational-strip__section-actions">
-          {leadingActions ? (
-            <div className="structure-operational-strip__section-actions-start">
-              {leadingActions}
-            </div>
-          ) : null}
-          {hasLifecycleActionsEnd ? (
-            <div className="structure-operational-strip__section-actions-end">
-              {showPrimaryButton && projectedAction ? (
-                (() => {
-                  const primaryInner = (
-                    <button
-                      type="button"
-                      className={primaryBtn}
-                      disabled={busy || !actionEnabled}
-                      aria-label={transitionActionLabel(t, projectedAction)}
-                      onClick={() => transitionMutation.mutate(projectedAction)}
-                    >
-                      {transitionMutation.isPending &&
-                      pendingCode === projectedAction ? (
-                        <PendingLabel>
-                          {mutationPendingLabel(t, projectedAction)}
-                        </PendingLabel>
-                      ) : (
-                        <>
-                          {transitionActionIcon(projectedAction)}
-                          <span>{transitionActionLabel(t, projectedAction)}</span>
-                        </>
-                      )}
-                    </button>
-                  );
-                  return primaryDisabledTooltip && !actionEnabled ? (
-                    <Tooltip content={primaryDisabledTooltip}>
-                      <span className="structure-operational-tile__action-wrap">
-                        {primaryInner}
-                      </span>
-                    </Tooltip>
-                  ) : (
-                    primaryInner
-                  );
-                })()
-              ) : null}
-              {showPauseResumeControl && pauseResumeCode ? (
-                <LifecycleRevertIconButton
-                  code={pauseResumeCode}
-                  enabled={revertEnabled}
-                  busy={busy}
-                  pending={
-                    transitionMutation.isPending && pendingCode === pauseResumeCode
-                  }
-                  tooltip={
-                    pauseResumeTooltip ?? revertActionLabel(t, pauseResumeCode)
-                  }
-                  onActivate={() => transitionMutation.mutate(pauseResumeCode)}
-                  t={t}
-                />
-              ) : null}
-              {showCancelStartControl && cancelStartCode ? (
-                <LifecycleRevertIconButton
-                  code={cancelStartCode}
-                  enabled={cancelStartEnabled}
-                  busy={busy}
-                  pending={
-                    transitionMutation.isPending && pendingCode === cancelStartCode
-                  }
-                  tooltip={cancelStartTooltip ?? revertActionLabel(t, cancelStartCode)}
-                  onActivate={() => transitionMutation.mutate(cancelStartCode)}
-                  t={t}
-                />
-              ) : null}
-              {showBackwardRevertControl && backwardRevertCode ? (
-                <LifecycleRevertIconButton
-                  code={backwardRevertCode}
-                  enabled={revertEnabled}
-                  busy={busy}
-                  pending={
-                    transitionMutation.isPending &&
-                    pendingCode === backwardRevertCode
-                  }
-                  tooltip={revertActionLabel(t, backwardRevertCode)}
-                  onActivate={() => transitionMutation.mutate(backwardRevertCode)}
-                  t={t}
-                />
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+      {messageStack}
+      {actionsRow}
     </div>
   );
 }

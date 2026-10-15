@@ -118,6 +118,8 @@ Lifecycle transitions are **not** in `stage.actions`; they come from `stage.life
 
 ## Phase 3 parity table (template)
 
+Recette checklist and automated test map: [phase-3-recette.md](./phase-3-recette.md).
+
 | Action | Before (strip/triptych) | After (band 3) | Match? |
 |--------|-------------------------|----------------|--------|
 | *fill during Phase 3 recette* | | | |

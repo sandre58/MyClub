@@ -383,6 +383,8 @@ export function StructurePhaseOperationalStrip({
       />
     ) : null;
 
+  const asideMatchsLayout = layoutVariant === 'aside-matchs';
+
   const matchesColumn = (
     <MatchesColumn
       index={sectionIndex('matches')}
@@ -395,6 +397,8 @@ export function StructurePhaseOperationalStrip({
       dematerializeMutation={dematerializeMutation}
       dematerializeConfirmOpen={dematerializeConfirmOpen}
       setDematerializeConfirmOpen={setDematerializeConfirmOpen}
+      omitLifecycle={asideMatchsLayout}
+      hideSectionHead={asideMatchsLayout}
     />
   );
 
@@ -1008,6 +1012,8 @@ function MatchesColumn({
   dematerializeMutation,
   dematerializeConfirmOpen: _dematerializeConfirmOpen,
   setDematerializeConfirmOpen,
+  omitLifecycle = false,
+  hideSectionHead = false,
 }: {
   index: number;
   titleChipRefreshing?: boolean;
@@ -1019,6 +1025,8 @@ function MatchesColumn({
   dematerializeMutation: DematerializeMutationResult;
   dematerializeConfirmOpen: boolean;
   setDematerializeConfirmOpen: (open: boolean) => void;
+  omitLifecycle?: boolean;
+  hideSectionHead?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
@@ -1183,12 +1191,14 @@ function MatchesColumn({
   let matchesContent: ReactNode;
 
   if (stage.status === 'Draft') {
-    matchesContent = (
-      <StructurePhaseDraftMatchsPrepare
-        competitionId={competitionId}
-        stage={stage}
-      />
-    );
+    matchesContent = omitLifecycle
+      ? null
+      : (
+        <StructurePhaseDraftMatchsPrepare
+          competitionId={competitionId}
+          stage={stage}
+        />
+      );
   } else if (stage.status === 'Completed') {
     const progress = stage.lifecycle?.matchProgress;
     matchesContent =
@@ -1221,28 +1231,37 @@ function MatchesColumn({
 
     matchesContent = (
       <>
+        {omitLifecycle && productionLeadingActions ? (
+          <div className="structure-operational-strip__production-actions">
+            {productionLeadingActions}
+          </div>
+        ) : null}
         {productionGauge}
         {productionErrors}
         {exploitationGauge}
-        <StructurePhaseMatchsLifecycleBlock
-          competitionId={competitionId}
-          stage={stage}
-          productionBusy={productionBusy}
-          leadingActions={productionLeadingActions}
-        />
+        {omitLifecycle ? null : (
+          <StructurePhaseMatchsLifecycleBlock
+            competitionId={competitionId}
+            stage={stage}
+            productionBusy={productionBusy}
+            leadingActions={productionLeadingActions}
+          />
+        )}
       </>
     );
   }
 
   const effectiveToolbar =
-    stage.status === 'Completed' &&
-    showViewMaterializedMatchesLink(stage, materialize ?? undefined)
-      ? (
-        <TextLink to={`/stages/${stage.stageId}/matches`}>
-          {t('fiche.materialize.viewPhaseMatches')}
-        </TextLink>
-      )
-      : toolbar;
+    hideSectionHead
+      ? null
+      : stage.status === 'Completed' &&
+          showViewMaterializedMatchesLink(stage, materialize ?? undefined)
+        ? (
+          <TextLink to={`/stages/${stage.stageId}/matches`}>
+            {t('fiche.materialize.viewPhaseMatches')}
+          </TextLink>
+        )
+        : toolbar;
 
   return (
     <StripSection
@@ -1250,6 +1269,7 @@ function MatchesColumn({
       sectionId="operational-matchs"
       title={t('fiche.operational.cluster.matches')}
       titleChipRefreshing={titleChipRefreshing}
+      titlePresentation={hideSectionHead ? 'hidden' : 'chip'}
       toolbar={effectiveToolbar}
     >
       {matchesContent}

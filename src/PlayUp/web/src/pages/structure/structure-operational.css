@@ -97,10 +97,14 @@
 .structure-phase-regulation-bar {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--space-12);
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-top: var(--space-8);
   padding-top: var(--space-4);
+  box-sizing: border-box;
   container-type: inline-size;
   container-name: regulation-bar;
 }
@@ -163,11 +167,16 @@
 
 .structure-regulation-strip__bar-footer {
   display: flex;
+  flex: none;
   justify-content: flex-end;
   align-items: center;
   width: 100%;
-  padding-top: var(--space-12);
+  min-width: 0;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  box-sizing: border-box;
 }
+
 
 .structure-operational-strip {
   display: grid;
@@ -681,37 +690,10 @@
 }
 
 @container regulation-bar (max-width: 42rem) {
-  .structure-phase-regulation-bar .structure-operational-strip {
+  .structure-phase-regulation {
     grid-template-columns: minmax(0, 1fr) !important;
     row-gap: var(--space-16);
     column-gap: 0;
-  }
-
-  .structure-phase-regulation-bar .structure-operational-strip__separator {
-    display: none;
-  }
-
-  .structure-phase-regulation-bar .structure-operational-strip__section:not(:first-child) {
-    position: relative;
-    padding-top: var(--space-16);
-    border-top: none;
-  }
-
-  .structure-phase-regulation-bar .structure-operational-strip__section:not(:first-child)::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 14%;
-    right: 14%;
-    height: var(--border-width);
-    border-radius: 999px;
-    background: linear-gradient(
-      to right,
-      transparent 0%,
-      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
-      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
-      transparent 100%
-    );
   }
 }
 

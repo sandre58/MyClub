@@ -2,11 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chip } from '../../design-system/components/Chip';
 import { Tooltip } from '../../design-system/components/Tooltip';
-import {
-  LocateIcon,
-  HourglassIcon,
-  ViewIcon,
-} from '../../design-system/icons/contentIcons';
+import { LocateIcon, HourglassIcon } from '../../design-system/icons/contentIcons';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import type {
   StructureEntry,
@@ -15,15 +11,13 @@ import type {
 } from '../../types';
 import type { FeedGroup } from './structurePhaseFeeds';
 import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
+import { FeedGroupPhaseHead } from './FeedGroupPhaseHead';
 import { inboundSeatsForFeedKey } from './structureCompositionInboundHub';
 import {
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from './structureEntryPlacementProjection';
 import type { EntryPlaceProjection } from './structureEntryPlacementProjection';
-
-const compactIcon =
-  'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
 export function CompositionQualifiersPanel({
   groups,
@@ -53,34 +47,12 @@ export function CompositionQualifiersPanel({
       <ul className="structure-flux-groups">
         {groups.map((group) => (
           <li key={group.peerId} className="structure-flux-group">
-            <div className="structure-composition-qualifiers__phase-head">
-              <h4 className="structure-composition-qualifiers__phase-title">
-                {group.peerName}
-              </h4>
-              <div className="structure-composition-qualifiers__phase-trail">
-                {renderGroupAction ? (
-                  <div className="structure-composition-qualifiers__phase-actions">
-                    {renderGroupAction(group)}
-                  </div>
-                ) : null}
-                {onViewPhase ? (
-                  <Tooltip content={t('composition.qualifiers.viewPhase')}>
-                    <a
-                      href="#"
-                      className={compactIcon}
-                      aria-label={t('composition.qualifiers.viewPhase')}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        onViewPhase(group.peerId);
-                      }}
-                    >
-                      <ViewIcon size="sm" />
-                    </a>
-                  </Tooltip>
-                ) : null}
-              </div>
-            </div>
-            <ul className="structure-composition-qualifiers__rules">
+            <FeedGroupPhaseHead
+              group={group}
+              onViewPhase={onViewPhase}
+              renderGroupAction={renderGroupAction}
+            />
+            <ul className="structure-feed-group__rules">
               {group.rules.flatMap((rule) => {
                 const seats = inboundSeatsForFeedKey(
                   inboundComposition,
@@ -117,7 +89,7 @@ export function CompositionQualifiersPanel({
                     <li
                       key={`${rule.key}-${seatIndex}`}
                       className={[
-                        'structure-composition-qualifiers__rule-line',
+                        'structure-feed-group__rule-line',
                         showUnplacedOpacity
                           ? 'structure-composition-qualifiers__rule-line--unplaced'
                           : null,

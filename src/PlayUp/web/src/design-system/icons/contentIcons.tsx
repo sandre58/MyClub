@@ -1,10 +1,12 @@
 import {
+  ArrowDown01,
   ArrowRight,
   ArrowLeftRight,
   CalendarDays,
   CalendarPlus,
   CircleAlert,
   Clipboard,
+  ClockPlus,
   Copy,
   Dices,
   Equal,
@@ -137,9 +139,21 @@ export function MatchRulesIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Volleyball} size={size} {...props} />;
 }
 
+export function ExtraTimeIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ClockPlus} size={size} {...props} />;
+}
+
 /** Standing — podium (aligned with Regulation hub). */
 export function StandingRulesIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Podium} size={size} {...props} />;
+}
+
+export function PointsRulesIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Sigma} size={size} {...props} />;
+}
+
+export function SortingRulesIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ArrowDown01} size={size} {...props} />;
 }
 
 /** Confrontations */

@@ -4,25 +4,25 @@ type QualifierRule = FeedGroup['rules'][number];
 
 export function CompositionQualifierRuleLabel({ rule }: { rule: QualifierRule }) {
   const leadClass = [
-    'structure-composition-qualifiers__rule-lead',
+    'structure-feed-group__rule-lead',
     rule.badgeTone === 'win'
-      ? 'structure-composition-qualifiers__rule-lead--win'
+      ? 'structure-feed-group__rule-lead--win'
       : rule.badgeTone === 'loss'
-        ? 'structure-composition-qualifiers__rule-lead--loss'
-        : 'structure-composition-qualifiers__rule-lead--primary',
+        ? 'structure-feed-group__rule-lead--loss'
+        : 'structure-feed-group__rule-lead--primary',
   ].join(' ');
 
   const tailParts = [rule.context, rule.extra].filter(Boolean);
 
   return (
-    <span className="structure-composition-qualifiers__rule-label">
+    <span className="structure-feed-group__rule-label">
       <span className={leadClass}>{rule.badge}</span>
       {tailParts.length > 0 ? (
         <>
-          <span className="structure-composition-qualifiers__rule-sep" aria-hidden="true">
+          <span className="structure-feed-group__rule-sep" aria-hidden="true">
             ·
           </span>
-          <span className="structure-composition-qualifiers__rule-tail">
+          <span className="structure-feed-group__rule-tail">
             {tailParts.join(' · ')}
           </span>
         </>

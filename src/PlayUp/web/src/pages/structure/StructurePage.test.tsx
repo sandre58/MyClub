@@ -34,6 +34,21 @@ const entryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 const avalStageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 
+const compositionBandEmptyHint =
+  /Ajouter des équipes à la phase ou alimenter les entrées/i;
+
+const hubReadyReadiness = {
+  readyForNextSlice: true,
+  readyForDraw: true,
+  readyForMaterialization: false,
+  readyForSchedule: false,
+  readyForMatchOperation: false,
+  readyForSchedulePath: false,
+  attachedMatchCount: 0,
+  blockers: [] as string[],
+  nextConstructionStepHint: 'None' as const,
+};
+
 function championshipStage(
   overrides: Partial<StructureStageHubSummary> = {},
 ): StructureStageHubSummary {
@@ -369,7 +384,11 @@ describe('StructurePage Structure hub', () => {
           numberOfPots: null,
           matchGenerationFormat: 'DoubleRoundRobin',
         },
-        stages: [championshipStage()],
+        stages: [
+          championshipStage({
+            actions: ['ReplaceAffectationAuthoring'],
+          }),
+        ],
         readiness: {
           readyForNextSlice: false,
           readyForDraw: false,
@@ -395,9 +414,7 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('heading', { name: /^Match$/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(compositionBandEmptyHint)).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -449,7 +466,6 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/équipes résolues/i)).toBeInTheDocument();
     const launch = screen.getByRole('button', { name: /Lancer le tirage/i });
     expect(launch).toHaveClass('ds-btn--primary');
     expect(launch).not.toHaveTextContent(/Tirage aléatoire/i);
@@ -460,7 +476,7 @@ describe('StructurePage Structure hub', () => {
       screen.getByRole('button', { name: /Désactiver le tirage/i }),
     ).toBeEnabled();
     expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
+      screen.getByRole('heading', { name: /Affectation des places/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
@@ -558,28 +574,26 @@ describe('StructurePage Structure hub', () => {
           primaryStageStatus: 'Draft',
         },
         stages: [groupesStage()],
+        readiness: hubReadyReadiness,
       }),
     );
 
     renderStructurePage();
 
     expect(
-      await screen.findByRole('button', { name: /Ouvrir le tirage/i }),
+      await screen.findByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();
     const deactivate = screen.getByRole('button', {
       name: /Désactiver le tirage/i,
     });
-    expect(deactivate).toBeDisabled();
-    expect(
-      screen.queryByText(/Annulez d’abord le tirage en cours/i),
-    ).not.toBeInTheDocument();
+    expect(deactivate).toBeEnabled();
 
     expect(
       screen.queryByRole('button', { name: /Autres actions/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Paramètres du tirage/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /^Paramètres$/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Supprimer la phase/i }),
     ).not.toBeInTheDocument();
@@ -1199,7 +1213,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
     const matchesSection = screen
       .getByRole('heading', { name: 'Matchs' })
-      .closest('section') as HTMLElement;
+      .closest('.structure-phase-tile--matchs') as HTMLElement;
     expect(
       within(matchesSection).queryByLabelText(
         /Avancement de la production des matchs/i,
@@ -1288,7 +1302,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows phase lifecycle in Matchs section without a status band', async () => {
+  it('shows phase lifecycle in fiche header without Matchs tile in Draft', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -1323,16 +1337,15 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(document.querySelector('.structure-phase-status-band')).toBeNull();
-    await screen.findByRole('heading', { name: 'Matchs' });
-    const matchesSection = document.getElementById('operational-matchs')!;
     expect(
-      within(matchesSection).getByRole('button', {
+      screen.queryByRole('heading', { name: 'Matchs' }),
+    ).not.toBeInTheDocument();
+    await screen.findByText(/complétez la structure/i);
+    expect(
+      screen.getByRole('button', {
         name: /préparer la phase/i,
       }),
     ).toBeDisabled();
-    expect(
-      within(matchesSection).getByText(/complétez la structure/i),
-    ).toBeInTheDocument();
   });
 
   it('does not show materialization-ready banner when matches already exist', async () => {
@@ -1630,14 +1643,13 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Demi-finales' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
-    ).toBeInTheDocument();
-    expect(
       screen.getByRole('heading', { name: /^Sorties$/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /Attribution des places/i }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Aucune sortie')).toBeInTheDocument();
+    expect(screen.getByText('Aucune attribution')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Ajouter une sortie/i }),
     ).toBeInTheDocument();
@@ -1672,7 +1684,10 @@ describe('StructurePage Structure hub', () => {
         },
         stages: [
           championshipStage({
-            actions: ['ReplaceQualificationRules'],
+            actions: [
+              'ReplaceQualificationRules',
+              'ReplaceAffectationAuthoring',
+            ],
           }),
         ],
       }),
@@ -1683,9 +1698,7 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('heading', { name: 'League' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(compositionBandEmptyHint)).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -1708,6 +1721,7 @@ describe('StructurePage Structure hub', () => {
             stageId,
             name: 'Finale',
             actions: ['ReplaceProgressionRules', 'ReplacePlacementAwardRules'],
+            affectationPreviewNames: ['Alpha', 'Beta'],
             progressionIntents: [
               {
                 intentId: 'pi-1',
@@ -1875,14 +1889,16 @@ describe('StructurePage Structure hub', () => {
         screen.queryByText(/Structure prête pour la prochaine étape/i),
       ).not.toBeInTheDocument();
 
-      const matchesSection = document.getElementById('operational-matchs')!;
+      const ficheHeader = document.querySelector(
+        '.structure-fiche__header',
+      ) as HTMLElement;
       expect(
-        within(matchesSection).getByRole('button', {
+        within(ficheHeader).getByRole('button', {
           name: /préparer la phase/i,
         }),
       ).toBeDisabled();
       expect(
-        within(matchesSection).getByText(/Remplissez toutes les places/i),
+        within(ficheHeader).getByText(/Remplissez toutes les places/i),
       ).toBeInTheDocument();
 
       expect(
@@ -1967,14 +1983,16 @@ describe('StructurePage Structure hub', () => {
       renderStructurePage();
 
       await screen.findByRole('heading', { name: 'Finale' });
-      const matchesSection = document.getElementById('operational-matchs')!;
+      const ficheHeader = document.querySelector(
+        '.structure-fiche__header',
+      ) as HTMLElement;
       expect(
-        within(matchesSection).getByRole('button', {
+        within(ficheHeader).getByRole('button', {
           name: /préparer la phase/i,
         }),
       ).toBeDisabled();
       expect(
-        within(matchesSection).getByText(
+        within(ficheHeader).getByText(
           /ne correspondent plus au tableau de cette phase/i,
         ),
       ).toBeInTheDocument();

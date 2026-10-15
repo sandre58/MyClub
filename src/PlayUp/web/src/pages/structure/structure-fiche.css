@@ -73,6 +73,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-16);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .structure-fiche__title-row {
@@ -151,6 +154,33 @@
 
 .structure-fiche__header-tools {
   flex: none;
+}
+
+.structure-fiche__header-lifecycle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.structure-fiche__header-lifecycle-toolbar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.structure-fiche__header-lifecycle-messages {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.structure-fiche__header-lifecycle-messages:empty {
+  display: none;
+}
+
+.structure-fiche__header-lifecycle-messages .structure-operational-strip__lifecycle {
+  margin: 0;
 }
 
 .structure-fiche__title {
@@ -400,56 +430,8 @@
   gap: var(--space-12);
 }
 
-.structure-flux-group__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-8);
-  margin-bottom: var(--space-4);
-}
-
-.structure-flux-group__head-trail {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  flex: none;
-}
-
-.structure-flux-group__peer {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--color-text-primary);
-  font: inherit;
-  font-weight: var(--font-weight-bold);
-  font-size: var(--text-label);
-  text-align: start;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-button.structure-flux-group__peer {
-  cursor: pointer;
-  color: var(--color-brand);
-  text-decoration: underline;
-  text-underline-offset: 0.12em;
-}
-
-.structure-flux-group__rules {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.structure-flux-group__rule {
-  margin: 0;
-  min-width: 0;
+.structure-flux-rail__head {
+  margin-bottom: var(--space-8);
 }
 
 .structure-flux-rule {
@@ -607,7 +589,7 @@ button.structure-flux-group__peer {
 
 .structure-phase-rail__issues {
   list-style: none;
-  margin: 0;
+  margin: var(--space-4) 0;
   padding: 0;
   display: flex;
   flex-direction: column;

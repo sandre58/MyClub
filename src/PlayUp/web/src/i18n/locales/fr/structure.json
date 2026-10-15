@@ -140,6 +140,8 @@
     "legsOne": "1 manche",
     "legsTwo": "2 manches",
     "tieSelectRoundEmpty": "Aucun format de confrontation modifiable.",
+    "tieSingleRoundDriftHint": "Le format enregistré pour ce tour diffère du format de base de la phase. Il n’a pas été modifié automatiquement.",
+    "tieRealignToPhase": "Réaligner sur le format de la phase",
     "drawModeLabel": "Mode",
     "drawActivatedToast": "Tirage activé",
     "drawParamsSavedToast": "Paramètres du tirage enregistrés",
@@ -553,6 +555,12 @@
     },
     "addExit": "Ajouter une sortie",
     "addAttribution": "Ajouter une attribution",
+    "flux": {
+      "sortiesEmptyTitle": "Aucune sortie",
+      "sortiesEmptyHint": "Ajoutez une qualification ou une progression vers une phase aval.",
+      "attributionEmptyTitle": "Aucune attribution",
+      "attributionEmptyHint": "Attribuez des places finales depuis une paire structurelle."
+    },
     "editExits": "Modifier les sorties",
     "exitKind": {
       "qualification": "Qualification",
