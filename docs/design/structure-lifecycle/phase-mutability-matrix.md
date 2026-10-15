@@ -1,6 +1,6 @@
 # Phase mutability — diagnostic & command matrix
 
-**Version:** signed policy (arbitrations #1–#3 closed 2026-10-15); factual conditions verified against repository.  
+**Version:** §11A + **§11B signed 2026-10-15**; arbitrations #1–#3 closed; factual conditions verified against repository.  
 **Audience:** product sign-off, then Agent implementation.  
 **Rule:** §5.2 = **target policy**; §5 = **current code**; §12 = **gaps** to implement.
 
@@ -263,7 +263,7 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 
 **New (implementation):** capability-based guards — `OperationalMutationGuard` must **not** block `GenerateNextRound` / scoped Swiss dematerialize.
 
-**New (implementation):** `UpstreamExitMutationGuard` (D1) — block when a **Ready** consumer would become inconsistent; return affected `stageId`s.
+**Shipped (G-OPS2):** [`StructureReadyConsumerFeedGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureReadyConsumerFeedGate.cs) — D1 on qual/prog/affectation replace; `Application.ReadyConsumerWouldBreak` + consumer ids.
 
 ---
 
@@ -271,32 +271,33 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 
 | ID | Scenario | Expected (signed policy) | Verification |
 |----|----------|------------------------|--------------|
-| **R-D1a** | Edit upstream exit; downstream still Draft | Allowed | **New test** (not in repo) |
-| **R-D1b** | Edit upstream exit; downstream Ready | Rejected + downstream list | **New test** |
-| **R-Draw1** | Change composition with published applied draw | Refuse mutation | Partial — draw gates in [`drawUi.ts`](../../../src/PlayUp/web/src/pages/structure/drawUi.ts); command refuse **New** |
+| **R-D1a** | U Ready, D Draft; Top 2→Top 1 on qual | Allowed (no D1) | [g-ops spec](./g-ops-ready-operational-mutations-and-d1.md) § R-D1a — test with G-OPS1 |
+| **R-D1b** | U+D Ready; Top 2→Top 1 or clear qual, entries on D | Rejected + consumer list (**b2** W3, **b1** W1) | `ReplaceStageQualificationRulesGOpsTests` |
+| **R-Draw1** | Change composition with published applied draw | Refuse mutation (target) | **Gap** — UI partial; gate deferred — [G-OPS3 decision](./g-ops3-arbitration-session.md); negatives [`ReplaceStageAffectationAuthoringGOps3Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ReplaceStageAffectationAuthoringGOps3Tests.cs) |
 | **R-Draw2** | Draw engaged; `SlotFeedMissing` hidden in drawer | Prepare still blocks; drawer hides only | [`StructurePresentedAttentionCollectorTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePresentedAttentionCollectorTests.cs) |
 | **R-Mat1** | Ch Ready, incomplete roster | `PhaseRosterIncomplete` | [`StructureMaterializeAssemblerTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructureMaterializeAssemblerTests.cs) |
-| **R-Mat2** | Ready, partial materialize, operational edit | Denied (D2) | **New test** |
+| **R-Mat2** | Ready, partial materialize, operational edit | Denied (D2) | `ReplaceStageQualificationRulesGOpsTests`, `ReplaceStageProgressionRulesGOpsTests`, `ReplaceStageAffectationAuthoringGOpsTests` (D2) |
 | **R-Prep1** | Cup `AuthoredAwardUnreachable` | Prepare blocked | [`StructurePrepareAttributionTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePrepareAttributionTests.cs) R3 |
 | **R-Prep2** | Championship + `AuthoredAwardUnreachable` issue | Prepare **not** blocked by attribution gate | Same file `BlocksPrepare_ignores_authored_award_on_classifying_phase` |
 | **R-Prep3** | `SlotFeedMissing` + Prepare | Blocked | Prepare gate + [`CompetitionFlowAnalyzerTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/CompetitionFlowAnalyzerTests.cs) |
-| **R-Mat-M1** | `ConfrontationUndecidable` at materialize | Block (target) | **Gap** — spec [g-mat1-confrontation-undecidable-at-materialize.md](./g-mat1-confrontation-undecidable-at-materialize.md); Prepare/readiness only today |
-| **R-Mat-M2** | `NonRootUnfed` blocks materialize when confrontation unfed | Block (target) | **Gap** — signal only today |
+| **R-Mat-M1** | `ConfrontationUndecidable` at materialize | Block (Cup) | `MaterializeCupFromOccupiedSlotsGMat1Tests` — [g-mat1 spec](./g-mat1-confrontation-undecidable-at-materialize.md) |
+| **R-Mat-M2** | `NonRootUnfed` blocks materialize when confrontation unfed | Block (target) **deferred** — A5 **M2b** signed | **M2b** — [`MaterializeCupFromOccupiedSlotsRMatM2bTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/MaterializeCupFromOccupiedSlotsRMatM2bTests.cs); positive gate **not** implemented (G-MAT3 spec draft) |
+| **R-Mat-M4b** | `SourcePopulationShortfall` on foreign phase | No G-MAT4 veto on **S** (A5) | [`MaterializeMatchesRMatM4bTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/MaterializeMatchesRMatM4bTests.cs); gate **deferred** ([G-MAT4 decision](./g-mat4-arbitration-session.md)) |
 | **R-Swiss1** | Running, generate next round | Allowed | [`GenerateNextRoundTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/GenerateNextRoundTests.cs) |
 | **R-Swiss2** | Dematerialize last Swiss round | Allowed in scope | [`DematerializeSwissLastRoundTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/DematerializeSwissLastRoundTests.cs) |
 | **R-Life1** | Revert Ready→Draft with attached matches | `ProductionPresent` | [`RevertToDraftReadAlignmentTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/RevertToDraftReadAlignmentTests.cs) |
 | **R-Stand1** | Replace standing after Start | Allowed | [`RegulationIntegrationTests`](../../../tests/MyClub.PlayUp.Domain.Tests/Rules/RegulationIntegrationTests.cs) |
-| **R-UI1** | Drawer `AuthoredAwardUnreachable` on Cup/KO vs classifying | Error vs warning per phase class | **Gap G-UI1** — global warning today |
+| **R-UI1** | Drawer `AuthoredAwardUnreachable` on Cup/KO vs classifying | Error vs warning per phase class | G-UI1 **Done** — `structureDiagnosticSeverity.ts` + `StructurePresentedAttentionCollector` |
 
 ---
 
 ## 11. Sign-off scope (two layers)
 
-Signing **§11A** does **not** commit to every §12 line as an implementation contract. §12 items marked **Litigious** need format-specific specs (or tests) before **§11B** sign-off.
+Signing **§11A** does **not** commit to every §12 line as an implementation contract. **§11B (signed 2026-10-15)** classifies every §12 row as **Done**, **Deferred**, or **Constraint** — the pre-§11B **Litigious** label is retired for backlog rows.
 
 ### 11A — Product policy (**SIGNED** 2026-10-15)
 
-By signing **§11A**, the decision maker validates **intent only** — not that the codebase already behaves this way. **Does not sign §11B** or litigious §12 rows (G-MAT1–G-MAT4).
+By signing **§11A**, the decision maker validates **intent only** — not that the codebase already behaves this way. **§11B** (separate signature, 2026-10-15) records the implementation contract for §12 without obligating deferred gates.
 
 - [x] **A1** — **Draft** allows structural and operational configuration (no materialize).
 - [x] **A2** — **Ready** freezes **form** and **game regulation** (match, standing, confrontation/tie); **operational** mutations remain possible **under conditions** (no production on phase, D1, draw-refuse rules).
@@ -313,28 +314,32 @@ By signing **§11A**, the decision maker validates **intent only** — not that 
 - [x] Arbitrations #1–#3 closed (§6–§8)
 - [x] Reference cases mapped (§10)
 
-### 11B — Implementation contract (sign after §12 specs)
+### 11B — Implementation contract (**SIGNED** 2026-10-15)
 
-- [ ] **B1** — All §12 rows **Ready** or **Deferred** (none left **Litigious** without written reserve)
-- [ ] **B2** — New reference tests (§10 `New` / `Gap`) agreed for litigious Materialize paths
-- [ ] **B3** — Notion Décision published (canonical)
-- [ ] **B4** — Agent may implement per [implementation-plan-placeholder.md](./implementation-plan-placeholder.md)
+**Maintainer pack:** [section-11b-signoff-preparation.md](./section-11b-signoff-preparation.md) · Notion copy [notion-decision-11b-draft.md](./notion-decision-11b-draft.md).
 
-**Stop line for coding:** **§11A** signed → may start **only** §12 rows marked **Ready** with agreed priority; **§11B** for guards D1/Ready and Materialize litigious gates.
+- [x] **B1** — All §12 rows **Done**, **Deferred**, or **Constraint** (no orphan **Litigious**) — §12 below
+- [x] **B2** — Reference tests §10 agreed for deferred materialize/draw paths (A5 contracts)
+- [x] **B3** — Notion Décision §11B published (canonical; cross-link from §11A)
+- [x] **B4** — Follow-up per [implementation-plan-post-11b.md](./implementation-plan-post-11b.md)
+
+**Stop line (post-sign):** Do **not** implement **Deferred** gates (G-MAT3, G-MAT4, G-OPS3) without a new product decision and reopen of the arbitration doc. **Done** rows are shipped; changes = regression fixes or Notion Task scope only.
+
+**Product signature:** §11B does **not** require delivering deferred gates — it records reserves and authorizes process for future reopen.
 
 ---
 
 ## 12. Policy vs code — implementation backlog
 
-| ID | Gap | Product policy (§5.2 / §11A) | Current code | Priority | Contract status | Notes / next spec step |
+| ID | Gap | Product policy (§5.2 / §11A) | Current code | Priority | §11B status | Notes / next spec step |
 |----|-----|------------------------------|--------------|----------|-----------------|------------------------|
-| **G-UI1** | Drawer `AuthoredAwardUnreachable` | Error **non-classifying only**; no error on classifying | Warning everywhere | **High** | **Done** (2026-10-15) | `structureDiagnosticSeverity.ts` + host `StructurePresentedAttentionCollector`; tests web + extend host |
-| **G-UI2** | Drawer `PopulationShortfall` / `SourcePopulationShortfall` | Warning in Draft | Default blocking severity | Medium | **Done** (2026-10-15) | Warning severity SPA + host |
-| **G-MAT1** | Materialize `ConfrontationUndecidable` | Block when undecidable **necessary** confrontation | Prepare + readiness blocker only; **not** on materialize commands yet | Medium | **Ready** | **Contract:** [g-mat1-confrontation-undecidable-at-materialize.md](./g-mat1-confrontation-undecidable-at-materialize.md) — P+/N1/N2 (dual-path)/N3 test-first signed 2026-10-15; implement Cup gate + 4 tests only (no §11B, no EXEC-001 Dev change) |
-| **G-MAT2** | Materialize `AuthoredAwardUnreachable` | Block only if awards block production | Prepare gate (Cup/KO) only | Low | **Litigious** | Tie to format: Cup final ranks vs optional awards — specify before command gate |
-| **G-MAT3** | Materialize `NonRootUnfed` | Block **only if** production impossible | Signal only | Low | **Litigious** | **Do not** blanket-block; define per-format predicate (which confrontations require inbound feed). Case **R-Mat-M2** |
-| **G-MAT4** | Materialize `SourcePopulationShortfall` | Block **only if** extraction required for production | Not gated | Low | **Litigious** | Map to outbound Qual volume vs available; prove on at least one format before gate |
-| **G-OPS1** | Ready operational mutations | Allow without production | `EnsureStructureMutable` Draft-only | **Major** (after 11A) | **Deferred** | Capability guards; after **G-UI1** + reference cases **R-D1*** |
-| **G-OPS2** | D1 upstream exit guard | Block + list Ready consumers | Not implemented | **Major** (after 11A) | **Deferred** | **R-D1a**, **R-D1b** |
-| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | Partial UI | Medium | **Deferred** | **R-Draw1** |
-| **G-SWISS** | Generic production guard | Must not break Swiss progressive | Swiss APIs separate today | — | **Ready (constraint)** | No new global guard; capability table §8 is the contract |
+| **G-UI1** | Drawer `AuthoredAwardUnreachable` | Error **non-classifying only**; no error on classifying | Shipped | **High** | **Done** | `structureDiagnosticSeverity.ts` + host collector |
+| **G-UI2** | Drawer `PopulationShortfall` / `SourcePopulationShortfall` | Warning in Draft | Shipped | Medium | **Done** | Warning severity SPA + host |
+| **G-MAT1** | Materialize `ConfrontationUndecidable` | Block when undecidable **necessary** confrontation | Cup gate shipped | Medium | **Done** | [g-mat1](./g-mat1-confrontation-undecidable-at-materialize.md); GMat1 tests |
+| **G-MAT2** | Materialize `AuthoredAwardUnreachable` | Block when **requested ∩ unreachable** or **eligible ∩ unreachable** (opt. **B**) | Cup gate shipped | Low | **Done** | [g-mat2](./g-mat2-authored-award-unreachable-at-materialize.md); GMat2 tests |
+| **G-MAT3** | Materialize `NonRootUnfed` | Block **only if** production impossible | Signal only; **no** materialize gate | Low | **Deferred** | [decision](./g-mat3-arbitration-session.md); M2b test; spec draft Git |
+| **G-MAT4** | Materialize `SourcePopulationShortfall` | Block **only if** extraction required for production | Not gated; `MaterializationFailure` on target roster | Low | **Deferred** | [decision](./g-mat4-arbitration-session.md); M4b + analyzer tests |
+| **G-OPS1** | Ready operational mutations | Allow without production (D2) on qual/prog/affectation replace | Shipped | **Major** | **Done** | [g-ops](./g-ops-ready-operational-mutations-and-d1.md); D2 tests |
+| **G-OPS2** | D1 upstream feed guard | Block on **feed effect** (rules or source population) | Shipped | **Major** | **Done** | `StructureReadyConsumerFeedGate`; SPA consumer names |
+| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | Partial UI; command **no** gate | Medium | **Deferred** | [decision](./g-ops3-arbitration-session.md); R-Draw1-N1..N3; **D3-1** |
+| **G-SWISS** | Generic production guard | Must not break Swiss progressive | Swiss APIs separate today | — | **Constraint** | §8 capability grid; no global guard |

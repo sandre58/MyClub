@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -22,28 +23,32 @@ public static class ReplaceStageQualificationRules
     public static void Execute(
         Stage sourceStage,
         IReadOnlyList<QualificationIntentSpec>? intents,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<Match>? upstreamMatches = null)
     {
         ArgumentNullException.ThrowIfNull(sourceStage);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureMutable(sourceStage);
 
+        QualificationRules? afterRules;
         if (intents is null || intents.Count == 0)
         {
-            sourceStage.ReplaceQualificationRules(null, clock);
-            return;
+            afterRules = null;
         }
-
-        var domainIntents = new List<QualificationIntent>(intents.Count);
-        foreach (var spec in intents)
+        else
         {
-            ArgumentNullException.ThrowIfNull(spec);
-            domainIntents.Add(ToDomainIntent(spec));
+            var domainIntents = new List<QualificationIntent>(intents.Count);
+            foreach (var spec in intents)
+            {
+                ArgumentNullException.ThrowIfNull(spec);
+                domainIntents.Add(ToDomainIntent(spec));
+            }
+
+            var groupOrder = sourceStage.Groups.Select(g => g.Id).ToArray();
+            afterRules = QualificationRules.FromIntents(domainIntents, groupOrder);
         }
 
-        var groupOrder = sourceStage.Groups.Select(g => g.Id).ToArray();
-        var rules = QualificationRules.FromIntents(domainIntents, groupOrder);
-        sourceStage.ReplaceQualificationRules(rules, clock);
+        EnsureAndApply(sourceStage, afterRules, clock, competitionStages, upstreamMatches);
     }
 
     /// <summary>
@@ -52,18 +57,44 @@ public static class ReplaceStageQualificationRules
     public static void Execute(
         Stage stage,
         IReadOnlyList<QualificationPathSpec>? paths,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<Match>? upstreamMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureMutable(stage);
 
+        QualificationRules? afterRules;
         if (paths is null || paths.Count == 0)
         {
-            stage.ReplaceQualificationRules(null, clock);
-            return;
+            afterRules = null;
+        }
+        else
+        {
+            afterRules = BuildRulesFromPaths(paths);
         }
 
+        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches);
+    }
+
+    private static void EnsureAndApply(
+        Stage stage,
+        QualificationRules? afterRules,
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages,
+        IReadOnlyList<Match>? upstreamMatches)
+    {
+        StructureOperationalExitEditGuard.Ensure(stage, upstreamMatches, "Qualification rules");
+        if (competitionStages is not null)
+        {
+            StructureReadyConsumerFeedGate.EnsureQualificationReplaceAllowed(stage, afterRules, competitionStages);
+        }
+
+        stage.ReplaceQualificationRulesOperationally(afterRules, clock);
+    }
+
+    private static QualificationRules BuildRulesFromPaths(IReadOnlyList<QualificationPathSpec> paths)
+    {
         var domainPaths = new List<QualificationPath>(paths.Count);
         foreach (var spec in paths)
         {
@@ -99,7 +130,7 @@ public static class ReplaceStageQualificationRules
                 new QualificationPath(spec.Order, source, selection, destination, condition));
         }
 
-        stage.ReplaceQualificationRules(new QualificationRules(domainPaths), clock);
+        return new QualificationRules(domainPaths);
     }
 
     private static QualificationDestination ResolvePathDestination(
@@ -123,8 +154,6 @@ public static class ReplaceStageQualificationRules
             ? QualificationDestination.ForSlot(stageId, slotKey!)
             : QualificationDestination.ForPopulation(stageId);
     }
-
-    private static void EnsureMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 
     private static QualificationIntent ToDomainIntent(QualificationIntentSpec spec) =>
         !Enum.IsDefined(spec.SourceKind)

@@ -212,6 +212,51 @@ public sealed class CompetitionFlowAnalyzerTests
     }
 
     [Fact]
+    public void AnalyzeCapacity_emits_SourcePopulationShortfall_when_outbound_exceeds_available_not_places()
+    {
+        var competition = CreateCompetition.Execute("SourceShortfall", _clock);
+        var source = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        var dest = Stage.Create(
+            competition.Id,
+            new StageName("KO"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(dest.Id, _clock);
+        source.AddGroup("A", _clock);
+        source.AddGroup("B", _clock);
+        source.AddGroup("C", _clock);
+        source.AddGroup("D", _clock);
+        source.SetPlacesPerGroup(2);
+        source.AddMatchday(1, _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "E1", _clock).Id;
+        var e2 = competition.AddEntry(TeamId.New(), "E2", _clock).Id;
+        source.ReplaceAffectationAuthoring([e1, e2], _clock);
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Top, 4),
+                    QualificationDestination.ForPopulation(dest.Id))
+            ]),
+            _clock);
+
+        var capacity = CompetitionFlowAnalyzer.AnalyzeCapacity([source, dest], activeEntryCount: 2);
+
+        capacity.Should().Contain(d =>
+            d.Code == CompetitionFlowAnalyzer.SourcePopulationShortfall && d.StageId == source.Id.Value);
+        capacity.Should().NotContain(d =>
+            d.Code == CompetitionFlowAnalyzer.OverExtraction && d.StageId == source.Id.Value);
+        CompetitionFlowAnalyzer.IsPrepareGateIssue(CompetitionFlowAnalyzer.SourcePopulationShortfall).Should().BeFalse();
+    }
+
+    [Fact]
     public void AnalyzeResult_emits_authored_award_unreachable_when_source_pair_missing()
     {
         var competition = CreateCompetition.Execute("Result", _clock);

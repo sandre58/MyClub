@@ -492,6 +492,7 @@ export function StructureQualificationDialog({
               {mutation.isError ? (
                 <MutationError
                   error={mutation.error}
+                  structureStages={data.stages}
                   sotHref={persistentStructureMutationSotHref(
                     mutation.error,
                     data.competitionId,

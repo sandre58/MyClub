@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { ApiError } from './api';
 import { apiErrorLabel } from './i18n/apiErrorLabel';
+import { formatStructureMutationMessage } from './pages/structure/problems/formatStructureMutationMessage';
 import { Status } from './design-system/components/Status';
 import { statusToneFromBadgeTone } from './design-system/components/statusTone';
 import { Alert } from './design-system/components/Alert';
@@ -14,6 +15,7 @@ import type {
   EntryStatus,
   MatchStatus,
   StageStatus,
+  StructureStageHubSummary,
 } from './types';
 import {
   competitionStatusLabel,
@@ -224,16 +226,25 @@ export function ErrorState({ error }: { error: unknown }) {
 export function MutationError({
   error,
   sotHref,
+  structureStages,
 }: {
   error: unknown;
   /** When the failure reveals a persistent Structure problem, link to its SoT. */
   sotHref?: string | null;
+  /** When set, D1 failures list blocking downstream phase names. */
+  structureStages?: readonly StructureStageHubSummary[];
 }) {
   const { t } = useTranslation('common');
+  const { t: tStructure } = useTranslation('structure');
+
+  const message =
+    structureStages && structureStages.length > 0
+      ? formatStructureMutationMessage(tStructure, t, error, structureStages)
+      : formatError(error, t);
 
   return (
     <Alert tone="danger" role="alert">
-      <span>{formatError(error, t)}</span>
+      <span>{message}</span>
       {sotHref ? (
         <>
           {' '}

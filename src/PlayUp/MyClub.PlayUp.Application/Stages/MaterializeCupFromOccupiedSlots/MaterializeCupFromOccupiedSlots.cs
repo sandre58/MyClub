@@ -51,7 +51,7 @@ public static class MaterializeCupFromOccupiedSlots
                 ApplicationErrorCodes.StageNotInCompetition);
         }
 
-        EnsureMutable(competition, stage);
+        EnsureMutable(competition, stage, pairKeys);
 
         if (stage.Rounds.Count == 0 || stage.Matchdays.Count > 0 || stage.Groups.Count > 0)
         {
@@ -222,6 +222,13 @@ public static class MaterializeCupFromOccupiedSlots
         return stage.BracketPairs.Count(pair => IsEligible(stage, pair));
     }
 
+    /// <summary>Eligible pair keys for G-MAT2 global scope (no side effects).</summary>
+    internal static IReadOnlyList<string> CollectEligiblePairKeys(Stage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        return stage.BracketPairs.Where(pair => IsEligible(stage, pair)).Select(pair => pair.PairKey).ToArray();
+    }
+
     /// <summary>
     /// Eligible: both slots occupied with distinct entries, and no fixture already bound to this PairKey.
     /// </summary>
@@ -237,9 +244,11 @@ public static class MaterializeCupFromOccupiedSlots
     /// Late materialization of a not-yet-started Cup stage is allowed while the competition runs.
     /// Does not unlock StructureLocked: a Running stage remains immutable.
     /// </summary>
-    private static void EnsureMutable(Competition competition, Stage stage)
+    private static void EnsureMutable(Competition competition, Stage stage, IReadOnlyList<string>? pairKeys)
     {
         StageMaterializeGuard.EnsureCupCompetition(competition);
         StageMaterializeGuard.EnsureStageReadyForMaterialize(stage);
+        StructureMaterializeExecutionGate.EnsureCupStage(stage);
+        StructureMaterializeAttributionGate.EnsureCupStage(stage, pairKeys);
     }
 }

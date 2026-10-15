@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -24,7 +25,9 @@ public static class ReplaceStageAffectationAuthoring
         Stage stage,
         Competition competition,
         IReadOnlyList<EntryId> entryIds,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
@@ -36,6 +39,12 @@ public static class ReplaceStageAffectationAuthoring
             _ = competition.GetEntry(entryId);
         }
 
-        stage.ReplaceAffectationAuthoring(entryIds, clock);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Affectation authoring");
+        if (competitionStages is not null)
+        {
+            StructureReadyConsumerFeedGate.EnsureAffectationReplaceAllowed(stage, entryIds, competitionStages);
+        }
+
+        stage.ReplaceAffectationAuthoringOperationally(entryIds, clock);
     }
 }

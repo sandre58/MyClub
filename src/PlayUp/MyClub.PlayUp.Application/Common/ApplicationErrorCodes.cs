@@ -186,6 +186,11 @@ public static class ApplicationErrorCodes
     public const string StructureNotMutable = "Application.StructureNotMutable";
 
     /// <summary>
+    /// Gets the code when an upstream qualification exit change would break a Ready downstream consumer feed contract.
+    /// </summary>
+    public const string ReadyConsumerWouldBreak = "Application.ReadyConsumerWouldBreak";
+
+    /// <summary>
     /// Gets the code when a stage skeleton rebuild attempts to change <c>StructureFormatKind</c>.
     /// </summary>
     public const string StructureFormatImmutable = "Application.StructureFormatImmutable";

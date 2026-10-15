@@ -16,6 +16,7 @@
     "OverCapacityEdge": "Inbound volume exceeds places capacity.",
     "OverExtraction": "Outbound extraction exceeds source capacity.",
     "StructureNotMutable": "Structure can no longer be edited in this state.",
+    "ReadyConsumerWouldBreak": "This change would break a ready downstream phase that already has teams placed from qualification — adjust the downstream phase first or revert it to draft.",
     "StructureFormatImmutable": "The structure format can no longer be changed.",
     "DrawRulesRequired": "Configure draw rules before creating a draw execution.",
     "InvalidStructureIntent": "Invalid structure parameters.",

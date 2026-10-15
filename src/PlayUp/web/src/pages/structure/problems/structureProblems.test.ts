@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../../../api';
+import enCommon from '../../../i18n/locales/en/common.json';
 import enStructure from '../../../i18n/locales/en/structure.json';
 import frStructure from '../../../i18n/locales/fr/structure.json';
+import type { StructureStageHubSummary } from '../../../types';
+import { formatStructureMutationMessage } from './formatStructureMutationMessage';
 import {
   LIFECYCLE_CHECKLIST_WIRE_CODES,
   MATCHS_LIFECYCLE_WIRE_CODES,
@@ -21,7 +24,10 @@ import {
   resolveLifecycleMutationMessage,
 } from './resolveStructureProblemMessage';
 
-const t = (key: string, opts?: { defaultValue?: string }) => {
+const t = (
+  key: string,
+  opts?: { defaultValue?: string } & Record<string, unknown>,
+) => {
   const parts = key.split('.');
   let node: unknown = enStructure;
   for (const part of parts) {
@@ -31,10 +37,67 @@ const t = (key: string, opts?: { defaultValue?: string }) => {
     node = (node as Record<string, unknown>)[part];
   }
   if (typeof node === 'string') {
-    return node;
+    let text = node;
+    if (opts) {
+      for (const [name, value] of Object.entries(opts)) {
+        if (name === 'defaultValue') {
+          continue;
+        }
+        text = text.replaceAll(`{{${name}}}`, String(value));
+      }
+    }
+    return text;
   }
   return opts?.defaultValue ?? '';
 };
+
+const tCommon = (key: string, opts?: Record<string, unknown>) => {
+  if (key === 'errorWithStatus' && opts) {
+    return enCommon.errorWithStatus
+      .replace('{{message}}', String(opts.message))
+      .replace('{{status}}', String(opts.status));
+  }
+  return key;
+};
+
+describe('formatStructureMutationMessage', () => {
+  it('lists ready downstream consumer phase names on D1 refusal', () => {
+    const downstream: StructureStageHubSummary = {
+      stageId: '11111111-1111-1111-1111-111111111111',
+      name: 'Final',
+      status: 'Ready',
+      teamCount: 2,
+      matchCount: 0,
+      matchdayCount: 0,
+      slotCount: 0,
+      numberOfPeriods: 2,
+      durationPerPeriod: 45,
+      hasExtraTime: false,
+      hasPenaltyShootout: false,
+      hasDrawRules: false,
+      hasQualificationRules: false,
+      qualificationPathCount: 0,
+      hasProgressionRules: false,
+      progressionPathCount: 0,
+      hasTieFormat: false,
+    };
+    const msg = formatStructureMutationMessage(
+      t,
+      tCommon,
+      new ApiError(
+        409,
+        'blocked',
+        undefined,
+        'Application.ReadyConsumerWouldBreak',
+        [downstream.stageId],
+      ),
+      [downstream],
+    );
+    expect(msg).toContain('Final');
+    expect(msg).toContain('Affected phases');
+    expect(msg).toContain('409');
+  });
+});
 
 describe('matchsColumnVisibility', () => {
   it('hides open-matches primary copy on running phase', () => {
@@ -138,6 +201,9 @@ describe('resolveLifecycleMutationMessageKey', () => {
     );
     expect(resolveLifecycleMutationMessageKey('Application.Attribution')).toBe(
       'problems.lifecycle.Attribution',
+    );
+    expect(resolveLifecycleMutationMessageKey('Application.ReadyConsumerWouldBreak')).toBe(
+      'problems.lifecycle.ReadyConsumerWouldBreak',
     );
   });
 });

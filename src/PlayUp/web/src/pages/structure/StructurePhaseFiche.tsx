@@ -1760,6 +1760,7 @@ export function StructurePhaseFiche({
         }}
         competitionId={data.competitionId}
         stage={stage}
+        stages={data.stages}
         entries={data.participants.entries}
         reservedFromFeeds={populationFeedVolume}
         focusSearch={composeFocusSearch}

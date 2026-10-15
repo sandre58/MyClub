@@ -682,7 +682,24 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
+        ApplyQualificationRulesReplacement(qualificationRules, clock);
+    }
 
+    /// <summary>
+    /// Replaces qualification rules while the stage is <see cref="StageStatus.Draft"/> or
+    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and D1 guards.
+    /// </summary>
+    /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceQualificationRulesOperationally(QualificationRules? qualificationRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyQualificationRulesReplacement(qualificationRules, clock);
+    }
+
+    private void ApplyQualificationRulesReplacement(QualificationRules? qualificationRules, IClock clock)
+    {
         if (qualificationRules is not null)
         {
             if (qualificationRules.Paths.Any(path => path.Destination.StageId.Equals(Id)))
@@ -709,7 +726,24 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
+        ApplyProgressionRulesReplacement(progressionRules, clock);
+    }
 
+    /// <summary>
+    /// Replaces progression rules while the stage is <see cref="StageStatus.Draft"/> or
+    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and D1 guards.
+    /// </summary>
+    /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceProgressionRulesOperationally(ProgressionRules? progressionRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyProgressionRulesReplacement(progressionRules, clock);
+    }
+
+    private void ApplyProgressionRulesReplacement(ProgressionRules? progressionRules, IClock clock)
+    {
         if (progressionRules is not null)
         {
             foreach (var path in progressionRules.Paths)
@@ -1464,7 +1498,25 @@ public sealed class Stage : AggregateRoot<StageId>
         ArgumentNullException.ThrowIfNull(entryIds);
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
+        ApplyAffectationAuthoringReplacement(entryIds, clock);
+    }
 
+    /// <summary>
+    /// Replaces Affectation authoring while <see cref="StageStatus.Draft"/> or <see cref="StageStatus.Ready"/>.
+    /// Caller enforces production freeze (D2). No D1 downstream exit guard.
+    /// </summary>
+    /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceAffectationAuthoringOperationally(IReadOnlyList<EntryId> entryIds, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyAffectationAuthoringReplacement(entryIds, clock);
+    }
+
+    private void ApplyAffectationAuthoringReplacement(IReadOnlyList<EntryId> entryIds, IClock clock)
+    {
         var distinct = new List<EntryId>(entryIds.Count);
         var seen = new HashSet<EntryId>();
         foreach (var entryId in entryIds)
@@ -2752,6 +2804,16 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             throw new DomainException(
                 $"Structure cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+    }
+
+    private void EnsureOperationalExitRulesMutable()
+    {
+        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        {
+            throw new DomainException(
+                $"Operational structure authoring cannot be modified when status is '{Status}'.",
                 StageErrorCodes.StructureLocked);
         }
     }

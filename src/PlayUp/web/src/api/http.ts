@@ -8,14 +8,33 @@ export class ApiError extends Error {
   readonly detail?: string;
   /** ProblemDetails extensions.code when present. */
   readonly code?: string;
+  /** Ready downstream consumers when code is Application.ReadyConsumerWouldBreak. */
+  readonly consumerStageIds?: readonly string[];
 
-  constructor(status: number, message: string, detail?: string, code?: string) {
+  constructor(
+    status: number,
+    message: string,
+    detail?: string,
+    code?: string,
+    consumerStageIds?: readonly string[],
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.detail = detail;
     this.code = code;
+    this.consumerStageIds = consumerStageIds;
   }
+}
+
+function readStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const ids = value.filter(
+    (item): item is string => typeof item === 'string' && item.length > 0,
+  );
+  return ids.length > 0 ? ids : undefined;
 }
 
 /**
@@ -29,14 +48,25 @@ export async function throwIfNotOk(response: Response): Promise<void> {
 
   let detail: string | undefined;
   let code: string | undefined;
+  let consumerStageIds: string[] | undefined;
   try {
     const problem = (await response.json()) as {
       title?: string;
       detail?: string;
       code?: string;
+      consumerStageIds?: unknown;
+      extensions?: { code?: string; consumerStageIds?: unknown };
     };
     detail = problem.detail ?? problem.title;
-    code = typeof problem.code === 'string' ? problem.code : undefined;
+    code =
+      typeof problem.code === 'string'
+        ? problem.code
+        : typeof problem.extensions?.code === 'string'
+          ? problem.extensions.code
+          : undefined;
+    consumerStageIds =
+      readStringArray(problem.consumerStageIds) ??
+      readStringArray(problem.extensions?.consumerStageIds);
   } catch {
     // Non-JSON body (rare)
   }
@@ -46,6 +76,7 @@ export async function throwIfNotOk(response: Response): Promise<void> {
     detail ?? `HTTP ${response.status}`,
     detail,
     code,
+    consumerStageIds,
   );
 }
 

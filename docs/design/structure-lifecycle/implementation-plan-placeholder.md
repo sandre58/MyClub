@@ -1,6 +1,6 @@
 # Implementation plan (placeholder)
 
-**Status:** DO NOT START until **human sign-off** on [phase-mutability-matrix.md](./phase-mutability-matrix.md) §11. Arbitrations #1–#3 are closed; implementation scope = matrix **§12** gaps.
+**Status:** **Historical (pre-§11B).** Active scope after sign-off: [implementation-plan-post-11b.md](./implementation-plan-post-11b.md). §11B preparation: [section-11b-signoff-preparation.md](./section-11b-signoff-preparation.md).
 
 ## Slices (order suggested)
 

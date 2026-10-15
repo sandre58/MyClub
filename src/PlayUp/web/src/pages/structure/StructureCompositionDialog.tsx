@@ -30,6 +30,7 @@ type StructureCompositionDialogProps = {
   onClose: () => void;
   competitionId: string;
   stage: StructureStageHubSummary;
+  stages: StructureStageHubSummary[];
   entries: StructureEntry[];
   /**
    * Inbound Qualif/Prog expected volume (Draft). Reserves Places N so Affectation
@@ -67,6 +68,7 @@ export function StructureCompositionDialog({
   onClose,
   competitionId,
   stage,
+  stages,
   entries,
   reservedFromFeeds = 0,
   focusSearch = false,
@@ -256,7 +258,10 @@ export function StructureCompositionDialog({
         trapFocus={!discardOpen}
         footerStatus={
           saveMutation.isError ? (
-            <MutationError error={saveMutation.error} />
+            <MutationError
+              error={saveMutation.error}
+              structureStages={stages}
+            />
           ) : null
         }
         footer={

@@ -143,9 +143,9 @@ This is **not** claiming product allows reaching Ready in this state through nor
 | Piece | Setup |
 |-------|--------|
 | Stage shape | Same as [`MaterializeCupFromOccupiedSlotsTests.CreateSemiStage`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/MaterializeCupFromOccupiedSlotsTests.cs): round, slots `SF1-A`/`SF1-B`/`SF2-A`/`SF2-B`, `SeedEntryRoundBracketPairs()` → **`P1`**, **`P2`**. |
-| **Necessary, not addressable** | `ReplaceProgressionRules` with winner on **`P1`** → `SF1-A` (as in P+), then **`ClearBracketPairs()`** and re-add **only** `BracketPair("P2", "SF2-A", "SF2-B")` — progression still references **`P1`**, but no `BracketPair` / fixture for `P1`. |
+| **Necessary, not addressable** | `ReplacePlacementAwardRules` on **`P1`** (rank 1) while both pairs exist, then **`ReplaceBracketPairs`** with **only** `P2` — award path still references **`P1`**, but no `BracketPair` / fixture for `P1`. (Progression on orphan `P1` is rejected by domain `Prepare`; placement award matches [`CompetitionFlowAnalyzerTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/CompetitionFlowAnalyzerTests.cs) pattern.) |
 | **Eligible ornamental path** | Occupied distinct entries on `SF2-A` / `SF2-B` (`ApplyResolvedEntry`). **No** progression/placement on **`P2`**. |
-| **Ready** | `PrepareStage.Execute(stage, [stage], clock)` — graph is Prepare-legal (no `ConfrontationUndecidable` because `P1` is not addressable). |
+| **Ready** | `stage.Prepare(clock)` (domain) — `AnalyzeExecution` empty; application `PrepareStage` also requires slot-feed resolution on unused semi slots for this graph. |
 | **Pre-invoke assertions** | `stage.Status` is `Ready`; `CompetitionFlowAnalyzer.AnalyzeExecution([stage])` is **empty**; `IsEligible` for `P2` is true (occupied slots, no fixture on `P2`). |
 
 | Field | Value |
