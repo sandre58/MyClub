@@ -51,13 +51,6 @@
     "problemsToHandle_one": "{{count}} problème à traiter",
     "problemsToHandle_other": "{{count}} problèmes à traiter",
     "anomalyHintTitle": "Des anomalies nécessitent votre attention",
-    "family": {
-      "graph": "Graphe",
-      "feed": "Alimentation",
-      "capacity": "Capacité",
-      "execution": "Exécution",
-      "result": "Résultat"
-    },
     "statStructural_one": "liaison à corriger",
     "statStructural_other": "liaisons à corriger",
     "statIncomplete_one": "phase incomplète",
@@ -405,14 +398,11 @@
   "fiche": {
     "section": {
       "phaseState": "État de la phase",
-      "phaseProduction": "Production des matchs",
-      "regulationFrame": "Cadre réglementaire de la phase",
-      "lifecycle": "Cycle de vie de la phase"
+      "regulationFrame": "Cadre réglementaire de la phase"
     },
     "composition": {
       "placeAssignment": "Affectation des places"
     },
-    "regulationDividerLabel": "Règlement",
     "edit": "Modifier",
     "editForme": "Modifier l’organisation",
     "editPhase": "Renommer la phase",
@@ -613,7 +603,6 @@
       "neutral": "Consultez la vue d'ensemble pour poursuivre le pilotage sportif."
     },
     "tiles": {
-      "population": "Équipes",
       "exits": "Sorties",
       "match": "Match",
       "standing": "Classement",
@@ -714,15 +703,8 @@
       "populationAria": "{{current}} entrées sur {{capacity}} places de la phase"
     },
     "qualifiers": {
-      "resolvedGauge": "{{count}} équipes résolues",
-      "resolvedGaugeAria": "{{count}} équipes résolues sur {{total}} qualifiées",
-      "resolvedGaugeLoading": "Chargement des équipes résolues…",
-      "resolvedStatusComplete": "Tous les qualifiés sont résolus.",
-      "resolvedStatusProgress": "Résolution des qualifiés en cours.",
-      "resolvedStatusNone": "Aucun qualifié résolu pour l'instant.",
       "viewPhase": "Voir la phase",
-      "unresolved": "Non résolue",
-      "pending": "En attente"
+      "unresolved": "Non résolue"
     },
     "title": "Équipes — {{phase}}",
     "lede": "Ajoutez des équipes à cette phase. Les places déjà attendues via Qualification / Progression sont réservées.",

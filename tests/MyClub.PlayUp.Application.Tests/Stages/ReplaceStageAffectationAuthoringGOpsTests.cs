@@ -10,7 +10,6 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -146,7 +145,7 @@ public sealed class ReplaceStageAffectationAuthoringGOpsTests
         downstream.AddMatchday(1, _clock);
 
         var entries = Enumerable.Range(0, 4)
-            .Select(_ => competition.AddEntry(TeamId.New(), $"T{_}", _clock).Id)
+            .Select(i => competition.AddEntry(TeamId.New(), $"T{i}", _clock).Id)
             .ToArray();
 
         upstream.ReplaceAffectationAuthoring(entries, _clock);

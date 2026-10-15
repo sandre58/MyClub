@@ -64,16 +64,7 @@ public static class ReplaceStageQualificationRules
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
-        QualificationRules? afterRules;
-        if (paths is null || paths.Count == 0)
-        {
-            afterRules = null;
-        }
-        else
-        {
-            afterRules = BuildRulesFromPaths(paths);
-        }
-
+        var afterRules = paths is null || paths.Count == 0 ? null : BuildRulesFromPaths(paths);
         EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches);
     }
 

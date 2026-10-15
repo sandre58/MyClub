@@ -142,8 +142,7 @@ public sealed class ReplaceStageQualificationRulesGOpsTests
             .Which.Code.Should().Be(ApplicationErrorCodes.ReadyConsumerWouldBreak);
     }
 
-    private void ReplaceWithTopOne(Stage upstream, Stage downstream, IReadOnlyList<Stage> stages)
-    {
+    private void ReplaceWithTopOne(Stage upstream, Stage downstream, IReadOnlyList<Stage> stages) =>
         ReplaceStageQualificationRules.Execute(
             upstream,
             [
@@ -157,7 +156,6 @@ public sealed class ReplaceStageQualificationRulesGOpsTests
             _clock,
             stages,
             []);
-    }
 
     private (Stage Upstream, Stage Downstream, List<Stage> Stages) CreateQualFeedTopology(bool applyQualification)
     {

@@ -12,6 +12,8 @@ import { TrendIcon } from '../design-system/TrendIcon';
 import { LiveStatus } from '../design-system/components/LiveStatus';
 import { TeamCrest } from '../design-system/TeamCrest';
 import { Tooltip } from '../design-system/components/Tooltip';
+import { GradientSeparator } from '../design-system/components/GradientSeparator';
+import { EntryCell } from '../design-system/components/EntryCell';
 import '../design-system/fonts';
 import '../design-system/index.css';
 import {
@@ -469,6 +471,53 @@ export function FoundationsPlayground() {
                 <p className="ds-body">Ombre courte, pas de glow.</p>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section className="ds-section" aria-labelledby="section-separators-entry">
+          <p className="ds-section__kicker">C2 — Structure primitives</p>
+          <h2 id="section-separators-entry" className="ds-heading">
+            GradientSeparator & EntryCell
+          </h2>
+          <div className="ds-stack">
+            <GradientSeparator orientation="horizontal" />
+            <div
+              className="ds-panel"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto 1fr',
+                gap: 'var(--space-16)',
+                alignItems: 'center',
+              }}
+            >
+              <p className="ds-meta">Colonne A</p>
+              <GradientSeparator orientation="vertical" />
+              <p className="ds-meta">Colonne B</p>
+            </div>
+            <ul className="structure-entries__teams structure-entries__teams--band">
+              <li className="structure-entries__team">
+                <EntryCell
+                  displayName="Racing Club de Strasbourg"
+                  primaryColor="#004996"
+                  placed
+                  placedTooltip="Place 1"
+                />
+              </li>
+              <li
+                className="structure-entries__team structure-entries__team--ineligible"
+              >
+                <EntryCell
+                  displayName="Équipe retirée"
+                  ineligible
+                  ineligibleLabel="Plus éligible"
+                />
+              </li>
+            </ul>
+            <EntryCell
+              variant="chip"
+              displayName="Étoile Filante de Metz"
+              primaryColor="#c8102e"
+            />
           </div>
         </section>
 

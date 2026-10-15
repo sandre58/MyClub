@@ -123,7 +123,7 @@ internal static class StructureReadyConsumerFeedGate
         foreach (var destinationId in destinationIds)
         {
             var consumer = competitionStages.FirstOrDefault(stage => stage.Id.Equals(destinationId));
-            if (consumer is null || consumer.Status is not StageStatus.Ready)
+            if (consumer?.Status is not StageStatus.Ready)
             {
                 continue;
             }
@@ -190,11 +190,7 @@ internal static class StructureReadyConsumerFeedGate
         IReadOnlyList<EntryId> afterEntryIds)
     {
         var previous = upstream.AffectationAuthoring.Select(entry => entry.EntryId).ToHashSet();
-        var next = new HashSet<EntryId>();
-        foreach (var entryId in afterEntryIds)
-        {
-            next.Add(entryId);
-        }
+        HashSet<EntryId> next = [.. afterEntryIds];
 
         var composition = upstream.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
         foreach (var removed in previous.Where(id => !next.Contains(id)))
@@ -216,25 +212,10 @@ internal static class StructureReadyConsumerFeedGate
     private static IEnumerable<StageId> EnumerateProgressionDestinations(ProgressionRules? rules) =>
         rules?.Paths.Select(path => path.Destination.StageId) ?? [];
 
-    private static int InboundQualificationVolume(StageId destinationStageId, QualificationRules? rules)
-    {
-        if (rules is null)
-        {
-            return 0;
-        }
+    private static int InboundQualificationVolume(StageId destinationStageId, QualificationRules? rules) =>
+        rules?.Paths
+                .Where(path => path.Destination.StageId.Equals(destinationStageId))
+                .Sum(StructurePopulationVolume.QualificationPathVolume) ?? 0;
 
-        return rules.Paths
-            .Where(path => path.Destination.StageId.Equals(destinationStageId))
-            .Sum(StructurePopulationVolume.QualificationPathVolume);
-    }
-
-    private static int InboundProgressionVolume(StageId destinationStageId, ProgressionRules? rules)
-    {
-        if (rules is null)
-        {
-            return 0;
-        }
-
-        return rules.Paths.Count(path => path.Destination.StageId.Equals(destinationStageId));
-    }
+    private static int InboundProgressionVolume(StageId destinationStageId, ProgressionRules? rules) => rules?.Paths.Count(path => path.Destination.StageId.Equals(destinationStageId)) ?? 0;
 }

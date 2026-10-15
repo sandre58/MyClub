@@ -18,43 +18,23 @@ internal static class StructureQualProgHubIntentsMapper
 {
     internal static IReadOnlyList<StructureQualificationIntentDto>? MapQualificationIntents(
         Stage stage,
-        QualificationRules? rules)
-    {
-        if (rules is null || rules.Paths.Count == 0)
-        {
-            return null;
-        }
-
-        if (rules.Intents.Count > 0)
-        {
-            return
-            [
-                .. rules.Intents.Select(intent => MapQualificationIntent(stage, intent))
-            ];
-        }
-
-        return
-        [
-            .. rules.Paths.Select(path => MapLegacyQualificationPath(stage, path))
-        ];
-    }
+        QualificationRules? rules) =>
+        rules is null || rules.Paths.Count == 0
+            ? null
+            : rules.Intents.Count > 0
+                ? [
+                    .. rules.Intents.Select(intent => MapQualificationIntent(stage, intent))
+                ]
+                : [
+                    .. rules.Paths.Select(path => MapLegacyQualificationPath(stage, path))
+                ];
 
     internal static IReadOnlyList<StructureProgressionIntentDto>? MapProgressionIntents(
         Stage stage,
-        ProgressionRules? rules)
-    {
-        if (rules is null || rules.Paths.Count == 0)
-        {
-            return null;
-        }
-
-        if (rules.Intents.Count > 0)
-        {
-            return MapPersistedProgressionIntents(stage, rules);
-        }
-
-        return MapLegacyProgressionPaths(stage, rules);
-    }
+        ProgressionRules? rules) =>
+        rules is null || rules.Paths.Count == 0
+            ? null
+            : rules.Intents.Count > 0 ? MapPersistedProgressionIntents(stage, rules) : MapLegacyProgressionPaths(stage, rules);
 
     private static StructureQualificationIntentDto MapQualificationIntent(
         Stage stage,
@@ -169,7 +149,7 @@ internal static class StructureQualProgHubIntentsMapper
         ];
     }
 
-    private static IReadOnlyList<StructureProgressionIntentDto> MapLegacyProgressionPaths(
+    private static List<StructureProgressionIntentDto> MapLegacyProgressionPaths(
         Stage stage,
         ProgressionRules rules)
     {
@@ -192,15 +172,15 @@ internal static class StructureQualProgHubIntentsMapper
             var roundName = stage.Rounds.FirstOrDefault(r => r.Id.Value == group.Key.RoundId)?.Name;
             string[]? slotKeys = null;
             Guid[]? groupIds = null;
-            if (!group.Key.TargetsPopulation && !group.Key.TargetsForm)
+            if (group.Key is { TargetsPopulation: false, TargetsForm: false })
             {
                 if (first.Destination.TargetsGroup)
                 {
-                    groupIds = paths.Select(p => p.Destination.GroupId!.Value.Value).ToArray();
+                    groupIds = [.. paths.Select(p => p.Destination.GroupId!.Value.Value)];
                 }
                 else
                 {
-                    slotKeys = paths.Select(p => p.Destination.SlotKey!).ToArray();
+                    slotKeys = [.. paths.Select(p => p.Destination.SlotKey!)];
                 }
             }
 

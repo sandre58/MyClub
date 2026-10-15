@@ -226,7 +226,7 @@ public static class MaterializeCupFromOccupiedSlots
     internal static IReadOnlyList<string> CollectEligiblePairKeys(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        return stage.BracketPairs.Where(pair => IsEligible(stage, pair)).Select(pair => pair.PairKey).ToArray();
+        return [.. stage.BracketPairs.Where(pair => IsEligible(stage, pair)).Select(pair => pair.PairKey)];
     }
 
     /// <summary>

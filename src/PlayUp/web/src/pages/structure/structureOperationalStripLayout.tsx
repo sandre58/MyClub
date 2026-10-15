@@ -1,6 +1,8 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Fragment, cloneElement, createElement, isValidElement } from 'react';
 
+import { GradientSeparator } from '../../design-system/components/GradientSeparator';
+
 function withStripChildKey(section: ReactNode, key: string): ReactNode {
   if (!section) {
     return null;
@@ -26,11 +28,11 @@ export function joinCompositionPlaceAssignmentSections(
   }
   if (options.showPlaces && places && options.showDraw && draw) {
     joined.push(
-      createElement('div', {
-        key: 'composition-tirage-separator',
-        className: 'structure-operational-strip__composition-tirage-separator',
-        'aria-hidden': 'true',
-      }),
+      <GradientSeparator
+        key="composition-tirage-separator"
+        orientation="horizontal"
+        className="structure-operational-strip__composition-tirage-separator"
+      />,
     );
   }
   if (options.showDraw && draw) {

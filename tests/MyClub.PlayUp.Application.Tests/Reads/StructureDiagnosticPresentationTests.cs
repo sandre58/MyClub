@@ -58,11 +58,9 @@ public sealed class StructureDiagnosticPresentationTests
     }
 
     [Fact]
-    public void ResolvePhaseBucket_Suspended_maps_to_Running()
-    {
+    public void ResolvePhaseBucket_Suspended_maps_to_Running() =>
         StructureDiagnosticPresentation.ResolvePhaseBucket(StageStatus.Suspended)
             .Should().Be(StructureDiagnosticPresentation.PresentationPhaseBucket.Running);
-    }
 
     [Fact]
     public void Collect_PopulationShortfall_blocking_when_stage_Ready()

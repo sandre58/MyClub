@@ -20,7 +20,7 @@ namespace MyClub.PlayUp.Application.Tests.Stages;
 /// must not block <see cref="MaterializeCupFromOccupiedSlots"/> on an independent eligible batch.
 /// G-MAT3 positive gate is deferred; this contract guards against a future blanket topology veto.
 /// </summary>
-public sealed class MaterializeCupFromOccupiedSlotsRMatM2bTests
+public sealed class MaterializeCupFromOccupiedSlotsRMatM2BTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 15, 14, 0, 0, TimeSpan.Zero));
 

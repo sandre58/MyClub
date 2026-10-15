@@ -196,17 +196,7 @@
 
 .structure-operational-strip__composition-tirage-separator {
   flex: none;
-  width: 100%;
-  height: var(--border-width);
   margin: var(--space-4) 0;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
-    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
-    transparent 100%
-  );
 }
 
 .structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__section-actions > .ds-btn,

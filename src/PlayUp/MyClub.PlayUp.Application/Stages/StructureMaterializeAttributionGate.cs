@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
@@ -37,7 +36,7 @@ internal static class StructureMaterializeAttributionGate
         if (requestEmpty)
         {
             var eligibleKeys = MaterializeCupFromOccupiedSlots.CollectEligiblePairKeys(stage);
-            if (!eligibleKeys.Any(key => unreachableKeys.Contains(key)))
+            if (!eligibleKeys.Any(unreachableKeys.Contains))
             {
                 return;
             }

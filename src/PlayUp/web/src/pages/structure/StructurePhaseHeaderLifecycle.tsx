@@ -6,7 +6,7 @@ import {
   StructurePhaseMatchsLifecycleBlock,
 } from './StructurePhaseMatchsLifecycleBlock';
 
-export function StructurePhaseFicheHeaderLifecycle({
+export function StructurePhaseHeaderLifecycle({
   competitionId,
   stage,
   productionBusy = false,

@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -17,7 +18,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-MAT2 — production-scoped <see cref="AuthoredAwardUnreachable"/> at materialize (option B).
+/// G-MAT2 — production-scoped <see cref="CompetitionFlowAnalyzer.AuthoredAwardUnreachable"/> at materialize (option B).
 /// </summary>
 public sealed class MaterializeCupFromOccupiedSlotsGMat2Tests
 {

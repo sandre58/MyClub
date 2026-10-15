@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Abstractions;
-using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
@@ -41,6 +40,7 @@ public static class StructureInboundCompositionAssembler
         {
             destinationMatchRows = rows;
         }
+
         var schematic = StageSchematicAssembler.Assemble(
             destination,
             competition,
@@ -53,29 +53,7 @@ public static class StructureInboundCompositionAssembler
         {
             if (source.Regulation.QualificationRules is { } qualification)
             {
-                foreach (var path in qualification.Paths)
-                {
-                    if (!path.Destination.StageId.Equals(destination.Id))
-                    {
-                        continue;
-                    }
-
-                    var feedKey = $"q-{source.Id.Value}-{path.Order}";
-                    var volume = StructurePopulationVolume.QualificationPathVolume(path);
-                    rules.Add(
-                        BuildRule(
-                            feedKey,
-                            source.Id.Value,
-                            volume,
-                            path,
-                            null,
-                            destination,
-                            source,
-                            entriesById,
-                            matchSummariesByStage,
-                            schematic,
-                            competitionStages));
-                }
+                rules.AddRange(from path in qualification.Paths where path.Destination.StageId.Equals(destination.Id) let feedKey = $"q-{source.Id.Value}-{path.Order}" let volume = StructurePopulationVolume.QualificationPathVolume(path) select BuildRule(feedKey, source.Id.Value, volume, path, null, destination, source, entriesById, matchSummariesByStage, schematic, competitionStages));
             }
 
             if (source.Regulation.ProgressionRules is not { } progression)
@@ -83,31 +61,10 @@ public static class StructureInboundCompositionAssembler
                 continue;
             }
 
-            foreach (var path in progression.Paths)
-            {
-                if (!path.Destination.StageId.Equals(destination.Id))
-                {
-                    continue;
-                }
-
-                var feedKey = $"p-{source.Id.Value}-{path.SourcePairKey}-{path.Outcome}";
-                rules.Add(
-                    BuildRule(
-                        feedKey,
-                        source.Id.Value,
-                        1,
-                        null,
-                        path,
-                        destination,
-                        source,
-                        entriesById,
-                        matchSummariesByStage,
-                        schematic,
-                        competitionStages));
-            }
+            rules.AddRange(from path in progression.Paths where path.Destination.StageId.Equals(destination.Id) let feedKey = $"p-{source.Id.Value}-{path.SourcePairKey}-{path.Outcome}" select BuildRule(feedKey, source.Id.Value, 1, null, path, destination, source, entriesById, matchSummariesByStage, schematic, competitionStages));
         }
 
-        rules.Sort(static (a, b) => string.Compare(a.FeedKey, b.FeedKey, StringComparison.Ordinal));
+        rules.Sort(static (a, b) => string.CompareOrdinal(a.FeedKey, b.FeedKey));
         var configuredVolume = rules.Sum(rule => rule.Seats.Count);
         var resolvedCount = rules.Sum(rule => rule.Seats.Count(seat => seat.EntryId is not null));
 
@@ -172,15 +129,12 @@ public static class StructureInboundCompositionAssembler
                 matchSummariesByStage);
         }
 
-        if (entryId is null)
-        {
-            entryId = ResolveFromSchematicInboundCase(
-                qualPath,
-                progPath,
-                sourceStage,
-                schematic,
-                usedSchematicCases);
-        }
+        entryId ??= ResolveFromSchematicInboundCase(
+            qualPath,
+            progPath,
+            sourceStage,
+            schematic,
+            usedSchematicCases);
 
         var placed = InboundFeedSeatResolver.IsInboundSeatPlaced(
             destination,
@@ -220,12 +174,7 @@ public static class StructureInboundCompositionAssembler
         }
 
         var slotKey = path.Destination.SlotKey;
-        if (string.IsNullOrWhiteSpace(slotKey))
-        {
-            return null;
-        }
-
-        return destination.FindSlot(slotKey)?.EntryId;
+        return string.IsNullOrWhiteSpace(slotKey) ? null : destination.FindSlot(slotKey)?.EntryId;
     }
 
     private static EntryId? ResolveFromSchematicInboundCase(
@@ -257,7 +206,7 @@ public static class StructureInboundCompositionAssembler
                     continue;
                 }
 
-                if (origin.PathOrder is int order && order != qualPath.Order)
+                if (origin.PathOrder is { } order && order != qualPath.Order)
                 {
                     continue;
                 }
@@ -266,23 +215,21 @@ public static class StructureInboundCompositionAssembler
                 return EntryIdFromCase(place);
             }
 
-            if (progPath is not null)
+            if (progPath is null) continue;
+            if (origin.Kind != FeedKind.Progression
+                || origin.SourceStageId != sourceStage.Id.Value)
             {
-                if (origin.Kind != FeedKind.Progression
-                    || origin.SourceStageId != sourceStage.Id.Value)
-                {
-                    continue;
-                }
-
-                if (!string.Equals(origin.SourcePairKey, progPath.SourcePairKey, StringComparison.Ordinal)
-                    || origin.Outcome != progPath.Outcome)
-                {
-                    continue;
-                }
-
-                usedSchematicCases.Add(caseKey);
-                return EntryIdFromCase(place);
+                continue;
             }
+
+            if (!string.Equals(origin.SourcePairKey, progPath.SourcePairKey, StringComparison.Ordinal)
+                || origin.Outcome != progPath.Outcome)
+            {
+                continue;
+            }
+
+            usedSchematicCases.Add(caseKey);
+            return EntryIdFromCase(place);
         }
 
         return null;
@@ -291,16 +238,10 @@ public static class StructureInboundCompositionAssembler
     private static string CaseKey(SchematicCaseDto place) =>
         $"{place.FormPosition.Kind}|{place.FormPosition.SlotKey}|{place.FormPosition.GroupId}|{place.FormPosition.Index}";
 
-    private static EntryId? EntryIdFromCase(SchematicCaseDto place)
-    {
-        if (place.Assignment is not null)
-        {
-            return new EntryId(place.Assignment.EntryId);
-        }
-
-        return place.Entry is not null ? new EntryId(place.Entry.EntryId) : null;
-    }
-
+    private static EntryId? EntryIdFromCase(SchematicCaseDto place) =>
+        place.Assignment is not null
+            ? new EntryId(place.Assignment.EntryId)
+            : place.Entry is not null ? new EntryId(place.Entry.EntryId) : null;
 }
 
 /// <summary>Inbound Qual/Prog composition projection for the Structure hub.</summary>

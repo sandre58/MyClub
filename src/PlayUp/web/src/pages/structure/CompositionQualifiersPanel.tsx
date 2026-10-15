@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chip } from '../../design-system/components/Chip';
-import { Tooltip } from '../../design-system/components/Tooltip';
-import { LocateIcon, HourglassIcon } from '../../design-system/icons/contentIcons';
-import { TeamCrest } from '../../design-system/TeamCrest';
+import {
+  EntryCell,
+  EntryCellPlacedMarker,
+} from '../../design-system/components/EntryCell';
 import type {
   StructureEntry,
   StructureFormatKind,
@@ -102,54 +102,36 @@ export function CompositionQualifiersPanel({
                       </div>
                       <div className="structure-composition-qualifiers__rule-outcome">
                         {seat.resolved ? (
-                          <Chip
-                            tone="neutral"
-                            className="structure-composition-qualifiers__status-chip structure-composition-qualifiers__status-chip--resolved"
-                          >
-                            <TeamCrest
-                              name={
-                                seat.teamName ??
-                                entry?.displayName ??
-                                t('manualPlacement.unknownTeam')
-                              }
-                              logoMediaId={entry?.logoMediaId}
-                              primaryColor={entry?.primaryColor}
-                              size="sm"
-                              className="structure-composition-qualifiers__status-crest"
-                            />
-                            <span className="structure-composition-qualifiers__status-text">
-                              {seat.teamName ??
-                                entry?.displayName ??
-                                t('manualPlacement.unknownTeam')}
-                            </span>
-                          </Chip>
+                          <EntryCell
+                            variant="chip"
+                            displayName={
+                              seat.teamName ??
+                              entry?.displayName ??
+                              t('manualPlacement.unknownTeam')
+                            }
+                            logoMediaId={entry?.logoMediaId}
+                            primaryColor={entry?.primaryColor}
+                          />
                         ) : (
-                          <Chip
-                            tone="neutral"
-                            className="structure-composition-qualifiers__status-chip structure-composition-qualifiers__status-chip--pending"
-                          >
-                            <HourglassIcon size="sm" aria-hidden="true" />
-                            <span className="structure-composition-qualifiers__status-text">
-                              {t('composition.qualifiers.unresolved')}
-                            </span>
-                          </Chip>
+                          <EntryCell
+                            variant="chip"
+                            displayName=""
+                            pending
+                            pendingLabel={t('composition.qualifiers.unresolved')}
+                          />
                         )}
-                        <span
-                          className="structure-composition-qualifiers__slot-placed-slot"
-                          aria-hidden={!placedInPhase}
-                        >
-                          {placedInPhase ? (
-                            <Tooltip
-                              content={
-                                placedTooltip ?? t('entries.entryPlacedStatus')
-                              }
-                            >
-                              <span className="structure-composition-qualifiers__slot-placed">
-                                <LocateIcon size="sm" aria-hidden="true" />
-                              </span>
-                            </Tooltip>
-                          ) : null}
-                        </span>
+                        {placedInPhase ? (
+                          <EntryCellPlacedMarker
+                            tooltip={
+                              placedTooltip ?? t('entries.entryPlacedStatus')
+                            }
+                          />
+                        ) : (
+                          <span
+                            className="structure-composition-qualifiers__slot-placed-slot"
+                            aria-hidden="true"
+                          />
+                        )}
                       </div>
                     </li>
                   );

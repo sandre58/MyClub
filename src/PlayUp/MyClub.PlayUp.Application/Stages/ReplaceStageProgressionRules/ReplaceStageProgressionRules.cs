@@ -63,16 +63,7 @@ public static class ReplaceStageProgressionRules
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
-        ProgressionRules? afterRules;
-        if (paths is null || paths.Count == 0)
-        {
-            afterRules = null;
-        }
-        else
-        {
-            afterRules = BuildRulesFromPaths(paths);
-        }
-
+        var afterRules = paths is null || paths.Count == 0 ? null : BuildRulesFromPaths(paths);
         EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches);
     }
 

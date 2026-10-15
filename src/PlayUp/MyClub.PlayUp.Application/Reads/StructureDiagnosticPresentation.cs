@@ -30,29 +30,11 @@ public static class StructureDiagnosticPresentation
         Blocking
     }
 
-    private static readonly HashSet<string> DangerMatrixCodes = new(StringComparer.Ordinal)
-    {
-        CompetitionFlowAnalyzer.CycleDetected,
-        CompetitionFlowAnalyzer.RoutingNondeterminism,
-        CompetitionFlowAnalyzer.OverExtraction,
-        CompetitionFlowAnalyzer.ConfrontationUndecidable,
-        CompetitionFlowAnalyzer.SlotFeedMissing,
-        CompetitionFlowAnalyzer.SlotFeedInvalid,
-        CompetitionFlowAnalyzer.SlotFeedMultiple,
-        "DanglingQualificationTarget",
-        "DanglingProgressionTarget",
-        "MissingQualificationDestinationSlot",
-        "MissingQualificationDestinationGroup",
-        "MissingProgressionDestinationSlot",
-        "MissingProgressionDestinationGroup"
-    };
-
     public static PresentationPhaseBucket ResolvePhaseBucket(StageStatus status) =>
         status switch
         {
             StageStatus.Ready => PresentationPhaseBucket.Ready,
-            StageStatus.Running => PresentationPhaseBucket.Running,
-            StageStatus.Suspended => PresentationPhaseBucket.Running,
+            StageStatus.Running or StageStatus.Suspended => PresentationPhaseBucket.Running,
             StageStatus.Completed => PresentationPhaseBucket.Hidden,
             _ => PresentationPhaseBucket.Draft
         };
@@ -92,47 +74,25 @@ public static class StructureDiagnosticPresentation
         string code,
         PresentationPhaseBucket bucket,
         StructureStageHubSummaryDto stage,
-        StructureViewDto view)
-    {
-        if (code is CompetitionFlowAnalyzer.OverCapacityEdge
-            or CompetitionFlowAnalyzer.ExpectedRankUnreachable)
-        {
-            return MatrixCell.Attention;
-        }
-
-        if (code is CompetitionFlowAnalyzer.PopulationShortfall
-            or CompetitionFlowAnalyzer.SourcePopulationShortfall)
-        {
-            return bucket == PresentationPhaseBucket.Ready
-                ? MatrixCell.Danger
-                : MatrixCell.Attention;
-        }
-
-        if (code == CompetitionFlowAnalyzer.NonRootUnfed)
-        {
-            if (bucket == PresentationPhaseBucket.Draft
-                && ResolveIncompletenessExpectedNonRootUnfed(stage, view))
-            {
-                return MatrixCell.Progress;
-            }
-
-            return MatrixCell.Attention;
-        }
-
-        if (code == CompetitionFlowAnalyzer.AuthoredAwardUnreachable)
-        {
-            return stage.FormatKind == StructureFormatKind.Cup
-                ? MatrixCell.Danger
-                : MatrixCell.Attention;
-        }
-
-        if (DangerMatrixCodes.Contains(code))
-        {
-            return MatrixCell.Danger;
-        }
-
-        return MatrixCell.Danger;
-    }
+        StructureViewDto view) =>
+        code is CompetitionFlowAnalyzer.OverCapacityEdge
+            or CompetitionFlowAnalyzer.ExpectedRankUnreachable
+            ? MatrixCell.Attention
+            : code is CompetitionFlowAnalyzer.PopulationShortfall
+                or CompetitionFlowAnalyzer.SourcePopulationShortfall
+                ? bucket == PresentationPhaseBucket.Ready
+                    ? MatrixCell.Danger
+                    : MatrixCell.Attention
+                : code != CompetitionFlowAnalyzer.NonRootUnfed
+                    ? code == CompetitionFlowAnalyzer.AuthoredAwardUnreachable
+                        ? stage.FormatKind == StructureFormatKind.Cup
+                            ? MatrixCell.Danger
+                            : MatrixCell.Attention
+                        : MatrixCell.Danger
+                    : bucket == PresentationPhaseBucket.Draft
+                      && ResolveIncompletenessExpectedNonRootUnfed(stage, view)
+                        ? MatrixCell.Progress
+                        : MatrixCell.Attention;
 
     internal static bool ResolveIncompletenessExpectedNonRootUnfed(
         StructureStageHubSummaryDto stage,
@@ -144,22 +104,7 @@ public static class StructureDiagnosticPresentation
         }
 
         var baselineId = view.Format.PrimaryStageId ?? view.Stages.FirstOrDefault()?.StageId;
-        if (baselineId is not null && stage.StageId.Equals(baselineId))
-        {
-            return false;
-        }
-
-        if (StageHasInboundQualProgFeed(view, stage.StageId))
-        {
-            return false;
-        }
-
-        if (stage.AffectationEntryCount > 0)
-        {
-            return false;
-        }
-
-        return true;
+        return (baselineId is null || !stage.StageId.Equals(baselineId)) && !StageHasInboundQualProgFeed(view, stage.StageId) && stage.AffectationEntryCount <= 0;
     }
 
     internal static bool StageHasInboundQualProgFeed(StructureViewDto view, Guid destinationStageId)

@@ -338,12 +338,6 @@
   }
 }
 
-@media (max-width: 56rem) {
-  .structure-phase-hero__triptych {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 40rem) {
   .structure-domain-tile--full {
     grid-column: auto;

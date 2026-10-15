@@ -26,26 +26,20 @@ internal static class InboundFeedSeatResolver
     {
         if (!string.IsNullOrWhiteSpace(path.Destination.SlotKey))
         {
-            var occupant = destination.FindSlot(path.Destination.SlotKey!)?.EntryId;
+            var occupant = destination.FindSlot(path.Destination.SlotKey)?.EntryId;
             if (occupant is not null)
             {
                 return occupant;
             }
         }
 
-        if (path.Destination.TargetsForm)
-        {
-            var fingerprint = FormPathResolutionKey.FromProgression(sourceStage.Id, path);
-            var resolved = destination.FormPathResolutions
-                .FirstOrDefault(r => r.PathFingerprint == fingerprint)
-                ?.EntryId;
-            if (resolved is not null)
-            {
-                return resolved;
-            }
-        }
-
-        return ProjectProgressionFromSourceFixture(path, sourceStage, matchSummariesByStage);
+        if (!path.Destination.TargetsForm)
+            return ProjectProgressionFromSourceFixture(path, sourceStage, matchSummariesByStage);
+        var fingerprint = FormPathResolutionKey.FromProgression(sourceStage.Id, path);
+        var resolved = destination.FormPathResolutions
+            .FirstOrDefault(r => r.PathFingerprint == fingerprint)
+            ?.EntryId;
+        return resolved ?? ProjectProgressionFromSourceFixture(path, sourceStage, matchSummariesByStage);
     }
 
     /// <summary>
@@ -57,45 +51,30 @@ internal static class InboundFeedSeatResolver
         QualificationPath? qualPath,
         ProgressionPath? progPath,
         EntryId? entryId,
-        IReadOnlyList<Stage> competitionStages)
-    {
-        if (entryId is not null)
-        {
-            return IsPlacedOnDestination(
+        IReadOnlyList<Stage> competitionStages) =>
+        entryId is not null
+            ? IsPlacedOnDestination(
                 destination,
                 sourceStage.Id,
                 qualPath,
                 progPath,
-                entryId.Value);
-        }
-
-        return IsInboundPathPlacedWithoutResolvedEntry(
-            destination,
-            sourceStage,
-            qualPath,
-            progPath,
-            competitionStages);
-    }
+                entryId.Value)
+            : IsInboundPathPlacedWithoutResolvedEntry(
+                destination,
+                sourceStage,
+                qualPath,
+                progPath,
+                competitionStages);
 
     internal static bool IsPlacedOnDestination(
         Stage destination,
         StageId sourceStageId,
         QualificationPath? qualPath,
         ProgressionPath? progPath,
-        EntryId entryId)
-    {
-        if (progPath is not null)
-        {
-            return IsPlacedForProgression(destination, sourceStageId, progPath, entryId);
-        }
-
-        if (qualPath is not null)
-        {
-            return IsPlacedForQualification(destination, sourceStageId, qualPath, entryId);
-        }
-
-        return false;
-    }
+        EntryId entryId) =>
+        progPath is not null
+            ? IsPlacedForProgression(destination, sourceStageId, progPath, entryId)
+            : qualPath is not null && IsPlacedForQualification(destination, sourceStageId, qualPath, entryId);
 
     private static bool IsInboundPathPlacedWithoutResolvedEntry(
         Stage destination,
@@ -124,27 +103,21 @@ internal static class InboundFeedSeatResolver
             }
         }
 
-        if (progPath is not null)
+        if (progPath is null) return false;
+        if (progPath.Destination.TargetsSlot
+            && !string.IsNullOrWhiteSpace(progPath.Destination.SlotKey))
         {
-            if (progPath.Destination.TargetsSlot
-                && !string.IsNullOrWhiteSpace(progPath.Destination.SlotKey))
-            {
-                return SlotFeedMatchesProgression(
-                    destination,
-                    competitionStages,
-                    sourceStage.Id,
-                    progPath);
-            }
-
-            if (progPath.Destination.TargetsForm)
-            {
-                var fingerprint = FormPathResolutionKey.FromProgression(sourceStage.Id, progPath);
-                return destination.FormPathResolutions
-                    .Any(resolution => resolution.PathFingerprint == fingerprint);
-            }
+            return SlotFeedMatchesProgression(
+                destination,
+                competitionStages,
+                sourceStage.Id,
+                progPath);
         }
 
-        return false;
+        if (!progPath.Destination.TargetsForm) return false;
+        var fingerprint1 = FormPathResolutionKey.FromProgression(sourceStage.Id, progPath);
+        return destination.FormPathResolutions
+            .Any(resolution => resolution.PathFingerprint == fingerprint1);
     }
 
     private static bool SlotFeedMatchesQualification(
@@ -172,8 +145,7 @@ internal static class InboundFeedSeatResolver
         }
 
         var qualification = resolution.Source.Qualification;
-        return qualification is not null
-            && qualification.SourceStageId.Equals(sourceStageId)
+        return qualification?.SourceStageId.Equals(sourceStageId) == true
             && qualification.PathOrder == path.Order;
     }
 
@@ -202,8 +174,7 @@ internal static class InboundFeedSeatResolver
         }
 
         var progression = resolution.Source.Progression;
-        return progression is not null
-            && progression.SourceStageId.Equals(sourceStageId)
+        return progression?.SourceStageId.Equals(sourceStageId) == true
             && string.Equals(progression.SourcePairKey, path.SourcePairKey, StringComparison.Ordinal)
             && progression.Outcome == path.Outcome;
     }
@@ -214,18 +185,18 @@ internal static class InboundFeedSeatResolver
         ProgressionPath path,
         EntryId entryId)
     {
-        if (!string.IsNullOrWhiteSpace(path.Destination.SlotKey))
+        if (string.IsNullOrWhiteSpace(path.Destination.SlotKey))
         {
-            var occupant = destination.FindSlot(path.Destination.SlotKey!)?.EntryId;
-            return occupant is not null && occupant.Value.Equals(entryId);
+            return DestinationSatisfaction.EvaluateProgression(
+                       destination,
+                       sourceStageId,
+                       path,
+                       entryId)
+                   == DestinationSatisfaction.Kind.Satisfied;
         }
 
-        return DestinationSatisfaction.EvaluateProgression(
-                destination,
-                sourceStageId,
-                path,
-                entryId)
-            == DestinationSatisfaction.Kind.Satisfied;
+        var occupant = destination.FindSlot(path.Destination.SlotKey)?.EntryId;
+        return occupant?.Equals(entryId) == true;
     }
 
     private static bool IsPlacedForQualification(
@@ -234,18 +205,18 @@ internal static class InboundFeedSeatResolver
         QualificationPath path,
         EntryId entryId)
     {
-        if (!string.IsNullOrWhiteSpace(path.Destination.SlotKey))
+        if (string.IsNullOrWhiteSpace(path.Destination.SlotKey))
         {
-            var occupant = destination.FindSlot(path.Destination.SlotKey!)?.EntryId;
-            return occupant is not null && occupant.Value.Equals(entryId);
+            return DestinationSatisfaction.EvaluateQualification(
+                       destination,
+                       sourceStageId,
+                       path,
+                       entryId)
+                   == DestinationSatisfaction.Kind.Satisfied;
         }
 
-        return DestinationSatisfaction.EvaluateQualification(
-                destination,
-                sourceStageId,
-                path,
-                entryId)
-            == DestinationSatisfaction.Kind.Satisfied;
+        var occupant = destination.FindSlot(path.Destination.SlotKey)?.EntryId;
+        return occupant?.Equals(entryId) == true;
     }
 
     private static EntryId? ProjectProgressionFromSourceFixture(

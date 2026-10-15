@@ -51,13 +51,6 @@
     "problemsToHandle_one": "{{count}} problem to handle",
     "problemsToHandle_other": "{{count}} problems to handle",
     "anomalyHintTitle": "Anomalies need your attention",
-    "family": {
-      "graph": "Graph",
-      "feed": "Feed",
-      "capacity": "Capacity",
-      "execution": "Execution",
-      "result": "Result"
-    },
     "statStructural_one": "connection to fix",
     "statStructural_other": "connections to fix",
     "statIncomplete_one": "incomplete phase",
@@ -405,14 +398,11 @@
   "fiche": {
     "section": {
       "phaseState": "Phase status",
-      "phaseProduction": "Match production",
-      "regulationFrame": "Phase regulation frame",
-      "lifecycle": "Phase lifecycle"
+      "regulationFrame": "Phase regulation frame"
     },
     "composition": {
       "placeAssignment": "Place assignment"
     },
-    "regulationDividerLabel": "Regulation",
     "edit": "Edit",
     "editForme": "Edit organisation",
     "editPhase": "Rename phase",
@@ -613,7 +603,6 @@
       "neutral": "See the overview to continue managing the competition."
     },
     "tiles": {
-      "population": "Teams",
       "exits": "Exits",
       "match": "Match",
       "standing": "Standings",
@@ -714,15 +703,8 @@
       "populationAria": "{{current}} entries of {{capacity}} phase places"
     },
     "qualifiers": {
-      "resolvedGauge": "{{count}} teams resolved",
-      "resolvedGaugeAria": "{{count}} of {{total}} qualified teams resolved",
-      "resolvedGaugeLoading": "Loading resolved teams…",
-      "resolvedStatusComplete": "All qualifiers are resolved.",
-      "resolvedStatusProgress": "Qualifier resolution in progress.",
-      "resolvedStatusNone": "No qualifiers resolved yet.",
       "viewPhase": "View phase",
-      "unresolved": "Unresolved",
-      "pending": "Pending"
+      "unresolved": "Unresolved"
     },
     "title": "Teams — {{phase}}",
     "lede": "Add teams to this phase. Places already expected from Qualification / Progression are reserved.",

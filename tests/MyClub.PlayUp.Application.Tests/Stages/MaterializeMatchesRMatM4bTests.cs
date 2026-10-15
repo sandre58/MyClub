@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -23,7 +22,7 @@ namespace MyClub.PlayUp.Application.Tests.Stages;
 /// R-Mat-M4b — A5: <see cref="CompetitionFlowAnalyzer.SourcePopulationShortfall"/> on foreign stage <c>T</c>
 /// must not block <see cref="MaterializeMatches"/> on independent championship <c>S</c>.
 /// </summary>
-public sealed class MaterializeMatchesRMatM4bTests
+public sealed class MaterializeMatchesRMatM4BTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 15, 15, 0, 0, TimeSpan.Zero));
 

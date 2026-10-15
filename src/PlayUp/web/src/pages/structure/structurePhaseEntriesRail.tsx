@@ -7,9 +7,11 @@ import {
   PencilIcon,
   PlusIcon,
   StructureIssueIcon,
-  LocateIcon,
 } from '../../design-system/icons/contentIcons';
-import { TeamCrest } from '../../design-system/TeamCrest';
+import {
+  EntryCell,
+  entryCellListItemClassName,
+} from '../../design-system/components/EntryCell';
 import { EmptyState } from '../../ui';
 import type {
   StructureEntry,
@@ -32,7 +34,7 @@ const EMPTY_ENTRY_IDS: string[] = [];
 
 export function listComposedAffectationEntries(
   stage: StructureStageHubSummary,
-  entries: StructureEntry[],
+  entries: readonly StructureEntry[],
 ): StructureEntry[] {
   const composedIds = stage.affectationEntryIds ?? EMPTY_ENTRY_IDS;
   const byId = new Map(entries.map((entry) => [entry.entryId, entry]));
@@ -128,7 +130,7 @@ export function RootEntriesRail({
   schematicReady = false,
 }: {
   stage: StructureStageHubSummary;
-  entries: StructureEntry[];
+  entries: readonly StructureEntry[];
   /** B2 — inbound Qualif/Prog rules (same rail as Affectation teams). */
   sources?: ReactNode;
   /** Expected volume from inbound rules (promised Entries, not yet necessarily in CompositionEntries). */
@@ -225,13 +227,10 @@ export function RootEntriesRail({
     return (
       <li
         key={entry.entryId}
-        className={[
-          'structure-entries__team',
-          entry.status !== 'Active' ? 'structure-entries__team--ineligible' : null,
-          showUnplacedOpacity ? 'structure-entries__team--unplaced' : null,
-        ]
-          .filter(Boolean)
-          .join(' ')}
+        className={entryCellListItemClassName({
+          ineligible: entry.status !== 'Active',
+          unplaced: showUnplacedOpacity,
+        })}
         aria-label={
           perEntryPlacement && schematicReady && entry.status === 'Active'
             ? placed
@@ -240,27 +239,17 @@ export function RootEntriesRail({
             : undefined
         }
       >
-        <TeamCrest
-          name={entry.displayName}
+        <EntryCell
+          displayName={entry.displayName}
           logoMediaId={entry.logoMediaId}
           primaryColor={entry.primaryColor}
-          size="sm"
+          ineligible={entry.status !== 'Active'}
+          ineligibleLabel={t('composition.noLongerEligible')}
+          placed={placed}
+          placedTooltip={
+            placedTooltip ?? (placed ? t('entries.entryPlacedStatus') : null)
+          }
         />
-        <span className="structure-entries__team-name">{entry.displayName}</span>
-        {entry.status !== 'Active' ? (
-          <span className="structure-entries__team-warn">
-            {t('composition.noLongerEligible')}
-          </span>
-        ) : null}
-        <span className="structure-entries__team-placed-slot">
-          {placed ? (
-            <Tooltip content={placedTooltip ?? t('entries.entryPlacedStatus')}>
-              <span className="structure-entries__team-placed">
-                <LocateIcon size="sm" aria-hidden="true" />
-              </span>
-            </Tooltip>
-          ) : null}
-        </span>
       </li>
     );
   };
