@@ -3521,6 +3521,12 @@ internal static class ScenarioOrchestration
             .ConfigureAwait(false);
         await BuildCtrlO3MatS4SwissSuspendedAsync(context, cancellationToken)
             .ConfigureAwait(false);
+        await BuildCtrlO3MatS5CupSuspendedEmptyPlacementAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+        await BuildCtrlO3MatS6CupSuspendedPartialPlacementAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+        await BuildCtrlO3MatS7CupSuspendedPopulationShortfallAsync(context, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private static async Task BuildCtrlO3MatS1GroupsCompAndStageSuspendedAsync(
@@ -3649,6 +3655,67 @@ internal static class ScenarioOrchestration
             competition,
             stage,
             StructuredSeedLifecycle.Suspended);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Δ-O3-1 recette — Suspended cup, full composition, no bracket occupancy (0 / N).
+    /// </summary>
+    private static async Task BuildCtrlO3MatS5CupSuspendedEmptyPlacementAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, entries) = await CreateRecetteCup8Async(
+                context,
+                "CTRL-O3-MAT S5 — Cup suspendu places vides (comp Running)",
+                "ctrl-o3-s5",
+                cancellationToken)
+            .ConfigureAwait(false);
+        AssignRootComposition(stage, entries, context.Clock);
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        stage.Suspend(context.Clock);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Δ-O3-1 recette — Suspended cup, partial bracket occupancy (2 / 8) via slot draw.
+    /// </summary>
+    private static async Task BuildCtrlO3MatS6CupSuspendedPartialPlacementAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, entries) = await CreateRecetteCup8Async(
+                context,
+                "CTRL-O3-MAT S6 — Cup suspendu places partielles (comp Running)",
+                "ctrl-o3-s6",
+                cancellationToken)
+            .ConfigureAwait(false);
+        AssignRootComposition(stage, entries, context.Clock);
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        _ = PlaceRecetteCupBracketPairsViaSlotDraw(context, stage, entries, pairCount: 1);
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        stage.Suspend(context.Clock);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Δ-O3-1 recette — Suspended cup, population shortfall on entries rail (5 / 8).
+    /// </summary>
+    private static async Task BuildCtrlO3MatS7CupSuspendedPopulationShortfallAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, entries) = await CreateRecetteCup8Async(
+                context,
+                "CTRL-O3-MAT S7 — Cup suspendu déficit population (comp Running)",
+                "ctrl-o3-s7",
+                cancellationToken)
+            .ConfigureAwait(false);
+        AssignRootComposition(stage, entries, context.Clock, take: 5);
+        stage.ReplaceDrawRules(new DrawRules(DrawMode.Random), context.Clock);
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        stage.Suspend(context.Clock);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

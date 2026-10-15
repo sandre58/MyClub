@@ -30,14 +30,41 @@ Manual / DevRunner UI pass still recommended after seed (Structure fiche → Asi
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios ctrl-o3-mat-recette
 ```
 
-Creates **four** competitions (search workspace list for prefix `CTRL-O3-MAT`):
+Creates **seven** competitions (search workspace list for prefix `CTRL-O3-MAT`):
 
 | ID | Competition display name | Stage / competition | Production state |
 |----|--------------------------|---------------------|------------------|
 | **S1** | `CTRL-O3-MAT S1 — Groups suspendu (comp+phase)` | Groups · stage **Suspended** · competition **Suspended** | 3/6 matches materialized, exploitation mid-run |
-| **S2** | `CTRL-O3-MAT S2 — Groups phase suspendue (comp Running)` | Groups · stage **Suspended** · competition **Running** | Same 3/6 — **isolated stage pause** |
+| **S2** | `CTRL-O3-MAT S2 — Groups phase suspendue (comp Running)` | Groups · stage **Suspended** · competition **Running** | Same 3/6 — **isolated stage pause** (tableau groupes **plein** — lifecycle / production gate) |
 | **S3** | `CTRL-O3-MAT S3 — Championnat suspendu` | Qual→Forme champ · stage **Suspended** · competition **Running** | 6/6 materialized, Started then Suspended |
 | **S4** | `CTRL-O3-MAT S4 — Swiss suspendu` | Swiss 8×3 · stage **Suspended** · competition **Suspended** | Progressive rounds mid-run (Swiss exception path) |
+| **S5** | `CTRL-O3-MAT S5 — Cup suspendu places vides (comp Running)` | Cup 8 · stage **Suspended** · comp **Running** | Composition 8/8 · **0/8** bracket occupied (Δ-O3-1 jauge places vides) |
+| **S6** | `CTRL-O3-MAT S6 — Cup suspendu places partielles (comp Running)` | Cup 8 · stage **Suspended** · comp **Running** | Composition 8/8 · **2/8** bracket occupied (1 paire tirée) |
+| **S7** | `CTRL-O3-MAT S7 — Cup suspendu déficit population (comp Running)` | Cup 8 · stage **Suspended** · comp **Running** | Composition **5/8** · rail Équipes + `PopulationShortfall` |
+
+### Δ-O3-1 visual recette (S5–S7)
+
+After seed, open Structure → select competition → phase fiche. Assert **pause** copy (FR/EN per locale), **no** diagnostic ⚠️ on the gauge gap lines, **no** Materialize primary, **Resume phase** available.
+
+| Row | URL pattern | Placement gauge | Population / TEAMS rail |
+|-----|-------------|-----------------|-------------------------|
+| **S5** | `/competitions/{S5-competitionId}/structure` | `0/8 OCCUPIED` · `emptyPaused` (no “fill the bracket now” tone) | 8/8 entries complete (not the shortfall row) |
+| **S6** | `/competitions/{S6-competitionId}/structure` | `2/8 OCCUPIED` · `partialPaused` | 8/8 entries complete |
+| **S7** | `/competitions/{S7-competitionId}/structure` | `0/8` or unschematic until draw — focus **TEAMS** meter `5/8` · `shortfallPaused` / `populationShortfallPaused` in strip, **no** diagnostic icon on paused gap |
+
+Competition IDs are **stable** for a given identity scope after `--reset` (S1–S4 unchanged). Example after seed:
+
+| Row | `competitionId` (deterministic scope) |
+|-----|----------------------------------------|
+| S1 | `f7d53519-533a-5c0a-be31-56f8602c43f9` (`ctrl-o3-s1`) |
+| S2 | `264e8653-628f-584d-9a90-8ed78fa9b677` (`ctrl-o3-s2`) |
+| S3 | `2c4ae578-e4ef-5662-8e1a-98ed26fb4266` (`ctrl-o3-s3`) |
+| S4 | `a95b3550-18b4-58de-a14a-8f0f500dc45e` (`ctrl-o3-s4`) |
+| S5 | `2be391d0-3133-58b9-9028-aba9cd058501` (`ctrl-o3-s5`) |
+| S6 | `94073383-f111-5e18-a991-7c81aa62258e` (`ctrl-o3-s6`) |
+| S7 | `f56556d9-91fb-5b76-81e1-f087a182ce0a` (`ctrl-o3-s7`) |
+
+**S2** remains the reference for **Groups** suspended + production gate; **S5–S7** cover cup bracket + population pause copy without changing S1–S4 behaviour.
 
 ### Legacy seeds (still valid for spot checks)
 
@@ -75,10 +102,15 @@ When `presentation === 'frozen'` and `materializedCount < determinedCount`:
 
 ## Gate criteria (close CTRL-O3-MAT)
 
-- [ ] All four **S1–S4** integration tests green.
-- [ ] SPA unit tests for **Suspended** + `frozen` / `blocked` green.
-- [ ] Manual spot-check on **S2** and **S4** once per release touching Matchs strip.
-- [ ] Then proceed with **Δ-O3-1/2** without conflating with this gate.
+- [x] All four **S1–S4** integration tests green — verified 2026-10-15 (`dotnet test --filter CtrlO3MatRecetteIntegrationTests`).
+- [x] SPA unit tests (**38** tests, 3 files) green — verified 2026-10-15.
+- [x] Manual spot-check **S2** — comp `Running`, phase `Suspended` (`264e8653-…`) : **Reprendre** visible ; pas de bouton Matérialiser ; read `commandEnabled: false`, `disabledReason: StructureNotMutable`.
+- [x] Manual spot-check **S4** — Swiss suspendu (`a95b3550-…`) : **Reprendre** visible ; pas de CTA batch materialize ; copy Swiss (« Générer la prochaine ronde suisse ») ≠ jauge Ch/G.
+- [ ] Re-run spot-checks when Matchs strip / materialize copy changes (per release).
+
+**Gate status:** **FERMÉ** (2026-10-15) pour l’environnement local (seed `ctrl-o3-mat-recette` + Host 5287 + Vite 5173). Réouverture = échec d’un critère ci-dessus.
+
+Proceed with **Δ-O3-1/2** only after this gate stays green in your target environment.
 
 ## Related code
 

@@ -3,6 +3,7 @@ import { structureDiagnosticPresentation } from './structureDiagnosticPresentati
 import type { StructureDiagnosticPresentationContext } from './structureDiagnosticPresentationPolicy';
 import {
   isDraftLikeStageStatus,
+  isSuspendedStageStatus,
   presentationToneToMeterKind,
 } from './structureOperationalMeterPresentation';
 import type { StripOperationalMessageKind } from './structureOperationalStripUi';
@@ -49,6 +50,22 @@ export function resolvePlaceOccupancyMeterCopy(input: {
     return {
       text: t('fiche.operational.placement.stateMessage.complete'),
       kind: 'success',
+    };
+  }
+
+  if (isSuspendedStageStatus(stageStatus)) {
+    if (occupiedPlacesCount === 0) {
+      return {
+        text: t('fiche.operational.placement.stateMessage.emptyPaused'),
+        kind: 'info',
+      };
+    }
+    const remaining = capacity! - occupiedPlacesCount;
+    return {
+      text: t('fiche.operational.placement.stateMessage.partialPaused', {
+        count: remaining,
+      }),
+      kind: 'info',
     };
   }
 
@@ -100,6 +117,14 @@ export function resolveCompositionPopulationMeterCopy(input: {
     };
   }
   if (gap < 0) {
+    if (isSuspendedStageStatus(presentationContext?.stageStatus)) {
+      return {
+        text: t('composition.gauge.populationShortfallPaused', {
+          count: Math.abs(gap),
+        }),
+        kind: 'info',
+      };
+    }
     const tone = structureDiagnosticPresentation(
       'PopulationShortfall',
       presentationContext ?? {},

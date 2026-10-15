@@ -7,6 +7,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Domain.Common;
@@ -30,7 +31,7 @@ public sealed class CtrlO3MatRecetteIntegrationTests(DevelopmentPostgresFixture 
 
         using var scope = fixture.Services.CreateScope();
         var list = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().ListAsync();
-        list.Should().HaveCount(4);
+        list.Should().HaveCount(7);
         list.Should().OnlyContain(c => c.Name.Value.Contains("CTRL-O3-MAT", StringComparison.Ordinal));
     }
 
@@ -76,6 +77,39 @@ public sealed class CtrlO3MatRecetteIntegrationTests(DevelopmentPostgresFixture 
         hub.Materialize.Should().BeNull(
             "Swiss progressive format does not project batch materialize on Structure hub");
         hub.Lifecycle!.RevertTransition!.Code.Should().Be(OverviewAssembler.ActionResumeStage);
+    }
+
+    [Fact]
+    public async Task S5_cup_suspended_empty_bracket_placement_read_modelAsync()
+    {
+        var (competition, hub) = await LoadPrimaryStageHubWithCompetitionAsync("CTRL-O3-MAT S5");
+        competition.Status.Should().Be(CompetitionStatus.Running);
+        hub.Status.Should().Be(StageStatus.Suspended);
+        hub.FormatKind.Should().Be(StructureFormatKind.Cup);
+        hub.AffectationEntryCount.Should().Be(8);
+        hub.CompositionCapacity.Should().Be(8);
+        hub.Materialize.Should().NotBeNull();
+        hub.Materialize!.CommandEnabled.Should().BeFalse();
+        hub.Lifecycle!.RevertTransition!.Code.Should().Be(OverviewAssembler.ActionResumeStage);
+    }
+
+    [Fact]
+    public async Task S6_cup_suspended_partial_composition_poolAsync()
+    {
+        var hub = await LoadPrimaryStageHubAsync("CTRL-O3-MAT S6");
+        hub.Status.Should().Be(StageStatus.Suspended);
+        hub.AffectationEntryCount.Should().Be(8);
+        hub.CompositionCapacity.Should().Be(8);
+    }
+
+    [Fact]
+    public async Task S7_cup_suspended_population_shortfall_on_railAsync()
+    {
+        var hub = await LoadPrimaryStageHubAsync("CTRL-O3-MAT S7");
+        hub.Status.Should().Be(StageStatus.Suspended);
+        hub.AffectationEntryCount.Should().Be(5);
+        hub.CompositionCapacity.Should().Be(8);
+        hub.StructureIssues.Should().Contain("PopulationShortfall");
     }
 
     private static async Task<IReadOnlyList<MatchSummaryRow>> BuildMatchSummariesAsync(

@@ -27,7 +27,10 @@ import {
 import { resolvePlacesN } from './structurePlaces';
 import { structureDiagnosticPresentation } from './structureDiagnosticPresentationPolicy';
 import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
-import { isDraftLikeStageStatus } from './structureOperationalMeterPresentation';
+import {
+  isDraftLikeStageStatus,
+  isSuspendedStageStatus,
+} from './structureOperationalMeterPresentation';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
@@ -96,11 +99,14 @@ export function CompositionMeter({
   const showDeficitChrome = gap < 0 && shortfallTone === 'danger';
   const draftIncomplete =
     gap < 0 && isDraftLikeStageStatus(stage?.status);
+  const pausedPopulationGap =
+    gap < 0 && isSuspendedStageStatus(stage?.status);
   const assemblyClass = [
     'structure-assembly',
     showDeficitChrome ? 'structure-assembly--deficit' : null,
     gap > 0 ? 'structure-assembly--over' : null,
     draftIncomplete ? 'structure-assembly--incomplete' : null,
+    pausedPopulationGap ? 'structure-assembly--paused' : null,
   ]
     .filter(Boolean)
     .join(' ');
@@ -130,11 +136,15 @@ export function CompositionMeter({
               className={
                 draftIncomplete
                   ? 'structure-assembly__gap structure-assembly__gap--expected'
-                  : 'structure-assembly__gap'
+                  : pausedPopulationGap
+                    ? 'structure-assembly__gap structure-assembly__gap--paused'
+                    : 'structure-assembly__gap'
               }
               role="status"
             >
-              {!draftIncomplete && gapDiagnosticTone != null ? (
+              {!draftIncomplete &&
+              !pausedPopulationGap &&
+              gapDiagnosticTone != null ? (
                 <span
                   className="structure-assembly__gap-icon"
                   aria-hidden="true"
@@ -146,7 +156,9 @@ export function CompositionMeter({
                 </span>
               ) : null}
               {gap < 0
-                ? t('entries.meter.shortfall', { count: Math.abs(gap) })
+                ? pausedPopulationGap
+                  ? t('entries.meter.shortfallPaused', { count: Math.abs(gap) })
+                  : t('entries.meter.shortfall', { count: Math.abs(gap) })
                 : t('entries.meter.surplus', { count: gap })}
             </p>
           ) : null}

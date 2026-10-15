@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  resolveCompositionPopulationMeterCopy,
   resolvePlaceOccupancyMeterCopy,
   resolveProductionMeterCopy,
 } from './structureOperationalStripMessages';
@@ -100,5 +101,60 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
         stageStatus: 'Ready',
       }).kind,
     ).toBe('attention');
+  });
+
+  it('uses info and pause copy for partial occupancy in Suspended (Δ-O3-1)', () => {
+    const result = resolvePlaceOccupancyMeterCopy({
+      t,
+      occupancyReady: true,
+      unknownCapacity: false,
+      capacity: 8,
+      occupiedPlacesCount: 3,
+      slotFeedMissingActive: true,
+      stageStatus: 'Suspended',
+    });
+    expect(result.kind).toBe('info');
+    expect(result.text).toBe(
+      'fiche.operational.placement.stateMessage.partialPaused',
+    );
+  });
+
+  it('uses info and pause copy for empty occupancy in Suspended', () => {
+    const result = resolvePlaceOccupancyMeterCopy({
+      t,
+      occupancyReady: true,
+      unknownCapacity: false,
+      capacity: 8,
+      occupiedPlacesCount: 0,
+      slotFeedMissingActive: false,
+      stageStatus: 'Suspended',
+    });
+    expect(result.kind).toBe('info');
+    expect(result.text).toBe(
+      'fiche.operational.placement.stateMessage.emptyPaused',
+    );
+  });
+});
+
+describe('resolveCompositionPopulationMeterCopy', () => {
+  it('uses pause readout for population shortfall in Suspended', () => {
+    const result = resolveCompositionPopulationMeterCopy({
+      t,
+      current: 4,
+      capacity: 8,
+      presentationContext: { stageStatus: 'Suspended' },
+    });
+    expect(result.kind).toBe('info');
+    expect(result.text).toBe('composition.gauge.populationShortfallPaused');
+  });
+
+  it('keeps diagnostic tone for population shortfall in Ready', () => {
+    const result = resolveCompositionPopulationMeterCopy({
+      t,
+      current: 4,
+      capacity: 8,
+      presentationContext: { stageStatus: 'Ready' },
+    });
+    expect(result.text).toBe('entries.meter.shortfall');
   });
 });

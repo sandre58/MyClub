@@ -376,6 +376,10 @@
   color: var(--color-text-secondary);
 }
 
+.structure-assembly--paused .structure-assembly__gap--paused {
+  color: var(--color-text-secondary);
+}
+
 .structure-assembly--deficit .structure-occupancy-meter__fill {
   background: var(--color-error);
 }

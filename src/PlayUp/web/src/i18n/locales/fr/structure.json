@@ -474,7 +474,10 @@
           "empty": "Aucune place n’est encore occupée sur le tableau.",
           "complete": "Toutes les places du tableau sont occupées.",
           "partial_one": "Il reste {{count}} place à remplir sur le tableau.",
-          "partial_other": "Il reste {{count}} places à remplir sur le tableau."
+          "partial_other": "Il reste {{count}} places à remplir sur le tableau.",
+          "emptyPaused": "Aucune place occupée sur le tableau (phase en pause).",
+          "partialPaused_one": "{{count}} place non occupée sur le tableau (phase en pause).",
+          "partialPaused_other": "{{count}} places non occupées sur le tableau (phase en pause)."
         }
       },
       "draw": {
@@ -672,6 +675,8 @@
       "places": "Places",
       "shortfall_one": "Il manque {{count}} équipe",
       "shortfall_other": "Il manque {{count}} équipes",
+      "shortfallPaused_one": "{{count}} équipe en dessous des places N (phase en pause).",
+      "shortfallPaused_other": "{{count}} équipes en dessous des places N (phase en pause).",
       "surplus_one": "{{count}} équipe en trop",
       "surplus_other": "{{count}} équipes en trop"
     }
@@ -703,6 +708,8 @@
       "resolvedQualifiedCaption": "Résolues",
       "entriesPlacesCaption": "Entrées",
       "populationComplete": "Le nombre d'entrées correspond aux places de la phase.",
+      "populationShortfallPaused_one": "{{count}} entrée en dessous des places de la phase (phase en pause).",
+      "populationShortfallPaused_other": "{{count}} entrées en dessous des places de la phase (phase en pause).",
       "populationAria": "{{current}} entrées sur {{capacity}} places de la phase"
     },
     "qualifiers": {

@@ -18,5 +18,12 @@ export function presentationToneToMeterKind(
 export function isDraftLikeStageStatus(
   stageStatus?: StageStatus | null,
 ): boolean {
-  return stageStatus === 'Draft' || stageStatus === 'Suspended';
+  return stageStatus === 'Draft';
+}
+
+/** Exploitation paused — gauge copy is state readout, not construction checklist. */
+export function isSuspendedStageStatus(
+  stageStatus?: StageStatus | null,
+): boolean {
+  return stageStatus === 'Suspended';
 }

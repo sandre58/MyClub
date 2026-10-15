@@ -7,7 +7,10 @@ import {
   operationalStripPoolTone,
   resolvePlacementPoolTone,
 } from './structureOperationalCopy';
-import { isDraftLikeStageStatus } from './structureOperationalMeterPresentation';
+import {
+  isDraftLikeStageStatus,
+  isSuspendedStageStatus,
+} from './structureOperationalMeterPresentation';
 import { resolveCompositionPopulationMeterCopy } from './structureOperationalStripMessages';
 
 /** Phase entries vs Places N — composition band (under Qualifiés / Équipes). */
@@ -30,13 +33,16 @@ export function CompositionPopulationGauge({
     presentationContext,
   });
   const ratioTone = resolvePlacementPoolTone(current, capacity);
-  const ratioToneForPool =
-    isDraftLikeStageStatus(presentationContext?.stageStatus) &&
-    meter.kind !== 'danger'
-      ? meter.kind === 'attention'
-        ? 'attention'
-        : 'neutral'
-      : ratioTone;
+  const stageStatus = presentationContext?.stageStatus;
+  const softenIncompleteChrome =
+    meter.kind !== 'danger' &&
+    (isDraftLikeStageStatus(stageStatus) ||
+      isSuspendedStageStatus(stageStatus));
+  const ratioToneForPool = softenIncompleteChrome
+    ? meter.kind === 'attention'
+      ? 'attention'
+      : 'neutral'
+    : ratioTone;
   const poolTone = operationalStripPoolTone(meter.kind, ratioToneForPool);
 
   const rootClass = [
