@@ -8,11 +8,17 @@ import { structureReadinessHintTitle } from './structureAnomalyHintCopy';
 /** PageHead readiness signal — existence only (no catalogue, no CTAs). */
 export function StructureReadinessHint({
   severity,
+  pausedStructureCopy = false,
 }: {
   severity: 'error' | 'warning';
+  pausedStructureCopy?: boolean;
 }) {
   const { t } = useTranslation('structure');
-  const title = structureReadinessHintTitle({ t, severity });
+  const title = structureReadinessHintTitle({
+    t,
+    severity,
+    pausedStructureCopy,
+  });
   const isError = severity === 'error';
 
   return (

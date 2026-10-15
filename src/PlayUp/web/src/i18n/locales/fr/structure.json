@@ -51,7 +51,9 @@
     "problemsToHandle_one": "{{count}} problème à traiter",
     "problemsToHandle_other": "{{count}} problèmes à traiter",
     "anomalyHintTitle": "Des anomalies nécessitent votre attention",
+    "anomalyHintTitlePaused": "Des anomalies structurelles sont constatées (phase en pause)",
     "warningHintTitle": "La structure reste à finaliser",
+    "warningHintTitlePaused": "Des éléments structurels restent incomplets (phase en pause)",
     "statStructural_one": "liaison à corriger",
     "statStructural_other": "liaisons à corriger",
     "statIncomplete_one": "phase incomplète",
@@ -234,7 +236,26 @@
       "SourcePopulationShortfall": "Pas encore assez d’équipes dans la phase source",
       "PopulationShortfall": "Pas assez d’équipes promises pour cette phase",
       "AuthoredAwardUnreachable": "Paire source introuvable",
-      "ExpectedRankUnreachable": "Ce rang de compétition ne peut pas être produit par les chemins d’attribution"
+      "ExpectedRankUnreachable": "Ce rang de compétition ne peut pas être produit par les chemins d’attribution",
+      "SlotFeedMissingPaused": "Place non alimentée (constat en pause)",
+      "SlotFeedInvalidPaused": "Alimentation d’emplacement invalide (constat en pause)",
+      "SlotFeedMultiplePaused": "Alimentations d’emplacement en conflit (constat en pause)",
+      "CycleDetectedPaused": "Liaison circulaire entre phases (constat en pause)",
+      "RoutingNondeterminismPaused": "Routage ambigu entre phases (constat en pause)",
+      "NonRootUnfedPaused": "Aucune équipe n’alimente encore cette phase (constat en pause)",
+      "DanglingQualificationTargetPaused": "Destination de qualification introuvable (constat en pause)",
+      "DanglingProgressionTargetPaused": "Destination de progression introuvable (constat en pause)",
+      "MissingQualificationDestinationSlotPaused": "Place de qualification manquante (constat en pause)",
+      "MissingQualificationDestinationGroupPaused": "Groupe de qualification manquant (constat en pause)",
+      "MissingProgressionDestinationSlotPaused": "Place de progression manquante (constat en pause)",
+      "MissingProgressionDestinationGroupPaused": "Groupe de progression manquant (constat en pause)",
+      "OverCapacityEdgePaused": "Plus d’équipes promises que de places (constat en pause)",
+      "OverExtractionPaused": "Sortie demandant plus d’équipes que la capacité (constat en pause)",
+      "PopulationShortfallPaused": "Pas assez d’équipes promises pour cette phase (constat en pause)",
+      "SourcePopulationShortfallPaused": "Pas encore assez d’équipes dans la phase source (constat en pause)",
+      "ConfrontationUndecidablePaused": "Confrontation qui ne peut pas toujours départager (constat en pause)",
+      "AuthoredAwardUnreachablePaused": "Paire source introuvable (constat en pause)",
+      "ExpectedRankUnreachablePaused": "Rang de compétition inaccessible via l’attribution (constat en pause)"
     },
     "issuesShort": {
       "DanglingQualificationTarget": "Destination qual. introuvable",
@@ -678,7 +699,9 @@
       "shortfallPaused_one": "{{count}} équipe en dessous des places N (phase en pause).",
       "shortfallPaused_other": "{{count}} équipes en dessous des places N (phase en pause).",
       "surplus_one": "{{count}} équipe en trop",
-      "surplus_other": "{{count}} équipes en trop"
+      "surplus_other": "{{count}} équipes en trop",
+      "surplusPaused_one": "{{count}} équipe au-delà des places N (phase en pause).",
+      "surplusPaused_other": "{{count}} équipes au-delà des places N (phase en pause)."
     }
   },
   "manualPlacement": {

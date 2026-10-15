@@ -4,6 +4,7 @@ import { collectAllStructureReadinessActionItems } from './structureReadinessAct
 import {
   computeStructureReadinessSummary,
   classifyReadinessHeaderTone,
+  presentedStructureProblemsSuspendedOnly,
   stageAmbientKinds,
   stagePopulationGap,
 } from './structureReadinessSummary';
@@ -166,6 +167,7 @@ describe('structureReadinessSummary', () => {
     const poules = stage({
       stageId: 'a',
       name: 'Poules',
+      status: 'Ready',
       structureIssues: ['OverCapacityEdge', 'SlotFeedMissing'],
       affectationEntryCount: 8,
       compositionCapacity: 8,
@@ -315,6 +317,83 @@ describe('structureReadinessSummary', () => {
     expect(summary.presentedProblemCount).toBeGreaterThan(3);
     expect(summary.actionableCount).toBe(actionable);
     expect(summary.actionableCount).toBeGreaterThan(3);
+  });
+
+  it('presentedStructureProblemsSuspendedOnly is true when only Suspended stages contribute', () => {
+    const suspended = stage({
+      stageId: 's1',
+      name: 'Cup',
+      status: 'Suspended',
+      formatKind: 'Cup',
+      affectationEntryCount: 2,
+      compositionCapacity: 8,
+    });
+    const data = view([suspended]);
+    expect(presentedStructureProblemsSuspendedOnly(data, [suspended])).toBe(
+      true,
+    );
+    expect(
+      computeStructureReadinessSummary(data, [suspended])
+        .presentedStructureProblemsSuspendedOnly,
+    ).toBe(true);
+  });
+
+  it('presentedStructureProblemsSuspendedOnly is false when a Ready stage also contributes', () => {
+    const suspended = stage({
+      stageId: 's1',
+      name: 'Cup',
+      status: 'Suspended',
+      formatKind: 'Cup',
+      affectationEntryCount: 0,
+      compositionCapacity: 8,
+    });
+    const ready = stage({
+      stageId: 's2',
+      name: 'Groups',
+      status: 'Ready',
+      structureIssues: ['SlotFeedMissing'],
+      hasDrawRules: false,
+    });
+    const data = view([suspended, ready]);
+    expect(presentedStructureProblemsSuspendedOnly(data, [suspended, ready])).toBe(
+      false,
+    );
+  });
+
+  it('presentedStructureProblemsSuspendedOnly is false when a Running stage also contributes', () => {
+    const suspended = stage({
+      stageId: 's1',
+      name: 'Cup',
+      status: 'Suspended',
+      formatKind: 'Cup',
+      affectationEntryCount: 0,
+      compositionCapacity: 8,
+    });
+    const running = stage({
+      stageId: 's2',
+      name: 'Groups',
+      status: 'Running',
+      structureIssues: ['CycleDetected'],
+    });
+    const data = view([suspended, running]);
+    expect(presentedStructureProblemsSuspendedOnly(data, [suspended, running])).toBe(
+      false,
+    );
+  });
+
+  it('presentedStructureProblemsSuspendedOnly is false when shape is invalid', () => {
+    const suspended = stage({
+      stageId: 's1',
+      name: 'Cup',
+      status: 'Suspended',
+      formatKind: 'Cup',
+      affectationEntryCount: 0,
+      compositionCapacity: 8,
+    });
+    const data = view([suspended], ['CupBracketInvalid']);
+    expect(presentedStructureProblemsSuspendedOnly(data, [suspended])).toBe(
+      false,
+    );
   });
 
   it('classifies header tone by diagnostic gravity, not child chrome', () => {

@@ -33,9 +33,10 @@ import {
   type StructureView,
 } from '../../types';
 import {
-  resolveStructurePageHeadNoteKind,
   type AttentionQueryPhase,
+  resolveStructurePageHeadNoteKind,
 } from './structurePageHeadReadiness';
+import { shouldUsePausedStructurePageHeadCopy } from './structurePageHeadPausedStructureCopy';
 import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructureReadinessHint } from './StructureReadinessHint';
 import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
@@ -558,12 +559,29 @@ function readinessStatusNote(
     readyForNextSlice: readiness.readyForNextSlice,
   });
 
+  const pausedStructurePageHeadCopy = shouldUsePausedStructurePageHeadCopy({
+    noteKind,
+    summary,
+    presentableBlockingAttentionCount: attentionPartition.blocking.length,
+    presentableNonBlockingAttentionCount: attentionPartition.attention.length,
+  });
+
   if (noteKind === 'negative') {
-    return <StructureReadinessHint severity="error" />;
+    return (
+      <StructureReadinessHint
+        severity="error"
+        pausedStructureCopy={pausedStructurePageHeadCopy}
+      />
+    );
   }
 
   if (noteKind === 'warning') {
-    return <StructureReadinessHint severity="warning" />;
+    return (
+      <StructureReadinessHint
+        severity="warning"
+        pausedStructureCopy={pausedStructurePageHeadCopy}
+      />
+    );
   }
 
   if (noteKind === 'positiveMaterialization') {

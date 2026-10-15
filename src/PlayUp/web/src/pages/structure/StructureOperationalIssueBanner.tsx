@@ -1,8 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import {
-  structureDiagnosticPresentation,
-  structureDiagnosticTone,
-} from './structureDiagnosticPresentation';
+import { structureDiagnosticTone } from './structureDiagnosticPresentation';
+import { resolveStructureDiagnosticIssueTitleKey } from './structurePausedDiagnosticCopy';
 import type { StructureDiagnosticSeverityContext } from './structureDiagnosticSeverity';
 import { StripOperationalDiagnosticMessage } from './structureOperationalStripUi';
 
@@ -19,27 +17,19 @@ export function StructureOperationalIssueBanner({
     return null;
   }
 
-  const presentationContext = diagnosticContext
-    ? {
-        formatKind: diagnosticContext.formatKind,
-        stageStatus: diagnosticContext.stageStatus,
-        isEntryBaselineStage: diagnosticContext.isEntryBaselineStage,
-        hasInboundQualProgFeed: diagnosticContext.hasInboundQualProgFeed,
-        affectationEntryCount: diagnosticContext.affectationEntryCount,
-      }
-    : {};
+  const stageStatus = diagnosticContext?.stageStatus ?? null;
 
   return (
     <div className="structure-operational-strip__message-stack">
       {codes.map((code) => {
         const tone = structureDiagnosticTone(code, diagnosticContext);
-        const { titleKeyLong } = structureDiagnosticPresentation(
+        const titleKey = resolveStructureDiagnosticIssueTitleKey(
           code,
-          presentationContext,
+          stageStatus,
         );
         return (
           <StripOperationalDiagnosticMessage key={code} tone={tone}>
-            {t(titleKeyLong, {
+            {t(titleKey, {
               defaultValue: code,
             })}
           </StripOperationalDiagnosticMessage>

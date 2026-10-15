@@ -64,6 +64,12 @@ export type StructureReadinessSummary = {
    * child component colours.
    */
   headerTone: StructureHeaderTone;
+  /**
+   * True when every hub-presented structure contributor (codes + missing pots)
+   * belongs to a Suspended non-completed stage. False when shape invalid or any
+   * contributor is on Draft / Ready / Running.
+   */
+  presentedStructureProblemsSuspendedOnly: boolean;
 };
 
 /** Explicit signal → gravity. Source of truth for headerTone (not vocabulary). */
@@ -126,6 +132,39 @@ export function stageHasPopulationShortfall(
 
 export { stageHasEngagedMissingPots } from './structureStagePresentedIssues';
 
+/**
+ * Hub synthesis (not selected fiche stage): are all presented structure problems
+ * contributed only by Suspended phases?
+ */
+export function presentedStructureProblemsSuspendedOnly(
+  data: StructureView,
+  stages: StructureStageHubSummary[],
+): boolean {
+  if (data.readiness.blockers.includes('CupBracketInvalid')) {
+    return false;
+  }
+
+  let hasContributor = false;
+
+  for (const stage of stages) {
+    if (stage.status === 'Completed') {
+      continue;
+    }
+    const presented = stagePresentedIssueCodes(data, stage);
+    const contributes =
+      presented.length > 0 || stageHasEngagedMissingPots(stage);
+    if (!contributes) {
+      continue;
+    }
+    hasContributor = true;
+    if (stage.status !== 'Suspended') {
+      return false;
+    }
+  }
+
+  return hasContributor;
+}
+
 /** Ambient signals for a tile — one kind per family present on the stage (UX-projected). */
 export function stageAmbientKinds(
   data: StructureView,
@@ -168,6 +207,7 @@ export function computeStructureReadinessSummary(
       showPageHeadNegative: false,
       firstAttentionStageId: null,
       headerTone: 'none',
+      presentedStructureProblemsSuspendedOnly: false,
     };
   }
 
@@ -225,5 +265,7 @@ export function computeStructureReadinessSummary(
     showPageHeadNegative: shapeInvalid || headerTone === 'danger',
     firstAttentionStageId,
     headerTone,
+    presentedStructureProblemsSuspendedOnly:
+      presentedStructureProblemsSuspendedOnly(data, stages),
   };
 }

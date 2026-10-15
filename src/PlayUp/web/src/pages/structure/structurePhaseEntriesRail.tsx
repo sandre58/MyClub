@@ -101,12 +101,16 @@ export function CompositionMeter({
     gap < 0 && isDraftLikeStageStatus(stage?.status);
   const pausedPopulationGap =
     gap < 0 && isSuspendedStageStatus(stage?.status);
+  const pausedPopulationSurplus =
+    gap > 0 && isSuspendedStageStatus(stage?.status);
   const assemblyClass = [
     'structure-assembly',
     showDeficitChrome ? 'structure-assembly--deficit' : null,
     gap > 0 ? 'structure-assembly--over' : null,
     draftIncomplete ? 'structure-assembly--incomplete' : null,
-    pausedPopulationGap ? 'structure-assembly--paused' : null,
+    pausedPopulationGap || pausedPopulationSurplus
+      ? 'structure-assembly--paused'
+      : null,
   ]
     .filter(Boolean)
     .join(' ');
@@ -136,7 +140,7 @@ export function CompositionMeter({
               className={
                 draftIncomplete
                   ? 'structure-assembly__gap structure-assembly__gap--expected'
-                  : pausedPopulationGap
+                  : pausedPopulationGap || pausedPopulationSurplus
                     ? 'structure-assembly__gap structure-assembly__gap--paused'
                     : 'structure-assembly__gap'
               }
@@ -144,6 +148,7 @@ export function CompositionMeter({
             >
               {!draftIncomplete &&
               !pausedPopulationGap &&
+              !pausedPopulationSurplus &&
               gapDiagnosticTone != null ? (
                 <span
                   className="structure-assembly__gap-icon"
@@ -159,7 +164,9 @@ export function CompositionMeter({
                 ? pausedPopulationGap
                   ? t('entries.meter.shortfallPaused', { count: Math.abs(gap) })
                   : t('entries.meter.shortfall', { count: Math.abs(gap) })
-                : t('entries.meter.surplus', { count: gap })}
+                : pausedPopulationSurplus
+                  ? t('entries.meter.surplusPaused', { count: gap })
+                  : t('entries.meter.surplus', { count: gap })}
             </p>
           ) : null}
         </>

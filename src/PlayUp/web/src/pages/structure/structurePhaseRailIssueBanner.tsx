@@ -6,10 +6,8 @@ import type {
 } from '../../types';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
-import {
-  structureDiagnosticTitleKey,
-  structureDiagnosticTone,
-} from './structureDiagnosticPresentation';
+import { structureDiagnosticTone } from './structureDiagnosticPresentation';
+import { resolveStructureDiagnosticIssueTitleKey } from './structurePausedDiagnosticCopy';
 
 export function StructurePhaseRailIssueBanner({
   codes,
@@ -46,9 +44,15 @@ export function StructurePhaseRailIssueBanner({
               <StructureDiagnosticIssueIcon tone={tone} />
             </span>
             <span>
-              {t(structureDiagnosticTitleKey(code), {
-                defaultValue: code,
-              })}
+              {t(
+                resolveStructureDiagnosticIssueTitleKey(
+                  code,
+                  diagnosticContext.stageStatus,
+                ),
+                {
+                  defaultValue: code,
+                },
+              )}
             </span>
           </li>
         );

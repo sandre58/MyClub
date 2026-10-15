@@ -51,7 +51,9 @@
     "problemsToHandle_one": "{{count}} problem to handle",
     "problemsToHandle_other": "{{count}} problems to handle",
     "anomalyHintTitle": "Anomalies need your attention",
+    "anomalyHintTitlePaused": "Structural anomalies noted (phase paused)",
     "warningHintTitle": "The structure still needs finishing",
+    "warningHintTitlePaused": "Structural items remain incomplete (phase paused)",
     "statStructural_one": "connection to fix",
     "statStructural_other": "connections to fix",
     "statIncomplete_one": "incomplete phase",
@@ -234,7 +236,26 @@
       "SourcePopulationShortfall": "Not enough teams yet in the source phase",
       "PopulationShortfall": "Not enough teams promised for this phase",
       "AuthoredAwardUnreachable": "Source pair not found",
-      "ExpectedRankUnreachable": "This competition rank cannot be produced by the attribution paths"
+      "ExpectedRankUnreachable": "This competition rank cannot be produced by the attribution paths",
+      "SlotFeedMissingPaused": "Place not fed (noted while paused)",
+      "SlotFeedInvalidPaused": "Invalid place feed (noted while paused)",
+      "SlotFeedMultiplePaused": "Conflicting place feeds (noted while paused)",
+      "CycleDetectedPaused": "Circular connection between phases (noted while paused)",
+      "RoutingNondeterminismPaused": "Ambiguous routing between phases (noted while paused)",
+      "NonRootUnfedPaused": "No teams feed this phase yet (noted while paused)",
+      "DanglingQualificationTargetPaused": "Qualification destination not found (noted while paused)",
+      "DanglingProgressionTargetPaused": "Progression destination not found (noted while paused)",
+      "MissingQualificationDestinationSlotPaused": "Missing qualification place (noted while paused)",
+      "MissingQualificationDestinationGroupPaused": "Missing qualification group (noted while paused)",
+      "MissingProgressionDestinationSlotPaused": "Missing progression place (noted while paused)",
+      "MissingProgressionDestinationGroupPaused": "Missing progression group (noted while paused)",
+      "OverCapacityEdgePaused": "More teams promised than places (noted while paused)",
+      "OverExtractionPaused": "Outbound demand exceeds capacity (noted while paused)",
+      "PopulationShortfallPaused": "Not enough teams promised for this phase (noted while paused)",
+      "SourcePopulationShortfallPaused": "Not enough teams in the source phase (noted while paused)",
+      "ConfrontationUndecidablePaused": "Confrontation cannot always decide (noted while paused)",
+      "AuthoredAwardUnreachablePaused": "Source pair not found (noted while paused)",
+      "ExpectedRankUnreachablePaused": "Competition rank unreachable via attribution (noted while paused)"
     },
     "issuesShort": {
       "DanglingQualificationTarget": "Qual destination missing",
@@ -678,7 +699,9 @@
       "shortfallPaused_one": "{{count}} team below Places N (phase paused).",
       "shortfallPaused_other": "{{count}} teams below Places N (phase paused).",
       "surplus_one": "{{count}} extra team",
-      "surplus_other": "{{count}} extra teams"
+      "surplus_other": "{{count}} extra teams",
+      "surplusPaused_one": "{{count}} team above Places N (phase paused).",
+      "surplusPaused_other": "{{count}} teams above Places N (phase paused)."
     }
   },
   "manualPlacement": {

@@ -48,4 +48,18 @@ describe('StructurePhaseRailIssueBanner', () => {
     expect(screen.getByRole('list')).toBeTruthy();
     expect(screen.getByRole('status')).toBeTruthy();
   });
+
+  it('requests paused issue copy when stage is Suspended', () => {
+    const suspendedStage = { ...stage, status: 'Suspended' as const };
+    render(
+      <StructurePhaseRailIssueBanner
+        codes={['PopulationShortfall']}
+        data={{ ...data, stages: [suspendedStage] }}
+        stage={suspendedStage}
+      />,
+    );
+    expect(
+      screen.getByText(/constat en pause/i),
+    ).toBeTruthy();
+  });
 });
