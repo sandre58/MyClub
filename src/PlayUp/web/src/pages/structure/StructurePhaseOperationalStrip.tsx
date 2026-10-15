@@ -13,6 +13,7 @@ import {
   materializeMatches,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { RatioMessageGauge } from '../../design-system/components/RatioMessageGauge';
 import { TextLink } from '../../design-system/components/TextLink';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
@@ -28,6 +29,7 @@ import { notify } from '../../design-system/toastStore';
 import { queryKeys } from '../../queryKeys';
 import type { CompetitionStatus, StructureStageHubSummary } from '../../types';
 import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui';
+import { StructureDrawReadinessChecklist } from './StructureDrawReadinessChecklist';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
@@ -39,6 +41,7 @@ import {
 } from './structureMaterializeCopy';
 import {
   productionRatio,
+  drawPoolToneToRatioGaugeTone,
   operationalStripPoolTone,
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
@@ -61,6 +64,7 @@ import {
   shouldShowProductionInMatchsSection,
 } from './structureMatchsSectionUi';
 import {
+  joinCompositionPlaceAssignmentSections,
   joinOperationalStripSections,
   operationalStripGridColumns,
 } from './structureOperationalStripLayout';
@@ -346,6 +350,13 @@ export function StructurePhaseOperationalStrip({
     return null;
   }
 
+  const compositionStack = layoutVariant === 'composition';
+  const stripSectionTitlePresentation = compositionStack ? 'subtitle' : 'chip';
+  const placesTitlePresentation = compositionStack ? 'hidden' : 'chip';
+  const drawTitlePresentation = compositionStack
+    ? 'subtitle'
+    : stripSectionTitlePresentation;
+
   const sectionIndex = (kind: StripSectionKind) =>
     visibleSections.indexOf(kind) + 1;
 
@@ -353,6 +364,8 @@ export function StructurePhaseOperationalStrip({
     <PlacesColumn
       index={sectionIndex('places')}
       titleChipRefreshing={structureHubBackgroundRefresh}
+      titlePresentation={placesTitlePresentation}
+      structureHubBackgroundRefresh={structureHubBackgroundRefresh}
       {...placement}
     />
   ) : null;
@@ -362,6 +375,9 @@ export function StructurePhaseOperationalStrip({
       <DrawColumn
         index={sectionIndex('draw')}
         titleChipRefreshing={structureHubBackgroundRefresh}
+        titlePresentation={drawTitlePresentation}
+        compositionLayout={compositionStack}
+        structureHubBackgroundRefresh={structureHubBackgroundRefresh}
         {...placement}
         drawApplied={drawApplied}
       />
@@ -382,11 +398,25 @@ export function StructurePhaseOperationalStrip({
     />
   );
 
-  const stripSections = joinOperationalStripSections([
-    visibleSections.includes('places') ? placesColumn : null,
-    visibleSections.includes('draw') ? drawColumn : null,
-    visibleSections.includes('matches') ? matchesColumn : null,
-  ]);
+  const stripSections = compositionStack
+    ? joinCompositionPlaceAssignmentSections(placesColumn, drawColumn, {
+        showPlaces,
+        showDraw,
+      })
+    : joinOperationalStripSections([
+        {
+          key: 'places',
+          node: visibleSections.includes('places') ? placesColumn : null,
+        },
+        {
+          key: 'draw',
+          node: visibleSections.includes('draw') ? drawColumn : null,
+        },
+        {
+          key: 'matches',
+          node: visibleSections.includes('matches') ? matchesColumn : null,
+        },
+      ]);
 
   return (
     <>
@@ -395,9 +425,15 @@ export function StructurePhaseOperationalStrip({
         data-layout-variant={layoutVariant}
         data-section-count={visibleSections.length}
         aria-busy={structureHubBackgroundRefresh || undefined}
-        style={{
-          gridTemplateColumns: operationalStripGridColumns(visibleSections.length),
-        }}
+        style={
+          compositionStack
+            ? undefined
+            : {
+                gridTemplateColumns: operationalStripGridColumns(
+                  visibleSections.length,
+                ),
+              }
+        }
       >
         {structureHubBackgroundRefresh ? (
           <span className="ds-visually-hidden" role="status">
@@ -450,6 +486,8 @@ function PlacesColumn(
   props: StructurePlacementOperationalSectionProps & {
     index: number;
     titleChipRefreshing?: boolean;
+    titlePresentation?: 'chip' | 'subtitle' | 'hidden';
+    structureHubBackgroundRefresh?: boolean;
   },
 ) {
   const { t } = useTranslation('structure');
@@ -484,60 +522,47 @@ function PlacesColumn(
   const placesUpdatingLabel = t(
     'fiche.operational.placement.stateMessage.loading',
   );
-
-  const gauge =
+  const showOccupancyRatio =
     !unknownCapacity &&
     props.occupancyReady &&
-    props.occupiedPlacesCount != null ? (
-      <StructureOperationalRatioGauge
-        current={props.occupiedPlacesCount}
-        capacity={capacity}
-        caption={t('fiche.operational.placement.meterCaptionOccupied')}
-        ariaLabel={t('fiche.operational.placement.meterAria')}
-        poolTone={placesPoolTone}
-        layout="trackOnly"
-      />
-    ) : null;
+    props.occupiedPlacesCount != null;
 
   return (
     <StripSection
       index={props.index}
       title={t('fiche.operational.cluster.places')}
+      titlePresentation={props.titlePresentation}
       titleChipRefreshing={props.titleChipRefreshing}
     >
       <SectionUpdatingBody
-        updating={placesInitialLoading}
+        updating={
+          placesInitialLoading &&
+          !(props.structureHubBackgroundRefresh && props.occupancyReady)
+        }
         label={placesUpdatingLabel}
       >
         <>
-          <MetricRow
-            aside={
-              <RatioAside
-                current={props.occupiedPlacesCount}
-                capacity={capacity}
-                label={ratioLabel}
-                poolTone={placesPoolTone}
-                loading={!props.occupancyReady && !unknownCapacity}
-              />
-            }
-            meter={
-              <>
-                {props.placesDiagnostics ? (
-                  <div className="structure-operational-strip__message-stack">
-                    {props.placesDiagnostics}
-                  </div>
-                ) : null}
-                <MetricGaugeBlock
-                  message={placeMeter.text}
-                  messageKind={placeMeter.kind}
-                  gauge={gauge}
-                />
-              </>
-            }
+          {props.placesDiagnostics ? (
+            <div className="structure-operational-strip__message-stack">
+              {props.placesDiagnostics}
+            </div>
+          ) : null}
+          <RatioMessageGauge
+            size="default"
+            current={showOccupancyRatio ? props.occupiedPlacesCount : null}
+            capacity={showOccupancyRatio ? capacity : null}
+            ratioCaption={ratioLabel}
+            message={placeMeter.text}
+            messageKind={placeMeter.kind}
+            ratioTone={drawPoolToneToRatioGaugeTone(placesPoolTone)}
+            ariaLabel={t('fiche.operational.placement.meterAria')}
+            loading={placesInitialLoading && !unknownCapacity}
+            loadingMessage={placesUpdatingLabel}
+            className="structure-operational-strip__ratio-gauge"
           />
           {props.canManualPlace ? (
             <div className="structure-operational-strip__section-actions">
-              <button type="button" className={primaryBtn} onClick={props.onManualPlace}>
+              <button type="button" className={secondaryBtn} onClick={props.onManualPlace}>
                 <PersonIcon size="sm" />
                 {t('fiche.manualPlacementCta')}
               </button>
@@ -554,6 +579,10 @@ function DrawColumn(
     index: number;
     drawApplied: boolean;
     titleChipRefreshing?: boolean;
+    titlePresentation?: 'chip' | 'subtitle' | 'hidden';
+    /** Composition band: resolved pool meter lives on Qualifiés. */
+    compositionLayout?: boolean;
+    structureHubBackgroundRefresh?: boolean;
   },
 ) {
   const compactIcon =
@@ -636,16 +665,163 @@ function DrawColumn(
   const drawInitialLoading = props.showDrawCta && props.drawOperationalReady === false;
   const drawUpdatingLabel = t('fiche.operational.draw.loading');
 
+  const compositionDrawDeactivate = (
+    <Tooltip
+      content={
+        props.hasNonCancelledDraw
+          ? t('regulation.deactivateDrawBlockedHint')
+          : t('fiche.deactivateDraw')
+      }
+    >
+      <span className="structure-operational-tile__action-wrap">
+        <button
+          type="button"
+          className={[
+            compactDangerIcon,
+            props.compositionLayout
+              ? 'structure-operational-strip__composition-draw-deactivate'
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          disabled={deactivateBlocked}
+          aria-label={t('fiche.deactivateDraw')}
+          onClick={props.onDeactivateDraw}
+        >
+          {props.deactivateDrawPending ? (
+            <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
+          ) : (
+            <TrashIcon size="sm" />
+          )}
+        </button>
+      </span>
+    </Tooltip>
+  );
+
+  const compositionLaunchButton = (
+    label: string,
+    onClick: () => void,
+    options?: {
+      disabled?: boolean;
+      disabledTitle?: string;
+      variant?: 'primary' | 'secondary';
+    },
+  ) => {
+    const btnClass =
+      options?.variant === 'secondary' ? secondaryBtn : primaryBtn;
+    const disabled = options?.disabled ?? false;
+    const disabledTitle = options?.disabledTitle;
+    return disabled ? (
+      <Tooltip content={disabledTitle ?? label}>
+        <span className="structure-operational-tile__action-wrap structure-operational-strip__composition-draw-cta-wrap">
+          <button type="button" className={btnClass} disabled>
+            <DrawPendingIcon size="sm" />
+            {label}
+          </button>
+        </span>
+      </Tooltip>
+    ) : (
+      <button type="button" className={btnClass} onClick={onClick}>
+        <DrawPendingIcon size="sm" />
+        {label}
+      </button>
+    );
+  };
+
   let body: ReactNode;
 
-  if (showActivate) {
+  const drawSetupEditableForChecklist =
+    props.canEditDraw && !props.drawApplied;
+  const showDrawReadinessChecklist =
+    props.compositionLayout &&
+    drawEngaged &&
+    drawSetupEditableForChecklist &&
+    props.drawReadinessChecklist != null &&
+    props.drawReadinessChecklist.length > 0;
+
+  const drawReadinessList = showDrawReadinessChecklist ? (
+    <StructureDrawReadinessChecklist items={props.drawReadinessChecklist!} />
+  ) : null;
+
+  if (props.compositionLayout && showActivate) {
+    body = (
+      <div className="structure-operational-strip__composition-draw">
+        {compositionLaunchButton(t('fiche.activateDraw'), props.onActivateDraw)}
+      </div>
+    );
+  } else if (props.compositionLayout && drawEngaged) {
+    const launchLabel = props.drawApplied
+      ? t('fiche.viewDrawWorkflow')
+      : t('fiche.performDraw');
+    const drawSetupEditable = props.canEditDraw && !props.drawApplied;
+    body = (
+      <div className="structure-operational-strip__composition-draw">
+        {!showDrawReadinessChecklist && drawBlockedNote ? (
+          <div className="structure-operational-strip__message-stack">
+            {drawBlockedNote}
+          </div>
+        ) : null}
+        {props.drawApplied ? (
+          <StripOperationalMessage kind="success">
+            {t('fiche.operational.draw.appliedMessage')}
+          </StripOperationalMessage>
+        ) : null}
+        <div className="structure-operational-strip__composition-draw-stack">
+          {props.showDrawCta
+            ? compositionLaunchButton(launchLabel, props.onOpenDrawWorkflow, {
+                disabled: props.blockPerformDrawCta,
+                disabledTitle: props.createBlockedShort ?? launchLabel,
+                variant: props.drawApplied ? 'secondary' : 'primary',
+              })
+            : null}
+          {drawSetupEditable ? (
+            <div className="structure-operational-strip__composition-draw-toolbar">
+              <button
+                type="button"
+                className={`${secondaryBtn} structure-operational-strip__composition-draw-params`}
+                onClick={props.onEditDrawParams}
+              >
+                <SettingsNavIcon size="sm" />
+                {t('fiche.drawParamsAction')}
+              </button>
+              {compositionDrawDeactivate}
+            </div>
+          ) : null}
+          {props.showReleaseCta ? (
+            <button
+              type="button"
+              className={secondaryBtn}
+              disabled={props.releasePending}
+              onClick={props.onReleasePlacements}
+            >
+              {props.releasePending ? (
+                <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
+              ) : (
+                <>
+                  <UnlockIcon size="sm" />
+                  {tDraw('releasePlacementsCount', {
+                    aligned: props.releasableAlignedCount,
+                    total: props.releasableTotal,
+                  })}
+                </>
+              )}
+            </button>
+          ) : null}
+        </div>
+        {drawReadinessList}
+      </div>
+    );
+  } else if (showActivate) {
     body = (
       <div className="structure-operational-strip__empty">
         <EmptyState
           variant="idle"
-          iconAccessible
-          icon={
-            <button type="button" className={primaryBtn} onClick={props.onActivateDraw}>
+          action={
+            <button
+              type="button"
+              className={primaryBtn}
+              onClick={props.onActivateDraw}
+            >
               <DrawPendingIcon size="sm" />
               {t('fiche.activateDraw')}
             </button>
@@ -681,10 +857,14 @@ function DrawColumn(
       capacity,
       unknownCapacity,
     });
+    const showDrawPoolGauge =
+      props.showResolvedPoolGauge &&
+      !unknownCapacity &&
+      !props.compositionLayout;
 
     body = (
       <>
-        {props.showResolvedPoolGauge && !unknownCapacity ? (
+        {showDrawPoolGauge ? (
           <MetricRow
             aside={
               <RatioAside
@@ -725,9 +905,11 @@ function DrawColumn(
                 {drawBlockedNote}
               </div>
             ) : null}
-            <StripOperationalMessage kind={poolMeter.kind}>
-              {poolMeter.text}
-            </StripOperationalMessage>
+            {!props.compositionLayout ? (
+              <StripOperationalMessage kind={poolMeter.kind}>
+                {poolMeter.text}
+              </StripOperationalMessage>
+            ) : null}
           </>
         )}
         <div className="structure-operational-strip__section-actions">
@@ -791,10 +973,25 @@ function DrawColumn(
     <StripSection
       index={props.index}
       title={t('fiche.operational.cluster.draw')}
+      titlePresentation={props.titlePresentation}
+      titleIcon={
+        props.titlePresentation === 'subtitle' ? (
+          <DrawPendingIcon size="sm" />
+        ) : undefined
+      }
       titleChipRefreshing={props.titleChipRefreshing}
-      toolbar={toolbar}
+      toolbar={props.compositionLayout ? null : toolbar}
     >
-      <SectionUpdatingBody updating={drawInitialLoading} label={drawUpdatingLabel}>
+      <SectionUpdatingBody
+        updating={
+          drawInitialLoading &&
+          !(
+            props.structureHubBackgroundRefresh &&
+            props.drawOperationalReady === true
+          )
+        }
+        label={drawUpdatingLabel}
+      >
         {body}
       </SectionUpdatingBody>
     </StripSection>

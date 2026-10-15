@@ -241,6 +241,27 @@ export interface StructureStageHubSummary {
   dematerialize?: StructureDematerialize | null;
   /** Phase lifecycle band (Prepare / Start / Complete). */
   lifecycle?: StructureStageLifecycle | null;
+  /** Inbound Qual/Prog resolution for Composition Qualifiés; omitted when root composition. */
+  inboundComposition?: StructureInboundComposition | null;
+}
+
+/** Hub projection — inbound feed seats (Structure GET, not schematic). */
+export interface StructureInboundComposition {
+  configuredVolume: number;
+  resolvedCount: number;
+  rules: StructureInboundFeedRule[];
+}
+
+export interface StructureInboundFeedRule {
+  feedKey: string;
+  sourceStageId: string;
+  seats: StructureInboundFeedSeat[];
+}
+
+export interface StructureInboundFeedSeat {
+  entryId?: string | null;
+  displayName?: string | null;
+  placed: boolean;
 }
 
 /** GET structure `stages[].lifecycle` — Structure N2 cycle band. */

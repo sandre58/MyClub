@@ -7,10 +7,21 @@ import {
   PencilIcon,
   PlusIcon,
   StructureIssueIcon,
+  LocateIcon,
 } from '../../design-system/icons/contentIcons';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { EmptyState } from '../../ui';
-import type { StructureEntry, StructureStageHubSummary } from '../../types';
+import type {
+  StructureEntry,
+  StructureFormatKind,
+  StructureStageHubSummary,
+} from '../../types';
+import {
+  type EntryPlaceProjection,
+  isEntryPlacedInPhase,
+  primaryPlaceLabel,
+  showPerEntryPlacement,
+} from './structureEntryPlacementProjection';
 import { resolvePlacesN } from './structurePlaces';
 import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
 
@@ -18,6 +29,22 @@ const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
 const EMPTY_ENTRY_IDS: string[] = [];
+
+export function listComposedAffectationEntries(
+  stage: StructureStageHubSummary,
+  entries: StructureEntry[],
+): StructureEntry[] {
+  const composedIds = stage.affectationEntryIds ?? EMPTY_ENTRY_IDS;
+  const byId = new Map(entries.map((entry) => [entry.entryId, entry]));
+  return composedIds
+    .map((id) => byId.get(id))
+    .filter((entry): entry is StructureEntry => entry != null)
+    .sort((a, b) =>
+      a.displayName.localeCompare(b.displayName, undefined, {
+        sensitivity: 'base',
+      }),
+    );
+}
 
 /** Cardinality gauge — expected Population vs Places N; shortfall = danger. */
 export function CompositionMeter({
@@ -94,6 +121,11 @@ export function RootEntriesRail({
   sourcesConfiguredVolume = 0,
   canCompose,
   onEditCompose,
+  variant = 'default',
+  formatKind,
+  placedEntryIds,
+  entryPlaceProjections,
+  schematicReady = false,
 }: {
   stage: StructureStageHubSummary;
   entries: StructureEntry[];
@@ -103,32 +135,26 @@ export function RootEntriesRail({
   sourcesConfiguredVolume?: number;
   canCompose?: boolean;
   onEditCompose?: () => void;
+  variant?: 'default' | 'composition-band';
+  formatKind?: StructureFormatKind | null;
+  placedEntryIds?: ReadonlySet<string>;
+  entryPlaceProjections?: ReadonlyMap<string, EntryPlaceProjection>;
+  schematicReady?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const fromAffectation = stage.affectationEntryCount ?? 0;
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
   const ineligible = stage.affectationIneligibleCount ?? 0;
-  const composedIds = stage.affectationEntryIds ?? EMPTY_ENTRY_IDS;
   const previewNames = stage.affectationPreviewNames ?? [];
   // U1 — Population gauge always covers authoring alimentations (never runtime membership).
   const meterEntries = fromAffectation + fromFeeds;
-  const byId = useMemo(
-    () => new Map(entries.map((entry) => [entry.entryId, entry])),
-    [entries],
-  );
   const composed = useMemo(
-    () =>
-      composedIds
-        .map((id) => byId.get(id))
-        .filter((entry): entry is StructureEntry => entry != null)
-        .sort((a, b) =>
-          a.displayName.localeCompare(b.displayName, undefined, {
-            sensitivity: 'base',
-          }),
-        ),
-    [composedIds, byId],
+    () => listComposedAffectationEntries(stage, entries),
+    [stage, entries],
   );
+  const perEntryPlacement = showPerEntryPlacement(formatKind ?? stage.formatKind);
+  const placedIds = placedEntryIds ?? new Set<string>();
 
   let state: 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
   if (n == null) {
@@ -168,6 +194,113 @@ export function RootEntriesRail({
         </button>
       </Tooltip>
     ) : null;
+
+  const teamListClass = [
+    'structure-entries__teams',
+    variant === 'composition-band' ? 'structure-entries__teams--band' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const renderTeamCell = (entry: StructureEntry) => {
+    const placed = isEntryPlacedInPhase(
+      entry.entryId,
+      placedIds,
+      formatKind ?? stage.formatKind,
+      schematicReady,
+    );
+    const showUnplacedOpacity =
+      perEntryPlacement &&
+      schematicReady &&
+      entry.status === 'Active' &&
+      !placed;
+    const projection = entryPlaceProjections?.get(entry.entryId);
+    const placeLabel = primaryPlaceLabel(projection);
+    const placedTooltip =
+      placed && placeLabel
+        ? t('entries.entryPlacedTooltip', { place: placeLabel })
+        : placed
+          ? t('entries.entryPlacedStatus')
+          : null;
+    return (
+      <li
+        key={entry.entryId}
+        className={[
+          'structure-entries__team',
+          entry.status !== 'Active' ? 'structure-entries__team--ineligible' : null,
+          showUnplacedOpacity ? 'structure-entries__team--unplaced' : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        aria-label={
+          perEntryPlacement && schematicReady && entry.status === 'Active'
+            ? placed
+              ? t('entries.entryPlacedAria', { name: entry.displayName })
+              : t('entries.entryNotPlacedAria', { name: entry.displayName })
+            : undefined
+        }
+      >
+        <TeamCrest
+          name={entry.displayName}
+          logoMediaId={entry.logoMediaId}
+          primaryColor={entry.primaryColor}
+          size="sm"
+        />
+        <span className="structure-entries__team-name">{entry.displayName}</span>
+        {entry.status !== 'Active' ? (
+          <span className="structure-entries__team-warn">
+            {t('composition.noLongerEligible')}
+          </span>
+        ) : null}
+        <span className="structure-entries__team-placed-slot">
+          {placed ? (
+            <Tooltip content={placedTooltip ?? t('entries.entryPlacedStatus')}>
+              <span className="structure-entries__team-placed">
+                <LocateIcon size="sm" aria-hidden="true" />
+              </span>
+            </Tooltip>
+          ) : null}
+        </span>
+      </li>
+    );
+  };
+
+  if (variant === 'composition-band') {
+    return (
+      <div
+        className={[
+          'structure-entries',
+          'structure-entries--composition-band',
+          danger ? 'structure-entries--danger' : null,
+          warn ? 'structure-entries--warn' : null,
+          soft ? 'structure-entries--soft' : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {composed.length > 0 ? (
+          <ul className={teamListClass}>
+            {composed.map((entry) => renderTeamCell(entry))}
+          </ul>
+        ) : previewNames.length > 0 ? (
+          <p className="structure-entries__preview" role="status">
+            {previewNames.join(' · ')}
+          </p>
+        ) : ineligible > 0 ? (
+          <p className="structure-entries__anomaly" role="status">
+            {t('entries.ineligibleOverlay', { count: ineligible })}
+          </p>
+        ) : (
+          <EmptyState
+            variant="idle"
+            icon={<EmptySelectionIcon size="lg" />}
+          >
+            {t('entries.emptyCompositionExtra')}
+          </EmptyState>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -212,35 +345,8 @@ export function RootEntriesRail({
               {affectationEdit}
             </header>
             {composed.length > 0 ? (
-              <ul className="structure-entries__teams">
-                {composed.map((entry) => (
-                  <li
-                    key={entry.entryId}
-                    className={[
-                      'structure-entries__team',
-                      entry.status !== 'Active'
-                        ? 'structure-entries__team--ineligible'
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    <TeamCrest
-                      name={entry.displayName}
-                      logoMediaId={entry.logoMediaId}
-                      primaryColor={entry.primaryColor}
-                      size="sm"
-                    />
-                    <span className="structure-entries__team-name">
-                      {entry.displayName}
-                    </span>
-                    {entry.status !== 'Active' ? (
-                      <span className="structure-entries__team-warn">
-                        {t('composition.noLongerEligible')}
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
+              <ul className={teamListClass}>
+                {composed.map((entry) => renderTeamCell(entry))}
               </ul>
             ) : previewNames.length > 0 ? (
               <p className="structure-entries__preview" role="status">

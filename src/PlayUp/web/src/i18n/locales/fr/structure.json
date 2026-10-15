@@ -383,6 +383,9 @@
       "regulationFrame": "Cadre réglementaire de la phase",
       "lifecycle": "Cycle de vie de la phase"
     },
+    "composition": {
+      "placeAssignment": "Affectation des places"
+    },
     "regulationDividerLabel": "Règlement",
     "edit": "Modifier",
     "editForme": "Modifier l’organisation",
@@ -459,6 +462,13 @@
         "activateHint": "Affecter aléatoirement les équipes dans la phase.",
         "appliedMessage": "Un tirage au sort a été appliqué pour cette phase.",
         "unavailable": "Le tirage n’est pas disponible pour cette phase.",
+        "readiness": {
+          "aria": "Prérequis pour effectuer le tirage",
+          "teamsFillPlaces": "Assez d’équipes pour occuper les places ({{current}}/{{capacity}})",
+          "teamsAllKnown": "Toutes les équipes sont connues ({{current}}/{{capacity}})",
+          "teamsAllKnownPlain": "Toutes les équipes sont connues",
+          "noManualPlacementPlain": "Aucun placement manuel sur le tableau"
+        },
         "stateMessage": {
           "unknown": "Capacité indisponible pour le vivier de tirage.",
           "pool": "{{filled}} équipes résolues sur {{capacity}} pour le tirage.",
@@ -624,16 +634,22 @@
     "ineligibleOverlay_other": "{{count}} équipes plus éligibles",
     "editComposition": "Modifier les équipes",
     "emptyTitle": "Aucune équipe",
+    "emptyCompositionExtra": "Aucune équipe supplémentaire",
+    "emptyCompositionBandHint": "Ajouter des équipes à la phase ou alimenter les entrées à partir d'une autre phase",
     "emptyBody": "Ajoutez des équipes.",
     "addAffectation": "Ajouter des équipes",
+    "entryPlacedAria": "{{name}} — placée sur la forme",
+    "entryNotPlacedAria": "{{name}} — pas encore placée",
+    "entryPlacedStatus": "Placée",
+    "entryPlacedTooltip": "Placée — {{place}}",
     "meterAria": "Équipes attendues / places",
     "meter": {
       "population": "Équipes",
       "places": "Places",
-      "shortfall_one": "Il manque {{count}} place",
-      "shortfall_other": "Il manque {{count}} places",
-      "surplus_one": "{{count}} place en trop",
-      "surplus_other": "{{count}} places en trop"
+      "shortfall_one": "Il manque {{count}} équipe",
+      "shortfall_other": "Il manque {{count}} équipes",
+      "surplus_one": "{{count}} équipe en trop",
+      "surplus_other": "{{count}} équipes en trop"
     }
   },
   "manualPlacement": {
@@ -659,6 +675,23 @@
     "toastCleared": "Affectation manuelle effacée"
   },
   "composition": {
+    "gauge": {
+      "resolvedQualifiedCaption": "Résolues",
+      "entriesPlacesCaption": "Entrées",
+      "populationComplete": "Le nombre d'entrées correspond aux places de la phase.",
+      "populationAria": "{{current}} entrées sur {{capacity}} places de la phase"
+    },
+    "qualifiers": {
+      "resolvedGauge": "{{count}} équipes résolues",
+      "resolvedGaugeAria": "{{count}} équipes résolues sur {{total}} qualifiées",
+      "resolvedGaugeLoading": "Chargement des équipes résolues…",
+      "resolvedStatusComplete": "Tous les qualifiés sont résolus.",
+      "resolvedStatusProgress": "Résolution des qualifiés en cours.",
+      "resolvedStatusNone": "Aucun qualifié résolu pour l'instant.",
+      "viewPhase": "Voir la phase",
+      "unresolved": "Non résolue",
+      "pending": "En attente"
+    },
     "title": "Équipes — {{phase}}",
     "lede": "Ajoutez des équipes à cette phase. Les places déjà attendues via Qualification / Progression sont réservées.",
     "counter": "{{k}}/{{n}} places",

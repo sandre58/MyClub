@@ -57,6 +57,31 @@ export function resolvePlaceOccupancyMeterCopy(input: {
   };
 }
 
+export function resolveCompositionPopulationMeterCopy(input: {
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  current: number;
+  capacity: number;
+}): StripMeterCopy {
+  const { t, current, capacity } = input;
+  const gap = current - capacity;
+  if (gap === 0) {
+    return {
+      text: t('composition.gauge.populationComplete'),
+      kind: 'success',
+    };
+  }
+  if (gap < 0) {
+    return {
+      text: t('entries.meter.shortfall', { count: Math.abs(gap) }),
+      kind: 'danger',
+    };
+  }
+  return {
+    text: t('entries.meter.surplus', { count: gap }),
+    kind: 'danger',
+  };
+}
+
 export function resolveDrawPoolMeterCopy(input: {
   t: (key: string, opts?: Record<string, unknown>) => string;
   filled: number;

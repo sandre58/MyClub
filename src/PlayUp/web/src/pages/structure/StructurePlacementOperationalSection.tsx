@@ -16,6 +16,7 @@ import { PendingLabel } from '../../ui';
 import { StructureOperationalActionGroup } from './StructureOperationalActionGroup';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import { StructureOperationalTile } from './StructureOperationalTile';
+import type { DrawReadinessChecklistItem } from './drawUi';
 import {
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
@@ -53,6 +54,7 @@ export type StructurePlacementOperationalSectionProps = {
   slotFeedMissingActive?: boolean;
   /** Draw pool / create gate needs draw overview (Cup) before showing Tirage strip body. */
   drawOperationalReady?: boolean;
+  drawReadinessChecklist?: readonly DrawReadinessChecklistItem[] | null;
   placesDiagnostics?: ReactNode;
   onOpenDrawWorkflow: () => void;
   onActivateDraw: () => void;

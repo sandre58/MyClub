@@ -209,9 +209,9 @@ export function StructurePhaseRegulationStrip({
   ) : null;
 
   const stripSections = joinOperationalStripSections([
-    matchSection,
-    standingSection,
-    confrontationSection,
+    { key: 'match', node: matchSection },
+    { key: 'standing', node: standingSection },
+    { key: 'confrontation', node: confrontationSection },
   ]);
 
   return (

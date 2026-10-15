@@ -32,6 +32,9 @@ export type FeedRow = {
   sortPrimary: number;
   /** Group name (alpha) or match number (numeric as string padded). */
   sortSecondary: string;
+  qualPathOrder?: number;
+  progressionPairKey?: string;
+  progressionOutcome?: string;
 };
 
 export type FeedGroup = {
@@ -50,6 +53,9 @@ export type FeedGroup = {
     family: FeedFamily;
     sortPrimary: number;
     sortSecondary: string;
+    qualPathOrder?: number;
+    progressionPairKey?: string;
+    progressionOutcome?: string;
   }[];
 };
 
@@ -379,6 +385,7 @@ export function inboundFeeds(
         peerOrder: stagePeerOrder(data, source.stageId),
         ...parts,
         volume: selectionVolume(path),
+        qualPathOrder: path.order,
       });
     }
     for (const path of source.progressionPaths ?? []) {
@@ -391,6 +398,8 @@ export function inboundFeeds(
         peerOrder: stagePeerOrder(data, source.stageId),
         ...parts,
         volume: 1,
+        progressionPairKey: path.sourcePairKey ?? undefined,
+        progressionOutcome: path.outcome ?? undefined,
       });
     }
   }
@@ -448,6 +457,9 @@ export function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
         family: feed.family,
         sortPrimary: feed.sortPrimary,
         sortSecondary: feed.sortSecondary,
+        qualPathOrder: feed.qualPathOrder,
+        progressionPairKey: feed.progressionPairKey,
+        progressionOutcome: feed.progressionOutcome,
       });
     } else {
       map.set(feed.peerId, {
@@ -467,6 +479,9 @@ export function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
             family: feed.family,
             sortPrimary: feed.sortPrimary,
             sortSecondary: feed.sortSecondary,
+            qualPathOrder: feed.qualPathOrder,
+            progressionPairKey: feed.progressionPairKey,
+            progressionOutcome: feed.progressionOutcome,
           },
         ],
       });

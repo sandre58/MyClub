@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  ArrowDown,
   ArrowLeftRight,
   CalendarDays,
   CalendarPlus,
@@ -44,10 +43,12 @@ import {
   Volleyball,
   X,
   Handshake,
+  Hourglass,
   CheckCircle2,
   Check,
   Pause,
   Play,
+  LocateFixed
 } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { Icon, LucideIcon, type IconSize } from './Icon';
@@ -321,6 +322,11 @@ export function PendingCircleIcon({ size, ...props }: ContentIconProps) {
   );
 }
 
+/** Target. */
+export function LocateIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={LocateFixed} size={size} {...props} />;
+}
+
 /** Person — head / shoulders (roster placeholder). */
 export function PersonIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={UsersRound} size={size} {...props} />;
@@ -331,11 +337,6 @@ export function ArrowRightIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowRight} size={size} {...props} />;
 }
 
-/** Vertical connector — down arrow (ordered topology). */
-export function ArrowDownIcon({ size, ...props }: ContentIconProps) {
-  return <LucideIcon icon={ArrowDown} size={size} {...props} />;
-}
-
 /** Aggregate score — sigma. */
 export function AggregateIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Sigma} size={size} {...props} />;
@@ -344,6 +345,10 @@ export function AggregateIcon({ size, ...props }: ContentIconProps) {
 /** Match clock / period duration. */
 export function TimerIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Timer} size={size} {...props} />;
+}
+
+export function HourglassIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Hourglass} size={size} {...props} />;
 }
 
 /** Penalties / goal — shootout token. */

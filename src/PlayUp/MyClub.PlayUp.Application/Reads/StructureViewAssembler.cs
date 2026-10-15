@@ -400,6 +400,12 @@ public static class StructureViewAssembler
                 drawExecutionBadge,
                 materialize));
 
+        var inboundComposition = StructureInboundCompositionAssembler.Assemble(
+            competition,
+            stage,
+            competitionStages,
+            matchSummariesByStage);
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -472,7 +478,8 @@ public static class StructureViewAssembler
             DrawExecutionBadge: drawExecutionBadge,
             Materialize: materialize,
             Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries),
-            Lifecycle: lifecycle);
+            Lifecycle: lifecycle,
+            InboundComposition: inboundComposition);
     }
 
     /// <summary>

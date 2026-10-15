@@ -241,6 +241,7 @@ public sealed record StructureReadinessDto(
 /// <param name="Materialize">Workspace materialize capability (null when the format has no Materialize command).</param>
 /// <param name="Dematerialize">Workspace dematerialize capability (null when nothing is materialized or the format is unsupported).</param>
 /// <param name="Lifecycle">Phase lifecycle band (Prepare / Start / Complete transition + checklist / match progress).</param>
+/// <param name="InboundComposition">Inbound Qual/Prog resolution for the Composition Qualifiés band; null when root composition.</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -312,7 +313,8 @@ public sealed record StructureStageHubSummaryDto(
     StructureDrawExecutionBadge? DrawExecutionBadge = null,
     StructureMaterializeDto? Materialize = null,
     StructureDematerializeDto? Dematerialize = null,
-    StructureStageLifecycleDto? Lifecycle = null);
+    StructureStageLifecycleDto? Lifecycle = null,
+    StructureInboundCompositionDto? InboundComposition = null);
 
 /// <summary>
 /// Structure workspace projection of match materialization (not Overview opportunity).

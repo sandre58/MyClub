@@ -179,6 +179,10 @@ describe('StructurePhaseOperationalStrip', () => {
     expect(
       screen.queryByRole('heading', { name: /Matchs/i }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /Places/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Tirage/i })).toBeInTheDocument();
   });
 
   it('aside-matchs layout variant omits placement and draw columns', () => {

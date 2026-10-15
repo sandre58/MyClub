@@ -383,6 +383,9 @@
       "regulationFrame": "Phase regulation frame",
       "lifecycle": "Phase lifecycle"
     },
+    "composition": {
+      "placeAssignment": "Place assignment"
+    },
     "regulationDividerLabel": "Regulation",
     "edit": "Edit",
     "editForme": "Edit organisation",
@@ -460,6 +463,13 @@
         "activateHint": "Enable the draw to resolve teams and run an execution.",
         "appliedMessage": "A random draw has been applied for this phase.",
         "unavailable": "Draw is not available for this phase.",
+        "readiness": {
+          "aria": "Requirements to run the draw",
+          "teamsFillPlaces": "Enough teams to fill the places ({{current}}/{{capacity}})",
+          "teamsAllKnown": "All teams are known ({{current}}/{{capacity}})",
+          "teamsAllKnownPlain": "All teams are known",
+          "noManualPlacementPlain": "No manual placement on the bracket"
+        },
         "stateMessage": {
           "unknown": "Capacity unavailable for the draw pool.",
           "pool": "{{filled}} teams resolved out of {{capacity}} for the draw.",
@@ -624,16 +634,22 @@
     "ineligibleOverlay_other": "{{count}} teams no longer eligible",
     "editComposition": "Edit teams",
     "emptyTitle": "No teams",
+    "emptyCompositionExtra": "No additional teams",
+    "emptyCompositionBandHint": "Add teams to the phase or feed entries from another phase",
     "emptyBody": "Add teams.",
     "addAffectation": "Add teams",
+    "entryPlacedAria": "{{name}} — placed on the form",
+    "entryNotPlacedAria": "{{name}} — not placed yet",
+    "entryPlacedStatus": "Placed",
+    "entryPlacedTooltip": "Placed — {{place}}",
     "meterAria": "Expected teams / places",
     "meter": {
       "population": "Teams",
       "places": "Places",
-      "shortfall_one": "{{count}} place missing",
-      "shortfall_other": "{{count}} places missing",
-      "surplus_one": "{{count}} place surplus",
-      "surplus_other": "{{count}} places surplus"
+      "shortfall_one": "{{count}} team missing",
+      "shortfall_other": "{{count}} teams missing",
+      "surplus_one": "{{count}} extra team",
+      "surplus_other": "{{count}} extra teams"
     }
   },
   "manualPlacement": {
@@ -659,6 +675,23 @@
     "toastCleared": "Manual assignment cleared"
   },
   "composition": {
+    "gauge": {
+      "resolvedQualifiedCaption": "Resolved",
+      "entriesPlacesCaption": "Entries",
+      "populationComplete": "Entry count matches phase places.",
+      "populationAria": "{{current}} entries of {{capacity}} phase places"
+    },
+    "qualifiers": {
+      "resolvedGauge": "{{count}} teams resolved",
+      "resolvedGaugeAria": "{{count}} of {{total}} qualified teams resolved",
+      "resolvedGaugeLoading": "Loading resolved teams…",
+      "resolvedStatusComplete": "All qualifiers are resolved.",
+      "resolvedStatusProgress": "Qualifier resolution in progress.",
+      "resolvedStatusNone": "No qualifiers resolved yet.",
+      "viewPhase": "View phase",
+      "unresolved": "Unresolved",
+      "pending": "Pending"
+    },
     "title": "Teams — {{phase}}",
     "lede": "Add teams to this phase. Places already expected from Qualification / Progression are reserved.",
     "counter": "{{k}}/{{n}} places",

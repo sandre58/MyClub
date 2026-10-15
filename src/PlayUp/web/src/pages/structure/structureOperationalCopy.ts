@@ -4,6 +4,7 @@ import type {
   StructureMaterialize,
   StructureStageHubSummary,
 } from '../../types';
+import type { RatioMessageGaugeRatioTone } from '../../design-system/components/RatioMessageGauge';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 import type { StripOperationalMessageKind } from './structureOperationalStripUi';
 import {
@@ -24,6 +25,23 @@ export function resolvePlacementPoolTone(
 }
 
 /** Align ratio / gauge chrome with the operational strip message severity (D5). */
+export function drawPoolToneToRatioGaugeTone(
+  tone: DrawCtaPoolTone,
+): RatioMessageGaugeRatioTone {
+  switch (tone) {
+    case 'complete':
+      return 'complete';
+    case 'danger':
+      return 'danger';
+    case 'attention':
+      return 'attention';
+    case 'partial':
+      return 'partial';
+    default:
+      return 'neutral';
+  }
+}
+
 export function operationalStripPoolTone(
   messageKind: StripOperationalMessageKind,
   ratioTone: 'neutral' | 'partial' | 'complete',

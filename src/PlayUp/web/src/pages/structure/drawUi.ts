@@ -320,6 +320,59 @@ export function resolveStageDrawCreateGate(input: {
   });
 }
 
+export type DrawReadinessCriterionId =
+  | 'teamsFillPlaces'
+  | 'teamsAllKnown'
+  | 'noManualPlacement';
+
+export type DrawReadinessChecklistItem = {
+  id: DrawReadinessCriterionId;
+  met: boolean;
+  current?: number;
+  capacity?: number;
+};
+
+/** Composition-band checklist before running a draw (3 product criteria). */
+export function resolveDrawReadinessChecklist(input: {
+  compositionEntryCount: number;
+  placesN: number | null | undefined;
+  inboundResolvedCount: number;
+  inboundConfiguredVolume: number;
+  slots: ReadonlyArray<{ entryId: string | null | undefined }>;
+}): DrawReadinessChecklistItem[] {
+  const pool = input.compositionEntryCount;
+  const places = input.placesN ?? 0;
+  const resolved = input.inboundResolvedCount;
+  const configured = input.inboundConfiguredVolume;
+
+  const teamsFillPlaces =
+    places > 0 && pool === places;
+
+  const teamsAllKnown =
+    configured <= 0 ? true : resolved >= configured;
+
+  const noManualPlacement = !slotsHaveOccupants(input.slots);
+
+  return [
+    {
+      id: 'teamsFillPlaces',
+      met: teamsFillPlaces,
+      current: pool,
+      capacity: places > 0 ? places : undefined,
+    },
+    {
+      id: 'teamsAllKnown',
+      met: teamsAllKnown,
+      current: configured > 0 ? resolved : undefined,
+      capacity: configured > 0 ? configured : undefined,
+    },
+    {
+      id: 'noManualPlacement',
+      met: noManualPlacement,
+    },
+  ];
+}
+
 /**
  * Synthetic chrome flags — projection keeps three axes; UI does not teach the matrix
  * via three systematic badges (PublishAndApply decision).

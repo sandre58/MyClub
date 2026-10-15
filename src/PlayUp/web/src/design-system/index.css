@@ -52,6 +52,7 @@
 @import './foundations/interactive-row.css';
 @import './foundations/links.css';
 @import './foundations/meter.css';
+@import './foundations/ratio-message-gauge.css';
 @import './foundations/home.css';
 @import './foundations/feedback.css';
 @import './foundations/visually-hidden.css';

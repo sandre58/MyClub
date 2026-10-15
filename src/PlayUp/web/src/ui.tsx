@@ -276,6 +276,7 @@ export function persistentStructureMutationSotHref(
  */
 export function EmptyState({
   title,
+  hint,
   children,
   action,
   icon,
@@ -283,7 +284,9 @@ export function EmptyState({
   variant = 'default',
 }: {
   title?: string;
-  children: ReactNode;
+  /** Secondary guidance below the title (idle regions). */
+  hint?: ReactNode;
+  children?: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
   /** When true, the icon slot is exposed to assistive tech (e.g. primary CTA). */
@@ -302,9 +305,10 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      {title && <p className="ds-empty__title">{title}</p>}
-      <p className="ds-empty__body">{children}</p>
-      {action}
+      {title ? <p className="ds-empty__title">{title}</p> : null}
+      {hint ? <p className="ds-empty__hint">{hint}</p> : null}
+      {children ? <p className="ds-empty__body">{children}</p> : null}
+      {action ? <div className="ds-empty__actions">{action}</div> : null}
     </div>
   );
 }

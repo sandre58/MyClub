@@ -9,6 +9,7 @@ import {
   replaceStageDrawRules,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { GradientSeparator } from '../../design-system/components/GradientSeparator';
 import { PanelHead } from '../../design-system/components/PanelHead';
 import { TextInput } from '../../design-system/components/TextInput';
 import { Tooltip } from '../../design-system/components/Tooltip';
@@ -17,9 +18,11 @@ import {
   AttributionIcon,
   ChampionshipFormatIcon,
   CupFormatIcon,
+  EmptySelectionIcon,
   GroupsFormatIcon,
   LayersIcon,
   MatchdayStatIcon,
+  TeamsIcon,
   MatchesStatIcon,
   PlusIcon,
   PencilIcon,
@@ -36,7 +39,7 @@ import {
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import { notify } from '../../design-system/toastStore';
-import { MutationError, StageStatusBadge } from '../../ui';
+import { EmptyState, MutationError, StageStatusBadge } from '../../ui';
 import { scheduleStructureRefresh } from './structureInvalidation';
 import {
   patchDrawRulesDeactivatedOptimistic,
@@ -69,6 +72,10 @@ import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip
 import { materializePresentationForStage } from './structureOperationalCopy';
 import { shouldShowMatchsSection } from './structureMatchsSectionUi';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
+import {
+  entryPlaceProjectionFromSchematic,
+  placedEntryIdsFromSchematic,
+} from './structureEntryPlacementProjection';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
 import {
@@ -78,6 +85,7 @@ import {
   stageHasPublishedAppliedDraw,
   pickActiveDraw,
   resolveDrawCreateBlockPresentation,
+  resolveDrawReadinessChecklist,
   resolveStageDrawCreateGate,
 } from './drawUi';
 import {
@@ -115,11 +123,15 @@ import {
   type ExitKind,
   type FeedGroup,
 } from './structurePhaseFeeds';
+import { CompositionPopulationGauge } from './CompositionPopulationGauge';
+import { CompositionQualifiersPanel } from './CompositionQualifiersPanel';
+import { CompositionQualifiersResolvedMeta } from './CompositionQualifiersResolvedMeta';
 import {
   ExitKindMenu,
   FluxGroupList,
   FluxRail,
   PlacementAwardRow,
+  listComposedAffectationEntries,
   RootEntriesRail,
 } from './StructurePhaseRails';
 import { StructurePhaseRegulationStrip } from './StructurePhaseRegulationStrip';
@@ -398,6 +410,34 @@ export function StructurePhaseFiche({
     );
   }, [stage, schematicQuery.isSuccess, schematicQuery.data]);
 
+  const placedEntryIds = useMemo(() => {
+    if (!stage || !schematicQuery.isSuccess || !schematicQuery.data) {
+      return new Set<string>();
+    }
+    return placedEntryIdsFromSchematic(
+      schematicQuery.data.cases,
+      stage.formatKind,
+    );
+  }, [stage, schematicQuery.isSuccess, schematicQuery.data]);
+
+  const entryPlaceProjections = useMemo(() => {
+    if (!stage || !schematicQuery.isSuccess || !schematicQuery.data) {
+      return new Map();
+    }
+    return entryPlaceProjectionFromSchematic(
+      schematicQuery.data.cases,
+      stage.formatKind,
+      t,
+    );
+  }, [stage, schematicQuery.isSuccess, schematicQuery.data, t]);
+
+  const composedAffectationEntries = useMemo(() => {
+    if (!stage) {
+      return [];
+    }
+    return listComposedAffectationEntries(stage, data.participants.entries);
+  }, [stage, data.participants.entries]);
+
   if (!stage) {
     return (
       <section className="structure-fiche" aria-labelledby="fiche-empty">
@@ -477,6 +517,29 @@ export function StructurePhaseFiche({
       : null;
   const createBlockedReason =
     createGate != null && !createGate.ok ? createGate.reason : null;
+  const qualifiersConfiguredVolume =
+    stage.inboundComposition?.configuredVolume ??
+    feedGroups.reduce((sum, group) => sum + group.volume, 0);
+  const qualifiersResolvedCount =
+    stage.inboundComposition?.resolvedCount ?? 0;
+  const drawReadinessChecklist =
+    drawGateReady && (showDrawCta || showActivateDrawCta)
+      ? resolveDrawReadinessChecklist({
+          compositionEntryCount: poolFilled,
+          placesN,
+          inboundResolvedCount: qualifiersResolvedCount,
+          inboundConfiguredVolume: qualifiersConfiguredVolume,
+          slots: overviewSlots,
+        })
+      : null;
+  const qualifiersInboundReady = stage.inboundComposition != null;
+  const qualifiersResolvedEyebrow = (
+    <CompositionQualifiersResolvedMeta
+      resolved={qualifiersResolvedCount}
+      configured={qualifiersConfiguredVolume}
+      ready={qualifiersInboundReady}
+    />
+  );
   const createBlockPresentation =
     createBlockedReason != null
       ? resolveDrawCreateBlockPresentation(createBlockedReason)
@@ -833,11 +896,42 @@ export function StructurePhaseFiche({
   const showAffectationSection =
     showPlacementBlock || showDrawCta || showActivateDrawCta;
   const showQualifiersSection = feedGroups.length > 0;
-  const qualifiersConfiguredVolume = feedGroups.reduce(
-    (sum, group) => sum + group.volume,
-    0,
-  );
-  const teamsEyebrowCount = stage.affectationEntryCount ?? 0;
+  const teamsHasListContent =
+    composedAffectationEntries.length > 0 ||
+    (stage.affectationPreviewNames?.length ?? 0) > 0 ||
+    (stage.affectationIneligibleCount ?? 0) > 0;
+  const showTeamsSection = teamsHasListContent;
+  const showCompositionContentEmpty =
+    !showQualifiersSection && !teamsHasListContent && canCompose;
+  const showCompositionBandEmpty =
+    showCompositionContentEmpty && !showAffectationSection;
+  const showPopulationColumn =
+    showTeamsSection || showCompositionContentEmpty;
+  const showCompositionPopulationGauge =
+    placesN != null &&
+    placesN > 0 &&
+    (showQualifiersSection || showTeamsSection || showCompositionContentEmpty);
+  const sharedCompositionPopulationGauge =
+    showCompositionPopulationGauge &&
+    showQualifiersSection &&
+    showTeamsSection;
+  const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
+    <CompositionPopulationGauge
+      current={poolFilled}
+      capacity={placesN!}
+      className={
+        sharedCompositionPopulationGauge
+          ? 'structure-phase-composition__population-gauge--span-sources'
+          : undefined
+      }
+    />
+  ) : null;
+  const teamsComposeActionLabel =
+    composedAffectationEntries.length > 0 ||
+    (stage.affectationPreviewNames?.length ?? 0) > 0 ||
+    (stage.affectationIneligibleCount ?? 0) > 0
+      ? t('entries.editComposition')
+      : t('entries.addAffectation');
   const materializePresentation = materializePresentationForStage(
     stage,
     data.status,
@@ -889,6 +983,7 @@ export function StructurePhaseFiche({
           onDeactivateDraw: () => setDeactivateDrawOpen(true),
           slotFeedMissingActive,
           drawOperationalReady: drawGateReady,
+          drawReadinessChecklist,
           placesDiagnostics:
             placesBannersForStrip.length > 0 ? (
               <StructureOperationalIssueBanner codes={placesBannersForStrip} />
@@ -898,9 +993,50 @@ export function StructurePhaseFiche({
   const compositionGridClass = [
     'structure-phase-composition__grid',
     !showQualifiersSection ? 'structure-phase-composition__grid--two-cols' : null,
+    showQualifiersSection
+      ? 'structure-phase-composition__grid--with-qualifiers'
+      : null,
+    showAffectationSection
+      ? 'structure-phase-composition__grid--with-affectation'
+      : null,
+    showQualifiersSection && !showTeamsSection
+      ? 'structure-phase-composition__grid--without-teams'
+      : null,
+    sharedCompositionPopulationGauge
+      ? 'structure-phase-composition__grid--shared-population-gauge'
+      : null,
   ]
     .filter(Boolean)
     .join(' ');
+
+  const compositionEmptyAction = canCompose ? (
+    <button
+      type="button"
+      className="ds-btn ds-btn--primary"
+      onClick={() => openCompose(false)}
+    >
+      <PlusIcon size="sm" aria-hidden="true" />
+      {t('entries.addAffectation')}
+    </button>
+  ) : null;
+
+  const compositionComposeToolbar =
+    canCompose ? (
+      <Tooltip content={teamsComposeActionLabel}>
+        <button
+          type="button"
+          className={compactIcon}
+          aria-label={teamsComposeActionLabel}
+          onClick={() => openCompose(false)}
+        >
+          {teamsHasListContent ? (
+            <PencilIcon size="sm" />
+          ) : (
+            <PlusIcon size="sm" />
+          )}
+        </button>
+      </Tooltip>
+    ) : null;
   // Overflow removed — Edit/Delete live in the header toolbar.
 
   const sortiesEditControl = (() => {
@@ -1094,28 +1230,28 @@ export function StructurePhaseFiche({
         </div>
       </header>
 
-      <div className="structure-phase-tile structure-phase-tile--composition structure-phase-composition">
-        <div className={compositionGridClass}>
-          <section
-            id="rail-entries"
-            className="structure-phase-composition__section"
-            aria-labelledby="composition-teams-heading"
+      <div
+        className={[
+          'structure-phase-tile',
+          'structure-phase-tile--composition',
+          'structure-phase-composition',
+          showCompositionBandEmpty
+            ? 'structure-phase-composition--band-empty'
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {showCompositionBandEmpty ? (
+          <EmptyState
+            variant="idle"
+            icon={<EmptySelectionIcon size="lg" />}
+            action={compositionEmptyAction}
           >
-            <PanelHead
-              id="composition-teams-heading"
-              title={t('population.sectionAffectation')}
-              aside={teamsEyebrowCount}
-            />
-            {issueBanner(capacityBanners)}
-            <RootEntriesRail
-              stage={stage}
-              entries={data.participants.entries}
-              sourcesConfiguredVolume={populationFeedVolume}
-              canCompose={canCompose}
-              onEditCompose={() => openCompose(false)}
-            />
-          </section>
-
+            {t('entries.emptyCompositionBandHint')}
+          </EmptyState>
+        ) : (
+        <div className={compositionGridClass}>
           {showQualifiersSection ? (
             <section
               className="structure-phase-composition__section"
@@ -1123,28 +1259,145 @@ export function StructurePhaseFiche({
             >
               <PanelHead
                 id="composition-qualifiers-heading"
+                density="inset"
+                titleStyle="section"
+                icon={<ArrowRightIcon size="sm" />}
+                iconRefreshing={structureHubBackgroundRefresh}
                 title={t('population.sectionSources')}
-                aside={qualifiersConfiguredVolume}
+                aside={qualifiersResolvedEyebrow}
+                metaVariant="count"
+                actions={
+                  !showTeamsSection ? compositionComposeToolbar : undefined
+                }
               />
-              <FluxGroupList
+              <CompositionQualifiersPanel
                 groups={feedGroups}
-                onOpenPeer={onSelectStage}
-                teamsLabel={teamsLabel}
+                inboundComposition={stage.inboundComposition}
+                entries={data.participants.entries}
+                formatKind={stage.formatKind}
+                schematicReady={schematicQuery.isSuccess}
+                entryPlaceProjections={entryPlaceProjections}
+                onViewPhase={onSelectStage}
                 renderGroupAction={renderAvalSourceAction}
               />
+              {compositionPopulationGaugeFooter &&
+              !sharedCompositionPopulationGauge &&
+              showQualifiersSection &&
+              !showTeamsSection &&
+              !showCompositionContentEmpty
+                ? compositionPopulationGaugeFooter
+                : null}
             </section>
           ) : null}
 
-          {showAffectationSection ? (
+          {showQualifiersSection &&
+          (showPopulationColumn || showAffectationSection) ? (
+            <GradientSeparator
+              orientation="responsive"
+              className="structure-phase-composition__sep structure-phase-composition__sep--population"
+            />
+          ) : null}
+
+          {showTeamsSection ? (
+          <section
+            id="rail-entries"
+            className="structure-phase-composition__section"
+            aria-labelledby="composition-teams-heading"
+          >
+            <PanelHead
+              id="composition-teams-heading"
+              density="inset"
+              titleStyle="section"
+              icon={<TeamsIcon size="sm" />}
+              iconRefreshing={structureHubBackgroundRefresh}
+              title={t('population.sectionAffectation')}
+              actions={
+                canCompose ? (
+                  <Tooltip content={teamsComposeActionLabel}>
+                    <button
+                      type="button"
+                      className={compactIcon}
+                      aria-label={teamsComposeActionLabel}
+                      onClick={() => openCompose(false)}
+                    >
+                      {composedAffectationEntries.length > 0 ? (
+                        <PencilIcon size="sm" />
+                      ) : (
+                        <PlusIcon size="sm" />
+                      )}
+                    </button>
+                  </Tooltip>
+                ) : undefined
+              }
+            />
+            {issueBanner(capacityBanners)}
+            <RootEntriesRail
+              variant="composition-band"
+              stage={stage}
+              entries={data.participants.entries}
+              formatKind={stage.formatKind}
+              placedEntryIds={placedEntryIds}
+              entryPlaceProjections={entryPlaceProjections}
+              schematicReady={schematicQuery.isSuccess}
+              sourcesConfiguredVolume={populationFeedVolume}
+            />
+            {compositionPopulationGaugeFooter &&
+            showTeamsSection &&
+            !sharedCompositionPopulationGauge
+              ? compositionPopulationGaugeFooter
+              : null}
+          </section>
+          ) : null}
+
+          {sharedCompositionPopulationGauge
+            ? compositionPopulationGaugeFooter
+            : null}
+
+          {showCompositionContentEmpty && !showTeamsSection ? (
             <section
-              className="structure-phase-composition__section structure-phase-composition__section--affectation"
+              className="structure-phase-composition__section structure-phase-composition__section--population-empty"
+              aria-label={t('entries.emptyCompositionBandHint')}
             >
-              <div className="structure-phase-operational-bar">
-                <section
-                  className="structure-fiche-section structure-fiche-section--operational"
-                  aria-label={t('fiche.section.phaseState')}
-                >
-                  <StructurePhaseOperationalStrip
+              <EmptyState
+                variant="idle"
+                icon={<EmptySelectionIcon size="lg" />}
+                action={compositionEmptyAction}
+              >
+                {t('entries.emptyCompositionBandHint')}
+              </EmptyState>
+              {compositionPopulationGaugeFooter
+                ? compositionPopulationGaugeFooter
+                : null}
+            </section>
+          ) : null}
+
+          {showPopulationColumn && showAffectationSection ? (
+            <GradientSeparator
+              orientation="responsive"
+              className="structure-phase-composition__sep structure-phase-composition__sep--before-affectation"
+            />
+          ) : null}
+
+          {showAffectationSection ? (
+            <>
+              <section
+                className="structure-phase-composition__section structure-phase-composition__section--affectation"
+                aria-labelledby="composition-place-assignment-heading"
+              >
+                <PanelHead
+                  id="composition-place-assignment-heading"
+                  density="inset"
+                  titleStyle="section"
+                  icon={<LayersIcon size="sm" />}
+                  iconRefreshing={structureHubBackgroundRefresh}
+                  title={t('fiche.composition.placeAssignment')}
+                />
+                <div className="structure-phase-operational-bar">
+                  <section
+                    className="structure-fiche-section structure-fiche-section--operational"
+                    aria-label={t('fiche.section.phaseState')}
+                  >
+                    <StructurePhaseOperationalStrip
                     layoutVariant="composition"
                     placement={placementOperationalProps}
                     showPlaces={showPlacementBlock}
@@ -1156,11 +1409,13 @@ export function StructurePhaseFiche({
                     structureHubBackgroundRefresh={structureHubBackgroundRefresh}
                     drawApplied={stageHasAppliedDraw}
                   />
-                </section>
-              </div>
-            </section>
+                  </section>
+                </div>
+              </section>
+            </>
           ) : null}
         </div>
+        )}
       </div>
 
       <div className="structure-phase-main">

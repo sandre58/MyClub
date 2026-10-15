@@ -12,6 +12,7 @@ import {
   projectSlotDrawResult,
   resolveDrawCreateBlockPresentation,
   resolveDrawCreateGate,
+  resolveDrawReadinessChecklist,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
   resolveTopologyDrawExecutionBadge,
@@ -585,6 +586,32 @@ describe('resolveDrawCreateGate', () => {
         { id: 'gb', name: 'B', entryIds: [] },
       ]),
     ).toBe(1);
+  });
+
+  it('lists three draw readiness criteria with ratios', () => {
+    const items = resolveDrawReadinessChecklist({
+      compositionEntryCount: 4,
+      placesN: 8,
+      inboundResolvedCount: 2,
+      inboundConfiguredVolume: 4,
+      slots: [{ entryId: 'e1' }],
+    });
+    expect(items.map((item) => item.id)).toEqual([
+      'teamsFillPlaces',
+      'teamsAllKnown',
+      'noManualPlacement',
+    ]);
+    expect(items[0]).toMatchObject({
+      met: false,
+      current: 4,
+      capacity: 8,
+    });
+    expect(items[1]).toMatchObject({
+      met: false,
+      current: 2,
+      capacity: 4,
+    });
+    expect(items[2]).toMatchObject({ met: false });
   });
 
   it('maps create-block presentation tones', () => {
