@@ -112,6 +112,22 @@ When `presentation === 'frozen'` and `materializedCount < determinedCount`:
 
 Proceed with **Δ-O3-1/2** only after this gate stays green in your target environment.
 
+## Δ-drawer-1 — drawer « À traiter » (same seed)
+
+**Status:** **Closed** (2026-10-16) — commit `440eabb6` on `feature/new_version_alt`. Presentation only (no policy / collector / bell count changes).
+
+| Scenario | Drawer checks |
+|----------|----------------|
+| **S6** | Group **Bloquant** unchanged; row title pause (`SlotFeedMissing`); neutral lede when only presentable rows are structure on **Suspended** |
+| **S7** | Group **À traiter**; `PopulationShortfall` paused copy; neutral lede if A+B+C |
+| **S2** | Paused row copy; neutral lede when single presentable structure row on suspended Groups |
+| **R1** (`c0408365-…` from `structure-materialize-recette`) | Action lede; short titles (no pause) |
+| **Draft** (`74598c06-…` from `cup-composition-partial`) | Action lede; short titles |
+
+**Automated:** `attentionDrawerPresentation.test.ts`, `functionalProblemPresentation.test.ts` (shell Vitest).
+
+**Notion:** [Matrice UI Structure — § Δ-drawer-1](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4).
+
 ## Related code
 
 - `StructureMaterializeAssembler` — stage must be **Ready** to materialize (Ch/G/Cup read path)

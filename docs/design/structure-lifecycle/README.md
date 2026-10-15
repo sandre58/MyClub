@@ -7,8 +7,8 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | Document | Purpose |
 |----------|---------|
 | [phase-mutability-matrix.md](./phase-mutability-matrix.md) | Exhaustive inventory (diagnostics + `UseCaseExecutor.Stages` commands), current vs target policy, reference cases, open arbitrations |
-| [ctrl-o3-mat-devrunner-recette.md](./ctrl-o3-mat-devrunner-recette.md) | **CTRL-O3-MAT** gate — DevRunner `ctrl-o3-mat-recette` + automated read/SPA assertions (Suspended / production UI) |
-| **Notion — Matrice UI Structure (présentation par statut)** | [Gel produit 2026-10-15](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — N2 presentation by phase status (registry **O**/**Δ** closed); complements this mutability matrix (commands, D1–D4). Post-gel control: **CTRL-O3-MAT** (materialize/production UI when phase **Suspended**). |
+| [ctrl-o3-mat-devrunner-recette.md](./ctrl-o3-mat-devrunner-recette.md) | **CTRL-O3-MAT** gate — DevRunner `ctrl-o3-mat-recette` + automated read/SPA assertions (Suspended / production UI); includes **Δ-drawer-1** drawer recette |
+| **Notion — Matrice UI Structure (présentation par statut)** | [Gel produit 2026-10-15](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — N2 presentation by phase status (registry **O**/**Δ** closed); **Δ-O3-1/2** + **Δ-drawer-1** closed (`d7460d0b` · `353b991d` · `440eabb6`). Post-gel backlog continues with **Δ-03** / **Δ-O4-*** / capacity debts. |
 | [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) | **Signed** — UI severity/tone/copy for structure diagnostics (presentation only) |
 | [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |
 | [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md) | Impact ², `R-Pres-*`, mutation inventory — **steps 3–5 implemented** (policy, surfaces, i18n short + mutation copy) |
