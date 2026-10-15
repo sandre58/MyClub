@@ -18,8 +18,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-OPS3 — R-Draw1 negative contracts (draw-refuse gate deferred).
-/// Guards future <c>StructureDrawCompositionGuard</c> must not block these paths.
+/// G-OPS3 / G-B-3 — R-Draw1 contracts on <see cref="ReplaceStageAffectationAuthoring"/>.
 /// </summary>
 public sealed class ReplaceStageAffectationAuthoringGOps3Tests
 {
@@ -79,6 +78,49 @@ public sealed class ReplaceStageAffectationAuthoringGOps3Tests
             []);
 
         stage.AffectationAuthoring.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void ReplaceAffectationAuthoring_refuses_shrink_when_group_draw_applied()
+    {
+        var (competition, stage, drawId, ids) = CreateGroupStageWithPublishedDraw(applied: true);
+        PrepareStage.Execute(stage, [stage], _clock);
+        DrawAppliedState.IsApplied(stage.GetDraw(drawId), stage).Should().BeTrue();
+
+        var act = () => ReplaceStageAffectationAuthoring.Execute(
+            stage,
+            competition,
+            [ids[0], ids[1], ids[2]],
+            _clock,
+            [stage],
+            []);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.AppliedDrawPoolChangeBlocked);
+        stage.AffectationAuthoring.Select(e => e.EntryId).Should().Equal(ids);
+    }
+
+    [Fact]
+    public void ReplaceAffectationAuthoring_refuses_swap_with_same_count_when_group_draw_applied()
+    {
+        var (competition, stage, drawId, ids) = CreateGroupStageWithPublishedDraw(applied: true);
+        var replacement = AddEntry.Execute(competition, "Replacement", _clock).Id;
+        PrepareStage.Execute(stage, [stage], _clock);
+        DrawAppliedState.IsApplied(stage.GetDraw(drawId), stage).Should().BeTrue();
+
+        var proposed = new[] { ids[0], ids[1], ids[2], replacement };
+
+        var act = () => ReplaceStageAffectationAuthoring.Execute(
+            stage,
+            competition,
+            proposed,
+            _clock,
+            [stage],
+            []);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.AppliedDrawPoolChangeBlocked);
+        stage.AffectationAuthoring.Select(e => e.EntryId).Should().Equal(ids);
     }
 
     private (Competition Competition, Stage Stage, DrawId DrawId, EntryId[] EntryIds)

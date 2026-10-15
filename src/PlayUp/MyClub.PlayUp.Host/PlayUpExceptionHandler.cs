@@ -96,6 +96,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Competition closed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.ReadyConsumerWouldBreak } application =>
                 (StatusCodes.Status409Conflict, "Ready consumer feed would break", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.AppliedDrawPoolChangeBlocked } application =>
+                (StatusCodes.Status409Conflict, "Applied draw pool change blocked", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MediaNotFound } application =>
                 (StatusCodes.Status400BadRequest, "Media not found", application.Code),
             ApplicationFailureException application =>

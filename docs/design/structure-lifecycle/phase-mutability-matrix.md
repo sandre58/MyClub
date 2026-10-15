@@ -1,6 +1,6 @@
 # Phase mutability — diagnostic & command matrix
 
-**Version:** §11A + **§11B signed 2026-10-15**; arbitrations #1–#3 closed; factual conditions verified against repository.  
+**Version:** §11A + **§11B signed 2026-10-15**; **§11C full sign (Git) 2026-10-15** — [E5 record](./section-11c-e5-matrix-diff-proposal.md); arbitrations #1–#3 closed; factual conditions verified against repository.  
 **Audience:** product sign-off, then Agent implementation.  
 **Rule:** §5.2 = **target policy**; §5 = **current code**; §12 = **gaps** to implement.
 
@@ -49,6 +49,8 @@ Capabilities are **orthogonal axes**; avoid a single guard “match exists ⇒ d
 | `materializeBatch` | Ch/G/Cup | Deny (stage not Ready) | Allow if gates pass | N/A (partial state) | Not used (Swiss) |
 | `swissProgressiveRound` | Swiss | N/A | N/A | N/A | **Allow** when `GenerateNextRound` preconditions pass |
 | `dematerialize` | All | Via `DematerializationCapability` | Same | Scoped removal | **Swiss last round only** (`DematerializeSwissLastRound`) |
+
+**`operationalDraw` (§11C):** Ready without production remains **Allow** for draw **workflow** and pool/affectation paths per **§9.1.1**. Stage-level `ReplaceStageDrawRules` and draw-entity configure/generate stay **Draft-only** (B-Q1b, B-Q3b). **≤1 non-cancelled draw** per phase is a **product contract** (B-Q3a) — delivery **G-B-1-ENF** (§12).
 
 ---
 
@@ -204,6 +206,8 @@ Tests to preserve: [`GenerateNextRoundTests`](../../../tests/MyClub.PlayUp.Appli
 
 Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Application `StageStructureEditGuard` mirrors Draft-only.
 
+**§9 table = runtime today.** Target draw policy = **§9.1.1**. Do not read **Allow** in §9.1 as “already enforced” where §9 shows Draft-only.
+
 | Executor method | Use case | App guard | Domain / other guard | Hub action (Draft comp.) | Family |
 |-----------------|----------|-----------|----------------------|--------------------------|--------|
 | `PrepareStageAsync` | `PrepareStage` | `EnsureCompetitionAllowsLifecycleMutation` | Places + attribution + feed resolution | Lifecycle | Lifecycle |
@@ -265,6 +269,27 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 
 **Shipped (G-OPS2):** [`StructureReadyConsumerFeedGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureReadyConsumerFeedGate.cs) — D1 on qual/prog/affectation replace; `Application.ReadyConsumerWouldBreak` + consumer ids.
 
+**Draw family (§11C — product target, partially enforced):** In Ready without production, **draw workflow** commands (`PublishDraw`, `ApplyDraw`, `CancelDraw`, create when allowed) are in scope; **not** unrestricted editing of all draw parameters. See **§9.1.1**.
+
+### 9.1.1 Draw commands — target policy (§11C signed 2026-10-15)
+
+**Status:** Product contract from Arbitrage **B** (+ **C** consumption gates as backlog). **Code** may differ — see §9 table and §12.
+
+| Command / concern | Stage **Draft** | Stage **Ready**, no production | **Applied** draw (entity) | Enforcement today |
+|-------------------|-----------------|-------------------------------|---------------------------|-------------------|
+| `ReplaceStageDrawRules` | Allow per guards | **Deny** (B-Q1b) — use cancel → recreate (P2) if needed | **Deny** | **Aligned** — `EnsureStructureMutable` |
+| `CreateDraw` | Allow | Allow if **≤1 non-cancelled** draw (B-Q3a) | — | **Δ** — SPA partial; **G-B-1-ENF** |
+| `ConfigureDrawInputs` / `GenerateDraw` | Draw entity **Draft** only | **Deny** on entity (B-Q3b) | **Deny** | **Aligned** — `Draw.EnsureDraftMutable` |
+| `PublishDraw` / `ApplyDraw` | Per lifecycle | **Allow** per B-Q2 (not universal deny post-Applied) | Idempotent **Apply** only if conform | **Partial** — no obsolete gate (**C-ENF-***) |
+| `ReplaceStageAffectationAuthoring` (pool) | Allow + D1/D2 | Allow | Same **EntryId** set (**R-Draw1-N2**); pool **change** → **refuse** (**R-Draw1+** / G-B-3) | **Aligned** — `StructureAppliedDrawPoolChangeGate` (**SLICE-1**) |
+| Obsolete draw **consumption** | — | Deny **Apply** / **Materialize** / dependent **Start** when **D** obsolete (**C**) | — | **Δ** — **C-ENF-*** backlog |
+
+**Invariant (B-Q3a):** At most **one** draw with `Status != Cancelled` per phase; cancelled history retained.
+
+**Three contracts (L3 — do not merge):** (a) **G-B-1** uniqueness, (b) **G-B-3** pool-change **refuse** after Applied, (c) **C** obsolete-for-consumption after **allowed** mutation.
+
+**Annex:** [section-11c-addendum](./section-11c-addendum-clarification-arbitration.md) §4.10, §5.4–§5.5.
+
 ---
 
 ## 10. Reference business cases
@@ -273,7 +298,12 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 |----|----------|------------------------|--------------|
 | **R-D1a** | U Ready, D Draft; Top 2→Top 1 on qual | Allowed (no D1) | [g-ops spec](./g-ops-ready-operational-mutations-and-d1.md) § R-D1a — test with G-OPS1 |
 | **R-D1b** | U+D Ready; Top 2→Top 1 or clear qual, entries on D | Rejected + consumer list (**b2** W3, **b1** W1) | `ReplaceStageQualificationRulesGOpsTests` |
-| **R-Draw1** | Change composition with published applied draw | Refuse mutation (target) | **Gap** — UI partial; gate deferred — [G-OPS3 decision](./g-ops3-arbitration-session.md); negatives [`ReplaceStageAffectationAuthoringGOps3Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ReplaceStageAffectationAuthoringGOps3Tests.cs) |
+| **R-Draw1** | Legacy umbrella — see **R-Draw1+** (refuse) and **R-Draw1-N2** (allow same set) | Refuse incompatible pool change (target) | [G-OPS3 decision](./g-ops3-arbitration-session.md); [`ReplaceStageAffectationAuthoringGOps3Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ReplaceStageAffectationAuthoringGOps3Tests.cs) |
+| **R-Draw1+** | Shrink or change affectation **EntryId** set with **Applied** draw | **Refuse mutation** (G-B-3 / G-OPS3) — not allow-then-obsolete | `ReplaceAffectationAuthoring_refuses_shrink_when_group_draw_applied`, `ReplaceAffectationAuthoring_refuses_swap_with_same_count_when_group_draw_applied` |
+| **R-Draw1-N2** | Replace affectation with **same** `EntryId` set, Applied draw | **Allow** — not obsolete | `ReplaceAffectationAuthoring_allows_replace_with_same_entries_when_group_draw_applied` |
+| **R-Inv-1** | Draft form change orphans placements; draw **D** obsolete for consumption | Allow mutation; **Deny** `ApplyDraw` / **Materialize** on obsolete **D** | **Gap** — **C-ENF-*** — [addendum §5.2.8](./section-11c-addendum-clarification-arbitration.md) |
+| **R-C-R3** | Recovery blocked by **D2** (matches produced) | **R3** — no false recreate promise; no C bypass | Related **R-Mat2** / D2 ops tests |
+| **R-Mat-block** | Ready; invalid assignments or obsolete draw on materialize path | **Materialize** denied with explicit reason (F4 + **C**) | **Gap** — **C-ENF-Mat** |
 | **R-Draw2** | Draw engaged; `SlotFeedMissing` hidden in drawer | Prepare not gated by occupancy; drawer hides only | [`StructurePresentedAttentionCollectorTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePresentedAttentionCollectorTests.cs) |
 | **R-Mat1** | Ch Ready, incomplete roster | `PhaseRosterIncomplete` | [`StructureMaterializeAssemblerTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructureMaterializeAssemblerTests.cs) |
 | **R-Mat2** | Ready, partial materialize, operational edit | Denied (D2) | `ReplaceStageQualificationRulesGOpsTests`, `ReplaceStageProgressionRulesGOpsTests`, `ReplaceStageAffectationAuthoringGOpsTests` (D2) |
@@ -291,9 +321,9 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 
 ---
 
-## 11. Sign-off scope (two layers)
+## 11. Sign-off scope (three layers)
 
-Signing **§11A** does **not** commit to every §12 line as an implementation contract. **§11B (signed 2026-10-15)** classifies every §12 row as **Done**, **Deferred**, or **Constraint** — the pre-§11B **Litigious** label is retired for backlog rows.
+Signing **§11A** does **not** commit to every §12 line as an implementation contract. **§11B (signed 2026-10-15)** classifies every §12 row as **Done**, **Deferred**, or **Constraint** — the pre-§11B **Litigious** label is retired for backlog rows. **§11C (signed Git 2026-10-15)** publishes A/B/C draw and obsolescence contracts without authorizing ENF backlogs until an explicit slice (§11C.4).
 
 ### 11A — Product policy (**SIGNED** 2026-10-15)
 
@@ -307,6 +337,8 @@ By signing **§11A**, the decision maker validates **intent only** — not that 
 - [x] **A6** — Gaps between policy and code are tracked in **§12** and closed via tested changes; no silent drift.
 
 **Signatory note:** Product policy validated; runtime gaps remain to be fixed in tested increments. Authorized without §11B: **G-UI1**, **G-UI2** — **shipped 2026-10-15** (see §12).
+
+**§11C maintainer note:** Full §11C sign **narrows interpretation** of operational draw via §9.1.1; does **not** reopen §11A A1–A6 without new arbitration.
 
 **Documentation completeness (maintainer, not product signature):**
 
@@ -323,9 +355,62 @@ By signing **§11A**, the decision maker validates **intent only** — not that 
 - [x] **B3** — Notion Décision §11B published (canonical; cross-link from §11A)
 - [x] **B4** — Follow-up per [implementation-plan-post-11b.md](./implementation-plan-post-11b.md)
 
-**Stop line (post-sign):** Do **not** implement **Deferred** gates (G-MAT3, G-MAT4, G-OPS3) without a new product decision and reopen of the arbitration doc. **Done** rows are shipped; changes = regression fixes or Notion Task scope only.
+**Stop line (post-sign):** Do **not** implement **Deferred** gates (G-MAT3, G-MAT4, G-OPS3, **G-B-1**, **G-B-3**, **G-C-INV**) without **§11C.4** slice authorization (or G-OPS3 reopen where applicable). **Done** rows are shipped; changes = regression fixes or Notion Task scope only.
 
 **Product signature:** §11B does **not** require delivering deferred gates — it records reserves and authorizes process for future reopen.
+
+**§11C stop line:** §11C adds **G-B-1-ENF**, **G-B-3-ENF**, and **C-ENF-*** delivery tracks (§12). Implementing them requires **§11C full sign** plus an explicit **slice** record (§11C.4) — not workbook sign alone.
+
+### 11C — Clarification & arbitration (**SIGNED Git 2026-10-15**)
+
+| Layer | Status |
+|-------|--------|
+| Workbooks **A**, **B**, **C** | **Signed** 2026-10-15 — [addendum](./section-11c-addendum-clarification-arbitration.md) |
+| **Matrix amend (E5)** | **Applied** — [E5 record](./section-11c-e5-matrix-diff-proposal.md) |
+| **§11C full sign (Git)** | **2026-10-15** — §9.1.1, §10, §12 per E5 |
+
+#### 11C.1 Product decisions published at full sign
+
+| ID | Summary | Source |
+|----|---------|--------|
+| **A-keep** | `operationalPlacement` Draft + Ready | Addendum §3.4 |
+| **B-Q1..B-Q3** | Publish commitment; draw rules Draft-only; ≤1 non-cancelled draw; post-Applied per-command; G-B-3 refuse pool change | Addendum §4.10, §4.13 |
+| **C1–C4** | Obsolete unit **D**; per-op deny on consumption; R1–R3; W-* witnesses; L3 ≠ G-B-3 | Addendum §5.2, §5.5 |
+
+#### 11C.2 Enforcement — explicit non-authorization
+
+Workbook and full **§11C** sign record **contracts** and **backlogs**. They do **not** imply runtime gates unless §12 row is **Done** with tests.
+
+| Backlog | Contract | Authorized by C workbook? | Authorized by §11C full sign alone? |
+|---------|----------|---------------------------|-------------------------------------|
+| **G-B-1-ENF** | ≤1 non-cancelled draw | **No** | **No** — needs **slice** |
+| **G-B-3-ENF** | Pool change refuse (G-B-3) | **No** | **Yes** — **SLICE-1** only (§11C.4) |
+| **C-ENF-Detect** | G-C-1 | **No** | **No** — needs **slice** |
+| **C-ENF-Apply** | G-C-2 | **No** | **No** — needs **slice** |
+| **C-ENF-Mat** | G-C-3 | **No** | **No** — needs **slice** |
+| **C-ENF-Deps** | G-C-4 | **No** | **No** — needs **slice** |
+
+#### 11C.3 Full sign checklist (DM — E5 2026-10-15)
+
+- [x] E5: Accept [matrix diff proposal](./section-11c-e5-matrix-diff-proposal.md) §9–§11 (+ §12 rows)
+- [x] E3: Accept §10 new/amended case rows
+- [x] E4: Confirm **B** not reopened
+- [x] **First implementation slice:** **SLICE-1-G-B-3-ENF** (2026-10-15) — `G-B-3-ENF` only
+
+#### 11C.4 First slice record
+
+| Field | Value |
+|-------|--------|
+| **Slice ID** | **SLICE-1-G-B-3-ENF** |
+| **Allowed backlog IDs** | **G-B-3-ENF** only |
+| **Out of scope** | **G-B-1-ENF**, all **C-ENF-*** |
+| **Fiche** | [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) |
+| **Known risk** | Cross-request concurrency — partial guarantee; see fiche §4 |
+| **Date / signatory** | 2026-10-15 — DM authorization (post Phase A fiche review) |
+
+**§11C full sign (Git):** 2026-10-15 — matrix §9.1.1, §10, §12 rows per [E5 proposal](./section-11c-e5-matrix-diff-proposal.md).
+
+**Implementation plan:** [implementation-plan-post-11c.md](./implementation-plan-post-11c.md) · Notion [Décision §11C](https://app.notion.com/p/3fa75fb92d1081e2b96cc7a987799e3f).
 
 ---
 
@@ -341,5 +426,8 @@ By signing **§11A**, the decision maker validates **intent only** — not that 
 | **G-MAT4** | Materialize `SourcePopulationShortfall` | Block **only if** extraction required for production | Not gated; `MaterializationFailure` on target roster | Low | **Deferred** | [decision](./g-mat4-arbitration-session.md); M4b + analyzer tests |
 | **G-OPS1** | Ready operational mutations | Allow without production (D2) on qual/prog/affectation replace | Shipped | **Major** | **Done** | [g-ops](./g-ops-ready-operational-mutations-and-d1.md); D2 tests |
 | **G-OPS2** | D1 upstream feed guard | Block on **feed effect** (rules or source population) | Shipped | **Major** | **Done** | `StructureReadyConsumerFeedGate`; SPA consumer names |
-| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | Partial UI; command **no** gate | Medium | **Deferred** | [decision](./g-ops3-arbitration-session.md); R-Draw1-N1..N3; **D3-1** |
+| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | Pool replace gate shipped (**G-B-3**); other commands unchanged | Medium | **Partial** | [decision](./g-ops3-arbitration-session.md); R-Draw1+, **R-Draw1-N2**; **D3-1**. **Not** obsolete-first path (**C** separate). |
+| **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | Domain allows multiple; SPA partial | Medium | **Deferred** | Delivery: **G-B-1-ENF** — not authorized until slice §11C.4 |
+| **G-B-3** | Refuse pool membership change with Applied draw | G-B-3 / G-OPS3; **R-Draw1+** | `StructureAppliedDrawPoolChangeGate` on affectation replace | Medium | **Done** | **SLICE-1-G-B-3-ENF**; distinct from **C**; N2 preserved |
+| **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | No unified obsolete predicate | Medium | **Deferred** | Delivery: **C-ENF-Detect**, **Apply**, **Mat**, **Deps** — one backlog ID per slice |
 | **G-SWISS** | Generic production guard | Must not break Swiss progressive | Swiss APIs separate today | — | **Constraint** | §8 capability grid; no global guard |

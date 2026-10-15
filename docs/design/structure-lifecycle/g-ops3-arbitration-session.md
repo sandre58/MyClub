@@ -55,6 +55,12 @@ Guard application / HTTP ; modification domaine draw ; SPA parity obligatoire da
 1. **D3-1** signé avec scénario **R-Draw1 positif** (test commande refuse avant persist) ; ou  
 2. Décision produit explicite d’un témoin **minimal** (ex. « toute entrée présente dans la résolution Applied doit rester dans l’affectation ») + tests +/-.
 
+**Mise à jour 2026-10-15 (§11C / Phase A doc, pas implémentation) :**
+
+- **D3-1 borné** pour le slice proposé : **égalité stricte du set** `EntryId` (allow si identique — **R-Draw1-N2** ; refuse si différent avec tirage **Applied**).
+- **Implémentation autorisée** uniquement après enregistrement **§11C.4** `SLICE-1-G-B-3-ENF` + Notion — fiche [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md).
+- Tant que **SLICE-0-none** : gate **non** livré ; G-OPS3 reste **Deferred** §12.
+
 ### Vigilance
 
 Les contrats négatifs **n’autorisent pas** le shrink avec tirage Applied — ils documentent seulement ce qui doit **rester** permis quand le gate existera. Le gap R-Draw1 positif reste un **risque produit** jusqu’à implémentation.

@@ -13,6 +13,11 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [notion-decision-draft.md](./notion-decision-draft.md) | Short **Décision** text for Notion (copy/paste); links to Git annex |
 | [implementation-plan-placeholder.md](./implementation-plan-placeholder.md) | Pre-§11B placeholder (historical) |
 | [section-11b-signoff-preparation.md](./section-11b-signoff-preparation.md) | **§11B** maintainer pack (signed 2026-10-15) |
+| [section-11c-addendum-clarification-arbitration.md](./section-11c-addendum-clarification-arbitration.md) | **§11C signed (Git)** 2026-10-15 — workbook + matrix; **SLICE-0-none** (no ENF code) |
+| [section-11c-e5-matrix-diff-proposal.md](./section-11c-e5-matrix-diff-proposal.md) | **E5** — applied matrix diff record (§9–§11) |
+| [notion-decision-11c-draft.md](./notion-decision-11c-draft.md) | Notion copy block §11C |
+| [implementation-plan-post-11c.md](./implementation-plan-post-11c.md) | Post–§11C sign — slices & stop line (**SLICE-0-none**) |
+| [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) | **Authorized** `SLICE-1-G-B-3-ENF` — `G-B-3-ENF` only (§11C.4) |
 | [implementation-plan-post-11b.md](./implementation-plan-post-11b.md) | Scope **after** §11B signature |
 | [notion-decision-11b-draft.md](./notion-decision-11b-draft.md) | Notion copy block §11B |
 | [g-mat1-confrontation-undecidable-at-materialize.md](./g-mat1-confrontation-undecidable-at-materialize.md) | **G-MAT1** — Done (Cup gate) |
@@ -37,4 +42,5 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 **G-MAT3 (2026-10-15):** gate deferred — [decision](./g-mat3-arbitration-session.md), **R-Mat-M2b** test.  
 **G-MAT4 (2026-10-15):** gate deferred — [decision](./g-mat4-arbitration-session.md), **R-Mat-M4b** + analyzer + overlap tests.  
 **G-OPS3 (2026-10-15):** gate deferred — [decision](./g-ops3-arbitration-session.md).  
-**§11B (2026-10-15):** **signed** — [signoff pack](./section-11b-signoff-preparation.md) · [Notion copy](./notion-decision-11b-draft.md) · matrix §11B ticked. Post-sign work: [implementation-plan-post-11b.md](./implementation-plan-post-11b.md).
+**§11B (2026-10-15):** **signed** — [signoff pack](./section-11b-signoff-preparation.md) · [Notion copy](./notion-decision-11b-draft.md) · matrix §11B ticked. Post-sign work: [implementation-plan-post-11b.md](./implementation-plan-post-11b.md).  
+**§11C (2026-10-15):** [addendum](./section-11c-addendum-clarification-arbitration.md) + [matrix §11](./phase-mutability-matrix.md#11-sign-off-scope-three-layers) — full Git sign; implementation **SLICE-0-none** until new §11C.4 decision.

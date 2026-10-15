@@ -194,6 +194,18 @@ describe('resolveLifecycleMutationMessageKey', () => {
     expect(resolveLifecycleMutationMessageKey('Application.ReadyConsumerWouldBreak')).toBe(
       'problems.lifecycle.ReadyConsumerWouldBreak',
     );
+    expect(resolveLifecycleMutationMessageKey('Application.AppliedDrawPoolChangeBlocked')).toBe(
+      'problems.lifecycle.AppliedDrawPoolChangeBlocked',
+    );
+  });
+
+  it('resolves G-B-3 pool change refusal without mutation unknown', () => {
+    const msg = resolveLifecycleMutationMessage(
+      t,
+      new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawPoolChangeBlocked'),
+    );
+    expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawPoolChangeBlocked);
+    expect(msg).not.toBe(enStructure.problems.mutation._unknown);
   });
 });
 

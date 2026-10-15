@@ -45,6 +45,8 @@ public static class ReplaceStageAffectationAuthoring
             StructureReadyConsumerFeedGate.EnsureAffectationReplaceAllowed(stage, entryIds, competitionStages);
         }
 
+        StructureAppliedDrawPoolChangeGate.EnsurePoolChangeAllowed(stage, entryIds);
+
         stage.ReplaceAffectationAuthoringOperationally(entryIds, clock);
     }
 }

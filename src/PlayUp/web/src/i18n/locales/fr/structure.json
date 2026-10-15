@@ -356,7 +356,8 @@
       "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant d’annuler le démarrage ou de mettre la phase en pause.",
       "MatchLiveInProgress": "Un match est en cours — terminez-le ou annulez-le avant de suspendre la phase.",
       "Attribution": "Les chemins d’attribution ne correspondent plus au tableau de cette phase — corrigez l’attribution avant de préparer.",
-      "ReadyConsumerWouldBreak": "Cette modification de sortie casserait une phase aval déjà prête avec des équipes issues de la qualification."
+      "ReadyConsumerWouldBreak": "Cette modification de sortie casserait une phase aval déjà prête avec des équipes issues de la qualification.",
+      "AppliedDrawPoolChangeBlocked": "Le pool de composition ne peut pas être modifié tant que le tirage de cette phase est déjà appliqué."
     },
     "mutation": {
       "_unknown": "Impossible d’effectuer cette action de cycle de phase pour le moment."
@@ -375,6 +376,7 @@
       "Attribution": "Les chemins d’attribution ne correspondent plus au tableau de cette phase — corrigez l’attribution avant de préparer.",
       "ReadyConsumerWouldBreak": "Cette modification de sortie casserait une phase aval déjà prête avec des équipes issues de la qualification.",
       "ReadyConsumerWouldBreakConsumers": "Phases concernées : {{phases}}.",
+      "AppliedDrawPoolChangeBlocked": "Le pool de composition ne peut pas être modifié tant que le tirage de cette phase est déjà appliqué.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
