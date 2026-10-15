@@ -459,7 +459,7 @@ export function StructurePhaseFiche({
     );
   }
 
-  const feeds = inboundFeeds(data, stage.stageId, t);
+  const feeds = inboundFeeds(data, stage.stageId, i18n.language, t);
   const feedGroups = groupFeeds(feeds);
   // Places N meter / Affectation reserve: Qual + Prog (Population and Place).
   // Place fills occupy capacity even though they skip the Population set.
@@ -467,7 +467,7 @@ export function StructurePhaseFiche({
     data,
     stage.stageId,
   );
-  const pathOutbounds = outboundFeeds(data, stage, t);
+  const pathOutbounds = outboundFeeds(data, stage, i18n.language, t);
   const outbounds = outboundSortiesFeeds(
     data,
     stage,

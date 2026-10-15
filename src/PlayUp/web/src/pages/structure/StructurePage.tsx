@@ -43,6 +43,7 @@ import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
 import { resolveStructureHubStages } from './structureResolveStages';
+import { outboundDestinationStageIds } from './structureStageQualProgProjection';
 import { topologyCardFacts } from './structureTopologyFacts';
 import {
   computeStructureReadinessSummary,
@@ -488,27 +489,7 @@ function StageFormatGlyph({
 }
 
 function outboundDestinations(stage: StructureStageHubSummary): string[] {
-  const destinations: string[] = [];
-  const seen = new Set<string>();
-  for (const path of stage.progressionPaths ?? []) {
-    if (
-      path.destinationStageId !== stage.stageId &&
-      !seen.has(path.destinationStageId)
-    ) {
-      seen.add(path.destinationStageId);
-      destinations.push(path.destinationStageId);
-    }
-  }
-  for (const path of stage.qualificationPaths ?? []) {
-    if (
-      path.destinationStageId !== stage.stageId &&
-      !seen.has(path.destinationStageId)
-    ) {
-      seen.add(path.destinationStageId);
-      destinations.push(path.destinationStageId);
-    }
-  }
-  return destinations;
+  return outboundDestinationStageIds(stage);
 }
 
 function edgeLabelFromSource(

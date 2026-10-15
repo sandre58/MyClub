@@ -17,7 +17,7 @@ import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 export function resolvePlacementPoolTone(
   filled: number,
   capacity: number | null,
-): 'neutral' | 'partial' | 'complete' {
+): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }
@@ -44,7 +44,7 @@ export function drawPoolToneToRatioGaugeTone(
 
 export function operationalStripPoolTone(
   messageKind: StripOperationalMessageKind,
-  ratioTone: 'neutral' | 'partial' | 'complete',
+  ratioTone: DrawCtaPoolTone,
 ): DrawCtaPoolTone {
   if (messageKind === 'danger') {
     return 'danger';
@@ -55,11 +55,14 @@ export function operationalStripPoolTone(
   if (messageKind === 'success') {
     return 'complete';
   }
-  if (ratioTone === 'complete') {
+  if (ratioTone === 'complete' || ratioTone === 'brand') {
     return 'complete';
   }
-  if (ratioTone === 'partial') {
+  if (ratioTone === 'partial' || ratioTone === 'attention') {
     return 'partial';
+  }
+  if (ratioTone === 'danger') {
+    return 'danger';
   }
   return 'neutral';
 }
@@ -68,7 +71,7 @@ export function operationalStripPoolTone(
 export function resolvePlaceOccupancyTone(
   filled: number,
   capacity: number | null,
-): 'neutral' | 'partial' | 'complete' {
+): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }
@@ -82,7 +85,7 @@ export function resolvePlaceOccupancyTone(
 export function resolveResolvedPoolTone(
   filled: number,
   capacity: number | null,
-): 'neutral' | 'partial' | 'complete' {
+): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }

@@ -5,7 +5,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  prepareStage,
   resumeStage,
   suspendStage,
   startStage,

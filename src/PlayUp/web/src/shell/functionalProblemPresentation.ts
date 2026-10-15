@@ -21,7 +21,6 @@ import type {
 import {
   structureDiagnosticMeta,
   structureDiagnosticPresentation,
-  structureDiagnosticTitleKey,
   structureDiagnosticTone,
   type StructureDiagnosticTone,
 } from '../pages/structure/structureDiagnosticPresentation';

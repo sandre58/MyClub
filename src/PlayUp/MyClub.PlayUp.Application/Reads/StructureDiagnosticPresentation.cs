@@ -166,12 +166,12 @@ public static class StructureDiagnosticPresentation
     {
         foreach (var source in view.Stages)
         {
-            if (source.QualificationPaths?.Any(path => path.DestinationStageId == destinationStageId) == true)
+            if (source.QualificationIntents?.Any(intent => intent.DestinationStageId == destinationStageId) == true)
             {
                 return true;
             }
 
-            if (source.ProgressionPaths?.Any(path => path.DestinationStageId == destinationStageId) == true)
+            if (source.ProgressionIntents?.Any(intent => intent.DestinationStageId == destinationStageId) == true)
             {
                 return true;
             }

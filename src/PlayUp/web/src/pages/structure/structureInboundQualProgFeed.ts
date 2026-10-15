@@ -1,27 +1,12 @@
 import type { StructureView } from '../../types';
+import { stageHasInboundQualProgTo } from './structureStageQualProgProjection';
 
-/** True when any qual/prog path targets `destinationStageId` (analyzer HasInboundFeed). */
+/** True when any qual/prog edge targets `destinationStageId` (analyzer HasInboundFeed). */
 export function stageHasInboundQualProgFeed(
   data: StructureView,
   destinationStageId: string,
 ): boolean {
-  for (const source of data.stages) {
-    if (
-      source.qualificationPaths?.some(
-        (path) => path.destinationStageId === destinationStageId,
-      )
-    ) {
-      return true;
-    }
-    if (
-      source.progressionPaths?.some(
-        (path) => path.destinationStageId === destinationStageId,
-      )
-    ) {
-      return true;
-    }
-  }
-  return false;
+  return stageHasInboundQualProgTo(data.stages, destinationStageId);
 }
 
 export function isEntryBaselineStage(

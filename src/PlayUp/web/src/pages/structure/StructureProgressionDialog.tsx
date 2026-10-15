@@ -40,7 +40,6 @@ import { notify } from '../../design-system/toastStore';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { queryKeys } from '../../queryKeys';
 import type {
-  ProgressionOutcome,
   StageBracketPair,
   StageSchematic,
   StructureStageHubSummary,
@@ -58,7 +57,6 @@ import {
   type ProgRoundOption,
 } from './StructureProgressionIntentEditor';
 import { scheduleStructureRefresh } from './structureInvalidation';
-import { isPopulationDestination } from './structureProgressionDraft';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { isMissingDestinationStage } from './structureSortiesDestination';
 import { structureIssuePresentation } from '../../shell/functionalProblemPresentation';
@@ -75,9 +73,7 @@ import {
   incompleteIntentReason,
   intentFromApi,
   isIntentComplete,
-  pathToSingletonIntent,
   placeMapKeys,
-  resizeDestinationSlotKeys,
   serializeIntents,
   summarizeIntentWho,
   syncPlaceSlotKeys,
@@ -86,7 +82,6 @@ import {
   isFormOnlyDestination,
   normalizeFormOnlyDestinationDraft,
   type ProgIntentDraft,
-  type ProgTargetKind,
 } from './structureProgressionDraft';
 import { areProgressionPlacesLabeled } from './structurePlaceLabel';
 import { expectedPopulationWithProgDraft } from './structurePopulationVolume';
@@ -105,24 +100,6 @@ type StructureProgressionDialogProps = {
 };
 
 const EMPTY_BRACKET_PAIRS: StageBracketPair[] = [];
-
-function resolveRoundIdForPairOrFixture(
-  rounds: ProgRoundOption[],
-  _sourcePairKey: string,
-): { roundId: string; roundName: string } | null {
-  // Cup mono-round: all pairs belong to the structural form / first round.
-  // SourcePairKey is BracketPair.PairKey — never FixtureId.
-  if (rounds.length === 1) {
-    return { roundId: rounds[0]!.id, roundName: rounds[0]!.name };
-  }
-  const terminal = championshipTerminalRound(rounds);
-  if (terminal) {
-    return { roundId: terminal.id, roundName: terminal.name };
-  }
-  return rounds[0]
-    ? { roundId: rounds[0].id, roundName: rounds[0].name }
-    : null;
-}
 
 export function StructureProgressionDialog({
   data,
@@ -280,174 +257,13 @@ export function StructureProgressionDialog({
     }
 
     const fromIntents = stage.progressionIntents ?? [];
-    if (fromIntents.length > 0) {
-      const next = fromIntents.map((intent) => {
-        const synced = syncPlaceSlotKeys(intentFromApi(intent, stage.stageId));
-        const peer = stageById.get(synced.destinationStageId.trim());
-        return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
-      });
-      setIntents(next);
-      setBaselineSerialized(serializeIntents(next));
-      setExpandedId(null);
-      setSessionReady(true);
-      resetDiscard();
-      return;
-    }
-
-    // Wait for rounds when falling back from path-list projection.
-    if (overviewQuery.isLoading) {
-      return;
-    }
-
-    const existingPaths = stage.progressionPaths ?? [];
-    if (existingPaths.length === 0) {
-      setIntents([]);
-      setBaselineSerialized(serializeIntents([]));
-      setExpandedId(null);
-      setSessionReady(true);
-      resetDiscard();
-      return;
-    }
-
-    type PathGroup = {
-      roundId: string;
-      roundName: string;
-      outcome: ProgressionOutcome;
-      destinationStageId: string;
-      targetKind: ProgTargetKind;
-      paths: typeof existingPaths;
-    };
-    const groups = new Map<string, PathGroup>();
-    for (const path of existingPaths) {
-      const resolved = resolveRoundIdForPairOrFixture(
-        rounds,
-        path.sourcePairKey,
-      );
-      if (!resolved) continue;
-      const targetKind: ProgTargetKind =
-        !path.destinationForm &&
-        isPopulationDestination(path.destinationSlotKey) &&
-        !path.destinationGroupId?.trim()
-          ? 'population'
-          : 'place';
-      const placeMode = path.destinationForm
-        ? 'form'
-        : path.destinationGroupId?.trim()
-          ? 'group'
-          : 'slot';
-      const key = `${resolved.roundId}|${path.outcome}|${path.destinationStageId}|${targetKind}|${placeMode}`;
-      const existing = groups.get(key);
-      if (existing) {
-        existing.paths.push(path);
-        continue;
-      }
-      groups.set(key, {
-        roundId: resolved.roundId,
-        roundName: resolved.roundName,
-        outcome: path.outcome,
-        destinationStageId: path.destinationStageId,
-        targetKind,
-        paths: [path],
-      });
-    }
-
-    const next: ProgIntentDraft[] = [];
-    let order = 1;
-    const orderedPairKeys = [...bracketPairs]
-      .map((p) => p.pairKey)
-      .sort((a, b) => a.localeCompare(b));
-    for (const group of groups.values()) {
-      const round = roundById.get(group.roundId);
-      const expandCount =
-        orderedPairKeys.length > 0
-          ? orderedPairKeys.length
-          : (round?.fixtures.length ?? group.paths.length);
-      if (group.targetKind === 'population') {
-        const seed = pathToSingletonIntent(
-          group.paths[0],
-          stage.stageId,
-          group.roundId,
-          group.roundName,
-          order++,
-        );
-        next.push(
-          syncPlaceSlotKeys({
-            ...seed,
-            targetKind: 'population',
-            destinationSlotKeys: [],
-            destinationGroupIds: [],
-            destinationForm: false,
-            expandedPathCount: expandCount,
-          }),
-        );
-        continue;
-      }
-
-      const isFormPlace = group.paths.some((p) => !!p.destinationForm);
-      if (isFormPlace) {
-        next.push(
-          syncPlaceSlotKeys({
-            id: crypto.randomUUID(),
-            order: order++,
-            roundId: group.roundId,
-            roundName: group.roundName,
-            outcome: group.outcome,
-            targetKind: 'place',
-            destinationStageId: group.destinationStageId,
-            destinationSlotKeys: [],
-            destinationGroupIds: [],
-            destinationForm: true,
-            expandedPathCount: expandCount,
-          }),
-        );
-        continue;
-      }
-
-      const isGroupPlace = group.paths.some((p) =>
-        Boolean(p.destinationGroupId?.trim()),
-      );
-      const keys = resizeDestinationSlotKeys([], expandCount);
-      const sortedPaths = [...group.paths].sort((a, b) =>
-        a.sourcePairKey.localeCompare(b.sourcePairKey),
-      );
-      for (const path of sortedPaths) {
-        let idx =
-          orderedPairKeys.length > 0
-            ? orderedPairKeys.indexOf(path.sourcePairKey)
-            : sortedPaths.indexOf(path);
-        if (idx < 0) {
-          idx = sortedPaths.indexOf(path);
-        }
-        const identity = isGroupPlace
-          ? (path.destinationGroupId?.trim() ?? '')
-          : (path.destinationSlotKey?.trim() ?? '');
-        if (idx >= 0 && identity) {
-          keys[idx] = identity;
-        }
-      }
-      next.push(
-        syncPlaceSlotKeys({
-          id: crypto.randomUUID(),
-          order: order++,
-          roundId: group.roundId,
-          roundName: group.roundName,
-          outcome: group.outcome,
-          targetKind: 'place',
-          destinationStageId: group.destinationStageId,
-          destinationSlotKeys: isGroupPlace ? [] : keys,
-          destinationGroupIds: isGroupPlace ? keys : [],
-          destinationForm: false,
-          expandedPathCount: expandCount,
-        }),
-      );
-    }
-
-    const normalized = next.map((intent) => {
-      const peer = stageById.get(intent.destinationStageId.trim());
-      return normalizeFormOnlyDestinationDraft(intent, peer?.formatKind);
+    const next = fromIntents.map((intent) => {
+      const synced = syncPlaceSlotKeys(intentFromApi(intent, stage.stageId));
+      const peer = stageById.get(synced.destinationStageId.trim());
+      return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
     });
-    setIntents(normalized);
-    setBaselineSerialized(serializeIntents(normalized));
+    setIntents(next);
+    setBaselineSerialized(serializeIntents(next));
     setExpandedId(null);
     setSessionReady(true);
     resetDiscard();
@@ -455,12 +271,7 @@ export function StructureProgressionDialog({
     open,
     stage.stageId,
     stage.progressionIntents,
-    stage.progressionPaths,
-    overviewQuery.isLoading,
     sourceSchematicQuery.isLoading,
-    rounds,
-    roundById,
-    bracketPairs,
     mutation.isPending,
     mutation.isSuccess,
     resetDiscard,

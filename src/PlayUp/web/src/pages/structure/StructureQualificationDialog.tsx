@@ -68,7 +68,6 @@ import {
   incompleteIntentReason,
   intentFromApi,
   isIntentComplete,
-  pathToSingletonIntent,
   placeMapKeys,
   serializeIntents,
   summarizeIntentWho,
@@ -263,11 +262,7 @@ export function StructureQualificationDialog({
     }
 
     const apiIntents = stage.qualificationIntents ?? [];
-    const next = (
-      apiIntents.length > 0
-        ? apiIntents.map(intentFromApi)
-        : (stage.qualificationPaths ?? []).map(pathToSingletonIntent)
-    ).map((intent) => {
+    const next = apiIntents.map(intentFromApi).map((intent) => {
       const synced = syncPlaceSlotKeys(intent, groups);
       const peer = stageById.get(synced.destinationStageId.trim());
       return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
@@ -281,7 +276,6 @@ export function StructureQualificationDialog({
     open,
     stage.stageId,
     stage.qualificationIntents,
-    stage.qualificationPaths,
     groups,
     sourceSchematicQuery.isSuccess,
     mutation.isPending,

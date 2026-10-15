@@ -6,7 +6,6 @@
 
 import {
   structureDiagnosticToneForCode,
-  structureProductSeverity,
   type StructureDiagnosticSeverityContext,
 } from './structureDiagnosticSeverity';
 

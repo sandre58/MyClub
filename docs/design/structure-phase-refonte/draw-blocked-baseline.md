@@ -1,6 +1,6 @@
 # Draw blocked CTA — UX baseline (Phase 1)
 
-Parity reference for **Tirage** when `resolveStageDrawCreateGate` returns `ok: false`. Sources: `StructurePhaseFiche.tsx`, `StructurePhaseOperationalStrip.tsx` (`DrawColumn`), `StructurePlacementOperationalSection.tsx`, `drawUi.ts`. No new rules in refonte layout work.
+Parity reference for **Tirage** when `resolveStageDrawCreateGate` returns `ok: false`. Sources: `StructurePhaseFiche.tsx`, `StructurePhaseOperationalStrip.tsx` (`DrawColumn`), `drawUi.ts`. No new rules in refonte layout work.
 
 Related: [truth sources](./truth-sources.md), [state matrix](./state-matrix.md).
 
@@ -48,7 +48,7 @@ Occupancy / places gauge **never** flips this flag.
 4. **Activate path**: `showActivateDrawCta` → empty state with activate button (not `blockPerformDrawCta` path).
 5. **Applied draw**: `StripDrawAppliedPanel` + view workflow secondary.
 
-Legacy tile (`StructurePlacementOperationalSection`) mirrors disabled primary + tooltip and rail-style issue list for caption — **not mounted** on current fiche path; strip is canonical for refonte.
+Operational strip (`DrawColumn`) is the canonical Tirage surface on the phase fiche.
 
 ---
 

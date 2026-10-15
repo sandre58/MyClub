@@ -934,12 +934,15 @@ describe('StructurePage Structure hub', () => {
             compositionCapacity: 8,
             affectationEntryCount: 8,
             actions: ['ReplaceQualificationRules', 'ReplaceDrawRules'],
-            qualificationPaths: [
+            qualificationIntents: [
               {
+                intentId: 'q-dangling',
                 order: 1,
-                selectionMode: 'Top',
-                selectionValue: 2,
+                sourceKind: 'Overall',
+                positionFrom: 1,
+                positionTo: 2,
                 destinationStageId: knockOutId,
+                destinationCount: 2,
               },
             ],
           }),
@@ -1053,18 +1056,24 @@ describe('StructurePage Structure hub', () => {
             hasStandingRules: false,
             hasProgressionRules: true,
             progressionPathCount: 2,
-            progressionPaths: [
+            progressionIntents: [
               {
-                sourcePairKey: 'sf-1',
+                intentId: 'p-winner',
+                order: 1,
+                roundId: 'round-1',
                 outcome: 'Winner',
                 destinationStageId: finaleId,
-                destinationSlotKey: 'home',
+                destinationSlotKeys: ['home'],
+                expandedPathCount: 1,
               },
               {
-                sourcePairKey: 'sf-1',
+                intentId: 'p-loser',
+                order: 2,
+                roundId: 'round-1',
                 outcome: 'Loser',
                 destinationStageId: bronzeId,
-                destinationSlotKey: 'home',
+                destinationSlotKeys: ['home'],
+                expandedPathCount: 1,
               },
             ],
           }),
@@ -1340,9 +1349,8 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByRole('heading', { name: 'Matchs' }),
     ).not.toBeInTheDocument();
-    await screen.findByText(/complétez la structure/i);
     expect(
-      screen.getByRole('button', {
+      await screen.findByRole('button', {
         name: /préparer la phase/i,
       }),
     ).toBeDisabled();
@@ -1883,17 +1891,7 @@ describe('StructurePage Structure hub', () => {
       renderStructurePage();
 
       expect(
-        await screen.findByText(/Des anomalies nécessitent votre attention/i),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByText(/Structure prête pour la prochaine étape/i),
-      ).not.toBeInTheDocument();
-
-      const ficheHeader = document.querySelector(
-        '.structure-fiche__header',
-      ) as HTMLElement;
-      expect(
-        within(ficheHeader).getByRole('button', {
+        await screen.findByRole('button', {
           name: /préparer la phase/i,
         }),
       ).toBeDisabled();
@@ -1906,23 +1904,23 @@ describe('StructurePage Structure hub', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows negative PageHead when structure synthesis reports OverCapacityEdge', async () => {
+    it('shows negative PageHead when Ready phase has danger-level population shortfall', async () => {
       vi.mocked(fetchStructureView).mockResolvedValue(
         structureView({
           stages: [
             championshipStage({
-              structureIssues: ['OverCapacityEdge'],
+              status: 'Ready',
               compositionCapacity: 8,
-              affectationEntryCount: 8,
+              affectationEntryCount: 0,
             }),
           ],
           readiness: {
-            readyForNextSlice: true,
+            readyForNextSlice: false,
             readyForDraw: false,
-            readyForMaterialization: true,
+            readyForMaterialization: false,
             readyForSchedule: false,
             readyForMatchOperation: false,
-            readyForSchedulePath: true,
+            readyForSchedulePath: false,
             attachedMatchCount: 0,
             blockers: [],
             nextConstructionStepHint: 'None',

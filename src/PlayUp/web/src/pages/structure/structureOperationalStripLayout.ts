@@ -1,11 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
 import { Fragment, cloneElement, createElement, isValidElement } from 'react';
 
-export type OperationalStripSectionEntry = {
-  key: string;
-  node: ReactNode;
-};
-
 function withStripChildKey(section: ReactNode, key: string): ReactNode {
   if (!section) {
     return null;
@@ -17,26 +12,6 @@ function withStripChildKey(section: ReactNode, key: string): ReactNode {
     return section;
   }
   return createElement(Fragment, { key }, section);
-}
-
-export function joinOperationalStripSections(
-  sections: OperationalStripSectionEntry[],
-): ReactNode[] {
-  const visible = sections.filter((entry) => entry.node);
-  const joined: ReactNode[] = [];
-  visible.forEach((entry, index) => {
-    if (index > 0) {
-      joined.push(
-        createElement('div', {
-          key: `operational-strip-sep-${entry.key}`,
-          className: 'structure-operational-strip__separator',
-          'aria-hidden': 'true',
-        }),
-      );
-    }
-    joined.push(withStripChildKey(entry.node, entry.key));
-  });
-  return joined;
 }
 
 /** Composition column — Places then Draw, horizontal separator only (no vertical sibling grid). */

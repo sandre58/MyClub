@@ -32,7 +32,7 @@ import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui'
 import { StructureDrawReadinessChecklist } from './StructureDrawReadinessChecklist';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
-import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
+import type { StructurePlacementOperationalSectionProps } from './structurePlacementOperationalProps';
 import {
   materializeDisabledCaption,
   materializeRatioTone,
@@ -45,7 +45,6 @@ import {
   operationalStripPoolTone,
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
-  showProductionOperationalSection,
 } from './structureOperationalCopy';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 import {
@@ -65,7 +64,6 @@ import {
 } from './structureMatchsSectionUi';
 import {
   joinCompositionPlaceAssignmentSections,
-  joinOperationalStripSections,
   operationalStripGridColumns,
 } from './structureOperationalStripLayout';
 import {
@@ -106,10 +104,7 @@ type DematerializeMutationResult = UseMutationResult<
 
 type StripSectionKind = 'places' | 'draw' | 'matches';
 
-export type StructureOperationalStripLayoutVariant =
-  | 'full'
-  | 'composition'
-  | 'aside-matchs';
+export type StructureOperationalStripLayoutVariant = 'composition' | 'aside-matchs';
 
 function materializeActionLabel(
   materialize: NonNullable<StructureStageHubSummary['materialize']>,
@@ -242,7 +237,7 @@ export function StructurePhaseOperationalStrip({
   presentation,
   structureHubBackgroundRefresh = false,
   drawApplied,
-  layoutVariant = 'full',
+  layoutVariant = 'composition',
 }: {
   placement: StructurePlacementOperationalSectionProps | null;
   showPlaces: boolean;
@@ -326,28 +321,15 @@ export function StructurePhaseOperationalStrip({
     },
   });
 
-  const showProductionOperational = showProductionOperationalSection(stage);
-  const showMatchesSection =
-    showProductionOperational ||
-    showPlaces ||
-    showDraw ||
-    shouldShowMatchsSection(stage);
-
   const visibleSections: StripSectionKind[] =
     layoutVariant === 'composition'
       ? [
           ...(showPlaces ? (['places'] as const) : []),
           ...(showDraw ? (['draw'] as const) : []),
         ]
-      : layoutVariant === 'aside-matchs'
-        ? shouldShowMatchsSection(stage)
-          ? (['matches'] as const)
-          : []
-        : [
-            ...(showPlaces ? (['places'] as const) : []),
-            ...(showDraw ? (['draw'] as const) : []),
-            'matches',
-          ];
+      : shouldShowMatchsSection(stage)
+        ? (['matches'] as const)
+        : [];
 
   if (visibleSections.length === 0) {
     return null;
@@ -395,6 +377,7 @@ export function StructurePhaseOperationalStrip({
       competitionId={competitionId}
       competitionStatus={competitionStatus}
       stage={stage}
+      structureStages={structureStages}
       presentation={presentation}
       materializeMutation={materializeMutation}
       dematerializeMutation={dematerializeMutation}
@@ -405,25 +388,15 @@ export function StructurePhaseOperationalStrip({
     />
   );
 
-  const stripSections = compositionStack
-    ? joinCompositionPlaceAssignmentSections(placesColumn, drawColumn, {
-        showPlaces,
-        showDraw,
-      })
-    : joinOperationalStripSections([
-        {
-          key: 'places',
-          node: visibleSections.includes('places') ? placesColumn : null,
-        },
-        {
-          key: 'draw',
-          node: visibleSections.includes('draw') ? drawColumn : null,
-        },
-        {
-          key: 'matches',
-          node: visibleSections.includes('matches') ? matchesColumn : null,
-        },
-      ]);
+  const stripSections =
+    layoutVariant === 'aside-matchs'
+      ? [matchesColumn]
+      : compositionStack
+        ? joinCompositionPlaceAssignmentSections(placesColumn, drawColumn, {
+            showPlaces,
+            showDraw,
+          })
+        : [];
 
   return (
     <>
@@ -1013,6 +986,7 @@ function MatchesColumn({
   titleChipRefreshing,
   competitionId,
   stage,
+  structureStages,
   presentation,
   materializeMutation,
   dematerializeMutation,
@@ -1026,6 +1000,7 @@ function MatchesColumn({
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
+  structureStages: readonly StructureStageHubSummary[];
   presentation: MaterializePresentation | null;
   materializeMutation: MaterializeMutationResult;
   dematerializeMutation: DematerializeMutationResult;

@@ -9,7 +9,7 @@ import { dematerializePhase, materializeMatches } from '../../api';
 import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
 import { classifyMaterializePresentation } from './structureMaterializeCopy';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
-import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
+import type { StructurePlacementOperationalSectionProps } from './structurePlacementOperationalProps';
 
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
@@ -155,6 +155,7 @@ function renderMatchesStrip(
   competitionStatus: 'Draft' | 'Running' = 'Draft',
 ) {
   return renderStrip({
+    layoutVariant: 'aside-matchs',
     showPlaces: false,
     showDraw: false,
     placement: null,
@@ -239,43 +240,39 @@ describe('StructurePhaseOperationalStrip', () => {
     expect(primaryBtn.className).toMatch(/ds-btn--primary/);
   });
 
-  it('renders three numbered sections when places, draw, and matches are visible', () => {
-    renderStrip();
+  it('renders composition place-assignment sections when places and draw are visible', () => {
+    renderStrip({ layoutVariant: 'composition' });
 
-    expect(document.getElementById('operational-strip-1-title')).toHaveTextContent('1');
-    expect(document.getElementById('operational-strip-2-title')).toHaveTextContent('2');
-    expect(document.getElementById('operational-strip-3-title')).toHaveTextContent('3');
-
-    expect(screen.getByRole('heading', { name: 'Places' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Tirage' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Matchs' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Placer manuellement/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Lancer le tirage/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /Matchs/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it('renumbers sections when places is hidden', () => {
-    renderStrip({ showPlaces: false });
+  it('omits places actions from composition when places column is hidden', () => {
+    renderStrip({ layoutVariant: 'composition', showPlaces: false });
 
-    expect(document.querySelector('#operational-strip-3-title')).not.toBeInTheDocument();
-    expect(document.getElementById('operational-strip-1-title')).toHaveTextContent('1');
-    expect(document.getElementById('operational-strip-2-title')).toHaveTextContent('2');
-    expect(screen.getByRole('heading', { name: 'Tirage' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Matchs' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Placer manuellement/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Lancer le tirage/i }),
+    ).toBeInTheDocument();
   });
 
   it('shows manual placement and draw launch actions in their sections', () => {
-    renderStrip();
+    renderStrip({ layoutVariant: 'composition' });
 
-    const placesSection = document
-      .getElementById('operational-strip-1-title')!
-      .closest('section')!;
     expect(
-      within(placesSection).getByRole('button', { name: /Placer manuellement/i }),
+      screen.getByRole('button', { name: /Placer manuellement/i }),
     ).toBeInTheDocument();
-
-    const drawSection = document
-      .getElementById('operational-strip-2-title')!
-      .closest('section')!;
     expect(
-      within(drawSection).getByRole('button', { name: /Lancer le tirage/i }),
+      screen.getByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();
   });
 
@@ -392,11 +389,6 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(
         matchesSection.querySelector('.structure-operational-strip__empty'),
       ).not.toBeNull();
-      expect(
-        within(matchesSection).getByRole('button', {
-          name: /Démarrer la phase/i,
-        }),
-      ).toBeDisabled();
     });
 
     it('shows frozen gap in the gauge without a materialize primary action', () => {
@@ -433,9 +425,6 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(
         screen.queryByLabelText(/Avancement de la production des matchs/i),
       ).not.toBeInTheDocument();
-      expect(
-        screen.getByRole('link', { name: /Voir les matchs/i }),
-      ).toBeInTheDocument();
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
         within(matchesSection).getByLabelText(/Avancement des matchs/i),
@@ -556,43 +545,6 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(dematerializePhase).toHaveBeenCalledWith(leagueStageBase.stageId);
     });
 
-    it('shows draft prepare empty state in the Matchs section without production gauge', () => {
-      renderMatchesStrip({
-        ...leagueStageBase,
-        materialize: {
-          commandCode: 'MaterializeMatches',
-          labelVariant: 'create',
-          determinedCount: 1,
-          eligibleCount: 1,
-          materializedCount: 0,
-          commandEnabled: true,
-          confrontations: [],
-        },
-        lifecycle: {
-          transition: {
-            code: 'PrepareStage',
-            enabled: false,
-            disabledReasonCode: 'StageNotReady',
-          },
-        },
-      });
-
-      const matchesSection = document.getElementById('operational-matchs')!;
-      expect(
-        within(matchesSection).getByText(/complétez la structure/i),
-      ).toBeInTheDocument();
-      expect(
-        within(matchesSection).getByRole('button', {
-          name: /préparer la phase/i,
-        }),
-      ).toBeDisabled();
-      expect(
-        within(matchesSection).queryByLabelText(
-          /Avancement de la production des matchs/i,
-        ),
-      ).not.toBeInTheDocument();
-    });
-
     it('keeps matches section content visible while materialize is pending', async () => {
       vi.mocked(materializeMatches).mockImplementation(
         () => new Promise(() => {}),
@@ -663,7 +615,10 @@ describe('StructurePhaseOperationalStrip', () => {
     });
 
     it('keeps placement metrics visible during hub background refresh', () => {
-      const { container } = renderStrip({ structureHubBackgroundRefresh: true });
+      const { container } = renderStrip({
+        layoutVariant: 'composition',
+        structureHubBackgroundRefresh: true,
+      });
 
       expect(
         screen.getByRole('button', { name: /placer manuellement/i }),
@@ -673,10 +628,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeNull();
       expect(
         container.querySelectorAll('.structure-operational-strip__section-chip-spinner'),
-      ).toHaveLength(3);
-      expect(
-        container.querySelector('.structure-operational-tile__sync-status'),
-      ).toBeNull();
+      ).toHaveLength(1);
     });
 
     it('does not insert sync status inside the strip grid (avoids spurious section separators)', () => {

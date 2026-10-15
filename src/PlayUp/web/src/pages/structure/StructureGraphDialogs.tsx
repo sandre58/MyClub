@@ -42,6 +42,7 @@ import {
   skeletonPayload,
   skeletonStepValid,
 } from './structureSkeletonForm';
+import { countInboundQualProgRules } from './structureStageQualProgProjection';
 
 const ADD_PHASE_FORMATS: StructureFormatKind[] = [
   'Championship',
@@ -491,28 +492,11 @@ export function RemovePhaseDialog({
   const { t: tCommon } = useTranslation('common');
   const queryClient = useQueryClient();
 
-  const inboundQual = data.stages.reduce((count, peer) => {
-    if (peer.stageId === stage.stageId) {
-      return count;
-    }
-    return (
-      count +
-      (peer.qualificationPaths ?? []).filter(
-        (path) => path.destinationStageId === stage.stageId,
-      ).length
-    );
-  }, 0);
-  const inboundProg = data.stages.reduce((count, peer) => {
-    if (peer.stageId === stage.stageId) {
-      return count;
-    }
-    return (
-      count +
-      (peer.progressionPaths ?? []).filter(
-        (path) => path.destinationStageId === stage.stageId,
-      ).length
-    );
-  }, 0);
+  const { qual: inboundQual, prog: inboundProg } = countInboundQualProgRules(
+    data.stages,
+    stage.stageId,
+    stage.stageId,
+  );
 
   const mutation = useMutation({
     mutationFn: () => removeCompetitionStage(data.competitionId, stage.stageId),

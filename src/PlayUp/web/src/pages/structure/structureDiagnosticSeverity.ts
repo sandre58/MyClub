@@ -2,7 +2,6 @@
 
 import type { StructureFormatKind, StageStatus } from '../../types';
 import {
-  structureDiagnosticPresentation,
   structureDiagnosticToneFromPresentation,
   structureProductSeverityFromPresentation,
   type StructureDiagnosticPresentationContext,

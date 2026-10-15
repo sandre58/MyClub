@@ -132,7 +132,7 @@ function resolveMatrixCell(
 }
 
 function applyImpactPromotion(
-  code: string,
+  _code: string,
   cell: MatrixCell,
   context: StructureDiagnosticPresentationContext,
 ): MatrixCell {

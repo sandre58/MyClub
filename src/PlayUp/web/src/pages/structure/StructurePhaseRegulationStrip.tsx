@@ -1,4 +1,10 @@
-import { Fragment, type ReactNode } from 'react';
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Chip } from '../../design-system/components/Chip';
@@ -108,11 +114,12 @@ function RegulationDigestSection({
   );
 }
 
-function RegulationDigestStrip({ children }: { children: ReactNode[] }) {
+function RegulationDigestStrip({ children }: { children: ReactNode }) {
+  const sections = Children.toArray(children).filter(isValidElement) as ReactElement[];
   return (
     <div className="structure-regulation-digest">
-      {children.map((child, index) => (
-        <Fragment key={child.key ?? index}>
+      {sections.map((child, index) => (
+        <Fragment key={child.key ?? `regulation-digest-${index}`}>
           {index > 0 ? (
             <GradientSeparator
               orientation="vertical"

@@ -9,7 +9,7 @@ import {
   singleRoundDriftRoundId,
   type TieFormatSessionFlags,
 } from './tieFormatEditorState';
-import { defaultOneLegForm, type TieFormState } from './tieFormatForm';
+import type { TieFormState } from './tieFormatForm';
 
 const phaseDefault: TieFormState = {
   numberOfLegs: 1,

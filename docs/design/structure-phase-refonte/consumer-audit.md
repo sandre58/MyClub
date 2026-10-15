@@ -24,14 +24,17 @@ Reference for header / strip / separator work. No product behaviour change beyon
 | Consumer | `layoutVariant` |
 |----------|-----------------|
 | `StructurePhaseFiche` | `composition`, `aside-matchs` |
-| `StructurePhaseRegulationStrip` | `full` (default) |
 
-**Risk:** `composition` uses vertical stack + `joinCompositionPlaceAssignmentSections`; `full` / `aside-matchs` unchanged.
+**Risk:** `composition` uses vertical stack + `joinCompositionPlaceAssignmentSections`; `aside-matchs` is a single Matchs column.
 
 ## GradientSeparator
 
-New DS component (`GradientSeparator.tsx`). Composition grid uses `orientation="responsive"` with `@container phase-composition` rules in `structure-phase-layout.css`. Regulation strip keeps legacy `.structure-operational-strip__separator` until a later dedup.
+New DS component (`GradientSeparator.tsx`). Composition grid and regulation digest use gradient separators; the old three-column operational strip grid is removed.
 
 ## Placement projection
 
 `structureEntryPlacementProjection.ts` — same case filter as `placedEntryIdsFromSchematic`; labels via `structurePlaceLabel.ts`.
+
+## DTO audit (phase 4)
+
+See [structure-hub-dto-audit.md](./structure-hub-dto-audit.md) — hub/stage field usage, dual path/intent projections, removal log.

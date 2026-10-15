@@ -6,12 +6,27 @@
 import type {
   SelectionMode,
   StructurePlacementAward,
+  StructureProgressionIntent,
   StructureProgressionPath,
+  StructureQualificationIntent,
   StructureQualificationPath,
   StructureStageHubSummary,
   StructureView,
 } from '../../types';
 import { qualificationPathVolume } from './structurePopulationVolume';
+import { intentFromApi, summarizeIntentWhoParts } from './structureQualificationDraft';
+import {
+  progressionEdgeKeyParts,
+  progressionEdgeDestination,
+  progressionEdges,
+  progressionEdgeVolume,
+  qualificationEdgeDestination,
+  qualificationEdges,
+  qualificationEdgeOrder,
+  qualificationEdgeVolume,
+  type ProgressionEdge,
+  type QualificationEdge,
+} from './structureStageQualProgProjection';
 
 export type FeedFamily = 'place' | 'result';
 
@@ -288,6 +303,105 @@ function matchSortKey(
   return fixtureId ?? '';
 }
 
+function qualificationIntentRuleParts(
+  intent: StructureQualificationIntent,
+  locale: string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): Pick<
+  FeedRow,
+  | 'badge'
+  | 'badgeTone'
+  | 'context'
+  | 'extra'
+  | 'family'
+  | 'sortPrimary'
+  | 'sortSecondary'
+> {
+  const draft = intentFromApi(intent);
+  const { selection, scope } = summarizeIntentWhoParts(draft, locale, t);
+  const extra =
+    draft.conditionKind === 'points' &&
+    Number.isFinite(Number(draft.minimumPoints))
+      ? t('fiche.rule.minimumPoints', { n: Number(draft.minimumPoints) })
+      : undefined;
+  return {
+    badge: selection || t('qualification.newPath'),
+    badgeTone: 'accent',
+    context: scope,
+    extra,
+    family: 'place',
+    sortPrimary: intent.order,
+    sortSecondary: scope,
+  };
+}
+
+function progressionIntentRuleParts(
+  intent: StructureProgressionIntent,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): Pick<
+  FeedRow,
+  | 'badge'
+  | 'badgeTone'
+  | 'context'
+  | 'extra'
+  | 'family'
+  | 'sortPrimary'
+  | 'sortSecondary'
+> {
+  const isWinner = intent.outcome === 'Winner';
+  const volume = Math.max(1, intent.expandedPathCount ?? 1);
+  const round =
+    intent.roundName?.trim() ||
+    (intent.roundId
+      ? t('progression.roundFallback', { id: intent.roundId.slice(0, 8) })
+      : '');
+  return {
+    badge: isWinner
+      ? t('fiche.rule.winner', { count: volume })
+      : t('fiche.rule.loser', { count: volume }),
+    badgeTone: isWinner ? 'win' : 'loss',
+    context: round,
+    family: 'result',
+    sortPrimary: isWinner ? 0 : 1,
+    sortSecondary: `${String(intent.order).padStart(6, '0')}-${round}`,
+  };
+}
+
+function qualificationEdgeRuleParts(
+  edge: QualificationEdge,
+  locale: string,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): Pick<
+  FeedRow,
+  | 'badge'
+  | 'badgeTone'
+  | 'context'
+  | 'extra'
+  | 'family'
+  | 'sortPrimary'
+  | 'sortSecondary'
+  | 'badgeAsText'
+> {
+  const parts = qualificationIntentRuleParts(edge.intent, locale, t);
+  return { ...parts, badgeAsText: true };
+}
+
+function progressionEdgeRuleParts(
+  edge: ProgressionEdge,
+  t: (key: string, opts?: Record<string, unknown>) => string,
+): Pick<
+  FeedRow,
+  | 'badge'
+  | 'badgeTone'
+  | 'context'
+  | 'extra'
+  | 'family'
+  | 'sortPrimary'
+  | 'sortSecondary'
+> {
+  return progressionIntentRuleParts(edge.intent, t);
+}
+
 export function progressionRuleParts(
   path: StructureProgressionPath,
   t: (key: string, opts?: Record<string, unknown>) => string,
@@ -370,36 +484,39 @@ export function compareFeedRules(
 export function inboundFeeds(
   data: StructureView,
   stageId: string,
+  locale: string,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   const feeds: FeedRow[] = [];
 
   for (const source of data.stages) {
-    for (const path of source.qualificationPaths ?? []) {
-      if (path.destinationStageId !== stageId) continue;
-      const parts = qualificationRuleParts(path, t);
+    for (const edge of qualificationEdges(source)) {
+      if (qualificationEdgeDestination(edge) !== stageId) continue;
+      const parts = qualificationEdgeRuleParts(edge, locale, t);
+      const order = qualificationEdgeOrder(edge);
       feeds.push({
-        key: `q-${source.stageId}-${path.order}`,
+        key: `q-i-${source.stageId}-${edge.intent.intentId}`,
         peerId: source.stageId,
         peerName: source.name,
         peerOrder: stagePeerOrder(data, source.stageId),
         ...parts,
-        volume: selectionVolume(path),
-        qualPathOrder: path.order,
+        volume: qualificationEdgeVolume(edge),
+        qualPathOrder: order,
       });
     }
-    for (const path of source.progressionPaths ?? []) {
-      if (path.destinationStageId !== stageId) continue;
-      const parts = progressionRuleParts(path, t);
+    for (const edge of progressionEdges(source)) {
+      if (progressionEdgeDestination(edge) !== stageId) continue;
+      const parts = progressionEdgeRuleParts(edge, t);
+      const keyParts = progressionEdgeKeyParts(edge);
       feeds.push({
-        key: `p-${source.stageId}-${path.sourcePairKey}-${path.outcome}`,
+        key: `p-i-${source.stageId}-${edge.intent.intentId}`,
         peerId: source.stageId,
         peerName: source.name,
         peerOrder: stagePeerOrder(data, source.stageId),
         ...parts,
-        volume: 1,
-        progressionPairKey: path.sourcePairKey ?? undefined,
-        progressionOutcome: path.outcome ?? undefined,
+        volume: progressionEdgeVolume(edge),
+        progressionPairKey: keyParts.sourcePairKey,
+        progressionOutcome: keyParts.outcome,
       });
     }
   }
@@ -409,32 +526,40 @@ export function inboundFeeds(
 export function outboundFeeds(
   data: StructureView,
   stage: StructureStageHubSummary,
+  locale: string,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   const feeds: FeedRow[] = [];
   const nameOf = (id: string) =>
     data.stages.find((s) => s.stageId === id)?.name ?? id;
 
-  for (const path of stage.qualificationPaths ?? []) {
-    const parts = qualificationRuleParts(path, t);
+  for (const edge of qualificationEdges(stage)) {
+    const destId = qualificationEdgeDestination(edge);
+    const parts = qualificationEdgeRuleParts(edge, locale, t);
+    const order = qualificationEdgeOrder(edge);
     feeds.push({
-      key: `q-out-${path.order}-${path.destinationStageId}`,
-      peerId: path.destinationStageId,
-      peerName: nameOf(path.destinationStageId),
-      peerOrder: stagePeerOrder(data, path.destinationStageId),
+      key: `q-out-i-${edge.intent.intentId}`,
+      peerId: destId,
+      peerName: nameOf(destId),
+      peerOrder: stagePeerOrder(data, destId),
       ...parts,
-      volume: selectionVolume(path),
+      volume: qualificationEdgeVolume(edge),
+      qualPathOrder: order,
     });
   }
-  for (const path of stage.progressionPaths ?? []) {
-    const parts = progressionRuleParts(path, t);
+  for (const edge of progressionEdges(stage)) {
+    const destId = progressionEdgeDestination(edge);
+    const parts = progressionEdgeRuleParts(edge, t);
+    const keyParts = progressionEdgeKeyParts(edge);
     feeds.push({
-      key: `p-out-${path.sourcePairKey}-${path.outcome}-${path.destinationStageId}`,
-      peerId: path.destinationStageId,
-      peerName: nameOf(path.destinationStageId),
-      peerOrder: stagePeerOrder(data, path.destinationStageId),
+      key: `p-out-i-${edge.intent.intentId}`,
+      peerId: destId,
+      peerName: nameOf(destId),
+      peerOrder: stagePeerOrder(data, destId),
       ...parts,
-      volume: 1,
+      volume: progressionEdgeVolume(edge),
+      progressionPairKey: keyParts.sourcePairKey,
+      progressionOutcome: keyParts.outcome,
     });
   }
   return feeds;
