@@ -25,6 +25,8 @@ import {
   type StructureDiagnosticTone,
 } from '../pages/structure/structureDiagnosticPresentation';
 import type { StructureDiagnosticSeverityContext } from '../pages/structure/structureDiagnosticSeverity';
+import { resolveStructureDiagnosticIssueTitleKey } from '../pages/structure/structurePausedDiagnosticCopy';
+import { isSuspendedStageStatus } from '../pages/structure/structureOperationalMeterPresentation';
 
 /** Orthogonal signal tone (DS Alert / Status / toast mapping — design §6.3). */
 export type FunctionalProblemTone = 'danger' | 'warning' | 'info' | 'attention';
@@ -155,7 +157,11 @@ function structureDiagnosticPresentationFields(
   );
   const tone = mapStructureTone(structureDiagnosticTone(code, context));
   if (canal === 'attention-drawer') {
-    return { tone, titleKey: pres.titleKeyShort, titleNs: 'structure' };
+    const stageStatus = context?.stageStatus;
+    const titleKey = isSuspendedStageStatus(stageStatus)
+      ? resolveStructureDiagnosticIssueTitleKey(code, stageStatus)
+      : pres.titleKeyShort;
+    return { tone, titleKey, titleNs: 'structure' };
   }
   return { tone, titleKey: pres.titleKeyLong, titleNs: 'structure' };
 }
@@ -203,6 +209,7 @@ export function functionalProblemPresentation(
       stageId: stageFromTarget,
       structureIssueCode: source,
       canal,
+      structureDiagnosticContext,
     });
   }
 

@@ -20,6 +20,7 @@ import { attentionSeverityToneFromSituations } from './attentionSeverityTone';
 import { attentionLoadErrorMessage } from './attentionLoadError';
 import { useShellCompetitionContext } from './useShellCompetitionContext';
 import { SHELL_MOTION_EXIT_MS } from './shellMotion';
+import { attentionDrawerLedeKey } from './attentionDrawerPresentation';
 
 type AttentionDrawerProps = {
   open: boolean;
@@ -75,6 +76,11 @@ export function AttentionDrawer({
     presentableAttentionSituations(wireItems, attentionPresentation),
   );
   const titleLabel = t('shell:attention.label');
+  const presentableSituations = presentableAttentionSituations(
+    wireItems,
+    attentionPresentation,
+  );
+  const ledeKey = attentionDrawerLedeKey(presentableSituations, stages);
   const showCount = !attentionPending && count > 0;
 
   useEffect(() => {
@@ -164,7 +170,7 @@ export function AttentionDrawer({
                 {titleLabel}
               </span>
               <span className="shell-attention-drawer__lede">
-                {t('shell:attention.lede')}
+                {t(`shell:${ledeKey}`)}
               </span>
             </span>
           </h2>

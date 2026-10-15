@@ -194,6 +194,26 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleNs).toBe('structure');
   });
 
+  it('situationPresentation uses paused structure title on Suspended drawer rows', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'SlotFeedMissing',
+        nature: 'Blocking',
+        targetType: 'Stage',
+        targetId: 'stage-sus',
+        matchId: null,
+        actionable: false,
+        actionCode: null,
+        impactCode: null,
+        params: { stageId: 'stage-sus' },
+      },
+      'comp-1',
+      [{ stageId: 'stage-sus', name: 'Cup', status: 'Suspended' }],
+    );
+    expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissingPaused');
+    expect(presentation.titleNs).toBe('structure');
+  });
+
   it('situationPresentation maps StructureGraphInvalid to Structure SoT', () => {
     const presentation = situationPresentation(
       {
