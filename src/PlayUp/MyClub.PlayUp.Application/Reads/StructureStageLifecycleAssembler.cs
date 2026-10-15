@@ -333,7 +333,7 @@ public static class StructureStageLifecycleAssembler
         formatKind == StructureFormatKind.Swiss
             ? stage.SwissSettings is not null
             : stage.Groups.Count > 0
-                ? stage.Matchdays.Count > 0 && stage.Groups.Any(group => group.EntryIds.Count > 0)
+                ? stage.Matchdays.Count > 0
                 : stage.Rounds.Count > 0 || stage.Matchdays.Count > 0;
 
     private static (string? Section, string? Focus, bool Manual, bool OpenDraw) MapRemediationDeepLink(

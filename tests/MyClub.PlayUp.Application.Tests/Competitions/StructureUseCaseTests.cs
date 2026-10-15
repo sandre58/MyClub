@@ -468,7 +468,7 @@ public sealed class StructureUseCaseTests
     }
 
     [Fact]
-    public void StructureView_exposes_RenameStage_when_stage_is_Running()
+    public void StructureView_exposes_rename_and_standing_when_stage_is_Running_classifying()
     {
         var competition = CreateCompetition.Execute("RenameActions", _clock);
         var configured = ConfigureStructure.Execute(
@@ -481,8 +481,32 @@ public sealed class StructureUseCaseTests
 
         var hub = StructureViewAssembler.Assemble(competition, [configured.Stage]).Stages.Single();
 
-        hub.Actions.Should().ContainSingle().Which.Should().Be(StructureViewAssembler.ActionRenameStage);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionRenameStage);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionReplaceStandingRules);
         hub.Actions.Should().NotContain(StructureViewAssembler.ActionRemoveStage);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionRebuildStructure);
+    }
+
+    [Fact]
+    public void StructureView_exposes_operational_actions_when_stage_is_Ready_without_production()
+    {
+        var competition = CreateCompetition.Execute("ReadyOps", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        var e1 = AddEntry.Execute(competition, "A", _clock).Id;
+        var e2 = AddEntry.Execute(competition, "B", _clock).Id;
+        ReplaceStageAffectationAuthoring.Execute(configured.Stage, competition, [e1, e2], _clock);
+        configured.Stage.Prepare(_clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [configured.Stage]).Stages.Single();
+
+        hub.Status.Should().Be(StageStatus.Ready);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionRenameStage);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionReplaceAffectationAuthoring);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionAddMatchday);
         hub.Actions.Should().NotContain(StructureViewAssembler.ActionRebuildStructure);
     }
 

@@ -320,7 +320,7 @@ public static class CompetitionFlowAnalyzer
         {
             SlotFeedInvalid => true,
             SlotFeedMultiple => true,
-            SlotFeedMissing => true,
+            SlotFeedMissing => false,
             CycleDetected => true,
             RoutingNondeterminism => true,
             OverCapacityEdge => true,

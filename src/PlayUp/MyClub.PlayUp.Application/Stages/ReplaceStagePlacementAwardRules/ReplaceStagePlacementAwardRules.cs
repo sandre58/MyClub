@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -21,15 +22,16 @@ public static class ReplaceStagePlacementAwardRules
     public static void Execute(
         Stage stage,
         IReadOnlyList<PlacementAwardPathSpec>? paths,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureMutable(stage);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Placement award rules");
 
         if (paths is null || paths.Count == 0)
         {
-            stage.ReplacePlacementAwardRules(null, clock);
+            stage.ReplacePlacementAwardRulesOperationally(null, clock);
             return;
         }
 
@@ -54,10 +56,8 @@ public static class ReplaceStagePlacementAwardRules
             domainPaths.Add(new PlacementAwardPath(spec.SourcePairKey, spec.Outcome, spec.Rank));
         }
 
-        stage.ReplacePlacementAwardRules(new PlacementAwardRules(domainPaths), clock);
+        stage.ReplacePlacementAwardRulesOperationally(new PlacementAwardRules(domainPaths), clock);
     }
-
-    private static void EnsureMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 }
 
 /// <summary>

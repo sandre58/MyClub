@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -21,11 +22,15 @@ public static class CreateDraw
     /// <param name="kind">Resolution kind (Slot or Group).</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <returns>The created draw.</returns>
-    public static Draw Execute(Stage stage, DrawResolutionKind kind, IClock clock)
+    public static Draw Execute(
+        Stage stage,
+        DrawResolutionKind kind,
+        IClock clock,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable(stage);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw");
         EnsureDrawRulesEngaged(stage);
         return stage.CreateDraw(kind, clock);
     }
@@ -41,6 +46,4 @@ public static class CreateDraw
             $"Draw cannot be created on stage '{stage.Name.Value}' without DrawRules.",
             ApplicationErrorCodes.DrawRulesRequired);
     }
-
-    private static void EnsureStructureMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 }

@@ -260,7 +260,7 @@
   },
   "lifecycle": {
     "actions": {
-      "prepare": "Prepare phase",
+      "prepare": "Mark as ready",
       "start": "Start phase",
       "complete": "Complete phase",
       "revertToDraft": "Back to draft",
@@ -291,11 +291,11 @@
     "state": {
       "Draft": {
         "lead": "Draft",
-        "detail": "Complete the structure, then mark the phase as ready."
+        "detail": "Complete the structure, then mark the phase as ready. Once validated, placement and sporting operations remain available."
       },
       "Ready": {
         "lead": "Ready",
-        "detail": "Start the phase when sporting operations can begin."
+        "detail": "Structure validated — placement, draw, and sporting operations remain available. Start when matches can begin."
       },
       "Running": {
         "lead": "Live",
@@ -338,7 +338,7 @@
       "_unknown": "This phase lifecycle action is unavailable right now.",
       "CompetitionClosed": "The competition is closed — phase lifecycle actions are unavailable.",
       "ConstructionFrozen": "The competition is live — finish preparing this phase before the competition started, or adjust from Overview.",
-      "Places": "Fill every place before preparing the phase.",
+      "Places": "Complete the composition pool (groups) before marking the phase as ready.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
       "StageNotReady": "Complete this phase’s structure before marking it ready.",
       "StructureGraphInvalid": "Fix structure connections before preparing the phase.",
@@ -367,7 +367,7 @@
       "_unknown": "This phase lifecycle action is unavailable right now.",
       "CompetitionClosed": "The competition is closed — phase lifecycle actions are unavailable.",
       "ConstructionFrozen": "The competition is live — finish preparing this phase before the competition started, or adjust from Overview.",
-      "Places": "Fill every place before preparing the phase.",
+      "Places": "Complete the composition pool (groups) before marking the phase as ready.",
       "Entries": "Assign every team to this phase before preparing it.",
       "Draw": "Finish draw setup and execution before preparing the phase.",
       "Matches": "Produce the required matches before preparing the phase.",

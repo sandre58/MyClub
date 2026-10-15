@@ -121,7 +121,7 @@ describe('resolveLifecycleAnticipatedMessage', () => {
   });
 
   it('resolves known wire codes from problems.lifecycle', () => {
-    expect(resolveLifecycleAnticipatedMessage(t, 'Places')).toContain('place');
+    expect(resolveLifecycleAnticipatedMessage(t, 'Places')).toMatch(/composition|pool/i);
     expect(resolveLifecycleAnticipatedMessage(t, 'NotInInventory')).toContain(
       'unavailable',
     );

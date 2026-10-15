@@ -57,7 +57,7 @@ public sealed class PrepareStageTests
     }
 
     [Fact]
-    public void Execute_rejects_missing_feed_and_does_not_prepare()
+    public void Execute_prepares_when_slot_feed_configuration_is_missing()
     {
         var stage = Stage.Create(
             CompetitionId.New(),
@@ -67,11 +67,10 @@ public sealed class PrepareStageTests
         stage.AddRound("QF", _clock);
         stage.AddSlot("SF1-A");
 
-        var act = () => PrepareStage.Execute(stage, [stage], _clock);
+        var resolutions = PrepareStage.Execute(stage, [stage], _clock);
 
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.SlotFeedsInvalid);
-        stage.Status.Should().Be(StageStatus.Draft);
+        resolutions.Should().ContainSingle(r => r.Status == FeedResolutionStatus.Missing);
+        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]

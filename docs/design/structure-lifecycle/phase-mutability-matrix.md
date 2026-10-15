@@ -135,7 +135,7 @@ Legend: **Y** = blocks or maps to blocking; **W** = warning in drawer/attention;
 |------|------------------------|-----------------|-------------------|--------------|---------------------------------------------|------------------------------------------------------|------------------|-----------------|-------|
 | `SlotFeedInvalid` | Y | Y | Slot resolver | Y | blocking (default) | blocking | — | — | — |
 | `SlotFeedMultiple` | Y | Y | Slot resolver | Y | blocking | blocking | — | — | — |
-| `SlotFeedMissing` | — | **Y** | `StructurePreparePlacesGate` | **Y** | blocking | **H** if draw awaiting | indirect (Cup places) | — | — |
+| `SlotFeedMissing` | — | **—** | not blocked at Prepare (D3 occupancy / missing feed config) | **—** | attention in Draft (D5) | **H** if draw awaiting | indirect (Cup places) | materialize gates | — |
 | `CycleDetected` | Y | Y | — | Y | blocking | blocking | — | — | — |
 | `RoutingNondeterminism` | Y | Y | — | Y | blocking | blocking | — | — | — |
 | `OverCapacityEdge` | — | Y | — | Y | **W** | **W** | — | — | — |
@@ -156,7 +156,7 @@ Legend: **Y** = blocks or maps to blocking; **W** = warning in drawer/attention;
 
 | Diagnostic | Cat. | Prepare (target) | Materialize (target) | Drawer (target) | Blocking condition (factual, from code) |
 |------------|------|------------------|----------------------|-----------------|----------------------------------------|
-| `SlotFeedMissing` | **I** | **Block** (decision A) | Block when pair/slot production requires unresolved feed (Cup occupancy + materialize eligibility) | **Error**; **hide** when `IsSlotFeedAwaitingDraw` (presentation only) | Required slot has no unique WhoFeeds resolution ([`PrepareStage`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/PrepareStage/PrepareStage.cs), [`StructurePreparePlacesGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePreparePlacesGate.cs)) |
+| `SlotFeedMissing` | **C** (occupancy synth) / **I** (analyzer `Missing` only when conflated) | **No block** (D3 — complete in Ready/Draft attention; block at Materialize) | Block when pair/slot production requires resolved occupancy / feeds | **Attention in Draft**; **hide** when `IsSlotFeedAwaitingDraw` (presentation only) | Schematic gap ([`StructurePlaceOccupancyIssues`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePlaceOccupancyIssues.cs)); `InvalidFeed` / `MultipleFeeds` still block Prepare via [`PrepareStage`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/PrepareStage/PrepareStage.cs) |
 | `SlotFeedInvalid` / `SlotFeedMultiple` | I | Block | Revalidate after operational mutation | Error | Feed analysis per slot |
 | `CycleDetected` / `RoutingNondeterminism` | I | Block | — | Error | Topology analyzer |
 | `OverCapacityEdge` / `OverExtraction` | I | Block | Block if still true at materialize preflight | Error / warn (OverCapacity drawer **warn** may stay) | `expected > places` / `outbound > capacity` ([`AnalyzeCapacity`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/CompetitionFlowAnalyzer.cs)) |
@@ -169,11 +169,11 @@ Legend: **Y** = blocks or maps to blocking; **W** = warning in drawer/attention;
 
 ---
 
-## 6. Resolved arbitration #1 — `SlotFeedMissing` = **A (integrity)**
+## 6. Resolved arbitration #1 — `SlotFeedMissing` (updated D3, 2026-10-15)
 
-- **Prepare:** remains blocking (`IsPrepareGateIssue` + places gate + slot resolver).
-- **Materialize:** remains subject to format-specific occupancy / confrontation rules.
-- **Drawer:** keep `IsSlotFeedAwaitingDraw` suppression; **does not** relax Prepare/Materialize.
+- **Prepare:** **does not** block on schematic occupancy or `FeedResolutionStatus.Missing`; **does** block on `InvalidFeed` / `MultipleFeeds` and other integrity prepare gates. Groups composition pool gap remains via [`StructurePreparePlacesGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePreparePlacesGate.cs) only.
+- **Materialize:** unchanged — format-specific occupancy / confrontation rules.
+- **Drawer:** D5 attention in Draft for occupancy; `IsSlotFeedAwaitingDraw` suppression unchanged.
 
 ---
 
@@ -274,12 +274,12 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 | **R-D1a** | U Ready, D Draft; Top 2→Top 1 on qual | Allowed (no D1) | [g-ops spec](./g-ops-ready-operational-mutations-and-d1.md) § R-D1a — test with G-OPS1 |
 | **R-D1b** | U+D Ready; Top 2→Top 1 or clear qual, entries on D | Rejected + consumer list (**b2** W3, **b1** W1) | `ReplaceStageQualificationRulesGOpsTests` |
 | **R-Draw1** | Change composition with published applied draw | Refuse mutation (target) | **Gap** — UI partial; gate deferred — [G-OPS3 decision](./g-ops3-arbitration-session.md); negatives [`ReplaceStageAffectationAuthoringGOps3Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ReplaceStageAffectationAuthoringGOps3Tests.cs) |
-| **R-Draw2** | Draw engaged; `SlotFeedMissing` hidden in drawer | Prepare still blocks; drawer hides only | [`StructurePresentedAttentionCollectorTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePresentedAttentionCollectorTests.cs) |
+| **R-Draw2** | Draw engaged; `SlotFeedMissing` hidden in drawer | Prepare not gated by occupancy; drawer hides only | [`StructurePresentedAttentionCollectorTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePresentedAttentionCollectorTests.cs) |
 | **R-Mat1** | Ch Ready, incomplete roster | `PhaseRosterIncomplete` | [`StructureMaterializeAssemblerTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructureMaterializeAssemblerTests.cs) |
 | **R-Mat2** | Ready, partial materialize, operational edit | Denied (D2) | `ReplaceStageQualificationRulesGOpsTests`, `ReplaceStageProgressionRulesGOpsTests`, `ReplaceStageAffectationAuthoringGOpsTests` (D2) |
 | **R-Prep1** | Cup `AuthoredAwardUnreachable` | Prepare blocked | [`StructurePrepareAttributionTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePrepareAttributionTests.cs) R3 |
 | **R-Prep2** | Championship + `AuthoredAwardUnreachable` issue | Prepare **not** blocked by attribution gate | Same file `BlocksPrepare_ignores_authored_award_on_classifying_phase` |
-| **R-Prep3** | `SlotFeedMissing` + Prepare | Blocked | Prepare gate + [`CompetitionFlowAnalyzerTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/CompetitionFlowAnalyzerTests.cs) |
+| **R-Prep3** | Cup slots with `Missing` feed config + Prepare | **Allowed** | [`PrepareStageTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/PrepareStageTests.cs) `Execute_prepares_when_slot_feed_configuration_is_missing` |
 | **R-Mat-M1** | `ConfrontationUndecidable` at materialize | Block (Cup) | `MaterializeCupFromOccupiedSlotsGMat1Tests` — [g-mat1 spec](./g-mat1-confrontation-undecidable-at-materialize.md) |
 | **R-Mat-M2** | `NonRootUnfed` blocks materialize when confrontation unfed | Block (target) **deferred** — A5 **M2b** signed | **M2b** — [`MaterializeCupFromOccupiedSlotsRMatM2bTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/MaterializeCupFromOccupiedSlotsRMatM2bTests.cs); positive gate **not** implemented (G-MAT3 spec draft) |
 | **R-Mat-M4b** | `SourcePopulationShortfall` on foreign phase | No G-MAT4 veto on **S** (A5) | [`MaterializeMatchesRMatM4bTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/MaterializeMatchesRMatM4bTests.cs); gate **deferred** ([G-MAT4 decision](./g-mat4-arbitration-session.md)) |

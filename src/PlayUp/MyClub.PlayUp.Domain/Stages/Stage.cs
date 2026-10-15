@@ -600,7 +600,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public Draw CreateDraw(DrawResolutionKind kind, DrawId id, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
         var draw = new Draw(id, kind);
         _draws.Add(draw);
         Raise(new StageDrawCreated(Id, draw.Id, kind, clock));
@@ -613,7 +613,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs)
     {
         ArgumentNullException.ThrowIfNull(inputs);
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
         GetDraw(drawId).ConfigureInputs(inputs);
     }
 
@@ -624,7 +624,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(resolution);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
         var draw = GetDraw(drawId);
         draw.RecordResolution(resolution);
         Raise(new StageDrawResolutionRecorded(Id, drawId, resolution.State, clock));
@@ -636,7 +636,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void MarkDrawNoSolution(DrawId drawId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
         var draw = GetDraw(drawId);
         draw.MarkNoSolution();
         Raise(new StageDrawResolutionRecorded(Id, drawId, DrawResolutionState.NoSolution, clock));
@@ -648,7 +648,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void PublishDraw(DrawId drawId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
 
         var draw = GetDraw(drawId);
         draw.Publish();
@@ -661,7 +661,7 @@ public sealed class Stage : AggregateRoot<StageId>
     public void CancelDraw(DrawId drawId, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
         var draw = GetDraw(drawId);
         if (draw.Status == DrawStatus.Cancelled)
         {
@@ -792,7 +792,23 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
+        ApplyPlacementAwardRulesReplacement(placementAwardRules, clock);
+    }
 
+    /// <summary>
+    /// Replaces placement award rules while the stage is Draft or Ready (operational attribution edit).
+    /// </summary>
+    /// <param name="placementAwardRules">The new placement award rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplacePlacementAwardRulesOperationally(PlacementAwardRules? placementAwardRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyPlacementAwardRulesReplacement(placementAwardRules, clock);
+    }
+
+    private void ApplyPlacementAwardRulesReplacement(PlacementAwardRules? placementAwardRules, IClock clock)
+    {
         if (placementAwardRules is not null)
         {
             foreach (var path in placementAwardRules.Paths)
@@ -1268,7 +1284,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="entryId">The entry identity.</param>
     public void AssignEntryToGroup(GroupId groupId, EntryId entryId)
     {
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
 
         var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
         if (owningGroup is not null)
@@ -1651,7 +1667,7 @@ public sealed class Stage : AggregateRoot<StageId>
         EntryId entryId,
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
 
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
@@ -1711,7 +1727,7 @@ public sealed class Stage : AggregateRoot<StageId>
         string slotKey,
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
-        EnsureStructureMutable();
+        EnsureOperationalExitRulesMutable();
 
         var key = Slot.NormalizeKey(slotKey);
         var slot = FindSlot(key)
@@ -2558,13 +2574,6 @@ public sealed class Stage : AggregateRoot<StageId>
             {
                 throw new DomainException(
                     "Poule stage requires at least one matchday before Prepare.",
-                    StageErrorCodes.InvalidConfiguration);
-            }
-
-            if (_groups.All(g => g.EntryIds.Count == 0))
-            {
-                throw new DomainException(
-                    "Poule stage requires at least one group with an entry before Prepare.",
                     StageErrorCodes.InvalidConfiguration);
             }
         }

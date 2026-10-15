@@ -48,8 +48,12 @@ public static class ApplyDraw
 
         return draw.Kind switch
         {
-            DrawResolutionKind.Slot => new ApplyDrawResult(ApplySlot(stage, draw, clock, snapshots), []),
-            DrawResolutionKind.Group => new ApplyDrawResult(ApplyGroup(stage, draw, snapshots), []),
+            DrawResolutionKind.Slot => new ApplyDrawResult(
+                ApplySlot(stage, draw, clock, snapshots, stageMatches),
+                []),
+            DrawResolutionKind.Group => new ApplyDrawResult(
+                ApplyGroup(stage, draw, snapshots, stageMatches),
+                []),
             _ => throw new ApplicationFailureException(
                 $"ApplyDraw does not support draw kind '{draw.Kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
@@ -91,9 +95,10 @@ public static class ApplyDraw
         Stage stage,
         Draw draw,
         IClock clock,
-        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+        IReadOnlyList<MatchParticipantSnapshot> snapshots,
+        IReadOnlyList<Match>? stageMatches)
     {
-        StageStructureEditGuard.EnsureEditable(stage);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw apply");
 
         var instructions = draw.ToSlotAssignmentInstructions(stage.Id);
         var pool = draw.Inputs!.Entries;
@@ -146,9 +151,10 @@ public static class ApplyDraw
     private static IReadOnlyList<SlotAssignmentInstruction> ApplyGroup(
         Stage stage,
         Draw draw,
-        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+        IReadOnlyList<MatchParticipantSnapshot> snapshots,
+        IReadOnlyList<Match>? stageMatches)
     {
-        StageStructureEditGuard.EnsureEditable(stage);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw apply");
 
         var placements = draw.Resolution.GroupResults;
         var pool = draw.Inputs!.Entries;

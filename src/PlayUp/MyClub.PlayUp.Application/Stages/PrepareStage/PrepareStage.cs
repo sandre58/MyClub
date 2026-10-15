@@ -53,7 +53,7 @@ public static class PrepareStage
         var resolutions = SlotFeedResolver.ResolveAll(snapshot);
 
         var failures = resolutions
-            .Where(r => r.Status is not FeedResolutionStatus.Unique)
+            .Where(r => r.Status is FeedResolutionStatus.InvalidFeed or FeedResolutionStatus.MultipleFeeds)
             .ToArray();
         if (failures.Length > 0)
         {

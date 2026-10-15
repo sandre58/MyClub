@@ -39,7 +39,23 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
-    public void Assemble_Draft_championship_with_partial_composition_blocks_Prepare()
+    public void Assemble_Draft_groups_with_empty_schematic_and_composition_allows_Prepare()
+    {
+        var situation = TestCompetition.Create("Lifecycle Draft groups", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Groups(2, 2, "Poules"));
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.StructureIssues.Should().Contain(CompetitionFlowAnalyzer.SlotFeedMissing);
+        hub.Lifecycle!.Transition.Enabled.Should().BeTrue();
+        PrepareStage.Execute(situation.PrimaryStage!, situation.Stages, _clock);
+        situation.PrimaryStage!.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Assemble_Draft_championship_with_partial_schematic_fill_allows_Prepare()
     {
         var situation = TestCompetition.Create("Lifecycle Draft partial", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -54,9 +70,9 @@ public sealed class StructureStageLifecycleAssemblerTests
         var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
         var hub = view.Stages.Single();
 
-        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
-        hub.Lifecycle.Transition.DisabledReasonCode.Should()
-            .Be(StructureStageLifecycleAssembler.ChecklistPlaces);
+        hub.StructureIssues.Should().Contain(CompetitionFlowAnalyzer.SlotFeedMissing);
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeTrue();
     }
 
     [Fact]
@@ -237,7 +253,7 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
-    public void Assemble_flux_like_clean_primary_prepares_while_broken_ko_stays_blocked()
+    public void Assemble_flux_like_clean_primary_and_empty_ko_allow_Prepare_while_integrity_cycle_blocks()
     {
         var situation = TestCompetition.Create("Flux split prepare", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -248,10 +264,11 @@ public sealed class StructureStageLifecycleAssemblerTests
             clean.AddResolvedPopulationEntry(entry.Id, _clock);
         }
 
+        var slotKeys = new[] { "QF1-A", "QF1-B", "QF2-A", "QF2-B" };
         var qf = situation.AddKnockoutStage(
             "Quarts de finale",
             "Quarts de finale",
-            ["QF1-A", "QF1-B", "QF2-A", "QF2-B"]);
+            slotKeys);
 
         var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
         var cleanHub = view.Stages.Single(h => h.StageId == clean.Id.Value);
@@ -259,7 +276,48 @@ public sealed class StructureStageLifecycleAssemblerTests
 
         cleanHub.Lifecycle!.Transition.Enabled.Should().BeTrue();
         qfHub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
-        qfHub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        qfHub.Lifecycle.Transition.Enabled.Should().BeTrue();
+        qfHub.StructureIssues.Should().Contain(CompetitionFlowAnalyzer.SlotFeedMissing);
+
+        ReplaceStageQualificationRules.Execute(
+            clean,
+            [
+                new QualificationIntentSpec(
+                    Guid.NewGuid(),
+                    1,
+                    QualificationIntentSourceKind.Overall,
+                    1,
+                    4,
+                    qf.Id.Value,
+                    DestinationSlotKeys: slotKeys)
+            ],
+            _clock);
+        ReplaceStageQualificationRules.Execute(
+            qf,
+            [
+                new QualificationIntentSpec(
+                    Guid.NewGuid(),
+                    1,
+                    QualificationIntentSourceKind.Overall,
+                    1,
+                    1,
+                    clean.Id.Value,
+                    DestinationForm: true)
+            ],
+            _clock);
+
+        view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        cleanHub = view.Stages.Single(h => h.StageId == clean.Id.Value);
+        qfHub = view.Stages.Single(h => h.StageId == qf.Id.Value);
+
+        cleanHub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        cleanHub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledStructureGraphInvalid);
+        cleanHub.StructureIssues.Should().Contain(CompetitionFlowAnalyzer.CycleDetected);
+        qfHub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        qfHub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledStructureGraphInvalid);
+        qfHub.StructureIssues.Should().Contain(CompetitionFlowAnalyzer.CycleDetected);
     }
 
     [Fact]
