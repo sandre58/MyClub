@@ -437,6 +437,43 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('Suspended frozen partial: no materialize primary (CTRL-O3-MAT)', () => {
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'exhausted',
+        determinedCount: 6,
+        eligibleCount: 0,
+        materializedCount: 3,
+        commandEnabled: false,
+        disabledReason: 'StructureNotMutable',
+        confrontations: [],
+      };
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Suspended',
+          matchCount: 3,
+          materialize,
+          lifecycle: {
+            revertTransition: { code: 'ResumeStage', enabled: true },
+            matchProgress: {
+              total: 3,
+              finished: 1,
+              open: 2,
+              cancelled: 0,
+              canComplete: false,
+            },
+          },
+        },
+        'Running',
+      );
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).queryByRole('button', { name: /matérialiser/i }),
+      ).not.toBeInTheDocument();
+    });
+
     it('shows closed ratio when matches are finished or cancelled', () => {
       renderMatchesStrip(
         {

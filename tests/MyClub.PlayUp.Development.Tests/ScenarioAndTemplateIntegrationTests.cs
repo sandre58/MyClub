@@ -39,6 +39,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             "championship-archived",
             "championship-structure-draft",
             "structure-graph-invalid",
+            "ctrl-o3-mat-recette",
             "structure-materialize-recette",
             "invariants-exec-undecidable",
             "invariants-feed-missing",

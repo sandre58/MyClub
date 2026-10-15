@@ -67,6 +67,39 @@ describe('structureMatchsSectionUi', () => {
     ).toBe(false);
   });
 
+  it('hides production in Suspended unless actionable or dematerialize enabled', () => {
+    const partialMaterialize = {
+      commandCode: 'MaterializeMatches' as const,
+      labelVariant: 'exhausted' as const,
+      determinedCount: 6,
+      eligibleCount: 0,
+      materializedCount: 3,
+      commandEnabled: false,
+      disabledReason: 'StructureNotMutable',
+      confrontations: [],
+    };
+    const suspended = baseStage({
+      status: 'Suspended',
+      materialize: partialMaterialize,
+    });
+    expect(
+      shouldShowProductionInMatchsSection(suspended, 'frozen'),
+    ).toBe(false);
+    expect(
+      shouldShowProductionInMatchsSection(suspended, 'blocked'),
+    ).toBe(false);
+    expect(
+      shouldShowProductionInMatchsSection(
+        baseStage({
+          status: 'Suspended',
+          materialize: partialMaterialize,
+          dematerialize: { enabled: true, scope: 'Phase' },
+        }),
+        'frozen',
+      ),
+    ).toBe(true);
+  });
+
   it('shows production in Running only when actionable', () => {
     const running = baseStage({
       status: 'Running',

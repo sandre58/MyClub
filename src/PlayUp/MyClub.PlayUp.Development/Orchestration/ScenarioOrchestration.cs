@@ -645,7 +645,10 @@ internal static class ScenarioOrchestration
 
     private static async Task<(Competition Competition, Stage Groups, Stage Champ)> SeedQualFormSixTeamDraftGraphAsync(
         ScenarioContext context,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string competitionLocalKey = "competition",
+        string groupsStageLocalKey = "stage",
+        string champStageLocalKey = "champ")
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
@@ -661,12 +664,25 @@ internal static class ScenarioOrchestration
             TeamNames = TeamNameSource.Generated
         };
 
-        var competition = await CreateCompetitionFromRecipeAsync(context, recipe, cancellationToken)
+        var competition = await CreateCompetitionFromRecipeAsync(
+                context,
+                recipe,
+                cancellationToken,
+                competitionLocalKey: competitionLocalKey)
             .ConfigureAwait(false);
         var entries = await RegisterTeamsAsync(
-                context, competition, recipe, countOverride: 6, cancellationToken: cancellationToken)
+                context,
+                competition,
+                recipe,
+                countOverride: 6,
+                identityScope: competitionLocalKey,
+                cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        var groups = ConfigurePrimaryStage(context, competition, recipe);
+        var groups = ConfigurePrimaryStage(
+            context,
+            competition,
+            recipe,
+            stageLocalKey: groupsStageLocalKey);
         groups.ReplaceDrawRules(null, context.Clock);
 
         var ordered = entries.OrderBy(entry => entry.Id.Value).ToList();
@@ -675,7 +691,7 @@ internal static class ScenarioOrchestration
         SeedMaterialization.AssignGroupsRoundRobin(groups, groupPool);
         AssignRootComposition(groups, groupPool, context.Clock);
 
-        var champ = CreateChampionshipStage(context, competition, "champ", "Championnat");
+        var champ = CreateChampionshipStage(context, competition, champStageLocalKey, "Championnat");
         AssignRootComposition(champ, directs, context.Clock);
 
         WireEachGroupQualificationToForm(
@@ -3485,5 +3501,154 @@ internal static class ScenarioOrchestration
 
         SeedSlotDraw.RecordAndApplySlotDraw(context, stage, pool, slotKeys);
         return [.. pairs.Select(pair => pair.PairKey)];
+    }
+
+    /// <summary>
+    /// Seeds CTRL-O3-MAT recette competitions (see <c>ctrl-o3-mat-recette</c> scenario).
+    /// </summary>
+    public static async Task BuildCtrlO3MatRecetteAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await BuildCtrlO3MatS1GroupsCompAndStageSuspendedAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+        await BuildCtrlO3MatS2GroupsStageOnlySuspendedAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+        await BuildCtrlO3MatS3ChampStageSuspendedAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+        await BuildCtrlO3MatS4SwissSuspendedAsync(context, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static async Task BuildCtrlO3MatS1GroupsCompAndStageSuspendedAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage) = await CreateCtrlO3MatGroupsPartialRunningAsync(
+                context,
+                "CTRL-O3-MAT S1 — Groups suspendu (comp+phase)",
+                "ctrl-o3-s1",
+                cancellationToken)
+            .ConfigureAwait(false);
+        stage.Suspend(context.Clock);
+        competition.Suspend(context.Clock);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildCtrlO3MatS2GroupsStageOnlySuspendedAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage) = await CreateCtrlO3MatGroupsPartialRunningAsync(
+                context,
+                "CTRL-O3-MAT S2 — Groups phase suspendue (comp Running)",
+                "ctrl-o3-s2",
+                cancellationToken)
+            .ConfigureAwait(false);
+        _ = competition;
+        stage.Suspend(context.Clock);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<(Competition Competition, Stage Stage)> CreateCtrlO3MatGroupsPartialRunningAsync(
+        ScenarioContext context,
+        string displayName,
+        string identityScope,
+        CancellationToken cancellationToken)
+    {
+        var (competition, stage, _) = await CreateRecetteGroups2X3Async(
+                context,
+                displayName,
+                identityScope,
+                cancellationToken)
+            .ConfigureAwait(false);
+        _ = SeedMaterialization.MaterializeGroupsMatchesUpTo(
+            context,
+            competition,
+            stage,
+            maxMatches: 3,
+            matchIdentityScope: identityScope);
+        SeedLifecycle.PrepareAndStart(context, competition, stage);
+        return (competition, stage);
+    }
+
+    private static async Task BuildCtrlO3MatS3ChampStageSuspendedAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        var (competition, groups, champ) = await SeedQualFormSixTeamDraftGraphAsync(
+                context,
+                cancellationToken,
+                competitionLocalKey: "ctrl-o3-s3",
+                groupsStageLocalKey: "ctrl-o3-s3-groups",
+                champStageLocalKey: "ctrl-o3-s3-champ")
+            .ConfigureAwait(false);
+        competition.Rename(new CompetitionName("CTRL-O3-MAT S3 — Championnat suspendu"), context.Clock);
+
+        await FinishGroupsAndApplyQualFormAsync(context, competition, groups, champ)
+            .ConfigureAwait(false);
+
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            competition, champ, [groups, champ], context.Clock);
+        var materialized = MaterializeMatches.Execute(
+            competition,
+            champ,
+            [],
+            context.Clock,
+            [groups, champ]);
+        foreach (var match in materialized.CreatedMatches)
+        {
+            context.Matches.Add(match);
+        }
+
+        PrepareCompetition.Execute(competition, context.Clock);
+        StartStage.Execute(champ, context.Clock);
+        StartCompetition.Execute(competition, context.Clock);
+        champ.Suspend(context.Clock);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task BuildCtrlO3MatS4SwissSuspendedAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var recipe = new CompetitionRecipe
+        {
+            DisplayName = "CTRL-O3-MAT S4 — Swiss suspendu",
+            Format = RecipeFormat.Swiss,
+            TeamCount = 8,
+            SwissRoundCount = 3,
+            StageName = "Swiss"
+        };
+
+        var competition = await CreateCompetitionFromRecipeAsync(
+                context,
+                recipe,
+                cancellationToken,
+                competitionLocalKey: "ctrl-o3-s4")
+            .ConfigureAwait(false);
+        var entries = await RegisterTeamsAsync(
+                context,
+                competition,
+                recipe,
+                identityScope: "ctrl-o3-s4",
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var stage = ConfigurePrimaryStage(
+            context,
+            competition,
+            recipe,
+            stageLocalKey: "ctrl-o3-s4-stage");
+        AssignRootComposition(stage, entries, context.Clock);
+        SeedLifecycle.ApplyStructuredLifecycleSwiss(
+            context,
+            competition,
+            stage,
+            StructuredSeedLifecycle.Suspended);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }
