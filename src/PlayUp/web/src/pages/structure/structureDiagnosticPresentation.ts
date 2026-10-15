@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 import {
+  structureDiagnosticToneForCode,
   structureProductSeverity,
   type StructureDiagnosticSeverityContext,
 } from './structureDiagnosticSeverity';
@@ -247,17 +248,14 @@ export function structureDiagnosticTone(
   code: string,
   context?: StructureDiagnosticSeverityContext,
 ): StructureDiagnosticTone {
-  const severity = structureProductSeverity(code, context);
-  if (severity === 'blocking') {
-    return 'danger';
-  }
-  if (code === 'NonRootUnfed') {
-    return 'progress';
-  }
-  return 'attention';
+  return structureDiagnosticToneForCode(code, context);
 }
 
-export { structureProductSeverity } from './structureDiagnosticSeverity';
+export {
+  structureDiagnosticPresentation,
+  structureProductSeverity,
+} from './structureDiagnosticSeverity';
+export type { StructureDiagnosticSeverityContext } from './structureDiagnosticSeverity';
 
 /** Scroll / rail / domain-tile element id for a canonical tile. */
 export function structureDiagnosticTileElementId(

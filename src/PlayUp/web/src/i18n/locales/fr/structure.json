@@ -241,6 +241,27 @@
       "PopulationShortfall": "Pas assez d’équipes promises pour cette phase",
       "AuthoredAwardUnreachable": "Paire source introuvable",
       "ExpectedRankUnreachable": "Ce rang de compétition ne peut pas être produit par les chemins d’attribution"
+    },
+    "issuesShort": {
+      "DanglingQualificationTarget": "Destination qual. introuvable",
+      "DanglingProgressionTarget": "Destination prog. introuvable",
+      "MissingQualificationDestinationSlot": "Place qual. manquante",
+      "MissingQualificationDestinationGroup": "Groupe qual. manquant",
+      "MissingProgressionDestinationSlot": "Place prog. manquante",
+      "MissingProgressionDestinationGroup": "Groupe prog. manquant",
+      "SlotFeedMissing": "Place non alimentée",
+      "SlotFeedInvalid": "Alimentation invalide",
+      "SlotFeedMultiple": "Alimentations conflictuelles",
+      "ConfrontationUndecidable": "Tirage pas toujours possible",
+      "CycleDetected": "Cycle entre phases",
+      "NonRootUnfed": "Pas d’équipes entrantes",
+      "RoutingNondeterminism": "Routage ambigu",
+      "OverCapacityEdge": "Trop d’équipes promises",
+      "OverExtraction": "Sortie > capacité",
+      "SourcePopulationShortfall": "Manque en source",
+      "PopulationShortfall": "Manque d’équipes",
+      "AuthoredAwardUnreachable": "Source attribution absente",
+      "ExpectedRankUnreachable": "Rang inaccessible"
     }
   },
   "lifecycle": {

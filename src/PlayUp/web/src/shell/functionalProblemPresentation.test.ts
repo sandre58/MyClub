@@ -107,11 +107,12 @@ describe('functionalProblemPresentation', () => {
     expect(plain.tone).toBe('danger');
   });
 
-  it('maps RESULT codes with attention tone (path reachability)', () => {
+  it('maps RESULT codes with attention tone for classifying formats', () => {
     const presentation = structureIssuePresentation({
       code: 'AuthoredAwardUnreachable',
       competitionId: 'comp-1',
       stageId: 'stage-9',
+      structureDiagnosticContext: { formatKind: 'Groups', stageStatus: 'Draft' },
     });
     expect(presentation.tone).toBe('attention');
     expect(presentation.titleKey).toBe('graph.issues.AuthoredAwardUnreachable');
@@ -127,11 +128,17 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissing');
   });
 
-  it('maps NonRootUnfed via feed family presentation (tile Équipes)', () => {
+  it('maps NonRootUnfed progress when incompleteness is expected', () => {
     const presentation = structureIssuePresentation({
       code: 'NonRootUnfed',
       competitionId: 'comp-1',
       stageId: 'stage-9',
+      structureDiagnosticContext: {
+        stageStatus: 'Draft',
+        isEntryBaselineStage: false,
+        hasInboundQualProgFeed: false,
+        affectationEntryCount: 0,
+      },
     });
     expect(presentation.tone).toBe('info');
     expect(presentation.titleKey).toBe('graph.issues.NonRootUnfed');
@@ -157,7 +164,7 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toBe('/matches/match-9');
   });
 
-  it('situationPresentation uses short enum title for structure drawer (D5 option B)', () => {
+  it('situationPresentation uses structure short title for drawer structure diagnostics', () => {
     const presentation = situationPresentation(
       {
         source: 'OverCapacityEdge',
@@ -171,9 +178,10 @@ describe('functionalProblemPresentation', () => {
         params: { stageId: 'stage-1' },
       },
       'comp-1',
+      [{ stageId: 'stage-1', name: 'Poules', status: 'Draft' }],
     );
-    expect(presentation.titleKey).toBe('attentionSource.OverCapacityEdge');
-    expect(presentation.titleNs).toBe('enums');
+    expect(presentation.titleKey).toBe('graph.issuesShort.OverCapacityEdge');
+    expect(presentation.titleNs).toBe('structure');
   });
 
   it('situationPresentation maps StructureGraphInvalid to Structure SoT', () => {

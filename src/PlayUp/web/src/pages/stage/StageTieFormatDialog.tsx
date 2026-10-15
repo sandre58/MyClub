@@ -162,11 +162,13 @@ function TieFormatFields({
 export function TieFormatDialog({
   competitionId,
   stage,
+  structureStages,
   open,
   onClose,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
+  structureStages?: readonly StructureStageHubSummary[];
   open: boolean;
   onClose: () => void;
 }) {
@@ -435,7 +437,12 @@ export function TieFormatDialog({
           </>
         }
         footerStatus={
-          mutation.isError ? <MutationError error={mutation.error} /> : null
+          mutation.isError ? (
+            <MutationError
+              error={mutation.error}
+              structureStages={structureStages}
+            />
+          ) : null
         }
       >
         <form

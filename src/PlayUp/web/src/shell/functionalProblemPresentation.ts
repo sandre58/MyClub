@@ -13,13 +13,19 @@
 
 import { situationHref } from './situationRoutes';
 import { organizerProblemPresentationCode } from './organizerProblemRead';
-import type { OrganizerProblemRead, OverviewSituation } from '../types';
+import type {
+  CompetitionStageSummary,
+  OrganizerProblemRead,
+  OverviewSituation,
+} from '../types';
 import {
   structureDiagnosticMeta,
+  structureDiagnosticPresentation,
   structureDiagnosticTitleKey,
   structureDiagnosticTone,
   type StructureDiagnosticTone,
 } from '../pages/structure/structureDiagnosticPresentation';
+import type { StructureDiagnosticSeverityContext } from '../pages/structure/structureDiagnosticSeverity';
 
 /** Orthogonal signal tone (DS Alert / Status / toast mapping — design §6.3). */
 export type FunctionalProblemTone = 'danger' | 'warning' | 'info' | 'attention';
@@ -63,6 +69,7 @@ export type FunctionalProblemIdentity = {
   awaitingDraw?: boolean;
   /** When `attention-drawer`, structure issues use short triage copy (enums). */
   canal?: FunctionalProblemCanal;
+  structureDiagnosticContext?: StructureDiagnosticSeverityContext;
 };
 
 export type FunctionalProblemCta = {
@@ -123,17 +130,35 @@ function teamsHref(competitionId: string): string {
   return `/competitions/${competitionId}/teams`;
 }
 
-function structureIssueTitleFields(
-  code: string,
-  canal: FunctionalProblemCanal | undefined,
-): { titleKey: string; titleNs: string } {
-  if (canal === 'attention-drawer') {
-    return { titleKey: `attentionSource.${code}`, titleNs: 'enums' };
+function toPresentationContext(
+  context?: StructureDiagnosticSeverityContext,
+) {
+  if (!context) {
+    return {};
   }
   return {
-    titleKey: structureDiagnosticTitleKey(code),
-    titleNs: 'structure',
+    formatKind: context.formatKind,
+    stageStatus: context.stageStatus,
+    isEntryBaselineStage: context.isEntryBaselineStage,
+    hasInboundQualProgFeed: context.hasInboundQualProgFeed,
+    affectationEntryCount: context.affectationEntryCount,
   };
+}
+
+function structureDiagnosticPresentationFields(
+  code: string,
+  canal: FunctionalProblemCanal | undefined,
+  context?: StructureDiagnosticSeverityContext,
+): { tone: FunctionalProblemTone; titleKey: string; titleNs: string } {
+  const pres = structureDiagnosticPresentation(
+    code,
+    toPresentationContext(context),
+  );
+  const tone = mapStructureTone(structureDiagnosticTone(code, context));
+  if (canal === 'attention-drawer') {
+    return { tone, titleKey: pres.titleKeyShort, titleNs: 'structure' };
+  }
+  return { tone, titleKey: pres.titleKeyLong, titleNs: 'structure' };
 }
 
 /**
@@ -154,6 +179,7 @@ export function functionalProblemPresentation(
     targetId,
     matchId,
     canal,
+    structureDiagnosticContext,
   } = identity;
 
   const descriptionParams = params
@@ -185,9 +211,13 @@ export function functionalProblemPresentation(
   if (structureIssueCode) {
     const meta = structureDiagnosticMeta(structureIssueCode);
     if (meta) {
-      const issueTitle = structureIssueTitleFields(structureIssueCode, canal);
+      const issueTitle = structureDiagnosticPresentationFields(
+        structureIssueCode,
+        canal,
+        structureDiagnosticContext,
+      );
       return {
-        tone: mapStructureTone(structureDiagnosticTone(structureIssueCode)),
+        tone: issueTitle.tone,
         titleKey: issueTitle.titleKey,
         titleNs: issueTitle.titleNs,
         descriptionParams,
@@ -196,6 +226,23 @@ export function functionalProblemPresentation(
         canal: canal ?? 'structure-topology',
       };
     }
+  }
+
+  if (canal === 'attention-drawer' && structureDiagnosticMeta(source)) {
+    const fields = structureDiagnosticPresentationFields(
+      source,
+      canal,
+      structureDiagnosticContext,
+    );
+    return {
+      tone: fields.tone,
+      titleKey: fields.titleKey,
+      titleNs: fields.titleNs,
+      descriptionParams,
+      sotHref: structureHref(competitionId, stageFromTarget),
+      cta: { actionCode: actionCode ?? 'ConfigureStructure' },
+      canal: 'attention-drawer',
+    };
   }
 
   if (source === 'StructureGraphInvalid') {
@@ -341,14 +388,30 @@ export function functionalProblemPresentation(
   };
 }
 
+function structureDiagnosticContextFromStageSummary(
+  stageId: string | null,
+  stages?: readonly CompetitionStageSummary[],
+): StructureDiagnosticSeverityContext | undefined {
+  if (!stageId || !stages?.length) {
+    return undefined;
+  }
+  const stage = stages.find((candidate) => candidate.stageId === stageId);
+  if (!stage) {
+    return undefined;
+  }
+  return { stageStatus: stage.status };
+}
+
 /** Convenience: Overview / Attention situation → presentation. */
 export function situationPresentation(
   situation: OverviewSituation,
   competitionId: string,
+  stages?: readonly CompetitionStageSummary[],
 ): FunctionalProblemPresentation {
   const stageIdFromParams =
     situation.params?.stageId?.trim() ||
     situation.params?.destinationStageId?.trim() ||
+    (situation.targetType === 'Stage' ? situation.targetId?.trim() : undefined) ||
     null;
   return functionalProblemPresentation({
     source: situation.source,
@@ -360,6 +423,10 @@ export function situationPresentation(
     actionCode: situation.actionCode,
     stageId: stageIdFromParams,
     canal: 'attention-drawer',
+    structureDiagnosticContext: structureDiagnosticContextFromStageSummary(
+      stageIdFromParams,
+      stages,
+    ),
   });
 }
 
@@ -370,6 +437,7 @@ export function structureIssuePresentation(input: {
   stageId: string;
   awaitingDraw?: boolean;
   problem?: OrganizerProblemRead | null;
+  structureDiagnosticContext?: StructureDiagnosticSeverityContext;
 }): FunctionalProblemPresentation {
   const issueCode = organizerProblemPresentationCode(input.problem, input.code);
   return functionalProblemPresentation({
@@ -379,5 +447,6 @@ export function structureIssuePresentation(input: {
     stageId: input.stageId,
     awaitingDraw: input.awaitingDraw,
     actionCode: 'ConfigureStructure',
+    structureDiagnosticContext: input.structureDiagnosticContext,
   });
 }

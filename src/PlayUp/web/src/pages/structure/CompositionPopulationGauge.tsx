@@ -13,10 +13,13 @@ export function CompositionPopulationGauge({
   current,
   capacity,
   className,
+  populationShortfallMessageKind,
 }: {
   current: number;
   capacity: number;
   className?: string;
+  /** When U1 shortfall is presented as danger/attention (D5), align gauge chrome. */
+  populationShortfallMessageKind?: 'danger' | 'attention' | null;
 }) {
   const { t } = useTranslation('structure');
   const meter = resolveCompositionPopulationMeterCopy({
@@ -25,7 +28,9 @@ export function CompositionPopulationGauge({
     capacity,
   });
   const ratioTone = resolvePlacementPoolTone(current, capacity);
-  const poolTone = operationalStripPoolTone(meter.kind, ratioTone);
+  const messageKind =
+    populationShortfallMessageKind ?? meter.kind;
+  const poolTone = operationalStripPoolTone(messageKind, ratioTone);
 
   const rootClass = [
     'structure-phase-composition__population-gauge',
@@ -42,7 +47,7 @@ export function CompositionPopulationGauge({
         capacity={capacity}
         ratioCaption={t('composition.gauge.entriesPlacesCaption')}
         message={meter.text}
-        messageKind={meter.kind}
+        messageKind={messageKind}
         ratioTone={drawPoolToneToRatioGaugeTone(poolTone)}
         ariaLabel={t('composition.gauge.populationAria', {
           current,

@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom';
 import {
   applyDraw,
   fetchCompetitionDetail,
+  fetchStructureView,
   fetchStageOverview,
   fetchStageSchematic,
   materializeCupFromOccupiedSlots,
@@ -36,6 +37,7 @@ import {
   type StageDraw,
   type StageOverview,
   type StageSlot,
+  type StructureStageHubSummary,
 } from '../../types';
 import {
   getDrawUiProjection,
@@ -65,6 +67,12 @@ export function StagePage() {
     enabled: Boolean(competitionId),
   });
 
+  const structureQuery = useQuery({
+    queryKey: queryKeys.competitions.structure(competitionId ?? ''),
+    queryFn: () => fetchStructureView(competitionId!),
+    enabled: Boolean(competitionId),
+  });
+
   return (
     <main id="main" className="page">
       <PageHead
@@ -88,12 +96,23 @@ export function StagePage() {
 
       {stageQuery.isPending && <LoadingState />}
       {stageQuery.isError && <ErrorState error={stageQuery.error} />}
-      {stageQuery.data && <StageOverviewView data={stageQuery.data} />}
+      {stageQuery.data && (
+        <StageOverviewView
+          data={stageQuery.data}
+          structureStages={structureQuery.data?.stages}
+        />
+      )}
     </main>
   );
 }
 
-function StageOverviewView({ data }: { data: StageOverview }) {
+function StageOverviewView({
+  data,
+  structureStages,
+}: {
+  data: StageOverview;
+  structureStages?: readonly StructureStageHubSummary[];
+}) {
   const { t } = useTranslation('stage');
   const queryClient = useQueryClient();
   const fixtureCount = data.rounds.reduce(
@@ -196,10 +215,18 @@ function StageOverviewView({ data }: { data: StageOverview }) {
           </Link>
         </div>
 
-        {stageActionError && <MutationError error={stageActionError} />}
+        {stageActionError && (
+          <MutationError
+            error={stageActionError}
+            structureStages={structureStages}
+          />
+        )}
       </section>
 
-      <CupConfrontationsPanel data={data} />
+      <CupConfrontationsPanel
+        data={data}
+        structureStages={structureStages}
+      />
 
       <section className="ds-panel" aria-labelledby="rounds-heading">
         <div className="ds-panel-head">
@@ -282,6 +309,7 @@ function StageOverviewView({ data }: { data: StageOverview }) {
         draws={data.draws}
         slots={data.slots}
         bracketPairs={data.bracketPairs ?? []}
+        structureStages={structureStages}
       />
     </div>
   );
@@ -292,7 +320,13 @@ function StageOverviewView({ data }: { data: StageOverview }) {
  * Lists schematic connections with pairKey; eligibility = both slots occupied
  * and no fixture bound yet (fixtureId null / matchNumber 0).
  */
-function CupConfrontationsPanel({ data }: { data: StageOverview }) {
+function CupConfrontationsPanel({
+  data,
+  structureStages,
+}: {
+  data: StageOverview;
+  structureStages?: readonly StructureStageHubSummary[];
+}) {
   const { t } = useTranslation('stage');
   const queryClient = useQueryClient();
   const [selectedPairKeys, setSelectedPairKeys] = useState<string[]>([]);
@@ -399,7 +433,12 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
       {schematicQuery.isLoading && (
         <p className="muted">{t('confrontations.loadingPairs')}</p>
       )}
-      {schematicQuery.isError && <MutationError error={schematicQuery.error} />}
+      {schematicQuery.isError && (
+        <MutationError
+          error={schematicQuery.error}
+          structureStages={structureStages}
+        />
+      )}
 
       {schematicQuery.isSuccess && rows.length === 0 && (
         <p className="muted">{t('confrontations.noBracketPairs')}</p>
@@ -486,7 +525,10 @@ function CupConfrontationsPanel({ data }: { data: StageOverview }) {
         </p>
       )}
       {materializeMutation.isError && (
-        <MutationError error={materializeMutation.error} />
+        <MutationError
+          error={materializeMutation.error}
+          structureStages={structureStages}
+        />
       )}
     </section>
   );
@@ -501,11 +543,13 @@ function DrawSection({
   draws,
   slots,
   bracketPairs,
+  structureStages,
 }: {
   stageId: string;
   draws: StageDraw[];
   slots: StageSlot[];
   bracketPairs: StageBracketPair[];
+  structureStages?: readonly StructureStageHubSummary[];
 }) {
   const { t } = useTranslation('stage');
   return (
@@ -526,6 +570,7 @@ function DrawSection({
                 draw={draw}
                 slots={slots}
                 bracketPairs={bracketPairs}
+                structureStages={structureStages}
               />
             </li>
           ))}
@@ -540,11 +585,13 @@ function DrawCard({
   draw,
   slots,
   bracketPairs,
+  structureStages,
 }: {
   stageId: string;
   draw: StageDraw;
   slots: StageSlot[];
   bracketPairs: StageBracketPair[];
+  structureStages?: readonly StructureStageHubSummary[];
 }) {
   const { t } = useTranslation('draw');
   const { t: tStructure } = useTranslation('structure');
@@ -643,7 +690,12 @@ function DrawCard({
           </div>
         )}
 
-      <DrawActions stageId={stageId} draw={draw} isApplied={ui.isApplied} />
+      <DrawActions
+        stageId={stageId}
+        draw={draw}
+        isApplied={ui.isApplied}
+        structureStages={structureStages}
+      />
     </article>
   );
 }
@@ -656,10 +708,12 @@ function DrawActions({
   stageId,
   draw,
   isApplied,
+  structureStages,
 }: {
   stageId: string;
   draw: StageDraw;
   isApplied: boolean;
+  structureStages?: readonly StructureStageHubSummary[];
 }) {
   const { t } = useTranslation('draw');
   const { t: tCommon } = useTranslation('common');
@@ -749,7 +803,12 @@ function DrawActions({
           </button>
         )}
 
-        {mutationError && <MutationError error={mutationError} />}
+        {mutationError && (
+          <MutationError
+            error={mutationError}
+            structureStages={structureStages}
+          />
+        )}
       </div>
       <ConfirmDialog
         open={applyConfirmOpen}
@@ -763,7 +822,10 @@ function DrawActions({
         confirmPendingLabel={t('applying')}
         footerStatus={
           applyMutation.isError ? (
-            <MutationError error={applyMutation.error} />
+            <MutationError
+              error={applyMutation.error}
+              structureStages={structureStages}
+            />
           ) : null
         }
         onCancel={() => {

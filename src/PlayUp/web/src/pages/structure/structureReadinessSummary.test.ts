@@ -145,7 +145,21 @@ describe('structureReadinessSummary', () => {
     const summary = computeStructureReadinessSummary(view([poules]), [poules]);
     expect(summary.familyCounts).toEqual([{ family: 'capacity', count: 1 }]);
     expect(summary.headerTone).toBe('attention');
+    expect(summary.showPageHeadNegative).toBe(false);
     expect(stagePopulationGap(view([poules]), poules)).toBe(-8);
+  });
+
+  it('sets showPageHeadNegative when Ready population shortfall is danger', () => {
+    const poules = stage({
+      stageId: 'a',
+      name: 'Poules',
+      status: 'Ready',
+      affectationEntryCount: 0,
+      compositionCapacity: 8,
+    });
+    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    expect(summary.headerTone).toBe('danger');
+    expect(summary.showPageHeadNegative).toBe(true);
   });
 
   it('keeps OverCapacity and SlotFeedMissing as distinct family counts', () => {
@@ -306,21 +320,21 @@ describe('structureReadinessSummary', () => {
   it('classifies header tone by diagnostic gravity, not child chrome', () => {
     expect(
       classifyReadinessHeaderTone({
-        codes: ['PopulationShortfall'],
+        codeTone: 'attention',
         missingPotsPhaseCount: 1,
         shapeInvalid: false,
       }),
     ).toBe('attention');
     expect(
       classifyReadinessHeaderTone({
-        codes: ['DanglingQualificationTarget', 'SlotFeedMissing'],
+        codeTone: 'danger',
         missingPotsPhaseCount: 0,
         shapeInvalid: false,
       }),
     ).toBe('danger');
     expect(
       classifyReadinessHeaderTone({
-        codes: [],
+        codeTone: 'none',
         missingPotsPhaseCount: 0,
         shapeInvalid: true,
       }),

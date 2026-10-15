@@ -238,6 +238,7 @@ export function StructurePhaseOperationalStrip({
   competitionId,
   competitionStatus,
   stage,
+  structureStages,
   presentation,
   structureHubBackgroundRefresh = false,
   drawApplied,
@@ -249,6 +250,8 @@ export function StructurePhaseOperationalStrip({
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
+  /** Hub phases for structure-aware mutation copy (D1 consumer names). */
+  structureStages: readonly StructureStageHubSummary[];
   presentation: MaterializePresentation | null;
   structureHubBackgroundRefresh?: boolean;
   drawApplied: boolean;
@@ -337,7 +340,7 @@ export function StructurePhaseOperationalStrip({
           ...(showDraw ? (['draw'] as const) : []),
         ]
       : layoutVariant === 'aside-matchs'
-        ? showMatchesSection
+        ? shouldShowMatchsSection(stage)
           ? (['matches'] as const)
           : []
         : [
@@ -424,6 +427,11 @@ export function StructurePhaseOperationalStrip({
 
   return (
     <>
+      {structureHubBackgroundRefresh ? (
+        <span className="ds-visually-hidden" role="status">
+          {t('fiche.operational.syncing')}
+        </span>
+      ) : null}
       <div
         className="structure-operational-strip"
         data-layout-variant={layoutVariant}
@@ -439,11 +447,6 @@ export function StructurePhaseOperationalStrip({
               }
         }
       >
-        {structureHubBackgroundRefresh ? (
-          <span className="ds-visually-hidden" role="status">
-            {t('fiche.operational.syncing')}
-          </span>
-        ) : null}
         {stripSections}
       </div>
       {dematerialize ? (
@@ -471,7 +474,10 @@ export function StructurePhaseOperationalStrip({
           confirmPendingLabel={t('fiche.dematerialize.submitting')}
           footerStatus={
             dematerializeMutation.isError ? (
-              <MutationError error={dematerializeMutation.error} />
+              <MutationError
+                error={dematerializeMutation.error}
+                structureStages={structureStages}
+              />
             ) : null
           }
           onConfirm={() => dematerializeMutation.mutate()}
@@ -1180,10 +1186,16 @@ function MatchesColumn({
     (materializeMutation.isError || dematerializeMutation.isError) ? (
       <>
         {materializeMutation.isError ? (
-          <MutationError error={materializeMutation.error} />
+          <MutationError
+            error={materializeMutation.error}
+            structureStages={structureStages}
+          />
         ) : null}
         {dematerializeMutation.isError ? (
-          <MutationError error={dematerializeMutation.error} />
+          <MutationError
+            error={dematerializeMutation.error}
+            structureStages={structureStages}
+          />
         ) : null}
       </>
     ) : null;
@@ -1231,14 +1243,16 @@ function MatchesColumn({
 
     matchesContent = (
       <>
-        {omitLifecycle && productionLeadingActions ? (
-          <div className="structure-operational-strip__production-actions">
-            {productionLeadingActions}
-          </div>
-        ) : null}
         {productionGauge}
         {productionErrors}
         {exploitationGauge}
+        {omitLifecycle && productionLeadingActions ? (
+          <div
+            className="structure-operational-strip__production-actions structure-operational-strip__production-actions--tile"
+          >
+            {productionLeadingActions}
+          </div>
+        ) : null}
         {omitLifecycle ? null : (
           <StructurePhaseMatchsLifecycleBlock
             competitionId={competitionId}

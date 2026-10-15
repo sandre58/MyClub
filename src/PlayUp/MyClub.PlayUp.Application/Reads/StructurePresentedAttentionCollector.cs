@@ -32,13 +32,14 @@ public static class StructurePresentedAttentionCollector
         {
             StagePresentedIssueCodes(structureView, stage)
                 .Where(code => !IsExcludedSource(code))
-                .Select(code => CreateStageItem(code, stage)).ToList().ForEach(items.Add);
+                .Select(code => CreateStageItem(code, stage, structureView)).ToList().ForEach(items.Add);
 
             if (StageHasEngagedMissingPots(stage))
             {
                 items.Add(CreateStageItem(
                     StructureViewAssembler.BlockerMissingPotRules,
                     stage,
+                    structureView,
                     NeedsAttentionAssembler.SeverityBlocking));
             }
         }
@@ -108,10 +109,16 @@ public static class StructurePresentedAttentionCollector
     private static NeedsAttentionItemDto CreateStageItem(
         string source,
         StructureStageHubSummaryDto stage,
-        string? severityOverride = null) =>
-        new(
+        StructureViewDto view,
+        string? severityOverride = null)
+    {
+        var severity = severityOverride
+            ?? StructureDiagnosticPresentation.MapSeverityToAttention(
+                StructureDiagnosticPresentation.ResolveSeverity(source, stage, view));
+
+        return new NeedsAttentionItemDto(
             source,
-            severityOverride ?? ResolveSeverity(source, stage),
+            severity,
             "Stage",
             stage.StageId.ToString(),
             new Dictionary<string, string>
@@ -119,31 +126,5 @@ public static class StructurePresentedAttentionCollector
                 ["stageId"] = stage.StageId.ToString()
             },
             Problem: OrganizerProblemSemanticsResolver.TryFromStructureIssue(source));
-
-    private static string ResolveSeverity(string source, StructureStageHubSummaryDto stage)
-    {
-        if (source == CompetitionFlowAnalyzer.AuthoredAwardUnreachable)
-        {
-            return stage.FormatKind == StructureFormatKind.Cup
-                ? NeedsAttentionAssembler.SeverityBlocking
-                : NeedsAttentionAssembler.SeverityWarning;
-        }
-
-        if (source is CompetitionFlowAnalyzer.PopulationShortfall
-            or CompetitionFlowAnalyzer.SourcePopulationShortfall)
-        {
-            return NeedsAttentionAssembler.SeverityWarning;
-        }
-
-        return SeverityBySource.GetValueOrDefault(source, NeedsAttentionAssembler.SeverityBlocking);
     }
-
-    /// <summary>Workshop default matrix (D5); G-UI1/G-UI2 aligned with web structureDiagnosticSeverity.</summary>
-    private static readonly Dictionary<string, string> SeverityBySource =
-        new(CodeComparer)
-        {
-            [CompetitionFlowAnalyzer.OverCapacityEdge] = NeedsAttentionAssembler.SeverityWarning,
-            [CompetitionFlowAnalyzer.NonRootUnfed] = NeedsAttentionAssembler.SeverityWarning,
-            [CompetitionFlowAnalyzer.ExpectedRankUnreachable] = NeedsAttentionAssembler.SeverityWarning
-        };
 }

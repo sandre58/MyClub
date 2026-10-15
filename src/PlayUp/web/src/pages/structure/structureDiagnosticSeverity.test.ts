@@ -3,12 +3,22 @@ import { structureProductSeverity } from './structureDiagnosticSeverity';
 import { structureDiagnosticTone } from './structureDiagnosticPresentation';
 
 describe('structureDiagnosticSeverity (D5)', () => {
-  it('classifies blocking vs warning codes', () => {
-    expect(structureProductSeverity('OverCapacityEdge')).toBe('warning');
-    expect(structureProductSeverity('SlotFeedMissing')).toBe('blocking');
-    expect(structureProductSeverity('PopulationShortfall')).toBe('warning');
-    expect(structureProductSeverity('SourcePopulationShortfall')).toBe('warning');
-    expect(structureProductSeverity('NonRootUnfed')).toBe('warning');
+  it('classifies blocking vs warning codes in Draft', () => {
+    expect(structureProductSeverity('OverCapacityEdge', { stageStatus: 'Draft' })).toBe(
+      'warning',
+    );
+    expect(structureProductSeverity('SlotFeedMissing', { stageStatus: 'Draft' })).toBe(
+      'blocking',
+    );
+    expect(
+      structureProductSeverity('PopulationShortfall', { stageStatus: 'Draft' }),
+    ).toBe('warning');
+    expect(
+      structureProductSeverity('PopulationShortfall', { stageStatus: 'Ready' }),
+    ).toBe('blocking');
+    expect(structureProductSeverity('NonRootUnfed', { stageStatus: 'Ready' })).toBe(
+      'warning',
+    );
   });
 
   it('AuthoredAwardUnreachable is blocking on Cup only (G-UI1)', () => {
@@ -22,15 +32,27 @@ describe('structureDiagnosticSeverity (D5)', () => {
         formatKind: 'Championship',
       }),
     ).toBe('warning');
-    expect(structureProductSeverity('AuthoredAwardUnreachable')).toBe(
-      'blocking',
-    );
+    expect(structureProductSeverity('AuthoredAwardUnreachable')).toBe('blocking');
   });
 
-  it('maps severity to diagnostic tone without downgrading blocking', () => {
-    expect(structureDiagnosticTone('PopulationShortfall')).toBe('attention');
-    expect(structureDiagnosticTone('OverCapacityEdge')).toBe('attention');
-    expect(structureDiagnosticTone('NonRootUnfed')).toBe('progress');
+  it('maps severity to diagnostic tone', () => {
+    expect(
+      structureDiagnosticTone('PopulationShortfall', { stageStatus: 'Draft' }),
+    ).toBe('attention');
+    expect(
+      structureDiagnosticTone('PopulationShortfall', { stageStatus: 'Ready' }),
+    ).toBe('danger');
+    expect(
+      structureDiagnosticTone('OverCapacityEdge', { stageStatus: 'Draft' }),
+    ).toBe('attention');
+    expect(
+      structureDiagnosticTone('NonRootUnfed', {
+        stageStatus: 'Draft',
+        isEntryBaselineStage: false,
+        hasInboundQualProgFeed: false,
+        affectationEntryCount: 0,
+      }),
+    ).toBe('progress');
     expect(
       structureDiagnosticTone('AuthoredAwardUnreachable', {
         formatKind: 'Cup',

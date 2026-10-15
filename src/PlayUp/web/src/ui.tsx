@@ -238,8 +238,8 @@ export function MutationError({
   const { t: tStructure } = useTranslation('structure');
 
   const message =
-    structureStages && structureStages.length > 0
-      ? formatStructureMutationMessage(tStructure, t, error, structureStages)
+    structureStages !== undefined
+      ? formatStructureMutationMessage(tStructure, error, structureStages)
       : formatError(error, t);
 
   return (

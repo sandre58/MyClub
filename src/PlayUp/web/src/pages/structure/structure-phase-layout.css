@@ -733,7 +733,25 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-8);
-  margin-bottom: var(--space-8);
+}
+
+.structure-operational-strip__production-actions--tile {
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.structure-operational-strip__production-actions--tile > .ds-btn.ds-btn--primary {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: center;
+}
+
+.structure-operational-strip__production-actions--tile > .ds-tooltip-trigger {
+  flex: none;
+  display: inline-flex;
+  margin-left: auto;
 }
 
 .structure-phase-tile--schematic .structure-phase-hero__stats {

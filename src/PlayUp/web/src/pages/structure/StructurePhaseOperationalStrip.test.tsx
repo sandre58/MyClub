@@ -137,6 +137,7 @@ function renderStrip(
     competitionId,
     competitionStatus,
     stage,
+    structureStages: overrides.structureStages ?? [stage],
     presentation,
   };
 
@@ -193,6 +194,49 @@ describe('StructurePhaseOperationalStrip', () => {
     expect(
       screen.queryByRole('heading', { name: /Tirage/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('aside-matchs places materialize actions below the production gauge on one row', () => {
+    const materialize: StructureMaterialize = {
+      commandCode: 'MaterializeMatches',
+      labelVariant: 'create',
+      determinedCount: 2,
+      eligibleCount: 2,
+      materializedCount: 0,
+      commandEnabled: true,
+      confrontations: [],
+    };
+    const { container } = renderStrip({
+      layoutVariant: 'aside-matchs',
+      showPlaces: false,
+      showDraw: false,
+      placement: null,
+      competitionStatus: 'Running',
+      stage: {
+        ...leagueStageBase,
+        status: 'Ready',
+        materialize,
+        lifecycle: {
+          transition: { code: 'StartStage', enabled: true },
+        },
+      },
+    });
+
+    const actions = container.querySelector(
+      '.structure-operational-strip__production-actions--tile',
+    );
+    expect(actions).not.toBeNull();
+    const matchesSection = document.getElementById('operational-matchs')!;
+    const gauge = within(matchesSection).getByLabelText(
+      /Avancement de la production des matchs/i,
+    );
+    expect(
+      gauge.compareDocumentPosition(actions!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const primaryBtn = within(actions as HTMLElement).getByRole('button', {
+      name: /Créer les matchs/i,
+    });
+    expect(primaryBtn.className).toMatch(/ds-btn--primary/);
   });
 
   it('renders three numbered sections when places, draw, and matches are visible', () => {
@@ -633,6 +677,43 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(
         container.querySelector('.structure-operational-tile__sync-status'),
       ).toBeNull();
+    });
+
+    it('does not insert sync status inside the strip grid (avoids spurious section separators)', () => {
+      const { container } = renderStrip({
+        layoutVariant: 'aside-matchs',
+        structureHubBackgroundRefresh: true,
+        showPlaces: false,
+        showDraw: false,
+        placement: null,
+        stage: {
+          ...leagueStageBase,
+          status: 'Ready',
+          materialize: {
+            commandCode: 'MaterializeMatches',
+            labelVariant: 'create',
+            determinedCount: 2,
+            eligibleCount: 2,
+            materializedCount: 0,
+            commandEnabled: true,
+            confrontations: [],
+          },
+          lifecycle: {
+            transition: { code: 'StartStage', enabled: true },
+          },
+        },
+        competitionStatus: 'Running',
+      });
+
+      const strip = container.querySelector('.structure-operational-strip')!;
+      expect(
+        strip.querySelector(':scope > .ds-visually-hidden[role="status"]'),
+      ).toBeNull();
+      expect(
+        container.querySelector('.ds-visually-hidden[role="status"]'),
+      ).toBeInTheDocument();
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(strip.firstElementChild).toBe(matchesSection);
     });
 
     it('shows Swiss guidance above gauge without separate banner or generate CTA', () => {

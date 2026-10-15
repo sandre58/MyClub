@@ -8,8 +8,10 @@ import { showViewMaterializedMatchesLink } from './structureMaterializeCopy';
 
 export function StructurePhaseMatchTilePanel({
   stage,
+  iconRefreshing = false,
 }: {
   stage: StructureStageHubSummary;
+  iconRefreshing?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const materialize = stage.materialize;
@@ -31,6 +33,7 @@ export function StructurePhaseMatchTilePanel({
       density="inset"
       titleStyle="section"
       icon={<CreateMatchesIcon size="sm" />}
+      iconRefreshing={iconRefreshing}
       title={t('fiche.operational.cluster.matches')}
       actions={
         viewMatchesLink ? (

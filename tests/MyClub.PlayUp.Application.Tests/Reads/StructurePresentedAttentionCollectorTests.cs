@@ -52,6 +52,14 @@ public sealed class StructurePresentedAttentionCollectorTests
             item.Source == CompetitionFlowAnalyzer.PopulationShortfall
             && item.Severity == NeedsAttentionAssembler.SeverityWarning
             && item.TargetId == poules.Id.Value.ToString());
+
+        var readyHub = hub with { Status = StageStatus.Ready };
+        var readyView = view with { Stages = [readyHub] };
+        var readyItems = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(readyView, readyItems);
+        readyItems.Should().Contain(item =>
+            item.Source == CompetitionFlowAnalyzer.PopulationShortfall
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
     }
 
     [Fact]

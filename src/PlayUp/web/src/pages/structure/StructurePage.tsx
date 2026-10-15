@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { fetchNeedsAttention, fetchStructureView } from '../../api';
-import { presentableAttentionCount } from '../../shell/attentionPartition';
+import { partitionPresentableAttention } from '../../shell/attentionPartition';
 import { FormSection } from '../../design-system/components/FormSection';
 import { SelectableTile } from '../../design-system/components/SelectableTile';
 import { PageHead } from '../../design-system/components/PageHead';
@@ -46,9 +46,9 @@ import { resolveStructureHubStages } from './structureResolveStages';
 import { topologyCardFacts } from './structureTopologyFacts';
 import {
   computeStructureReadinessSummary,
-  stageAmbientKinds,
   type StructureReadinessSummary,
 } from './structureReadinessSummary';
+import { stageWorstPresentedDiagnosticTone } from './structureStageTopologyPresentation';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,
@@ -270,6 +270,7 @@ function StructureHub({ data }: { data: StructureView }) {
 
       <AddPhaseDialog
         competitionId={data.competitionId}
+        structureStages={stages}
         open={addPhaseOpen}
         onClose={() => setAddPhaseOpen(false)}
         onCreated={selectStage}
@@ -314,7 +315,10 @@ function TopologyPanel({
           const next = stages[index + 1];
           const outbound = outboundDestinations(stage);
           const facts = topologyCardFacts(stage, t);
-          const ambient = stageAmbientKinds(data, stage);
+          const topologyIssueTone = stageWorstPresentedDiagnosticTone(
+            data,
+            stage,
+          );
           const formatLabel = stage.formatKind
             ? structureFormatKindLabel(stage.formatKind)
             : t('structure.formatNotConfigured');
@@ -352,9 +356,10 @@ function TopologyPanel({
                   </span>
                   <span className="structure-topology__tile-status">
                     <StageStatusBadge status={stage.status} density="compact" />
-                    {ambient.length > 0 ? (
+                    {topologyIssueTone != null ? (
                       <span
                         className="structure-topology__issue"
+                        data-tone={topologyIssueTone}
                         aria-label={t('hub.phaseGapsAmbient')}
                       >
                         <StructureIssueIcon size="sm" aria-hidden="true" />
@@ -544,17 +549,19 @@ function readinessStatusNote(
   const lifecycleClosed =
     data.status === 'Completed' || data.status === 'Archived';
   const attentionPhase = attentionQueryPhase(attentionQuery);
-  const presentableCount =
+  const presentableBlockingCount =
     attentionPhase === 'success'
-      ? presentableAttentionCount(attentionQuery.data?.items ?? [])
+      ? partitionPresentableAttention(attentionQuery.data?.items ?? [])
+          .blocking.length
       : 0;
 
   const noteKind = resolveStructurePageHeadNoteKind({
     lifecycleClosed,
     stagesEmpty: stages.length === 0,
-    hasAny: summary.hasAny,
+    structurePresentedDanger: summary.showPageHeadNegative,
+    structureHasPresentedProblems: summary.hasAny,
     attentionPhase,
-    presentableAttentionCount: presentableCount,
+    presentableBlockingAttentionCount: presentableBlockingCount,
     readyToMaterialize: readiness.readyForMaterialization,
     readyForSchedule: readiness.readyForSchedule,
     readyForNextSlice: readiness.readyForNextSlice,

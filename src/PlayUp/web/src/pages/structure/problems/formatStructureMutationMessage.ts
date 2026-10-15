@@ -16,41 +16,26 @@ function resolveConsumerStageLabels(
 
 /**
  * Structure mutation footer copy — lifecycle/problems namespace plus D1 consumer names when present.
+ * Organizer-facing: no HTTP status suffix (step 5).
  */
 export function formatStructureMutationMessage(
   tStructure: TFunction<'structure'>,
-  tCommon: TFunction<'common'>,
   error: unknown,
   stages: readonly StructureStageHubSummary[],
 ): string {
   const base = resolveLifecycleMutationMessage(tStructure, error);
 
   if (!(error instanceof ApiError) || error.code !== READY_CONSUMER_WIRE) {
-    return wrapWithStatus(tCommon, error, base);
+    return base;
   }
 
   const ids = error.consumerStageIds;
   if (!ids || ids.length === 0) {
-    return wrapWithStatus(tCommon, error, base);
+    return base;
   }
 
   const labels = resolveConsumerStageLabels(ids, stages);
-  const withConsumers = `${base} ${tStructure('problems.lifecycle.ReadyConsumerWouldBreakConsumers', {
+  return `${base} ${tStructure('problems.lifecycle.ReadyConsumerWouldBreakConsumers', {
     phases: labels.join(', '),
   })}`;
-  return wrapWithStatus(tCommon, error, withConsumers);
-}
-
-function wrapWithStatus(
-  tCommon: TFunction<'common'>,
-  error: unknown,
-  message: string,
-): string {
-  if (error instanceof ApiError) {
-    return tCommon('errorWithStatus', {
-      message,
-      status: error.status,
-    });
-  }
-  return message;
 }

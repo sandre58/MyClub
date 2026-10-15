@@ -11,12 +11,12 @@ import { inboundPopulationConfiguredVolume } from './structurePopulationVolume';
 import {
   STRUCTURE_DIAGNOSTIC_FAMILIES,
   countStructureIssuesByFamily,
-  projectPresentedStageIssueCodes,
   structureDiagnosticFamily,
   structureDiagnosticMeta,
   structureDiagnosticTone,
   type StructureDiagnosticFamily,
 } from './structureDiagnosticPresentation';
+import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import { collectAllStructureReadinessActionItems } from './structureReadinessActions';
 import {
   stageHasEngagedMissingPots,
@@ -56,6 +56,8 @@ export type StructureReadinessSummary = {
   shapeInvalid: boolean;
   /** True when the PageHead readiness banner should render. */
   hasAny: boolean;
+  /** PageHead negative band — danger-level structure signals only (not warning-only). */
+  showPageHeadNegative: boolean;
   firstAttentionStageId: string | null;
   /**
    * Worst-signal header chrome. Explicit classification — never derived from
@@ -66,23 +68,13 @@ export type StructureReadinessSummary = {
 
 /** Explicit signal → gravity. Source of truth for headerTone (not vocabulary). */
 export function classifyReadinessHeaderTone(args: {
-  codes?: readonly string[];
   codeTone?: StructureHeaderTone;
   missingPotsPhaseCount: number;
   shapeInvalid: boolean;
 }): StructureHeaderTone {
   if (args.shapeInvalid) return 'danger';
-  const fromCodes =
-    args.codeTone ??
-    (args.codes && args.codes.length > 0
-      ? headerToneFromCodesLegacy(args.codes)
-      : 'none');
-  if (fromCodes === 'danger') return 'danger';
-  if (
-    fromCodes === 'attention' ||
-    args.missingPotsPhaseCount > 0 ||
-    (args.codes?.length ?? 0) > 0
-  ) {
+  if (args.codeTone === 'danger') return 'danger';
+  if (args.codeTone === 'attention' || args.missingPotsPhaseCount > 0) {
     return 'attention';
   }
   return 'none';
@@ -98,27 +90,13 @@ function headerToneFromStages(
     const presented = stagePresentedIssueCodes(data, stage);
     for (const code of presented) {
       if (!structureDiagnosticMeta(code)) continue;
-      const tone = structureDiagnosticTone(code, {
-        formatKind: stage.formatKind,
-      });
+      const tone = structureDiagnosticTone(
+        code,
+        structureDiagnosticContextFromStage(data, stage),
+      );
       if (tone === 'danger') hasDanger = true;
       else hasNonDanger = true;
     }
-  }
-  if (hasDanger) return 'danger';
-  if (hasNonDanger) return 'attention';
-  return 'none';
-}
-
-/** Flat code list without stage context — prefer {@link headerToneFromStages}. */
-function headerToneFromCodesLegacy(codes: readonly string[]): StructureHeaderTone {
-  let hasDanger = false;
-  let hasNonDanger = false;
-  for (const code of codes) {
-    if (!structureDiagnosticMeta(code)) continue;
-    const tone = structureDiagnosticTone(code);
-    if (tone === 'danger') hasDanger = true;
-    else hasNonDanger = true;
   }
   if (hasDanger) return 'danger';
   if (hasNonDanger) return 'attention';
@@ -153,24 +131,17 @@ export function stageAmbientKinds(
   data: StructureView,
   stage: StructureStageHubSummary,
 ): StageAmbientKind[] {
+  if (stage.status === 'Completed') {
+    return [];
+  }
   const kinds: StageAmbientKind[] = [];
   const seen = new Set<StructureDiagnosticFamily>();
-  const presented = projectPresentedStageIssueCodes(
-    stage.structureIssues ?? [],
-    stage,
-  );
+  const presented = stagePresentedIssueCodes(data, stage);
   for (const code of presented) {
     const family = structureDiagnosticFamily(code);
     if (!family || seen.has(family)) continue;
     seen.add(family);
     kinds.push(family);
-  }
-  if (
-    !seen.has('capacity') &&
-    stageHasPopulationShortfall(data, stage) &&
-    !presented.includes('PopulationShortfall')
-  ) {
-    kinds.push('capacity');
   }
   if (stageHasEngagedMissingPots(stage)) {
     kinds.push('drawPots');
@@ -194,6 +165,7 @@ export function computeStructureReadinessSummary(
       missingPotsPhaseCount: 0,
       shapeInvalid: false,
       hasAny: false,
+      showPageHeadNegative: false,
       firstAttentionStageId: null,
       headerTone: 'none',
     };
@@ -204,6 +176,9 @@ export function computeStructureReadinessSummary(
   let firstAttentionStageId: string | null = null;
 
   for (const stage of stages) {
+    if (stage.status === 'Completed') {
+      continue;
+    }
     const presented = stagePresentedIssueCodes(data, stage);
     if (presented.length > 0) {
       firstAttentionStageId ??= stage.stageId;
@@ -234,6 +209,12 @@ export function computeStructureReadinessSummary(
     stages,
   ).length;
 
+  const headerTone = classifyReadinessHeaderTone({
+    codeTone: headerToneFromStages(data, stages),
+    missingPotsPhaseCount,
+    shapeInvalid,
+  });
+
   return {
     familyCounts,
     presentedProblemCount,
@@ -241,12 +222,8 @@ export function computeStructureReadinessSummary(
     missingPotsPhaseCount,
     shapeInvalid,
     hasAny,
+    showPageHeadNegative: shapeInvalid || headerTone === 'danger',
     firstAttentionStageId,
-    headerTone: classifyReadinessHeaderTone({
-      codeTone: headerToneFromStages(data, stages),
-      codes: presentedCodes,
-      missingPotsPhaseCount,
-      shapeInvalid,
-    }),
+    headerTone,
   };
 }

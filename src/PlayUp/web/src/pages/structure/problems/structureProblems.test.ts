@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../../../api';
-import enCommon from '../../../i18n/locales/en/common.json';
 import enStructure from '../../../i18n/locales/en/structure.json';
 import frStructure from '../../../i18n/locales/fr/structure.json';
 import type { StructureStageHubSummary } from '../../../types';
@@ -51,15 +50,6 @@ const t = (
   return opts?.defaultValue ?? '';
 };
 
-const tCommon = (key: string, opts?: Record<string, unknown>) => {
-  if (key === 'errorWithStatus' && opts) {
-    return enCommon.errorWithStatus
-      .replace('{{message}}', String(opts.message))
-      .replace('{{status}}', String(opts.status));
-  }
-  return key;
-};
-
 describe('formatStructureMutationMessage', () => {
   it('lists ready downstream consumer phase names on D1 refusal', () => {
     const downstream: StructureStageHubSummary = {
@@ -83,7 +73,6 @@ describe('formatStructureMutationMessage', () => {
     };
     const msg = formatStructureMutationMessage(
       t,
-      tCommon,
       new ApiError(
         409,
         'blocked',
@@ -95,7 +84,7 @@ describe('formatStructureMutationMessage', () => {
     );
     expect(msg).toContain('Final');
     expect(msg).toContain('Affected phases');
-    expect(msg).toContain('409');
+    expect(msg).not.toMatch(/\(\d{3}\)/);
   });
 });
 
@@ -248,6 +237,18 @@ describe('resolveLifecycleMutationMessage', () => {
 });
 
 describe('problems i18n parity', () => {
+  it('has matching FR/EN graph.issuesShort for structure diagnostics', () => {
+    const longKeys = Object.keys(enStructure.graph.issues).filter(
+      (code) => code !== 'SlotFeedMissingAwaitingDraw',
+    );
+    for (const code of longKeys) {
+      expect(enStructure.graph.issuesShort).toHaveProperty(code);
+      expect(frStructure.graph.issuesShort).toHaveProperty(code);
+      expect(enStructure.graph.issuesShort[code as keyof typeof enStructure.graph.issuesShort]).toBeTruthy();
+      expect(frStructure.graph.issuesShort[code as keyof typeof frStructure.graph.issuesShort]).toBeTruthy();
+    }
+  });
+
   it('has matching FR/EN keys for Matchs lifecycle inventory', () => {
     for (const code of MATCHS_LIFECYCLE_WIRE_CODES) {
       expect(enStructure.problems.lifecycle).toHaveProperty(code);

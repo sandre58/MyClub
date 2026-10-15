@@ -16,6 +16,7 @@ export function StructurePhaseOperationalBar({
   competitionId,
   competitionStatus,
   stage,
+  structureStages,
   drawApplied,
 }: {
   structureHubBackgroundRefresh: boolean;
@@ -25,6 +26,7 @@ export function StructurePhaseOperationalBar({
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
+  structureStages: readonly StructureStageHubSummary[];
   drawApplied: boolean;
 }) {
   const { t } = useTranslation('structure');
@@ -56,6 +58,7 @@ export function StructurePhaseOperationalBar({
           competitionId={competitionId}
           competitionStatus={competitionStatus}
           stage={stage}
+          structureStages={structureStages}
           presentation={presentation}
           structureHubBackgroundRefresh={structureHubBackgroundRefresh}
           drawApplied={drawApplied}

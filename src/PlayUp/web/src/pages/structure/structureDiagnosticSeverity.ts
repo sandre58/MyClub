@@ -1,38 +1,56 @@
-// Product severity (D5) — Host Severity / drawer nature should match this matrix.
-// Lifecycle gates remain explicit in Application (Prepare, etc.).
+// Product presentation severity — delegates to structureDiagnosticPresentationPolicy.
 
-import type { StructureFormatKind } from '../../types';
-import { isNonClassifyingStructurePhase } from './structureStageClassification';
+import type { StructureFormatKind, StageStatus } from '../../types';
+import {
+  structureDiagnosticPresentation,
+  structureDiagnosticToneFromPresentation,
+  structureProductSeverityFromPresentation,
+  type StructureDiagnosticPresentationContext,
+} from './structureDiagnosticPresentationPolicy';
 
 export type StructureProductSeverity = 'blocking' | 'warning';
 
 export type StructureDiagnosticSeverityContext = {
   formatKind?: StructureFormatKind | null;
+  stageStatus?: StageStatus | null;
+  isEntryBaselineStage?: boolean;
+  hasInboundQualProgFeed?: boolean;
+  affectationEntryCount?: number;
 };
 
-/** A4 revision + D5; G-UI1 / G-UI2 (§11A signed policy). */
-const SEVERITY_BY_CODE: Record<string, StructureProductSeverity> = {
-  SlotFeedMissing: 'blocking',
-  OverCapacityEdge: 'warning',
-  NonRootUnfed: 'warning',
-  ExpectedRankUnreachable: 'warning',
-  PopulationShortfall: 'warning',
-  SourcePopulationShortfall: 'warning',
-};
+function toPresentationContext(
+  context?: StructureDiagnosticSeverityContext,
+): StructureDiagnosticPresentationContext {
+  if (!context) {
+    return {};
+  }
+  return {
+    formatKind: context.formatKind,
+    stageStatus: context.stageStatus,
+    isEntryBaselineStage: context.isEntryBaselineStage,
+    hasInboundQualProgFeed: context.hasInboundQualProgFeed,
+    affectationEntryCount: context.affectationEntryCount,
+  };
+}
 
 export function structureProductSeverity(
   code: string,
   context?: StructureDiagnosticSeverityContext,
 ): StructureProductSeverity {
-  if (code === 'AuthoredAwardUnreachable') {
-    if (
-      context &&
-      !isNonClassifyingStructurePhase({ formatKind: context.formatKind })
-    ) {
-      return 'warning';
-    }
-    return 'blocking';
-  }
-
-  return SEVERITY_BY_CODE[code] ?? 'blocking';
+  return structureProductSeverityFromPresentation(
+    code,
+    toPresentationContext(context),
+  );
 }
+
+export function structureDiagnosticToneForCode(
+  code: string,
+  context?: StructureDiagnosticSeverityContext,
+): 'danger' | 'attention' | 'progress' {
+  return structureDiagnosticToneFromPresentation(
+    code,
+    toPresentationContext(context),
+  );
+}
+
+export { structureDiagnosticPresentation } from './structureDiagnosticPresentationPolicy';

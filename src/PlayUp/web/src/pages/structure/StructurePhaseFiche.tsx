@@ -72,7 +72,10 @@ import { StructurePhaseFicheHeaderLifecycle } from './StructurePhaseFicheHeaderL
 import { StructurePhaseMatchTilePanel } from './StructurePhaseMatchTilePanel';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
 import { materializePresentationForStage } from './structureOperationalCopy';
-import { shouldShowAsideMatchsTile } from './structureMatchsSectionUi';
+import {
+  shouldShowAsideMatchsTile,
+  shouldShowMatchsSection,
+} from './structureMatchsSectionUi';
 import { CompositionPlacementAwardLabel } from './CompositionPlacementAwardLabel';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
 import {
@@ -93,11 +96,13 @@ import {
 } from './drawUi';
 import {
   isSlotFeedAwaitingDraw,
+  structureDiagnosticPresentation,
   structureDiagnosticTitleKey,
   structureDiagnosticTone,
   structureIssueBannersForTile,
   structureIssuesForTile,
 } from './structureDiagnosticPresentation';
+import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import {
   stageHasPopulationShortfall,
 } from './structureReadinessSummary';
@@ -710,9 +715,10 @@ export function StructurePhaseFiche({
     codes.length === 0 ? undefined : (
       <ul className="structure-phase-rail__issues" role="list">
         {codes.map((code) => {
-          const tone = structureDiagnosticTone(code, {
-            formatKind: stage.formatKind,
-          });
+          const tone = structureDiagnosticTone(
+            code,
+            structureDiagnosticContextFromStage(data, stage),
+          );
           return (
             <li
               key={code}
@@ -922,10 +928,29 @@ export function StructurePhaseFiche({
     showQualifiersSection &&
     showTeamsSection;
   const populationMeterCurrent = expectedPopulationOccupancy(data, stage);
+  const stageDiagnosticContext = structureDiagnosticContextFromStage(data, stage);
+  const populationShortfallMessageKind =
+    stageHasPopulationShortfall(data, stage)
+      ? (() => {
+          const tone = structureDiagnosticPresentation(
+            'PopulationShortfall',
+            {
+              formatKind: stageDiagnosticContext.formatKind,
+              stageStatus: stageDiagnosticContext.stageStatus,
+              isEntryBaselineStage: stageDiagnosticContext.isEntryBaselineStage,
+              hasInboundQualProgFeed:
+                stageDiagnosticContext.hasInboundQualProgFeed,
+              affectationEntryCount: stageDiagnosticContext.affectationEntryCount,
+            },
+          ).tone;
+          return tone === 'danger' || tone === 'attention' ? tone : null;
+        })()
+      : null;
   const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
     <CompositionPopulationGauge
       current={populationMeterCurrent}
       capacity={placesN!}
+      populationShortfallMessageKind={populationShortfallMessageKind}
       className={
         sharedCompositionPopulationGauge
           ? 'structure-phase-composition__population-gauge--span-sources'
@@ -995,7 +1020,7 @@ export function StructurePhaseFiche({
             placesBannersForStrip.length > 0 ? (
               <StructureOperationalIssueBanner
                 codes={placesBannersForStrip}
-                formatKind={stage.formatKind}
+                diagnosticContext={stageDiagnosticContext}
               />
             ) : undefined,
         }
@@ -1181,7 +1206,10 @@ export function StructurePhaseFiche({
                   </Tooltip>
                 </div>
                 {renameMutation.isError ? (
-                  <MutationError error={renameMutation.error} />
+                  <MutationError
+                    error={renameMutation.error}
+                    structureStages={data.stages}
+                  />
                 ) : null}
               </form>
             ) : (
@@ -1423,6 +1451,7 @@ export function StructurePhaseFiche({
                     competitionId={data.competitionId}
                     competitionStatus={data.status}
                     stage={stage}
+                    structureStages={data.stages}
                     presentation={materializePresentation}
                     structureHubBackgroundRefresh={structureHubBackgroundRefresh}
                     drawApplied={stageHasAppliedDraw}
@@ -1502,26 +1531,32 @@ export function StructurePhaseFiche({
         <aside className="structure-phase-aside">
           {showAsideMatchsSection ? (
             <div className="structure-phase-tile structure-phase-tile--matchs">
-              <StructurePhaseMatchTilePanel stage={stage} />
-              <div className="structure-phase-operational-bar">
-                <section
-                  className="structure-fiche-section structure-fiche-section--operational"
-                  aria-labelledby="aside-matchs-heading"
-                >
-                  <StructurePhaseOperationalStrip
-                    layoutVariant="aside-matchs"
-                    placement={placementOperationalProps}
-                    showPlaces={showPlacementBlock}
-                    showDraw={showDrawCta || showActivateDrawCta}
-                    competitionId={data.competitionId}
-                    competitionStatus={data.status}
-                    stage={stage}
-                    presentation={materializePresentation}
-                    structureHubBackgroundRefresh={structureHubBackgroundRefresh}
-                    drawApplied={stageHasAppliedDraw}
-                  />
-                </section>
-              </div>
+              <StructurePhaseMatchTilePanel
+                stage={stage}
+                iconRefreshing={structureHubBackgroundRefresh}
+              />
+              {shouldShowMatchsSection(stage) ? (
+                <div className="structure-phase-operational-bar">
+                  <section
+                    className="structure-fiche-section structure-fiche-section--operational"
+                    aria-labelledby="aside-matchs-heading"
+                  >
+                    <StructurePhaseOperationalStrip
+                      layoutVariant="aside-matchs"
+                      placement={placementOperationalProps}
+                      showPlaces={showPlacementBlock}
+                      showDraw={showDrawCta || showActivateDrawCta}
+                      competitionId={data.competitionId}
+                      competitionStatus={data.status}
+                      stage={stage}
+                      structureStages={data.stages}
+                      presentation={materializePresentation}
+                      structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+                      drawApplied={stageHasAppliedDraw}
+                    />
+                  </section>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -1693,6 +1728,7 @@ export function StructurePhaseFiche({
       <DrawRulesDialog
         competitionId={data.competitionId}
         stage={stage}
+        structureStages={data.stages}
         open={edit === 'tirage-activate' || edit === 'tirage-params'}
         onClose={() => setEdit(null)}
         intent={edit === 'tirage-activate' ? 'activate' : 'params'}
@@ -1709,7 +1745,10 @@ export function StructurePhaseFiche({
         confirmPending={deactivateDrawMutation.isPending}
         footerStatus={
           deactivateDrawMutation.isError ? (
-            <MutationError error={deactivateDrawMutation.error} />
+            <MutationError
+              error={deactivateDrawMutation.error}
+              structureStages={data.stages}
+            />
           ) : null
         }
         onConfirm={() => deactivateDrawMutation.mutate()}
@@ -1728,7 +1767,10 @@ export function StructurePhaseFiche({
         confirmPendingLabel={tDraw('releasingPlacements')}
         footerStatus={
           releaseMutation.isError ? (
-            <MutationError error={releaseMutation.error} />
+            <MutationError
+              error={releaseMutation.error}
+              structureStages={data.stages}
+            />
           ) : null
         }
         onCancel={() => {
@@ -1749,6 +1791,7 @@ export function StructurePhaseFiche({
         competitionStatus={data.status}
         minimumTeams={data.regulation.minimumTeams}
         stage={stage}
+        structureStages={data.stages}
         open={drawWorkflowOpen}
         onClose={() => setDrawWorkflowOpen(false)}
       />
@@ -1773,6 +1816,7 @@ export function StructurePhaseFiche({
         }}
         competitionId={data.competitionId}
         stage={stage}
+        structureStages={data.stages}
         entries={data.participants.entries}
         cases={schematicQuery.data?.cases ?? []}
         initialSlotKey={manualSlotKey}
@@ -1780,6 +1824,7 @@ export function StructurePhaseFiche({
       <TieFormatDialog
         competitionId={data.competitionId}
         stage={stage}
+        structureStages={data.stages}
         open={edit === 'confrontation'}
         onClose={() => setEdit(null)}
       />

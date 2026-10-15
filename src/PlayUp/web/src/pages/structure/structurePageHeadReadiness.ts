@@ -3,9 +3,12 @@ export type AttentionQueryPhase = 'pending' | 'success' | 'error';
 export type StructurePageHeadReadinessInput = {
   lifecycleClosed: boolean;
   stagesEmpty: boolean;
-  hasAny: boolean;
+  /** Structure hub: danger-level presented diagnostics (or shape invalid). */
+  structurePresentedDanger: boolean;
+  /** Structure hub: any presented problem (including warnings) — blocks positive notes. */
+  structureHasPresentedProblems: boolean;
   attentionPhase: AttentionQueryPhase;
-  presentableAttentionCount: number;
+  presentableBlockingAttentionCount: number;
   readyToMaterialize: boolean;
   readyForSchedule: boolean;
   readyForNextSlice: boolean;
@@ -25,9 +28,10 @@ export function resolveStructurePageHeadNoteKind(
   }
 
   const showNegative =
-    input.hasAny ||
-    (input.attentionPhase === 'success' && input.presentableAttentionCount > 0) ||
-    (input.attentionPhase === 'error' && input.hasAny);
+    input.structurePresentedDanger ||
+    (input.attentionPhase === 'success' &&
+      input.presentableBlockingAttentionCount > 0) ||
+    (input.attentionPhase === 'error' && input.structurePresentedDanger);
 
   if (showNegative) {
     return 'negative';
@@ -38,8 +42,8 @@ export function resolveStructurePageHeadNoteKind(
   }
 
   if (
-    input.presentableAttentionCount === 0 &&
-    !input.hasAny &&
+    input.presentableBlockingAttentionCount === 0 &&
+    !input.structureHasPresentedProblems &&
     input.readyToMaterialize &&
     !input.readyForSchedule
   ) {
@@ -47,8 +51,8 @@ export function resolveStructurePageHeadNoteKind(
   }
 
   if (
-    input.presentableAttentionCount === 0 &&
-    !input.hasAny &&
+    input.presentableBlockingAttentionCount === 0 &&
+    !input.structureHasPresentedProblems &&
     !input.readyToMaterialize &&
     input.readyForNextSlice
   ) {

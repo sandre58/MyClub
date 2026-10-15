@@ -241,6 +241,27 @@
       "PopulationShortfall": "Not enough teams promised for this phase",
       "AuthoredAwardUnreachable": "Source pair not found",
       "ExpectedRankUnreachable": "This competition rank cannot be produced by the attribution paths"
+    },
+    "issuesShort": {
+      "DanglingQualificationTarget": "Qual destination missing",
+      "DanglingProgressionTarget": "Prog destination missing",
+      "MissingQualificationDestinationSlot": "Qual place missing",
+      "MissingQualificationDestinationGroup": "Qual group missing",
+      "MissingProgressionDestinationSlot": "Prog place missing",
+      "MissingProgressionDestinationGroup": "Prog group missing",
+      "SlotFeedMissing": "Place not fed",
+      "SlotFeedInvalid": "Invalid place feed",
+      "SlotFeedMultiple": "Conflicting place feeds",
+      "ConfrontationUndecidable": "Draw not always decidable",
+      "CycleDetected": "Cycle between phases",
+      "NonRootUnfed": "No inbound teams yet",
+      "RoutingNondeterminism": "Ambiguous routing",
+      "OverCapacityEdge": "Too many teams promised",
+      "OverExtraction": "Exit exceeds supply",
+      "SourcePopulationShortfall": "Source team shortfall",
+      "PopulationShortfall": "Team shortfall",
+      "AuthoredAwardUnreachable": "Award source missing",
+      "ExpectedRankUnreachable": "Rank unreachable"
     }
   },
   "lifecycle": {

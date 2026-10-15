@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronRightIcon } from '../../design-system/icons/shellIcons';
+import { ViewIcon } from '../../design-system/icons/contentIcons';
 import type { FeedGroup } from './structurePhaseFeeds';
 
 export function FeedGroupPhaseHead({
@@ -26,13 +26,11 @@ export function FeedGroupPhaseHead({
         {onViewPhase ? (
           <button
             type="button"
-            className="ds-text-link"
+            className="ds-text-link ds-text-link--icon"
+            aria-label={t('composition.qualifiers.viewPhase')}
             onClick={() => onViewPhase(group.peerId)}
           >
-            <span>{t('composition.qualifiers.viewPhase')}</span>
-            <span className="ds-text-link__arrow" aria-hidden="true">
-              <ChevronRightIcon size="sm" />
-            </span>
+            <ViewIcon size="sm" aria-hidden="true" />
           </button>
         ) : null}
       </div>

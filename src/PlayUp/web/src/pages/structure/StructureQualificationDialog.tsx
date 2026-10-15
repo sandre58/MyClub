@@ -616,7 +616,10 @@ export function StructureQualificationDialog({
 
           {!sessionReady ? (
             sourceSchematicQuery.isError ? (
-              <MutationError error={sourceSchematicQuery.error} />
+              <MutationError
+                error={sourceSchematicQuery.error}
+                structureStages={data.stages}
+              />
             ) : (
               <LoadingState size="region" />
             )

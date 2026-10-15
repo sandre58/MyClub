@@ -90,11 +90,13 @@ export function ProgressionRulesDialog({
 
 export function AddPhaseDialog({
   competitionId,
+  structureStages = [],
   open,
   onClose,
   onCreated,
 }: {
   competitionId: string;
+  structureStages?: readonly StructureStageHubSummary[];
   open: boolean;
   onClose: () => void;
   /** Called after a successful create so the hub can select the new phase. */
@@ -193,7 +195,12 @@ export function AddPhaseDialog({
           </>
         }
         footerStatus={
-          mutation.isError ? <MutationError error={mutation.error} /> : null
+          mutation.isError ? (
+            <MutationError
+              error={mutation.error}
+              structureStages={structureStages}
+            />
+          ) : null
         }
       >
         <form
@@ -383,7 +390,12 @@ export function EditSkeletonDialog({
           </>
         }
         footerStatus={
-          mutation.isError ? <MutationError error={mutation.error} /> : null
+          mutation.isError ? (
+            <MutationError
+              error={mutation.error}
+              structureStages={data.stages}
+            />
+          ) : null
         }
       >
         <form
@@ -550,7 +562,12 @@ export function RemovePhaseDialog({
         </>
       }
       footerStatus={
-        mutation.isError ? <MutationError error={mutation.error} /> : null
+        mutation.isError ? (
+          <MutationError
+            error={mutation.error}
+            structureStages={data.stages}
+          />
+        ) : null
       }
     >
       <p>{t('graph.removePhaseBody', { name: stage.name })}</p>

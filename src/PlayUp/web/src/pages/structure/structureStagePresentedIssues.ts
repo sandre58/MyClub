@@ -11,6 +11,9 @@ export function stagePresentedIssueCodes(
   data: StructureView,
   stage: StructureStageHubSummary,
 ): string[] {
+  if (stage.status === 'Completed') {
+    return [];
+  }
   const raw = [...(stage.structureIssues ?? [])];
   const places = resolvePlacesN(stage);
   if (places != null && places > 0) {

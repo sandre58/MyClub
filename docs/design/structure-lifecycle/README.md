@@ -7,6 +7,9 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | Document | Purpose |
 |----------|---------|
 | [phase-mutability-matrix.md](./phase-mutability-matrix.md) | Exhaustive inventory (diagnostics + `UseCaseExecutor.Stages` commands), current vs target policy, reference cases, open arbitrations |
+| [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) | **Signed** — UI severity/tone/copy for structure diagnostics (presentation only) |
+| [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |
+| [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md) | Impact ², `R-Pres-*`, mutation inventory — **steps 3–5 implemented** (policy, surfaces, i18n short + mutation copy) |
 | [notion-decision-draft.md](./notion-decision-draft.md) | Short **Décision** text for Notion (copy/paste); links to Git annex |
 | [implementation-plan-placeholder.md](./implementation-plan-placeholder.md) | Pre-§11B placeholder (historical) |
 | [section-11b-signoff-preparation.md](./section-11b-signoff-preparation.md) | **§11B** maintainer pack (signed 2026-10-15) |
