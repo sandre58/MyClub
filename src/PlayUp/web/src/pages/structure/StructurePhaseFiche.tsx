@@ -102,7 +102,10 @@ import {
   stageHasPopulationShortfall,
 } from './structureReadinessSummary';
 import { outboundSortiesFeeds } from './structureSortiesIntentFeed';
-import { inboundPopulationConfiguredVolume } from './structurePopulationVolume';
+import {
+  expectedPopulationOccupancy,
+  inboundPopulationConfiguredVolume,
+} from './structurePopulationVolume';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -707,7 +710,9 @@ export function StructurePhaseFiche({
     codes.length === 0 ? undefined : (
       <ul className="structure-phase-rail__issues" role="list">
         {codes.map((code) => {
-          const tone = structureDiagnosticTone(code);
+          const tone = structureDiagnosticTone(code, {
+            formatKind: stage.formatKind,
+          });
           return (
             <li
               key={code}
@@ -916,9 +921,10 @@ export function StructurePhaseFiche({
     showCompositionPopulationGauge &&
     showQualifiersSection &&
     showTeamsSection;
+  const populationMeterCurrent = expectedPopulationOccupancy(data, stage);
   const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
     <CompositionPopulationGauge
-      current={poolFilled}
+      current={populationMeterCurrent}
       capacity={placesN!}
       className={
         sharedCompositionPopulationGauge
@@ -987,7 +993,10 @@ export function StructurePhaseFiche({
           drawReadinessChecklist,
           placesDiagnostics:
             placesBannersForStrip.length > 0 ? (
-              <StructureOperationalIssueBanner codes={placesBannersForStrip} />
+              <StructureOperationalIssueBanner
+                codes={placesBannersForStrip}
+                formatKind={stage.formatKind}
+              />
             ) : undefined,
         }
       : null;
@@ -1236,13 +1245,6 @@ export function StructurePhaseFiche({
             </div>
           ) : null}
         </div>
-        {!editingName ? (
-          <StructurePhaseFicheHeaderLifecycle
-            competitionId={data.competitionId}
-            stage={stage}
-            part="messages"
-          />
-        ) : null}
       </header>
 
       <div

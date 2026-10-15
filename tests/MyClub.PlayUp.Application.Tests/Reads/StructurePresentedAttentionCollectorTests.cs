@@ -50,7 +50,7 @@ public sealed class StructurePresentedAttentionCollectorTests
 
         items.Should().Contain(item =>
             item.Source == CompetitionFlowAnalyzer.PopulationShortfall
-            && item.Severity == NeedsAttentionAssembler.SeverityBlocking
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
             && item.TargetId == poules.Id.Value.ToString());
     }
 

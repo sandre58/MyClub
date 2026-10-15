@@ -144,7 +144,7 @@ describe('structureReadinessSummary', () => {
     });
     const summary = computeStructureReadinessSummary(view([poules]), [poules]);
     expect(summary.familyCounts).toEqual([{ family: 'capacity', count: 1 }]);
-    expect(summary.headerTone).toBe('danger');
+    expect(summary.headerTone).toBe('attention');
     expect(stagePopulationGap(view([poules]), poules)).toBe(-8);
   });
 
@@ -195,7 +195,7 @@ describe('structureReadinessSummary', () => {
     const summary = computeStructureReadinessSummary(view([final]), [final]);
     expect(summary.familyCounts).toEqual([{ family: 'result', count: 1 }]);
     expect(summary.presentedProblemCount).toBe(1);
-    expect(summary.headerTone).toBe('attention');
+    expect(summary.headerTone).toBe('danger');
   });
 
   it('counts engaged missing pots only for Groups when no graph/shortfall', () => {
@@ -310,7 +310,7 @@ describe('structureReadinessSummary', () => {
         missingPotsPhaseCount: 1,
         shapeInvalid: false,
       }),
-    ).toBe('danger');
+    ).toBe('attention');
     expect(
       classifyReadinessHeaderTone({
         codes: ['DanglingQualificationTarget', 'SlotFeedMissing'],

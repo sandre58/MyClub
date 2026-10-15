@@ -4,7 +4,10 @@
 // Product severity (D5) drives diagnostic tone; lifecycle gates stay in Host.
 // -----------------------------------------------------------------------
 
-import { structureProductSeverity } from './structureDiagnosticSeverity';
+import {
+  structureProductSeverity,
+  type StructureDiagnosticSeverityContext,
+} from './structureDiagnosticSeverity';
 
 /** Business family for Structure header synthesis. */
 export type StructureDiagnosticFamily =
@@ -240,8 +243,11 @@ export function structureDiagnosticTitleKey(code: string): string {
 }
 
 /** Effective UX tone — derived from product severity (D5), not legacy meta.tone alone. */
-export function structureDiagnosticTone(code: string): StructureDiagnosticTone {
-  const severity = structureProductSeverity(code);
+export function structureDiagnosticTone(
+  code: string,
+  context?: StructureDiagnosticSeverityContext,
+): StructureDiagnosticTone {
+  const severity = structureProductSeverity(code, context);
   if (severity === 'blocking') {
     return 'danger';
   }

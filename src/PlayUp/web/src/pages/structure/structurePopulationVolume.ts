@@ -53,6 +53,17 @@ export function inboundPopulationConfiguredVolume(
   return n;
 }
 
+/** U1 meter — affectation authoring + inbound Qual/Prog configured volume. */
+export function expectedPopulationOccupancy(
+  data: StructureView,
+  destination: StructureStageHubSummary,
+): number {
+  return (
+    (destination.affectationEntryCount ?? 0) +
+    inboundPopulationConfiguredVolume(data, destination.stageId)
+  );
+}
+
 /**
  * Expected Places N occupancy of `destination` while authoring Qual from `sourceStageId`.
  * Persisted Qual from the current source is replaced by `draftQualVolume` (Z).

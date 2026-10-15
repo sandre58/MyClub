@@ -103,10 +103,17 @@ describe('structureDiagnosticPresentation', () => {
     expect(structureDiagnosticTitleKey('AuthoredAwardUnreachable')).toBe(
       'graph.issues.AuthoredAwardUnreachable',
     );
-    expect(structureDiagnosticTone('AuthoredAwardUnreachable')).toBe(
-      'attention',
-    );
-    expect(structureDiagnosticTone('PopulationShortfall')).toBe('danger');
+    expect(
+      structureDiagnosticTone('AuthoredAwardUnreachable', {
+        formatKind: 'Cup',
+      }),
+    ).toBe('danger');
+    expect(
+      structureDiagnosticTone('AuthoredAwardUnreachable', {
+        formatKind: 'Championship',
+      }),
+    ).toBe('attention');
+    expect(structureDiagnosticTone('PopulationShortfall')).toBe('attention');
   });
 
   it('keeps OverCapacity and SlotFeedMissing on distinct tiles', () => {

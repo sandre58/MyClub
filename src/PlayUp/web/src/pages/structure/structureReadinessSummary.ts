@@ -66,24 +66,52 @@ export type StructureReadinessSummary = {
 
 /** Explicit signal → gravity. Source of truth for headerTone (not vocabulary). */
 export function classifyReadinessHeaderTone(args: {
-  codes: readonly string[];
+  codes?: readonly string[];
+  codeTone?: StructureHeaderTone;
   missingPotsPhaseCount: number;
   shapeInvalid: boolean;
 }): StructureHeaderTone {
   if (args.shapeInvalid) return 'danger';
-  const fromCodes = headerToneFromCodes(args.codes);
+  const fromCodes =
+    args.codeTone ??
+    (args.codes && args.codes.length > 0
+      ? headerToneFromCodesLegacy(args.codes)
+      : 'none');
   if (fromCodes === 'danger') return 'danger';
   if (
     fromCodes === 'attention' ||
     args.missingPotsPhaseCount > 0 ||
-    args.codes.length > 0
+    (args.codes?.length ?? 0) > 0
   ) {
     return 'attention';
   }
   return 'none';
 }
 
-function headerToneFromCodes(codes: readonly string[]): StructureHeaderTone {
+function headerToneFromStages(
+  data: StructureView,
+  stages: StructureStageHubSummary[],
+): StructureHeaderTone {
+  let hasDanger = false;
+  let hasNonDanger = false;
+  for (const stage of stages) {
+    const presented = stagePresentedIssueCodes(data, stage);
+    for (const code of presented) {
+      if (!structureDiagnosticMeta(code)) continue;
+      const tone = structureDiagnosticTone(code, {
+        formatKind: stage.formatKind,
+      });
+      if (tone === 'danger') hasDanger = true;
+      else hasNonDanger = true;
+    }
+  }
+  if (hasDanger) return 'danger';
+  if (hasNonDanger) return 'attention';
+  return 'none';
+}
+
+/** Flat code list without stage context — prefer {@link headerToneFromStages}. */
+function headerToneFromCodesLegacy(codes: readonly string[]): StructureHeaderTone {
   let hasDanger = false;
   let hasNonDanger = false;
   for (const code of codes) {
@@ -215,6 +243,7 @@ export function computeStructureReadinessSummary(
     hasAny,
     firstAttentionStageId,
     headerTone: classifyReadinessHeaderTone({
+      codeTone: headerToneFromStages(data, stages),
       codes: presentedCodes,
       missingPotsPhaseCount,
       shapeInvalid,

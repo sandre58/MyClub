@@ -3,6 +3,7 @@ import type { StructureStageHubSummary, StructureView } from '../../types';
 import {
   expectedPopulationWithQualDraft,
   expectedPopulationWithProgDraft,
+  expectedPopulationOccupancy,
   inboundPopulationConfiguredVolume,
   qualificationPathVolume,
 } from './structurePopulationVolume';
@@ -84,6 +85,32 @@ describe('structurePopulationVolume', () => {
       stage({ stageId: 'final', name: 'Finale', compositionCapacity: 2 }),
     ]);
     expect(inboundPopulationConfiguredVolume(data, 'final')).toBe(2);
+  });
+
+  it('expectedPopulationOccupancy sums affectation and inbound feeds', () => {
+    const final = stage({
+      stageId: 'final',
+      name: 'Finale',
+      compositionCapacity: 4,
+      affectationEntryCount: 2,
+    });
+    const data = view([
+      stage({
+        stageId: 'sf',
+        name: 'Demis',
+        qualificationPaths: [
+          {
+            order: 1,
+            rankingScope: 'Group',
+            selectionMode: 'Top',
+            selectionValue: 2,
+            destinationStageId: 'final',
+          },
+        ],
+      }),
+      final,
+    ]);
+    expect(expectedPopulationOccupancy(data, final)).toBe(4);
   });
 
   it('adds Prog Place from same source to Qual draft Z (4/2 case)', () => {

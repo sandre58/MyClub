@@ -516,7 +516,7 @@
 
 .structure-feed-group__rules {
   list-style: none;
-  margin: 0;
+  margin-left: var(--space-12);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -713,6 +713,11 @@
   padding: 0;
   border: none;
   background: transparent;
+}
+
+.structure-phase-tile--matchs .structure-phase-match-tile__head.ds-panel-head {
+  align-items: center;
+  margin-bottom: var(--space-8);
 }
 
 .structure-phase-match-tile__head-actions {

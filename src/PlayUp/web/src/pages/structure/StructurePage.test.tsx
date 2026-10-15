@@ -1897,9 +1897,6 @@ describe('StructurePage Structure hub', () => {
           name: /préparer la phase/i,
         }),
       ).toBeDisabled();
-      expect(
-        within(ficheHeader).getByText(/Remplissez toutes les places/i),
-      ).toBeInTheDocument();
 
       expect(
         document.querySelector('.structure-operational-strip'),
@@ -1991,11 +1988,6 @@ describe('StructurePage Structure hub', () => {
           name: /préparer la phase/i,
         }),
       ).toBeDisabled();
-      expect(
-        within(ficheHeader).getByText(
-          /ne correspondent plus au tableau de cette phase/i,
-        ),
-      ).toBeInTheDocument();
     });
 
     it('silences SlotFeedMissing on fiche while draw is engaged but keeps other diagnostics', async () => {

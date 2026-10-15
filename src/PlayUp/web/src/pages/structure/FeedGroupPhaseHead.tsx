@@ -1,11 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tooltip } from '../../design-system/components/Tooltip';
-import { ViewIcon } from '../../design-system/icons/contentIcons';
+import { ChevronRightIcon } from '../../design-system/icons/shellIcons';
 import type { FeedGroup } from './structurePhaseFeeds';
-
-const compactIcon =
-  'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
 export function FeedGroupPhaseHead({
   group,
@@ -28,19 +24,16 @@ export function FeedGroupPhaseHead({
           </div>
         ) : null}
         {onViewPhase ? (
-          <Tooltip content={t('composition.qualifiers.viewPhase')}>
-            <a
-              href="#"
-              className={compactIcon}
-              aria-label={t('composition.qualifiers.viewPhase')}
-              onClick={(event) => {
-                event.preventDefault();
-                onViewPhase(group.peerId);
-              }}
-            >
-              <ViewIcon size="sm" />
-            </a>
-          </Tooltip>
+          <button
+            type="button"
+            className="ds-text-link"
+            onClick={() => onViewPhase(group.peerId)}
+          >
+            <span>{t('composition.qualifiers.viewPhase')}</span>
+            <span className="ds-text-link__arrow" aria-hidden="true">
+              <ChevronRightIcon size="sm" />
+            </span>
+          </button>
         ) : null}
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 Audit of **authoritative data** for each UI indicator in the band-3 refonte. Scope: PlayUp web Structure hub (`StructurePhaseFiche` and modules it composes today). No new business rules; gaps are labelled **indeterminate** or **pre-existing defect** for separate arbitration.
 
-Related: [state matrix](./state-matrix.md), [actions & permissions inventory](./actions-permissions-inventory.md), [visual chrome & recette](./visual-chrome-recette.md), design mocks in this folder.
+Related: [state matrix](./state-matrix.md), [actions & permissions inventory](./actions-permissions-inventory.md), [visual chrome & recette](./visual-chrome-recette.md), design mocks in this folder. Stage lifecycle / mutability matrix (pre-implementation): [structure-lifecycle](../structure-lifecycle/README.md).
 
 ---
 

@@ -291,6 +291,7 @@
   justify-content: center;
   align-self: center;
   flex: none;
+  margin-bottom: 0;
   color: var(--color-text-secondary);
   opacity: 0.85;
 }

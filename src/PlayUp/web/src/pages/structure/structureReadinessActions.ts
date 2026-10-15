@@ -146,7 +146,9 @@ function pushIssueItem(
   if (!meta) {
     return;
   }
-  const tone = structureDiagnosticTone(args.code);
+  const tone = structureDiagnosticTone(args.code, {
+    formatKind: args.stage.formatKind,
+  });
   items.push({
     id: `${args.stage.stageId}:${args.code}`,
     stageId: args.stage.stageId,

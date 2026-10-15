@@ -6,19 +6,40 @@ describe('structureDiagnosticSeverity (D5)', () => {
   it('classifies blocking vs warning codes', () => {
     expect(structureProductSeverity('OverCapacityEdge')).toBe('warning');
     expect(structureProductSeverity('SlotFeedMissing')).toBe('blocking');
-    expect(structureProductSeverity('PopulationShortfall')).toBe('blocking');
+    expect(structureProductSeverity('PopulationShortfall')).toBe('warning');
+    expect(structureProductSeverity('SourcePopulationShortfall')).toBe('warning');
     expect(structureProductSeverity('NonRootUnfed')).toBe('warning');
+  });
+
+  it('AuthoredAwardUnreachable is blocking on Cup only (G-UI1)', () => {
+    expect(
+      structureProductSeverity('AuthoredAwardUnreachable', {
+        formatKind: 'Cup',
+      }),
+    ).toBe('blocking');
+    expect(
+      structureProductSeverity('AuthoredAwardUnreachable', {
+        formatKind: 'Championship',
+      }),
+    ).toBe('warning');
     expect(structureProductSeverity('AuthoredAwardUnreachable')).toBe(
-      'warning',
+      'blocking',
     );
   });
 
   it('maps severity to diagnostic tone without downgrading blocking', () => {
-    expect(structureDiagnosticTone('PopulationShortfall')).toBe('danger');
+    expect(structureDiagnosticTone('PopulationShortfall')).toBe('attention');
     expect(structureDiagnosticTone('OverCapacityEdge')).toBe('attention');
     expect(structureDiagnosticTone('NonRootUnfed')).toBe('progress');
-    expect(structureDiagnosticTone('AuthoredAwardUnreachable')).toBe(
-      'attention',
-    );
+    expect(
+      structureDiagnosticTone('AuthoredAwardUnreachable', {
+        formatKind: 'Cup',
+      }),
+    ).toBe('danger');
+    expect(
+      structureDiagnosticTone('AuthoredAwardUnreachable', {
+        formatKind: 'Groups',
+      }),
+    ).toBe('attention');
   });
 });
