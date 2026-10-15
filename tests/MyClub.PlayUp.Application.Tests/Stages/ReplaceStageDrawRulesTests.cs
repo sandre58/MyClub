@@ -8,7 +8,9 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -128,5 +130,26 @@ public sealed class ReplaceStageDrawRulesTests
         ReplaceStageDrawRules.Execute(stage, null, _clock);
 
         stage.Regulation.DrawRules.Should().BeNull();
+    }
+
+    [Fact]
+    public void Replace_rejected_when_stage_is_Ready()
+    {
+        var competition = CreateCompetition.Execute("ReadyDrawRules", _clock);
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(4),
+            _clock).Stage;
+        PrepareStage.Execute(stage, [stage], _clock);
+        stage.Status.Should().Be(StageStatus.Ready);
+
+        var act = () => ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random),
+            _clock);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
     }
 }

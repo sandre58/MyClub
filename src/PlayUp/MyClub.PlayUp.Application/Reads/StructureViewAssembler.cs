@@ -847,11 +847,6 @@ public static class StructureViewAssembler
 
         actions.Add(ActionReplaceAffectationAuthoring);
 
-        if (StageNeedsDrawRulesAction(stage))
-        {
-            actions.Add(ActionReplaceDrawRules);
-        }
-
         var format = StructureSkeleton.InferFormat(stage);
         if (format is StructureFormatKind.Cup or null)
         {

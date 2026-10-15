@@ -292,6 +292,75 @@ describe('StructurePhaseOperationalStrip', () => {
     ).toBeInTheDocument();
   });
 
+  describe('Δ-03 Ready — P1 hidden, P3 preserved', () => {
+    const readyCupStage: StructureStageHubSummary = {
+      ...baseStage,
+      status: 'Ready',
+    };
+
+    it('hides P1 setup controls but keeps perform-draw CTA when rules are engaged', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: readyCupStage,
+        placement: {
+          ...basePlacement,
+          canEditDraw: false,
+          showDrawCta: true,
+          showActivateDrawCta: false,
+        },
+      });
+
+      expect(
+        screen.getByRole('button', { name: /Lancer le tirage/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Paramètres/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Désactiver le tirage/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('hides activate draw when P1 authoring is off and draw is not engaged', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: readyCupStage,
+        placement: {
+          ...basePlacement,
+          canEditDraw: false,
+          showDrawCta: false,
+          showActivateDrawCta: false,
+          showResolvedPoolGauge: false,
+        },
+      });
+
+      expect(
+        screen.queryByRole('button', { name: /Activer le tirage/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('keeps view-draw workflow when draw is applied without P1 toolbar', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: readyCupStage,
+        drawApplied: true,
+        placement: {
+          ...basePlacement,
+          canEditDraw: false,
+          showDrawCta: true,
+          showActivateDrawCta: false,
+        },
+      });
+
+      expect(
+        screen.getByRole('button', { name: /Voir le tirage/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Paramètres/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe('matches cluster (materialize / dematerialize)', () => {
     it('executes global materialize from the strip primary action', async () => {
       vi.mocked(materializeMatches).mockResolvedValue({

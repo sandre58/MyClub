@@ -73,7 +73,6 @@ import {
 } from './drawUi';
 import {
   isSlotFeedAwaitingDraw,
-  structureDiagnosticPresentation,
   structureIssueBannersForTile,
   structureIssuesForTile,
 } from './structureDiagnosticPresentation';
@@ -430,17 +429,20 @@ export function StructurePhaseFiche({
   const drawRulesLocked = areDrawRulesLockedByExecution(
     drawOverviewQuery.data?.draws ?? [],
   );
-  const canEditDraw = actions.includes('ReplaceDrawRules');
+  const canReplaceDrawRules = actions.includes('ReplaceDrawRules');
+  /** P1 authoring (activate / params / deactivate) — Draft only; independent of P3 execution. */
+  const canAuthorDrawRulesP1 =
+    canReplaceDrawRules && stage.status === 'Draft';
   /** Execution CTA only when DrawRules engage the mechanism. */
   const showDrawCta = stage.hasDrawRules;
   /**
    * Secondary discovery CTA — Groups/Cup, mechanism not yet engaged.
-   * Visibility = format + !DrawRules + ReplaceDrawRules only.
+   * Visibility = format + !DrawRules + P1 authoring only.
    * No occupation / Qual / Composition / Places N predicate (Activate ≠ coverage).
    */
   const showActivateDrawCta =
     !stage.hasDrawRules &&
-    canEditDraw &&
+    canAuthorDrawRulesP1 &&
     (stage.formatKind === 'Cup' || stage.formatKind === 'Groups');
   const hasNonCancelledDraw = (drawOverviewQuery.data?.draws ?? []).some(
     (draw) => draw.status !== 'Cancelled',
@@ -899,7 +901,7 @@ export function StructurePhaseFiche({
             stage.formatKind === 'Championship' ||
             stage.formatKind === 'Swiss',
           canManualPlace,
-          canEditDraw,
+          canEditDraw: canAuthorDrawRulesP1,
           showReleaseCta,
           hasNonCancelledDraw,
           activeDraw: Boolean(activeDraw),
