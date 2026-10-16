@@ -1,6 +1,6 @@
-# C-20 — `ReplaceStandingRules` en phase `Ready` — audit lecture seule
+# C-20 — `ReplaceStandingRules` en phase `Ready` — **Closed**
 
-**Status:** Audit (2026-10-16) — **aucune implémentation** ; **recommandation décisionnelle H1** (2026-10-16) — **go implémentation distinct**.
+**Status:** **Closed** (2026-10-16) — **H1** livré : `Stage.StandingRulesLocked` en `Ready` ; `Completed` inchangé (`InvalidTransition`). Hub/SPA inchangés.
 
 **Contexte** — **Δ-01** (strip réglement Prêt) et **D4** (matrice §3 `gameRegulation`) : match / standing / confrontation = **lecture seule** en `Ready`. Le **hub** structure et la **SPA** n’exposent pas `ReplaceStandingRules` en `Ready` (aligné Δ-01). Le **domaine** et l’**API** acceptent encore `ReplaceStandingRules` en `Ready` pour une phase classifiante — écart **capacité** (même famille que **C-18** / C-19).
 
@@ -112,8 +112,8 @@ Pas d’écart Δ-01 identifié sur la fiche structure **Ready** ; C-20 ne vise 
 
 ---
 
-## Clôture audit
+## Clôture audit / livraison
 
-- **Livrable** — cette fiche ; pas de code.
-- **Recommandation** — **H1** (2026-10-16).
-- **Suite** — validation code erreur + **go implémentation** distinct ; sinon clôture documentée « H2 assumé ».
+- **Décision** — **H1** + `Stage.StandingRulesLocked` (2026-10-16).
+- **Implémentation** — `EnsureStandingRulesMutable` refuse `Ready` ; tests domaine / application / Host ; matrice § commande mise à jour.
+- **Hors scope livré** — hub, SPA, statuts autres que `Ready` (Running / Suspended / Completed comportement antérieur conservé).

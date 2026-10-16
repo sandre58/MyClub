@@ -25,7 +25,7 @@
 ## Exclusions communes (toutes tranches)
 
 - **C-18** — **Closed** (PR #54 · `59d20b0a`) — voir [c-18-rename-stage-completed-audit.md](./c-18-rename-stage-completed-audit.md).
-- **C-20** — standing rules domaine en Ready (audit ouvert).
+- **C-20** — **Closed** — standing rules verrouillées en Ready (H1).
 - **Domaine / API / Host** — pas d’assouplissement ni de nouveau garde-fou métier dans Δ-O4-*.
 - **Diagnostics policy**, **compteurs**, **drawer** attention, **sévérités** wire.
 - **Revert\*** / reprise lifecycle (arbitrages O* distincts).
@@ -205,7 +205,7 @@ Environnement : DevRunner `PlayUpDev` aligné Host · Host `http://localhost:528
 | ID | Sujet | Suite |
 |----|--------|--------|
 | **C-18** | ~~Hub expose `RenameStage` en Completed~~ | **Closed** — [c-18-rename-stage-completed-audit.md](./c-18-rename-stage-completed-audit.md) |
-| **C-20** | Standing mutable domaine en Ready | Inchangé |
+| **C-20** | Standing verrouillé domaine en Ready | **Closed** (H1) |
 
 ---
 

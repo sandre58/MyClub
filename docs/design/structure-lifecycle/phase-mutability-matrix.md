@@ -237,7 +237,7 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 | `ReplaceStageQualificationRulesAsync` | `ReplaceStageQualificationRules` | — | App guard | `ReplaceQualificationRules` | Sorties |
 | `ReplaceStageQualificationIntentsAsync` | same | — | App guard | same | Sorties |
 | `ReplaceStagePlacementAwardRulesAsync` | `ReplaceStagePlacementAwardRules` | — | App guard | `ReplacePlacementAwardRules` | Attribution |
-| `ReplaceStageStandingRulesAsync` | `ReplaceStageStandingRules` | — | `EnsureStandingRulesMutable` (Running+ classifying) | `ReplaceStandingRules` | Règlement jeu |
+| `ReplaceStageStandingRulesAsync` | `ReplaceStageStandingRules` | — | deny `Ready` (`Stage.StandingRulesLocked` / C-20) ; Running+ classifying | `ReplaceStandingRules` | Règlement jeu |
 | `ReplaceStageMatchRulesAsync` | `ReplaceStageMatchRules` | — | `EnsureStructureMutable` | `ReplaceMatchRules` | Règlement jeu |
 | `BindStageRegulationAsync` | `BindStageRegulation` | — | `EnsureStructureMutable` | `BindToCompetition` | Règlement jeu |
 | `ReplaceStageDrawRulesAsync` | `ReplaceStageDrawRules` | — | `EnsureStructureMutable` + draw locks | `ReplaceDrawRules` | Operational draw |
