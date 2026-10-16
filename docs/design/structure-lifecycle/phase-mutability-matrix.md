@@ -404,7 +404,7 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **SLICE-1-G-B-3-ENF** | G-B-3-ENF only | **Closed** (2026-10-15) | [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) |
 | **SLICE-2-G-B-1-ENF** | G-B-1-ENF only (B-Q3a) | **Authorized** (2026-10-16) — not Closed until verified commit | [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) |
 | **SLICE-3-G-OPS3-QUAL-PROG-ENF** | G-OPS3 reliquat qual/prog | **Authorized** (2026-10-16) — **G-OPS3** §12 stays **Partial** | [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) |
-| **SLICE-C-ENF-DETECT** | C-ENF-Detect (G-C-1) | **Authorized** (2026-10-16 Detect arbitration) — not Closed until dedicated commit | [slice-c-enf-detect.md](./slice-c-enf-detect.md) |
+| **SLICE-C-ENF-DETECT** | C-ENF-Detect (G-C-1) | **Closed** (2026-10-16) — `279b6235` | [slice-c-enf-detect.md](./slice-c-enf-detect.md) |
 | **SLICE-C-ENF-APPLY** | C-ENF-Apply | **Pending** | [slice-c-enf-apply.md](./slice-c-enf-apply.md) |
 | **SLICE-C-ENF-MAT-START** | C-ENF-Mat + C-ENF-Deps (Start path) | **Pending** | [slice-c-enf-mat-start.md](./slice-c-enf-mat-start.md) |
 
@@ -433,5 +433,5 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | **G-B-3** pool gate **Done**; qual/prog Applied gate shipped (**SLICE-3**, `472546bb`); **reliquat** draw-rules / autres commandes hors périmètre SLICE-3 | Medium | **Partial** | [decision](./g-ops3-arbitration-session.md); [slice-3](./slice-3-g-ops3-qual-prog-enf.md). **Not** **Done**. **C** separate. |
 | **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | **SLICE-2** domain guard + tests shipped (`c1a12ec4`); SPA partial | Medium | **Deferred** | Slice protocol not **Closed**; backlog SPA remains; [slice-2](./slice-2-g-b-1-enf.md) |
 | **G-B-3** | Refuse pool membership change with Applied draw | G-B-3 / G-OPS3; **R-Draw1+** | `StructureAppliedDrawPoolChangeGate` on affectation replace | Medium | **Done** | **SLICE-1-G-B-3-ENF**; distinct from **C**; N2 preserved |
-| **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | **Detect** authorized — predicate + read surfacing only; Apply/Mat/Start prototype **uncommitted**, not authorized | Medium | **Deferred** | [slice-c-enf-detect.md](./slice-c-enf-detect.md) **Authorized**; Apply/Mat-Start **Pending**; **G-C-INV** not **Done** until consumption gates shipped |
+| **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | **C-ENF-Detect** shipped (`279b6235`) — read predicate + overview only; consumption gates **not** shipped (stash WIP, not authorized) | Medium | **Deferred** | **SLICE-C-ENF-DETECT** **Closed**; Apply/Mat-Start **Pending**; **G-C-INV** not **Done** until consumption gates authorized and shipped |
 | **G-SWISS** | Generic production guard | Must not break Swiss progressive | Swiss APIs separate today | — | **Constraint** | §8 capability grid; no global guard |

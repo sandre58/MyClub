@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Authorized** (DM arbitration Detect scope, 2026-10-16) — **not Closed** until dedicated commit, Release tests, DTO contract, and §11C.4 review |
+| **Status** | **Closed** (2026-10-16) — delivery commit [`279b6235`](https://github.com/sandre58/MyClub/commit/279b6235) (predicate + overview/DTO/SPA + tests; no consumption gates) |
 | **Slice ID** | `SLICE-C-ENF-DETECT` |
 | **Backlog** | **C-ENF-Detect** (G-C-1) |
 | **Contract** | Derived predicate `IsObsoleteForConsumption` (W-inputs + W-pool; explicit exclusions) + read surfacing only |
@@ -100,12 +100,14 @@ G-B-3 refuse-mutation coverage stays in **GOps3 / affectation** suites — not s
 
 ## Closure criteria
 
-**Closed** only when:
+**Closed** when:
 
-1. Diff contains **Detect scope only** (predicate, overview/DTO, SPA type, tests).
-2. Release tests § above green.
-3. Read contract verified (no action/diagnostic side effects).
-4. §11C.4 slice row updated; **G-C-INV** remains **Deferred** until Apply + Mat-Start slices are authorized and shipped.
+1. Diff contains **Detect scope only** (predicate, overview/DTO, SPA type, tests). — **Done** (`279b6235`).
+2. Release tests § above green. — **Done** (11/11 targeted Release).
+3. Read contract verified (no action/diagnostic side effects). — **Done**.
+4. §11C.4 slice row updated; **G-C-INV** remains **Deferred** until Apply + Mat-Start slices are authorized and shipped. — **Done** (governance sync with closure).
+
+**Apply / Mat-Start** remain **Pending**; **G-C-INV** is **not** **Done**.
 
 ---
 

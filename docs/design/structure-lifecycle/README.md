@@ -19,7 +19,7 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md) | **Arbitrage DM** — §11C.4 (pas de ratification bloc C-ENF) |
 | [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) | **SLICE-2** — G-B-1-ENF (**Authorized**) |
 | [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) | **SLICE-3** — G-OPS3 qual/prog (**Authorized**, G-OPS3 **Partial**) |
-| [slice-c-enf-detect.md](./slice-c-enf-detect.md) · [apply](./slice-c-enf-apply.md) · [mat-start](./slice-c-enf-mat-start.md) | **C-ENF** — **Pending** |
+| [slice-c-enf-detect.md](./slice-c-enf-detect.md) · [apply](./slice-c-enf-apply.md) · [mat-start](./slice-c-enf-mat-start.md) | **C-ENF** — Detect **Closed** (`279b6235`) · Apply/Mat-Start **Pending** |
 | **Notion — Matrice UI Structure (présentation par statut)** | [Gel produit 2026-10-15](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — **Δ-O3-1/2** · **Δ-drawer-1** · **Δ-03** · **Δ-O4-2** · **Δ-O4-1** · **C-18** · **C-20** closed. Post-gel capacity backlog: CTRL-O3-MAT, D1 awards, ENF slices sur go. |
 | [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) | **Signed** — UI severity/tone/copy for structure diagnostics (presentation only) |
 | [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |
