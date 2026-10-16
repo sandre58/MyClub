@@ -851,7 +851,8 @@ export function StructurePhaseFiche({
   const showCompositionPopulationGauge =
     placesN != null &&
     placesN > 0 &&
-    (showQualifiersSection || showTeamsSection || showCompositionContentEmpty);
+    (showQualifiersSection || showTeamsSection || showCompositionContentEmpty) &&
+    !(isCompletedStage && showPlacementBlock);
   const sharedCompositionPopulationGauge =
     showCompositionPopulationGauge &&
     showQualifiersSection &&
@@ -1065,7 +1066,7 @@ export function StructurePhaseFiche({
         editingName={editingName}
         nameDraft={nameDraft}
         renameMutation={renameMutation}
-        canRename={canRename}
+        canRename={canRename && !isCompletedStage}
         canRebuild={canRebuild}
         canRemove={canRemove}
         compactIcon={compactIcon}

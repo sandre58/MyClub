@@ -119,6 +119,22 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     );
   });
 
+  it('uses info final readout for partial occupancy in Completed (Δ-O4-1)', () => {
+    const result = resolvePlaceOccupancyMeterCopy({
+      t,
+      occupancyReady: true,
+      unknownCapacity: false,
+      capacity: 8,
+      occupiedPlacesCount: 3,
+      slotFeedMissingActive: false,
+      stageStatus: 'Completed',
+    });
+    expect(result.kind).toBe('info');
+    expect(result.text).toBe(
+      'fiche.operational.placement.stateMessage.finalPartial',
+    );
+  });
+
   it('uses info and pause copy for empty occupancy in Suspended', () => {
     const result = resolvePlaceOccupancyMeterCopy({
       t,
@@ -146,6 +162,17 @@ describe('resolveCompositionPopulationMeterCopy', () => {
     });
     expect(result.kind).toBe('info');
     expect(result.text).toBe('composition.gauge.populationShortfallPaused');
+  });
+
+  it('uses final-state info for population shortfall in Completed (Δ-O4-1)', () => {
+    const result = resolveCompositionPopulationMeterCopy({
+      t,
+      current: 4,
+      capacity: 8,
+      presentationContext: { stageStatus: 'Completed' },
+    });
+    expect(result.kind).toBe('info');
+    expect(result.text).toBe('composition.gauge.populationFinalShortfall');
   });
 
   it('keeps diagnostic tone for population shortfall in Ready', () => {

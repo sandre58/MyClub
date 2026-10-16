@@ -2,6 +2,7 @@ import type { StageStatus } from '../../types';
 import { structureDiagnosticPresentation } from './structureDiagnosticPresentationPolicy';
 import type { StructureDiagnosticPresentationContext } from './structureDiagnosticPresentationPolicy';
 import {
+  isCompletedStageStatus,
   isDraftLikeStageStatus,
   isSuspendedStageStatus,
   presentationToneToMeterKind,
@@ -69,6 +70,22 @@ export function resolvePlaceOccupancyMeterCopy(input: {
     };
   }
 
+  if (isCompletedStageStatus(stageStatus)) {
+    if (occupiedPlacesCount === 0) {
+      return {
+        text: t('fiche.operational.placement.stateMessage.finalEmpty'),
+        kind: 'info',
+      };
+    }
+    return {
+      text: t('fiche.operational.placement.stateMessage.finalPartial', {
+        occupied: occupiedPlacesCount,
+        capacity,
+      }),
+      kind: 'info',
+    };
+  }
+
   const incompleteKind = (): StripOperationalMessageKind => {
     if (isDraftLikeStageStatus(stageStatus)) {
       return 'attention';
@@ -125,6 +142,14 @@ export function resolveCompositionPopulationMeterCopy(input: {
         kind: 'info',
       };
     }
+    if (isCompletedStageStatus(presentationContext?.stageStatus)) {
+      return {
+        text: t('composition.gauge.populationFinalShortfall', {
+          count: Math.abs(gap),
+        }),
+        kind: 'info',
+      };
+    }
     const tone = structureDiagnosticPresentation(
       'PopulationShortfall',
       presentationContext ?? {},
@@ -132,6 +157,12 @@ export function resolveCompositionPopulationMeterCopy(input: {
     return {
       text: t('entries.meter.shortfall', { count: Math.abs(gap) }),
       kind: presentationToneToMeterKind(tone),
+    };
+  }
+  if (isCompletedStageStatus(presentationContext?.stageStatus)) {
+    return {
+      text: t('composition.gauge.populationFinalSurplus', { count: gap }),
+      kind: 'info',
     };
   }
   const overTone = structureDiagnosticPresentation(

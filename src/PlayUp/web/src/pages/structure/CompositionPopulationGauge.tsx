@@ -8,6 +8,7 @@ import {
   resolvePlacementPoolTone,
 } from './structureOperationalCopy';
 import {
+  isCompletedStageStatus,
   isDraftLikeStageStatus,
   isSuspendedStageStatus,
 } from './structureOperationalMeterPresentation';
@@ -37,7 +38,8 @@ export function CompositionPopulationGauge({
   const softenIncompleteChrome =
     meter.kind !== 'danger' &&
     (isDraftLikeStageStatus(stageStatus) ||
-      isSuspendedStageStatus(stageStatus));
+      isSuspendedStageStatus(stageStatus) ||
+      isCompletedStageStatus(stageStatus));
   const ratioToneForPool = softenIncompleteChrome
     ? meter.kind === 'attention'
       ? 'attention'

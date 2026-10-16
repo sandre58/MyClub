@@ -1,6 +1,6 @@
 # O-04 — Fiche Terminée (`Completed`) — cadrage Δ-O4-1 / Δ-O4-2
 
-**Status:** **Δ-O4-2 Closed** (2026-10-16) — commit `ec45ed60` on `feature/new_version_alt`. **Δ-O4-1** : Open (go distinct). Cadrage O-04 global inchangé.
+**Status:** **O-04 livré en SPA** (2026-10-16) — **Δ-O4-2** `ec45ed60` · **Δ-O4-1** *(SHA au commit de clôture)* sur `feature/new_version_alt`. C-18 / domaine inchangés.
 
 **Décision produit (gelée)** — Notion [Matrice UI Structure — § O-04 / Δ-O4](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) (2026-10-15) : phase **Terminée** = lecture seule **allégée** ; pas d’édition construction / production / sorties / awards / réglement ; **nom non modifiable en UI** ; état final tirage / places **consultable** sans signaux d’action opérationnelle.
 
@@ -105,58 +105,71 @@ Seed recommandé (un seul `--reset`) :
 | 4 | Ready / Running | `groups:running` ; Ready complémentaire `groups-draw-pending` → `POST …/stages/{id}/prepare` | **OK** — strip draw exploitation inchangé (**Lancer** en Ready sans P1). Limite : `groups:prepared` seul ≠ Ready pur (souvent Running à 0 match) |
 | 5 | Brouillon Cup | `cup-composition-complete` Draft | **OK** — Lancer / Paramètres / Désactiver / checklist / placement manuel présents |
 
-**Surfaces voisines** — lifecycle Completed sans bandeau Prepare/Start ; matchs sans materialize ; diagnostics hub masqués ; **Renommer la phase** encore visible (hors Δ-O4-2).
+**Surfaces voisines** — lifecycle Completed sans bandeau Prepare/Start ; matchs sans materialize ; diagnostics hub masqués ; crayon rename titre → **Δ-O4-1**.
 
 **Verdict recette** — **4/5 scénarios manuels OK** ; scénario **2** couvert par tests automatisés uniquement (réserve documentée, ne bloque pas la clôture).
 
 ### Clôture tranche Δ-O4-2
 
-- Commit dédié code + cette fiche ; Notion registre **Δ-O4-2** (Closed + SHA).
-- **Δ-O4-1** reste **Open** jusqu’au go suivant.
+- Commit dédié code + cette fiche ; Notion registre **Δ-O4-2** (Closed + SHA `ec45ed60`).
 
 ---
 
-# Tranche 2 — Δ-O4-1 (densité mode audit)
+# Tranche 2 — Δ-O4-1 (densité mode audit) — **Closed**
 
-**Objectif** — Faire lire la fiche **Completed** comme un **bilan**, pas comme une phase en exploitation : réduire densité sans **supprimer** les preuves d’état final.
+**Objectif (resserré)** — Bilan **Completed** : masquer le crayon rename en SPA, ton **final** sur les jauges d’occupation, **une** réduction de densité justifiée (pas de refonte hero / liste équipes / eyebrow qualifiés).
 
-**Prérequis** — Δ-O4-2 **clôturée** (plus de faux CTAs strip).
+**Prérequis** — Δ-O4-2 **clôturée**.
 
-### Principes de réduction (à respecter à l’implémentation)
+### Livraison SPA (2026-10-16)
 
-| Catégorie | Traitement cible |
-|-----------|------------------|
-| **Masquer** | Empty states « constituer », toolbars compose, CTAs secondaires suggestifs, checklist ops déjà couverts par Δ-O4-2 |
-| **Condenser** | Hero stats, rails qualifiés / pool (listes → synthèse ou sections repliées selon matrice « réduite ») |
-| **Conserver visible** | Occupation finale schéma, résumé tirage/places, sorties/awards en lecture, réglement digest, lien matchs |
-
-« Réduire la densité » **≠** retirer l’information utile à l’audit (places occupées, tirage final, résultat matchs).
+| Sous-chantier | Implémentation |
+|---------------|----------------|
+| Rename UI | `StructurePhaseFiche.tsx` — `canRename={canRename && !isCompletedStage}` vers le header ; hub `RenameStage` inchangé (**C-18**) |
+| Copy jauges Completed | `structureOperationalStripMessages.ts` + i18n `structure.json` (places `finalEmpty` / `finalPartial` ; composition population final shortfall/surplus) ; ton jauge adouci (`CompositionPopulationGauge`, pool Places strip via `isCompletedStageStatus`) |
+| Densité (1 élément) | Masquer la **jauge population composition** en `Completed` quand le bloc placement est affiché (`showPlacementBlock`) — redondante avec la strip Places sur la paire running/finished |
+| Hors scope | Pas de CSS dédié ; pas de masquage liste équipes / eyebrow qualifiés ; pas de changement `StructurePhaseCompositionBand` layout |
 
 ### Critères d’acceptation
 
-- [ ] **`Completed`** : composition **visuellement moins dense** qu’une phase **Running** comparable (même compétition, progress `running` vs `finished`) — recette comparative obligatoire.
-- [ ] Sections matrice **réduites** : composition, placement opérationnel (post Δ-O4-2), sorties, awards, schéma, réglement — **lecture** ; pas de crayons / compose.
-- [ ] **Titre phase** : pas de crayon rename (**O-04 UI** ; hub C-18 inchangé).
-- [ ] **Running / Ready / Draft** : pas de régression layout (tests spot ou recette).
+- [x] **`Completed`** : pas de crayon rename titre ; autres statuts inchangés.
+- [x] Jauges occupation **consultables** en Completed, formulation **finale** (distincte de Suspended `*Paused`).
+- [x] Densité réduite (jauge population retirée quand strip Places présente) ; places, occupants, schéma, liens consultation conservés.
+- [x] Aucun CTA opérationnel Δ-O4-2 réintroduit (strip inchangée hors copy/ton pool).
+- [x] Tests ciblés OK ; recette comparative documentée ci-dessous.
 
-### Fichiers concernés (indicatif)
+### Vérification automatisée (2026-10-16)
 
-| Fichier | Nature |
-|---------|--------|
-| `StructurePhaseFiche.tsx` | Flags `Completed` pour hero / sections / `showCompositionBandEmpty` |
-| `StructurePhaseFicheHeader.tsx` | `canRename` → false en UI si `Completed` (sans toucher hub) |
-| `StructurePhaseCompositionBand.tsx` | Layout réduit / sections conditionnelles |
-| CSS modules structure phase | Classes « audit » / density si nécessaire |
+| Suite | Résultat |
+|-------|----------|
+| `structureOperationalStripMessages.test.ts` (Completed place + composition copy) | inclus |
+| `StructurePhaseOperationalStrip.test.tsx` (régressions Δ-O4-2 / Δ-03) | **27/27** |
+| `StructurePhaseFicheHeader.test.tsx` (pas de bouton rename si `canRename={false}`) | **1/1** |
+| **Total filtré Δ-O4-1** | **41/41** |
 
-### Tests / recette Δ-O4-1
+### Recette comparative Δ-O4-1
 
-- Tests unitaires **légers** sur gates de sections (éviter tests pixel-perfect).
-- Recette **paire** : même seed `championship:running` vs `championship:finished` (ou groups/cup) — checklist densité + contenu final toujours présent.
+**Seed** — Comparer visuellement deux passes DevRunner (collision PK si `championship:running` + `championship:finished` dans un seul `--reset`) :
+
+1. `--reset --scenarios championship:running` → fiche phase Running.
+2. `--reset --scenarios championship:finished` → fiche phase Completed (`d81b6474-…`).
+
+Checklist **Running** vs **Completed** (même scénario championship, progress différent) :
+
+| Point | Running | Completed |
+|-------|---------|-----------|
+| Crayon rename titre | visible si hub `RenameStage` | **absent** |
+| Strip Places — ton jauge | exploitation | **final** (pas « reste à placer ») |
+| Jauge population sous composition (si placement block) | visible | **masquée** |
+| Liste équipes / schéma / matchs | inchangé | inchangé |
+| CTAs strip placement/tirage | exploitation | lecture seule (Δ-O4-2) |
+
+**Recette session 2026-10-16** — Reset paire `championship:running,championship:finished` **échoue** (duplicate `PK_competitions`) ; recette manuelle = **deux resets séquentiels** (checklist ci-dessus). Complément optionnel : `cup:finished` pour jauges composition en KO terminé.
 
 ### Clôture tranche Δ-O4-1
 
-- Commit dédié + Notion **Δ-O4-1** Closed.
-- Mettre à jour `README.md` lifecycle + backlog post-gel (O-04 impl. livrée).
+- Commit dédié code + cette fiche ; Notion registre **Δ-O4-1** (Closed + SHA).
+- `README.md` lifecycle mis à jour (O-04 SPA livré).
 
 ---
 

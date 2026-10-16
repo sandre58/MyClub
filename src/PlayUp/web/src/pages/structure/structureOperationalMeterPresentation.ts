@@ -27,3 +27,10 @@ export function isSuspendedStageStatus(
 ): boolean {
   return stageStatus === 'Suspended';
 }
+
+/** Phase finished — meters are final-state readout, not construction checklist. */
+export function isCompletedStageStatus(
+  stageStatus?: StageStatus | null,
+): boolean {
+  return stageStatus === 'Completed';
+}

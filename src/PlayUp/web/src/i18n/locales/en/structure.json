@@ -498,7 +498,9 @@
           "partial_other": "{{count}} places left to fill on the bracket.",
           "emptyPaused": "No bracket places are occupied (phase paused).",
           "partialPaused_one": "{{count}} bracket place unoccupied (phase paused).",
-          "partialPaused_other": "{{count}} bracket places unoccupied (phase paused)."
+          "partialPaused_other": "{{count}} bracket places unoccupied (phase paused).",
+          "finalEmpty": "No bracket places are occupied (phase completed).",
+          "finalPartial": "{{occupied}} of {{capacity}} bracket places occupied."
         }
       },
       "draw": {
@@ -733,6 +735,10 @@
       "populationComplete": "Entry count matches phase places.",
       "populationShortfallPaused_one": "{{count}} entry below phase places (phase paused).",
       "populationShortfallPaused_other": "{{count}} entries below phase places (phase paused).",
+      "populationFinalShortfall_one": "{{count}} entry below phase places (final state).",
+      "populationFinalShortfall_other": "{{count}} entries below phase places (final state).",
+      "populationFinalSurplus_one": "{{count}} entry above phase places (final state).",
+      "populationFinalSurplus_other": "{{count}} entries above phase places (final state).",
       "populationAria": "{{current}} entries of {{capacity}} phase places"
     },
     "qualifiers": {

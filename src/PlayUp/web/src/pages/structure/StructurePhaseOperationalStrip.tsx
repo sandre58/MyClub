@@ -47,6 +47,7 @@ import {
   resolveResolvedPoolTone,
 } from './structureOperationalCopy';
 import {
+  isCompletedStageStatus,
   isDraftLikeStageStatus,
   isSuspendedStageStatus,
 } from './structureOperationalMeterPresentation';
@@ -505,7 +506,8 @@ function PlacesColumn(
   const softenPlacePoolTone =
     placeMeter.kind !== 'danger' &&
     (isDraftLikeStageStatus(props.stageStatus) ||
-      isSuspendedStageStatus(props.stageStatus));
+      isSuspendedStageStatus(props.stageStatus) ||
+      isCompletedStageStatus(props.stageStatus));
   const occupancyToneForPool = softenPlacePoolTone
     ? operationalStripPoolTone(
         placeMeter.kind,

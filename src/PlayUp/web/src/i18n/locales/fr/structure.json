@@ -498,7 +498,9 @@
           "partial_other": "Il reste {{count}} places à remplir sur le tableau.",
           "emptyPaused": "Aucune place occupée sur le tableau (phase en pause).",
           "partialPaused_one": "{{count}} place non occupée sur le tableau (phase en pause).",
-          "partialPaused_other": "{{count}} places non occupées sur le tableau (phase en pause)."
+          "partialPaused_other": "{{count}} places non occupées sur le tableau (phase en pause).",
+          "finalEmpty": "Aucune place occupée sur le tableau (phase terminée).",
+          "finalPartial": "{{occupied}} place(s) occupée(s) sur {{capacity}} sur le tableau."
         }
       },
       "draw": {
@@ -733,6 +735,10 @@
       "populationComplete": "Le nombre d'entrées correspond aux places de la phase.",
       "populationShortfallPaused_one": "{{count}} entrée en dessous des places de la phase (phase en pause).",
       "populationShortfallPaused_other": "{{count}} entrées en dessous des places de la phase (phase en pause).",
+      "populationFinalShortfall_one": "{{count}} entrée en dessous des places de la phase (état final).",
+      "populationFinalShortfall_other": "{{count}} entrées en dessous des places de la phase (état final).",
+      "populationFinalSurplus_one": "{{count}} entrée au-delà des places de la phase (état final).",
+      "populationFinalSurplus_other": "{{count}} entrées au-delà des places de la phase (état final).",
       "populationAria": "{{current}} entrées sur {{capacity}} places de la phase"
     },
     "qualifiers": {
