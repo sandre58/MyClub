@@ -87,10 +87,12 @@ function stage(
 
 describe('structureReadinessActions', () => {
   it('limits action items to three by severity', () => {
+    // D5: SlotFeedMissing is danger in Ready, attention in Draft; Cup-only blocking for awards.
     const stages = [
       stage({
         stageId: 's1',
         name: 'A',
+        status: 'Ready',
         structureIssues: ['SlotFeedMissing'],
       }),
       stage({

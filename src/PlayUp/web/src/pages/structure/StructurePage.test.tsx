@@ -1351,7 +1351,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
     expect(
       await screen.findByRole('button', {
-        name: /préparer la phase/i,
+        name: /marquer comme prête/i,
       }),
     ).toBeDisabled();
   });
@@ -1892,7 +1892,7 @@ describe('StructurePage Structure hub', () => {
 
       expect(
         await screen.findByRole('button', {
-          name: /préparer la phase/i,
+          name: /marquer comme prête/i,
         }),
       ).toBeDisabled();
 
@@ -1983,7 +1983,7 @@ describe('StructurePage Structure hub', () => {
       ) as HTMLElement;
       expect(
         within(ficheHeader).getByRole('button', {
-          name: /préparer la phase/i,
+          name: /marquer comme prête/i,
         }),
       ).toBeDisabled();
     });

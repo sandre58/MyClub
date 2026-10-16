@@ -291,8 +291,10 @@ describe('resolveLifecycleMutationMessage', () => {
 
 describe('problems i18n parity', () => {
   it('has matching FR/EN graph.issuesShort for structure diagnostics', () => {
+    // Wire codes only — pause presentation uses graph.issues.{code}Paused (long), not issuesShort.
     const longKeys = Object.keys(enStructure.graph.issues).filter(
-      (code) => code !== 'SlotFeedMissingAwaitingDraw',
+      (code) =>
+        code !== 'SlotFeedMissingAwaitingDraw' && !code.endsWith('Paused'),
     );
     for (const code of longKeys) {
       expect(enStructure.graph.issuesShort).toHaveProperty(code);

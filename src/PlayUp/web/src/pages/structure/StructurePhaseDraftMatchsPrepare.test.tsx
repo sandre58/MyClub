@@ -69,7 +69,7 @@ describe('StructurePhaseDraftMatchsPrepare', () => {
       screen.getByText(/complétez la structure/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /préparer la phase/i }),
+      screen.getByRole('button', { name: /marquer comme prête/i }),
     ).toBeDisabled();
   });
 
@@ -85,7 +85,7 @@ describe('StructurePhaseDraftMatchsPrepare', () => {
     });
 
     await user.click(
-      screen.getByRole('button', { name: /préparer la phase/i }),
+      screen.getByRole('button', { name: /marquer comme prête/i }),
     );
     expect(prepareStage).toHaveBeenCalledWith(baseStage.stageId);
   });
