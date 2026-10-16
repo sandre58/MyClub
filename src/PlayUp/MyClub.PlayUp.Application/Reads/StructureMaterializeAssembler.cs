@@ -194,6 +194,11 @@ internal static class StructureMaterializeAssembler
         IReadOnlyList<StructureMaterializeConfrontationDto>? confrontations = null,
         bool phaseRosterComplete = true)
     {
+        if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
+        {
+            commandEnabled = false;
+        }
+
         var disabledReason = ResolveDisabledReason(
             competition,
             stage,
@@ -226,6 +231,11 @@ internal static class StructureMaterializeAssembler
         bool groupsReady,
         bool phaseRosterComplete)
     {
+        if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
+        {
+            return StructureMaterializeDisabledReasons.DrawObsoleteForConsumption;
+        }
+
         if (commandEnabled)
         {
             return null;

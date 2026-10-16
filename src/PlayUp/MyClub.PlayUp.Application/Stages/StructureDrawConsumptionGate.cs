@@ -30,13 +30,30 @@ internal static class StructureDrawConsumptionGate
             ApplicationErrorCodes.DrawObsoleteForConsumption);
     }
 
-    internal static void EnsureNoObsoleteDrawsOnStage(Stage stage)
+    internal static bool StageHasObsoleteDrawForConsumption(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
 
         foreach (var draw in stage.Draws.Where(draw => draw.Status != DrawStatus.Cancelled))
         {
-            EnsureDrawConsumable(draw, stage);
+            if (DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage))
+            {
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    internal static void EnsureNoObsoleteDrawsOnStage(Stage stage)
+    {
+        if (!StageHasObsoleteDrawForConsumption(stage))
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"Stage '{stage.Id}' has a draw that is obsolete for consumption.",
+            ApplicationErrorCodes.DrawObsoleteForConsumption);
     }
 }

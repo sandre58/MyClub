@@ -446,7 +446,8 @@
         "NoDeterminedConfrontations": "Aucune confrontation n’est encore déterminée. Les équipes de la phase ne sont peut‑être pas toutes connues.",
         "PhaseRosterIncomplete": "La composition de la phase est incomplète : toutes les places ne sont pas encore résolues.",
         "GroupsNotReady": "Les poules ne sont pas prêtes pour la production de matchs.",
-        "NoEligibleConfrontations": "Aucune confrontation ne peut être matérialisée pour le moment."
+        "NoEligibleConfrontations": "Aucune confrontation ne peut être matérialisée pour le moment.",
+        "DrawObsoleteForConsumption": "Ce tirage ne correspond plus à la phase — annulez-le ou rétablissez la cohérence avant d’appliquer ou de produire des matchs."
       },
       "viewPhaseMatches": "Voir les matchs",
       "submitting": "Création…",

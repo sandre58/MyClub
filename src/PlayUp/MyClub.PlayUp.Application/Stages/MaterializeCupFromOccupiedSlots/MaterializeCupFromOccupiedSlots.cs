@@ -250,5 +250,6 @@ public static class MaterializeCupFromOccupiedSlots
         StageMaterializeGuard.EnsureStageReadyForMaterialize(stage);
         StructureMaterializeExecutionGate.EnsureCupStage(stage);
         StructureMaterializeAttributionGate.EnsureCupStage(stage, pairKeys);
+        StructureDrawConsumptionGate.EnsureNoObsoleteDrawsOnStage(stage);
     }
 }

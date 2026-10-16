@@ -22,6 +22,8 @@ internal static class StageStartReadinessGuard
     /// <summary>Read-side disabled reason when eligible confrontations remain unmaterialized.</summary>
     internal const string DisabledUnmaterializedConfrontations = "UnmaterializedConfrontations";
 
+    internal const string DisabledDrawObsoleteForConsumption = "DrawObsoleteForConsumption";
+
     private const string DisabledInitialRoundNotPlayable = "InitialRoundNotPlayable";
 
     internal static void EnsureReadyToStart(
@@ -40,6 +42,8 @@ internal static class StageStartReadinessGuard
                 "Start is blocked because eligible confrontations are not fully materialized.",
                 ApplicationErrorCodes.StartBlockedUnmaterialized);
         }
+
+        StructureDrawConsumptionGate.EnsureNoObsoleteDrawsOnStage(stage);
     }
 
     internal static string? TryGetDisabledReasonCode(
@@ -55,6 +59,11 @@ internal static class StageStartReadinessGuard
         if (HasMaterializationGapBeforeStart(competition, stage, matchSummaries, competitionStages))
         {
             return DisabledUnmaterializedConfrontations;
+        }
+
+        if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
+        {
+            return DisabledDrawObsoleteForConsumption;
         }
 
         var format = StructureSkeleton.InferFormat(stage);

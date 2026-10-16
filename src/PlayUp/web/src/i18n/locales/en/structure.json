@@ -446,7 +446,8 @@
         "NoDeterminedConfrontations": "No confrontations are determined yet. Phase teams may still be unresolved.",
         "PhaseRosterIncomplete": "Phase composition is incomplete: not every place is resolved yet.",
         "GroupsNotReady": "Groups are not ready for match production.",
-        "NoEligibleConfrontations": "No confrontations can be materialized right now."
+        "NoEligibleConfrontations": "No confrontations can be materialized right now.",
+        "DrawObsoleteForConsumption": "This draw no longer matches the phase — cancel it or restore coherence before applying or producing matches."
       },
       "viewPhaseMatches": "View matches",
       "submitting": "Creating…",

@@ -16,4 +16,5 @@ public static class StructureMaterializeDisabledReasons
     public const string PhaseRosterIncomplete = "PhaseRosterIncomplete";
     public const string GroupsNotReady = "GroupsNotReady";
     public const string NoEligibleConfrontations = "NoEligibleConfrontations";
+    public const string DrawObsoleteForConsumption = "DrawObsoleteForConsumption";
 }

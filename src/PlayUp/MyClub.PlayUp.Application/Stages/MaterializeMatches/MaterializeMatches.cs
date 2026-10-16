@@ -55,6 +55,7 @@ public static class MaterializeMatches
         }
 
         EnsureMutable(competition, stage);
+        StructureDrawConsumptionGate.EnsureNoObsoleteDrawsOnStage(stage);
 
         var format = StructureSkeleton.InferFormat(stage)
                      ?? throw new ApplicationFailureException(

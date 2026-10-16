@@ -57,6 +57,9 @@ public static class StructureStageLifecycleAssembler
     /// <summary>Start disabled — eligible confrontations not fully materialized.</summary>
     public const string DisabledUnmaterializedConfrontations = "UnmaterializedConfrontations";
 
+    /// <summary>Start disabled — obsolete draw blocks consumption.</summary>
+    public const string DisabledDrawObsoleteForConsumption = "DrawObsoleteForConsumption";
+
     /// <summary>Revert disabled — match sportively engaged.</summary>
     public const string DisabledMatchLifecycleStarted = "MatchLifecycleStarted";
 
@@ -345,7 +348,7 @@ public static class StructureStageLifecycleAssembler
                 return ("tirage", null, false, true);
             case ChecklistPlaces or DisabledInitialRoundNotPlayable:
                 return (null, "operational-placement", true, false);
-            case ChecklistMatches or DisabledUnmaterializedConfrontations:
+            case ChecklistMatches or DisabledUnmaterializedConfrontations or DisabledDrawObsoleteForConsumption:
                 return ("matchs", null, false, false);
             case ChecklistExits or StructureViewAssembler.IssueConfrontationUndecidable:
                 return ("qualification", null, false, false);
