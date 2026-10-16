@@ -18,7 +18,7 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [wave-b-programme-after-gel-a.md](./wave-b-programme-after-gel-a.md) | **Programme B** — ordre slices post-gel A |
 | [programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md) | **Arbitrage DM** — §11C.4 (pas de ratification bloc C-ENF) |
 | [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) | **SLICE-2** — G-B-1-ENF **Closed** (`c1a12ec4`) · §12 **G-B-1 Deferred** (SPA reserve) |
-| [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) | **SLICE-3** — G-OPS3 qual/prog (**Authorized**, G-OPS3 **Partial**) |
+| [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) | **SLICE-3** — G-OPS3 qual/prog **Closed** (`472546bb`) · §12 **G-OPS3 Partial** (proof reserves) |
 | [slice-c-enf-detect.md](./slice-c-enf-detect.md) · [apply](./slice-c-enf-apply.md) · [mat-start](./slice-c-enf-mat-start.md) | **C-ENF** — three slices **Closed** · **G-C-INV** §12 **Done** |
 | **Notion — Matrice UI Structure (présentation par statut)** | [Gel produit 2026-10-15](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — **Δ-O3-1/2** · **Δ-drawer-1** · **Δ-03** · **Δ-O4-2** · **Δ-O4-1** · **C-18** · **C-20** closed. Post-gel capacity backlog: CTRL-O3-MAT, D1 awards, ENF slices sur go. |
 | [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) | **Signed** — UI severity/tone/copy for structure diagnostics (presentation only) |
@@ -57,4 +57,4 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 **G-MAT4 (2026-10-15):** gate deferred — [decision](./g-mat4-arbitration-session.md), **R-Mat-M4b** + analyzer + overlap tests.  
 **G-OPS3 (2026-10-15):** gate deferred — [decision](./g-ops3-arbitration-session.md).  
 **§11B (2026-10-15):** **signed** — [signoff pack](./section-11b-signoff-preparation.md) · [Notion copy](./notion-decision-11b-draft.md) · matrix §11B ticked. Post-sign work: [implementation-plan-post-11b.md](./implementation-plan-post-11b.md).  
-**§11C (2026-10-15):** [addendum](./section-11c-addendum-clarification-arbitration.md) + [matrix §11](./phase-mutability-matrix.md#11-sign-off-scope-three-layers) — full Git sign. **Programme B (2026-10-16):** **C-ENF** **Closed** · **G-C-INV** **Done** · **SLICE-2** **Closed** (SPA reserve) · **SLICE-3** **Authorized** — [wave-b](./wave-b-programme-after-gel-a.md).
+**§11C (2026-10-15):** [addendum](./section-11c-addendum-clarification-arbitration.md) + [matrix §11](./phase-mutability-matrix.md#11-sign-off-scope-three-layers) — full Git sign. **Programme B (2026-10-16):** slices arbitrées **Closed** (SLICE-1..3 + C-ENF) · **G-C-INV** **Done** · §12 **G-B-1 Deferred** · **G-OPS3 Partial** — [wave-b](./wave-b-programme-after-gel-a.md).

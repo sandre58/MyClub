@@ -55,4 +55,4 @@ SLICE-2 couvre l’enforcement domaine et Application de la règle B-Q3a : un st
 
 ## Sequencing
 
-**SLICE-2** **Closed**. **SLICE-3** unchanged (**Authorized**, separate closure). **C-ENF** trilogy **Closed** — do not reopen without anomaly.
+**SLICE-2** **Closed**. **SLICE-3** **Closed** (G-OPS3 partial reserve). **C-ENF** trilogy **Closed** — do not reopen without anomaly.

@@ -11,7 +11,7 @@
 | Sujet | Décision | §11C.4 / fiche |
 |-------|----------|----------------|
 | **G-B-1-ENF** | Ratifier **uniquement** B-Q3a (≤1 tirage non annulé ; refus `CreateDraw` si autre tirage non `Cancelled`). | **SLICE-2-G-B-1-ENF** — **Closed** (`c1a12ec4`) ; réserve SPA · §12 **G-B-1 Deferred** — [fiche](./slice-2-g-b-1-enf.md) |
-| **G-OPS3 qual/prog** | Ratifier le refus de changement des règles **qualification / progression** lorsqu’un tirage est **Applied** (même entrées logiques que G-B-3 : mutation refusée, pas obsolescence C). | **SLICE-3-G-OPS3-QUAL-PROG-ENF** — **Authorized** ; **G-OPS3** reste **Partial** §12. |
+| **G-OPS3 qual/prog** | Ratifier le refus de changement des règles **qualification / progression** lorsqu’un tirage est **Applied** (même entrées logiques que G-B-3 : mutation refusée, pas obsolescence C). | **SLICE-3-G-OPS3-QUAL-PROG-ENF** — **Closed** (`472546bb`) ; réserves preuve · §12 **G-OPS3 Partial** — [fiche](./slice-3-g-ops3-qual-prog-enf.md) |
 | **C-ENF** | Bundle interdit. Detect + Apply + Mat-Start **Closed** (`279b6235`, `85360d3`, `ee0fc2e6`). | **G-C-INV** §12 **Done** (consumption gates) ; limite Host Start HTTP documentée en fiche Mat-Start. |
 
 ---
