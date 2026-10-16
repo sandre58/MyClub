@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { StageBracketPair, StageDraw, StageSlot } from '../../types';
 import {
   areDrawRulesLockedByExecution,
+  canAuthorStageDrawRules,
   countAlignedDrawPlacements,
   pickReleasableCancelledDraw,
   drawExecutionNumber,
@@ -731,6 +732,15 @@ describe('resolveTopologyDrawExecutionBadge', () => {
         slots,
       ),
     ).toBe('Applied');
+  });
+});
+
+describe('canAuthorStageDrawRules (G-OPS3 lot B)', () => {
+  it('allows authoring only in Draft when ReplaceDrawRules is available', () => {
+    expect(canAuthorStageDrawRules('Draft', true)).toBe(true);
+    expect(canAuthorStageDrawRules('Ready', true)).toBe(false);
+    expect(canAuthorStageDrawRules('Running', true)).toBe(false);
+    expect(canAuthorStageDrawRules('Draft', false)).toBe(false);
   });
 });
 

@@ -63,6 +63,7 @@ import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
 import {
   areDrawRulesLockedByExecution,
+  canAuthorStageDrawRules,
   drawResolutionPlacementCount,
   pickReleasableCancelledDraw,
   stageHasPublishedAppliedDraw,
@@ -261,8 +262,14 @@ export function StructurePhaseFiche({
       construction: null,
     };
     if (initialEdit === 'tirage') {
-      setRulesEditStage(stage);
-      setEdit(stage.hasDrawRules ? 'tirage-params' : 'tirage-activate');
+      const canAuthor = canAuthorStageDrawRules(
+        stage.status,
+        (stage.actions ?? []).includes('ReplaceDrawRules'),
+      );
+      if (canAuthor) {
+        setRulesEditStage(stage);
+        setEdit(stage.hasDrawRules ? 'tirage-params' : 'tirage-activate');
+      }
       onInitialEditConsumed?.();
       return;
     }
@@ -431,8 +438,10 @@ export function StructurePhaseFiche({
   );
   const canReplaceDrawRules = actions.includes('ReplaceDrawRules');
   /** P1 authoring (activate / params / deactivate) — Draft only; independent of P3 execution. */
-  const canAuthorDrawRulesP1 =
-    canReplaceDrawRules && stage.status === 'Draft';
+  const canAuthorDrawRulesP1 = canAuthorStageDrawRules(
+    stage.status,
+    canReplaceDrawRules,
+  );
   /** Execution CTA only when DrawRules engage the mechanism. */
   const showDrawCta = stage.hasDrawRules;
   /**
@@ -925,8 +934,16 @@ export function StructurePhaseFiche({
           releasePending: releaseMutation.isPending,
           deactivateDrawPending: deactivateDrawMutation.isPending,
           onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
-          onActivateDraw: () => setEdit('tirage-activate'),
-          onEditDrawParams: () => setEdit('tirage-params'),
+          onActivateDraw: () => {
+            if (canAuthorDrawRulesP1) {
+              setEdit('tirage-activate');
+            }
+          },
+          onEditDrawParams: () => {
+            if (canAuthorDrawRulesP1) {
+              setEdit('tirage-params');
+            }
+          },
           onManualPlace: () => {
             setManualSlotKey(null);
             setManualOpen(true);
@@ -1251,7 +1268,10 @@ export function StructurePhaseFiche({
         competitionId={data.competitionId}
         stage={stage}
         structureStages={data.stages}
-        open={edit === 'tirage-activate' || edit === 'tirage-params'}
+        open={
+          canAuthorDrawRulesP1 &&
+          (edit === 'tirage-activate' || edit === 'tirage-params')
+        }
         onClose={() => setEdit(null)}
         intent={edit === 'tirage-activate' ? 'activate' : 'params'}
         rulesLocked={edit === 'tirage-params' && drawRulesLocked}

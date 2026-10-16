@@ -465,6 +465,17 @@ export function areDrawRulesLockedByExecution(draws: StageDraw[]): boolean {
 }
 
 /**
+ * B-Q1b SPA — P1 draw-rules authoring (activate / params) is Draft-only.
+ * Distinct from draw execution workflow (`openDrawWorkflow`).
+ */
+export function canAuthorStageDrawRules(
+  stageStatus: StageStatus,
+  canReplaceDrawRules: boolean,
+): boolean {
+  return canReplaceDrawRules && stageStatus === 'Draft';
+}
+
+/**
  * Current non-cancelled draw for Structure chrome (newest first).
  * Cancelled-only history → null (capacity / config, not engagement).
  */

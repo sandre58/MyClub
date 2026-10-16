@@ -109,9 +109,8 @@ export function DrawRulesDialog({
         mode: 'Random',
         numberOfPots: showPots ? (normalizedPots ?? undefined) : undefined,
       };
-      const demoted = stage.status === 'Ready';
       await replaceStageDrawRules(stage.stageId, body);
-      return { demoted, activated: isActivate };
+      return { activated: isActivate };
     },
     onSuccess: (result) => {
       onClose();
@@ -120,9 +119,6 @@ export function DrawRulesDialog({
           ? t('regulation.drawActivatedToast')
           : t('regulation.drawParamsSavedToast'),
       );
-      if (result.demoted) {
-        notify.attention(t('regulation.drawSavedDemotedToast'));
-      }
       if (result.activated) {
         patchDrawRulesActivatedOptimistic(
           queryClient,

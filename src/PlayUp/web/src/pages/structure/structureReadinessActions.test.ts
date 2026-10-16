@@ -157,4 +157,17 @@ describe('structureReadinessActions', () => {
       }),
     ).toBe(`/competitions/${competitionId}/structure?stage=s1&draw=1`);
   });
+
+  it('maps MissingPotRules to tirage section deep-link (lot B entry)', () => {
+    expect(
+      resolveStructureDiagnosticNavigation({
+        competitionId,
+        stageId: 's1',
+        code: 'MissingPotRules',
+        cta: 'qualification',
+      }),
+    ).toBe(
+      `/competitions/${competitionId}/structure?stage=s1&section=tirage`,
+    );
+  });
 });
