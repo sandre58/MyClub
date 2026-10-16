@@ -63,4 +63,29 @@ public sealed class CreateDrawTests
         draw.Status.Should().Be(DrawStatus.Draft);
         draw.Kind.Should().Be(DrawResolutionKind.Slot);
     }
+
+    [Fact]
+    public void Create_second_non_cancelled_draw_is_rejected()
+    {
+        var competition = CreateCompetition.Execute("B-Q3a", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(4),
+            _clock).Stage;
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(e => e.Id)], _clock);
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+
+        CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+
+        var act = () => CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.NonCancelledDrawAlreadyExists);
+    }
 }

@@ -275,6 +275,11 @@ public static class StageErrorCodes
     public const string DrawRulesReplaceBlockedAfterGenerate = "Stage.DrawRulesReplaceBlockedAfterGenerate";
 
     /// <summary>
+    /// Gets the code when a second non-cancelled draw would be created (B-Q3a).
+    /// </summary>
+    public const string NonCancelledDrawAlreadyExists = "Stage.NonCancelledDrawAlreadyExists";
+
+    /// <summary>
     /// Gets the code when standing rules presence violates A5 (classifying vs non-classifying topology).
     /// </summary>
     public const string StandingRulesInvariant = "Stage.StandingRulesInvariant";

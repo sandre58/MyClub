@@ -601,6 +601,13 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureOperationalExitRulesMutable();
+        if (_draws.Any(draw => draw.Status != DrawStatus.Cancelled))
+        {
+            throw new DomainException(
+                "A phase cannot have more than one non-cancelled draw.",
+                StageErrorCodes.NonCancelledDrawAlreadyExists);
+        }
+
         var draw = new Draw(id, kind);
         _draws.Add(draw);
         Raise(new StageDrawCreated(Id, draw.Id, kind, clock));

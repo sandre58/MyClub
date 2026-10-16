@@ -20,6 +20,32 @@ public sealed class StageDrawTests
     private readonly CompetitionId _competitionId = CompetitionId.New();
 
     [Fact]
+    public void CreateDraw_rejects_second_non_cancelled_draw()
+    {
+        var stage = CreateStage();
+        stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        var act = () => stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.NonCancelledDrawAlreadyExists);
+        stage.Draws.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void CreateDraw_allows_new_draw_after_cancel()
+    {
+        var stage = CreateStage();
+        var first = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.CancelDraw(first.Id, _clock);
+
+        var second = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        second.Id.Should().NotBe(first.Id);
+        stage.Draws.Should().HaveCount(2);
+    }
+
+    [Fact]
     public void CreateDraw_is_draft_not_resolved()
     {
         var stage = CreateStage();
@@ -32,21 +58,6 @@ public sealed class StageDrawTests
         draw.Resolution.State.Should().Be(DrawResolutionState.NotResolved);
         draw.Inputs.Should().BeNull();
         stage.DomainEvents.Should().ContainSingle(e => e is StageDrawCreated);
-    }
-
-    [Fact]
-    public void CreateDraw_in_Ready_is_rejected()
-    {
-        var stage = CreateStage();
-        stage.AddRound("R1", _clock);
-        stage.Prepare(_clock);
-        stage.Status.Should().Be(StageStatus.Ready);
-
-        var act = () => stage.CreateDraw(DrawResolutionKind.Slot, _clock);
-
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
-        stage.Draws.Should().BeEmpty();
-        stage.Status.Should().Be(StageStatus.Ready);
     }
 
     [Fact]
