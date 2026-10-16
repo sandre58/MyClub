@@ -1,6 +1,6 @@
 # O-04 — Fiche Terminée (`Completed`) — cadrage Δ-O4-1 / Δ-O4-2
 
-**Status:** **Δ-O4-2 Closed** (2026-10-16) — commit `31e3893f` on `feature/new_version_alt`. **Δ-O4-1** : Open (go distinct). Cadrage O-04 global inchangé.
+**Status:** **Δ-O4-2 Closed** (2026-10-16) — commit `ec45ed60` on `feature/new_version_alt`. **Δ-O4-1** : Open (go distinct). Cadrage O-04 global inchangé.
 
 **Décision produit (gelée)** — Notion [Matrice UI Structure — § O-04 / Δ-O4](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) (2026-10-15) : phase **Terminée** = lecture seule **allégée** ; pas d’édition construction / production / sorties / awards / réglement ; **nom non modifiable en UI** ; état final tirage / places **consultable** sans signaux d’action opérationnelle.
 
