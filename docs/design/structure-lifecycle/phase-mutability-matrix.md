@@ -280,9 +280,9 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 | `ReplaceStageDrawRules` | Allow per guards | **Deny** (B-Q1b) — use cancel → recreate (P2) if needed | **Deny** | **Aligned** — `EnsureStructureMutable` |
 | `CreateDraw` | Allow | Allow if **≤1 non-cancelled** draw (B-Q3a) | — | **Δ** — SPA partial; **G-B-1-ENF** |
 | `ConfigureDrawInputs` / `GenerateDraw` | Draw entity **Draft** only | **Deny** on entity (B-Q3b) | **Deny** | **Aligned** — `Draw.EnsureDraftMutable` |
-| `PublishDraw` / `ApplyDraw` | Per lifecycle | **Allow** per B-Q2 (not universal deny post-Applied) | Idempotent **Apply** only if conform; **deny** obsolete **D** on **Apply** (**C-ENF-Apply** `85360d3`) | **Partial** — Materialize/Start obsolete gates (**C-ENF-Mat/Deps**) pending |
+| `PublishDraw` / `ApplyDraw` | Per lifecycle | **Allow** per B-Q2 (not universal deny post-Applied) | Idempotent **Apply** only if conform; **deny** obsolete **D** on **Apply** (**C-ENF-Apply** `85360d3`) | **Aligned** — Apply gate shipped |
 | `ReplaceStageAffectationAuthoring` (pool) | Allow + D1/D2 | Allow | Same **EntryId** set (**R-Draw1-N2**); pool **change** → **refuse** (**R-Draw1+** / G-B-3) | **Aligned** — `StructureAppliedDrawPoolChangeGate` (**SLICE-1**) |
-| Obsolete draw **consumption** | — | Deny **Apply** / **Materialize** / dependent **Start** when **D** obsolete (**C**) | — | **Δ** — **C-ENF-*** backlog |
+| Obsolete draw **consumption** | — | Deny **Apply** / **Materialize** / dependent **Start** when **D** obsolete (**C**) | **C-ENF** Detect + Apply + Mat-Start (`279b6235`, `85360d3`, `ee0fc2e6`) | **Aligned** — **G-C-INV** §12 **Done** |
 
 **Invariant (B-Q3a):** At most **one** draw with `Status != Cancelled` per phase; cancelled history retained.
 
@@ -301,9 +301,9 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 | **R-Draw1** | Legacy umbrella — see **R-Draw1+** (refuse) and **R-Draw1-N2** (allow same set) | Refuse incompatible pool change (target) | [G-OPS3 decision](./g-ops3-arbitration-session.md); [`ReplaceStageAffectationAuthoringGOps3Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ReplaceStageAffectationAuthoringGOps3Tests.cs) |
 | **R-Draw1+** | Shrink or change affectation **EntryId** set with **Applied** draw | **Refuse mutation** (G-B-3 / G-OPS3) — not allow-then-obsolete | `ReplaceAffectationAuthoring_refuses_shrink_when_group_draw_applied`, `ReplaceAffectationAuthoring_refuses_swap_with_same_count_when_group_draw_applied` |
 | **R-Draw1-N2** | Replace affectation with **same** `EntryId` set, Applied draw | **Allow** — not obsolete | `ReplaceAffectationAuthoring_allows_replace_with_same_entries_when_group_draw_applied` |
-| **R-Inv-1** | Draft form change orphans placements; draw **D** obsolete for consumption | Allow mutation; **Deny** `ApplyDraw` / **Materialize** on obsolete **D** | **Partial** — Apply leg **SLICE-C-ENF-APPLY** `85360d3`; Materialize/Start **Mat-Start** pending — [addendum §5.2.8](./section-11c-addendum-clarification-arbitration.md) |
+| **R-Inv-1** | Draft form change orphans placements; draw **D** obsolete for consumption | Allow mutation; **Deny** `ApplyDraw` / **Materialize** on obsolete **D** | **Done** — `DrawConsumptionMatStartTests` + Apply R-Inv-1; Host Start HTTP not integration-tested — [addendum §5.2.8](./section-11c-addendum-clarification-arbitration.md) |
 | **R-C-R3** | Recovery blocked by **D2** (matches produced) | **R3** — no false recreate promise; no C bypass | Related **R-Mat2** / D2 ops tests |
-| **R-Mat-block** | Ready; invalid assignments or obsolete draw on materialize path | **Materialize** denied with explicit reason (F4 + **C**) | **Gap** — **C-ENF-Mat** |
+| **R-Mat-block** | Ready; invalid assignments or obsolete draw on materialize path | **Materialize** denied with explicit reason (F4 + **C**) | **Done** — `DrawConsumptionMatStartTests` + `CEnfMatStartEndpointTests` (Groups HTTP) |
 | **R-Draw2** | Draw engaged; `SlotFeedMissing` hidden in drawer | Prepare not gated by occupancy; drawer hides only | [`StructurePresentedAttentionCollectorTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePresentedAttentionCollectorTests.cs) |
 | **R-Mat1** | Ch Ready, incomplete roster | `PhaseRosterIncomplete` | [`StructureMaterializeAssemblerTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructureMaterializeAssemblerTests.cs) |
 | **R-Mat2** | Ready, partial materialize, operational edit | Denied (D2) | `ReplaceStageQualificationRulesGOpsTests`, `ReplaceStageProgressionRulesGOpsTests`, `ReplaceStageAffectationAuthoringGOpsTests` (D2) |
@@ -355,7 +355,7 @@ By signing **§11A**, the decision maker validates **intent only** — not that 
 - [x] **B3** — Notion Décision §11B published (canonical; cross-link from §11A)
 - [x] **B4** — Follow-up per [implementation-plan-post-11b.md](./implementation-plan-post-11b.md)
 
-**Stop line (post-sign):** Do **not** implement **Deferred** gates (G-MAT3, G-MAT4, G-OPS3, **G-B-1**, **G-B-3**, **G-C-INV**) without **§11C.4** slice authorization (or G-OPS3 reopen where applicable). **Done** rows are shipped; changes = regression fixes or Notion Task scope only.
+**Stop line (post-sign):** Do **not** implement **Deferred** gates (G-MAT3, G-MAT4, G-OPS3, **G-B-1**, **G-B-3**) without **§11C.4** slice authorization (or G-OPS3 reopen where applicable). **G-C-INV** is **Done** (C-ENF slices **Closed**). **Done** rows are shipped; changes = regression fixes or Notion Task scope only.
 
 **Product signature:** §11B does **not** require delivering deferred gates — it records reserves and authorizes process for future reopen.
 
@@ -406,7 +406,7 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **SLICE-3-G-OPS3-QUAL-PROG-ENF** | G-OPS3 reliquat qual/prog | **Authorized** (2026-10-16) — **G-OPS3** §12 stays **Partial** | [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) |
 | **SLICE-C-ENF-DETECT** | C-ENF-Detect (G-C-1) | **Closed** (2026-10-16) — `279b6235` | [slice-c-enf-detect.md](./slice-c-enf-detect.md) |
 | **SLICE-C-ENF-APPLY** | C-ENF-Apply (G-C-2) | **Closed** (2026-10-16) — `85360d3` | [slice-c-enf-apply.md](./slice-c-enf-apply.md) |
-| **SLICE-C-ENF-MAT-START** | C-ENF-Mat + C-ENF-Deps (G-C-3, G-C-4) | **Authorized** (2026-10-16 Mat-Start arbitration) — not Closed until dedicated commit + read parity | [slice-c-enf-mat-start.md](./slice-c-enf-mat-start.md) |
+| **SLICE-C-ENF-MAT-START** | C-ENF-Mat + C-ENF-Deps (G-C-3, G-C-4) | **Closed** (2026-10-16) — `ee0fc2e6` | [slice-c-enf-mat-start.md](./slice-c-enf-mat-start.md) |
 
 **Arbitration SoT (2026-10-16):** [programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md).
 
@@ -433,5 +433,5 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | **G-B-3** pool gate **Done**; qual/prog Applied gate shipped (**SLICE-3**, `472546bb`); **reliquat** draw-rules / autres commandes hors périmètre SLICE-3 | Medium | **Partial** | [decision](./g-ops3-arbitration-session.md); [slice-3](./slice-3-g-ops3-qual-prog-enf.md). **Not** **Done**. **C** separate. |
 | **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | **SLICE-2** domain guard + tests shipped (`c1a12ec4`); SPA partial | Medium | **Deferred** | Slice protocol not **Closed**; backlog SPA remains; [slice-2](./slice-2-g-b-1-enf.md) |
 | **G-B-3** | Refuse pool membership change with Applied draw | G-B-3 / G-OPS3; **R-Draw1+** | `StructureAppliedDrawPoolChangeGate` on affectation replace | Medium | **Done** | **SLICE-1-G-B-3-ENF**; distinct from **C**; N2 preserved |
-| **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | Detect + Apply **Closed**; Mat-Start **Authorized** not shipped; stash Mat/Start WIP not ratified | Medium | **Deferred** | **Done** after Mat-Start **Closed**, read/command parity verified, §11C.4 + §12 sync |
+| **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | **C-ENF** three slices (`279b6235`, `85360d3`, `ee0fc2e6`); read/command parity Materialize + Start (Application); Host Start HTTP limit per fiche | Medium | **Done** | [slice-c-enf-detect](./slice-c-enf-detect.md) · [apply](./slice-c-enf-apply.md) · [mat-start](./slice-c-enf-mat-start.md) |
 | **G-SWISS** | Generic production guard | Must not break Swiss progressive | Swiss APIs separate today | — | **Constraint** | §8 capability grid; no global guard |

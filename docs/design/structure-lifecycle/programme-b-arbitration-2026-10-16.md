@@ -12,7 +12,7 @@
 |-------|----------|----------------|
 | **G-B-1-ENF** | Ratifier **uniquement** B-Q3a (≤1 tirage non annulé ; refus `CreateDraw` si autre tirage non `Cancelled`). | **SLICE-2-G-B-1-ENF** — **Authorized** ; **pas Closed** avant vérification conformité + commits dédiés. |
 | **G-OPS3 qual/prog** | Ratifier le refus de changement des règles **qualification / progression** lorsqu’un tirage est **Applied** (même entrées logiques que G-B-3 : mutation refusée, pas obsolescence C). | **SLICE-3-G-OPS3-QUAL-PROG-ENF** — **Authorized** ; **G-OPS3** reste **Partial** §12. |
-| **C-ENF** | Bundle interdit. Detect + Apply **Closed**. Mat-Start **Authorized** (2026-10-16) — pas **Closed** avant livraison + parité lecture. | Voir § C-ENF Mat-Start ; **G-C-INV** **Deferred** jusqu’à clôture Mat-Start. |
+| **C-ENF** | Bundle interdit. Detect + Apply + Mat-Start **Closed** (`279b6235`, `85360d3`, `ee0fc2e6`). | **G-C-INV** §12 **Done** (consumption gates) ; limite Host Start HTTP documentée en fiche Mat-Start. |
 
 ---
 
@@ -22,9 +22,9 @@
 |----------|---------|-----------------|--------|
 | **SLICE-C-ENF-DETECT** | **C-ENF-Detect** (G-C-1) | Prédicat `IsObsoleteForConsumption` (W-inputs, W-pool ; W-rules **exclu**) + lecture DTO/SPA uniquement. | **Closed** (2026-10-16) — `279b6235` · [fiche](./slice-c-enf-detect.md) |
 | **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage cible obsolète (prédicat Detect) ; wire 409 + i18n. | **Closed** (2026-10-16) — `85360d3` · [fiche](./slice-c-enf-apply.md) |
-| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** (2 commandes) + **Start** ; parité lecture Materialize/Start. | **Authorized** (2026-10-16) — **pas Closed** · [fiche](./slice-c-enf-mat-start.md) |
+| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** (2 commandes) + **Start** ; parité lecture Materialize/Start. | **Closed** (2026-10-16) — `ee0fc2e6` · [fiche](./slice-c-enf-mat-start.md) |
 
-**WIP non ratifié** — Stash `c-enf-apply-mat-gates-wip` + `.c-enf-gates-wip/` : prototype mixte Apply/Mat/Start ; reprise **ciblée** seulement après fiche **Authorized** (Apply : oui ; Mat-Start : non).
+**WIP** — Stash `c-enf-apply-mat-gates-wip` / `.c-enf-gates-wip/` : prototype obsolète ; livraison C-ENF complète en Git — stash conservé, non requis pour **G-C-INV**.
 
 ### Arbitrage Detect (2026-10-16) — synthèse
 
@@ -66,7 +66,7 @@
 
 1. Fiches slices + §11C.4 (ce document + [phase-mutability-matrix.md](./phase-mutability-matrix.md)).
 2. Aucune fiche **Closed** sans protocole slice-1 (autorisation → implémentation → preuves → revue).
-3. Matrice §12 : **G-OPS3** = **Partial** ; **G-B-1** / **G-C-INV** mis à jour sans prétendre **Done** pour C-ENF.
+3. Matrice §12 : **G-OPS3** = **Partial** ; **G-B-1** **Deferred** ; **G-C-INV** **Done** après clôture C-ENF (2026-10-16).
 4. Tests ciblés **Release** + audit diff par lot.
 5. Commits **séparés** (G-B-1 ; G-OPS3 ; C-ENF uniquement après autorisation slice par slice).
 

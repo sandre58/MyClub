@@ -18,7 +18,7 @@
 |----|-------------------|--------|
 | **G-B-1** / **SLICE-2-G-B-1-ENF** | **Authorized** — pas **Closed** | B-Q3a ; diff local non commité |
 | **G-OPS3** reliquat qual/prog / **SLICE-3** | **Authorized** — **G-OPS3** §12 **Partial** | Gate qual/prog ; pas Done |
-| **C-ENF** (Detect / Apply / Mat-Start) | Detect + Apply **Closed** ; Mat-Start **Authorized** | **G-C-INV** §12 **Deferred** jusqu’à clôture Mat-Start |
+| **C-ENF** (Detect / Apply / Mat-Start) | **Closed** (`279b6235`, `85360d3`, `ee0fc2e6`) | **G-C-INV** §12 **Done** |
 | **G-MAT3 / G-MAT4** | **Deferred** | Inchangé |
 
 ---
@@ -43,13 +43,13 @@ flowchart LR
 | **P2b** | **G-OPS3** qual/prog | [slice-3](./slice-3-g-ops3-qual-prog-enf.md) | **Authorized** ; G-OPS3 **Partial** |
 | **P3a** | **C-ENF-Detect** | [slice-c-enf-detect](./slice-c-enf-detect.md) | **Closed** (`279b6235`) |
 | **P3b** | **C-ENF-Apply** | [slice-c-enf-apply](./slice-c-enf-apply.md) | **Closed** (`85360d3`) |
-| **P3c** | **C-ENF-Mat + Start** | [slice-c-enf-mat-start](./slice-c-enf-mat-start.md) | **Authorized** — pas **Closed** |
+| **P3c** | **C-ENF-Mat + Start** | [slice-c-enf-mat-start](./slice-c-enf-mat-start.md) | **Closed** (`ee0fc2e6`) |
 
 ---
 
 ## Working tree (proposition technique — non ratifiée en bloc)
 
-Branche `feature/new_version` : **Detect** + **Apply** livrés ; **Mat-Start** **Authorized** (gouvernance) — implémentation + parité lecture à livrer. Stash Mat/Start (`c-enf-apply-mat-gates-wip`) : reprise **sélective** uniquement.
+Branche `feature/new_version` : **C-ENF** livré (3 commits slices). **G-C-INV** **Done**. Stash WIP optionnel — non requis.
 
 ---
 

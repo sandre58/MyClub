@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Authorized** (DM arbitration 2026-10-16) — **not Closed** until dedicated commit, Release tests, read/command parity proof, and §11C.4 review |
+| **Status** | **Closed** (2026-10-16) — delivery commit [`ee0fc2e6`](https://github.com/sandre58/MyClub/commit/ee0fc2e6) (Materialize + Start gates + read parity) |
 | **Slice ID** | `SLICE-C-ENF-MAT-START` |
 | **Backlog** | **C-ENF-Mat** (G-C-3) + **C-ENF-Deps** (G-C-4) — Start consumption path |
 | **Depends on** | **SLICE-C-ENF-DETECT** **Closed** (`279b6235`); **SLICE-C-ENF-APPLY** **Closed** (`85360d3`) |
@@ -76,41 +76,59 @@ Align §10 / §12: explicit materialize denial when obsolete draw is on the cons
 
 ---
 
-## Required tests (Release) before **Closed**
+## Read/command parity (verified)
 
-| # | Layer | Scenario | Expected |
-|---|--------|----------|----------|
-| 1 | Application | Obsolete draw on stage → `MaterializeMatches` or Cup path | `DrawObsoleteForConsumption` |
-| 2 | Application | Obsolete draw → `EnsureReadyToStart` | `DrawObsoleteForConsumption` |
-| 3 | Application | Conform stage (no obsolete non-cancelled draw) | Materialize/Start unchanged |
-| 4 | Reads | `StructureMaterializeAssembler` when obsolete | `DisabledReason` = materialize code |
-| 5 | Reads | Start lifecycle assembler when obsolete | `DisabledReasonCode` matches Start guard |
-| 6 | Host | HTTP Materialize / Start when obsolete | **409** + `Application.DrawObsoleteForConsumption` |
-| 7 | Regression | Read disabled ⇔ command would fail (representative format: Groups + Cup) | assembler tests |
+| Surface | Command | Read | Shared condition |
+|---------|---------|------|------------------|
+| **Materialize** | `EnsureNoObsoleteDrawsOnStage` on both materialize use cases | `StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption` in `Pack` + `ResolveDisabledReason` | Same stage-wide scan + `IsObsoleteForConsumption` per non-cancelled draw |
+| **Start** | `EnsureNoObsoleteDrawsOnStage` after unmaterialized check | `StageHasObsoleteDrawForConsumption` after same unmaterialized check in `TryGetDisabledReasonCode` | Same ordering; read code `DrawObsoleteForConsumption` ↔ wire `Application.DrawObsoleteForConsumption` |
 
-Reuse fixtures from **DrawConsumptionConformanceTests** / Apply R-Inv-1 setup; do not duplicate full predicate matrix.
+`EnsureNoObsoleteDrawsOnStage` delegates to `StageHasObsoleteDrawForConsumption` before throw — not a second predicate.
 
 ---
 
-## WIP prototype (not ratified as-is)
+## Required tests (Release) — proof (`ee0fc2e6`)
 
-Stash `c-enf-apply-mat-gates-wip` contains **command-only** hooks for Materialize/Start **without** read parity. **Delivery** = selective extraction (Mat/Start commands + assemblers + i18n + tests) — **no** `stash pop`, **no** Apply-draw changes. `.c-enf-gates-wip/` is redundant with committed `StructureDrawConsumptionGate.cs`.
+| # | Layer | Scenario | Expected | Proof |
+|---|--------|----------|----------|--------|
+| 1 | Application | Obsolete → `MaterializeMatches` | `DrawObsoleteForConsumption` | `MaterializeMatches_R_Inv_1_*` |
+| 1b | Application | Obsolete → Cup materialize | same | `MaterializeCupFromOccupiedSlots_denies_*` |
+| 2 | Application | Obsolete → `EnsureReadyToStart` | same | `Start_R_Inv_1_*` |
+| 3 | Application | Conform paths | unchanged | `StartStageReadinessTests` (5) + existing materialize suites (no regression in targeted run) |
+| 4 | Reads | Materialize hub disabled reason | `StructureMaterializeDisabledReasons.DrawObsoleteForConsumption` | `Read_materialize_disabled_reason_*` |
+| 5 | Reads | Start hub disabled reason | `StructureStageLifecycleAssembler.DisabledDrawObsoleteForConsumption` | `Read_start_disabled_reason_*` |
+| 6a | Host | HTTP **Materialize** when obsolete | **409** + wire code | `CEnfMatStartEndpointTests.Materialize_when_draw_obsolete_*` |
+| 6b | Host | HTTP **Start** when obsolete | **409** (expected) | **Not tested** — see coverage limit below |
+| 7 | Parity | Groups + Cup representative formats | command/read aligned | rows 1–5 |
+
+**Coverage limit (explicit):** Start **command** and **read** parity are proven in Application only; **HTTP Start** with `DrawObsoleteForConsumption` was **not** exercised in Host integration tests.
+
+---
+
+## Delivery proof (`ee0fc2e6`)
+
+- [`StructureDrawConsumptionGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureDrawConsumptionGate.cs) — `StageHasObsoleteDrawForConsumption`
+- [`MaterializeMatches`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/MaterializeMatches/MaterializeMatches.cs) · [`MaterializeCupFromOccupiedSlots`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/MaterializeCupFromOccupiedSlots/MaterializeCupFromOccupiedSlots.cs)
+- [`StageStartReadinessGuard`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StageStartReadinessGuard.cs) · [`StructureMaterializeAssembler`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructureMaterializeAssembler.cs)
+- [`DrawConsumptionMatStartTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/DrawConsumptionMatStartTests.cs) · [`CEnfMatStartEndpointTests`](../../../tests/MyClub.PlayUp.Host.Tests/CEnfMatStartEndpointTests.cs)
+
+Stash `c-enf-apply-mat-gates-wip` / `.c-enf-gates-wip/` — **not** applied; prototype superseded by committed delivery.
 
 ---
 
 ## Closure criteria
 
-**Closed** only when:
+**Closed** when:
 
-1. Diff contains **Mat-Start scope only** (materialize + start commands, read assemblers/guard, i18n read copy, tests).
-2. Release tests § above green.
-3. Read/command parity verified for Materialize and Start hubs.
-4. §11C.4 updated; **G-C-INV** reviewed for **Done** (Apply + Mat-Start both **Closed**, parity proof, §12 sync).
+1. Diff Mat-Start scope only. — **Done** (`ee0fc2e6`).
+2. Release tests § above green. — **Done** (5 Mat-Start + 5 `StartStageReadinessTests` in targeted Release run).
+3. Read/command parity verified. — **Done** (table above + tests #4–5).
+4. §11C.4 + **G-C-INV** §12 sync. — **Done** (governance commit with Mat-Start closure).
 
-Until Mat-Start **Closed**, **G-C-INV** remains **Deferred**.
+**G-C-INV** **Done** — C-ENF consumption gates shipped across Detect + Apply + Mat-Start (W-rules / drawer out of scope per slices).
 
 ---
 
 ## Sequencing
 
-**SLICE-C-ENF-APPLY** **Closed** — prerequisite met. Implementation authorized; **no** code until executor starts slice delivery after this governance commit.
+All three **SLICE-C-ENF-*** slices **Closed**. Stash remains optional cleanup — not required for **G-C-INV**.

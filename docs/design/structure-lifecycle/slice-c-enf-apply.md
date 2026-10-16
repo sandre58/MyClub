@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Closed** (2026-10-16) — delivery commit [`85360d3`](https://github.com/sandre58/MyClub/commit/85360d3) (Apply gate + wire + tests; Mat-Start not shipped) |
+| **Status** | **Closed** (2026-10-16) — delivery commit [`85360d3`](https://github.com/sandre58/MyClub/commit/85360d3) (Apply gate + wire + tests) |
 | **Slice ID** | `SLICE-C-ENF-APPLY` |
 | **Backlog** | **C-ENF-Apply** (G-C-2) |
 | **Depends on** | **SLICE-C-ENF-DETECT** **Closed** (`279b6235`) — shared predicate only |
@@ -83,7 +83,7 @@ Predicate matrix: [slice-c-enf-detect.md](./slice-c-enf-detect.md) § Required t
 - [`ApplyDraw`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/ApplyDraw/ApplyDraw.cs) — `EnsureDrawConsumable` after preflights
 - Host **409** · i18n · [`ApplyDrawTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ApplyDrawTests.cs) · [`ApplyDrawEndpointTests`](../../../tests/MyClub.PlayUp.Host.Tests/ApplyDrawEndpointTests.cs)
 
-**WIP:** Stash `c-enf-apply-mat-gates-wip` / `.c-enf-gates-wip/` — Mat-Start portions **not** ratified; selective pop only after Mat-Start **Authorized**.
+**WIP:** Stash `c-enf-apply-mat-gates-wip` / `.c-enf-gates-wip/` — obsolete prototype; C-ENF shipped in Git (see [mat-start](./slice-c-enf-mat-start.md)).
 
 ---
 
@@ -94,12 +94,12 @@ Predicate matrix: [slice-c-enf-detect.md](./slice-c-enf-detect.md) § Required t
 1. Diff contains **Apply scope only**. — **Done** (`85360d3`).
 2. Release tests § above green. — **Done** (filters above + full `ApplyDrawTests`).
 3. Gate timing verified (preflights then consumption check; no false block on consumable draws). — **Done** (DM reserve accepted 2026-10-16).
-4. §11C.4 updated; **G-C-INV** **Deferred** until Mat-Start **Closed**. — **Done** (this governance commit).
+4. §11C.4 updated at Apply closure. — **Done** (2026-10-16).
 
-**G-C-INV** is **not** **Done** after Apply alone.
+**G-C-INV** §12 **Done** after [Mat-Start](./slice-c-enf-mat-start.md) **Closed** (`ee0fc2e6`).
 
 ---
 
 ## Sequencing
 
-**SLICE-C-ENF-APPLY** **Closed**. **SLICE-C-ENF-MAT-START** is **Authorized** (2026-10-16) — implementation separate; selective stash reuse only.
+**SLICE-C-ENF-APPLY** **Closed**. **SLICE-C-ENF-MAT-START** **Closed** (`ee0fc2e6`); **G-C-INV** **Done**.

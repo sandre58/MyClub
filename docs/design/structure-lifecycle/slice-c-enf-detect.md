@@ -107,7 +107,7 @@ G-B-3 refuse-mutation coverage stays in **GOps3 / affectation** suites — not s
 3. Read contract verified (no action/diagnostic side effects). — **Done**.
 4. §11C.4 slice row updated; **G-C-INV** remains **Deferred** until Apply + Mat-Start slices are authorized and shipped. — **Done** (governance sync with closure).
 
-**SLICE-C-ENF-APPLY** **Closed** (`85360d3`); **G-C-INV** is **not** **Done** until **SLICE-C-ENF-MAT-START** is also **Closed**.
+**C-ENF** trilogy **Closed**; **G-C-INV** §12 **Done** (see [mat-start](./slice-c-enf-mat-start.md) for Host Start HTTP coverage limit).
 
 ---
 
