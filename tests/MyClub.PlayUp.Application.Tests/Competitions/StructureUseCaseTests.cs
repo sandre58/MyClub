@@ -585,6 +585,11 @@ public sealed class StructureUseCaseTests
         hub.Status.Should().Be(StageStatus.Ready);
         hub.Actions.Should().Contain(StructureViewAssembler.ActionRenameStage);
         hub.Actions.Should().Contain(StructureViewAssembler.ActionReplaceAffectationAuthoring);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceMatchRules);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceStandingRules);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceDrawRules);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceDefaultTieFormat);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceRoundTieFormat);
         hub.Actions.Should().NotContain(StructureViewAssembler.ActionAddMatchday);
         hub.Actions.Should().NotContain(StructureViewAssembler.ActionRebuildStructure);
     }
