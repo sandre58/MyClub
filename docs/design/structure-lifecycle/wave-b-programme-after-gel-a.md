@@ -53,6 +53,16 @@ flowchart LR
 
 `feature/new_version` : slices arbitrées **Closed** (feat + docs gouvernance). **SLICE-2** : livraison `c1a12ec4` ; gouvernance `docs(structure-lifecycle): close SLICE-2-G-B-1-ENF with SPA reserve`. **SLICE-3** : livraison `472546bb` ; gouvernance `docs(structure-lifecycle): close SLICE-3-G-OPS3-QUAL-PROG-ENF with G-OPS3 partial reserve`. Stash WIP optionnel. Publication (push) = décision distincte.
 
+### B-Q1b `ReplaceStageDrawRules` en Ready — preuve (sans slice §11C.4)
+
+| Couche | Statut | Preuve |
+|--------|--------|--------|
+| Application / domaine | Refus **Ready** (`EnsureStructureMutable` → `Stage.StructureLocked`) | `ReplaceStageDrawRulesTests.Replace_rejected_when_stage_is_Ready` |
+| Host HTTP | **409** + wire `Stage.StructureLocked` sur `PUT /draw-rules` après **Prepare** | `ReplaceStageDrawRulesEndpointTests.Put_draw_rules_when_ready_returns_409_StructureLockedAsync` |
+| SPA / hub | Pas d’action `ReplaceDrawRules` en Ready (Δ-03) | `StructureViewAssemblerDrawRulesTests` |
+
+**Pas** de nouveau garde-fou métier — fermeture d’un **écart de preuve** seulement. **G-OPS3** §12 reste **Partial** ; reliquat invalidation (draw-rules sémantique / autres commandes) = **arbitrage distinct** (piste B), pas couvert par B-Q1b.
+
 ---
 
 ## Références
