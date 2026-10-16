@@ -5,7 +5,7 @@
 | **Status** | **Pending** — **not** **Authorized** until **SLICE-C-ENF-APPLY** is **Closed** (DM arbitration 2026-10-16) |
 | **Slice ID** | `SLICE-C-ENF-MAT-START` |
 | **Backlog** | **C-ENF-Mat** (G-C-3) + **C-ENF-Deps** (G-C-4) — Start consumption path |
-| **Depends on** | **SLICE-C-ENF-DETECT** **Closed**; **SLICE-C-ENF-APPLY** **Closed** (sequential authorization) |
+| **Depends on** | **SLICE-C-ENF-DETECT** **Closed** (`279b6235`); **SLICE-C-ENF-APPLY** **Closed** (`85360d3`) — prerequisite met; slice still **Pending** until DM **Authorized** |
 | **Contract (target)** | Deny **Materialize** (both commands) and **Start** when the phase would **consume** an obsolete draw resolution; **read/command parity** on hubs |
 
 **Governance:** [programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md) · predicate SoT [slice-c-enf-detect.md](./slice-c-enf-detect.md).

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Authorized** (DM arbitration 2026-10-16) — **not Closed** until dedicated commit, Release tests, and §11C.4 review |
+| **Status** | **Closed** (2026-10-16) — delivery commit [`85360d3`](https://github.com/sandre58/MyClub/commit/85360d3) (Apply gate + wire + tests; Mat-Start not shipped) |
 | **Slice ID** | `SLICE-C-ENF-APPLY` |
 | **Backlog** | **C-ENF-Apply** (G-C-2) |
 | **Depends on** | **SLICE-C-ENF-DETECT** **Closed** (`279b6235`) — shared predicate only |
@@ -42,7 +42,7 @@ Use **`DrawConsumptionConformance.IsObsoleteForConsumption`** exactly as in Dete
 | **Failure** | `ApplicationFailureException` with `ApplicationErrorCodes.DrawObsoleteForConsumption` |
 | **HTTP** | **409 Conflict** (same pattern as SLICE-3 Applied-draw feed rules) |
 | **Message** | i18n `DrawObsoleteForConsumption` (structure mutation copy); FR + EN |
-| **Gate placement** | `ApplyDraw.Execute` only for Apply slice; `StructureDrawConsumptionGate` internal helper acceptable if colocated in `Application/Stages` |
+| **Gate placement** | After slot/group **preflight** validation, **before** placement mutations (`ApplySlot` / `ApplyGroup`); shared `ApplyDraw.Execute` path covers `PublishAndApplyDraw` |
 
 **Not in this slice:** `EnsureNoObsoleteDrawsOnStage` (stage-wide scan) — reserved for Mat-Start.
 
@@ -62,40 +62,44 @@ Materialize / Start legs of R-Inv-1 belong to **SLICE-C-ENF-MAT-START**.
 
 ---
 
-## Required tests (Release) before **Closed**
+## Required tests (Release) — proof (`85360d3`)
 
-| # | Layer | Scenario | Expected |
-|---|--------|----------|----------|
-| 1 | Application | Allowed mutation → obsolete target draw → `ApplyDraw.Execute` | throws `DrawObsoleteForConsumption` |
-| 2 | Application | Conform published resolved draw (predicate `false`) | Apply succeeds as today |
-| 3 | Application | Applied draw (predicate `false` by W-applied exclusion) | Apply idempotency / success path unchanged |
-| 4 | Host | HTTP Apply when obsolete | **409** + problem code `Application.DrawObsoleteForConsumption` |
-| 5 | Host | i18n key mapped for mutation surface | `DrawObsoleteForConsumption` resolvable |
-| 6 | Regression | `PublishAndApplyDraw` when apply would fail obsolete | publish may persist; apply fails with same code (existing orchestration test pattern) |
+| # | Layer | Scenario | Expected | Proof |
+|---|--------|----------|----------|--------|
+| 1 | Application | Allowed mutation → obsolete → `ApplyDraw.Execute` | `DrawObsoleteForConsumption` | `Execute_R_Inv_1_denies_apply_when_draw_obsolete_after_allowed_pool_shrink` |
+| 2 | Application | Conform published resolved draw | Apply succeeds | `ApplyDrawTests` (24/24 Release) |
+| 3 | Application | Applied draw / idempotent conform Apply | unchanged | `Execute_slot_idempotent_when_already_conform` + `Applied_draw_is_not_obsolete` (Detect) |
+| 4 | Host | HTTP Apply when obsolete | **409** + wire code | `Apply_when_draw_obsolete_for_consumption_returns_409_DrawObsoleteForConsumptionAsync` |
+| 5 | Host / SPA | i18n + mutation key | `DrawObsoleteForConsumption` | `lifecycleMutationMessageKey.ts` + `structure.json` EN/FR in `85360d3` |
+| 6 | Orchestration | `PublishAndApplyDraw` on obsolete | same code via `ApplyDraw.Execute` | **By shared use case** — no dedicated obsolete orchestration test (same path as #1) |
 
-Reuse or extend existing Apply / GOps test fixtures; do not duplicate full Detect predicate matrix — cite Detect tests for predicate truth.
+Predicate matrix: [slice-c-enf-detect.md](./slice-c-enf-detect.md) § Required tests.
 
 ---
 
-## WIP prototype (not ratified as-is)
+## Delivery proof (`85360d3`)
 
-Stash `c-enf-apply-mat-gates-wip` and `.c-enf-gates-wip/StructureDrawConsumptionGate.cs` mix Apply with Mat/Start. **Apply delivery** must be a **clean diff**: gate helper + Apply hook + error wire + Apply-only tests. Pop stash **selectively** after this fiche is **Authorized** (done) and implementation is explicitly started.
+- [`StructureDrawConsumptionGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureDrawConsumptionGate.cs)
+- [`ApplyDraw`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/ApplyDraw/ApplyDraw.cs) — `EnsureDrawConsumable` after preflights
+- Host **409** · i18n · [`ApplyDrawTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ApplyDrawTests.cs) · [`ApplyDrawEndpointTests`](../../../tests/MyClub.PlayUp.Host.Tests/ApplyDrawEndpointTests.cs)
+
+**WIP:** Stash `c-enf-apply-mat-gates-wip` / `.c-enf-gates-wip/` — Mat-Start portions **not** ratified; selective pop only after Mat-Start **Authorized**.
 
 ---
 
 ## Closure criteria
 
-**Closed** only when:
+**Closed** when:
 
-1. Diff contains **Apply scope only** (gate helper if new, `ApplyDraw`, error code, Host handler, i18n, tests).
-2. Release tests § above green.
-3. Gate timing verified (current state, target draw, no false block on consumable draws).
-4. §11C.4 slice row updated; **G-C-INV** remains **Deferred** until **SLICE-C-ENF-MAT-START** is also **Closed** and §12 proof review passes.
+1. Diff contains **Apply scope only**. — **Done** (`85360d3`).
+2. Release tests § above green. — **Done** (filters above + full `ApplyDrawTests`).
+3. Gate timing verified (preflights then consumption check; no false block on consumable draws). — **Done** (DM reserve accepted 2026-10-16).
+4. §11C.4 updated; **G-C-INV** **Deferred** until Mat-Start **Closed**. — **Done** (this governance commit).
 
-**G-C-INV** becomes **Done** only after **both** Apply and Mat-Start are formally closed with read/command parity — not when this slice alone ships.
+**G-C-INV** is **not** **Done** after Apply alone.
 
 ---
 
 ## Sequencing
 
-**SLICE-C-ENF-MAT-START** stays **Pending** until this slice is **Closed**. No `stash pop` for Mat/Start portions until Mat-Start governance **Authorized**.
+**SLICE-C-ENF-APPLY** **Closed**. **SLICE-C-ENF-MAT-START** remains **Pending** — governance **Authorized** only after DM step; no Mat/Start `stash pop` until then.

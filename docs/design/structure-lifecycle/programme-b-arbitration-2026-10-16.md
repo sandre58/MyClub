@@ -12,7 +12,7 @@
 |-------|----------|----------------|
 | **G-B-1-ENF** | Ratifier **uniquement** B-Q3a (≤1 tirage non annulé ; refus `CreateDraw` si autre tirage non `Cancelled`). | **SLICE-2-G-B-1-ENF** — **Authorized** ; **pas Closed** avant vérification conformité + commits dédiés. |
 | **G-OPS3 qual/prog** | Ratifier le refus de changement des règles **qualification / progression** lorsqu’un tirage est **Applied** (même entrées logiques que G-B-3 : mutation refusée, pas obsolescence C). | **SLICE-3-G-OPS3-QUAL-PROG-ENF** — **Authorized** ; **G-OPS3** reste **Partial** §12. |
-| **C-ENF** | **Ne pas** ratifier le bundle Apply + Mat + Start avec Detect. Detect **Closed** (`279b6235`). Apply **Authorized** ; Mat-Start **Pending** jusqu’à clôture Apply. | Voir § C-ENF Apply/Mat-Start ; commits **un slice à la fois**. |
+| **C-ENF** | Bundle interdit. Detect **Closed** (`279b6235`). Apply **Closed** (`85360d3`). Mat-Start **Pending** (autorisation après clôture Apply — **faite** côté Apply). | Voir § C-ENF ; Mat-Start : prochaine autorisation DM. |
 
 ---
 
@@ -21,7 +21,7 @@
 | Slice ID | Backlog | Périmètre cible | Statut |
 |----------|---------|-----------------|--------|
 | **SLICE-C-ENF-DETECT** | **C-ENF-Detect** (G-C-1) | Prédicat `IsObsoleteForConsumption` (W-inputs, W-pool ; W-rules **exclu**) + lecture DTO/SPA uniquement. | **Closed** (2026-10-16) — `279b6235` · [fiche](./slice-c-enf-detect.md) |
-| **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage cible obsolète (prédicat Detect) ; wire 409 + i18n. | **Authorized** (2026-10-16) — **pas Closed** · [fiche](./slice-c-enf-apply.md) |
+| **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage cible obsolète (prédicat Detect) ; wire 409 + i18n. | **Closed** (2026-10-16) — `85360d3` · [fiche](./slice-c-enf-apply.md) |
 | **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** + **Start** ; **parité lecture/commande** hubs. | **Pending** — autorisation **après** clôture Apply · [fiche](./slice-c-enf-mat-start.md) |
 
 **WIP non ratifié** — Stash `c-enf-apply-mat-gates-wip` + `.c-enf-gates-wip/` : prototype mixte Apply/Mat/Start ; reprise **ciblée** seulement après fiche **Authorized** (Apply : oui ; Mat-Start : non).
