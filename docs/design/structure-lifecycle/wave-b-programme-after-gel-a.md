@@ -22,6 +22,7 @@
 | **G-OPS3** reliquat qual/prog / **SLICE-3** | **Closed** (`472546bb`) | Qual/prog Applied gate ; réserves preuve · §12 **G-OPS3 Partial** — [fiche](./slice-3-g-ops3-qual-prog-enf.md) |
 | **C-ENF** (Detect / Apply / Mat-Start) | **Closed** (feat `279b6235`, `85360d3`, `ee0fc2e6` ; gouvernance `7f3acca0`) | **G-C-INV** §12 **Done** — ne pas rouvrir sans anomalie |
 | **G-MAT3 / G-MAT4** | **Deferred** | Inchangé |
+| **G-OPS3** piste **B1** (Cup Assign/Clear vs Applied `SlotResults`) | **Arbitrage fermé** — fiche **Draft** ; **pas** §11C.4 · **pas** implémentation | [slice-g-ops3-b1-cup-slot-placement.md](./slice-g-ops3-b1-cup-slot-placement.md) |
 
 ---
 
