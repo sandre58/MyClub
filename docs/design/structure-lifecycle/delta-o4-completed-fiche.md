@@ -205,7 +205,7 @@ Environnement : DevRunner `PlayUpDev` aligné Host · Host `http://localhost:528
 
 | ID | Sujet | Suite |
 |----|--------|--------|
-| **C-18** | Hub expose `RenameStage` en Completed | Dette capacité ; alignement hub **après** Δ-O4-1 UI crayon |
+| **C-18** | Hub expose `RenameStage` en Completed | Dette capacité — audit [c-18-rename-stage-completed-audit.md](./c-18-rename-stage-completed-audit.md) ; arbitrage serveur avant impl. |
 | **C-20** | Standing mutable domaine en Ready | Inchangé |
 
 ---
