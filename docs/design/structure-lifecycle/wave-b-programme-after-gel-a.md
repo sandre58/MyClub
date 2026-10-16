@@ -1,6 +1,6 @@
 # Programme B — après recette gel A (2026-10-16)
 
-**Contexte** — Gel **A** (capacité D4 / présentation lifecycle) clôturé. **B** = lignes §12 **Deferred** / **Partial** et slices §11C — **pas** d’implémentation sans **slice §11C.4** ou réouverture d’arbitrage explicite.
+**Contexte** — Gel **A** clôturé. Programme B : slices §11C.4 **un par un** — voir [programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md).
 
 ---
 
@@ -9,9 +9,17 @@
 | ID | Statut |
 |----|--------|
 | **G-B-3** / **SLICE-1-G-B-3-ENF** | **Closed** — pool `EntryId` + Applied draw |
-| **G-OPS3** | **Partial** — affectation pool seulement ; [wave-2-g-b-3-g-ops3-closure.md](./wave-2-g-b-3-g-ops3-closure.md) |
-| **G-MAT3 / G-MAT4** | **Deferred** — décision signée « pas de gate » |
-| **C-ENF-*** | **Forbidden** hors slice nommé |
+
+---
+
+## Arbitrage 2026-10-16 (non = livré)
+
+| ID | Statut gouvernance | Notes |
+|----|-------------------|--------|
+| **G-B-1** / **SLICE-2-G-B-1-ENF** | **Authorized** — pas **Closed** | B-Q3a ; diff local non commité |
+| **G-OPS3** reliquat qual/prog / **SLICE-3** | **Authorized** — **G-OPS3** §12 **Partial** | Gate qual/prog ; pas Done |
+| **C-ENF-Detect / Apply / Mat-Start** | **Pending** | Pas d’autorisation ; **aucun commit** C-ENF |
+| **G-MAT3 / G-MAT4** | **Deferred** | Inchangé |
 
 ---
 
@@ -19,37 +27,32 @@
 
 ```mermaid
 flowchart LR
-  P2[G-B-1-ENF]
-  P3a[C-ENF-Detect]
-  P3b[C-ENF-Apply]
-  OPS3[G-OPS3 reliquat]
-  P2 --> P3a
-  P3a --> P3b
+  P2[SLICE-2 G-B-1]
+  P3[SLICE-3 G-OPS3 qual/prog]
+  D[C-ENF Detect]
+  A[C-ENF Apply]
+  MS[C-ENF Mat-Start]
+  P2 --> P3
+  D --> A
+  D --> MS
 ```
 
-| Priorité | Backlog | Livrable cible | Bloquant |
-|----------|---------|----------------|----------|
-| **P2** | **G-B-1-ENF** | ≤1 tirage non annulé / phase (B-Q3a) | **Nouveau slice §11C.4** + fiche type [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) |
-| **P3a** | **C-ENF-Detect** | Prédicat obsolete **D** + surfacing | Slice dédié ; Layer 4 addendum |
-| **P3b–d** | **C-ENF-Apply / Mat / Deps** | Refus consommation obsolete | Dépend de Detect (ou même slice si DM l’autorise explicitement) |
-| **—** | **G-OPS3** (qual/prog, obsolete) | Extension R-Draw1 | Arbitrage D3-2 / piste **C** — distinct de G-B-3 |
-| **—** | **G-MAT3/4** | Gates materialize conditionnels | **Réouverture** session arbitrage — pas par défaut |
-| **—** | **D1 awards** | Cas limites attribution Prêt | Arbitrage produit |
+| Priorité | Backlog | Slice | Statut |
+|----------|---------|-------|--------|
+| **P2** | **G-B-1-ENF** | [slice-2](./slice-2-g-b-1-enf.md) | **Authorized** |
+| **P2b** | **G-OPS3** qual/prog | [slice-3](./slice-3-g-ops3-qual-prog-enf.md) | **Authorized** ; G-OPS3 **Partial** |
+| **P3a** | **C-ENF-Detect** | [slice-c-enf-detect](./slice-c-enf-detect.md) | **Pending** |
+| **P3b** | **C-ENF-Apply** | [slice-c-enf-apply](./slice-c-enf-apply.md) | **Pending** |
+| **P3c** | **C-ENF-Mat + Start** | [slice-c-enf-mat-start](./slice-c-enf-mat-start.md) | **Pending** |
 
 ---
 
-## Prochain slice proposé : **G-B-1-ENF** (à autoriser)
+## Working tree (proposition technique — non ratifiée en bloc)
 
-**Problème** — Domaine autorise plusieurs tirages non annulés ; contrat B-Q3a = **≤1** par phase.
-
-**Périmètre slice (ébauche, non autorisé)** — Refus `CreateDraw` (et chemins équivalents) quand un tirage non `Cancelled` existe déjà ; tests référence B-Q3a ; **pas** de bundle avec C-ENF.
-
-**Hors scope** — UI seule ; concurrency globale (sauf limite documentée comme G-B-3).
-
-**Décision requise** — Enregistrer **SLICE-2-G-B-1-ENF** (ou ID DM) dans matrice §11C.4 + Notion avant tout code.
+Code local non commité sur `feature/new_version`. **Seuls** les lots **Authorized** (SLICE-2, SLICE-3) sont candidats aux premiers commits après audit Release. Le code C-ENF reste **en attente** de ratification slice par slice.
 
 ---
 
 ## Références
 
-[implementation-plan-post-11c.md](./implementation-plan-post-11c.md) · [phase-mutability-matrix.md](./phase-mutability-matrix.md) §12 · [section-11c-addendum-clarification-arbitration.md](./section-11c-addendum-clarification-arbitration.md).
+[programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md) · [implementation-plan-post-11c.md](./implementation-plan-post-11c.md) · [phase-mutability-matrix.md](./phase-mutability-matrix.md) §11C.4 · §12

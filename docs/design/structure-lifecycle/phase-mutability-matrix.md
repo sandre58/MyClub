@@ -397,16 +397,20 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 - [x] E4: Confirm **B** not reopened
 - [x] **First implementation slice:** **SLICE-1-G-B-3-ENF** (2026-10-15) — `G-B-3-ENF` only
 
-#### 11C.4 First slice record
+#### 11C.4 Slice records
 
-| Field | Value |
-|-------|--------|
-| **Slice ID** | **SLICE-1-G-B-3-ENF** |
-| **Allowed backlog IDs** | **G-B-3-ENF** only |
-| **Out of scope** | **G-B-1-ENF**, all **C-ENF-*** |
-| **Fiche** | [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) |
-| **Known risk** | Cross-request concurrency — partial guarantee; see fiche §4 |
-| **Date / signatory** | 2026-10-15 — DM authorization (post Phase A fiche review) |
+| Slice ID | Backlog | Status | Fiche |
+|----------|---------|--------|-------|
+| **SLICE-1-G-B-3-ENF** | G-B-3-ENF only | **Closed** (2026-10-15) | [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) |
+| **SLICE-2-G-B-1-ENF** | G-B-1-ENF only (B-Q3a) | **Authorized** (2026-10-16) — not Closed until verified commit | [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) |
+| **SLICE-3-G-OPS3-QUAL-PROG-ENF** | G-OPS3 reliquat qual/prog | **Authorized** (2026-10-16) — **G-OPS3** §12 stays **Partial** | [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) |
+| **SLICE-C-ENF-DETECT** | C-ENF-Detect | **Pending** — no implementation commit | [slice-c-enf-detect.md](./slice-c-enf-detect.md) |
+| **SLICE-C-ENF-APPLY** | C-ENF-Apply | **Pending** | [slice-c-enf-apply.md](./slice-c-enf-apply.md) |
+| **SLICE-C-ENF-MAT-START** | C-ENF-Mat + C-ENF-Deps (Start path) | **Pending** | [slice-c-enf-mat-start.md](./slice-c-enf-mat-start.md) |
+
+**Arbitration SoT (2026-10-16):** [programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md).
+
+**SLICE-1** — Known risk: cross-request concurrency (fiche §4).
 
 **§11C full sign (Git):** 2026-10-15 — matrix §9.1.1, §10, §12 rows per [E5 proposal](./section-11c-e5-matrix-diff-proposal.md).
 
@@ -426,8 +430,8 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **G-MAT4** | Materialize `SourcePopulationShortfall` | Block **only if** extraction required for production | Not gated; `MaterializationFailure` on target roster | Low | **Deferred** | [decision](./g-mat4-arbitration-session.md); M4b + analyzer tests |
 | **G-OPS1** | Ready operational mutations | Allow without production (D2) on qual/prog/affectation replace | Shipped | **Major** | **Done** | [g-ops](./g-ops-ready-operational-mutations-and-d1.md); D2 tests |
 | **G-OPS2** | D1 upstream feed guard | Block on **feed effect** (rules or source population) | Shipped | **Major** | **Done** | `StructureReadyConsumerFeedGate`; SPA consumer names |
-| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | Pool replace gate shipped (**G-B-3**); other commands unchanged | Medium | **Partial** | [decision](./g-ops3-arbitration-session.md); R-Draw1+, **R-Draw1-N2**; **D3-1**. **Not** obsolete-first path (**C** separate). |
-| **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | Domain allows multiple; SPA partial | Medium | **Deferred** | Delivery: **G-B-1-ENF** — not authorized until slice §11C.4 |
+| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | **G-B-3** pool gate **Done**; qual/prog Applied gate **SLICE-3 Authorized** (working tree, not committed); draw-rules / autres commandes hors périmètre | Medium | **Partial** | [decision](./g-ops3-arbitration-session.md); [slice-3](./slice-3-g-ops3-qual-prog-enf.md). **Not** **Done**. **C** separate. |
+| **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | **SLICE-2 Authorized** — domain guard in working tree (not committed); SPA partial | Medium | **Deferred** | **Not Done** until SLICE-2 verified + commit; [slice-2](./slice-2-g-b-1-enf.md) |
 | **G-B-3** | Refuse pool membership change with Applied draw | G-B-3 / G-OPS3; **R-Draw1+** | `StructureAppliedDrawPoolChangeGate` on affectation replace | Medium | **Done** | **SLICE-1-G-B-3-ENF**; distinct from **C**; N2 preserved |
-| **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | No unified obsolete predicate | Medium | **Deferred** | Delivery: **C-ENF-Detect**, **Apply**, **Mat**, **Deps** — one backlog ID per slice |
+| **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | Prototype gates in **uncommitted** tree — **not authorized** ([C-ENF slices](./slice-c-enf-detect.md) **Pending**) | Medium | **Deferred** | **SLICE-C-ENF-*** Pending; no C-ENF commit until Authorized per slice |
 | **G-SWISS** | Generic production guard | Must not break Swiss progressive | Swiss APIs separate today | — | **Constraint** | §8 capability grid; no global guard |
