@@ -9,6 +9,7 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [phase-mutability-matrix.md](./phase-mutability-matrix.md) | Exhaustive inventory (diagnostics + `UseCaseExecutor.Stages` commands), current vs target policy, reference cases, open arbitrations |
 | [ctrl-o3-mat-devrunner-recette.md](./ctrl-o3-mat-devrunner-recette.md) | **CTRL-O3-MAT** gate — DevRunner `ctrl-o3-mat-recette` + automated read/SPA assertions (Suspended / production UI); includes **Δ-drawer-1** drawer recette |
 | [cup-materialize-recette-protocol.md](./cup-materialize-recette-protocol.md) | **Cup materialize** — `CupMaterializeRecetteProtocolTests` + SPA checklist (R6–R8, jauge copy); DevRunner `structure-materialize-recette` / `cup-qf-sf` |
+| [r7-schematic-case-primary-arbitration.md](./r7-schematic-case-primary-arbitration.md) | **R7 Accepted** — schematic case primary: resolved participant; Qual/Prog path in tooltip |
 | [p3-composition-band-visibility-matrix-v0.md](./p3-composition-band-visibility-matrix-v0.md) | **P3 draft v0** — contextual Composition band visibility (lifecycle + population state); no implementation |
 | [p3-composition-band-recette-u1-s1-s3.md](./p3-composition-band-recette-u1-s1-s3.md) | **P3 recette** — manual U1 / dual projection worksheet (S1–S3); gate before matrix validation |
 | [delta-03-hub-p1-fiche.md](./delta-03-hub-p1-fiche.md) | **Δ-03** closed — hub P1 draw rules Draft-only in Ready (C-19 / B-Q1b); manual recette + tests |
