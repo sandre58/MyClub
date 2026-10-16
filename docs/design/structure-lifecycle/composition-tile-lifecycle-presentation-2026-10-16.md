@@ -24,7 +24,7 @@ Presentation may change with phase status **without** changing server authorizat
 | Zone | Draft / Ready | Running / Suspended | Completed |
 |------|---------------|---------------------|-----------|
 | **Qualifiés** | Configure + resolve inbound feeds | Read + track entrants (resolved / placed / unresolved) | Historical consult |
-| **Équipes** | Affectation authoring pool + population gauge (work) | **Engaged runtime pool** (see §5.1) + gauge as **state**, not prep checklist | Final engaged state when available (§5.1) |
+| **Équipes** | Affectation authoring pool + **Entrées** gauge vs Places N (work) | **Engaged runtime pool** (see §5.1) + **Résolues** gauge (inbound seats when present, else pool vs Places N) | Final engaged state + **Résolues** gauge when total > 0 |
 | **Affectation des places** (Places + Tirage strip) | Full operational strip (work zone) | **Compact operational summary** + path to detail | Final state consult |
 
 ### Rules

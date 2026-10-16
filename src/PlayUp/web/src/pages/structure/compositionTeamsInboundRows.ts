@@ -142,6 +142,34 @@ export function compositionTeamRowsResolutionStats(
   return { resolved, total: rows.length };
 }
 
+/** Exploitation / historical composition band — always « Résolues » when total > 0. */
+export function resolveCompositionResolvedGaugeStats(
+  mode: CompositionTileMode,
+  teamRows: CompositionTeamRow[] | null | undefined,
+  engagedPoolFallback: { resolved: number; capacity: number } | null,
+): { resolved: number; total: number } | null {
+  if (mode === 'prep') {
+    return null;
+  }
+  const fromInbound = compositionTeamRowsResolutionStats(teamRows);
+  if (fromInbound != null && fromInbound.total > 0) {
+    return fromInbound;
+  }
+  if (
+    engagedPoolFallback != null &&
+    engagedPoolFallback.capacity > 0
+  ) {
+    return {
+      resolved: Math.min(
+        engagedPoolFallback.resolved,
+        engagedPoolFallback.capacity,
+      ),
+      total: engagedPoolFallback.capacity,
+    };
+  }
+  return null;
+}
+
 export function hasCompositionTeamsInboundMerge(
   mode: CompositionTileMode,
   groups: readonly CompositionQualifierFeedGroup[],

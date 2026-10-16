@@ -114,7 +114,7 @@ import { compositionQualifierFeedGroups } from './structureCompositionQualifierF
 import {
   hasCompositionTeamsInboundMerge,
   inboundEntryProvenanceByEntryId,
-  compositionTeamRowsResolutionStats,
+  resolveCompositionResolvedGaugeStats,
   listCompositionTeamRows,
 } from './compositionTeamsInboundRows';
 import { CompositionQualifiersResolvedMeta } from './CompositionQualifiersResolvedMeta';
@@ -928,33 +928,41 @@ export function StructurePhaseFiche({
     showCompositionContentEmpty && !showAffectationSection;
   const showPopulationColumn =
     showTeamsSection || showCompositionContentEmpty;
-  const inboundTeamResolutionStats =
-    compositionTeamRowsResolutionStats(compositionTeamRows);
-  const showCompositionInboundResolvedGauge =
-    mergeInboundIntoTeams &&
-    inboundTeamResolutionStats != null &&
-    inboundTeamResolutionStats.total > 0;
-  const showCompositionPopulationGauge =
-    !mergeInboundIntoTeams &&
-    placesN != null &&
-    placesN > 0 &&
-    (showQualifiersSection || showTeamsSection || showCompositionContentEmpty) &&
-    !(isCompletedStage && showPlacementBlock && compositionPrepActions);
-  const sharedCompositionPopulationGauge =
-    showCompositionPopulationGauge &&
-    showQualifiersSection &&
-    showTeamsSection;
   const populationMeterCurrent = resolveCompositionPopulationGaugeCurrent(
     compositionTileMode,
     stage,
     expectedPopulationOccupancy(data, stage),
   );
+  const compositionResolvedGaugeStats = resolveCompositionResolvedGaugeStats(
+    compositionTileMode,
+    compositionTeamRows,
+    placesN != null && placesN > 0
+      ? { resolved: populationMeterCurrent, capacity: placesN }
+      : null,
+  );
+  const gaugeSectionVisible =
+    showQualifiersSection || showTeamsSection || showCompositionContentEmpty;
+  const showCompositionInboundResolvedGauge =
+    compositionResolvedGaugeStats != null &&
+    compositionResolvedGaugeStats.total > 0 &&
+    gaugeSectionVisible &&
+    !(isCompletedStage && showPlacementBlock && compositionPrepActions);
+  const showCompositionPopulationGauge =
+    compositionTileMode === 'prep' &&
+    placesN != null &&
+    placesN > 0 &&
+    gaugeSectionVisible &&
+    !(isCompletedStage && showPlacementBlock && compositionPrepActions);
+  const sharedCompositionPopulationGauge =
+    showCompositionPopulationGauge &&
+    showQualifiersSection &&
+    showTeamsSection;
   const stageDiagnosticContext = structureDiagnosticContextFromStage(data, stage);
   const compositionInboundResolvedGaugeFooter = showCompositionInboundResolvedGauge
     ? (
         <CompositionInboundResolvedGauge
-          resolved={inboundTeamResolutionStats!.resolved}
-          total={inboundTeamResolutionStats!.total}
+          resolved={compositionResolvedGaugeStats!.resolved}
+          total={compositionResolvedGaugeStats!.total}
           mode={compositionTileMode}
         />
       )

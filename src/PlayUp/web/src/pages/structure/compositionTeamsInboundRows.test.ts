@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   listCompositionTeamRows,
   provenanceLabelsForQualifierRule,
+  resolveCompositionResolvedGaugeStats,
 } from './compositionTeamsInboundRows';
 import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
 import type { StructureStageHubSummary } from '../../types';
@@ -53,5 +54,70 @@ describe('compositionTeamsInboundRows', () => {
     expect(rows).toHaveLength(2);
     expect(rows?.[0].kind).toBe('resolved');
     expect(rows?.[1].kind).toBe('unresolved');
+  });
+
+  it('resolveCompositionResolvedGaugeStats prefers inbound rows in exploitation', () => {
+    const rows = listCompositionTeamRows(
+      'exploitation',
+      {
+        status: 'Running',
+        compositionEntryIds: ['e1'],
+        compositionEntryCount: 1,
+        formatKind: 'Groups',
+      } as StructureStageHubSummary,
+      [{ entryId: 'e1', displayName: 'Alpha', status: 'Active' }],
+      [
+        {
+          peerId: 'src',
+          peerName: 'Poules',
+          peerOrder: 0,
+          volume: 1,
+          rules: [
+            {
+              key: 'q',
+              volume: 1,
+              badge: '1er',
+              badgeTone: 'accent',
+              context: null,
+              family: 'place',
+              sortPrimary: 1,
+              sortSecondary: '1',
+              qualPathOrder: 1,
+              hubSeats: [
+                {
+                  entryId: 'e1',
+                  teamName: 'Alpha',
+                  placed: false,
+                  resolved: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      null,
+    );
+    expect(
+      resolveCompositionResolvedGaugeStats('exploitation', rows, {
+        resolved: 99,
+        capacity: 8,
+      }),
+    ).toEqual({ resolved: 1, total: 1 });
+  });
+
+  it('resolveCompositionResolvedGaugeStats uses engaged pool vs places when no inbound rows', () => {
+    expect(
+      resolveCompositionResolvedGaugeStats('exploitation', null, {
+        resolved: 6,
+        capacity: 8,
+      }),
+    ).toEqual({ resolved: 6, total: 8 });
+    expect(resolveCompositionResolvedGaugeStats('prep', null, null)).toBeNull();
+    expect(
+      resolveCompositionResolvedGaugeStats('historical', null, {
+        resolved: 8,
+        capacity: 8,
+      }),
+    ).toEqual({ resolved: 8, total: 8 });
   });
 });
