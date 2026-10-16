@@ -102,9 +102,9 @@ Aucun autre écran web ne consomme `RenameStage` pour l’instant (grep codebase
 | Règle | Cible recommandée (phase Completed) | Statut arbitrage |
 |-------|--------------------------------------|------------------|
 | **R1 — Phase `Completed`** | Refus domaine/API ; hub **sans** `RenameStage` | **Recommandation H1** — à confirmer au **go C-18** |
-| **R2 — Compétition `Completed` / `Archived`** | Refus si le produit considère que la clôture compétition **fige toutes les phases** (y compris phase non `Completed`) | **Ouvert** — l’audit constate le cas ; ne suffit pas à trancher seul |
+| **R2 — Compétition `Completed` / `Archived`** | **Refus rename uniquement via R1** (statut phase) — pas de gel additionnel au niveau compétition | **Arbitré 2026-10-16** — seul `Stage.Completed` bloque ; phase `Running`/`Ready` sous compétition clôturée : rename **autorisé** (hub/API/domaine alignés sur le statut phase) |
 
-**Arbitrage R2 encore requis** — Exemple : compétition archivée avec une phase encore `Running` / `Ready` : rename autorisé ou refusé ? Tant que R2 n’est pas tranché, **pas de go implémentation C-18** (même si R1 est acquise).
+**R2** — Une compétition `Completed`/`Archived` ne doit **pas** à elle seule retirer `RenameStage` du hub pour une phase non `Completed` (ex. multi-phase partiellement terminée). Le hub actuel qui renvoie `[RenameStage]` seul pour toute compétition clôturée (L716–718) devra être **resserré** sous C-18 : projection selon **statut de phase**, pas seulement statut compétition.
 
 **Détails techniques si H1 validé** (à préciser à l’impl.) :
 
@@ -135,4 +135,4 @@ Aucun autre écran web ne consomme `RenameStage` pour l’instant (grep codebase
 ## Clôture audit / suite
 
 - **Livrable audit** — constats + options (commit `c067a40e`).
-- **Implémentation** — **bloquée** jusqu’à : (1) arbitrage **R2** compétition clôturée ; (2) **go C-18** explicite confirmant H1 + R1 (+ R2).
+- **Implémentation** — **bloquée** jusqu’au **go C-18** explicite (H1 + R1 + R2 arbitrés 2026-10-16).
