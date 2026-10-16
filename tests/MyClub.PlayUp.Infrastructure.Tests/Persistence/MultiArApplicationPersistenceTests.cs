@@ -51,6 +51,7 @@ public sealed class MultiArApplicationPersistenceTests(PostgresFixture fixture)
             var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
             stage.AddSlot("S1");
             stage.AddSlot("S2");
+            stage.ReplaceAffectationAuthoring([entryA, entryB], _clock);
             var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
             stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entryA, entryB]));
             stage.RecordDrawResolution(

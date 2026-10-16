@@ -240,6 +240,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         stage.SeedEntryRoundBracketPairs();
         var entryA = EntryId.New();
         var entryB = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entryA, entryB], _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entryA, entryB]));
         stage.RecordDrawResolution(

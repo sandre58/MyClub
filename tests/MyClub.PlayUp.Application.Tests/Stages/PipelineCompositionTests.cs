@@ -72,6 +72,7 @@ public sealed class PipelineCompositionTests
                 new SlotDrawPlacement(pool[1], "SF1-B")
             ]),
             _clock);
+        DrawTestPoolSync.EnsureEffectivePool(sf, pool, _clock);
         sf.PublishDraw(draw.Id, _clock);
 
         ApplyDraw.Execute(sf, draw.Id, _clock);
@@ -92,6 +93,7 @@ public sealed class PipelineCompositionTests
         var home = EntryId.New();
         var away = EntryId.New();
 
+        DrawTestPoolSync.EnsureEffectivePool(stage, [home, away], _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([home, away]));
         stage.RecordDrawResolution(
@@ -209,6 +211,7 @@ public sealed class PipelineCompositionTests
         var b = EntryId.New();
         var c = EntryId.New();
         var d = EntryId.New();
+        DrawTestPoolSync.EnsureEffectivePool(groups, [a, b, c, d], _clock);
         var draw = groups.CreateDraw(DrawResolutionKind.Group, _clock);
         groups.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([a, b, c, d]));
         groups.RecordDrawResolution(
@@ -320,6 +323,7 @@ public sealed class PipelineCompositionTests
                 new SlotDrawPlacement(pool[1], "SF1-B")
             ]),
             _clock);
+        DrawTestPoolSync.EnsureEffectivePool(sf, pool, _clock);
         sf.PublishDraw(drawSf.Id, _clock);
         ApplyDraw.Execute(sf, drawSf.Id, _clock);
 
@@ -337,6 +341,7 @@ public sealed class PipelineCompositionTests
         EntryId[] pool,
         IReadOnlyList<SlotDrawPlacement> placements)
     {
+        DrawTestPoolSync.EnsureEffectivePool(stage, pool, _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot(pool));
         stage.RecordDrawResolution(draw.Id, DrawResolution.ResolvedSlots(placements), _clock);

@@ -1050,6 +1050,7 @@ public sealed class UseCaseExecutorTests
         var scenario = CreateDraftChampionshipOnCompetition();
         scenario.Stage.AddSlot("A");
         var entry = EntryId.New();
+        scenario.Stage.ReplaceAffectationAuthoring([entry], _clock);
         var draw = scenario.Stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         scenario.Stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         scenario.Stage.RecordDrawResolution(
@@ -1065,6 +1066,7 @@ public sealed class UseCaseExecutorTests
         var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
         stage.AddSlot("A");
         var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(

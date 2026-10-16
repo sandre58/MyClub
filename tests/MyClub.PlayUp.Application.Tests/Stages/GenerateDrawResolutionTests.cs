@@ -268,6 +268,7 @@ public sealed class GenerateDrawResolutionTests
             seed: 11);
 
         generated.IsResolved.Should().BeTrue();
+        DrawTestPoolSync.EnsureEffectivePool(stage, entries, _clock);
         stage.PublishDraw(draw.Id, _clock);
 
         var applied = ApplyDraw.Execute(stage, draw.Id, _clock);

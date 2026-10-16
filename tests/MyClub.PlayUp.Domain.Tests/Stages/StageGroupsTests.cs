@@ -71,14 +71,15 @@ public sealed class StageGroupsTests
     }
 
     [Fact]
-    public void AssignEntryToGroup_in_Ready_is_rejected()
+    public void AssignEntryToGroup_in_Ready_is_allowed()
     {
         var stage = CreateReadyPoules();
         var group = stage.Groups[0];
+        var entryId = EntryId.New();
 
-        var act = () => stage.AssignEntryToGroup(group.Id, EntryId.New());
+        stage.AssignEntryToGroup(group.Id, entryId);
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        group.EntryIds.Should().Contain(entryId);
         stage.Status.Should().Be(StageStatus.Ready);
     }
 

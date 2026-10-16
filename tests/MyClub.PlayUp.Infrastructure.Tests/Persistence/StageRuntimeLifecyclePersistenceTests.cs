@@ -99,6 +99,7 @@ public sealed class StageRuntimeLifecyclePersistenceTests(PostgresFixture fixtur
             var noSolution = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
             stage.ConfigureDrawInputs(noSolution.Id, DrawInputs.ForSlot([entry]));
             stage.MarkDrawNoSolution(noSolution.Id, _clock);
+            stage.CancelDraw(noSolution.Id, _clock);
 
             var cancelled = stage.CreateDraw(DrawResolutionKind.Group, _clock);
             stage.CancelDraw(cancelled.Id, _clock);

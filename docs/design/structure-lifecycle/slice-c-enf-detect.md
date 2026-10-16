@@ -42,7 +42,7 @@ Detect **identifies** draw resolution drift **before consumption**. It does **no
 
 ### Effective pool
 
-**Intersection** of current affectation authoring `EntryId` set and current composition `EntryId` set. Membership in only one side is **not** sufficient.
+**Intersection** of current affectation authoring `EntryId` set and current composition `EntryId` set when affectation is non-empty. When affectation is **empty**, the effective pool is the composition set (runtime population from Qual/Prog without duplicate authoring). Membership in only one side is **not** sufficient once affectation is authored.
 
 ### Other product rules
 

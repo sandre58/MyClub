@@ -300,6 +300,11 @@ public sealed class TestCompetition
                 $"Slot draw pool count ({pool.Count}) must match slot key count ({slotKeys.Count}).");
         }
 
+        if (pool.Count > 0)
+        {
+            stage.ReplaceAffectationAuthoring([.. pool], Clock);
+        }
+
         var draw = drawId is { } id
             ? stage.CreateDraw(DrawResolutionKind.Slot, id, Clock)
             : stage.CreateDraw(DrawResolutionKind.Slot, Clock);

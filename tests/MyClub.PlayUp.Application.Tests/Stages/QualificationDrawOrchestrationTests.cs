@@ -73,6 +73,7 @@ public sealed class QualificationDrawOrchestrationTests
                 new SlotDrawPlacement(pool[2], "SF2-B")
             ]),
             _clock);
+        DrawTestPoolSync.EnsureEffectivePool(knockout, pool, _clock);
         knockout.PublishDraw(draw.Id, _clock);
 
         var result = ApplyDraw.Execute(knockout, draw.Id, _clock);

@@ -101,6 +101,11 @@ public static class DrawConsumptionConformance
     {
         var affectation = stage.AffectationAuthoring.Select(entry => entry.EntryId).ToHashSet();
         var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+        if (affectation.Count == 0)
+        {
+            return composition;
+        }
+
         affectation.IntersectWith(composition);
         return affectation;
     }

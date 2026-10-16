@@ -139,6 +139,7 @@ public sealed class MechanismBoundaryTests
                 new SlotDrawPlacement(pool[1], "SF1-B")
             ]),
             _clock);
+        DrawTestPoolSync.EnsureEffectivePool(knockout, pool, _clock);
         knockout.PublishDraw(draw.Id, _clock);
         ApplyDraw.Execute(knockout, draw.Id, _clock);
 

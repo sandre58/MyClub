@@ -34,6 +34,40 @@ public sealed class DrawConsumptionConformanceTests
     }
 
     [Fact]
+    public void Published_resolved_with_composition_only_when_affectation_empty_is_not_obsolete()
+    {
+        var competition = CreateCompetition.Execute("composition-only", _clock);
+        var ids = Enumerable.Range(0, 2)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Cup(2),
+            _clock).Stage;
+        stage.AddSlot("A");
+        stage.AddSlot("B");
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.AddResolvedPopulationEntry(ids[0], _clock);
+        stage.AddResolvedPopulationEntry(ids[1], _clock);
+        stage.AffectationAuthoring.Should().BeEmpty();
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ConfigureDrawInputs.Execute(stage, draw.Id, DrawInputs.ForSlot(ids));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(ids[0], "A"),
+                new SlotDrawPlacement(ids[1], "B"),
+            ]),
+            _clock);
+        PublishDraw.Execute(stage, draw.Id, _clock);
+
+        DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage).Should().BeFalse();
+    }
+
+    [Fact]
     public void Published_resolved_when_inputs_pool_and_resolution_align_is_not_obsolete()
     {
         var (stage, drawId, _) = CreateGroupStageWithPublishedDraw();
