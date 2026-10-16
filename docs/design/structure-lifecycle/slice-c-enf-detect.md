@@ -66,19 +66,35 @@ Downstream slices (Apply, Mat-Start) must call the **same** `IsObsoleteForConsum
 
 ## Required tests (Release) before **Closed**
 
-| # | Scenario | Expected |
-|---|----------|----------|
-| 1 | Published + Resolved, not Applied; allowed pool shrink makes resolution incompatible | `true` |
-| 2 | Resolved entry ∉ `Inputs.Entries` | `true` |
-| 3 | Fixed slot or group removed from stage | `true` |
-| 4 | Empty effective pool, non-empty resolution | `true` |
-| 5 | Same `EntryId` set, reorder only | `false` |
-| 6 | Applied draw | `false` |
-| 7 | Non-consumable states (Draft, Cancelled, NoSolution, Published not Resolved) | `false` |
-| 8 | Overview DTO matches predicate for representative cases | exact |
-| 9 | Dedicated test project run in **Release** | pass |
+| # | Scenario | Expected | Application test (integration) |
+|---|----------|----------|--------------------------------|
+| 1 | Published + Resolved, not Applied; allowed pool shrink makes resolution incompatible | `true` | `Published_resolved_draw_obsolete_when_effective_pool_shrinks_after_allowed_mutation` |
+| 2 | Resolved entry ∉ `Inputs.Entries` (product rule) | `true` at read | **Domain proof:** [`RecordResolution_rejects_entry_outside_pool`](../../../tests/MyClub.PlayUp.Domain.Tests/Stages/StageDrawTests.cs). **Read:** defensive loop in predicate; **not** a separate integration test — Published+Resolved+missing input is **not constructible** via `PublishDraw` / `RecordDrawResolution`. **Happy path:** `Published_resolved_when_inputs_pool_and_resolution_align_is_not_obsolete`. |
+| 3 | Fixed slot or group removed from stage | `true` | `Removed_fixed_slot_reference_is_obsolete` |
+| 4 | Empty effective pool, non-empty resolution | `true` | `Empty_effective_pool_with_resolved_entries_is_obsolete` |
+| 5 | Same `EntryId` set, reorder only | `false` | `Same_entry_set_reordered_in_affectation_is_not_obsolete` |
+| 6 | Applied draw | `false` | `Applied_draw_is_not_obsolete` |
+| 7 | Non-consumable states (Draft, Cancelled, NoSolution) | `false` | `Draft_draw_*`, `Cancelled_draw_*`, `NoSolution_draw_*`, `Resolved_draft_draw_*` |
+| 7b | **Published** ∧ resolution **not** `Resolved` | `false` | **Not integration-tested** — see § Test constructibility below |
+| 8 | Overview DTO matches predicate for representative cases | exact | `Assemble_draw_obsolete_flag_matches_IsObsoleteForConsumption_predicate` |
+| 9 | Dedicated test project run in **Release** | pass | Filter `DrawConsumptionConformanceTests` + overview obsolete test |
 
 G-B-3 refuse-mutation coverage stays in **GOps3 / affectation** suites — not substituted as Detect proof.
+
+### Test constructibility (no reflection tests in Detect)
+
+**A — `resolution ⊆ Inputs.Entries`**
+
+- **Product rule (unchanged):** any resolved entry not listed in `Draw.Inputs.Entries` ⇒ obsolete for consumption when the predicate runs on Published + Resolved + not Applied.
+- **Domain:** inconsistent resolution vs inputs is **rejected at record** (`StageDrawTests.RecordResolution_rejects_entry_outside_pool`); `Publish()` also requires non-null inputs and `Resolution == Resolved`.
+- **Detect slice:** keep the defensive check in `IsObsoleteForConsumption`; prove alignment with `Published_resolved_when_inputs_pool_and_resolution_align_is_not_obsolete` and pool/structure drift tests. **Do not** use reflection to simulate corrupt Published draws.
+
+**B — `Published` ∧ not `Resolved`**
+
+- **Product rule:** predicate returns `false` (not yet consumable).
+- **Domain:** `Draw.Publish()` requires `Resolution.State == Resolved`, so **Published + not Resolved** is **not reachable** through `PublishDraw`.
+- **`Resolved_draft_draw_is_not_obsolete`** exercises **Draft** + Resolved (early exit on status), **not** this branch.
+- **Detect slice:** document the unreachable combination; **no** reflection test and **no** extra helper extracted solely for branch coverage.
 
 ---
 
@@ -93,19 +109,6 @@ G-B-3 refuse-mutation coverage stays in **GOps3 / affectation** suites — not s
 
 ---
 
-## Prototype local vs contract (pre-implementation)
+## Out-of-scope WIP (stash)
 
-Uncommitted `DrawConsumptionConformance` is a **technical draft**, not ratified. Align or replace before the Detect commit:
-
-| Topic | Contract | Local prototype (working tree) |
-|-------|----------|--------------------------------|
-| Effective pool | **Intersection** affectation ∩ composition | **Union** (concat sets); skips W-pool when `pool.Count == 0` |
-| Published, not Resolved | `false` | `true` when `Resolution.State != Resolved` |
-| NoSolution | `false` | Treated like non-Resolved → `true` |
-| W-rules | Excluded | Not implemented (aligned) |
-| Applied exclusion | `false` | Aligned |
-| Fixed slot/group removal | Obsolete | Aligned |
-| Resolution ∉ `Inputs.Entries` | Obsolete | Aligned (resolution vs inputs) |
-| Apply / Mat / Start gates | Out of slice | Present in local tree — **must not** ship in Detect commit |
-
-**Next implementation step:** adjust predicate + tests to contract, commit **Detect only**, leave Apply/Mat-Start WIP uncommitted until separately authorized.
+Apply / Mat / Start gates and `DrawObsoleteForConsumption` wiring live in **`git stash`** `c-enf-apply-mat-gates-wip` and `.c-enf-gates-wip/` — **must not** ship in the Detect commit.

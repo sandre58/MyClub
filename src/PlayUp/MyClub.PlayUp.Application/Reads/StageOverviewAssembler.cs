@@ -100,7 +100,8 @@ public static class StageOverviewAssembler
                 resolution.State,
                 slotPlacements,
                 groupPlacements,
-                IsApplied: false);
+                IsApplied: false,
+                IsObsoleteForConsumption: DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage));
         }
 
         slotPlacements =
@@ -147,6 +148,7 @@ public static class StageOverviewAssembler
             resolution.State,
             slotPlacements,
             groupPlacements,
-            DrawAppliedState.IsApplied(draw, stage));
+            DrawAppliedState.IsApplied(draw, stage),
+            DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage));
     }
 }

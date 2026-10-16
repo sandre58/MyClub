@@ -70,6 +70,8 @@ export interface StageDraw {
   groupPlacements?: StageDrawGroupPlacement[];
   /** Server-derived occupancy (DrawAppliedState). Prefer over local heuristics. */
   isApplied?: boolean;
+  /** C-ENF-Detect — resolution obsolete for Apply / Materialize consumption. */
+  isObsoleteForConsumption?: boolean;
 }
 
 export interface StageGroupOverview {

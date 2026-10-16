@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
@@ -177,5 +178,48 @@ public sealed class StageOverviewAssemblerTests
         overview.Slots.Single(slot => slot.SlotKey == "SF1-B").CoveredByCompleteFixture.Should().BeTrue();
         overview.Slots.Single(slot => slot.SlotKey == "SF2-A").CoveredByCompleteFixture.Should().BeFalse();
         overview.Slots.Single(slot => slot.SlotKey == "SF2-B").CoveredByCompleteFixture.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Assemble_draw_obsolete_flag_matches_IsObsoleteForConsumption_predicate()
+    {
+        var competition = CreateCompetition.Execute("overview-obsolete", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(g => g.Id)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+
+        var before = StageOverviewAssembler.Assemble(stage, competition);
+        var domainDraw = stage.GetDraw(draw.Id);
+        before.Draws[0].IsObsoleteForConsumption.Should()
+            .Be(DrawConsumptionConformance.IsObsoleteForConsumption(domainDraw, stage));
+
+        stage.ReplaceAffectationAuthoring([ids[0], ids[1], ids[2]], _clock);
+
+        var after = StageOverviewAssembler.Assemble(stage, competition);
+        after.Draws[0].IsObsoleteForConsumption.Should().BeTrue();
+        after.Draws[0].IsObsoleteForConsumption.Should()
+            .Be(DrawConsumptionConformance.IsObsoleteForConsumption(domainDraw, stage));
     }
 }
