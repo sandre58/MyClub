@@ -1,6 +1,6 @@
 # O-04 — Fiche Terminée (`Completed`) — cadrage Δ-O4-1 / Δ-O4-2
 
-**Status:** **O-04 livré en SPA** (2026-10-16) — **Δ-O4-2** `ec45ed60` · **Δ-O4-1** `68d0f50a` sur `feature/new_version_alt`. C-18 / domaine inchangés.
+**Status:** **O-04 validé** (2026-10-16) — SPA livré (**Δ-O4-2** `ec45ed60` · **Δ-O4-1** `68d0f50a`) ; recette comparative Championnat **OK** (deux passes DevRunner). **C-18** / domaine inchangés — prochain chantier distinct.
 
 **Décision produit (gelée)** — Notion [Matrice UI Structure — § O-04 / Δ-O4](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) (2026-10-15) : phase **Terminée** = lecture seule **allégée** ; pas d’édition construction / production / sorties / awards / réglement ; **nom non modifiable en UI** ; état final tirage / places **consultable** sans signaux d’action opérationnelle.
 
@@ -164,12 +164,40 @@ Checklist **Running** vs **Completed** (même scénario championship, progress d
 | Liste équipes / schéma / matchs | inchangé | inchangé |
 | CTAs strip placement/tirage | exploitation | lecture seule (Δ-O4-2) |
 
-**Recette session 2026-10-16** — Reset paire `championship:running,championship:finished` **échoue** (duplicate `PK_competitions`) ; recette manuelle = **deux resets séquentiels** (checklist ci-dessus). Complément optionnel : `cup:finished` pour jauges composition en KO terminé.
+**Procédure DevRunner** — Un seul `--reset` avec `championship:running,championship:finished` **échoue** (duplicate `PK_competitions`) ; utiliser **deux resets séquentiels** (même `competitionId` / `stageId` déterministes).
+
+### Recette comparative exécutée (2026-10-16)
+
+Environnement : DevRunner `PlayUpDev` aligné Host · Host `http://localhost:5287` · SPA Vite (port local variable). Identifiants stables (seed workspace `42`) :
+
+| Clé | Valeur |
+|-----|--------|
+| Compétition | `d81b6474-eea6-5569-9b3a-9ff55dc119f5` (`Championnat généré`) |
+| Phase | `045f6dd3-a0de-5a04-b3e4-85d05cc91bad` (`Championnat`) |
+| URL fiche | `/competitions/{competitionId}/structure?stage={stageId}` |
+
+| Passe | Commande | Statut API | Résultat visuel (checklist) |
+|-------|----------|------------|-----------------------------|
+| **Running** | `--reset --scenarios championship:running` | `Running` | **OK** — bouton **Rename phase** ; lifecycle (Complete / Suspend / Cancel start) ; **Edit standings** ; **8 équipes** listées ; strip Places + **View matches** |
+| **Completed** | `--reset --scenarios championship:finished` | `Completed` | **OK** — **pas** de Rename phase ; **pas** de lifecycle ni Edit standings ; **8 équipes** inchangées ; Places + consultation matchs / réglement ; pas de CTAs exploitation strip (Δ-O4-2) |
+
+**Verdict recette comparative** — **2/2 OK** sur Championnat. Densité Δ-O4-1 observable surtout via header/strip (pas de jauge population redondante sous composition quand le bloc placement est affiché). Complément optionnel non rejoué : `cup:finished` (jauges composition KO terminé).
 
 ### Clôture tranche Δ-O4-1
 
 - Commit dédié code + cette fiche ; Notion registre **Δ-O4-1** (Closed + SHA).
 - `README.md` lifecycle mis à jour (O-04 SPA livré).
+
+---
+
+## Validation globale O-04 (2026-10-16)
+
+| Tranche | Tests | Recette manuelle | Verdict |
+|---------|-------|------------------|---------|
+| **Δ-O4-2** | Strip **27/27** | Matrice multi-scénarios **4/5** (réserve scénario 2 — seed) | **Closed** |
+| **Δ-O4-1** | Ciblés **41/41** | Comparative Championnat **2/2** | **Closed** |
+
+**O-04** — Pas de réouverture en l’absence d’anomalie constatée en recette. **C-18** — alignement hub/API `RenameStage` en `Completed` : audit contrat et décision serveur **hors** périmètre O-04 SPA.
 
 ---
 
