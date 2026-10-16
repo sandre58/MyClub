@@ -226,7 +226,7 @@ describe('PhaseSchematic', () => {
     expect(screen.queryByText(/Match #/)).toBeNull();
   });
 
-  it('cup Qual/Prog feed stays primary; resolved team is not shown (U4 B1)', () => {
+  it('cup Qual/Prog shows resolved participant primary; path in tooltip (R7)', () => {
     const { container } = render(
       <PhaseSchematic
         schematic={cupSchematic({
@@ -240,19 +240,22 @@ describe('PhaseSchematic', () => {
                 sourceStageName: 'Demi-finales',
               },
               entry: { entryId: 'e1', displayName: 'FC Nice' },
-              assignment: { entryId: 'e1', displayName: 'FC Nice' },
+              assignment: {
+                entryId: 'e1',
+                displayName: 'FC Nice',
+                logoMediaId: 'logo-nice',
+              },
             },
           ],
         })}
       />,
     );
-    expect(screen.getByText(/Vainqueur · Match #2/)).toBeInTheDocument();
     expect(
       container.querySelector('.schematic-slot__primary')?.textContent,
-    ).toBe('Vainqueur · Match #2');
-    expect(container.querySelector('.schematic-slot__crest')).toBeNull();
+    ).toBe('FC Nice');
+    expect(container.querySelector('.schematic-slot__crest')).toBeTruthy();
     expect(container.querySelector('.schematic-slot__secondary')).toBeNull();
-    expect(container.querySelector('.schematic-slot-tip')).toBeTruthy();
+    expect(screen.queryByText(/Vainqueur · Match #2/)).toBeNull();
     expect(container.querySelector('.ds-tooltip-trigger')).toBeTruthy();
   });
 
@@ -385,11 +388,12 @@ describe('PhaseSchematic', () => {
     });
   });
 
-  it('buildSchematicCaseTooltipModel stacks path primary / team secondary / from-phase', () => {
+  it('buildSchematicCaseTooltipModel Qual/Prog resolved: path in tip, team on case (R7)', () => {
     const model = buildSchematicCaseTooltipModel({
       address: '1·A',
-      primary: 'Vainqueur · Match #2',
+      primary: 'FC Nice',
       resolvedName: 'FC Nice',
+      constructionPathLabel: 'Vainqueur · Match #2',
       feed: {
         kind: 'Progression',
         sourceStageName: 'Demi-finales',
@@ -409,11 +413,7 @@ describe('PhaseSchematic', () => {
     expect(model).toEqual({
       address: '1·A',
       subject: { kind: 'label', name: 'Vainqueur · Match #2' },
-      resolvedTeam: {
-        name: 'FC Nice',
-        logoMediaId: 'logo-1',
-        primaryColor: '#123',
-      },
+      resolvedTeam: null,
       origin: {
         kind: 'from',
         lead: 'Vient de',

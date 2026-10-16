@@ -21,7 +21,8 @@ export type SchematicCaseTooltipModel = {
     primaryColor?: string | null;
   } | null;
   /**
-   * Qual/Prog only: resolved occupant when known (secondary — tip-only, never case).
+   * Legacy Qual/Prog tip row when case primary was the path (pre-R7). Unused when R7
+   * shows the participant on the case and the path in the tip subject.
    */
   resolvedTeam: {
     name: string;
@@ -41,13 +42,13 @@ export type SchematicCaseTooltipModel = {
 };
 
 /**
- * Case tooltip model — Structure decision A:
- * case = address + construction; tip adds resolution + provenance when useful.
+ * Case tooltip model — R7: participant on case when resolved; Qual/Prog path in tip.
  */
 export function buildSchematicCaseTooltipModel({
   address,
   primary,
   resolvedName,
+  constructionPathLabel = null,
   feed,
   crest,
   canManualPlace = false,
@@ -56,6 +57,8 @@ export function buildSchematicCaseTooltipModel({
   address: string | null;
   primary: string | null;
   resolvedName: string | null;
+  /** Qual/Prog feed path label — independent of case primary after R7. */
+  constructionPathLabel?: string | null;
   feed?: SchematicFeedOrigin | null;
   crest?: {
     logoMediaId?: string | null;
@@ -74,21 +77,16 @@ export function buildSchematicCaseTooltipModel({
   let subject: SchematicCaseTooltipModel['subject'] = null;
   let resolvedTeam: SchematicCaseTooltipModel['resolvedTeam'] = null;
 
+  const pathLabel = constructionPathLabel?.trim() || null;
+
   if (isStructuralFeed) {
-    // Path is primary; resolved team is tip-only secondary when distinct.
-    if (label) {
+    if (teamName && pathLabel) {
+      // R7 — case shows team; tip carries construction path (+ from-phase footer).
+      subject = { kind: 'label', name: pathLabel };
+    } else if (pathLabel) {
+      subject = { kind: 'label', name: pathLabel };
+    } else if (label) {
       subject = { kind: 'label', name: label };
-    }
-    if (teamName && teamName !== label) {
-      resolvedTeam = {
-        name: teamName,
-        ...(crest
-          ? {
-              logoMediaId: crest.logoMediaId,
-              primaryColor: crest.primaryColor,
-            }
-          : {}),
-      };
     }
   } else if (teamName) {
     subject = {

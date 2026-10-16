@@ -68,9 +68,7 @@ Conclusive only if all three align:
 
 ### R7 — P1 (resolved participant vs primary label)
 
-Open `cup-qf-sf` → **Demi-finale**. Schematic primary shows progression path (e.g. “Winner of P1 · Match #1”), not team name on the case; teams appear in Qualified rail / tooltip policy ([phaseSchematic.tsx](../../../src/PlayUp/web/src/pages/structure/phaseSchematic.tsx) U4 B1).
-
-**Product arbitration required** before changing presentation: identity primary when resolved vs provenance always primary.
+Open `cup-qf-sf` → **Demi-finale**. Case primary = **resolved team**; Qual/Prog path in **tooltip** ([R7](./r7-schematic-case-primary-arbitration.md) **Accepted**).
 
 ### Jauge — copy
 

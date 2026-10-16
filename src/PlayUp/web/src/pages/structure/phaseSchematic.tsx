@@ -135,12 +135,19 @@ function SlotBox({
     .filter(Boolean)
     .join(' ');
 
+  const constructionPathLabel =
+    c?.feedOrigin?.kind === 'Qualification' ||
+    c?.feedOrigin?.kind === 'Progression'
+      ? feedOriginLabel(c.feedOrigin, t)
+      : null;
+
   const tip =
     !ghost && c
       ? buildSchematicCaseTooltip({
           address,
           primary,
           resolvedName,
+          constructionPathLabel,
           feed: c.feedOrigin,
           crest: c.assignment
             ? {
@@ -160,7 +167,7 @@ function SlotBox({
     ? { width: '100%', height: '100%', minHeight: 0 }
     : undefined;
 
-  // Crest only with a real team name — never beside a Qual/Prog path label.
+  // Crest when case primary is the resolved participant (R7, Draw, Direct).
   const showTeamCrest = !!resolvedName && !!primary && primary === resolvedName;
   const showSlotCrest = density === 'full' && showTeamCrest;
   const slotInner = (
@@ -1241,9 +1248,8 @@ function orderLeafCases(
 }
 
 /**
- * Structure projection (decision A / U4 B1 amended):
- * case = address + construction only (2 lines). Qual/Prog → path primary;
- * resolved team is tip-only. Draw / Direct → occupant is the case primary.
+ * Structure projection (R7 accepted): resolved participant is case primary for all feeds.
+ * Qual/Prog path stays on the case only when unresolved; provenance in tooltip when resolved.
  */
 function structureCaseLabels(
   c: SchematicCase,
@@ -1274,7 +1280,10 @@ function structureCaseLabels(
     return { primary: feedOriginLabel(feed, t), secondary: null };
   }
 
-  // Qualification / Progression — structural construction feeds (U4 B1: no resolved team).
+  // Qualification / Progression — occupant primary when resolved (R7).
+  if (occupant) {
+    return { primary: occupant, secondary: null };
+  }
   return {
     primary: feedOriginLabel(feed, t),
     secondary: null,
