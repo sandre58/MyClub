@@ -12,7 +12,7 @@
 |-------|----------|----------------|
 | **G-B-1-ENF** | Ratifier **uniquement** B-Q3a (≤1 tirage non annulé ; refus `CreateDraw` si autre tirage non `Cancelled`). | **SLICE-2-G-B-1-ENF** — **Authorized** ; **pas Closed** avant vérification conformité + commits dédiés. |
 | **G-OPS3 qual/prog** | Ratifier le refus de changement des règles **qualification / progression** lorsqu’un tirage est **Applied** (même entrées logiques que G-B-3 : mutation refusée, pas obsolescence C). | **SLICE-3-G-OPS3-QUAL-PROG-ENF** — **Authorized** ; **G-OPS3** reste **Partial** §12. |
-| **C-ENF** | Bundle interdit. Detect **Closed** (`279b6235`). Apply **Closed** (`85360d3`). Mat-Start **Pending** (autorisation après clôture Apply — **faite** côté Apply). | Voir § C-ENF ; Mat-Start : prochaine autorisation DM. |
+| **C-ENF** | Bundle interdit. Detect + Apply **Closed**. Mat-Start **Authorized** (2026-10-16) — pas **Closed** avant livraison + parité lecture. | Voir § C-ENF Mat-Start ; **G-C-INV** **Deferred** jusqu’à clôture Mat-Start. |
 
 ---
 
@@ -22,7 +22,7 @@
 |----------|---------|-----------------|--------|
 | **SLICE-C-ENF-DETECT** | **C-ENF-Detect** (G-C-1) | Prédicat `IsObsoleteForConsumption` (W-inputs, W-pool ; W-rules **exclu**) + lecture DTO/SPA uniquement. | **Closed** (2026-10-16) — `279b6235` · [fiche](./slice-c-enf-detect.md) |
 | **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage cible obsolète (prédicat Detect) ; wire 409 + i18n. | **Closed** (2026-10-16) — `85360d3` · [fiche](./slice-c-enf-apply.md) |
-| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** + **Start** ; **parité lecture/commande** hubs. | **Pending** — autorisation **après** clôture Apply · [fiche](./slice-c-enf-mat-start.md) |
+| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** (2 commandes) + **Start** ; parité lecture Materialize/Start. | **Authorized** (2026-10-16) — **pas Closed** · [fiche](./slice-c-enf-mat-start.md) |
 
 **WIP non ratifié** — Stash `c-enf-apply-mat-gates-wip` + `.c-enf-gates-wip/` : prototype mixte Apply/Mat/Start ; reprise **ciblée** seulement après fiche **Authorized** (Apply : oui ; Mat-Start : non).
 
@@ -45,6 +45,20 @@
 | 5 | **Gouvernance** | Fiches + §11C.4 **Authorized** avant reprise WIP ; jamais **Closed** sans commit dédié |
 
 **Réserve Apply :** contrôle au bon moment sur l’état courant — pas de faux blocage d’un tirage encore consommable.
+
+### Arbitrage C-ENF Mat-Start (2026-10-16)
+
+| # | Sujet | Décision |
+|---|--------|----------|
+| 1 | **Autorisation** | **Authorized** après clôture Apply — implémentation distincte, pas de bundle |
+| 2 | **Materialize** | `EnsureNoObsoleteDrawsOnStage` sur `MaterializeMatches` + `MaterializeCupFromOccupiedSlots` |
+| 3 | **Start** | Blocage commande + **`TryGetDisabledReasonCode`** aligné |
+| 4 | **Parité lecture** | `StructureMaterializeAssembler` + hub Start — codes disabled existants ; pas de drawer |
+| 5 | **Tests** | Domain/Application/Host + assemblers ; R-Inv-1 jambes Mat/Start ; **R-Mat-block** |
+| 6 | **WIP** | Reprise **sélective** du stash — **pas** `stash pop` global |
+| 7 | **G-C-INV** | **Done** seulement après **Closed** Mat-Start + preuves parité + §12 ; sinon **Deferred** |
+
+**Hors périmètre :** prédicat Detect, W-rules, Apply, drawer diagnostics.
 
 ---
 

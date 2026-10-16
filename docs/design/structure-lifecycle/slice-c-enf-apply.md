@@ -102,4 +102,4 @@ Predicate matrix: [slice-c-enf-detect.md](./slice-c-enf-detect.md) § Required t
 
 ## Sequencing
 
-**SLICE-C-ENF-APPLY** **Closed**. **SLICE-C-ENF-MAT-START** remains **Pending** — governance **Authorized** only after DM step; no Mat/Start `stash pop` until then.
+**SLICE-C-ENF-APPLY** **Closed**. **SLICE-C-ENF-MAT-START** is **Authorized** (2026-10-16) — implementation separate; selective stash reuse only.
