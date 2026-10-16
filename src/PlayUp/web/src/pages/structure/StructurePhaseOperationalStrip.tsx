@@ -84,7 +84,9 @@ import {
   StripOperationalMessage,
   type StripOperationalMessageKind,
 } from './structureOperationalStripUi';
-import {Link} from "react-router-dom";
+import { Link } from 'react-router-dom';
+import type { PlacesStripLayout } from './compositionTilePresentation';
+import { shouldShowCompositionPrepActions } from './compositionTilePresentation';
 
 const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
 const secondaryBtn = 'ds-btn ds-btn--secondary ds-btn--sm';
@@ -244,6 +246,7 @@ export function StructurePhaseOperationalStrip({
   structureHubBackgroundRefresh = false,
   drawApplied,
   layoutVariant = 'composition',
+  placesStripLayout = 'full',
 }: {
   placement: StructurePlacementOperationalSectionProps | null;
   showPlaces: boolean;
@@ -257,6 +260,7 @@ export function StructurePhaseOperationalStrip({
   structureHubBackgroundRefresh?: boolean;
   drawApplied: boolean;
   layoutVariant?: StructureOperationalStripLayoutVariant;
+  placesStripLayout?: PlacesStripLayout;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
@@ -416,6 +420,7 @@ export function StructurePhaseOperationalStrip({
       <div
         className="structure-operational-strip"
         data-layout-variant={layoutVariant}
+        data-places-strip-layout={compositionStack ? placesStripLayout : undefined}
         data-section-count={visibleSections.length}
         aria-busy={structureHubBackgroundRefresh || undefined}
         style={
@@ -743,9 +748,13 @@ function DrawColumn(
   let body: ReactNode;
 
   const readOnlyCompletedFinal = props.stageStatus === 'Completed';
+  const compositionExploitation =
+    props.compositionLayout &&
+    !shouldShowCompositionPrepActions(props.compositionTileMode ?? 'prep');
 
   const showDrawReadinessChecklist =
     props.compositionLayout &&
+    shouldShowCompositionPrepActions(props.compositionTileMode ?? 'prep') &&
     drawEngaged &&
     !props.drawApplied &&
     (props.stageStatus === 'Ready' || props.canEditDraw) &&
@@ -756,7 +765,22 @@ function DrawColumn(
     <StructureDrawReadinessChecklist items={props.drawReadinessChecklist!} />
   ) : null;
 
-  if (readOnlyCompletedFinal && drawEngaged) {
+  if (compositionExploitation && drawEngaged) {
+    body = (
+      <div className="structure-operational-strip__composition-draw">
+        {props.drawApplied ? (
+          <StripOperationalMessage kind="success">
+            {t('fiche.operational.draw.appliedMessage')}
+          </StripOperationalMessage>
+        ) : null}
+        {compositionLaunchButton(
+          t('fiche.viewDrawWorkflow'),
+          props.onOpenDrawWorkflow,
+          { variant: 'secondary' },
+        )}
+      </div>
+    );
+  } else if (readOnlyCompletedFinal && drawEngaged) {
     if (props.drawApplied) {
       body = props.compositionLayout ? (
         <div className="structure-operational-strip__composition-draw">

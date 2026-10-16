@@ -236,3 +236,4 @@ function stagePeerOrder(data: StructureView, stageId: string): number {
   const index = data.stages.findIndex((s) => s.stageId === stageId);
   return index >= 0 ? index : Number.MAX_SAFE_INTEGER;
 }
+

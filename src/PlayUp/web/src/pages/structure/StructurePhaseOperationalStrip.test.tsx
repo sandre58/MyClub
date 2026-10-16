@@ -114,6 +114,9 @@ function renderStrip(
     layoutVariant?: ComponentProps<
       typeof StructurePhaseOperationalStrip
     >['layoutVariant'];
+    placesStripLayout?: ComponentProps<
+      typeof StructurePhaseOperationalStrip
+    >['placesStripLayout'];
   } = {},
 ) {
   const stage = overrides.stage ?? baseStage;
@@ -134,6 +137,7 @@ function renderStrip(
     drawApplied: overrides.drawApplied ?? false,
     structureHubBackgroundRefresh: overrides.structureHubBackgroundRefresh ?? false,
     layoutVariant: overrides.layoutVariant,
+    placesStripLayout: overrides.placesStripLayout,
     competitionId,
     competitionStatus,
     stage,
@@ -262,6 +266,36 @@ describe('StructurePhaseOperationalStrip', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Lancer le tirage/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('composition exploitation draw shows view workflow only', () => {
+    renderStrip({
+      layoutVariant: 'composition',
+      showPlaces: false,
+      stage: { ...baseStage, status: 'Running' },
+      placement: {
+        ...basePlacement,
+        stageStatus: 'Running',
+        compositionTileMode: 'exploitation',
+        canManualPlace: false,
+        canEditDraw: false,
+        drawReadinessChecklist: [
+          { id: 'teamsFillPlaces' as const, met: false, current: 4, capacity: 8 },
+        ],
+      },
+    });
+
+    expect(
+      screen.queryByRole('button', { name: /Lancer le tirage/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('list', {
+        name: /Prérequis pour effectuer le tirage/i,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Voir le tirage/i }),
     ).toBeInTheDocument();
   });
 

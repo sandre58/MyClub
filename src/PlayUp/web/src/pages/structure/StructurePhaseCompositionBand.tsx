@@ -27,6 +27,11 @@ import type { CompositionQualifierFeedGroup } from './structureCompositionQualif
 import type { EntryPlaceProjection } from './structureEntryPlacementProjection';
 import type { StructurePlacementOperationalSectionProps } from './structurePlacementOperationalProps';
 import type { MaterializePresentation } from './structureMaterializeCopy';
+import type {
+  CompositionTileMode,
+  PlacesStripLayout,
+} from './compositionTilePresentation';
+import { shouldShowCompositionPrepActions } from './compositionTilePresentation';
 
 export type StructurePhaseCompositionBandProps = {
   showCompositionBandEmpty: boolean;
@@ -49,7 +54,10 @@ export type StructurePhaseCompositionBandProps = {
   showTeamsSection: boolean;
   showCompositionContentEmpty: boolean;
   showPopulationColumn: boolean;
-  showAffectationSection: boolean;
+  showPlaceAssignmentSection: boolean;
+  showCompositionDrawSection: boolean;
+  entryProvenanceByEntryId: ReadonlyMap<string, import('./compositionTeamsInboundRows').CompositionTeamProvenance>;
+  compositionTeamRows: import('./compositionTeamsInboundRows').CompositionTeamRow[] | null;
   canCompose: boolean;
   teamsComposeActionLabel: string;
   compactIcon: string;
@@ -68,6 +76,8 @@ export type StructurePhaseCompositionBandProps = {
   structureStages: readonly StructureStageHubSummary[];
   materializePresentation: MaterializePresentation | null;
   stageHasAppliedDraw: boolean;
+  compositionTileMode: CompositionTileMode;
+  placesStripLayout: PlacesStripLayout;
 };
 
 export function StructurePhaseCompositionBand({
@@ -91,7 +101,10 @@ export function StructurePhaseCompositionBand({
   showTeamsSection,
   showCompositionContentEmpty,
   showPopulationColumn,
-  showAffectationSection,
+  showPlaceAssignmentSection,
+  showCompositionDrawSection,
+  entryProvenanceByEntryId,
+  compositionTeamRows,
   canCompose,
   teamsComposeActionLabel,
   compactIcon,
@@ -110,9 +123,11 @@ export function StructurePhaseCompositionBand({
   structureStages,
   materializePresentation,
   stageHasAppliedDraw,
+  compositionTileMode,
+  placesStripLayout,
 }: StructurePhaseCompositionBandProps) {
   const { t } = useTranslation('structure');
-
+  const compositionPrep = shouldShowCompositionPrepActions(compositionTileMode);
   if (showCompositionBandEmpty) {
     return (
       <EmptyState
@@ -143,7 +158,9 @@ export function StructurePhaseCompositionBand({
             aside={qualifiersResolvedEyebrow}
             metaVariant="count"
             actions={
-              !showTeamsSection ? compositionComposeToolbar : undefined
+              compositionPrep && !showTeamsSection
+                ? compositionComposeToolbar
+                : undefined
             }
           />
           <CompositionQualifiersPanel
@@ -166,7 +183,9 @@ export function StructurePhaseCompositionBand({
       ) : null}
 
       {showQualifiersSection &&
-      (showPopulationColumn || showAffectationSection) ? (
+      (showPopulationColumn ||
+        showPlaceAssignmentSection ||
+        showCompositionDrawSection) ? (
         <GradientSeparator
           orientation="responsive"
           className="structure-phase-composition__sep structure-phase-composition__sep--population"
@@ -187,7 +206,7 @@ export function StructurePhaseCompositionBand({
             iconRefreshing={structureHubBackgroundRefresh}
             title={t('population.sectionAffectation')}
             actions={
-              canCompose ? (
+              compositionPrep && canCompose ? (
                 <Tooltip content={teamsComposeActionLabel}>
                   <button
                     type="button"
@@ -215,6 +234,9 @@ export function StructurePhaseCompositionBand({
             entryPlaceProjections={entryPlaceProjections}
             schematicReady={schematicReady}
             sourcesConfiguredVolume={populationFeedVolume}
+            compositionTileMode={compositionTileMode}
+            entryProvenanceByEntryId={entryProvenanceByEntryId}
+            compositionTeamRows={compositionTeamRows}
           />
           {compositionPopulationGaugeFooter &&
           showTeamsSection &&
@@ -246,14 +268,15 @@ export function StructurePhaseCompositionBand({
         </section>
       ) : null}
 
-      {showPopulationColumn && showAffectationSection ? (
+      {showPopulationColumn &&
+      (showPlaceAssignmentSection || showCompositionDrawSection) ? (
         <GradientSeparator
           orientation="responsive"
           className="structure-phase-composition__sep structure-phase-composition__sep--before-affectation"
         />
       ) : null}
 
-      {showAffectationSection ? (
+      {showPlaceAssignmentSection ? (
         <section
           className="structure-phase-composition__section structure-phase-composition__section--affectation"
           aria-labelledby="composition-place-assignment-heading"
@@ -273,9 +296,39 @@ export function StructurePhaseCompositionBand({
             >
               <StructurePhaseOperationalStrip
                 layoutVariant="composition"
+                placesStripLayout={placesStripLayout}
                 placement={placementOperationalProps}
                 showPlaces={showPlacementBlock}
                 showDraw={showDrawCta || showActivateDrawCta}
+                competitionId={competitionId}
+                competitionStatus={competitionStatus}
+                stage={stage}
+                structureStages={structureStages}
+                presentation={materializePresentation}
+                structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+                drawApplied={stageHasAppliedDraw}
+              />
+            </section>
+          </div>
+        </section>
+      ) : null}
+
+      {showCompositionDrawSection ? (
+        <section
+          className="structure-phase-composition__section structure-phase-composition__section--composition-draw"
+          aria-label={t('fiche.operational.cluster.draw')}
+        >
+          <div className="structure-phase-operational-bar">
+            <section
+              className="structure-fiche-section structure-fiche-section--operational"
+              aria-label={t('fiche.operational.cluster.draw')}
+            >
+              <StructurePhaseOperationalStrip
+                layoutVariant="composition"
+                placesStripLayout="full"
+                placement={placementOperationalProps}
+                showPlaces={false}
+                showDraw={true}
                 competitionId={competitionId}
                 competitionStatus={competitionStatus}
                 stage={stage}

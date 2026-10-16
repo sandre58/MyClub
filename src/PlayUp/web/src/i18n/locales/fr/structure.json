@@ -750,7 +750,11 @@
       "populationFinalShortfall_other": "{{count}} entrées en dessous des places de la phase (état final).",
       "populationFinalSurplus_one": "{{count}} entrée au-delà des places de la phase (état final).",
       "populationFinalSurplus_other": "{{count}} entrées au-delà des places de la phase (état final).",
-      "populationAria": "{{current}} entrées sur {{capacity}} places de la phase"
+      "populationAria": "{{current}} entrées sur {{capacity}} places de la phase",
+      "inboundAllResolved": "Toutes les équipes sont résolues.",
+      "inboundUnresolved_one": "{{count}} équipe n’est pas encore résolue.",
+      "inboundUnresolved_other": "{{count}} équipes ne sont pas encore résolues.",
+      "inboundResolvedAria": "{{resolved}} équipes résolues sur {{total}}"
     },
     "qualifiers": {
       "viewPhase": "Voir la phase",
@@ -775,7 +779,20 @@
     "noLongerEligible": "Plus éligible",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
-    "toastUpdated": "Équipes mises à jour"
+    "toastUpdated": "Équipes mises à jour",
+    "tile": {
+      "engagedPoolSubtitle": "Pool engagé",
+      "engagedPoolUndeterminedTitle": "Pool engagé indéterminé",
+      "engagedPoolUndeterminedBody": "La composition en exploitation n’est pas disponible via le hub structure pour cette phase. L’affectation auteur n’est pas affichée comme pool actif.",
+      "engagedPoolEmpty": "Aucune équipe dans le pool engagé.",
+      "authoringPoolContrast": "Affectation auteur : {{count}}",
+      "strip": {
+        "drawNotApplied": "Tirage non appliqué.",
+        "drawHistoricalApplied": "Tirage appliqué (état final).",
+        "drawHistoricalNotApplied": "Tirage non appliqué (état final).",
+        "drawHistoricalUnavailable": "Pas de tirage pour cette phase (état final)."
+      }
+    }
   },
   "progression": {
     "title": "Progression — {{phase}}",

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compositionQualifierFeedGroups } from './structureCompositionQualifierFeeds';
+import { inboundEntryProvenanceByEntryId } from './compositionTeamsInboundRows';
 import type { StructureView } from '../../types';
 
 describe('compositionQualifierFeedGroups', () => {
@@ -63,5 +64,28 @@ describe('compositionQualifierFeedGroups', () => {
     expect(groups[0].rules[0].context).toContain('Poule A');
     expect(groups[0].rules[1].context).toContain('Poule B');
     expect(groups[0].rules[0].hubSeats?.[0]?.placed).toBe(true);
+
+    const inboundWithEntry = {
+      ...inbound,
+      rules: [
+        {
+          ...inbound.rules[0],
+          seats: [{ entryId: 'entry-a', displayName: 'Team A', placed: true }],
+        },
+      ],
+    };
+    const groupsWithEntry = compositionQualifierFeedGroups({
+      data,
+      inbound: inboundWithEntry,
+      t: (key, opts) =>
+        key === 'fiche.rule.contextGroup'
+          ? `Poule ${opts?.group}`
+          : key,
+      intentFallbackGroups: [],
+    });
+    const provenance = inboundEntryProvenanceByEntryId(groupsWithEntry);
+    expect(provenance.get('entry-a')?.full).toContain('Phase de groupes');
+    expect(provenance.get('entry-a')?.full).toContain('Poule A');
+    expect(provenance.get('entry-a')?.badge.length).toBeGreaterThan(0);
   });
 });

@@ -1,6 +1,7 @@
 // Population (Équipes) rail — affectation list + cardinality meter.
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Chip } from '../../design-system/components/Chip';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   EmptySelectionIcon,
@@ -31,11 +32,32 @@ import {
   isDraftLikeStageStatus,
   isSuspendedStageStatus,
 } from './structureOperationalMeterPresentation';
+import {
+  listEngagedCompositionEntries,
+  resolveEngagedPoolResolution,
+  type CompositionTileMode,
+} from './compositionTilePresentation';
+import type {
+  CompositionTeamProvenance,
+  CompositionTeamRow,
+} from './compositionTeamsInboundRows';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
 const EMPTY_ENTRY_IDS: string[] = [];
+
+function compositionTeamProvenanceBadge(
+  provenance: CompositionTeamProvenance,
+): ReactNode {
+  return (
+    <Tooltip content={provenance.full}>
+      <Chip tone="soft" className="structure-entries__team-provenance-badge">
+        {provenance.badge}
+      </Chip>
+    </Tooltip>
+  );
+}
 
 export function listComposedAffectationEntries(
   stage: StructureStageHubSummary,
@@ -186,6 +208,9 @@ export function RootEntriesRail({
   placedEntryIds,
   entryPlaceProjections,
   schematicReady = false,
+  compositionTileMode = 'prep',
+  entryProvenanceByEntryId,
+  compositionTeamRows = null,
 }: {
   stage: StructureStageHubSummary;
   entries: readonly StructureEntry[];
@@ -200,19 +225,32 @@ export function RootEntriesRail({
   placedEntryIds?: ReadonlySet<string>;
   entryPlaceProjections?: ReadonlyMap<string, EntryPlaceProjection>;
   schematicReady?: boolean;
+  compositionTileMode?: CompositionTileMode;
+  entryProvenanceByEntryId?: ReadonlyMap<string, CompositionTeamProvenance>;
+  compositionTeamRows?: CompositionTeamRow[] | null;
 }) {
   const { t } = useTranslation('structure');
   const fromAffectation = stage.affectationEntryCount ?? 0;
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
-  const ineligible = stage.affectationIneligibleCount ?? 0;
-  const previewNames = stage.affectationPreviewNames ?? [];
+  const runtimeMode = compositionTileMode !== 'prep';
+  const ineligible = runtimeMode
+    ? (stage.compositionIneligibleCount ?? 0)
+    : (stage.affectationIneligibleCount ?? 0);
+  const previewNames = runtimeMode
+    ? (stage.compositionPreviewNames ?? [])
+    : (stage.affectationPreviewNames ?? []);
   // U1 — Population gauge always covers authoring alimentations (never runtime membership).
   const meterEntries = fromAffectation + fromFeeds;
   const composed = useMemo(
-    () => listComposedAffectationEntries(stage, entries),
-    [stage, entries],
+    () =>
+      runtimeMode
+        ? listEngagedCompositionEntries(stage, entries)
+        : listComposedAffectationEntries(stage, entries),
+    [stage, entries, runtimeMode],
   );
+  const engagedPoolUndetermined =
+    runtimeMode && resolveEngagedPoolResolution(stage).kind === 'undetermined';
   const perEntryPlacement = showPerEntryPlacement(formatKind ?? stage.formatKind);
   const placedIds = placedEntryIds ?? new Set<string>();
 
@@ -262,18 +300,28 @@ export function RootEntriesRail({
     .filter(Boolean)
     .join(' ');
 
-  const renderTeamCell = (entry: StructureEntry) => {
-    const placed = isEntryPlacedInPhase(
-      entry.entryId,
-      placedIds,
-      formatKind ?? stage.formatKind,
-      schematicReady,
-    );
+  const showPlacementChrome =
+    variant !== 'composition-band' && perEntryPlacement;
+
+  const renderTeamCell = (
+    entry: StructureEntry,
+    provenance?: CompositionTeamProvenance | null,
+  ) => {
+    const placed = showPlacementChrome
+      ? isEntryPlacedInPhase(
+          entry.entryId,
+          placedIds,
+          formatKind ?? stage.formatKind,
+          schematicReady,
+        )
+      : false;
     const showUnplacedOpacity =
-      perEntryPlacement &&
+      showPlacementChrome &&
       schematicReady &&
       entry.status === 'Active' &&
       !placed;
+    const provenanceLabel =
+      provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
     const projection = entryPlaceProjections?.get(entry.entryId);
     const placeLabel = primaryPlaceLabel(projection);
     const placedTooltip =
@@ -290,7 +338,7 @@ export function RootEntriesRail({
           unplaced: showUnplacedOpacity,
         })}
         aria-label={
-          perEntryPlacement && schematicReady && entry.status === 'Active'
+          showPlacementChrome && schematicReady && entry.status === 'Active'
             ? placed
               ? t('entries.entryPlacedAria', { name: entry.displayName })
               : t('entries.entryNotPlacedAria', { name: entry.displayName })
@@ -307,25 +355,56 @@ export function RootEntriesRail({
           placedTooltip={
             placedTooltip ?? (placed ? t('entries.entryPlacedStatus') : null)
           }
+          trailing={
+            provenanceLabel
+              ? compositionTeamProvenanceBadge(provenanceLabel)
+              : undefined
+          }
         />
       </li>
     );
   };
 
   if (variant === 'composition-band') {
+    const bandStateClass = runtimeMode ? null : danger ? 'structure-entries--danger' : warn ? 'structure-entries--warn' : soft ? 'structure-entries--soft' : null;
     return (
       <div
         className={[
           'structure-entries',
           'structure-entries--composition-band',
-          danger ? 'structure-entries--danger' : null,
-          warn ? 'structure-entries--warn' : null,
-          soft ? 'structure-entries--soft' : null,
+          runtimeMode ? 'structure-entries--engaged-pool' : null,
+          bandStateClass,
         ]
           .filter(Boolean)
           .join(' ')}
       >
-        {composed.length > 0 ? (
+        {compositionTeamRows && compositionTeamRows.length > 0 ? (
+          <ul className={teamListClass}>
+            {compositionTeamRows.map((row) =>
+              row.kind === 'unresolved' ? (
+                <li key={row.key} className="structure-entries__team">
+                  <EntryCell
+                    displayName=""
+                    pending
+                    pendingLabel={t('composition.qualifiers.unresolved')}
+                    trailing={compositionTeamProvenanceBadge(row.provenance)}
+                  />
+                </li>
+              ) : (
+                renderTeamCell(row.entry, row.provenance)
+              ),
+            )}
+          </ul>
+        ) : engagedPoolUndetermined ? (
+          <EmptyState variant="idle" icon={<EmptySelectionIcon size="lg" />}>
+            <p className="structure-entries__engaged-undetermined-title">
+              {t('composition.tile.engagedPoolUndeterminedTitle')}
+            </p>
+            <p className="structure-entries__engaged-undetermined-body">
+              {t('composition.tile.engagedPoolUndeterminedBody')}
+            </p>
+          </EmptyState>
+        ) : composed.length > 0 ? (
           <ul className={teamListClass}>
             {composed.map((entry) => renderTeamCell(entry))}
           </ul>
@@ -342,7 +421,9 @@ export function RootEntriesRail({
             variant="idle"
             icon={<EmptySelectionIcon size="lg" />}
           >
-            {t('entries.emptyCompositionExtra')}
+            {runtimeMode
+              ? t('composition.tile.engagedPoolEmpty')
+              : t('entries.emptyCompositionExtra')}
           </EmptyState>
         )}
       </div>

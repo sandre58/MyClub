@@ -750,7 +750,11 @@
       "populationFinalShortfall_other": "{{count}} entries below phase places (final state).",
       "populationFinalSurplus_one": "{{count}} entry above phase places (final state).",
       "populationFinalSurplus_other": "{{count}} entries above phase places (final state).",
-      "populationAria": "{{current}} entries of {{capacity}} phase places"
+      "populationAria": "{{current}} entries of {{capacity}} phase places",
+      "inboundAllResolved": "All teams are resolved.",
+      "inboundUnresolved_one": "{{count}} team is not resolved yet.",
+      "inboundUnresolved_other": "{{count}} teams are not resolved yet.",
+      "inboundResolvedAria": "{{resolved}} of {{total}} teams resolved"
     },
     "qualifiers": {
       "viewPhase": "View phase",
@@ -775,7 +779,20 @@
     "noLongerEligible": "No longer eligible",
     "save": "Save",
     "saving": "Saving…",
-    "toastUpdated": "Teams updated"
+    "toastUpdated": "Teams updated",
+    "tile": {
+      "engagedPoolSubtitle": "Engaged pool",
+      "engagedPoolUndeterminedTitle": "Engaged pool undetermined",
+      "engagedPoolUndeterminedBody": "Runtime composition is not available from the structure hub for this phase. Authoring affectation is not shown as the live pool.",
+      "engagedPoolEmpty": "No teams in the engaged pool.",
+      "authoringPoolContrast": "Authoring affectation: {{count}}",
+      "strip": {
+        "drawNotApplied": "Draw not applied.",
+        "drawHistoricalApplied": "Draw was applied (final state).",
+        "drawHistoricalNotApplied": "Draw was not applied (final state).",
+        "drawHistoricalUnavailable": "No draw for this phase (final state)."
+      }
+    }
   },
   "progression": {
     "title": "Progression — {{phase}}",

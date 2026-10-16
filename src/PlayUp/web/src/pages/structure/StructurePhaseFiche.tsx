@@ -108,10 +108,24 @@ import {
   type FeedGroup,
 } from './structurePhaseFeeds';
 import { CompositionPopulationGauge } from './CompositionPopulationGauge';
+import { CompositionInboundResolvedGauge } from './CompositionInboundResolvedGauge';
 import { StructurePhaseCompositionBand } from './StructurePhaseCompositionBand';
 import { compositionQualifierFeedGroups } from './structureCompositionQualifierFeeds';
+import {
+  hasCompositionTeamsInboundMerge,
+  inboundEntryProvenanceByEntryId,
+  compositionTeamRowsResolutionStats,
+  listCompositionTeamRows,
+} from './compositionTeamsInboundRows';
 import { CompositionQualifiersResolvedMeta } from './CompositionQualifiersResolvedMeta';
 import { ExitKindMenu, listComposedAffectationEntries } from './StructurePhaseRails';
+import {
+  hasEngagedTeamsSectionContent,
+  resolveCompositionPopulationGaugeCurrent,
+  resolveCompositionTileMode,
+  resolvePlacesStripLayout,
+  shouldShowCompositionPrepActions,
+} from './compositionTilePresentation';
 import { StructurePhaseRegulationStrip } from './StructurePhaseRegulationStrip';
 
 type EditTarget =
@@ -864,31 +878,87 @@ export function StructurePhaseFiche({
     showDrawCta,
     showActivateDrawCta,
   });
-  const showAffectationSection =
+  const compositionTileMode = resolveCompositionTileMode(stage);
+  const placesStripLayout = resolvePlacesStripLayout(compositionTileMode);
+  const compositionPrepActions = shouldShowCompositionPrepActions(
+    compositionTileMode,
+  );
+  const canComposeTeams =
+    canCompose && compositionPrepActions && !stageHasAppliedDraw;
+  const hasCompositionOperationalSignals =
     showPlacementBlock || showDrawCta || showActivateDrawCta;
-  const showQualifiersSection = qualifiersPanelGroups.length > 0;
-  const teamsHasListContent =
-    composedAffectationEntries.length > 0 ||
-    (stage.affectationPreviewNames?.length ?? 0) > 0 ||
-    (stage.affectationIneligibleCount ?? 0) > 0;
-  const showTeamsSection = teamsHasListContent;
+  const showPlaceAssignmentSection =
+    compositionPrepActions && hasCompositionOperationalSignals;
+  const showCompositionDrawSection =
+    !compositionPrepActions && (showDrawCta || showActivateDrawCta);
+  const showAffectationSection =
+    showPlaceAssignmentSection || showCompositionDrawSection;
+  const mergeInboundIntoTeams = hasCompositionTeamsInboundMerge(
+    compositionTileMode,
+    qualifiersPanelGroups,
+  );
+  const compositionTeamRows = mergeInboundIntoTeams
+    ? listCompositionTeamRows(
+        compositionTileMode,
+        stage,
+        data.participants.entries,
+        qualifiersPanelGroups,
+        stage.inboundComposition,
+      )
+    : null;
+  const entryProvenanceByEntryId =
+    inboundEntryProvenanceByEntryId(qualifiersPanelGroups);
+  const showQualifiersSection =
+    compositionPrepActions && qualifiersPanelGroups.length > 0;
+  const teamsHasListContent = hasEngagedTeamsSectionContent(
+    compositionTileMode,
+    stage,
+    data.participants.entries,
+    { mergeInboundQualProg: mergeInboundIntoTeams },
+  );
+  const showTeamsSection =
+    teamsHasListContent ||
+    (!compositionPrepActions &&
+      (showQualifiersSection || showAffectationSection));
   const showCompositionContentEmpty =
-    !showQualifiersSection && !teamsHasListContent && canCompose;
+    !showQualifiersSection &&
+    !teamsHasListContent &&
+    canComposeTeams;
   const showCompositionBandEmpty =
     showCompositionContentEmpty && !showAffectationSection;
   const showPopulationColumn =
     showTeamsSection || showCompositionContentEmpty;
+  const inboundTeamResolutionStats =
+    compositionTeamRowsResolutionStats(compositionTeamRows);
+  const showCompositionInboundResolvedGauge =
+    mergeInboundIntoTeams &&
+    inboundTeamResolutionStats != null &&
+    inboundTeamResolutionStats.total > 0;
   const showCompositionPopulationGauge =
+    !mergeInboundIntoTeams &&
     placesN != null &&
     placesN > 0 &&
     (showQualifiersSection || showTeamsSection || showCompositionContentEmpty) &&
-    !(isCompletedStage && showPlacementBlock);
+    !(isCompletedStage && showPlacementBlock && compositionPrepActions);
   const sharedCompositionPopulationGauge =
     showCompositionPopulationGauge &&
     showQualifiersSection &&
     showTeamsSection;
-  const populationMeterCurrent = expectedPopulationOccupancy(data, stage);
+  const populationMeterCurrent = resolveCompositionPopulationGaugeCurrent(
+    compositionTileMode,
+    stage,
+    expectedPopulationOccupancy(data, stage),
+  );
   const stageDiagnosticContext = structureDiagnosticContextFromStage(data, stage);
+  const compositionInboundResolvedGaugeFooter = showCompositionInboundResolvedGauge
+    ? (
+        <CompositionInboundResolvedGauge
+          resolved={inboundTeamResolutionStats!.resolved}
+          total={inboundTeamResolutionStats!.total}
+          mode={compositionTileMode}
+        />
+      )
+    : null;
   const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
     <CompositionPopulationGauge
       current={populationMeterCurrent}
@@ -898,7 +968,10 @@ export function StructurePhaseFiche({
         stageStatus: stageDiagnosticContext.stageStatus,
         isEntryBaselineStage: stageDiagnosticContext.isEntryBaselineStage,
         hasInboundQualProgFeed: stageDiagnosticContext.hasInboundQualProgFeed,
-        affectationEntryCount: stageDiagnosticContext.affectationEntryCount,
+        affectationEntryCount: compositionPrepActions
+          ? stageDiagnosticContext.affectationEntryCount
+          : (stage.compositionEntryCount ??
+            stageDiagnosticContext.affectationEntryCount),
       }}
       className={
         sharedCompositionPopulationGauge
@@ -907,6 +980,8 @@ export function StructurePhaseFiche({
       }
     />
   ) : null;
+  const compositionTeamsGaugeFooter =
+    compositionInboundResolvedGaugeFooter ?? compositionPopulationGaugeFooter;
   const teamsComposeActionLabel =
     composedAffectationEntries.length > 0 ||
     (stage.affectationPreviewNames?.length ?? 0) > 0 ||
@@ -931,12 +1006,13 @@ export function StructurePhaseFiche({
             schematicQuery.isSuccess,
           showDrawCta,
           showActivateDrawCta: isCompletedStage ? false : showActivateDrawCta,
-          showResolvedPoolGauge: isCompletedStage
-            ? false
-            : showDrawCta ||
+          showResolvedPoolGauge: compositionPrepActions
+            ? showDrawCta ||
               showActivateDrawCta ||
               stage.formatKind === 'Championship' ||
-              stage.formatKind === 'Swiss',
+              stage.formatKind === 'Swiss'
+            : false,
+          compositionTileMode,
           canManualPlace: isCompletedStage ? false : canManualPlace,
           canEditDraw: canAuthorDrawRulesP1,
           showReleaseCta: isCompletedStage ? false : showReleaseCta,
@@ -990,8 +1066,18 @@ export function StructurePhaseFiche({
             ) : undefined,
         }
       : null;
+  const compositionVisibleSectionCount = [
+    showQualifiersSection,
+    showTeamsSection,
+    showCompositionContentEmpty && !showTeamsSection,
+    showPlaceAssignmentSection,
+    showCompositionDrawSection,
+  ].filter(Boolean).length;
   const compositionGridClass = [
     'structure-phase-composition__grid',
+    compositionVisibleSectionCount === 1
+      ? 'structure-phase-composition__grid--single-section'
+      : null,
     !showQualifiersSection ? 'structure-phase-composition__grid--two-cols' : null,
     showQualifiersSection
       ? 'structure-phase-composition__grid--with-qualifiers'
@@ -1009,7 +1095,8 @@ export function StructurePhaseFiche({
     .filter(Boolean)
     .join(' ');
 
-  const compositionEmptyAction = canCompose ? (
+  const compositionEmptyAction =
+    canComposeTeams ? (
     <button
       type="button"
       className="ds-btn ds-btn--primary"
@@ -1021,7 +1108,7 @@ export function StructurePhaseFiche({
   ) : null;
 
   const compositionComposeToolbar =
-    canCompose ? (
+    canComposeTeams ? (
       <Tooltip content={teamsComposeActionLabel}>
         <button
           type="button"
@@ -1127,6 +1214,12 @@ export function StructurePhaseFiche({
           showCompositionBandEmpty
             ? 'structure-phase-composition--band-empty'
             : null,
+          compositionTileMode === 'exploitation'
+            ? 'structure-phase-composition--mode-exploitation'
+            : null,
+          compositionTileMode === 'historical'
+            ? 'structure-phase-composition--mode-historical'
+            : null,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -1147,13 +1240,16 @@ export function StructurePhaseFiche({
           entryPlaceProjections={entryPlaceProjections}
           onViewPhase={onSelectStage}
           renderAvalSourceAction={renderAvalSourceAction}
-          compositionPopulationGaugeFooter={compositionPopulationGaugeFooter}
+          compositionPopulationGaugeFooter={compositionTeamsGaugeFooter}
           sharedCompositionPopulationGauge={sharedCompositionPopulationGauge}
           showTeamsSection={showTeamsSection}
           showCompositionContentEmpty={showCompositionContentEmpty}
           showPopulationColumn={showPopulationColumn}
-          showAffectationSection={showAffectationSection}
-          canCompose={canCompose}
+          showPlaceAssignmentSection={showPlaceAssignmentSection}
+          showCompositionDrawSection={showCompositionDrawSection}
+          entryProvenanceByEntryId={entryProvenanceByEntryId}
+          compositionTeamRows={compositionTeamRows}
+          canCompose={canComposeTeams}
           teamsComposeActionLabel={teamsComposeActionLabel}
           compactIcon={compactIcon}
           openCompose={openCompose}
@@ -1171,6 +1267,8 @@ export function StructurePhaseFiche({
           structureStages={data.stages}
           materializePresentation={materializePresentation}
           stageHasAppliedDraw={stageHasAppliedDraw}
+          compositionTileMode={compositionTileMode}
+          placesStripLayout={placesStripLayout}
         />
       </div>
 

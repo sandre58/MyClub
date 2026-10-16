@@ -121,6 +121,32 @@ export function EntryCell({
     );
   }
 
+  if (pending) {
+    return (
+      <>
+        <span className="structure-entries__team-pending-icon" aria-hidden="true">
+          <HourglassIcon size="sm" />
+        </span>
+        <span
+          className={[
+            nameClassName,
+            'structure-entries__team-name--pending',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {pendingLabel}
+        </span>
+        <span
+          className="structure-entries__team-placed-slot"
+          aria-hidden={!trailing}
+        >
+          {trailing ?? null}
+        </span>
+      </>
+    );
+  }
+
   return (
     <>
       <TeamCrest

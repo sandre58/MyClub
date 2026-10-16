@@ -93,7 +93,10 @@ function renderBand(
     showTeamsSection: false,
     showCompositionContentEmpty: false,
     showPopulationColumn: false,
-    showAffectationSection: false,
+    showPlaceAssignmentSection: false,
+    showCompositionDrawSection: false,
+    entryProvenanceByEntryId: new Map(),
+    compositionTeamRows: null,
     canCompose: false,
     teamsComposeActionLabel: '',
     compactIcon: 'ds-btn',
@@ -112,6 +115,8 @@ function renderBand(
     structureStages: [baseStage],
     materializePresentation: null,
     stageHasAppliedDraw: false,
+    compositionTileMode: 'prep',
+    placesStripLayout: 'full',
     ...overrides,
   };
 
@@ -137,7 +142,7 @@ describe('StructurePhaseCompositionBand', () => {
 
   it('renders the place-assignment section and operational strip when affectation is shown', () => {
     renderBand({
-      showAffectationSection: true,
+      showPlaceAssignmentSection: true,
       showPopulationColumn: true,
       placementOperationalProps: basePlacement,
       showPlacementBlock: true,
