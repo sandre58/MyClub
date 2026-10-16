@@ -12,7 +12,7 @@
 |-------|----------|----------------|
 | **G-B-1-ENF** | Ratifier **uniquement** B-Q3a (≤1 tirage non annulé ; refus `CreateDraw` si autre tirage non `Cancelled`). | **SLICE-2-G-B-1-ENF** — **Authorized** ; **pas Closed** avant vérification conformité + commits dédiés. |
 | **G-OPS3 qual/prog** | Ratifier le refus de changement des règles **qualification / progression** lorsqu’un tirage est **Applied** (même entrées logiques que G-B-3 : mutation refusée, pas obsolescence C). | **SLICE-3-G-OPS3-QUAL-PROG-ENF** — **Authorized** ; **G-OPS3** reste **Partial** §12. |
-| **C-ENF** | **Ne pas** ratifier le bundle Apply + Mat + Start avec Detect. Detect : **Closed** (`279b6235`). | **SLICE-C-ENF-DETECT** **Closed** ; Apply / Mat-Start **Pending** ; commits C-ENF **un slice à la fois**. |
+| **C-ENF** | **Ne pas** ratifier le bundle Apply + Mat + Start avec Detect. Detect **Closed** (`279b6235`). Apply **Authorized** ; Mat-Start **Pending** jusqu’à clôture Apply. | Voir § C-ENF Apply/Mat-Start ; commits **un slice à la fois**. |
 
 ---
 
@@ -21,10 +21,10 @@
 | Slice ID | Backlog | Périmètre cible | Statut |
 |----------|---------|-----------------|--------|
 | **SLICE-C-ENF-DETECT** | **C-ENF-Detect** (G-C-1) | Prédicat `IsObsoleteForConsumption` (W-inputs, W-pool ; W-rules **exclu**) + lecture DTO/SPA uniquement. | **Closed** (2026-10-16) — `279b6235` · [fiche](./slice-c-enf-detect.md) |
-| **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage obsolète (après Detect). | **Pending** — non autorisé |
-| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** et **Start** lorsque la voie consomme un tirage obsolète. | **Pending** — non autorisé |
+| **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage cible obsolète (prédicat Detect) ; wire 409 + i18n. | **Authorized** (2026-10-16) — **pas Closed** · [fiche](./slice-c-enf-apply.md) |
+| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** + **Start** ; **parité lecture/commande** hubs. | **Pending** — autorisation **après** clôture Apply · [fiche](./slice-c-enf-mat-start.md) |
 
-**Code local non commité** — Prototype `DrawConsumptionConformance` + gates Apply/Mat/Start : **non ratifié** ; écart documenté dans [slice-c-enf-detect.md](./slice-c-enf-detect.md) § prototype vs contrat. Livraison **Detect** = commit isolé après alignement sur la fiche.
+**WIP non ratifié** — Stash `c-enf-apply-mat-gates-wip` + `.c-enf-gates-wip/` : prototype mixte Apply/Mat/Start ; reprise **ciblée** seulement après fiche **Authorized** (Apply : oui ; Mat-Start : non).
 
 ### Arbitrage Detect (2026-10-16) — synthèse
 
@@ -33,6 +33,18 @@
 - **W-rules** : hors Detect (exclusion explicite).
 - **Lecture** : `isObsoleteForConsumption` dérivé ; pas de badge, drawer, ni gate d’action dans ce slice.
 - **Tests** : neuf scénarios listés dans la fiche Detect ; G-B-3 reste hors preuve Detect.
+
+### Arbitrage C-ENF Apply / Mat-Start (2026-10-16)
+
+| # | Sujet | Décision |
+|---|--------|----------|
+| 1 | **SLICE-C-ENF-APPLY** | **Authorized** — refus `ApplyDraw` via `IsObsoleteForConsumption` ; `PublishAndApplyDraw` via `ApplyDraw.Execute` ; `Application.DrawObsoleteForConsumption` ; 409 + i18n ; tests R-Inv-1 (Apply) ; **ne pas** modifier le prédicat Detect |
+| 2 | **Ordre** | Apply implémenté et **Closed** avant autorisation Mat-Start |
+| 3 | **Mat-Start** | Un seul slice (G-C-3 + G-C-4) ; **parité lecture** Materialize + Start **in scope** quand autorisé |
+| 4 | **G-C-INV §12** | **Done** seulement après clôture formelle **des deux** slices + preuves + parité ; sinon **Deferred** |
+| 5 | **Gouvernance** | Fiches + §11C.4 **Authorized** avant reprise WIP ; jamais **Closed** sans commit dédié |
+
+**Réserve Apply :** contrôle au bon moment sur l’état courant — pas de faux blocage d’un tirage encore consommable.
 
 ---
 
@@ -48,4 +60,4 @@
 
 ## Références
 
-[wave-b-programme-after-gel-a.md](./wave-b-programme-after-gel-a.md) · [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) · [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) · [slice-c-enf-detect.md](./slice-c-enf-detect.md)
+[wave-b-programme-after-gel-a.md](./wave-b-programme-after-gel-a.md) · [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) · [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) · [slice-c-enf-detect.md](./slice-c-enf-detect.md) · [slice-c-enf-apply.md](./slice-c-enf-apply.md) · [slice-c-enf-mat-start.md](./slice-c-enf-mat-start.md)

@@ -18,7 +18,7 @@
 |----|-------------------|--------|
 | **G-B-1** / **SLICE-2-G-B-1-ENF** | **Authorized** — pas **Closed** | B-Q3a ; diff local non commité |
 | **G-OPS3** reliquat qual/prog / **SLICE-3** | **Authorized** — **G-OPS3** §12 **Partial** | Gate qual/prog ; pas Done |
-| **C-ENF-Detect / Apply / Mat-Start** | **Pending** | Pas d’autorisation ; **aucun commit** C-ENF |
+| **C-ENF** (Detect / Apply / Mat-Start) | Detect **Closed** ; Apply **Authorized** ; Mat-Start **Pending** | **G-C-INV** §12 **Deferred** — pas **Done** |
 | **G-MAT3 / G-MAT4** | **Deferred** | Inchangé |
 
 ---
@@ -41,15 +41,15 @@ flowchart LR
 |----------|---------|-------|--------|
 | **P2** | **G-B-1-ENF** | [slice-2](./slice-2-g-b-1-enf.md) | **Authorized** |
 | **P2b** | **G-OPS3** qual/prog | [slice-3](./slice-3-g-ops3-qual-prog-enf.md) | **Authorized** ; G-OPS3 **Partial** |
-| **P3a** | **C-ENF-Detect** | [slice-c-enf-detect](./slice-c-enf-detect.md) | **Pending** |
-| **P3b** | **C-ENF-Apply** | [slice-c-enf-apply](./slice-c-enf-apply.md) | **Pending** |
-| **P3c** | **C-ENF-Mat + Start** | [slice-c-enf-mat-start](./slice-c-enf-mat-start.md) | **Pending** |
+| **P3a** | **C-ENF-Detect** | [slice-c-enf-detect](./slice-c-enf-detect.md) | **Closed** (`279b6235`) |
+| **P3b** | **C-ENF-Apply** | [slice-c-enf-apply](./slice-c-enf-apply.md) | **Authorized** — pas **Closed** |
+| **P3c** | **C-ENF-Mat + Start** | [slice-c-enf-mat-start](./slice-c-enf-mat-start.md) | **Pending** — après clôture Apply |
 
 ---
 
 ## Working tree (proposition technique — non ratifiée en bloc)
 
-Code local non commité sur `feature/new_version`. **Seuls** les lots **Authorized** (SLICE-2, SLICE-3) sont candidats aux premiers commits après audit Release. Le code C-ENF reste **en attente** de ratification slice par slice.
+Branche `feature/new_version` : **Detect** livré (`279b6235`) ; **Apply** **Authorized** — implémentation slice par slice après fiche. WIP gates Apply/Mat/Start en stash (`c-enf-apply-mat-gates-wip`) **non ratifié** en bloc.
 
 ---
 

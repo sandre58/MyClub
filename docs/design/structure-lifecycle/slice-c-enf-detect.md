@@ -21,7 +21,7 @@ Detect **identifies** draw resolution drift **before consumption**. It does **no
 | `StageDrawDto.isObsoleteForConsumption` + SPA type field | `Application.DrawObsoleteForConsumption` wire on mutations (Apply slice) |
 | Tests proving detection + overview alignment | G-B-3 mutation-refuse tests as Detect proof |
 | | **W-rules** comparison (explicit exclusion — see below) |
-| | **SLICE-C-ENF-APPLY**, **SLICE-C-ENF-MAT-START** (remain **Pending**) |
+| | **SLICE-C-ENF-APPLY** (consumption gate), **SLICE-C-ENF-MAT-START** |
 
 **L3:** Obsolescence after **allowed** mutation (e.g. R-Inv-1). **G-B-3** still **refuses** pool change when draw is **Applied** — Detect does not replace that.
 
@@ -107,7 +107,7 @@ G-B-3 refuse-mutation coverage stays in **GOps3 / affectation** suites — not s
 3. Read contract verified (no action/diagnostic side effects). — **Done**.
 4. §11C.4 slice row updated; **G-C-INV** remains **Deferred** until Apply + Mat-Start slices are authorized and shipped. — **Done** (governance sync with closure).
 
-**Apply / Mat-Start** remain **Pending**; **G-C-INV** is **not** **Done**.
+**SLICE-C-ENF-APPLY** may be **Authorized** after Detect closure; **G-C-INV** is **not** **Done** until Apply + Mat-Start are **Closed**.
 
 ---
 
