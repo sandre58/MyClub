@@ -22,6 +22,10 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
   'Application.ReadyConsumerWouldBreak': 'ReadyConsumerWouldBreak',
   'Application.AppliedDrawPoolChangeBlocked': 'AppliedDrawPoolChangeBlocked',
   'Application.AppliedDrawFeedRulesChangeBlocked': 'AppliedDrawFeedRulesChangeBlocked',
+  'Application.ProgressionFeedConsumed': 'ProgressionFeedConsumed',
+  'Application.ProgressionFeedImpactAmbiguous': 'ProgressionFeedImpactAmbiguous',
+  'Application.ProgressionDownstreamProductionBlocked': 'ProgressionDownstreamProductionBlocked',
+  'Application.ProgressionProductionParticipationAmbiguous': 'ProgressionProductionParticipationAmbiguous',
   'Application.AppliedDrawSlotPlacementProtected': 'AppliedDrawSlotPlacementProtected',
   'Application.DrawObsoleteForConsumption': 'DrawObsoleteForConsumption',
 };

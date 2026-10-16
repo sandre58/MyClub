@@ -25,7 +25,8 @@ public static class ReplaceStageProgressionRules
         IReadOnlyList<ProgressionIntentSpec>? intents,
         IClock clock,
         IReadOnlyList<Stage>? competitionStages = null,
-        IReadOnlyList<Match>? upstreamMatches = null)
+        IReadOnlyList<Match>? upstreamMatches = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? destinationMatchesByStage = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
@@ -47,7 +48,7 @@ public static class ReplaceStageProgressionRules
             afterRules = ProgressionRules.FromIntents(domainIntents, stage.Rounds, stage.BracketPairs);
         }
 
-        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches);
+        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches, destinationMatchesByStage);
     }
 
     /// <summary>
@@ -58,13 +59,14 @@ public static class ReplaceStageProgressionRules
         IReadOnlyList<ProgressionPathSpec>? paths,
         IClock clock,
         IReadOnlyList<Stage>? competitionStages = null,
-        IReadOnlyList<Match>? upstreamMatches = null)
+        IReadOnlyList<Match>? upstreamMatches = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? destinationMatchesByStage = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
 
         var afterRules = paths is null || paths.Count == 0 ? null : BuildRulesFromPaths(paths);
-        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches);
+        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches, destinationMatchesByStage);
     }
 
     private static void EnsureAndApply(
@@ -72,15 +74,21 @@ public static class ReplaceStageProgressionRules
         ProgressionRules? afterRules,
         IClock clock,
         IReadOnlyList<Stage>? competitionStages,
-        IReadOnlyList<Match>? upstreamMatches)
+        IReadOnlyList<Match>? upstreamMatches,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? destinationMatchesByStage)
     {
         StructureOperationalExitEditGuard.Ensure(stage, upstreamMatches, "Progression rules");
         if (competitionStages is not null)
         {
             StructureReadyConsumerFeedGate.EnsureProgressionReplaceAllowed(stage, afterRules, competitionStages);
+            StructureProgressionImpactGate.EnsureReplaceAllowed(
+                stage,
+                afterRules,
+                competitionStages,
+                upstreamMatches,
+                destinationMatchesByStage);
         }
 
-        StructureAppliedDrawFeedRulesChangeGate.EnsureProgressionReplaceAllowed(stage, afterRules);
         stage.ReplaceProgressionRulesOperationally(afterRules, clock);
     }
 

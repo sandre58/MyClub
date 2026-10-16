@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -78,7 +79,8 @@ public sealed class ReplaceStageProgressionRulesGOpsTests
             ],
             _clock,
             stages,
-            []);
+            [],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [final.Id] = [] });
 
         act.Should().NotThrow();
         quarter.Regulation.ProgressionRules!.Paths.Should().ContainSingle();

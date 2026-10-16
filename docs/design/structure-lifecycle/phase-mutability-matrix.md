@@ -404,6 +404,7 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **SLICE-1-G-B-3-ENF** | G-B-3-ENF only | **Closed** (2026-10-15) | [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) |
 | **SLICE-2-G-B-1-ENF** | G-B-1-ENF only (B-Q3a) | **Closed** (2026-10-16) — `c1a12ec4` ; SPA reserve · §12 **G-B-1 Deferred** | [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) |
 | **SLICE-3-G-OPS3-QUAL-PROG-ENF** | G-OPS3 reliquat qual/prog | **Closed** (2026-10-16) — `472546bb` ; proof reserves · §12 **G-OPS3 Partial** | [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) |
+| **SLICE-4-G-OPS3-PROG-IMPACT-ENF** | G-OPS3 progression impact gate | **Closed** (2026-10-16) — P0–P6 · §12 **G-OPS3 Partial** | [slice-4](./slice-4-g-ops3-prog-impact-enf.md) · [arbitrage](./g-ops3-progression-impact-arbitration.md) |
 | **SLICE-C-ENF-DETECT** | C-ENF-Detect (G-C-1) | **Closed** (2026-10-16) — `279b6235` | [slice-c-enf-detect.md](./slice-c-enf-detect.md) |
 | **SLICE-C-ENF-APPLY** | C-ENF-Apply (G-C-2) | **Closed** (2026-10-16) — `85360d3` | [slice-c-enf-apply.md](./slice-c-enf-apply.md) |
 | **SLICE-C-ENF-MAT-START** | C-ENF-Mat + C-ENF-Deps (G-C-3, G-C-4) | **Closed** (2026-10-16) — `ee0fc2e6` | [slice-c-enf-mat-start.md](./slice-c-enf-mat-start.md) |

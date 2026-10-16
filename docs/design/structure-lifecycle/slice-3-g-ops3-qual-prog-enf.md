@@ -15,12 +15,14 @@
 
 | In scope | Out of scope |
 |----------|----------------|
-| `StructureAppliedDrawFeedRulesChangeGate` on qual/prog replace | `ReplaceStageAffectationAuthoring` (**G-B-3** / SLICE-1) |
+| `StructureAppliedDrawFeedRulesChangeGate` on **qualification** replace (progression : SLICE-4 / P6) | `ReplaceStageAffectationAuthoring` (**G-B-3** / SLICE-1) |
 | Wire `Application.AppliedDrawFeedRulesChangeBlocked` + i18n mutation | **C-ENF-*** |
 | Tests `ReplaceStageQualificationRulesGOps3Tests` + Host qual endpoint | Promotion **G-OPS3** §12 → **Done** |
 | | `ReplaceStageDrawRules`, autres commandes composition, invalidation hors N2 |
 
 **§12 G-OPS3** reste **Partial** après clôture de cette slice (draw-rules et reliquats composition non couverts).
+
+**Progression (reliquat) :** livré [SLICE-4](./slice-4-g-ops3-prog-impact-enf.md) **Closed** — [arbitrage](./g-ops3-progression-impact-arbitration.md).
 
 ---
 
@@ -37,7 +39,7 @@ La branche de progression ne dispose pas d’un test dédié Application/Host ; 
 ## Delivery proof (`472546bb`)
 
 - Gate : [`StructureAppliedDrawFeedRulesChangeGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureAppliedDrawFeedRulesChangeGate.cs)
-- Commands : [`ReplaceStageQualificationRules`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/ReplaceStageQualificationRules/ReplaceStageQualificationRules.cs) · [`ReplaceStageProgressionRules`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/ReplaceStageProgressionRules/ReplaceStageProgressionRules.cs)
+- Commands : [`ReplaceStageQualificationRules`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/ReplaceStageQualificationRules/ReplaceStageQualificationRules.cs) (gate Applied) · progression : [`StructureProgressionImpactGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureProgressionImpactGate.cs) depuis SLICE-4 P5 (P6 retire le proxy progression du gate SLICE-3)
 - Wire : `Application.AppliedDrawFeedRulesChangeBlocked` · Host **409** · i18n EN/FR · `lifecycleMutationMessageKey.ts`
 - Tests (Release) :
   - Application : [`ReplaceStageQualificationRulesGOps3Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ReplaceStageQualificationRulesGOps3Tests.cs) — **1/1**

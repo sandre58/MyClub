@@ -624,7 +624,18 @@ public sealed partial class UseCaseExecutor
             .ConfigureAwait(false);
         var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
             .ConfigureAwait(false);
-        ReplaceStageProgressionRules.Execute(stage, paths, clock, competitionStages, stageMatches);
+        var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
+                stageId,
+                competitionStages,
+                cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageProgressionRules.Execute(
+            stage,
+            paths,
+            clock,
+            competitionStages,
+            stageMatches,
+            destinationMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -643,7 +654,18 @@ public sealed partial class UseCaseExecutor
             .ConfigureAwait(false);
         var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
             .ConfigureAwait(false);
-        ReplaceStageProgressionRules.Execute(stage, intents, clock, competitionStages, stageMatches);
+        var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
+                stageId,
+                competitionStages,
+                cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageProgressionRules.Execute(
+            stage,
+            intents,
+            clock,
+            competitionStages,
+            stageMatches,
+            destinationMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

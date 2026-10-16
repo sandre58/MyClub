@@ -12,7 +12,8 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-OPS3 reliquat — refuse qualification/progression rule changes when a draw is Applied on the stage.
+/// G-OPS3 / SLICE-3 — refuse qualification rule changes when a draw is Applied on the stage.
+/// Progression uses <see cref="StructureProgressionImpactGate"/> (SLICE-4 P5+).
 /// </summary>
 internal static class StructureAppliedDrawFeedRulesChangeGate
 {
@@ -26,18 +27,6 @@ internal static class StructureAppliedDrawFeedRulesChangeGate
         }
 
         EnsureNoAppliedDraw(stage, "Qualification rules");
-    }
-
-    internal static void EnsureProgressionReplaceAllowed(Stage stage, ProgressionRules? afterRules)
-    {
-        ArgumentNullException.ThrowIfNull(stage);
-
-        if (Equals(stage.Regulation.ProgressionRules, afterRules))
-        {
-            return;
-        }
-
-        EnsureNoAppliedDraw(stage, "Progression rules");
     }
 
     private static void EnsureNoAppliedDraw(Stage stage, string surface)

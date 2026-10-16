@@ -216,6 +216,26 @@ public static class ApplicationErrorCodes
     public const string AppliedDrawFeedRulesChangeBlocked = "Application.AppliedDrawFeedRulesChangeBlocked";
 
     /// <summary>
+    /// Gets the code when progression rules would change after a touched path satisfied its destination (G-OPS3 W-OPS3-2).
+    /// </summary>
+    public const string ProgressionFeedConsumed = "Application.ProgressionFeedConsumed";
+
+    /// <summary>
+    /// Gets the code when progression consumption for a touched path cannot be determined (prudent refuse).
+    /// </summary>
+    public const string ProgressionFeedImpactAmbiguous = "Application.ProgressionFeedImpactAmbiguous";
+
+    /// <summary>
+    /// Gets the code when a touched path participates in downstream attached match production (G-OPS3 2c).
+    /// </summary>
+    public const string ProgressionDownstreamProductionBlocked = "Application.ProgressionDownstreamProductionBlocked";
+
+    /// <summary>
+    /// Gets the code when downstream production participation for a touched path cannot be determined.
+    /// </summary>
+    public const string ProgressionProductionParticipationAmbiguous = "Application.ProgressionProductionParticipationAmbiguous";
+
+    /// <summary>
     /// Gets the code when a Cup slot assignment would break a placement guaranteed by an Applied draw (G-OPS3 B1).
     /// </summary>
     public const string AppliedDrawSlotPlacementProtected = "Application.AppliedDrawSlotPlacementProtected";

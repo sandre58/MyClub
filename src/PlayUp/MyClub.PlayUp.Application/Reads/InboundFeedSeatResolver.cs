@@ -34,12 +34,12 @@ internal static class InboundFeedSeatResolver
         }
 
         if (!path.Destination.TargetsForm)
-            return ProjectProgressionFromSourceFixture(path, sourceStage, matchSummariesByStage);
+            return ProjectProgressionEntryFromSourceFixture(path, sourceStage, matchSummariesByStage);
         var fingerprint = FormPathResolutionKey.FromProgression(sourceStage.Id, path);
         var resolved = destination.FormPathResolutions
             .FirstOrDefault(r => r.PathFingerprint == fingerprint)
             ?.EntryId;
-        return resolved ?? ProjectProgressionFromSourceFixture(path, sourceStage, matchSummariesByStage);
+        return resolved ?? ProjectProgressionEntryFromSourceFixture(path, sourceStage, matchSummariesByStage);
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ internal static class InboundFeedSeatResolver
             && qualification.PathOrder == path.Order;
     }
 
-    private static bool SlotFeedMatchesProgression(
+    internal static bool SlotFeedMatchesProgression(
         Stage destination,
         IReadOnlyList<Stage> competitionStages,
         StageId sourceStageId,
@@ -219,7 +219,10 @@ internal static class InboundFeedSeatResolver
         return occupant?.Equals(entryId) == true;
     }
 
-    private static EntryId? ProjectProgressionFromSourceFixture(
+    /// <summary>
+    /// Replays upstream fixture outcome for WC-1 / hub (no slot occupant shortcut).
+    /// </summary>
+    internal static EntryId? ProjectProgressionEntryFromSourceFixture(
         ProgressionPath path,
         Stage sourceStage,
         IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)

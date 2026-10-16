@@ -465,4 +465,25 @@ public sealed partial class UseCaseExecutor
                 ApplicationErrorCodes.StageNotFound)
             : [.. loaded];
     }
+
+    private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadDestinationMatchesForProgressionReplaceAsync(
+        StageId upstreamStageId,
+        IReadOnlyList<Stage> competitionStages,
+        CancellationToken cancellationToken)
+    {
+        var map = new Dictionary<StageId, IReadOnlyList<Match>>();
+        foreach (var stage in competitionStages)
+        {
+            if (stage.Id.Equals(upstreamStageId))
+            {
+                continue;
+            }
+
+            var stageMatches = await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken)
+                .ConfigureAwait(false);
+            map[stage.Id] = stageMatches;
+        }
+
+        return map;
+    }
 }

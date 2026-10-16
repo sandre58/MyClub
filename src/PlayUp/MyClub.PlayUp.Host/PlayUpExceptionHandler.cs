@@ -100,6 +100,14 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Applied draw pool change blocked", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.AppliedDrawFeedRulesChangeBlocked } application =>
                 (StatusCodes.Status409Conflict, "Applied draw feed rules change blocked", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ProgressionFeedConsumed } application =>
+                (StatusCodes.Status409Conflict, "Progression feed consumed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ProgressionFeedImpactAmbiguous } application =>
+                (StatusCodes.Status409Conflict, "Progression feed impact ambiguous", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ProgressionDownstreamProductionBlocked } application =>
+                (StatusCodes.Status409Conflict, "Progression downstream production blocked", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ProgressionProductionParticipationAmbiguous } application =>
+                (StatusCodes.Status409Conflict, "Progression production participation ambiguous", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.AppliedDrawSlotPlacementProtected } application =>
                 (StatusCodes.Status409Conflict, "Applied draw slot placement protected", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawObsoleteForConsumption } application =>
