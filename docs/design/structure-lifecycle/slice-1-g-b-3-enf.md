@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Authorized** — DM 2026-10-15; matrix §11C.4 + Notion |
+| **Status** | **Closed** (livraison code + tests application/SPA) — DM 2026-10-15; revue Wave 2 2026-10-16 |
 | **Slice ID** | `SLICE-1-G-B-3-ENF` |
 | **Allowed backlog** | `G-B-3-ENF` only |
 | **Contract** | G-B-3 — refuse pool **EntryId** set change when draw **Applied** ([§11C](./section-11c-addendum-clarification-arbitration.md) B §4.13, matrix §9.1.1) |

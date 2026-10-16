@@ -12,6 +12,8 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [delta-o4-completed-fiche.md](./delta-o4-completed-fiche.md) | **O-04** validé — **Δ-O4-2** `ec45ed60` + **Δ-O4-1** `68d0f50a` ; recette comparative Championnat OK |
 | [c-18-rename-stage-completed-audit.md](./c-18-rename-stage-completed-audit.md) | **C-18 Closed** — `RenameStage` refusé en `Completed` (`59d20b0a`, PR #54) |
 | [c-20-standing-rules-ready-audit.md](./c-20-standing-rules-ready-audit.md) | **C-20 Closed** — `ReplaceStandingRules` refusé en `Ready` (`Stage.StandingRulesLocked`) |
+| [wave-1-capacity-audit-ready-d4.md](./wave-1-capacity-audit-ready-d4.md) | **Wave 1** — audit capacité D4 / `Ready` (lecture seule ; zéro écart métier identifié post-C-20) |
+| [wave-2-g-b-3-g-ops3-closure.md](./wave-2-g-b-3-g-ops3-closure.md) | **Wave 2** — preuves G-B-3 ; **G-OPS3** reste **Partial** |
 | **Notion — Matrice UI Structure (présentation par statut)** | [Gel produit 2026-10-15](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — **Δ-O3-1/2** · **Δ-drawer-1** · **Δ-03** · **Δ-O4-2** · **Δ-O4-1** · **C-18** · **C-20** closed. Post-gel capacity backlog: CTRL-O3-MAT, D1 awards, ENF slices sur go. |
 | [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) | **Signed** — UI severity/tone/copy for structure diagnostics (presentation only) |
 | [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |

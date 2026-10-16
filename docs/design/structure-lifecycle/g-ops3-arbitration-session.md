@@ -70,9 +70,11 @@ Les contrats négatifs **n’autorisent pas** le shrink avec tirage Applied — 
 - [x] Tests R-Draw1-N1..N3
 - [x] Décision consignée (cette fiche)
 - [x] G-OPS3 **Spec draft** §12 — pas **Ready**
-- [x] Aucun guard / wire code
+- [x] Aucun guard / wire code *(historique 2026-10-15 — voir note post-**SLICE-1**)*
 - [x] Spec [g-ops3](./g-ops3-draw-refuse-on-composition-change.md) synchronisée
 
 ---
+
+**Note post-livraison (2026-10-16, Wave 2)** — **SLICE-1-G-B-3-ENF** a livré le guard `StructureAppliedDrawPoolChangeGate` + `Application.AppliedDrawPoolChangeBlocked` + tests **R-Draw1+** / **N1–N3** sur `ReplaceStageAffectationAuthoring` uniquement. Cela **ne** promeut pas **G-OPS3** §12 en **Done** : reliquat documenté dans [wave-2-g-b-3-g-ops3-closure.md](./wave-2-g-b-3-g-ops3-closure.md).
 
 Spec : [g-ops3-draw-refuse-on-composition-change.md](./g-ops3-draw-refuse-on-composition-change.md)
