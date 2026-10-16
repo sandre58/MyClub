@@ -1,6 +1,6 @@
 # O-04 — Fiche Terminée (`Completed`) — cadrage Δ-O4-1 / Δ-O4-2
 
-**Status:** **O-04 livré en SPA** (2026-10-16) — **Δ-O4-2** `ec45ed60` · **Δ-O4-1** *(SHA au commit de clôture)* sur `feature/new_version_alt`. C-18 / domaine inchangés.
+**Status:** **O-04 livré en SPA** (2026-10-16) — **Δ-O4-2** `ec45ed60` · **Δ-O4-1** `68d0f50a` sur `feature/new_version_alt`. C-18 / domaine inchangés.
 
 **Décision produit (gelée)** — Notion [Matrice UI Structure — § O-04 / Δ-O4](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) (2026-10-15) : phase **Terminée** = lecture seule **allégée** ; pas d’édition construction / production / sorties / awards / réglement ; **nom non modifiable en UI** ; état final tirage / places **consultable** sans signaux d’action opérationnelle.
 
