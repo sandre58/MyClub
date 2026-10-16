@@ -140,6 +140,8 @@ public static class ApplyDraw
             }
         }
 
+        StructureDrawConsumptionGate.EnsureDrawConsumable(draw, stage);
+
         foreach (var instruction in instructions)
         {
             stage.ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock, snapshots);
@@ -174,6 +176,8 @@ public static class ApplyDraw
                     ApplicationErrorCodes.DrawApplyFailure);
             }
         }
+
+        StructureDrawConsumptionGate.EnsureDrawConsumable(draw, stage);
 
         // Targeted rematerialization: only entries in this resolution move.
         // Same-group → no-op; other-group → remove then assign; unassigned → assign.

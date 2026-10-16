@@ -11,8 +11,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using Xunit;
@@ -59,6 +62,31 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
         GetCode(problem).Should().Be(ApplicationErrorCodes.StageNotFound);
+    }
+
+    [IntegrationFact]
+    public async Task Apply_when_draw_obsolete_for_consumption_returns_409_DrawObsoleteForConsumptionAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedPublishedGroupDrawAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var shrink = await client.PutAsJsonAsync(
+            AffectationUri(seed.StageId),
+            new EntryIdsRequest(
+            [
+                seed.EntryIds[0].Value,
+                seed.EntryIds[1].Value,
+                seed.EntryIds[2].Value,
+            ]),
+            HostJson.Options);
+        shrink.EnsureSuccessStatusCode();
+
+        using var response = await client.PostAsync(ApplyUri(seed.StageId, seed.DrawId), content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
     }
 
     [IntegrationFact]
@@ -132,6 +160,9 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
     private static Uri ApplyUri(StageId stageId, DrawId drawId) =>
         new($"/stages/{stageId.Value}/draws/{drawId.Value}/apply", UriKind.Relative);
 
+    private static Uri AffectationUri(StageId stageId) =>
+        new($"/stages/{stageId.Value}/affectation", UriKind.Relative);
+
     private static Uri MaterializeUri(StageId stageId) =>
         new($"/stages/{stageId.Value}/matches/materialize-from-slots", UriKind.Relative);
 
@@ -144,6 +175,47 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
                 JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
                 _ => raw.ToString()
             };
+
+    private async Task<GroupDrawSeed> SeedPublishedGroupDrawAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = CreateCompetition.Execute("Apply C-ENF host", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(g => g.Id)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+
+        competitions.Add(competition);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync();
+
+        return new GroupDrawSeed(stage.Id, draw.Id, ids);
+    }
 
     private Task<SlotDrawSeed> SeedPublishedSlotDrawAsync(PlayUpWebApplicationFactory factory) =>
         SeedSlotDrawAsync(factory, publish: true);
@@ -195,4 +267,6 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
         DrawId DrawId,
         EntryId EntryA,
         EntryId EntryB);
+
+    private sealed record GroupDrawSeed(StageId StageId, DrawId DrawId, EntryId[] EntryIds);
 }

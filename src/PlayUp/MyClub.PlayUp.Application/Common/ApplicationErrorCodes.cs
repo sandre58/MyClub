@@ -201,6 +201,11 @@ public static class ApplicationErrorCodes
     public const string AppliedDrawFeedRulesChangeBlocked = "Application.AppliedDrawFeedRulesChangeBlocked";
 
     /// <summary>
+    /// Gets the code when a draw resolution is obsolete for consumption (C-ENF-Apply).
+    /// </summary>
+    public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";
+
+    /// <summary>
     /// Gets the code when a stage skeleton rebuild attempts to change <c>StructureFormatKind</c>.
     /// </summary>
     public const string StructureFormatImmutable = "Application.StructureFormatImmutable";

@@ -5,10 +5,14 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application;
+using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Stages.Events;
 using Xunit;
@@ -19,6 +23,23 @@ public sealed class ApplyDrawTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 11, 14, 0, 0, TimeSpan.Zero));
     private readonly CompetitionId _competitionId = CompetitionId.New();
+
+    [Fact]
+    public void Execute_R_Inv_1_denies_apply_when_draw_obsolete_after_allowed_pool_shrink()
+    {
+        var (stage, drawId, ids) = CreateGroupStageWithPublishedDraw();
+        stage.ReplaceAffectationAuthoring([ids[0], ids[1], ids[2]], _clock);
+
+        var draw = stage.GetDraw(drawId);
+        DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage).Should().BeTrue();
+
+        var act = () => ApplyDraw.Execute(stage, drawId, _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
+        stage.Groups.Should().OnlyContain(g => g.EntryIds.Count == 0);
+        draw.Status.Should().Be(DrawStatus.Published);
+    }
 
     [Fact]
     public void Execute_rejects_missing_draw()
@@ -482,6 +503,42 @@ public sealed class ApplyDrawTests
         stage.Status.Should().Be(StageStatus.Suspended);
     }
 
+    private (Stage Stage, DrawId DrawId, EntryId[] EntryIds) CreateGroupStageWithPublishedDraw()
+    {
+        var competition = CreateCompetition.Execute("apply-c-enf", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        var draw = PublishGroupDrawOnStage(stage);
+        return (stage, draw.Id, ids);
+    }
+
+    private Draw PublishGroupDrawOnStage(Stage stage)
+    {
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(g => g.Id)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        return draw;
+    }
+
     private Stage CreateStage() =>
         Stage.Create(_competitionId, new StageName("Phase"), SampleRegulations.Standard(), _clock);
 
@@ -489,6 +546,7 @@ public sealed class ApplyDrawTests
     {
         stage.AddSlot(slotKey);
         var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry]));
         stage.RecordDrawResolution(
@@ -501,6 +559,7 @@ public sealed class ApplyDrawTests
 
     private Draw PublishGroupDraw(Stage stage, EntryId entry, GroupId groupId)
     {
+        stage.ReplaceAffectationAuthoring([entry], _clock);
         var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
         stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]));
         stage.RecordDrawResolution(
