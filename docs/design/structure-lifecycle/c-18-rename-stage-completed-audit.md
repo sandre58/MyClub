@@ -138,4 +138,4 @@ Aucun autre écran web ne consomme `RenameStage` pour l’instant (grep codebase
 
 - **Livrable audit** — constats + options (commit `c067a40e`).
 - **Implémentation** — **livré** merge PR #54 · commit principal `59d20b0a` (H1 + R1 + R2 statut phase seul).
-- **Suite capacité** — **C-20** (audit distinct).
+- **Suite capacité** — **C-20** ([c-20-standing-rules-ready-audit.md](./c-20-standing-rules-ready-audit.md)).

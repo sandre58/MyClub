@@ -11,6 +11,7 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [delta-03-hub-p1-fiche.md](./delta-03-hub-p1-fiche.md) | **Δ-03** closed — hub P1 draw rules Draft-only in Ready (C-19 / B-Q1b); manual recette + tests |
 | [delta-o4-completed-fiche.md](./delta-o4-completed-fiche.md) | **O-04** validé — **Δ-O4-2** `ec45ed60` + **Δ-O4-1** `68d0f50a` ; recette comparative Championnat OK |
 | [c-18-rename-stage-completed-audit.md](./c-18-rename-stage-completed-audit.md) | **C-18 Closed** — `RenameStage` refusé en `Completed` (`59d20b0a`, PR #54) |
+| [c-20-standing-rules-ready-audit.md](./c-20-standing-rules-ready-audit.md) | **C-20** — audit `ReplaceStandingRules` en `Ready` vs D4 ; **H1 recommandé** (go impl. distinct) |
 | **Notion — Matrice UI Structure (présentation par statut)** | [Gel produit 2026-10-15](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — **Δ-O3-1/2** · **Δ-drawer-1** · **Δ-03** · **Δ-O4-2** · **Δ-O4-1** · **C-18** closed. Post-gel capacity backlog: **C-20** (+ CTRL-O3-MAT, D1 awards, ENF slices sur go). |
 | [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) | **Signed** — UI severity/tone/copy for structure diagnostics (presentation only) |
 | [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |
