@@ -1,13 +1,13 @@
-# SLICE (draft) — G-OPS3 B1 — Cup slot placement
+# SLICE-G-OPS3-B1-CUP-SLOT-PLACEMENT — G-OPS3 B1 — Cup slot placement
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Draft** — product contract **closed** (DM arbitration 2026-10-16); **implementation not authorized**; **no** §11C.4 slice record |
-| **Proposed slice ID** | `SLICE-G-OPS3-B1-CUP-SLOT-PLACEMENT` (TBD at §11C.4 authorization) |
-| **Allowed backlog (when authorized)** | Reliquat **G-OPS3** — Cup manual placement only |
+| **Status** | **Closed** (2026-10-16) — delivery [`c9029ba0`](https://github.com/sandre58/MyClub/commit/c9029ba0) ; governance `docs(structure-lifecycle): close SLICE-G-OPS3-B1-CUP-SLOT-PLACEMENT with G-OPS3 partial reserve` (Cup Assign/Clear vs Applied slots ; réserves R4/T7) |
+| **Slice ID** | `SLICE-G-OPS3-B1-CUP-SLOT-PLACEMENT` |
+| **Allowed backlog** | Reliquat **G-OPS3** — Cup `AssignEntryToSlot` / `ClearSlotAssignment` only |
 | **Contract** | Refuse **conflicting** `AssignEntryToSlot` / `ClearSlotAssignment` when they would break a placement guaranteed by an **Applied** draw resolution (`SlotResults`); **not** a global Cup bracket lock |
 
-**Governance:** [wave-b-programme-after-gel-a.md](./wave-b-programme-after-gel-a.md) (piste B) · [phase-mutability-matrix.md](./phase-mutability-matrix.md) §12 **G-OPS3** (**Partial** — unchanged by this fiche) · [g-ops3-arbitration-session.md](./g-ops3-arbitration-session.md).
+**Governance:** [wave-b-programme-after-gel-a.md](./wave-b-programme-after-gel-a.md) · [phase-mutability-matrix.md](./phase-mutability-matrix.md) §11C.4 · §12 **G-OPS3** (remains **Partial**).
 
 **Distinct slices (do not conflate):** [SLICE-1-G-B-3-ENF](./slice-1-g-b-3-enf.md) (pool replace) · [SLICE-3-G-OPS3-QUAL-PROG-ENF](./slice-3-g-ops3-qual-prog-enf.md) (qual/prog rules).
 
@@ -85,7 +85,7 @@ candidates = { draw ∈ stage.Draws | Status ≠ Cancelled ∧ DrawAppliedState.
 ### Proposed guard order (B1 slice)
 
 1. `StructureOperationalExitEditGuard` (D2) — **unchanged**
-2. **B1 gate (new)** — `StructureAppliedDrawSlotPlacementGate` (name TBD) on proposed `slotKey` + resulting occupancy
+2. **B1 gate** — `StructureAppliedDrawSlotPlacementGate` on proposed `slotKey` + resulting occupancy
 3. Domain `AssignEntryToSlot` / `ClearSlotAssignment` (F1 inside domain) — **unchanged**
 
 **Clear:** B1 must run **before** domain no-op on draw-applied-only occupancy.
@@ -98,81 +98,96 @@ candidates = { draw ∈ stage.Draws | Status ≠ Cancelled ∧ DrawAppliedState.
 
 ---
 
-## 5. Errors and presentation
+## 5. Errors and presentation (delivered)
 
-| Situation | Target |
-|-----------|--------|
+| Situation | Delivered |
+|-----------|-----------|
 | B1 conflict | **HTTP 409**, `Application.AppliedDrawSlotPlacementProtected` |
-| User copy (FR product) | *« Cette affectation est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement. »* |
+| User copy (FR product) | *« Cette affectation est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement. »* (EN/FR `structure.json` + `lifecycleMutationMessageKey.ts`) |
 | Same pair re-assign | Success; no B1 error |
-| D2 `StructureNotMutable` | Unchanged |
-| F1 / cup coherence | Unchanged (independent of B1) |
-| G-B-3 pool | Unchanged — different command |
+| D2 / F1 / G-B-3 | Unchanged — independent guards |
 
-### Open before implementation (not closed in arbitration)
+**Not delivered in this slice:** separate **read-side R4 diagnostic** wire or hub signal (mutation gate only). **Recovery copy** does not promise cancel/recreate draw. **Mandatory SPA disable-button** parity for placement (may follow elsewhere). **Do not** reuse `Application.AppliedDrawPoolChangeBlocked` (G-B-3).
 
-| Topic | Note |
-|-------|------|
-| **R4 diagnostic** | Wire code, surface (read vs mutation), link to B-Q3a integrity — **TBD in implementation slice** |
-| **SPA / hub** | Map wire code in placement mutation footer (see [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md)); i18n EN + FR; extend inventory §5 |
-| **Constants** | Add `AppliedDrawSlotPlacementProtected` in [`ApplicationErrorCodes`](../../../src/PlayUp/MyClub.PlayUp.Application/Common/ApplicationErrorCodes.cs); map in [`PlayUpExceptionHandler`](../../../src/PlayUp/MyClub.PlayUp.Host/PlayUpExceptionHandler.cs) |
-| **Recovery copy** | Do **not** promise cancel/recreate draw in error text until product validates D3-3 path |
-
-**Do not** reuse `Application.AppliedDrawPoolChangeBlocked` (G-B-3 semantics).
+Inventory: [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md).
 
 ---
 
-## 6. Acceptance tests (planned — not implemented)
+## 6. Acceptance tests (Release — `c9029ba0`)
 
-Suggested files: `AssignEntryToSlotGOps3B1Tests.cs`, `ClearSlotAssignmentGOps3B1Tests.cs`; Host mirrors for at least one Assign refuse and one Clear refuse.
+Application — [`CupSlotPlacementGOps3B1Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/CupSlotPlacementGOps3B1Tests.cs) (**9** tests):
 
-| ID | Scenario | Expected |
-|----|----------|----------|
-| **T1** | Applied draw, `ClearSlotAssignment` on `slotKey ∈ SlotResults` | Deny, `AppliedDrawSlotPlacementProtected` |
-| **T2** | Applied, `AssignEntryToSlot` different entry on protected slot | Deny, same code |
-| **T3** | Applied, assign same `EntryId` to same slot | Allow |
-| **T4** | Applied, mutate slot ∉ `SlotResults` | Allow on B1 (F1 may still deny) |
-| **T5** | Published resolved, **not** Applied, clear slot in resolution | Allow on B1 |
-| **T6** | Drift: `IsApplied` false, slot still matches resolution visually | Allow on B1 |
-| **T7** | Applied, F1 violation on non-protected slot | F1 denies independently |
-| **T8** | Applied, composition shrink | **G-B-3** only — `AppliedDrawPoolChangeBlocked` on affectation replace |
+| ID | Scenario (as exercised) | Expected |
+|----|-------------------------|----------|
+| **T1** | Applied · `ClearSlotAssignment` on protected slot | Deny · `AppliedDrawSlotPlacementProtected` |
+| **T2** | Applied · `AssignEntryToSlot` changes protected entry | Deny · same code |
+| **T3** | Applied · same `EntryId` on same slot | Allow |
+| **T4** | Applied · slot ∉ `SlotResults` | Allow on B1 |
+| **T5** | Draw resolved on slot, **not** Applied (`apply: false`) · assign/clear on resolution slot | Allow on B1 |
+| **T6** | Occupancy drift → `IsApplied` false · clear on formerly protected slot | Allow on B1 |
+| **T7** | Cup F1 path · B1 does not apply (`Assign_still_hits_f1_domain_gate_when_b1_does_not_apply`) | **F1** denies (`MaterializedOpponentConflict`) — not a combined Applied+F1-on-protected-slot proof |
+| — | Canonical slot key (whitespace padding) | Aligns with `FindSlot` / gate |
 
----
+Host — [`CupSlotPlacementGOps3B1EndpointTests`](../../../tests/MyClub.PlayUp.Host.Tests/CupSlotPlacementGOps3B1EndpointTests.cs) (**2** tests): `DELETE` and `PUT` assignment refuse with **409** + `Application.AppliedDrawSlotPlacementProtected`.
 
-## 7. Transactional boundary (expected)
-
-Same pattern as SLICE-1: load tracked `Stage` (+ matches for D2/F1) → guards → mutate → single `SaveChangesAsync`. **Concurrency:** same accepted limitation as [slice-1 §4](./slice-1-g-b-3-enf.md) unless a separate slice authorizes stronger guarantees.
+**T8** (composition shrink / **G-B-3**) — **out of scope** for B1; see SLICE-1.
 
 ---
 
-## 8. Authorization record
+## 7. Transactional boundary
 
-| Field | Value |
-|-------|--------|
-| **§11C.4** | **Not authorized** — this document is **contract + delivery spec draft** only |
-| **§12 G-OPS3** | Remains **Partial** until a future DM closes reliquat or promotes backlog |
-| **Implementation** | Requires explicit DM + new §11C.4 row + governance close commit |
-| **Arbitration closed** | R0–R4, A1–A3, conflict witness, wire code name, HTTP 409, user message |
+Same pattern as SLICE-1: load tracked `Stage` (+ matches for D2/F1) → guards → mutate → single `SaveChangesAsync`. **Concurrency:** same accepted limitation as [slice-1 §4](./slice-1-g-b-3-enf.md).
 
 ---
 
-## 9. Closure criteria (when implementation is authorized)
+## Réserves de clôture (DM 2026-10-16)
+
+| Réserve | Contenu |
+|---------|---------|
+| **R4** | Defensive gate branch when multiple Applied candidates disagree on a slot — documented **unreachable** with valid domain data; **no** reflection test |
+| **T7 (proof limit)** | Delivered T7 proves F1 when B1 does not apply; does **not** prove « Applied elsewhere + F1 on protected slot » in one mutation |
+
+**§12 G-OPS3** reste **Partial** après clôture de cette slice (draw-rules sémantique, autres commandes composition, reliquats hors B1).
+
+---
+
+## Delivery proof (`c9029ba0`)
+
+- Gate : [`StructureAppliedDrawSlotPlacementGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureAppliedDrawSlotPlacementGate.cs)
+- Commands : [`AssignEntryToSlot`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/AssignEntryToSlot/AssignEntryToSlot.cs) · [`ClearSlotAssignment`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/ClearSlotAssignment/ClearSlotAssignment.cs) — order D2 → B1 → domain
+- Wire / Host : `Application.AppliedDrawSlotPlacementProtected` · [`PlayUpExceptionHandler`](../../../src/PlayUp/MyClub.PlayUp.Host/PlayUpExceptionHandler.cs) **409**
+- SPA : `lifecycleMutationMessageKey.ts` · EN/FR `structure.json` · `structureProblems.test.ts` (key + message)
+
+**Not claimed:** Host mirror for every Application variant; full placement SPA disable parity; read-side R4 diagnostic.
+
+---
+
+## Closure criteria
 
 **Closed** when:
 
-1. Diff contains **B1** scope only (Assign/Clear gate + tests + error/presentation items agreed in §5).
-2. **T1–T7** green in Release (Host proof for Assign + Clear refuse at minimum).
-3. Clear refuses **before** domain no-op on protected draw-applied slots.
-4. Fiche updated to **Closed** + §11C.4 row added; **G-OPS3** §12 status per DM (likely still **Partial** if other reliquat remains).
-5. No conflation with G-B-3 wire codes or C-ENF obsolete consumption.
+1. Diff contains **B1** scope only. — **Done** (`c9029ba0`).
+2. **T1–T7** Application + Host Assign/Clear refuse minimum. — **Done** (with reserves above).
+3. Clear refuses **before** domain no-op on protected Applied slots. — **Done**.
+4. Proof limits and §12 **G-OPS3 Partial** recorded. — **Done** (reserves above).
+5. §11C.4 + matrix / wave B sync (governance commit). — **Done** (DM 2026-10-16).
+
+**§12:** **G-OPS3** remains **Partial** — slice **Closed** ≠ backlog **Done**.
 
 ---
 
-## 10. Code references (SoT today)
+## Sequencing
+
+**SLICE-G-OPS3-B1-CUP-SLOT-PLACEMENT** **Closed**. Reliquat **G-OPS3** (draw-rules, autres commandes) : arbitrage / livraisons **distinctes** de B1. **SLICE-3** · **SLICE-1** · **C-ENF** **Closed** — do not reopen without anomaly.
+
+---
+
+## 10. Code references
 
 | Concern | Location |
 |---------|----------|
 | Applied predicate | [`DrawAppliedState.cs`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/DrawAppliedState.cs) |
 | Slot results | `draw.Resolution.SlotResults` |
 | Assign/Clear use cases | [`AssignEntryToSlot.cs`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/AssignEntryToSlot/AssignEntryToSlot.cs), [`ClearSlotAssignment.cs`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/ClearSlotAssignment/ClearSlotAssignment.cs) |
+| B1 gate | [`StructureAppliedDrawSlotPlacementGate.cs`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureAppliedDrawSlotPlacementGate.cs) |
 | G-B-3 pattern (candidates) | [`StructureAppliedDrawPoolChangeGate.cs`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureAppliedDrawPoolChangeGate.cs) |

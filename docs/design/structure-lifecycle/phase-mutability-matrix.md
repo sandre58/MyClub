@@ -407,10 +407,13 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **SLICE-C-ENF-DETECT** | C-ENF-Detect (G-C-1) | **Closed** (2026-10-16) — `279b6235` | [slice-c-enf-detect.md](./slice-c-enf-detect.md) |
 | **SLICE-C-ENF-APPLY** | C-ENF-Apply (G-C-2) | **Closed** (2026-10-16) — `85360d3` | [slice-c-enf-apply.md](./slice-c-enf-apply.md) |
 | **SLICE-C-ENF-MAT-START** | C-ENF-Mat + C-ENF-Deps (G-C-3, G-C-4) | **Closed** (2026-10-16) — `ee0fc2e6` | [slice-c-enf-mat-start.md](./slice-c-enf-mat-start.md) |
+| **SLICE-G-OPS3-B1-CUP-SLOT-PLACEMENT** | G-OPS3 B1 — Cup Assign/Clear only | **Closed** (2026-10-16) — `c9029ba0` ; réserves R4/T7 · §12 **G-OPS3 Partial** | [slice-g-ops3-b1-cup-slot-placement.md](./slice-g-ops3-b1-cup-slot-placement.md) |
 
 **Arbitration SoT (2026-10-16):** [programme-b-arbitration-2026-10-16.md](./programme-b-arbitration-2026-10-16.md).
 
 **SLICE-1** — Known risk: cross-request concurrency (fiche §4).
+
+**SLICE-G-OPS3-B1** — R4 defensive branch (no reflection test); T7 delivery = F1 when B1 does not apply, not combined Applied+F1 on protected slot. No mandatory SPA disable parity.
 
 **§11C full sign (Git):** 2026-10-15 — matrix §9.1.1, §10, §12 rows per [E5 proposal](./section-11c-e5-matrix-diff-proposal.md).
 
@@ -430,7 +433,7 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **G-MAT4** | Materialize `SourcePopulationShortfall` | Block **only if** extraction required for production | Not gated; `MaterializationFailure` on target roster | Low | **Deferred** | [decision](./g-mat4-arbitration-session.md); M4b + analyzer tests |
 | **G-OPS1** | Ready operational mutations | Allow without production (D2) on qual/prog/affectation replace | Shipped | **Major** | **Done** | [g-ops](./g-ops-ready-operational-mutations-and-d1.md); D2 tests |
 | **G-OPS2** | D1 upstream feed guard | Block on **feed effect** (rules or source population) | Shipped | **Major** | **Done** | `StructureReadyConsumerFeedGate`; SPA consumer names |
-| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | **SLICE-3 Closed** — qual/prog Applied gate (`472546bb`); **G-B-3** pool **Done**; Cup Assign/Clear vs Applied slots — **B1 contract** [fiche draft](./slice-g-ops3-b1-cup-slot-placement.md) (no §11C.4); draw-rules / autres reliquat | Medium | **Partial** | Slice **Closed** ≠ §12 **Done** — [slice-3](./slice-3-g-ops3-qual-prog-enf.md); [decision](./g-ops3-arbitration-session.md). **C** separate. |
+| **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | **SLICE-3 Closed** — qual/prog (`472546bb`); **G-B-3** pool **Done**; **SLICE-G-OPS3-B1 Closed** — Cup Assign/Clear Applied slot gate (`c9029ba0`); draw-rules / autres reliquat | Medium | **Partial** | Slice **Closed** ≠ §12 **Done** — [slice-3](./slice-3-g-ops3-qual-prog-enf.md) · [slice B1](./slice-g-ops3-b1-cup-slot-placement.md); [decision](./g-ops3-arbitration-session.md). **C** separate. |
 | **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | **SLICE-2 Closed** — domain/app guard (`c1a12ec4`); SPA UX parity **not** in slice | Medium | **Deferred** | SPA backlog; slice **Closed** ≠ §12 **Done** — [slice-2](./slice-2-g-b-1-enf.md) |
 | **G-B-3** | Refuse pool membership change with Applied draw | G-B-3 / G-OPS3; **R-Draw1+** | `StructureAppliedDrawPoolChangeGate` on affectation replace | Medium | **Done** | **SLICE-1-G-B-3-ENF**; distinct from **C**; N2 preserved |
 | **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | **C-ENF** three slices (`279b6235`, `85360d3`, `ee0fc2e6`); read/command parity Materialize + Start (Application); Host Start HTTP limit per fiche | Medium | **Done** | [slice-c-enf-detect](./slice-c-enf-detect.md) · [apply](./slice-c-enf-apply.md) · [mat-start](./slice-c-enf-mat-start.md) |
