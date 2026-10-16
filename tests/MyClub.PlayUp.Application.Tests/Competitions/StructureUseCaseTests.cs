@@ -468,6 +468,41 @@ public sealed class StructureUseCaseTests
     }
 
     [Fact]
+    public void StructureView_includes_rename_when_stage_is_Draft_C18()
+    {
+        var competition = CreateCompetition.Execute("C18 Draft", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [configured.Stage]).Stages.Single();
+
+        hub.Status.Should().Be(StageStatus.Draft);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionRenameStage);
+    }
+
+    [Fact]
+    public void StructureView_includes_rename_when_stage_is_Suspended_C18()
+    {
+        var competition = CreateCompetition.Execute("C18 Suspended", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        configured.Stage.Prepare(_clock);
+        configured.Stage.Start(_clock);
+        configured.Stage.Suspend(_clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [configured.Stage]).Stages.Single();
+
+        hub.Status.Should().Be(StageStatus.Suspended);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionRenameStage);
+    }
+
+    [Fact]
     public void StructureView_omits_rename_when_stage_is_Completed_C18()
     {
         var competition = CreateCompetition.Execute("C18 Completed", _clock);
