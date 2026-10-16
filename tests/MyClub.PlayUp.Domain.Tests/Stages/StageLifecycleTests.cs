@@ -223,6 +223,26 @@ public sealed class StageLifecycleTests
     }
 
     [Fact]
+    public void Rename_when_Completed_throws_DisplayNameLocked()
+    {
+        var stage = CreateRunning();
+        stage.Complete(_clock);
+
+        var act = () => stage.Rename(new StageName("After"));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DisplayNameLocked);
+    }
+
+    [Fact]
+    public void CanRenameDisplayName_is_false_only_when_Completed()
+    {
+        var stage = CreateRunning();
+        stage.CanRenameDisplayName().Should().BeTrue();
+        stage.Complete(_clock);
+        stage.CanRenameDisplayName().Should().BeFalse();
+    }
+
+    [Fact]
     public void Rename_same_name_is_noop()
     {
         // Arrange

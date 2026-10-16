@@ -1,6 +1,6 @@
 # C-18 — `RenameStage` en phase `Completed` — audit lecture seule
 
-**Status:** Audit (2026-10-16) — **aucune implémentation** ; arbitrage métier requis avant chantier.
+**Status:** **Closed** (2026-10-16) — H1 + R1/R2 implémentés (domaine `CanRenameDisplayName` / `DisplayNameLocked`, hub `BuildStageActions`, tests hub + Host).
 
 **Contexte** — O-04 livré en SPA : crayon rename masqué en `Completed` (Δ-O4-1, `68d0f50a`). Le hub structure et l’API acceptent encore le renommage. **C-18** = alignement **capacité** hub/API (et éventuellement domaine) vs cible produit « titre lecture seule » en Terminée.
 

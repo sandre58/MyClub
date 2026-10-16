@@ -713,11 +713,6 @@ public static class StructureViewAssembler
         Competition competition,
         Stage stage)
     {
-        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
-        {
-            return [ActionRenameStage];
-        }
-
         var attachedMatches = CountAttachedMatches(stage);
 
         return stage.Status switch
@@ -725,8 +720,8 @@ public static class StructureViewAssembler
             StageStatus.Draft => BuildDraftStageActions(competition, stage, attachedMatches),
             StageStatus.Ready => BuildReadyStageActions(stage, attachedMatches),
             StageStatus.Running or StageStatus.Suspended => BuildExploitationStageActions(stage),
-            StageStatus.Completed => [ActionRenameStage],
-            _ => [ActionRenameStage],
+            StageStatus.Completed => [],
+            _ => stage.CanRenameDisplayName() ? [ActionRenameStage] : [],
         };
     }
 

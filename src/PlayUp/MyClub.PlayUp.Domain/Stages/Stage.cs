@@ -956,13 +956,18 @@ public sealed class Stage : AggregateRoot<StageId>
         || _matchdays.SelectMany(m => m.Fixtures).Any(f => f.Contains(matchId));
 
     /// <summary>
+    /// Whether the display name may be renamed (C-18 / O-04 — not when the phase is completed).
+    /// </summary>
+    public bool CanRenameDisplayName() => Status is not StageStatus.Completed;
+
+    /// <summary>
     /// Renames the stage. No-op when the normalized name is unchanged.
-    /// Allowed at any lifecycle status — display name is not structure-critical.
     /// </summary>
     /// <param name="name">The new name.</param>
     public void Rename(StageName name)
     {
         ArgumentNullException.ThrowIfNull(name);
+        EnsureDisplayNameMutable();
 
         if (Name.Equals(name))
         {
@@ -2804,6 +2809,16 @@ public sealed class Stage : AggregateRoot<StageId>
             throw new DomainException(
                 $"Slot occupant cannot be resolved when status is '{Status}'.",
                 StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsureDisplayNameMutable()
+    {
+        if (!CanRenameDisplayName())
+        {
+            throw new DomainException(
+                $"Display name cannot be renamed when status is '{Status}'.",
+                StageErrorCodes.DisplayNameLocked);
         }
     }
 

@@ -468,6 +468,50 @@ public sealed class StructureUseCaseTests
     }
 
     [Fact]
+    public void StructureView_omits_rename_when_stage_is_Completed_C18()
+    {
+        var competition = CreateCompetition.Execute("C18 Completed", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        configured.Stage.Prepare(_clock);
+        configured.Stage.Start(_clock);
+        configured.Stage.Complete(_clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [configured.Stage]).Stages.Single();
+
+        hub.Status.Should().Be(StageStatus.Completed);
+        hub.Actions.Should().NotContain(StructureViewAssembler.ActionRenameStage);
+    }
+
+    [Fact]
+    public void StructureView_includes_rename_when_competition_Completed_but_stage_still_Running_C18_R2()
+    {
+        var competition = CreateCompetition.Execute("C18 R2", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock);
+        var e1 = AddEntry.Execute(competition, "A", _clock).Id;
+        var e2 = AddEntry.Execute(competition, "B", _clock).Id;
+        ReplaceStageAffectationAuthoring.Execute(configured.Stage, competition, [e1, e2], _clock);
+        configured.Stage.Prepare(_clock);
+        configured.Stage.Start(_clock);
+        competition.Prepare(_clock);
+        StartCompetition.Execute(competition, _clock);
+        competition.Complete(CompletionMode.Administrative, _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [configured.Stage]).Stages.Single();
+
+        competition.Status.Should().Be(CompetitionStatus.Completed);
+        hub.Status.Should().Be(StageStatus.Running);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionRenameStage);
+    }
+
+    [Fact]
     public void StructureView_exposes_rename_and_standing_when_stage_is_Running_classifying()
     {
         var competition = CreateCompetition.Execute("RenameActions", _clock);

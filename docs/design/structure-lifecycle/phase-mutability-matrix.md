@@ -227,7 +227,7 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 | `AddStageSlotAsync` | `AddStageSlot` | — | App guard | `AddSlot` | Forme |
 | `AssignEntryToSlotAsync` | `AssignEntryToSlot` | lifecycle mutation | App guard + F1 | `AssignEntryToSlot` | Placement |
 | `ClearSlotAssignmentAsync` | `ClearSlotAssignment` | lifecycle mutation | App guard + F1 | `ClearSlotAssignment` | Placement |
-| `RenameStageAsync` | `RenameStage` | — | always allowed | `RenameStage` | Meta |
+| `RenameStageAsync` | `RenameStage` | — | deny when `Stage.Completed` (`Stage.DisplayNameLocked` / C-18) | `RenameStage` when `CanRenameDisplayName()` | Meta |
 | `AddStageMatchdayAsync` | `AddStageMatchday` | — | App guard (structure matchday) | `AddMatchday` | Forme |
 | `AddStageGroupAsync` | `AddStageGroup` | — | App guard | `AddGroup` | Forme |
 | `ReplaceStageMatchGenerationFormatAsync` | `ReplaceStageMatchGenerationFormat` | — | App guard | — | Forme |
