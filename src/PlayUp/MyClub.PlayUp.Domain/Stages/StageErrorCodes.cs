@@ -42,6 +42,11 @@ public static class StageErrorCodes
     public const string DisplayNameLocked = "Stage.DisplayNameLocked";
 
     /// <summary>
+    /// Gets the code when standing rules cannot be replaced (ready phase per D4).
+    /// </summary>
+    public const string StandingRulesLocked = "Stage.StandingRulesLocked";
+
+    /// <summary>
     /// Gets the code when a group cannot be found.
     /// </summary>
     public const string GroupNotFound = "Stage.GroupNotFound";

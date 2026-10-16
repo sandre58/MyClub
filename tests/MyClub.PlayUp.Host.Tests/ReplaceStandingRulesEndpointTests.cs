@@ -56,6 +56,27 @@ public sealed class ReplaceStandingRulesEndpointTests(HostPostgresFixture fixtur
     }
 
     [IntegrationFact]
+    public async Task Put_when_ready_returns_409_StandingRulesLockedAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var stageId = await SeedReadyChampionshipAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PutAsJsonAsync(
+            RulesUri(stageId),
+            new ReplaceStageStandingRulesRequest(
+                WinPoints: 2,
+                DrawPoints: 1,
+                LossPoints: 0,
+                RankingCriteria: [RankingCriterion.Points]),
+            HostJson.Options);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        GetCode(problem!).Should().Be(StageErrorCodes.StandingRulesLocked);
+    }
+
+    [IntegrationFact]
     public async Task Put_on_cup_returns_domain_problemAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -108,6 +129,32 @@ public sealed class ReplaceStandingRulesEndpointTests(HostPostgresFixture fixtur
                 JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
                 _ => raw.ToString()
             };
+
+    private async Task<StageId> SeedReadyChampionshipAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(
+            new CompetitionName("Standing Host League Ready"),
+            SampleRegulations.Standard(),
+            _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+
+        var stage = Stage.Create(competition.Id, new StageName("Championship"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        stage.Prepare(_clock);
+        competition.AddStage(stage.Id, _clock);
+
+        competitions.Add(competition);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync();
+
+        return stage.Id;
+    }
 
     private async Task<StageId> SeedRunningChampionshipAsync(PlayUpWebApplicationFactory factory)
     {

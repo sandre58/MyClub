@@ -50,6 +50,19 @@ public sealed class ReplaceStageStandingRulesTests
     }
 
     [Fact]
+    public void Replace_rejects_when_ready()
+    {
+        var stage = CreateReadyChampionship();
+
+        var act = () => ReplaceStageStandingRules.Execute(
+            stage,
+            new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points]),
+            _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StandingRulesLocked);
+    }
+
+    [Fact]
     public void Replace_rejects_when_completed()
     {
         var stage = CreateRunningChampionship();
@@ -63,12 +76,18 @@ public sealed class ReplaceStageStandingRulesTests
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
     }
 
-    private Stage CreateRunningChampionship()
+    private Stage CreateReadyChampionship()
     {
-        var competition = CreateCompetition.Execute("League-Standing", _clock);
+        var competition = CreateCompetition.Execute("League-Standing-Ready", _clock);
         var stage = AddCompetitionStage.Execute(competition, StructureIntent.Championship(stageName: "Championship"), _clock);
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
+        return stage;
+    }
+
+    private Stage CreateRunningChampionship()
+    {
+        var stage = CreateReadyChampionship();
         stage.Start(_clock);
         return stage;
     }

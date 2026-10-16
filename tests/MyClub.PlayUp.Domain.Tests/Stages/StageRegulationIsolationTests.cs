@@ -160,6 +160,34 @@ public sealed class StageRegulationIsolationTests
     }
 
     [Fact]
+    public void ReplaceStandingRules_on_Ready_is_rejected()
+    {
+        var stage = CreateReady();
+
+        var act = () => stage.ReplaceStandingRules(
+            new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points]),
+            _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StandingRulesLocked);
+    }
+
+    [Fact]
+    public void ReplaceStandingRules_is_allowed_when_suspended()
+    {
+        var stage = CreateRunning();
+        stage.Suspend(_clock);
+
+        var newStanding = new StandingRules(
+            new PointsPolicy(2, 1, 0),
+            [RankingCriterion.Points, RankingCriterion.Wins]);
+
+        stage.ReplaceStandingRules(newStanding, _clock);
+
+        stage.Status.Should().Be(StageStatus.Suspended);
+        stage.Regulation.StandingRules.Should().Be(newStanding);
+    }
+
+    [Fact]
     public void ReplaceStandingRules_is_allowed_after_Start()
     {
         // Arrange

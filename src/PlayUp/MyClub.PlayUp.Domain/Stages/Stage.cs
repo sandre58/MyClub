@@ -2763,6 +2763,13 @@ public sealed class Stage : AggregateRoot<StageId>
 
     private void EnsureStandingRulesMutable()
     {
+        if (Status is StageStatus.Ready)
+        {
+            throw new DomainException(
+                "Standing rules cannot be replaced while the stage is ready.",
+                StageErrorCodes.StandingRulesLocked);
+        }
+
         if (Status is StageStatus.Completed)
         {
             throw new DomainException(
