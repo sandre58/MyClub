@@ -77,7 +77,7 @@ public sealed class ApplyDrawEndpointTests(HostPostgresFixture fixture)
             [
                 seed.EntryIds[0].Value,
                 seed.EntryIds[1].Value,
-                seed.EntryIds[2].Value,
+                seed.EntryIds[2].Value
             ]),
             HostJson.Options);
         shrink.EnsureSuccessStatusCode();

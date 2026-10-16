@@ -21,6 +21,7 @@ public static class CreateDraw
     /// <param name="stage">Owning stage.</param>
     /// <param name="kind">Resolution kind (Slot or Group).</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="stageMatches">Matches of stage.</param>
     /// <returns>The created draw.</returns>
     public static Draw Execute(
         Stage stage,

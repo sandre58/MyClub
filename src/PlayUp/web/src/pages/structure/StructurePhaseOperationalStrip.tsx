@@ -26,6 +26,7 @@ import {
 } from '../../design-system/icons/contentIcons';
 import { SettingsNavIcon } from '../../design-system/icons/shellIcons';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { queryKeys } from '../../queryKeys';
 import type { CompetitionStatus, StructureStageHubSummary } from '../../types';
 import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui';
@@ -325,6 +326,8 @@ export function StructurePhaseOperationalStrip({
       );
     },
   });
+
+  useClearMutationsOnOpen(dematerializeConfirmOpen, dematerializeMutation);
 
   const visibleSections: StripSectionKind[] =
     layoutVariant === 'composition'
@@ -734,12 +737,11 @@ function DrawColumn(
 
   const readOnlyCompletedFinal = props.stageStatus === 'Completed';
 
-  const drawSetupEditableForChecklist =
-    props.canEditDraw && !props.drawApplied;
   const showDrawReadinessChecklist =
     props.compositionLayout &&
     drawEngaged &&
-    drawSetupEditableForChecklist &&
+    !props.drawApplied &&
+    (props.stageStatus === 'Ready' || props.canEditDraw) &&
     props.drawReadinessChecklist != null &&
     props.drawReadinessChecklist.length > 0;
 

@@ -27,7 +27,7 @@ public sealed class CupSlotPlacementGOps3B1Tests
     [Fact]
     public void Clear_refuses_when_slot_protected_by_applied_draw()
     {
-        var (stage, draw, protectedSlot, _) = SeedCupWithAppliedSlotDraw();
+        var (stage, _, protectedSlot, _) = SeedCupWithAppliedSlotDraw();
 
         var act = () => ClearSlotAssignment.Execute(stage, protectedSlot);
 
@@ -185,7 +185,7 @@ public sealed class CupSlotPlacementGOps3B1Tests
         GenerateDrawResolution.Execute(stage, draw.Id, _clock, slotTargets)
             .IsResolved.Should().BeTrue();
 
-        if (resolutionSlotCount is int keepCount && keepCount < slotTargets.Length)
+        if (resolutionSlotCount is { } keepCount && keepCount < slotTargets.Length)
         {
             var all = draw.Resolution.SlotResults.ToList();
             var trimmed = all.Skip(all.Count - keepCount).ToList();

@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../design-system/components/Dialog';
 import { Field } from '../../design-system/components/Field';
 import { TextInput } from '../../design-system/components/TextInput';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import {
   ChampionshipFormatIcon,
@@ -148,6 +149,8 @@ export function AddPhaseDialog({
       scheduleStructureRefresh(queryClient, competitionId, ['graph']);
     },
   });
+
+  useClearMutationsOnOpen(open, mutation);
 
   const canSubmit =
     name.trim().length > 0 && formatPicked && skeletonStepValid(skeleton);
@@ -345,6 +348,8 @@ export function EditSkeletonDialog({
     },
   });
 
+  useClearMutationsOnOpen(open, mutation);
+
   const canSubmit = skeletonStepValid(skeleton);
 
   function requestClose() {
@@ -509,6 +514,8 @@ export function RemovePhaseDialog({
       scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });
+
+  useClearMutationsOnOpen(open, mutation);
 
   return (
     <Dialog

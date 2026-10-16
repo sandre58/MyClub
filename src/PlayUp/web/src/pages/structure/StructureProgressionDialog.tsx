@@ -37,6 +37,7 @@ import {
   CloseIcon,
 } from '../../design-system/icons/shellIcons';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { queryKeys } from '../../queryKeys';
 import type {
@@ -239,10 +240,10 @@ export function StructureProgressionDialog({
       return;
     }
 
-    // Reset prior success/error so a reopen can hydrate.
-    mutation.reset();
     setSessionReady(false);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- open edge only
+
+  useClearMutationsOnOpen(open, mutation);
 
   useEffect(() => {
     if (!open) {

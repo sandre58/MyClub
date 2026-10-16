@@ -20,6 +20,7 @@ import {
 import { CloseIcon } from '../../design-system/icons/shellIcons';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import type {
   SchematicCase,
@@ -198,6 +199,8 @@ export function StructureManualPlacementDialog({
       });
     },
   });
+
+  useClearMutationsOnOpen(open, saveMutation);
 
   const pending = saveMutation.isPending;
   const mutationError = saveMutation.error;

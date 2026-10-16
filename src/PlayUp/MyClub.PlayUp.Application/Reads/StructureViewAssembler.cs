@@ -721,7 +721,7 @@ public static class StructureViewAssembler
             StageStatus.Ready => BuildReadyStageActions(stage, attachedMatches),
             StageStatus.Running or StageStatus.Suspended => BuildExploitationStageActions(stage),
             StageStatus.Completed => [],
-            _ => stage.CanRenameDisplayName() ? [ActionRenameStage] : [],
+            _ => stage.CanRenameDisplayName() ? [ActionRenameStage] : []
         };
     }
 
@@ -843,11 +843,9 @@ public static class StructureViewAssembler
         actions.Add(ActionReplaceAffectationAuthoring);
 
         var format = StructureSkeleton.InferFormat(stage);
-        if (format is StructureFormatKind.Cup or null)
-        {
-            actions.Add(ActionAssignEntryToSlot);
-            actions.Add(ActionClearSlotAssignment);
-        }
+        if (format is not (StructureFormatKind.Cup or null)) return actions;
+        actions.Add(ActionAssignEntryToSlot);
+        actions.Add(ActionClearSlotAssignment);
 
         return actions;
     }

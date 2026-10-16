@@ -19,6 +19,7 @@ import {
   RegulationNavIcon,
 } from '../../design-system/icons/shellIcons';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { MutationError, PendingLabel } from '../../ui';
 import type {
@@ -315,6 +316,8 @@ export function TieFormatDialog({
       });
     },
   });
+
+  useClearMutationsOnOpen(open, mutation);
 
   function requestSave() {
     if (mutation.isPending || !canSave) {

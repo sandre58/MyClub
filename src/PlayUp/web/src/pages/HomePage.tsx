@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { createCompetition, fetchCompetitions } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
+import { useClearMutationsOnOpen } from '../design-system/useClearMutationsOnOpen';
 import { Field } from '../design-system/components/Field';
 import { HomeBrand } from '../design-system/components/HomeBrand';
 import { TextInput } from '../design-system/components/TextInput';
@@ -257,6 +258,8 @@ function CreateCompetitionDialog({
       void navigate(`/competitions/${created.id}/structure`);
     },
   });
+
+  useClearMutationsOnOpen(open, mutation);
 
   const trimmed = name.trim();
   const canSubmit =

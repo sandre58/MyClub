@@ -28,6 +28,7 @@ public static class GenerateDrawResolution
     /// <param name="constraintContext">Optional maps for Group (association) constraints.</param>
     /// <param name="seed">Optional RNG seed (Application builds <see cref="SeededRandomSource"/>).</param>
     /// <param name="randomSource">Optional injected source; when null, uses seed or <see cref="SystemRandomSource"/>.</param>
+    /// <param name="stageMatches">Matches of stage.</param>
     /// <returns>The generation result (also recorded on the Draw; soft violations not persisted).</returns>
     public static DrawGenerationResult Execute(
         Stage stage,

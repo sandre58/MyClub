@@ -56,20 +56,14 @@ public static class DrawConsumptionConformance
             return true;
         }
 
-        foreach (var placement in draw.Inputs.FixedGroups)
+        if (draw.Inputs.FixedGroups.Any(placement => stage.FindGroup(placement.GroupId) is null))
         {
-            if (stage.FindGroup(placement.GroupId) is null)
-            {
-                return true;
-            }
+            return true;
         }
 
-        foreach (var placement in draw.Inputs.FixedSlots)
+        if (draw.Inputs.FixedSlots.Any(placement => stage.FindSlot(placement.SlotKey) is null))
         {
-            if (stage.FindSlot(placement.SlotKey) is null)
-            {
-                return true;
-            }
+            return true;
         }
 
         var effectivePool = EffectiveEntryPool(stage);
@@ -78,7 +72,7 @@ public static class DrawConsumptionConformance
         {
             DrawResolutionKind.Group => draw.Resolution.GroupResults.Select(p => p.EntryId),
             DrawResolutionKind.Slot => draw.Resolution.SlotResults.Select(p => p.EntryId),
-            _ => [],
+            _ => []
         };
 
         foreach (var entry in resolutionEntries)

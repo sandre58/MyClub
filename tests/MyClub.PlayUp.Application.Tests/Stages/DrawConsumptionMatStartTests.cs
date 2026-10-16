@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
@@ -95,7 +94,7 @@ public sealed class DrawConsumptionMatStartTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(ids[0], "SF1-A"),
-                new SlotDrawPlacement(ids[1], "SF1-B"),
+                new SlotDrawPlacement(ids[1], "SF1-B")
             ]),
             _clock);
         PublishDraw.Execute(stage, draw.Id, _clock);

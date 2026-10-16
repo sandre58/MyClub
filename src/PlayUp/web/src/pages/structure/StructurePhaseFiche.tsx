@@ -23,6 +23,7 @@ import {
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { MutationError } from '../../ui';
 import { scheduleStructureRefresh } from './structureInvalidation';
 import {
@@ -233,6 +234,9 @@ export function StructurePhaseFiche({
       });
     },
   });
+
+  useClearMutationsOnOpen(deactivateDrawOpen, deactivateDrawMutation);
+  useClearMutationsOnOpen(releaseConfirmOpen, releaseMutation);
 
   useEffect(() => {
     if (!stage) return;

@@ -18,6 +18,7 @@ import {
 import { CloseIcon } from '../../design-system/icons/shellIcons';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../../types';
 import { MutationError, PendingLabel } from '../../ui';
@@ -189,6 +190,8 @@ export function StructureCompositionDialog({
       scheduleStructureRefresh(queryClient, competitionId, ['graph']);
     },
   });
+
+  useClearMutationsOnOpen(open, saveMutation);
 
   const toggle = (entryId: string, currentlySelected: boolean) => {
     setSelected((prev) => {

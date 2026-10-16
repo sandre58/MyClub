@@ -25,6 +25,7 @@ public static class PublishDraw
     /// <param name="stage">Stage that owns the draw.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="stageMatches">Matches of stage.</param>
     public static void Execute(
         Stage stage,
         DrawId drawId,

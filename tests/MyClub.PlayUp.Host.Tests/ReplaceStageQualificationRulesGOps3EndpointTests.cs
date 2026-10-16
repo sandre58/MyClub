@@ -14,7 +14,6 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
@@ -46,7 +45,7 @@ public sealed class ReplaceStageQualificationRulesGOps3EndpointTests(HostPostgre
                     1,
                     1,
                     seed.DownstreamStageId.Value,
-                    DestinationForm: true),
+                    DestinationForm: true)
             ]),
             HostJson.Options);
 

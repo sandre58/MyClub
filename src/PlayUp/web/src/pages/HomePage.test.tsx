@@ -225,6 +225,35 @@ describe('HomePage', () => {
     expect(await screen.findByText('Structure route')).toBeInTheDocument();
   });
 
+  it('clears API error when the create dialog is closed and reopened', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchCompetitions).mockResolvedValue([]);
+    vi.mocked(createCompetition).mockRejectedValue(
+      new ApiError(400, 'Competition name cannot be empty.'),
+    );
+
+    renderHomePage();
+
+    await user.click(
+      await screen.findByRole('button', { name: /Créer une compétition/i }),
+    );
+    let dialog = await screen.findByRole('dialog');
+    await user.type(within(dialog).getByRole('textbox', { name: /Nom/i }), 'X');
+    await user.click(within(dialog).getByRole('button', { name: /^Créer$/i }));
+    expect(await within(dialog).findByRole('alert')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    await user.click(
+      await screen.findByRole('button', { name: /Créer une compétition/i }),
+    );
+    dialog = await screen.findByRole('dialog');
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('shows API error inside dialog and does not navigate on create failure', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchCompetitions).mockResolvedValue([]);

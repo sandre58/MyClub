@@ -21,6 +21,7 @@ import { ReorderList } from '../../design-system/components/ReorderList';
 import { Select } from '../../design-system/components/Select';
 import { SwitchPanel } from '../../design-system/components/SwitchPanel';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import {
   CheckIcon,
@@ -243,6 +244,8 @@ export function MatchRulesDialog({
       });
     },
   });
+
+  useClearMutationsOnOpen(open, mutation);
 
   const setNumber =
     (key: keyof ReplaceStageMatchRulesRequest) => (value: number | null) => {
@@ -598,6 +601,8 @@ export function StandingRulesDialog({
       });
     },
   });
+
+  useClearMutationsOnOpen(open, mutation);
 
   const setNumber =
     (key: 'winPoints' | 'drawPoints' | 'lossPoints') =>

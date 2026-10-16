@@ -59,7 +59,7 @@ public sealed class DrawConsumptionConformanceTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(ids[0], "A"),
-                new SlotDrawPlacement(ids[1], "B"),
+                new SlotDrawPlacement(ids[1], "B")
             ]),
             _clock);
         PublishDraw.Execute(stage, draw.Id, _clock);
@@ -104,7 +104,7 @@ public sealed class DrawConsumptionConformanceTests
             DrawResolution.ResolvedSlots(
             [
                 new SlotDrawPlacement(home, "SF1-A"),
-                new SlotDrawPlacement(away, "SF1-B"),
+                new SlotDrawPlacement(away, "SF1-B")
             ]),
             _clock);
         PublishDraw.Execute(stage, draw.Id, _clock);

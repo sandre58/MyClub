@@ -38,7 +38,7 @@ function meterTone(
   overCapacity: boolean,
 ): 'brand' | 'success' | 'attention' | 'error' | 'neutral' {
   if (overCapacity) {
-    return 'error';
+    return kind === 'danger' ? 'error' : 'attention';
   }
   switch (kind) {
     case 'success':

@@ -23,6 +23,7 @@ import {
 import { CloseIcon } from '../../design-system/icons/shellIcons';
 import { ToastToneIcon } from '../../design-system/icons/toastIcons';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { queryKeys } from '../../queryKeys';
 import type {
@@ -126,9 +127,10 @@ export function StructurePlacementAwardDialog({
 
   useEffect(() => {
     if (!open) return;
-    mutation.reset();
     setSessionReady(false);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- open edge only
+
+  useClearMutationsOnOpen(open, mutation);
 
   useEffect(() => {
     if (!open) return;

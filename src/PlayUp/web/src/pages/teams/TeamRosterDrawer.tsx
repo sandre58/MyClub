@@ -35,6 +35,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { queryKeys } from '../../queryKeys';
 import { EntryStatusBadge, MutationError } from '../../ui';
 import {
@@ -232,6 +233,8 @@ export function TeamRosterDrawer({
       setPendingRemove(null);
     },
   });
+
+  useClearMutationsOnOpen(pendingRemove != null, removeMutation);
 
   useEffect(() => {
     if (!staffMenuOpen) {

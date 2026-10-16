@@ -36,6 +36,7 @@ import {
 import { CloseIcon } from '../../design-system/icons/shellIcons';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { drawResolutionKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import type {
@@ -410,16 +411,16 @@ export function StructureDrawDialog({
     },
   });
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    publishAndApplyMutation.reset();
-    applyMutation.reset();
-    cancelMutation.reset();
-    releaseMutation.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- clear sticky footer errors when dialog opens
-  }, [open]);
+  useClearMutationsOnOpen(
+    open,
+    publishAndApplyMutation,
+    applyMutation,
+    cancelMutation,
+    releaseMutation,
+  );
+  useClearMutationsOnOpen(applyConfirmOpen, applyMutation);
+  useClearMutationsOnOpen(cancelConfirmOpen, cancelMutation);
+  useClearMutationsOnOpen(releaseConfirmOpen, releaseMutation);
 
   const busy =
     createMutation.isPending ||

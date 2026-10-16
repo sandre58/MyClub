@@ -386,6 +386,67 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('shows draw readiness checklist read-only when P1 authoring is off', () => {
+      const drawReadinessChecklist = [
+        { id: 'teamsFillPlaces' as const, met: false, current: 4, capacity: 8 },
+        { id: 'teamsAllKnown' as const, met: true, current: 4, capacity: 4 },
+        { id: 'noManualPlacement' as const, met: true },
+      ];
+
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: readyCupStage,
+        placement: {
+          ...basePlacement,
+          stageStatus: 'Ready',
+          canEditDraw: false,
+          showDrawCta: true,
+          showActivateDrawCta: false,
+          drawReadinessChecklist,
+        },
+      });
+
+      expect(
+        screen.getByRole('list', {
+          name: /Prérequis pour effectuer le tirage/i,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Paramètres/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('does not show draw readiness checklist when stage is Running', () => {
+      const runningStage: StructureStageHubSummary = {
+        ...baseStage,
+        status: 'Running',
+      };
+      const drawReadinessChecklist = [
+        { id: 'teamsFillPlaces' as const, met: false, current: 4, capacity: 8 },
+        { id: 'teamsAllKnown' as const, met: true, current: 4, capacity: 4 },
+        { id: 'noManualPlacement' as const, met: true },
+      ];
+
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: runningStage,
+        placement: {
+          ...basePlacement,
+          stageStatus: 'Running',
+          canEditDraw: false,
+          showDrawCta: true,
+          showActivateDrawCta: false,
+          drawReadinessChecklist,
+        },
+      });
+
+      expect(
+        screen.queryByRole('list', {
+          name: /Prérequis pour effectuer le tirage/i,
+        }),
+      ).not.toBeInTheDocument();
+    });
+
     it('hides activate draw when P1 authoring is off and draw is not engaged', () => {
       renderStrip({
         layoutVariant: 'composition',

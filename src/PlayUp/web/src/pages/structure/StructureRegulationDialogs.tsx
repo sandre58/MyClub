@@ -10,6 +10,7 @@ import { Field } from '../../design-system/components/Field';
 import { InputNumber } from '../../design-system/components/InputNumber';
 import { SwitchPanel } from '../../design-system/components/SwitchPanel';
 import { notify } from '../../design-system/toastStore';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { RandomIcon, CheckIcon } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
@@ -133,6 +134,8 @@ export function DrawRulesDialog({
       }
     },
   });
+
+  useClearMutationsOnOpen(open, saveMutation);
 
   const title = isActivate ? t('fiche.activateDraw') : t('fiche.drawParams');
   const saveLabel = isActivate ? t('fiche.activateDraw') : t('regulation.save');

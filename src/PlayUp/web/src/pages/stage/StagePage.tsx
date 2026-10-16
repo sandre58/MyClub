@@ -14,6 +14,7 @@ import {
   startStage,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { PageHead } from '../../design-system/components/PageHead';
 import { Status } from '../../design-system/components/Status';
 import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
@@ -751,6 +752,8 @@ function DrawActions({
 
   const busy = publishAndApplyMutation.isPending || applyMutation.isPending;
   const mutationError = publishAndApplyMutation.error ?? applyMutation.error;
+
+  useClearMutationsOnOpen(applyConfirmOpen, applyMutation);
 
   function handlePublishAndApply() {
     publishAndApplyMutation.mutate();

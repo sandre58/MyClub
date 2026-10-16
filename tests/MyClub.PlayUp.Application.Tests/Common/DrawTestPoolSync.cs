@@ -12,7 +12,7 @@ namespace MyClub.PlayUp.Application.Tests.Common;
 /// <summary>
 /// Aligns stage population with draw pool in tests when neither affectation nor composition was seeded.
 /// </summary>
-public static class DrawTestPoolSync
+internal static class DrawTestPoolSync
 {
     /// <summary>
     /// Ensures C-ENF W-pool covers <paramref name="pool"/> without duplicating inbound-only authoring.

@@ -21,6 +21,7 @@ public static class ConfigureDrawInputs
     /// <param name="stage">Owning stage.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="inputs">Concrete inputs.</param>
+    /// <param name="stageMatches">Matches of stage.</param>
     public static void Execute(
         Stage stage,
         DrawId drawId,

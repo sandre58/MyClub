@@ -29,6 +29,7 @@ import { Meter, type MeterTone } from '../../design-system/components/Meter';
 import { PageHead } from '../../design-system/components/PageHead';
 import { SelectionBar } from '../../design-system/components/SelectionBar';
 import { Tooltip } from '../../design-system/components/Tooltip';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import {
   Field,
@@ -210,6 +211,12 @@ function TeamsView({
       await invalidateAfterTeamsMutation(queryClient, data.competitionId);
     },
   });
+
+  useClearMutationsOnOpen(
+    pendingRemove != null,
+    deleteMutation,
+    withdrawMutation,
+  );
 
   function removeKind(): 'delete' | 'withdraw' {
     return data.status === 'Draft' || data.status === 'Ready'
@@ -756,6 +763,8 @@ function AddEntryDialog({
     },
   });
 
+  useClearMutationsOnOpen(open, addMutation);
+
   const canSubmit =
     displayName.trim().length > 0 &&
     shortName.trim().length > 0 &&
@@ -968,6 +977,8 @@ function IdentityDialog({
       onClose();
     },
   });
+
+  useClearMutationsOnOpen(open, saveMutation);
 
   const canSubmit =
     name.trim().length > 0 &&

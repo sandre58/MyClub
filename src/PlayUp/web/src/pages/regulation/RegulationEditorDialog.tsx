@@ -27,6 +27,7 @@ import { pointsBaremeWarning } from '../../design-system/components/pointsBareme
 import { ReorderList } from '../../design-system/components/ReorderList';
 import { Select } from '../../design-system/components/Select';
 import { SwitchPanel } from '../../design-system/components/SwitchPanel';
+import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import {
   CheckIcon,
@@ -341,6 +342,9 @@ export function RegulationEditorDialog({
       ]);
     },
   });
+
+  useClearMutationsOnOpen(open, mutation);
+  useClearMutationsOnOpen(confirmOpen && pendingPreview != null, mutation);
 
   const setNumber =
     (key: keyof ReplaceRegulationRequest) => (value: number | null) => {
