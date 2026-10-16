@@ -378,7 +378,8 @@
       "MatchLiveInProgress": "A match is live — finish or cancel it before suspending the phase.",
       "Attribution": "Place award paths no longer match this phase’s bracket — fix attribution before preparing.",
       "ReadyConsumerWouldBreak": "This exit change would break a ready downstream phase that already has teams from qualification.",
-      "AppliedDrawPoolChangeBlocked": "You cannot change the composition pool while the draw for this phase is already applied."
+      "AppliedDrawPoolChangeBlocked": "You cannot change the composition pool while the draw for this phase is already applied.",
+      "AppliedDrawFeedRulesChangeBlocked": "You cannot change qualification or progression rules while the draw for this phase is already applied."
     },
     "mutation": {
       "_unknown": "This phase lifecycle action could not be completed right now."
@@ -398,6 +399,7 @@
       "ReadyConsumerWouldBreak": "This exit change would break a ready downstream phase that already has teams from qualification.",
       "ReadyConsumerWouldBreakConsumers": "Affected phases: {{phases}}.",
       "AppliedDrawPoolChangeBlocked": "You cannot change the composition pool while the draw for this phase is already applied.",
+      "AppliedDrawFeedRulesChangeBlocked": "You cannot change qualification or progression rules while the draw for this phase is already applied.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
       "StageNotReady": "Complete this phase’s structure before marking it ready.",
       "StructureGraphInvalid": "Fix structure connections before preparing the phase.",

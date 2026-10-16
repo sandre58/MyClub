@@ -80,6 +80,7 @@ public static class ReplaceStageProgressionRules
             StructureReadyConsumerFeedGate.EnsureProgressionReplaceAllowed(stage, afterRules, competitionStages);
         }
 
+        StructureAppliedDrawFeedRulesChangeGate.EnsureProgressionReplaceAllowed(stage, afterRules);
         stage.ReplaceProgressionRulesOperationally(afterRules, clock);
     }
 

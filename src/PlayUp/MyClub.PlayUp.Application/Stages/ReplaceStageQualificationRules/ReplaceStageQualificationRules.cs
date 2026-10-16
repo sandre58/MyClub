@@ -81,6 +81,7 @@ public static class ReplaceStageQualificationRules
             StructureReadyConsumerFeedGate.EnsureQualificationReplaceAllowed(stage, afterRules, competitionStages);
         }
 
+        StructureAppliedDrawFeedRulesChangeGate.EnsureQualificationReplaceAllowed(stage, afterRules);
         stage.ReplaceQualificationRulesOperationally(afterRules, clock);
     }
 

@@ -21,6 +21,7 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
   'Application.StructureCycleDetected': 'CycleDetected',
   'Application.ReadyConsumerWouldBreak': 'ReadyConsumerWouldBreak',
   'Application.AppliedDrawPoolChangeBlocked': 'AppliedDrawPoolChangeBlocked',
+  'Application.AppliedDrawFeedRulesChangeBlocked': 'AppliedDrawFeedRulesChangeBlocked',
 };
 
 export function resolveLifecycleMutationMessageKey(wireCode: string): string {

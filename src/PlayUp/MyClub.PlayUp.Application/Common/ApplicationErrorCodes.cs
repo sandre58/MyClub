@@ -196,6 +196,11 @@ public static class ApplicationErrorCodes
     public const string AppliedDrawPoolChangeBlocked = "Application.AppliedDrawPoolChangeBlocked";
 
     /// <summary>
+    /// Gets the code when qualification or progression rules would change while a draw is Applied (G-OPS3).
+    /// </summary>
+    public const string AppliedDrawFeedRulesChangeBlocked = "Application.AppliedDrawFeedRulesChangeBlocked";
+
+    /// <summary>
     /// Gets the code when a stage skeleton rebuild attempts to change <c>StructureFormatKind</c>.
     /// </summary>
     public const string StructureFormatImmutable = "Application.StructureFormatImmutable";
