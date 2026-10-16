@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../../../api';
+import i18n from '../../../i18n';
+import enErrors from '../../../i18n/locales/en/errors.json';
 import enStructure from '../../../i18n/locales/en/structure.json';
+import frErrors from '../../../i18n/locales/fr/errors.json';
 import frStructure from '../../../i18n/locales/fr/structure.json';
 import type { StructureStageHubSummary } from '../../../types';
 import { formatStructureMutationMessage } from './formatStructureMutationMessage';
@@ -218,6 +221,32 @@ describe('resolveLifecycleMutationMessageKey', () => {
     );
     expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawSlotPlacementProtected);
     expect(msg).not.toBe(enStructure.problems.mutation._unknown);
+  });
+
+  it('resolves B-Q3a second draw refusal via errors.Stage (lot A)', async () => {
+    await i18n.changeLanguage('en');
+    const msg = resolveLifecycleMutationMessage(
+      t,
+      new ApiError(
+        409,
+        'blocked',
+        undefined,
+        'Stage.NonCancelledDrawAlreadyExists',
+      ),
+    );
+    expect(msg).toBe(enErrors.Stage.NonCancelledDrawAlreadyExists);
+    expect(msg).not.toBe(enStructure.problems.mutation._unknown);
+  });
+});
+
+describe('errors Stage parity (lot A B-Q3a)', () => {
+  it('has matching FR/EN copy for NonCancelledDrawAlreadyExists', () => {
+    expect(frErrors.Stage.NonCancelledDrawAlreadyExists).toBe(
+      'Cette phase compte déjà un tirage non annulé. Annulez-le avant d’en créer un autre.',
+    );
+    expect(enErrors.Stage.NonCancelledDrawAlreadyExists).toBe(
+      'This phase already has a non-cancelled draw. Cancel it before creating another.',
+    );
   });
 });
 

@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
+  ApiError,
   applyDraw,
   cancelDraw,
   createAndGenerateDraw,
@@ -48,6 +49,7 @@ import type {
   StructureStageHubSummary,
 } from '../../types';
 import { deriveShortName } from '../teams/deriveShortName';
+import { resolveLifecycleMutationMessage } from './problems/resolveStructureProblemMessage';
 import {
   drawExecutionNumber,
   getDrawUiProjection,
@@ -354,6 +356,13 @@ export function StructureDrawDialog({
         return;
       }
       pendingSelectIdRef.current = null;
+      if (
+        error instanceof ApiError &&
+        error.code === 'Stage.NonCancelledDrawAlreadyExists'
+      ) {
+        notify.error(resolveLifecycleMutationMessage(t, error));
+        return;
+      }
       notify.error(tDraw('toastActionFailed'));
     },
   });

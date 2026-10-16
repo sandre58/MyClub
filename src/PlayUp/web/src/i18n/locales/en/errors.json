@@ -100,6 +100,7 @@
     "DrawInvalidTransition": "Forbidden draw transition.",
     "DrawRulesClearBlockedByActiveDraw": "Cancel the current draw first.",
     "DrawRulesReplaceBlockedAfterGenerate": "Settings are locked after generation. Cancel the execution to start a new one.",
+    "NonCancelledDrawAlreadyExists": "This phase already has a non-cancelled draw. Cancel it before creating another.",
     "MaterializedOpponentConflict": "This team is already on a created match. This change would contradict the existing calendar."
   }
 }

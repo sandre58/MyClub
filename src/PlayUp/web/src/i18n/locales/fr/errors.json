@@ -100,6 +100,7 @@
     "DrawInvalidTransition": "Transition de tirage interdite.",
     "DrawRulesClearBlockedByActiveDraw": "Annulez d’abord le tirage en cours.",
     "DrawRulesReplaceBlockedAfterGenerate": "Les paramètres sont figés après génération. Annulez l’exécution pour en créer une nouvelle.",
+    "NonCancelledDrawAlreadyExists": "Cette phase compte déjà un tirage non annulé. Annulez-le avant d’en créer un autre.",
     "MaterializedOpponentConflict": "Cette équipe figure déjà sur un match créé. Cette modification créerait une contradiction avec le calendrier."
   }
 }
