@@ -20,11 +20,17 @@ public static class StageOverviewAssembler
     /// </summary>
     /// <param name="stage">Loaded stage (with relations).</param>
     /// <param name="competition">Owning competition for entry display names.</param>
+    /// <param name="competitionStages">Competition stages for inbound feed classification (defaults to target only).</param>
     /// <returns>The assembled overview.</returns>
-    public static StageOverviewDto Assemble(Stage stage, Competition competition)
+    public static StageOverviewDto Assemble(
+        Stage stage,
+        Competition competition,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
+
+        var stagesForFeeds = competitionStages ?? [stage];
 
         var names = EntryDisplayNames.ToMap(competition);
         var entries = EntryDisplayNames.ToEntries(competition);
@@ -59,6 +65,9 @@ public static class StageOverviewAssembler
                 [.. group.EntryIds.Select(entryId => entryId.Value)]))
             .ToArray();
 
+        var drawBracketLaunchFacts =
+            StageDrawBracketLaunchClassifier.TryClassify(stage, stagesForFeeds);
+
         return new StageOverviewDto(
             stage.Id.Value,
             stage.CompetitionId.Value,
@@ -68,7 +77,8 @@ public static class StageOverviewAssembler
             slots,
             draws,
             bracketPairs,
-            groups);
+            groups,
+            drawBracketLaunchFacts);
     }
 
     private static StageFixtureDto MapFixture(Fixture fixture) =>

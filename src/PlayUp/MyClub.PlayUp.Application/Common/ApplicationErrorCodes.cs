@@ -113,6 +113,16 @@ public static class ApplicationErrorCodes
     public const string DrawRulesRequired = "Application.DrawRulesRequired";
 
     /// <summary>
+    /// Gets the code when draw rerun inputs are refused because bracket places block launch.
+    /// </summary>
+    public const string DrawLaunchGridNotVacant = "Application.DrawLaunchGridNotVacant";
+
+    /// <summary>
+    /// Gets the code when draw rerun inputs are refused because direct assignments exist.
+    /// </summary>
+    public const string DrawLaunchDirectAssignmentPresent = "Application.DrawLaunchDirectAssignmentPresent";
+
+    /// <summary>
     /// Gets the code when ReleaseDrawAlignedPlacements cannot run (e.g. not Resolved Slot).
     /// Distinct from Domain <c>SlotFeedConflict</c> (DirectAssignment on a target slot).
     /// </summary>

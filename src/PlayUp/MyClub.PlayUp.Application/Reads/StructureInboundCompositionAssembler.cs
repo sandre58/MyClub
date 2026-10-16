@@ -100,7 +100,19 @@ public static class StructureInboundCompositionAssembler
                 competitionStages));
         }
 
-        return new StructureInboundFeedRuleDto(feedKey, sourceStageId, seats);
+        StructureInboundQualificationPathDto? qualificationPath = qualPath is not null
+            ? StructureInboundFeedPathProjection.MapQualificationPath(qualPath, sourceStage)
+            : null;
+        StructureInboundProgressionPathDto? progressionPath = progPath is not null
+            ? StructureInboundFeedPathProjection.MapProgressionPath(progPath, sourceStage)
+            : null;
+
+        return new StructureInboundFeedRuleDto(
+            feedKey,
+            sourceStageId,
+            seats,
+            qualificationPath,
+            progressionPath);
     }
 
     private static StructureInboundFeedSeatDto ResolveSeat(
@@ -253,11 +265,39 @@ public sealed record StructureInboundCompositionDto(
     int ResolvedCount,
     IReadOnlyList<StructureInboundFeedRuleDto> Rules);
 
+/// <summary>Hub read projection of one qualification path (Composition Qualifiés labels).</summary>
+public sealed record StructureInboundQualificationPathDto(
+    int Order,
+    SelectionMode SelectionMode,
+    int SelectionValue,
+    Guid DestinationStageId,
+    int? SelectionEndValue = null,
+    string? DestinationSlotKey = null,
+    Guid? DestinationGroupId = null,
+    bool DestinationForm = false,
+    RankingScope? RankingScope = null,
+    Guid? GroupId = null,
+    string? GroupName = null,
+    int? AcrossGroupsPosition = null,
+    int? MinimumPoints = null);
+
+/// <summary>Hub read projection of one progression path (Composition Qualifiés labels).</summary>
+public sealed record StructureInboundProgressionPathDto(
+    string SourcePairKey,
+    ProgressionOutcome Outcome,
+    Guid DestinationStageId,
+    string? DestinationSlotKey = null,
+    Guid? DestinationGroupId = null,
+    bool DestinationForm = false,
+    string? SourceLabel = null);
+
 /// <summary>One inbound feed rule and its seat resolutions.</summary>
 public sealed record StructureInboundFeedRuleDto(
     string FeedKey,
     Guid SourceStageId,
-    IReadOnlyList<StructureInboundFeedSeatDto> Seats);
+    IReadOnlyList<StructureInboundFeedSeatDto> Seats,
+    StructureInboundQualificationPathDto? QualificationPath = null,
+    StructureInboundProgressionPathDto? ProgressionPath = null);
 
 /// <summary>One seat within an inbound feed rule.</summary>
 public sealed record StructureInboundFeedSeatDto(

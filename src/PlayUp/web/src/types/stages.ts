@@ -80,6 +80,15 @@ export interface StageGroupOverview {
   entryIds: string[];
 }
 
+export interface StageDrawBracketLaunchFacts {
+  entryPlaceCount: number;
+  occupiedByEntryCount: number;
+  reservedByStructuralFeedCount: number;
+  feedResolutionInvalidCount: number;
+  blockingPlaceCount: number;
+  vacantForDrawLaunchCount: number;
+}
+
 export interface StageOverview {
   id: string;
   competitionId: string;
@@ -92,6 +101,8 @@ export interface StageOverview {
   bracketPairs?: StageBracketPair[];
   /** Current group membership; empty for non-Groups formats. */
   groups?: StageGroupOverview[];
+  /** Bracket occupancy for Tirage launch; from Application classifier when DrawRules engaged. */
+  drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null;
 }
 
 /** Structural Cup pair from StageOverview — drives Slot draw A vs B (not Fixture #). */

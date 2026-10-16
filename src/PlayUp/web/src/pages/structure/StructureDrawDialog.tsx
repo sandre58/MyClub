@@ -15,6 +15,7 @@ import {
   cancelDraw,
   createAndGenerateDraw,
   fetchStageOverview,
+  fetchStageSchematic,
   isDrawGenerateFailedError,
   publishAndApplyDraw,
   releaseDrawAlignedPlacements,
@@ -219,6 +220,12 @@ export function StructureDrawDialog({
     enabled: open && Boolean(stageId),
   });
 
+  const schematicQuery = useQuery({
+    queryKey: queryKeys.stages.schematic(stageId),
+    queryFn: () => fetchStageSchematic(stageId),
+    enabled: open && Boolean(stageId),
+  });
+
   const draws = overviewQuery.data?.draws;
   const slots = overviewQuery.data?.slots ?? [];
   const overviewGroups = overviewQuery.data?.groups ?? [];
@@ -273,6 +280,7 @@ export function StructureDrawDialog({
     formatKind: stage.formatKind,
     draws: drawList,
     slots,
+    drawBracketLaunchFacts: overviewQuery.data?.drawBracketLaunchFacts,
     compositionEntryCount: poolCount,
     isRootComposition: stage.isRootComposition,
     numberOfPots: stage.numberOfPots,

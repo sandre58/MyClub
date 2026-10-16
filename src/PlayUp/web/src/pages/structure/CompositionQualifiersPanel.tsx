@@ -9,10 +9,10 @@ import type {
   StructureFormatKind,
   StructureInboundComposition,
 } from '../../types';
-import type { FeedGroup } from './structurePhaseFeeds';
+import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
 import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
 import { FeedGroupPhaseHead } from './FeedGroupPhaseHead';
-import { inboundSeatsForFeedKey } from './structureCompositionInboundHub';
+import { inboundSeatsForFeedRule } from './structureCompositionInboundHub';
 import {
   primaryPlaceLabel,
   showPerEntryPlacement,
@@ -24,19 +24,17 @@ export function CompositionQualifiersPanel({
   inboundComposition,
   entries,
   formatKind,
-  schematicReady,
   entryPlaceProjections,
   onViewPhase,
   renderGroupAction,
 }: {
-  groups: FeedGroup[];
+  groups: CompositionQualifierFeedGroup[];
   inboundComposition: StructureInboundComposition | null | undefined;
   entries: readonly StructureEntry[];
   formatKind: StructureFormatKind | null | undefined;
-  schematicReady: boolean;
   entryPlaceProjections: ReadonlyMap<string, EntryPlaceProjection>;
   onViewPhase?: (peerId: string) => void;
-  renderGroupAction?: (group: FeedGroup) => ReactNode;
+  renderGroupAction?: (group: CompositionQualifierFeedGroup) => ReactNode;
 }) {
   const { t } = useTranslation('structure');
   const entryById = new Map(entries.map((entry) => [entry.entryId, entry]));
@@ -54,11 +52,19 @@ export function CompositionQualifiersPanel({
             />
             <ul className="structure-feed-group__rules">
               {group.rules.flatMap((rule) => {
-                const seats = inboundSeatsForFeedKey(
-                  inboundComposition,
-                  rule.key,
-                  rule.volume,
-                );
+                const seats =
+                  rule.hubSeats ??
+                  inboundSeatsForFeedRule(
+                    inboundComposition,
+                    {
+                      uiFeedKey: rule.key,
+                      sourceStageId: group.peerId,
+                      qualPathOrder: rule.qualPathOrder,
+                      progressionPairKey: rule.progressionPairKey,
+                      progressionOutcome: rule.progressionOutcome,
+                    },
+                    rule.volume,
+                  );
                 return seats.map((seat, seatIndex) => {
                   const entry =
                     seat.entryId != null
@@ -67,7 +73,6 @@ export function CompositionQualifiersPanel({
                   const placedInPhase = seat.placed;
                   const showUnplacedOpacity =
                     perEntryPlacement &&
-                    schematicReady &&
                     seat.resolved &&
                     seat.entryId != null &&
                     !placedInPhase &&

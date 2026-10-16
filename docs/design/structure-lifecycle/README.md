@@ -8,6 +8,8 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 |----------|---------|
 | [phase-mutability-matrix.md](./phase-mutability-matrix.md) | Exhaustive inventory (diagnostics + `UseCaseExecutor.Stages` commands), current vs target policy, reference cases, open arbitrations |
 | [ctrl-o3-mat-devrunner-recette.md](./ctrl-o3-mat-devrunner-recette.md) | **CTRL-O3-MAT** gate — DevRunner `ctrl-o3-mat-recette` + automated read/SPA assertions (Suspended / production UI); includes **Δ-drawer-1** drawer recette |
+| [p3-composition-band-visibility-matrix-v0.md](./p3-composition-band-visibility-matrix-v0.md) | **P3 draft v0** — contextual Composition band visibility (lifecycle + population state); no implementation |
+| [p3-composition-band-recette-u1-s1-s3.md](./p3-composition-band-recette-u1-s1-s3.md) | **P3 recette** — manual U1 / dual projection worksheet (S1–S3); gate before matrix validation |
 | [delta-03-hub-p1-fiche.md](./delta-03-hub-p1-fiche.md) | **Δ-03** closed — hub P1 draw rules Draft-only in Ready (C-19 / B-Q1b); manual recette + tests |
 | [delta-o4-completed-fiche.md](./delta-o4-completed-fiche.md) | **O-04** validé — **Δ-O4-2** `ec45ed60` + **Δ-O4-1** `68d0f50a` ; recette comparative Championnat OK |
 | [c-18-rename-stage-completed-audit.md](./c-18-rename-stage-completed-audit.md) | **C-18 Closed** — `RenameStage` refusé en `Completed` (`59d20b0a`, PR #54) |
@@ -22,6 +24,7 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [slice-c-enf-detect.md](./slice-c-enf-detect.md) · [apply](./slice-c-enf-apply.md) · [mat-start](./slice-c-enf-mat-start.md) | **C-ENF** — three slices **Closed** · **G-C-INV** §12 **Done** |
 | **Notion — Matrice UI Structure (présentation par statut)** | [Gel produit 2026-10-15](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — **Δ-O3-1/2** · **Δ-drawer-1** · **Δ-03** · **Δ-O4-2** · **Δ-O4-1** · **C-18** · **C-20** closed. Post-gel capacity backlog: CTRL-O3-MAT, D1 awards, ENF slices sur go. |
 | [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) | **Signed** — UI severity/tone/copy for structure diagnostics (presentation only) |
+| [places-operational-strip-occupancy-arbitration-2026-10-16.md](./places-operational-strip-occupancy-arbitration-2026-10-16.md) | **Arbitration (validated)** — Places strip vs `SlotFeedMissing` vs badges; action signal gated on `createGate.ok` (SPA §9 shipped) |
 | [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |
 | [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md) | Impact ², `R-Pres-*`, mutation inventory — **steps 3–5 implemented** (policy, surfaces, i18n short + mutation copy) |
 | [notion-decision-draft.md](./notion-decision-draft.md) | Short **Décision** text for Notion (copy/paste); links to Git annex |

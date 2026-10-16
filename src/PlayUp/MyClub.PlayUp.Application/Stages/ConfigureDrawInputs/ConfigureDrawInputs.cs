@@ -21,11 +21,15 @@ public static class ConfigureDrawInputs
     /// <param name="stage">Owning stage.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="inputs">Concrete inputs.</param>
+    /// <param name="configureIntent">When <see cref="DrawInputsIntent.Rerun"/>, enforces vacant launch grid before mutation.</param>
+    /// <param name="competitionStages">Required for <see cref="DrawInputsIntent.Rerun"/> feed classification.</param>
     /// <param name="stageMatches">Matches of stage.</param>
     public static void Execute(
         Stage stage,
         DrawId drawId,
         DrawInputs inputs,
+        DrawInputsIntent configureIntent = DrawInputsIntent.Default,
+        IReadOnlyList<Stage>? competitionStages = null,
         IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
@@ -41,6 +45,19 @@ public static class ConfigureDrawInputs
         }
 
         inputs.EnsureCompatibleWith(draw.Kind);
+
+        if (configureIntent == DrawInputsIntent.Rerun)
+        {
+            if (competitionStages is null)
+            {
+                throw new ArgumentNullException(
+                    nameof(competitionStages),
+                    "Competition stages are required to validate Rerun draw inputs.");
+            }
+
+            StageDrawRerunLaunchGuard.Ensure(stage, competitionStages, draw.Kind);
+        }
+
         stage.ConfigureDrawInputs(drawId, inputs);
     }
 }

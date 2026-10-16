@@ -390,7 +390,7 @@ describe('StructurePhaseOperationalStrip', () => {
       const drawReadinessChecklist = [
         { id: 'teamsFillPlaces' as const, met: false, current: 4, capacity: 8 },
         { id: 'teamsAllKnown' as const, met: true, current: 4, capacity: 4 },
-        { id: 'noManualPlacement' as const, met: true },
+        { id: 'bracketPlacesFree' as const, met: true },
       ];
 
       renderStrip({
@@ -424,7 +424,7 @@ describe('StructurePhaseOperationalStrip', () => {
       const drawReadinessChecklist = [
         { id: 'teamsFillPlaces' as const, met: false, current: 4, capacity: 8 },
         { id: 'teamsAllKnown' as const, met: true, current: 4, capacity: 4 },
-        { id: 'noManualPlacement' as const, met: true },
+        { id: 'bracketPlacesFree' as const, met: true },
       ];
 
       renderStrip({

@@ -145,6 +145,8 @@ IDs are for step 3 automated tests / manual recipe. **Gates unchanged** — asse
 | ID | Setup | Expected |
 |----|--------|----------|
 | **R-Pres-M-1** | `SlotFeedMissing`, draw engaged awaiting | `hidden` on presented sets |
+| **R-Pres-M-1b** | Places strip **0/N**, draw rules engaged, tirage **not** launchable (`createGate.ok === false`) | Strip message `info`; ratio **neutral** — [arbitration](./places-operational-strip-occupancy-arbitration-2026-10-16.md) §5 |
+| **R-Pres-M-1c** | Places strip **0/N**, tirage **launchable** (`createGate.ok === true`) | Strip message `attention`; ratio **partial/attention** (journey action, not diagnostic) — same arbitration §5 · SPA §9 |
 | **R-Pres-M-2** | Same context, Host attention vs SPA fiche | same severity |
 | **R-Pres-ST-1** | Completed phase with raw `structureIssues` in API | **hidden** on structure hub |
 | **R-Pres-ST-2** | Suspended + `OverCapacityEdge` | **Running** column → `attention` |

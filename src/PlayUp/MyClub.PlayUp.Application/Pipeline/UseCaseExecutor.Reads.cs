@@ -222,7 +222,32 @@ public sealed partial class UseCaseExecutor
                               $"Competition '{stage.CompetitionId}' was not found.",
                               ApplicationErrorCodes.CompetitionNotFound);
 
-        return StageOverviewAssembler.Assemble(stage, competition);
+        IReadOnlyList<Stage> competitionStages;
+        if (competition.StageIds.Count == 0)
+        {
+            competitionStages = [stage];
+        }
+        else
+        {
+            var peerIds = competition.StageIds.Where(id => !id.Equals(stageId)).ToList();
+            var peers = peerIds.Count == 0
+                ? []
+                : await stages
+                    .GetByIdsReadOnlyAsync(peerIds, SchematicPeerCapabilities, cancellationToken)
+                    .ConfigureAwait(false);
+            if (peers.Count != peerIds.Count)
+            {
+                throw new ApplicationFailureException(
+                    "One or more competition stages were not found.",
+                    ApplicationErrorCodes.StageNotFound);
+            }
+
+            var byId = peers.ToDictionary(candidate => candidate.Id);
+            byId[stage.Id] = stage;
+            competitionStages = [.. competition.StageIds.Select(id => byId[id])];
+        }
+
+        return StageOverviewAssembler.Assemble(stage, competition, competitionStages);
     }
 
     /// <summary>

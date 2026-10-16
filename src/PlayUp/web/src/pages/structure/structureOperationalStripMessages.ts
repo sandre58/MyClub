@@ -21,6 +21,10 @@ export function resolvePlaceOccupancyMeterCopy(input: {
   capacity: number | null;
   occupiedPlacesCount: number | null;
   slotFeedMissingActive: boolean;
+  /** Draw rules engaged on this stage — launchability gates 0/N action signal. */
+  drawRulesEngaged?: boolean;
+  /** `createGate.ok` when draw rules engaged. */
+  drawLaunchable?: boolean;
   stageStatus?: StageStatus | null;
   slotFeedPresentationContext?: StructureDiagnosticPresentationContext;
 }): StripMeterCopy {
@@ -31,6 +35,8 @@ export function resolvePlaceOccupancyMeterCopy(input: {
     capacity,
     occupiedPlacesCount,
     slotFeedMissingActive,
+    drawRulesEngaged = false,
+    drawLaunchable = false,
     stageStatus,
     slotFeedPresentationContext,
   } = input;
@@ -96,6 +102,9 @@ export function resolvePlaceOccupancyMeterCopy(input: {
         slotFeedPresentationContext ?? { stageStatus },
       ).tone;
       return presentationToneToMeterKind(tone);
+    }
+    if (drawRulesEngaged && occupiedPlacesCount === 0) {
+      return drawLaunchable ? 'attention' : 'info';
     }
     if (occupiedPlacesCount === 0) {
       return 'info';

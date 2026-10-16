@@ -21,6 +21,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Draws">Draw lifecycle and summarized resolution.</param>
 /// <param name="BracketPairs">Cup structural confrontations (empty for Groups).</param>
 /// <param name="Groups">Group membership snapshot (empty for non-Groups formats).</param>
+/// <param name="DrawBracketLaunchFacts">Bracket occupancy for Tirage launch; null when draw mechanism not applicable.</param>
 public sealed record StageOverviewDto(
     Guid Id,
     Guid CompetitionId,
@@ -30,7 +31,8 @@ public sealed record StageOverviewDto(
     IReadOnlyList<StageSlotDto> Slots,
     IReadOnlyList<StageDrawDto> Draws,
     IReadOnlyList<StageBracketPairDto> BracketPairs,
-    IReadOnlyList<StageGroupOverviewDto> Groups);
+    IReadOnlyList<StageGroupOverviewDto> Groups,
+    StageDrawBracketLaunchFactsDto? DrawBracketLaunchFacts = null);
 
 /// <summary>
 /// Group membership line for stage overview (draw release / alignment checks).

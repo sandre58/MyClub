@@ -109,6 +109,7 @@ import {
 } from './structurePhaseFeeds';
 import { CompositionPopulationGauge } from './CompositionPopulationGauge';
 import { StructurePhaseCompositionBand } from './StructurePhaseCompositionBand';
+import { compositionQualifierFeedGroups } from './structureCompositionQualifierFeeds';
 import { CompositionQualifiersResolvedMeta } from './CompositionQualifiersResolvedMeta';
 import { ExitKindMenu, listComposedAffectationEntries } from './StructurePhaseRails';
 import { StructurePhaseRegulationStrip } from './StructurePhaseRegulationStrip';
@@ -416,6 +417,16 @@ export function StructurePhaseFiche({
 
   const feeds = inboundFeeds(data, stage.stageId, i18n.language, t);
   const feedGroups = groupFeeds(feeds);
+  const compositionQualifierGroups = compositionQualifierFeedGroups({
+    data,
+    inbound: stage.inboundComposition,
+    t,
+    intentFallbackGroups: feedGroups,
+  });
+  const qualifiersPanelGroups =
+    compositionQualifierGroups.length > 0
+      ? compositionQualifierGroups
+      : feedGroups;
   // Places N meter / Affectation reserve: Qual + Prog (Population and Place).
   // Place fills occupy capacity even though they skip the Population set.
   const populationFeedVolume = inboundPopulationConfiguredVolume(
@@ -468,6 +479,9 @@ export function StructurePhaseFiche({
   const overviewSlots = drawOverviewQuery.data?.slots ?? [];
   const overviewDraws = drawOverviewQuery.data?.draws ?? [];
   const overviewGroups = drawOverviewQuery.data?.groups ?? [];
+  const drawBracketLaunchFacts =
+    drawOverviewQuery.data?.drawBracketLaunchFacts ?? undefined;
+  const schematicCases = schematicQuery.data?.cases;
   const drawGateReady =
     drawOverviewQuery.isSuccess ||
     stage.formatKind === 'Groups' ||
@@ -478,6 +492,7 @@ export function StructurePhaseFiche({
           formatKind: stage.formatKind,
           draws: overviewDraws,
           slots: overviewSlots,
+          drawBracketLaunchFacts,
           compositionEntryCount: poolFilled,
           isRootComposition: stage.isRootComposition,
           numberOfPots: stage.numberOfPots,
@@ -503,6 +518,9 @@ export function StructurePhaseFiche({
           placesN,
           inboundResolvedCount: qualifiersResolvedCount,
           inboundConfiguredVolume: qualifiersConfiguredVolume,
+          isRootComposition: stage.isRootComposition ?? true,
+          formatKind: stage.formatKind,
+          drawBracketLaunchFacts,
           slots: overviewSlots,
         })
       : null;
@@ -523,7 +541,6 @@ export function StructurePhaseFiche({
       ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
       : null;
   const stageHasAppliedDraw = stageHasPublishedAppliedDraw(overviewDraws);
-  const schematicCases = schematicQuery.data?.cases;
   const releasablePick = pickReleasableCancelledDraw({
     draws: overviewDraws,
     slots: overviewSlots,
@@ -849,7 +866,7 @@ export function StructurePhaseFiche({
   });
   const showAffectationSection =
     showPlacementBlock || showDrawCta || showActivateDrawCta;
-  const showQualifiersSection = feedGroups.length > 0;
+  const showQualifiersSection = qualifiersPanelGroups.length > 0;
   const teamsHasListContent =
     composedAffectationEntries.length > 0 ||
     (stage.affectationPreviewNames?.length ?? 0) > 0 ||
@@ -955,6 +972,8 @@ export function StructurePhaseFiche({
           onReleasePlacements: () => setReleaseConfirmOpen(true),
           onDeactivateDraw: () => setDeactivateDrawOpen(true),
           slotFeedMissingActive,
+          drawLaunchable:
+            showDrawCta && drawGateReady && createGate?.ok === true,
           stageStatus: stage.status,
           slotFeedPresentationContext: {
             formatKind: stageDiagnosticContext.formatKind,
@@ -1120,7 +1139,7 @@ export function StructurePhaseFiche({
           structureHubBackgroundRefresh={structureHubBackgroundRefresh}
           qualifiersResolvedEyebrow={qualifiersResolvedEyebrow}
           compositionComposeToolbar={compositionComposeToolbar}
-          feedGroups={feedGroups}
+          feedGroups={qualifiersPanelGroups}
           inboundComposition={stage.inboundComposition}
           entries={data.participants.entries}
           formatKind={stage.formatKind}

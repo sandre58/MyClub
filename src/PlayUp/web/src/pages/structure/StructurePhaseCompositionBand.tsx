@@ -23,7 +23,7 @@ import { EmptyState } from '../../ui';
 import { CompositionQualifiersPanel } from './CompositionQualifiersPanel';
 import { RootEntriesRail } from './StructurePhaseRails';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
-import type { FeedGroup } from './structurePhaseFeeds';
+import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
 import type { EntryPlaceProjection } from './structureEntryPlacementProjection';
 import type { StructurePlacementOperationalSectionProps } from './structurePlacementOperationalProps';
 import type { MaterializePresentation } from './structureMaterializeCopy';
@@ -36,7 +36,7 @@ export type StructurePhaseCompositionBandProps = {
   structureHubBackgroundRefresh: boolean;
   qualifiersResolvedEyebrow: ReactNode;
   compositionComposeToolbar: ReactNode;
-  feedGroups: FeedGroup[];
+  feedGroups: CompositionQualifierFeedGroup[];
   inboundComposition: StructureInboundComposition | null | undefined;
   entries: readonly StructureEntry[];
   formatKind: StructureFormatKind | null | undefined;
@@ -151,7 +151,6 @@ export function StructurePhaseCompositionBand({
             inboundComposition={inboundComposition}
             entries={entries}
             formatKind={formatKind}
-            schematicReady={schematicReady}
             entryPlaceProjections={entryPlaceProjections}
             onViewPhase={onViewPhase}
             renderGroupAction={renderAvalSourceAction}

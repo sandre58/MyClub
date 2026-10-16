@@ -517,10 +517,14 @@
         "unavailable": "Draw is not available for this phase.",
         "readiness": {
           "aria": "Requirements to run the draw",
-          "teamsFillPlaces": "Enough teams to fill the places ({{current}}/{{capacity}})",
-          "teamsAllKnown": "All teams are known ({{current}}/{{capacity}})",
-          "teamsAllKnownPlain": "All teams are known",
-          "noManualPlacementPlain": "No manual placement on the bracket"
+          "statusMet": "Complete",
+          "statusUnmet": "To complete",
+          "teamsFillPlaces": "Teams in phase: {{current}}/{{capacity}}",
+          "teamsFillPlacesNoCapacity": "Teams in phase: {{current}}",
+          "teamsAllKnown": "Teams known from previous phases: {{current}}/{{capacity}}",
+          "teamsAllKnownNoQuota": "Teams known from previous phases: {{current}}",
+          "bracketPlacesOccupiedNone": "Occupied places on the draw: none",
+          "bracketPlacesOccupiedCount": "Occupied places on the draw: {{count}}"
         },
         "stateMessage": {
           "unknown": "Capacity unavailable for the draw pool.",
@@ -750,7 +754,8 @@
     },
     "qualifiers": {
       "viewPhase": "View phase",
-      "unresolved": "Unresolved"
+      "unresolved": "Unresolved",
+      "pathPending": "Qualification path"
     },
     "title": "Teams — {{phase}}",
     "lede": "Add teams to this phase. Places already expected from Qualification / Progression are reserved.",

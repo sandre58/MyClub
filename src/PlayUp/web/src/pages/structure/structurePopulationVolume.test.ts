@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary, StructureView } from '../../types';
+import { inboundFeeds } from './structurePhaseFeeds';
 import {
   expectedPopulationWithQualDraft,
   expectedPopulationWithProgDraft,
@@ -119,6 +120,39 @@ describe('structurePopulationVolume', () => {
       final,
     ]);
     expect(expectedPopulationOccupancy(data, final)).toBe(4);
+  });
+
+  it('inboundPopulationConfiguredVolume matches sum of inboundFeeds row volumes (U1 intent projection)', () => {
+    const final = stage({
+      stageId: 'final',
+      name: 'Finale',
+      compositionCapacity: 4,
+      affectationEntryCount: 2,
+    });
+    const data = view([
+      stage({
+        stageId: 'sf',
+        name: 'Demis',
+        qualificationIntents: [
+          {
+            intentId: 'q1',
+            order: 1,
+            sourceKind: 'EachGroup',
+            positionFrom: 1,
+            positionTo: 2,
+            destinationStageId: 'final',
+            destinationCount: 2,
+          },
+        ],
+      }),
+      final,
+    ]);
+    const feeds = inboundFeeds(data, 'final', 'fr', (key) => key);
+    const feedVolume = feeds.reduce((sum, row) => sum + row.volume, 0);
+    expect(inboundPopulationConfiguredVolume(data, 'final')).toBe(feedVolume);
+    expect(expectedPopulationOccupancy(data, final)).toBe(
+      (final.affectationEntryCount ?? 0) + feedVolume,
+    );
   });
 
   it('adds Prog Place from same source to Qual draft Z (4/2 case)', () => {

@@ -30,6 +30,8 @@ export type StructurePlacementOperationalSectionProps = {
   deactivateDrawPending: boolean;
   /** Host reports SlotFeedMissing — strip meter copy carries the gap (not the banner). */
   slotFeedMissingActive?: boolean;
+  /** Same predicate as Create + Generate (`resolveStageDrawCreateGate`). Only when `showDrawCta`. */
+  drawLaunchable?: boolean;
   stageStatus?: StageStatus;
   slotFeedPresentationContext?: StructureDiagnosticPresentationContext;
   /** Draw pool / create gate needs draw overview (Cup) before showing Tirage strip body. */

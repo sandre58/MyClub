@@ -516,10 +516,14 @@
         "unavailable": "Le tirage n’est pas disponible pour cette phase.",
         "readiness": {
           "aria": "Prérequis pour effectuer le tirage",
-          "teamsFillPlaces": "Assez d’équipes pour occuper les places ({{current}}/{{capacity}})",
-          "teamsAllKnown": "Toutes les équipes sont connues ({{current}}/{{capacity}})",
-          "teamsAllKnownPlain": "Toutes les équipes sont connues",
-          "noManualPlacementPlain": "Aucun placement manuel sur le tableau"
+          "statusMet": "Satisfait",
+          "statusUnmet": "À compléter",
+          "teamsFillPlaces": "Équipes dans la phase : {{current}}/{{capacity}}",
+          "teamsFillPlacesNoCapacity": "Équipes dans la phase : {{current}}",
+          "teamsAllKnown": "Équipes connues depuis l’amont : {{current}}/{{capacity}}",
+          "teamsAllKnownNoQuota": "Équipes connues depuis l’amont : {{current}}",
+          "bracketPlacesOccupiedNone": "Places occupées sur le tableau : aucun",
+          "bracketPlacesOccupiedCount": "Places occupées sur le tableau : {{count}}"
         },
         "stateMessage": {
           "unknown": "Capacité indisponible pour le vivier de tirage.",
@@ -750,7 +754,8 @@
     },
     "qualifiers": {
       "viewPhase": "Voir la phase",
-      "unresolved": "Non résolue"
+      "unresolved": "Non résolue",
+      "pathPending": "Chemin de qualification"
     },
     "title": "Équipes — {{phase}}",
     "lede": "Ajoutez des équipes à cette phase. Les places déjà attendues via Qualification / Progression sont réservées.",

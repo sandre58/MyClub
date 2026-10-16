@@ -484,11 +484,16 @@ function PlacesColumn(
   const { t } = useTranslation('structure');
   const capacity = props.placesN;
   const unknownCapacity = capacity == null || capacity <= 0;
+  const drawRulesEngaged = props.showDrawCta;
+  const drawLaunchable = props.drawLaunchable ?? false;
   const occupancyTone =
     !unknownCapacity &&
     capacity != null &&
     props.occupiedPlacesCount != null
-      ? resolvePlaceOccupancyTone(props.occupiedPlacesCount, capacity)
+      ? resolvePlaceOccupancyTone(props.occupiedPlacesCount, capacity, {
+          drawRulesEngaged,
+          drawLaunchable,
+        })
       : 'neutral';
 
   const ratioLabel = t('fiche.operational.placement.ratioLabel', {
@@ -502,6 +507,8 @@ function PlacesColumn(
     capacity,
     occupiedPlacesCount: props.occupiedPlacesCount,
     slotFeedMissingActive: props.slotFeedMissingActive ?? false,
+    drawRulesEngaged,
+    drawLaunchable,
     stageStatus: props.stageStatus,
     slotFeedPresentationContext: props.slotFeedPresentationContext,
   });

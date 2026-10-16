@@ -22,6 +22,38 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('info');
   });
 
+  it('T-LAUNCH-0: uses info for 0/N when draw rules engaged but gate closed', () => {
+    expect(
+      resolvePlaceOccupancyMeterCopy({
+        t,
+        occupancyReady: true,
+        unknownCapacity: false,
+        capacity: 8,
+        occupiedPlacesCount: 0,
+        slotFeedMissingActive: false,
+        drawRulesEngaged: true,
+        drawLaunchable: false,
+        stageStatus: 'Ready',
+      }).kind,
+    ).toBe('info');
+  });
+
+  it('T-LAUNCH-1: uses attention for 0/N when draw is launchable', () => {
+    expect(
+      resolvePlaceOccupancyMeterCopy({
+        t,
+        occupancyReady: true,
+        unknownCapacity: false,
+        capacity: 8,
+        occupiedPlacesCount: 0,
+        slotFeedMissingActive: false,
+        drawRulesEngaged: true,
+        drawLaunchable: true,
+        stageStatus: 'Ready',
+      }).kind,
+    ).toBe('attention');
+  });
+
   it('uses danger for empty occupancy when SlotFeedMissing is active in Ready', () => {
     expect(
       resolvePlaceOccupancyMeterCopy({

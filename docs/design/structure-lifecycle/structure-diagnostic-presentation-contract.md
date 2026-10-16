@@ -5,7 +5,8 @@
 **Out of scope:** §11B authorization gates (Prepare, Materialize, Start, G-OPS, G-MAT); sport Overview; live matches; teams (except echoes).  
 **Annexes:**  
 - Step 1 audit — [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md)  
-- **Step 2 (signed)** — [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md)
+- **Step 2 (signed)** — [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md)  
+- **Places strip occupancy (2026-10-16)** — [places-operational-strip-occupancy-arbitration-2026-10-16.md](./places-operational-strip-occupancy-arbitration-2026-10-16.md) (occupation vs diagnostic vs lifecycle; draw badges; `SlotFeedMissing` SoT)
 
 ---
 
@@ -20,6 +21,8 @@
 | **Authorization** | Whether an operation is allowed | Existing business gates and server |
 
 Presentation may change with phase status **without** changing server authorization.
+
+The **Places operational strip** ratio is primarily an **occupation** readout; **diagnostic severity** for feed gaps comes from presented codes such as `SlotFeedMissing`, not from `drawExecutionBadge` alone. See [places-operational-strip-occupancy-arbitration-2026-10-16.md](./places-operational-strip-occupancy-arbitration-2026-10-16.md).
 
 ### 1.2 Contract values
 

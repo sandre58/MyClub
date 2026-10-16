@@ -4,6 +4,7 @@ import {
   areDrawRulesLockedByExecution,
   canAuthorStageDrawRules,
   countAlignedDrawPlacements,
+  countBracketPlacesBlockingDraw,
   pickReleasableCancelledDraw,
   drawExecutionNumber,
   getDrawUiProjection,
@@ -13,6 +14,7 @@ import {
   projectSlotDrawResult,
   resolveDrawCreateBlockPresentation,
   resolveDrawCreateGate,
+  resolveStageDrawCreateGate,
   resolveDrawReadinessChecklist,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
@@ -467,7 +469,50 @@ describe('resolveDrawCreateGate', () => {
     ).toEqual({ ok: false, reason: 'active' });
   });
 
-  it('does not treat vacant Qual/Prog feeds as occupants', () => {
+  it('counts Qual/Prog schematic feeds as blocking cup draw places', () => {
+    const cases = [
+      {
+        formPosition: { kind: 'CupSlot' as const, slotKey: 'S1' },
+        feedOrigin: { kind: 'Qualification' as const },
+        entry: null,
+      },
+      {
+        formPosition: { kind: 'CupSlot' as const, slotKey: 'S2' },
+        feedOrigin: null,
+        entry: null,
+      },
+    ];
+    expect(
+      countBracketPlacesBlockingDraw(
+        'Cup',
+        [{ entryId: null }, { entryId: null }],
+        null,
+        cases,
+      ),
+    ).toBe(1);
+    expect(
+      resolveStageDrawCreateGate({
+        formatKind: 'Cup',
+        draws: [],
+        slots: [{ entryId: null }, { entryId: null }],
+        drawBracketLaunchFacts: {
+          entryPlaceCount: 2,
+          occupiedByEntryCount: 0,
+          reservedByStructuralFeedCount: 1,
+          feedResolutionInvalidCount: 0,
+          blockingPlaceCount: 1,
+          vacantForDrawLaunchCount: 1,
+        },
+        schematicCases: cases,
+        compositionEntryCount: 2,
+        placesN: 2,
+        numberOfPots: null,
+        groupCount: 0,
+      }),
+    ).toEqual({ ok: false, reason: 'occupiedSlots' });
+  });
+
+  it('does not treat vacant Qual/Prog feeds as occupants on overview slots alone', () => {
     expect(
       slotsHaveOccupants([
         { entryId: null },
@@ -589,6 +634,32 @@ describe('resolveDrawCreateGate', () => {
     ).toBe(1);
   });
 
+  it('checklist bracket line uses schematic qual feeds', () => {
+    const items = resolveDrawReadinessChecklist({
+      compositionEntryCount: 0,
+      placesN: 2,
+      inboundResolvedCount: 0,
+      inboundConfiguredVolume: 2,
+      isRootComposition: false,
+      formatKind: 'Cup',
+      schematicCases: [
+        {
+          formPosition: { kind: 'CupSlot', slotKey: 'A' },
+          feedOrigin: { kind: 'Qualification' },
+        },
+        {
+          formPosition: { kind: 'CupSlot', slotKey: 'B' },
+          feedOrigin: { kind: 'Qualification' },
+        },
+      ],
+      slots: [{ entryId: null }, { entryId: null }],
+    });
+    expect(items.find((i) => i.id === 'bracketPlacesFree')).toMatchObject({
+      met: false,
+      current: 2,
+    });
+  });
+
   it('lists three draw readiness criteria with ratios', () => {
     const items = resolveDrawReadinessChecklist({
       compositionEntryCount: 4,
@@ -600,7 +671,7 @@ describe('resolveDrawCreateGate', () => {
     expect(items.map((item) => item.id)).toEqual([
       'teamsFillPlaces',
       'teamsAllKnown',
-      'noManualPlacement',
+      'bracketPlacesFree',
     ]);
     expect(items[0]).toMatchObject({
       met: false,
@@ -612,7 +683,43 @@ describe('resolveDrawCreateGate', () => {
       current: 2,
       capacity: 4,
     });
-    expect(items[2]).toMatchObject({ met: false });
+    expect(items[2]).toMatchObject({ met: false, current: 1 });
+  });
+
+  it('omits inbound-known line when no qual/prog volume is configured', () => {
+    const items = resolveDrawReadinessChecklist({
+      compositionEntryCount: 2,
+      placesN: 4,
+      inboundResolvedCount: 0,
+      inboundConfiguredVolume: 0,
+      isRootComposition: true,
+      slots: [],
+    });
+    expect(items.map((item) => item.id)).toEqual([
+      'teamsFillPlaces',
+      'bracketPlacesFree',
+    ]);
+  });
+
+  it('separates inbound configured Places fill from resolved qual count', () => {
+    const items = resolveDrawReadinessChecklist({
+      compositionEntryCount: 0,
+      placesN: 4,
+      inboundResolvedCount: 0,
+      inboundConfiguredVolume: 4,
+      isRootComposition: false,
+      slots: [],
+    });
+    expect(items[0]).toMatchObject({
+      met: true,
+      current: 4,
+      capacity: 4,
+    });
+    expect(items[1]).toMatchObject({
+      met: false,
+      current: 0,
+      capacity: 4,
+    });
   });
 
   it('maps create-block presentation tones', () => {

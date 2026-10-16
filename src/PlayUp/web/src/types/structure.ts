@@ -251,6 +251,10 @@ export interface StructureInboundFeedRule {
   feedKey: string;
   sourceStageId: string;
   seats: StructureInboundFeedSeat[];
+  /** Regulation path projection (hub SoT for Qualifiés labels). */
+  qualificationPath?: StructureQualificationPath | null;
+  /** Regulation path projection (hub SoT for Qualifiés labels). */
+  progressionPath?: StructureProgressionPath | null;
 }
 
 export interface StructureInboundFeedSeat {

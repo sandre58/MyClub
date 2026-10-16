@@ -71,11 +71,15 @@ export function operationalStripPoolTone(
 export function resolvePlaceOccupancyTone(
   filled: number,
   capacity: number | null,
+  options?: { drawRulesEngaged?: boolean; drawLaunchable?: boolean },
 ): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }
   if (filled <= 0) {
+    if (options?.drawRulesEngaged && !options.drawLaunchable) {
+      return 'neutral';
+    }
     return 'partial';
   }
   return resolveDrawCtaPoolTone(filled, capacity);

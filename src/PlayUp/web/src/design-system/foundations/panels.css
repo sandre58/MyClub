@@ -213,6 +213,21 @@
   height: 2.75rem;
 }
 
+.ds-empty__icon .ds-icon.ds-icon--sm {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.ds-empty__icon .ds-icon.ds-icon--md {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.ds-empty__icon .ds-icon.ds-icon--lg {
+  width: 3.10rem;
+  height: 3.10rem;
+}
+
 .ds-empty__icon .ds-btn .ds-icon {
   width: auto;
   height: auto;
@@ -294,21 +309,6 @@
   margin-bottom: 0;
   color: var(--color-text-secondary);
   opacity: 0.85;
-}
-
-.ds-empty__icon--sm .ds-icon {
-  width: var(--icon-size-sm);
-  height: var(--icon-size-sm);
-}
-
-.ds-empty__icon--md .ds-icon {
-  width: var(--icon-size-md);
-  height: var(--icon-size-md);
-}
-
-.ds-empty__icon--lg .ds-icon {
-  width: var(--icon-size-lg);
-  height: var(--icon-size-lg);
 }
 
 .ds-empty:not(.ds-empty--compact) .ds-empty__icon--lg .ds-icon {

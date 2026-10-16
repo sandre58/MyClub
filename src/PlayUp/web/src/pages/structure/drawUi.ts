@@ -3,6 +3,7 @@ import type {
   DrawResolutionState,
   DrawStatus,
   SchematicCase,
+  SchematicFeedKind,
   StageBracketPair,
   StageDraw,
   StageDrawGroupPlacement,
@@ -11,6 +12,7 @@ import type {
   StageSlot,
   StageStatus,
   StructureFormatKind,
+  StageDrawBracketLaunchFacts,
 } from '../../types';
 import { canReleaseDrawAlignedPlacements } from '../stage/lifecycleGates';
 
@@ -249,11 +251,66 @@ export function resolveDrawCreateGate(input: {
   return { ok: true };
 }
 
-/** Occupant = entryId present; vacant Qual/Prog feed does not count. */
+/** Occupant = entryId present on StageOverview slots (overview-only; see countBracketPlacesBlockingDraw). */
 export function slotsHaveOccupants(
   slots: ReadonlyArray<{ entryId: string | null | undefined }>,
 ): boolean {
-  return slots.some((slot) => slot.entryId != null);
+  return countOccupiedSlots(slots) > 0;
+}
+
+export function countOccupiedSlots(
+  slots: ReadonlyArray<{ entryId: string | null | undefined }>,
+): number {
+  return slots.reduce(
+    (count, slot) => (slot.entryId != null ? count + 1 : count),
+    0,
+  );
+}
+
+const FEEDS_BLOCKING_CUP_DRAW: ReadonlySet<SchematicFeedKind> = new Set([
+  'Qualification',
+  'Progression',
+  'Direct',
+  'Draw',
+]);
+
+/** Cup / Groups place reserved for draw when an entry or structural feed is present. */
+export function schematicCaseBlocksDraw(place: SchematicCase): boolean {
+  if (place.entry?.entryId) {
+    return true;
+  }
+  const kind = place.feedOrigin?.kind;
+  return kind != null && FEEDS_BLOCKING_CUP_DRAW.has(kind);
+}
+
+/**
+ * Places that block a Cup/Slot draw rerun — aligns with schematic (Qual/Prog feeds)
+ * and falls back to overview slot entryId when schematic is unavailable.
+ */
+export function countBracketPlacesBlockingDraw(
+  formatKind: StructureFormatKind | null | undefined,
+  slots: ReadonlyArray<{ entryId: string | null | undefined }>,
+  drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null,
+  schematicCases?: ReadonlyArray<SchematicCase> | null,
+): number {
+  if (drawBracketLaunchFacts) {
+    return drawBracketLaunchFacts.blockingPlaceCount;
+  }
+  if (schematicCases && schematicCases.length > 0) {
+    const formKind =
+      formatKind === 'Cup'
+        ? 'CupSlot'
+        : formatKind === 'Groups'
+          ? 'GroupPlace'
+          : null;
+    if (formKind) {
+      return schematicCases.filter(
+        (place) =>
+          place.formPosition.kind === formKind && schematicCaseBlocksDraw(place),
+      ).length;
+    }
+  }
+  return countOccupiedSlots(slots);
 }
 
 /**
@@ -291,6 +348,8 @@ export function resolveStageDrawCreateGate(input: {
   formatKind: StructureFormatKind | null | undefined;
   draws: ReadonlyArray<{ status: string }>;
   slots: ReadonlyArray<{ entryId: string | null | undefined }>;
+  drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null;
+  schematicCases?: ReadonlyArray<SchematicCase> | null;
   compositionEntryCount: number;
   isRootComposition?: boolean;
   numberOfPots: number | null | undefined;
@@ -316,14 +375,21 @@ export function resolveStageDrawCreateGate(input: {
     slotCount: input.placesN,
     minimumTeams: input.minimumTeams,
     hasDirectAssignment: (input.directAssignmentCount ?? 0) > 0,
-    hasOccupiedSlots: slotsHaveOccupants(input.slots),
+    hasOccupiedSlots:
+      countBracketPlacesBlockingDraw(
+        input.formatKind,
+        input.slots,
+        input.drawBracketLaunchFacts,
+        input.schematicCases,
+      ) > 0,
   });
 }
 
 export type DrawReadinessCriterionId =
   | 'teamsFillPlaces'
   | 'teamsAllKnown'
-  | 'noManualPlacement';
+  /** Any bracket place with an occupant (manual, qual/prog, prior draw) — mirrors draw occupiedSlots gate. */
+  | 'bracketPlacesFree';
 
 export type DrawReadinessChecklistItem = {
   id: DrawReadinessCriterionId;
@@ -332,45 +398,69 @@ export type DrawReadinessChecklistItem = {
   capacity?: number;
 };
 
-/** Composition-band checklist before running a draw (3 product criteria). */
+/** Composition-band checklist before running a draw (2–3 criteria; amont line only when configured). */
 export function resolveDrawReadinessChecklist(input: {
   compositionEntryCount: number;
   placesN: number | null | undefined;
   inboundResolvedCount: number;
   inboundConfiguredVolume: number;
+  /** False when inbound Qual/Prog feeds the phase — line 1 reads configured vs Places N. */
+  isRootComposition?: boolean;
+  formatKind?: StructureFormatKind | null;
+  drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null;
+  schematicCases?: ReadonlyArray<SchematicCase> | null;
   slots: ReadonlyArray<{ entryId: string | null | undefined }>;
 }): DrawReadinessChecklistItem[] {
   const pool = input.compositionEntryCount;
   const places = input.placesN ?? 0;
   const resolved = input.inboundResolvedCount;
   const configured = input.inboundConfiguredVolume;
+  const useInboundPlacesFill =
+    input.isRootComposition === false && configured > 0 && places > 0;
 
-  const teamsFillPlaces =
-    places > 0 && pool === places;
+  const teamsFillPlaces = useInboundPlacesFill
+    ? configured === places
+    : places > 0 && pool === places;
+  const teamsFillPlacesCurrent = useInboundPlacesFill ? configured : pool;
+  const teamsFillPlacesCapacity =
+    places > 0 ? places : undefined;
 
-  const teamsAllKnown =
-    configured <= 0 ? true : resolved >= configured;
+  const showInboundKnown = configured > 0;
+  const teamsAllKnown = !showInboundKnown || resolved >= configured;
 
-  const noManualPlacement = !slotsHaveOccupants(input.slots);
+  const occupiedBracketPlaces = countBracketPlacesBlockingDraw(
+    input.formatKind,
+    input.slots,
+    input.drawBracketLaunchFacts,
+    input.schematicCases,
+  );
+  const bracketPlacesFree = occupiedBracketPlaces === 0;
 
-  return [
+  const items: DrawReadinessChecklistItem[] = [
     {
       id: 'teamsFillPlaces',
       met: teamsFillPlaces,
-      current: pool,
-      capacity: places > 0 ? places : undefined,
-    },
-    {
-      id: 'teamsAllKnown',
-      met: teamsAllKnown,
-      current: configured > 0 ? resolved : undefined,
-      capacity: configured > 0 ? configured : undefined,
-    },
-    {
-      id: 'noManualPlacement',
-      met: noManualPlacement,
+      current: teamsFillPlacesCurrent,
+      capacity: teamsFillPlacesCapacity,
     },
   ];
+
+  if (showInboundKnown) {
+    items.push({
+      id: 'teamsAllKnown',
+      met: teamsAllKnown,
+      current: resolved,
+      capacity: configured,
+    });
+  }
+
+  items.push({
+    id: 'bracketPlacesFree',
+    met: bracketPlacesFree,
+    current: occupiedBracketPlaces,
+  });
+
+  return items;
 }
 
 /**

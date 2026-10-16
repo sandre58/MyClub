@@ -2,7 +2,7 @@
 
 Parity reference for **Tirage** when `resolveStageDrawCreateGate` returns `ok: false`. Sources: `StructurePhaseFiche.tsx`, `StructurePhaseOperationalStrip.tsx` (`DrawColumn`), `drawUi.ts`. No new rules in refonte layout work.
 
-Related: [truth sources](./truth-sources.md), [state matrix](./state-matrix.md).
+Related: [truth sources](./truth-sources.md), [state matrix](./state-matrix.md), [draw bracket place readiness contract](./draw-bracket-place-readiness-contract.md).
 
 ---
 
