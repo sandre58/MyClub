@@ -51,13 +51,9 @@
     "problemsToHandle_one": "{{count}} problème à traiter",
     "problemsToHandle_other": "{{count}} problèmes à traiter",
     "anomalyHintTitle": "Des anomalies nécessitent votre attention",
-    "family": {
-      "graph": "Graphe",
-      "feed": "Alimentation",
-      "capacity": "Capacité",
-      "execution": "Exécution",
-      "result": "Résultat"
-    },
+    "anomalyHintTitlePaused": "Des anomalies structurelles sont constatées (phase en pause)",
+    "warningHintTitle": "La structure reste à finaliser",
+    "warningHintTitlePaused": "Des éléments structurels restent incomplets (phase en pause)",
     "statStructural_one": "liaison à corriger",
     "statStructural_other": "liaisons à corriger",
     "statIncomplete_one": "phase incomplète",
@@ -140,6 +136,8 @@
     "legsOne": "1 manche",
     "legsTwo": "2 manches",
     "tieSelectRoundEmpty": "Aucun format de confrontation modifiable.",
+    "tieSingleRoundDriftHint": "Le format enregistré pour ce tour diffère du format de base de la phase. Il n’a pas été modifié automatiquement.",
+    "tieRealignToPhase": "Réaligner sur le format de la phase",
     "drawModeLabel": "Mode",
     "drawActivatedToast": "Tirage activé",
     "drawParamsSavedToast": "Paramètres du tirage enregistrés",
@@ -238,12 +236,52 @@
       "SourcePopulationShortfall": "Pas encore assez d’équipes dans la phase source",
       "PopulationShortfall": "Pas assez d’équipes promises pour cette phase",
       "AuthoredAwardUnreachable": "Paire source introuvable",
-      "ExpectedRankUnreachable": "Ce rang de compétition ne peut pas être produit par les chemins d’attribution"
+      "ExpectedRankUnreachable": "Ce rang de compétition ne peut pas être produit par les chemins d’attribution",
+      "SlotFeedMissingPaused": "Place non alimentée (constat en pause)",
+      "SlotFeedInvalidPaused": "Alimentation d’emplacement invalide (constat en pause)",
+      "SlotFeedMultiplePaused": "Alimentations d’emplacement en conflit (constat en pause)",
+      "CycleDetectedPaused": "Liaison circulaire entre phases (constat en pause)",
+      "RoutingNondeterminismPaused": "Routage ambigu entre phases (constat en pause)",
+      "NonRootUnfedPaused": "Aucune équipe n’alimente encore cette phase (constat en pause)",
+      "DanglingQualificationTargetPaused": "Destination de qualification introuvable (constat en pause)",
+      "DanglingProgressionTargetPaused": "Destination de progression introuvable (constat en pause)",
+      "MissingQualificationDestinationSlotPaused": "Place de qualification manquante (constat en pause)",
+      "MissingQualificationDestinationGroupPaused": "Groupe de qualification manquant (constat en pause)",
+      "MissingProgressionDestinationSlotPaused": "Place de progression manquante (constat en pause)",
+      "MissingProgressionDestinationGroupPaused": "Groupe de progression manquant (constat en pause)",
+      "OverCapacityEdgePaused": "Plus d’équipes promises que de places (constat en pause)",
+      "OverExtractionPaused": "Sortie demandant plus d’équipes que la capacité (constat en pause)",
+      "PopulationShortfallPaused": "Pas assez d’équipes promises pour cette phase (constat en pause)",
+      "SourcePopulationShortfallPaused": "Pas encore assez d’équipes dans la phase source (constat en pause)",
+      "ConfrontationUndecidablePaused": "Confrontation qui ne peut pas toujours départager (constat en pause)",
+      "AuthoredAwardUnreachablePaused": "Paire source introuvable (constat en pause)",
+      "ExpectedRankUnreachablePaused": "Rang de compétition inaccessible via l’attribution (constat en pause)"
+    },
+    "issuesShort": {
+      "DanglingQualificationTarget": "Destination qual. introuvable",
+      "DanglingProgressionTarget": "Destination prog. introuvable",
+      "MissingQualificationDestinationSlot": "Place qual. manquante",
+      "MissingQualificationDestinationGroup": "Groupe qual. manquant",
+      "MissingProgressionDestinationSlot": "Place prog. manquante",
+      "MissingProgressionDestinationGroup": "Groupe prog. manquant",
+      "SlotFeedMissing": "Place non alimentée",
+      "SlotFeedInvalid": "Alimentation invalide",
+      "SlotFeedMultiple": "Alimentations conflictuelles",
+      "ConfrontationUndecidable": "Tirage pas toujours possible",
+      "CycleDetected": "Cycle entre phases",
+      "NonRootUnfed": "Pas d’équipes entrantes",
+      "RoutingNondeterminism": "Routage ambigu",
+      "OverCapacityEdge": "Trop d’équipes promises",
+      "OverExtraction": "Sortie > capacité",
+      "SourcePopulationShortfall": "Manque en source",
+      "PopulationShortfall": "Manque d’équipes",
+      "AuthoredAwardUnreachable": "Source attribution absente",
+      "ExpectedRankUnreachable": "Rang inaccessible"
     }
   },
   "lifecycle": {
     "actions": {
-      "prepare": "Préparer la phase",
+      "prepare": "Marquer comme prête",
       "start": "Démarrer la phase",
       "complete": "Terminer la phase",
       "revertToDraft": "Revenir en brouillon",
@@ -274,11 +312,11 @@
     "state": {
       "Draft": {
         "lead": "Brouillon",
-        "detail": "Complétez la structure, puis marquez la phase comme prête."
+        "detail": "Complétez la structure, puis marquez la phase comme prête. Structure validée : le placement et les opérations sportives restent possibles ensuite."
       },
       "Ready": {
         "lead": "Prête",
-        "detail": "Démarrez la phase lorsque les opérations sportives peuvent commencer."
+        "detail": "Structure validée — placement, tirage et opérations sportives restent possibles. Démarrez lorsque les matchs peuvent commencer."
       },
       "Running": {
         "lead": "En cours",
@@ -321,7 +359,7 @@
       "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",
       "CompetitionClosed": "La compétition est clôturée — les actions de cycle de phase sont indisponibles.",
       "ConstructionFrozen": "La compétition est en cours — terminez la préparation de cette phase avant le démarrage de la compétition, ou ajustez depuis la vue d’ensemble.",
-      "Places": "Remplissez toutes les places avant de préparer la phase.",
+      "Places": "Complétez le pool de composition (poules) avant de marquer la phase comme prête.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
@@ -338,7 +376,9 @@
       "ProductionPresent": "Retirez les matchs rattachés avant de revenir en brouillon.",
       "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant d’annuler le démarrage ou de mettre la phase en pause.",
       "MatchLiveInProgress": "Un match est en cours — terminez-le ou annulez-le avant de suspendre la phase.",
-      "Attribution": "Les chemins d’attribution ne correspondent plus au tableau de cette phase — corrigez l’attribution avant de préparer."
+      "Attribution": "Les chemins d’attribution ne correspondent plus au tableau de cette phase — corrigez l’attribution avant de préparer.",
+      "ReadyConsumerWouldBreak": "Cette modification de sortie casserait une phase aval déjà prête avec des équipes issues de la qualification.",
+      "AppliedDrawPoolChangeBlocked": "Le pool de composition ne peut pas être modifié tant que le tirage de cette phase est déjà appliqué."
     },
     "mutation": {
       "_unknown": "Impossible d’effectuer cette action de cycle de phase pour le moment."
@@ -349,12 +389,15 @@
       "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",
       "CompetitionClosed": "La compétition est clôturée — les actions de cycle de phase sont indisponibles.",
       "ConstructionFrozen": "La compétition est en cours — terminez la préparation de cette phase avant le démarrage de la compétition, ou ajustez depuis la vue d’ensemble.",
-      "Places": "Remplissez toutes les places avant de préparer la phase.",
+      "Places": "Complétez le pool de composition (poules) avant de marquer la phase comme prête.",
       "Entries": "Affectez toutes les équipes à cette phase avant de la préparer.",
       "Draw": "Terminez la configuration et l’exécution du tirage avant de préparer la phase.",
       "Matches": "Produisez les matchs requis avant de préparer la phase.",
       "Exits": "Complétez les sorties (qualification / progression) avant de préparer la phase.",
       "Attribution": "Les chemins d’attribution ne correspondent plus au tableau de cette phase — corrigez l’attribution avant de préparer.",
+      "ReadyConsumerWouldBreak": "Cette modification de sortie casserait une phase aval déjà prête avec des équipes issues de la qualification.",
+      "ReadyConsumerWouldBreakConsumers": "Phases concernées : {{phases}}.",
+      "AppliedDrawPoolChangeBlocked": "Le pool de composition ne peut pas être modifié tant que le tirage de cette phase est déjà appliqué.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
@@ -379,11 +422,11 @@
   "fiche": {
     "section": {
       "phaseState": "État de la phase",
-      "phaseProduction": "Production des matchs",
-      "regulationFrame": "Cadre réglementaire de la phase",
-      "lifecycle": "Cycle de vie de la phase"
+      "regulationFrame": "Cadre réglementaire de la phase"
     },
-    "regulationDividerLabel": "Règlement",
+    "composition": {
+      "placeAssignment": "Affectation des places"
+    },
     "edit": "Modifier",
     "editForme": "Modifier l’organisation",
     "editPhase": "Renommer la phase",
@@ -452,13 +495,25 @@
           "empty": "Aucune place n’est encore occupée sur le tableau.",
           "complete": "Toutes les places du tableau sont occupées.",
           "partial_one": "Il reste {{count}} place à remplir sur le tableau.",
-          "partial_other": "Il reste {{count}} places à remplir sur le tableau."
+          "partial_other": "Il reste {{count}} places à remplir sur le tableau.",
+          "emptyPaused": "Aucune place occupée sur le tableau (phase en pause).",
+          "partialPaused_one": "{{count}} place non occupée sur le tableau (phase en pause).",
+          "partialPaused_other": "{{count}} places non occupées sur le tableau (phase en pause).",
+          "finalEmpty": "Aucune place occupée sur le tableau (phase terminée).",
+          "finalPartial": "{{occupied}} place(s) occupée(s) sur {{capacity}} sur le tableau."
         }
       },
       "draw": {
         "activateHint": "Affecter aléatoirement les équipes dans la phase.",
         "appliedMessage": "Un tirage au sort a été appliqué pour cette phase.",
         "unavailable": "Le tirage n’est pas disponible pour cette phase.",
+        "readiness": {
+          "aria": "Prérequis pour effectuer le tirage",
+          "teamsFillPlaces": "Assez d’équipes pour occuper les places ({{current}}/{{capacity}})",
+          "teamsAllKnown": "Toutes les équipes sont connues ({{current}}/{{capacity}})",
+          "teamsAllKnownPlain": "Toutes les équipes sont connues",
+          "noManualPlacementPlain": "Aucun placement manuel sur le tableau"
+        },
         "stateMessage": {
           "unknown": "Capacité indisponible pour le vivier de tirage.",
           "pool": "{{filled}} équipes résolues sur {{capacity}} pour le tirage.",
@@ -543,6 +598,12 @@
     },
     "addExit": "Ajouter une sortie",
     "addAttribution": "Ajouter une attribution",
+    "flux": {
+      "sortiesEmptyTitle": "Aucune sortie",
+      "sortiesEmptyHint": "Ajoutez une qualification ou une progression vers une phase aval.",
+      "attributionEmptyTitle": "Aucune attribution",
+      "attributionEmptyHint": "Attribuez des places finales depuis une paire structurelle."
+    },
     "editExits": "Modifier les sorties",
     "exitKind": {
       "qualification": "Qualification",
@@ -571,7 +632,6 @@
       "neutral": "Consultez la vue d'ensemble pour poursuivre le pilotage sportif."
     },
     "tiles": {
-      "population": "Équipes",
       "exits": "Sorties",
       "match": "Match",
       "standing": "Classement",
@@ -624,16 +684,26 @@
     "ineligibleOverlay_other": "{{count}} équipes plus éligibles",
     "editComposition": "Modifier les équipes",
     "emptyTitle": "Aucune équipe",
+    "emptyCompositionExtra": "Aucune équipe supplémentaire",
+    "emptyCompositionBandHint": "Ajouter des équipes à la phase ou alimenter les entrées à partir d'une autre phase",
     "emptyBody": "Ajoutez des équipes.",
     "addAffectation": "Ajouter des équipes",
+    "entryPlacedAria": "{{name}} — placée sur la forme",
+    "entryNotPlacedAria": "{{name}} — pas encore placée",
+    "entryPlacedStatus": "Placée",
+    "entryPlacedTooltip": "Placée — {{place}}",
     "meterAria": "Équipes attendues / places",
     "meter": {
       "population": "Équipes",
       "places": "Places",
-      "shortfall_one": "Il manque {{count}} place",
-      "shortfall_other": "Il manque {{count}} places",
-      "surplus_one": "{{count}} place en trop",
-      "surplus_other": "{{count}} places en trop"
+      "shortfall_one": "Il manque {{count}} équipe",
+      "shortfall_other": "Il manque {{count}} équipes",
+      "shortfallPaused_one": "{{count}} équipe en dessous des places N (phase en pause).",
+      "shortfallPaused_other": "{{count}} équipes en dessous des places N (phase en pause).",
+      "surplus_one": "{{count}} équipe en trop",
+      "surplus_other": "{{count}} équipes en trop",
+      "surplusPaused_one": "{{count}} équipe au-delà des places N (phase en pause).",
+      "surplusPaused_other": "{{count}} équipes au-delà des places N (phase en pause)."
     }
   },
   "manualPlacement": {
@@ -659,6 +729,22 @@
     "toastCleared": "Affectation manuelle effacée"
   },
   "composition": {
+    "gauge": {
+      "resolvedQualifiedCaption": "Résolues",
+      "entriesPlacesCaption": "Entrées",
+      "populationComplete": "Le nombre d'entrées correspond aux places de la phase.",
+      "populationShortfallPaused_one": "{{count}} entrée en dessous des places de la phase (phase en pause).",
+      "populationShortfallPaused_other": "{{count}} entrées en dessous des places de la phase (phase en pause).",
+      "populationFinalShortfall_one": "{{count}} entrée en dessous des places de la phase (état final).",
+      "populationFinalShortfall_other": "{{count}} entrées en dessous des places de la phase (état final).",
+      "populationFinalSurplus_one": "{{count}} entrée au-delà des places de la phase (état final).",
+      "populationFinalSurplus_other": "{{count}} entrées au-delà des places de la phase (état final).",
+      "populationAria": "{{current}} entrées sur {{capacity}} places de la phase"
+    },
+    "qualifiers": {
+      "viewPhase": "Voir la phase",
+      "unresolved": "Non résolue"
+    },
     "title": "Équipes — {{phase}}",
     "lede": "Ajoutez des équipes à cette phase. Les places déjà attendues via Qualification / Progression sont réservées.",
     "counter": "{{k}}/{{n}} places",

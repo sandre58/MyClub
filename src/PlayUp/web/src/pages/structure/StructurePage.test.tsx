@@ -34,6 +34,21 @@ const entryId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 const avalStageId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 
+const compositionBandEmptyHint =
+  /Ajouter des équipes à la phase ou alimenter les entrées/i;
+
+const hubReadyReadiness = {
+  readyForNextSlice: true,
+  readyForDraw: true,
+  readyForMaterialization: false,
+  readyForSchedule: false,
+  readyForMatchOperation: false,
+  readyForSchedulePath: false,
+  attachedMatchCount: 0,
+  blockers: [] as string[],
+  nextConstructionStepHint: 'None' as const,
+};
+
 function championshipStage(
   overrides: Partial<StructureStageHubSummary> = {},
 ): StructureStageHubSummary {
@@ -369,7 +384,11 @@ describe('StructurePage Structure hub', () => {
           numberOfPots: null,
           matchGenerationFormat: 'DoubleRoundRobin',
         },
-        stages: [championshipStage()],
+        stages: [
+          championshipStage({
+            actions: ['ReplaceAffectationAuthoring'],
+          }),
+        ],
         readiness: {
           readyForNextSlice: false,
           readyForDraw: false,
@@ -395,9 +414,7 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('heading', { name: /^Match$/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(compositionBandEmptyHint)).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -449,7 +466,6 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/équipes résolues/i)).toBeInTheDocument();
     const launch = screen.getByRole('button', { name: /Lancer le tirage/i });
     expect(launch).toHaveClass('ds-btn--primary');
     expect(launch).not.toHaveTextContent(/Tirage aléatoire/i);
@@ -460,7 +476,7 @@ describe('StructurePage Structure hub', () => {
       screen.getByRole('button', { name: /Désactiver le tirage/i }),
     ).toBeEnabled();
     expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
+      screen.getByRole('heading', { name: /Affectation des places/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
@@ -558,28 +574,26 @@ describe('StructurePage Structure hub', () => {
           primaryStageStatus: 'Draft',
         },
         stages: [groupesStage()],
+        readiness: hubReadyReadiness,
       }),
     );
 
     renderStructurePage();
 
     expect(
-      await screen.findByRole('button', { name: /Ouvrir le tirage/i }),
+      await screen.findByRole('button', { name: /Lancer le tirage/i }),
     ).toBeInTheDocument();
     const deactivate = screen.getByRole('button', {
       name: /Désactiver le tirage/i,
     });
-    expect(deactivate).toBeDisabled();
-    expect(
-      screen.queryByText(/Annulez d’abord le tirage en cours/i),
-    ).not.toBeInTheDocument();
+    expect(deactivate).toBeEnabled();
 
     expect(
       screen.queryByRole('button', { name: /Autres actions/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Paramètres du tirage/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /^Paramètres$/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Supprimer la phase/i }),
     ).not.toBeInTheDocument();
@@ -920,12 +934,15 @@ describe('StructurePage Structure hub', () => {
             compositionCapacity: 8,
             affectationEntryCount: 8,
             actions: ['ReplaceQualificationRules', 'ReplaceDrawRules'],
-            qualificationPaths: [
+            qualificationIntents: [
               {
+                intentId: 'q-dangling',
                 order: 1,
-                selectionMode: 'Top',
-                selectionValue: 2,
+                sourceKind: 'Overall',
+                positionFrom: 1,
+                positionTo: 2,
                 destinationStageId: knockOutId,
+                destinationCount: 2,
               },
             ],
           }),
@@ -1039,18 +1056,24 @@ describe('StructurePage Structure hub', () => {
             hasStandingRules: false,
             hasProgressionRules: true,
             progressionPathCount: 2,
-            progressionPaths: [
+            progressionIntents: [
               {
-                sourcePairKey: 'sf-1',
+                intentId: 'p-winner',
+                order: 1,
+                roundId: 'round-1',
                 outcome: 'Winner',
                 destinationStageId: finaleId,
-                destinationSlotKey: 'home',
+                destinationSlotKeys: ['home'],
+                expandedPathCount: 1,
               },
               {
-                sourcePairKey: 'sf-1',
+                intentId: 'p-loser',
+                order: 2,
+                roundId: 'round-1',
                 outcome: 'Loser',
                 destinationStageId: bronzeId,
-                destinationSlotKey: 'home',
+                destinationSlotKeys: ['home'],
+                expandedPathCount: 1,
               },
             ],
           }),
@@ -1199,7 +1222,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
     const matchesSection = screen
       .getByRole('heading', { name: 'Matchs' })
-      .closest('section') as HTMLElement;
+      .closest('.structure-phase-tile--matchs') as HTMLElement;
     expect(
       within(matchesSection).queryByLabelText(
         /Avancement de la production des matchs/i,
@@ -1288,7 +1311,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows phase lifecycle in Matchs section without a status band', async () => {
+  it('shows phase lifecycle in fiche header without Matchs tile in Draft', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
@@ -1323,16 +1346,14 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(document.querySelector('.structure-phase-status-band')).toBeNull();
-    await screen.findByRole('heading', { name: 'Matchs' });
-    const matchesSection = document.getElementById('operational-matchs')!;
     expect(
-      within(matchesSection).getByRole('button', {
+      screen.queryByRole('heading', { name: 'Matchs' }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', {
         name: /préparer la phase/i,
       }),
     ).toBeDisabled();
-    expect(
-      within(matchesSection).getByText(/complétez la structure/i),
-    ).toBeInTheDocument();
   });
 
   it('does not show materialization-ready banner when matches already exist', async () => {
@@ -1630,14 +1651,13 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Demi-finales' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
-    ).toBeInTheDocument();
-    expect(
       screen.getByRole('heading', { name: /^Sorties$/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: /Attribution des places/i }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Aucune sortie')).toBeInTheDocument();
+    expect(screen.getByText('Aucune attribution')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Ajouter une sortie/i }),
     ).toBeInTheDocument();
@@ -1672,7 +1692,10 @@ describe('StructurePage Structure hub', () => {
         },
         stages: [
           championshipStage({
-            actions: ['ReplaceQualificationRules'],
+            actions: [
+              'ReplaceQualificationRules',
+              'ReplaceAffectationAuthoring',
+            ],
           }),
         ],
       }),
@@ -1683,9 +1706,7 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByRole('heading', { name: 'League' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: /Équipes/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(compositionBandEmptyHint)).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
@@ -1708,6 +1729,7 @@ describe('StructurePage Structure hub', () => {
             stageId,
             name: 'Finale',
             actions: ['ReplaceProgressionRules', 'ReplacePlacementAwardRules'],
+            affectationPreviewNames: ['Alpha', 'Beta'],
             progressionIntents: [
               {
                 intentId: 'pi-1',
@@ -1869,21 +1891,10 @@ describe('StructurePage Structure hub', () => {
       renderStructurePage();
 
       expect(
-        await screen.findByText(/Des anomalies nécessitent votre attention/i),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByText(/Structure prête pour la prochaine étape/i),
-      ).not.toBeInTheDocument();
-
-      const matchesSection = document.getElementById('operational-matchs')!;
-      expect(
-        within(matchesSection).getByRole('button', {
+        await screen.findByRole('button', {
           name: /préparer la phase/i,
         }),
       ).toBeDisabled();
-      expect(
-        within(matchesSection).getByText(/Remplissez toutes les places/i),
-      ).toBeInTheDocument();
 
       expect(
         document.querySelector('.structure-operational-strip'),
@@ -1893,23 +1904,23 @@ describe('StructurePage Structure hub', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows negative PageHead when structure synthesis reports OverCapacityEdge', async () => {
+    it('shows negative PageHead when Ready phase has danger-level population shortfall', async () => {
       vi.mocked(fetchStructureView).mockResolvedValue(
         structureView({
           stages: [
             championshipStage({
-              structureIssues: ['OverCapacityEdge'],
+              status: 'Ready',
               compositionCapacity: 8,
-              affectationEntryCount: 8,
+              affectationEntryCount: 0,
             }),
           ],
           readiness: {
-            readyForNextSlice: true,
+            readyForNextSlice: false,
             readyForDraw: false,
-            readyForMaterialization: true,
+            readyForMaterialization: false,
             readyForSchedule: false,
             readyForMatchOperation: false,
-            readyForSchedulePath: true,
+            readyForSchedulePath: false,
             attachedMatchCount: 0,
             blockers: [],
             nextConstructionStepHint: 'None',
@@ -1967,17 +1978,14 @@ describe('StructurePage Structure hub', () => {
       renderStructurePage();
 
       await screen.findByRole('heading', { name: 'Finale' });
-      const matchesSection = document.getElementById('operational-matchs')!;
+      const ficheHeader = document.querySelector(
+        '.structure-fiche__header',
+      ) as HTMLElement;
       expect(
-        within(matchesSection).getByRole('button', {
+        within(ficheHeader).getByRole('button', {
           name: /préparer la phase/i,
         }),
       ).toBeDisabled();
-      expect(
-        within(matchesSection).getByText(
-          /ne correspondent plus au tableau de cette phase/i,
-        ),
-      ).toBeInTheDocument();
     });
 
     it('silences SlotFeedMissing on fiche while draw is engaged but keeps other diagnostics', async () => {

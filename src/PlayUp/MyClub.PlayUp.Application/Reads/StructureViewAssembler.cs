@@ -297,10 +297,14 @@ public static class StructureViewAssembler
         var match = regulation.MatchRules;
         var standing = regulation.StandingRules;
         var draw = regulation.DrawRules;
-        var qualificationPaths = MapQualificationPaths(stage, regulation.QualificationRules);
-        var qualificationIntents = MapQualificationIntents(stage, regulation.QualificationRules);
-        var progressionPaths = MapProgressionPaths(stage, regulation.ProgressionRules);
-        var progressionIntents = MapProgressionIntents(stage, regulation.ProgressionRules);
+        var qualificationIntents = StructureQualProgHubIntentsMapper.MapQualificationIntents(
+            stage,
+            regulation.QualificationRules);
+        var progressionIntents = StructureQualProgHubIntentsMapper.MapProgressionIntents(
+            stage,
+            regulation.ProgressionRules);
+        var qualificationPathCount = regulation.QualificationRules?.Paths.Count ?? 0;
+        var progressionPathCount = regulation.ProgressionRules?.Paths.Count ?? 0;
         var placement = regulation.PlacementAwardRules;
         var storedTie = regulation.TieFormat
                         ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
@@ -400,6 +404,12 @@ public static class StructureViewAssembler
                 drawExecutionBadge,
                 materialize));
 
+        var inboundComposition = StructureInboundCompositionAssembler.Assemble(
+            competition,
+            stage,
+            competitionStages,
+            matchSummariesByStage);
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -425,9 +435,9 @@ public static class StructureViewAssembler
             DrawMode: draw?.Mode,
             NumberOfPots: draw?.PotRules?.NumberOfPots,
             HasQualificationRules: regulation.QualificationRules is not null,
-            QualificationPathCount: qualificationPaths?.Count ?? 0,
+            QualificationPathCount: qualificationPathCount,
             HasProgressionRules: regulation.ProgressionRules is not null,
-            ProgressionPathCount: progressionPaths?.Count ?? 0,
+            ProgressionPathCount: progressionPathCount,
             HasTieFormat: hasTie,
             NumberOfLegs: numberOfLegs,
             AggregateScoring: aggregateScoring,
@@ -447,9 +457,7 @@ public static class StructureViewAssembler
             DefaultsBinding: MapDefaultsBinding(stage),
             ConfrontationSegments: confrontationSegments,
             Actions: BuildStageActions(competition, stage),
-            QualificationPaths: qualificationPaths,
             QualificationIntents: qualificationIntents,
-            ProgressionPaths: progressionPaths,
             ProgressionIntents: progressionIntents,
             StructureIssues: structureIssues,
             StructureIssueSemantics: OrganizerProblemSemanticsResolver.CollectStructureIssueSemantics(
@@ -460,7 +468,6 @@ public static class StructureViewAssembler
             CompositionEntryIds: composition.EntryIds,
             CompositionCapacity: compositionCapacity,
             CompositionPreviewNames: composition.PreviewNames,
-            CompositionPreviewOverflow: composition.PreviewOverflow,
             CompositionIneligibleCount: composition.IneligibleCount,
             AffectationEntryCount: affectation.Count,
             AffectationEntryIds: affectation.EntryIds,
@@ -472,7 +479,8 @@ public static class StructureViewAssembler
             DrawExecutionBadge: drawExecutionBadge,
             Materialize: materialize,
             Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries),
-            Lifecycle: lifecycle);
+            Lifecycle: lifecycle,
+            InboundComposition: inboundComposition);
     }
 
     /// <summary>
@@ -535,7 +543,6 @@ public static class StructureViewAssembler
         int Count,
         IReadOnlyList<Guid> EntryIds,
         IReadOnlyList<string> PreviewNames,
-        int PreviewOverflow,
         int IneligibleCount);
 
     private static EntrySetProjection BuildEntrySetProjection(
@@ -559,7 +566,7 @@ public static class StructureViewAssembler
             !entriesById.TryGetValue(compositionEntry.EntryId, out var entry)
             || entry.Status != EntryStatus.Active);
 
-        return new EntrySetProjection(count, entryIds, preview, PreviewOverflow: 0, ineligible);
+        return new EntrySetProjection(count, entryIds, preview, ineligible);
     }
 
     /// <summary>
@@ -634,138 +641,6 @@ public static class StructureViewAssembler
         return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
     }
 
-    private static IReadOnlyList<StructureQualificationIntentDto>? MapQualificationIntents(
-        Stage stage,
-        QualificationRules? rules) =>
-        rules is null || rules.Intents.Count == 0
-            ? null
-            :
-            [
-                .. rules.Intents.Select(intent =>
-                {
-                    string? groupName = null;
-                    if (intent.GroupId is { } groupId)
-                    {
-                        groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
-                    }
-
-                    var destinationCount = CountIntentDestinations(intent, stage.Groups.Count);
-                    return new StructureQualificationIntentDto(
-                        intent.Id.Value,
-                        intent.Order,
-                        intent.SourceKind,
-                        intent.PositionFrom,
-                        intent.PositionTo,
-                        intent.DestinationStageId.Value,
-                        intent.GroupId?.Value,
-                        groupName,
-                        intent.AcrossGroupsPosition,
-                        intent.Condition?.MinimumPoints,
-                        destinationCount,
-                        intent.DestinationSlotKeys,
-                        intent.DestinationGroupIds.Count == 0 ? null : intent.DestinationGroupIds.Select(g => g.Value).ToArray(),
-                        intent.DestinationForm);
-                })
-            ];
-
-    private static int CountIntentDestinations(QualificationIntent intent, int groupCount)
-    {
-        var span = intent.PositionTo - intent.PositionFrom + 1;
-        return intent.SourceKind switch
-        {
-            QualificationIntentSourceKind.EachGroup => Math.Max(groupCount, 0) * span,
-            QualificationIntentSourceKind.SingleGroup
-                or QualificationIntentSourceKind.Overall
-                or QualificationIntentSourceKind.AcrossGroups => span,
-            _ => span
-        };
-    }
-
-    private static IReadOnlyList<StructureQualificationPathDto>? MapQualificationPaths(
-        Stage stage,
-        QualificationRules? rules) =>
-        rules is null
-            ? null
-            : [
-                .. rules.Paths.Select(path =>
-                {
-                    string? groupName = null;
-                    if (path.Source.GroupId is { } groupId)
-                    {
-                        groupName = stage.Groups.FirstOrDefault(g => g.Id.Equals(groupId))?.Name;
-                    }
-
-                    return new StructureQualificationPathDto(
-                        path.Order,
-                        path.Selection.Mode,
-                        path.Selection.Value,
-                        path.Destination.StageId.Value,
-                        path.Source.Scope,
-                        path.Source.GroupId?.Value,
-                        path.Source.AcrossGroupsPosition,
-                        path.Selection.EndValue,
-                        path.Condition?.MinimumPoints,
-                        groupName,
-                        path.Destination.SlotKey,
-                        path.Destination.GroupId?.Value,
-                        path.Destination.TargetsForm);
-                })
-            ];
-
-    private static IReadOnlyList<StructureProgressionPathDto>? MapProgressionPaths(
-        Stage stage,
-        ProgressionRules? rules) =>
-        rules is null
-            ? null
-            :
-            [
-                .. rules.Paths.Select(path => new StructureProgressionPathDto(
-                    path.SourcePairKey,
-                    path.Outcome,
-                    path.Destination.StageId.Value,
-                    path.Destination.SlotKey,
-                    ResolveProgressionSourceLabel(stage, path.SourcePairKey),
-                    path.Destination.GroupId?.Value,
-                    path.Destination.TargetsForm))
-            ];
-
-    private static IReadOnlyList<StructureProgressionIntentDto>? MapProgressionIntents(
-        Stage stage,
-        ProgressionRules? rules)
-    {
-        if (rules is null || rules.Intents.Count == 0)
-        {
-            return null;
-        }
-
-        var roundNameById = stage.Rounds.ToDictionary(r => r.Id, r => r.Name);
-        var expandCount = stage.BracketPairs.Count > 0
-            ? stage.BracketPairs.Count
-            : 0;
-        return
-        [
-            .. rules.Intents.Select(intent =>
-            {
-                var count = expandCount > 0
-                    ? expandCount
-                    : stage.Rounds
-                        .FirstOrDefault(r => r.Id.Equals(intent.RoundId))
-                        ?.Fixtures.Count ?? 0;
-                return new StructureProgressionIntentDto(
-                    intent.Id.Value,
-                    intent.Order,
-                    intent.RoundId.Value,
-                    roundNameById.GetValueOrDefault(intent.RoundId),
-                    intent.Outcome,
-                    intent.DestinationStageId.Value,
-                    intent.DestinationSlotKeys,
-                    count,
-                    intent.DestinationGroupIds.Count == 0 ? null : intent.DestinationGroupIds.Select(g => g.Value).ToArray(),
-                    intent.DestinationForm);
-            })
-        ];
-    }
-
     /// <summary>
     /// Human source label: PairKey, or bound fixture label when materialized.
     /// </summary>
@@ -838,12 +713,28 @@ public static class StructureViewAssembler
         Competition competition,
         Stage stage)
     {
-        // Rename is always available (display name is not structure-critical).
-        if (competition.Status is CompetitionStatus.Completed
-                or CompetitionStatus.Archived
-                or CompetitionStatus.Running
-                or CompetitionStatus.Suspended ||
-            stage.Status is not StageStatus.Draft)
+        var attachedMatches = CountAttachedMatches(stage);
+
+        return stage.Status switch
+        {
+            StageStatus.Draft => BuildDraftStageActions(competition, stage, attachedMatches),
+            StageStatus.Ready => BuildReadyStageActions(stage, attachedMatches),
+            StageStatus.Running or StageStatus.Suspended => BuildExploitationStageActions(stage),
+            StageStatus.Completed => [],
+            _ => stage.CanRenameDisplayName() ? [ActionRenameStage] : [],
+        };
+    }
+
+    private static bool CompetitionFreezesDraftStructure(Competition competition) =>
+        competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
+
+    /// <summary>Draft — full form + game regulation + operational (§11A A1).</summary>
+    private static List<string> BuildDraftStageActions(
+        Competition competition,
+        Stage stage,
+        int attachedMatches)
+    {
+        if (CompetitionFreezesDraftStructure(competition))
         {
             return [ActionRenameStage];
         }
@@ -853,9 +744,6 @@ public static class StructureViewAssembler
             ActionRenameStage, ActionReplaceMatchRules, ActionBindToCompetition
         };
 
-        // Exit capacity: classifying → Qualification ; Cup/KO non-classifying → Progression.
-        // Attribution (PlacementAwardRules) = KO/Cup only — Championship/Groups use Standing.
-        // Domain still allows both Qual/Prog on StageRegulation; UI/actions filter by topology.
         if (StageClassification.IsClassifyingPhase(stage))
         {
             actions.Add(ActionReplaceQualificationRules);
@@ -878,8 +766,6 @@ public static class StructureViewAssembler
             actions.Add(ActionReplaceDrawRules);
         }
 
-        // Affectation may co-exist with inbound Qualif/Prog on the same phase
-        // (scenario B2). Domain ReplaceAffectationAuthoring is not root-gated.
         actions.Add(ActionReplaceAffectationAuthoring);
 
         if (StageNeedsTieFormatAction(stage))
@@ -892,7 +778,6 @@ public static class StructureViewAssembler
         }
 
         var format = StructureSkeleton.InferFormat(stage);
-        var attachedMatches = CountAttachedMatches(stage);
 
         if (attachedMatches == 0)
         {
@@ -930,6 +815,51 @@ public static class StructureViewAssembler
         if (competition.StageIds.Count > 1 && attachedMatches == 0)
         {
             actions.Add(ActionRemoveStage);
+        }
+
+        return actions;
+    }
+
+    /// <summary>Ready — operational only when no production (G-OPS1 / D2); form frozen (A2).</summary>
+    private static List<string> BuildReadyStageActions(Stage stage, int attachedMatches)
+    {
+        var actions = new List<string> { ActionRenameStage };
+        if (attachedMatches > 0)
+        {
+            return actions;
+        }
+
+        if (StageClassification.IsClassifyingPhase(stage))
+        {
+            actions.Add(ActionReplaceQualificationRules);
+        }
+
+        if (StageClassification.IsNonClassifyingPhase(stage))
+        {
+            actions.Add(ActionReplaceProgressionRules);
+            actions.Add(ActionReplacePlacementAwardRules);
+        }
+
+        actions.Add(ActionReplaceAffectationAuthoring);
+
+        var format = StructureSkeleton.InferFormat(stage);
+        if (format is StructureFormatKind.Cup or null)
+        {
+            actions.Add(ActionAssignEntryToSlot);
+            actions.Add(ActionClearSlotAssignment);
+        }
+
+        return actions;
+    }
+
+    /// <summary>Running / Suspended — rename + standing recalculation on classifying phases (R-Stand1).</summary>
+    private static List<string> BuildExploitationStageActions(Stage stage)
+    {
+        var actions = new List<string> { ActionRenameStage };
+        if (stage.Regulation.StandingRules is not null
+            && StageClassification.IsClassifyingPhase(stage))
+        {
+            actions.Add(ActionReplaceStandingRules);
         }
 
         return actions;

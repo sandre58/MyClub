@@ -50,8 +50,16 @@ public sealed class StructurePresentedAttentionCollectorTests
 
         items.Should().Contain(item =>
             item.Source == CompetitionFlowAnalyzer.PopulationShortfall
-            && item.Severity == NeedsAttentionAssembler.SeverityBlocking
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
             && item.TargetId == poules.Id.Value.ToString());
+
+        var readyHub = hub with { Status = StageStatus.Ready };
+        var readyView = view with { Stages = [readyHub] };
+        var readyItems = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(readyView, readyItems);
+        readyItems.Should().Contain(item =>
+            item.Source == CompetitionFlowAnalyzer.PopulationShortfall
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
     }
 
     [Fact]
@@ -226,7 +234,7 @@ public sealed class StructurePresentedAttentionCollectorTests
 
         items.Should().ContainSingle(item =>
             item.Source == CompetitionFlowAnalyzer.SlotFeedMissing
-            && item.Severity == NeedsAttentionAssembler.SeverityBlocking
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
             && item.TargetType == "Stage"
             && item.TargetId == target.Id.Value.ToString());
     }

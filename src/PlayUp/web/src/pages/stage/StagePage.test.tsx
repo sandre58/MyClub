@@ -198,7 +198,7 @@ describe('StagePage prepare', () => {
     renderStagePage();
 
     expect(
-      await screen.findByRole('button', { name: 'Préparer la phase' }),
+      await screen.findByRole('button', { name: 'Marquer comme prête' }),
     ).toBeEnabled();
     expect(screen.getByText('Brouillon')).toBeInTheDocument();
   });
@@ -214,7 +214,7 @@ describe('StagePage prepare', () => {
       expect(screen.getByText('Prêt')).toBeInTheDocument();
     });
     expect(
-      screen.queryByRole('button', { name: /Préparer la phase/i }),
+      screen.queryByRole('button', { name: /Marquer comme prête/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -229,7 +229,7 @@ describe('StagePage prepare', () => {
       expect(screen.getByText('En cours')).toBeInTheDocument();
     });
     expect(
-      screen.queryByRole('button', { name: /Préparer la phase/i }),
+      screen.queryByRole('button', { name: /Marquer comme prête/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -246,7 +246,7 @@ describe('StagePage prepare', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Préparer la phase' }),
+      await screen.findByRole('button', { name: 'Marquer comme prête' }),
     );
 
     await waitFor(() => {
@@ -254,7 +254,7 @@ describe('StagePage prepare', () => {
       expect(screen.getByText('Prêt')).toBeInTheDocument();
     });
     expect(
-      screen.queryByRole('button', { name: /Préparer la phase/i }),
+      screen.queryByRole('button', { name: /Marquer comme prête/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -273,7 +273,7 @@ describe('StagePage prepare', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Préparer la phase' }),
+      await screen.findByRole('button', { name: 'Marquer comme prête' }),
     );
 
     expect(
@@ -295,7 +295,7 @@ describe('StagePage prepare', () => {
 
     renderStagePage();
     await user.click(
-      await screen.findByRole('button', { name: 'Préparer la phase' }),
+      await screen.findByRole('button', { name: 'Marquer comme prête' }),
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -303,7 +303,7 @@ describe('StagePage prepare', () => {
     );
     expect(screen.getByText('Brouillon')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Préparer la phase' }),
+      screen.getByRole('button', { name: 'Marquer comme prête' }),
     ).toBeEnabled();
   });
 });
@@ -336,7 +336,7 @@ describe('StagePage start', () => {
     ).toBeEnabled();
     expect(screen.getByText('Prêt')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Préparer la phase/i }),
+      screen.queryByRole('button', { name: /Marquer comme prête/i }),
     ).not.toBeInTheDocument();
   });
 

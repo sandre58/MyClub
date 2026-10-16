@@ -39,6 +39,10 @@ export function resolveLifecycleMutationMessage(
     if (fromErrors) {
       return fromErrors;
     }
+    const detail = error.detail?.trim();
+    if (detail) {
+      return detail;
+    }
   }
 
   return t(MUTATION_UNKNOWN_KEY);

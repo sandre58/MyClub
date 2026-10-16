@@ -25,7 +25,7 @@ export function AttentionSituationRow({
   stages = [],
   onNavigate,
 }: AttentionSituationRowProps) {
-  const presentation = situationPresentation(item, competitionId);
+  const presentation = situationPresentation(item, competitionId, stages);
   const href = presentation.sotHref;
   const isBlocking = item.nature === 'Blocking';
   const titleSource = organizerProblemPresentationCode(

@@ -95,43 +95,60 @@ describe('functionalProblemPresentation', () => {
     });
     // Copy is no longer draw-specific — silence is handled by projection filters.
     expect(awaiting.titleKey).toBe('graph.issues.SlotFeedMissing');
-    expect(awaiting.tone).toBe('danger');
+    expect(awaiting.tone).toBe('attention');
 
     const plain = structureIssuePresentation({
       code: 'SlotFeedMissing',
       competitionId: 'comp-1',
       stageId: 'stage-9',
       awaitingDraw: false,
+      structureDiagnosticContext: { stageStatus: 'Ready' },
     });
     expect(plain.titleKey).toBe('graph.issues.SlotFeedMissing');
     expect(plain.tone).toBe('danger');
   });
 
-  it('maps RESULT codes with attention tone (path reachability)', () => {
+  it('maps RESULT codes with attention tone for classifying formats', () => {
     const presentation = structureIssuePresentation({
       code: 'AuthoredAwardUnreachable',
       competitionId: 'comp-1',
       stageId: 'stage-9',
+      structureDiagnosticContext: { formatKind: 'Groups', stageStatus: 'Draft' },
     });
     expect(presentation.tone).toBe('attention');
     expect(presentation.titleKey).toBe('graph.issues.AuthoredAwardUnreachable');
   });
 
-  it('maps SlotFeedMissing as danger when presented (D5)', () => {
-    const presentation = structureIssuePresentation({
+  it('maps SlotFeedMissing as attention in Draft and danger when Ready', () => {
+    const draft = structureIssuePresentation({
       code: 'SlotFeedMissing',
       competitionId: 'comp-1',
       stageId: 'stage-9',
+      structureDiagnosticContext: { stageStatus: 'Draft' },
     });
-    expect(presentation.tone).toBe('danger');
+    expect(draft.tone).toBe('attention');
+    const ready = structureIssuePresentation({
+      code: 'SlotFeedMissing',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+      structureDiagnosticContext: { stageStatus: 'Ready' },
+    });
+    expect(ready.tone).toBe('danger');
+    const presentation = draft;
     expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissing');
   });
 
-  it('maps NonRootUnfed via feed family presentation (tile Équipes)', () => {
+  it('maps NonRootUnfed progress when incompleteness is expected', () => {
     const presentation = structureIssuePresentation({
       code: 'NonRootUnfed',
       competitionId: 'comp-1',
       stageId: 'stage-9',
+      structureDiagnosticContext: {
+        stageStatus: 'Draft',
+        isEntryBaselineStage: false,
+        hasInboundQualProgFeed: false,
+        affectationEntryCount: 0,
+      },
     });
     expect(presentation.tone).toBe('info');
     expect(presentation.titleKey).toBe('graph.issues.NonRootUnfed');
@@ -157,7 +174,7 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toBe('/matches/match-9');
   });
 
-  it('situationPresentation uses short enum title for structure drawer (D5 option B)', () => {
+  it('situationPresentation uses structure short title for drawer structure diagnostics', () => {
     const presentation = situationPresentation(
       {
         source: 'OverCapacityEdge',
@@ -171,9 +188,30 @@ describe('functionalProblemPresentation', () => {
         params: { stageId: 'stage-1' },
       },
       'comp-1',
+      [{ stageId: 'stage-1', name: 'Poules', status: 'Draft' }],
     );
-    expect(presentation.titleKey).toBe('attentionSource.OverCapacityEdge');
-    expect(presentation.titleNs).toBe('enums');
+    expect(presentation.titleKey).toBe('graph.issuesShort.OverCapacityEdge');
+    expect(presentation.titleNs).toBe('structure');
+  });
+
+  it('situationPresentation uses paused structure title on Suspended drawer rows', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'SlotFeedMissing',
+        nature: 'Blocking',
+        targetType: 'Stage',
+        targetId: 'stage-sus',
+        matchId: null,
+        actionable: false,
+        actionCode: null,
+        impactCode: null,
+        params: { stageId: 'stage-sus' },
+      },
+      'comp-1',
+      [{ stageId: 'stage-sus', name: 'Cup', status: 'Suspended' }],
+    );
+    expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissingPaused');
+    expect(presentation.titleNs).toBe('structure');
   });
 
   it('situationPresentation maps StructureGraphInvalid to Structure SoT', () => {

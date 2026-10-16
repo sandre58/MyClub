@@ -44,6 +44,7 @@
     "emptyHint": "Items appear here when a blocked or pending situation is reported.",
     "emptyStructureLink": "Open Structure",
     "lede": "Situations that need action.",
+    "ledePaused": "Findings on paused phases. Listed situations remain available to review. Some actions require resuming the phase.",
     "groupBlocking": "Blocking",
     "groupAttention": "Needs attention"
   },

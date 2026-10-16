@@ -347,7 +347,7 @@ public sealed class PipelineCompositionTests
     private Stage CreateKnockout(CompetitionId competitionId, string name, string[] slotKeys)
     {
         var stage = Stage.Create(competitionId, new StageName(name), SampleRegulations.Standard(), _clock);
-        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddRound("R1", SampleRegulations.KnockoutTieDecidable(), _clock);
         foreach (var key in slotKeys)
         {
             stage.AddSlot(key);

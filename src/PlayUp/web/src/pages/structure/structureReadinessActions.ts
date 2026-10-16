@@ -7,6 +7,7 @@ import {
   type StructureDiagnosticTile,
   type StructureDiagnosticTone,
 } from './structureDiagnosticPresentation';
+import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import {
   stageHasEngagedMissingPots,
   stagePresentedIssueCodes,
@@ -137,6 +138,7 @@ export function resolveStructureDiagnosticNavigation(args: {
 function pushIssueItem(
   items: StructureReadinessActionItem[],
   args: {
+    data: StructureView;
     competitionId: string;
     stage: StructureStageHubSummary;
     code: string;
@@ -146,7 +148,10 @@ function pushIssueItem(
   if (!meta) {
     return;
   }
-  const tone = structureDiagnosticTone(args.code);
+  const tone = structureDiagnosticTone(
+    args.code,
+    structureDiagnosticContextFromStage(args.data, args.stage),
+  );
   items.push({
     id: `${args.stage.stageId}:${args.code}`,
     stageId: args.stage.stageId,
@@ -217,7 +222,7 @@ export function collectAllStructureReadinessActionItems(
   for (const stage of stages) {
     const presented = stagePresentedIssueCodes(data, stage);
     for (const code of presented) {
-      pushIssueItem(items, { competitionId, stage, code });
+      pushIssueItem(items, { data, competitionId, stage, code });
     }
     if (stageHasEngagedMissingPots(stage)) {
       pushSyntheticItem(items, {

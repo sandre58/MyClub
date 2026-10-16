@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -20,10 +21,15 @@ public static class ConfigureDrawInputs
     /// <param name="stage">Owning stage.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="inputs">Concrete inputs.</param>
-    public static void Execute(Stage stage, DrawId drawId, DrawInputs inputs)
+    public static void Execute(
+        Stage stage,
+        DrawId drawId,
+        DrawInputs inputs,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(inputs);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw");
 
         var draw = stage.GetDraw(drawId);
         if (draw.Status != DrawStatus.Draft)

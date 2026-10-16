@@ -25,7 +25,7 @@ public static class ClearSlotAssignment
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        StageStructureEditGuard.EnsureEditable(stage);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Slot assignment");
 
         if (string.IsNullOrWhiteSpace(slotKey))
         {

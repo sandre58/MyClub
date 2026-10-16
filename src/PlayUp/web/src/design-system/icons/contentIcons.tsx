@@ -1,11 +1,12 @@
 import {
+  ArrowDown01,
   ArrowRight,
-  ArrowDown,
   ArrowLeftRight,
   CalendarDays,
   CalendarPlus,
   CircleAlert,
   Clipboard,
+  ClockPlus,
   Copy,
   Dices,
   Equal,
@@ -44,10 +45,12 @@ import {
   Volleyball,
   X,
   Handshake,
+  Hourglass,
   CheckCircle2,
   Check,
   Pause,
   Play,
+  LocateFixed
 } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { Icon, LucideIcon, type IconSize } from './Icon';
@@ -136,9 +139,21 @@ export function MatchRulesIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Volleyball} size={size} {...props} />;
 }
 
+export function ExtraTimeIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ClockPlus} size={size} {...props} />;
+}
+
 /** Standing — podium (aligned with Regulation hub). */
 export function StandingRulesIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Podium} size={size} {...props} />;
+}
+
+export function PointsRulesIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Sigma} size={size} {...props} />;
+}
+
+export function SortingRulesIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ArrowDown01} size={size} {...props} />;
 }
 
 /** Confrontations */
@@ -321,6 +336,11 @@ export function PendingCircleIcon({ size, ...props }: ContentIconProps) {
   );
 }
 
+/** Target. */
+export function LocateIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={LocateFixed} size={size} {...props} />;
+}
+
 /** Person — head / shoulders (roster placeholder). */
 export function PersonIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={UsersRound} size={size} {...props} />;
@@ -331,11 +351,6 @@ export function ArrowRightIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowRight} size={size} {...props} />;
 }
 
-/** Vertical connector — down arrow (ordered topology). */
-export function ArrowDownIcon({ size, ...props }: ContentIconProps) {
-  return <LucideIcon icon={ArrowDown} size={size} {...props} />;
-}
-
 /** Aggregate score — sigma. */
 export function AggregateIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Sigma} size={size} {...props} />;
@@ -344,6 +359,10 @@ export function AggregateIcon({ size, ...props }: ContentIconProps) {
 /** Match clock / period duration. */
 export function TimerIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Timer} size={size} {...props} />;
+}
+
+export function HourglassIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Hourglass} size={size} {...props} />;
 }
 
 /** Penalties / goal — shootout token. */

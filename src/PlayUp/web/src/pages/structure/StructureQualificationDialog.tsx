@@ -68,7 +68,6 @@ import {
   incompleteIntentReason,
   intentFromApi,
   isIntentComplete,
-  pathToSingletonIntent,
   placeMapKeys,
   serializeIntents,
   summarizeIntentWho,
@@ -263,11 +262,7 @@ export function StructureQualificationDialog({
     }
 
     const apiIntents = stage.qualificationIntents ?? [];
-    const next = (
-      apiIntents.length > 0
-        ? apiIntents.map(intentFromApi)
-        : (stage.qualificationPaths ?? []).map(pathToSingletonIntent)
-    ).map((intent) => {
+    const next = apiIntents.map(intentFromApi).map((intent) => {
       const synced = syncPlaceSlotKeys(intent, groups);
       const peer = stageById.get(synced.destinationStageId.trim());
       return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
@@ -281,7 +276,6 @@ export function StructureQualificationDialog({
     open,
     stage.stageId,
     stage.qualificationIntents,
-    stage.qualificationPaths,
     groups,
     sourceSchematicQuery.isSuccess,
     mutation.isPending,
@@ -492,6 +486,7 @@ export function StructureQualificationDialog({
               {mutation.isError ? (
                 <MutationError
                   error={mutation.error}
+                  structureStages={data.stages}
                   sotHref={persistentStructureMutationSotHref(
                     mutation.error,
                     data.competitionId,
@@ -615,7 +610,10 @@ export function StructureQualificationDialog({
 
           {!sessionReady ? (
             sourceSchematicQuery.isError ? (
-              <MutationError error={sourceSchematicQuery.error} />
+              <MutationError
+                error={sourceSchematicQuery.error}
+                structureStages={data.stages}
+              />
             ) : (
               <LoadingState size="region" />
             )

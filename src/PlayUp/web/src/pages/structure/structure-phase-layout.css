@@ -1,0 +1,763 @@
+/*
+ * Structure phase fiche — band-3 layout (composition tile, schematic, aside).
+ * Column chrome: base .structure-fiche in structure-fiche.css (hub parity with Topology).
+ * Loaded via structure.css.
+ */
+
+/* Inset work zones inside the flat fiche shell */
+.structure-fiche--flat .structure-phase-tile:not(.structure-phase-tile--schematic) {
+  padding: var(--space-12);
+  background: color-mix(in srgb, var(--color-surface-secondary) 65%, var(--color-surface));
+  border: var(--border-width) solid
+    color-mix(in srgb, var(--color-border) 42%, transparent);
+  border-radius: var(--radius-control);
+  box-shadow: none;
+}
+
+.structure-fiche--flat .structure-phase-tile--schematic {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 14rem;
+  padding: 0;
+}
+
+.structure-fiche--flat .structure-phase-tile--schematic .structure-schematic-viewport {
+  flex: 1 1 auto;
+  min-height: 12rem;
+}
+
+.structure-fiche--flat .structure-phase-main {
+  align-items: stretch;
+}
+
+.structure-fiche--flat .structure-phase-regulation-bar {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-phase-regulation {
+  display: grid;
+  align-items: start;
+  column-gap: var(--space-16);
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-phase-regulation__top-sep {
+  margin-bottom: var(--space-12);
+}
+
+.structure-regulation-digest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: var(--space-16) var(--space-24);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-regulation-digest__sep {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: var(--border-width);
+  min-height: 3.5rem;
+  height: auto;
+  max-height: none;
+}
+
+.structure-regulation-digest__section {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-16);
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.structure-regulation-digest__hero-icon {
+  display: flex;
+  flex: none;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-brand);
+  line-height: 0;
+}
+
+.structure-regulation-digest__hero-icon .ds-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.structure-regulation-digest__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-regulation-digest__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
+  margin-bottom: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-regulation-digest__title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+  min-width: 0;
+}
+
+.structure-regulation-digest__actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.structure-regulation-digest__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) var(--space-24);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-regulation-digest__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-regulation-digest__fact-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: none;
+  color: var(--color-brand);
+  line-height: 1;
+}
+
+.structure-regulation-digest__fact-content {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.structure-regulation-digest__chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.structure-regulation-digest__segment {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+@container regulation-bar (max-width: 40rem) {
+  .structure-regulation-digest__section {
+    flex: 1 1 100%;
+  }
+
+  .structure-regulation-digest__sep {
+    display: none;
+  }
+}
+
+.structure-phase-flux__sep {
+  margin: var(--space-4) 0;
+}
+
+.structure-phase-rail__empty .ds-empty--compact {
+  padding-block: var(--space-4);
+}
+
+.structure-phase-regulation__sep {
+  align-self: stretch;
+}
+
+.structure-feed-group__placement-rule {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-feed-group__placement-rank {
+  flex: none;
+}
+
+.structure-phase-tile {
+  min-width: 0;
+  padding: var(--space-16);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  box-sizing: border-box;
+}
+
+.structure-phase-tile--schematic {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.structure-phase-tile__head {
+  margin-bottom: var(--space-12);
+}
+
+.structure-phase-composition {
+  container-type: inline-size;
+  container-name: phase-composition;
+}
+
+.structure-phase-composition__grid {
+  display: grid;
+  gap: var(--space-16);
+  align-items: stretch;
+}
+
+@container phase-composition (min-width: 56rem) {
+  .structure-phase-composition__grid:not(.structure-phase-composition__grid--with-affectation) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .structure-phase-composition__grid:not(.structure-phase-composition__grid--with-affectation).structure-phase-composition__grid--two-cols {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  /* Place assignment column = 1/3; other columns share the remaining 2/3. */
+  .structure-phase-composition__grid--with-affectation.structure-phase-composition__grid--with-qualifiers:not(
+      .structure-phase-composition__grid--without-teams
+    ) {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  .structure-phase-composition__grid--with-affectation.structure-phase-composition__grid--with-qualifiers.structure-phase-composition__grid--without-teams,
+  .structure-phase-composition__grid--with-affectation.structure-phase-composition__grid--two-cols {
+    grid-template-columns: minmax(0, 2fr) auto minmax(0, 1fr);
+  }
+
+  .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
+      .structure-phase-composition__grid--without-teams
+    ) {
+    grid-template-rows: auto auto;
+  }
+
+  .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
+      .structure-phase-composition__grid--without-teams
+    ) .structure-phase-composition__section--affectation {
+    grid-row: 1 / span 2;
+  }
+
+  .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
+      .structure-phase-composition__grid--without-teams
+    ) .structure-phase-composition__sep--before-affectation {
+    grid-row: 1 / span 2;
+  }
+
+  .structure-phase-composition__population-gauge--span-sources {
+    grid-column: 1 / 4;
+    grid-row: 2;
+    margin-top: 0;
+  }
+
+  .structure-phase-composition__grid--shared-population-gauge:not(
+      .structure-phase-composition__grid--with-affectation
+    ) .structure-phase-composition__population-gauge--span-sources {
+    grid-column: 1 / -1;
+  }
+
+  .structure-phase-composition__sep.ds-gradient-separator--responsive {
+    width: var(--border-width);
+    min-height: 4.5rem;
+    max-height: 10rem;
+    height: 72%;
+    align-self: center;
+    justify-self: center;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
+      color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
+      transparent 100%
+    );
+  }
+}
+
+@container phase-composition (max-width: 55.99rem) {
+  .structure-phase-composition__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .structure-phase-composition__section,
+  .structure-phase-composition__sep,
+  .structure-phase-composition__population-gauge--span-sources {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+.structure-phase-composition__section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.structure-phase-composition__section:has(.structure-phase-composition__population-gauge) {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.structure-phase-composition__population-gauge {
+  margin-top: auto;
+  padding-top: var(--space-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-phase-composition__population-gauge--span-sources {
+  margin-top: 0;
+}
+
+.structure-phase-composition .ds-panel-head {
+  align-items: center;
+  min-height: 2.25rem;
+  margin-bottom: 0;
+}
+
+.structure-phase-composition .ds-panel-head__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.structure-phase-composition__section--affectation {
+  min-width: 0;
+}
+
+.structure-entries--composition-band {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-entries__teams--band {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  column-gap: var(--space-24);
+  row-gap: var(--space-4);
+  align-content: start;
+  overflow-y: auto;
+  max-height: min(16rem, 40vh);
+  padding-inline-end: var(--space-4);
+}
+
+.structure-entries__teams--band .structure-entries__team {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-4);
+  row-gap: var(--space-4);
+  min-width: 0;
+}
+
+.structure-entries__teams--band .structure-entries__team > :first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.structure-entries__teams--band .structure-entries__team-name {
+  grid-column: 2;
+}
+
+.structure-entries__teams--band .structure-entries__team-warn {
+  grid-column: 2 / -1;
+  grid-row: 2;
+}
+
+.structure-entries__teams--band .structure-entries__team-placed-slot {
+  grid-column: 3;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  flex: none;
+}
+
+.structure-entries__team--unplaced {
+  opacity: 0.9;
+}
+
+.structure-entries__team-placed {
+  flex: none;
+  display: inline-flex;
+  color: var(--color-success);
+}
+
+.structure-phase-composition__section .structure-phase-operational-bar {
+  margin: 0;
+}
+
+.structure-phase-composition__section .structure-fiche-section--operational {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-composition-qualifiers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.structure-phase-composition__qual-resolved-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.12em;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.structure-phase-composition__qual-resolved-meta__filled--partial {
+  color: var(--color-attention);
+}
+
+.structure-phase-composition__qual-resolved-meta__filled--complete {
+  color: var(--color-success);
+}
+
+.structure-phase-composition__qual-resolved-meta__filled--over {
+  color: var(--color-error);
+}
+
+.structure-phase-composition__qual-resolved-meta__filled--neutral {
+  color: var(--color-text-primary);
+}
+
+.structure-phase-composition__qual-resolved-meta__sep {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+.structure-phase-composition__qual-resolved-meta__cap {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-phase-composition__qual-resolved-meta__label {
+  margin-left: var(--space-4);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.05em;
+  font-size: 0.625rem;
+}
+
+.structure-feed-group__phase-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin-bottom: var(--space-8);
+}
+
+.structure-feed-group__phase-trail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.structure-feed-group__phase-title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.structure-feed-group__phase-actions {
+  flex-shrink: 0;
+}
+
+.structure-feed-group__rules {
+  list-style: none;
+  margin-left: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 0;
+}
+
+.structure-feed-group__rule-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--space-8);
+  min-width: 0;
+  margin: 0;
+}
+
+.structure-composition-qualifiers__rule-feed {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.structure-feed-group__rule-label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-4);
+  min-width: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.structure-feed-group__rule-lead--win {
+  color: var(--color-success);
+}
+
+.structure-feed-group__rule-lead--loss {
+  color: var(--color-error);
+}
+
+.structure-feed-group__rule-lead--primary {
+  color: var(--color-text-primary);
+}
+
+.structure-feed-group__rule-sep {
+  color: var(--color-text-secondary);
+}
+
+.structure-feed-group__rule-tail {
+  min-width: 0;
+  color: var(--color-text-secondary);
+}
+
+.structure-composition-qualifiers__rule-line--unplaced {
+  opacity: 0.9;
+}
+
+.structure-composition-qualifiers__rule-outcome {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  max-width: min(50%, 14rem);
+}
+
+.structure-composition-qualifiers__status-chip {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.structure-composition-qualifiers__status-chip--resolved {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-success) 16%, var(--color-surface));
+}
+
+.structure-composition-qualifiers__status-chip--pending {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+.structure-composition-qualifiers__status-chip .structure-composition-qualifiers__status-crest {
+  flex: none;
+  width: 1rem;
+  height: 1.125rem;
+}
+
+.structure-composition-qualifiers__status-chip .structure-composition-qualifiers__status-crest .team-crest__img,
+.structure-composition-qualifiers__status-chip .structure-composition-qualifiers__status-crest .team-crest__shield {
+  width: 100%;
+  height: 100%;
+}
+
+.structure-composition-qualifiers__status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.structure-phase-composition--band-empty {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 11rem;
+}
+
+.structure-phase-composition--band-empty > .ds-empty--idle {
+  flex: 1 1 auto;
+}
+
+.structure-phase-composition__section--population-empty {
+  align-self: stretch;
+  justify-content: center;
+  min-height: 11rem;
+}
+
+.structure-phase-composition__section--population-empty .ds-empty--idle {
+  flex: 1 1 auto;
+  padding: var(--space-12) var(--space-8);
+}
+
+.structure-composition-qualifiers__slot-placed-slot {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+}
+
+.structure-composition-qualifiers__slot-placed {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-success);
+}
+
+.structure-phase-main {
+  display: grid;
+  gap: var(--space-16);
+  align-items: start;
+  min-width: 0;
+}
+
+@media (min-width: 48rem) {
+  .structure-phase-main {
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.38fr);
+  }
+}
+
+.structure-phase-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.structure-phase-aside .structure-phase-operational-bar {
+  margin: 0;
+}
+
+.structure-phase-aside .structure-fiche-section--operational {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-phase-tile--flux .structure-phase-hero__out {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.structure-phase-tile--flux .structure-phase-rail {
+  border: none;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.structure-phase-tile--flux .structure-phase-rail--empty .structure-flux-rail__head {
+  margin-bottom: 0;
+}
+
+.structure-phase-tile--matchs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.structure-phase-tile--matchs .structure-phase-operational-bar {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-phase-tile--matchs .structure-fiche-section--operational {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.structure-phase-tile--matchs .structure-phase-match-tile__head.ds-panel-head {
+  align-items: center;
+  margin-bottom: var(--space-8);
+}
+
+.structure-phase-match-tile__head-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+.structure-operational-strip__production-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.structure-operational-strip__production-actions--tile {
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.structure-operational-strip__production-actions--tile > .ds-btn.ds-btn--primary {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: center;
+}
+
+.structure-operational-strip__production-actions--tile > .ds-tooltip-trigger {
+  flex: none;
+  display: inline-flex;
+  margin-left: auto;
+}
+
+.structure-phase-tile--schematic .structure-phase-hero__stats {
+  margin-bottom: var(--space-8);
+}
+
+.structure-phase-tile--schematic .structure-schematic-viewport {
+  border-radius: var(--radius-control);
+}

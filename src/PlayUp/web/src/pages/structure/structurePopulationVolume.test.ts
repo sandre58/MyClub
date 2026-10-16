@@ -3,6 +3,7 @@ import type { StructureStageHubSummary, StructureView } from '../../types';
 import {
   expectedPopulationWithQualDraft,
   expectedPopulationWithProgDraft,
+  expectedPopulationOccupancy,
   inboundPopulationConfiguredVolume,
   qualificationPathVolume,
 } from './structurePopulationVolume';
@@ -60,24 +61,30 @@ describe('structurePopulationVolume', () => {
       stage({
         stageId: 'sf',
         name: 'Demis',
-        progressionPaths: [
+        progressionIntents: [
           {
-            sourcePairKey: 'f1',
+            intentId: 'p1',
+            order: 1,
+            roundId: 'r1',
             outcome: 'Winner',
             destinationStageId: 'final',
-            destinationSlotKey: null,
+            expandedPathCount: 1,
           },
           {
-            sourcePairKey: 'f2',
+            intentId: 'p2',
+            order: 2,
+            roundId: 'r1',
             outcome: 'Winner',
             destinationStageId: 'final',
-            destinationSlotKey: 'F-A',
+            expandedPathCount: 1,
           },
           {
-            sourcePairKey: 'f3',
+            intentId: 'p3',
+            order: 3,
+            roundId: 'r1',
             outcome: 'Loser',
             destinationStageId: 'third',
-            destinationSlotKey: 'B-A',
+            expandedPathCount: 1,
           },
         ],
       }),
@@ -86,22 +93,54 @@ describe('structurePopulationVolume', () => {
     expect(inboundPopulationConfiguredVolume(data, 'final')).toBe(2);
   });
 
+  it('expectedPopulationOccupancy sums affectation and inbound feeds', () => {
+    const final = stage({
+      stageId: 'final',
+      name: 'Finale',
+      compositionCapacity: 4,
+      affectationEntryCount: 2,
+    });
+    const data = view([
+      stage({
+        stageId: 'sf',
+        name: 'Demis',
+        qualificationIntents: [
+          {
+            intentId: 'q1',
+            order: 1,
+            sourceKind: 'EachGroup',
+            positionFrom: 1,
+            positionTo: 2,
+            destinationStageId: 'final',
+            destinationCount: 2,
+          },
+        ],
+      }),
+      final,
+    ]);
+    expect(expectedPopulationOccupancy(data, final)).toBe(4);
+  });
+
   it('adds Prog Place from same source to Qual draft Z (4/2 case)', () => {
     const demis = stage({
       stageId: 'sf',
       name: 'Demis',
-      progressionPaths: [
+      progressionIntents: [
         {
-          sourcePairKey: 'f1',
+          intentId: 'p1',
+          order: 1,
+          roundId: 'r1',
           outcome: 'Winner',
           destinationStageId: 'final',
-          destinationSlotKey: 'F-A',
+          expandedPathCount: 1,
         },
         {
-          sourcePairKey: 'f2',
+          intentId: 'p2',
+          order: 2,
+          roundId: 'r1',
           outcome: 'Winner',
           destinationStageId: 'final',
-          destinationSlotKey: 'F-B',
+          expandedPathCount: 1,
         },
       ],
     });
@@ -128,40 +167,48 @@ describe('structurePopulationVolume', () => {
     const groups = stage({
       stageId: 'groups',
       name: 'Groupes',
-      qualificationPaths: [
+      qualificationIntents: [
         {
+          intentId: 'q1',
           order: 1,
-          rankingScope: 'Group',
-          selectionMode: 'Position',
-          selectionValue: 1,
+          sourceKind: 'SingleGroup',
+          positionFrom: 1,
+          positionTo: 1,
           destinationStageId: 'final',
           groupId: 'g1',
+          destinationCount: 1,
         },
         {
+          intentId: 'q2',
           order: 2,
-          rankingScope: 'Group',
-          selectionMode: 'Position',
-          selectionValue: 1,
+          sourceKind: 'SingleGroup',
+          positionFrom: 1,
+          positionTo: 1,
           destinationStageId: 'final',
           groupId: 'g2',
+          destinationCount: 1,
         },
       ],
     });
     const demis = stage({
       stageId: 'sf',
       name: 'Demis',
-      progressionPaths: [
+      progressionIntents: [
         {
-          sourcePairKey: 'f1',
+          intentId: 'p1',
+          order: 1,
+          roundId: 'r1',
           outcome: 'Winner',
           destinationStageId: 'final',
-          destinationSlotKey: null,
+          expandedPathCount: 1,
         },
         {
-          sourcePairKey: 'f2',
+          intentId: 'p2',
+          order: 2,
+          roundId: 'r1',
           outcome: 'Winner',
           destinationStageId: 'final',
-          destinationSlotKey: null,
+          expandedPathCount: 1,
         },
       ],
     });
@@ -199,18 +246,22 @@ describe('structurePopulationVolume', () => {
     const groups = stage({
       stageId: 'groups',
       name: 'Groupes',
-      progressionPaths: [
+      progressionIntents: [
         {
-          sourcePairKey: 'f1',
+          intentId: 'p1',
+          order: 1,
+          roundId: 'r1',
           outcome: 'Winner',
           destinationStageId: 'demis',
-          destinationSlotKey: null,
+          expandedPathCount: 1,
         },
         {
-          sourcePairKey: 'f2',
+          intentId: 'p2',
+          order: 2,
+          roundId: 'r1',
           outcome: 'Winner',
           destinationStageId: 'demis',
-          destinationSlotKey: null,
+          expandedPathCount: 1,
         },
       ],
     });
@@ -240,5 +291,48 @@ describe('structurePopulationVolume', () => {
         draftProgVolume: 3,
       }),
     ).toBe(3);
+  });
+
+  it('uses qualificationIntents destinationCount for inbound volume', () => {
+    const data = view([
+      stage({
+        stageId: 'groups',
+        name: 'Groupes',
+        qualificationIntents: [
+          {
+            intentId: 'q1',
+            order: 1,
+            sourceKind: 'Overall',
+            positionFrom: 1,
+            positionTo: 1,
+            destinationStageId: 'final',
+            destinationCount: 3,
+          },
+        ],
+      }),
+      stage({ stageId: 'final', name: 'Finale', compositionCapacity: 8 }),
+    ]);
+    expect(inboundPopulationConfiguredVolume(data, 'final')).toBe(3);
+  });
+
+  it('uses progressionIntents expandedPathCount for inbound volume', () => {
+    const data = view([
+      stage({
+        stageId: 'cup',
+        name: 'Cup',
+        progressionIntents: [
+          {
+            intentId: 'p1',
+            order: 1,
+            roundId: 'r1',
+            outcome: 'Winner',
+            destinationStageId: 'final',
+            expandedPathCount: 4,
+          },
+        ],
+      }),
+      stage({ stageId: 'final', name: 'Finale', compositionCapacity: 8 }),
+    ]);
+    expect(inboundPopulationConfiguredVolume(data, 'final')).toBe(4);
   });
 });

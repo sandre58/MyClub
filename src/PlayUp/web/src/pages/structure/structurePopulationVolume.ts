@@ -10,6 +10,14 @@ import type {
   StructureStageHubSummary,
   StructureView,
 } from '../../types';
+import {
+  progressionEdgeDestination,
+  progressionEdges,
+  progressionEdgeVolume,
+  qualificationEdgeDestination,
+  qualificationEdges,
+  qualificationEdgeVolume,
+} from './structureStageQualProgProjection';
 
 /** Volume of Entries promised by one qualification path. */
 export function qualificationPathVolume(
@@ -41,16 +49,27 @@ export function inboundPopulationConfiguredVolume(
 ): number {
   let n = 0;
   for (const source of data.stages) {
-    for (const path of source.qualificationPaths ?? []) {
-      if (path.destinationStageId !== destinationStageId) continue;
-      n += qualificationPathVolume(path);
+    for (const edge of qualificationEdges(source)) {
+      if (qualificationEdgeDestination(edge) !== destinationStageId) continue;
+      n += qualificationEdgeVolume(edge);
     }
-    for (const path of source.progressionPaths ?? []) {
-      if (path.destinationStageId !== destinationStageId) continue;
-      n += 1;
+    for (const edge of progressionEdges(source)) {
+      if (progressionEdgeDestination(edge) !== destinationStageId) continue;
+      n += progressionEdgeVolume(edge);
     }
   }
   return n;
+}
+
+/** U1 meter — affectation authoring + inbound Qual/Prog configured volume. */
+export function expectedPopulationOccupancy(
+  data: StructureView,
+  destination: StructureStageHubSummary,
+): number {
+  return (
+    (destination.affectationEntryCount ?? 0) +
+    inboundPopulationConfiguredVolume(data, destination.stageId)
+  );
 }
 
 /**
@@ -71,14 +90,14 @@ export function expectedPopulationWithQualDraft(args: {
   let progInbound = 0;
 
   for (const source of data.stages) {
-    for (const path of source.qualificationPaths ?? []) {
-      if (path.destinationStageId !== destination.stageId) continue;
+    for (const edge of qualificationEdges(source)) {
+      if (qualificationEdgeDestination(edge) !== destination.stageId) continue;
       if (source.stageId === sourceStageId) continue;
-      qualFromOthers += qualificationPathVolume(path);
+      qualFromOthers += qualificationEdgeVolume(edge);
     }
-    for (const path of source.progressionPaths ?? []) {
-      if (path.destinationStageId !== destination.stageId) continue;
-      progInbound += 1;
+    for (const edge of progressionEdges(source)) {
+      if (progressionEdgeDestination(edge) !== destination.stageId) continue;
+      progInbound += progressionEdgeVolume(edge);
     }
   }
 
@@ -105,14 +124,14 @@ export function expectedPopulationWithProgDraft(args: {
   let progFromOthers = 0;
 
   for (const source of data.stages) {
-    for (const path of source.qualificationPaths ?? []) {
-      if (path.destinationStageId !== destination.stageId) continue;
-      qualInbound += qualificationPathVolume(path);
+    for (const edge of qualificationEdges(source)) {
+      if (qualificationEdgeDestination(edge) !== destination.stageId) continue;
+      qualInbound += qualificationEdgeVolume(edge);
     }
-    for (const path of source.progressionPaths ?? []) {
-      if (path.destinationStageId !== destination.stageId) continue;
+    for (const edge of progressionEdges(source)) {
+      if (progressionEdgeDestination(edge) !== destination.stageId) continue;
       if (source.stageId === sourceStageId) continue;
-      progFromOthers += 1;
+      progFromOthers += progressionEdgeVolume(edge);
     }
   }
 

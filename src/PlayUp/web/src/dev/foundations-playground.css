@@ -253,11 +253,6 @@
   border-radius: var(--radius-control);
 }
 
-.ds-code {
-  font-family: ui-monospace, monospace;
-  font-size: var(--text-meta);
-}
-
 .ds-playground-rail {
   width: 15rem;
   max-width: 100%;
@@ -269,6 +264,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-12);
+  font-family: ui-monospace, monospace;
+  font-size: var(--text-meta);
   color: var(--color-ink);
 }
 

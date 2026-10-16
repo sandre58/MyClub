@@ -41,6 +41,7 @@ type StructureManualPlacementDialogProps = {
   stage: StructureStageHubSummary;
   entries: StructureEntry[];
   cases: SchematicCase[];
+  structureStages: readonly StructureStageHubSummary[];
   /** Preselect from schematic click; null = CTA (pick place). */
   initialSlotKey?: string | null;
 };
@@ -63,6 +64,7 @@ export function StructureManualPlacementDialog({
   stage,
   entries,
   cases,
+  structureStages,
   initialSlotKey = null,
 }: StructureManualPlacementDialogProps) {
   const { t } = useTranslation('structure');
@@ -250,7 +252,12 @@ export function StructureManualPlacementDialog({
         closeDisabled={pending || discardOpen}
         trapFocus={!discardOpen}
         footerStatus={
-          mutationError ? <MutationError error={mutationError} /> : null
+          mutationError ? (
+            <MutationError
+              error={mutationError}
+              structureStages={structureStages}
+            />
+          ) : null
         }
         footer={
           <>

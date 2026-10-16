@@ -212,10 +212,8 @@ public sealed record StructureReadinessDto(
 /// otherwise <see langword="null"/>.
 /// </param>
 /// <param name="Actions">Per-phase Structure mutation action codes (server-gated).</param>
-/// <param name="QualificationPaths">Authoring projection of qualification paths when present.</param>
-/// <param name="QualificationIntents">Authoring projection of qualification intents when present.</param>
-/// <param name="ProgressionPaths">Authoring projection of progression paths when present.</param>
-/// <param name="ProgressionIntents">Authoring projection of progression intents when present.</param>
+/// <param name="QualificationIntents">Authoring projection of qualification intents (legacy path rules synthesized on read).</param>
+/// <param name="ProgressionIntents">Authoring projection of progression intents (legacy path rules synthesized on read).</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
 /// <param name="StructureIssueSemantics">Pilot organizer-problem semantics for selected issue codes.</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
@@ -228,7 +226,6 @@ public sealed record StructureReadinessDto(
 /// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
 /// </param>
 /// <param name="CompositionPreviewNames">Display names for runtime composition (Draw / Live).</param>
-/// <param name="CompositionPreviewOverflow">Always 0 — retained for API shape; rails no longer truncate.</param>
 /// <param name="CompositionIneligibleCount">Runtime composition entries that are no longer Active.</param>
 /// <param name="AffectationEntryCount">Affectation authoring set size (Population tile).</param>
 /// <param name="AffectationEntryIds">Affectation authoring entry identities.</param>
@@ -241,6 +238,7 @@ public sealed record StructureReadinessDto(
 /// <param name="Materialize">Workspace materialize capability (null when the format has no Materialize command).</param>
 /// <param name="Dematerialize">Workspace dematerialize capability (null when nothing is materialized or the format is unsupported).</param>
 /// <param name="Lifecycle">Phase lifecycle band (Prepare / Start / Complete transition + checklist / match progress).</param>
+/// <param name="InboundComposition">Inbound Qual/Prog resolution for the Composition Qualifiés band; null when root composition.</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -288,9 +286,7 @@ public sealed record StructureStageHubSummaryDto(
     StructureStageDefaultsBindingDto? DefaultsBinding = null,
     IReadOnlyList<StructureConfrontationSegmentDto>? ConfrontationSegments = null,
     IReadOnlyList<string>? Actions = null,
-    IReadOnlyList<StructureQualificationPathDto>? QualificationPaths = null,
     IReadOnlyList<StructureQualificationIntentDto>? QualificationIntents = null,
-    IReadOnlyList<StructureProgressionPathDto>? ProgressionPaths = null,
     IReadOnlyList<StructureProgressionIntentDto>? ProgressionIntents = null,
     IReadOnlyList<string>? StructureIssues = null,
     IReadOnlyList<OrganizerProblemReadDto>? StructureIssueSemantics = null,
@@ -300,7 +296,6 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<Guid>? CompositionEntryIds = null,
     int? CompositionCapacity = null,
     IReadOnlyList<string>? CompositionPreviewNames = null,
-    int CompositionPreviewOverflow = 0,
     int CompositionIneligibleCount = 0,
     int AffectationEntryCount = 0,
     IReadOnlyList<Guid>? AffectationEntryIds = null,
@@ -312,7 +307,8 @@ public sealed record StructureStageHubSummaryDto(
     StructureDrawExecutionBadge? DrawExecutionBadge = null,
     StructureMaterializeDto? Materialize = null,
     StructureDematerializeDto? Dematerialize = null,
-    StructureStageLifecycleDto? Lifecycle = null);
+    StructureStageLifecycleDto? Lifecycle = null,
+    StructureInboundCompositionDto? InboundComposition = null);
 
 /// <summary>
 /// Structure workspace projection of match materialization (not Overview opportunity).
@@ -391,35 +387,6 @@ public sealed record StructureQualificationIntentDto(
     IReadOnlyList<Guid>? DestinationGroupIds = null,
     bool DestinationForm = false);
 
-/// <summary>One qualification path for Structure authoring / impact preview.</summary>
-/// <param name="Order">Path order (≥ 1).</param>
-/// <param name="SelectionMode">Selection mode.</param>
-/// <param name="SelectionValue">Position, count, or range lower bound.</param>
-/// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="RankingScope">Optional ranking scope.</param>
-/// <param name="GroupId">Group when scope is Group.</param>
-/// <param name="AcrossGroupsPosition">Across-groups position when applicable.</param>
-/// <param name="SelectionEndValue">Range upper bound when mode is Range.</param>
-/// <param name="MinimumPoints">Optional Points ≥ gate.</param>
-/// <param name="GroupName">Resolved group display name when <paramref name="GroupId"/> is set.</param>
-/// <param name="DestinationSlotKey">Cup Place slot key; null when not slot-targeting.</param>
-/// <param name="DestinationGroupId">Groups Place group id; null when not group-targeting.</param>
-/// <param name="DestinationForm">True when path targets Form Placement (Championship/Swiss).</param>
-public sealed record StructureQualificationPathDto(
-    int Order,
-    SelectionMode SelectionMode,
-    int SelectionValue,
-    Guid DestinationStageId,
-    RankingScope? RankingScope = null,
-    Guid? GroupId = null,
-    int? AcrossGroupsPosition = null,
-    int? SelectionEndValue = null,
-    int? MinimumPoints = null,
-    string? GroupName = null,
-    string? DestinationSlotKey = null,
-    Guid? DestinationGroupId = null,
-    bool DestinationForm = false);
-
 /// <summary>One progression authoring intent for Structure dialog.</summary>
 public sealed record StructureProgressionIntentDto(
     Guid IntentId,
@@ -431,23 +398,6 @@ public sealed record StructureProgressionIntentDto(
     IReadOnlyList<string>? DestinationSlotKeys,
     int ExpandedPathCount,
     IReadOnlyList<Guid>? DestinationGroupIds = null,
-    bool DestinationForm = false);
-
-/// <summary>One progression path for Structure authoring / impact preview.</summary>
-/// <param name="SourcePairKey">Structural source key (Cup = BracketPair.PairKey).</param>
-/// <param name="Outcome">Winner or Loser.</param>
-/// <param name="DestinationStageId">Destination stage.</param>
-/// <param name="DestinationSlotKey">Cup Place slot key; null when not slot-targeting.</param>
-/// <param name="SourceLabel">Resolved confrontation label (PairKey or bound fixture) when known.</param>
-/// <param name="DestinationGroupId">Groups Place group id; null when not group-targeting.</param>
-/// <param name="DestinationForm">True when path targets Form Placement.</param>
-public sealed record StructureProgressionPathDto(
-    string SourcePairKey,
-    ProgressionOutcome Outcome,
-    Guid DestinationStageId,
-    string? DestinationSlotKey,
-    string? SourceLabel = null,
-    Guid? DestinationGroupId = null,
     bool DestinationForm = false);
 
 /// <summary>Round identity + display name inside a confrontation segment.</summary>

@@ -19,6 +19,58 @@
   margin-bottom: var(--space-12);
 }
 
+.ds-panel-head__trail {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.ds-panel-head__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ds-panel-head__meta--count {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-text-secondary);
+}
+
+.ds-panel-head--inset .ds-panel-head__title,
+.ds-panel-head--tile .ds-panel-head__title {
+  font-size: var(--text-label);
+  color: var(--color-text-primary);
+}
+
+.ds-panel-head__title-text--section {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.ds-panel-head__meta-badge {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--text-body);
+  line-height: 1.2;
+  min-width: 1.75rem;
+  min-height: 1.5rem;
+  justify-content: center;
+  padding-inline: var(--space-12);
+}
+
+.ds-panel-head--flush {
+  margin-bottom: 0;
+}
+
 .ds-panel-head__title {
   margin: 0;
   display: inline-flex;
@@ -31,7 +83,7 @@
 
 .ds-panel-head__icon {
   display: inline-flex;
-  color: var(--color-text-secondary);
+  color: var(--color-brand);
 }
 
 .ds-panel-head__icon svg {
@@ -39,8 +91,70 @@
   height: 1rem;
 }
 
+.ds-panel-head__icon--refreshing {
+  width: 1rem;
+  height: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds-panel-head__icon-spinner {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-brand);
+}
+
 .ds-panel-head .ds-eyebrow {
   letter-spacing: 0.05em;
+}
+
+.ds-gradient-separator {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
+    transparent 100%
+  );
+}
+
+.ds-gradient-separator--vertical {
+  width: var(--border-width);
+  min-height: 4.5rem;
+  max-height: 10rem;
+  height: 72%;
+  align-self: center;
+  justify-self: center;
+}
+
+.ds-gradient-separator--horizontal {
+  width: 100%;
+  height: var(--border-width);
+  min-height: var(--border-width);
+  max-height: var(--border-width);
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
+    transparent 100%
+  );
+}
+
+/* Structure phase-composition container — see structure-phase-layout.css */
+.ds-gradient-separator--responsive {
+  width: 100%;
+  height: var(--border-width);
+  min-height: var(--border-width);
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 22%,
+    color-mix(in srgb, var(--color-brand) 18%, var(--color-border)) 78%,
+    transparent 100%
+  );
 }
 
 .ds-page {
@@ -129,6 +243,108 @@
   font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
+}
+
+.ds-empty__hint {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  max-width: 28rem;
+  line-height: var(--leading-normal);
+}
+
+.ds-empty--idle .ds-empty__hint {
+  text-align: center;
+}
+
+.ds-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-4);
+}
+
+.ds-empty--idle .ds-empty__actions {
+  justify-content: center;
+}
+
+/* Compact — nested rails, composition hints (low height). */
+.ds-empty--compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-8);
+  padding: var(--space-4) 0;
+  text-align: start;
+}
+
+.ds-empty--compact.ds-empty--idle {
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--space-4) 0;
+  text-align: start;
+}
+
+.ds-empty--compact .ds-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: none;
+  margin-bottom: 0;
+  color: var(--color-text-secondary);
+  opacity: 0.85;
+}
+
+.ds-empty__icon--sm .ds-icon {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+.ds-empty__icon--md .ds-icon {
+  width: var(--icon-size-md);
+  height: var(--icon-size-md);
+}
+
+.ds-empty__icon--lg .ds-icon {
+  width: var(--icon-size-lg);
+  height: var(--icon-size-lg);
+}
+
+.ds-empty:not(.ds-empty--compact) .ds-empty__icon--lg .ds-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.ds-empty--compact .ds-empty__title {
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.ds-empty--compact .ds-empty__hint {
+  font-size: 0.6875rem;
+  line-height: var(--leading-tight);
+  max-width: none;
+  text-align: start;
+}
+
+.ds-empty--compact .ds-empty__body {
+  font-size: var(--text-meta);
+  max-width: none;
+}
+
+.ds-empty__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Comfortable — full-page / drawer idle (more air than default idle). */
+.ds-empty--comfortable.ds-empty--idle {
+  padding: var(--space-24) var(--space-16);
 }
 
 /* Admin pages (Stage) — prefer PageHead; keep back-link recipe here. */

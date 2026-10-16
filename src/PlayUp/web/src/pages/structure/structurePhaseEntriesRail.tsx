@@ -6,28 +6,64 @@ import {
   EmptySelectionIcon,
   PencilIcon,
   PlusIcon,
-  StructureIssueIcon,
 } from '../../design-system/icons/contentIcons';
-import { TeamCrest } from '../../design-system/TeamCrest';
+import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
+import {
+  EntryCell,
+  entryCellListItemClassName,
+} from '../../design-system/components/EntryCell';
 import { EmptyState } from '../../ui';
-import type { StructureEntry, StructureStageHubSummary } from '../../types';
+import type {
+  StructureEntry,
+  StructureFormatKind,
+  StructureStageHubSummary,
+} from '../../types';
+import {
+  type EntryPlaceProjection,
+  isEntryPlacedInPhase,
+  primaryPlaceLabel,
+  showPerEntryPlacement,
+} from './structureEntryPlacementProjection';
 import { resolvePlacesN } from './structurePlaces';
+import { structureDiagnosticPresentation } from './structureDiagnosticPresentationPolicy';
 import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
+import {
+  isDraftLikeStageStatus,
+  isSuspendedStageStatus,
+} from './structureOperationalMeterPresentation';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
 const EMPTY_ENTRY_IDS: string[] = [];
 
-/** Cardinality gauge — expected Population vs Places N; shortfall = danger. */
+export function listComposedAffectationEntries(
+  stage: StructureStageHubSummary,
+  entries: readonly StructureEntry[],
+): StructureEntry[] {
+  const composedIds = stage.affectationEntryIds ?? EMPTY_ENTRY_IDS;
+  const byId = new Map(entries.map((entry) => [entry.entryId, entry]));
+  return composedIds
+    .map((id) => byId.get(id))
+    .filter((entry): entry is StructureEntry => entry != null)
+    .sort((a, b) =>
+      a.displayName.localeCompare(b.displayName, undefined, {
+        sensitivity: 'base',
+      }),
+    );
+}
+
+/** Cardinality gauge — expected Population vs Places N (D5 phase-aware chrome). */
 export function CompositionMeter({
   entries,
   places,
   t,
+  stage,
 }: {
   entries: number;
   places: number | null;
   t: (key: string, opts?: Record<string, unknown>) => string;
+  stage?: import('../../types').StructureStageHubSummary;
 }) {
   if (places == null || places <= 0) {
     return (
@@ -46,9 +82,35 @@ export function CompositionMeter({
 
   const gap = entries - places;
   const state = occupancyMeterState(entries, places);
+  const gapDiagnosticTone =
+    gap < 0
+      ? structureDiagnosticPresentation('PopulationShortfall', {
+          formatKind: stage?.formatKind,
+          stageStatus: stage?.status,
+          affectationEntryCount: stage?.affectationEntryCount ?? 0,
+        }).tone
+      : gap > 0
+        ? structureDiagnosticPresentation('OverCapacityEdge', {
+            formatKind: stage?.formatKind,
+            stageStatus: stage?.status,
+          }).tone
+        : null;
+  const shortfallTone = gap < 0 ? gapDiagnosticTone : null;
+  const showDeficitChrome = gap < 0 && shortfallTone === 'danger';
+  const draftIncomplete =
+    gap < 0 && isDraftLikeStageStatus(stage?.status);
+  const pausedPopulationGap =
+    gap < 0 && isSuspendedStageStatus(stage?.status);
+  const pausedPopulationSurplus =
+    gap > 0 && isSuspendedStageStatus(stage?.status);
   const assemblyClass = [
     'structure-assembly',
-    gap < 0 ? 'structure-assembly--deficit' : gap > 0 ? 'structure-assembly--over' : null,
+    showDeficitChrome ? 'structure-assembly--deficit' : null,
+    gap > 0 ? 'structure-assembly--over' : null,
+    draftIncomplete ? 'structure-assembly--incomplete' : null,
+    pausedPopulationGap || pausedPopulationSurplus
+      ? 'structure-assembly--paused'
+      : null,
   ]
     .filter(Boolean)
     .join(' ');
@@ -58,6 +120,7 @@ export function CompositionMeter({
       current={entries}
       capacity={places}
       state={state}
+      fillVariant={draftIncomplete ? 'brand' : 'default'}
       ariaLabel={t('entries.meterAria')}
       className={assemblyClass}
       header={
@@ -73,13 +136,37 @@ export function CompositionMeter({
             <strong>{places}</strong>
           </div>
           {gap !== 0 ? (
-            <p className="structure-assembly__gap" role="status">
-              <span className="structure-assembly__gap-icon" aria-hidden="true">
-                <StructureIssueIcon size="sm" />
-              </span>
+            <p
+              className={
+                draftIncomplete
+                  ? 'structure-assembly__gap structure-assembly__gap--expected'
+                  : pausedPopulationGap || pausedPopulationSurplus
+                    ? 'structure-assembly__gap structure-assembly__gap--paused'
+                    : 'structure-assembly__gap'
+              }
+              role="status"
+            >
+              {!draftIncomplete &&
+              !pausedPopulationGap &&
+              !pausedPopulationSurplus &&
+              gapDiagnosticTone != null ? (
+                <span
+                  className="structure-assembly__gap-icon"
+                  aria-hidden="true"
+                >
+                  <StructureDiagnosticIssueIcon
+                    tone={gapDiagnosticTone}
+                    size="sm"
+                  />
+                </span>
+              ) : null}
               {gap < 0
-                ? t('entries.meter.shortfall', { count: Math.abs(gap) })
-                : t('entries.meter.surplus', { count: gap })}
+                ? pausedPopulationGap
+                  ? t('entries.meter.shortfallPaused', { count: Math.abs(gap) })
+                  : t('entries.meter.shortfall', { count: Math.abs(gap) })
+                : pausedPopulationSurplus
+                  ? t('entries.meter.surplusPaused', { count: gap })
+                  : t('entries.meter.surplus', { count: gap })}
             </p>
           ) : null}
         </>
@@ -94,41 +181,40 @@ export function RootEntriesRail({
   sourcesConfiguredVolume = 0,
   canCompose,
   onEditCompose,
+  variant = 'default',
+  formatKind,
+  placedEntryIds,
+  entryPlaceProjections,
+  schematicReady = false,
 }: {
   stage: StructureStageHubSummary;
-  entries: StructureEntry[];
+  entries: readonly StructureEntry[];
   /** B2 — inbound Qualif/Prog rules (same rail as Affectation teams). */
   sources?: ReactNode;
   /** Expected volume from inbound rules (promised Entries, not yet necessarily in CompositionEntries). */
   sourcesConfiguredVolume?: number;
   canCompose?: boolean;
   onEditCompose?: () => void;
+  variant?: 'default' | 'composition-band';
+  formatKind?: StructureFormatKind | null;
+  placedEntryIds?: ReadonlySet<string>;
+  entryPlaceProjections?: ReadonlyMap<string, EntryPlaceProjection>;
+  schematicReady?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const fromAffectation = stage.affectationEntryCount ?? 0;
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
   const ineligible = stage.affectationIneligibleCount ?? 0;
-  const composedIds = stage.affectationEntryIds ?? EMPTY_ENTRY_IDS;
   const previewNames = stage.affectationPreviewNames ?? [];
   // U1 — Population gauge always covers authoring alimentations (never runtime membership).
   const meterEntries = fromAffectation + fromFeeds;
-  const byId = useMemo(
-    () => new Map(entries.map((entry) => [entry.entryId, entry])),
-    [entries],
-  );
   const composed = useMemo(
-    () =>
-      composedIds
-        .map((id) => byId.get(id))
-        .filter((entry): entry is StructureEntry => entry != null)
-        .sort((a, b) =>
-          a.displayName.localeCompare(b.displayName, undefined, {
-            sensitivity: 'base',
-          }),
-        ),
-    [composedIds, byId],
+    () => listComposedAffectationEntries(stage, entries),
+    [stage, entries],
   );
+  const perEntryPlacement = showPerEntryPlacement(formatKind ?? stage.formatKind);
+  const placedIds = placedEntryIds ?? new Set<string>();
 
   let state: 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
   if (n == null) {
@@ -168,6 +254,100 @@ export function RootEntriesRail({
         </button>
       </Tooltip>
     ) : null;
+
+  const teamListClass = [
+    'structure-entries__teams',
+    variant === 'composition-band' ? 'structure-entries__teams--band' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const renderTeamCell = (entry: StructureEntry) => {
+    const placed = isEntryPlacedInPhase(
+      entry.entryId,
+      placedIds,
+      formatKind ?? stage.formatKind,
+      schematicReady,
+    );
+    const showUnplacedOpacity =
+      perEntryPlacement &&
+      schematicReady &&
+      entry.status === 'Active' &&
+      !placed;
+    const projection = entryPlaceProjections?.get(entry.entryId);
+    const placeLabel = primaryPlaceLabel(projection);
+    const placedTooltip =
+      placed && placeLabel
+        ? t('entries.entryPlacedTooltip', { place: placeLabel })
+        : placed
+          ? t('entries.entryPlacedStatus')
+          : null;
+    return (
+      <li
+        key={entry.entryId}
+        className={entryCellListItemClassName({
+          ineligible: entry.status !== 'Active',
+          unplaced: showUnplacedOpacity,
+        })}
+        aria-label={
+          perEntryPlacement && schematicReady && entry.status === 'Active'
+            ? placed
+              ? t('entries.entryPlacedAria', { name: entry.displayName })
+              : t('entries.entryNotPlacedAria', { name: entry.displayName })
+            : undefined
+        }
+      >
+        <EntryCell
+          displayName={entry.displayName}
+          logoMediaId={entry.logoMediaId}
+          primaryColor={entry.primaryColor}
+          ineligible={entry.status !== 'Active'}
+          ineligibleLabel={t('composition.noLongerEligible')}
+          placed={placed}
+          placedTooltip={
+            placedTooltip ?? (placed ? t('entries.entryPlacedStatus') : null)
+          }
+        />
+      </li>
+    );
+  };
+
+  if (variant === 'composition-band') {
+    return (
+      <div
+        className={[
+          'structure-entries',
+          'structure-entries--composition-band',
+          danger ? 'structure-entries--danger' : null,
+          warn ? 'structure-entries--warn' : null,
+          soft ? 'structure-entries--soft' : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {composed.length > 0 ? (
+          <ul className={teamListClass}>
+            {composed.map((entry) => renderTeamCell(entry))}
+          </ul>
+        ) : previewNames.length > 0 ? (
+          <p className="structure-entries__preview" role="status">
+            {previewNames.join(' · ')}
+          </p>
+        ) : ineligible > 0 ? (
+          <p className="structure-entries__anomaly" role="status">
+            {t('entries.ineligibleOverlay', { count: ineligible })}
+          </p>
+        ) : (
+          <EmptyState
+            variant="idle"
+            icon={<EmptySelectionIcon size="lg" />}
+          >
+            {t('entries.emptyCompositionExtra')}
+          </EmptyState>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -212,35 +392,8 @@ export function RootEntriesRail({
               {affectationEdit}
             </header>
             {composed.length > 0 ? (
-              <ul className="structure-entries__teams">
-                {composed.map((entry) => (
-                  <li
-                    key={entry.entryId}
-                    className={[
-                      'structure-entries__team',
-                      entry.status !== 'Active'
-                        ? 'structure-entries__team--ineligible'
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    <TeamCrest
-                      name={entry.displayName}
-                      logoMediaId={entry.logoMediaId}
-                      primaryColor={entry.primaryColor}
-                      size="sm"
-                    />
-                    <span className="structure-entries__team-name">
-                      {entry.displayName}
-                    </span>
-                    {entry.status !== 'Active' ? (
-                      <span className="structure-entries__team-warn">
-                        {t('composition.noLongerEligible')}
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
+              <ul className={teamListClass}>
+                {composed.map((entry) => renderTeamCell(entry))}
               </ul>
             ) : previewNames.length > 0 ? (
               <p className="structure-entries__preview" role="status">
@@ -263,7 +416,7 @@ export function RootEntriesRail({
         ) : null}
       </div>
       <div className="structure-entries__footer">
-        <CompositionMeter entries={meterEntries} places={n} t={t} />
+        <CompositionMeter entries={meterEntries} places={n} t={t} stage={stage} />
       </div>
     </div>
   );

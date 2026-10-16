@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { ApiError } from './api';
 import { apiErrorLabel } from './i18n/apiErrorLabel';
+import { formatStructureMutationMessage } from './pages/structure/problems/formatStructureMutationMessage';
 import { Status } from './design-system/components/Status';
 import { statusToneFromBadgeTone } from './design-system/components/statusTone';
 import { Alert } from './design-system/components/Alert';
@@ -14,6 +15,7 @@ import type {
   EntryStatus,
   MatchStatus,
   StageStatus,
+  StructureStageHubSummary,
 } from './types';
 import {
   competitionStatusLabel,
@@ -224,16 +226,25 @@ export function ErrorState({ error }: { error: unknown }) {
 export function MutationError({
   error,
   sotHref,
+  structureStages,
 }: {
   error: unknown;
   /** When the failure reveals a persistent Structure problem, link to its SoT. */
   sotHref?: string | null;
+  /** When set, D1 failures list blocking downstream phase names. */
+  structureStages?: readonly StructureStageHubSummary[];
 }) {
   const { t } = useTranslation('common');
+  const { t: tStructure } = useTranslation('structure');
+
+  const message =
+    structureStages !== undefined
+      ? formatStructureMutationMessage(tStructure, error, structureStages)
+      : formatError(error, t);
 
   return (
     <Alert tone="danger" role="alert">
-      <span>{formatError(error, t)}</span>
+      <span>{message}</span>
       {sotHref ? (
         <>
           {' '}
@@ -273,38 +284,75 @@ export function persistentStructureMutationSotHref(
  * Empty lists are product states, not blanks: say what is missing and,
  * when the Host really exposes one, what the organizer can do next.
  * variant="idle" — centered icon + title + body (drawer / region empty).
+ * size="compact" — inline, low vertical footprint (nested rails / tiles).
  */
 export function EmptyState({
   title,
+  hint,
   children,
   action,
   icon,
   iconAccessible = false,
   variant = 'default',
+  size = 'default',
+  iconSize,
 }: {
   title?: string;
-  children: ReactNode;
+  /** Secondary guidance below the title (idle regions). */
+  hint?: ReactNode;
+  children?: ReactNode;
   action?: ReactNode;
   icon?: ReactNode;
   /** When true, the icon slot is exposed to assistive tech (e.g. primary CTA). */
   iconAccessible?: boolean;
   variant?: 'default' | 'idle';
+  /** `compact` for inset sub-regions; `comfortable` for larger idle zones. */
+  size?: 'compact' | 'default' | 'comfortable';
+  /** Icon scale in the icon slot (`sm` / `md` / `lg`). Defaults to `sm` when `size="compact"`. */
+  iconSize?: 'sm' | 'md' | 'lg';
 }) {
-  const classes = variant === 'idle' ? 'ds-empty ds-empty--idle' : 'ds-empty';
+  const resolvedIconSize = iconSize ?? (size === 'compact' ? 'sm' : undefined);
+
+  const classes = [
+    'ds-empty',
+    variant === 'idle' ? 'ds-empty--idle' : null,
+    size === 'compact' ? 'ds-empty--compact' : null,
+    size === 'comfortable' ? 'ds-empty--comfortable' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const iconClassName = [
+    'ds-empty__icon',
+    resolvedIconSize ? `ds-empty__icon--${resolvedIconSize}` : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const copy = (
+    <>
+      {title ? <p className="ds-empty__title">{title}</p> : null}
+      {hint ? <p className="ds-empty__hint">{hint}</p> : null}
+      {children ? <p className="ds-empty__body">{children}</p> : null}
+      {action ? <div className="ds-empty__actions">{action}</div> : null}
+    </>
+  );
 
   return (
     <div className={classes}>
       {icon ? (
         <span
-          className="ds-empty__icon"
+          className={iconClassName}
           aria-hidden={iconAccessible ? undefined : true}
         >
           {icon}
         </span>
       ) : null}
-      {title && <p className="ds-empty__title">{title}</p>}
-      <p className="ds-empty__body">{children}</p>
-      {action}
+      {size === 'compact' ? (
+        <div className="ds-empty__copy">{copy}</div>
+      ) : (
+        copy
+      )}
     </div>
   );
 }

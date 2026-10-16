@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { ApiError } from '../../../api';
 import enStructure from '../../../i18n/locales/en/structure.json';
 import frStructure from '../../../i18n/locales/fr/structure.json';
+import type { StructureStageHubSummary } from '../../../types';
+import { formatStructureMutationMessage } from './formatStructureMutationMessage';
 import {
   LIFECYCLE_CHECKLIST_WIRE_CODES,
   MATCHS_LIFECYCLE_WIRE_CODES,
@@ -21,7 +23,10 @@ import {
   resolveLifecycleMutationMessage,
 } from './resolveStructureProblemMessage';
 
-const t = (key: string, opts?: { defaultValue?: string }) => {
+const t = (
+  key: string,
+  opts?: { defaultValue?: string } & Record<string, unknown>,
+) => {
   const parts = key.split('.');
   let node: unknown = enStructure;
   for (const part of parts) {
@@ -31,10 +36,57 @@ const t = (key: string, opts?: { defaultValue?: string }) => {
     node = (node as Record<string, unknown>)[part];
   }
   if (typeof node === 'string') {
-    return node;
+    let text = node;
+    if (opts) {
+      for (const [name, value] of Object.entries(opts)) {
+        if (name === 'defaultValue') {
+          continue;
+        }
+        text = text.replaceAll(`{{${name}}}`, String(value));
+      }
+    }
+    return text;
   }
   return opts?.defaultValue ?? '';
 };
+
+describe('formatStructureMutationMessage', () => {
+  it('lists ready downstream consumer phase names on D1 refusal', () => {
+    const downstream: StructureStageHubSummary = {
+      stageId: '11111111-1111-1111-1111-111111111111',
+      name: 'Final',
+      status: 'Ready',
+      teamCount: 2,
+      matchCount: 0,
+      matchdayCount: 0,
+      slotCount: 0,
+      numberOfPeriods: 2,
+      durationPerPeriod: 45,
+      hasExtraTime: false,
+      hasPenaltyShootout: false,
+      hasDrawRules: false,
+      hasQualificationRules: false,
+      qualificationPathCount: 0,
+      hasProgressionRules: false,
+      progressionPathCount: 0,
+      hasTieFormat: false,
+    };
+    const msg = formatStructureMutationMessage(
+      t,
+      new ApiError(
+        409,
+        'blocked',
+        undefined,
+        'Application.ReadyConsumerWouldBreak',
+        [downstream.stageId],
+      ),
+      [downstream],
+    );
+    expect(msg).toContain('Final');
+    expect(msg).toContain('Affected phases');
+    expect(msg).not.toMatch(/\(\d{3}\)/);
+  });
+});
 
 describe('matchsColumnVisibility', () => {
   it('hides open-matches primary copy on running phase', () => {
@@ -69,7 +121,7 @@ describe('resolveLifecycleAnticipatedMessage', () => {
   });
 
   it('resolves known wire codes from problems.lifecycle', () => {
-    expect(resolveLifecycleAnticipatedMessage(t, 'Places')).toContain('place');
+    expect(resolveLifecycleAnticipatedMessage(t, 'Places')).toMatch(/composition|pool/i);
     expect(resolveLifecycleAnticipatedMessage(t, 'NotInInventory')).toContain(
       'unavailable',
     );
@@ -139,6 +191,21 @@ describe('resolveLifecycleMutationMessageKey', () => {
     expect(resolveLifecycleMutationMessageKey('Application.Attribution')).toBe(
       'problems.lifecycle.Attribution',
     );
+    expect(resolveLifecycleMutationMessageKey('Application.ReadyConsumerWouldBreak')).toBe(
+      'problems.lifecycle.ReadyConsumerWouldBreak',
+    );
+    expect(resolveLifecycleMutationMessageKey('Application.AppliedDrawPoolChangeBlocked')).toBe(
+      'problems.lifecycle.AppliedDrawPoolChangeBlocked',
+    );
+  });
+
+  it('resolves G-B-3 pool change refusal without mutation unknown', () => {
+    const msg = resolveLifecycleMutationMessage(
+      t,
+      new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawPoolChangeBlocked'),
+    );
+    expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawPoolChangeBlocked);
+    expect(msg).not.toBe(enStructure.problems.mutation._unknown);
   });
 });
 
@@ -182,6 +249,18 @@ describe('resolveLifecycleMutationMessage', () => {
 });
 
 describe('problems i18n parity', () => {
+  it('has matching FR/EN graph.issuesShort for structure diagnostics', () => {
+    const longKeys = Object.keys(enStructure.graph.issues).filter(
+      (code) => code !== 'SlotFeedMissingAwaitingDraw',
+    );
+    for (const code of longKeys) {
+      expect(enStructure.graph.issuesShort).toHaveProperty(code);
+      expect(frStructure.graph.issuesShort).toHaveProperty(code);
+      expect(enStructure.graph.issuesShort[code as keyof typeof enStructure.graph.issuesShort]).toBeTruthy();
+      expect(frStructure.graph.issuesShort[code as keyof typeof frStructure.graph.issuesShort]).toBeTruthy();
+    }
+  });
+
   it('has matching FR/EN keys for Matchs lifecycle inventory', () => {
     for (const code of MATCHS_LIFECYCLE_WIRE_CODES) {
       expect(enStructure.problems.lifecycle).toHaveProperty(code);

@@ -27,8 +27,13 @@ button.ds-text-link {
   text-decoration: none;
 }
 
-.ds-root a.ds-text-link:hover {
+.ds-root a.ds-text-link:hover,
+button.ds-text-link:hover {
   color: color-mix(in srgb, var(--color-info) 80%, var(--color-ink));
+}
+
+.ds-text-link--icon {
+  line-height: 0;
 }
 
 .ds-text-link__arrow {

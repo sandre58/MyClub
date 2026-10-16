@@ -52,9 +52,12 @@ export function useStructureStageLifecycleMutation(
     },
     onSuccess: (_data, code) => {
       notify.success(mutationSuccessToast(t, code));
-      scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
-        stageId,
-      });
+      scheduleStructureRefresh(
+        queryClient,
+        competitionId,
+        ['hubStageShell', 'competitionReads'],
+        { stageId },
+      );
     },
   });
 }

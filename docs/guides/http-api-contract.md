@@ -513,7 +513,7 @@ Empty or null `paths` clears rules. Domain validates source fixture ownership an
 
 Empty or null `paths` clears rules. Optional: `groupId`, `acrossGroupsPosition`, `selectionEndValue`, `minimumPoints`. Rejected while stage is Running / Suspended / Completed (`StructureNotMutable`).
 
-Structure hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationPaths` / `progressionPaths`, `structureIssues` (Draft-persistable graph validity), and `lifecycle` (see above). Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
+Structure hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationIntents` / `progressionIntents` (authoring read model; legacy path-list rules are synthesized into intents on GET), `structureIssues` (Draft-persistable graph validity), and `lifecycle` (see above). `qualificationPathCount` / `progressionPathCount` reflect expanded domain path counts for hub summaries. Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
 
 #### `PUT /stages/{stageId}/placement-award-rules` → 204 No Content
 

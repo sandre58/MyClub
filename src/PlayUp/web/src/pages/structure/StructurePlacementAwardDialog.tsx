@@ -240,7 +240,10 @@ export function StructurePlacementAwardDialog({
           mutation.isError || saveBlockedReason || nonContiguous ? (
             <>
               {mutation.isError ? (
-                <MutationError error={mutation.error} />
+                <MutationError
+                  error={mutation.error}
+                  structureStages={data.stages}
+                />
               ) : null}
               {saveBlockedReason ? (
                 <Alert tone="warning" role="status">

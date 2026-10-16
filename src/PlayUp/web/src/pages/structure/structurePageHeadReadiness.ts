@@ -3,9 +3,13 @@ export type AttentionQueryPhase = 'pending' | 'success' | 'error';
 export type StructurePageHeadReadinessInput = {
   lifecycleClosed: boolean;
   stagesEmpty: boolean;
-  hasAny: boolean;
+  /** Structure hub: danger-level presented diagnostics (or shape invalid). */
+  structurePresentedDanger: boolean;
+  /** Structure hub: any presented problem (including warnings) — blocks positive notes. */
+  structureHasPresentedProblems: boolean;
   attentionPhase: AttentionQueryPhase;
-  presentableAttentionCount: number;
+  presentableBlockingAttentionCount: number;
+  presentableNonBlockingAttentionCount: number;
   readyToMaterialize: boolean;
   readyForSchedule: boolean;
   readyForNextSlice: boolean;
@@ -14,8 +18,27 @@ export type StructurePageHeadReadinessInput = {
 export type StructurePageHeadNoteKind =
   | 'none'
   | 'negative'
+  | 'warning'
   | 'positiveMaterialization'
   | 'positiveNextSlice';
+
+function pageHeadHasErrors(input: StructurePageHeadReadinessInput): boolean {
+  return (
+    input.structurePresentedDanger ||
+    (input.attentionPhase === 'success' &&
+      input.presentableBlockingAttentionCount > 0) ||
+    (input.attentionPhase === 'error' && input.structurePresentedDanger)
+  );
+}
+
+function pageHeadHasWarnings(input: StructurePageHeadReadinessInput): boolean {
+  const structureWarnings =
+    input.structureHasPresentedProblems && !input.structurePresentedDanger;
+  const attentionWarnings =
+    input.attentionPhase === 'success' &&
+    input.presentableNonBlockingAttentionCount > 0;
+  return structureWarnings || attentionWarnings;
+}
 
 export function resolveStructurePageHeadNoteKind(
   input: StructurePageHeadReadinessInput,
@@ -24,13 +47,12 @@ export function resolveStructurePageHeadNoteKind(
     return 'none';
   }
 
-  const showNegative =
-    input.hasAny ||
-    (input.attentionPhase === 'success' && input.presentableAttentionCount > 0) ||
-    (input.attentionPhase === 'error' && input.hasAny);
-
-  if (showNegative) {
+  if (pageHeadHasErrors(input)) {
     return 'negative';
+  }
+
+  if (pageHeadHasWarnings(input)) {
+    return 'warning';
   }
 
   if (input.attentionPhase !== 'success') {
@@ -38,8 +60,9 @@ export function resolveStructurePageHeadNoteKind(
   }
 
   if (
-    input.presentableAttentionCount === 0 &&
-    !input.hasAny &&
+    input.presentableBlockingAttentionCount === 0 &&
+    input.presentableNonBlockingAttentionCount === 0 &&
+    !input.structureHasPresentedProblems &&
     input.readyToMaterialize &&
     !input.readyForSchedule
   ) {
@@ -47,8 +70,9 @@ export function resolveStructurePageHeadNoteKind(
   }
 
   if (
-    input.presentableAttentionCount === 0 &&
-    !input.hasAny &&
+    input.presentableBlockingAttentionCount === 0 &&
+    input.presentableNonBlockingAttentionCount === 0 &&
+    !input.structureHasPresentedProblems &&
     !input.readyToMaterialize &&
     input.readyForNextSlice
   ) {

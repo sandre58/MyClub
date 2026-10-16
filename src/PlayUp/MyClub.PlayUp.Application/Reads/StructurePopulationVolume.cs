@@ -98,20 +98,23 @@ public static class StructurePopulationVolume
     }
 
     /// <summary>
-    /// Volume promised by one qualification path on the Structure read DTO (SPA parity).
+    /// Volume promised by one qualification intent on the Structure read DTO (SPA parity).
     /// </summary>
-    public static int QualificationPathVolume(StructureQualificationPathDto path)
+    public static int QualificationIntentVolume(StructureQualificationIntentDto intent)
     {
-        ArgumentNullException.ThrowIfNull(path);
+        ArgumentNullException.ThrowIfNull(intent);
 
-        return path.SelectionMode switch
-        {
-            SelectionMode.Position => 1,
-            SelectionMode.Range =>
-                Math.Max(1, (path.SelectionEndValue ?? path.SelectionValue) - path.SelectionValue + 1),
-            SelectionMode.Top or SelectionMode.Bottom => Math.Max(1, path.SelectionValue),
-            _ => Math.Max(1, path.SelectionValue)
-        };
+        return Math.Max(1, intent.DestinationCount);
+    }
+
+    /// <summary>
+    /// Volume promised by one progression intent on the Structure read DTO (SPA parity).
+    /// </summary>
+    public static int ProgressionIntentVolume(StructureProgressionIntentDto intent)
+    {
+        ArgumentNullException.ThrowIfNull(intent);
+
+        return Math.Max(1, intent.ExpandedPathCount);
     }
 
     /// <summary>
@@ -124,16 +127,18 @@ public static class StructurePopulationVolume
         var volume = 0;
         foreach (var source in view.Stages)
         {
-            if (source.QualificationPaths is { } qualificationPaths)
+            if (source.QualificationIntents is { } qualificationIntents)
             {
-                volume += qualificationPaths
-                    .Where(path => path.DestinationStageId == destinationStageId)
-                    .Sum(QualificationPathVolume);
+                volume += qualificationIntents
+                    .Where(intent => intent.DestinationStageId == destinationStageId)
+                    .Sum(QualificationIntentVolume);
             }
 
-            if (source.ProgressionPaths is { } progressionPaths)
+            if (source.ProgressionIntents is { } progressionIntents)
             {
-                volume += progressionPaths.Count(path => path.DestinationStageId == destinationStageId);
+                volume += progressionIntents
+                    .Where(intent => intent.DestinationStageId == destinationStageId)
+                    .Sum(ProgressionIntentVolume);
             }
         }
 

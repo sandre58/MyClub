@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { replaceRoundTieFormat, replaceStageDefaultTieFormat } from '../../api';
+import { Alert } from '../../design-system/components/Alert';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../design-system/components/Dialog';
 import { Field } from '../../design-system/components/Field';
@@ -22,22 +23,29 @@ import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { MutationError, PendingLabel } from '../../ui';
 import type {
   ReplaceRoundTieFormatRequest,
-  ReplaceStageDefaultTieFormatRequest,
   StructureConfrontationSegment,
   StructureStageHubSummary,
-  StructureTieFormatSummary,
 } from '../../types';
 import { scheduleStructureRefresh } from '../structure/structureInvalidation';
+import {
+  applyPhaseFormToInheritedRounds,
+  buildInheritsAtLoad,
+  isRoundCustomized,
+  roundPersistenceUpdates,
+  shouldShowRoundNavigation,
+  singleRoundDriftRoundId,
+  type TieFormatSessionFlags,
+} from './tieFormatEditorState';
+import {
+  cloneTie,
+  roundFormsFromStage,
+  sameTie,
+  tieFormFromSummary,
+  toRequest,
+  withLegs,
+  type TieFormState,
+} from './tieFormatForm';
 import '../regulation/regulation-shared.css';
-
-type TieFormState = {
-  numberOfLegs: 1 | 2;
-  /** Domain: forced true when two legs, false when one. */
-  aggregateScoring: boolean;
-  hasAwayGoalsRule: boolean;
-  hasExtraTimeRule: boolean;
-  hasPenaltyShootoutRule: boolean;
-};
 
 type RoundTieRow = {
   roundId: string;
@@ -46,88 +54,6 @@ type RoundTieRow = {
 };
 
 type NavTarget = 'phase' | string;
-
-function defaultOneLegForm(): TieFormState {
-  return {
-    numberOfLegs: 1,
-    aggregateScoring: false,
-    hasAwayGoalsRule: false,
-    hasExtraTimeRule: false,
-    hasPenaltyShootoutRule: false,
-  };
-}
-
-function withLegs(form: TieFormState, legs: 1 | 2): TieFormState {
-  const twoLegs = legs === 2;
-  return {
-    ...form,
-    numberOfLegs: legs,
-    aggregateScoring: twoLegs,
-    hasAwayGoalsRule: twoLegs ? form.hasAwayGoalsRule : false,
-  };
-}
-
-function tieFormFromSummary(
-  summary: StructureTieFormatSummary | null | undefined,
-): TieFormState {
-  if (!summary) {
-    return defaultOneLegForm();
-  }
-  const legs = summary.numberOfLegs === 2 ? 2 : 1;
-  const aggregate = legs === 2;
-  return {
-    numberOfLegs: legs,
-    aggregateScoring: aggregate,
-    hasAwayGoalsRule: aggregate && summary.hasAwayGoalsRule === true,
-    hasExtraTimeRule: summary.hasTieExtraTime === true,
-    hasPenaltyShootoutRule: summary.hasTiePenaltyShootout === true,
-  };
-}
-
-function tieFormFromSegment(
-  segment: StructureConfrontationSegment,
-): TieFormState {
-  const legs = segment.numberOfLegs === 2 ? 2 : 1;
-  const aggregate = legs === 2;
-  return {
-    numberOfLegs: legs,
-    aggregateScoring: aggregate,
-    hasAwayGoalsRule: aggregate && segment.hasAwayGoalsRule === true,
-    hasExtraTimeRule: segment.hasTieExtraTime === true,
-    hasPenaltyShootoutRule: segment.hasTiePenaltyShootout === true,
-  };
-}
-
-function stableTie(form: TieFormState): TieFormState {
-  const legs = form.numberOfLegs === 2 ? 2 : 1;
-  const aggregate = legs === 2;
-  return {
-    numberOfLegs: legs,
-    aggregateScoring: aggregate,
-    hasAwayGoalsRule: aggregate && form.hasAwayGoalsRule,
-    hasExtraTimeRule: form.hasExtraTimeRule,
-    hasPenaltyShootoutRule: form.hasPenaltyShootoutRule,
-  };
-}
-
-function sameTie(a: TieFormState, b: TieFormState): boolean {
-  return JSON.stringify(stableTie(a)) === JSON.stringify(stableTie(b));
-}
-
-function cloneTie(form: TieFormState): TieFormState {
-  return { ...stableTie(form) };
-}
-
-function toRequest(form: TieFormState): ReplaceStageDefaultTieFormatRequest {
-  const stable = stableTie(form);
-  return {
-    clear: false,
-    numberOfLegs: stable.numberOfLegs,
-    hasAwayGoalsRule: stable.hasAwayGoalsRule,
-    hasExtraTimeRule: stable.hasExtraTimeRule,
-    hasPenaltyShootoutRule: stable.hasPenaltyShootoutRule,
-  };
-}
 
 function flattenRounds(
   segments: StructureConfrontationSegment[] | null | undefined,
@@ -143,19 +69,6 @@ function flattenRounds(
     }
   }
   return rows.sort((a, b) => a.sortOrder - b.sortOrder);
-}
-
-function roundFormsFromStage(
-  stage: StructureStageHubSummary,
-): Record<string, TieFormState> {
-  const next: Record<string, TieFormState> = {};
-  for (const segment of stage.confrontationSegments ?? []) {
-    const form = tieFormFromSegment(segment);
-    for (const round of segment.rounds) {
-      next[round.roundId] = form;
-    }
-  }
-  return next;
 }
 
 function TieFormatFields({
@@ -249,11 +162,13 @@ function TieFormatFields({
 export function TieFormatDialog({
   competitionId,
   stage,
+  structureStages,
   open,
   onClose,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
+  structureStages?: readonly StructureStageHubSummary[];
   open: boolean;
   onClose: () => void;
 }) {
@@ -272,6 +187,10 @@ export function TieFormatDialog({
     () => flattenRounds(stage.confrontationSegments),
     [stage.confrontationSegments],
   );
+  const roundIds = useMemo(
+    () => rounds.map((round) => round.roundId),
+    [rounds],
+  );
 
   const [phaseForm, setPhaseForm] = useState(() =>
     tieFormFromSummary(stage.defaultTieFormat),
@@ -285,24 +204,49 @@ export function TieFormatDialog({
   const [baselineRounds, setBaselineRounds] = useState(() =>
     roundFormsFromStage(stage),
   );
-  /** Rounds currently opened for custom editing (even if values still match phase). */
+  const [inheritsAtLoad, setInheritsAtLoad] = useState<Record<string, boolean>>(
+    () => ({}),
+  );
+  /** Session-only: organizer explicitly enabled per-round override. */
   const [overrideEditing, setOverrideEditing] = useState<Record<string, true>>(
+    {},
+  );
+  /** Session-only: single-round historical drift realigned to phase default. */
+  const [sessionRealigned, setSessionRealigned] = useState<Record<string, true>>(
     {},
   );
   const [nav, setNav] = useState<NavTarget>('phase');
 
+  const sessionFlags = useMemo(
+    (): TieFormatSessionFlags => ({
+      inheritsAtLoad,
+      sessionOverride: overrideEditing,
+      sessionRealigned,
+    }),
+    [inheritsAtLoad, overrideEditing, sessionRealigned],
+  );
+
   const phaseDirty = canEditDefault && !sameTie(phaseForm, baselinePhase);
-  const dirtyRoundIds = rounds
-    .map((round) => round.roundId)
-    .filter((id) => {
-      const current = roundForms[id];
-      const baseline = baselineRounds[id];
-      if (!current || !baseline) {
-        return false;
-      }
-      return canEditRounds && !sameTie(current, baseline);
-    });
-  const isDirty = phaseDirty || dirtyRoundIds.length > 0;
+  const roundUpdates = useMemo(
+    () =>
+      roundPersistenceUpdates(
+        roundIds,
+        sessionFlags,
+        phaseForm,
+        roundForms,
+        baselineRounds,
+      ),
+    [
+      roundIds,
+      sessionFlags,
+      phaseForm,
+      roundForms,
+      baselineRounds,
+    ],
+  );
+  const roundUpdateIds = Object.keys(roundUpdates);
+  const isDirty =
+    phaseDirty || (canEditRounds && roundUpdateIds.length > 0);
   const canSave = isDirty && (canEditDefault || canEditRounds);
 
   const {
@@ -319,16 +263,22 @@ export function TieFormatDialog({
     }
     const nextPhase = tieFormFromSummary(stage.defaultTieFormat);
     const nextRounds = roundFormsFromStage(stage);
+    const nextRoundIds = flattenRounds(stage.confrontationSegments).map(
+      (round) => round.roundId,
+    );
     setPhaseForm(nextPhase);
     setBaselinePhase(nextPhase);
     setRoundForms(nextRounds);
     setBaselineRounds(nextRounds);
+    setInheritsAtLoad(
+      buildInheritsAtLoad(nextRoundIds, nextRounds, nextPhase),
+    );
     setOverrideEditing({});
+    setSessionRealigned({});
     const canDefault = (stage.actions ?? []).includes(
       'ReplaceDefaultTieFormat',
     );
-    const firstRound = flattenRounds(stage.confrontationSegments)[0];
-    setNav(canDefault ? 'phase' : (firstRound?.roundId ?? 'phase'));
+    setNav(canDefault ? 'phase' : (nextRoundIds[0] ?? 'phase'));
     resetDiscard();
   }, [open, stage, resetDiscard]);
 
@@ -340,8 +290,8 @@ export function TieFormatDialog({
           replaceStageDefaultTieFormat(stage.stageId, toRequest(phaseForm)),
         );
       }
-      for (const roundId of dirtyRoundIds) {
-        const form = roundForms[roundId];
+      for (const roundId of roundUpdateIds) {
+        const form = roundUpdates[roundId];
         if (!form) {
           continue;
         }
@@ -377,12 +327,20 @@ export function TieFormatDialog({
     requestDiscardClose(mutation.isPending);
   }
 
-  function isRoundCustomized(roundId: string): boolean {
-    const form = roundForms[roundId];
-    if (!form) {
-      return false;
-    }
-    return Boolean(overrideEditing[roundId]) || !sameTie(form, phaseForm);
+  function updatePhaseForm(next: TieFormState) {
+    setPhaseForm(next);
+    setRoundForms((current) =>
+      applyPhaseFormToInheritedRounds(
+        roundIds,
+        sessionFlags,
+        next,
+        current,
+      ),
+    );
+  }
+
+  function roundIsCustomized(roundId: string): boolean {
+    return isRoundCustomized(roundId, sessionFlags);
   }
 
   function startRoundOverride(roundId: string) {
@@ -405,6 +363,29 @@ export function TieFormatDialog({
     });
   }
 
+  function realignRoundToPhase(roundId: string) {
+    setSessionRealigned((current) => ({ ...current, [roundId]: true }));
+    setRoundForms((current) => ({
+      ...current,
+      [roundId]: cloneTie(phaseForm),
+    }));
+    setOverrideEditing((current) => {
+      const next = { ...current };
+      delete next[roundId];
+      return next;
+    });
+  }
+
+  const driftRoundId = singleRoundDriftRoundId(
+    roundIds,
+    baselineRounds,
+    baselinePhase,
+  );
+  const showHistoricalDrift =
+    rounds.length === 1 &&
+    driftRoundId != null &&
+    !sessionRealigned[driftRoundId];
+
   const selectedRound =
     nav === 'phase' ? null : rounds.find((round) => round.roundId === nav);
   const selectedRoundForm =
@@ -412,9 +393,9 @@ export function TieFormatDialog({
       ? (roundForms[selectedRound.roundId] ?? cloneTie(phaseForm))
       : null;
   const selectedIsCustom =
-    selectedRound != null && isRoundCustomized(selectedRound.roundId);
+    selectedRound != null && roundIsCustomized(selectedRound.roundId);
 
-  const showSplit = canEditRounds && rounds.length > 0;
+  const showSplit = shouldShowRoundNavigation(rounds.length, canEditRounds);
 
   return (
     <>
@@ -456,7 +437,12 @@ export function TieFormatDialog({
           </>
         }
         footerStatus={
-          mutation.isError ? <MutationError error={mutation.error} /> : null
+          mutation.isError ? (
+            <MutationError
+              error={mutation.error}
+              structureStages={structureStages}
+            />
+          ) : null
         }
       >
         <form
@@ -504,7 +490,7 @@ export function TieFormatDialog({
                 </p>
                 <ul className="tie-format-editor__nav-list">
                   {rounds.map((round) => {
-                    const customized = isRoundCustomized(round.roundId);
+                    const customized = roundIsCustomized(round.roundId);
                     const active = nav === round.roundId;
                     return (
                       <li key={round.roundId}>
@@ -551,9 +537,22 @@ export function TieFormatDialog({
                       </div>
                     </header>
                     <div className="tie-format-editor__detail-body">
+                      {showHistoricalDrift && driftRoundId ? (
+                        <Alert tone="warning">
+                          <p>{t('regulation.tieSingleRoundDriftHint')}</p>
+                          <button
+                            type="button"
+                            className="ds-btn ds-btn--secondary ds-btn--sm"
+                            disabled={mutation.isPending}
+                            onClick={() => realignRoundToPhase(driftRoundId)}
+                          >
+                            {t('regulation.tieRealignToPhase')}
+                          </button>
+                        </Alert>
+                      ) : null}
                       <TieFormatFields
                         form={phaseForm}
-                        onChange={setPhaseForm}
+                        onChange={updatePhaseForm}
                       />
                     </div>
                   </>

@@ -1,6 +1,9 @@
 // Structure flux rails — Sorties / population list chrome.
 import type { ReactNode } from 'react';
 import { Chip } from '../../design-system/components/Chip';
+import { PanelHead } from '../../design-system/components/PanelHead';
+import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
+import { FeedGroupPhaseHead } from './FeedGroupPhaseHead';
 import { type FeedGroup } from './structurePhaseFeeds';
 
 export function FluxRuleRow({
@@ -74,12 +77,10 @@ export function PlacementAwardRow({
 export function FluxGroupList({
   groups,
   onOpenPeer,
-  teamsLabel,
   renderGroupAction,
 }: {
   groups: FeedGroup[];
   onOpenPeer?: (peerId: string) => void;
-  teamsLabel: (count: number) => string;
   /** Compact control in the group head (e.g. edit exits on source). */
   renderGroupAction?: (group: FeedGroup) => ReactNode;
 }) {
@@ -87,35 +88,15 @@ export function FluxGroupList({
     <ul className="structure-flux-groups">
       {groups.map((group) => (
         <li key={group.peerId} className="structure-flux-group">
-          <div className="structure-flux-group__head">
-            {onOpenPeer ? (
-              <button
-                type="button"
-                className="structure-flux-group__peer"
-                onClick={() => onOpenPeer(group.peerId)}
-              >
-                {group.peerName}
-              </button>
-            ) : (
-              <span className="structure-flux-group__peer">
-                {group.peerName}
-              </span>
-            )}
-            <div className="structure-flux-group__head-trail">
-              <Chip tone="neutral">{teamsLabel(group.volume)}</Chip>
-              {renderGroupAction?.(group)}
-            </div>
-          </div>
-          <ul className="structure-flux-group__rules">
+          <FeedGroupPhaseHead
+            group={group}
+            onViewPhase={onOpenPeer}
+            renderGroupAction={renderGroupAction}
+          />
+          <ul className="structure-feed-group__rules">
             {group.rules.map((rule) => (
-              <li key={rule.key} className="structure-flux-group__rule">
-                <FluxRuleRow
-                  badge={rule.badge}
-                  badgeTone={rule.badgeTone}
-                  context={rule.context}
-                  extra={rule.extra}
-                  badgeAsText={rule.badgeAsText}
-                />
+              <li key={rule.key} className="structure-feed-group__rule-line">
+                <CompositionQualifierRuleLabel rule={rule} />
               </li>
             ))}
           </ul>
@@ -132,7 +113,8 @@ export function FluxRail({
   editControl,
   children,
   side,
-  empty = false,
+  contentEmpty = false,
+  emptyState,
   attentionBanner,
 }: {
   id: string;
@@ -141,8 +123,9 @@ export function FluxRail({
   editControl?: ReactNode;
   children?: ReactNode;
   side: 'in' | 'out';
-  /** When true: header only — body omitted so it consumes no vertical space. */
-  empty?: boolean;
+  /** When true, shows `emptyState` instead of `children`. */
+  contentEmpty?: boolean;
+  emptyState?: ReactNode;
   /** Diagnostic banners owned by this rail (no container chrome). */
   attentionBanner?: ReactNode;
 }) {
@@ -150,30 +133,28 @@ export function FluxRail({
   return (
     <aside
       id={id}
-      className={[
-        'structure-phase-rail',
-        `structure-phase-rail--${side}`,
-        empty ? 'structure-phase-rail--empty' : null,
-      ]
+      className={['structure-phase-rail', `structure-phase-rail--${side}`]
         .filter(Boolean)
         .join(' ')}
       aria-labelledby={titleId}
     >
-      <header className="structure-phase-rail__head">
-        <span className="structure-phase-rail__icon" aria-hidden="true">
-          {icon}
-        </span>
-        <h3 id={titleId} className="structure-phase-rail__title">
-          {title}
-        </h3>
-        {editControl}
-      </header>
-      {empty ? null : (
-        <div className="structure-phase-rail__body">
-          {children}
-          {attentionBanner}
-        </div>
-      )}
+      <PanelHead
+        id={titleId}
+        density="inset"
+        titleStyle="section"
+        icon={icon}
+        title={title}
+        actions={editControl}
+        className="structure-flux-rail__head"
+      />
+      <div className="structure-phase-rail__body">
+        {contentEmpty && emptyState ? (
+          <div className="structure-phase-rail__empty">{emptyState}</div>
+        ) : (
+          children
+        )}
+        {attentionBanner}
+      </div>
     </aside>
   );
 }

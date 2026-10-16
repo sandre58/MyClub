@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Application.Reads;
 
@@ -30,15 +31,21 @@ public static class StructurePresentedAttentionCollector
 
         foreach (var stage in structureView.Stages)
         {
+            if (stage.Status == StageStatus.Completed)
+            {
+                continue;
+            }
+
             StagePresentedIssueCodes(structureView, stage)
-                .Where(code => !IsExcludedSource(code))
-                .Select(code => CreateStageItem(code, stage.StageId)).ToList().ForEach(items.Add);
+                .Where(code => !IsExcludedSource(code) && ShouldEmitAttention(code, stage, structureView))
+                .Select(code => CreateStageItem(code, stage, structureView)).ToList().ForEach(items.Add);
 
             if (StageHasEngagedMissingPots(stage))
             {
                 items.Add(CreateStageItem(
                     StructureViewAssembler.BlockerMissingPotRules,
-                    stage.StageId,
+                    stage,
+                    structureView,
                     NeedsAttentionAssembler.SeverityBlocking));
             }
         }
@@ -57,6 +64,13 @@ public static class StructurePresentedAttentionCollector
                 }));
         }
     }
+
+    private static bool ShouldEmitAttention(
+        string code,
+        StructureStageHubSummaryDto stage,
+        StructureViewDto view) =>
+        StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
+            != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
 
     private static bool IsExcludedSource(string code) =>
         code is StructureViewAssembler.BlockerMissingStage
@@ -107,29 +121,23 @@ public static class StructurePresentedAttentionCollector
 
     private static NeedsAttentionItemDto CreateStageItem(
         string source,
-        Guid stageId,
-        string? severityOverride = null) =>
-        new(
+        StructureStageHubSummaryDto stage,
+        StructureViewDto view,
+        string? severityOverride = null)
+    {
+        var severity = severityOverride
+            ?? StructureDiagnosticPresentation.MapSeverityToAttention(
+                StructureDiagnosticPresentation.ResolveSeverity(source, stage, view));
+
+        return new NeedsAttentionItemDto(
             source,
-            severityOverride ?? ResolveSeverity(source),
+            severity,
             "Stage",
-            stageId.ToString(),
+            stage.StageId.ToString(),
             new Dictionary<string, string>
             {
-                ["stageId"] = stageId.ToString()
+                ["stageId"] = stage.StageId.ToString()
             },
             Problem: OrganizerProblemSemanticsResolver.TryFromStructureIssue(source));
-
-    private static string ResolveSeverity(string source) =>
-        SeverityBySource.GetValueOrDefault(source, NeedsAttentionAssembler.SeverityBlocking);
-
-    /// <summary>Workshop default matrix (D1 revision Annex A4 PROPOSED).</summary>
-    private static readonly Dictionary<string, string> SeverityBySource =
-        new(CodeComparer)
-        {
-            [CompetitionFlowAnalyzer.OverCapacityEdge] = NeedsAttentionAssembler.SeverityWarning,
-            [CompetitionFlowAnalyzer.NonRootUnfed] = NeedsAttentionAssembler.SeverityWarning,
-            [CompetitionFlowAnalyzer.AuthoredAwardUnreachable] = NeedsAttentionAssembler.SeverityWarning,
-            [CompetitionFlowAnalyzer.ExpectedRankUnreachable] = NeedsAttentionAssembler.SeverityWarning
-        };
+    }
 }

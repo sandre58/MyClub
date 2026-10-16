@@ -37,6 +37,11 @@ public static class StageErrorCodes
     public const string StructureLocked = "Stage.StructureLocked";
 
     /// <summary>
+    /// Gets the code when the display name cannot be renamed (completed phase).
+    /// </summary>
+    public const string DisplayNameLocked = "Stage.DisplayNameLocked";
+
+    /// <summary>
     /// Gets the code when a group cannot be found.
     /// </summary>
     public const string GroupNotFound = "Stage.GroupNotFound";

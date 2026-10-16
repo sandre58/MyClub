@@ -3,6 +3,7 @@ import {
   dedupeAttentionSituations,
   isAttentionDrawerForbiddenSource,
   partitionAttentionItems,
+  partitionPresentableAttention,
   presentableAttentionCount,
   presentableAttentionSituations,
 } from './attentionPartition';
@@ -81,6 +82,48 @@ describe('attentionPartition', () => {
     ];
     expect(presentableAttentionCount(wire)).toBe(0);
     expect(presentableAttentionSituations(wire)).toEqual([]);
+  });
+
+  it('downgrades Draft SlotFeedMissing blocking wire to attention group', () => {
+    const wire: NeedsAttentionItem[] = [
+      {
+        source: 'SlotFeedMissing',
+        severity: 'Blocking',
+        targetType: 'Stage',
+        targetId: 's1',
+        params: { stageId: 's1' },
+      },
+    ];
+    const stages = [
+      { stageId: 's1', name: 'Phase', status: 'Draft' as const },
+    ];
+    const { blocking, attention } = partitionPresentableAttention(wire, {
+      stages,
+    });
+    expect(blocking).toHaveLength(0);
+    expect(attention.map((item) => item.source)).toEqual(['SlotFeedMissing']);
+  });
+
+  it('downgrades Draft PopulationShortfall blocking wire to attention group', () => {
+    const wire: NeedsAttentionItem[] = [
+      {
+        source: 'PopulationShortfall',
+        severity: 'Blocking',
+        targetType: 'Stage',
+        targetId: 's1',
+        params: { stageId: 's1' },
+      },
+    ];
+    const stages = [
+      { stageId: 's1', name: 'Phase', status: 'Draft' as const },
+    ];
+    const { blocking, attention } = partitionPresentableAttention(wire, {
+      stages,
+    });
+    expect(blocking).toHaveLength(0);
+    expect(attention.map((item) => item.source)).toEqual([
+      'PopulationShortfall',
+    ]);
   });
 
   it('presentableAttentionCount includes blocking and warning rows', () => {

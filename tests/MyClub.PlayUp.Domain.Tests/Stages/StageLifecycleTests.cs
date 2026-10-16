@@ -90,27 +90,14 @@ public sealed class StageLifecycleTests
     }
 
     [Fact]
-    public void Prepare_poules_requires_group_with_entry_and_matchday()
+    public void Prepare_poules_requires_matchday_not_group_entries()
     {
-        // Arrange
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
-        var group = stage.AddGroup("A", _clock);
+        stage.AddGroup("A", _clock);
         stage.AddMatchday(1, _clock);
 
-        // Act — no entry yet
-        var act = () => stage.Prepare(_clock);
-
-        // Assert
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidConfiguration);
-
-        // Arrange — assign entry
-        stage.AssignEntryToGroup(group.Id, EntryId.New());
-        stage.ClearDomainEvents();
-
-        // Act
         stage.Prepare(_clock);
 
-        // Assert
         stage.Status.Should().Be(StageStatus.Ready);
     }
 
@@ -233,6 +220,26 @@ public sealed class StageLifecycleTests
 
         // Assert
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
+    }
+
+    [Fact]
+    public void Rename_when_Completed_throws_DisplayNameLocked()
+    {
+        var stage = CreateRunning();
+        stage.Complete(_clock);
+
+        var act = () => stage.Rename(new StageName("After"));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DisplayNameLocked);
+    }
+
+    [Fact]
+    public void CanRenameDisplayName_is_false_only_when_Completed()
+    {
+        var stage = CreateRunning();
+        stage.CanRenameDisplayName().Should().BeTrue();
+        stage.Complete(_clock);
+        stage.CanRenameDisplayName().Should().BeFalse();
     }
 
     [Fact]

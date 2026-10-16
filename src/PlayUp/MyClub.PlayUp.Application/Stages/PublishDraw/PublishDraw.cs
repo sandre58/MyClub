@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -24,10 +25,15 @@ public static class PublishDraw
     /// <param name="stage">Stage that owns the draw.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="clock">Clock for domain events.</param>
-    public static void Execute(Stage stage, DrawId drawId, IClock clock)
+    public static void Execute(
+        Stage stage,
+        DrawId drawId,
+        IClock clock,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw");
 
         stage.PublishDraw(drawId, clock);
     }

@@ -136,6 +136,22 @@ describe('structureMaterializeCopy', () => {
     expect(showMaterializeActionBlock('frozen')).toBe(false);
   });
 
+  it('classifies Suspended partial materialize as frozen (not actionable)', () => {
+    expect(
+      classifyMaterializePresentation(
+        {
+          ...base,
+          commandEnabled: false,
+          materializedCount: 3,
+          determinedCount: 6,
+          disabledReason: 'StructureNotMutable',
+        },
+        'Running',
+        'Suspended',
+      ),
+    ).toBe('frozen');
+  });
+
   it('shows frozen remaining banner only for incomplete frozen states', () => {
     const partial = {
       ...base,

@@ -4,6 +4,7 @@ import type {
   StructureMaterialize,
   StructureStageHubSummary,
 } from '../../types';
+import type { RatioMessageGaugeRatioTone } from '../../design-system/components/RatioMessageGauge';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 import type { StripOperationalMessageKind } from './structureOperationalStripUi';
 import {
@@ -16,7 +17,7 @@ import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 export function resolvePlacementPoolTone(
   filled: number,
   capacity: number | null,
-): 'neutral' | 'partial' | 'complete' {
+): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }
@@ -24,9 +25,26 @@ export function resolvePlacementPoolTone(
 }
 
 /** Align ratio / gauge chrome with the operational strip message severity (D5). */
+export function drawPoolToneToRatioGaugeTone(
+  tone: DrawCtaPoolTone,
+): RatioMessageGaugeRatioTone {
+  switch (tone) {
+    case 'complete':
+      return 'complete';
+    case 'danger':
+      return 'danger';
+    case 'attention':
+      return 'attention';
+    case 'partial':
+      return 'partial';
+    default:
+      return 'neutral';
+  }
+}
+
 export function operationalStripPoolTone(
   messageKind: StripOperationalMessageKind,
-  ratioTone: 'neutral' | 'partial' | 'complete',
+  ratioTone: DrawCtaPoolTone,
 ): DrawCtaPoolTone {
   if (messageKind === 'danger') {
     return 'danger';
@@ -37,11 +55,14 @@ export function operationalStripPoolTone(
   if (messageKind === 'success') {
     return 'complete';
   }
-  if (ratioTone === 'complete') {
+  if (ratioTone === 'complete' || ratioTone === 'brand') {
     return 'complete';
   }
-  if (ratioTone === 'partial') {
+  if (ratioTone === 'partial' || ratioTone === 'attention') {
     return 'partial';
+  }
+  if (ratioTone === 'danger') {
+    return 'danger';
   }
   return 'neutral';
 }
@@ -50,7 +71,7 @@ export function operationalStripPoolTone(
 export function resolvePlaceOccupancyTone(
   filled: number,
   capacity: number | null,
-): 'neutral' | 'partial' | 'complete' {
+): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }
@@ -64,7 +85,7 @@ export function resolvePlaceOccupancyTone(
 export function resolveResolvedPoolTone(
   filled: number,
   capacity: number | null,
-): 'neutral' | 'partial' | 'complete' {
+): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }

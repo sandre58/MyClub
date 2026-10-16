@@ -184,6 +184,7 @@ type StructureDrawDialogProps = {
   /** Competition EntryRules.MinimumTeams — gate belowMinimumTeams. */
   minimumTeams?: number | null;
   stage: StructureStageHubSummary;
+  structureStages: readonly StructureStageHubSummary[];
 };
 
 const EMPTY_DRAWS: StageDraw[] = [];
@@ -197,6 +198,7 @@ export function StructureDrawDialog({
   open,
   onClose,
   competitionId,
+  structureStages,
   competitionStatus,
   minimumTeams = null,
   stage,
@@ -510,6 +512,7 @@ export function StructureDrawDialog({
               {mutationError ? (
                 <MutationError
                   error={mutationError}
+                  structureStages={structureStages}
                   sotHref={persistentStructureMutationSotHref(
                     mutationError,
                     competitionId,
@@ -659,6 +662,7 @@ export function StructureDrawDialog({
           applyMutation.isError ? (
             <MutationError
               error={applyMutation.error}
+              structureStages={structureStages}
               sotHref={persistentStructureMutationSotHref(
                 applyMutation.error,
                 competitionId,
@@ -701,6 +705,7 @@ export function StructureDrawDialog({
           cancelMutation.isError ? (
             <MutationError
               error={cancelMutation.error}
+              structureStages={structureStages}
               sotHref={persistentStructureMutationSotHref(
                 cancelMutation.error,
                 competitionId,
@@ -737,6 +742,7 @@ export function StructureDrawDialog({
           releaseMutation.isError ? (
             <MutationError
               error={releaseMutation.error}
+              structureStages={structureStages}
               sotHref={persistentStructureMutationSotHref(
                 releaseMutation.error,
                 competitionId,

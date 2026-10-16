@@ -186,6 +186,16 @@ public static class ApplicationErrorCodes
     public const string StructureNotMutable = "Application.StructureNotMutable";
 
     /// <summary>
+    /// Gets the code when an upstream qualification exit change would break a Ready downstream consumer feed contract.
+    /// </summary>
+    public const string ReadyConsumerWouldBreak = "Application.ReadyConsumerWouldBreak";
+
+    /// <summary>
+    /// Gets the code when affectation pool <c>EntryId</c> membership would change while a draw is Applied on the stage (G-B-3).
+    /// </summary>
+    public const string AppliedDrawPoolChangeBlocked = "Application.AppliedDrawPoolChangeBlocked";
+
+    /// <summary>
     /// Gets the code when a stage skeleton rebuild attempts to change <c>StructureFormatKind</c>.
     /// </summary>
     public const string StructureFormatImmutable = "Application.StructureFormatImmutable";

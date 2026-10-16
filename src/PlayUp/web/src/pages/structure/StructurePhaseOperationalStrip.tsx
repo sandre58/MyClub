@@ -13,12 +13,12 @@ import {
   materializeMatches,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
+import { RatioMessageGauge } from '../../design-system/components/RatioMessageGauge';
 import { TextLink } from '../../design-system/components/TextLink';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   CreateMatchesIcon,
   DrawPendingIcon,
-  MatchesStatIcon,
   PersonIcon,
   TrashIcon,
   UnlockIcon,
@@ -29,22 +29,28 @@ import { notify } from '../../design-system/toastStore';
 import { queryKeys } from '../../queryKeys';
 import type { CompetitionStatus, StructureStageHubSummary } from '../../types';
 import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui';
+import { StructureDrawReadinessChecklist } from './StructureDrawReadinessChecklist';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
-import type { StructurePlacementOperationalSectionProps } from './StructurePlacementOperationalSection';
+import type { StructurePlacementOperationalSectionProps } from './structurePlacementOperationalProps';
 import {
   materializeDisabledCaption,
   materializeRatioTone,
   showViewMaterializedMatchesLink,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
-import { dematerializeDisabledCaption } from './structureDematerializeCopy';
 import {
   productionRatio,
+  drawPoolToneToRatioGaugeTone,
   operationalStripPoolTone,
   resolvePlaceOccupancyTone,
   resolveResolvedPoolTone,
 } from './structureOperationalCopy';
+import {
+  isCompletedStageStatus,
+  isDraftLikeStageStatus,
+  isSuspendedStageStatus,
+} from './structureOperationalMeterPresentation';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
 import {
   scheduleQueryRefresh,
@@ -58,10 +64,11 @@ import {
 } from './StructurePhaseMatchsLifecycleBlock';
 import {
   shouldShowMatchExploitationProgress,
+  shouldShowMatchsSection,
   shouldShowProductionInMatchsSection,
 } from './structureMatchsSectionUi';
 import {
-  joinOperationalStripSections,
+  joinCompositionPlaceAssignmentSections,
   operationalStripGridColumns,
 } from './structureOperationalStripLayout';
 import {
@@ -76,6 +83,7 @@ import {
   StripOperationalMessage,
   type StripOperationalMessageKind,
 } from './structureOperationalStripUi';
+import {Link} from "react-router-dom";
 
 const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
 const secondaryBtn = 'ds-btn ds-btn--secondary ds-btn--sm';
@@ -87,8 +95,7 @@ type MaterializeMutationResult = UseMutationResult<
     alreadyComplete: boolean;
   },
   Error,
-  void,
-  unknown
+  void
 >;
 
 type DematerializeMutationResult = UseMutationResult<
@@ -97,11 +104,12 @@ type DematerializeMutationResult = UseMutationResult<
     removedRoundNumber: number | null;
   },
   Error,
-  void,
-  unknown
+  void
 >;
 
 type StripSectionKind = 'places' | 'draw' | 'matches';
+
+export type StructureOperationalStripLayoutVariant = 'composition' | 'aside-matchs';
 
 function materializeActionLabel(
   materialize: NonNullable<StructureStageHubSummary['materialize']>,
@@ -230,9 +238,11 @@ export function StructurePhaseOperationalStrip({
   competitionId,
   competitionStatus,
   stage,
+  structureStages,
   presentation,
   structureHubBackgroundRefresh = false,
   drawApplied,
+  layoutVariant = 'composition',
 }: {
   placement: StructurePlacementOperationalSectionProps | null;
   showPlaces: boolean;
@@ -240,9 +250,12 @@ export function StructurePhaseOperationalStrip({
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
+  /** Hub phases for structure-aware mutation copy (D1 consumer names). */
+  structureStages: readonly StructureStageHubSummary[];
   presentation: MaterializePresentation | null;
   structureHubBackgroundRefresh?: boolean;
   drawApplied: boolean;
+  layoutVariant?: StructureOperationalStripLayoutVariant;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
@@ -313,11 +326,26 @@ export function StructurePhaseOperationalStrip({
     },
   });
 
-  const visibleSections: StripSectionKind[] = [
-    ...(showPlaces ? (['places'] as const) : []),
-    ...(showDraw ? (['draw'] as const) : []),
-    'matches',
-  ];
+  const visibleSections: StripSectionKind[] =
+    layoutVariant === 'composition'
+      ? [
+          ...(showPlaces ? (['places'] as const) : []),
+          ...(showDraw ? (['draw'] as const) : []),
+        ]
+      : shouldShowMatchsSection(stage)
+        ? (['matches'] as const)
+        : [];
+
+  if (visibleSections.length === 0) {
+    return null;
+  }
+
+  const compositionStack = layoutVariant === 'composition';
+  const stripSectionTitlePresentation = compositionStack ? 'subtitle' : 'chip';
+  const placesTitlePresentation = compositionStack ? 'hidden' : 'chip';
+  const drawTitlePresentation = compositionStack
+    ? 'subtitle'
+    : stripSectionTitlePresentation;
 
   const sectionIndex = (kind: StripSectionKind) =>
     visibleSections.indexOf(kind) + 1;
@@ -326,6 +354,8 @@ export function StructurePhaseOperationalStrip({
     <PlacesColumn
       index={sectionIndex('places')}
       titleChipRefreshing={structureHubBackgroundRefresh}
+      titlePresentation={placesTitlePresentation}
+      structureHubBackgroundRefresh={structureHubBackgroundRefresh}
       {...placement}
     />
   ) : null;
@@ -335,10 +365,15 @@ export function StructurePhaseOperationalStrip({
       <DrawColumn
         index={sectionIndex('draw')}
         titleChipRefreshing={structureHubBackgroundRefresh}
+        titlePresentation={drawTitlePresentation}
+        compositionLayout={compositionStack}
+        structureHubBackgroundRefresh={structureHubBackgroundRefresh}
         {...placement}
         drawApplied={drawApplied}
       />
     ) : null;
+
+  const asideMatchsLayout = layoutVariant === 'aside-matchs';
 
   const matchesColumn = (
     <MatchesColumn
@@ -347,35 +382,49 @@ export function StructurePhaseOperationalStrip({
       competitionId={competitionId}
       competitionStatus={competitionStatus}
       stage={stage}
+      structureStages={structureStages}
       presentation={presentation}
       materializeMutation={materializeMutation}
       dematerializeMutation={dematerializeMutation}
       dematerializeConfirmOpen={dematerializeConfirmOpen}
       setDematerializeConfirmOpen={setDematerializeConfirmOpen}
+      omitLifecycle={asideMatchsLayout}
+      hideSectionHead={asideMatchsLayout}
     />
   );
 
-  const stripSections = joinOperationalStripSections([
-    placesColumn,
-    drawColumn,
-    matchesColumn,
-  ]);
+  const stripSections =
+    layoutVariant === 'aside-matchs'
+      ? [matchesColumn]
+      : compositionStack
+        ? joinCompositionPlaceAssignmentSections(placesColumn, drawColumn, {
+            showPlaces,
+            showDraw,
+          })
+        : [];
 
   return (
     <>
+      {structureHubBackgroundRefresh ? (
+        <span className="ds-visually-hidden" role="status">
+          {t('fiche.operational.syncing')}
+        </span>
+      ) : null}
       <div
         className="structure-operational-strip"
+        data-layout-variant={layoutVariant}
         data-section-count={visibleSections.length}
         aria-busy={structureHubBackgroundRefresh || undefined}
-        style={{
-          gridTemplateColumns: operationalStripGridColumns(visibleSections.length),
-        }}
+        style={
+          compositionStack
+            ? undefined
+            : {
+                gridTemplateColumns: operationalStripGridColumns(
+                  visibleSections.length,
+                ),
+              }
+        }
       >
-        {structureHubBackgroundRefresh ? (
-          <span className="ds-visually-hidden" role="status">
-            {t('fiche.operational.syncing')}
-          </span>
-        ) : null}
         {stripSections}
       </div>
       {dematerialize ? (
@@ -403,7 +452,10 @@ export function StructurePhaseOperationalStrip({
           confirmPendingLabel={t('fiche.dematerialize.submitting')}
           footerStatus={
             dematerializeMutation.isError ? (
-              <MutationError error={dematerializeMutation.error} />
+              <MutationError
+                error={dematerializeMutation.error}
+                structureStages={structureStages}
+              />
             ) : null
           }
           onConfirm={() => dematerializeMutation.mutate()}
@@ -422,6 +474,8 @@ function PlacesColumn(
   props: StructurePlacementOperationalSectionProps & {
     index: number;
     titleChipRefreshing?: boolean;
+    titlePresentation?: 'chip' | 'subtitle' | 'hidden';
+    structureHubBackgroundRefresh?: boolean;
   },
 ) {
   const { t } = useTranslation('structure');
@@ -445,71 +499,72 @@ function PlacesColumn(
     capacity,
     occupiedPlacesCount: props.occupiedPlacesCount,
     slotFeedMissingActive: props.slotFeedMissingActive ?? false,
+    stageStatus: props.stageStatus,
+    slotFeedPresentationContext: props.slotFeedPresentationContext,
   });
+
+  const softenPlacePoolTone =
+    placeMeter.kind !== 'danger' &&
+    (isDraftLikeStageStatus(props.stageStatus) ||
+      isSuspendedStageStatus(props.stageStatus) ||
+      isCompletedStageStatus(props.stageStatus));
+  const occupancyToneForPool = softenPlacePoolTone
+    ? operationalStripPoolTone(
+        placeMeter.kind,
+        placeMeter.kind === 'attention' ? 'attention' : 'neutral',
+      )
+    : operationalStripPoolTone(placeMeter.kind, occupancyTone);
 
   const placesPoolTone = operationalStripPoolTone(
     placeMeter.kind,
-    occupancyTone,
+    occupancyToneForPool,
   );
 
   const placesInitialLoading = !props.occupancyReady;
   const placesUpdatingLabel = t(
     'fiche.operational.placement.stateMessage.loading',
   );
-
-  const gauge =
+  const showOccupancyRatio =
     !unknownCapacity &&
     props.occupancyReady &&
-    props.occupiedPlacesCount != null ? (
-      <StructureOperationalRatioGauge
-        current={props.occupiedPlacesCount}
-        capacity={capacity}
-        caption={t('fiche.operational.placement.meterCaptionOccupied')}
-        ariaLabel={t('fiche.operational.placement.meterAria')}
-        poolTone={placesPoolTone}
-        layout="trackOnly"
-      />
-    ) : null;
+    props.occupiedPlacesCount != null;
 
   return (
     <StripSection
       index={props.index}
       title={t('fiche.operational.cluster.places')}
+      titlePresentation={props.titlePresentation}
       titleChipRefreshing={props.titleChipRefreshing}
     >
       <SectionUpdatingBody
-        updating={placesInitialLoading}
+        updating={
+          placesInitialLoading &&
+          !(props.structureHubBackgroundRefresh && props.occupancyReady)
+        }
         label={placesUpdatingLabel}
       >
         <>
-          <MetricRow
-            aside={
-              <RatioAside
-                current={props.occupiedPlacesCount}
-                capacity={capacity}
-                label={ratioLabel}
-                poolTone={placesPoolTone}
-                loading={!props.occupancyReady && !unknownCapacity}
-              />
-            }
-            meter={
-              <>
-                {props.placesDiagnostics ? (
-                  <div className="structure-operational-strip__message-stack">
-                    {props.placesDiagnostics}
-                  </div>
-                ) : null}
-                <MetricGaugeBlock
-                  message={placeMeter.text}
-                  messageKind={placeMeter.kind}
-                  gauge={gauge}
-                />
-              </>
-            }
+          {props.placesDiagnostics ? (
+            <div className="structure-operational-strip__message-stack">
+              {props.placesDiagnostics}
+            </div>
+          ) : null}
+          <RatioMessageGauge
+            size="default"
+            current={showOccupancyRatio ? props.occupiedPlacesCount : null}
+            capacity={showOccupancyRatio ? capacity : null}
+            ratioCaption={ratioLabel}
+            message={placeMeter.text}
+            messageKind={placeMeter.kind}
+            ratioTone={drawPoolToneToRatioGaugeTone(placesPoolTone)}
+            ariaLabel={t('fiche.operational.placement.meterAria')}
+            loading={placesInitialLoading && !unknownCapacity}
+            loadingMessage={placesUpdatingLabel}
+            className="structure-operational-strip__ratio-gauge"
           />
           {props.canManualPlace ? (
             <div className="structure-operational-strip__section-actions">
-              <button type="button" className={primaryBtn} onClick={props.onManualPlace}>
+              <button type="button" className={secondaryBtn} onClick={props.onManualPlace}>
                 <PersonIcon size="sm" />
                 {t('fiche.manualPlacementCta')}
               </button>
@@ -526,6 +581,10 @@ function DrawColumn(
     index: number;
     drawApplied: boolean;
     titleChipRefreshing?: boolean;
+    titlePresentation?: 'chip' | 'subtitle' | 'hidden';
+    /** Composition band: resolved pool meter lives on Qualifiés. */
+    compositionLayout?: boolean;
+    structureHubBackgroundRefresh?: boolean;
   },
 ) {
   const compactIcon =
@@ -605,20 +664,203 @@ function DrawColumn(
       </StripOperationalMessage>
     ) : null;
 
-  const drawNeedsOverview = props.showDrawCta && props.drawOperationalReady === false;
-  const drawInitialLoading = drawNeedsOverview;
+  const drawInitialLoading = props.showDrawCta && props.drawOperationalReady === false;
   const drawUpdatingLabel = t('fiche.operational.draw.loading');
+
+  const compositionDrawDeactivate = (
+    <Tooltip
+      content={
+        props.hasNonCancelledDraw
+          ? t('regulation.deactivateDrawBlockedHint')
+          : t('fiche.deactivateDraw')
+      }
+    >
+      <span className="structure-operational-tile__action-wrap">
+        <button
+          type="button"
+          className={[
+            compactDangerIcon,
+            props.compositionLayout
+              ? 'structure-operational-strip__composition-draw-deactivate'
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          disabled={deactivateBlocked}
+          aria-label={t('fiche.deactivateDraw')}
+          onClick={props.onDeactivateDraw}
+        >
+          {props.deactivateDrawPending ? (
+            <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
+          ) : (
+            <TrashIcon size="sm" />
+          )}
+        </button>
+      </span>
+    </Tooltip>
+  );
+
+  const compositionLaunchButton = (
+    label: string,
+    onClick: () => void,
+    options?: {
+      disabled?: boolean;
+      disabledTitle?: string;
+      variant?: 'primary' | 'secondary';
+    },
+  ) => {
+    const btnClass =
+      options?.variant === 'secondary' ? secondaryBtn : primaryBtn;
+    const disabled = options?.disabled ?? false;
+    const disabledTitle = options?.disabledTitle;
+    return disabled ? (
+      <Tooltip content={disabledTitle ?? label}>
+        <span className="structure-operational-tile__action-wrap structure-operational-strip__composition-draw-cta-wrap">
+          <button type="button" className={btnClass} disabled>
+            <DrawPendingIcon size="sm" />
+            {label}
+          </button>
+        </span>
+      </Tooltip>
+    ) : (
+      <button type="button" className={btnClass} onClick={onClick}>
+        <DrawPendingIcon size="sm" />
+        {label}
+      </button>
+    );
+  };
 
   let body: ReactNode;
 
-  if (showActivate) {
+  const readOnlyCompletedFinal = props.stageStatus === 'Completed';
+
+  const drawSetupEditableForChecklist =
+    props.canEditDraw && !props.drawApplied;
+  const showDrawReadinessChecklist =
+    props.compositionLayout &&
+    drawEngaged &&
+    drawSetupEditableForChecklist &&
+    props.drawReadinessChecklist != null &&
+    props.drawReadinessChecklist.length > 0;
+
+  const drawReadinessList = showDrawReadinessChecklist ? (
+    <StructureDrawReadinessChecklist items={props.drawReadinessChecklist!} />
+  ) : null;
+
+  if (readOnlyCompletedFinal && drawEngaged) {
+    if (props.drawApplied) {
+      body = props.compositionLayout ? (
+        <div className="structure-operational-strip__composition-draw">
+          <StripOperationalMessage kind="success">
+            {t('fiche.operational.draw.appliedMessage')}
+          </StripOperationalMessage>
+          {compositionLaunchButton(
+            t('fiche.viewDrawWorkflow'),
+            props.onOpenDrawWorkflow,
+            { variant: 'secondary' },
+          )}
+        </div>
+      ) : (
+        <StripDrawAppliedPanel
+          message={t('fiche.operational.draw.appliedMessage')}
+          action={
+            <button
+              type="button"
+              className={secondaryBtn}
+              onClick={props.onOpenDrawWorkflow}
+            >
+              <ViewIcon size="sm" />
+              {t('fiche.viewDrawWorkflow')}
+            </button>
+          }
+        />
+      );
+    } else {
+      body = (
+        <StripOperationalMessage kind="info">
+          {t('fiche.operational.draw.unavailable')}
+        </StripOperationalMessage>
+      );
+    }
+  } else if (props.compositionLayout && showActivate) {
+    body = (
+      <div className="structure-operational-strip__composition-draw">
+        {compositionLaunchButton(t('fiche.activateDraw'), props.onActivateDraw)}
+      </div>
+    );
+  } else if (props.compositionLayout && drawEngaged) {
+    const launchLabel = props.drawApplied
+      ? t('fiche.viewDrawWorkflow')
+      : t('fiche.performDraw');
+    const drawSetupEditable = props.canEditDraw && !props.drawApplied;
+    body = (
+      <div className="structure-operational-strip__composition-draw">
+        {!showDrawReadinessChecklist && drawBlockedNote ? (
+          <div className="structure-operational-strip__message-stack">
+            {drawBlockedNote}
+          </div>
+        ) : null}
+        {props.drawApplied ? (
+          <StripOperationalMessage kind="success">
+            {t('fiche.operational.draw.appliedMessage')}
+          </StripOperationalMessage>
+        ) : null}
+        <div className="structure-operational-strip__composition-draw-stack">
+          {props.showDrawCta
+            ? compositionLaunchButton(launchLabel, props.onOpenDrawWorkflow, {
+                disabled: props.blockPerformDrawCta,
+                disabledTitle: props.createBlockedShort ?? launchLabel,
+                variant: props.drawApplied ? 'secondary' : 'primary',
+              })
+            : null}
+          {drawSetupEditable ? (
+            <div className="structure-operational-strip__composition-draw-toolbar">
+              <button
+                type="button"
+                className={`${secondaryBtn} structure-operational-strip__composition-draw-params`}
+                onClick={props.onEditDrawParams}
+              >
+                <SettingsNavIcon size="sm" />
+                {t('fiche.drawParamsAction')}
+              </button>
+              {compositionDrawDeactivate}
+            </div>
+          ) : null}
+          {props.showReleaseCta ? (
+            <button
+              type="button"
+              className={secondaryBtn}
+              disabled={props.releasePending}
+              onClick={props.onReleasePlacements}
+            >
+              {props.releasePending ? (
+                <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
+              ) : (
+                <>
+                  <UnlockIcon size="sm" />
+                  {tDraw('releasePlacementsCount', {
+                    aligned: props.releasableAlignedCount,
+                    total: props.releasableTotal,
+                  })}
+                </>
+              )}
+            </button>
+          ) : null}
+        </div>
+        {drawReadinessList}
+      </div>
+    );
+  } else if (showActivate) {
     body = (
       <div className="structure-operational-strip__empty">
         <EmptyState
           variant="idle"
-          iconAccessible
-          icon={
-            <button type="button" className={primaryBtn} onClick={props.onActivateDraw}>
+          action={
+            <button
+              type="button"
+              className={primaryBtn}
+              onClick={props.onActivateDraw}
+            >
               <DrawPendingIcon size="sm" />
               {t('fiche.activateDraw')}
             </button>
@@ -654,10 +896,14 @@ function DrawColumn(
       capacity,
       unknownCapacity,
     });
+    const showDrawPoolGauge =
+      props.showResolvedPoolGauge &&
+      !unknownCapacity &&
+      !props.compositionLayout;
 
     body = (
       <>
-        {props.showResolvedPoolGauge && !unknownCapacity ? (
+        {showDrawPoolGauge ? (
           <MetricRow
             aside={
               <RatioAside
@@ -698,9 +944,11 @@ function DrawColumn(
                 {drawBlockedNote}
               </div>
             ) : null}
-            <StripOperationalMessage kind={poolMeter.kind}>
-              {poolMeter.text}
-            </StripOperationalMessage>
+            {!props.compositionLayout ? (
+              <StripOperationalMessage kind={poolMeter.kind}>
+                {poolMeter.text}
+              </StripOperationalMessage>
+            ) : null}
           </>
         )}
         <div className="structure-operational-strip__section-actions">
@@ -764,10 +1012,25 @@ function DrawColumn(
     <StripSection
       index={props.index}
       title={t('fiche.operational.cluster.draw')}
+      titlePresentation={props.titlePresentation}
+      titleIcon={
+        props.titlePresentation === 'subtitle' ? (
+          <DrawPendingIcon size="sm" />
+        ) : undefined
+      }
       titleChipRefreshing={props.titleChipRefreshing}
-      toolbar={toolbar}
+      toolbar={props.compositionLayout ? null : toolbar}
     >
-      <SectionUpdatingBody updating={drawInitialLoading} label={drawUpdatingLabel}>
+      <SectionUpdatingBody
+        updating={
+          drawInitialLoading &&
+          !(
+            props.structureHubBackgroundRefresh &&
+            props.drawOperationalReady === true
+          )
+        }
+        label={drawUpdatingLabel}
+      >
         {body}
       </SectionUpdatingBody>
     </StripSection>
@@ -779,22 +1042,28 @@ function MatchesColumn({
   titleChipRefreshing,
   competitionId,
   stage,
+  structureStages,
   presentation,
   materializeMutation,
   dematerializeMutation,
   dematerializeConfirmOpen: _dematerializeConfirmOpen,
   setDematerializeConfirmOpen,
+  omitLifecycle = false,
+  hideSectionHead = false,
 }: {
   index: number;
   titleChipRefreshing?: boolean;
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
+  structureStages: readonly StructureStageHubSummary[];
   presentation: MaterializePresentation | null;
   materializeMutation: MaterializeMutationResult;
   dematerializeMutation: DematerializeMutationResult;
   dematerializeConfirmOpen: boolean;
   setDematerializeConfirmOpen: (open: boolean) => void;
+  omitLifecycle?: boolean;
+  hideSectionHead?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
@@ -819,11 +1088,6 @@ function MatchesColumn({
     dematerialize?.scope === 'LastSwissRound'
       ? tActions('DematerializeLastSwissRound')
       : tActions('DematerializePhase');
-
-  const dematerializeCaption =
-    dematerialize && !dematerialize.enabled
-      ? dematerializeDisabledCaption(dematerialize, t)
-      : null;
 
   const matchMeter = resolveProductionMeterCopy({
     t,
@@ -953,10 +1217,16 @@ function MatchesColumn({
     (materializeMutation.isError || dematerializeMutation.isError) ? (
       <>
         {materializeMutation.isError ? (
-          <MutationError error={materializeMutation.error} />
+          <MutationError
+            error={materializeMutation.error}
+            structureStages={structureStages}
+          />
         ) : null}
         {dematerializeMutation.isError ? (
-          <MutationError error={dematerializeMutation.error} />
+          <MutationError
+            error={dematerializeMutation.error}
+            structureStages={structureStages}
+          />
         ) : null}
       </>
     ) : null;
@@ -964,12 +1234,14 @@ function MatchesColumn({
   let matchesContent: ReactNode;
 
   if (stage.status === 'Draft') {
-    matchesContent = (
-      <StructurePhaseDraftMatchsPrepare
-        competitionId={competitionId}
-        stage={stage}
-      />
-    );
+    matchesContent = omitLifecycle
+      ? null
+      : (
+        <StructurePhaseDraftMatchsPrepare
+          competitionId={competitionId}
+          stage={stage}
+        />
+      );
   } else if (stage.status === 'Completed') {
     const progress = stage.lifecycle?.matchProgress;
     matchesContent =
@@ -1005,25 +1277,36 @@ function MatchesColumn({
         {productionGauge}
         {productionErrors}
         {exploitationGauge}
-        <StructurePhaseMatchsLifecycleBlock
-          competitionId={competitionId}
-          stage={stage}
-          productionBusy={productionBusy}
-          leadingActions={productionLeadingActions}
-        />
+        {omitLifecycle && productionLeadingActions ? (
+          <div
+            className="structure-operational-strip__production-actions structure-operational-strip__production-actions--tile"
+          >
+            {productionLeadingActions}
+          </div>
+        ) : null}
+        {omitLifecycle ? null : (
+          <StructurePhaseMatchsLifecycleBlock
+            competitionId={competitionId}
+            stage={stage}
+            productionBusy={productionBusy}
+            leadingActions={productionLeadingActions}
+          />
+        )}
       </>
     );
   }
 
   const effectiveToolbar =
-    stage.status === 'Completed' &&
-    showViewMaterializedMatchesLink(stage, materialize ?? undefined)
-      ? (
-        <TextLink to={`/stages/${stage.stageId}/matches`}>
-          {t('fiche.materialize.viewPhaseMatches')}
-        </TextLink>
-      )
-      : toolbar;
+    hideSectionHead
+      ? null
+      : stage.status === 'Completed' &&
+          showViewMaterializedMatchesLink(stage, materialize ?? undefined)
+        ? (
+          <TextLink to={`/stages/${stage.stageId}/matches`}>
+            {t('fiche.materialize.viewPhaseMatches')}
+          </TextLink>
+        )
+        : toolbar;
 
   return (
     <StripSection
@@ -1031,6 +1314,7 @@ function MatchesColumn({
       sectionId="operational-matchs"
       title={t('fiche.operational.cluster.matches')}
       titleChipRefreshing={titleChipRefreshing}
+      titlePresentation={hideSectionHead ? 'hidden' : 'chip'}
       toolbar={effectiveToolbar}
     >
       {matchesContent}

@@ -9,42 +9,27 @@ import {
   replaceStageDrawRules,
 } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
-import { TextInput } from '../../design-system/components/TextInput';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
-  ArrowDownIcon,
-  ArrowRightIcon,
-  AttributionIcon,
-  ChampionshipFormatIcon,
-  CupFormatIcon,
   GroupsFormatIcon,
   LayersIcon,
   MatchdayStatIcon,
   MatchesStatIcon,
   PlusIcon,
   PencilIcon,
-  CheckIcon,
   RoundsStatIcon,
-  StructureIcon,
-  SwissFormatIcon,
-  TrashIcon,
   UnlockIcon,
 } from '../../design-system/icons/contentIcons';
-import {
-  CloseIcon,
-} from '../../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import { notify } from '../../design-system/toastStore';
-import { MutationError, StageStatusBadge } from '../../ui';
+import { MutationError } from '../../ui';
 import { scheduleStructureRefresh } from './structureInvalidation';
 import {
   patchDrawRulesDeactivatedOptimistic,
   patchStageNameOptimistic,
 } from './structureQueryCache';
 import type {
-  SchematicCase,
-  StructureFormatKind,
   StructureStageHubSummary,
   StructureView,
 } from '../../types';
@@ -64,10 +49,16 @@ import {
 } from './StructureRegulationDialogs';
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
-import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
-import { StructurePhaseOperationalBar } from './StructurePhaseOperationalBar';
-import { shouldShowMatchsSection } from './structureMatchsSectionUi';
+import { StructurePhaseFicheHeader } from './StructurePhaseFicheHeader';
+import { StructurePhaseSchematicAndAside } from './StructurePhaseSchematicAndAside';
+import { StructurePhaseRailIssueBanner } from './structurePhaseRailIssueBanner';
+import { materializePresentationForStage } from './structureOperationalCopy';
+import { shouldShowAsideMatchsTile } from './structureMatchsSectionUi';
 import { StructureOperationalIssueBanner } from './StructureOperationalIssueBanner';
+import {
+  entryPlaceProjectionFromSchematic,
+  placedEntryIdsFromSchematic,
+} from './structureEntryPlacementProjection';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
 import {
@@ -77,20 +68,23 @@ import {
   stageHasPublishedAppliedDraw,
   pickActiveDraw,
   resolveDrawCreateBlockPresentation,
+  resolveDrawReadinessChecklist,
   resolveStageDrawCreateGate,
 } from './drawUi';
 import {
   isSlotFeedAwaitingDraw,
-  structureDiagnosticTitleKey,
-  structureDiagnosticTone,
   structureIssueBannersForTile,
   structureIssuesForTile,
 } from './structureDiagnosticPresentation';
+import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import {
   stageHasPopulationShortfall,
 } from './structureReadinessSummary';
 import { outboundSortiesFeeds } from './structureSortiesIntentFeed';
-import { inboundPopulationConfiguredVolume } from './structurePopulationVolume';
+import {
+  expectedPopulationOccupancy,
+  inboundPopulationConfiguredVolume,
+} from './structurePopulationVolume';
 import {
   isMatchFrameBound,
   isStandingFrameBound,
@@ -100,8 +94,6 @@ import {
 import { resolvePlacesN } from './structurePlaces';
 import { swissRoundCounts } from './swissRoundCounts';
 import type { StructureFocusId } from './structureNavigation';
-import { PhaseSchematic } from './phaseSchematic';
-import { StructureSchematicViewport } from './StructureSchematicViewport';
 import { listCupManualPlaces } from './manualPlacementUi';
 import '../regulation/regulation-shared.css';
 
@@ -110,17 +102,13 @@ import {
   groupFeeds,
   inboundFeeds,
   outboundFeeds,
-  placementRuleParts,
   type ExitKind,
   type FeedGroup,
 } from './structurePhaseFeeds';
-import {
-  ExitKindMenu,
-  FluxGroupList,
-  FluxRail,
-  PlacementAwardRow,
-  RootEntriesRail,
-} from './StructurePhaseRails';
+import { CompositionPopulationGauge } from './CompositionPopulationGauge';
+import { StructurePhaseCompositionBand } from './StructurePhaseCompositionBand';
+import { CompositionQualifiersResolvedMeta } from './CompositionQualifiersResolvedMeta';
+import { ExitKindMenu, listComposedAffectationEntries } from './StructurePhaseRails';
 import { StructurePhaseRegulationStrip } from './StructurePhaseRegulationStrip';
 
 type EditTarget =
@@ -143,27 +131,6 @@ const compactDangerIcon =
 
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
-}
-
-function FormatGlyph({
-  kind,
-  size = 'md',
-}: {
-  kind?: StructureFormatKind | null;
-  size?: 'sm' | 'md' | 'lg';
-}) {
-  switch (kind) {
-    case 'Cup':
-      return <CupFormatIcon size={size} aria-hidden="true" />;
-    case 'Championship':
-      return <ChampionshipFormatIcon size={size} aria-hidden="true" />;
-    case 'Groups':
-      return <GroupsFormatIcon size={size} aria-hidden="true" />;
-    case 'Swiss':
-      return <SwissFormatIcon size={size} aria-hidden="true" />;
-    default:
-      return <StructureIcon size={size} aria-hidden="true" />;
-  }
 }
 
 export function StructurePhaseFiche({
@@ -397,6 +364,34 @@ export function StructurePhaseFiche({
     );
   }, [stage, schematicQuery.isSuccess, schematicQuery.data]);
 
+  const placedEntryIds = useMemo(() => {
+    if (!stage || !schematicQuery.isSuccess || !schematicQuery.data) {
+      return new Set<string>();
+    }
+    return placedEntryIdsFromSchematic(
+      schematicQuery.data.cases,
+      stage.formatKind,
+    );
+  }, [stage, schematicQuery.isSuccess, schematicQuery.data]);
+
+  const entryPlaceProjections = useMemo(() => {
+    if (!stage || !schematicQuery.isSuccess || !schematicQuery.data) {
+      return new Map();
+    }
+    return entryPlaceProjectionFromSchematic(
+      schematicQuery.data.cases,
+      stage.formatKind,
+      t,
+    );
+  }, [stage, schematicQuery.isSuccess, schematicQuery.data, t]);
+
+  const composedAffectationEntries = useMemo(() => {
+    if (!stage) {
+      return [];
+    }
+    return listComposedAffectationEntries(stage, data.participants.entries);
+  }, [stage, data.participants.entries]);
+
   if (!stage) {
     return (
       <section className="structure-fiche" aria-labelledby="fiche-empty">
@@ -408,7 +403,7 @@ export function StructurePhaseFiche({
     );
   }
 
-  const feeds = inboundFeeds(data, stage.stageId, t);
+  const feeds = inboundFeeds(data, stage.stageId, i18n.language, t);
   const feedGroups = groupFeeds(feeds);
   // Places N meter / Affectation reserve: Qual + Prog (Population and Place).
   // Place fills occupy capacity even though they skip the Population set.
@@ -416,7 +411,7 @@ export function StructurePhaseFiche({
     data,
     stage.stageId,
   );
-  const pathOutbounds = outboundFeeds(data, stage, t);
+  const pathOutbounds = outboundFeeds(data, stage, i18n.language, t);
   const outbounds = outboundSortiesFeeds(
     data,
     stage,
@@ -434,24 +429,29 @@ export function StructurePhaseFiche({
   const drawRulesLocked = areDrawRulesLockedByExecution(
     drawOverviewQuery.data?.draws ?? [],
   );
-  const canEditDraw = actions.includes('ReplaceDrawRules');
+  const canReplaceDrawRules = actions.includes('ReplaceDrawRules');
+  /** P1 authoring (activate / params / deactivate) — Draft only; independent of P3 execution. */
+  const canAuthorDrawRulesP1 =
+    canReplaceDrawRules && stage.status === 'Draft';
   /** Execution CTA only when DrawRules engage the mechanism. */
   const showDrawCta = stage.hasDrawRules;
   /**
    * Secondary discovery CTA — Groups/Cup, mechanism not yet engaged.
-   * Visibility = format + !DrawRules + ReplaceDrawRules only.
+   * Visibility = format + !DrawRules + P1 authoring only.
    * No occupation / Qual / Composition / Places N predicate (Activate ≠ coverage).
    */
   const showActivateDrawCta =
     !stage.hasDrawRules &&
-    canEditDraw &&
+    canAuthorDrawRulesP1 &&
     (stage.formatKind === 'Cup' || stage.formatKind === 'Groups');
   const hasNonCancelledDraw = (drawOverviewQuery.data?.draws ?? []).some(
     (draw) => draw.status !== 'Cancelled',
   );
   const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
   const poolFilled = stage.compositionEntryCount ?? 0;
-  const showPoolHint = showDrawCta && placesN != null && placesN > 0;
+  const isCompletedStage = stage.status === 'Completed';
+  const showPoolHint =
+    !isCompletedStage && showDrawCta && placesN != null && placesN > 0;
   const overviewSlots = drawOverviewQuery.data?.slots ?? [];
   const overviewDraws = drawOverviewQuery.data?.draws ?? [];
   const overviewGroups = drawOverviewQuery.data?.groups ?? [];
@@ -476,6 +476,31 @@ export function StructurePhaseFiche({
       : null;
   const createBlockedReason =
     createGate != null && !createGate.ok ? createGate.reason : null;
+  const qualifiersConfiguredVolume =
+    stage.inboundComposition?.configuredVolume ??
+    feedGroups.reduce((sum, group) => sum + group.volume, 0);
+  const qualifiersResolvedCount =
+    stage.inboundComposition?.resolvedCount ?? 0;
+  const drawReadinessChecklist =
+    !isCompletedStage &&
+    drawGateReady &&
+    (showDrawCta || showActivateDrawCta)
+      ? resolveDrawReadinessChecklist({
+          compositionEntryCount: poolFilled,
+          placesN,
+          inboundResolvedCount: qualifiersResolvedCount,
+          inboundConfiguredVolume: qualifiersConfiguredVolume,
+          slots: overviewSlots,
+        })
+      : null;
+  const qualifiersInboundReady = stage.inboundComposition != null;
+  const qualifiersResolvedEyebrow = (
+    <CompositionQualifiersResolvedMeta
+      resolved={qualifiersResolvedCount}
+      configured={qualifiersConfiguredVolume}
+      ready={qualifiersInboundReady}
+    />
+  );
   const createBlockPresentation =
     createBlockedReason != null
       ? resolveDrawCreateBlockPresentation(createBlockedReason)
@@ -505,6 +530,7 @@ export function StructurePhaseFiche({
   /** Inline short caption on the stage card — skip when Release is the unblock action, and
    * skip countMismatch when the filled/capacity ratio already carries the signal. */
   const showCreateBlockedCaption =
+    !isCompletedStage &&
     createBlockedShort != null &&
     createBlockPresentation?.kind === 'inline' &&
     !showReleaseCta &&
@@ -633,38 +659,17 @@ export function StructurePhaseFiche({
   const showAttributionRail =
     canEditPlacement || attributionOwnedIssues.length > 0;
   const showOutRail = showSortiesRail || showAttributionRail;
-  const teamsLabel = (count: number) => t('fiche.teamsCount', { count });
   const formatLabel = stage.formatKind
     ? structureFormatKindLabel(stage.formatKind)
     : null;
 
-  const issueBanner = (codes: string[]) =>
+  const railIssueBanner = (codes: readonly string[]) =>
     codes.length === 0 ? undefined : (
-      <ul className="structure-phase-rail__issues" role="list">
-        {codes.map((code) => {
-          const tone = structureDiagnosticTone(code);
-          return (
-            <li
-              key={code}
-              className="structure-phase-rail__issue"
-              data-tone={tone}
-              role="status"
-            >
-              <span
-                className="structure-phase-rail__issue-icon"
-                aria-hidden="true"
-              >
-                <StructureDiagnosticIssueIcon tone={tone} />
-              </span>
-              <span>
-                {t(structureDiagnosticTitleKey(code), {
-                  defaultValue: code,
-                })}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      <StructurePhaseRailIssueBanner
+        codes={codes}
+        data={data}
+        stage={stage}
+      />
     );
 
   const openCompose = (focusSearch = false) => {
@@ -823,10 +828,175 @@ export function StructurePhaseFiche({
   }
 
   const showHeroStats = heroFacts.length > 0;
-  const showHeroStructureActions =
-    showPlacementBlock ||
-    showProductionOperationalBar ||
-    (stage != null && shouldShowMatchsSection(stage));
+  const showAsideMatchsSection = shouldShowAsideMatchsTile(stage, {
+    showProductionOperationalBar,
+    showPlacementBlock,
+    showDrawCta,
+    showActivateDrawCta,
+  });
+  const showAffectationSection =
+    showPlacementBlock || showDrawCta || showActivateDrawCta;
+  const showQualifiersSection = feedGroups.length > 0;
+  const teamsHasListContent =
+    composedAffectationEntries.length > 0 ||
+    (stage.affectationPreviewNames?.length ?? 0) > 0 ||
+    (stage.affectationIneligibleCount ?? 0) > 0;
+  const showTeamsSection = teamsHasListContent;
+  const showCompositionContentEmpty =
+    !showQualifiersSection && !teamsHasListContent && canCompose;
+  const showCompositionBandEmpty =
+    showCompositionContentEmpty && !showAffectationSection;
+  const showPopulationColumn =
+    showTeamsSection || showCompositionContentEmpty;
+  const showCompositionPopulationGauge =
+    placesN != null &&
+    placesN > 0 &&
+    (showQualifiersSection || showTeamsSection || showCompositionContentEmpty) &&
+    !(isCompletedStage && showPlacementBlock);
+  const sharedCompositionPopulationGauge =
+    showCompositionPopulationGauge &&
+    showQualifiersSection &&
+    showTeamsSection;
+  const populationMeterCurrent = expectedPopulationOccupancy(data, stage);
+  const stageDiagnosticContext = structureDiagnosticContextFromStage(data, stage);
+  const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
+    <CompositionPopulationGauge
+      current={populationMeterCurrent}
+      capacity={placesN!}
+      presentationContext={{
+        formatKind: stageDiagnosticContext.formatKind,
+        stageStatus: stageDiagnosticContext.stageStatus,
+        isEntryBaselineStage: stageDiagnosticContext.isEntryBaselineStage,
+        hasInboundQualProgFeed: stageDiagnosticContext.hasInboundQualProgFeed,
+        affectationEntryCount: stageDiagnosticContext.affectationEntryCount,
+      }}
+      className={
+        sharedCompositionPopulationGauge
+          ? 'structure-phase-composition__population-gauge--span-sources'
+          : undefined
+      }
+    />
+  ) : null;
+  const teamsComposeActionLabel =
+    composedAffectationEntries.length > 0 ||
+    (stage.affectationPreviewNames?.length ?? 0) > 0 ||
+    (stage.affectationIneligibleCount ?? 0) > 0
+      ? t('entries.editComposition')
+      : t('entries.addAffectation');
+  const materializePresentation = materializePresentationForStage(
+    stage,
+    data.status,
+    stage.status,
+  );
+  const placementOperationalProps =
+    showAffectationSection
+      ? {
+          competitionId: data.competitionId,
+          placesN,
+          poolFilled,
+          occupiedPlacesCount,
+          occupancyReady:
+            stage.formatKind === 'Championship' ||
+            stage.formatKind === 'Swiss' ||
+            schematicQuery.isSuccess,
+          showDrawCta,
+          showActivateDrawCta: isCompletedStage ? false : showActivateDrawCta,
+          showResolvedPoolGauge: isCompletedStage
+            ? false
+            : showDrawCta ||
+              showActivateDrawCta ||
+              stage.formatKind === 'Championship' ||
+              stage.formatKind === 'Swiss',
+          canManualPlace: isCompletedStage ? false : canManualPlace,
+          canEditDraw: canAuthorDrawRulesP1,
+          showReleaseCta: isCompletedStage ? false : showReleaseCta,
+          hasNonCancelledDraw,
+          activeDraw: Boolean(activeDraw),
+          blockPerformDrawCta,
+          createBlockedShort,
+          createBlockedReason,
+          showCreateBlockedCaption,
+          showPoolHint,
+          releasableAlignedCount,
+          releasableTotal:
+            releasableDraw != null
+              ? drawResolutionPlacementCount(releasableDraw)
+              : 0,
+          releasePending: releaseMutation.isPending,
+          deactivateDrawPending: deactivateDrawMutation.isPending,
+          onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
+          onActivateDraw: () => setEdit('tirage-activate'),
+          onEditDrawParams: () => setEdit('tirage-params'),
+          onManualPlace: () => {
+            setManualSlotKey(null);
+            setManualOpen(true);
+          },
+          onReleasePlacements: () => setReleaseConfirmOpen(true),
+          onDeactivateDraw: () => setDeactivateDrawOpen(true),
+          slotFeedMissingActive,
+          stageStatus: stage.status,
+          slotFeedPresentationContext: {
+            formatKind: stageDiagnosticContext.formatKind,
+            stageStatus: stageDiagnosticContext.stageStatus,
+          },
+          drawOperationalReady: drawGateReady,
+          drawReadinessChecklist,
+          placesDiagnostics:
+            placesBannersForStrip.length > 0 ? (
+              <StructureOperationalIssueBanner
+                codes={placesBannersForStrip}
+                diagnosticContext={stageDiagnosticContext}
+              />
+            ) : undefined,
+        }
+      : null;
+  const compositionGridClass = [
+    'structure-phase-composition__grid',
+    !showQualifiersSection ? 'structure-phase-composition__grid--two-cols' : null,
+    showQualifiersSection
+      ? 'structure-phase-composition__grid--with-qualifiers'
+      : null,
+    showAffectationSection
+      ? 'structure-phase-composition__grid--with-affectation'
+      : null,
+    showQualifiersSection && !showTeamsSection
+      ? 'structure-phase-composition__grid--without-teams'
+      : null,
+    sharedCompositionPopulationGauge
+      ? 'structure-phase-composition__grid--shared-population-gauge'
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const compositionEmptyAction = canCompose ? (
+    <button
+      type="button"
+      className="ds-btn ds-btn--primary"
+      onClick={() => openCompose(false)}
+    >
+      <PlusIcon size="sm" aria-hidden="true" />
+      {t('entries.addAffectation')}
+    </button>
+  ) : null;
+
+  const compositionComposeToolbar =
+    canCompose ? (
+      <Tooltip content={teamsComposeActionLabel}>
+        <button
+          type="button"
+          className={compactIcon}
+          aria-label={teamsComposeActionLabel}
+          onClick={() => openCompose(false)}
+        >
+          {teamsHasListContent ? (
+            <PencilIcon size="sm" />
+          ) : (
+            <PlusIcon size="sm" />
+          )}
+        </button>
+      </Tooltip>
+    ) : null;
   // Overflow removed — Edit/Delete live in the header toolbar.
 
   const sortiesEditControl = (() => {
@@ -888,360 +1058,122 @@ export function StructurePhaseFiche({
       className="structure-fiche structure-fiche--flat"
       aria-labelledby="phase-overview-heading"
     >
-      <header className="structure-fiche__header structure-fiche__header--toolbar">
-        <div className="structure-fiche__title-row structure-fiche__title-row--primary">
-            {formatLabel ? (
-              <Tooltip content={formatLabel}>
-                <span className="structure-fiche__format-icon">
-                  <FormatGlyph kind={stage.formatKind} size="lg" />
-                </span>
-              </Tooltip>
-            ) : (
-              <span className="structure-fiche__format-icon" aria-hidden="true">
-                <FormatGlyph kind={stage.formatKind} size="lg" />
-              </span>
-            )}
-            {editingName ? (
-              <form
-                className="structure-fiche__title-edit"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  commitRename();
-                }}
-              >
-                <div className="structure-fiche__title-edit-field">
-                  <label className="ds-visually-hidden" htmlFor="phase-rename-input">
-                    {t('fiche.renamePhase')}
-                  </label>
-                  <TextInput
-                    id="phase-rename-input"
-                    value={nameDraft}
-                    onChange={(event) => setNameDraft(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Escape') {
-                        event.preventDefault();
-                        cancelRename();
-                      }
-                    }}
-                    disabled={renameMutation.isPending}
-                    maxLength={100}
-                    required
-                    autoFocus
-                    invalid={renameMutation.isError}
-                  />
-                </div>
-                <div className="ds-icon-toolbar">
-                  <Tooltip content={t('fiche.confirmRename')}>
-                    <button
-                      type="submit"
-                      className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--affirm"
-                      disabled={
-                        renameMutation.isPending ||
-                        nameDraft.trim().length === 0
-                      }
-                      aria-label={t('fiche.confirmRename')}
-                    >
-                      {renameMutation.isPending ? (
-                        <span className="ds-spinner" aria-hidden="true" />
-                      ) : (
-                        <CheckIcon size="sm" />
-                      )}
-                    </button>
-                  </Tooltip>
-                  <Tooltip content={tCommon('cancel')}>
-                    <button
-                      type="button"
-                      className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                      disabled={renameMutation.isPending}
-                      aria-label={tCommon('cancel')}
-                      onClick={cancelRename}
-                    >
-                      <CloseIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                </div>
-                {renameMutation.isError ? (
-                  <MutationError error={renameMutation.error} />
-                ) : null}
-              </form>
-            ) : (
-              <>
-                <h2
-                  id="phase-overview-heading"
-                  className="structure-fiche__title"
-                >
-                  {stage.name}
-                </h2>
-                {canRename ? (
-                  <Tooltip content={t('fiche.editPhase')}>
-                    <button
-                      type="button"
-                      className={compactIcon}
-                      aria-label={t('fiche.editPhase')}
-                      onClick={beginRename}
-                    >
-                      <PencilIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                ) : null}
-              </>
-            )}
-          {!editingName ? (
-            <div className="structure-fiche__header-end">
-              <StageStatusBadge status={stage.status} />
-              <div className="structure-fiche__header-tools ds-icon-toolbar">
-                {canRebuild ? (
-                  <Tooltip content={t('fiche.editForme')}>
-                    <button
-                      type="button"
-                      className={compactIcon}
-                      aria-label={t('fiche.editForme')}
-                      onClick={() => setSkeletonOpen(true)}
-                    >
-                      <StructureIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                ) : null}
-                {canRemove ? (
-                  <Tooltip content={t('graph.removePhase')}>
-                    <button
-                      type="button"
-                      className={compactDangerIcon}
-                      aria-label={t('graph.removePhase')}
-                      onClick={() => setRemoveOpen(true)}
-                    >
-                      <TrashIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </header>
+      <StructurePhaseFicheHeader
+        stage={stage}
+        competitionId={data.competitionId}
+        structureStages={data.stages}
+        formatLabel={formatLabel}
+        editingName={editingName}
+        nameDraft={nameDraft}
+        renameMutation={renameMutation}
+        canRename={canRename && !isCompletedStage}
+        canRebuild={canRebuild}
+        canRemove={canRemove}
+        compactIcon={compactIcon}
+        compactDangerIcon={compactDangerIcon}
+        onNameDraftChange={setNameDraft}
+        onBeginRename={beginRename}
+        onCancelRename={cancelRename}
+        onCommitRename={commitRename}
+        onOpenSkeleton={() => setSkeletonOpen(true)}
+        onOpenRemove={() => setRemoveOpen(true)}
+      />
 
-      {showHeroStructureActions && stage ? (
-        <StructurePhaseOperationalBar
+      <div
+        className={[
+          'structure-phase-tile',
+          'structure-phase-tile--composition',
+          'structure-phase-composition',
+          showCompositionBandEmpty
+            ? 'structure-phase-composition--band-empty'
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <StructurePhaseCompositionBand
+          showCompositionBandEmpty={showCompositionBandEmpty}
+          compositionGridClass={compositionGridClass}
+          compositionEmptyAction={compositionEmptyAction}
+          showQualifiersSection={showQualifiersSection}
           structureHubBackgroundRefresh={structureHubBackgroundRefresh}
-          showPlaces={showPlacementBlock}
-          showDraw={showDrawCta || showActivateDrawCta}
-          drawApplied={stageHasAppliedDraw}
-          placement={
-            showPlacementBlock || showDrawCta || showActivateDrawCta
-              ? {
-                  competitionId: data.competitionId,
-                  placesN,
-                  poolFilled,
-                  occupiedPlacesCount,
-                  occupancyReady:
-                    stage.formatKind === 'Championship' ||
-                    stage.formatKind === 'Swiss' ||
-                    schematicQuery.isSuccess,
-                  showDrawCta,
-                  showActivateDrawCta,
-                  showResolvedPoolGauge:
-                    showDrawCta ||
-                    showActivateDrawCta ||
-                    stage.formatKind === 'Championship' ||
-                    stage.formatKind === 'Swiss',
-                  canManualPlace,
-                  canEditDraw,
-                  showReleaseCta,
-                  hasNonCancelledDraw,
-                  activeDraw: Boolean(activeDraw),
-                  blockPerformDrawCta,
-                  createBlockedShort,
-                  createBlockedReason,
-                  showCreateBlockedCaption,
-                  showPoolHint,
-                  releasableAlignedCount,
-                  releasableTotal:
-                    releasableDraw != null
-                      ? drawResolutionPlacementCount(releasableDraw)
-                      : 0,
-                  releasePending: releaseMutation.isPending,
-                  deactivateDrawPending: deactivateDrawMutation.isPending,
-                  onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
-                  onActivateDraw: () => setEdit('tirage-activate'),
-                  onEditDrawParams: () => setEdit('tirage-params'),
-                  onManualPlace: () => {
-                    setManualSlotKey(null);
-                    setManualOpen(true);
-                  },
-                  onReleasePlacements: () => setReleaseConfirmOpen(true),
-                  onDeactivateDraw: () => setDeactivateDrawOpen(true),
-                  slotFeedMissingActive,
-                  drawOperationalReady: drawGateReady,
-                  placesDiagnostics:
-                    placesBannersForStrip.length > 0 ? (
-                      <StructureOperationalIssueBanner codes={placesBannersForStrip} />
-                    ) : undefined,
-                }
-              : null
-          }
+          qualifiersResolvedEyebrow={qualifiersResolvedEyebrow}
+          compositionComposeToolbar={compositionComposeToolbar}
+          feedGroups={feedGroups}
+          inboundComposition={stage.inboundComposition}
+          entries={data.participants.entries}
+          formatKind={stage.formatKind}
+          schematicReady={schematicQuery.isSuccess}
+          entryPlaceProjections={entryPlaceProjections}
+          onViewPhase={onSelectStage}
+          renderAvalSourceAction={renderAvalSourceAction}
+          compositionPopulationGaugeFooter={compositionPopulationGaugeFooter}
+          sharedCompositionPopulationGauge={sharedCompositionPopulationGauge}
+          showTeamsSection={showTeamsSection}
+          showCompositionContentEmpty={showCompositionContentEmpty}
+          showPopulationColumn={showPopulationColumn}
+          showAffectationSection={showAffectationSection}
+          canCompose={canCompose}
+          teamsComposeActionLabel={teamsComposeActionLabel}
+          compactIcon={compactIcon}
+          openCompose={openCompose}
+          teamsHasListContent={teamsHasListContent}
+          capacityIssueBanner={railIssueBanner(capacityBanners)}
+          stage={stage}
+          placedEntryIds={placedEntryIds}
+          populationFeedVolume={populationFeedVolume}
+          placementOperationalProps={placementOperationalProps}
+          showPlacementBlock={showPlacementBlock}
+          showDrawCta={showDrawCta}
+          showActivateDrawCta={showActivateDrawCta}
           competitionId={data.competitionId}
           competitionStatus={data.status}
-          stage={stage}
+          structureStages={data.stages}
+          materializePresentation={materializePresentation}
+          stageHasAppliedDraw={stageHasAppliedDraw}
         />
-      ) : null}
-
-      <div className="structure-phase-hero structure-phase-hero--lite">
-        <div
-          className={[
-            'structure-phase-hero__triptych',
-            showOutRail ? null : 'structure-phase-hero__triptych--no-out',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          <FluxRail
-            id="rail-entries"
-            side="in"
-            title={t('fiche.tiles.population')}
-            icon={<ArrowDownIcon size="md" />}
-            attentionBanner={issueBanner(capacityBanners)}
-          >
-            <RootEntriesRail
-              stage={stage}
-              entries={data.participants.entries}
-              sourcesConfiguredVolume={populationFeedVolume}
-              canCompose={canCompose}
-              onEditCompose={() => openCompose(false)}
-              sources={
-                feedGroups.length > 0 ? (
-                  <FluxGroupList
-                    groups={feedGroups}
-                    onOpenPeer={onSelectStage}
-                    teamsLabel={teamsLabel}
-                    renderGroupAction={renderAvalSourceAction}
-                  />
-                ) : undefined
-              }
-            />
-          </FluxRail>
-
-          <div className="structure-phase-hero__center">
-            {showHeroStats ? (
-              <ul
-                className="structure-phase-hero__stats"
-                aria-label={t('fiche.statsAria')}
-              >
-                {heroFacts.map((fact) => (
-                  <li key={fact.statKey} className="structure-phase-hero__stat">
-                    <span
-                      className="structure-phase-hero__stat-icon"
-                      aria-hidden="true"
-                    >
-                      {fact.icon}
-                    </span>
-                    <span className="structure-phase-hero__stat-value">
-                      {fact.value}
-                    </span>
-                    <span className="structure-phase-hero__stat-label">
-                      {fact.label}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <div
-              id="tile-places"
-              className="structure-schematic-viewport"
-            >
-              <StructureSchematicViewport
-                schematic={schematicQuery.data}
-                isError={schematicQuery.isError}
-                isFetching={schematicQuery.isFetching}
-                loadingLabel={t('fiche.schematicLoading')}
-                unavailableLabel={t('fiche.occupantsUnavailable')}
-              >
-                {(schematic) => (
-                  <PhaseSchematic
-                    schematic={schematic}
-                    terminal={!hasExits}
-                    cupRoundCount={stage.roundCount}
-                    cupPairProductionStates={cupPairProductionStates}
-                    onPlaceActivate={
-                      canManualPlace
-                        ? (place: SchematicCase) => {
-                            const key = place.formPosition.slotKey?.trim();
-                            if (!key) return;
-                            setManualSlotKey(key);
-                            setManualOpen(true);
-                          }
-                        : undefined
-                    }
-                  />
-                )}
-              </StructureSchematicViewport>
-              {!showPlacementBlock && placesBanners.length > 0 ? (
-                <div className="structure-schematic-viewport__issues">
-                  {issueBanner(placesBanners)}
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {showOutRail ? (
-            <div className="structure-phase-hero__out">
-              {showSortiesRail ? (
-                <FluxRail
-                  id="rail-exits"
-                  side="out"
-                  title={t('fiche.tiles.exits')}
-                  icon={<ArrowRightIcon size="md" />}
-                  editControl={sortiesEditControl}
-                  empty={!hasExits && exitsBanners.length === 0}
-                  attentionBanner={issueBanner(exitsBanners)}
-                >
-                  {hasExits ? (
-                    <FluxGroupList
-                      groups={outboundGroups}
-                      onOpenPeer={onSelectStage}
-                      teamsLabel={teamsLabel}
-                    />
-                  ) : null}
-                </FluxRail>
-              ) : null}
-              {showAttributionRail ? (
-                <FluxRail
-                  id="rail-attribution"
-                  side="out"
-                  title={t('fiche.tiles.attribution')}
-                  icon={<AttributionIcon size="md" />}
-                  editControl={attributionEditControl}
-                  empty={!hasAttribution && attributionBanners.length === 0}
-                  attentionBanner={issueBanner(attributionBanners)}
-                >
-                  {hasAttribution ? (
-                    <ul className="structure-flux-group__rules">
-                      {[...placementAwards]
-                        .sort((a, b) => a.rank - b.rank)
-                        .map((award) => {
-                          const parts = placementRuleParts(award, t);
-                          return (
-                            <li
-                              key={`${award.rank}-${award.outcome}-${award.sourcePairKey}`}
-                              className="structure-flux-group__rule"
-                            >
-                              <PlacementAwardRow
-                                rank={parts.rank}
-                                medal={parts.medal}
-                                badge={parts.badge}
-                                badgeTone={parts.badgeTone}
-                                context={parts.context}
-                              />
-                            </li>
-                          );
-                        })}
-                    </ul>
-                  ) : null}
-                </FluxRail>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
       </div>
+
+      <StructurePhaseSchematicAndAside
+        showHeroStats={showHeroStats}
+        heroFacts={heroFacts}
+        schematicQuery={schematicQuery}
+        stage={stage}
+        hasExits={hasExits}
+        cupPairProductionStates={cupPairProductionStates}
+        canManualPlace={canManualPlace}
+        onManualPlaceActivate={(place) => {
+          const key = place.formPosition.slotKey?.trim();
+          if (!key) return;
+          setManualSlotKey(key);
+          setManualOpen(true);
+        }}
+        schematicIssuesBanner={
+          !showPlacementBlock ? railIssueBanner(placesBanners) : undefined
+        }
+        showAsideMatchsSection={showAsideMatchsSection}
+        structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+        placementOperationalProps={placementOperationalProps}
+        showPlacementBlock={showPlacementBlock}
+        showDrawCta={showDrawCta}
+        showActivateDrawCta={showActivateDrawCta}
+        competitionId={data.competitionId}
+        competitionStatus={data.status}
+        structureStages={data.stages}
+        materializePresentation={materializePresentation}
+        stageHasAppliedDraw={stageHasAppliedDraw}
+        showOutRail={showOutRail}
+        showSortiesRail={showSortiesRail}
+        showAttributionRail={showAttributionRail}
+        sortiesEditControl={sortiesEditControl}
+        exitsBanners={railIssueBanner(exitsBanners)}
+        outboundGroups={outboundGroups}
+        onSelectStage={onSelectStage}
+        attributionEditControl={attributionEditControl}
+        attributionBanners={railIssueBanner(attributionBanners)}
+        hasAttribution={hasAttribution}
+        placementAwards={placementAwards}
+      />
 
       <StructurePhaseRegulationStrip
         stage={stage}
@@ -1262,11 +1194,13 @@ export function StructurePhaseFiche({
         }
         onEditConfrontation={() => setEdit('confrontation')}
         standingIssues={
-          standingBanners.length > 0 ? issueBanner(standingBanners) : undefined
+          standingBanners.length > 0
+            ? railIssueBanner(standingBanners)
+            : undefined
         }
         confrontationIssues={
           confrontationBanners.length > 0
-            ? issueBanner(confrontationBanners)
+            ? railIssueBanner(confrontationBanners)
             : undefined
         }
       />
@@ -1316,6 +1250,7 @@ export function StructurePhaseFiche({
       <DrawRulesDialog
         competitionId={data.competitionId}
         stage={stage}
+        structureStages={data.stages}
         open={edit === 'tirage-activate' || edit === 'tirage-params'}
         onClose={() => setEdit(null)}
         intent={edit === 'tirage-activate' ? 'activate' : 'params'}
@@ -1332,7 +1267,10 @@ export function StructurePhaseFiche({
         confirmPending={deactivateDrawMutation.isPending}
         footerStatus={
           deactivateDrawMutation.isError ? (
-            <MutationError error={deactivateDrawMutation.error} />
+            <MutationError
+              error={deactivateDrawMutation.error}
+              structureStages={data.stages}
+            />
           ) : null
         }
         onConfirm={() => deactivateDrawMutation.mutate()}
@@ -1351,7 +1289,10 @@ export function StructurePhaseFiche({
         confirmPendingLabel={tDraw('releasingPlacements')}
         footerStatus={
           releaseMutation.isError ? (
-            <MutationError error={releaseMutation.error} />
+            <MutationError
+              error={releaseMutation.error}
+              structureStages={data.stages}
+            />
           ) : null
         }
         onCancel={() => {
@@ -1372,6 +1313,7 @@ export function StructurePhaseFiche({
         competitionStatus={data.status}
         minimumTeams={data.regulation.minimumTeams}
         stage={stage}
+        structureStages={data.stages}
         open={drawWorkflowOpen}
         onClose={() => setDrawWorkflowOpen(false)}
       />
@@ -1383,6 +1325,7 @@ export function StructurePhaseFiche({
         }}
         competitionId={data.competitionId}
         stage={stage}
+        stages={data.stages}
         entries={data.participants.entries}
         reservedFromFeeds={populationFeedVolume}
         focusSearch={composeFocusSearch}
@@ -1395,6 +1338,7 @@ export function StructurePhaseFiche({
         }}
         competitionId={data.competitionId}
         stage={stage}
+        structureStages={data.stages}
         entries={data.participants.entries}
         cases={schematicQuery.data?.cases ?? []}
         initialSlotKey={manualSlotKey}
@@ -1402,6 +1346,7 @@ export function StructurePhaseFiche({
       <TieFormatDialog
         competitionId={data.competitionId}
         stage={stage}
+        structureStages={data.stages}
         open={edit === 'confrontation'}
         onClose={() => setEdit(null)}
       />

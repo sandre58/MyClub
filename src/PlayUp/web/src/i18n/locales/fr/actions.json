@@ -5,7 +5,7 @@
   "RenameEntry": "Renommer une équipe",
   "WithdrawEntry": "Faire forfait pour une équipe",
   "DeleteEntry": "Supprimer une équipe",
-  "PrepareStage": "Préparer la phase « {{name}} »",
+  "PrepareStage": "Marquer la phase « {{name}} » comme prête",
   "StartStage": "Démarrer la phase « {{name}} »",
   "PublishDraw": "Publier le tirage",
   "PublishAndApplyDraw": "Publier et appliquer",

@@ -39,6 +39,7 @@ export type DrawRulesDialogIntent = 'activate' | 'params';
 export function DrawRulesDialog({
   competitionId,
   stage,
+  structureStages,
   open,
   onClose,
   intent = 'params',
@@ -46,6 +47,7 @@ export function DrawRulesDialog({
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
+  structureStages: readonly StructureStageHubSummary[];
   open: boolean;
   onClose: () => void;
   intent?: DrawRulesDialogIntent;
@@ -194,7 +196,10 @@ export function DrawRulesDialog({
         }
         footerStatus={
           saveMutation.isError ? (
-            <MutationError error={saveMutation.error} />
+            <MutationError
+              error={saveMutation.error}
+              structureStages={structureStages}
+            />
           ) : rulesLocked ? (
             <Alert tone="info" role="status">
               {t('regulation.drawParamsLockedHint')}

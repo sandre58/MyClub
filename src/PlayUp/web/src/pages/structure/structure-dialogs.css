@@ -338,12 +338,6 @@
   }
 }
 
-@media (max-width: 56rem) {
-  .structure-phase-hero__triptych {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 40rem) {
   .structure-domain-tile--full {
     grid-column: auto;
@@ -1071,10 +1065,81 @@
   font-size: var(--text-meta);
 }
 
+.structure-manual-placement {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ds-dialog:has(.structure-manual-placement) .ds-dialog__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.structure-manual-placement__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-manual-placement__field--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-manual-placement__label {
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.structure-manual-placement__place-locked {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.structure-manual-placement__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.structure-manual-placement__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.structure-manual-placement__teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-content: start;
+  max-height: 16rem;
+  overflow: auto;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-secondary);
+}
+
+.structure-manual-placement .ds-empty--idle {
+  width: 100%;
+}
+
 @media (max-width: 36rem) {
   .structure-qualification__fields,
   .structure-qualification__scope-tiles,
-  .structure-qualification__place-map > li {
+  .structure-qualification__place-map > li,
+  .structure-manual-placement__teams {
     grid-template-columns: 1fr;
   }
 }

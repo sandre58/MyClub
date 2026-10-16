@@ -179,6 +179,7 @@ function renderDialog(
         competitionId={competitionId}
         competitionStatus={competitionStatus}
         stage={stage}
+        structureStages={[stage]}
       />
     </QueryClientProvider>,
   );
@@ -895,6 +896,7 @@ describe('StructureDrawDialog', () => {
           competitionId={competitionId}
           competitionStatus="Draft"
           stage={groupsStage()}
+          structureStages={[groupsStage()]}
         />
       </QueryClientProvider>,
     );
@@ -902,9 +904,9 @@ describe('StructureDrawDialog', () => {
     await user.click(
       await screen.findByRole('button', { name: 'Publier et appliquer' }),
     );
-    expect(
-      await screen.findByRole('alert'),
-    ).toHaveTextContent('Entry appears on materialized match');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /équipe figure déjà sur un match créé|already on a created match/i,
+    );
 
     rerender(
       <QueryClientProvider client={queryClient}>
@@ -914,6 +916,7 @@ describe('StructureDrawDialog', () => {
           competitionId={competitionId}
           competitionStatus="Draft"
           stage={groupsStage()}
+          structureStages={[groupsStage()]}
         />
       </QueryClientProvider>,
     );
@@ -925,6 +928,7 @@ describe('StructureDrawDialog', () => {
           competitionId={competitionId}
           competitionStatus="Draft"
           stage={groupsStage()}
+          structureStages={[groupsStage()]}
         />
       </QueryClientProvider>,
     );

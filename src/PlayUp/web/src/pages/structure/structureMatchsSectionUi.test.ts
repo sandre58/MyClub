@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { StructureStageHubSummary } from '../../types';
 import {
+  shouldShowAsideMatchsTile,
   shouldShowMatchExploitationProgress,
   shouldShowMatchsSection,
   shouldShowProductionInMatchsSection,
@@ -28,7 +29,21 @@ const baseStage = (
   ...overrides,
 });
 
+const asideSignals = {
+  showProductionOperationalBar: false,
+  showPlacementBlock: false,
+  showDrawCta: false,
+  showActivateDrawCta: false,
+};
+
 describe('structureMatchsSectionUi', () => {
+  it('hides aside Matchs tile in Draft even when lifecycle applies', () => {
+    expect(
+      shouldShowAsideMatchsTile(baseStage({ status: 'Draft' }), asideSignals),
+    ).toBe(false);
+    expect(shouldShowMatchsSection(baseStage({ status: 'Draft' }))).toBe(true);
+  });
+
   it('shows Matchs section for Completed when matches exist', () => {
     expect(
       shouldShowMatchsSection(
@@ -50,6 +65,39 @@ describe('structureMatchsSectionUi', () => {
         'terminal',
       ),
     ).toBe(false);
+  });
+
+  it('hides production in Suspended unless actionable or dematerialize enabled', () => {
+    const partialMaterialize = {
+      commandCode: 'MaterializeMatches' as const,
+      labelVariant: 'exhausted' as const,
+      determinedCount: 6,
+      eligibleCount: 0,
+      materializedCount: 3,
+      commandEnabled: false,
+      disabledReason: 'StructureNotMutable',
+      confrontations: [],
+    };
+    const suspended = baseStage({
+      status: 'Suspended',
+      materialize: partialMaterialize,
+    });
+    expect(
+      shouldShowProductionInMatchsSection(suspended, 'frozen'),
+    ).toBe(false);
+    expect(
+      shouldShowProductionInMatchsSection(suspended, 'blocked'),
+    ).toBe(false);
+    expect(
+      shouldShowProductionInMatchsSection(
+        baseStage({
+          status: 'Suspended',
+          materialize: partialMaterialize,
+          dematerialize: { enabled: true, scope: 'Phase' },
+        }),
+        'frozen',
+      ),
+    ).toBe(true);
   });
 
   it('shows production in Running only when actionable', () => {

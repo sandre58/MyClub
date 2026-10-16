@@ -19,6 +19,8 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
   'Application.StartBlockedUnmaterialized': 'UnmaterializedConfrontations',
   'Application.StageExploitationClosed': 'CompetitionClosed',
   'Application.StructureCycleDetected': 'CycleDetected',
+  'Application.ReadyConsumerWouldBreak': 'ReadyConsumerWouldBreak',
+  'Application.AppliedDrawPoolChangeBlocked': 'AppliedDrawPoolChangeBlocked',
 };
 
 export function resolveLifecycleMutationMessageKey(wireCode: string): string {

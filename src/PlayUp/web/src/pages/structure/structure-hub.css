@@ -199,8 +199,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-error);
   line-height: 0;
+}
+
+.structure-topology__issue[data-tone='danger'] {
+  color: var(--color-error);
+}
+
+.structure-topology__issue[data-tone='attention'] {
+  color: var(--color-attention);
+}
+
+.structure-topology__issue[data-tone='progress'] {
+  color: var(--color-info);
 }
 
 .structure-topology__tile-facts {

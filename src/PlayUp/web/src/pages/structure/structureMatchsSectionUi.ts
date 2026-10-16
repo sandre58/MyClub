@@ -3,6 +3,30 @@ import type { MaterializePresentation } from './structureMaterializeCopy';
 import { showProductionOperationalSection } from './structureOperationalCopy';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
 
+export type AsideMatchsTileSignals = {
+  showProductionOperationalBar: boolean;
+  showPlacementBlock: boolean;
+  showDrawCta: boolean;
+  showActivateDrawCta: boolean;
+};
+
+/** Aside Matchs tile — hidden in Draft (lifecycle lives in the fiche header). */
+export function shouldShowAsideMatchsTile(
+  stage: StructureStageHubSummary,
+  signals: AsideMatchsTileSignals,
+): boolean {
+  if (stage.status === 'Draft') {
+    return false;
+  }
+  return (
+    signals.showProductionOperationalBar ||
+    signals.showPlacementBlock ||
+    signals.showDrawCta ||
+    signals.showActivateDrawCta ||
+    shouldShowMatchsSection(stage)
+  );
+}
+
 /** When the operational strip should include the Matchs column. */
 export function shouldShowMatchsSection(stage: StructureStageHubSummary): boolean {
   if (stage.status !== 'Completed') {

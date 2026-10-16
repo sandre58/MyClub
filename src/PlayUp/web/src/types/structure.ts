@@ -195,11 +195,7 @@ export interface StructureStageHubSummary {
   confrontationSegments?: StructureConfrontationSegment[] | null;
   /** Per-phase Structure mutation action codes (server-gated). */
   actions?: string[];
-  /** Authoring projection of qualification paths when present. */
-  qualificationPaths?: StructureQualificationPath[] | null;
-  /** Authoring projection of progression paths when present. */
-  progressionPaths?: StructureProgressionPath[] | null;
-  /** Authoring intents (Round × Outcome → Destination). Prefer over flat paths when present. */
+  /** Authoring intents (Round × Outcome → Destination). */
   progressionIntents?: StructureProgressionIntent[] | null;
   /** Machine-readable graph validity codes (Draft-persistable). */
   structureIssues?: string[];
@@ -217,8 +213,6 @@ export interface StructureStageHubSummary {
   placesPerGroup?: number | null;
   /** Display names for runtime composition (Draw / Live). */
   compositionPreviewNames?: string[] | null;
-  /** Always 0 — retained for API shape; rails no longer truncate. */
-  compositionPreviewOverflow?: number;
   /** Runtime composition entries that are no longer Active. */
   compositionIneligibleCount?: number;
   /** Affectation authoring set size (Population tile). */
@@ -234,6 +228,7 @@ export interface StructureStageHubSummary {
   /** Stage regulation TieFormat (AddRound copy source); null/omitted when unset. */
   defaultTieFormat?: StructureTieFormatSummary | null;
   /** Authoring intents (1 → N paths). Prefer over flat paths when present. */
+  /** Authoring intents (source scope × ranks → destination). Legacy path rules are synthesized on read. */
   qualificationIntents?: StructureQualificationIntent[] | null;
   /** Workspace materialize capability; omitted when the format has no Materialize command. */
   materialize?: StructureMaterialize | null;
@@ -241,6 +236,27 @@ export interface StructureStageHubSummary {
   dematerialize?: StructureDematerialize | null;
   /** Phase lifecycle band (Prepare / Start / Complete). */
   lifecycle?: StructureStageLifecycle | null;
+  /** Inbound Qual/Prog resolution for Composition Qualifiés; omitted when root composition. */
+  inboundComposition?: StructureInboundComposition | null;
+}
+
+/** Hub projection — inbound feed seats (Structure GET, not schematic). */
+export interface StructureInboundComposition {
+  configuredVolume: number;
+  resolvedCount: number;
+  rules: StructureInboundFeedRule[];
+}
+
+export interface StructureInboundFeedRule {
+  feedKey: string;
+  sourceStageId: string;
+  seats: StructureInboundFeedSeat[];
+}
+
+export interface StructureInboundFeedSeat {
+  entryId?: string | null;
+  displayName?: string | null;
+  placed: boolean;
 }
 
 /** GET structure `stages[].lifecycle` — Structure N2 cycle band. */

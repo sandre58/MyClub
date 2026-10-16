@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -36,10 +37,12 @@ public static class GenerateDrawResolution
         IReadOnlyList<GroupId>? groupTargets = null,
         DrawConstraintContext? constraintContext = null,
         int? seed = null,
-        IRandomSource? randomSource = null)
+        IRandomSource? randomSource = null,
+        IReadOnlyList<Match>? stageMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
+        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw");
 
         var draw = stage.GetDraw(drawId);
         EnsureDraftMutable(draw);

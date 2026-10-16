@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -22,28 +23,31 @@ public static class ReplaceStageProgressionRules
     public static void Execute(
         Stage stage,
         IReadOnlyList<ProgressionIntentSpec>? intents,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<Match>? upstreamMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureMutable(stage);
 
+        ProgressionRules? afterRules;
         if (intents is null || intents.Count == 0)
         {
-            stage.ReplaceProgressionRules(null, clock);
-            return;
+            afterRules = null;
         }
-
-        var domainIntents = new List<ProgressionIntent>(intents.Count);
-        foreach (var spec in intents)
+        else
         {
-            ArgumentNullException.ThrowIfNull(spec);
-            domainIntents.Add(ToDomainIntent(stage, spec));
+            var domainIntents = new List<ProgressionIntent>(intents.Count);
+            foreach (var spec in intents)
+            {
+                ArgumentNullException.ThrowIfNull(spec);
+                domainIntents.Add(ToDomainIntent(stage, spec));
+            }
+
+            afterRules = ProgressionRules.FromIntents(domainIntents, stage.Rounds, stage.BracketPairs);
         }
 
-        stage.ReplaceProgressionRules(
-            ProgressionRules.FromIntents(domainIntents, stage.Rounds, stage.BracketPairs),
-            clock);
+        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches);
     }
 
     /// <summary>
@@ -52,18 +56,35 @@ public static class ReplaceStageProgressionRules
     public static void Execute(
         Stage stage,
         IReadOnlyList<ProgressionPathSpec>? paths,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<Match>? upstreamMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
-        EnsureMutable(stage);
 
-        if (paths is null || paths.Count == 0)
+        var afterRules = paths is null || paths.Count == 0 ? null : BuildRulesFromPaths(paths);
+        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches);
+    }
+
+    private static void EnsureAndApply(
+        Stage stage,
+        ProgressionRules? afterRules,
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages,
+        IReadOnlyList<Match>? upstreamMatches)
+    {
+        StructureOperationalExitEditGuard.Ensure(stage, upstreamMatches, "Progression rules");
+        if (competitionStages is not null)
         {
-            stage.ReplaceProgressionRules(null, clock);
-            return;
+            StructureReadyConsumerFeedGate.EnsureProgressionReplaceAllowed(stage, afterRules, competitionStages);
         }
 
+        stage.ReplaceProgressionRulesOperationally(afterRules, clock);
+    }
+
+    private static ProgressionRules BuildRulesFromPaths(IReadOnlyList<ProgressionPathSpec> paths)
+    {
         var domainPaths = new List<ProgressionPath>(paths.Count);
         foreach (var spec in paths)
         {
@@ -95,7 +116,7 @@ public static class ReplaceStageProgressionRules
                     destination));
         }
 
-        stage.ReplaceProgressionRules(new ProgressionRules(domainPaths), clock);
+        return new ProgressionRules(domainPaths);
     }
 
     private static ProgressionDestination ResolvePathDestination(
@@ -119,8 +140,6 @@ public static class ReplaceStageProgressionRules
             ? ProgressionDestination.ForSlot(stageId, slotKey!)
             : ProgressionDestination.ForPopulation(stageId);
     }
-
-    private static void EnsureMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
 
     private static ProgressionIntent ToDomainIntent(Stage stage, ProgressionIntentSpec spec)
     {

@@ -42,8 +42,13 @@ function stage(
 }
 
 describe('structureDiagnosticPresentation', () => {
-  it('maps SlotFeedMissing without draw as danger (D5 blocking)', () => {
-    expect(structureDiagnosticTone('SlotFeedMissing')).toBe('danger');
+  it('maps SlotFeedMissing as attention in Draft and danger when Ready', () => {
+    expect(
+      structureDiagnosticTone('SlotFeedMissing', { stageStatus: 'Draft' }),
+    ).toBe('attention');
+    expect(
+      structureDiagnosticTone('SlotFeedMissing', { stageStatus: 'Ready' }),
+    ).toBe('danger');
     expect(structureDiagnosticTile('SlotFeedMissing')).toBe('places');
   });
 
@@ -103,10 +108,17 @@ describe('structureDiagnosticPresentation', () => {
     expect(structureDiagnosticTitleKey('AuthoredAwardUnreachable')).toBe(
       'graph.issues.AuthoredAwardUnreachable',
     );
-    expect(structureDiagnosticTone('AuthoredAwardUnreachable')).toBe(
-      'attention',
-    );
-    expect(structureDiagnosticTone('PopulationShortfall')).toBe('danger');
+    expect(
+      structureDiagnosticTone('AuthoredAwardUnreachable', {
+        formatKind: 'Cup',
+      }),
+    ).toBe('danger');
+    expect(
+      structureDiagnosticTone('AuthoredAwardUnreachable', {
+        formatKind: 'Championship',
+      }),
+    ).toBe('attention');
+    expect(structureDiagnosticTone('PopulationShortfall')).toBe('attention');
   });
 
   it('keeps OverCapacity and SlotFeedMissing on distinct tiles', () => {
