@@ -1,6 +1,6 @@
 # Wave 1 — Audit capacité (lecture seule) — D4 / tokens Structure en `Ready`
 
-**Status:** Audit (2026-10-16) — **aucun correctif code** tant que les écarts ci-dessous ne sont pas **validés** par le décisionnaire.
+**Status:** **Validé** (2026-10-16) — zéro écart capacité métier D4 / `Ready` ; **recette gel A** autorisée ; aucun correctif code sur cette base.
 
 **Périmètre** — Gel **A** : cohérence **hub structure** · **SPA** (strip réglement / tokens) · **API** · **domaine** pour le gel **D4** (match / standing / confrontation) et les tokens `Replace*` / lifecycle en phase **`Ready`**, hors production attachée (D2).
 
@@ -57,8 +57,16 @@ Hub : **`[RenameStage]`** seul (`BuildReadyStageActions` L827–829). Aligné D2
 
 ---
 
-## Suite
+## Décision décisionnaire (2026-10-16)
 
-1. **Décisionnaire** — valider « zéro écart capacité » ou pointer un ID W1-* à implémenter.
-2. Si zéro — **feu vert recette gel A** (avec Wave 2 doc).
-3. Si W1-T* validés — chantier tests uniquement, commits séparés.
+| Point | Décision |
+|-------|----------|
+| D4 / `Ready` — match, standing, tie, draw P1 | **Conforme** (audit) |
+| **W1-T1** — assertions hub Ready | **Autorisé** (renfort post-recette) |
+| **W1-T2** — Host `PUT` match-rules Ready | **Autorisé** (renfort post-recette) |
+| **W1-T3** — Host `AppliedDrawPoolChangeBlocked` | **Autorisé** (renfort post-recette) |
+| G-MAT3/4, G-B-1, C-ENF, D1, reliquat G-OPS3 | **Hors recette gel A** |
+
+**Recette gel A** — clôturée : [recette-gel-a-closure.md](./recette-gel-a-closure.md).
+
+**Git** — Waves 1+2 : `cc255b89` ; validation décisionnaire + recette : commit doc post-recette.
