@@ -1,6 +1,6 @@
 # Δ-03 — Hub P1 draw rules in Ready (C-19)
 
-**Status:** **Closed** (2026-10-16) — commit `d371baf6` on `feature/new_version_alt`.
+**Status:** **Closed** (2026-10-16) — commit `5f7a49b9` on `feature/new_version_alt`.
 
 **Décision produit (gelée)** — Notion [Matrice UI Structure — § Δ-03](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) · **B-Q1b** : `ReplaceStageDrawRules` / P1 = **Brouillon uniquement** ; en **Prêt** = digest + **P3** (workflow), pas Activer / Paramètres / Désactiver P1.
 

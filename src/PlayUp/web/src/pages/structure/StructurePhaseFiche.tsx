@@ -449,7 +449,9 @@ export function StructurePhaseFiche({
   );
   const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
   const poolFilled = stage.compositionEntryCount ?? 0;
-  const showPoolHint = showDrawCta && placesN != null && placesN > 0;
+  const isCompletedStage = stage.status === 'Completed';
+  const showPoolHint =
+    !isCompletedStage && showDrawCta && placesN != null && placesN > 0;
   const overviewSlots = drawOverviewQuery.data?.slots ?? [];
   const overviewDraws = drawOverviewQuery.data?.draws ?? [];
   const overviewGroups = drawOverviewQuery.data?.groups ?? [];
@@ -480,7 +482,9 @@ export function StructurePhaseFiche({
   const qualifiersResolvedCount =
     stage.inboundComposition?.resolvedCount ?? 0;
   const drawReadinessChecklist =
-    drawGateReady && (showDrawCta || showActivateDrawCta)
+    !isCompletedStage &&
+    drawGateReady &&
+    (showDrawCta || showActivateDrawCta)
       ? resolveDrawReadinessChecklist({
           compositionEntryCount: poolFilled,
           placesN,
@@ -526,6 +530,7 @@ export function StructurePhaseFiche({
   /** Inline short caption on the stage card — skip when Release is the unblock action, and
    * skip countMismatch when the filled/capacity ratio already carries the signal. */
   const showCreateBlockedCaption =
+    !isCompletedStage &&
     createBlockedShort != null &&
     createBlockPresentation?.kind === 'inline' &&
     !showReleaseCta &&
@@ -894,15 +899,16 @@ export function StructurePhaseFiche({
             stage.formatKind === 'Swiss' ||
             schematicQuery.isSuccess,
           showDrawCta,
-          showActivateDrawCta,
-          showResolvedPoolGauge:
-            showDrawCta ||
-            showActivateDrawCta ||
-            stage.formatKind === 'Championship' ||
-            stage.formatKind === 'Swiss',
-          canManualPlace,
+          showActivateDrawCta: isCompletedStage ? false : showActivateDrawCta,
+          showResolvedPoolGauge: isCompletedStage
+            ? false
+            : showDrawCta ||
+              showActivateDrawCta ||
+              stage.formatKind === 'Championship' ||
+              stage.formatKind === 'Swiss',
+          canManualPlace: isCompletedStage ? false : canManualPlace,
           canEditDraw: canAuthorDrawRulesP1,
-          showReleaseCta,
+          showReleaseCta: isCompletedStage ? false : showReleaseCta,
           hasNonCancelledDraw,
           activeDraw: Boolean(activeDraw),
           blockPerformDrawCta,

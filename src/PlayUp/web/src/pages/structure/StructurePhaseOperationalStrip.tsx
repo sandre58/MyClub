@@ -730,6 +730,8 @@ function DrawColumn(
 
   let body: ReactNode;
 
+  const readOnlyCompletedFinal = props.stageStatus === 'Completed';
+
   const drawSetupEditableForChecklist =
     props.canEditDraw && !props.drawApplied;
   const showDrawReadinessChecklist =
@@ -743,7 +745,42 @@ function DrawColumn(
     <StructureDrawReadinessChecklist items={props.drawReadinessChecklist!} />
   ) : null;
 
-  if (props.compositionLayout && showActivate) {
+  if (readOnlyCompletedFinal && drawEngaged) {
+    if (props.drawApplied) {
+      body = props.compositionLayout ? (
+        <div className="structure-operational-strip__composition-draw">
+          <StripOperationalMessage kind="success">
+            {t('fiche.operational.draw.appliedMessage')}
+          </StripOperationalMessage>
+          {compositionLaunchButton(
+            t('fiche.viewDrawWorkflow'),
+            props.onOpenDrawWorkflow,
+            { variant: 'secondary' },
+          )}
+        </div>
+      ) : (
+        <StripDrawAppliedPanel
+          message={t('fiche.operational.draw.appliedMessage')}
+          action={
+            <button
+              type="button"
+              className={secondaryBtn}
+              onClick={props.onOpenDrawWorkflow}
+            >
+              <ViewIcon size="sm" />
+              {t('fiche.viewDrawWorkflow')}
+            </button>
+          }
+        />
+      );
+    } else {
+      body = (
+        <StripOperationalMessage kind="info">
+          {t('fiche.operational.draw.unavailable')}
+        </StripOperationalMessage>
+      );
+    }
+  } else if (props.compositionLayout && showActivate) {
     body = (
       <div className="structure-operational-strip__composition-draw">
         {compositionLaunchButton(t('fiche.activateDraw'), props.onActivateDraw)}

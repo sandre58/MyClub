@@ -292,6 +292,71 @@ describe('StructurePhaseOperationalStrip', () => {
     ).toBeInTheDocument();
   });
 
+  describe('Δ-O4-2 Completed — draw strip read-only final state', () => {
+    const completedCupStage: StructureStageHubSummary = {
+      ...baseStage,
+      status: 'Completed',
+    };
+
+    it('hides perform / activate / setup controls but keeps view-draw when applied', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: completedCupStage,
+        drawApplied: true,
+        placement: {
+          ...basePlacement,
+          stageStatus: 'Completed',
+          canEditDraw: false,
+          showActivateDrawCta: false,
+          showResolvedPoolGauge: false,
+          showReleaseCta: false,
+          showCreateBlockedCaption: false,
+          showPoolHint: false,
+          canManualPlace: false,
+        },
+      });
+
+      expect(
+        screen.getByRole('button', { name: /Voir le tirage/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Lancer le tirage/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Activer le tirage/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Paramètres/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows no perform CTA when draw was not applied', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: completedCupStage,
+        drawApplied: false,
+        placement: {
+          ...basePlacement,
+          stageStatus: 'Completed',
+          canEditDraw: false,
+          showActivateDrawCta: false,
+          showResolvedPoolGauge: false,
+          showReleaseCta: false,
+          showCreateBlockedCaption: false,
+          showPoolHint: false,
+          canManualPlace: false,
+        },
+      });
+
+      expect(
+        screen.queryByRole('button', { name: /Lancer le tirage/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /Voir le tirage/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe('Δ-03 Ready — P1 hidden, P3 preserved', () => {
     const readyCupStage: StructureStageHubSummary = {
       ...baseStage,
