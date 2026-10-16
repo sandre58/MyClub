@@ -12,19 +12,27 @@
 |-------|----------|----------------|
 | **G-B-1-ENF** | Ratifier **uniquement** B-Q3a (≤1 tirage non annulé ; refus `CreateDraw` si autre tirage non `Cancelled`). | **SLICE-2-G-B-1-ENF** — **Authorized** ; **pas Closed** avant vérification conformité + commits dédiés. |
 | **G-OPS3 qual/prog** | Ratifier le refus de changement des règles **qualification / progression** lorsqu’un tirage est **Applied** (même entrées logiques que G-B-3 : mutation refusée, pas obsolescence C). | **SLICE-3-G-OPS3-QUAL-PROG-ENF** — **Authorized** ; **G-OPS3** reste **Partial** §12. |
-| **C-ENF** | **Ne pas** ratifier rétroactivement le bundle Detect + Apply + Mat + Start. | Trois slices **Pending** (voir ci-dessous) ; **aucun commit** C-ENF tant qu’ils ne sont pas autorisés un par un. |
+| **C-ENF** | **Ne pas** ratifier le bundle Apply + Mat + Start avec Detect. Detect : périmètre produit **Authorized** (voir § Detect). | **SLICE-C-ENF-DETECT** **Authorized** ; Apply / Mat-Start **Pending** ; commits C-ENF **un slice à la fois**. |
 
 ---
 
-## C-ENF — découpage (en attente d’autorisation)
+## C-ENF — découpage
 
 | Slice ID | Backlog | Périmètre cible | Statut |
 |----------|---------|-----------------|--------|
-| **SLICE-C-ENF-DETECT** | **C-ENF-Detect** (G-C-1) | Prédicat de conformité / obsolescence **pour consommation** ; surfacing lecture (`StageDrawDto`, etc.). | **Pending** — DM n’a pas encore autorisé l’implémentation. |
-| **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage obsolète (après Detect). | **Pending** |
-| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** et **Start** lorsque la voie consomme un tirage obsolète. | **Pending** |
+| **SLICE-C-ENF-DETECT** | **C-ENF-Detect** (G-C-1) | Prédicat `IsObsoleteForConsumption` (W-inputs, W-pool ; W-rules **exclu**) + lecture DTO/SPA uniquement. | **Authorized** (2026-10-16) — **pas Closed** avant commit dédié · [fiche](./slice-c-enf-detect.md) |
+| **SLICE-C-ENF-APPLY** | **C-ENF-Apply** (G-C-2) | Refus `ApplyDraw` si tirage obsolète (après Detect). | **Pending** — non autorisé |
+| **SLICE-C-ENF-MAT-START** | **C-ENF-Mat** + **C-ENF-Deps** (G-C-3, G-C-4) | Refus **Materialize** et **Start** lorsque la voie consomme un tirage obsolète. | **Pending** — non autorisé |
 
-**Code local non commité** — Les fichiers `DrawConsumptionConformance`, `StructureDrawConsumptionGate`, et raccordements Apply/Mat/Start constituent une **proposition technique** alignée sur ce découpage ; ils **ne sont pas** livrés tant que les slices C-ENF correspondants ne sont pas **Authorized** puis vérifiés.
+**Code local non commité** — Prototype `DrawConsumptionConformance` + gates Apply/Mat/Start : **non ratifié** ; écart documenté dans [slice-c-enf-detect.md](./slice-c-enf-detect.md) § prototype vs contrat. Livraison **Detect** = commit isolé après alignement sur la fiche.
+
+### Arbitrage Detect (2026-10-16) — synthèse
+
+- **Pool effectif** : intersection affectation ∩ composition ; pool vide autorisé ; résolution non vide ⇒ obsolete si hors pool.
+- **W-applied** : Applied ⇒ non obsolete ; **Published non Resolved** / Draft / Cancelled / NoSolution ⇒ `false`.
+- **W-rules** : hors Detect (exclusion explicite).
+- **Lecture** : `isObsoleteForConsumption` dérivé ; pas de badge, drawer, ni gate d’action dans ce slice.
+- **Tests** : neuf scénarios listés dans la fiche Detect ; G-B-3 reste hors preuve Detect.
 
 ---
 
@@ -40,4 +48,4 @@
 
 ## Références
 
-[wave-b-programme-after-gel-a.md](./wave-b-programme-after-gel-a.md) · [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) · [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md)
+[wave-b-programme-after-gel-a.md](./wave-b-programme-after-gel-a.md) · [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) · [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) · [slice-c-enf-detect.md](./slice-c-enf-detect.md)
