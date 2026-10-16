@@ -1,6 +1,6 @@
 # C-18 — `RenameStage` en phase `Completed` — audit lecture seule
 
-**Status:** **Closed** (2026-10-16) — commits `59d20b0a` (+ hub régression Draft/Suspended) — H1 + R1/R2 : domaine `CanRenameDisplayName` / `DisplayNameLocked`, hub `BuildStageActions`, tests hub + Host.
+**Status:** **Closed** (2026-10-16) — commits `59d20b0a` · `a2f16830` (hub régression Draft/Suspended) — H1 + R1/R2 : domaine `CanRenameDisplayName` / `DisplayNameLocked`, hub `BuildStageActions`, tests hub + Host.
 
 **Couverture hub `RenameStage` (post-C-18)** — `StructureUseCaseTests` : Draft · Ready · Running · Suspended → exposé ; Completed → absent ; R2 compétition clôturée + phase Running → exposé.
 
