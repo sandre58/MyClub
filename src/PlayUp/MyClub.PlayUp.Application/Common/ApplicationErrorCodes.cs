@@ -191,6 +191,11 @@ public static class ApplicationErrorCodes
     public const string CupBracketNotPowerOfTwo = "Application.CupBracketNotPowerOfTwo";
 
     /// <summary>
+    /// Gets the code when a mono-round stage uses canonical <c>S1…Sn</c> naming but an invalid entry bracket shape.
+    /// </summary>
+    public const string CupCanonicalTopologyInvalid = "Application.CupCanonicalTopologyInvalid";
+
+    /// <summary>
     /// Gets the code when Structure mutations are refused for the current lifecycle status.
     /// </summary>
     public const string StructureNotMutable = "Application.StructureNotMutable";

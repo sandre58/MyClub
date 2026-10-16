@@ -11,6 +11,7 @@ import {
   resolveEngagedPoolResolution,
   type CompositionTileMode,
 } from './compositionTilePresentation';
+import { compactCompositionProvenanceBadge } from './compositionTeamProvenanceLabel';
 
 export type CompositionTeamProvenance = {
   full: string;
@@ -30,16 +31,25 @@ export type CompositionTeamRow =
       provenance: CompositionTeamProvenance;
     };
 
+function distinctInboundPeerCount(
+  groups: readonly CompositionQualifierFeedGroup[],
+): number {
+  return new Set(groups.map((group) => group.peerId)).size;
+}
+
 export function provenanceLabelsForQualifierRule(
   group: CompositionQualifierFeedGroup,
   rule: CompositionQualifierRule,
+  distinctPeerCount = 1,
 ): CompositionTeamProvenance {
   const pathParts = [rule.badge, rule.context, rule.extra].filter(Boolean);
   const pathLabel = pathParts.join(' · ');
   const full = pathLabel ? `${group.peerName} · ${pathLabel}` : group.peerName;
-  const badgeParts = [rule.badge, rule.extra].filter(Boolean);
-  const badge =
-    badgeParts.length > 0 ? badgeParts.join(' · ') : rule.badge || group.peerName;
+  const badge = compactCompositionProvenanceBadge(
+    group.peerName,
+    rule,
+    distinctPeerCount,
+  );
   return { full, badge };
 }
 
@@ -47,9 +57,10 @@ export function inboundEntryProvenanceByEntryId(
   groups: readonly CompositionQualifierFeedGroup[],
 ): ReadonlyMap<string, CompositionTeamProvenance> {
   const map = new Map<string, CompositionTeamProvenance>();
+  const peerCount = distinctInboundPeerCount(groups);
   for (const group of groups) {
     for (const rule of group.rules) {
-      const labels = provenanceLabelsForQualifierRule(group, rule);
+      const labels = provenanceLabelsForQualifierRule(group, rule, peerCount);
       for (const seat of rule.hubSeats ?? []) {
         const entryId = seat.entryId?.trim();
         if (entryId) {
@@ -74,10 +85,15 @@ export function listCompositionTeamRows(
 
   const rows: CompositionTeamRow[] = [];
   const seenEntryIds = new Set<string>();
+  const peerCount = distinctInboundPeerCount(groups);
 
   for (const group of groups) {
     for (const rule of group.rules) {
-      const provenance = provenanceLabelsForQualifierRule(group, rule);
+      const provenance = provenanceLabelsForQualifierRule(
+        group,
+        rule,
+        peerCount,
+      );
       const seats =
         rule.hubSeats ??
         inboundSeatsForFeedRule(

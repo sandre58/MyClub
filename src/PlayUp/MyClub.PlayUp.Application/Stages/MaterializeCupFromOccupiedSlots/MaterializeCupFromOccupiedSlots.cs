@@ -52,6 +52,7 @@ public static class MaterializeCupFromOccupiedSlots
         }
 
         EnsureMutable(competition, stage, pairKeys);
+        CupCanonicalBracketTopologyGate.EnsureBeforeMaterialize(stage);
 
         if (stage.Rounds.Count == 0 || stage.Matchdays.Count > 0 || stage.Groups.Count > 0)
         {

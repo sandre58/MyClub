@@ -21,7 +21,7 @@ namespace MyClub.PlayUp.Application.Stages;
 /// Group: Apply rematerializes only entries present in the resolution (move from other group if needed);
 /// same-group is idempotent; entries outside the resolution are left untouched.
 /// Host supplies Draw entry pools (typically ⊆ qualified/progressed Entries).
-/// Cup confrontations are created via <see cref="MaterializeCupFromOccupiedSlots"/> after Slot apply.
+/// Cup match materialization runs via <see cref="MaterializeCupFromOccupiedSlots"/> after Slot apply (fixtures, not BracketPairs).
 /// </remarks>
 public static class ApplyDraw
 {

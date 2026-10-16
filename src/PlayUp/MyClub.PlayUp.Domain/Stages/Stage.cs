@@ -1469,6 +1469,43 @@ public sealed class Stage : AggregateRoot<StageId>
         ReplaceBracketPairs(BracketPair.CreateEntryRoundPairs([.. _slots.Select(s => s.SlotKey)]));
 
     /// <summary>
+    /// Appends canonical bracket pairs without structure mutability (Ready-safe add-only repair).
+    /// Caller must supply pairs validated by <see cref="CupCanonicalBracketPairEnsurer"/>.
+    /// </summary>
+    /// <param name="pairs">Pairs to append; each key must be absent and slots must not already belong to a pair.</param>
+    public void AppendCanonicalBracketPairs(IReadOnlyList<BracketPair> pairs)
+    {
+        ArgumentNullException.ThrowIfNull(pairs);
+        if (pairs.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var pair in pairs)
+        {
+            if (FindBracketPair(pair.PairKey) is not null)
+            {
+                throw new DomainException(
+                    $"BracketPair '{pair.PairKey}' already exists.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            EnsureBracketPairSlotExists(pair.SlotAKey);
+            EnsureBracketPairSlotExists(pair.SlotBKey);
+
+            if (IsSlotReferencedByBracketPair(pair.SlotAKey)
+                || IsSlotReferencedByBracketPair(pair.SlotBKey))
+            {
+                throw new DomainException(
+                    $"Cannot append BracketPair '{pair.PairKey}' because a slot is already paired.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            _bracketPairs.Add(pair);
+        }
+    }
+
+    /// <summary>
     /// Adds a resolved entry to the phase population (B1-M2 / Progression inter → population).
     /// Does not touch slots or <see cref="DirectAssignment"/>. Idempotent when already present.
     /// Allowed under the same mutability as dynamic slot resolution (Draft/Ready/Running/Suspended).

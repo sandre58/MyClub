@@ -462,11 +462,27 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-secondary);
+  line-height: 0;
+}
+
+.structure-entries__teams--band .structure-entries__team-pending-icon .ds-icon {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .structure-entries__teams--band .structure-entries__team-name--pending {
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--text-meta);
+  font-weight: inherit;
+}
+
+.structure-phase-composition__section .structure-operational-strip__section-icon {
+  color: var(--color-brand);
+}
+
+.structure-phase-composition__section .structure-operational-strip__section-icon .ds-icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .structure-entries__teams--band .structure-entries__team-warn {

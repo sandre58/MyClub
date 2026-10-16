@@ -42,6 +42,7 @@ public static class PrepareStage
         EnsureOutboundPathDestinations(target, competitionStages);
         StructurePrepareAttributionGate.Ensure(target);
         EnsurePrepareGateDiagnostics(target, competitionStages);
+        CupCanonicalBracketTopologyGate.EnsureBeforePrepare(target);
 
         if (target.Slots.Count == 0)
         {
