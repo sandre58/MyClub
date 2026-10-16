@@ -402,7 +402,7 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | Slice ID | Backlog | Status | Fiche |
 |----------|---------|--------|-------|
 | **SLICE-1-G-B-3-ENF** | G-B-3-ENF only | **Closed** (2026-10-15) | [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) |
-| **SLICE-2-G-B-1-ENF** | G-B-1-ENF only (B-Q3a) | **Authorized** (2026-10-16) — not Closed until verified commit | [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) |
+| **SLICE-2-G-B-1-ENF** | G-B-1-ENF only (B-Q3a) | **Closed** (2026-10-16) — `c1a12ec4` ; SPA reserve · §12 **G-B-1 Deferred** | [slice-2-g-b-1-enf.md](./slice-2-g-b-1-enf.md) |
 | **SLICE-3-G-OPS3-QUAL-PROG-ENF** | G-OPS3 reliquat qual/prog | **Authorized** (2026-10-16) — **G-OPS3** §12 stays **Partial** | [slice-3-g-ops3-qual-prog-enf.md](./slice-3-g-ops3-qual-prog-enf.md) |
 | **SLICE-C-ENF-DETECT** | C-ENF-Detect (G-C-1) | **Closed** (2026-10-16) — `279b6235` | [slice-c-enf-detect.md](./slice-c-enf-detect.md) |
 | **SLICE-C-ENF-APPLY** | C-ENF-Apply (G-C-2) | **Closed** (2026-10-16) — `85360d3` | [slice-c-enf-apply.md](./slice-c-enf-apply.md) |
@@ -431,7 +431,7 @@ Workbook and full **§11C** sign record **contracts** and **backlogs**. They do 
 | **G-OPS1** | Ready operational mutations | Allow without production (D2) on qual/prog/affectation replace | Shipped | **Major** | **Done** | [g-ops](./g-ops-ready-operational-mutations-and-d1.md); D2 tests |
 | **G-OPS2** | D1 upstream feed guard | Block on **feed effect** (rules or source population) | Shipped | **Major** | **Done** | `StructureReadyConsumerFeedGate`; SPA consumer names |
 | **G-OPS3** | Draw-refuse on composition change | Refuse if applied draw invalidated | **G-B-3** pool gate **Done**; qual/prog Applied gate shipped (**SLICE-3**, `472546bb`); **reliquat** draw-rules / autres commandes hors périmètre SLICE-3 | Medium | **Partial** | [decision](./g-ops3-arbitration-session.md); [slice-3](./slice-3-g-ops3-qual-prog-enf.md). **Not** **Done**. **C** separate. |
-| **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | **SLICE-2** domain guard + tests shipped (`c1a12ec4`); SPA partial | Medium | **Deferred** | Slice protocol not **Closed**; backlog SPA remains; [slice-2](./slice-2-g-b-1-enf.md) |
+| **G-B-1** | ≤1 non-cancelled draw per phase | B-Q3a invariant | **SLICE-2 Closed** — domain/app guard (`c1a12ec4`); SPA UX parity **not** in slice | Medium | **Deferred** | SPA backlog; slice **Closed** ≠ §12 **Done** — [slice-2](./slice-2-g-b-1-enf.md) |
 | **G-B-3** | Refuse pool membership change with Applied draw | G-B-3 / G-OPS3; **R-Draw1+** | `StructureAppliedDrawPoolChangeGate` on affectation replace | Medium | **Done** | **SLICE-1-G-B-3-ENF**; distinct from **C**; N2 preserved |
 | **G-C-INV** | Obsolete draw **consumption** gates | C1–C4; **R-Inv-1**, **R-Mat-block** | **C-ENF** three slices (`279b6235`, `85360d3`, `ee0fc2e6`); read/command parity Materialize + Start (Application); Host Start HTTP limit per fiche | Medium | **Done** | [slice-c-enf-detect](./slice-c-enf-detect.md) · [apply](./slice-c-enf-apply.md) · [mat-start](./slice-c-enf-mat-start.md) |
 | **G-SWISS** | Generic production guard | Must not break Swiss progressive | Swiss APIs separate today | — | **Constraint** | §8 capability grid; no global guard |
