@@ -87,29 +87,40 @@ Aucun autre écran web ne consomme `RenameStage` pour l’instant (grep codebase
 
 ---
 
-## Options d’alignement (non arbitrées)
+## Options d’alignement (terminologie produit)
 
-| Option | Hub | Application / API | Domaine | Effort / risque |
-|--------|-----|-------------------|---------|------------------|
-| **H1 — Hub seul** | Retirer `RenameStage` si `stage.Status == Completed` (et ? compétition clôturée) | Inchangé | Inchangé | Faible ; **capacité HTTP résiduelle** |
-| **H2 — Application** | Aligné sur refus executor | `RenameStageAsync` refuse si `Completed` (+ ? compétition clôturée) | Inchangé ou garde légère | Moyen ; contrat erreur à définir (`ApplicationErrorCodes`) |
-| **D — Domaine** | Aligné | Délègue au domaine | `Rename` refuse `Completed` | Plus fort ; remet en cause doc « locale at any status » |
-| **P — Produit inverse** | Garder hub + API | Garder | Garder | Réouvre O-04 UI (non retenu aujourd’hui) |
+| Option | Avantage | Limite |
+|--------|----------|--------|
+| **H1 — Interdiction serveur** | Contrat cohérent hub + API ; protège les appels directs | Définir les statuts bloquants ; tests Host ; erreur métier + HTTP |
+| **H2 — Retrait hub seul** | Diff minimal côté projection | API accepte encore le rename → capacité résiduelle vs phase figée (O-04) |
+| **D — Maintien volontaire** | Correction administrative post-clôture possible | Capacité **métier assumée**, pas écart UI ; réouvre la cible O-04 |
 
-**Points à décider explicitement** (arbitrage métier — **pas** tranchés ici) :
+**Recommandation décisionnaire (2026-10-16, non = go impl.)** — **H1** : refuser le renommage **côté serveur** pour une phase `Completed`, avec **même règle** dans `BuildStageActions` et sur `POST …/rename` (erreur explicite). Aligné avec O-04 si « Terminée » = figée.
 
-1. Le renommage en phase **Terminée** doit-il être **interdit côté serveur**, ou seulement **non exposé** (hub) / **non affiché** (SPA déjà fait) ?
-2. Même question pour **compétition** `Completed` / `Archived` : le seul token hub `RenameStage` est-il voulu (métadonnée d’archive) ?
-3. Si refus serveur : **code d’erreur**, message UX (mutation copy), mise à jour **matrice** § Meta et registre Notion C-18.
+**Deux règles métier distinctes** (ne pas les fusionner en une seule condition implicite) :
+
+| Règle | Cible recommandée (phase Completed) | Statut arbitrage |
+|-------|--------------------------------------|------------------|
+| **R1 — Phase `Completed`** | Refus domaine/API ; hub **sans** `RenameStage` | **Recommandation H1** — à confirmer au **go C-18** |
+| **R2 — Compétition `Completed` / `Archived`** | Refus si le produit considère que la clôture compétition **fige toutes les phases** (y compris phase non `Completed`) | **Ouvert** — l’audit constate le cas ; ne suffit pas à trancher seul |
+
+**Arbitrage R2 encore requis** — Exemple : compétition archivée avec une phase encore `Running` / `Ready` : rename autorisé ou refusé ? Tant que R2 n’est pas tranché, **pas de go implémentation C-18** (même si R1 est acquise).
+
+**Détails techniques si H1 validé** (à préciser à l’impl.) :
+
+- Couche de refus : domaine (`Stage.Rename`) vs application (`RenameStageAsync`) — préférer **une** source de vérité alignée matrice § Meta.
+- Code `ApplicationErrorCodes` + mapping HTTP (4xx) ; pas de changement SPA attendu (Δ-O4-1).
+- Mise à jour `phase-mutability-matrix.md` · registre Notion C-18.
 
 ---
 
-## Périmètre chantier suggéré (après décision)
+## Périmètre chantier proposé (après go C-18 + R2 tranché)
 
-- **Probable** — `StructureViewAssembler.BuildStageActions` · tests `StructureUseCaseTests` (Completed + compétition clôturée).
-- **Si H2+** — `UseCaseExecutor.RenameStageAsync` · test application · test Host rename 4xx.
-- **Si D** — `Stage.Rename` + tests domaine · sync `phase-mutability-matrix.md`.
-- **Hors scope C-18** — C-20 standing Ready ; autres tokens hub ; i18n SPA (déjà OK).
+1. Règles **R1** (+ **R2** selon arbitrage) sur `Stage.Completed` et `Competition.Completed` / `Archived`.
+2. Même règle dans `BuildStageActions` et chemin `RenameStageAsync` / domaine.
+3. Tests hub (`StructureUseCaseTests`) + Host/API (rename autorisé vs refusé).
+4. Régression : Draft, Ready, Running, Suspended inchangés.
+5. **Hors scope** — C-20 ; i18n SPA (déjà OK).
 
 ---
 
@@ -121,7 +132,7 @@ Aucun autre écran web ne consomme `RenameStage` pour l’instant (grep codebase
 
 ---
 
-## Clôture audit
+## Clôture audit / suite
 
-- **Livrable** — cette fiche uniquement (lecture seule).
-- **Suite** — décision produit sur H1 / H2 / D (ou variante) → fiche d’implémentation ou tâche Notion **C-18** avant code.
+- **Livrable audit** — constats + options (commit `c067a40e`).
+- **Implémentation** — **bloquée** jusqu’à : (1) arbitrage **R2** compétition clôturée ; (2) **go C-18** explicite confirmant H1 + R1 (+ R2).
