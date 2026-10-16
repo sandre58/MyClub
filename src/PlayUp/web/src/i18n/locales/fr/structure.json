@@ -380,6 +380,7 @@
       "ReadyConsumerWouldBreak": "Cette modification de sortie casserait une phase aval déjà prête avec des équipes issues de la qualification.",
       "AppliedDrawPoolChangeBlocked": "Le pool de composition ne peut pas être modifié tant que le tirage de cette phase est déjà appliqué.",
       "AppliedDrawFeedRulesChangeBlocked": "Les règles de qualification ou de progression ne peuvent pas être modifiées tant que le tirage de cette phase est déjà appliqué.",
+      "AppliedDrawSlotPlacementProtected": "Cette affectation est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
       "DrawObsoleteForConsumption": "Ce tirage ne correspond plus à la phase — annulez-le ou rétablissez la cohérence avant d’appliquer ou de produire des matchs."
     },
     "mutation": {
@@ -401,6 +402,7 @@
       "ReadyConsumerWouldBreakConsumers": "Phases concernées : {{phases}}.",
       "AppliedDrawPoolChangeBlocked": "Le pool de composition ne peut pas être modifié tant que le tirage de cette phase est déjà appliqué.",
       "AppliedDrawFeedRulesChangeBlocked": "Les règles de qualification ou de progression ne peuvent pas être modifiées tant que le tirage de cette phase est déjà appliqué.",
+      "AppliedDrawSlotPlacementProtected": "Cette affectation est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
       "DrawObsoleteForConsumption": "Ce tirage ne correspond plus à la phase — annulez-le ou rétablissez la cohérence avant d’appliquer ou de produire des matchs.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",

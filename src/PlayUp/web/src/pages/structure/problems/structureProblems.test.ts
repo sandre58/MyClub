@@ -197,6 +197,9 @@ describe('resolveLifecycleMutationMessageKey', () => {
     expect(resolveLifecycleMutationMessageKey('Application.AppliedDrawPoolChangeBlocked')).toBe(
       'problems.lifecycle.AppliedDrawPoolChangeBlocked',
     );
+    expect(resolveLifecycleMutationMessageKey('Application.AppliedDrawSlotPlacementProtected')).toBe(
+      'problems.lifecycle.AppliedDrawSlotPlacementProtected',
+    );
   });
 
   it('resolves G-B-3 pool change refusal without mutation unknown', () => {
@@ -205,6 +208,15 @@ describe('resolveLifecycleMutationMessageKey', () => {
       new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawPoolChangeBlocked'),
     );
     expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawPoolChangeBlocked);
+    expect(msg).not.toBe(enStructure.problems.mutation._unknown);
+  });
+
+  it('resolves B1 slot placement refusal without mutation unknown', () => {
+    const msg = resolveLifecycleMutationMessage(
+      t,
+      new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawSlotPlacementProtected'),
+    );
+    expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawSlotPlacementProtected);
     expect(msg).not.toBe(enStructure.problems.mutation._unknown);
   });
 });

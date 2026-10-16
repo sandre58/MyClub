@@ -34,6 +34,8 @@ public static class ClearSlotAssignment
                 ApplicationErrorCodes.InvalidStructureIntent);
         }
 
+        StructureAppliedDrawSlotPlacementGate.EnsureClearAllowed(stage, slotKey);
+
         stage.ClearSlotAssignment(
             slotKey,
             MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []));

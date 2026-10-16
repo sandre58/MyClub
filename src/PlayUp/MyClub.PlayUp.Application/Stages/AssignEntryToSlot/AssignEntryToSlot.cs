@@ -36,6 +36,8 @@ public static class AssignEntryToSlot
                 ApplicationErrorCodes.InvalidStructureIntent);
         }
 
+        StructureAppliedDrawSlotPlacementGate.EnsureAssignAllowed(stage, slotKey, entryId);
+
         stage.AssignEntryToSlot(
             slotKey,
             entryId,

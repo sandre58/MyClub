@@ -380,6 +380,7 @@
       "ReadyConsumerWouldBreak": "This exit change would break a ready downstream phase that already has teams from qualification.",
       "AppliedDrawPoolChangeBlocked": "You cannot change the composition pool while the draw for this phase is already applied.",
       "AppliedDrawFeedRulesChangeBlocked": "You cannot change qualification or progression rules while the draw for this phase is already applied.",
+      "AppliedDrawSlotPlacementProtected": "This placement is protected by the applied draw. It cannot be changed directly.",
       "DrawObsoleteForConsumption": "This draw no longer matches the phase — cancel it or restore coherence before applying or producing matches."
     },
     "mutation": {
@@ -401,6 +402,7 @@
       "ReadyConsumerWouldBreakConsumers": "Affected phases: {{phases}}.",
       "AppliedDrawPoolChangeBlocked": "You cannot change the composition pool while the draw for this phase is already applied.",
       "AppliedDrawFeedRulesChangeBlocked": "You cannot change qualification or progression rules while the draw for this phase is already applied.",
+      "AppliedDrawSlotPlacementProtected": "This placement is protected by the applied draw. It cannot be changed directly.",
       "DrawObsoleteForConsumption": "This draw no longer matches the phase — cancel it or restore coherence before applying or producing matches.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
       "StageNotReady": "Complete this phase’s structure before marking it ready.",

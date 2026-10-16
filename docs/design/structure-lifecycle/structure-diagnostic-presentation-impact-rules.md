@@ -183,6 +183,7 @@ IDs are for step 3 automated tests / manual recipe. **Gates unchanged** — asse
 | `Application.SlotFeedsInvalid` | Prepare slot resolver | yes | yes | prepare |
 | `Application.ReadyConsumerWouldBreak` | G-OPS2 | yes + consumers | yes | qual, prog, composition |
 | `Application.AppliedDrawPoolChangeBlocked` | G-B-3 (`StructureAppliedDrawPoolChangeGate`) | yes | **no** | composition (pool replace) |
+| `Application.AppliedDrawSlotPlacementProtected` | G-OPS3 B1 (`StructureAppliedDrawSlotPlacementGate`) | yes | **no** | manual Cup placement |
 | `Application.RevertToDraftBlocked` | Revert | yes (`ProductionPresent`) | **no** | lifecycle |
 | `Application.RevertToReadyBlocked` | Suspend / revert ready | yes (`MatchLifecycleStarted`) | **no** | lifecycle |
 | `Application.StartBlockedUnmaterialized` | Start guard | yes | **no** | lifecycle |

@@ -22,6 +22,7 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
   'Application.ReadyConsumerWouldBreak': 'ReadyConsumerWouldBreak',
   'Application.AppliedDrawPoolChangeBlocked': 'AppliedDrawPoolChangeBlocked',
   'Application.AppliedDrawFeedRulesChangeBlocked': 'AppliedDrawFeedRulesChangeBlocked',
+  'Application.AppliedDrawSlotPlacementProtected': 'AppliedDrawSlotPlacementProtected',
   'Application.DrawObsoleteForConsumption': 'DrawObsoleteForConsumption',
 };
 

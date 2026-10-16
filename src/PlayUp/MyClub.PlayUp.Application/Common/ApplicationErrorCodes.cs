@@ -201,6 +201,11 @@ public static class ApplicationErrorCodes
     public const string AppliedDrawFeedRulesChangeBlocked = "Application.AppliedDrawFeedRulesChangeBlocked";
 
     /// <summary>
+    /// Gets the code when a Cup slot assignment would break a placement guaranteed by an Applied draw (G-OPS3 B1).
+    /// </summary>
+    public const string AppliedDrawSlotPlacementProtected = "Application.AppliedDrawSlotPlacementProtected";
+
+    /// <summary>
     /// Gets the code when a draw resolution is obsolete for consumption (C-ENF-Apply).
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";
