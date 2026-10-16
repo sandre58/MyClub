@@ -1,10 +1,10 @@
 # O-04 — Fiche Terminée (`Completed`) — cadrage Δ-O4-1 / Δ-O4-2
 
-**Status:** **O-04 validé** (2026-10-16) — SPA livré (**Δ-O4-2** `ec45ed60` · **Δ-O4-1** `68d0f50a`) ; recette comparative Championnat **OK** (deux passes DevRunner). **C-18** / domaine inchangés — prochain chantier distinct.
+**Status:** **O-04 validé** (2026-10-16) — SPA livré (**Δ-O4-2** `ec45ed60` · **Δ-O4-1** `68d0f50a`) ; recette comparative Championnat **OK** (deux passes DevRunner). **C-18** livré séparément (`59d20b0a`, PR #54).
 
 **Décision produit (gelée)** — Notion [Matrice UI Structure — § O-04 / Δ-O4](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) (2026-10-15) : phase **Terminée** = lecture seule **allégée** ; pas d’édition construction / production / sorties / awards / réglement ; **nom non modifiable en UI** ; état final tirage / places **consultable** sans signaux d’action opérationnelle.
 
-**Ordre de livraison validé** — (1) **Δ-O4-2** strip placement / tirage → (2) **Δ-O4-1** densité mode audit. **C-18** (`RenameStage` hub Completed) **hors** ces tranches.
+**Ordre de livraison validé** — (1) **Δ-O4-2** strip placement / tirage → (2) **Δ-O4-1** densité mode audit. **C-18** était **hors** ces tranches (clôturé post-merge).
 
 ---
 
@@ -16,7 +16,7 @@
 | Diagnostics structure hub | Bucket `hidden` en Completed | `structureDiagnosticPresentationPolicy.ts` · R-Pres-ST-1 |
 | Production Matchs | Pas materialize / demat | `structureMatchsSectionUi.ts` |
 | Matchs Terminée | Jauge exploitation + lien voir matchs | `StructurePhaseOperationalStrip.tsx` |
-| Hub actions | `[RenameStage]` seul | `StructureViewAssembler.BuildStageActions` |
+| Hub actions Completed | `[]` (rename via **C-18**) | `StructureViewAssembler.BuildStageActions` |
 | Réglement strip | Digest sans crayons (Δ-01) | tokens Replace* absents |
 | O-03 / O-03 pause / drawer | Hors périmètre Terminée | lots clôturés |
 
@@ -24,18 +24,17 @@
 
 ## Exclusions communes (toutes tranches)
 
-- **C-18** — retrait `RenameStage` du hub Completed (écart **capacité** ; traitement ultérieur).
-- **C-20** — standing rules domaine en Ready.
+- **C-18** — **Closed** (PR #54 · `59d20b0a`) — voir [c-18-rename-stage-completed-audit.md](./c-18-rename-stage-completed-audit.md).
+- **C-20** — standing rules domaine en Ready (audit ouvert).
 - **Domaine / API / Host** — pas d’assouplissement ni de nouveau garde-fou métier dans Δ-O4-*.
 - **Diagnostics policy**, **compteurs**, **drawer** attention, **sévérités** wire.
 - **Revert\*** / reprise lifecycle (arbitrages O* distincts).
 - Refonte schéma, matchs aside (déjà partiellement conformes), Δ-03, P2 tirage.
 
-### C-18 — règle de cadrage UI
+### C-18 — règle de cadrage UI (historique Δ-O4 → livré)
 
-- **Δ-O4** exige : **pas de crayon rename** sur le titre en `Completed` (affordance SPA).
-- **Ne pas** retirer `RenameStage` du hub dans Δ-O4-1 / Δ-O4-2.
-- Masquer le crayon **ne** fige pas le domaine : toute autre voie de rename reste hors scope de ces tranches.
+- **Δ-O4-1** : pas de crayon rename en `Completed` (SPA).
+- **C-18** (post O-04) : hub + API alignés — `RenameStage` refusé en `Completed`.
 
 ---
 
@@ -43,7 +42,7 @@
 
 **Objectif** — Supprimer les **faux signaux d’action** sur le cluster Places / Draw en `Completed`, tout en gardant la **preuve** de l’état final (tirage appliqué ou non, occupation des places selon read model).
 
-**Livraison** — SPA uniquement (`StructurePhaseFiche`, `StructurePhaseOperationalStrip`, tests strip). Pas de hub/API. **Renommer la phase** en UI reste visible en `Completed` → **Δ-O4-1** ; **C-18** inchangé.
+**Livraison** — SPA uniquement (`StructurePhaseFiche`, `StructurePhaseOperationalStrip`, tests strip). Hub/API rename → **C-18** (hors tranche Δ-O4-2).
 
 ### Invariants (non négociables)
 
@@ -125,7 +124,7 @@ Seed recommandé (un seul `--reset`) :
 
 | Sous-chantier | Implémentation |
 |---------------|----------------|
-| Rename UI | `StructurePhaseFiche.tsx` — `canRename={canRename && !isCompletedStage}` vers le header ; hub `RenameStage` inchangé (**C-18**) |
+| Rename UI | `StructurePhaseFiche.tsx` — `canRename={canRename && !isCompletedStage}` ; alignement hub/API → **C-18** |
 | Copy jauges Completed | `structureOperationalStripMessages.ts` + i18n `structure.json` (places `finalEmpty` / `finalPartial` ; composition population final shortfall/surplus) ; ton jauge adouci (`CompositionPopulationGauge`, pool Places strip via `isCompletedStageStatus`) |
 | Densité (1 élément) | Masquer la **jauge population composition** en `Completed` quand le bloc placement est affiché (`showPlacementBlock`) — redondante avec la strip Places sur la paire running/finished |
 | Hors scope | Pas de CSS dédié ; pas de masquage liste équipes / eyebrow qualifiés ; pas de changement `StructurePhaseCompositionBand` layout |
@@ -197,7 +196,7 @@ Environnement : DevRunner `PlayUpDev` aligné Host · Host `http://localhost:528
 | **Δ-O4-2** | Strip **27/27** | Matrice multi-scénarios **4/5** (réserve scénario 2 — seed) | **Closed** |
 | **Δ-O4-1** | Ciblés **41/41** | Comparative Championnat **2/2** | **Closed** |
 
-**O-04** — Pas de réouverture en l’absence d’anomalie constatée en recette. **C-18** — alignement hub/API `RenameStage` en `Completed` : audit contrat et décision serveur **hors** périmètre O-04 SPA.
+**O-04** — Pas de réouverture en l’absence d’anomalie constatée en recette. **C-18** — **Closed** (PR #54).
 
 ---
 

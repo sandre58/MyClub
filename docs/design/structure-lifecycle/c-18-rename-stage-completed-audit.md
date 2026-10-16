@@ -1,4 +1,4 @@
-# C-18 — `RenameStage` en phase `Completed` — audit lecture seule
+# C-18 — `RenameStage` en phase `Completed` — **Closed**
 
 **Status:** **Closed** (2026-10-16) — commits `59d20b0a` · `a2f16830` (hub régression Draft/Suspended) — H1 + R1/R2 : domaine `CanRenameDisplayName` / `DisplayNameLocked`, hub `BuildStageActions`, tests hub + Host.
 
@@ -137,4 +137,5 @@ Aucun autre écran web ne consomme `RenameStage` pour l’instant (grep codebase
 ## Clôture audit / suite
 
 - **Livrable audit** — constats + options (commit `c067a40e`).
-- **Implémentation** — **bloquée** jusqu’au **go C-18** explicite (H1 + R1 + R2 arbitrés 2026-10-16).
+- **Implémentation** — **livré** merge PR #54 · commit principal `59d20b0a` (H1 + R1 + R2 statut phase seul).
+- **Suite capacité** — **C-20** (audit distinct).
