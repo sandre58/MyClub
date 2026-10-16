@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Authorized** (DM arbitration 2026-10-16) — **not Closed** until conformance verified and dedicated commit |
+| **Status** | **Authorized** (DM arbitration 2026-10-16) — **not Closed** per slice protocol; shipped `472546bb` |
 | **Slice ID** | `SLICE-3-G-OPS3-QUAL-PROG-ENF` |
 | **Allowed backlog** | Reliquat **G-OPS3** — `ReplaceStageQualificationRules` / `ReplaceStageProgressionRules` only |
 | **Contract** | Refuse **change** to qual/prog rules when a non-cancelled draw is **Applied** on the stage (`DrawAppliedState`); **no-op** replace when rules equal |
@@ -22,7 +22,8 @@
 
 ---
 
-## Preuve (working tree — non commité)
+## Preuve (commit `472546bb`)
 
 - [`StructureAppliedDrawFeedRulesChangeGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/StructureAppliedDrawFeedRulesChangeGate.cs)
 - [`ReplaceStageQualificationRulesGOps3Tests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/ReplaceStageQualificationRulesGOps3Tests.cs)
+- [`ReplaceStageQualificationRulesGOps3EndpointTests`](../../../tests/MyClub.PlayUp.Host.Tests/ReplaceStageQualificationRulesGOps3EndpointTests.cs) (HTTP 409)

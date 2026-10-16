@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|--------|
-| **Status** | **Authorized** (DM arbitration 2026-10-16) — **not Closed** until Release tests + dedicated commit + review |
+| **Status** | **Authorized** (DM arbitration 2026-10-16) — **not Closed** per slice protocol; shipped `c1a12ec4` |
 | **Slice ID** | `SLICE-2-G-B-1-ENF` |
 | **Allowed backlog** | `G-B-1-ENF` only |
 | **Contract** | B-Q3a — at most **one** non-cancelled draw per phase |
@@ -15,7 +15,7 @@
 | Wire `Stage.NonCancelledDrawAlreadyExists` | SPA-only enforcement |
 | Tests domaine + application | Concurrency globale (limitation G-B-3) |
 
-## Preuve (working tree — non commité)
+## Preuve (commit `c1a12ec4`)
 
 - Domaine : [`Stage.CreateDraw`](../../../src/PlayUp/MyClub.PlayUp.Domain/Stages/Stage.cs)
 - Tests : [`StageDrawTests`](../../../tests/MyClub.PlayUp.Domain.Tests/Stages/StageDrawTests.cs), [`CreateDrawTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/CreateDrawTests.cs)
