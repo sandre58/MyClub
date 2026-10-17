@@ -673,7 +673,9 @@ Secondary transitions (reverts) must not hide primary without explicit product l
 
 ### H — Start readiness by format (V2)
 
-**Status (2026-10-17):** table records **observed code + read projection** for tests and UI. **Product arbitration** on whether Cup Start should require “all determined materialized”, “first round playable”, or both remains **open** — this appendix does **not** decide § H.
+**DECIDED (2026-10-17) — Option A:** production complète sur le périmètre **déterminé et éligible** avant `StartStage` ; matérialisation batch **Ready** only ; Cup conserve en plus `InitialRoundNotPlayable` (jouabilité R0). Poules/Championship : même complétude ; Swiss hors périmètre. **Notion:** [Décision § H — Start et production (Option A)](https://app.notion.com/p/3fc75fb92d10817f99bcc929ee77aba7). Any Start with remaining eligible production or batch materialize in `Running` requires a **separate** product decision (mutability / D2).
+
+**Status:** table below records **observed code + read projection** aligned with the decision above.
 
 | Format | Start **allowed** when (code today) | Start **blocked** — read `disabledReasonCode` |
 | :----- | :---------------------------------- | :-------------------------------------------- |
@@ -724,7 +726,7 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 
 **Implementation (2026-10-13):** Lifecycle V2 — anticipated + mutation copy (`structureProblems/*`), prepare gates on read (`StructureStageLifecycleAssembler` + `StructurePrepareAttributionGate`), Materialize **Ready-only** read mirror, tests (`StructureStageLifecycleAssemblerTests`, `StructurePrepareAttributionTests`, `StructurePage` cross-surface). **2c** Places N label still **blocked** métier.
 
-**Implementation (2026-10-17):** Fiche owns lifecycle chrome; `#operational-matchs` uses `omitLifecycle` — tests `50c4354f`; Start gate recipes `10166fbb`, `32c6186e`, `fb14feb7`. **Follow-up (out of scope):** remediation link visible label for `InitialRoundNotPlayable` (i18n).
+**Implementation (2026-10-17):** Fiche owns lifecycle chrome; `#operational-matchs` uses `omitLifecycle` — tests `50c4354f`; Start gate recipes `10166fbb`, `32c6186e`, `fb14feb7`; i18n remédiation IRR `4f7328ab`. **§ H product decision (Option A):** Notion [3fc75fb9](https://app.notion.com/p/3fc75fb92d10817f99bcc929ee77aba7) — no code change required.
 
 **After formal Notion validation:** add `Notion validation: YYYY-MM-DD` and list any deviations from shipped behaviour.
 
