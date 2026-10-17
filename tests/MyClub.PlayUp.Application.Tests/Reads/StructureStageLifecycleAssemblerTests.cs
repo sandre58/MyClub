@@ -106,6 +106,43 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
+    public void Assemble_Ready_groups_partial_production_blocks_Start_with_matchs_remediation()
+    {
+        var situation = TestCompetition.Create("Groups partial production", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Groups(2, 2, "Poules"));
+        var stage = situation.PrimaryStage!;
+        var entries = situation.Competition.Entries.OrderBy(entry => entry.Id.Value).ToArray();
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[0].Id);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[1].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[2].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[3].Id);
+        situation.PreparePrimaryStage();
+
+        stage.Status.Should().Be(StageStatus.Ready);
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle.Should().NotBeNull();
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+
+        hub.Lifecycle.Transition.Remediation.Should().NotBeNull();
+        hub.Lifecycle.Transition.Remediation!.Href.Should().Contain("section=matchs");
+        hub.Lifecycle.Transition.Remediation.Href.Should().NotContain("operational-placement");
+
+        hub.Materialize.Should().NotBeNull();
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        hub.Materialize.EligibleCount.Should().Be(2);
+        hub.Materialize.DeterminedCount.Should().Be(2);
+        hub.Materialize.MaterializedCount.Should().Be(0);
+        hub.Materialize.CommandCode.Should().Be(OverviewAssembler.ActionMaterializeMatches);
+    }
+
+    [Fact]
     public void Assemble_Running_with_open_match_blocks_Complete()
     {
         var (competition, stage, match) = CreateRunningWithMatch(MatchStatus.Scheduled);
