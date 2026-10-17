@@ -14,7 +14,7 @@ export type AsideMatchsStripContent = {
 };
 
 /**
- * Pure contract for what the aside Matchs strip can present (O-MAT-VIS-1 / O-MAT-IMPL-1).
+ * Pure contract for what the aside Matchs strip can present (O-MAT-VIS-1).
  * Shared with fiche tile visibility — not used for composition layout.
  */
 export function resolveAsideMatchsStripContent(

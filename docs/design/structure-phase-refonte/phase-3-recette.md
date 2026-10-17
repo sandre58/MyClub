@@ -10,7 +10,7 @@ Authority: [actions-permissions-inventory](./actions-permissions-inventory.md), 
 
 | Area | Tests |
 |------|--------|
-| Aside Matchs visibility | `structureMatchsSectionUi.test.ts` (`shouldShowAsideMatchsTile`) |
+| Aside Matchs visibility | `structureMatchsSectionUi.test.ts` (`resolveAsideMatchsStripContent`, `shouldShowAsideMatchsTile`) |
 | Matchs aside O-MAT-VIS-1 recette (SPA render) | `phase3MatchsAsideRecette.test.tsx` — **not** a browser/DevRunner substitute |
 | Operational strip / materialize | `StructurePhaseOperationalStrip.test.tsx` |
 | Lifecycle chrome | `StructurePhaseMatchsLifecycleBlock.test.tsx`, `StructurePhaseDraftMatchsPrepare.test.tsx` |
@@ -33,18 +33,18 @@ Do not replace these with empty snapshots; extend when adding behaviour.
 
 Authority: **O-MAT-VIS-1** (Notion Matrice UI + `structure-phase-lifecycle-ui.md` § Matchs aside tile). Tile only when useful content is **rendered**; lifecycle stays on fiche header.
 
-#### 2026-10-17 — Matchs aside recette pass (working tree; not committed)
+#### 2026-10-17 — Matchs aside recette pass
 
 **What this pass is**
 
 | Layer | Replayed in this pass? | Role |
 |-------|------------------------|------|
-| Vitest `phase3MatchsAsideRecette.test.tsx` (8 cases) | **Yes** | SPA **component render** of aside strip + one header case; verdict on **DOM presented**, not `shouldShowAsideMatchsTile` alone |
-| Vitest `StructurePhaseOperationalStrip.test.tsx` (Suspended / materialize) | **No** (existing suite; not re-run as part of sign-off narrative) | Prior coverage for production rules on strip |
+| Vitest `phase3MatchsAsideRecette.test.tsx` (8 cases) | **Yes** | SPA **component render** of aside strip + one header case; verdict on **DOM presented** |
+| Vitest `structureMatchsSectionUi.test.ts` + `StructurePhaseOperationalStrip.test.tsx` | **Yes** (with recette file) | Tile visibility (`resolveAsideMatchsStripContent`) + strip production rules |
 | .NET `Qual_form_champ_*` Development.Tests | **Yes** (3 tests) | Hub read model for seeds partial / full / running |
 | DevRunner + browser (Structure fiche end-to-end) | **No** | **Distinct** manual pass — still required for full Phase 3 sign-off |
 
-**Reproducibility (Vitest)**
+**Reproducibility (Vitest)** — not a browser substitute:
 
 ```bash
 cd src/PlayUp/web
@@ -52,26 +52,25 @@ npm run test -- --run src/pages/structure/phase3MatchsAsideRecette.test.tsx
 npm run test -- --run src/pages/structure/structureMatchsSectionUi.test.ts src/pages/structure/StructurePhaseOperationalStrip.test.tsx src/pages/structure/phase3MatchsAsideRecette.test.tsx
 ```
 
-(Verified 2026-10-17: 8/8 isolated; 46/46 with the two related structure test files — no ordering dependency.)
+(Verified 2026-10-17: 8/8 isolated; **48/48** with the two related structure test files.)
 
-**O-MAT-IMPL-1 — confirmed visibility gaps (product contract unchanged)**
+**O-MAT-IMPL-1 — tile visibility (closed in SPA)**
 
-Strip production rules are **not** implicated; gaps are **fiche-level tile visibility** vs useful content presented in aside.
+Fiche-level tile visibility now follows **`resolveAsideMatchsStripContent`** / `shouldShowAsideMatchsTile(stage, presentation)` (shared with `MatchesColumn` aside rendering). Strip **production** rules unchanged; composition layout still uses `shouldShowMatchsSection`.
 
-| Case | Scenario | Product (O-MAT-VIS-1) | Observed | Tracking |
-|------|----------|----------------------|----------|----------|
-| 3 | Champ Ready, `placesN` / placement signal, no `materialize` | Hide tile | Strip body empty; `shouldShowAsideMatchsTile` can still be true | **O-MAT-IMPL-1** |
-| 5 | Swiss Ready (`swiss-ready`) | Hide tile (2a) | Strip body empty; tile flag can still be true at fiche | **O-MAT-IMPL-1** |
-| 6 | Ready, lifecycle/composition signal only | Hide tile | Strip body empty; tile flag true via lifecycle Ready | **O-MAT-IMPL-1** |
-
-No SPA functional change in this recette artefact; alignment of `shouldShowAsideMatchsTile` is a **separate** implementation track after scope validation.
+| Case | Scenario | Product (O-MAT-VIS-1) | After fix |
+|------|----------|----------------------|-----------|
+| 3 | Champ Ready, `placesN` / placement signal, no `materialize` | Hide tile | Tile hidden — Vitest |
+| 5 | Swiss Ready (`swiss-ready`) | Hide tile (2a) | Tile hidden — Vitest |
+| 6 | Ready, lifecycle signal only (no production body) | Hide tile | Tile hidden — Vitest |
 
 **Checklist items touched by this pass**
 
-- [x] Case 1 (Draft): tile hidden; Prepare on header — Vitest + `shouldShowAsideMatchsTile`.
+- [x] Case 1 (Draft): tile hidden; Prepare on header — Vitest.
 - [x] Cases 2, 4, 7, 8: production / progression in strip; no lifecycle CTAs in aside — Vitest.
-- [ ] Case 7 **Suspended**: not replayed here — use `ctrl-o3-mat-recette` + `StructurePhaseOperationalStrip.test.tsx` / [ctrl-o3-mat-devrunner-recette.md](../structure-lifecycle/ctrl-o3-mat-devrunner-recette.md).
-- [ ] « Voir les matchs » link (Completed toolbar) — **not** exercised in `phase3MatchsAsideRecette.test.tsx`.
+- [x] Cases 3, 5, 6: empty aside shell no longer shown at fiche — Vitest (`shouldShowAsideMatchsTile` + strip render).
+- [ ] Case 7 **Suspended**: not replayed in recette file — use `ctrl-o3-mat-recette` + `StructurePhaseOperationalStrip.test.tsx` / [ctrl-o3-mat-devrunner-recette.md](../structure-lifecycle/ctrl-o3-mat-devrunner-recette.md).
+- [ ] « Voir les matchs » link (Completed toolbar) — unit coverage in `structureMatchsSectionUi.test.ts`; **browser** not replayed in recette file.
 - [ ] Full browser/DevRunner pass — **outstanding** for formal Phase 3 closure.
 
 ### Aside — Flux

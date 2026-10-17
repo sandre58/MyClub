@@ -81,11 +81,11 @@ These must stay **separate** in copy and layout; none replaces another.
 
 **Invariants:** I-3 — primary Materialize iff `presentation === 'actionable'`; dematerialize separate (`dematerialize.enabled`). Lifecycle and remediations stay on fiche header only.
 
-**Technical mirror (not normative UX):** `shouldShowAsideMatchsTile`, `shouldShowProductionInMatchsSection`, `shouldShowMatchExploitationProgress`, `classifyMaterializePresentation` — `structureMatchsSectionUi.ts`, `structureMaterializeCopy.ts`, `StructurePhaseOperationalStrip.tsx`, `swissMatchsGuidance.ts`.
+**Technical mirror (not normative UX):** `resolveAsideMatchsStripContent`, `shouldShowAsideMatchsTile(stage, presentation)`, `shouldShowProductionInMatchsSection`, `shouldShowMatchExploitationProgress`, `classifyMaterializePresentation` — `structureMatchsSectionUi.ts`, `structureMaterializeCopy.ts`, `StructurePhaseOperationalStrip.tsx`, `swissMatchsGuidance.ts`.
 
-**Tests:** `structureMatchsSectionUi.test.ts`, `StructurePhaseOperationalStrip.test.tsx` (`omitLifecycle`, Suspended production).
+**Tests:** `structureMatchsSectionUi.test.ts`, `StructurePhaseOperationalStrip.test.tsx` (`omitLifecycle`, Suspended production), `phase3MatchsAsideRecette.test.tsx`.
 
-**Implementation gap:** **O-MAT-IMPL-1** — code may show the tile without useful content (lifecycle/placement-only Ready, Swiss Ready); fixing that is a separate change from this contract.
+**SPA alignment:** fiche tile visibility uses the same resolver as aside strip content (useful production, progression, view-matches link). Composition strip still gates on `shouldShowMatchsSection(stage)`.
 
 ---
 
@@ -753,7 +753,7 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 
 **Implementation (2026-10-17):** Fiche owns lifecycle chrome; `#operational-matchs` uses `omitLifecycle` — tests `50c4354f`; Start gate recipes `10166fbb`, `32c6186e`, `fb14feb7`; i18n remédiation IRR `4f7328ab`. **§ H product decision (Option A):** Notion [3fc75fb9](https://app.notion.com/p/3fc75fb92d10817f99bcc929ee77aba7) — no code change required.
 
-**Documentation (2026-10-17):** **O-MAT-VIS-1** aside tile visibility (useful content) — product decision in Notion Matrice UI; this appendix § Matchs aside tile; **O-MAT-IMPL-1** tracks code alignment. No SPA change from doc sync alone.
+**Documentation (2026-10-17):** **O-MAT-VIS-1** aside tile visibility (useful content) — product decision in Notion Matrice UI; this appendix § Matchs aside tile. SPA tile alignment shipped (`resolveAsideMatchsStripContent`). Formal Phase 3 browser/DevRunner checks remain in `phase-3-recette.md`.
 
 **After formal Notion validation:** add `Notion validation: YYYY-MM-DD` and list any deviations from shipped behaviour.
 

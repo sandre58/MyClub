@@ -80,8 +80,8 @@ Tests: `drawUi.test.ts` (`resolveDrawCreateGate`). **Gap:** no dedicated test th
 
 | Indicator | Authority | Rule | Consumers | Missing / conflict |
 |-----------|-----------|------|-----------|-------------------|
-| Tile visibility (product) | **O-MAT-VIS-1** — useful presented content only | Not Draft; not lifecycle/composition/placement signals alone; Swiss Ready 2a — see Notion Matrice UI + `structure-phase-lifecycle-ui.md` § Matchs aside tile | `#operational-matchs` | **O-MAT-IMPL-1** — `shouldShowAsideMatchsTile` may diverge until aligned |
-| Tile visibility (technical) | `shouldShowAsideMatchsTile(stage, signals)` | Signals from `StructurePhaseFiche`; not normative UX | `StructurePhaseSchematicAndAside.tsx` | Same gap as product row |
+| Tile visibility (product) | **O-MAT-VIS-1** — useful presented content only | Not Draft; not lifecycle/composition/placement signals alone; Swiss Ready 2a — see Notion Matrice UI + `structure-phase-lifecycle-ui.md` § Matchs aside tile | `#operational-matchs` | — |
+| Tile visibility (technical) | `resolveAsideMatchsStripContent` → `shouldShowAsideMatchsTile(stage, presentation)` | Shared with `MatchesColumn` aside body/toolbar; `presentation` from `materializePresentationForStage` | `StructurePhaseFiche.tsx`, `StructurePhaseSchematicAndAside.tsx` | — |
 | Strip body (composition layout) | `shouldShowMatchsSection(stage)` | Legacy composition strip / inner gate — **not** aside tile product rule | Composition operational bar | — |
 | Materialize / dematerialize | `stage.materialize`, `stage.dematerialize` | `classifyMaterializePresentation`, mutations in strip | `StructurePhaseOperationalStrip.tsx` | — |
 | Production gauge | `materialize.determinedCount`, `materializedCount` | `structureMaterializeCopy.ts` | Matchs cluster | Frozen running state hides primary |
