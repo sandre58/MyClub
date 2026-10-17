@@ -1,8 +1,8 @@
 # Cup lifecycle — Start, mutability, recovery (product arbitration)
 
 **Status:** **Pending** product arbitration (no implementation until Notion decision is validated).  
-**Product SoT:** Notion **Décisions** — page title TBD; paste arbitration body there first, then set the link below.  
-**Notion link:** _TBD after decision page is created_
+**Product SoT:** [Notion — [Play'Up] Cup — Start, mutabilité (D2) et récupération](https://app.notion.com/p/3fc75fb92d1081d587e9ed0b5b59e4a2) (`💭 Proposée`).  
+**Notion link:** https://app.notion.com/p/3fc75fb92d1081d587e9ed0b5b59e4a2
 
 **Reference rules (remain in force until this decision overrides them):**
 
