@@ -926,7 +926,7 @@ public static class StructureViewAssembler
                     continue;
                 }
 
-                if (destination.FindSlot(path.Destination.SlotKey!) is null)
+                if (destination.FindSlot(path.Destination.SlotKey) is null)
                 {
                     issues.Add(IssueMissingQualificationDestinationSlot);
                 }
@@ -962,7 +962,7 @@ public static class StructureViewAssembler
                             issues.Add(IssueMissingProgressionDestinationGroup);
                         }
                     }
-                    else if (stage.FindSlot(path.Destination.SlotKey!) is null)
+                    else if (stage.FindSlot(path.Destination.SlotKey) is null)
                     {
                         issues.Add(IssueMissingProgressionDestinationSlot);
                     }
@@ -983,7 +983,7 @@ public static class StructureViewAssembler
                         issues.Add(IssueMissingProgressionDestinationGroup);
                     }
                 }
-                else if (destination.FindSlot(path.Destination.SlotKey!) is null)
+                else if (destination.FindSlot(path.Destination.SlotKey) is null)
                 {
                     issues.Add(IssueMissingProgressionDestinationSlot);
                 }

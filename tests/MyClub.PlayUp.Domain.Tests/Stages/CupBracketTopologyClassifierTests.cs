@@ -6,7 +6,6 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Tests.Common;
 using Xunit;
@@ -99,7 +98,7 @@ public sealed class CupBracketTopologyClassifierTests
         stage.ReplaceBracketPairs(
         [
             new BracketPair("P1", "S1", "S2"),
-            new BracketPair("P2", "S3", "S4"),
+            new BracketPair("P2", "S3", "S4")
         ]);
 
         CupCanonicalBracketPairEnsurer.EnsureMissing(stage).Should().Be(2);
@@ -131,7 +130,7 @@ public sealed class CupBracketTopologyClassifierTests
         stage.ReplaceBracketPairs(
         [
             new BracketPair("P1", "S1", "S2"),
-            new BracketPair("P2", "S3", "S4"),
+            new BracketPair("P2", "S3", "S4")
         ]);
 
         CupCanonicalBracketPairEnsurer.EnsureMissing(stage).Should().Be(2);
@@ -153,6 +152,14 @@ public sealed class CupBracketTopologyClassifierTests
         stage.BracketPairs.Should().ContainSingle();
     }
 
+    private static void AddCanonicalSlots(Stage stage, int count)
+    {
+        for (var index = 1; index <= count; index++)
+        {
+            stage.AddSlot($"S{index}");
+        }
+    }
+
     private Stage CreateMonoRoundShell()
     {
         var stage = Stage.Create(
@@ -162,13 +169,5 @@ public sealed class CupBracketTopologyClassifierTests
             _clock);
         stage.AddRound("Tour", _clock);
         return stage;
-    }
-
-    private static void AddCanonicalSlots(Stage stage, int count)
-    {
-        for (var index = 1; index <= count; index++)
-        {
-            stage.AddSlot($"S{index}");
-        }
     }
 }

@@ -41,7 +41,7 @@ public sealed class ProgressionPathProductionParticipationWitnessTests
     [Fact]
     public void Wc2_progressed_entry_on_attached_downstream_match_is_participating()
     {
-        var (source, destination, path, home, away, fixtureId, match, summaries) = CreatePopulationScenario();
+        var (source, destination, path, home, _, fixtureId, match, summaries) = CreatePopulationScenario();
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         var other = EntryId.New();
@@ -129,7 +129,7 @@ public sealed class ProgressionPathProductionParticipationWitnessTests
     [Fact]
     public void Wc2_form_resolution_not_aligned_with_replay_is_not_participating()
     {
-        var (source, destination, path, home, away, fixtureId, match, _) = CreateFormScenario();
+        var (source, destination, path, _, _, fixtureId, match, _) = CreateFormScenario();
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         var summariesAwayWins = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
@@ -272,6 +272,21 @@ public sealed class ProgressionPathProductionParticipationWitnessTests
         diff.Added.Should().ContainSingle(p => p.SourcePairKey == "P3");
     }
 
+    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> BuildSummaries(Stage source, Match match) =>
+        new()
+        {
+            [source.Id] =
+            [
+                new MatchSummaryRow(
+                    match.Id,
+                    source.Id,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result)
+            ]
+        };
+
     private (
         Stage Source,
         Stage Destination,
@@ -335,21 +350,6 @@ public sealed class ProgressionPathProductionParticipationWitnessTests
         var summaries = BuildSummaries(source, match);
         return (source, destination, path, home, away, fixture.Id, match, summaries);
     }
-
-    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> BuildSummaries(Stage source, Match match) =>
-        new()
-        {
-            [source.Id] =
-            [
-                new MatchSummaryRow(
-                    match.Id,
-                    source.Id,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result)
-            ]
-        };
 
     private (
         Stage Source,

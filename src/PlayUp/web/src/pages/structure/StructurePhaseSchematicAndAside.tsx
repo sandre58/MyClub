@@ -207,8 +207,7 @@ export function StructurePhaseSchematicAndAside({
                       iconSize="lg"
                       icon={<EmptySelectionIcon />}
                       title={t('fiche.flux.sortiesEmptyTitle')}
-                      hint={t('fiche.flux.sortiesEmptyHint')}
-                    />
+                    >{t('fiche.flux.sortiesEmptyHint')}</EmptyState>
                   }
                   attentionBanner={exitsBanners}
                 >
@@ -241,8 +240,7 @@ export function StructurePhaseSchematicAndAside({
                       iconSize="lg"
                       icon={<EmptySelectionIcon />}
                       title={t('fiche.flux.attributionEmptyTitle')}
-                      hint={t('fiche.flux.attributionEmptyHint')}
-                    />
+                    >{t('fiche.flux.attributionEmptyHint')}</EmptyState>
                   }
                   attentionBanner={attributionBanners}
                 >

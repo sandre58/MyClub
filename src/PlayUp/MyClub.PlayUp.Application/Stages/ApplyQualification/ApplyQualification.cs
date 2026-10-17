@@ -145,7 +145,7 @@ public static class ApplyQualification
                 continue;
             }
 
-            if (destination.FindSlot(path.Destination.SlotKey!) is null)
+            if (destination.FindSlot(path.Destination.SlotKey) is null)
             {
                 throw new ApplicationFailureException(
                     $"Qualification destination slot '{path.Destination.SlotKey}' was not found on stage '{destination.Id}'.",

@@ -312,26 +312,8 @@
 }
 
 .ds-empty:not(.ds-empty--compact) .ds-empty__icon--lg .ds-icon {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-
-.ds-empty--compact .ds-empty__title {
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-}
-
-.ds-empty--compact .ds-empty__hint {
-  font-size: 0.6875rem;
-  line-height: var(--leading-tight);
-  max-width: none;
-  text-align: start;
-}
-
-.ds-empty--compact .ds-empty__body {
-  font-size: var(--text-meta);
-  max-width: none;
+  width: 2.95rem;
+  height: 2.95rem;
 }
 
 .ds-empty__copy {

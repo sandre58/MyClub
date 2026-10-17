@@ -35,12 +35,9 @@ public static class CupBracketTopologyClassifier
 
         var slotKeys = stage.Slots.Select(slot => slot.SlotKey).ToArray();
         var expected = BracketPair.CreateEntryRoundPairs(slotKeys);
-        if (!ExistingPairsAlignWithExpected(stage, expected))
-        {
-            return CupBracketTopologyKind.ExplicitTopology;
-        }
-
-        return stage.BracketPairs.Count == expected.Count
+        return !ExistingPairsAlignWithExpected(stage, expected)
+            ? CupBracketTopologyKind.ExplicitTopology
+            : stage.BracketPairs.Count == expected.Count
             ? CupBracketTopologyKind.CanonicalComplete
             : CupBracketTopologyKind.CanonicalIncomplete;
     }
@@ -63,10 +60,7 @@ public static class CupBracketTopologyClassifier
     }
 
     private static bool IsMonoRoundKnockout(Stage stage) =>
-        !stage.IsSwiss
-        && stage.Rounds.Count == 1
-        && stage.Groups.Count == 0
-        && stage.Matchdays.Count == 0;
+        stage is { IsSwiss: false, Rounds.Count: 1, Groups.Count: 0, Matchdays.Count: 0 };
 
     private static bool TryParseCanonicalSlotSequence(Stage stage, out int slotCount)
     {
@@ -101,12 +95,7 @@ public static class CupBracketTopologyClassifier
         }
 
         var suffix = slotKey[1..];
-        if (!int.TryParse(suffix, out number) || number < 1)
-        {
-            return false;
-        }
-
-        return true;
+        return int.TryParse(suffix, out number) && number >= 1;
     }
 
     private static bool ExistingPairsAlignWithExpected(

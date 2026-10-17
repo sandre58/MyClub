@@ -26,13 +26,7 @@ public static class CupCanonicalBracketPairEnsurer
 
         var expected = CupBracketTopologyClassifier.ExpectedCanonicalPairs(stage);
         var missing = new List<BracketPair>(expected.Count);
-        foreach (var pair in expected)
-        {
-            if (stage.FindBracketPair(pair.PairKey) is null)
-            {
-                missing.Add(pair);
-            }
-        }
+        missing.AddRange(expected.Where(pair => stage.FindBracketPair(pair.PairKey) is null));
 
         if (missing.Count == 0)
         {

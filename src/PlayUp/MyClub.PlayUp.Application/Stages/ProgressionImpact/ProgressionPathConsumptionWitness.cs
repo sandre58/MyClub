@@ -52,7 +52,7 @@ internal static class ProgressionPathConsumptionWitness
         }
 
         var afterPath = FindPathBySourceKey(afterRules, pathBefore);
-        return afterPath is null || !afterPath.Equals(pathBefore)
+        return afterPath?.Equals(pathBefore) != true
             ? Verdict.ConsumedLoss
             : Verdict.NotConsumed;
     }
@@ -95,24 +95,7 @@ internal static class ProgressionPathConsumptionWitness
     private static Verdict Max(Verdict a, Verdict b) =>
         (Verdict)Math.Max((int)a, (int)b);
 
-    private static ProgressionPath? FindPathBySourceKey(ProgressionRules? afterRules, ProgressionPath pathBefore)
-    {
-        if (afterRules is null)
-        {
-            return null;
-        }
-
-        foreach (var candidate in afterRules.Paths)
-        {
-            if (candidate.SourcePairKey == pathBefore.SourcePairKey
-                && candidate.Outcome == pathBefore.Outcome)
-            {
-                return candidate;
-            }
-        }
-
-        return null;
-    }
+    private static ProgressionPath? FindPathBySourceKey(ProgressionRules? afterRules, ProgressionPath pathBefore) => afterRules?.Paths.FirstOrDefault(candidate => candidate.SourcePairKey == pathBefore.SourcePairKey && candidate.Outcome == pathBefore.Outcome);
 
     private static bool TryResolveExpectedEntryFromReplay(
         ProgressionPath path,
@@ -137,33 +120,18 @@ internal static class ProgressionPathConsumptionWitness
     private static bool DestinationShowsSatisfactionForPath(
         ProgressionPath path,
         StageId sourceStageId,
-        Stage destinationStage)
-    {
-        foreach (var entry in destinationStage.CompositionEntries)
-        {
-            if (DestinationSatisfaction.EvaluateProgression(
-                    destinationStage,
-                    sourceStageId,
-                    path,
-                    entry.EntryId)
-                == DestinationSatisfaction.Kind.Satisfied)
-            {
-                return true;
-            }
-        }
-
-        if (path.Destination.TargetsSlot
-            && destinationStage.FindSlot(path.Destination.SlotKey)?.EntryId is { } slotEntry
-            && DestinationSatisfaction.EvaluateProgression(
-                destinationStage,
-                sourceStageId,
-                path,
-                slotEntry)
-            == DestinationSatisfaction.Kind.Satisfied)
-        {
-            return true;
-        }
-
-        return false;
-    }
+        Stage destinationStage) =>
+        destinationStage.CompositionEntries.Any(entry => DestinationSatisfaction.EvaluateProgression(
+                                                             destinationStage,
+                                                             sourceStageId,
+                                                             path,
+                                                             entry.EntryId)
+                                                         == DestinationSatisfaction.Kind.Satisfied) || (path.Destination.TargetsSlot
+              && destinationStage.FindSlot(path.Destination.SlotKey)?.EntryId is { } slotEntry
+              && DestinationSatisfaction.EvaluateProgression(
+                  destinationStage,
+                  sourceStageId,
+                  path,
+                  slotEntry)
+              == DestinationSatisfaction.Kind.Satisfied);
 }

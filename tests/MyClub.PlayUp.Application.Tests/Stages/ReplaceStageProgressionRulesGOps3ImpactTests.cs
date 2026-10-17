@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -43,7 +42,7 @@ public sealed class ReplaceStageProgressionRulesGOps3ImpactTests
             EmptyDestinationMatches(stages, quarter.Id));
 
         act.Should().NotThrow();
-        quarter.Regulation.ProgressionRules!.Paths.Should().ContainSingle();
+        quarter.Regulation.ProgressionRules.Paths.Should().ContainSingle();
     }
 
     [Fact]
@@ -87,7 +86,7 @@ public sealed class ReplaceStageProgressionRulesGOps3ImpactTests
         ApplyDraw.Execute(quarter, draw.Id, _clock);
         quarter.Prepare(_clock);
 
-        var before = quarter.Regulation.ProgressionRules!;
+        var before = quarter.Regulation.ProgressionRules;
         var act = () => ReplaceStageProgressionRules.Execute(
             quarter,
             [
@@ -107,7 +106,7 @@ public sealed class ReplaceStageProgressionRulesGOps3ImpactTests
     public void R_Prog_OPS3_B2_refuses_removing_consumed_population_path()
     {
         var (source, destination, stages, match) = CreateAppliedPopulationProgression();
-        var before = source.Regulation.ProgressionRules!;
+        var before = source.Regulation.ProgressionRules;
 
         var act = () => ReplaceStageProgressionRules.Execute(
             source,
@@ -146,7 +145,7 @@ public sealed class ReplaceStageProgressionRulesGOps3ImpactTests
     public void R_Prog_OPS3_B1neg_allows_additive_path_when_downstream_slot_has_direct_feed_only()
     {
         var (source, destination, final, stages) = CreateCupWithDirectSlotOccupantAndProgressionToOtherSlot();
-        var draw = PublishSlotDraw(source, source.AffectationAuthoring.Select(e => e.EntryId).ToArray());
+        var draw = PublishSlotDraw(source, [.. source.AffectationAuthoring.Select(e => e.EntryId)]);
         ApplyDraw.Execute(source, draw.Id, _clock);
 
         var act = () => ReplaceStageProgressionRules.Execute(
@@ -168,7 +167,7 @@ public sealed class ReplaceStageProgressionRulesGOps3ImpactTests
     public void R_Prog_OPS3_B1_refuses_clear_when_progression_fed_slot_is_consumed()
     {
         var (source, destination, stages, match) = CreateAppliedSlotProgression();
-        var before = source.Regulation.ProgressionRules!;
+        var before = source.Regulation.ProgressionRules;
 
         var act = () => ReplaceStageProgressionRules.Execute(
             source,

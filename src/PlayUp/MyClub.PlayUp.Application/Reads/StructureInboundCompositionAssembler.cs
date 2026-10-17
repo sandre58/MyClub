@@ -100,10 +100,10 @@ public static class StructureInboundCompositionAssembler
                 competitionStages));
         }
 
-        StructureInboundQualificationPathDto? qualificationPath = qualPath is not null
+        var qualificationPath = qualPath is not null
             ? StructureInboundFeedPathProjection.MapQualificationPath(qualPath, sourceStage)
             : null;
-        StructureInboundProgressionPathDto? progressionPath = progPath is not null
+        var progressionPath = progPath is not null
             ? StructureInboundFeedPathProjection.MapProgressionPath(progPath, sourceStage)
             : null;
 

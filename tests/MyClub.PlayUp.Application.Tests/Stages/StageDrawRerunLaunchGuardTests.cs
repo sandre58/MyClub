@@ -127,7 +127,7 @@ public sealed class StageDrawRerunLaunchGuardTests
         stage.AssignEntryToSlot(stage.Slots[0].SlotKey, e1.Id);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
-        var inputs = DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot, DrawInputsIntent.Default);
+        var inputs = DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot);
 
         ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Default, [stage]);
 

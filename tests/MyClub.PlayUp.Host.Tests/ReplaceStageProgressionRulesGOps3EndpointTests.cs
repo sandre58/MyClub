@@ -27,7 +27,7 @@ public sealed class ReplaceStageProgressionRulesGOps3EndpointTests(HostPostgresF
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 16, 20, 0, 0, TimeSpan.Zero));
 
     [IntegrationFact]
-    public async Task Put_progression_intents_when_draw_applied_and_downstream_draft_returns_204_R_Prog_OPS3_A1()
+    public async Task Put_progression_intents_when_draw_applied_and_downstream_draft_returns_204_R_Prog_OPS3_A1_Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedAppliedDrawWithoutProgressionAsync(factory);
@@ -60,7 +60,7 @@ public sealed class ReplaceStageProgressionRulesGOps3EndpointTests(HostPostgresF
     }
 
     [IntegrationFact]
-    public async Task Put_clear_progression_when_downstream_production_participates_returns_409_ProgressionDownstreamProductionBlocked_R_Prog_OPS3_2c()
+    public async Task Put_clear_progression_when_downstream_production_participates_returns_409_ProgressionDownstreamProductionBlocked_R_Prog_OPS3_2c_Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedDownstreamProductionParticipationWithoutApplyProgressionAsync(factory);
@@ -77,7 +77,7 @@ public sealed class ReplaceStageProgressionRulesGOps3EndpointTests(HostPostgresF
     }
 
     [IntegrationFact]
-    public async Task Put_clear_progression_after_population_consumed_returns_409_ProgressionFeedConsumed_R_Prog_OPS3_B2()
+    public async Task Put_clear_progression_after_population_consumed_returns_409_ProgressionFeedConsumed_R_Prog_OPS3_B2_Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedPopulationProgressionConsumedAsync(factory);
@@ -189,14 +189,14 @@ public sealed class ReplaceStageProgressionRulesGOps3EndpointTests(HostPostgresF
 
         var home = situation.Competition.Entries[0].Id;
         var away = situation.Competition.Entries[1].Id;
-        var fixture = source.AddFixture(source.Rounds[0].Id, _clock, "QF-A", "QF-B", "P1");
+        var addFixture = source.AddFixture(source.Rounds[0].Id, _clock, "QF-A", "QF-B", "P1");
         var match = Match.Create(situation.Competition.Id, source.Id, home, away, _clock);
-        source.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        source.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         situation.TrackMatch(match);
 
-        ApplyProgressionOutcome.Execute(source, fixture.Id, [match], [source, destination], _clock);
+        ApplyProgressionOutcome.Execute(source, addFixture.Id, [match], [source, destination], _clock);
 
         await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
 

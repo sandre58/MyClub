@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Stages;
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -25,22 +24,9 @@ public static class StageDrawBracketLaunchClassifier
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
 
-        if (stage.Regulation.DrawRules is null)
-        {
-            return null;
-        }
-
-        if (stage.Slots.Count > 0)
-        {
-            return ClassifySlots(stage, competitionStages);
-        }
-
-        if (stage.Groups.Count > 0)
-        {
-            return ClassifyGroups(stage);
-        }
-
-        return null;
+        return stage.Regulation.DrawRules is null
+            ? null
+            : stage.Slots.Count > 0 ? ClassifySlots(stage, competitionStages) : stage.Groups.Count > 0 ? ClassifyGroups(stage) : null;
     }
 
     /// <summary>
@@ -95,8 +81,6 @@ public static class StageDrawBracketLaunchClassifier
                     break;
                 case FeedResolutionStatus.MultipleFeeds:
                 case FeedResolutionStatus.InvalidFeed:
-                    feedInvalid++;
-                    break;
                 default:
                     feedInvalid++;
                     break;
@@ -115,7 +99,7 @@ public static class StageDrawBracketLaunchClassifier
     {
         var pool = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
         var occupiedByEntry = stage.Groups.Sum(group =>
-            group.EntryIds.Count(entryId => pool.Contains(entryId)));
+            group.EntryIds.Count(pool.Contains));
 
         var entryPlaceCount = pool.Count;
         var vacant = entryPlaceCount - occupiedByEntry;
@@ -136,13 +120,10 @@ public static class StageDrawBracketLaunchClassifier
         int vacant)
     {
         var blocking = occupiedByEntry + reservedByStructuralFeed + feedInvalid;
-        if (blocking + vacant != entryPlaceCount)
-        {
-            throw new InvalidOperationException(
-                "Bracket launch facts must partition entry places (blocking + vacant = entryPlaceCount).");
-        }
-
-        return new StageDrawBracketLaunchFactsDto(
+        return blocking + vacant != entryPlaceCount
+            ? throw new InvalidOperationException(
+                "Bracket launch facts must partition entry places (blocking + vacant = entryPlaceCount).")
+            : new StageDrawBracketLaunchFactsDto(
             entryPlaceCount,
             occupiedByEntry,
             reservedByStructuralFeed,

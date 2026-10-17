@@ -24,7 +24,7 @@ public sealed class ProgressionPathConsumptionWitnessTests
     [Fact]
     public void Wc1_satisfied_path_removed_yields_consumed_loss()
     {
-        var (source, destination, path, home, away, fixtureId, match, summaries) = CreateAppliedPopulationScenario();
+        var (source, destination, _, _, _, fixtureId, match, summaries) = CreateAppliedPopulationScenario();
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         var diff = ProgressionRulesPathDiff.Compare(source.Regulation.ProgressionRules, afterRules: null);
@@ -43,18 +43,17 @@ public sealed class ProgressionPathConsumptionWitnessTests
     [Fact]
     public void Wc1_undecided_fixture_yields_ambiguous()
     {
-        var (source, destination, path, _, _, fixtureId, match, _) = CreateAppliedPopulationScenario();
+        var (source, destination, _, _, _, fixtureId, match, _) = CreateAppliedPopulationScenario();
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         var diff = ProgressionRulesPathDiff.Compare(source.Regulation.ProgressionRules, afterRules: null);
-        var emptySummaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
 
         var verdict = ProgressionPathConsumptionWitness.EvaluateTouchedPath(
             diff.Touched[0],
             afterRules: null,
             source,
             destination,
-            emptySummaries);
+            new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>());
 
         verdict.Should().Be(ProgressionPathConsumptionWitness.Verdict.ConsumedAmbiguous);
     }
@@ -75,7 +74,7 @@ public sealed class ProgressionPathConsumptionWitnessTests
 
         var home = EntryId.New();
         var away = EntryId.New();
-        var (fixtureId, match, _) = AttachFinishedMatch(source, "P1", "QF-A", "QF-B", home, away);
+        var (fixtureId, match) = AttachFinishedMatch(source, "P1", "QF-A", "QF-B", home, away);
         var summaries = BuildSummaries(source, match);
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, sf], _clock);
 
@@ -111,7 +110,7 @@ public sealed class ProgressionPathConsumptionWitnessTests
         var pathP2 = new ProgressionPath("P2", ProgressionOutcome.Winner, ProgressionDestination.ForPopulation(destination.Id));
         source.ReplaceProgressionRules(new ProgressionRules([pathP1, pathP2]), _clock);
 
-        var (fixtureP1, matchP1, _) = AttachFinishedMatch(source, "P1", "P1-A", "P1-B", EntryId.New(), EntryId.New());
+        var (fixtureP1, matchP1) = AttachFinishedMatch(source, "P1", "P1-A", "P1-B", EntryId.New(), EntryId.New());
         ApplyProgressionOutcome.Execute(source, fixtureP1, [matchP1], [source, destination], _clock);
 
         var after = new ProgressionRules(
@@ -137,7 +136,7 @@ public sealed class ProgressionPathConsumptionWitnessTests
     [Fact]
     public void Wc1_no_op_rules_yields_not_consumed()
     {
-        var (source, destination, _, _, _, fixtureId, match, summaries) = CreateAppliedPopulationScenario();
+        var (source, destination, _, _, _, fixtureId, match, _) = CreateAppliedPopulationScenario();
         ApplyProgressionOutcome.Execute(source, fixtureId, [match], [source, destination], _clock);
 
         var before = source.Regulation.ProgressionRules!;
@@ -150,7 +149,7 @@ public sealed class ProgressionPathConsumptionWitnessTests
     public void Wc1_path_not_applied_yields_not_consumed_on_removal()
     {
         var (source, destination, _, _, _, _, _, summaries) = CreateAppliedPopulationScenario();
-        var before = source.Regulation.ProgressionRules!;
+        var before = source.Regulation.ProgressionRules;
 
         var diff = ProgressionRulesPathDiff.Compare(before, afterRules: null);
         var verdict = ProgressionPathConsumptionWitness.EvaluateTouchedPath(
@@ -162,6 +161,21 @@ public sealed class ProgressionPathConsumptionWitnessTests
 
         verdict.Should().Be(ProgressionPathConsumptionWitness.Verdict.NotConsumed);
     }
+
+    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> BuildSummaries(Stage source, Match match) =>
+        new()
+        {
+            [source.Id] =
+            [
+                new MatchSummaryRow(
+                    match.Id,
+                    source.Id,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result)
+            ]
+        };
 
     private (
         Stage Source,
@@ -185,27 +199,12 @@ public sealed class ProgressionPathConsumptionWitnessTests
         source.ReplaceProgressionRules(new ProgressionRules([path]), _clock);
         var home = EntryId.New();
         var away = EntryId.New();
-        var (fixtureId, match, _) = AttachFinishedMatch(source, "P1", "QF-A", "QF-B", home, away);
+        var (fixtureId, match) = AttachFinishedMatch(source, "P1", "QF-A", "QF-B", home, away);
         var summaries = BuildSummaries(source, match);
         return (source, destination, path, home, away, fixtureId, match, summaries);
     }
 
-    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> BuildSummaries(Stage source, Match match) =>
-        new()
-        {
-            [source.Id] =
-            [
-                new MatchSummaryRow(
-                    match.Id,
-                    source.Id,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result)
-            ]
-        };
-
-    private (FixtureId FixtureId, Match Match, EntryId Home) AttachFinishedMatch(
+    private (FixtureId FixtureId, Match Match) AttachFinishedMatch(
         Stage stage,
         string pairKey,
         string slotA,
@@ -218,7 +217,7 @@ public sealed class ProgressionPathConsumptionWitnessTests
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
-        return (fixture.Id, match, home);
+        return (fixture.Id, match);
     }
 
     private Stage CreateKnockoutStage(CompetitionId competitionId, string name, string[] slotKeys)

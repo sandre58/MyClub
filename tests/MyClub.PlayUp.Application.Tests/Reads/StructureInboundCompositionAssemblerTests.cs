@@ -7,7 +7,6 @@
 using FluentAssertions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -39,7 +38,7 @@ public sealed class StructureInboundCompositionAssemblerTests
                     1,
                     QualificationSource.FromGroup(groupA.Id),
                     new QualificationSelection(SelectionMode.Range, 1, 2),
-                    QualificationDestination.ForPopulation(final.Id)),
+                    QualificationDestination.ForPopulation(final.Id))
             ]),
             _clock);
 
@@ -49,10 +48,10 @@ public sealed class StructureInboundCompositionAssemblerTests
             [source, final]);
 
         inbound.Should().NotBeNull();
-        inbound!.Rules.Should().ContainSingle();
+        inbound.Rules.Should().ContainSingle();
         var rule = inbound.Rules[0];
         rule.QualificationPath.Should().NotBeNull();
-        rule.QualificationPath!.Order.Should().Be(1);
+        rule.QualificationPath.Order.Should().Be(1);
         rule.QualificationPath.SelectionMode.Should().Be(SelectionMode.Range);
         rule.QualificationPath.SelectionValue.Should().Be(1);
         rule.QualificationPath.SelectionEndValue.Should().Be(2);

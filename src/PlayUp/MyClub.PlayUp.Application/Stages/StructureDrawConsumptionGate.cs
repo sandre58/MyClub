@@ -34,7 +34,7 @@ internal static class StructureDrawConsumptionGate
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        return stage.Draws.Where(draw => draw.Status != DrawStatus.Cancelled).Any(draw => DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage));
+        return stage.Draws.Any(draw => draw.Status != DrawStatus.Cancelled && DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage));
     }
 
     internal static void EnsureNoObsoleteDrawsOnStage(Stage stage)

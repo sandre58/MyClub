@@ -39,35 +39,26 @@ internal static class ProgressionPathProductionParticipationWitness
         ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(destinationMaterializedParticipants);
 
-        if (!ProgressionDestinationAttachedProduction.HasAttachedProduction(
+        return !ProgressionDestinationAttachedProduction.HasAttachedProduction(
                 destinationStage,
-                destinationMaterializedParticipants))
-        {
-            return Verdict.NotApplicable;
-        }
-
-        if (pathBefore.Destination.TargetsSlot)
-        {
-            return EvaluateSlotParticipation(
+                destinationMaterializedParticipants)
+            ? Verdict.NotApplicable
+            : pathBefore.Destination.TargetsSlot
+            ? EvaluateSlotParticipation(
                 pathBefore,
                 sourceStage,
                 destinationStage,
                 competitionStages,
                 destinationMaterializedParticipants,
-                upstreamMatchSummariesByStage);
-        }
-
-        if (pathBefore.Destination.TargetsForm)
-        {
-            return EvaluateFormParticipation(
+                upstreamMatchSummariesByStage)
+            : pathBefore.Destination.TargetsForm
+            ? EvaluateFormParticipation(
                 pathBefore,
                 sourceStage,
                 destinationStage,
                 destinationMaterializedParticipants,
-                upstreamMatchSummariesByStage);
-        }
-
-        return EvaluatePopulationOrGroupParticipation(
+                upstreamMatchSummariesByStage)
+            : EvaluatePopulationOrGroupParticipation(
             pathBefore,
             sourceStage,
             destinationStage,
@@ -91,17 +82,11 @@ internal static class ProgressionPathProductionParticipationWitness
         var fingerprint = FormPathResolutionKey.FromProgression(sourceStage.Id, pathBefore);
         var resolution = destinationStage.FormPathResolutions
             .FirstOrDefault(candidate => candidate.PathFingerprint == fingerprint);
-        if (resolution is null)
-        {
-            return Verdict.ParticipationAmbiguous;
-        }
-
-        if (!resolution.EntryId.Equals(expectedEntry))
-        {
-            return Verdict.NotParticipating;
-        }
-
-        return ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
+        return resolution is null
+            ? Verdict.ParticipationAmbiguous
+            : !resolution.EntryId.Equals(expectedEntry)
+            ? Verdict.NotParticipating
+            : ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
             destinationStage,
             expectedEntry,
             destinationMaterializedParticipants)
@@ -125,43 +110,24 @@ internal static class ProgressionPathProductionParticipationWitness
 
         var snapshot = SlotFeedSnapshotAssembler.Assemble(destinationStage, competitionStages);
         var resolution = SlotFeedResolver.Resolve(snapshot, slotKey);
-        if (resolution.Status == FeedResolutionStatus.Unique
-            && resolution.Source is not null
-            && resolution.Source.Kind == FeedKind.Progression)
-        {
-            if (!InboundFeedSeatResolver.SlotFeedMatchesProgression(
+        return resolution is { Status: FeedResolutionStatus.Unique, Source.Kind: FeedKind.Progression }
+            ? !InboundFeedSeatResolver.SlotFeedMatchesProgression(
                     destinationStage,
                     competitionStages,
                     sourceStage.Id,
-                    pathBefore))
-            {
-                return Verdict.NotParticipating;
-            }
-
-            if (!TryResolveExpectedEntryFromReplay(pathBefore, sourceStage, upstreamMatchSummariesByStage, out var expectedEntry))
-            {
-                return Verdict.ParticipationAmbiguous;
-            }
-
-            return ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
+                    pathBefore)
+                ? Verdict.NotParticipating
+                : !TryResolveExpectedEntryFromReplay(pathBefore, sourceStage, upstreamMatchSummariesByStage, out var expectedEntry)
+                ? Verdict.ParticipationAmbiguous
+                : ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
                 destinationStage,
                 expectedEntry,
                 destinationMaterializedParticipants)
                 ? Verdict.Participating
-                : Verdict.NotParticipating;
-        }
-
-        if (resolution.Status != FeedResolutionStatus.Unique)
-        {
-            return Verdict.ParticipationAmbiguous;
-        }
-
-        if (!TryResolveExpectedEntryFromReplay(pathBefore, sourceStage, upstreamMatchSummariesByStage, out var replayedEntry))
-        {
-            return Verdict.ParticipationAmbiguous;
-        }
-
-        return ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
+                : Verdict.NotParticipating
+            : resolution.Status != FeedResolutionStatus.Unique || !TryResolveExpectedEntryFromReplay(pathBefore, sourceStage, upstreamMatchSummariesByStage, out var replayedEntry)
+            ? Verdict.ParticipationAmbiguous
+            : ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
             destinationStage,
             replayedEntry,
             destinationMaterializedParticipants)
@@ -182,22 +148,26 @@ internal static class ProgressionPathProductionParticipationWitness
             return Verdict.ParticipationAmbiguous;
         }
 
-        if (requireGroupMembership)
+        if (!requireGroupMembership)
         {
-            var groupId = pathBefore.Destination.GroupId;
-            if (groupId is null)
-            {
-                return Verdict.ParticipationAmbiguous;
-            }
-
-            var group = destinationStage.FindGroup(groupId.Value);
-            if (group is null || !group.EntryIds.Contains(expectedEntry))
-            {
-                return Verdict.NotParticipating;
-            }
+            return ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
+                destinationStage,
+                expectedEntry,
+                destinationMaterializedParticipants)
+                ? Verdict.Participating
+                : Verdict.NotParticipating;
         }
 
-        return ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
+        var groupId = pathBefore.Destination.GroupId;
+        if (groupId is null)
+        {
+            return Verdict.ParticipationAmbiguous;
+        }
+
+        var group = destinationStage.FindGroup(groupId.Value);
+        return group?.EntryIds.Contains(expectedEntry) != true
+            ? Verdict.NotParticipating
+            : ProgressionDestinationAttachedProduction.EntryAppearsOnAttachedProduction(
             destinationStage,
             expectedEntry,
             destinationMaterializedParticipants)

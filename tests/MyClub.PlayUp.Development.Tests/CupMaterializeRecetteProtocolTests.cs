@@ -49,9 +49,9 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         result.AlreadyComplete.Should().BeFalse();
         result.CreatedMatches.Should().HaveCount(1, "recette C1 uses SingleLeg tie format");
 
-        var fixture = stage.FindFixtureByBracketPairKey(row.Key);
-        fixture.Should().NotBeNull();
-        fixture!.Attachments.Should().ContainSingle();
+        var fixtureByBracketPairKey = stage.FindFixtureByBracketPairKey(row.Key);
+        fixtureByBracketPairKey.Should().NotBeNull();
+        fixtureByBracketPairKey!.Attachments.Should().ContainSingle();
     }
 
     [Fact]
@@ -95,47 +95,55 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
     }
 
     [Fact]
-    public async Task R6_cup_draw_obsolete_read_and_command_alignAsync()
+    public Task R6_cup_draw_obsolete_read_and_command_align()
     {
-        var competition = CreateCompetition.Execute("recette-r6-cup", _clock);
-        var stage = ConfigureStructure.Execute(
-            competition,
-            null,
-            StructureIntent.Cup(4),
-            _clock).Stage;
-        stage.AddSlot("SF1-A");
-        stage.AddSlot("SF1-B");
-        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
-        var ids = Enumerable.Range(0, 2)
-            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
-            .ToArray();
-        stage.ReplaceAffectationAuthoring(ids, _clock);
-        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
-        ConfigureDrawInputs.Execute(stage, draw.Id, DrawInputs.ForSlot(ids));
-        stage.RecordDrawResolution(
-            draw.Id,
-            DrawResolution.ResolvedSlots(
-            [
-                new SlotDrawPlacement(ids[0], "SF1-A"),
-                new SlotDrawPlacement(ids[1], "SF1-B")
-            ]),
-            _clock);
-        PublishDraw.Execute(stage, draw.Id, _clock);
-        stage.SeedEntryRoundBracketPairs();
-        stage.ApplyResolvedEntry("SF1-A", ids[0], _clock);
-        stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
-        PrepareStage.Execute(stage, [stage], _clock);
-        stage.ReplaceAffectationAuthoringOperationally([ids[0]], _clock);
-        DrawConsumptionConformance.IsObsoleteForConsumption(stage.GetDraw(draw.Id), stage).Should().BeTrue();
+        try
+        {
+            var competition = CreateCompetition.Execute("recette-r6-cup", _clock);
+            var stage = ConfigureStructure.Execute(
+                competition,
+                null,
+                StructureIntent.Cup(4),
+                _clock).Stage;
+            stage.AddSlot("SF1-A");
+            stage.AddSlot("SF1-B");
+            ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+            var ids = Enumerable.Range(0, 2)
+                .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
+                .ToArray();
+            stage.ReplaceAffectationAuthoring(ids, _clock);
+            var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+            ConfigureDrawInputs.Execute(stage, draw.Id, DrawInputs.ForSlot(ids));
+            stage.RecordDrawResolution(
+                draw.Id,
+                DrawResolution.ResolvedSlots(
+                [
+                    new SlotDrawPlacement(ids[0], "SF1-A"),
+                    new SlotDrawPlacement(ids[1], "SF1-B")
+                ]),
+                _clock);
+            PublishDraw.Execute(stage, draw.Id, _clock);
+            stage.SeedEntryRoundBracketPairs();
+            stage.ApplyResolvedEntry("SF1-A", ids[0], _clock);
+            stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+            PrepareStage.Execute(stage, [stage], _clock);
+            stage.ReplaceAffectationAuthoringOperationally([ids[0]], _clock);
+            DrawConsumptionConformance.IsObsoleteForConsumption(stage.GetDraw(draw.Id), stage).Should().BeTrue();
 
-        var hub = AssembleHub(competition, [stage], []);
-        hub.Materialize.Should().NotBeNull();
-        hub.Materialize!.CommandEnabled.Should().BeFalse();
-        hub.Materialize.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.DrawObsoleteForConsumption);
+            var hub = AssembleHub(competition, [stage], []);
+            hub.Materialize.Should().NotBeNull();
+            hub.Materialize.CommandEnabled.Should().BeFalse();
+            hub.Materialize.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.DrawObsoleteForConsumption);
 
-        var act = () => MaterializeCupFromOccupiedSlots.Execute(competition, stage, ["P1"], [], _clock);
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
+            var act = () => MaterializeCupFromOccupiedSlots.Execute(competition, stage, ["P1"], [], _clock);
+            act.Should().Throw<ApplicationFailureException>()
+                .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
+            return Task.CompletedTask;
+        }
+        catch (Exception exception)
+        {
+            return Task.FromException(exception);
+        }
     }
 
     [Fact]
@@ -164,7 +172,7 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
     }
 
     [Fact]
-    public async Task R5a_p2_materializes_when_p1_award_unreachableAsync()
+    public void R5a_p2_materializes_when_p1_award_unreachable()
     {
         var competition = CreateCompetition.Execute("recette-r5a", _clock);
         var stage = CreateSemiStage(competition);
@@ -217,7 +225,7 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
     }
 
     [Fact]
-    public async Task R5b_harness_gmat2_refuses_when_eligible_intersects_unreachableAsync()
+    public void R5b_harness_gmat2_refuses_when_eligible_intersects_unreachable()
     {
         var competition = CreateCompetition.Execute("recette-r5b", _clock);
         var stage = Stage.Create(
@@ -318,33 +326,21 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         return new RecetteCupScope(scope, competition, stage, hub, matchList, matches);
     }
 
-    private sealed class RecetteCupScope : IAsyncDisposable
+    private sealed class RecetteCupScope(
+        IServiceScope scope,
+        Competition competition,
+        Stage stage,
+        StructureStageHubSummaryDto hub,
+        IReadOnlyList<Match> matches,
+        IMatchRepository matchRepository)
+        : IAsyncDisposable
     {
-        private readonly IServiceScope _scope;
-        private readonly IMatchRepository _matches;
-        private readonly StageId _stageId;
+        private readonly StageId _stageId = stage.Id;
 
-        public RecetteCupScope(
-            IServiceScope scope,
-            Competition competition,
-            Stage stage,
-            StructureStageHubSummaryDto hub,
-            IReadOnlyList<Match> matches,
-            IMatchRepository matchRepository)
-        {
-            _scope = scope;
-            Competition = competition;
-            Stage = stage;
-            Hub = hub;
-            Matches = matches;
-            _matches = matchRepository;
-            _stageId = stage.Id;
-        }
-
-        public Competition Competition { get; }
-        public Stage Stage { get; }
-        public StructureStageHubSummaryDto Hub { get; }
-        public IReadOnlyList<Match> Matches { get; }
+        public Competition Competition { get; } = competition;
+        public Stage Stage { get; } = stage;
+        public StructureStageHubSummaryDto Hub { get; } = hub;
+        public IReadOnlyList<Match> Matches { get; } = matches;
 
         public void Deconstruct(
             out Competition competition,
@@ -359,11 +355,11 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         }
 
         public async Task<IReadOnlyList<Match>> ReloadMatchesAsync() =>
-            await _matches.ListByStageForUpdateAsync(_stageId);
+            await matchRepository.ListByStageForUpdateAsync(_stageId);
 
         public ValueTask DisposeAsync()
         {
-            _scope.Dispose();
+            scope.Dispose();
             return ValueTask.CompletedTask;
         }
     }
@@ -392,22 +388,5 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
                 [stage.Id] = rows
             });
         return view.Stages.Single(s => s.StageId == stage.Id.Value);
-    }
-
-    private static async Task<IReadOnlyList<MatchSummaryRow>> BuildMatchSummariesAsync(
-        IMatchRepository matches,
-        StageId stageId)
-    {
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
-        return stageMatches
-            .Select(match => new MatchSummaryRow(
-                match.Id,
-                match.StageId,
-                match.Status,
-                match.HomeEntryId,
-                match.AwayEntryId,
-                match.Result,
-                match.HasObservedLive))
-            .ToArray();
     }
 }

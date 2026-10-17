@@ -28,21 +28,14 @@ internal static class ProgressionImpactMatchSummaries
             .ToArray();
 
         return rows.Length == 0
-            ? new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>()
+            ? []
             : new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> { [upstream.Id] = rows };
     }
 
     internal static IReadOnlyList<Match> MatchesForStage(
         StageId stageId,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage)
-    {
-        if (matchesByStage is null || !matchesByStage.TryGetValue(stageId, out var matches))
-        {
-            return [];
-        }
-
-        return matches;
-    }
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage) =>
+        matchesByStage is null || !matchesByStage.TryGetValue(stageId, out var matches) ? [] : matches;
 
     private static MatchSummaryRow ToRow(Match match) =>
         new(

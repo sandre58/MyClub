@@ -1957,7 +1957,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="slotKey">The slot key.</param>
     /// <returns>The slot, or <see langword="null"/>.</returns>
-    public Slot? FindSlot(string slotKey)
+    public Slot? FindSlot(string? slotKey)
     {
         var key = Slot.NormalizeKey(slotKey);
         return _slots.FirstOrDefault(s => string.Equals(s.SlotKey, key, StringComparison.Ordinal));
@@ -3284,7 +3284,7 @@ public sealed class Stage : AggregateRoot<StageId>
                             StageErrorCodes.GroupNotFound);
                     }
                 }
-                else if (FindSlot(path.Destination.SlotKey!) is null)
+                else if (FindSlot(path.Destination.SlotKey) is null)
                 {
                     throw new DomainException(
                         $"Slot '{path.Destination.SlotKey}' was not found.",

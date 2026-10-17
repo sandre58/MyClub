@@ -22,25 +22,18 @@ internal static class ProgressionImpactWitnessComposition
 
     internal static CombinedBlockReason Combine(
         ProgressionPathConsumptionWitness.Verdict wc1,
-        ProgressionPathProductionParticipationWitness.Verdict wc2)
-    {
-        if (wc1 == ProgressionPathConsumptionWitness.Verdict.ConsumedLoss)
+        ProgressionPathProductionParticipationWitness.Verdict wc2) =>
+        wc1 switch
         {
-            return CombinedBlockReason.FeedConsumed;
-        }
-
-        if (wc1 == ProgressionPathConsumptionWitness.Verdict.ConsumedAmbiguous)
-        {
-            return CombinedBlockReason.FeedConsumedAmbiguous;
-        }
-
-        return wc2 switch
-        {
-            ProgressionPathProductionParticipationWitness.Verdict.Participating =>
-                CombinedBlockReason.DownstreamProduction,
-            ProgressionPathProductionParticipationWitness.Verdict.ParticipationAmbiguous =>
-                CombinedBlockReason.DownstreamProductionAmbiguous,
-            _ => CombinedBlockReason.None
+            ProgressionPathConsumptionWitness.Verdict.ConsumedLoss => CombinedBlockReason.FeedConsumed,
+            ProgressionPathConsumptionWitness.Verdict.ConsumedAmbiguous => CombinedBlockReason.FeedConsumedAmbiguous,
+            _ => wc2 switch
+            {
+                ProgressionPathProductionParticipationWitness.Verdict.Participating => CombinedBlockReason
+                    .DownstreamProduction,
+                ProgressionPathProductionParticipationWitness.Verdict.ParticipationAmbiguous => CombinedBlockReason
+                    .DownstreamProductionAmbiguous,
+                _ => CombinedBlockReason.None
+            }
         };
-    }
 }

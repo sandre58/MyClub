@@ -24,5 +24,5 @@ public enum CupBracketTopologyKind
     CanonicalComplete = 3,
 
     /// <summary>Canonical, valid shape, existing pairs aligned — missing pairs may be added without ambiguity.</summary>
-    CanonicalIncomplete = 4,
+    CanonicalIncomplete = 4
 }

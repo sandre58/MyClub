@@ -85,7 +85,7 @@ public static class ApplyProgressionOutcome
         {
             var instruction = instructions[i];
             var destination = ResolveCanonicalStage(instruction.StageId, competitionStages);
-            if (instruction.TargetsSlot && destination.FindSlot(instruction.SlotKey!) is null)
+            if (instruction.TargetsSlot && destination.FindSlot(instruction.SlotKey) is null)
             {
                 throw new ApplicationFailureException(
                     $"Progression destination slot '{instruction.SlotKey}' was not found on stage '{destination.Id}'.",
