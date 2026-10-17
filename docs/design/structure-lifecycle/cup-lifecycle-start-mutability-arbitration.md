@@ -30,7 +30,21 @@
 | **Q2 Mutability** | Confirm freeze when **any** match is attached, **including Ready**, or define a scoped exception (not assumed). |
 | **Q3 Recovery** | Dematerialize, cancel start, revert draft — which paths are **supported** vs discouraged vs out of scope? |
 
-Full option matrix, reference scenario, and UX track live in the Notion decision draft (same content as arbitration chat 2026-10-17).
+Full option matrix lives in [Notion](https://app.notion.com/p/3fc75fb92d1081d587e9ed0b5b59e4a2) (section **Résolution des 4 points** — analysis, not accepted).
+
+### Reference seeds (impasse — verify manually before tests)
+
+| DevRunner row (`structure-materialize-recette`) | Role |
+|-------------------------------------------------|------|
+| **RECETTE C1** — Cup 8, one bracket pair placed | Before first materialize (0/1 style) |
+| **RECETTE C2** — Cup 8, two pairs placed, one materialized | **Impasse-type** (D2 + Start after Option A) |
+| **RECETTE C3** — Cup 8, fully materialized | Positive control |
+
+```bash
+dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios structure-materialize-recette
+```
+
+Cup **BYE** is **not** represented in domain code today (Swiss only) — see Notion analysis; do not assume BYE in R0 definition.
 
 ---
 
