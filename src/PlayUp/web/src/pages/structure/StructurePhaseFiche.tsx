@@ -872,12 +872,15 @@ export function StructurePhaseFiche({
   }
 
   const showHeroStats = heroFacts.length > 0;
-  const showAsideMatchsSection = shouldShowAsideMatchsTile(stage, {
-    showProductionOperationalBar,
-    showPlacementBlock,
-    showDrawCta,
-    showActivateDrawCta,
-  });
+  const materializePresentation = materializePresentationForStage(
+    stage,
+    data.status,
+    stage.status,
+  );
+  const showAsideMatchsSection = shouldShowAsideMatchsTile(
+    stage,
+    materializePresentation,
+  );
   const compositionTileMode = resolveCompositionTileMode(stage);
   const placesStripLayout = resolvePlacesStripLayout(compositionTileMode);
   const compositionPrepActions = shouldShowCompositionPrepActions(
@@ -996,11 +999,6 @@ export function StructurePhaseFiche({
     (stage.affectationIneligibleCount ?? 0) > 0
       ? t('entries.editComposition')
       : t('entries.addAffectation');
-  const materializePresentation = materializePresentationForStage(
-    stage,
-    data.status,
-    stage.status,
-  );
   const placementOperationalProps =
     showAffectationSection
       ? {

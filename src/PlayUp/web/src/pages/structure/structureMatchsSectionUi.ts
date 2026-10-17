@@ -1,30 +1,100 @@
 import type { StructureStageHubSummary } from '../../types';
 import type { MaterializePresentation } from './structureMaterializeCopy';
-import { showProductionOperationalSection } from './structureOperationalCopy';
+import { showViewMaterializedMatchesLink } from './structureMaterializeCopy';
+import { productionRatio, showProductionOperationalSection } from './structureOperationalCopy';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
 
-export type AsideMatchsTileSignals = {
-  showProductionOperationalBar: boolean;
-  showPlacementBlock: boolean;
-  showDrawCta: boolean;
-  showActivateDrawCta: boolean;
+/** Mirrors `MatchesColumn` body/toolbar signals when `omitLifecycle` (aside-matchs). */
+export type AsideMatchsStripContent = {
+  showProductionBody: boolean;
+  showProductionLeadingActions: boolean;
+  showExploitationProgress: boolean;
+  /** Toolbar link when the hub exposes attached matches (any non-Draft status). */
+  showViewMatchesLink: boolean;
 };
 
-/** Aside Matchs tile — hidden in Draft (lifecycle lives in the fiche header). */
-export function shouldShowAsideMatchsTile(
+/**
+ * Pure contract for what the aside Matchs strip can present (O-MAT-VIS-1 / O-MAT-IMPL-1).
+ * Shared with fiche tile visibility — not used for composition layout.
+ */
+export function resolveAsideMatchsStripContent(
   stage: StructureStageHubSummary,
-  signals: AsideMatchsTileSignals,
+  presentation: MaterializePresentation | null,
+): AsideMatchsStripContent {
+  const none: AsideMatchsStripContent = {
+    showProductionBody: false,
+    showProductionLeadingActions: false,
+    showExploitationProgress: false,
+    showViewMatchesLink: false,
+  };
+
+  if (stage.status === 'Draft') {
+    return none;
+  }
+
+  const materialize = stage.materialize;
+  const dematerialize = stage.dematerialize;
+  const progress = stage.lifecycle?.matchProgress;
+  const showExploitationProgress =
+    shouldShowMatchExploitationProgress(stage) && progress != null;
+
+  const showViewMatchesLink = showViewMaterializedMatchesLink(
+    stage,
+    materialize ?? undefined,
+  );
+
+  if (stage.status === 'Completed') {
+    return {
+      ...none,
+      showExploitationProgress,
+      showViewMatchesLink,
+    };
+  }
+
+  const showProduction = shouldShowProductionInMatchsSection(stage, presentation);
+  const gaugeRatio = productionRatio(materialize ?? undefined);
+  const canShowMetric =
+    showProduction &&
+    gaugeRatio != null &&
+    (materialize != null || dematerialize != null);
+  const showProductionBody =
+    canShowMetric ||
+    (showProduction && (materialize != null || dematerialize != null));
+  const showMaterializePrimary =
+    materialize != null && presentation === 'actionable';
+  const showProductionLeadingActions =
+    showProduction && (showMaterializePrimary || dematerialize?.enabled === true);
+
+  return {
+    showProductionBody,
+    showProductionLeadingActions,
+    showExploitationProgress,
+    showViewMatchesLink,
+  };
+}
+
+export function hasUsefulAsideMatchsContent(
+  stage: StructureStageHubSummary,
+  presentation: MaterializePresentation | null,
 ): boolean {
   if (stage.status === 'Draft') {
     return false;
   }
+  const content = resolveAsideMatchsStripContent(stage, presentation);
   return (
-    signals.showProductionOperationalBar ||
-    signals.showPlacementBlock ||
-    signals.showDrawCta ||
-    signals.showActivateDrawCta ||
-    shouldShowMatchsSection(stage)
+    content.showProductionBody ||
+    content.showProductionLeadingActions ||
+    content.showExploitationProgress ||
+    content.showViewMatchesLink
   );
+}
+
+/** Aside Matchs tile — hidden in Draft; visible only when aside strip has useful content. */
+export function shouldShowAsideMatchsTile(
+  stage: StructureStageHubSummary,
+  presentation: MaterializePresentation | null,
+): boolean {
+  return hasUsefulAsideMatchsContent(stage, presentation);
 }
 
 /** When the operational strip should include the Matchs column. */

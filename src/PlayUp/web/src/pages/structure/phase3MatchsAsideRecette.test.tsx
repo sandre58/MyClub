@@ -8,8 +8,7 @@
  * Not a substitute for DevRunner + browser. Suspended (case 7) and Completed
  * « Voir les matchs » toolbar link are not replayed here — see phase-3-recette.md.
  *
- * O-MAT-IMPL-1 confirmed gaps (visibility at fiche, not strip production rules):
- * cases 3, 5, 6 in this file document tile-flag vs empty strip body.
+ * O-MAT-IMPL-1: tile visibility follows `resolveAsideMatchsStripContent` (cases 3, 5, 6).
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, screen, within } from '@testing-library/react';
@@ -27,13 +26,6 @@ import {
 } from './structureMatchsSectionUi';
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
-
-const asideSignals = {
-  showProductionOperationalBar: false,
-  showPlacementBlock: false,
-  showDrawCta: false,
-  showActivateDrawCta: false,
-};
 
 function baseStage(
   overrides: Partial<StructureStageHubSummary> = {},
@@ -132,12 +124,7 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
         transition: { code: 'PrepareStage', enabled: true },
       },
     });
-    expect(
-      shouldShowAsideMatchsTile(stage, {
-        ...asideSignals,
-        showProductionOperationalBar: false,
-      }),
-    ).toBe(false);
+    expect(shouldShowAsideMatchsTile(stage, null)).toBe(false);
 
     cleanup();
     render(
@@ -211,24 +198,15 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
     expect(stripHasUsefulProductionBody(section)).toBe(true);
   });
 
-  it('3 — Championship Ready placesN only (no materialize): product hide — observed tile shell likely (O-MAT-IMPL-1)', () => {
+  it('3 — Championship Ready placesN only (no materialize): tile hidden (O-MAT-IMPL-1)', () => {
     const stage = baseStage({
       materialize: undefined,
       dematerialize: undefined,
     });
-    const signals = {
-      ...asideSignals,
-      showPlacementBlock: true,
-      showProductionOperationalBar: false,
-    };
-    const tileFlag = shouldShowAsideMatchsTile(stage, signals);
+    expect(shouldShowAsideMatchsTile(stage, null)).toBe(false);
     renderAsideStrip(stage, 'Ready');
     const section = matchsSection()!;
-    const useful = stripHasUsefulProductionBody(section);
-    expect(useful).toBe(false);
-    if (tileFlag) {
-      expect(section.textContent?.trim().length ?? 0).toBeLessThan(20);
-    }
+    expect(stripHasUsefulProductionBody(section)).toBe(false);
   });
 
   it('4 — Championship Ready actionable production (seed qual-form-champ-ready-full)', () => {
@@ -257,11 +235,7 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
       matchdayCount: 0,
       materialize: undefined,
     });
-    const signals = {
-      ...asideSignals,
-      showPlacementBlock: true,
-    };
-    shouldShowAsideMatchsTile(stage, signals);
+    expect(shouldShowAsideMatchsTile(stage, null)).toBe(false);
     renderAsideStrip(stage, 'Ready');
     const section = matchsSection()!;
     expect(
@@ -282,11 +256,10 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
         },
       },
     });
-    const tileFlag = shouldShowAsideMatchsTile(stage, asideSignals);
+    expect(shouldShowAsideMatchsTile(stage, null)).toBe(false);
     renderAsideStrip(stage, 'Ready');
     const section = matchsSection()!;
     expect(stripHasUsefulProductionBody(section)).toBe(false);
-    expect(tileFlag).toBe(true);
   });
 
   it('7 — Running: exploitation progress; no lifecycle CTA in aside (seed qual-form-champ-running)', () => {

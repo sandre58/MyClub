@@ -37,7 +37,6 @@ import type { StructurePlacementOperationalSectionProps } from './structurePlace
 import {
   materializeDisabledCaption,
   materializeRatioTone,
-  showViewMaterializedMatchesLink,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
 import {
@@ -64,6 +63,7 @@ import {
   StructurePhaseMatchsLifecycleBlock,
 } from './StructurePhaseMatchsLifecycleBlock';
 import {
+  resolveAsideMatchsStripContent,
   shouldShowMatchExploitationProgress,
   shouldShowMatchsSection,
   shouldShowProductionInMatchsSection,
@@ -1110,7 +1110,8 @@ function MatchesColumn({
       : 'neutral';
   const showMaterializePrimary =
     materialize != null && presentation === 'actionable';
-  const showViewMatchesLink = showViewMaterializedMatchesLink(stage, materialize);
+  const asideStripContent = resolveAsideMatchsStripContent(stage, presentation);
+  const showViewMatchesLink = asideStripContent.showViewMatchesLink;
 
   const blockedCaption =
     presentation === 'blocked' && materialize
@@ -1164,7 +1165,8 @@ function MatchesColumn({
 
   const materializeBtnClass = primaryBtn;
 
-  const productionGauge = canShowMetric ? (
+  const productionGauge =
+    !asideStripContent.showProductionBody ? null : canShowMetric ? (
     <MetricRow
       aside={
         <RatioAside
@@ -1191,7 +1193,7 @@ function MatchesColumn({
         />
       }
     />
-  ) : showProduction && (materialize != null || dematerialize != null) ? (
+  ) : (
     <div className="structure-operational-strip__empty">
       <EmptyState variant="idle">
         {presentation === 'blocked' && materialize
@@ -1199,10 +1201,10 @@ function MatchesColumn({
           : matchMeter.text}
       </EmptyState>
     </div>
-  ) : null;
+  );
 
   const productionLeadingActions =
-    showProduction && (showMaterializePrimary || dematerialize?.enabled) ? (
+    asideStripContent.showProductionLeadingActions ? (
       <>
         {showMaterializePrimary && materialize ? (
           <button
@@ -1278,7 +1280,7 @@ function MatchesColumn({
   } else if (stage.status === 'Completed') {
     const progress = stage.lifecycle?.matchProgress;
     matchesContent =
-      shouldShowMatchExploitationProgress(stage) && progress ? (
+      asideStripContent.showExploitationProgress && progress ? (
         <StructureMatchPhaseProgressGauge
           finished={progress.finished}
           total={progress.total}
@@ -1293,7 +1295,7 @@ function MatchesColumn({
     const swissProgressCaption =
       stage.formatKind === 'Swiss' ? resolveSwissMatchsGuidance(stage) : null;
     const exploitationGauge =
-      shouldShowMatchExploitationProgress(stage) && progress ? (
+      asideStripContent.showExploitationProgress && progress ? (
         <StructureMatchPhaseProgressGauge
           finished={progress.finished}
           total={progress.total}
@@ -1329,17 +1331,7 @@ function MatchesColumn({
     );
   }
 
-  const effectiveToolbar =
-    hideSectionHead
-      ? null
-      : stage.status === 'Completed' &&
-          showViewMaterializedMatchesLink(stage, materialize ?? undefined)
-        ? (
-          <TextLink to={`/stages/${stage.stageId}/matches`}>
-            {t('fiche.materialize.viewPhaseMatches')}
-          </TextLink>
-        )
-        : toolbar;
+  const effectiveToolbar = hideSectionHead ? null : toolbar;
 
   return (
     <StripSection

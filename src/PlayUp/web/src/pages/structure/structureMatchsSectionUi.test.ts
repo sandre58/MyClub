@@ -29,19 +29,62 @@ const baseStage = (
   ...overrides,
 });
 
-const asideSignals = {
-  showProductionOperationalBar: false,
-  showPlacementBlock: false,
-  showDrawCta: false,
-  showActivateDrawCta: false,
-};
-
 describe('structureMatchsSectionUi', () => {
   it('hides aside Matchs tile in Draft even when lifecycle applies', () => {
-    expect(
-      shouldShowAsideMatchsTile(baseStage({ status: 'Draft' }), asideSignals),
-    ).toBe(false);
+    expect(shouldShowAsideMatchsTile(baseStage({ status: 'Draft' }), null)).toBe(
+      false,
+    );
     expect(shouldShowMatchsSection(baseStage({ status: 'Draft' }))).toBe(true);
+  });
+
+  it('hides aside Matchs tile for placement/lifecycle-only Ready (O-MAT-IMPL-1)', () => {
+    expect(
+      shouldShowAsideMatchsTile(
+        baseStage({
+          status: 'Ready',
+          lifecycle: {
+            transition: {
+              code: 'StartStage',
+              enabled: false,
+              disabledReasonCode: 'UnmaterializedConfrontations',
+            },
+          },
+        }),
+        null,
+      ),
+    ).toBe(false);
+    expect(
+      shouldShowAsideMatchsTile(
+        baseStage({
+          status: 'Ready',
+          formatKind: 'Swiss',
+          swissRoundCount: 3,
+          matchdayCount: 0,
+        }),
+        null,
+      ),
+    ).toBe(false);
+  });
+
+  it('shows aside Matchs tile for Completed view-matches link without progress body', () => {
+    expect(
+      shouldShowAsideMatchsTile(
+        baseStage({
+          status: 'Completed',
+          matchCount: 4,
+          materialize: {
+            commandCode: 'MaterializeMatches',
+            labelVariant: 'exhausted',
+            determinedCount: 4,
+            eligibleCount: 0,
+            materializedCount: 4,
+            commandEnabled: false,
+            confrontations: [],
+          },
+        }),
+        'terminal',
+      ),
+    ).toBe(true);
   });
 
   it('shows Matchs section for Completed when matches exist', () => {
