@@ -74,13 +74,15 @@ Tests: `drawUi.test.ts` (`resolveDrawCreateGate`). **Gap:** no dedicated test th
 |-----------|-----------|------|-----------|-------------------|
 | Status badge | `stage.status` | `StageStatusBadge` | Fiche header | — |
 | Prepare / Start / Complete CTAs | `stage.lifecycle.transition` (+ revert codes) | `StructurePhaseMatchsLifecycleBlock`, `useStructureStageLifecycleMutation` | Fiche header toolbar (`StructurePhaseFicheHeaderLifecycle`) | Disabled reasons from `problems/*` |
-| Match progress | `lifecycle.matchProgress` | Shown when Running/Suspended/Completed per `structureMatchsSectionUi.ts` | Matchs column | — |
+| Match progress | `lifecycle.matchProgress` | Rendered in aside when status contract + `shouldShowMatchExploitationProgress` produce strip content — hub field alone is not a visibility trigger | Matchs aside tile | — |
 
 ### Matchs (aside)
 
 | Indicator | Authority | Rule | Consumers | Missing / conflict |
 |-----------|-----------|------|-----------|-------------------|
-| Section visibility | `shouldShowMatchsSection(stage)` | Draft hidden unless lifecycle/production rules; Completed needs matches or progress | Fiche operational bar | — |
+| Tile visibility (product) | **O-MAT-VIS-1** — useful presented content only | Not Draft; not lifecycle/composition/placement signals alone; Swiss Ready 2a — see Notion Matrice UI + `structure-phase-lifecycle-ui.md` § Matchs aside tile | `#operational-matchs` | **O-MAT-IMPL-1** — `shouldShowAsideMatchsTile` may diverge until aligned |
+| Tile visibility (technical) | `shouldShowAsideMatchsTile(stage, signals)` | Signals from `StructurePhaseFiche`; not normative UX | `StructurePhaseSchematicAndAside.tsx` | Same gap as product row |
+| Strip body (composition layout) | `shouldShowMatchsSection(stage)` | Legacy composition strip / inner gate — **not** aside tile product rule | Composition operational bar | — |
 | Materialize / dematerialize | `stage.materialize`, `stage.dematerialize` | `classifyMaterializePresentation`, mutations in strip | `StructurePhaseOperationalStrip.tsx` | — |
 | Production gauge | `materialize.determinedCount`, `materializedCount` | `structureMaterializeCopy.ts` | Matchs cluster | Frozen running state hides primary |
 

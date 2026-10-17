@@ -46,7 +46,7 @@ These must stay **separate** in copy and layout; none replaces another.
 
 1. **Cycle de vie** — domain `StageStatus`: `Draft`, `Ready`, `Running`, `Suspended`, `Completed`.
 2. **État de construction sportive** — structure, équipes, places, tirage, sorties, matérialisation (read-model checklist + structure issues).
-3. **Actions organisateur** — `PrepareStage`, `StartStage`, `CompleteStage`, `SuspendStage` / `ResumeStage`, reverts (Matchs operational column); competition-level actions may also appear on Overview.
+3. **Actions organisateur** — `PrepareStage`, `StartStage`, `CompleteStage`, `SuspendStage` / `ResumeStage`, reverts (**fiche header** lifecycle toolbar); competition-level actions may also appear on Overview.
 
 **Presentation rule (DECIDED; fiche/aside split shipped 2026-10-17):**
 
@@ -54,13 +54,38 @@ These must stay **separate** in copy and layout; none replaces another.
 | :------ | :--- |
 | **Fiche header** (`StructurePhaseFicheHeader` + `StructurePhaseHeaderLifecycle`) | Official **badge**; lifecycle **transition + revert** buttons; **why** Start/Prepare/Complete is blocked (`disabledReasonCode` copy when shown); **remediation** deep links. |
 | **Aside Matchs** (`#operational-matchs`, `StructurePhaseOperationalStrip` with `layoutVariant: 'aside-matchs'`, **`omitLifecycle={true}`**) | Match **production** (materialize/dematerialize), exploitation **match stats**, link to match list, format-specific production guidance — **no** lifecycle CTAs and **no** duplication of lifecycle block paragraphs suppressed elsewhere (`shouldShowPrimaryBlockMessage` in `problems/matchsColumnVisibility.ts`). |
-| **Composition / other operational strips** | May still embed the full Matchs lifecycle block when `omitLifecycle` is false (legacy column layout). |
+| **Composition strip** (`layoutVariant: 'composition'`) | **Out of scope** for the Matchs aside product contract; may still embed lifecycle when `omitLifecycle` is false. |
 
 **Cross-surface copy (DECIDED):** the same underlying gate may appear on **fiche** (transition impact + remediation) and in **Matchs** (operational production state + materialize action) with **different** wording — do **not** repeat the fiche lifecycle paragraph inside `#operational-matchs`.
 
 **Removed:** header status band and Prepare stepper (false-green checklist).
 
-**Matchs aside by status (2026-10-17):** Draft — Prepare-only empty state on fiche; aside Matchs omits lifecycle. Ready — aside shows production gauge/actions only; Start lives on fiche. Running/Suspended — exploitation stats on aside; Complete/pause on fiche. Completed — match progress + view link when matches exist. Visibility helpers: `structureMatchsSectionUi.ts`, `structurePhaseStatusBandModel.ts`.
+**Product SoT (aside visibility):** [Matrice UI Structure — présentation par statut de phase](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4) — **O-MAT-VIS-1** (2026-10-17, DECIDED). Summary below; full tables live in Notion.
+
+---
+
+## Matchs aside tile — product contract (O-MAT-VIS-1)
+
+**Scope:** `#operational-matchs` only (`layoutVariant: 'aside-matchs'`, `omitLifecycle={true}`). **Not** `structure-problems-contract.md` (Paused).
+
+**Visibility (product):** show the tile (status ≠ Draft) only when the aside **presents** at least one useful block: hub **production** (gauge, production empty state explaining a real blocker, primary Materialize when `presentation === 'actionable'`, dematerialize when `dematerialize.enabled` and production visibility rules apply), **match progression** rendered per status contract, or **view matches** link when the strip shows it. Non-actionable production empty states (e.g. `PhaseRosterIncomplete`) **are** useful. **Not sufficient:** Matchs title alone; Ready lifecycle alone; composition/placement/draw signals without tile content. **Swiss Ready (2a):** hide when no useful tile content (guidance `readyNoRounds` is not rendered in aside today). **`GenerateNextRound`:** out of tile scope (**O-MAT-CH-1** open).
+
+**Per-status (content when visible):**
+
+| Status | Tile | Content / CTAs in tile | Fiche owns |
+| :----- | :--- | :--------------------- | :--------- |
+| Draft | Hidden | — | Prepare |
+| Ready | O-MAT-VIS-1 | Production cluster from read model; no Start/Revert | Start, gates, § H Cup |
+| Running / Suspended | O-MAT-VIS-1 | Progression if rendered; production per `shouldShowProductionInMatchsSection` + presentation | Complete, Suspend/Resume, Revert |
+| Completed | O-MAT-VIS-1 | Progression or matches link **only if strip renders them** — hub signals alone do not force visibility | No lifecycle band |
+
+**Invariants:** I-3 — primary Materialize iff `presentation === 'actionable'`; dematerialize separate (`dematerialize.enabled`). Lifecycle and remediations stay on fiche header only.
+
+**Technical mirror (not normative UX):** `shouldShowAsideMatchsTile`, `shouldShowProductionInMatchsSection`, `shouldShowMatchExploitationProgress`, `classifyMaterializePresentation` — `structureMatchsSectionUi.ts`, `structureMaterializeCopy.ts`, `StructurePhaseOperationalStrip.tsx`, `swissMatchsGuidance.ts`.
+
+**Tests:** `structureMatchsSectionUi.test.ts`, `StructurePhaseOperationalStrip.test.tsx` (`omitLifecycle`, Suspended production).
+
+**Implementation gap:** **O-MAT-IMPL-1** — code may show the tile without useful content (lifecycle/placement-only Ready, Swiss Ready); fixing that is a separate change from this contract.
 
 ---
 
@@ -73,7 +98,7 @@ These must stay **separate** in copy and layout; none replaces another.
 | **Draft** | Still configuring; Prepare not (yet) acquired. | `Stage.Prepare` only from Draft (`Stage.cs`). Many structural edits call `DemoteToDraftIfReady()` when status was Ready. |
 | **Ready** | Configuration passed **Prepare** at time T. | `PrepareStage.Execute` then `Stage.Prepare` → Ready. **Not** “matches started” or “exploitation opened”. |
 | **Running** | Exploitation **opened** via Start. | `Stage.Start` Ready → Running; `EnsureStructureMutable` blocks structural mutation (`Stage.cs`). |
-| **Suspended** | Paused; not closed. | Domain suspend/resume exists; Structure read projects `SuspendStage` / `ResumeStage` on `lifecycle.revertTransition` (icon actions in Matchs column). |
+| **Suspended** | Paused; not closed. | Domain suspend/resume exists; Structure read projects `SuspendStage` / `ResumeStage` on `lifecycle.revertTransition` (fiche header lifecycle toolbar). |
 | **Completed** | Phase closed. | `CompleteStage` requires every match Finished or Cancelled (Application); domain allows Complete with **zero** matches (assembler test). |
 
 ### Actions (Structure read model today)
@@ -727,6 +752,8 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 **Implementation (2026-10-13):** Lifecycle V2 — anticipated + mutation copy (`structureProblems/*`), prepare gates on read (`StructureStageLifecycleAssembler` + `StructurePrepareAttributionGate`), Materialize **Ready-only** read mirror, tests (`StructureStageLifecycleAssemblerTests`, `StructurePrepareAttributionTests`, `StructurePage` cross-surface). **2c** Places N label still **blocked** métier.
 
 **Implementation (2026-10-17):** Fiche owns lifecycle chrome; `#operational-matchs` uses `omitLifecycle` — tests `50c4354f`; Start gate recipes `10166fbb`, `32c6186e`, `fb14feb7`; i18n remédiation IRR `4f7328ab`. **§ H product decision (Option A):** Notion [3fc75fb9](https://app.notion.com/p/3fc75fb92d10817f99bcc929ee77aba7) — no code change required.
+
+**Documentation (2026-10-17):** **O-MAT-VIS-1** aside tile visibility (useful content) — product decision in Notion Matrice UI; this appendix § Matchs aside tile; **O-MAT-IMPL-1** tracks code alignment. No SPA change from doc sync alone.
 
 **After formal Notion validation:** add `Notion validation: YYYY-MM-DD` and list any deviations from shipped behaviour.
 
