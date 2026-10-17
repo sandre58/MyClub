@@ -11,6 +11,7 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
 
@@ -103,5 +104,26 @@ public sealed class StartStageReadinessTests
         var hub = view.Stages.Single();
 
         hub.Lifecycle!.Transition.Enabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void TryGetDisabledReasonCode_cup_ready_slotted_non_playable_initial_round()
+    {
+        var situation = TestCompetition.Create("Cup IRR guard", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.PrimaryStage!;
+        var round = stage.Rounds[0];
+        stage.AddFixture(round.Id, _clock, "S1", "S2", "P1");
+        stage.AddFixture(round.Id, _clock, "S3", "S4", "P2");
+        situation.PreparePrimaryStage();
+
+        var reason = StageStartReadinessGuard.TryGetDisabledReasonCode(
+            stage,
+            situation.Competition,
+            [],
+            situation.Stages);
+
+        reason.Should().Be(StructureStageLifecycleAssembler.DisabledInitialRoundNotPlayable);
     }
 }

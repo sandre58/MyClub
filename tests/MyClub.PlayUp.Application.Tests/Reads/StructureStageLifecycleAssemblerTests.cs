@@ -504,6 +504,43 @@ public sealed class StructureStageLifecycleAssemblerTests
             .Be(StructureStageLifecycleAssembler.DisabledStructureGraphInvalid);
     }
 
+    [Fact]
+    public void Assemble_Ready_cup_slotted_non_playable_initial_round_blocks_Start_with_placement_remediation()
+    {
+        var situation = TestCompetition.Create("Cup initial round not playable", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.PrimaryStage!;
+        var round = stage.Rounds[0];
+        stage.AddFixture(round.Id, _clock, "S1", "S2", "P1");
+        stage.AddFixture(round.Id, _clock, "S3", "S4", "P2");
+        situation.PreparePrimaryStage();
+
+        stage.Status.Should().Be(StageStatus.Ready);
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle.Should().NotBeNull();
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledInitialRoundNotPlayable);
+
+        hub.Lifecycle.Transition.Remediation.Should().NotBeNull();
+        hub.Lifecycle.Transition.Remediation!.Href.Should().Contain("focus=operational-placement");
+        hub.Lifecycle.Transition.Remediation.Href.Should().Contain("manual=1");
+        hub.Lifecycle.Transition.Remediation.Href.Should().NotContain("section=matchs");
+
+        hub.Materialize.Should().NotBeNull();
+        hub.Materialize!.CommandEnabled.Should().BeFalse();
+        hub.Materialize.EligibleCount.Should().Be(0);
+        hub.Materialize.DeterminedCount.Should().Be(0);
+        hub.Materialize.MaterializedCount.Should().Be(2, "fixture shells bound to bracket pairs without entries");
+        hub.Materialize.DisabledReason.Should()
+            .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
+    }
+
     private static MatchSummaryRow ToSummaryRow(Match match) =>
         new(
             match.Id,
