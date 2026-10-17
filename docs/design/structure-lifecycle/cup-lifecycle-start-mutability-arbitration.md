@@ -46,6 +46,10 @@ dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios s
 
 Cup **BYE** is **not** represented in domain code today (Swiss only) — see Notion analysis; do not assume BYE in R0 definition.
 
+### R0 complete (draft — **not** product-validated)
+
+Mono-tour canonical Cup: **R0 complete** when every **family A** entry-round canonical pair P* is **determined** (two distinct entries). **Family B:** empty until a separate Cup BYE decision exists. **Family C:** does not apply to entry-round pairs on the upstream mono-tour phase; applies to progression-only slots on downstream phases.
+
 ---
 
 ## After decision
