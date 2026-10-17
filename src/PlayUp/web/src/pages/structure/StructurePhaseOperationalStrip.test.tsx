@@ -966,6 +966,101 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
+    describe('aside-matchs lifecycle separation (omitLifecycle)', () => {
+      const placementRemediationHref = `/competitions/${competitionId}/structure?stage=${leagueStageBase.stageId}&focus=operational-placement&manual=1`;
+
+      function cupReadyStage(
+        overrides: Partial<StructureStageHubSummary>,
+      ): StructureStageHubSummary {
+        return {
+          ...leagueStageBase,
+          formatKind: 'Cup',
+          status: 'Ready',
+          hasDrawRules: true,
+          ...overrides,
+        };
+      }
+
+      it('omits lifecycle actions and block copy in operational-matchs when Start is blocked (InitialRoundNotPlayable)', () => {
+        renderMatchesStrip(
+          cupReadyStage({
+            materialize: {
+              commandCode: 'MaterializeFromOccupiedSlots',
+              labelVariant: 'idle',
+              determinedCount: 0,
+              eligibleCount: 0,
+              materializedCount: 2,
+              commandEnabled: false,
+              disabledReason: 'NoDeterminedConfrontations',
+              confrontations: [],
+            },
+            lifecycle: {
+              transition: {
+                code: 'StartStage',
+                enabled: false,
+                disabledReasonCode: 'InitialRoundNotPlayable',
+                remediation: {
+                  href: placementRemediationHref,
+                  labelKey: 'InitialRoundNotPlayable',
+                },
+              },
+            },
+          }),
+          'Draft',
+        );
+
+        const matchesSection = document.getElementById('operational-matchs')!;
+        expect(
+          within(matchesSection).queryByRole('button', {
+            name: /Démarrer la phase/i,
+          }),
+        ).not.toBeInTheDocument();
+        expect(
+          within(matchesSection).queryByText(
+            /Le premier tour n’est pas encore jouable/i,
+          ),
+        ).not.toBeInTheDocument();
+        expect(
+          within(matchesSection).getByText(
+            /Aucune confrontation n’est encore déterminée/i,
+          ),
+        ).toBeInTheDocument();
+      });
+
+      it('keeps production actions in operational-matchs while omitting Start (partial cup)', () => {
+        renderMatchesStrip(
+          cupReadyStage({
+            materialize: cupMaterializePartial,
+            lifecycle: {
+              transition: {
+                code: 'StartStage',
+                enabled: false,
+                disabledReasonCode: 'UnmaterializedConfrontations',
+              },
+            },
+          }),
+          'Draft',
+        );
+
+        const matchesSection = document.getElementById('operational-matchs')!;
+        expect(
+          within(matchesSection).getByRole('button', {
+            name: /Créer les matchs/i,
+          }),
+        ).toBeInTheDocument();
+        expect(
+          within(matchesSection).queryByRole('button', {
+            name: /Démarrer la phase/i,
+          }),
+        ).not.toBeInTheDocument();
+        expect(
+          within(matchesSection).queryByText(
+            /Matérialisez toutes les confrontations éligibles/i,
+          ),
+        ).not.toBeInTheDocument();
+      });
+    });
+
     it('hides dematerialize action when read blocks it', () => {
       renderMatchesStrip({
         ...leagueStageBase,
