@@ -353,7 +353,8 @@
       "viewStandings": "View standings"
     },
     "remediation": {
-      "default": "Go to the relevant section"
+      "default": "Go to the relevant section",
+      "InitialRoundNotPlayable": "Go to operational placement"
     },
     "disabled": {
       "_unknown": "This phase lifecycle action is unavailable right now.",

@@ -426,7 +426,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
                 {disabledReason === 'ConstructionFrozen'
                   ? t('lifecycle.statusBand.viewOverview')
                   : t(`lifecycle.remediation.${remediationLabelKey}`, {
-                      defaultValue: '',
+                      defaultValue: t('lifecycle.remediation.default'),
                     })}
               </Link>
             </>

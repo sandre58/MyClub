@@ -353,7 +353,8 @@
       "viewStandings": "Voir les classements"
     },
     "remediation": {
-      "default": "Aller à la section concernée"
+      "default": "Aller à la section concernée",
+      "InitialRoundNotPlayable": "Aller au placement opérationnel"
     },
     "disabled": {
       "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",

@@ -112,10 +112,9 @@ describe('StructurePhaseFicheHeader', () => {
     expect(
       screen.getByText(/Le premier tour n’est pas encore jouable/i),
     ).toBeInTheDocument();
-    const remediationLink = screen
-      .getAllByRole('link')
-      .find((el) => el.getAttribute('href') === remediationHref);
-    expect(remediationLink).toBeDefined();
+    const remediationLink = screen.getByRole('link', {
+      name: /Aller au placement opérationnel/i,
+    });
     expect(remediationLink).toHaveAttribute('href', remediationHref);
     expect(remediationLink.getAttribute('href')).toContain('operational-placement');
     expect(remediationLink.getAttribute('href')).not.toContain('section=matchs');
