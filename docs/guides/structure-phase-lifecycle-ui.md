@@ -1,10 +1,10 @@
 # Structure — phase lifecycle UI (spec appendix)
 
-**Purpose:** Git-side design reference for Structure phase **lifecycle UI in the Matchs operational column** and match stats during exploitation.
+**Purpose:** Git-side design reference for Structure phase **lifecycle UI on the phase fiche (header)** and **Matchs operational content** (`#operational-matchs`), including match stats during exploitation and the **fiche vs aside** responsibility split.
 
 **Problems messaging (Matchs column):** [structure-problems-contract.md](./structure-problems-contract.md) (**paused** — local pilot). Transversal audit: [organizer-problems-audit.md](./organizer-problems-audit.md) (working draft). Product intent and durable UX decisions remain in **Notion** (*MyClub*); this document records **agreed direction**, **open product choices**, and **facts verified in code** so mockups and PRs do not drift from the domain.
 
-**Last code audit:** 2026-10-13 — Lifecycle V2 **aligned** (Matchs column, reverts, Start unmaterialized, materialize Ready-only, exploitation gauge **clos/total**). Places N Qual→Forme: **Acceptée** Notion (`ChampionshipSwissPhasePlaces`, B′2 Prepare, A3 PLACES). **Residual:** stepper/2b matrix **N/A** (UI removed).
+**Last code audit:** 2026-10-17 — Lifecycle V2 **aligned**; **fiche / aside Matchs split** (`omitLifecycle` on `#operational-matchs`) **VERIFIED** (Vitest `50c4354f`). Earlier audit (2026-10-13): Matchs lifecycle block, reverts, Start gates, materialize Ready-only, exploitation gauge **clos/total**. Places N Qual→Forme: **Acceptée** Notion. Stepper / matrice 2b **N/A** (removed).
 
 **Notion validation:** 2026-10-12 — [Arbitrage Structure — cycle de vie et gel construction](https://app.notion.com/p/3f775fb92d10817eb795ddb5fc52dd9c).
 
@@ -48,17 +48,19 @@ These must stay **separate** in copy and layout; none replaces another.
 2. **État de construction sportive** — structure, équipes, places, tirage, sorties, matérialisation (read-model checklist + structure issues).
 3. **Actions organisateur** — `PrepareStage`, `StartStage`, `CompleteStage`, `SuspendStage` / `ResumeStage`, reverts (Matchs operational column); competition-level actions may also appear on Overview.
 
-**Presentation rule (DECIDED, shipped 2026-10-12):**
+**Presentation rule (DECIDED; fiche/aside split shipped 2026-10-17):**
 
 | Surface | Role |
 | :------ | :--- |
-| Header **badge** | Official lifecycle status only. |
-| **Matchs** operational column | Lifecycle transition + revert buttons, disabled-reason copy, remediation links; match stats in Running/Suspended. |
-| **Matchs** operational column (same) | Match **production** (materialize/dematerialize gauge) — construction sportive, not lifecycle status. |
+| **Fiche header** (`StructurePhaseFicheHeader` + `StructurePhaseHeaderLifecycle`) | Official **badge**; lifecycle **transition + revert** buttons; **why** Start/Prepare/Complete is blocked (`disabledReasonCode` copy when shown); **remediation** deep links. |
+| **Aside Matchs** (`#operational-matchs`, `StructurePhaseOperationalStrip` with `layoutVariant: 'aside-matchs'`, **`omitLifecycle={true}`**) | Match **production** (materialize/dematerialize), exploitation **match stats**, link to match list, format-specific production guidance — **no** lifecycle CTAs and **no** duplication of lifecycle block paragraphs suppressed elsewhere (`shouldShowPrimaryBlockMessage` in `problems/matchsColumnVisibility.ts`). |
+| **Composition / other operational strips** | May still embed the full Matchs lifecycle block when `omitLifecycle` is false (legacy column layout). |
+
+**Cross-surface copy (DECIDED):** the same underlying gate may appear on **fiche** (transition impact + remediation) and in **Matchs** (operational production state + materialize action) with **different** wording — do **not** repeat the fiche lifecycle paragraph inside `#operational-matchs`.
 
 **Removed:** header status band and Prepare stepper (false-green checklist).
 
-**Matchs column by status (2026-10-12):** Draft — Prepare-only empty state, no production. Ready — production gauge then lifecycle (Start) then materialize (secondary when Start shown). Running/Suspended — exploitation stats + Complete/pause; production gauge only when read `presentation === 'actionable'` or dematerialize enabled. Completed — match progress + view link when matches exist. Visibility helpers: `structureMatchsSectionUi.ts`.
+**Matchs aside by status (2026-10-17):** Draft — Prepare-only empty state on fiche; aside Matchs omits lifecycle. Ready — aside shows production gauge/actions only; Start lives on fiche. Running/Suspended — exploitation stats on aside; Complete/pause on fiche. Completed — match progress + view link when matches exist. Visibility helpers: `structureMatchsSectionUi.ts`, `structurePhaseStatusBandModel.ts`.
 
 ---
 
@@ -91,7 +93,29 @@ These must stay **separate** in copy and layout; none replaces another.
 
 **Secondary transitions (VERIFIED):** `RevertToDraftStage`, `SuspendStage`, `ResumeStage` on `lifecycle.revertTransition`; `RevertToReadyStage` on `lifecycle.cancelStartTransition` (Running / Suspended, engagement gate = dematerialize predicate).
 
-**Action order in Matchs column (VERIFIED DOM):** primary transition (Prepare / Start / Complete) → Suspend / Resume icons → cancel start → Revert to draft. Manual browser pass on desktop and narrow viewport recommended before release.
+**Action order on fiche lifecycle chrome (VERIFIED DOM):** primary transition (Prepare / Start / Complete) → Suspend / Resume icons → cancel start → Revert to draft. Manual browser pass on desktop and narrow viewport recommended before release.
+
+---
+
+## Fiche vs aside — executable verification recipes (VERIFIED 2026-10-17)
+
+**Scope:** documents **current** read + SPA behaviour. Does **not** resolve product **§ H** (exact Cup vs Championship/Groups Start policy trade-offs).
+
+| Track | Format / situation | Read `disabledReasonCode` (Start) | Production command (hub) | Remediation (when projected) | Proof |
+| :---- | :----------------- | :-------------------------------- | :------------------------- | :--------------------------- | :---- |
+| **A** | Cup Ready, R0 fixtures **slotted** with **empty slots**, no **determined** confrontations (`materializedCount` may reflect fixture shells, not full production) | `InitialRoundNotPlayable` | `MaterializeFromOccupiedSlots` idle (`NoDeterminedConfrontations`) | Fiche: `focus=operational-placement&manual=1` — **not** `section=matchs` | Read `10166fbb`; SPA separation `50c4354f` |
+| **Poules partial** | Groups Ready, partial materialization, eligible confrontations remain | `UnmaterializedConfrontations` | **`MaterializeMatches`** (actionable partial production) | Fiche: `section=matchs` when remediation link shown; Matchs aside: production CTA only — **no** `UnmaterializedConfrontations` paragraph | Read `32c6186e`; SPA `50c4354f` |
+| **Cup partial** | Cup Ready, some pairs determined, not all materialized | `UnmaterializedConfrontations` | **`MaterializeFromOccupiedSlots`** (not `MaterializeMatches`) | Same suppression rule on aside; fiche carries Start gate | Read `fb14feb7`; SPA `50c4354f` |
+
+**Start gate order (VERIFIED, Cup/Ch/G):** `StageStartReadinessGuard` — `UnmaterializedConfrontations` → `DrawObsoleteForConsumption` → `InitialRoundNotPlayable` (Cup). Remediation mapping: `StructureStageLifecycleAssembler.MapRemediationDeepLink`.
+
+**SPA proof (`50c4354f`):** `StructurePhaseFicheHeader.test.tsx` (IRR on fiche + placement `href`); `StructurePhaseOperationalStrip.test.tsx` (`aside-matchs lifecycle separation (omitLifecycle)`).
+
+### Piste C — not an executable recipe
+
+**Claim (invalid under current canonical Cup model):** Ready Cup with **100 % of determined confrontations materialized** **and** Start blocked with **`InitialRoundNotPlayable`**.
+
+**Why it does not hold today:** mono-round canonical Cup production via `MaterializeCupFromOccupiedSlots` materializes a **playable** first-round fixture for determined occupied pairs; slotted-but-empty R0 shells without determined confrontations are a **different** situation (piste **A** — production idle, IRR on Start). Do **not** add automated tests or manual recette scripts for the piste C combination.
 
 ---
 
@@ -103,7 +127,10 @@ These must stay **separate** in copy and layout; none replaces another.
 | Per-hub assembly inputs | `StructureViewAssembler.cs` → `StructureStageLifecycleInput` |
 | Prepare execution (gates + slot feeds + domain) | `PrepareStage/PrepareStage.cs` |
 | Flow facts / gate vs graph policy | `CompetitionFlowAnalyzer.cs` (`IsStructureGraphGateIssue`, `IsPrepareGateIssue`) |
-| SPA Matchs lifecycle UI | `StructurePhaseMatchsLifecycleBlock.tsx`, `StructurePhaseOperationalStrip.tsx` (`MatchesColumn`), `structurePhaseStatusBandModel.ts` |
+| SPA lifecycle UI (fiche) | `StructurePhaseFicheHeader.tsx`, `StructurePhaseHeaderLifecycle.tsx`, `StructurePhaseMatchsLifecycleBlock.tsx` |
+| SPA Matchs operational aside | `StructurePhaseOperationalStrip.tsx` (`omitLifecycle` when `layoutVariant === 'aside-matchs'`), `StructurePhaseSchematicAndAside.tsx` (`#operational-matchs`) |
+| Matchs column visibility / dedup | `problems/matchsColumnVisibility.ts` (`shouldShowPrimaryBlockMessage`, `shouldShowLifecycleRemediationLink`, `remediationHref`) |
+| Lifecycle visibility helpers | `structurePhaseStatusBandModel.ts`, `structureMatchsSectionUi.ts` |
 | Transition copy keys | `structure.json` → `lifecycle.disabled.*`, `lifecycle.statusBand.*` (legacy key prefix) |
 
 HTTP: structure hub includes `lifecycle.transition`, optional `lifecycle.revertTransition`, and `lifecycle.matchProgress` (Running / Suspended / Completed). **Prepare stepper / `prepareChecklist` removed** (transition + disabled reasons only).
@@ -292,7 +319,8 @@ When `transition.enabled` was true (or stale client). ProblemDetails `code` (VER
 | :------------------- | :------------------- | :------------ | :---- | :---- |
 | `CompetitionClosed` | N/A | `lifecycle.disabled.CompetitionClosed` | Band | OK |
 | `ConstructionFrozen` | N/A | `lifecycle.disabled.ConstructionFrozen` | Band + overview | OK |
-| `InitialRoundNotPlayable` | No stepper in Ready | `lifecycle.disabled.InitialRoundNotPlayable` | Band | OK |
+| `InitialRoundNotPlayable` | No stepper in Ready | `lifecycle.disabled.InitialRoundNotPlayable` | Fiche paragraph + link (`operational-placement`); **not** aside Matchs | OK |
+| `UnmaterializedConfrontations` | No stepper in Ready | `lifecycle.disabled.UnmaterializedConfrontations` | Fiche: tooltip on disabled Start; paragraph **suppressed** (`shouldShowPrimaryBlockMessage`); aside Matchs: **no** lifecycle paragraph — production only | OK |
 
 ---
 
@@ -519,7 +547,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | :--- | :------ | :------------- | :------------------- | :-------------------------- | :------------------------------------- |
 | Draft | `PrepareStage` | Ready | Existing Prepare gates pass | `Stage.NotReady`, `Stage.InvalidConfiguration`, Prepare gate `Application.*` | `StageNotReady`, `StructureGraphInvalid`, prepare-gate codes, `CompetitionClosed`, `ConstructionFrozen`† |
 | Ready | `RevertToDraft` | Draft | **Zero** stage-attached matches (same attachment notion as dematerialize scope) | **PROPOSED** `Stage.RevertBlockedProductionPresent` or `Application.RevertToDraftBlocked` | **PROPOSED** `ProductionPresent` |
-| Ready | `StartStage` | Running | Format Start readiness (§ H) | `Stage.InvalidTransition`, `Stage.NotReady` (cup positional), **PROPOSED** `Application.StartBlockedUnmaterialized` (Ch/G) | `InitialRoundNotPlayable`, **PROPOSED** `UnmaterializedConfrontations`, `ConstructionFrozen`, `CompetitionClosed` |
+| Ready | `StartStage` | Running | Format Start readiness (§ H — product arbitration **open**) | `Stage.InvalidTransition`, `Stage.NotReady` (cup positional); app `StageStartReadinessGuard` | `UnmaterializedConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable`, `ConstructionFrozen`, `CompetitionClosed` |
 | Running | `RevertToReady` | Ready | No match **sportively engaged** (Live, Finished, Cancelled+observed Live); **Scheduled/Postponed kept** | **PROPOSED** `Application.RevertToReadyBlocked` + reason `MatchLifecycleStarted` (reuse dematerialize predicate) | **PROPOSED** `MatchLifecycleStarted` |
 | Suspended | `RevertToReady` | Ready | Same as Running → Ready | Same | Same |
 | Running | `CompleteStage` | Completed | All matches Finished or Cancelled | `Application.StageCompletionBlocked` (`OpenMatches`) | `OpenMatches` |
@@ -645,12 +673,16 @@ Secondary transitions (reverts) must not hide primary without explicit product l
 
 ### H — Start readiness by format (V2)
 
-| Format | Start **allowed** when | Start **blocked** — code |
-| :----- | :--------------------- | :----------------------- |
-| **Championship / Groups** | Every **eligible** confrontation materialized | **PROPOSED** read `UnmaterializedConfrontations`; app gate before `Stage.Start` |
+**Status (2026-10-17):** table records **observed code + read projection** for tests and UI. **Product arbitration** on whether Cup Start should require “all determined materialized”, “first round playable”, or both remains **open** — this appendix does **not** decide § H.
+
+| Format | Start **allowed** when (code today) | Start **blocked** — read `disabledReasonCode` |
+| :----- | :---------------------------------- | :-------------------------------------------- |
+| **Championship / Groups** | Every **eligible** confrontation materialized (`StageStartReadinessGuard`) | `UnmaterializedConfrontations` — partial production recipes: `32c6186e` (`MaterializeMatches`) |
 | **Championship / Groups** | **Zero** eligible confrontations | **Product edge:** Start **denied** if format implies matches (document per scenario); else explicit “empty exploitation” decision — default test: **deny** when `determined > 0` and `eligible > 0` |
-| **Cup** | First **playable** round fully materialized | `Stage.NotReady`, read `InitialRoundNotPlayable` (+ **PROPOSED** `InitialRoundIncomplete` if slotted but not materialized) |
+| **Cup** | Guard passes: no unmaterialized eligible confrontations, draw not obsolete for consumption, initial round **playable** | `UnmaterializedConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable` — IRR + placement: `10166fbb`; partial cup: `fb14feb7` (`MaterializeFromOccupiedSlots`) |
 | **Swiss** | After Prepare; **0 matches OK** | No full-calendar gate; Start then GenerateNextRound in Running |
+
+**Not reachable (document only):** “all determined confrontations materialized” **and** `InitialRoundNotPlayable` on canonical mono-round Cup — see **Piste C** (§ Fiche vs aside recipes).
 
 ---
 
@@ -662,9 +694,10 @@ Secondary transitions (reverts) must not hide primary without explicit product l
 | `Application.StageExploitationClosed` | Application | Completed planif + sportive |
 | `Application.RevertToReadyBlocked` | Application | Revert when match engaged |
 | `Application.RevertToDraftBlocked` | Application | Revert when production present |
-| `Application.StartBlockedUnmaterialized` | Application | Ch/G Start gate |
+| `Application.StartBlockedUnmaterialized` | Application | Legacy/alternate naming — prefer read `UnmaterializedConfrontations` + `StageStartReadinessGuard` (verified `32c6186e` / `fb14feb7`) |
 | `Stage.RevertBlocked` (or split Ready/Draft) | Domain | Optional if domain owns revert |
-| Read: `UnmaterializedConfrontations`, `ProductionPresent`, `MatchLifecycleStarted` (revert) | Structure lifecycle DTO | Anticipated disable on transitions |
+| Read: `ProductionPresent`, `MatchLifecycleStarted` (revert) | Structure lifecycle DTO | Anticipated disable on transitions |
+| Read: `UnmaterializedConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable` | Structure lifecycle DTO | **Shipped** on Start (`StructureStageLifecycleAssembler` + guard) |
 
 Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **reason detail** inside revert preflight where possible — avoid duplicate predicates.
 
@@ -686,18 +719,20 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 | Artifact | Role |
 | :------- | :--- |
 | **Notion — Lifecycle phase UI Structure** | **SoT** — V2 contract (2026-10-12) + legacy UX sections (some superseded; see page callouts) |
-| **Notion — Arbitrage matrice 2b** | Superseded — copy lives in Matchs column; sync Notion Lifecycle UI page |
+| **Notion — Arbitrage matrice 2b** | Superseded — lifecycle copy on **fiche**; production on aside Matchs; sync Notion Lifecycle UI page |
 | **This Git appendix** | Code-verified facts + **V2 gap audit** + 2b matrix draft |
 
-**Implementation (2026-10-13):** Lifecycle V2 Matchs column — anticipated + mutation copy (`structureProblems/*`), prepare gates on read (`StructureStageLifecycleAssembler` + `StructurePrepareAttributionGate`), Materialize **Ready-only** read mirror, tests (`StructureStageLifecycleAssemblerTests`, `StructurePrepareAttributionTests`, `StructurePage` cross-surface). **2c** Places N label still **blocked** métier.
+**Implementation (2026-10-13):** Lifecycle V2 — anticipated + mutation copy (`structureProblems/*`), prepare gates on read (`StructureStageLifecycleAssembler` + `StructurePrepareAttributionGate`), Materialize **Ready-only** read mirror, tests (`StructureStageLifecycleAssemblerTests`, `StructurePrepareAttributionTests`, `StructurePage` cross-surface). **2c** Places N label still **blocked** métier.
+
+**Implementation (2026-10-17):** Fiche owns lifecycle chrome; `#operational-matchs` uses `omitLifecycle` — tests `50c4354f`; Start gate recipes `10166fbb`, `32c6186e`, `fb14feb7`. **Follow-up (out of scope):** remediation link visible label for `InitialRoundNotPlayable` (i18n).
 
 **After formal Notion validation:** add `Notion validation: YYYY-MM-DD` and list any deviations from shipped behaviour.
 
 ---
 
-## Post-validation PR scope (Lifecycle V2 — shipped 2026-10-13)
+## Post-validation PR scope (Lifecycle V2 — shipped 2026-10-13; fiche/aside 2026-10-17)
 
-- [x] Matchs column lifecycle (no stepper); prepare gates projected on `disabledReasonCode`
+- [x] Lifecycle on **fiche** (no stepper); `#operational-matchs` **omitLifecycle**; prepare gates projected on `disabledReasonCode`
 - [x] `StageNotReady` honest draft copy; prepare-gate `problems.lifecycle.*`
 - [x] `_unknown` keys (`problems.lifecycle` / `problems.mutation`)
 - [x] `errors:Application.StageCompletionBlocked`
