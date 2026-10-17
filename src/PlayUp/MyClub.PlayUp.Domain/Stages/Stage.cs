@@ -1959,7 +1959,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <returns>The slot, or <see langword="null"/>.</returns>
     public Slot? FindSlot(string? slotKey)
     {
-        var key = Slot.NormalizeKey(slotKey);
+        var key = Slot.NormalizeKey(slotKey ?? string.Empty);
         return _slots.FirstOrDefault(s => string.Equals(s.SlotKey, key, StringComparison.Ordinal));
     }
 

@@ -91,7 +91,6 @@ public sealed class ProgressionPathProductionParticipationWitnessTests
         var downstream = Match.Create(destination.CompetitionId, destination.Id, alienA, alienB, _clock);
         var sfFixture = destination.AddFixture(destination.Rounds[0].Id, _clock, "SF-A", "SF-B", "P1");
         destination.AttachMatch(sfFixture.Id, downstream.Id, legIndex: 1, _clock);
-        var emptySummaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
 
         var verdict = ProgressionPathProductionParticipationWitness.EvaluateTouchedPath(
             path,
@@ -99,7 +98,7 @@ public sealed class ProgressionPathProductionParticipationWitnessTests
             destination,
             [source, destination],
             MaterializedParticipantSnapshots.FromMatches([downstream]),
-            emptySummaries);
+            new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>());
 
         verdict.Should().Be(ProgressionPathProductionParticipationWitness.Verdict.ParticipationAmbiguous);
     }

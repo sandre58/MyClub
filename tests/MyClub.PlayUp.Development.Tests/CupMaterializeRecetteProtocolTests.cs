@@ -51,14 +51,14 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
 
         var fixtureByBracketPairKey = stage.FindFixtureByBracketPairKey(row.Key);
         fixtureByBracketPairKey.Should().NotBeNull();
-        fixtureByBracketPairKey!.Attachments.Should().ContainSingle();
+        fixtureByBracketPairKey.Attachments.Should().ContainSingle();
     }
 
     [Fact]
     public async Task R3_idempotence_and_already_complete_are_distinctAsync()
     {
         await using var scope = await OpenRecetteCupScopeAsync("RECETTE C3");
-        var (competition, stage, _, matches) = scope;
+        var (competition, stage, _, _) = scope;
         EnsureRecetteCupReady(competition, stage);
         var matchList = await scope.ReloadMatchesAsync();
 
@@ -88,7 +88,7 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         {
             var pair = stage.FindBracketPair(row.Key);
             pair.Should().NotBeNull();
-            var slotA = stage.FindSlot(pair!.SlotAKey);
+            var slotA = stage.FindSlot(pair.SlotAKey);
             var slotB = stage.FindSlot(pair.SlotBKey);
             (slotA?.EntryId is null || slotB?.EntryId is null).Should().BeTrue();
         }
@@ -158,7 +158,6 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         var competition = await competitions.GetByIdForUpdateAsync(
             (await competitions.ListAsync()).Single().Id);
         var allStages = await stages.GetByIdsForUpdateAsync(competition!.StageIds);
-        var quarter = allStages[0];
         var semi = allStages[1];
 
         semi.Slots.Should().OnlyContain(slot => slot.EntryId != null);
