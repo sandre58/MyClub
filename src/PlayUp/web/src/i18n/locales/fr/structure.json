@@ -47,13 +47,8 @@
     }
   },
   "readiness": {
-    "structureNotReady": "Structure à finaliser",
-    "problemsToHandle_one": "{{count}} problème à traiter",
-    "problemsToHandle_other": "{{count}} problèmes à traiter",
-    "anomalyHintTitle": "Des anomalies nécessitent votre attention",
-    "anomalyHintTitlePaused": "Des anomalies structurelles sont constatées (phase en pause)",
-    "warningHintTitle": "La structure reste à finaliser",
-    "warningHintTitlePaused": "Des éléments structurels restent incomplets (phase en pause)",
+    "anomalyHintTitle": "Anomalies à traiter",
+    "warningHintTitle": "Structure incomplète",
     "statStructural_one": "liaison à corriger",
     "statStructural_other": "liaisons à corriger",
     "statIncomplete_one": "phase incomplète",
@@ -80,9 +75,9 @@
       "attribution": "Voir l’attribution",
       "structure": "Corriger la structure"
     },
-    "readyForNextSlice": "Structure prête pour la prochaine étape de construction",
-    "readyForMaterialization": "La compétition est prête à créer les matchs",
-    "readyForCupSkeleton": "La coupe est prête pour le squelette de confrontations (tirage)",
+    "readyForNextSlice": "Structure prête",
+    "readyForMaterialization": "Prête pour les matchs",
+    "readyForCupSkeleton": "Structure prête",
     "nextStep": {
       "RunDraw": "Lancer le tirage au sort",
       "ApplyDraw": "Appliquer le tirage publié",

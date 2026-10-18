@@ -61,6 +61,10 @@
   max-width: 36rem;
 }
 
+.ds-page-head__note .ds-status--multiline {
+  max-width: min(100%, 42rem);
+}
+
 .ds-page-head__tools {
   display: flex;
   flex-wrap: wrap;

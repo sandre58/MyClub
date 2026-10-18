@@ -36,58 +36,11 @@
   line-height: var(--leading-normal);
 }
 
-/* ---------- Readiness (PageHead note — synthesis banner, not Alert) ---------- */
+/* ---------- PageHead note width (readiness = DS Status multiline) ---------- */
 
 .page.page--structure .ds-page-head__note {
   max-width: none;
   width: 100%;
-}
-
-.structure-status {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  min-width: 0;
-}
-
-.structure-status__title {
-  margin: 0;
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-  color: inherit;
-}
-
-.structure-status__title--attention {
-  color: var(--color-attention);
-}
-
-.structure-status__title--ready {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  color: var(--color-success);
-}
-
-.structure-status__title--hint-negative,
-.structure-status__title--hint-attention {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-}
-
-.structure-status__title--hint-negative {
-  color: var(--color-error);
-}
-
-.structure-status__title--hint-attention {
-  color: var(--color-attention);
-}
-
-.structure-status__detail {
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-meta);
-  color: var(--color-text-secondary);
 }
 
 /* ---------- Entries list shell ---------- */

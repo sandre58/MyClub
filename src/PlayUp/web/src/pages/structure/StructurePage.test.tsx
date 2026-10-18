@@ -994,7 +994,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Des anomalies nécessitent votre attention/i),
+      await screen.findByText(/Anomalies à traiter/i),
     ).toBeInTheDocument();
     expect(screen.queryByText(/1 problème identifié/i)).not.toBeInTheDocument();
     expect(
@@ -1303,7 +1303,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/La compétition est prête à créer les matchs/i),
+      await screen.findByText(/Prête pour les matchs/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Créer les matchs/i }),
@@ -1408,7 +1408,7 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'League' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/La compétition est prête à créer les matchs/i),
+      screen.queryByText(/Prête pour les matchs/i),
     ).not.toBeInTheDocument();
   });
 
@@ -1445,7 +1445,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Structure prête pour la prochaine étape/i),
+      await screen.findByText(/Structure prête/i),
     ).toBeInTheDocument();
   });
 
@@ -1488,10 +1488,10 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Des anomalies nécessitent votre attention/i),
+      await screen.findByText(/Anomalies à traiter/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText(/La compétition est prête à créer les matchs/i),
+      screen.queryByText(/Prête pour les matchs/i),
     ).not.toBeInTheDocument();
   });
 
@@ -1581,7 +1581,7 @@ describe('StructurePage Structure hub', () => {
 
     expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
     expect(
-      screen.queryByText(/Structure prête pour la prochaine étape/i),
+      screen.queryByText(/Structure prête/i),
     ).not.toBeInTheDocument();
   });
 
@@ -1933,10 +1933,10 @@ describe('StructurePage Structure hub', () => {
       renderStructurePage();
 
       expect(
-        await screen.findByText(/Des anomalies nécessitent votre attention/i),
+        await screen.findByText(/Anomalies à traiter/i),
       ).toBeInTheDocument();
       expect(
-        screen.queryByText(/La compétition est prête à créer les matchs/i),
+        screen.queryByText(/Prête pour les matchs/i),
       ).not.toBeInTheDocument();
     });
 
@@ -2029,7 +2029,7 @@ describe('StructurePage Structure hub', () => {
         screen.getByText(/Liaison circulaire entre phases/i),
       ).toBeInTheDocument();
       expect(
-        await screen.findByText(/Des anomalies nécessitent votre attention/i),
+        await screen.findByText(/Anomalies à traiter/i),
       ).toBeInTheDocument();
     });
   });

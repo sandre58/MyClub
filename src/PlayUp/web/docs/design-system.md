@@ -102,6 +102,12 @@ Do not collapse them: pulse activity ≠ tone chip.
 - Fact / rule token (neutral, soft, accent, win/draw/loss) — **not** a lifecycle `Status`.
 - Hint copy: wrap with `Tooltip` (native `title` is not the V1 tip path).
 
+## Status
+
+- Canonical: `components/Status.tsx` + `foundations/status.css`.
+- Icon + label rows: wrap children in `.ds-status-inline` / `.ds-status-inline__icon`.
+- Hub notes (Structure PageHead): `context` · `outline` · `pill`, short nominal label + `.ds-status-inline`; specimen in Design Lab **Structure PageHead**. Use `multiline` + `textBody` only when a longer wrapped label is explicitly required elsewhere.
+
 ## PageHead
 
 - Canonical: `components/PageHead.tsx` + `foundations/page-head.css`.

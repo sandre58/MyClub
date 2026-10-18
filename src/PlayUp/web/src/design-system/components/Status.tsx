@@ -11,6 +11,10 @@ type StatusProps = {
   tone?: StatusTone;
   variant?: StatusVariant;
   shape?: StatusShape;
+  /** Wrapped label (e.g. PageHead). Icon row uses `.ds-status-inline`. */
+  multiline?: boolean;
+  /** Context density only — use `--text-body` instead of label size. */
+  textBody?: boolean;
   children: ReactNode;
   className?: string;
 } & Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'title' | 'className'>;
@@ -24,6 +28,8 @@ export function Status({
   tone = 'info',
   variant = 'soft',
   shape = 'rounded',
+  multiline = false,
+  textBody = false,
   children,
   className,
   ...rest
@@ -35,6 +41,8 @@ export function Status({
     isChip && `ds-status--${variant}`,
     isChip && `ds-status--tone-${tone}`,
     isChip && `ds-status--${shape}`,
+    multiline && 'ds-status--multiline',
+    textBody && density === 'context' && 'ds-status--text-body',
     className,
   ]
     .filter(Boolean)

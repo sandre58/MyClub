@@ -7,7 +7,7 @@ describe('StructureReadinessHint', () => {
     render(<StructureReadinessHint severity="error" />);
 
     expect(
-      screen.getByText(/Des anomalies nécessitent votre attention/i),
+      screen.getByText(/Anomalies à traiter/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Corriger/i }),
@@ -18,7 +18,7 @@ describe('StructureReadinessHint', () => {
     render(<StructureReadinessHint severity="warning" />);
 
     expect(
-      screen.getByText(/La structure reste à finaliser/i),
+      screen.getByText(/Structure incomplète/i),
     ).toBeInTheDocument();
   });
 });

@@ -29,6 +29,7 @@ import { LabToast } from './LabToast';
 import { LabTooltip } from './LabTooltip';
 import { LabForm } from './LabForm';
 import { LabRegulation } from './LabRegulation';
+import { LabStructurePageHead } from './LabStructurePageHead';
 import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait';
 import { Toaster } from '../design-system/components/Toaster';
 import { Tooltip } from '../design-system/components/Tooltip';
@@ -50,7 +51,8 @@ type LabView =
   | 'overview-loading'
   | 'matches'
   | 'match'
-  | 'standings';
+  | 'standings'
+  | 'structure-pagehead';
 
 /**
  * /design-lab — visual prototype for the competition-grid direction.
@@ -231,6 +233,7 @@ export function DesignLabPage() {
               {view === 'matches' && <LabMatches />}
               {view === 'match' && <LabMatchSheet lifecycle={lifecycle} />}
               {view === 'standings' && <LabStandings />}
+              {view === 'structure-pagehead' && <LabStructurePageHead />}
             </main>
           </div>
         </div>
@@ -258,6 +261,7 @@ const viewOptions: Array<{ key: LabView; label: string }> = [
   { key: 'matches', label: 'Matchs' },
   { key: 'match', label: 'Fiche match' },
   { key: 'standings', label: 'Classements' },
+  { key: 'structure-pagehead', label: 'Structure PageHead' },
 ];
 
 const waitKindOptions: Array<{ key: LabWaitKind; label: string }> = [
@@ -397,7 +401,7 @@ const labNavGroups: Array<{
   id: string;
   label: string;
   items: Array<{
-    key: LabView | 'structure' | 'teams' | 'regulation';
+    key: LabView | 'teams' | 'regulation';
     label: string;
     icon: typeof OverviewNavIcon;
     dest?: LabView;
@@ -420,10 +424,10 @@ const labNavGroups: Array<{
     label: 'Compétition',
     items: [
       {
-        key: 'structure',
+        key: 'structure-pagehead',
         label: 'Structure',
         icon: StructureNavIcon,
-        dest: 'overview',
+        dest: 'structure-pagehead',
       },
       {
         key: 'matches',

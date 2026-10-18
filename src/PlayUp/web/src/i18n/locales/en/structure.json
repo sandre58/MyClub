@@ -47,13 +47,8 @@
     }
   },
   "readiness": {
-    "structureNotReady": "Structure to finalize",
-    "problemsToHandle_one": "{{count}} problem to handle",
-    "problemsToHandle_other": "{{count}} problems to handle",
-    "anomalyHintTitle": "Anomalies need your attention",
-    "anomalyHintTitlePaused": "Structural anomalies noted (phase paused)",
-    "warningHintTitle": "The structure still needs finishing",
-    "warningHintTitlePaused": "Structural items remain incomplete (phase paused)",
+    "anomalyHintTitle": "Issues to address",
+    "warningHintTitle": "Structure incomplete",
     "statStructural_one": "connection to fix",
     "statStructural_other": "connections to fix",
     "statIncomplete_one": "incomplete phase",
@@ -80,15 +75,15 @@
       "attribution": "View attribution",
       "structure": "Fix structure"
     },
-    "readyForNextSlice": "Structure is ready for the next construction step",
+    "readyForNextSlice": "Structure ready",
     "nextStep": {
       "RunDraw": "Run the random draw",
       "ApplyDraw": "Apply the published draw",
       "BuildSchedule": "Build the match schedule",
       "RunSwissRounds": "Generate the next Swiss round"
     },
-    "readyForMaterialization": "The competition is ready to create matches",
-    "readyForCupSkeleton": "The cup is ready for the fixture skeleton (draw)"
+    "readyForMaterialization": "Ready for matches",
+    "readyForCupSkeleton": "Structure ready"
   },
   "roster": {
     "playersHeading": "Players",

@@ -124,6 +124,76 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Structure PageHead readiness — Lab specimen (not product)          */
+/* ------------------------------------------------------------------ */
+
+.dlab-structure-pagehead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 42rem;
+}
+
+.dlab-structure-pagehead__title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-structure-pagehead__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__shape-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__shape-caption {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.dlab-structure-pagehead__specimen {
+  padding: var(--space-16);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-canvas);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__specimen .ds-page-head__note {
+  max-width: none;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------ */
 /* Wait states — lab-only (not DS foundations)             */
 /* ------------------------------------------------------------------ */
 

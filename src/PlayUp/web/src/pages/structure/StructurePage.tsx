@@ -10,13 +10,13 @@ import { PageHead } from '../../design-system/components/PageHead';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   ChampionshipFormatIcon,
-  CheckIcon,
   CupFormatIcon,
   GroupsFormatIcon,
   PlusIcon,
   StructureIcon,
   SwissFormatIcon,
   EmptySelectionIcon,
+  InfoIcon,
 } from '../../design-system/icons/contentIcons';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
@@ -36,9 +36,9 @@ import {
   type AttentionQueryPhase,
   resolveStructurePageHeadNoteKind,
 } from './structurePageHeadReadiness';
-import { shouldUsePausedStructurePageHeadCopy } from './structurePageHeadPausedStructureCopy';
 import { AddPhaseDialog } from './StructureGraphDialogs';
 import { StructureReadinessHint } from './StructureReadinessHint';
+import { StructurePageHeadReadinessStatus } from './structurePageHeadReadinessStatus';
 import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
 import { StructurePhaseFiche } from './StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
@@ -559,29 +559,12 @@ function readinessStatusNote(
     readyForNextSlice: readiness.readyForNextSlice,
   });
 
-  const pausedStructurePageHeadCopy = shouldUsePausedStructurePageHeadCopy({
-    noteKind,
-    summary,
-    presentableBlockingAttentionCount: attentionPartition.blocking.length,
-    presentableNonBlockingAttentionCount: attentionPartition.attention.length,
-  });
-
   if (noteKind === 'negative') {
-    return (
-      <StructureReadinessHint
-        severity="error"
-        pausedStructureCopy={pausedStructurePageHeadCopy}
-      />
-    );
+    return <StructureReadinessHint severity="error" />;
   }
 
   if (noteKind === 'warning') {
-    return (
-      <StructureReadinessHint
-        severity="warning"
-        pausedStructureCopy={pausedStructurePageHeadCopy}
-      />
-    );
+    return <StructureReadinessHint severity="warning" />;
   }
 
   if (noteKind === 'positiveMaterialization') {
@@ -598,44 +581,18 @@ function readinessStatusNote(
   }
 
   if (noteKind === 'positiveNextSlice') {
-    const hint = readiness.nextConstructionStepHint ?? 'None';
-    const titleKey =
-      hint !== 'None'
-        ? (`readiness.nextStep.${hint}` as const)
-        : 'readiness.readyForNextSlice';
-    return <ReadinessReadyStatus titleKey={titleKey} />;
+    return <ReadinessReadyStatus titleKey="readiness.readyForNextSlice" />;
   }
 
   return null;
 }
 
-function ReadinessReadyStatus({
-  titleKey,
-  detailKey,
-  detailCount,
-}: {
-  titleKey: string;
-  detailKey?: string;
-  detailCount?: number;
-}) {
+function ReadinessReadyStatus({ titleKey }: { titleKey: string }) {
   const { t } = useTranslation('structure');
 
   return (
-    <div className="structure-status" role="status">
-      <p
-        id="readiness-heading"
-        className="structure-status__title structure-status__title--ready"
-      >
-        <CheckIcon size="sm" aria-hidden="true" />
-        <span>{t(titleKey)}</span>
-      </p>
-      {detailKey != null ? (
-        <p className="structure-status__detail">
-          {detailCount != null && detailCount > 0
-            ? t(detailKey, { count: detailCount })
-            : t(detailKey)}
-        </p>
-      ) : null}
-    </div>
+    <StructurePageHeadReadinessStatus tone="info" icon={<InfoIcon size="sm" />}>
+      {t(titleKey)}
+    </StructurePageHeadReadinessStatus>
   );
 }

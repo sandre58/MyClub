@@ -102,3 +102,36 @@
   background: none;
   border: none;
 }
+
+/* Multiline chips — hub notes, drawer labels; not single-line meta chips */
+.ds-status--multiline {
+  white-space: normal;
+  max-width: min(100%, 42rem);
+  align-items: center;
+  line-height: var(--leading-normal);
+}
+
+.ds-status--context.ds-status--text-body {
+  font-size: var(--text-body);
+}
+
+.ds-status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  text-align: start;
+}
+
+.ds-status-inline__icon {
+  display: inline-flex;
+  flex: none;
+  color: inherit;
+}
+
+/* Outline multiline: stronger ink + border (default outline reads muted / “disabled”) */
+.ds-status--outline.ds-status--multiline {
+  --status-wash: 14%;
+  border-color: color-mix(in srgb, var(--status-ink) 44%, transparent);
+  color: var(--status-ink);
+}

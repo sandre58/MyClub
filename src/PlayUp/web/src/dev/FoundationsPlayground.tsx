@@ -633,6 +633,23 @@ export function FoundationsPlayground() {
               </Status>
             ))}
           </div>
+          <p className="ds-label">Context · outline · multiline · textBody</p>
+          <div className="ds-row">
+            <Status
+              density="context"
+              tone="error"
+              variant="outline"
+              multiline
+              textBody
+            >
+              <span className="ds-status-inline">
+                <span className="ds-status-inline__icon" aria-hidden="true">
+                  !
+                </span>
+                <span>Anomalies à traiter</span>
+              </span>
+            </Status>
+          </div>
           <p className="ds-label">Dense (texte secondaire, sans fill)</p>
           <div className="ds-row">
             {statusTones.map((tone) => (

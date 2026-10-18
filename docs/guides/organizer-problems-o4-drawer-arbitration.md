@@ -343,22 +343,21 @@ When **`SlotFeedMissing`** is **presented** (diagnostic signal; **not** a Prepar
 - **`NonRootUnfed`**: confirm intermediate construction vs hard anomaly per competition shape (no automatic reclass to Blocking).
 - **`SlotFeedMissing`**: confirm Host can use global **`Blocking`** + presentation silence (preferred) vs conditional severity emission.
 
-### Structure PageHead — anomaly hint (DECIDED 2026-10-12, chat)
+### Structure PageHead — global status pill (DECIDED 2026-10-12, amended 2026-10-18)
 
-**Intent:** Option **A** (no PageHead problem catalogue) + **minimal negative hint** so anomalies are not invisible on Structure.
+**Intent:** Option **A** (no PageHead problem catalogue) + **compact nominal status** so hub state is visible without duplicating fiche or drawer detail.
 
 | Rule | Contract |
 | :--- | :------- |
-| **Placement** | Same `ds-page-head__note` slot and family as **positive** readiness messages (`structure-status`, not action banner). |
-| **Negative chrome** | Same layout as positive readiness: icon + label use **`--color-error`** (positive uses **`--color-success`**); **no** large danger panel, **no** corrective buttons in PageHead. |
-| **Content** | **One line** (title only); **no** lede, **no** issue list, **no** per-phase CTAs, **no** number in PageHead (D1). |
-| **Visibility (D2)** | Show negative hint when **either** Structure synthesis `hasAny` **or** `/attention` has **presentable** drawer rows (union). Never show positive readiness while either signal is active. Do not show positive while `/attention` is still pending. |
-| **Do not use** | `presentedProblemCount` for PageHead copy or a second catalogue; `NeedsAttentionDto.Count` alone for shell badge (SPA uses presentable count). |
-| **Removed** | `StructureReadinessBanner` action list (`MAX_ACTION_ITEMS = 3`), headline « N problèmes identifiés » as pseudo-catalogue. |
+| **Placement** | `ds-page-head__note` — DS **`Status`** `context` · `outline` · **`pill`**, tones `error` / `attention` / `info`, icon + short label. |
+| **Content** | **Nominal status** (2–4 words); **no** full sentence, **no** imperative/CTA, **no** pause-specific PageHead copy, **no** count (D1). |
+| **Positive** | `readyForMaterialization` → « Prête pour les matchs » / *Ready for matches*; `readyForNextSlice` and `readyForCupSkeleton` → « Structure prête » / *Structure ready* (keys may differ, copy may match). |
+| **Negative / warning** | `anomalyHintTitle` / `warningHintTitle` short labels only; severity from `resolveStructurePageHeadNoteKind` unchanged. |
+| **Visibility (D2)** | Unchanged: blocking/danger → negative pill; warning-only → attention pill; clean readiness flags → info pill; no positive while attention pending or problems presented. |
+| **Do not use** | `presentedProblemCount` for PageHead copy; `nextStep.*` imperatives in PageHead; page-local CSS mimicking `Status`. |
+| **Removed** | Long synthesis sentences; pause PageHead variants; success checkmark; `StructureReadinessBanner` catalogue. |
 
-**Copy (FR target):**
-
-- Single line: « Des anomalies nécessitent votre attention » when `showNegative`; no count in PageHead.
+**Copy (FR / EN):** see `structure.readiness.anomalyHintTitle`, `warningHintTitle`, `readyForMaterialization`, `readyForNextSlice`, `readyForCupSkeleton` in Git i18n.
 
 **Shell count (D3):** SPA badge and drawer header use **`presentableAttentionCount`** (map → dedupe → denylist → blocking + warning rows). API `Count => Items.Count` unchanged.
 
