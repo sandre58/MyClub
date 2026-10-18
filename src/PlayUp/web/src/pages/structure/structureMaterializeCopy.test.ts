@@ -7,6 +7,8 @@ import {
   showMaterializeActionBlock,
   showMaterializeFrozenRemainingBanner,
   materializeFrozenRemainingCount,
+  resolveProspectiveMaterializeCapacity,
+  shouldShowMaterializeCommandButton,
   showViewMaterializedMatchesLink,
   cupCanonicalEntryRoundIncomplete,
   cupEntryRoundPlacementGaugeRatio,
@@ -80,6 +82,47 @@ describe('structureMaterializeCopy', () => {
         'Draft',
       ),
     ).toBe('terminal');
+  });
+
+  it('shouldShowMaterializeCommandButton follows remaining determined work', () => {
+    const terminal = {
+      ...base,
+      materializedCount: 6,
+      eligibleCount: 0,
+      commandEnabled: false,
+    };
+    expect(
+      shouldShowMaterializeCommandButton(terminal, 'terminal'),
+    ).toBe(false);
+
+    expect(
+      shouldShowMaterializeCommandButton(
+        { ...base, materializedCount: 2, commandEnabled: false },
+        'blocked',
+      ),
+    ).toBe(true);
+
+    const rosterBlocked = {
+      ...base,
+      determinedCount: 0,
+      materializedCount: 0,
+      commandEnabled: false,
+      disabledReason: 'PhaseRosterIncomplete',
+    };
+    expect(shouldShowMaterializeCommandButton(rosterBlocked, 'blocked')).toBe(
+      false,
+    );
+    expect(
+      shouldShowMaterializeCommandButton(rosterBlocked, 'blocked', {
+        formatKind: 'Championship',
+        compositionCapacity: 4,
+        numberOfLegs: 1,
+        defaultTieFormat: null,
+        matchCount: 0,
+        groupCount: 0,
+        placesPerGroup: null,
+      }),
+    ).toBe(true);
   });
 
   it('classifies running 3/6 as frozen, not terminal', () => {
@@ -191,6 +234,23 @@ describe('structureMaterializeCopy', () => {
     });
   });
 
+  it('cup prospective capacity drives materialize CTA visibility before any match is determined', () => {
+    const materialize = {
+      ...base,
+      commandCode: 'MaterializeFromOccupiedSlots' as const,
+      determinedCount: 0,
+      materializedCount: 0,
+      commandEnabled: false,
+      canonicalEntryPairCount: 8,
+      confrontations: [],
+    };
+    const stage = { matchCount: 0, formatKind: 'Cup' as const };
+    expect(resolveProspectiveMaterializeCapacity(materialize, stage)).toBe(8);
+    expect(
+      shouldShowMaterializeCommandButton(materialize, 'blocked', stage),
+    ).toBe(true);
+  });
+
   it('detects incomplete canonical cup entry round from read counts', () => {
     const cupPartial = {
       ...base,
@@ -293,6 +353,45 @@ describe('structureMaterializeCopy', () => {
       mode: 'materialized',
       ratio: { filled: 0, capacity: 4 },
     });
+  });
+
+  it('roster gap blocks determined-confrontation idle gauge when lifecycle says PhaseRosterIncomplete', () => {
+    const materialize = {
+      ...base,
+      determinedCount: 0,
+      disabledReason: 'NoDeterminedConfrontations',
+      confrontations: [
+        {
+          key: 'x',
+          sideA: 'A',
+          sideB: 'B',
+          determined: false,
+          materialized: false,
+          eligible: false,
+        },
+        {
+          key: 'y',
+          sideA: 'C',
+          sideB: 'D',
+          determined: false,
+          materialized: false,
+          eligible: false,
+        },
+      ],
+    };
+    const stage = {
+      matchCount: 0,
+      formatKind: 'Championship' as const,
+      compositionCapacity: 4,
+      lifecycle: {
+        transition: {
+          code: 'StartStage' as const,
+          enabled: false,
+          disabledReasonCode: 'PhaseRosterIncomplete',
+        },
+      },
+    };
+    expect(resolveMatchsProductionGauge(materialize, stage)).toBeNull();
   });
 
   it('groups not ready wins over undetermined confrontation rows (no cup idle copy)', () => {

@@ -45,7 +45,7 @@ import {
   resolveMatchsProductionGauge,
   resolveStartStageProductionBlocker,
   shouldConfirmCupMaterializeWithIncompleteEntryRound,
-  shouldShowBlockedGroupsMaterializeCta,
+  shouldShowMaterializeCommandButton,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
 import {
@@ -80,6 +80,16 @@ import {
   operationalStripGridColumns,
 } from './structureOperationalStripLayout';
 import { CupEntryRoundPlacementGauge } from './CupEntryRoundPlacementGauge';
+import { CompositionInboundResolvedGauge } from './CompositionInboundResolvedGauge';
+import type { CompositionTileMode } from './compositionTilePresentation';
+import {
+  phaseRosterBlocksMatchProduction,
+  resolveAsideCupEntryRoundGaugeStats,
+  resolveAsideMatchProductionPresentation,
+  resolveAsideRosterResolutionGaugeStats,
+  shouldShowAsideEntryRoundBlockerGauge,
+  shouldShowAsideRosterResolutionGauge,
+} from './matchsAsideTilePresentation';
 import {
   resolveDrawPoolMeterCopy,
   resolvePlaceOccupancyMeterCopy,
@@ -418,6 +428,7 @@ export function StructurePhaseOperationalStrip({
       setMaterializeConfirmOpen={setMaterializeConfirmOpen}
       omitLifecycle={asideMatchsLayout || omitLifecycle}
       hideSectionHead={asideMatchsLayout}
+      placement={placement}
     />
   );
 
@@ -1144,6 +1155,7 @@ function MatchesColumn({
   setMaterializeConfirmOpen,
   omitLifecycle = false,
   hideSectionHead = false,
+  placement = null,
 }: {
   index: number;
   titleChipRefreshing?: boolean;
@@ -1160,26 +1172,40 @@ function MatchesColumn({
   setMaterializeConfirmOpen: (open: boolean) => void;
   omitLifecycle?: boolean;
   hideSectionHead?: boolean;
+  placement?: StructurePlacementOperationalSectionProps | null;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
 
   const materialize = stage.materialize;
   const dematerialize = stage.dematerialize;
-  const matchsProductionGauge = resolveMatchsProductionGauge(materialize, stage);
-  const gaugeRatio = matchsProductionGauge?.ratio ?? null;
-  const productionGaugeMode = matchsProductionGauge?.mode ?? null;
+  const asideMatchsTile = hideSectionHead;
+  const phaseRosterBlocksProduction = phaseRosterBlocksMatchProduction(stage);
+  const asideProductionPresentation =
+    asideMatchsTile && materialize != null
+      ? resolveAsideMatchProductionPresentation(stage)
+      : null;
+  const matchsProductionGauge =
+    materialize != null && !asideMatchsTile && !phaseRosterBlocksProduction
+      ? resolveMatchsProductionGauge(materialize, stage)
+      : null;
+  const gaugeRatio =
+    asideProductionPresentation?.ratio ??
+    (phaseRosterBlocksProduction
+      ? resolveAsideMatchProductionPresentation(stage)?.ratio ?? null
+      : matchsProductionGauge?.ratio ?? null);
+  const productionGaugeMode =
+    asideMatchsTile && asideProductionPresentation != null
+      ? asideProductionPresentation.mode
+      : matchsProductionGauge?.mode ?? null;
   const poolTone =
     gaugeRatio != null
       ? resolveDrawCtaPoolTone(gaugeRatio.filled, gaugeRatio.capacity)
       : 'neutral';
-  const showMaterializePrimary =
-    materialize != null && presentation === 'actionable';
-  const showMaterializeBlockedCta =
+  const showMaterializeCta =
     materialize != null &&
     presentation != null &&
-    shouldShowBlockedGroupsMaterializeCta(materialize, presentation);
-  const showMaterializeCta = showMaterializePrimary || showMaterializeBlockedCta;
+    shouldShowMaterializeCommandButton(materialize, presentation, stage);
   const asideStripContent = resolveAsideMatchsStripContent(stage, presentation);
   const showViewMatchesLink = asideStripContent.showViewMatchesLink;
 
@@ -1193,8 +1219,33 @@ function MatchesColumn({
     stage,
   );
 
+  const entryRoundPlacementRatio =
+    materialize == null
+      ? null
+      : asideMatchsTile && stage.formatKind === 'Cup'
+        ? resolveAsideCupEntryRoundGaugeStats(materialize)
+        : cupEntryRoundPlacementGaugeRatio(materialize);
+
+  const rosterResolutionStats = resolveAsideRosterResolutionGaugeStats(
+    stage,
+    placement,
+  );
+  const showAsideRosterResolutionGauge = shouldShowAsideRosterResolutionGauge(
+    stage,
+    rosterResolutionStats,
+  );
+  const showAsideEntryRoundBlockerGauge = shouldShowAsideEntryRoundBlockerGauge(
+    stage,
+    materialize,
+  );
+  const asideHasMaterializeBlockerGauge =
+    showAsideRosterResolutionGauge || showAsideEntryRoundBlockerGauge;
+
   const blockedCaption =
-    presentation === 'blocked' && materialize && !structuralProductionChrome
+    presentation === 'blocked' &&
+    materialize &&
+    !structuralProductionChrome &&
+    !(asideMatchsTile && asideHasMaterializeBlockerGauge)
       ? materializeDisabledCaption(materialize, t)
       : null;
 
@@ -1209,8 +1260,6 @@ function MatchesColumn({
     materialize,
   );
 
-  const entryRoundPlacementRatio =
-    materialize != null ? cupEntryRoundPlacementGaugeRatio(materialize) : null;
   const groupsPoolsIncomplete =
     materialize != null && isGroupsPoolPlacementIncomplete(materialize);
   const matchMeter = resolveProductionMeterCopy({
@@ -1221,6 +1270,7 @@ function MatchesColumn({
     startStageBlocker,
     productionGaugeMode,
     groupsPoolsIncomplete,
+    phaseRosterBlocksProduction,
   });
 
   const productionBasePoolTone =
@@ -1273,10 +1323,21 @@ function MatchesColumn({
     materializeMutation.mutate(undefined);
   };
 
+  const asideCompositionMode: CompositionTileMode =
+    stage.status === 'Completed'
+      ? 'historical'
+      : stage.status === 'Draft'
+        ? 'prep'
+        : 'exploitation';
+
+  const showAsideProductionBody =
+    asideStripContent.showProductionBody ||
+    (asideMatchsTile && showProduction && materialize != null);
+
   let entryRoundShownInProductionSlot = false;
   let productionGauge: ReactNode = null;
 
-  if (asideStripContent.showProductionBody) {
+  if (showAsideProductionBody) {
     if (canShowMetric && gaugeRatio != null) {
       productionGauge = (
         <MetricRow
@@ -1306,7 +1367,20 @@ function MatchesColumn({
           }
         />
       );
-    } else if (entryRoundPlacementRatio != null) {
+    } else if (
+      asideMatchsTile &&
+      canShowMetric === false &&
+      entryRoundPlacementRatio != null &&
+      showAsideEntryRoundBlockerGauge
+    ) {
+      productionGauge = (
+        <CupEntryRoundPlacementGauge
+          filled={entryRoundPlacementRatio.filled}
+          capacity={entryRoundPlacementRatio.capacity}
+          blocksPhaseStart={entryRoundBlocksPhaseStart}
+        />
+      );
+    } else if (entryRoundPlacementRatio != null && !asideMatchsTile) {
       entryRoundShownInProductionSlot = true;
       productionGauge = (
         <CupEntryRoundPlacementGauge
@@ -1315,7 +1389,13 @@ function MatchesColumn({
           blocksPhaseStart={entryRoundBlocksPhaseStart}
         />
       );
-    } else if (showProduction && materialize && !structuralProductionChrome) {
+    } else if (
+      showProduction &&
+      materialize &&
+      !structuralProductionChrome &&
+      !asideMatchsTile &&
+      gaugeRatio == null
+    ) {
       productionGauge = (
         <div className="structure-operational-strip__empty">
           <EmptyState
@@ -1333,7 +1413,9 @@ function MatchesColumn({
   }
 
   const entryRoundGaugeSection =
-    entryRoundPlacementRatio != null && !entryRoundShownInProductionSlot ? (
+    entryRoundPlacementRatio != null &&
+    !entryRoundShownInProductionSlot &&
+    (!asideMatchsTile || showAsideEntryRoundBlockerGauge) ? (
       <CupEntryRoundPlacementGauge
         filled={entryRoundPlacementRatio.filled}
         capacity={entryRoundPlacementRatio.capacity}
@@ -1341,8 +1423,52 @@ function MatchesColumn({
       />
     ) : null;
 
+  const asideRosterResolutionGauge =
+    asideMatchsTile &&
+    showAsideRosterResolutionGauge &&
+    rosterResolutionStats
+      ? (
+        <CompositionInboundResolvedGauge
+          resolved={rosterResolutionStats.resolved}
+          total={rosterResolutionStats.total}
+          mode={asideCompositionMode}
+          className="structure-phase-match-tile__roster-resolution-gauge"
+        />
+      )
+      : null;
+
+  const asideBlockedCompactMessage =
+    asideMatchsTile &&
+    showProduction &&
+    materialize &&
+    gaugeRatio == null &&
+    !asideHasMaterializeBlockerGauge
+      ? (
+        <StripOperationalMessage kind="attention">
+          {presentation === 'blocked'
+            ? materializeDisabledCaption(materialize, t)
+            : t('fiche.operational.production.emptyStructuralTitle')}
+        </StripOperationalMessage>
+      )
+      : null;
+
+  const asideProblemSlot =
+    asideMatchsTile &&
+    (asideRosterResolutionGauge ||
+      asideBlockedCompactMessage ||
+      entryRoundGaugeSection)
+      ? (
+        <div className="structure-operational-strip__aside-problem">
+          {asideRosterResolutionGauge}
+          {asideBlockedCompactMessage}
+          {entryRoundGaugeSection}
+        </div>
+      )
+      : null;
+
   const productionLeadingActions =
-    asideStripContent.showProductionLeadingActions ? (
+    asideStripContent.showProductionLeadingActions
+      ? (
       <>
         {showMaterializeCta && materialize ? (
           <button
@@ -1445,29 +1571,47 @@ function MatchesColumn({
         />
       ) : null;
 
-    matchesContent = (
-      <>
-        {productionGauge}
-        {productionErrors}
-        {exploitationGauge}
-        {omitLifecycle && productionLeadingActions ? (
-          <div
-            className="structure-operational-strip__production-actions structure-operational-strip__production-actions--tile"
-          >
-            {productionLeadingActions}
-          </div>
-        ) : null}
-        {omitLifecycle ? null : (
-          <StructurePhaseMatchsLifecycleBlock
-            competitionId={competitionId}
-            stage={stage}
-            productionBusy={productionBusy}
-            leadingActions={productionLeadingActions}
-          />
-        )}
-        {entryRoundGaugeSection}
-      </>
-    );
+    if (asideMatchsTile) {
+      matchesContent = (
+        <>
+          {productionGauge}
+          {productionErrors}
+          {exploitationGauge}
+          {productionLeadingActions ? (
+            <div
+              className="structure-operational-strip__production-actions structure-operational-strip__production-actions--tile"
+            >
+              {productionLeadingActions}
+            </div>
+          ) : null}
+          {asideProblemSlot}
+        </>
+      );
+    } else {
+      matchesContent = (
+        <>
+          {productionGauge}
+          {productionErrors}
+          {exploitationGauge}
+          {omitLifecycle && productionLeadingActions ? (
+            <div
+              className="structure-operational-strip__production-actions structure-operational-strip__production-actions--tile"
+            >
+              {productionLeadingActions}
+            </div>
+          ) : null}
+          {omitLifecycle ? null : (
+            <StructurePhaseMatchsLifecycleBlock
+              competitionId={competitionId}
+              stage={stage}
+              productionBusy={productionBusy}
+              leadingActions={productionLeadingActions}
+            />
+          )}
+          {entryRoundGaugeSection}
+        </>
+      );
+    }
   }
 
   const effectiveToolbar = hideSectionHead ? null : toolbar;

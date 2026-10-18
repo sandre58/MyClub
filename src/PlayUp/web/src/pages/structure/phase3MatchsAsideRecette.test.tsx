@@ -103,12 +103,16 @@ function stripHasUsefulProductionBody(section: HTMLElement): boolean {
     section.querySelector('.structure-operational-strip__empty'),
   );
   const hasGauge = Boolean(section.querySelector('.structure-operational-ratio-gauge'));
+  const hasRosterResolutionGauge = Boolean(
+    section.querySelector('.structure-phase-match-tile__roster-resolution-gauge'),
+  );
   return (
     hasPrimaryMaterialize ||
     hasDemat ||
     hasProgress ||
     hasProductionEmpty ||
     hasGauge ||
+    hasRosterResolutionGauge ||
     text.length > 40
   );
 }
@@ -181,18 +185,34 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
       disabledReason: 'PhaseRosterIncomplete',
       confrontations: [],
     };
-    const stage = baseStage({ materialize });
+    const stage = baseStage({
+      materialize,
+      formatKind: 'Championship',
+      compositionCapacity: 8,
+      schematicOccupiedPlaceCount: 8,
+      inboundComposition: {
+        configuredVolume: 8,
+        resolvedCount: 2,
+        rules: [],
+      },
+    });
     const presentation = classifyMaterializePresentation(materialize, 'Ready', 'Ready');
     expect(shouldShowProductionInMatchsSection(stage, presentation)).toBe(true);
 
     renderAsideStrip(stage, 'Ready');
     const section = matchsSection()!;
     expect(
-      within(section).getByText(/composition de la phase est incomplète/i),
+      section.querySelector('.structure-phase-match-tile__roster-resolution-gauge'),
+    ).not.toBeNull();
+    expect(
+      within(section).getByLabelText(/Avancement de la production des matchs/i),
     ).toBeInTheDocument();
     expect(
-      within(section).queryByRole('button', { name: /Créer les matchs/i }),
-    ).not.toBeInTheDocument();
+      within(section).getByLabelText(/2 équipes résolues sur 8/i),
+    ).toBeInTheDocument();
+    expect(
+      within(section).getByRole('button', { name: /Créer les matchs/i }),
+    ).toBeDisabled();
     expect(
       screen.queryByRole('button', { name: /Démarrer la phase/i }),
     ).not.toBeInTheDocument();

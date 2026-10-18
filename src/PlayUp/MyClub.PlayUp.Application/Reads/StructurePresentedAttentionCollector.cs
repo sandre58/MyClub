@@ -49,9 +49,16 @@ public static class StructurePresentedAttentionCollector
     private static bool ShouldEmitAttention(
         string code,
         StructureStageHubSummaryDto stage,
-        StructureViewDto view) =>
-        StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
+        StructureViewDto view)
+    {
+        if (code == StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification)
+        {
+            return false;
+        }
+
+        return StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
             != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
+    }
 
     private static bool IsExcludedSource(string code) =>
         code is StructureViewAssembler.BlockerMissingStage

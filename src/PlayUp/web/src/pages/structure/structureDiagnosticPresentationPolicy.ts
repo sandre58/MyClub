@@ -123,6 +123,10 @@ function resolveMatrixCell(
     return 'attention';
   }
 
+  if (code === 'AwaitingInboundQualification') {
+    return 'progress';
+  }
+
   if (code === 'AuthoredAwardUnreachable') {
     if (
       context.formatKind != null &&

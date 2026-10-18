@@ -16,6 +16,13 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 public static class StructurePresentedStageDiagnostics
 {
+    /// <summary>
+    /// Informative presented code when roster gap is solely upstream qual flux not yet produced (A3).
+    /// Replaces <see cref="StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete"/> in
+    /// <c>presentedIssueCodes</c> only — Start <c>disabledReasonCode</c> stays PhaseRosterIncomplete.
+    /// </summary>
+    public const string PresentedAwaitingInboundQualification = "AwaitingInboundQualification";
+
     private static readonly StringComparer CodeComparer = StringComparer.Ordinal;
 
     /// <summary>
@@ -58,7 +65,23 @@ public static class StructurePresentedStageDiagnostics
             AddDistinct(codes, detail.Code);
         }
 
+        ApplyPhaseRosterPresentationSubstitution(codes, stage);
+
         return codes;
+    }
+
+    private static void ApplyPhaseRosterPresentationSubstitution(
+        List<string> codes,
+        StructureStageHubSummaryDto stage)
+    {
+        if (stage.PhaseRosterPresentation != PhaseRosterPresentationKind.AwaitingInboundQualification)
+        {
+            return;
+        }
+
+        codes.RemoveAll(code =>
+            code == StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete);
+        AddDistinct(codes, PresentedAwaitingInboundQualification);
     }
 
     /// <summary>SPA: <c>stagePresentedIssueCodes</c> structure slice (structureIssues + U1).</summary>

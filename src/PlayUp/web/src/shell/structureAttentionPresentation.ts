@@ -17,6 +17,11 @@ const EXTRA_STRUCTURE_ATTENTION_SOURCES = new Set([
   'GroupsNotReady',
 ]);
 
+/** Informative flux on destination — shown on Structure fiche, not global À traiter. */
+const STRUCTURE_INFORMATIONAL_PRESENTED_SOURCES = new Set([
+  'AwaitingInboundQualification',
+]);
+
 export function isStructureAttentionSource(source: string): boolean {
   return (
     structureDiagnosticMeta(source) != null ||
@@ -78,6 +83,9 @@ export function shouldPresentStructureAttentionItem(
   item: OverviewSituation,
   stages: readonly CompetitionStageSummary[],
 ): boolean {
+  if (STRUCTURE_INFORMATIONAL_PRESENTED_SOURCES.has(item.source)) {
+    return false;
+  }
   if (!isStructureAttentionSource(item.source)) {
     return true;
   }

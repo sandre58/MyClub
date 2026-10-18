@@ -63,6 +63,12 @@ public static class OrganizerProblemSemanticsResolver
                 [],
                 TransportCode: NeedsAttentionAssembler.SourceQualificationPending,
                 SuggestedActionCode: OverviewAssembler.ActionApplyQualification),
+            StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification =>
+                new OrganizerProblemReadDto(
+                    StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification,
+                    OrganizerProblemSemanticLevels.Attention,
+                    [],
+                    TransportCode: StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification),
             StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
                 or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
                 or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations

@@ -87,6 +87,8 @@ public static class StructureDiagnosticPresentation
                     ? bucket == PresentationPhaseBucket.Draft
                         ? MatrixCell.Attention
                         : MatrixCell.Danger
+                    : code == StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification
+                    ? MatrixCell.Progress
                     : code != CompetitionFlowAnalyzer.NonRootUnfed
                     ? code == CompetitionFlowAnalyzer.AuthoredAwardUnreachable
                         ? stage.FormatKind == StructureFormatKind.Cup

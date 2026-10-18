@@ -558,7 +558,7 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(materializeMatches).toHaveBeenCalledWith(leagueStageBase.stageId);
     });
 
-    it('shows roster-incomplete empty state when phase composition is partial', () => {
+    it('aside-matchs shows prospective match gauge, disabled CTA, and roster resolution gauge', () => {
       const materialize: StructureMaterialize = {
         commandCode: 'MaterializeMatches',
         labelVariant: 'idle',
@@ -569,25 +569,106 @@ describe('StructurePhaseOperationalStrip', () => {
         disabledReason: 'PhaseRosterIncomplete',
         confrontations: [],
       };
-      renderMatchesStrip({
-        ...leagueStageBase,
-        status: 'Ready',
-        materialize,
-        lifecycle: {
-          transition: {
-            code: 'StartStage',
-            enabled: false,
-            disabledReasonCode: 'UnmaterializedConfrontations',
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Ready',
+          formatKind: 'Championship',
+          compositionCapacity: 8,
+          schematicOccupiedPlaceCount: 8,
+          inboundComposition: {
+            configuredVolume: 8,
+            resolvedCount: 2,
+            rules: [],
+          },
+          materialize,
+          lifecycle: {
+            transition: {
+              code: 'StartStage',
+              enabled: false,
+              disabledReasonCode: 'UnmaterializedConfrontations',
+            },
           },
         },
-      });
+        'Ready',
+      );
 
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
-        within(matchesSection).getByText(
-          /La composition de la phase est incomplète/i,
+        within(matchesSection).getByLabelText(
+          /Avancement de la production des matchs/i,
         ),
       ).toBeInTheDocument();
+      expect(
+        within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+      ).toBeDisabled();
+      expect(
+        matchesSection.querySelector(
+          '.structure-phase-match-tile__roster-resolution-gauge',
+        ),
+      ).not.toBeNull();
+      expect(
+        matchesSection.querySelector('.structure-operational-strip__empty'),
+      ).toBeNull();
+      expect(
+        within(matchesSection).queryByText(/Confrontations déterminées/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it('hides materialize CTA when all determined confrontations are materialized', () => {
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'complete',
+        determinedCount: 6,
+        eligibleCount: 0,
+        materializedCount: 6,
+        commandEnabled: false,
+        confrontations: [],
+      };
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Ready',
+          materialize,
+          lifecycle: { transition: { code: 'StartStage', enabled: true } },
+        },
+        'Ready',
+      );
+
+      expect(
+        screen.queryByRole('button', { name: /Créer les matchs/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('shows disabled materialize CTA when confrontations remain but command is blocked', () => {
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'create',
+        determinedCount: 6,
+        eligibleCount: 0,
+        materializedCount: 2,
+        commandEnabled: false,
+        disabledReason: 'PhaseRosterIncomplete',
+        confrontations: [],
+      };
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Ready',
+          materialize,
+          lifecycle: {
+            transition: {
+              code: 'StartStage',
+              enabled: false,
+              disabledReasonCode: 'UnmaterializedConfrontations',
+            },
+          },
+        },
+        'Ready',
+      );
+
+      const btn = screen.getByRole('button', { name: /Créer les matchs/i });
+      expect(btn).toBeDisabled();
     });
 
     it('shows determined-confrontation metric when none are determined yet', () => {
@@ -649,16 +730,16 @@ describe('StructurePhaseOperationalStrip', () => {
 
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
-        within(matchesSection).getByText('Confrontations déterminées'),
-      ).toBeInTheDocument();
+        within(matchesSection).queryByText(/Confrontations déterminées/i),
+      ).not.toBeInTheDocument();
       const ratio = matchesSection.querySelector(
         '.structure-operational-strip__ratio',
       );
       expect(ratio?.textContent).toContain('0');
       expect(ratio?.textContent).toContain('4');
       expect(
-        within(matchesSection).getByText('Aucune confrontation déterminée'),
-      ).toBeInTheDocument();
+        within(matchesSection).queryByText('Aucune confrontation déterminée'),
+      ).not.toBeInTheDocument();
       expect(
         matchesSection.querySelector('.structure-operational-strip__empty'),
       ).toBeNull();
@@ -889,20 +970,15 @@ describe('StructurePhaseOperationalStrip', () => {
 
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
-        within(matchesSection).getByText(
-          /paire(s)? d’entrée à compléter avant le démarrage/i,
+        within(matchesSection).getByLabelText(
+          /Avancement de la production des matchs/i,
         ),
       ).toBeInTheDocument();
       expect(
         matchesSection.querySelector(
-          '.structure-phase-match-tile__entry-round-gauge [data-kind="danger"]',
+          '.structure-phase-match-tile__entry-round-gauge',
         ),
-      ).toBeInTheDocument();
-      expect(
-        matchesSection.querySelector(
-          '.structure-phase-match-tile__entry-round-gauge .ds-ratio-message-gauge__ratio-filled',
-        )?.textContent,
-      ).toBe('1');
+      ).toBeNull();
 
       await user.click(
         within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
@@ -1130,7 +1206,7 @@ describe('StructurePhaseOperationalStrip', () => {
         };
       }
 
-      it('omits lifecycle actions and block copy in operational-matchs when Start is blocked (InitialRoundNotPlayable)', () => {
+      it('omits lifecycle actions and shows match + entry-round gauges when Start is blocked (InitialRoundNotPlayable)', () => {
         renderMatchesStrip(
           cupReadyStage({
             materialize: {
@@ -1138,10 +1214,12 @@ describe('StructurePhaseOperationalStrip', () => {
               labelVariant: 'idle',
               determinedCount: 0,
               eligibleCount: 0,
-              materializedCount: 2,
+              materializedCount: 0,
               commandEnabled: false,
               disabledReason: 'NoDeterminedConfrontations',
               confrontations: [],
+              canonicalEntryPairCount: 8,
+              undeterminedCanonicalEntryPairCount: 8,
             },
             lifecycle: {
               transition: {
@@ -1170,8 +1248,24 @@ describe('StructurePhaseOperationalStrip', () => {
           ),
         ).not.toBeInTheDocument();
         expect(
-          within(matchesSection).getByText('Aucune confrontation déterminée'),
+          within(matchesSection).queryByText(/Confrontations déterminées/i),
+        ).not.toBeInTheDocument();
+        expect(
+          within(matchesSection).queryByText('Aucune confrontation déterminée'),
+        ).not.toBeInTheDocument();
+        expect(
+          matchesSection.querySelector(
+            '.structure-phase-match-tile__entry-round-gauge',
+          ),
+        ).not.toBeNull();
+        expect(
+          within(matchesSection).getByLabelText(
+            /Avancement de la production des matchs/i,
+          ),
         ).toBeInTheDocument();
+        expect(
+          within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+        ).toBeDisabled();
       });
 
       it('keeps production actions in operational-matchs while omitting Start (partial cup)', () => {

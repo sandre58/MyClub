@@ -3,8 +3,9 @@ import type { MaterializePresentation } from './structureMaterializeCopy';
 import { showViewMaterializedMatchesLink } from './structureMaterializeCopy';
 import {
   hasMatchsStructuralProductionChrome,
-  shouldShowBlockedGroupsMaterializeCta,
+  shouldShowMaterializeCommandButton,
 } from './structureMaterializeCopy';
+import { resolveAsideMatchProductionPresentation } from './matchsAsideTilePresentation';
 import { productionRatio, showProductionOperationalSection } from './structureOperationalCopy';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
 
@@ -56,7 +57,9 @@ export function resolveAsideMatchsStripContent(
   }
 
   const showProduction = shouldShowProductionInMatchsSection(stage, presentation);
-  const gaugeRatio = productionRatio(materialize ?? undefined, stage);
+  const asideMatchGauge = resolveAsideMatchProductionPresentation(stage)?.ratio;
+  const gaugeRatio =
+    asideMatchGauge ?? productionRatio(materialize ?? undefined, stage);
   const structuralChrome = hasMatchsStructuralProductionChrome(
     materialize,
     stage,
@@ -68,17 +71,13 @@ export function resolveAsideMatchsStripContent(
   const showProductionBody =
     canShowMetric ||
     (showProduction && (materialize != null || dematerialize != null));
-  const showMaterializePrimary =
-    materialize != null && presentation === 'actionable';
-  const showMaterializeBlockedCta =
+  const showMaterializeButton =
     materialize != null &&
     presentation != null &&
-    shouldShowBlockedGroupsMaterializeCta(materialize, presentation);
+    shouldShowMaterializeCommandButton(materialize, presentation, stage);
   const showProductionLeadingActions =
     showProduction &&
-    (showMaterializePrimary ||
-      showMaterializeBlockedCta ||
-      dematerialize?.enabled === true);
+    (showMaterializeButton || dematerialize?.enabled === true);
 
   return {
     showProductionBody,

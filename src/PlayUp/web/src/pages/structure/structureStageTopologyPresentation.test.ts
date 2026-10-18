@@ -93,6 +93,17 @@ describe('stageWorstPresentedDiagnosticTone', () => {
     expect(stageWorstPresentedDiagnosticTone(view([cup]), cup)).toBe('danger');
   });
 
+  it('returns null for informative progress presented codes', () => {
+    const ch = stage({
+      stageId: 'ch-1',
+      status: 'Ready',
+      formatKind: 'Championship',
+      structureIssues: [],
+      presentedIssueCodes: ['AwaitingInboundQualification'],
+    });
+    expect(stageWorstPresentedDiagnosticTone(view([ch]), ch)).toBeNull();
+  });
+
   it('returns danger when Host presentedIssueCodes includes UnmaterializedConfrontations', () => {
     const ch = stage({
       stageId: 'ch-1',

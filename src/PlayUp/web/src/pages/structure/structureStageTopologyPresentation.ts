@@ -36,6 +36,9 @@ export function stageWorstPresentedDiagnosticTone(
       continue;
     }
     const tone = structureDiagnosticTone(code, context);
+    if (tone === 'progress') {
+      continue;
+    }
     const nextRank = toneRank(tone);
     if (nextRank > rank) {
       rank = nextRank;

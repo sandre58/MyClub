@@ -222,6 +222,12 @@ export interface StructureStageHubSummary {
   structureIssues?: string[];
   /** Host-authored presented diagnostics (Gate 3); topology, readiness, attention. */
   presentedIssueCodes?: string[];
+  /** Read classifier for fed phase roster gaps (Ready); mirrors Application enum. */
+  phaseRosterPresentation?:
+    | 'Complete'
+    | 'AwaitingInboundQualification'
+    | 'CompositionIncomplete'
+    | null;
   /** Pilot organizer-problem semantics for selected structure issues. */
   structureIssueSemantics?: OrganizerProblemRead[] | null;
   /** Configured DirectAssignment count (slot → entry). */

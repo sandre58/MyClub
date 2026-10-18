@@ -101,6 +101,9 @@ function headerToneFromStages(
         code,
         structureDiagnosticContextFromStage(data, stage),
       );
+      if (tone === 'progress') {
+        continue;
+      }
       if (tone === 'danger') hasDanger = true;
       else hasNonDanger = true;
     }
@@ -177,7 +180,11 @@ export function stageAmbientKinds(
   const kinds: StageAmbientKind[] = [];
   const seen = new Set<StructureDiagnosticFamily>();
   const presented = stagePresentedIssueCodes(data, stage);
+  const context = structureDiagnosticContextFromStage(data, stage);
   for (const code of presented) {
+    if (structureDiagnosticTone(code, context) === 'progress') {
+      continue;
+    }
     const family = structureDiagnosticFamily(code);
     if (!family || seen.has(family)) continue;
     seen.add(family);
@@ -220,7 +227,11 @@ export function computeStructureReadinessSummary(
     if (stage.status === 'Completed') {
       continue;
     }
-    const presented = stagePresentedIssueCodes(data, stage);
+    const diagnosticContext = structureDiagnosticContextFromStage(data, stage);
+    const presented = stagePresentedIssueCodes(data, stage).filter(
+      (code) =>
+        structureDiagnosticTone(code, diagnosticContext) !== 'progress',
+    );
     if (presented.length > 0) {
       firstAttentionStageId ??= stage.stageId;
       presentedCodes.push(...presented);

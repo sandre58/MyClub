@@ -853,7 +853,6 @@
 
 .structure-phase-match-tile__entry-round-gauge {
   margin-top: var(--space-12);
-  padding-top: var(--space-12);
   width: 100%;
   min-width: 0;
 }
@@ -896,6 +895,13 @@
   flex: none;
   margin-left: auto;
   white-space: nowrap;
+}
+
+.structure-operational-strip__aside-problem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
 }
 
 .structure-operational-strip__production-advisory {

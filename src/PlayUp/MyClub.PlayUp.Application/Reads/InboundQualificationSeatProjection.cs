@@ -47,7 +47,7 @@ internal static class InboundQualificationSeatProjection
             overall = BuildOverall(sourceStage, matches);
             groups = BuildGroups(sourceStage, matches);
         }
-        catch (ApplicationFailureException)
+        catch (Exception ex) when (ex is ApplicationFailureException or DomainException)
         {
             return null;
         }

@@ -31,7 +31,42 @@ export type MatchsProductionGaugeStageHub = Pick<
   | 'formatKind'
   | 'groupCount'
   | 'placesPerGroup'
+  | 'compositionCapacity'
+  | 'inboundComposition'
+  | 'status'
+  | 'lifecycle'
+  | 'phaseRosterPresentation'
 >;
+
+/** Championship/Swiss roster gap — do not use determined-confrontation idle gauge. */
+export function rosterGapBlocksMatchProductionGauge(
+  materialize: StructureMaterialize | null | undefined,
+  stage: Pick<
+    StructureStageHubSummary,
+    'lifecycle' | 'phaseRosterPresentation' | 'status' | 'formatKind'
+  > | null
+    | undefined,
+): boolean {
+  if (materialize?.disabledReason === 'PhaseRosterIncomplete') {
+    return true;
+  }
+  if (
+    stage?.lifecycle?.transition?.disabledReasonCode === 'PhaseRosterIncomplete'
+  ) {
+    return true;
+  }
+  if (stage?.status !== 'Ready') {
+    return false;
+  }
+  if (stage.formatKind !== 'Championship' && stage.formatKind !== 'Swiss') {
+    return false;
+  }
+  const presentation = stage.phaseRosterPresentation;
+  return (
+    presentation === 'AwaitingInboundQualification' ||
+    presentation === 'CompositionIncomplete'
+  );
+}
 
 /** Groups / Championship — determined slots vs exposed confrontation rows (not match production). */
 export function materializeDeterminedConfrontationsRatio(
@@ -93,7 +128,11 @@ export function resolveMatchsProductionGauge(
   }
 
   const determined = materializeDeterminedConfrontationsRatio(materialize);
-  if (determined && !isGroupsPoolPlacementIncomplete(materialize)) {
+  if (
+    determined &&
+    !isGroupsPoolPlacementIncomplete(materialize) &&
+    !rosterGapBlocksMatchProductionGauge(materialize, stage)
+  ) {
     return { mode: 'determined', ratio: determined };
   }
 
@@ -305,6 +344,68 @@ export function showMaterializeFrozenRemainingBanner(
   return (
     presentation === 'frozen' && materializeFrozenRemainingCount(materialize) > 0
   );
+}
+
+/** Match slots at Places N when the read has not fixed determinedCount yet. */
+export function resolveProspectiveMaterializeCapacity(
+  materialize: StructureMaterialize,
+  stage: MatchsProductionGaugeStageHub | null | undefined,
+): number {
+  const determined = materializeProductionTarget(materialize);
+  if (determined > 0) {
+    return determined;
+  }
+  if (!stage) {
+    return 0;
+  }
+  if (
+    stage.formatKind === 'Cup' &&
+    materialize.commandCode === 'MaterializeFromOccupiedSlots'
+  ) {
+    const legs = cupLegsPerMaterializedConfrontation(stage);
+    const canonical = materialize.canonicalEntryPairCount ?? 0;
+    if (canonical > 0) {
+      return canonical * legs;
+    }
+    const rows = materialize.confrontations?.length ?? 0;
+    return rows > 0 ? rows * legs : 0;
+  }
+  if (stage.formatKind !== 'Championship' && stage.formatKind !== 'Swiss') {
+    return 0;
+  }
+  const places =
+    stage.compositionCapacity ?? stage.inboundComposition?.configuredVolume ?? null;
+  if (places == null || places < 2) {
+    return 0;
+  }
+  const confrontations = (places * (places - 1)) / 2;
+  const legs =
+    stage.defaultTieFormat?.numberOfLegs ?? stage.numberOfLegs ?? 1;
+  const safeLegs = legs > 0 ? legs : 1;
+  return confrontations * safeLegs;
+}
+
+/**
+ * Materialize CTA visibility (distinct from `commandEnabled`).
+ * Shown while match production capacity exceeds materializedCount (determined or
+ * prospective), or Groups pools block production but confrontations are expected.
+ */
+export function shouldShowMaterializeCommandButton(
+  materialize: StructureMaterialize,
+  presentation: MaterializePresentation | null,
+  stage?: MatchsProductionGaugeStageHub | null,
+): boolean {
+  if (materializeFrozenRemainingCount(materialize) > 0) {
+    return true;
+  }
+  if (
+    presentation != null &&
+    shouldShowBlockedGroupsMaterializeCta(materialize, presentation)
+  ) {
+    return true;
+  }
+  const capacity = resolveProspectiveMaterializeCapacity(materialize, stage);
+  return capacity > materialize.materializedCount;
 }
 
 /**

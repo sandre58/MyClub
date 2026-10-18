@@ -235,6 +235,8 @@ export function resolveProductionMeterCopy(input: {
   productionGaugeMode?: 'materialized' | 'determined' | null;
   /** Groups pools incomplete — match production not actionable (Cup entry-round parity). */
   groupsPoolsIncomplete?: boolean;
+  /** Championship/Swiss roster gap — prospective match gauge, not a danger signal. */
+  phaseRosterBlocksProduction?: boolean;
 }): StripMeterCopy {
   const {
     t,
@@ -244,6 +246,7 @@ export function resolveProductionMeterCopy(input: {
     startStageBlocker = null,
     productionGaugeMode = null,
     groupsPoolsIncomplete = false,
+    phaseRosterBlocksProduction = false,
   } = input;
 
   if (!hasProduction) {
@@ -306,8 +309,11 @@ export function resolveProductionMeterCopy(input: {
       kind: 'success',
     };
   }
-  const kind =
-    startStageBlocker === 'UnmaterializedConfrontations' ? 'danger' : 'attention';
+  const kind = phaseRosterBlocksProduction
+    ? 'info'
+    : startStageBlocker === 'UnmaterializedConfrontations'
+      ? 'danger'
+      : 'attention';
   return {
     text: t('fiche.operational.production.stateMessage.partial', {
       count: remaining,

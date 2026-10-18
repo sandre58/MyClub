@@ -73,6 +73,14 @@ describe('structureDiagnosticPresentationPolicy (R-Pres)', () => {
     expect(p.severity).toBe('warning');
   });
 
+  it('R-Pres-A3-1 AwaitingInboundQualification progress on Ready', () => {
+    const p = structureDiagnosticPresentation('AwaitingInboundQualification', {
+      stageStatus: 'Ready',
+    });
+    expect(p.tone).toBe('progress');
+    expect(p.severity).toBe('warning');
+  });
+
   it('R-Pres-AA-1 Cup AuthoredAward danger', () => {
     const p = structureDiagnosticPresentation('AuthoredAwardUnreachable', {
       formatKind: 'Cup',

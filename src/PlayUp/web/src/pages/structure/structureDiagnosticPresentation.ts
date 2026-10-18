@@ -99,6 +99,13 @@ const BY_CODE: Record<string, StructureDiagnosticMeta> = {
     tone: 'progress',
     titleKey: 'graph.issues.NonRootUnfed',
   },
+  AwaitingInboundQualification: {
+    family: 'feed',
+    tile: 'capacity',
+    cta: 'affectation',
+    tone: 'progress',
+    titleKey: 'graph.issues.AwaitingInboundQualification',
+  },
   DanglingQualificationTarget: {
     family: 'graph',
     tile: 'exits',

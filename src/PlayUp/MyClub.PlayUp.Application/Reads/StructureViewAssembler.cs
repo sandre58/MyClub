@@ -448,6 +448,16 @@ public static class StructureViewAssembler
             compositionCapacity,
             formatKind);
 
+        PhaseRosterPresentationKind? phaseRosterPresentation = null;
+        if (stage.Status == StageStatus.Ready && !isRootComposition)
+        {
+            phaseRosterPresentation = PhaseRosterPresentationClassifier.Classify(
+                competition,
+                stage,
+                competitionStages,
+                matchSummariesByStage);
+        }
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -499,6 +509,7 @@ public static class StructureViewAssembler
             QualificationIntents: qualificationIntents,
             ProgressionIntents: progressionIntents,
             StructureIssues: structureIssues,
+            PhaseRosterPresentation: phaseRosterPresentation,
             StructureIssueSemantics: OrganizerProblemSemanticsResolver.CollectStructureIssueSemantics(
                 structureIssues),
             HalfTimeDuration: match.Duration.HalfTimeDuration,
