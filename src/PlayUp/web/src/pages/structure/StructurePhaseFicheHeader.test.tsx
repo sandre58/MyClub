@@ -10,6 +10,7 @@ vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
   return {
     ...actual,
+    prepareStage: vi.fn(),
     startStage: vi.fn(),
     completeStage: vi.fn(),
     suspendStage: vi.fn(),
@@ -39,7 +40,10 @@ const baseStage: StructureStageHubSummary = {
   hasTieFormat: false,
 };
 
-function renderHeader(stage: StructureStageHubSummary) {
+function renderHeader(
+  stage: StructureStageHubSummary,
+  options?: { editingName?: boolean },
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -52,7 +56,7 @@ function renderHeader(stage: StructureStageHubSummary) {
           competitionId={competitionId}
           structureStages={[stage]}
           formatLabel={null}
-          editingName={false}
+          editingName={options?.editingName ?? false}
           nameDraft=""
           renameMutation={{
             isPending: false,
@@ -85,7 +89,78 @@ describe('StructurePhaseFicheHeader', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows InitialRoundNotPlayable lifecycle copy and placement remediation in the header', () => {
+  it('uses two structural rows when lifecycle is shown', () => {
+    const stage: StructureStageHubSummary = {
+      ...baseStage,
+      status: 'Draft',
+      lifecycle: {
+        transition: { code: 'PrepareStage', enabled: true },
+      },
+    };
+    const { container } = renderHeader(stage);
+    expect(
+      container.querySelector('.structure-fiche__header-row--identity'),
+    ).toBeTruthy();
+    expect(
+      container.querySelector('.structure-fiche__header-row--lifecycle'),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: /Marquer comme prête/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows Completed badge on identity row without lifecycle row', () => {
+    const { container } = renderHeader(baseStage);
+    expect(
+      container.querySelector('.structure-fiche__header-row--lifecycle'),
+    ).toBeNull();
+    expect(screen.getByText(/Terminé/i)).toBeInTheDocument();
+  });
+
+  it('hides lifecycle row while renaming', () => {
+    const stage: StructureStageHubSummary = {
+      ...baseStage,
+      status: 'Draft',
+      lifecycle: {
+        transition: { code: 'PrepareStage', enabled: true },
+      },
+    };
+    const { container } = renderHeader(stage, { editingName: true });
+    expect(
+      container.querySelector('.structure-fiche__header-row--lifecycle'),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Marquer comme prête/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows overview remediation link without block paragraph for ConstructionFrozen', () => {
+    const stage: StructureStageHubSummary = {
+      ...baseStage,
+      status: 'Draft',
+      lifecycle: {
+        transition: {
+          code: 'PrepareStage',
+          enabled: false,
+          disabledReasonCode: 'ConstructionFrozen',
+        },
+      },
+    };
+
+    renderHeader(stage);
+
+    expect(
+      screen.getByRole('button', { name: /Marquer comme prête/i }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByText(/Complétez la structure de cette phase/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Voir la synthèse/i }),
+    ).toHaveAttribute('href', `/competitions/${competitionId}/overview`);
+  });
+
+  it('shows placement remediation link without long block copy for InitialRoundNotPlayable', () => {
     const remediationHref = `/competitions/${competitionId}/structure?stage=${baseStage.stageId}&focus=operational-placement&manual=1`;
     const stage: StructureStageHubSummary = {
       ...baseStage,
@@ -110,13 +185,11 @@ describe('StructurePhaseFicheHeader', () => {
       screen.getByRole('button', { name: /Démarrer la phase/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Le premier tour n’est pas encore jouable/i),
-    ).toBeInTheDocument();
+      screen.queryByText(/Le premier tour n’est pas encore jouable/i),
+    ).not.toBeInTheDocument();
     const remediationLink = screen.getByRole('link', {
       name: /Aller au placement opérationnel/i,
     });
     expect(remediationLink).toHaveAttribute('href', remediationHref);
-    expect(remediationLink.getAttribute('href')).toContain('operational-placement');
-    expect(remediationLink.getAttribute('href')).not.toContain('section=matchs');
   });
 });

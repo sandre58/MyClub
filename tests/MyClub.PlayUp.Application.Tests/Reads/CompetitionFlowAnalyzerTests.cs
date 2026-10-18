@@ -172,7 +172,7 @@ public sealed class CompetitionFlowAnalyzerTests
         var shortfall = CompetitionFlowAnalyzer.AnalyzeCapacity([stage]);
         shortfall.Should().Contain(d => d.Code == CompetitionFlowAnalyzer.PopulationShortfall);
         CompetitionFlowAnalyzer.IsPrepareGateIssue(CompetitionFlowAnalyzer.PopulationShortfall).Should().BeFalse();
-        CompetitionFlowAnalyzer.IsPrepareGateIssue(CompetitionFlowAnalyzer.OverCapacityEdge).Should().BeTrue();
+        CompetitionFlowAnalyzer.IsPrepareGateIssue(CompetitionFlowAnalyzer.OverCapacityEdge).Should().BeFalse();
     }
 
     [Fact]

@@ -256,6 +256,7 @@ export function StructurePhaseOperationalStrip({
   layoutVariant = 'composition',
   placesStripLayout = 'full',
   compositionDrawColumnHead = false,
+  omitLifecycle = false,
 }: {
   placement: StructurePlacementOperationalSectionProps | null;
   showPlaces: boolean;
@@ -272,6 +273,8 @@ export function StructurePhaseOperationalStrip({
   placesStripLayout?: PlacesStripLayout;
   /** Composition band: PanelHead owns the draw title in the standalone draw column. */
   compositionDrawColumnHead?: boolean;
+  /** When true, MatchesColumn (if rendered) omits lifecycle CTAs — fiche header owns lifecycle. */
+  omitLifecycle?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
@@ -414,7 +417,7 @@ export function StructurePhaseOperationalStrip({
       setDematerializeConfirmOpen={setDematerializeConfirmOpen}
       materializeConfirmOpen={materializeConfirmOpen}
       setMaterializeConfirmOpen={setMaterializeConfirmOpen}
-      omitLifecycle={asideMatchsLayout}
+      omitLifecycle={asideMatchsLayout || omitLifecycle}
       hideSectionHead={asideMatchsLayout}
     />
   );

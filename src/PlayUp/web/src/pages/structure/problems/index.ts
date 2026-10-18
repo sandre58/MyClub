@@ -5,6 +5,8 @@ export {
 export {
   remediationHref,
   shouldShowDraftPrepareDisabledTooltip,
+  shouldShowHeaderLifecycleInlineCopy,
+  shouldShowHeaderLifecycleRemediation,
   shouldShowLifecycleRemediationLink,
   shouldShowMatchsLifecycle,
   shouldShowPrimaryBlockMessage,
@@ -18,3 +20,4 @@ export {
   resolveLifecycleAnticipatedMessage,
   resolveLifecycleMutationMessage,
 } from './resolveStructureProblemMessage';
+export { resolveLifecycleRemediationLabel } from './matchsColumnVisibility';

@@ -342,7 +342,6 @@
       }
     },
     "statusBand": {
-      "readyHint": "La phase est prête à démarrer.",
       "viewOverview": "Voir la synthèse",
       "matchStatsHeading": "Matchs de la phase",
       "matchStatsAria": "Avancement des matchs",
@@ -363,7 +362,6 @@
       "viewStandings": "Voir les classements"
     },
     "remediation": {
-      "default": "Aller à la section concernée",
       "InitialRoundNotPlayable": "Aller au placement opérationnel",
       "IncompleteEntryRound": "Aller au placement opérationnel"
     },

@@ -318,6 +318,7 @@ export function StructurePhaseCompositionBand({
             >
               <StructurePhaseOperationalStrip
                 layoutVariant="composition"
+                omitLifecycle={true}
                 placesStripLayout={placesStripLayout}
                 placement={placementOperationalProps}
                 showPlaces={showPlacementBlock}
@@ -355,6 +356,7 @@ export function StructurePhaseCompositionBand({
             >
               <StructurePhaseOperationalStrip
                 layoutVariant="composition"
+                omitLifecycle={true}
                 placesStripLayout="full"
                 compositionDrawColumnHead
                 placement={placementOperationalProps}

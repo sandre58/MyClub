@@ -140,7 +140,7 @@ Legend: **Y** = blocks or maps to blocking; **W** = warning in drawer/attention;
 | `SlotFeedMissing` | — | **—** | not blocked at Prepare (D3 occupancy / missing feed config) | **—** | attention in Draft (D5) | **H** if draw awaiting | indirect (Cup places) | materialize gates | — |
 | `CycleDetected` | Y | Y | — | Y | blocking | blocking | — | — | — |
 | `RoutingNondeterminism` | Y | Y | — | Y | blocking | blocking | — | — | — |
-| `OverCapacityEdge` | — | Y | — | Y | **W** | **W** | — | — | — |
+| `OverCapacityEdge` | — | **—** | — | — | **W** | **W** | — | — | — |
 | `OverExtraction` | — | Y | — | Y | blocking | blocking | — | — | — |
 | `ConfrontationUndecidable` | — | Y | — | Y + readiness blocker | blocking | blocking | — | — | — |
 | `NonRootUnfed` | — | — | — | — | **W** | **W** | — | — | — |
@@ -161,7 +161,8 @@ Legend: **Y** = blocks or maps to blocking; **W** = warning in drawer/attention;
 | `SlotFeedMissing` | **C** (occupancy synth) / **I** (analyzer `Missing` only when conflated) | **No block** (D3 — complete in Ready/Draft attention; block at Materialize) | Block when pair/slot production requires resolved occupancy / feeds | **Attention in Draft**; **hide** when `IsSlotFeedAwaitingDraw` (presentation only) | Schematic gap ([`StructurePlaceOccupancyIssues`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePlaceOccupancyIssues.cs)); `InvalidFeed` / `MultipleFeeds` still block Prepare via [`PrepareStage`](../../../src/PlayUp/MyClub.PlayUp.Application/Stages/PrepareStage/PrepareStage.cs) |
 | `SlotFeedInvalid` / `SlotFeedMultiple` | I | Block | Revalidate after operational mutation | Error | Feed analysis per slot |
 | `CycleDetected` / `RoutingNondeterminism` | I | Block | — | Error | Topology analyzer |
-| `OverCapacityEdge` / `OverExtraction` | I | Block | Block if still true at materialize preflight | Error / warn (OverCapacity drawer **warn** may stay) | `expected > places` / `outbound > capacity` ([`AnalyzeCapacity`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/CompetitionFlowAnalyzer.cs)) |
+| `OverCapacityEdge` | I | **No block** (warning only — surplus meter / drawer) | Block if still true at materialize preflight | **Warning** (drawer) | `expected > places` ([`AnalyzeCapacity`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/CompetitionFlowAnalyzer.cs)) |
+| `OverExtraction` | I | Block | Block if still true at materialize preflight | Error | `outbound > capacity` ([`AnalyzeCapacity`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/CompetitionFlowAnalyzer.cs)) |
 | `ConfrontationUndecidable` | M | Block | Block | Error | Necessary confrontation `TieFormat` cannot `CanAlwaysDecideDraw()` |
 | `AuthoredAwardUnreachable` | M | **Block** on **non-classifying** phases only (keep gate) | Block if placement award paths still unreachable **and** awards are required for production (format-specific — **spec TBD §12**) | **Error** on non-classifying only; **warning or omit** on classifying (Prepare does not gate) — **Δ code** | `PlacementAward` path `SourcePairKey` has no `BracketPair` ([`AnalyzeResult`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/CompetitionFlowAnalyzer.cs)); Prepare gate ignores classifying ([R-Prep2](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePrepareAttributionTests.cs)) |
 | `ExpectedRankUnreachable` | M | **No block** by default | Block if rank needed for production cannot be produced | **Warning**; suppress when `AuthoredAwardUnreachable` present (keep) | Authored rank ∉ reachable ranks on stage |

@@ -47,6 +47,28 @@ export function remediationHref(
   return null;
 }
 
+const LIFECYCLE_REMEDIATION_LABEL_KEYS = new Set([
+  'InitialRoundNotPlayable',
+  'IncompleteEntryRound',
+]);
+
+export function resolveLifecycleRemediationLabel(
+  t: (key: string) => string,
+  disabledReasonCode: string,
+  remediationLabelKey?: string | null,
+): string | null {
+  if (disabledReasonCode === 'ConstructionFrozen') {
+    return t('lifecycle.statusBand.viewOverview');
+  }
+  if (
+    remediationLabelKey &&
+    LIFECYCLE_REMEDIATION_LABEL_KEYS.has(remediationLabelKey)
+  ) {
+    return t(`lifecycle.remediation.${remediationLabelKey}`);
+  }
+  return null;
+}
+
 export function shouldShowLifecycleRemediationLink(
   disabledReasonCode: string | null | undefined,
   remediationHrefValue: string | null,
@@ -58,7 +80,10 @@ export function shouldShowLifecycleRemediationLink(
   if (disabledReasonCode === 'ConstructionFrozen') {
     return true;
   }
-  return Boolean(remediationLabelKey && remediationLabelKey !== 'default');
+  return Boolean(
+    remediationLabelKey &&
+      LIFECYCLE_REMEDIATION_LABEL_KEYS.has(remediationLabelKey),
+  );
 }
 
 /** Inline revert-disable hints on the control, not as paragraph copy. */
@@ -79,10 +104,29 @@ export function shouldShowDraftPrepareDisabledTooltip(
   disabledReasonCode: string | null | undefined,
   actionEnabled: boolean,
 ): boolean {
-  return (
-    Boolean(disabledReasonCode) &&
-    !actionEnabled &&
-    disabledReasonCode !== 'ConstructionFrozen'
+  return Boolean(disabledReasonCode) && !actionEnabled;
+}
+
+/** Fiche header — never show lifecycle paragraph copy (tooltips + compact remediation only). */
+export function shouldShowHeaderLifecycleInlineCopy(
+  _disabledReasonCode: string | null | undefined,
+): boolean {
+  return false;
+}
+
+export function shouldShowHeaderLifecycleRemediation(
+  disabledReasonCode: string | null | undefined,
+  actionEnabled: boolean,
+  remediationHrefValue: string | null,
+  remediationLabelKey?: string | null,
+): boolean {
+  if (actionEnabled || !disabledReasonCode) {
+    return false;
+  }
+  return shouldShowLifecycleRemediationLink(
+    disabledReasonCode,
+    remediationHrefValue,
+    remediationLabelKey,
   );
 }
 

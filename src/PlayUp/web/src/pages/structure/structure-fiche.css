@@ -54,14 +54,87 @@
 
 .structure-fiche__header {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-8);
+}
+
+.structure-fiche__header--two-rows {
+  gap: var(--space-8);
+}
+
+.structure-fiche__header-row {
+  display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-12);
+  min-width: 0;
 }
 
-.structure-fiche__header--toolbar {
+.structure-fiche__header-row--identity {
+  flex-wrap: nowrap;
+}
+
+.structure-fiche__header-row--lifecycle {
+  flex-wrap: wrap;
+}
+
+.structure-fiche__header-identity {
+  display: flex;
+  flex: 1 1 auto;
   align-items: center;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.structure-fiche__header-row-end {
+  display: inline-flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+.structure-fiche__header-lifecycle-cluster {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-fiche__header-lifecycle-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-8);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-fiche__header-remediation {
+  flex: none;
+  white-space: nowrap;
+}
+
+.structure-fiche__header-lifecycle-toolbar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-4);
+}
+
+.structure-fiche__header-lifecycle-toolbar
+  .structure-operational-strip__section-actions-end {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 /* -- Flat phase card (N2) -- */
@@ -131,6 +204,12 @@
 .structure-fiche__title-row--primary .structure-fiche__title {
   flex: 0 1 auto;
   min-width: 0;
+}
+
+.structure-fiche__header-identity .structure-fiche__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .structure-fiche__header-end {

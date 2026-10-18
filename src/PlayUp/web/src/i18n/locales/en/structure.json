@@ -342,7 +342,6 @@
       }
     },
     "statusBand": {
-      "readyHint": "The phase is ready to start.",
       "viewOverview": "View overview",
       "matchStatsHeading": "Phase matches",
       "matchStatsAria": "Match progress",
@@ -363,7 +362,6 @@
       "viewStandings": "View standings"
     },
     "remediation": {
-      "default": "Go to the relevant section",
       "InitialRoundNotPlayable": "Go to operational placement",
       "IncompleteEntryRound": "Go to operational placement"
     },

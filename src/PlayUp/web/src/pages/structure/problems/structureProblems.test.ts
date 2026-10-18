@@ -16,6 +16,7 @@ import {
 import { resolveLifecycleMutationMessageKey } from './lifecycleMutationMessageKey';
 import {
   shouldShowDraftPrepareDisabledTooltip,
+  shouldShowLifecycleRemediationLink,
   shouldShowPrimaryBlockMessage,
   shouldShowRevertDisabledParagraph,
 } from './matchsColumnVisibility';
@@ -103,11 +104,29 @@ describe('matchsColumnVisibility', () => {
     ).toBe(false);
   });
 
-  it('hides draft prepare tooltip for ConstructionFrozen', () => {
+  it('shows lifecycle remediation link only for explicit label keys', () => {
+    expect(
+      shouldShowLifecycleRemediationLink(
+        'OverCapacityEdge',
+        '/competitions/x/structure',
+        'OverCapacityEdge',
+      ),
+    ).toBe(false);
+    expect(
+      shouldShowLifecycleRemediationLink(
+        'InitialRoundNotPlayable',
+        '/competitions/x/structure?focus=operational-placement',
+        'InitialRoundNotPlayable',
+      ),
+    ).toBe(true);
+  });
+
+  it('shows draft prepare tooltip for any disabled reason including ConstructionFrozen', () => {
     expect(
       shouldShowDraftPrepareDisabledTooltip('ConstructionFrozen', false),
-    ).toBe(false);
+    ).toBe(true);
     expect(shouldShowDraftPrepareDisabledTooltip('Places', false)).toBe(true);
+    expect(shouldShowDraftPrepareDisabledTooltip('Places', true)).toBe(false);
   });
 
   it('keeps revert disable on tooltip-only codes out of paragraph', () => {

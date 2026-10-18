@@ -323,7 +323,7 @@ public static class CompetitionFlowAnalyzer
             SlotFeedMissing => false,
             CycleDetected => true,
             RoutingNondeterminism => true,
-            OverCapacityEdge => true,
+            OverCapacityEdge => false,
             OverExtraction => true,
             ConfrontationUndecidable => true,
             _ => false
