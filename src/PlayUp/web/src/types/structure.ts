@@ -31,6 +31,11 @@ export interface StructureView {
   readiness: StructureReadiness;
   /** Per-stage topology + regulation tokens (Regulation hub). */
   stages: StructureStageHubSummary[];
+  /**
+   * At most one hub-level structural next step (PageHead info pill).
+   * Null = no info step (not calm / not success).
+   */
+  hubNextStep?: StructureHubNextStep | null;
   shortName?: string | null;
   logoMediaId?: string | null;
   scheduledStart?: string | null;
@@ -52,6 +57,12 @@ export interface StructureEntry {
   primaryColor?: string | null;
   secondaryColor?: string | null;
   declaredMembers?: DeclaredMember[];
+}
+
+export interface StructureHubNextStep {
+  code: string;
+  stageId: string;
+  stageName: string;
 }
 
 export interface StructureFormatSummary {

@@ -229,7 +229,7 @@ public static class StructureViewAssembler
             stageHubs);
         var actions = BuildActions(competition);
 
-        return new StructureViewDto(
+        var view = new StructureViewDto(
             competition.Id.Value,
             competition.Name.Value,
             competition.Status,
@@ -240,10 +240,19 @@ public static class StructureViewAssembler
             actions,
             readiness,
             stageHubs,
+            HubNextStep: null,
             competition.ShortName?.Value,
             competition.LogoMediaId?.Value,
             competition.ScheduledStart,
             competition.ScheduledEnd);
+
+        var hubNextStep = StructureHubNextStepResolver.Decide(
+            competition,
+            stages,
+            view,
+            matchSummariesByStage);
+
+        return view with { HubNextStep = hubNextStep };
     }
 
     private static List<StructureStageHubSummaryDto> BuildStageHubSummaries(

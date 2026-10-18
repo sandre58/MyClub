@@ -78,6 +78,19 @@
     "readyForNextSlice": "Structure prête",
     "readyForMaterialization": "Prête pour les matchs",
     "readyForCupSkeleton": "Structure prête",
+    "structureCalm": "Structure prête",
+    "hubStep": {
+      "PrepareStage": "Phase à préparer · {{stageName}}",
+      "StartStage": "Phase à démarrer · {{stageName}}",
+      "CompleteStage": "Phase à terminer · {{stageName}}",
+      "ResumeStage": "Phase à reprendre · {{stageName}}",
+      "ApplyDraw": "Tirage à appliquer · {{stageName}}",
+      "RunDraw": "Tirage à lancer · {{stageName}}",
+      "MaterializeMatches": "Matchs à créer · {{stageName}}",
+      "BuildSchedule": "Calendrier à construire · {{stageName}}",
+      "RunSwissRounds": "Ronde suisse à générer · {{stageName}}",
+      "unknown": "Étape structurelle · {{stageName}}"
+    },
     "nextStep": {
       "RunDraw": "Lancer le tirage au sort",
       "ApplyDraw": "Appliquer le tirage publié",

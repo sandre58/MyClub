@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { resolveStructurePageHeadNoteKind } from './structurePageHeadReadiness';
+import {
+  isStructureHubCalm,
+  resolveStructurePageHeadNoteKind,
+} from './structurePageHeadReadiness';
 
 const base = {
   lifecycleClosed: false,
@@ -9,9 +12,8 @@ const base = {
   attentionPhase: 'success' as const,
   presentableBlockingAttentionCount: 0,
   presentableNonBlockingAttentionCount: 0,
-  readyToMaterialize: false,
-  readyForSchedule: false,
-  readyForNextSlice: false,
+  hubNextStep: null,
+  stages: [{ status: 'Ready' as const }],
 };
 
 describe('resolveStructurePageHeadNoteKind', () => {
@@ -43,17 +45,6 @@ describe('resolveStructurePageHeadNoteKind', () => {
     ).toBe('warning');
   });
 
-  it('shows negative when errors and warnings are both present', () => {
-    expect(
-      resolveStructurePageHeadNoteKind({
-        ...base,
-        structurePresentedDanger: true,
-        structureHasPresentedProblems: true,
-        presentableNonBlockingAttentionCount: 2,
-      }),
-    ).toBe('negative');
-  });
-
   it('shows warning for non-blocking attention only', () => {
     expect(
       resolveStructurePageHeadNoteKind({
@@ -68,28 +59,122 @@ describe('resolveStructurePageHeadNoteKind', () => {
       resolveStructurePageHeadNoteKind({
         ...base,
         attentionPhase: 'pending',
-        readyToMaterialize: true,
+        hubNextStep: {
+          code: 'PrepareStage',
+          stageId: 'a',
+          stageName: 'League',
+        },
       }),
     ).toBe('none');
   });
 
-  it('shows positive materialization when clean and attention succeeded empty', () => {
+  it('shows info next step from hubNextStep when clean', () => {
     expect(
       resolveStructurePageHeadNoteKind({
         ...base,
-        readyToMaterialize: true,
+        stages: [{ status: 'Draft' }],
+        hubNextStep: {
+          code: 'PrepareStage',
+          stageId: 'a',
+          stageName: 'League',
+        },
       }),
-    ).toBe('positiveMaterialization');
+    ).toBe('positiveNextStep');
   });
 
-  it('shows negative on attention error when structure has danger', () => {
+  it('does not treat hubNextStep null with draft as calm', () => {
     expect(
       resolveStructurePageHeadNoteKind({
         ...base,
-        attentionPhase: 'error',
-        structurePresentedDanger: true,
-        structureHasPresentedProblems: true,
+        hubNextStep: null,
+        stages: [{ status: 'Draft' }],
       }),
-    ).toBe('negative');
+    ).toBe('none');
+  });
+});
+
+describe('isStructureHubCalm', () => {
+  it('is true when all phases at least Ready and hubNextStep is null', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        hubNextStep: null,
+        stages: [{ status: 'Ready' }, { status: 'Running' }],
+      }),
+    ).toBe(true);
+  });
+
+  it('is false when any phase is Draft', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        stages: [{ status: 'Ready' }, { status: 'Draft' }],
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when hubNextStep is set (ambiguous resolver null is not calm)', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        hubNextStep: {
+          code: 'MaterializeMatches',
+          stageId: 'a',
+          stageName: 'League',
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when attention is pending', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        attentionPhase: 'pending',
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when all phases are Completed', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        stages: [{ status: 'Completed' }],
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when resume is possible (hub step would be set in API)', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        hubNextStep: {
+          code: 'ResumeStage',
+          stageId: 'a',
+          stageName: 'League',
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when a phase is Suspended and hubNextStep is null (fail-closed)', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        hubNextStep: null,
+        stages: [{ status: 'Ready' }, { status: 'Suspended' }],
+      }),
+    ).toBe(false);
+  });
+
+  it('does not show success while attention query is pending', () => {
+    expect(
+      resolveStructurePageHeadNoteKind({
+        ...base,
+        attentionPhase: 'pending',
+        hubNextStep: null,
+        stages: [{ status: 'Ready' }],
+      }),
+    ).toBe('none');
   });
 });

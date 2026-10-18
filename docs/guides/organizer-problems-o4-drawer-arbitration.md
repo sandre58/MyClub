@@ -349,15 +349,17 @@ When **`SlotFeedMissing`** is **presented** (diagnostic signal; **not** a Prepar
 
 | Rule | Contract |
 | :--- | :------- |
-| **Placement** | `ds-page-head__note` — DS **`Status`** `context` · `outline` · **`pill`**, tones `error` / `attention` / `info`, icon + short label. |
-| **Content** | **Nominal status** (2–4 words); **no** full sentence, **no** imperative/CTA, **no** pause-specific PageHead copy, **no** count (D1). |
-| **Positive** | `readyForMaterialization` → « Prête pour les matchs » / *Ready for matches*; `readyForNextSlice` and `readyForCupSkeleton` → « Structure prête » / *Structure ready* (keys may differ, copy may match). |
-| **Negative / warning** | `anomalyHintTitle` / `warningHintTitle` short labels only; severity from `resolveStructurePageHeadNoteKind` unchanged. |
-| **Visibility (D2)** | Unchanged: blocking/danger → negative pill; warning-only → attention pill; clean readiness flags → info pill; no positive while attention pending or problems presented. |
-| **Do not use** | `presentedProblemCount` for PageHead copy; `nextStep.*` imperatives in PageHead; page-local CSS mimicking `Status`. |
-| **Removed** | Long synthesis sentences; pause PageHead variants; success checkmark; `StructureReadinessBanner` catalogue. |
+| **Placement** | `ds-page-head__note` — DS **`Status`** `context` · `outline` · **`pill`**, tones `error` / `attention` / `info` / **`success`**, icon + short label. |
+| **Content** | **Nominal status**; **no** full sentence, **no** imperative/CTA, **no** pause-specific PageHead copy, **no** count (D1). |
+| **Next step (`info`)** | Sole SoT: **`StructureView.hubNextStep`** (Application). Labels `structure.readiness.hubStep.*` with `{{stageName}}` — see [truth matrix](../../design/structure-lifecycle/structure-pagehead-truth-matrix.md) §3. |
+| **Calm (`success`)** | `structure.readiness.structureCalm` only when `isStructureHubCalm` — **not** when `hubNextStep === null` alone. |
+| **Negative / warning** | `anomalyHintTitle` / `warningHintTitle`; severity from `resolveStructurePageHeadNoteKind` unchanged. |
+| **Priority** | `error` → `attention` → `info` → `success` → silence; competition **Completed** / **Archived** → no pill (truth matrix §1). |
+| **Visibility (D2)** | No positive while `attentionPhase !== 'success'`; no SPA draw-gate or cross-phase priority recompute. |
+| **Do not use** | `presentedProblemCount` for PageHead copy; `nextStep.*` imperatives in PageHead; `readyForNextSlice` / `readyForMaterialization` for pills; page-local CSS mimicking `Status`. |
+| **Removed** | Long synthesis sentences; pause PageHead variants; `StructureReadinessBanner` catalogue. |
 
-**Copy (FR / EN):** see `structure.readiness.anomalyHintTitle`, `warningHintTitle`, `readyForMaterialization`, `readyForNextSlice`, `readyForCupSkeleton` in Git i18n.
+**Copy (FR / EN):** `anomalyHintTitle`, `warningHintTitle`, `structureCalm`, `hubStep.*` in Git i18n (`structure.json`).
 
 **Shell count (D3):** SPA badge and drawer header use **`presentableAttentionCount`** (map → dedupe → denylist → blocking + warning rows). API `Count => Items.Count` unchanged.
 

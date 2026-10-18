@@ -1,26 +1,29 @@
+import type { StageStatus, StructureHubNextStep } from '../../types';
+
 export type AttentionQueryPhase = 'pending' | 'success' | 'error';
+
+export type StructurePageHeadStageSnapshot = {
+  status: StageStatus;
+};
 
 export type StructurePageHeadReadinessInput = {
   lifecycleClosed: boolean;
   stagesEmpty: boolean;
-  /** Structure hub: danger-level presented diagnostics (or shape invalid). */
   structurePresentedDanger: boolean;
-  /** Structure hub: any presented problem (including warnings) — blocks positive notes. */
   structureHasPresentedProblems: boolean;
   attentionPhase: AttentionQueryPhase;
   presentableBlockingAttentionCount: number;
   presentableNonBlockingAttentionCount: number;
-  readyToMaterialize: boolean;
-  readyForSchedule: boolean;
-  readyForNextSlice: boolean;
+  hubNextStep: StructureHubNextStep | null | undefined;
+  stages: StructurePageHeadStageSnapshot[];
 };
 
 export type StructurePageHeadNoteKind =
   | 'none'
   | 'negative'
   | 'warning'
-  | 'positiveMaterialization'
-  | 'positiveNextSlice';
+  | 'positiveNextStep'
+  | 'positiveCalm';
 
 function pageHeadHasErrors(input: StructurePageHeadReadinessInput): boolean {
   return (
@@ -38,6 +41,46 @@ function pageHeadHasWarnings(input: StructurePageHeadReadinessInput): boolean {
     input.attentionPhase === 'success' &&
     input.presentableNonBlockingAttentionCount > 0;
   return structureWarnings || attentionWarnings;
+}
+
+/** Hub calm (success pill) — independent from resolver null (see product matrix). */
+export function isStructureHubCalm(input: StructurePageHeadReadinessInput): boolean {
+  if (input.lifecycleClosed || input.stagesEmpty) {
+    return false;
+  }
+
+  if (input.hubNextStep) {
+    return false;
+  }
+
+  if (input.attentionPhase !== 'success') {
+    return false;
+  }
+
+  if (
+    input.presentableBlockingAttentionCount > 0 ||
+    input.presentableNonBlockingAttentionCount > 0 ||
+    input.structureHasPresentedProblems
+  ) {
+    return false;
+  }
+
+  const statuses = input.stages.map((stage) => stage.status);
+  if (statuses.some((status) => status === 'Draft' || status === 'Suspended')) {
+    return false;
+  }
+
+  if (statuses.length > 0 && statuses.every((status) => status === 'Completed')) {
+    return false;
+  }
+
+  return statuses.every(
+    (status) =>
+      status === 'Ready' ||
+      status === 'Running' ||
+      status === 'Suspended' ||
+      status === 'Completed',
+  );
 }
 
 export function resolveStructurePageHeadNoteKind(
@@ -59,24 +102,12 @@ export function resolveStructurePageHeadNoteKind(
     return 'none';
   }
 
-  if (
-    input.presentableBlockingAttentionCount === 0 &&
-    input.presentableNonBlockingAttentionCount === 0 &&
-    !input.structureHasPresentedProblems &&
-    input.readyToMaterialize &&
-    !input.readyForSchedule
-  ) {
-    return 'positiveMaterialization';
+  if (input.hubNextStep) {
+    return 'positiveNextStep';
   }
 
-  if (
-    input.presentableBlockingAttentionCount === 0 &&
-    input.presentableNonBlockingAttentionCount === 0 &&
-    !input.structureHasPresentedProblems &&
-    !input.readyToMaterialize &&
-    input.readyForNextSlice
-  ) {
-    return 'positiveNextSlice';
+  if (isStructureHubCalm(input)) {
+    return 'positiveCalm';
   }
 
   return 'none';

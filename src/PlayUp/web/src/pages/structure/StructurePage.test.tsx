@@ -1297,13 +1297,18 @@ describe('StructurePage Structure hub', () => {
           blockers: [],
           nextConstructionStepHint: 'None',
         },
+        hubNextStep: {
+          code: 'MaterializeMatches',
+          stageId,
+          stageName: 'League',
+        },
       }),
     );
 
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Prête pour les matchs/i),
+      await screen.findByText(/Matchs à créer · League/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Créer les matchs/i }),
@@ -1412,17 +1417,18 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows PageHead ready note when structure can advance and has no problems', async () => {
+  it('shows PageHead calm success when hub has no next step and phases are at least Ready', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         format: {
           kind: 'Groups',
           primaryStageId: groupesStage().stageId,
           primaryStageName: 'Groupes',
-          primaryStageStatus: 'Draft',
+          primaryStageStatus: 'Ready',
         },
         stages: [
           groupesStage({
+            status: 'Ready',
             compositionCapacity: 8,
             affectationEntryCount: 8,
             structureIssues: [],
@@ -1439,6 +1445,7 @@ describe('StructurePage Structure hub', () => {
           blockers: [],
           nextConstructionStepHint: 'None',
         },
+        hubNextStep: null,
       }),
     );
 
@@ -1447,6 +1454,27 @@ describe('StructurePage Structure hub', () => {
     expect(
       await screen.findByText(/Structure prête/i),
     ).toBeInTheDocument();
+  });
+
+  it('does not show calm PageHead when hubNextStep is null but a phase is still Draft', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Championship',
+          primaryStageId: stageId,
+          primaryStageName: 'League',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [championshipStage({ status: 'Draft', structureIssues: [] })],
+        readiness: hubReadyReadiness,
+        hubNextStep: null,
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(await screen.findByRole('heading', { name: 'League' })).toBeInTheDocument();
+    expect(screen.queryByText(/Structure prête/i)).not.toBeInTheDocument();
   });
 
   it('shows PageHead negative hint when attention has items but structure synthesis is clean', async () => {

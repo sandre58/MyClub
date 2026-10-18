@@ -1,0 +1,316 @@
+// -----------------------------------------------------------------------
+// <copyright file="StructureHubNextStepResolver.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Stages;
+
+namespace MyClub.PlayUp.Application.Reads;
+
+/// <summary>
+/// Selects at most one structural next step for the Structure hub (fail-closed).
+/// </summary>
+public static class StructureHubNextStepResolver
+{
+    private enum HubNextStepTier
+    {
+        Resume = 1,
+        Prepare = 2,
+        ApplyDraw = 3,
+        RunDraw = 4,
+        Materialize = 5,
+        Start = 6,
+        Complete = 7,
+        ScheduleOrSwiss = 8
+    }
+
+    /// <summary>
+    /// Resolves the hub next step from an assembled Structure view and loaded stages.
+    /// </summary>
+    public static StructureHubNextStepDto? Decide(
+        Competition competition,
+        IReadOnlyList<Stage> competitionStages,
+        StructureViewDto view,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+        ArgumentNullException.ThrowIfNull(view);
+
+        if (competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived)
+        {
+            return null;
+        }
+
+        if (view.Stages.Count == 0)
+        {
+            return null;
+        }
+
+        var stageById = competitionStages.ToDictionary(stage => stage.Id.Value);
+        var candidates = new List<(HubNextStepTier Tier, StructureHubNextStepDto Decision)>();
+
+        foreach (var hub in view.Stages)
+        {
+            if (!stageById.TryGetValue(hub.StageId, out var stage))
+            {
+                continue;
+            }
+
+            IReadOnlyList<MatchSummaryRow>? summaries = null;
+            if (matchSummariesByStage is not null)
+            {
+                matchSummariesByStage.TryGetValue(stage.Id, out summaries);
+            }
+
+            if (TryPerStageCandidate(competition, stage, competitionStages, hub, summaries, out var tier, out var decision))
+            {
+                candidates.Add((tier, decision));
+            }
+        }
+
+        if (TryCompetitionScheduleCandidate(competition, view, out var scheduleDecision))
+        {
+            candidates.Add((HubNextStepTier.ScheduleOrSwiss, scheduleDecision));
+        }
+
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        var bestTier = candidates.Min(candidate => candidate.Tier);
+        var atBest = candidates.Where(candidate => candidate.Tier == bestTier).ToArray();
+        return atBest.Length == 1 ? atBest[0].Decision : null;
+    }
+
+    private static bool TryPerStageCandidate(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        StructureStageHubSummaryDto hub,
+        IReadOnlyList<MatchSummaryRow>? summaries,
+        out HubNextStepTier tier,
+        out StructureHubNextStepDto decision)
+    {
+        if (TryResume(hub, out decision))
+        {
+            tier = HubNextStepTier.Resume;
+            return true;
+        }
+
+        if (TryPrepare(hub, out decision))
+        {
+            tier = HubNextStepTier.Prepare;
+            return true;
+        }
+
+        if (TryApplyDraw(stage, out decision))
+        {
+            tier = HubNextStepTier.ApplyDraw;
+            return true;
+        }
+
+        if (TryRunDraw(competition, stage, competitionStages, hub, summaries, out decision))
+        {
+            tier = HubNextStepTier.RunDraw;
+            return true;
+        }
+
+        if (TryMaterialize(hub, out decision))
+        {
+            tier = HubNextStepTier.Materialize;
+            return true;
+        }
+
+        if (TryStart(hub, out decision))
+        {
+            tier = HubNextStepTier.Start;
+            return true;
+        }
+
+        if (TryComplete(hub, out decision))
+        {
+            tier = HubNextStepTier.Complete;
+            return true;
+        }
+
+        tier = default;
+        decision = null!;
+        return false;
+    }
+
+    private static bool TryResume(StructureStageHubSummaryDto hub, out StructureHubNextStepDto decision)
+    {
+        var revert = hub.Lifecycle?.RevertTransition;
+        if (revert is { Code: OverviewAssembler.ActionResumeStage, Enabled: true })
+        {
+            decision = Pack(hub, OverviewAssembler.ActionResumeStage);
+            return true;
+        }
+
+        decision = null!;
+        return false;
+    }
+
+    private static bool TryPrepare(StructureStageHubSummaryDto hub, out StructureHubNextStepDto decision)
+    {
+        var transition = hub.Lifecycle?.Transition;
+        if (transition is { Code: OverviewAssembler.ActionPrepareStage, Enabled: true })
+        {
+            decision = Pack(hub, OverviewAssembler.ActionPrepareStage);
+            return true;
+        }
+
+        decision = null!;
+        return false;
+    }
+
+    private static bool TryApplyDraw(Stage stage, out StructureHubNextStepDto decision)
+    {
+        foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
+        {
+            if (draw is
+                {
+                    Status: DrawStatus.Published,
+                    Resolution.State: DrawResolutionState.Resolved,
+                    Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
+                }
+                && !DrawAppliedState.IsApplied(draw, stage))
+            {
+                decision = Pack(stage, OverviewAssembler.ActionApplyDraw);
+                return true;
+            }
+        }
+
+        decision = null!;
+        return false;
+    }
+
+    private static bool TryRunDraw(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        StructureStageHubSummaryDto hub,
+        IReadOnlyList<MatchSummaryRow>? summaries,
+        out StructureHubNextStepDto decision)
+    {
+        var gate = StructureDrawCreateLaunchGate.Evaluate(
+            competition,
+            stage,
+            competitionStages,
+            hub,
+            hub.DrawExecutionBadge,
+            summaries);
+        if (!gate.Allowed)
+        {
+            decision = null!;
+            return false;
+        }
+
+        decision = Pack(hub, StructureViewAssembler.NextStepRunDraw);
+        return true;
+    }
+
+    private static bool TryMaterialize(StructureStageHubSummaryDto hub, out StructureHubNextStepDto decision)
+    {
+        if (hub.Materialize is { CommandEnabled: true })
+        {
+            decision = Pack(hub, hub.Materialize.CommandCode);
+            return true;
+        }
+
+        decision = null!;
+        return false;
+    }
+
+    private static bool TryStart(StructureStageHubSummaryDto hub, out StructureHubNextStepDto decision)
+    {
+        var transition = hub.Lifecycle?.Transition;
+        if (transition is { Code: OverviewAssembler.ActionStartStage, Enabled: true })
+        {
+            decision = Pack(hub, OverviewAssembler.ActionStartStage);
+            return true;
+        }
+
+        decision = null!;
+        return false;
+    }
+
+    private static bool TryComplete(StructureStageHubSummaryDto hub, out StructureHubNextStepDto decision)
+    {
+        var transition = hub.Lifecycle?.Transition;
+        if (transition is { Code: OverviewAssembler.ActionCompleteStage, Enabled: true })
+        {
+            decision = Pack(hub, OverviewAssembler.ActionCompleteStage);
+            return true;
+        }
+
+        decision = null!;
+        return false;
+    }
+
+    private static bool TryCompetitionScheduleCandidate(
+        Competition competition,
+        StructureViewDto view,
+        out StructureHubNextStepDto decision)
+    {
+        decision = null!;
+        if (competition.Status is CompetitionStatus.Running
+            && view.Stages.Any(HasConstructionFrozenDraftPhase))
+        {
+            return false;
+        }
+
+        if (!view.Readiness.ReadyForNextSlice || IsConstructionBlocked(view.Readiness))
+        {
+            return false;
+        }
+
+        var hint = view.Readiness.NextConstructionStepHint;
+        if (hint is not (StructureViewAssembler.NextStepBuildSchedule
+            or StructureViewAssembler.NextStepRunSwissRounds))
+        {
+            return false;
+        }
+
+        if (view.Format.PrimaryStageId is not { } primaryId
+            || view.Format.PrimaryStageName is not { } primaryName)
+        {
+            return false;
+        }
+
+        decision = new StructureHubNextStepDto(hint, primaryId, primaryName);
+        return true;
+    }
+
+    private static bool HasConstructionFrozenDraftPhase(StructureStageHubSummaryDto hub) =>
+        hub.Status == StageStatus.Draft
+        && hub.Lifecycle?.Transition is
+        {
+            Code: OverviewAssembler.ActionPrepareStage,
+            Enabled: false,
+            DisabledReasonCode: StructureStageLifecycleAssembler.DisabledConstructionFrozen
+        };
+
+    private static bool IsConstructionBlocked(StructureReadinessDto readiness) =>
+        readiness.Blockers.Contains(StructureViewAssembler.BlockerMissingStage)
+        || readiness.Blockers.Contains(StructureViewAssembler.BlockerMissingStructure)
+        || readiness.Blockers.Contains(StructureViewAssembler.BlockerMissingPotRules)
+        || readiness.Blockers.Contains(StructureViewAssembler.BlockerCupBracketInvalid)
+        || readiness.Blockers.Contains(StructureViewAssembler.BlockerStructureGraphInvalid)
+        || readiness.Blockers.Contains(StructureViewAssembler.BlockerConfrontationUndecidable)
+        || readiness.Blockers.Contains(StructureViewAssembler.BlockerOverCapacityEdge)
+        || readiness.Blockers.Contains(StructureViewAssembler.BlockerOverExtraction);
+
+    private static StructureHubNextStepDto Pack(StructureStageHubSummaryDto hub, string code) =>
+        new(code, hub.StageId, hub.Name);
+
+    private static StructureHubNextStepDto Pack(Stage stage, string code) =>
+        new(code, stage.Id.Value, stage.Name.Value);
+}

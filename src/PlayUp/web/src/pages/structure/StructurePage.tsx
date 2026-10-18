@@ -10,6 +10,7 @@ import { PageHead } from '../../design-system/components/PageHead';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   ChampionshipFormatIcon,
+  CheckIcon,
   CupFormatIcon,
   GroupsFormatIcon,
   PlusIcon,
@@ -18,6 +19,7 @@ import {
   EmptySelectionIcon,
   InfoIcon,
 } from '../../design-system/icons/contentIcons';
+import { structurePageHeadHubStepLabelKey } from './structurePageHeadHubStepCopy';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
 import {
@@ -28,6 +30,7 @@ import {
 } from '../../ui';
 import {
   type StructureFormatKind,
+  type StructureHubNextStep,
   type StructureStageHubSummary,
   type NeedsAttention,
   type StructureView,
@@ -529,8 +532,6 @@ function readinessStatusNote(
   summary: StructureReadinessSummary,
   attentionQuery: UseQueryResult<NeedsAttention>,
 ): ReactNode {
-  const readiness = data.readiness;
-  const formatKind = data.format.kind;
   const lifecycleClosed =
     data.status === 'Completed' || data.status === 'Archived';
   const attentionPhase = attentionQueryPhase(attentionQuery);
@@ -554,9 +555,8 @@ function readinessStatusNote(
     attentionPhase,
     presentableBlockingAttentionCount: attentionPartition.blocking.length,
     presentableNonBlockingAttentionCount: attentionPartition.attention.length,
-    readyToMaterialize: readiness.readyForMaterialization,
-    readyForSchedule: readiness.readyForSchedule,
-    readyForNextSlice: readiness.readyForNextSlice,
+    hubNextStep: data.hubNextStep,
+    stages: stages.map((stage) => ({ status: stage.status })),
   });
 
   if (noteKind === 'negative') {
@@ -567,32 +567,39 @@ function readinessStatusNote(
     return <StructureReadinessHint severity="warning" />;
   }
 
-  if (noteKind === 'positiveMaterialization') {
-    const isCup = formatKind === 'Cup';
-    return (
-      <ReadinessReadyStatus
-        titleKey={
-          isCup
-            ? 'readiness.readyForCupSkeleton'
-            : 'readiness.readyForMaterialization'
-        }
-      />
-    );
+  if (noteKind === 'positiveNextStep' && data.hubNextStep) {
+    return <StructurePageHeadNextStepNote hubNextStep={data.hubNextStep} />;
   }
 
-  if (noteKind === 'positiveNextSlice') {
-    return <ReadinessReadyStatus titleKey="readiness.readyForNextSlice" />;
+  if (noteKind === 'positiveCalm') {
+    return <StructurePageHeadCalmNote />;
   }
 
   return null;
 }
 
-function ReadinessReadyStatus({ titleKey }: { titleKey: string }) {
+function StructurePageHeadNextStepNote({
+  hubNextStep,
+}: {
+  hubNextStep: StructureHubNextStep;
+}) {
   const { t } = useTranslation('structure');
-
+  const labelKey = structurePageHeadHubStepLabelKey(hubNextStep.code);
   return (
     <StructurePageHeadReadinessStatus tone="info" icon={<InfoIcon size="sm" />}>
-      {t(titleKey)}
+      {t(labelKey, { stageName: hubNextStep.stageName })}
+    </StructurePageHeadReadinessStatus>
+  );
+}
+
+function StructurePageHeadCalmNote() {
+  const { t } = useTranslation('structure');
+  return (
+    <StructurePageHeadReadinessStatus
+      tone="success"
+      icon={<CheckIcon size="sm" />}
+    >
+      {t('readiness.structureCalm')}
     </StructurePageHeadReadinessStatus>
   );
 }

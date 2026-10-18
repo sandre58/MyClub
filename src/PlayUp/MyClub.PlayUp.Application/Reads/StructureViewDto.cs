@@ -23,6 +23,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Actions">Available structure action codes.</param>
 /// <param name="Readiness">Application readiness diagnostic.</param>
 /// <param name="Stages">Per-stage topology + regulation tokens (Regulation hub).</param>
+/// <param name="HubNextStep">At most one hub-level structural next step; null when calm, ambiguous, or closed (not success).</param>
 /// <param name="ShortName">Optional abbreviated name.</param>
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="ScheduledStart">Optional declared start.</param>
@@ -38,6 +39,7 @@ public sealed record StructureViewDto(
     IReadOnlyList<string> Actions,
     StructureReadinessDto Readiness,
     IReadOnlyList<StructureStageHubSummaryDto> Stages,
+    StructureHubNextStepDto? HubNextStep = null,
     string? ShortName = null,
     Guid? LogoMediaId = null,
     DateTimeOffset? ScheduledStart = null,

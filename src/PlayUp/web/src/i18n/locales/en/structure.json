@@ -76,6 +76,19 @@
       "structure": "Fix structure"
     },
     "readyForNextSlice": "Structure ready",
+    "structureCalm": "Structure ready",
+    "hubStep": {
+      "PrepareStage": "Phase to prepare · {{stageName}}",
+      "StartStage": "Phase to start · {{stageName}}",
+      "CompleteStage": "Phase to complete · {{stageName}}",
+      "ResumeStage": "Phase to resume · {{stageName}}",
+      "ApplyDraw": "Draw to apply · {{stageName}}",
+      "RunDraw": "Draw to run · {{stageName}}",
+      "MaterializeMatches": "Matches to create · {{stageName}}",
+      "BuildSchedule": "Schedule to build · {{stageName}}",
+      "RunSwissRounds": "Swiss round to generate · {{stageName}}",
+      "unknown": "Structural step · {{stageName}}"
+    },
     "nextStep": {
       "RunDraw": "Run the random draw",
       "ApplyDraw": "Apply the published draw",
