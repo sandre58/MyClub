@@ -144,6 +144,40 @@ public sealed class StructureHubNextStepResolverContractTests
     }
 
     [Fact]
+    public void S13_never_emits_schedule_or_swiss_hub_step_codes()
+    {
+        var situation = TestCompetition.Create("S13", _clock)
+            .WithStructure(StructureIntent.Championship(stageName: "League"))
+            .PreparePrimaryStage()
+            .StartPrimaryStage();
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        foreach (var hint in new[]
+                 {
+                     StructureViewAssembler.NextStepBuildSchedule,
+                     StructureViewAssembler.NextStepRunSwissRounds,
+                 })
+        {
+            var hinted = view with
+            {
+                Readiness = view.Readiness with
+                {
+                    ReadyForNextSlice = true,
+                    NextConstructionStepHint = hint,
+                },
+            };
+
+            var step = StructureHubNextStepResolver.Decide(
+                situation.Competition,
+                situation.Stages,
+                hinted);
+            if (step is not null)
+            {
+                step.Code.Should().NotBe(hint);
+            }
+        }
+    }
+
+    [Fact]
     public void S11_completed_competition_resolver_null()
     {
         var situation = TestCompetition.Create("S11", _clock)

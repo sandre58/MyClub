@@ -14,6 +14,7 @@ const base = {
   presentableNonBlockingAttentionCount: 0,
   hubNextStep: null,
   stages: [{ status: 'Ready' as const }],
+  operationalSlicePending: false,
 };
 
 describe('resolveStructurePageHeadNoteKind', () => {
@@ -176,5 +177,16 @@ describe('isStructureHubCalm', () => {
         stages: [{ status: 'Ready' }],
       }),
     ).toBe('none');
+  });
+
+  it('is false when only operational slice (schedule) remains', () => {
+    expect(
+      isStructureHubCalm({
+        ...base,
+        hubNextStep: null,
+        operationalSlicePending: true,
+        stages: [{ status: 'Running' }],
+      }),
+    ).toBe(false);
   });
 });

@@ -1,5 +1,13 @@
 /** i18n key under `structure` for a hub next-step code from `StructureHubNextStepDto`. */
-export function structurePageHeadHubStepLabelKey(code: string): string {
+export function structurePageHeadHubStepLabelKey(
+  code: string,
+  options: { includeStageName: boolean },
+): string {
+  const base = hubStepLabelKeyBase(code);
+  return options.includeStageName ? base : `${base}_solo`;
+}
+
+function hubStepLabelKeyBase(code: string): string {
   switch (code) {
     case 'PrepareStage':
       return 'readiness.hubStep.PrepareStage';
@@ -16,10 +24,6 @@ export function structurePageHeadHubStepLabelKey(code: string): string {
     case 'MaterializeMatches':
     case 'MaterializeFromOccupiedSlots':
       return 'readiness.hubStep.MaterializeMatches';
-    case 'BuildSchedule':
-      return 'readiness.hubStep.BuildSchedule';
-    case 'RunSwissRounds':
-      return 'readiness.hubStep.RunSwissRounds';
     default:
       return 'readiness.hubStep.unknown';
   }

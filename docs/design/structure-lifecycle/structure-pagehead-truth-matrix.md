@@ -61,19 +61,19 @@ Wire on `StructureViewDto`:
 StructureHubNextStepDto? HubNextStep = null,
 ```
 
-**Signed nominal labels (FR)** — i18n `structure.readiness.hubStep.*` with `{{stageName}}`; EN mirrors the same pattern (nominal, non-imperative).
+**Hub scope (Structure-only):** phases, composition, draw, match materialization. **`BuildSchedule` / `RunSwissRounds` are not `hubNextStep` candidates** — calendar and Swiss progression stay on operational surfaces; `readiness.nextConstructionStepHint` may still reference them elsewhere.
 
-| Code | Signed FR label | Notes |
-| ---- | --------------- | ----- |
-| `PrepareStage` | Phase à préparer · {name} | `OverviewAssembler.ActionPrepareStage` |
-| `StartStage` | Phase à démarrer · {name} | `ActionStartStage` |
-| `CompleteStage` | Phase à terminer · {name} | `ActionCompleteStage` |
-| `ResumeStage` | Phase à reprendre · {name} | **`OverviewAssembler.ActionResumeStage`** on `lifecycle.revertTransition` (Suspended) — existing code, not a new action |
-| `RunDraw` | Tirage à lancer · {name} | Only when launch is **authorized** (§8.3) |
-| `ApplyDraw` | Tirage à appliquer · {name} | Only when apply is **authorized** (§8.3) |
-| `MaterializeMatches` | Matchs à créer · {name} | Same copy for `MaterializeFromOccupiedSlots` |
-| `BuildSchedule` | Calendrier à construire · {name} | Primary-stage schedule path (TBD in resolver) |
-| `RunSwissRounds` | Ronde suisse à générer · {name} | Swiss generate path (TBD in resolver) |
+**Signed labels (FR)** — grammar **à + infinitif** for lifecycle; draw/materialize keep object noun; i18n `structure.readiness.hubStep.*` / `*_solo` when `stages.length === 1` (presentation only). EN mirrors (`To complete` aligns with lifecycle CTA « Complete phase », not “close”).
+
+| Code | Multi-phase (FR) | Solo phase (FR) |
+| ---- | ---------------- | --------------- |
+| `PrepareStage` | À préparer · {name} | À préparer |
+| `StartStage` | À démarrer · {name} | À démarrer |
+| `CompleteStage` | À clôturer · {name} | À clôturer |
+| `ResumeStage` | À reprendre · {name} | À reprendre |
+| `RunDraw` | Tirage à lancer · {name} | Tirage à lancer |
+| `ApplyDraw` | Tirage à appliquer · {name} | Tirage à appliquer |
+| `MaterializeMatches` | Matchs à créer · {name} | Matchs à créer |
 
 **Activatability:** `enabled` / `commandEnabled` on the read model is necessary but not sufficient where domain gates exist (draw launch, apply consumability, Prepare checklist).
 
@@ -102,9 +102,8 @@ Scan stages in **`stages[]` order** (competition `StageIds`). Emit a candidate o
 5. `Materialize*` when `materialize.commandEnabled`.
 6. `StartStage` when transition enabled and no higher-priority construction remains on that stage.
 7. `CompleteStage` when transition enabled and no higher-priority construction remains.
-8. Primary `BuildSchedule` / `RunSwissRounds` when competition-scope readiness says so (single primary path only).
 
-Tiers 3–7 are **context-sensitive**; exact predicates belong in the resolver + S1–S14 tests, not in the SPA.
+Tiers 3–7 are **context-sensitive**; exact predicates belong in the resolver + contract tests, not in the SPA.
 
 ## 5. Calm / `success` pill rules (SPA — `isStructureHubCalm`)
 
@@ -117,7 +116,8 @@ Show **`success` · Structure prête** (`readiness.structureCalm`) only when:
 - `stages.length >= 1`,
 - No stage `Draft` or **`Suspended`** (fail-closed: resume / ambiguity → info via API or silence),
 - Not every stage `status` is `Completed`,
-- Competition not `Completed` / `Archived` (handled via `lifecycleClosed` before calm).
+- Competition not `Completed` / `Archived` (handled via `lifecycleClosed` before calm),
+- **`operationalSlicePending` false** — `readyForNextSlice` with `nextConstructionStepHint` `BuildSchedule` or `RunSwissRounds` (schedule/Swiss work remains, but out of Structure PageHead scope → **silence**, not success).
 
 **Not** the resolver `else`: calm is a **separate** predicate in `structurePageHeadReadiness.ts`.
 
@@ -132,19 +132,19 @@ Show **`success` · Structure prête** (`readiness.structureCalm`) only when:
 
 | # | Scenario | Expected pill | Tone | SoT (target) | Ambiguity / fail-closed |
 | - | -------- | ------------- | ---- | ------------ | ------------------------ |
-| S1 | Single Draft, `PrepareStage` enabled | Phase à préparer · {name} | info | `HubNextStep` | — |
+| S1 | Single Draft, `PrepareStage` enabled | À préparer (solo) or À préparer · {name} | info | `HubNextStep` | — |
 | S2 | Two Draft phases, both Prepare enabled | **None** (positive) | — | Resolver `null` | Multi-stage same tier (Prepare) |
-| S3 | Suspended, `ResumeStage` revert enabled | Phase à reprendre · {name} | info | `HubNextStep` | — |
+| S3 | Suspended, `ResumeStage` revert enabled | À reprendre · {name} | info | `HubNextStep` | — |
 | S4 | `DrawExecutionBadge` ToLaunch, gate OK | Tirage à lancer · {name} | info | Hub stage + draw gate | If gate false → no draw pill |
 | S5 | Badge ToApply, apply authorized | Tirage à appliquer · {name} | info | Resolver + Overview parity | Badge without authorization → silence |
 | S6 | `materialize.commandEnabled` | Matchs à créer · {name} | info | Stage `materialize` | If `commandEnabled` false → never |
-| S7 | Running, Complete enabled, no draw/mat/schedule left on that stage | Phase à terminer · {name} | info | Lifecycle when §4 “expected closure” | Complete enabled but construction pending → info on construction, not Complete |
+| S7 | Running, Complete enabled, no draw/mat left on that stage | À clôturer · {name} | info | Lifecycle when §4 “expected closure” | Complete enabled but construction pending → info on construction, not Complete |
 | S8 | Competition Running + stage Draft (frozen) | Structure incomplète / anomaly per diagnostics | attention/error | Existing PageHead synthesis | **Not** green |
 | S9 | All stages ≥ Ready, none Completed, no hub step | Structure prête | success | Calm rules + `HubNextStep null` | — |
 | S10 | `/attention` pending | No positive pill | — | `attentionPhase !== 'success'` | Existing gate |
 | S11 | Competition Completed/Archived | No pill | — | `lifecycleClosed` | Existing gate |
 | S12 | `PrepareStage` present but **disabled** | No action pill | — | `enabled == false` | Never invent |
-| S13 | Primary `readyForNextSlice` + `BuildSchedule` hint, no higher-priority stage step | Calendrier à construire · {primary} | info | Readiness + primary name | Only if single primary path |
+| S13 | Primary `readyForNextSlice` + `BuildSchedule` / `RunSwissRounds` hint only | **None** (positive) | — | Resolver `null`; calm blocked in SPA | Operational surfaces own schedule/Swiss |
 | S14 | Errors + enabled Prepare on one stage | Anomalies à traiter | error | PageHead negative wins | Positive suppressed |
 
 ## 7. Domain verification (targeted code pass — 2026-10-18)

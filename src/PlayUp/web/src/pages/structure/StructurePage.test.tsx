@@ -1308,7 +1308,7 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByText(/Matchs à créer · League/i),
+      await screen.findByText(/^Matchs à créer$/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Créer les matchs/i }),
@@ -1316,6 +1316,49 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByRole('link', { name: /Vue d’ensemble/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('shows hub step label with phase name when competition has multiple stages', async () => {
+    const finaleStageId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: groupesStage().stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Running',
+        },
+        stages: [
+          groupesStage({
+            status: 'Running',
+            compositionCapacity: 8,
+            affectationEntryCount: 8,
+            structureIssues: [],
+          }),
+          groupesStage({
+            stageId: finaleStageId,
+            name: 'Finale',
+            status: 'Draft',
+            formatKind: 'Cup',
+            compositionCapacity: 8,
+            affectationEntryCount: 8,
+            structureIssues: [],
+          }),
+        ],
+        readiness: hubReadyReadiness,
+        hubNextStep: {
+          code: 'PrepareStage',
+          stageId: finaleStageId,
+          stageName: 'Finale',
+        },
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByText(/À préparer · Finale/i),
+    ).toBeInTheDocument();
   });
 
   it('shows phase lifecycle in fiche header without Matchs tile in Draft', async () => {

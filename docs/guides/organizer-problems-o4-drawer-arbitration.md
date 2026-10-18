@@ -351,8 +351,8 @@ When **`SlotFeedMissing`** is **presented** (diagnostic signal; **not** a Prepar
 | :--- | :------- |
 | **Placement** | `ds-page-head__note` — DS **`Status`** `context` · `outline` · **`pill`**, tones `error` / `attention` / `info` / **`success`**, icon + short label. |
 | **Content** | **Nominal status**; **no** full sentence, **no** imperative/CTA, **no** pause-specific PageHead copy, **no** count (D1). |
-| **Next step (`info`)** | Sole SoT: **`StructureView.hubNextStep`** (Application). Labels `structure.readiness.hubStep.*` with `{{stageName}}` — see [truth matrix](../../design/structure-lifecycle/structure-pagehead-truth-matrix.md) §3. |
-| **Calm (`success`)** | `structure.readiness.structureCalm` only when `isStructureHubCalm` — **not** when `hubNextStep === null` alone. |
+| **Next step (`info`)** | Sole SoT: **`StructureView.hubNextStep`** (Application), **structure scope only** (no schedule/Swiss). Labels `structure.readiness.hubStep.*` / `*_solo` when one phase — see [truth matrix](../../design/structure-lifecycle/structure-pagehead-truth-matrix.md) §3. |
+| **Calm (`success`)** | `structure.readiness.structureCalm` only when `isStructureHubCalm` — **not** when `hubNextStep === null` alone; **not** when only schedule/Swiss slice remains (`operationalSlicePending`). |
 | **Negative / warning** | `anomalyHintTitle` / `warningHintTitle`; severity from `resolveStructurePageHeadNoteKind` unchanged. |
 | **Priority** | `error` → `attention` → `info` → `success` → silence; competition **Completed** / **Archived** → no pill (truth matrix §1). |
 | **Visibility (D2)** | No positive while `attentionPhase !== 'success'`; no SPA draw-gate or cross-phase priority recompute. |

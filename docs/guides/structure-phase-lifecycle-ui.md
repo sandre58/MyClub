@@ -757,7 +757,7 @@ Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **rea
 
 **Implementation (2026-10-17):** Fiche owns lifecycle chrome; `#operational-matchs` uses `omitLifecycle` — tests `50c4354f`; Start gate recipes `10166fbb`, `32c6186e`, `fb14feb7`; i18n remédiation IRR `4f7328ab`. **§ H product decision (Option A):** Notion [3fc75fb9](https://app.notion.com/p/3fc75fb92d10817f99bcc929ee77aba7) — no code change required.
 
-**Documentation (2026-10-17):** **O-MAT-VIS-1** aside tile visibility (useful content) — product decision in Notion Matrice UI; this appendix § Matchs aside tile. SPA tile alignment shipped (`resolveAsideMatchsStripContent`). Formal Phase 3 browser/DevRunner checks remain in `phase-3-recette.md`.
+**Documentation (2026-10-17):** **O-MAT-VIS-1** aside tile visibility (useful content) — product decision in Notion Matrice UI; this appendix § Matchs aside tile. SPA tile alignment shipped (`resolveAsideMatchsStripContent`). Formal Phase 3 browser/DevRunner recette **executed and closed** (2026-10-18) — [phase-3-recette.md](../design/structure-phase-refonte/phase-3-recette.md), [execution sheet](../design/structure-phase-refonte/phase-3-recette-manual-execution.md).
 
 **After formal Notion validation:** add `Notion validation: YYYY-MM-DD` and list any deviations from shipped behaviour.
 

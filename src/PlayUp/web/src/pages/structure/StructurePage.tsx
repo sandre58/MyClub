@@ -37,6 +37,7 @@ import {
 } from '../../types';
 import {
   type AttentionQueryPhase,
+  isStructureHubOperationalSlicePending,
   resolveStructurePageHeadNoteKind,
 } from './structurePageHeadReadiness';
 import { AddPhaseDialog } from './StructureGraphDialogs';
@@ -557,6 +558,10 @@ function readinessStatusNote(
     presentableNonBlockingAttentionCount: attentionPartition.attention.length,
     hubNextStep: data.hubNextStep,
     stages: stages.map((stage) => ({ status: stage.status })),
+    operationalSlicePending: isStructureHubOperationalSlicePending(
+      data.readiness.readyForNextSlice,
+      data.readiness.nextConstructionStepHint,
+    ),
   });
 
   if (noteKind === 'negative') {
@@ -568,7 +573,12 @@ function readinessStatusNote(
   }
 
   if (noteKind === 'positiveNextStep' && data.hubNextStep) {
-    return <StructurePageHeadNextStepNote hubNextStep={data.hubNextStep} />;
+    return (
+      <StructurePageHeadNextStepNote
+        hubNextStep={data.hubNextStep}
+        includeStageName={stages.length > 1}
+      />
+    );
   }
 
   if (noteKind === 'positiveCalm') {
@@ -580,14 +590,20 @@ function readinessStatusNote(
 
 function StructurePageHeadNextStepNote({
   hubNextStep,
+  includeStageName,
 }: {
   hubNextStep: StructureHubNextStep;
+  includeStageName: boolean;
 }) {
   const { t } = useTranslation('structure');
-  const labelKey = structurePageHeadHubStepLabelKey(hubNextStep.code);
+  const labelKey = structurePageHeadHubStepLabelKey(hubNextStep.code, {
+    includeStageName,
+  });
   return (
     <StructurePageHeadReadinessStatus tone="info" icon={<InfoIcon size="sm" />}>
-      {t(labelKey, { stageName: hubNextStep.stageName })}
+      {includeStageName
+        ? t(labelKey, { stageName: hubNextStep.stageName })
+        : t(labelKey)}
     </StructurePageHeadReadinessStatus>
   );
 }

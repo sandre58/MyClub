@@ -1,4 +1,8 @@
-import type { StageStatus, StructureHubNextStep } from '../../types';
+import type {
+  StageStatus,
+  StructureHubNextStep,
+  StructureNextConstructionStepHint,
+} from '../../types';
 
 export type AttentionQueryPhase = 'pending' | 'success' | 'error';
 
@@ -16,7 +20,21 @@ export type StructurePageHeadReadinessInput = {
   presentableNonBlockingAttentionCount: number;
   hubNextStep: StructureHubNextStep | null | undefined;
   stages: StructurePageHeadStageSnapshot[];
+  /** Schedule / Swiss next slice — out of Structure PageHead scope; blocks calm only. */
+  operationalSlicePending: boolean;
 };
+
+/** True when readiness points at calendar or Swiss work (not Structure hub scope). */
+export function isStructureHubOperationalSlicePending(
+  readyForNextSlice: boolean,
+  nextConstructionStepHint?: StructureNextConstructionStepHint,
+): boolean {
+  if (!readyForNextSlice) {
+    return false;
+  }
+  const hint = nextConstructionStepHint ?? 'None';
+  return hint === 'BuildSchedule' || hint === 'RunSwissRounds';
+}
 
 export type StructurePageHeadNoteKind =
   | 'none'
@@ -50,6 +68,10 @@ export function isStructureHubCalm(input: StructurePageHeadReadinessInput): bool
   }
 
   if (input.hubNextStep) {
+    return false;
+  }
+
+  if (input.operationalSlicePending) {
     return false;
   }
 

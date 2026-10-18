@@ -12,24 +12,27 @@ import {
 const READINESS_COPY_FR = {
   anomaly: 'Anomalies à traiter',
   warning: 'Structure incomplète',
-  prepare: 'Phase à préparer · Poules',
-  materialize: 'Matchs à créer · Championnat',
-  runDraw: 'Tirage à lancer · Quarts de finale',
+  prepareSolo: 'À préparer',
+  prepareNamed: 'À préparer · Poules',
+  materializeSolo: 'Matchs à créer',
+  materializeNamed: 'Matchs à créer · Championnat',
+  runDrawNamed: 'Tirage à lancer · Quarts de finale',
   calm: 'Structure prête',
 } as const;
 
 const READINESS_COPY_EN = {
   anomaly: 'Issues to address',
   warning: 'Structure incomplete',
-  prepare: 'Phase to prepare · Groups',
-  materialize: 'Matches to create · League',
-  runDraw: 'Draw to run · Quarter-finals',
+  prepareSolo: 'To prepare',
+  prepareNamed: 'To prepare · Groups',
+  materializeSolo: 'Matches to create',
+  materializeNamed: 'Matches to create · League',
+  runDrawNamed: 'Draw to run · Quarter-finals',
   calm: 'Structure ready',
-  /** Longest nominal info labels — nowrap / overflow QA */
-  scheduleLong:
-    'Schedule to build · Championship preliminary round group stage',
-  swissLong:
-    'Swiss round to generate · International open qualification stage',
+  drawLong:
+    'Draw to run · International open qualification preliminary round',
+  materializeLong:
+    'Matches to create · Championship preliminary round group stage',
 } as const;
 
 function ReadinessPill({
@@ -100,8 +103,8 @@ export function LabStructurePageHead() {
         <h1 className="dlab-structure-pagehead__title">PageHead — statut global</h1>
         <p className="ds-label">
           <code>Status</code> · <code>context</code> · <code>outline</code> ·{' '}
-          <code>pill</code> · libellés nominaux (phase nommée sur info). Vérifier
-          nowrap sur les libellés les plus longs (EN).
+          <code>pill</code> · libellés nominaux (nom de phase si plusieurs
+          phases). Vérifier nowrap sur les libellés les plus longs (EN).
         </p>
       </header>
 
@@ -126,23 +129,30 @@ export function LabStructurePageHead() {
             icon={<OverviewAttentionIcon size="sm" />}
           />
           <PageHeadSpecimen
-            localeLabel="info · PrepareStage"
+            localeLabel="info · PrepareStage (1 phase)"
             title="Structure"
-            label={READINESS_COPY_FR.prepare}
+            label={READINESS_COPY_FR.prepareSolo}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
           <PageHeadSpecimen
-            localeLabel="info · MaterializeMatches"
+            localeLabel="info · PrepareStage (multi)"
             title="Structure"
-            label={READINESS_COPY_FR.materialize}
+            label={READINESS_COPY_FR.prepareNamed}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
           <PageHeadSpecimen
-            localeLabel="info · RunDraw"
+            localeLabel="info · MaterializeMatches (1 phase)"
             title="Structure"
-            label={READINESS_COPY_FR.runDraw}
+            label={READINESS_COPY_FR.materializeSolo}
+            tone="info"
+            icon={<InfoIcon size="sm" />}
+          />
+          <PageHeadSpecimen
+            localeLabel="info · RunDraw (multi)"
+            title="Structure"
+            label={READINESS_COPY_FR.runDrawNamed}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
@@ -177,23 +187,23 @@ export function LabStructurePageHead() {
             icon={<OverviewAttentionIcon size="sm" />}
           />
           <PageHeadSpecimen
-            localeLabel="info · PrepareStage"
+            localeLabel="info · PrepareStage (solo)"
             title="Structure"
-            label={READINESS_COPY_EN.prepare}
+            label={READINESS_COPY_EN.prepareSolo}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
           <PageHeadSpecimen
-            localeLabel="info · MaterializeMatches"
+            localeLabel="info · MaterializeMatches (named)"
             title="Structure"
-            label={READINESS_COPY_EN.materialize}
+            label={READINESS_COPY_EN.materializeNamed}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
           <PageHeadSpecimen
-            localeLabel="info · RunDraw"
+            localeLabel="info · RunDraw (named)"
             title="Structure"
-            label={READINESS_COPY_EN.runDraw}
+            label={READINESS_COPY_EN.runDrawNamed}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
@@ -220,16 +230,16 @@ export function LabStructurePageHead() {
         </p>
         <div className="dlab-structure-pagehead__shape-grid">
           <PageHeadSpecimen
-            localeLabel="info · BuildSchedule (long)"
+            localeLabel="info · RunDraw (long EN)"
             title="Structure"
-            label={READINESS_COPY_EN.scheduleLong}
+            label={READINESS_COPY_EN.drawLong}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
           <PageHeadSpecimen
-            localeLabel="info · RunSwissRounds (long)"
+            localeLabel="info · MaterializeMatches (long EN)"
             title="Structure"
-            label={READINESS_COPY_EN.swissLong}
+            label={READINESS_COPY_EN.materializeLong}
             tone="info"
             icon={<InfoIcon size="sm" />}
           />

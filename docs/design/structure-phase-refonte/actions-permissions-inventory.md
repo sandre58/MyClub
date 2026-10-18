@@ -122,6 +122,6 @@ Recette checklist and automated test map: [phase-3-recette.md](./phase-3-recette
 
 | Action | Before (strip/triptych) | After (band 3) | Match? |
 |--------|-------------------------|----------------|--------|
-| *fill during Phase 3 recette* | | | |
+| *Parity rows (Phase 3 closed 2026-10-18)* | — | — | See [phase-3-recette-manual-execution.md §6](./phase-3-recette-manual-execution.md#6-table-de-parité) (canonical; no duplicate here). |
 
 Any mismatch → classify per refonte plan: conforming / pre-existing defect / indeterminate.

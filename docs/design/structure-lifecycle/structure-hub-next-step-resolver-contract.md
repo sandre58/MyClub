@@ -40,7 +40,8 @@ Per stage, evaluate **activatable** steps. Pick **at most one** hub winner:
 | T5 | `MaterializeMatches`, `MaterializeFromOccupiedSlots` | `materialize.commandEnabled` |
 | T6 | `StartStage` | `lifecycle.transition`: `StartStage`, `enabled`, and **no** higher tier on same stage |
 | T7 | `CompleteStage` | `lifecycle.transition`: `CompleteStage`, `enabled`, and **no** higher tier on same stage |
-| T8 | `BuildSchedule`, `RunSwissRounds` | Primary stage only; `readiness` path open; single competition-scope candidate |
+
+**Out of scope for `hubNextStep`:** `BuildSchedule`, `RunSwissRounds` (Structure PageHead is structure-only; hints may remain on `readiness` for other surfaces).
 
 **Cross-stage (Q1 signed):** collect the **best (lowest) tier** per stage; global winner = the **single** stage at the minimum tier. If **two or more** stages share that minimum tier → `null`. **Stage order does not break ties.**
 
@@ -64,7 +65,7 @@ Tests live in `StructureHubNextStepResolverContractTests.cs`. Expected **resolve
 | S10 | (attention) | `null` | SPA gate — not resolver input |
 | S11 | Competition Completed/Archived | `null` | No positive pill |
 | S12 | Prepare projected but `enabled: false` | `null` | No action pill |
-| S13 | Primary schedule/Swiss path, no stage tier T1–T7 | `BuildSchedule` or `RunSwissRounds` · primary | Single path only |
+| S13 | Schedule/Swiss hint only (`readyForNextSlice` + hint) | `null` | Never emitted on Structure hub |
 | S14 | Structure problems + Prepare enabled | `PrepareStage` at resolver | PageHead shows **error**; positive suppressed in SPA |
 
 ## Conflict scenarios (priority regression)

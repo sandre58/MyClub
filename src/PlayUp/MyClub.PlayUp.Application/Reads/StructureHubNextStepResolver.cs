@@ -25,8 +25,7 @@ public static class StructureHubNextStepResolver
         RunDraw = 4,
         Materialize = 5,
         Start = 6,
-        Complete = 7,
-        ScheduleOrSwiss = 8
+        Complete = 7
     }
 
     /// <summary>
@@ -72,11 +71,6 @@ public static class StructureHubNextStepResolver
             {
                 candidates.Add((tier, decision));
             }
-        }
-
-        if (TryCompetitionScheduleCandidate(competition, view, out var scheduleDecision))
-        {
-            candidates.Add((HubNextStepTier.ScheduleOrSwiss, scheduleDecision));
         }
 
         if (candidates.Count == 0)
@@ -254,59 +248,6 @@ public static class StructureHubNextStepResolver
         decision = null!;
         return false;
     }
-
-    private static bool TryCompetitionScheduleCandidate(
-        Competition competition,
-        StructureViewDto view,
-        out StructureHubNextStepDto decision)
-    {
-        decision = null!;
-        if (competition.Status is CompetitionStatus.Running
-            && view.Stages.Any(HasConstructionFrozenDraftPhase))
-        {
-            return false;
-        }
-
-        if (!view.Readiness.ReadyForNextSlice || IsConstructionBlocked(view.Readiness))
-        {
-            return false;
-        }
-
-        var hint = view.Readiness.NextConstructionStepHint;
-        if (hint is not (StructureViewAssembler.NextStepBuildSchedule
-            or StructureViewAssembler.NextStepRunSwissRounds))
-        {
-            return false;
-        }
-
-        if (view.Format.PrimaryStageId is not { } primaryId
-            || view.Format.PrimaryStageName is not { } primaryName)
-        {
-            return false;
-        }
-
-        decision = new StructureHubNextStepDto(hint, primaryId, primaryName);
-        return true;
-    }
-
-    private static bool HasConstructionFrozenDraftPhase(StructureStageHubSummaryDto hub) =>
-        hub.Status == StageStatus.Draft
-        && hub.Lifecycle?.Transition is
-        {
-            Code: OverviewAssembler.ActionPrepareStage,
-            Enabled: false,
-            DisabledReasonCode: StructureStageLifecycleAssembler.DisabledConstructionFrozen
-        };
-
-    private static bool IsConstructionBlocked(StructureReadinessDto readiness) =>
-        readiness.Blockers.Contains(StructureViewAssembler.BlockerMissingStage)
-        || readiness.Blockers.Contains(StructureViewAssembler.BlockerMissingStructure)
-        || readiness.Blockers.Contains(StructureViewAssembler.BlockerMissingPotRules)
-        || readiness.Blockers.Contains(StructureViewAssembler.BlockerCupBracketInvalid)
-        || readiness.Blockers.Contains(StructureViewAssembler.BlockerStructureGraphInvalid)
-        || readiness.Blockers.Contains(StructureViewAssembler.BlockerConfrontationUndecidable)
-        || readiness.Blockers.Contains(StructureViewAssembler.BlockerOverCapacityEdge)
-        || readiness.Blockers.Contains(StructureViewAssembler.BlockerOverExtraction);
 
     private static StructureHubNextStepDto Pack(StructureStageHubSummaryDto hub, string code) =>
         new(code, hub.StageId, hub.Name);
