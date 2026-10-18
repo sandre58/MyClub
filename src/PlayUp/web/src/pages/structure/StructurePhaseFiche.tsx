@@ -51,6 +51,7 @@ import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructurePhaseFicheHeader } from './StructurePhaseFicheHeader';
 import { StructureReadinessAttributedBlockerBanner } from './StructureReadinessAttributedBlockerBanner';
+import { blockerDetailsForStage } from './structureReadinessBlockerDetails';
 import { StructurePhaseSchematicAndAside } from './StructurePhaseSchematicAndAside';
 import { StructurePhaseRailIssueBanner } from './structurePhaseRailIssueBanner';
 import { materializePresentationForStage } from './structureOperationalCopy';
@@ -1190,11 +1191,6 @@ export function StructurePhaseFiche({
       className="structure-fiche structure-fiche--flat"
       aria-labelledby="phase-overview-heading"
     >
-      <StructureReadinessAttributedBlockerBanner
-        data={data}
-        stageId={stage.stageId}
-      />
-
       <StructurePhaseFicheHeader
         stage={stage}
         competitionId={data.competitionId}
@@ -1297,9 +1293,28 @@ export function StructurePhaseFiche({
           setManualSlotKey(key);
           setManualOpen(true);
         }}
-        schematicIssuesBanner={
-          !showPlacementBlock ? railIssueBanner(placesBanners) : undefined
-        }
+        schematicIssuesBanner={(() => {
+          const placesBanner = !showPlacementBlock
+            ? railIssueBanner(placesBanners)
+            : undefined;
+          const hasCupBracketReadiness =
+            blockerDetailsForStage(data, stage.stageId, 'CupBracketInvalid')
+              .length > 0;
+          if (!placesBanner && !hasCupBracketReadiness) {
+            return undefined;
+          }
+          return (
+            <>
+              {placesBanner}
+              {hasCupBracketReadiness ? (
+                <StructureReadinessAttributedBlockerBanner
+                  data={data}
+                  stageId={stage.stageId}
+                />
+              ) : null}
+            </>
+          );
+        })()}
         showAsideMatchsSection={showAsideMatchsSection}
         structureHubBackgroundRefresh={structureHubBackgroundRefresh}
         placementOperationalProps={placementOperationalProps}

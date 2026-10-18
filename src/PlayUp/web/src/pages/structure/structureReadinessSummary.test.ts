@@ -12,6 +12,7 @@ import {
   stageAmbientKinds,
   stagePopulationGap,
 } from './structureReadinessSummary';
+import { withFixturePresentedIssueCodes } from './structurePresentedIssueCodes.fixture';
 
 function stage(
   partial: Partial<StructureStageHubSummary> &
@@ -47,7 +48,7 @@ function view(
   blockers: string[] = [],
   blockerDetails: StructureReadinessBlocker[] = [],
 ): StructureView {
-  return {
+  const draft: StructureView = {
     competitionId: 'comp',
     name: 'Test',
     status: 'Draft',
@@ -94,6 +95,12 @@ function view(
     actions: [],
     stages,
   };
+  return {
+    ...draft,
+    stages: draft.stages.map((hub) =>
+      withFixturePresentedIssueCodes(draft, hub),
+    ),
+  };
 }
 
 describe('structureReadinessSummary', () => {
@@ -130,7 +137,8 @@ describe('structureReadinessSummary', () => {
       affectationEntryCount: 0,
       compositionCapacity: 8,
     });
-    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.familyCounts).toEqual([
       { family: 'graph', count: 1 },
       { family: 'capacity', count: 1 },
@@ -149,7 +157,8 @@ describe('structureReadinessSummary', () => {
       affectationEntryCount: 0,
       compositionCapacity: 8,
     });
-    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.familyCounts).toEqual([{ family: 'capacity', count: 1 }]);
     expect(summary.headerTone).toBe('attention');
     expect(summary.showPageHeadNegative).toBe(false);
@@ -164,7 +173,8 @@ describe('structureReadinessSummary', () => {
       affectationEntryCount: 0,
       compositionCapacity: 8,
     });
-    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.headerTone).toBe('danger');
     expect(summary.showPageHeadNegative).toBe(true);
   });
@@ -179,7 +189,8 @@ describe('structureReadinessSummary', () => {
       compositionCapacity: 8,
       hasDrawRules: false,
     });
-    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.familyCounts).toEqual([
       { family: 'feed', count: 1 },
       { family: 'capacity', count: 1 },
@@ -198,7 +209,8 @@ describe('structureReadinessSummary', () => {
       affectationEntryCount: 8,
       compositionCapacity: 8,
     });
-    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.hasAny).toBe(false);
     expect(summary.familyCounts).toEqual([]);
   });
@@ -214,7 +226,8 @@ describe('structureReadinessSummary', () => {
       compositionCapacity: 2,
       groupCount: 0,
     });
-    const summary = computeStructureReadinessSummary(view([final]), [final]);
+    const data = view([final]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.familyCounts).toEqual([{ family: 'result', count: 1 }]);
     expect(summary.presentedProblemCount).toBe(1);
     expect(summary.headerTone).toBe('danger');
@@ -230,7 +243,8 @@ describe('structureReadinessSummary', () => {
       affectationEntryCount: 8,
       compositionCapacity: 8,
     });
-    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.missingPotsPhaseCount).toBe(1);
     expect(summary.familyCounts).toEqual([]);
     expect(summary.headerTone).toBe('attention');
@@ -249,8 +263,9 @@ describe('structureReadinessSummary', () => {
       groupCount: 0,
       placesPerGroup: undefined,
     });
-    expect(stageAmbientKinds(view([cup]), cup)).toEqual([]);
-    const summary = computeStructureReadinessSummary(view([cup]), [cup]);
+    const cupData = view([cup]);
+    expect(stageAmbientKinds(cupData, cupData.stages[0]!)).toEqual([]);
+    const summary = computeStructureReadinessSummary(cupData, cupData.stages);
     expect(summary.missingPotsPhaseCount).toBe(0);
     expect(summary.hasAny).toBe(false);
   });
@@ -264,8 +279,9 @@ describe('structureReadinessSummary', () => {
       affectationEntryCount: 8,
       compositionCapacity: 8,
     });
-    expect(stageAmbientKinds(view([poules]), poules)).toEqual([]);
-    const summary = computeStructureReadinessSummary(view([poules]), [poules]);
+    const data = view([poules]);
+    expect(stageAmbientKinds(data, data.stages[0]!)).toEqual([]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
     expect(summary.hasAny).toBe(false);
     expect(summary.headerTone).toBe('none');
   });
@@ -280,7 +296,8 @@ describe('structureReadinessSummary', () => {
       affectationEntryCount: 0,
       compositionCapacity: 8,
     });
-    expect(stageAmbientKinds(view([poules]), poules)).toEqual([
+    const ambientData = view([poules]);
+    expect(stageAmbientKinds(ambientData, ambientData.stages[0]!)).toEqual([
       'graph',
       'capacity',
       'drawPots',
@@ -318,8 +335,11 @@ describe('structureReadinessSummary', () => {
       }),
     ];
     const data = view(stages);
-    const summary = computeStructureReadinessSummary(data, stages);
-    const actionable = collectAllStructureReadinessActionItems(data, stages).length;
+    const summary = computeStructureReadinessSummary(data, data.stages);
+    const actionable = collectAllStructureReadinessActionItems(
+      data,
+      data.stages,
+    ).length;
     expect(summary.presentedProblemCount).toBeGreaterThan(3);
     expect(summary.actionableCount).toBe(actionable);
     expect(summary.actionableCount).toBeGreaterThan(3);
@@ -335,11 +355,11 @@ describe('structureReadinessSummary', () => {
       compositionCapacity: 8,
     });
     const data = view([suspended]);
-    expect(presentedStructureProblemsSuspendedOnly(data, [suspended])).toBe(
+    expect(presentedStructureProblemsSuspendedOnly(data, data.stages)).toBe(
       true,
     );
     expect(
-      computeStructureReadinessSummary(data, [suspended])
+      computeStructureReadinessSummary(data, data.stages)
         .presentedStructureProblemsSuspendedOnly,
     ).toBe(true);
   });
@@ -361,7 +381,7 @@ describe('structureReadinessSummary', () => {
       hasDrawRules: false,
     });
     const data = view([suspended, ready]);
-    expect(presentedStructureProblemsSuspendedOnly(data, [suspended, ready])).toBe(
+    expect(presentedStructureProblemsSuspendedOnly(data, data.stages)).toBe(
       false,
     );
   });
@@ -382,7 +402,7 @@ describe('structureReadinessSummary', () => {
       structureIssues: ['CycleDetected'],
     });
     const data = view([suspended, running]);
-    expect(presentedStructureProblemsSuspendedOnly(data, [suspended, running])).toBe(
+    expect(presentedStructureProblemsSuspendedOnly(data, data.stages)).toBe(
       false,
     );
   });
@@ -397,7 +417,7 @@ describe('structureReadinessSummary', () => {
       compositionCapacity: 8,
     });
     const data = view([suspended], ['CupBracketInvalid']);
-    expect(presentedStructureProblemsSuspendedOnly(data, [suspended])).toBe(
+    expect(presentedStructureProblemsSuspendedOnly(data, data.stages)).toBe(
       false,
     );
   });

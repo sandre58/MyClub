@@ -4,6 +4,7 @@ import {
   collectAllStructureReadinessActionItems,
   resolveStructureDiagnosticNavigation,
 } from './structureReadinessActions';
+import { withFixturePresentedIssueCodes } from './structurePresentedIssueCodes.fixture';
 
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 
@@ -11,7 +12,7 @@ function baseView(
   partial: Partial<StructureView> & Pick<StructureView, 'stages'>,
 ): StructureView {
   const { stages, ...rest } = partial;
-  return {
+  const draft: StructureView = {
     competitionId,
     name: 'Comp',
     status: 'Draft',
@@ -56,6 +57,12 @@ function baseView(
     },
     stages,
     ...rest,
+  };
+  return {
+    ...draft,
+    stages: draft.stages.map((hub) =>
+      withFixturePresentedIssueCodes(draft, hub),
+    ),
   };
 }
 
@@ -112,10 +119,8 @@ describe('structureReadinessActions', () => {
         structureIssues: ['AuthoredAwardUnreachable'],
       }),
     ];
-    const all = collectAllStructureReadinessActionItems(
-      baseView({ stages }),
-      stages,
-    );
+    const data = baseView({ stages });
+    const all = collectAllStructureReadinessActionItems(data, data.stages);
     expect(all).toHaveLength(4);
     expect(all.slice(0, 3).map((item) => item.tone)).toEqual([
       'danger',

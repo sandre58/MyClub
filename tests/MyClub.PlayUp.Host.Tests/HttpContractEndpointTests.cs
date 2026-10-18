@@ -90,6 +90,51 @@ public sealed class HttpContractEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
+    public async Task Structure_ready_championship_without_matches_exposes_presentedIssueCodesAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        var competitionId = await CreateCompetitionAsync(client, "PresentedCodes");
+        await AddEntriesAsync(client, competitionId, 4);
+        using var structureResponse = await client.PostAsJsonAsync(
+            $"/competitions/{competitionId}/structure",
+            new ConfigureStructureRequest("Championship"));
+        structureResponse.EnsureSuccessStatusCode();
+        var stageId = (await structureResponse.Content.ReadFromJsonAsync<ConfigureStructureResponse>(HostJson.Options))!
+            .Structure.Format.PrimaryStageId!.Value;
+        await HostStageHttpHelpers.FillRootCompositionFromActiveEntriesAsync(factory, competitionId, stageId);
+
+        using (var prepare = await HostStageHttpHelpers.PostPrepareAsync(client, stageId))
+        {
+            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using var getResponse = await client.GetAsync($"/competitions/{competitionId}/structure");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var json = await getResponse.Content.ReadAsStringAsync();
+        using var document = JsonDocument.Parse(json);
+        var stage = document.RootElement.GetProperty("stages")[0];
+        stage.GetProperty("status").GetString().Should().Be("Ready");
+
+        var materialize = stage.GetProperty("materialize");
+        materialize.GetProperty("determinedCount").GetInt32().Should().Be(6);
+        materialize.GetProperty("materializedCount").GetInt32().Should().Be(0);
+
+        var presented = stage.GetProperty("presentedIssueCodes");
+        presented.ValueKind.Should().Be(JsonValueKind.Array);
+        presented.EnumerateArray()
+            .Select(element => element.GetString())
+            .Should()
+            .Contain(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+
+        var typed = await getResponse.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
+        typed!.Stages[0].PresentedIssueCodes.Should().Contain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+    }
+
+    [IntegrationFact]
     public async Task Structure_stage_hub_projects_lifecycle_wire_shapeAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);

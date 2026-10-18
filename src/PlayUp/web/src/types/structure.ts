@@ -218,6 +218,8 @@ export interface StructureStageHubSummary {
   progressionIntents?: StructureProgressionIntent[] | null;
   /** Machine-readable graph validity codes (Draft-persistable). */
   structureIssues?: string[];
+  /** Host-authored presented diagnostics (Gate 3); topology, readiness, attention. */
+  presentedIssueCodes?: string[];
   /** Pilot organizer-problem semantics for selected structure issues. */
   structureIssueSemantics?: OrganizerProblemRead[] | null;
   /** Configured DirectAssignment count (slot → entry). */

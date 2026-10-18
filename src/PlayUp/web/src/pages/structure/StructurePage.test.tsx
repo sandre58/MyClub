@@ -15,6 +15,7 @@ import {
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import { StructurePage } from './StructurePage';
 import { relevantPhaseSections } from './structureHubSections';
+import { withFixturePresentedIssueCodes } from './structurePresentedIssueCodes.fixture';
 
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
@@ -159,7 +160,7 @@ function cupStage(
 }
 
 function structureView(overrides: Partial<StructureView> = {}): StructureView {
-  return {
+  const viewWithoutPresented: StructureView = {
     competitionId,
     name: 'Spring Cup',
     status: 'Draft',
@@ -212,6 +213,12 @@ function structureView(overrides: Partial<StructureView> = {}): StructureView {
     },
     stages: [],
     ...overrides,
+  };
+  return {
+    ...viewWithoutPresented,
+    stages: viewWithoutPresented.stages.map((stage) =>
+      withFixturePresentedIssueCodes(viewWithoutPresented, stage),
+    ),
   };
 }
 

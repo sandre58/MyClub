@@ -91,6 +91,21 @@ public sealed class StructureReadinessBlockerAttributionTests
     }
 
     [Fact]
+    public void Assemble_invalid_cup_blocks_prepare_transition_on_owner_hub()
+    {
+        var situation = TestCompetition.Create("Cup prepare gate", _clock)
+            .WithTeams("A", "B", "C", "D", "E", "F", "G", "H");
+        var cup = situation.AddRegulationStyleInvalidKnockoutFinal("Phase finale");
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single(s => s.StageId == cup.Id.Value);
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureViewAssembler.BlockerCupBracketInvalid);
+    }
+
+    [Fact]
     public void DeriveLegacyBlockerCodes_preserves_first_occurrence_order()
     {
         var details = new[]

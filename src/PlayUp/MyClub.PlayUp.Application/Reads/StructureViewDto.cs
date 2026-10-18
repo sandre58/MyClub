@@ -225,6 +225,9 @@ public sealed record StructureReadinessDto(
 /// <param name="QualificationIntents">Authoring projection of qualification intents (legacy path rules synthesized on read).</param>
 /// <param name="ProgressionIntents">Authoring projection of progression intents (legacy path rules synthesized on read).</param>
 /// <param name="StructureIssues">Machine-readable graph validity codes for this phase (Draft-persistable).</param>
+/// <param name="PresentedIssueCodes">
+/// Host-authored presented diagnostics for this phase (structure projection + lifecycle + readiness attribution).
+/// </param>
 /// <param name="StructureIssueSemantics">Pilot organizer-problem semantics for selected issue codes.</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 /// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
@@ -301,6 +304,7 @@ public sealed record StructureStageHubSummaryDto(
     IReadOnlyList<StructureQualificationIntentDto>? QualificationIntents = null,
     IReadOnlyList<StructureProgressionIntentDto>? ProgressionIntents = null,
     IReadOnlyList<string>? StructureIssues = null,
+    IReadOnlyList<string>? PresentedIssueCodes = null,
     IReadOnlyList<OrganizerProblemReadDto>? StructureIssueSemantics = null,
     int HalfTimeDuration = 0,
     int DirectAssignmentCount = 0,

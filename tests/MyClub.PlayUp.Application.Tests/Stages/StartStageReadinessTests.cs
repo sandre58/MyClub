@@ -185,6 +185,8 @@ public sealed class StartStageReadinessTests
         hub.Lifecycle.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+        hub.PresentedIssueCodes.Should().Contain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
     }
 
     [Fact]

@@ -156,6 +156,16 @@ public static class StructureStageLifecycleAssembler
                 input.StructureIssues!.First(CompetitionFlowAnalyzer.IsStructureGraphGateIssue));
         }
 
+        if (input.FormatKind == StructureFormatKind.Cup
+            && StructureViewAssembler.IsCupBracketReadinessInvalid(input.Stage))
+        {
+            return BlockedTransition(
+                code,
+                StructureViewAssembler.BlockerCupBracketInvalid,
+                input,
+                StructureViewAssembler.BlockerCupBracketInvalid);
+        }
+
         if (StructurePrepareAttributionGate.BlocksPrepare(input))
         {
             return BlockedTransition(
@@ -367,6 +377,7 @@ public static class StructureStageLifecycleAssembler
             case ChecklistEntries:
                 return (null, "rail-entries", false, false);
             case DisabledStructureGraphInvalid:
+            case StructureViewAssembler.BlockerCupBracketInvalid:
                 return ("construction", null, false, false);
             case DisabledConstructionFrozen or DisabledCompetitionClosed:
                 return (null, null, false, false);

@@ -73,9 +73,9 @@ Exercise **A** can proceed **without** a live export. Exercise **B** is required
 | :--- | :-------------- | :------------------------------------------------------- |
 | Silence `SlotFeedMissing` when draw engaged | [`projectPresentedStageIssueCodes`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticPresentation.ts) | Banner ≠ bell count |
 | Drop `ExpectedRankUnreachable` when `AuthoredAwardUnreachable` present | [`projectPresentedIssueCodes`](../../src/PlayUp/web/src/pages/structure/structureDiagnosticPresentation.ts) | Extra drawer line |
-| Synthetic `PopulationShortfall` (U1) | [`StructurePopulationVolume`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePopulationVolume.cs) + SPA [`stagePresentedIssueCodes`](../../src/PlayUp/web/src/pages/structure/structureStagePresentedIssues.ts) | Aligned in Application (2026-10-12) |
-| `MissingPotRules` per phase | [`stageHasEngagedMissingPots`](../../src/PlayUp/web/src/pages/structure/structureStagePresentedIssues.ts) | Missing line |
-| `CupBracketInvalid` | `readiness.blockers` | Missing competition-level line |
+| Synthetic `PopulationShortfall` (U1) | [`StructurePresentedStageDiagnostics`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePresentedStageDiagnostics.cs) → `presentedIssueCodes` | SPA consumes Host only (no local synthesis) |
+| `MissingPotRules` per phase | `readiness.blockerDetails` (stage-attributed) → `presentedIssueCodes` | Missing line |
+| `CupBracketInvalid` | `readiness.blockerDetails` (per invalid Cup hub) → `presentedIssueCodes`; `/attention` **Stage** target | Missing or wrong attribution |
 
 **Decision at Acceptée:** emit **presented-equivalent** items from Application **or** document + test Host ↔ SPA equivalence — do not assume factorization before comparing effective rules.
 
@@ -196,7 +196,7 @@ Conservative stance retained: the drawer is **not** a mirror of the Structure ba
 | :------------- | :--------------------- | :-------- |
 | `MissingStage`, `MissingStructure` | Keep creation paths + Overview SoT | Initial configuration, not runtime triage |
 | `MissingPotRules` | Keep Structure SoT | Banner + navigation to draw section already contextualize action |
-| `CupBracketInvalid` | Keep Structure SoT | Competition construction; dedicated surface |
+| `CupBracketInvalid` | Keep Structure SoT | Stage-attributed (`blockerDetails.stageId`); Construction deep-link on owner phase |
 | `StructureGraphInvalid` (aggregate) | **No extra drawer line** if detailed child issues are shown elsewhere | Avoid global blocker + causes duplication |
 | `OverCapacityEdge`, `OverExtraction`, `ConfrontationUndecidable` | Keep Structure SoT by default; **individual** review if drawer adds cross-page action | Different contexts and corrections |
 | `CycleDetected`, `RoutingNondeterminism`, missing qual/prog destinations | **No bulk import**; per-code review vs qual/prog/exits overlap | Related but not necessarily equivalent actions |
@@ -484,7 +484,7 @@ Superseded for product target by [A4 revision (PROPOSED)](#a4-revision--per-code
 | `MissingStage` | **No** | — | Birth |
 | `MissingStructure` | **No** | — | Birth |
 | `MissingPotRules` | Yes | Blocking | Synthetic per stage (presented) |
-| `CupBracketInvalid` | Yes | Blocking | Competition target |
+| `CupBracketInvalid` | Yes | Blocking | Stage (`blockerDetails.stageId`; `/attention` TargetType=Stage) |
 | `StructureGraphInvalid` | **No** | — | Aggregate when children listed |
 | `ConfrontationUndecidable` | Yes | Blocking | |
 | `OverCapacityEdge` | Yes | **Warning** | D5: surplus meter **orange**; Prepare may still refuse Ready |

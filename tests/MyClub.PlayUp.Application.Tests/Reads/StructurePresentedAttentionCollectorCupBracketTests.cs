@@ -35,7 +35,8 @@ public sealed class StructurePresentedAttentionCollectorCupBracketTests
         cupItems.Should().ContainSingle();
         cupItems[0].Params.Should().ContainKey("stageId");
         cupItems[0].Params!["stageId"].Should().Be(knockout.Id.Value.ToString());
-        cupItems[0].TargetType.Should().Be("Competition");
+        cupItems[0].TargetType.Should().Be("Stage");
+        cupItems[0].TargetId.Should().Be(knockout.Id.Value.ToString());
     }
 
     [Fact]

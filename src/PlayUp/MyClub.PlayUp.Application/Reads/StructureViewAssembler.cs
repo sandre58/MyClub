@@ -246,6 +246,20 @@ public static class StructureViewAssembler
             competition.ScheduledStart,
             competition.ScheduledEnd);
 
+        // Presented diagnostics: one pass after hubs + readiness exist; no feedback into assembly.
+        view = view with
+        {
+            Stages =
+            [
+                .. view.Stages.Select(stage => stage with
+                {
+                    PresentedIssueCodes = StructurePresentedStageDiagnostics.CollectPresentedIssueCodes(
+                        view,
+                        stage)
+                })
+            ]
+        };
+
         var hubNextStep = StructureHubNextStepResolver.Decide(
             competition,
             stages,
@@ -1440,6 +1454,17 @@ public static class StructureViewAssembler
             blockers,
             nextStepHint,
             blockerDetails);
+    }
+
+    internal static bool IsCupBracketReadinessInvalid(Stage stage)
+    {
+        if (StructureSkeleton.InferFormat(stage) != StructureFormatKind.Cup)
+        {
+            return false;
+        }
+
+        var cupEntryPlaces = ResolveCupEntryPlaces(stage);
+        return cupEntryPlaces is null or < 2 || !IsPowerOfTwo(cupEntryPlaces.Value);
     }
 
     internal static IReadOnlyList<string> DeriveLegacyBlockerCodes(

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import { stageWorstPresentedDiagnosticTone } from './structureStageTopologyPresentation';
+import { withFixturePresentedIssueCodes } from './structurePresentedIssueCodes.fixture';
 
 function view(stages: StructureStageHubSummary[]): StructureView {
-  return {
+  const draft = {
     competitionId: 'c1',
     status: 'Draft',
     format: { kind: 'Groups' },
@@ -16,6 +17,12 @@ function view(stages: StructureStageHubSummary[]): StructureView {
     },
     stages,
   } as unknown as StructureView;
+  return {
+    ...draft,
+    stages: draft.stages.map((hub) =>
+      withFixturePresentedIssueCodes(draft, hub),
+    ),
+  };
 }
 
 function stage(
@@ -51,7 +58,8 @@ describe('stageWorstPresentedDiagnosticTone', () => {
       status: 'Completed',
       structureIssues: ['DanglingQualificationTarget'],
     });
-    expect(stageWorstPresentedDiagnosticTone(view([s]), s)).toBeNull();
+    const data = view([s]);
+    expect(stageWorstPresentedDiagnosticTone(data, data.stages[0]!)).toBeNull();
   });
 
   it('returns danger for blocking graph issues', () => {
@@ -59,7 +67,8 @@ describe('stageWorstPresentedDiagnosticTone', () => {
       stageId: 'a',
       structureIssues: ['DanglingQualificationTarget'],
     });
-    expect(stageWorstPresentedDiagnosticTone(view([s]), s)).toBe('danger');
+    const data = view([s]);
+    expect(stageWorstPresentedDiagnosticTone(data, data.stages[0]!)).toBe('danger');
   });
 
   it('returns attention for Draft population shortfall', () => {
@@ -68,24 +77,30 @@ describe('stageWorstPresentedDiagnosticTone', () => {
       affectationEntryCount: 0,
       compositionCapacity: 8,
     });
-    expect(stageWorstPresentedDiagnosticTone(view([s]), s)).toBe('attention');
+    const data = view([s]);
+    expect(stageWorstPresentedDiagnosticTone(data, data.stages[0]!)).toBe(
+      'attention',
+    );
   });
 
-  it('returns danger when cup bracket invalid is attributed to stage', () => {
+  it('returns danger when Host presentedIssueCodes includes CupBracketInvalid', () => {
     const cup = stage({
       stageId: 'cup-1',
       formatKind: 'Cup',
       structureIssues: [],
+      presentedIssueCodes: ['CupBracketInvalid'],
     });
-    const base = view([cup]);
-    const data: StructureView = {
-      ...base,
-      readiness: {
-        ...base.readiness,
-        blockers: ['CupBracketInvalid'],
-        blockerDetails: [{ code: 'CupBracketInvalid', stageId: 'cup-1' }],
-      },
-    };
-    expect(stageWorstPresentedDiagnosticTone(data, cup)).toBe('danger');
+    expect(stageWorstPresentedDiagnosticTone(view([cup]), cup)).toBe('danger');
+  });
+
+  it('returns danger when Host presentedIssueCodes includes UnmaterializedConfrontations', () => {
+    const ch = stage({
+      stageId: 'ch-1',
+      status: 'Ready',
+      formatKind: 'Championship',
+      structureIssues: [],
+      presentedIssueCodes: ['UnmaterializedConfrontations'],
+    });
+    expect(stageWorstPresentedDiagnosticTone(view([ch]), ch)).toBe('danger');
   });
 });

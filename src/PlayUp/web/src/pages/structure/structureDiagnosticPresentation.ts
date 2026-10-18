@@ -218,6 +218,20 @@ const BY_CODE: Record<string, StructureDiagnosticMeta> = {
     tone: 'attention',
     titleKey: 'graph.issues.ExpectedRankUnreachable',
   },
+  MissingPotRules: {
+    family: 'execution',
+    tile: 'confrontation',
+    cta: 'structure',
+    tone: 'attention',
+    titleKey: 'enums.attentionSource.MissingPotRules',
+  },
+  CupBracketInvalid: {
+    family: 'execution',
+    tile: 'confrontation',
+    cta: 'structure',
+    tone: 'danger',
+    titleKey: 'enums.attentionSource.CupBracketInvalid',
+  },
 };
 
 export const STRUCTURE_DIAGNOSTIC_FAMILIES: StructureDiagnosticFamily[] = [

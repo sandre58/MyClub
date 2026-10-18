@@ -10,14 +10,11 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Projects Structure hub diagnostics onto <c>GET /attention</c> using the same
-/// presented rules as the Structure PageHead (SPA <c>stagePresentedIssueCodes</c>).
-/// Includes U1 synthetic <c>PopulationShortfall</c> via <see cref="StructurePopulationVolume"/>.
+/// Projects Structure hub diagnostics onto <c>GET /attention</c> using
+/// <see cref="StructurePresentedStageDiagnostics"/> (same codes as <c>presentedIssueCodes</c>).
 /// </summary>
 public static class StructurePresentedAttentionCollector
 {
-    private static readonly StringComparer CodeComparer = StringComparer.Ordinal;
-
     /// <summary>Collects presented structure anomalies for the attention catalogue (D1 revision).</summary>
     public static void Collect(StructureViewDto structureView, IList<NeedsAttentionItemDto> items)
     {
@@ -36,42 +33,16 @@ public static class StructurePresentedAttentionCollector
                 continue;
             }
 
-            StagePresentedIssueCodes(structureView, stage)
-                .Where(code => !IsExcludedSource(code) && ShouldEmitAttention(code, stage, structureView))
-                .Select(code => CreateStageItem(code, stage, structureView)).ToList().ForEach(items.Add);
-
-            if (StageHasEngagedMissingPots(stage))
+            foreach (var code in stage.PresentedIssueCodes
+                         ?? StructurePresentedStageDiagnostics.CollectPresentedIssueCodes(structureView, stage))
             {
-                items.Add(CreateStageItem(
-                    StructureViewAssembler.BlockerMissingPotRules,
-                    stage,
-                    structureView,
-                    NeedsAttentionAssembler.SeverityBlocking));
-            }
-
-            CollectStartTransitionBlockers(stage, items);
-            CollectGroupsMatchProductionAttentionGap(stage, items);
-        }
-
-        foreach (var detail in structureView.Readiness.BlockerDetails)
-        {
-            if (!string.Equals(
-                    detail.Code,
-                    StructureViewAssembler.BlockerCupBracketInvalid,
-                    StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            items.Add(new NeedsAttentionItemDto(
-                detail.Code,
-                NeedsAttentionAssembler.SeverityBlocking,
-                "Competition",
-                structureView.CompetitionId.ToString(),
-                new Dictionary<string, string>
+                if (IsExcludedSource(code) || !ShouldEmitAttention(code, stage, structureView))
                 {
-                    ["stageId"] = detail.StageId?.ToString() ?? string.Empty
-                }));
+                    continue;
+                }
+
+                items.Add(CreateStageItem(code, stage, structureView));
+            }
         }
     }
 
@@ -82,215 +53,37 @@ public static class StructurePresentedAttentionCollector
         StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
             != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
 
-    private static void CollectGroupsMatchProductionAttentionGap(
-        StructureStageHubSummaryDto stage,
-        IList<NeedsAttentionItemDto> items)
-    {
-        if (!ReportsGroupsMatchProductionAttentionGap(stage))
-        {
-            return;
-        }
-
-        const string reason = StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations;
-        items.Add(
-            new NeedsAttentionItemDto(
-                reason,
-                NeedsAttentionAssembler.SeverityBlocking,
-                "Stage",
-                stage.StageId.ToString(),
-                new Dictionary<string, string> { ["stageId"] = stage.StageId.ToString() },
-                Problem: OrganizerProblemSemanticsResolver.TryFromStartTransitionBlocker(reason)));
-    }
-
-    private static bool ReportsGroupsMatchProductionAttentionGap(
-        StructureStageHubSummaryDto stage)
-    {
-        if (stage.Status is not StageStatus.Ready || stage.FormatKind is not StructureFormatKind.Groups)
-        {
-            return false;
-        }
-
-        var materialize = stage.Materialize;
-        if (materialize?.CommandEnabled != false)
-        {
-            return false;
-        }
-
-        var capacity = materialize.GroupsPlacementCapacityCount;
-        var filled = materialize.GroupsPlacementFilledCount;
-        if (capacity <= 0 || filled >= capacity)
-        {
-            return false;
-        }
-
-        var transition = stage.Lifecycle?.Transition;
-        return transition is not { Enabled: false, Code: OverviewAssembler.ActionStartStage };
-    }
-
-    private static void CollectStartTransitionBlockers(
-        StructureStageHubSummaryDto stage,
-        IList<NeedsAttentionItemDto> items)
-    {
-        var transition = stage.Lifecycle?.Transition;
-        if (transition is not { Enabled: false, Code: OverviewAssembler.ActionStartStage })
-        {
-            return;
-        }
-
-        var emitted = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var reason in EnumeratePresentedStartTransitionBlockers(stage, transition.DisabledReasonCode))
-        {
-            if (!emitted.Add(reason))
-            {
-                continue;
-            }
-
-            items.Add(
-                new NeedsAttentionItemDto(
-                    reason,
-                    NeedsAttentionAssembler.SeverityBlocking,
-                    "Stage",
-                    stage.StageId.ToString(),
-                    new Dictionary<string, string> { ["stageId"] = stage.StageId.ToString() },
-                    Problem: OrganizerProblemSemanticsResolver.TryFromStartTransitionBlocker(reason)));
-        }
-    }
-
-    private static IEnumerable<string> EnumeratePresentedStartTransitionBlockers(
-        StructureStageHubSummaryDto stage,
-        string? primaryDisabledReasonCode)
-    {
-        if (!string.IsNullOrWhiteSpace(primaryDisabledReasonCode)
-            && primaryDisabledReasonCode is
-                StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
-                or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
-                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations
-                or StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
-                or StructureStageLifecycleAssembler.DisabledGroupsNotReady)
-        {
-            if (primaryDisabledReasonCode
-                    != StructureStageLifecycleAssembler.DisabledGroupsNotReady
-                || !DeferGroupsNotReadyForDraw(stage))
-            {
-                yield return primaryDisabledReasonCode;
-            }
-        }
-
-        if (ReportsCanonicalEntryRoundStartGap(stage))
-        {
-            yield return StructureStageLifecycleAssembler.DisabledIncompleteEntryRound;
-        }
-
-        if (ReportsUnmaterializedConfrontationsStartGap(stage, primaryDisabledReasonCode))
-        {
-            yield return StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations;
-        }
-    }
-
-    private static bool ReportsCanonicalEntryRoundStartGap(StructureStageHubSummaryDto stage)
-    {
-        if (stage.Status is not StageStatus.Ready)
-        {
-            return false;
-        }
-
-        var materialize = stage.Materialize;
-        if (materialize?.CommandCode != OverviewAssembler.ActionMaterializeFromOccupiedSlots)
-        {
-            return false;
-        }
-
-        var canonical = materialize.CanonicalEntryPairCount;
-        var undetermined = materialize.UndeterminedCanonicalEntryPairCount;
-        return canonical > 0 && undetermined > 0;
-    }
-
-    private static bool ReportsUnmaterializedConfrontationsStartGap(
-        StructureStageHubSummaryDto stage,
-        string? primaryDisabledReasonCode)
-    {
-        switch (primaryDisabledReasonCode)
-        {
-            case StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
-                or StructureStageLifecycleAssembler.DisabledGroupsNotReady:
-                return false;
-            case StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations:
-                return true;
-        }
-
-        if (stage.Status is not StageStatus.Ready)
-        {
-            return false;
-        }
-
-        var materialize = stage.Materialize;
-        return materialize is not null && (materialize.EligibleCount != 0
-                                            || materialize.MaterializedCount < materialize.DeterminedCount) && (materialize.EligibleCount > 0
-            || materialize.DeterminedCount > materialize.MaterializedCount);
-    }
-
     private static bool IsExcludedSource(string code) =>
         code is StructureViewAssembler.BlockerMissingStage
             or StructureViewAssembler.BlockerMissingStructure
             or StructureViewAssembler.BlockerStructureGraphInvalid;
 
-    private static IReadOnlyList<string> StagePresentedIssueCodes(
+    /// <summary>SPA parity — delegates to <see cref="StructurePresentedStageDiagnostics"/>.</summary>
+    internal static IReadOnlyList<string> StagePresentedIssueCodes(
         StructureViewDto view,
-        StructureStageHubSummaryDto stage)
-    {
-        var raw = stage.StructureIssues?.ToList() ?? [];
-        if (StructurePopulationVolume.ShouldSynthesizePopulationShortfall(view, stage, raw))
-        {
-            raw.Add(CompetitionFlowAnalyzer.PopulationShortfall);
-        }
-
-        return ProjectPresentedStageIssueCodes(raw, stage);
-    }
+        StructureStageHubSummaryDto stage) =>
+        StructurePresentedStageDiagnostics.ProjectPresentedStageIssueCodesFromStructure(view, stage);
 
     /// <summary>SPA: <c>projectPresentedStageIssueCodes</c>.</summary>
     internal static IReadOnlyList<string> ProjectPresentedStageIssueCodes(
         IReadOnlyList<string> codes,
-        StructureStageHubSummaryDto stage)
-    {
-        var filtered = codes.ToList();
-        if (IsSlotFeedAwaitingDraw(stage))
-        {
-            filtered.RemoveAll(code => code == CompetitionFlowAnalyzer.SlotFeedMissing);
-        }
-
-        if (DeferGroupsNotReadyForDraw(stage))
-        {
-            filtered.RemoveAll(code =>
-                code == StructureStageLifecycleAssembler.DisabledGroupsNotReady);
-        }
-
-        if (filtered.Contains(CompetitionFlowAnalyzer.PopulationShortfall, CodeComparer))
-        {
-            filtered.RemoveAll(code => code == CompetitionFlowAnalyzer.NonRootUnfed);
-        }
-
-        return ProjectPresentedIssueCodes(filtered);
-    }
+        StructureStageHubSummaryDto stage) =>
+        StructurePresentedStageDiagnostics.ProjectPresentedStageIssueCodes(codes, stage);
 
     /// <summary>SPA: <c>projectPresentedIssueCodes</c>.</summary>
-    internal static IReadOnlyList<string> ProjectPresentedIssueCodes(IReadOnlyList<string> codes) => codes.Contains(CompetitionFlowAnalyzer.AuthoredAwardUnreachable, CodeComparer) ? [.. codes.Where(code => code != CompetitionFlowAnalyzer.ExpectedRankUnreachable)] : codes;
+    internal static IReadOnlyList<string> ProjectPresentedIssueCodes(IReadOnlyList<string> codes) =>
+        StructurePresentedStageDiagnostics.ProjectPresentedIssueCodes(codes);
 
     /// <summary>SPA: <c>isSlotFeedAwaitingDraw</c>.</summary>
     internal static bool IsSlotFeedAwaitingDraw(StructureStageHubSummaryDto stage) =>
-        stage is
-        {
-            HasDrawRules: true, DrawExecutionBadge: not (
-            StructureDrawExecutionBadge.ToApply or StructureDrawExecutionBadge.Applied)
-        };
+        StructurePresentedStageDiagnostics.IsSlotFeedAwaitingDraw(stage);
 
     internal static bool DeferGroupsNotReadyForDraw(StructureStageHubSummaryDto stage) =>
-        StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(
-            stage.HasDrawRules,
-            stage.DrawExecutionBadge);
+        StructurePresentedStageDiagnostics.DeferGroupsNotReadyForDraw(stage);
 
     /// <summary>SPA: <c>stageHasEngagedMissingPots</c>.</summary>
     internal static bool StageHasEngagedMissingPots(StructureStageHubSummaryDto stage) =>
-        stage is { FormatKind: StructureFormatKind.Groups, HasDrawRules: true, NumberOfPots: null };
+        StructurePresentedStageDiagnostics.StageHasEngagedMissingPots(stage);
 
     private static NeedsAttentionItemDto CreateStageItem(
         string source,
@@ -302,6 +95,9 @@ public static class StructurePresentedAttentionCollector
             ?? StructureDiagnosticPresentation.MapSeverityToAttention(
                 StructureDiagnosticPresentation.ResolveSeverity(source, stage, view));
 
+        var problem = OrganizerProblemSemanticsResolver.TryFromStructureIssue(source)
+            ?? OrganizerProblemSemanticsResolver.TryFromStartTransitionBlocker(source);
+
         return new NeedsAttentionItemDto(
             source,
             severity,
@@ -311,6 +107,6 @@ public static class StructurePresentedAttentionCollector
             {
                 ["stageId"] = stage.StageId.ToString()
             },
-            Problem: OrganizerProblemSemanticsResolver.TryFromStructureIssue(source));
+            Problem: problem);
     }
 }
