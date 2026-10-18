@@ -46,6 +46,7 @@ const hubReadyReadiness = {
   readyForSchedulePath: false,
   attachedMatchCount: 0,
   blockers: [] as string[],
+  blockerDetails: [],
   nextConstructionStepHint: 'None' as const,
 };
 

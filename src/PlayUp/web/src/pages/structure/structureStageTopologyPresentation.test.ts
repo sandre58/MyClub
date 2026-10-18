@@ -9,6 +9,7 @@ function view(stages: StructureStageHubSummary[]): StructureView {
     format: { kind: 'Groups' },
     readiness: {
       blockers: [],
+      blockerDetails: [],
       readyForMaterialization: false,
       readyForSchedule: false,
       readyForNextSlice: false,
@@ -68,5 +69,23 @@ describe('stageWorstPresentedDiagnosticTone', () => {
       compositionCapacity: 8,
     });
     expect(stageWorstPresentedDiagnosticTone(view([s]), s)).toBe('attention');
+  });
+
+  it('returns danger when cup bracket invalid is attributed to stage', () => {
+    const cup = stage({
+      stageId: 'cup-1',
+      formatKind: 'Cup',
+      structureIssues: [],
+    });
+    const base = view([cup]);
+    const data: StructureView = {
+      ...base,
+      readiness: {
+        ...base.readiness,
+        blockers: ['CupBracketInvalid'],
+        blockerDetails: [{ code: 'CupBracketInvalid', stageId: 'cup-1' }],
+      },
+    };
+    expect(stageWorstPresentedDiagnosticTone(data, cup)).toBe('danger');
   });
 });

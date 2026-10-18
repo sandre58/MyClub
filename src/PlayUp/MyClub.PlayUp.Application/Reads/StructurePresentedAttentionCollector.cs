@@ -53,17 +53,24 @@ public static class StructurePresentedAttentionCollector
             CollectGroupsMatchProductionAttentionGap(stage, items);
         }
 
-        if (structureView.Readiness.Blockers.Contains(StructureViewAssembler.BlockerCupBracketInvalid))
+        foreach (var detail in structureView.Readiness.BlockerDetails)
         {
+            if (!string.Equals(
+                    detail.Code,
+                    StructureViewAssembler.BlockerCupBracketInvalid,
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             items.Add(new NeedsAttentionItemDto(
-                StructureViewAssembler.BlockerCupBracketInvalid,
+                detail.Code,
                 NeedsAttentionAssembler.SeverityBlocking,
                 "Competition",
                 structureView.CompetitionId.ToString(),
                 new Dictionary<string, string>
                 {
-                    ["stageId"] = structureView.Format.PrimaryStageId?.ToString()
-                        ?? string.Empty
+                    ["stageId"] = detail.StageId?.ToString() ?? string.Empty
                 }));
         }
     }

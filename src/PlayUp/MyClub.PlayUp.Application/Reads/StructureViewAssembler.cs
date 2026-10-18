@@ -1244,50 +1244,50 @@ public static class StructureViewAssembler
         int attachedMatchCount,
         IReadOnlyList<StructureStageHubSummaryDto> stageHubs)
     {
-        var blockers = new List<string>();
+        var blockerDetails = new List<StructureReadinessBlockerDto>();
 
         var activeCount = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
         var minimum = competition.Regulation.EntryRules.MinimumTeams;
         if (activeCount < minimum)
         {
-            blockers.Add(BlockerInsufficientParticipants);
+            blockerDetails.Add(new StructureReadinessBlockerDto(BlockerInsufficientParticipants, null));
         }
 
         if (primary is null)
         {
-            blockers.Add(BlockerMissingStage);
+            blockerDetails.Add(new StructureReadinessBlockerDto(BlockerMissingStage, null));
         }
         else if (formatKind is null)
         {
-            blockers.Add(BlockerMissingStructure);
+            blockerDetails.Add(new StructureReadinessBlockerDto(BlockerMissingStructure, null));
         }
 
         if (stageHubs.Any(hub =>
                 hub.StructureIssues is { Count: > 0 } issues
                 && issues.Any(CompetitionFlowAnalyzer.IsStructureGraphGateIssue)))
         {
-            blockers.Add(BlockerStructureGraphInvalid);
+            blockerDetails.Add(new StructureReadinessBlockerDto(BlockerStructureGraphInvalid, null));
         }
 
         if (stageHubs.Any(hub =>
                 hub.StructureIssues is { Count: > 0 } issues
                 && issues.Contains(IssueConfrontationUndecidable, StringComparer.Ordinal)))
         {
-            blockers.Add(BlockerConfrontationUndecidable);
+            blockerDetails.Add(new StructureReadinessBlockerDto(BlockerConfrontationUndecidable, null));
         }
 
         if (stageHubs.Any(hub =>
                 hub.StructureIssues is { Count: > 0 } issues
                 && issues.Contains(IssueOverCapacityEdge, StringComparer.Ordinal)))
         {
-            blockers.Add(BlockerOverCapacityEdge);
+            blockerDetails.Add(new StructureReadinessBlockerDto(BlockerOverCapacityEdge, null));
         }
 
         if (stageHubs.Any(hub =>
                 hub.StructureIssues is { Count: > 0 } issues
                 && issues.Contains(IssueOverExtraction, StringComparer.Ordinal)))
         {
-            blockers.Add(BlockerOverExtraction);
+            blockerDetails.Add(new StructureReadinessBlockerDto(BlockerOverExtraction, null));
         }
 
         // Cup / Groups gates apply to every concerned phase, not only the primary hub.
@@ -1298,18 +1298,17 @@ public static class StructureViewAssembler
                 var cupEntryPlaces = ResolveCupEntryPlacesFromHub(hub);
                 if (cupEntryPlaces is null or < 2 || !IsPowerOfTwo(cupEntryPlaces.Value))
                 {
-                    if (!blockers.Contains(BlockerCupBracketInvalid))
-                    {
-                        blockers.Add(BlockerCupBracketInvalid);
-                    }
+                    blockerDetails.Add(new StructureReadinessBlockerDto(BlockerCupBracketInvalid, hub.StageId));
                 }
             }
 
-            if (hub is { FormatKind: StructureFormatKind.Groups, HasDrawRules: true, NumberOfPots: null } && !blockers.Contains(BlockerMissingPotRules))
+            if (hub is { FormatKind: StructureFormatKind.Groups, HasDrawRules: true, NumberOfPots: null })
             {
-                blockers.Add(BlockerMissingPotRules);
+                blockerDetails.Add(new StructureReadinessBlockerDto(BlockerMissingPotRules, hub.StageId));
             }
         }
+
+        var blockers = DeriveLegacyBlockerCodes(blockerDetails);
 
         var readyForDraw = false;
         var readyForSchedulePath = false;
@@ -1415,7 +1414,8 @@ public static class StructureViewAssembler
                 readyForSchedulePath,
                 attachedMatchCount,
                 blockers,
-                nextStepHint);
+                nextStepHint,
+                blockerDetails);
         }
 
         nextStepHint = drawLaunchOpen
@@ -1438,7 +1438,24 @@ public static class StructureViewAssembler
             readyForSchedulePath,
             attachedMatchCount,
             blockers,
-            nextStepHint);
+            nextStepHint,
+            blockerDetails);
+    }
+
+    internal static IReadOnlyList<string> DeriveLegacyBlockerCodes(
+        IReadOnlyList<StructureReadinessBlockerDto> blockerDetails)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var blockers = new List<string>();
+        foreach (var detail in blockerDetails)
+        {
+            if (seen.Add(detail.Code))
+            {
+                blockers.Add(detail.Code);
+            }
+        }
+
+        return blockers;
     }
 
     private static int? ResolveCupEntryPlacesFromHub(StructureStageHubSummaryDto hub)

@@ -12,6 +12,7 @@ import {
   stageHasEngagedMissingPots,
   stagePresentedIssueCodes,
 } from './structureStagePresentedIssues';
+import { blockerDetailsForStage } from './structureReadinessBlockerDetails';
 import {
   structureDeepLink,
   type StructureFocusId,
@@ -237,18 +238,22 @@ export function collectAllStructureReadinessActionItems(
     }
   }
 
-  const shapeInvalid = data.readiness.blockers.includes('CupBracketInvalid');
-  if (shapeInvalid) {
-    const anchor = stages[0]!;
-    pushSyntheticItem(items, {
-      competitionId,
-      stage: anchor,
-      id: `${anchor.stageId}:CupBracketInvalid`,
-      code: 'CupBracketInvalid',
-      tone: 'danger',
-      titleKey: 'readiness.statShape',
-      cta: 'structure',
-    });
+  for (const stage of stages) {
+    for (const _entry of blockerDetailsForStage(
+      data,
+      stage.stageId,
+      'CupBracketInvalid',
+    )) {
+      pushSyntheticItem(items, {
+        competitionId,
+        stage,
+        id: `${stage.stageId}:CupBracketInvalid`,
+        code: 'CupBracketInvalid',
+        tone: 'danger',
+        titleKey: 'readiness.statShape',
+        cta: 'structure',
+      });
+    }
   }
 
   items.sort((a, b) => {

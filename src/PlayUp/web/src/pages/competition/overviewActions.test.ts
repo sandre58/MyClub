@@ -138,4 +138,48 @@ describe('situationHref', () => {
       ),
     ).toBe(`/competitions/${competitionId}/teams`);
   });
+
+  it('maps CupBracketInvalid with stageId to construction deep link', () => {
+    const stageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    expect(
+      situationHref(
+        {
+          source: 'CupBracketInvalid',
+          nature: 'Blocking',
+          targetType: 'Competition',
+          targetId: competitionId,
+          matchId: null,
+          actionable: true,
+          actionCode: 'FixStructure',
+          impactCode: 'BlocksConstruction',
+          params: { stageId },
+        },
+        competitionId,
+      ),
+    ).toBe(
+      `/competitions/${competitionId}/structure?stage=${encodeURIComponent(stageId)}&section=construction`,
+    );
+  });
+
+  it('keeps MissingPotRules on structure hub without construction section', () => {
+    const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+    expect(
+      situationHref(
+        {
+          source: 'MissingPotRules',
+          nature: 'Blocking',
+          targetType: 'Competition',
+          targetId: competitionId,
+          matchId: null,
+          actionable: true,
+          actionCode: 'FixStructure',
+          impactCode: 'BlocksConstruction',
+          params: { stageId },
+        },
+        competitionId,
+      ),
+    ).toBe(
+      `/competitions/${competitionId}/structure?stage=${encodeURIComponent(stageId)}`,
+    );
+  });
 });

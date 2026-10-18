@@ -246,6 +246,35 @@ public sealed class TestCompetition
     }
 
     /// <summary>
+    /// Knockout with 4 slots across 3 rounds (regulation-demo style) — invalid entry bracket for readiness.
+    /// </summary>
+    public Stage AddRegulationStyleInvalidKnockoutFinal(string name, StageId? stageId = null)
+    {
+        var regulation = StageRegulation.MaterializeFrom(
+            Competition.Regulation,
+            isClassifyingPhase: false);
+        var stage = stageId is { } id
+            ? Stage.Create(Competition.Id, new StageName(name), regulation, id, Clock)
+            : Stage.Create(Competition.Id, new StageName(name), regulation, Clock);
+        var tie = new TieFormat(
+            TieFormat.SingleLeg,
+            aggregateScoring: false,
+            penaltyShootoutRule: new PenaltyShootoutRule());
+        var quarter = stage.AddRound("Quarts", tie, Clock);
+        var semi = stage.AddRound("Demis", tie, Clock);
+        var final = stage.AddRound("Finale", tie, Clock);
+        stage.ArrangeRounds([quarter.Id, semi.Id, final.Id]);
+        stage.AddSlot("QF-1-A");
+        stage.AddSlot("QF-1-B");
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
+        Competition.AddStage(stage.Id, Clock);
+        TrackStage(stage);
+        return stage;
+    }
+
+    /// <summary>
     /// Replaces qualification paths on <paramref name="stage"/> via Application authoring.
     /// </summary>
     /// <param name="stage">Source stage.</param>

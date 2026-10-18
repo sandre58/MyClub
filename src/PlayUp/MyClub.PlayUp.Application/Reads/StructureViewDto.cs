@@ -140,6 +140,11 @@ public sealed record StructureTopologySummaryDto(
     MatchGenerationFormat MatchGenerationFormat,
     int? SwissRoundCount = null);
 
+/// <summary>One readiness blocker with optional owning stage (canonical attribution).</summary>
+/// <param name="Code">Machine-readable blocker code.</param>
+/// <param name="StageId">Owner stage when known; null for competition-scoped blockers.</param>
+public sealed record StructureReadinessBlockerDto(string Code, Guid? StageId);
+
 /// <summary>Application readiness diagnostic (not persisted, not Domain).</summary>
 /// <param name="ReadyForNextSlice">True when structure is sufficient for the next construction step.</param>
 /// <param name="ReadyForDraw">True when a Draw path is identifiable.</param>
@@ -148,8 +153,9 @@ public sealed record StructureTopologySummaryDto(
 /// <param name="ReadyForMatchOperation">True when match operations can start (Matches attached; schedule optional).</param>
 /// <param name="ReadyForSchedulePath">Structure hint: championship schedule path identifiable from structure.</param>
 /// <param name="AttachedMatchCount">Matches attached to the primary stage.</param>
-/// <param name="Blockers">Machine-readable blocker codes (authoritative for SPA i18n).</param>
+/// <param name="Blockers">Legacy unique codes for .Contains consumers (derived from <see cref="BlockerDetails"/>).</param>
 /// <param name="NextConstructionStepHint">When <see cref="ReadyForNextSlice"/> is true, SPA title for the hub ready band (i18n key segment).</param>
+/// <param name="BlockerDetails">Canonical list; duplicate codes allowed with different <see cref="StructureReadinessBlockerDto.StageId"/>.</param>
 public sealed record StructureReadinessDto(
     bool ReadyForNextSlice,
     bool ReadyForDraw,
@@ -159,7 +165,8 @@ public sealed record StructureReadinessDto(
     bool ReadyForSchedulePath,
     int AttachedMatchCount,
     IReadOnlyList<string> Blockers,
-    string NextConstructionStepHint);
+    string NextConstructionStepHint,
+    IReadOnlyList<StructureReadinessBlockerDto> BlockerDetails);
 
 /// <summary>
 /// Per-stage hub row for Structure / Regulation (topology + regulation tokens + graph authoring).

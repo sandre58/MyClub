@@ -1,5 +1,6 @@
 import type { OverviewSituation } from '../types';
 import { structureDiagnosticMeta } from '../pages/structure/structureDiagnosticPresentation';
+import { structureDeepLink } from '../pages/structure/structureNavigation';
 
 /**
  * Resolve an Overview navigationHint / situation target to an existing SPA route.
@@ -65,6 +66,15 @@ export function situationHref(
   const stageId =
     situation.params?.stageId?.trim() ||
     (situation.targetType === 'Stage' ? situation.targetId?.trim() : null);
+
+  if (situation.source === 'CupBracketInvalid' && stageId) {
+    return structureDeepLink({
+      competitionId,
+      stageId,
+      section: 'construction',
+    });
+  }
+
   const isStructureCatalogueSource =
     Boolean(structureDiagnosticMeta(situation.source)) ||
     situation.source === 'CupBracketInvalid' ||

@@ -52,6 +52,7 @@ function baseView(
       readyForSchedulePath: false,
       attachedMatchCount: 0,
       blockers: [],
+      blockerDetails: [],
     },
     stages,
     ...rest,
@@ -158,6 +159,35 @@ describe('structureReadinessActions', () => {
         cta: 'places',
       }),
     ).toBe(`/competitions/${competitionId}/structure?stage=s1&draw=1`);
+  });
+
+  it('emits distinct cup bracket actions per owner stage', () => {
+    const cupA = stage({ stageId: 'cup-a', name: 'Cup A', formatKind: 'Cup' });
+    const cupB = stage({ stageId: 'cup-b', name: 'Cup B', formatKind: 'Cup' });
+    const data = baseView({
+      stages: [cupA, cupB],
+      readiness: {
+        readyForNextSlice: false,
+        readyForDraw: false,
+        readyForMaterialization: false,
+        readyForSchedule: false,
+        readyForMatchOperation: false,
+        readyForSchedulePath: false,
+        attachedMatchCount: 0,
+        blockers: ['CupBracketInvalid'],
+        blockerDetails: [
+          { code: 'CupBracketInvalid', stageId: 'cup-a' },
+          { code: 'CupBracketInvalid', stageId: 'cup-b' },
+        ],
+      },
+    });
+    const items = collectAllStructureReadinessActionItems(data, [cupA, cupB]);
+    const cupItems = items.filter((i) => i.code === 'CupBracketInvalid');
+    expect(cupItems).toHaveLength(2);
+    expect(cupItems.map((i) => i.stageId).sort()).toEqual(['cup-a', 'cup-b']);
+    expect(cupItems[0]?.href).toContain('section=construction');
+    expect(cupItems[1]?.href).toContain('section=construction');
+    expect(new Set(cupItems.map((i) => i.id)).size).toBe(2);
   });
 
   it('maps MissingPotRules to tirage section deep-link (lot B entry)', () => {

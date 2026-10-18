@@ -9,6 +9,7 @@ import {
   stageHasEngagedMissingPots,
   stagePresentedIssueCodes,
 } from './structureStagePresentedIssues';
+import { blockerDetailsForStage } from './structureReadinessBlockerDetails';
 
 function toneRank(tone: StructureDiagnosticTone): number {
   switch (tone) {
@@ -48,6 +49,14 @@ export function stageWorstPresentedDiagnosticTone(
 
   if (stageHasEngagedMissingPots(stage) && rank < toneRank('attention')) {
     worst = 'attention';
+  }
+
+  if (
+    blockerDetailsForStage(data, stage.stageId, 'CupBracketInvalid').length > 0 &&
+    rank < toneRank('danger')
+  ) {
+    worst = 'danger';
+    rank = toneRank('danger');
   }
 
   return worst;

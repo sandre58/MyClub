@@ -50,6 +50,7 @@ import {
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructurePhaseFicheHeader } from './StructurePhaseFicheHeader';
+import { StructureReadinessAttributedBlockerBanner } from './StructureReadinessAttributedBlockerBanner';
 import { StructurePhaseSchematicAndAside } from './StructurePhaseSchematicAndAside';
 import { StructurePhaseRailIssueBanner } from './structurePhaseRailIssueBanner';
 import { materializePresentationForStage } from './structureOperationalCopy';
@@ -1189,6 +1190,11 @@ export function StructurePhaseFiche({
       className="structure-fiche structure-fiche--flat"
       aria-labelledby="phase-overview-heading"
     >
+      <StructureReadinessAttributedBlockerBanner
+        data={data}
+        stageId={stage.stageId}
+      />
+
       <StructurePhaseFicheHeader
         stage={stage}
         competitionId={data.competitionId}

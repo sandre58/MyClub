@@ -18,6 +18,7 @@ import {
 } from './structureDiagnosticPresentation';
 import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import { collectAllStructureReadinessActionItems } from './structureReadinessActions';
+import { readinessHasBlockerCode } from './structureReadinessBlockerDetails';
 import {
   stageHasEngagedMissingPots,
   stagePresentedIssueCodes,
@@ -140,7 +141,7 @@ export function presentedStructureProblemsSuspendedOnly(
   data: StructureView,
   stages: StructureStageHubSummary[],
 ): boolean {
-  if (data.readiness.blockers.includes('CupBracketInvalid')) {
+  if (readinessHasBlockerCode(data, 'CupBracketInvalid')) {
     return false;
   }
 
@@ -235,7 +236,7 @@ export function computeStructureReadinessSummary(
     (family) => byFamily[family] > 0,
   ).map((family) => ({ family, count: byFamily[family] }));
 
-  const shapeInvalid = data.readiness.blockers.includes('CupBracketInvalid');
+  const shapeInvalid = readinessHasBlockerCode(data, 'CupBracketInvalid');
 
   const presentedProblemCount =
     presentedCodes.length +

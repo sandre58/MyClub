@@ -119,6 +119,11 @@ export type StructureNextConstructionStepHint =
   | 'BuildSchedule'
   | 'RunSwissRounds';
 
+export interface StructureReadinessBlocker {
+  code: string;
+  stageId?: string | null;
+}
+
 export interface StructureReadiness {
   readyForNextSlice: boolean;
   readyForDraw: boolean;
@@ -128,6 +133,7 @@ export interface StructureReadiness {
   readyForSchedulePath: boolean;
   attachedMatchCount: number;
   blockers: string[];
+  blockerDetails: StructureReadinessBlocker[];
   /** Host-authored hub ready-band title; `None` when not applicable. */
   nextConstructionStepHint?: StructureNextConstructionStepHint;
 }

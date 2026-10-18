@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { StructureStageHubSummary, StructureView } from '../../types';
+import type {
+  StructureReadinessBlocker,
+  StructureStageHubSummary,
+  StructureView,
+} from '../../types';
 import { collectAllStructureReadinessActionItems } from './structureReadinessActions';
 import {
   computeStructureReadinessSummary,
@@ -41,6 +45,7 @@ function stage(
 function view(
   stages: StructureStageHubSummary[],
   blockers: string[] = [],
+  blockerDetails: StructureReadinessBlocker[] = [],
 ): StructureView {
   return {
     competitionId: 'comp',
@@ -84,6 +89,7 @@ function view(
       readyForSchedulePath: false,
       attachedMatchCount: 0,
       blockers,
+      blockerDetails,
     },
     actions: [],
     stages,

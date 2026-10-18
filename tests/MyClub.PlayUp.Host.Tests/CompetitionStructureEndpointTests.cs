@@ -108,6 +108,8 @@ public sealed class CompetitionStructureEndpointTests(HostPostgresFixture fixtur
         cup.Structure.Structure.SlotCount.Should().Be(4);
         cup.Structure.Structure.RoundCount.Should().Be(1);
         cup.Structure.Readiness.ReadyForDraw.Should().BeTrue();
+        cup.Structure.Readiness.BlockerDetails.Should().NotBeNull();
+        cup.Structure.Readiness.BlockerDetails.Should().BeEmpty();
     }
 
     [IntegrationFact]
