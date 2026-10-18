@@ -415,4 +415,15 @@ public static class ApplicationErrorCodes
     /// </summary>
     public const string StartBlockedNoExploitableInitialConfrontations =
         "Application.StartBlockedNoExploitableInitialConfrontations";
+
+    /// <summary>
+    /// Gets the code when Start is refused because the championship phase roster is incomplete.
+    /// </summary>
+    public const string StartBlockedPhaseRosterIncomplete =
+        "Application.StartBlockedPhaseRosterIncomplete";
+
+    /// <summary>
+    /// Gets the code when Start is refused because groups are not ready on a groups phase.
+    /// </summary>
+    public const string StartBlockedGroupsNotReady = "Application.StartBlockedGroupsNotReady";
 }

@@ -1,7 +1,10 @@
 import type { StructureStageHubSummary } from '../../types';
 import type { MaterializePresentation } from './structureMaterializeCopy';
 import { showViewMaterializedMatchesLink } from './structureMaterializeCopy';
-import { hasMatchsStructuralProductionChrome } from './structureMaterializeCopy';
+import {
+  hasMatchsStructuralProductionChrome,
+  shouldShowBlockedGroupsMaterializeCta,
+} from './structureMaterializeCopy';
 import { productionRatio, showProductionOperationalSection } from './structureOperationalCopy';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
 
@@ -67,8 +70,15 @@ export function resolveAsideMatchsStripContent(
     (showProduction && (materialize != null || dematerialize != null));
   const showMaterializePrimary =
     materialize != null && presentation === 'actionable';
+  const showMaterializeBlockedCta =
+    materialize != null &&
+    presentation != null &&
+    shouldShowBlockedGroupsMaterializeCta(materialize, presentation);
   const showProductionLeadingActions =
-    showProduction && (showMaterializePrimary || dematerialize?.enabled === true);
+    showProduction &&
+    (showMaterializePrimary ||
+      showMaterializeBlockedCta ||
+      dematerialize?.enabled === true);
 
   return {
     showProductionBody,

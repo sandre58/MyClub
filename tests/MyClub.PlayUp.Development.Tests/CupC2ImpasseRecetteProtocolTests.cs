@@ -40,6 +40,9 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         var (competition, stage, hub, matches) = scope;
         EnsureRecetteCupReady(competition, stage);
 
+        matches.Should().NotBeNull();
+        hub.Should().NotBeNull();
+
         matches = await scope.ReloadMatchesAsync();
         hub = AssembleHub(competition, [stage], matches);
 
@@ -55,13 +58,14 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
             .Select(e => e.EntryId)
             .First(id => stage.Slots.All(s => s.EntryId is null || !s.EntryId.Equals(id)));
 
-        var assignAct = () => AssignEntryToSlot.Execute(
+        AssignEntryToSlot.Execute(
             stage,
             emptySlot.SlotKey,
             entryForAssign,
             matches);
-        assignAct.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
+        stage.Slots.Single(s => s.SlotKey == emptySlot.SlotKey).EntryId.Should().Be(entryForAssign);
+
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToSlot);
 
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var startAct = async () => await executor.StartStageAsync(stage.Id);
@@ -70,8 +74,6 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
 
         hub.Lifecycle!.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
-
-        hub.Actions.Should().NotContain(StructureViewAssembler.ActionAssignEntryToSlot);
 
         var materializeSecond = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
         materializeSecond.CreatedMatches.Should().HaveCount(1);
@@ -186,10 +188,7 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         var view = StructureViewAssembler.Assemble(
             competition,
             stages,
-            matchSummariesByStage: new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
-            {
-                [stage.Id] = rows
-            });
+            matchSummariesByStage: new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> { [stage.Id] = rows });
         return view.Stages.Single(s => s.StageId == stage.Id.Value);
     }
 }

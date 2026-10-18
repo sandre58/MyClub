@@ -282,6 +282,7 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         hub.Materialize!.CommandEnabled.Should().BeFalse();
         hub.Materialize.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.StructureNotMutable);
         hub.Materialize.DeterminedCount.Should().BeGreaterThan(hub.Materialize.MaterializedCount);
+        hub.StructureIssues.Should().NotContain(CompetitionFlowAnalyzer.PopulationShortfall);
     }
 
     private Stage CreateSemiStage(Competition competition)

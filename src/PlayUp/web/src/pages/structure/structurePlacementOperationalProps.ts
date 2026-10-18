@@ -33,6 +33,7 @@ export type StructurePlacementOperationalSectionProps = {
   slotFeedMissingActive?: boolean;
   /** Same predicate as Create + Generate (`resolveStageDrawCreateGate`). Only when `showDrawCta`. */
   drawLaunchable?: boolean;
+  drawExecutionBadge?: 'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied' | null;
   stageStatus?: StageStatus;
   slotFeedPresentationContext?: StructureDiagnosticPresentationContext;
   /** Draw pool / create gate needs draw overview (Cup) before showing Tirage strip body. */

@@ -258,6 +258,8 @@
       "ExpectedRankUnreachablePaused": "Competition rank unreachable via attribution (noted while paused)",
       "IncompleteEntryRound": "Entry-bracket pairs incomplete — start blocked",
       "UnmaterializedConfrontations": "Eligible matches not created — start blocked",
+      "PhaseRosterIncomplete": "Phase composition incomplete — start blocked",
+      "GroupsNotReady": "Groups incomplete — start blocked",
       "NoExploitableInitialConfrontations": "No initial confrontation can be established — start blocked"
     },
     "issuesShort": {
@@ -282,6 +284,8 @@
       "ExpectedRankUnreachable": "Rank unreachable",
       "IncompleteEntryRound": "Incomplete entry pairs",
       "UnmaterializedConfrontations": "Matches not created",
+      "PhaseRosterIncomplete": "Composition incomplete",
+      "GroupsNotReady": "Groups incomplete",
       "NoExploitableInitialConfrontations": "No initial confrontation"
     }
   },
@@ -382,6 +386,8 @@
       "CycleDetected": "Links between phases form a cycle — fix qualification or progression.",
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
+      "PhaseRosterIncomplete": "Complete the phase composition (eligible teams) before starting.",
+      "GroupsNotReady": "Complete group assignments before starting the phase.",
       "NoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
       "MatchLifecycleStarted": "Finish or cancel engaged matches before reverting the start or pausing the phase.",
@@ -436,6 +442,8 @@
       "CycleDetected": "Links between phases form a cycle — fix qualification or progression.",
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
+      "PhaseRosterIncomplete": "Complete the phase composition (eligible teams) before starting.",
+      "GroupsNotReady": "Complete group assignments before starting the phase.",
       "NoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
       "MatchLifecycleStarted": "Finish or cancel engaged matches before reverting the start or pausing the phase.",
@@ -565,6 +573,8 @@
         "meterCaptionEntryPairs": "entry pairs",
         "entryRoundRatioCaption": "Pairs",
         "meterAriaEntryPairs": "Entry-bracket pair fill progress",
+        "groupsPlacementRatioCaption": "Places",
+        "meterAriaGroupsPlacement": "Group pool place assignment progress",
         "ratioLabel_one": "created",
         "ratioLabel_other": "created",
         "ratioLabelMatches_one": "match created",
@@ -577,13 +587,18 @@
         "emptyTitle": "Match production",
         "emptyStructuralTitle": "No confrontation to display",
         "determinedRatioLabel": "Determined confrontations",
+        "groupsPlacementRatioLabel": "Places in groups",
         "meterCaptionDetermined": "determined",
+        "meterCaptionGroupsPlacement": "assigned",
         "stateMessage": {
           "unavailable": "No matches to produce for this phase.",
           "complete": "All planned matches are created.",
           "partial_one": "{{count}} match left to create.",
           "partial_other": "{{count}} matches left to create.",
           "noDeterminedConfrontations": "No confrontation determined",
+          "groupsPlacementIncomplete": "Groups are not ready for match production — complete assignments ({{filled}} / {{capacity}}).",
+          "groupsPlacementReady": "All group places are assigned.",
+          "matchesBlockedByGroupsPools": "Complete group places before matches can be created.",
           "determinedPartial_one": "{{count}} confrontation left to determine.",
           "determinedPartial_other": "{{count}} confrontations left to determine.",
           "determinedComplete": "All listed confrontations are determined.",
@@ -788,6 +803,7 @@
   "composition": {
     "gauge": {
       "resolvedQualifiedCaption": "Resolved",
+      "eligibleParticipantsCaption": "Eligible",
       "entriesPlacesCaption": "Entries",
       "populationComplete": "Entry count matches phase places.",
       "populationShortfallPaused_one": "{{count}} entry below phase places (phase paused).",
@@ -800,7 +816,11 @@
       "inboundAllResolved": "All teams are resolved.",
       "inboundUnresolved_one": "{{count}} team is not resolved yet.",
       "inboundUnresolved_other": "{{count}} teams are not resolved yet.",
-      "inboundResolvedAria": "{{resolved}} of {{total}} teams resolved"
+      "inboundResolvedAria": "{{resolved}} of {{total}} teams resolved",
+      "eligibleAllActive": "All participants are still eligible.",
+      "eligibleInactive_one": "{{count}} participant is no longer eligible.",
+      "eligibleInactive_other": "{{count}} participants are no longer eligible.",
+      "eligibleAria": "{{active}} eligible participants out of {{capacity}}"
     },
     "qualifiers": {
       "viewPhase": "View phase",
@@ -823,6 +843,7 @@
     "emptyEligible": "No eligible teams",
     "openTeams": "View teams",
     "noLongerEligible": "No longer eligible",
+    "withdrawnFromCompetitionTip": "Team withdrawn from the competition — no longer plays in this phase.",
     "save": "Save",
     "saving": "Saving…",
     "toastUpdated": "Teams updated",

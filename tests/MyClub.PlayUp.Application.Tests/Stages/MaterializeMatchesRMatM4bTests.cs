@@ -127,7 +127,6 @@ public sealed class MaterializeMatchesRMatM4BTests
             ],
             _clock);
 
-        StructurePreparePlacesGate.Ensure(competition, s, [t, s]);
         PrepareStage.Execute(s, [t, s], _clock);
 
         var act = () => MaterializeMatches.Execute(competition, s, [], _clock, [t, s]);

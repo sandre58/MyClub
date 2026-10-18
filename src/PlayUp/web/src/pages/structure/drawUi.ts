@@ -507,6 +507,20 @@ export type DrawUiProjection = {
 export type TopologyDrawExecutionBadge =
   'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied';
 
+/** Placement strip at 0/N — launch CTA copy + brand pool when draw rules are engaged. */
+export function isPlacementDrawLaunchSignal(input: {
+  drawRulesEngaged: boolean;
+  drawLaunchable: boolean;
+  drawExecutionBadge?: TopologyDrawExecutionBadge | null;
+  occupiedPlacesCount: number | null;
+}): boolean {
+  if (!input.drawRulesEngaged || input.occupiedPlacesCount !== 0) {
+    return false;
+  }
+
+  return input.drawLaunchable || input.drawExecutionBadge === 'ToLaunch';
+}
+
 /**
  * Draw ids are UUID v7 in production — lexicographic order ≈ creation order.
  * Do not trust API array order alone (Include without OrderBy can invert / scramble).

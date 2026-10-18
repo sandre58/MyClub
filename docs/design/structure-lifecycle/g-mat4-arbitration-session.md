@@ -21,7 +21,7 @@
 
 - `SourcePopulationShortfall` : `outboundQual(U) > availablePopulation(U)` alors que l’outbound ne dépasse pas les **places** structurelles de `U` (distinct de `OverExtraction`).
 - `MaterializeMatches` (Ch/Groups) ne lit **pas** ce prédicat : il exige un roster **complet sur la phase cible** (`IsRosterComplete`) ou échoue en **`MaterializationFailure`**.
-- Cas qual → championnat incomplet : Prepare peut passer (places gate), materialize refuse déjà — [`StructurePreparePlacesGateTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePreparePlacesGateTests.cs) ; le refus effectif est **roster cible**, pas shortfall source nommé.
+- Cas qual → championnat incomplet : Prepare peut passer (D3), materialize refuse déjà — [`PrepareQualFeedPendingMaterializeBlocksTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/PrepareQualFeedPendingMaterializeBlocksTests.cs) ; le refus effectif est **roster cible**, pas shortfall source nommé.
 - Cas championnat **S** indépendant avec poules **T** en shortfall : materialize **réussit** — [`MaterializeMatchesRMatM4bTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/MaterializeMatchesRMatM4bTests.cs).
 - **Cup** : hors périmètre (slots) ; pas de gate G-MAT4 Cup en v1.
 

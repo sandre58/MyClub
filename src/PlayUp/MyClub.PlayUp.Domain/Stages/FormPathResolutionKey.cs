@@ -12,21 +12,21 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Builds a stable content fingerprint for a ForForm <see cref="QualificationPath"/> /
-/// <see cref="ProgressionPath"/>. Does not use Path.Order (expansion ordinal is fragile).
+/// Builds a stable content fingerprint for a <see cref="QualificationPath"/> /
+/// <see cref="ProgressionPath"/> feeding population or ForForm. Does not use Path.Order (expansion ordinal is fragile).
 /// </summary>
 public static class FormPathResolutionKey
 {
     /// <summary>
-    /// Fingerprint for a qualification ForForm path owned by <paramref name="sourceStageId"/>.
+    /// Fingerprint for a qualification path owned by <paramref name="sourceStageId"/> (population or ForForm).
     /// </summary>
     public static string FromQualification(StageId sourceStageId, QualificationPath path)
     {
         ArgumentNullException.ThrowIfNull(path);
-        if (!path.Destination.TargetsForm)
+        if (path.Destination is { TargetsForm: false, TargetsPopulation: false })
         {
             throw new DomainException(
-                "Form path resolution key requires a ForForm qualification destination.",
+                "Qualification path resolution key requires a population or ForForm destination.",
                 StageErrorCodes.InvalidConfiguration);
         }
 

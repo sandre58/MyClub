@@ -3,6 +3,7 @@ import {
   listCompositionTeamRows,
   provenanceLabelsForQualifierRule,
   resolveCompositionResolvedGaugeStats,
+  compositionTeamRowsResolutionStats,
 } from './compositionTeamsInboundRows';
 import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
 import type { StructureStageHubSummary } from '../../types';
@@ -54,6 +55,75 @@ describe('compositionTeamsInboundRows', () => {
     expect(rows).toHaveLength(2);
     expect(rows?.[0].kind).toBe('resolved');
     expect(rows?.[1].kind).toBe('unresolved');
+  });
+
+  it('compositionTeamRowsResolutionStats counts withdrawn seats as resolved', () => {
+    const rows = listCompositionTeamRows(
+      'exploitation',
+      {
+        status: 'Running',
+        compositionEntryIds: ['e1', 'e2'],
+        compositionEntryCount: 2,
+        formatKind: 'Groups',
+      } as import('../../types').StructureStageHubSummary,
+      [
+        { entryId: 'e1', displayName: 'Active', status: 'Active' },
+        { entryId: 'e2', displayName: 'Out', status: 'Withdrawn' },
+      ],
+      [
+        {
+          peerId: 'src',
+          peerName: 'Poules',
+          peerOrder: 0,
+          volume: 2,
+          rules: [
+            {
+              key: 'q-src-1',
+              volume: 1,
+              badge: '1er',
+              badgeTone: 'accent',
+              context: null,
+              family: 'place',
+              sortPrimary: 1,
+              sortSecondary: '1',
+              qualPathOrder: 1,
+              hubSeats: [
+                {
+                  entryId: 'e1',
+                  teamName: 'Active',
+                  placed: true,
+                  resolved: true,
+                },
+              ],
+            },
+            {
+              key: 'q-src-2',
+              volume: 1,
+              badge: '1er',
+              badgeTone: 'accent',
+              context: null,
+              family: 'place',
+              sortPrimary: 1,
+              sortSecondary: '2',
+              qualPathOrder: 2,
+              hubSeats: [
+                {
+                  entryId: 'e2',
+                  teamName: 'Out',
+                  placed: true,
+                  resolved: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      null,
+    );
+    expect(compositionTeamRowsResolutionStats(rows)).toEqual({
+      resolved: 2,
+      total: 2,
+    });
   });
 
   it('resolveCompositionResolvedGaugeStats prefers inbound rows in exploitation', () => {

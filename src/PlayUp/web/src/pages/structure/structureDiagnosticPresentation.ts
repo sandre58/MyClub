@@ -176,6 +176,20 @@ const BY_CODE: Record<string, StructureDiagnosticMeta> = {
     tone: 'attention',
     titleKey: 'graph.issues.UnmaterializedConfrontations',
   },
+  PhaseRosterIncomplete: {
+    family: 'capacity',
+    tile: 'capacity',
+    cta: 'affectation',
+    tone: 'attention',
+    titleKey: 'graph.issues.PhaseRosterIncomplete',
+  },
+  GroupsNotReady: {
+    family: 'execution',
+    tile: 'confrontation',
+    cta: 'places',
+    tone: 'attention',
+    titleKey: 'graph.issues.GroupsNotReady',
+  },
   SourcePopulationShortfall: {
     family: 'capacity',
     tile: 'capacity',
@@ -251,6 +265,14 @@ export function isSlotFeedAwaitingDraw(stage: {
   return badge !== 'ToApply' && badge !== 'Applied';
 }
 
+/** Groups pool gaps stay expected until draw results are applied (read parity). */
+export function deferGroupsNotReadyPresentation(stage: {
+  hasDrawRules: boolean;
+  drawExecutionBadge?: 'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied' | null;
+}): boolean {
+  return stage.hasDrawRules && stage.drawExecutionBadge !== 'Applied';
+}
+
 /** Host title key for a structure issue. */
 export function structureDiagnosticTitleKey(code: string): string {
   return structureDiagnosticMeta(code)?.titleKey ?? `graph.issues.${code}`;
@@ -313,6 +335,12 @@ export function projectPresentedStageIssueCodes(
   let filtered = [...codes];
   if (isSlotFeedAwaitingDraw(stage)) {
     filtered = filtered.filter((code) => code !== 'SlotFeedMissing');
+  }
+  if (deferGroupsNotReadyPresentation(stage)) {
+    filtered = filtered.filter((code) => code !== 'GroupsNotReady');
+  }
+  if (filtered.includes('PopulationShortfall')) {
+    filtered = filtered.filter((code) => code !== 'NonRootUnfed');
   }
   return projectPresentedIssueCodes(filtered);
 }

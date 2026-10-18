@@ -8,6 +8,8 @@ import {
   presentationToneToMeterKind,
 } from './structureOperationalMeterPresentation';
 import type { StripOperationalMessageKind } from './structureOperationalStripUi';
+import type { TopologyDrawExecutionBadge } from './drawUi';
+import { isPlacementDrawLaunchSignal } from './drawUi';
 
 export type StripMeterCopy = {
   text: string;
@@ -25,6 +27,7 @@ export function resolvePlaceOccupancyMeterCopy(input: {
   drawRulesEngaged?: boolean;
   /** `createGate.ok` when draw rules engaged. */
   drawLaunchable?: boolean;
+  drawExecutionBadge?: TopologyDrawExecutionBadge | null;
   stageStatus?: StageStatus | null;
   slotFeedPresentationContext?: StructureDiagnosticPresentationContext;
 }): StripMeterCopy {
@@ -37,6 +40,7 @@ export function resolvePlaceOccupancyMeterCopy(input: {
     slotFeedMissingActive,
     drawRulesEngaged = false,
     drawLaunchable = false,
+    drawExecutionBadge,
     stageStatus,
     slotFeedPresentationContext,
   } = input;
@@ -104,7 +108,7 @@ export function resolvePlaceOccupancyMeterCopy(input: {
       return presentationToneToMeterKind(tone);
     }
     if (drawRulesEngaged && occupiedPlacesCount === 0) {
-      return drawLaunchable ? 'attention' : 'info';
+      return 'info';
     }
     if (occupiedPlacesCount === 0) {
       return 'info';
@@ -112,7 +116,20 @@ export function resolvePlaceOccupancyMeterCopy(input: {
     return 'attention';
   };
 
+  const drawLaunchSignal = isPlacementDrawLaunchSignal({
+    drawRulesEngaged,
+    drawLaunchable,
+    drawExecutionBadge,
+    occupiedPlacesCount,
+  });
+
   if (occupiedPlacesCount === 0) {
+    if (drawLaunchSignal && !slotFeedMissingActive) {
+      return {
+        text: t('readiness.nextStep.RunDraw'),
+        kind: 'info',
+      };
+    }
     return {
       text: t('fiche.operational.placement.stateMessage.empty'),
       kind: incompleteKind(),
@@ -216,6 +233,8 @@ export function resolveProductionMeterCopy(input: {
   hasProduction: boolean;
   startStageBlocker?: 'IncompleteEntryRound' | 'UnmaterializedConfrontations' | null;
   productionGaugeMode?: 'materialized' | 'determined' | null;
+  /** Groups pools incomplete — match production not actionable (Cup entry-round parity). */
+  groupsPoolsIncomplete?: boolean;
 }): StripMeterCopy {
   const {
     t,
@@ -224,6 +243,7 @@ export function resolveProductionMeterCopy(input: {
     hasProduction,
     startStageBlocker = null,
     productionGaugeMode = null,
+    groupsPoolsIncomplete = false,
   } = input;
 
   if (!hasProduction) {
@@ -271,6 +291,18 @@ export function resolveProductionMeterCopy(input: {
       kind: 'success',
     };
   }
+  if (
+    groupsPoolsIncomplete &&
+    productionGaugeMode !== 'determined' &&
+    gaugeRatio.filled < gaugeRatio.capacity
+  ) {
+    return {
+      text: t(
+        'fiche.operational.production.stateMessage.matchesBlockedByGroupsPools',
+      ),
+      kind: 'danger',
+    };
+  }
   const remaining = gaugeRatio.capacity - gaugeRatio.filled;
   if (remaining <= 0) {
     return {
@@ -292,6 +324,32 @@ export function entryRoundPlacementMessageKind(
   blocksPhaseStart: boolean,
 ): StripMeterCopy['kind'] {
   return blocksPhaseStart ? 'danger' : 'attention';
+}
+
+export function resolveGroupsPlacementMeterCopy(input: {
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  gaugeRatio: { filled: number; capacity: number };
+}): { text: string; kind: StripMeterCopy['kind'] } | null {
+  const { t, gaugeRatio } = input;
+  if (gaugeRatio.capacity <= 0) {
+    return null;
+  }
+  if (gaugeRatio.filled >= gaugeRatio.capacity) {
+    return {
+      text: t('fiche.operational.production.stateMessage.groupsPlacementReady'),
+      kind: 'success',
+    };
+  }
+  return {
+    text: t(
+      'fiche.operational.production.stateMessage.groupsPlacementIncomplete',
+      {
+        filled: gaugeRatio.filled,
+        capacity: gaugeRatio.capacity,
+      },
+    ),
+    kind: 'attention',
+  };
 }
 
 export function resolveEntryRoundPlacementMeterCopy(input: {

@@ -138,4 +138,13 @@ describe('StructurePhaseRegulationStrip', () => {
     ).not.toBeInTheDocument();
     expect(document.getElementById('tile-match')).toBeInTheDocument();
   });
+
+  it('hides standing edit when ReplaceStandingRules is not on hub actions', () => {
+    renderStrip({ canEditStanding: false, canRebind: false });
+
+    const standingPanel = document.getElementById('tile-standing')!;
+    expect(
+      within(standingPanel).queryByRole('button', { name: /Modifier/i }),
+    ).not.toBeInTheDocument();
+  });
 });

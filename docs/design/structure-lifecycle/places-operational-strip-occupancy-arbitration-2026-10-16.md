@@ -1,6 +1,6 @@
 # Places operational strip — occupancy vs diagnostic (arbitration)
 
-**Status:** Product arbitration **validated** (2026-10-16). **§8 signed off** (2026-10-16). **SPA slice §9 implemented** (`drawLaunchable` on Places strip).  
+**Status:** Product arbitration **validated** (2026-10-16). **§8 signed off** (2026-10-16). **SPA slice §9 implemented** (`drawLaunchable` on Places strip). **§10 addendum signed** (2026-10-18) — Places **0/N lançable** → ton **brand** + copy action (replaces §5.2/§9 **attention** for that case). **Implementation:** slice `places-strip-draw-launch-brand` — **shipped** (SPA).  
 **Scope:** Structure fiche **Places** cluster (`RatioMessageGauge` in `StructurePhaseOperationalStrip`), `drawExecutionBadge`, and `SlotFeedMissing` presentation.  
 **Related:** [structure-diagnostic-presentation-contract.md](./structure-diagnostic-presentation-contract.md) · [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md) (`R-Pres-M-1`, `R-Pres-M-1b`) · [truth-sources](../structure-phase-refonte/truth-sources.md) (Affectation / Tirage).
 
@@ -80,7 +80,7 @@ Applies when `showDrawCta` and occupancy is known (`occupancyReady`, capacity kn
 | Situation | Places message | Gauge (`resolvePlaceOccupancyTone` / `data-pool-tone`) |
 |-----------|----------------|--------------------------------------------------------|
 | **Tirage impossible à lancer** — amont / config / journey incomplete (`!createGate.ok` or gate pending) | **Info** — attente normale sur le parcours | **Neutre** (including **0/N**) |
-| **Tirage lançable**, **0/N** occupé | **Attention** — action attendue sur le parcours (lancer le tirage) | **Attention** (not neutral) |
+| **Tirage lançable**, **0/N** occupé | **Attention** — action attendue sur le parcours (lancer le tirage) | **Attention** (not neutral) — **superseded by §10** (brand + copy explicite) |
 | **Tirage lançable**, occupation partielle **k/N** | **Attention** sur les places restantes (copy existante) | Reflète l’occupation (`partial` / pool tone) — **pas** de diagnostic inventé |
 | **`ToApply` / `Applied`**, `SlotFeedMissing` **presented** en Prêt | Gravité portée par le **diagnostic D5** (`slotFeedMissingActive`) | Idem D5 via `presentationToneToMeterKind` |
 
@@ -104,6 +104,7 @@ Applies when `showDrawCta` and occupancy is known (`occupancyReady`, capacity kn
 | `SlotFeedMissing` | Remains anomaly SoT; badge alone does not create anomaly; masking unchanged |
 | `ToApply` | Keep current behaviour (outside awaiting-draw silence) |
 | Places **0/N** action signal | **Launchability** (`createGate.ok`), not badge / `hasDrawRules` alone |
+| Places **0/N** when launchable (2026-10-18) | **Brand** gauge + caption **`RunDraw`**; message kind **info** — not attention (§10) |
 | Places **k/N** when launchable | Occupation-led message + tone; no extra “soften” proposal |
 | Checklist vs strip | Checklist ≠ parallel gate for strip (§8) |
 
@@ -197,3 +198,61 @@ Extend `structureOperationalStripMessages.test.ts` and `structureOperationalCopy
 - §8 sign-off recorded (Notion or this doc status line).
 - T-LAUNCH-0/1 green; no regression on `R-Pres-M-1` masking tests.
 - Recette spot-check: fed qual incomplete (gate closed) vs pool full + vacant grid (gate open) on DevRunner structure fiche.
+
+---
+
+## 10. Addendum (2026-10-18) — 0/N lançable : brand + prochaine action (signed)
+
+**Context:** Recette Structure (2026-10-18) — le ton **`attention`** sur la jauge Places quand le tirage est **lançable** mais le tableau est encore à **0/N** est lu comme un **warning**, alors que le parcours attend une **prochaine action** normale (alignement principe design : attention ≠ erreur ; « Prochaine action » en brand sur Overview).
+
+**Scope:** Uniquement le cluster **Places** (`resolvePlaceOccupancyMeterCopy`, `resolvePlaceOccupancyTone`, `StructureOperationalRatioGauge` sur la bande placement). Hors scope : checklist tirage, drawer, diagnostics `SlotFeedMissing` (§3–4 inchangés).
+
+### 10.1 Decision (validated)
+
+| Situation | Message (FR) | Message kind / chrome | Gauge pool + fill |
+|-----------|----------------|----------------------|-------------------|
+| Draw rules engaged, **0/N**, **`!drawLaunchable`** | Copy existante `fiche.operational.placement.stateMessage.empty` (attente parcours) | **`info`** — pas d’icône attention | **Neutre** |
+| Draw rules engaged, **0/N**, **`drawLaunchable`** | **« Lancer le tirage au sort »** — même intention que le CTA primaire tirage | **`info`** (pas `attention`) — **ne pas** utiliser `OverviewAttentionIcon` | **`brand`** (`poolTone` + `fillVariant: 'brand'` sur `StructureOperationalRatioGauge`) |
+| **k/N** partiel, tirage lançable ou non | Copy partielle existante (`partial` / places restantes) | **`attention`** seulement si la situation relève d’un **écart réel** (places restantes à remplir, diagnostic D5 actif, etc.) — pas parce que le tirage n’a pas encore été lancé | Occupation-led (`partial` / pool tone) |
+| Diagnostic **`SlotFeedMissing`** présenté en Ready | Inchangé — D5 | `presentationToneToMeterKind` | Inchangé §5.2 row 4 |
+
+**i18n (implementation):**
+
+- **FR:** réutiliser la clé existante `structure:actions.RunDraw` (« Lancer le tirage au sort ») pour le caption strip **ou** ajouter `fiche.operational.placement.stateMessage.emptyDrawLaunchable` avec la **même** chaîne (éviter deux libellés divergents).
+- **EN:** `structure:actions.RunDraw` (« Run the random draw ») ou clé jumelle.
+
+**Rejected:** Garder **`attention`** pour 0/N lançable — trop proche d’une anomalie.
+
+**Retained from §5:** Pivot **`drawLaunchable`** (`createGate.ok`) inchangé ; seuls **ton + copy** changent pour le cas 0/N lançable.
+
+### 10.2 Supersedes (doc only until slice shipped)
+
+| Prior text | Replacement |
+|------------|-------------|
+| §5.2 row « Tirage lançable, 0/N » → attention + attention gauge | §10.1 table |
+| §9.2 **T-LAUNCH-1** → `kind: attention`, tone attention | **T-LAUNCH-1b:** `kind: info`, caption = `RunDraw`, `poolTone: brand`, `fillVariant: brand` |
+| §9.3 shipped behaviour for 0/N launchable | **Pending** re-implementation per §10 |
+
+### 10.3 SPA slice (shipped)
+
+**Slice id:** `places-strip-draw-launch-brand`
+
+| File | Change |
+|------|--------|
+| `structureOperationalStripMessages.ts` | Branche `drawRulesEngaged && occupiedPlacesCount === 0 && drawLaunchable` → texte `RunDraw` (ou clé dédiée), `kind: 'info'` |
+| `structureOperationalCopy.ts` | `resolvePlaceOccupancyTone` → retourner **`brand`** pour 0/N + `drawLaunchable` (au lieu de `partial` / attention) |
+| `StructurePhaseOperationalStrip.tsx` | Passer `fillVariant="brand"` quand pool tone brand sur Places |
+| `structureOperationalStripRatioTone.ts` | Si besoin : ne pas mapper `brand` message vers `partial` fill |
+| Tests | Remplacer / compléter T-LAUNCH-1 ; régression T-LAUNCH-0 |
+
+### 10.4 Recette (minimum)
+
+| Id | Setup | Expected |
+|----|--------|----------|
+| **T-BRAND-0** | Ready, Groups/Cup, `showDrawCta`, 0/N, `createGate.ok === false` | Message attente neutre ; pas de brand |
+| **T-BRAND-1** | Ready, draw engagé, 0/N, `createGate.ok === true` | Caption « Lancer le tirage au sort » ; jauge **brand** ; **pas** d’icône attention sur la ligne message |
+| **T-BRAND-2** | Même que T-BRAND-1, puis occupation 1/N | Copy partielle / occupation — **pas** le message RunDraw |
+
+### 10.5 Notion
+
+Optional one-liner in **Décisions** DB: « Places 0/N lançable = prochaine action (brand), pas warning » → link **this §10**.

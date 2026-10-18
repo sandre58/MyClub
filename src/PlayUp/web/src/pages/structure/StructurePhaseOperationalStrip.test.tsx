@@ -663,7 +663,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeNull();
     });
 
-    it('shows structural empty state when production has no countable rows', () => {
+    it('shows cup-like layout when groups pools are not ready', () => {
       const materialize: StructureMaterialize = {
         commandCode: 'MaterializeMatches',
         labelVariant: 'idle',
@@ -672,21 +672,45 @@ describe('StructurePhaseOperationalStrip', () => {
         materializedCount: 0,
         commandEnabled: false,
         disabledReason: 'GroupsNotReady',
+        groupsPlacementFilledCount: 1,
+        groupsPlacementCapacityCount: 4,
+        prospectiveConfrontationCount: 2,
         confrontations: [],
       };
       renderMatchesStrip({
         ...leagueStageBase,
+        formatKind: 'Groups',
+        groupCount: 2,
+        placesPerGroup: 2,
         status: 'Ready',
         materialize,
       });
 
       const matchesSection = document.getElementById('operational-matchs')!;
+      const mainRatio = matchesSection.querySelector(
+        '.structure-operational-strip__ratio',
+      );
+      expect(mainRatio?.textContent).toContain('0');
+      expect(mainRatio?.textContent).toContain('2');
       expect(
-        within(matchesSection).getByText(/Les poules ne sont pas prêtes/i),
+        within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+      ).toBeDisabled();
+      expect(
+        matchesSection.querySelector(
+          '.structure-phase-match-tile__groups-placement-gauge',
+        ),
+      ).toBeNull();
+      expect(
+        within(matchesSection).getByText(
+          /Complétez les places en poules avant de pouvoir créer les matchs/i,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        matchesSection.querySelector('[data-kind="danger"]'),
       ).toBeInTheDocument();
       expect(
         matchesSection.querySelector('.structure-operational-strip__empty'),
-      ).not.toBeNull();
+      ).toBeNull();
     });
 
     it('shows frozen gap in the gauge without a materialize primary action', () => {

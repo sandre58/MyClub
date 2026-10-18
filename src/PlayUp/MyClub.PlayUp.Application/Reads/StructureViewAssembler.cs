@@ -411,6 +411,13 @@ public static class StructureViewAssembler
             competitionStages,
             matchSummariesByStage);
 
+        var compositionBandResolved = StructureCompositionGaugeAssembler.ResolveResolvedSeatCount(
+            stage,
+            competitionStages,
+            composition.Count,
+            inboundComposition,
+            compositionCapacity);
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -481,7 +488,8 @@ public static class StructureViewAssembler
             Materialize: materialize,
             Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries),
             Lifecycle: lifecycle,
-            InboundComposition: inboundComposition);
+            InboundComposition: inboundComposition,
+            CompositionBandResolvedCount: compositionBandResolved);
     }
 
     /// <summary>
@@ -563,9 +571,7 @@ public static class StructureViewAssembler
 
         var count = entries.Count;
         var preview = orderedNames.ToArray();
-        var ineligible = entries.Count(compositionEntry =>
-            !entriesById.TryGetValue(compositionEntry.EntryId, out var entry)
-            || entry.Status != EntryStatus.Active);
+        var (_, ineligible) = StructureCompositionEligibility.CountRoster(competition, entries);
 
         return new EntrySetProjection(count, entryIds, preview, ineligible);
     }

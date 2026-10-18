@@ -32,21 +32,15 @@ internal static class CupCanonicalEntryRoundStartGate
     {
         ArgumentNullException.ThrowIfNull(stage);
         canonicalPairCount = 0;
-        undeterminedPairCount = 0;
         var pairs = CupBracketTopologyClassifier.ExpectedCanonicalPairs(stage);
         if (pairs.Count == 0)
         {
+            undeterminedPairCount = 0;
             return false;
         }
 
         canonicalPairCount = pairs.Count;
-        foreach (var pair in pairs)
-        {
-            if (!IsPairDetermined(stage, pair))
-            {
-                undeterminedPairCount++;
-            }
-        }
+        undeterminedPairCount = pairs.Count(pair => !IsPairDetermined(stage, pair));
 
         return true;
     }

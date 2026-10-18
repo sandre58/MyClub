@@ -24,13 +24,17 @@ describe('resolvePlaceOccupancyTone', () => {
     ).toBe('neutral');
   });
 
-  it('T-LAUNCH-1: uses partial for 0/N when draw is launchable', () => {
+  it('T-LAUNCH-1b: uses brand for 0/N when draw is launchable', () => {
     expect(
       resolvePlaceOccupancyTone(0, 8, {
         drawRulesEngaged: true,
         drawLaunchable: true,
       }),
-    ).toBe('partial');
+    ).toBe('brand');
+  });
+
+  it('preserves brand pool tone when strip message is info', () => {
+    expect(operationalStripPoolTone('info', 'brand')).toBe('brand');
   });
 
   it('uses partial for empty bracket when draw rules are not engaged', () => {

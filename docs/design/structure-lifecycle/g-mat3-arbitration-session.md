@@ -157,7 +157,7 @@ Une ligne **Litigious** sans réserve écrite bloque **§11B**.
 
 ### `SlotFeedMissing` vs G-MAT3
 
-- **Prepare** : bloque via [`StructurePreparePlacesGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePreparePlacesGate.cs) + analyse feed.
+- **Prepare** : pas de blocage places / occupation schématique (D3) ; intégrité feed via `PrepareStage` / `CompetitionFlowAnalyzer.IsPrepareGateIssue` (pas `SlotFeedMissing`).
 - **Materialize (commandes)** : **aucun** refus `SlotFeedMissing` aujourd’hui — échecs plutôt `MaterializationFailure` / roster incomplet / pas de paires éligibles.
 - **Hub** : `SlotFeedMissing` (souvent blocking en UX) + scénario dev [`InvariantsFeedMissingScenario`](../../../src/PlayUp/MyClub.PlayUp.Development/Scenarios/InvariantsFeedMissingScenario.cs) coémet `SlotFeedMissing`, `PopulationShortfall`, **`NonRootUnfed`**.
 

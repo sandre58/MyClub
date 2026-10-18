@@ -161,6 +161,20 @@ describe('StructurePhaseCompositionBand', () => {
     ).toHaveLength(1);
   });
 
+  it('renders a PanelHead-aligned draw title in the standalone draw column', () => {
+    renderBand({
+      showCompositionDrawSection: true,
+      showPopulationColumn: true,
+      compositionTileMode: 'exploitation',
+      showDrawCta: true,
+      placementOperationalProps: basePlacement,
+    });
+
+    expect(
+      screen.getByRole('heading', { name: 'Tirage' }),
+    ).toBeInTheDocument();
+  });
+
   it('renders the place-assignment section and operational strip when affectation is shown', () => {
     renderBand({
       showPlaceAssignmentSection: true,

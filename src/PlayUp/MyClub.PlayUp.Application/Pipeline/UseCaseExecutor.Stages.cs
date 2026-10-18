@@ -54,7 +54,6 @@ public sealed partial class UseCaseExecutor
 
         // Prefer the tracked instance from the competition list (same identity as StageIds load).
         var target = competitionStages.First(candidate => candidate.Id.Equals(stageId));
-        StructurePreparePlacesGate.Ensure(competition, target, competitionStages);
         PrepareStage.Execute(target, competitionStages, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         LogStagePrepared(logger, stageId.Value, stage.CompetitionId.Value);

@@ -19,6 +19,8 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
   'Application.StartBlockedUnmaterialized': 'UnmaterializedConfrontations',
   'Application.StartBlockedIncompleteEntryRound': 'IncompleteEntryRound',
   'Application.StartBlockedNoExploitableInitialConfrontations': 'NoExploitableInitialConfrontations',
+  'Application.StartBlockedPhaseRosterIncomplete': 'PhaseRosterIncomplete',
+  'Application.StartBlockedGroupsNotReady': 'GroupsNotReady',
   'Application.StageExploitationClosed': 'CompetitionClosed',
   'Application.StructureCycleDetected': 'CycleDetected',
   'Application.ReadyConsumerWouldBreak': 'ReadyConsumerWouldBreak',

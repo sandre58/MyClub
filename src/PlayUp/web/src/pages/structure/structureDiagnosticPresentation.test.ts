@@ -74,6 +74,47 @@ describe('structureDiagnosticPresentation', () => {
     ).toEqual([]);
   });
 
+  it('silences NonRootUnfed when PopulationShortfall is already presented', () => {
+    const stage = {
+      stageId: 'a',
+      name: 'Quarts',
+      hasDrawRules: false,
+      structureIssues: [],
+    };
+    expect(
+      projectPresentedStageIssueCodes(
+        ['NonRootUnfed', 'PopulationShortfall', 'SlotFeedMissing'],
+        stage,
+      ),
+    ).toEqual(['PopulationShortfall', 'SlotFeedMissing']);
+    expect(
+      projectPresentedStageIssueCodes(['NonRootUnfed'], stage),
+    ).toEqual(['NonRootUnfed']);
+  });
+
+  it('silences GroupsNotReady until draw is applied', () => {
+    const awaitingApply = stage({
+      stageId: 'a',
+      name: 'Poules',
+      hasDrawRules: true,
+      drawExecutionBadge: 'ToApply',
+      structureIssues: ['GroupsNotReady'],
+    });
+    expect(
+      projectPresentedStageIssueCodes(['GroupsNotReady'], awaitingApply),
+    ).toEqual([]);
+    const applied = stage({
+      stageId: 'b',
+      name: 'Poules',
+      hasDrawRules: true,
+      drawExecutionBadge: 'Applied',
+      structureIssues: ['GroupsNotReady'],
+    });
+    expect(
+      projectPresentedStageIssueCodes(['GroupsNotReady'], applied),
+    ).toEqual(['GroupsNotReady']);
+  });
+
   it('keeps SlotFeedMissing when there is no draw', () => {
     const noDraw = stage({
       stageId: 'a',

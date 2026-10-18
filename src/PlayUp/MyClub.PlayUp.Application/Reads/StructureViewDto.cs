@@ -226,7 +226,7 @@ public sealed record StructureReadinessDto(
 /// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
 /// </param>
 /// <param name="CompositionPreviewNames">Display names for runtime composition (Draw / Live).</param>
-/// <param name="CompositionIneligibleCount">Runtime composition entries that are no longer Active.</param>
+/// <param name="CompositionIneligibleCount">Runtime composition entries that are no longer Active (row chrome only).</param>
 /// <param name="AffectationEntryCount">Affectation authoring set size (Population tile).</param>
 /// <param name="AffectationEntryIds">Affectation authoring entry identities.</param>
 /// <param name="AffectationPreviewNames">Display names for Affectation authoring.</param>
@@ -239,6 +239,7 @@ public sealed record StructureReadinessDto(
 /// <param name="Dematerialize">Workspace dematerialize capability (null when nothing is materialized or the format is unsupported).</param>
 /// <param name="Lifecycle">Phase lifecycle band (Prepare / Start / Complete transition + checklist / match progress).</param>
 /// <param name="InboundComposition">Inbound Qual/Prog resolution for the Composition Qualifiés band; null when root composition.</param>
+/// <param name="CompositionBandResolvedCount">Composition band — resolved seat count (inbound or roster size).</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -308,7 +309,8 @@ public sealed record StructureStageHubSummaryDto(
     StructureMaterializeDto? Materialize = null,
     StructureDematerializeDto? Dematerialize = null,
     StructureStageLifecycleDto? Lifecycle = null,
-    StructureInboundCompositionDto? InboundComposition = null);
+    StructureInboundCompositionDto? InboundComposition = null,
+    int CompositionBandResolvedCount = 0);
 
 /// <summary>
 /// Structure workspace projection of match materialization (not Overview opportunity).
@@ -324,6 +326,9 @@ public sealed record StructureStageHubSummaryDto(
 /// <param name="DisabledReason">When command is disabled and not terminal — minimal causal code for UI copy.</param>
 /// <param name="CanonicalEntryPairCount">Canonical Cup entry-round pair count; zero when not applicable.</param>
 /// <param name="UndeterminedCanonicalEntryPairCount">Canonical pairs without two distinct entries; zero when not applicable.</param>
+/// <param name="GroupsPlacementFilledCount">Groups: entries assigned across pools; zero when not applicable.</param>
+/// <param name="GroupsPlacementCapacityCount">Groups: groupCount × placesPerGroup; zero when not applicable.</param>
+/// <param name="ProspectiveConfrontationCount">Groups: round-robin pairs if every pool were filled to PlacesPerGroup; zero when not applicable.</param>
 public sealed record StructureMaterializeDto(
     string CommandCode,
     string LabelVariant,
@@ -334,7 +339,10 @@ public sealed record StructureMaterializeDto(
     IReadOnlyList<StructureMaterializeConfrontationDto> Confrontations,
     string? DisabledReason = null,
     int CanonicalEntryPairCount = 0,
-    int UndeterminedCanonicalEntryPairCount = 0);
+    int UndeterminedCanonicalEntryPairCount = 0,
+    int GroupsPlacementFilledCount = 0,
+    int GroupsPlacementCapacityCount = 0,
+    int ProspectiveConfrontationCount = 0);
 
 /// <summary>
 /// Structure workspace dematerialization capability (sibling of materialize; not Overview).

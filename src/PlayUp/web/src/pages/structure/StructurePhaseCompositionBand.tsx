@@ -6,6 +6,7 @@ import { PanelHead } from '../../design-system/components/PanelHead';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   ArrowRightIcon,
+  DrawPendingIcon,
   EmptySelectionIcon,
   LayersIcon,
   PencilIcon,
@@ -337,8 +338,16 @@ export function StructurePhaseCompositionBand({
       {showCompositionDrawSection ? (
         <section
           className="structure-phase-composition__section structure-phase-composition__section--composition-draw"
-          aria-label={t('fiche.operational.cluster.draw')}
+          aria-labelledby="composition-draw-heading"
         >
+          <PanelHead
+            id="composition-draw-heading"
+            density="inset"
+            titleStyle="section"
+            icon={<DrawPendingIcon size="sm" />}
+            iconRefreshing={structureHubBackgroundRefresh}
+            title={t('fiche.operational.cluster.draw')}
+          />
           <div className="structure-phase-operational-bar">
             <section
               className="structure-fiche-section structure-fiche-section--operational"
@@ -347,6 +356,7 @@ export function StructurePhaseCompositionBand({
               <StructurePhaseOperationalStrip
                 layoutVariant="composition"
                 placesStripLayout="full"
+                compositionDrawColumnHead
                 placement={placementOperationalProps}
                 showPlaces={false}
                 showDraw={true}

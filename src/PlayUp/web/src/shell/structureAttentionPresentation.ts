@@ -13,6 +13,8 @@ const EXTRA_STRUCTURE_ATTENTION_SOURCES = new Set([
   'IncompleteEntryRound',
   'UnmaterializedConfrontations',
   'NoExploitableInitialConfrontations',
+  'PhaseRosterIncomplete',
+  'GroupsNotReady',
 ]);
 
 export function isStructureAttentionSource(source: string): boolean {

@@ -1,11 +1,10 @@
 // -----------------------------------------------------------------------
-// <copyright file="StructurePreparePlacesGateTests.cs" company="Stéphane ANDRE">
+// <copyright file="PrepareQualFeedPendingMaterializeBlocksTests.cs" company="Stéphane ANDRE">
 // Copyright (c) Stéphane ANDRE. All rights reserved.
 // </copyright>
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -16,12 +15,12 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
-public sealed class StructurePreparePlacesGateTests
+public sealed class PrepareQualFeedPendingMaterializeBlocksTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 13, 14, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public void Ensure_allows_prepare_when_championship_structure_full_but_qual_feeders_pending()
+    public void Prepare_allows_ready_when_championship_structure_full_but_qual_feeders_pending()
     {
         var competition = Competition.Create(new CompetitionName("FormChamp"), SampleRegulations.Standard(), _clock);
         var source = Stage.Create(
@@ -56,7 +55,6 @@ public sealed class StructurePreparePlacesGateTests
             _clock);
 
         champ.CompositionEntries.Should().HaveCount(2);
-        StructurePreparePlacesGate.Ensure(competition, champ, [source, champ]);
         PrepareStage.Execute(champ, [source, champ], _clock);
         champ.Status.Should().Be(StageStatus.Ready);
 

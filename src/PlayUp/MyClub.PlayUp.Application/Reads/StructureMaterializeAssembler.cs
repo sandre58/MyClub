@@ -81,7 +81,6 @@ internal static class StructureMaterializeAssembler
             eligible,
             materialized,
             commandEnabled: eligible > 0,
-            groupsReady: true,
             phaseRosterComplete: rosterReady);
     }
 
@@ -127,6 +126,10 @@ internal static class StructureMaterializeAssembler
         var determined = rows.Count;
         var materializedCount = rows.Count(row => row.Materialized);
         var eligibleCount = rows.Count(row => row.Eligible);
+        var (groupsPlacementFilled, groupsPlacementCapacity) =
+            GroupsPlacementReadiness.GetPlacementProgress(stage);
+        var prospectiveConfrontations = CountGroupsProspectiveConfrontations(stage);
+        var blocksProduction = GroupsPlacementReadiness.BlocksProduction(stage);
         return Pack(
             competition,
             stage,
@@ -135,9 +138,28 @@ internal static class StructureMaterializeAssembler
             determined,
             eligibleCount,
             materializedCount,
-            commandEnabled: eligibleCount > 0,
-            groupsReady,
-            rows);
+            commandEnabled: eligibleCount > 0 && !blocksProduction,
+            rows,
+            groupsPlacementFilledCount: groupsPlacementFilled,
+            groupsPlacementCapacityCount: groupsPlacementCapacity,
+            prospectiveConfrontationCount: prospectiveConfrontations);
+    }
+
+    private static int CountGroupsProspectiveConfrontations(Stage stage)
+    {
+        if (stage.Groups.Count == 0 || stage.PlacesPerGroup is not { } placesPerGroup || placesPerGroup < 2)
+        {
+            return 0;
+        }
+
+        List<EntryId> placeholder =
+        [
+            .. Enumerable.Range(0, placesPerGroup).Select(_ => EntryId.New())
+        ];
+        var pairsPerGroup = MaterializeMatches.BuildRoundRobinRounds(placeholder, stage.MatchGenerationFormat)
+            .Sum(round => round.Count)
+;
+        return pairsPerGroup * stage.Groups.Count;
     }
 
     private static StructureMaterializeDto AssembleCup(Competition competition, Stage stage)
@@ -184,7 +206,6 @@ internal static class StructureMaterializeAssembler
             eligibleCount,
             materializedCount,
             commandEnabled: eligibleCount > 0,
-            groupsReady: true,
             rows,
             canonicalEntryPairCount: canonicalCount,
             undeterminedCanonicalEntryPairCount: undeterminedCanonicalCount);
@@ -199,11 +220,13 @@ internal static class StructureMaterializeAssembler
         int eligible,
         int materialized,
         bool commandEnabled,
-        bool groupsReady,
         IReadOnlyList<StructureMaterializeConfrontationDto>? confrontations = null,
         bool phaseRosterComplete = true,
         int canonicalEntryPairCount = 0,
-        int undeterminedCanonicalEntryPairCount = 0)
+        int undeterminedCanonicalEntryPairCount = 0,
+        int groupsPlacementFilledCount = 0,
+        int groupsPlacementCapacityCount = 0,
+        int prospectiveConfrontationCount = 0)
     {
         if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
         {
@@ -218,7 +241,6 @@ internal static class StructureMaterializeAssembler
             eligible,
             materialized,
             commandEnabled,
-            groupsReady,
             phaseRosterComplete);
         return new StructureMaterializeDto(
             commandCode,
@@ -230,7 +252,10 @@ internal static class StructureMaterializeAssembler
             confrontations ?? [],
             disabledReason,
             canonicalEntryPairCount,
-            undeterminedCanonicalEntryPairCount);
+            undeterminedCanonicalEntryPairCount,
+            groupsPlacementFilledCount,
+            groupsPlacementCapacityCount,
+            prospectiveConfrontationCount);
     }
 
     private static string? ResolveDisabledReason(
@@ -241,9 +266,13 @@ internal static class StructureMaterializeAssembler
         int eligible,
         int materialized,
         bool commandEnabled,
-        bool groupsReady,
         bool phaseRosterComplete)
     {
+        var hasDrawRules = stage.Regulation.DrawRules is not null;
+        var drawExecutionBadge = StructureViewAssembler.GetDrawExecutionBadge(stage, hasDrawRules);
+        var deferGroupsNotReady = StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(
+            hasDrawRules,
+            drawExecutionBadge);
         if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
         {
             return StructureMaterializeDisabledReasons.DrawObsoleteForConsumption;
@@ -275,7 +304,9 @@ internal static class StructureMaterializeAssembler
             {
                 StructureFormatKind.Championship when !phaseRosterComplete => StructureMaterializeDisabledReasons
                     .PhaseRosterIncomplete,
-                StructureFormatKind.Groups when !groupsReady => StructureMaterializeDisabledReasons.GroupsNotReady,
+                StructureFormatKind.Groups when !deferGroupsNotReady
+                    && GroupsPlacementReadiness.BlocksProduction(stage) =>
+                    StructureMaterializeDisabledReasons.GroupsNotReady,
                 _ => determined == 0 ? StructureMaterializeDisabledReasons.NoDeterminedConfrontations :
                     eligible == 0 ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null
             };

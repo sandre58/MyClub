@@ -353,7 +353,16 @@ export function RootEntriesRail({
           logoMediaId={entry.logoMediaId}
           primaryColor={entry.primaryColor}
           ineligible={entry.status !== 'Active'}
-          ineligibleLabel={t('composition.noLongerEligible')}
+          ineligibleTooltip={
+            entry.status === 'Withdrawn'
+              ? t('composition.withdrawnFromCompetitionTip')
+              : undefined
+          }
+          ineligibleLabel={
+            entry.status !== 'Active' && entry.status !== 'Withdrawn'
+              ? t('composition.noLongerEligible')
+              : undefined
+          }
           placed={placed}
           placedTooltip={
             placedTooltip ?? (placed ? t('entries.entryPlacedStatus') : null)

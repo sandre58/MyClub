@@ -38,6 +38,8 @@ export function drawPoolToneToRatioGaugeTone(
       return 'attention';
     case 'partial':
       return 'partial';
+    case 'brand':
+      return 'brand';
     default:
       return 'neutral';
   }
@@ -56,7 +58,10 @@ export function operationalStripPoolTone(
   if (messageKind === 'success') {
     return 'complete';
   }
-  if (ratioTone === 'complete' || ratioTone === 'brand') {
+  if (ratioTone === 'brand') {
+    return 'brand';
+  }
+  if (ratioTone === 'complete') {
     return 'complete';
   }
   if (ratioTone === 'partial' || ratioTone === 'attention') {
@@ -72,13 +77,23 @@ export function operationalStripPoolTone(
 export function resolvePlaceOccupancyTone(
   filled: number,
   capacity: number | null,
-  options?: { drawRulesEngaged?: boolean; drawLaunchable?: boolean },
+  options?: {
+    drawRulesEngaged?: boolean;
+    drawLaunchable?: boolean;
+    drawLaunchSignal?: boolean;
+  },
 ): DrawCtaPoolTone {
   if (capacity == null || capacity <= 0) {
     return 'neutral';
   }
   if (filled <= 0) {
-    if (options?.drawRulesEngaged && !options.drawLaunchable) {
+    const launchSignal =
+      options?.drawLaunchSignal ??
+      (options?.drawRulesEngaged === true && options?.drawLaunchable === true);
+    if (launchSignal) {
+      return 'brand';
+    }
+    if (options?.drawRulesEngaged) {
       return 'neutral';
     }
     return 'partial';

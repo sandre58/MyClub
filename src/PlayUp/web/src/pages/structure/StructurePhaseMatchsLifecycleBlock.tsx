@@ -33,6 +33,7 @@ import {
   isLifecycleActionCode,
   isLifecycleRevertCode,
 } from './structurePhaseStatusBandModel';
+import { groupsPoolsBlockPhaseStart } from './structureMaterializeCopy';
 import { useStructureStageLifecycleMutation } from './useStructureStageLifecycleMutation';
 
 const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
@@ -321,7 +322,8 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const projectedAction = isLifecycleActionCode(transitionCode)
     ? transitionCode
     : null;
-  const actionEnabled = transition?.enabled ?? false;
+  const actionEnabled =
+    (transition?.enabled ?? false) && !groupsPoolsBlockPhaseStart(stage);
   const showPrimaryButton = projectedAction != null;
 
   const cancelStart = lifecycle?.cancelStartTransition;

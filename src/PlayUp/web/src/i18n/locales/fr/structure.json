@@ -258,6 +258,8 @@
       "ExpectedRankUnreachablePaused": "Rang de compétition inaccessible via l’attribution (constat en pause)",
       "IncompleteEntryRound": "Paires d’entrée du tableau incomplètes — démarrage bloqué",
       "UnmaterializedConfrontations": "Matchs éligibles non créés — démarrage bloqué",
+      "PhaseRosterIncomplete": "Composition incomplète — démarrage bloqué",
+      "GroupsNotReady": "Poules incomplètes — démarrage bloqué",
       "NoExploitableInitialConfrontations": "Aucune confrontation initiale ne peut être établie — démarrage bloqué"
     },
     "issuesShort": {
@@ -282,6 +284,8 @@
       "ExpectedRankUnreachable": "Rang inaccessible",
       "IncompleteEntryRound": "Paires d’entrée incomplètes",
       "UnmaterializedConfrontations": "Matchs non créés",
+      "PhaseRosterIncomplete": "Composition incomplète",
+      "GroupsNotReady": "Poules incomplètes",
       "NoExploitableInitialConfrontations": "Aucune confrontation initiale"
     }
   },
@@ -382,6 +386,8 @@
       "CycleDetected": "Les liaisons entre phases forment un cycle — corrigez qualification ou progression.",
       "RoutingNondeterminism": "Le routage entre phases est ambigu — corrigez qualification ou progression.",
       "UnmaterializedConfrontations": "Matérialisez toutes les confrontations éligibles avant de démarrer la phase.",
+      "PhaseRosterIncomplete": "Complétez la composition de la phase (équipes éligibles) avant de démarrer.",
+      "GroupsNotReady": "Complétez l’affectation des poules avant de démarrer la phase.",
       "NoExploitableInitialConfrontations": "Ajoutez suffisamment de participants pour établir des confrontations initiales avant de démarrer la phase.",
       "ProductionPresent": "Retirez les matchs rattachés avant de revenir en brouillon.",
       "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant d’annuler le démarrage ou de mettre la phase en pause.",
@@ -436,6 +442,8 @@
       "CycleDetected": "Les liaisons entre phases forment un cycle — corrigez qualification ou progression.",
       "RoutingNondeterminism": "Le routage entre phases est ambigu — corrigez qualification ou progression.",
       "UnmaterializedConfrontations": "Matérialisez toutes les confrontations éligibles avant de démarrer la phase.",
+      "PhaseRosterIncomplete": "Complétez la composition de la phase (équipes éligibles) avant de démarrer.",
+      "GroupsNotReady": "Complétez l’affectation des poules avant de démarrer la phase.",
       "NoExploitableInitialConfrontations": "Ajoutez suffisamment de participants pour établir des confrontations initiales avant de démarrer la phase.",
       "ProductionPresent": "Retirez les matchs rattachés avant de revenir en brouillon.",
       "MatchLifecycleStarted": "Terminez ou annulez les matchs engagés avant d’annuler le démarrage ou de mettre la phase en pause.",
@@ -565,6 +573,8 @@
         "meterCaptionEntryPairs": "paires d’entrée",
         "entryRoundRatioCaption": "Paires",
         "meterAriaEntryPairs": "Avancement du remplissage des paires d’entrée du tableau",
+        "groupsPlacementRatioCaption": "Places",
+        "meterAriaGroupsPlacement": "Avancement du remplissage des places en poules",
         "ratioLabel_one": "créé",
         "ratioLabel_other": "créés",
         "ratioLabelMatches_one": "match créé",
@@ -577,13 +587,18 @@
         "emptyTitle": "Production des matchs",
         "emptyStructuralTitle": "Aucune confrontation à afficher",
         "determinedRatioLabel": "Confrontations déterminées",
+        "groupsPlacementRatioLabel": "Places en poules",
         "meterCaptionDetermined": "déterminées",
+        "meterCaptionGroupsPlacement": "assignées",
         "stateMessage": {
           "unavailable": "Aucun match à produire pour cette phase.",
           "complete": "Tous les matchs prévus sont créés.",
           "partial_one": "Il reste {{count}} match à créer.",
           "partial_other": "Il reste {{count}} matchs à créer.",
           "noDeterminedConfrontations": "Aucune confrontation déterminée",
+          "groupsPlacementIncomplete": "Les poules ne sont pas prêtes pour la production de matchs — complétez l’affectation ({{filled}} / {{capacity}}).",
+          "groupsPlacementReady": "Toutes les places en poules sont assignées.",
+          "matchesBlockedByGroupsPools": "Complétez les places en poules avant de pouvoir créer les matchs.",
           "determinedPartial_one": "Il reste {{count}} confrontation à déterminer.",
           "determinedPartial_other": "Il reste {{count}} confrontations à déterminer.",
           "determinedComplete": "Toutes les confrontations exposées sont déterminées.",
@@ -788,6 +803,7 @@
   "composition": {
     "gauge": {
       "resolvedQualifiedCaption": "Résolues",
+      "eligibleParticipantsCaption": "Éligibles",
       "entriesPlacesCaption": "Entrées",
       "populationComplete": "Le nombre d'entrées correspond aux places de la phase.",
       "populationShortfallPaused_one": "{{count}} entrée en dessous des places de la phase (phase en pause).",
@@ -800,7 +816,11 @@
       "inboundAllResolved": "Toutes les équipes sont résolues.",
       "inboundUnresolved_one": "{{count}} équipe n’est pas encore résolue.",
       "inboundUnresolved_other": "{{count}} équipes ne sont pas encore résolues.",
-      "inboundResolvedAria": "{{resolved}} équipes résolues sur {{total}}"
+      "inboundResolvedAria": "{{resolved}} équipes résolues sur {{total}}",
+      "eligibleAllActive": "Tous les participants sont encore éligibles.",
+      "eligibleInactive_one": "{{count}} participant n’est plus éligible.",
+      "eligibleInactive_other": "{{count}} participants ne sont plus éligibles.",
+      "eligibleAria": "{{active}} participants éligibles sur {{capacity}}"
     },
     "qualifiers": {
       "viewPhase": "Voir la phase",
@@ -823,6 +843,7 @@
     "emptyEligible": "Aucune équipe éligible",
     "openTeams": "Voir les équipes",
     "noLongerEligible": "Plus éligible",
+    "withdrawnFromCompetitionTip": "Équipe retirée de la compétition — ne participe plus à cette phase.",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
     "toastUpdated": "Équipes mises à jour",

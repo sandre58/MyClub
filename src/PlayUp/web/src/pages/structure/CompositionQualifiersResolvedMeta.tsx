@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
+import { CompositionGaugeRatioLine } from './CompositionGaugeRatioLine';
+
+/** Qualif/Prog inbound seats resolved vs configured — never the Équipes eligibility counter. */
 export function CompositionQualifiersResolvedMeta({
   resolved,
   configured,
@@ -15,44 +18,14 @@ export function CompositionQualifiersResolvedMeta({
     return <span className="structure-phase-composition__qual-resolved-meta">…</span>;
   }
 
-  const label = t('composition.gauge.resolvedQualifiedCaption');
-
-  if (configured <= 0) {
-    return (
-      <span className="structure-phase-composition__qual-resolved-meta">
-        <span
-          className="structure-phase-composition__qual-resolved-meta__filled structure-phase-composition__qual-resolved-meta__filled--neutral"
-        >
-          {resolved}
-        </span>
-        <span className="structure-phase-composition__qual-resolved-meta__label">
-          {label}
-        </span>
-      </span>
-    );
-  }
-
-  const filledTone =
-    resolved >= configured
-      ? 'complete'
-      : resolved > configured
-        ? 'over'
-        : 'partial';
+  const resolutionLabel = t('composition.gauge.resolvedQualifiedCaption');
+  const capacity = configured > 0 ? configured : Math.max(resolved, 1);
 
   return (
-    <span className="structure-phase-composition__qual-resolved-meta">
-      <span
-        className={`structure-phase-composition__qual-resolved-meta__filled structure-phase-composition__qual-resolved-meta__filled--${filledTone}`}
-      >
-        {resolved}
-      </span>
-      <span className="structure-phase-composition__qual-resolved-meta__sep">/</span>
-      <span className="structure-phase-composition__qual-resolved-meta__cap">
-        {configured}
-      </span>
-      <span className="structure-phase-composition__qual-resolved-meta__label">
-        {label}
-      </span>
-    </span>
+    <CompositionGaugeRatioLine
+      current={resolved}
+      capacity={capacity}
+      label={resolutionLabel}
+    />
   );
 }

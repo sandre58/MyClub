@@ -67,8 +67,10 @@ public static class StructureInboundCompositionAssembler
         rules.Sort(static (a, b) => string.CompareOrdinal(a.FeedKey, b.FeedKey));
         var configuredVolume = rules.Sum(rule => rule.Seats.Count);
         var resolvedCount = rules.Sum(rule => rule.Seats.Count(seat => seat.EntryId is not null));
-
-        return new StructureInboundCompositionDto(configuredVolume, resolvedCount, rules);
+        return new StructureInboundCompositionDto(
+            configuredVolume,
+            resolvedCount,
+            rules);
     }
 
     private static StructureInboundFeedRuleDto BuildRule(
@@ -130,7 +132,11 @@ public static class StructureInboundCompositionAssembler
 
         if (qualPath is not null)
         {
-            entryId = ResolveQualificationSeat(qualPath, destination, sourceStage);
+            entryId = ResolveQualificationSeat(
+                qualPath,
+                destination,
+                sourceStage,
+                matchSummariesByStage);
         }
         else if (progPath is not null)
         {
@@ -170,17 +176,23 @@ public static class StructureInboundCompositionAssembler
     private static EntryId? ResolveQualificationSeat(
         QualificationPath path,
         Stage destination,
-        Stage sourceStage)
+        Stage sourceStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
     {
-        if (path.Destination.TargetsForm)
+        if (path.Destination.TargetsForm || path.Destination.TargetsPopulation)
         {
             var fingerprint = FormPathResolutionKey.FromQualification(sourceStage.Id, path);
-            return destination.FormPathResolutions
+            var fromWitness = destination.FormPathResolutions
                 .FirstOrDefault(resolution => resolution.PathFingerprint == fingerprint)
                 ?.EntryId;
+            return fromWitness ?? InboundQualificationSeatProjection.TryResolveSeat(
+                path,
+                sourceStage,
+                destination,
+                matchSummariesByStage);
         }
 
-        if (path.Destination.TargetsPopulation || path.Destination.TargetsGroup)
+        if (path.Destination.TargetsGroup)
         {
             return null;
         }

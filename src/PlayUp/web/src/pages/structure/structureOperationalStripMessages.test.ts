@@ -39,20 +39,53 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('info');
   });
 
-  it('T-LAUNCH-1: uses attention for 0/N when draw is launchable', () => {
-    expect(
-      resolvePlaceOccupancyMeterCopy({
-        t,
-        occupancyReady: true,
-        unknownCapacity: false,
-        capacity: 8,
-        occupiedPlacesCount: 0,
-        slotFeedMissingActive: false,
-        drawRulesEngaged: true,
-        drawLaunchable: true,
-        stageStatus: 'Ready',
-      }).kind,
-    ).toBe('attention');
+  it('T-LAUNCH-1b: uses RunDraw copy and info when draw is launchable at 0/N', () => {
+    const result = resolvePlaceOccupancyMeterCopy({
+      t,
+      occupancyReady: true,
+      unknownCapacity: false,
+      capacity: 8,
+      occupiedPlacesCount: 0,
+      slotFeedMissingActive: false,
+      drawRulesEngaged: true,
+      drawLaunchable: true,
+      stageStatus: 'Ready',
+    });
+    expect(result.kind).toBe('info');
+    expect(result.text).toBe('readiness.nextStep.RunDraw');
+  });
+
+  it('T-LAUNCH-1c: uses RunDraw in Draft when draw rules engaged at 0/N', () => {
+    const result = resolvePlaceOccupancyMeterCopy({
+      t,
+      occupancyReady: true,
+      unknownCapacity: false,
+      capacity: 8,
+      occupiedPlacesCount: 0,
+      slotFeedMissingActive: false,
+      drawRulesEngaged: true,
+      drawLaunchable: false,
+      drawExecutionBadge: 'ToLaunch',
+      stageStatus: 'Draft',
+    });
+    expect(result.text).toBe('readiness.nextStep.RunDraw');
+    expect(result.kind).toBe('info');
+  });
+
+  it('T-LAUNCH-1d: uses RunDraw when draw rules engaged and badge ToLaunch at 0/N in Ready', () => {
+    const result = resolvePlaceOccupancyMeterCopy({
+      t,
+      occupancyReady: true,
+      unknownCapacity: false,
+      capacity: 8,
+      occupiedPlacesCount: 0,
+      slotFeedMissingActive: false,
+      drawRulesEngaged: true,
+      drawLaunchable: false,
+      drawExecutionBadge: 'ToLaunch',
+      stageStatus: 'Ready',
+    });
+    expect(result.text).toBe('readiness.nextStep.RunDraw');
   });
 
   it('uses danger for empty occupancy when SlotFeedMissing is active in Ready', () => {
@@ -93,6 +126,21 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
         hasProduction: true,
       }).kind,
     ).toBe('attention');
+  });
+
+  it('uses danger when match quota is prospective but groups pools block production', () => {
+    const result = resolveProductionMeterCopy({
+      t,
+      blockedCaption: null,
+      gaugeRatio: { filled: 0, capacity: 24 },
+      hasProduction: true,
+      productionGaugeMode: 'materialized',
+      groupsPoolsIncomplete: true,
+    });
+    expect(result.kind).toBe('danger');
+    expect(result.text).toBe(
+      'fiche.operational.production.stateMessage.matchesBlockedByGroupsPools',
+    );
   });
 
   it('uses danger for entry-round meter when start is blocked by incomplete pairs', () => {

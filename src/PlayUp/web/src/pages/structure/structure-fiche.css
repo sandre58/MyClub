@@ -323,6 +323,14 @@
   color: var(--color-attention);
 }
 
+.structure-entries__team-withdrawn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-attention);
+  line-height: 0;
+}
+
 .structure-entries__anomaly {
   margin: 0;
   font-size: var(--text-meta);

@@ -28,6 +28,11 @@ internal static class StageStartReadinessGuard
 
     internal const string DisabledNoExploitableInitialConfrontations = "NoExploitableInitialConfrontations";
 
+    internal const string DisabledPhaseRosterIncomplete =
+        StructureMaterializeDisabledReasons.PhaseRosterIncomplete;
+
+    internal const string DisabledGroupsNotReady = StructureMaterializeDisabledReasons.GroupsNotReady;
+
     private const string DisabledInitialRoundNotPlayable = "InitialRoundNotPlayable";
 
     internal static void EnsureReadyToStart(
@@ -40,11 +45,9 @@ internal static class StageStartReadinessGuard
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
-        if (HasMaterializationGapBeforeStart(competition, stage, matchSummaries, competitionStages))
+        if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
-            throw new ApplicationFailureException(
-                "Start is blocked because eligible confrontations are not fully materialized.",
-                ApplicationErrorCodes.StartBlockedUnmaterialized);
+            ThrowStartBlockedForProductionGap(productionGap);
         }
 
         if (StageConfrontationMaterializationState.LacksExploitableInitialConfrontations(
@@ -77,9 +80,9 @@ internal static class StageStartReadinessGuard
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
-        if (HasMaterializationGapBeforeStart(competition, stage, matchSummaries, competitionStages))
+        if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
-            return DisabledUnmaterializedConfrontations;
+            return productionGap;
         }
 
         if (StageConfrontationMaterializationState.LacksExploitableInitialConfrontations(
@@ -101,10 +104,12 @@ internal static class StageStartReadinessGuard
         }
 
         var format = StructureSkeleton.InferFormat(stage);
-        return format == StructureFormatKind.Cup && !IsInitialRoundPlayable(stage) ? DisabledInitialRoundNotPlayable : null;
+        return format == StructureFormatKind.Cup && !IsInitialRoundPlayable(stage)
+            ? DisabledInitialRoundNotPlayable
+            : null;
     }
 
-    private static bool HasMaterializationGapBeforeStart(
+    private static string? TryGetProductionStartGap(
         Competition competition,
         Stage stage,
         IReadOnlyList<MatchSummaryRow> matchSummaries,
@@ -112,34 +117,44 @@ internal static class StageStartReadinessGuard
     {
         if (stage.Status is not StageStatus.Ready)
         {
-            return false;
-        }
-
-        if (StageConfrontationMaterializationState.CountEligibleUnmaterialized(
-                competition,
-                stage,
-                matchSummaries,
-                competitionStages) > 0)
-        {
-            return true;
+            return null;
         }
 
         var stages = competitionStages ?? [stage];
         var format = StructureSkeleton.InferFormat(stage);
-        switch (format)
-        {
-            case StructureFormatKind.Championship
-                when competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
-                     && !ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages):
-            case StructureFormatKind.Groups
-                when competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready
-                     && (stage.Groups.Count == 0
-                         || stage.Groups.Any(group => group.EntryIds.Count < 2)):
-                return true;
-            default:
-                return false;
-        }
+        return (format == StructureFormatKind.Groups
+                && GroupsPlacementReadiness.BlocksProduction(stage)) ||
+               StageConfrontationMaterializationState.CountEligibleUnmaterialized(
+                   competition,
+                   stage,
+                   matchSummaries,
+                   competitionStages) > 0
+            ? DisabledUnmaterializedConfrontations
+            : format switch
+            {
+                StructureFormatKind.Championship
+                    when !ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages)
+                    => DisabledPhaseRosterIncomplete,
+                _ => null
+            };
     }
+
+    private static void ThrowStartBlockedForProductionGap(string productionGap) =>
+        throw productionGap switch
+        {
+            DisabledUnmaterializedConfrontations => new ApplicationFailureException(
+                "Start is blocked because eligible confrontations are not fully materialized.",
+                ApplicationErrorCodes.StartBlockedUnmaterialized),
+            DisabledPhaseRosterIncomplete => new ApplicationFailureException(
+                "Start is blocked because the phase composition roster is incomplete.",
+                ApplicationErrorCodes.StartBlockedPhaseRosterIncomplete),
+            DisabledGroupsNotReady => new ApplicationFailureException(
+                "Start is blocked because groups are not ready for this phase.",
+                ApplicationErrorCodes.StartBlockedGroupsNotReady),
+            _ => new ApplicationFailureException(
+                "Start is blocked because production prerequisites are not met.",
+                ApplicationErrorCodes.StartBlockedUnmaterialized)
+        };
 
     internal static IReadOnlyList<MatchSummaryRow> ToSummaryRows(IReadOnlyList<Match> stageMatches) =>
     [

@@ -118,6 +118,11 @@ import {
   listCompositionTeamRows,
 } from './compositionTeamsInboundRows';
 import { CompositionQualifiersResolvedMeta } from './CompositionQualifiersResolvedMeta';
+import {
+  resolveCompositionBandResolvedGaugeStats,
+  resolveCompositionResolvedSeatCount,
+  resolveCompositionTeamsGaugeVariant,
+} from './compositionBandGauge';
 import { ExitKindMenu, listComposedAffectationEntries } from './StructurePhaseRails';
 import {
   hasEngagedTeamsSectionContent,
@@ -523,8 +528,7 @@ export function StructurePhaseFiche({
   const qualifiersConfiguredVolume =
     stage.inboundComposition?.configuredVolume ??
     feedGroups.reduce((sum, group) => sum + group.volume, 0);
-  const qualifiersResolvedCount =
-    stage.inboundComposition?.resolvedCount ?? 0;
+  const qualifiersResolvedCount = resolveCompositionResolvedSeatCount(stage);
   const drawReadinessChecklist =
     !isCompletedStage &&
     drawGateReady &&
@@ -541,13 +545,6 @@ export function StructurePhaseFiche({
         })
       : null;
   const qualifiersInboundReady = stage.inboundComposition != null;
-  const qualifiersResolvedEyebrow = (
-    <CompositionQualifiersResolvedMeta
-      resolved={qualifiersResolvedCount}
-      configured={qualifiersConfiguredVolume}
-      ready={qualifiersInboundReady}
-    />
-  );
   const createBlockPresentation =
     createBlockedReason != null
       ? resolveDrawCreateBlockPresentation(createBlockedReason)
@@ -946,12 +943,25 @@ export function StructurePhaseFiche({
     stage,
     expectedPopulationOccupancy(data, stage),
   );
-  const compositionResolvedGaugeStats = resolveCompositionResolvedGaugeStats(
-    compositionTileMode,
-    compositionTeamRows,
-    placesN != null && placesN > 0
-      ? { resolved: populationMeterCurrent, capacity: placesN }
-      : null,
+  const compositionResolvedGaugeStats =
+    resolveCompositionBandResolvedGaugeStats(stage, placesN) ??
+    resolveCompositionResolvedGaugeStats(
+      compositionTileMode,
+      compositionTeamRows,
+      placesN != null && placesN > 0
+        ? { resolved: populationMeterCurrent, capacity: placesN }
+        : null,
+    );
+  const compositionResolvedSeatCount = resolveCompositionResolvedSeatCount(
+    stage,
+    compositionResolvedGaugeStats?.resolved ?? qualifiersResolvedCount,
+  );
+  const qualifiersResolvedEyebrow = (
+    <CompositionQualifiersResolvedMeta
+      resolved={qualifiersResolvedCount}
+      configured={qualifiersConfiguredVolume}
+      ready={qualifiersInboundReady}
+    />
   );
   const gaugeSectionVisible =
     showQualifiersSection || showTeamsSection || showCompositionContentEmpty;
@@ -971,15 +981,21 @@ export function StructurePhaseFiche({
     showQualifiersSection &&
     showTeamsSection;
   const stageDiagnosticContext = structureDiagnosticContextFromStage(data, stage);
-  const compositionInboundResolvedGaugeFooter = showCompositionInboundResolvedGauge
-    ? (
-        <CompositionInboundResolvedGauge
-          resolved={compositionResolvedGaugeStats!.resolved}
-          total={compositionResolvedGaugeStats!.total}
-          mode={compositionTileMode}
-        />
-      )
-    : null;
+  const compositionTeamsGaugeVariant = resolveCompositionTeamsGaugeVariant(
+    compositionTileMode,
+    compositionResolvedGaugeStats,
+  );
+  const compositionInboundResolvedGaugeFooter =
+    showCompositionInboundResolvedGauge &&
+    compositionTeamsGaugeVariant === 'resolved'
+      ? (
+          <CompositionInboundResolvedGauge
+            resolved={compositionResolvedGaugeStats!.resolved}
+            total={compositionResolvedGaugeStats!.total}
+            mode={compositionTileMode}
+          />
+        )
+      : null;
   const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
     <CompositionPopulationGauge
       current={populationMeterCurrent}
@@ -1002,7 +1018,9 @@ export function StructurePhaseFiche({
     />
   ) : null;
   const compositionTeamsGaugeFooter =
-    compositionInboundResolvedGaugeFooter ?? compositionPopulationGaugeFooter;
+    compositionTeamsGaugeVariant === 'entries'
+      ? compositionPopulationGaugeFooter
+      : compositionInboundResolvedGaugeFooter;
   const teamsComposeActionLabel =
     composedAffectationEntries.length > 0 ||
     (stage.affectationPreviewNames?.length ?? 0) > 0 ||
@@ -1066,6 +1084,7 @@ export function StructurePhaseFiche({
           slotFeedMissingActive,
           drawLaunchable:
             showDrawCta && drawGateReady && createGate?.ok === true,
+          drawExecutionBadge: stage.drawExecutionBadge ?? null,
           stageStatus: stage.status,
           slotFeedPresentationContext: {
             formatKind: stageDiagnosticContext.formatKind,

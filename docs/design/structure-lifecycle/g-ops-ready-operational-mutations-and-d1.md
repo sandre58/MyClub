@@ -72,7 +72,7 @@
 
 | Field | Fixture |
 |-------|---------|
-| **Topology** | `U` Ready, qual feeds `D`; pattern aligned with [`StructurePreparePlacesGateTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/StructurePreparePlacesGateTests.cs) |
+| **Topology** | `U` Ready, qual feeds `D`; pattern aligned with [`PrepareQualFeedPendingMaterializeBlocksTests`](../../../tests/MyClub.PlayUp.Application.Tests/Reads/PrepareQualFeedPendingMaterializeBlocksTests.cs) |
 | **Initial** | `U` **Ready**; `D` **Draft**; qual **Top 2** → `D` |
 | **Mutation** | On `U`: **Top 2 → Top 1** |
 | **Expected** | Success; **no** `Application.ReadyConsumerWouldBreak`; `D` remains **Draft** |

@@ -24,6 +24,14 @@ internal static class StructurePlaceOccupancyIssues
         hasDrawRules && badge is not StructureDrawExecutionBadge.ToApply
             and not StructureDrawExecutionBadge.Applied;
 
+    /// <summary>
+    /// Incomplete group pools are expected until a published draw is applied (Groups + draw rules).
+    /// </summary>
+    internal static bool DeferGroupsNotReadyForDraw(
+        bool hasDrawRules,
+        StructureDrawExecutionBadge? drawExecutionBadge) =>
+        hasDrawRules && drawExecutionBadge is not StructureDrawExecutionBadge.Applied;
+
     internal static void AppendSchematicPlaceOccupancyIssue(
         IList<string> issues,
         Competition competition,

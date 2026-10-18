@@ -76,7 +76,6 @@ public sealed class StructureMaterializeAssemblerTests
             ],
             _clock);
 
-        StructurePreparePlacesGate.Ensure(competition, champ, [source, champ]);
         PrepareStage.Execute(champ, [source, champ], _clock);
         champ.Status.Should().Be(StageStatus.Ready);
 
@@ -155,6 +154,32 @@ public sealed class StructureMaterializeAssemblerTests
         materialize.MaterializedCount.Should().Be(1);
         materialize.EligibleCount.Should().Be(2);
         materialize.CommandEnabled.Should().BeTrue();
+        materialize.Confrontations.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Groups_not_ready_exposes_placement_progress_for_matchs_gauge()
+    {
+        var competition = CreateCompetition.Execute("Groups partial", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock);
+        var stage = configured.Stage;
+        var entry = competition.Entries[0].Id;
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entry);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var materialize = view.Stages[0].Materialize!;
+
+        materialize.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.GroupsNotReady);
+        materialize.GroupsPlacementFilledCount.Should().Be(1);
+        materialize.GroupsPlacementCapacityCount.Should().Be(4);
+        materialize.ProspectiveConfrontationCount.Should().Be(2);
         materialize.Confrontations.Should().BeEmpty();
     }
 

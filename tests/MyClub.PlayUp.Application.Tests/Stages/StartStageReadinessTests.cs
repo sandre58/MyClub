@@ -11,6 +11,8 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
 
@@ -118,6 +120,44 @@ public sealed class StartStageReadinessTests
     }
 
     [Fact]
+    public void Start_blocked_when_groups_placement_capacity_not_met()
+    {
+        var competition = CreateCompetition.Execute("Groups partial pools", _clock);
+        for (var i = 0; i < 8; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 4),
+            _clock);
+        var stage = configured.Stage;
+        var entries = competition.Entries.OrderBy(entry => entry.Id.Value).ToArray();
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[0].Id);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[1].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[2].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[3].Id);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+
+        StageStartReadinessGuard.TryGetDisabledReasonCode(
+                stage,
+                competition,
+                [],
+                [stage])
+            .Should()
+            .Be(StageStartReadinessGuard.DisabledUnmaterializedConfrontations);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var hub = view.Stages[0];
+        hub.Lifecycle.Should().NotBeNull();
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+    }
+
+    [Fact]
     public void Start_allowed_for_swiss_without_matches()
     {
         var situation = TestCompetition.Create("Swiss", _clock)
@@ -145,6 +185,107 @@ public sealed class StartStageReadinessTests
         hub.Lifecycle.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+    }
+
+    [Fact]
+    public void TryGetDisabledReasonCode_championship_roster_incomplete_returns_phase_roster_not_unmaterialized()
+    {
+        var competition = CreateCompetition.Execute("Qual-fed roster gap", _clock);
+        var groups = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(groups.Id, _clock);
+        _ = groups.AddGroup("A", _clock);
+        _ = groups.AddGroup("B", _clock);
+        groups.AddMatchday(1, _clock);
+
+        var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);
+        champ.AddMatchday(1, _clock);
+        competition.AddStage(champ.Id, _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "E1", _clock).Id;
+        var e2 = competition.AddEntry(TeamId.New(), "E2", _clock).Id;
+        champ.ReplaceAffectationAuthoring([e1, e2], _clock);
+
+        ReplaceStageQualificationRules.Execute(
+            groups,
+            [
+                new QualificationIntentSpec(
+                    Guid.NewGuid(),
+                    1,
+                    QualificationIntentSourceKind.EachGroup,
+                    1,
+                    2,
+                    champ.Id.Value,
+                    DestinationForm: true)
+            ],
+            _clock);
+
+        PrepareStage.Execute(champ, [groups, champ], _clock);
+        champ.Status.Should().Be(StageStatus.Ready);
+
+        StageStartReadinessGuard.TryGetDisabledReasonCode(
+                champ,
+                competition,
+                [],
+                [groups, champ])
+            .Should()
+            .Be(StructureMaterializeDisabledReasons.PhaseRosterIncomplete);
+
+        var act = () => StageStartReadinessGuard.EnsureReadyToStart(
+            champ,
+            competition,
+            [],
+            [groups, champ]);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedPhaseRosterIncomplete);
+    }
+
+    [Fact]
+    public void Read_Start_disabled_when_phase_roster_incomplete_not_unmaterialized()
+    {
+        var competition = CreateCompetition.Execute("Qual-fed roster gap read", _clock);
+        var groups = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(groups.Id, _clock);
+        _ = groups.AddGroup("A", _clock);
+        _ = groups.AddGroup("B", _clock);
+        groups.AddMatchday(1, _clock);
+
+        var champ = Stage.Create(competition.Id, new StageName("Championnat"), SampleRegulations.Standard(), _clock);
+        champ.AddMatchday(1, _clock);
+        competition.AddStage(champ.Id, _clock);
+        var e1 = competition.AddEntry(TeamId.New(), "E1", _clock).Id;
+        var e2 = competition.AddEntry(TeamId.New(), "E2", _clock).Id;
+        champ.ReplaceAffectationAuthoring([e1, e2], _clock);
+
+        ReplaceStageQualificationRules.Execute(
+            groups,
+            [
+                new QualificationIntentSpec(
+                    Guid.NewGuid(),
+                    1,
+                    QualificationIntentSourceKind.EachGroup,
+                    1,
+                    2,
+                    champ.Id.Value,
+                    DestinationForm: true)
+            ],
+            _clock);
+
+        PrepareStage.Execute(champ, [groups, champ], _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [groups, champ]);
+        var hub = view.Stages.Single(stage => stage.StageId == champ.Id.Value);
+
+        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete);
     }
 
     [Fact]

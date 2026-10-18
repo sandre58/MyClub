@@ -213,8 +213,10 @@ export interface StructureStageHubSummary {
   placesPerGroup?: number | null;
   /** Display names for runtime composition (Draw / Live). */
   compositionPreviewNames?: string[] | null;
-  /** Runtime composition entries that are no longer Active. */
+  /** Runtime composition entries that are no longer Active (list chrome). */
   compositionIneligibleCount?: number;
+  /** Composition band — resolved seat count (hub SoT). */
+  compositionBandResolvedCount?: number;
   /** Affectation authoring set size (Population tile). */
   affectationEntryCount?: number;
   /** Affectation authoring entry identities. */
@@ -554,6 +556,12 @@ export interface StructureMaterialize {
   canonicalEntryPairCount?: number;
   /** Canonical pairs without two distinct entries; omitted or zero when not applicable. */
   undeterminedCanonicalEntryPairCount?: number;
+  /** Groups: entries assigned across pools; omitted or zero when not applicable. */
+  groupsPlacementFilledCount?: number;
+  /** Groups: groupCount × placesPerGroup; omitted or zero when not applicable. */
+  groupsPlacementCapacityCount?: number;
+  /** Groups: confrontations if every pool were filled; omitted or zero when not applicable. */
+  prospectiveConfrontationCount?: number;
 }
 
 export interface StructureMaterializeConfrontation {

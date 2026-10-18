@@ -509,7 +509,7 @@ export function FoundationsPlayground() {
                 <EntryCell
                   displayName="Équipe retirée"
                   ineligible
-                  ineligibleLabel="Plus éligible"
+                  ineligibleTooltip="Équipe retirée de la compétition — ne participe plus à cette phase."
                 />
               </li>
             </ul>

@@ -65,7 +65,9 @@ public static class OrganizerProblemSemanticsResolver
                 SuggestedActionCode: OverviewAssembler.ActionApplyQualification),
             StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
                 or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
-                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations =>
+                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations
+                or StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
+                or StructureStageLifecycleAssembler.DisabledGroupsNotReady =>
                 TryFromStartTransitionBlocker(source),
             _ => null
         };
@@ -80,7 +82,9 @@ public static class OrganizerProblemSemanticsResolver
                     [OverviewAssembler.ActionStartStage],
                     TransportCode: disabledReasonCode),
             StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
-                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations =>
+                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations
+                or StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
+                or StructureStageLifecycleAssembler.DisabledGroupsNotReady =>
                 new OrganizerProblemReadDto(
                     disabledReasonCode,
                     OrganizerProblemSemanticLevels.Gate,

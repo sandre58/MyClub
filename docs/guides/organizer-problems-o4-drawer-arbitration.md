@@ -325,7 +325,7 @@ When **`SlotFeedMissing`** is **silenced** because draw is engaged and not yet p
 - MUST **omit** from `/attention`, bell count, PageHead **presented** counts, and Structure banners that depend on presented codes.
 - Silence MUST **not** hide independent codes or disable domain gates elsewhere.
 
-When **`SlotFeedMissing`** is **presented** (would block Prepare via [`StructurePreparePlacesGate`](../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePreparePlacesGate.cs)):
+When **`SlotFeedMissing`** is **presented** (diagnostic signal; **not** a Prepare integrity gate — D3 / `IsPrepareGateIssue`):
 
 - Host **`Severity` = `Blocking`** (not `Warning`).
 
@@ -334,7 +334,7 @@ When **`SlotFeedMissing`** is **presented** (would block Prepare via [`Structure
 | Code | Product severity | Gate / notes | Presentation |
 | :--- | :--------------- | :----------- | :----------- |
 | `OverCapacityEdge` | **Warning** | Prepare gate still applies (D5: severity ≠ gate) | Fiche: « N places en trop » **orange**; drawer: groupe **À traiter**, titre court |
-| `SlotFeedMissing` | **Blocking** when presented; **absent** when silenced | Prepare gate when present | Strip empty-tableau copy aligned with **Blocking** when `slotFeedMissingActive` |
+| `SlotFeedMissing` | **Blocking** when presented; **absent** when silenced | Not a Prepare integrity gate (D3); blocks Materialize / occupancy presentation | Strip empty-tableau copy aligned with **Blocking** when `slotFeedMissingActive` |
 | `PopulationShortfall` | **Blocking** (incl. U1 synthetic) | Composition / occupancy (see Application gates) | No **`progress`** tone masking; deficit meter stays **red**; visible in Structure syntheses |
 | `NonRootUnfed` | **Warning** (default) | Not a Prepare graph gate by code alone | Monitor; upgrade to **Blocking** only with an **explicit** gate + tests — do not infer from name |
 

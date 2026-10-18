@@ -2,7 +2,11 @@ import type { ReactNode } from 'react';
 
 import { Chip } from './Chip';
 import { Tooltip } from './Tooltip';
-import { HourglassIcon, LocateIcon } from '../icons/contentIcons';
+import {
+  HourglassIcon,
+  LocateIcon,
+  WithdrawIcon,
+} from '../icons/contentIcons';
 import { TeamCrest } from '../TeamCrest';
 
 export type EntryCellVariant = 'list-row' | 'chip';
@@ -13,7 +17,10 @@ export type EntryCellProps = {
   primaryColor?: string | null;
   variant?: EntryCellVariant;
   ineligible?: boolean;
+  /** @deprecated Prefer `ineligibleTooltip` (icon on row end). */
   ineligibleLabel?: string;
+  /** Withdrawal / inactive — icon + tooltip in the trailing slot (not inline warning copy). */
+  ineligibleTooltip?: string;
   unplaced?: boolean;
   placed?: boolean;
   placedTooltip?: string | null;
@@ -25,6 +32,26 @@ export type EntryCellProps = {
   nameClassName?: string;
   trailing?: ReactNode;
 };
+
+export function EntryCellWithdrawnMarker({
+  tooltip,
+  className = 'structure-entries__team-withdrawn',
+}: {
+  tooltip: string;
+  className?: string;
+}) {
+  return (
+    <Tooltip content={tooltip}>
+      <span
+        className={className}
+        role="img"
+        aria-label={tooltip}
+      >
+        <WithdrawIcon size="sm" aria-hidden="true" />
+      </span>
+    </Tooltip>
+  );
+}
 
 export function EntryCellPlacedMarker({
   tooltip,
@@ -51,6 +78,7 @@ export function EntryCell({
   variant = 'list-row',
   ineligible = false,
   ineligibleLabel,
+  ineligibleTooltip,
   placed = false,
   placedTooltip,
   pending = false,
@@ -61,8 +89,14 @@ export function EntryCell({
   nameClassName = 'structure-entries__team-name',
   trailing,
 }: EntryCellProps) {
+  const ineligibleSlot =
+    ineligible && ineligibleTooltip
+      ? <EntryCellWithdrawnMarker tooltip={ineligibleTooltip} />
+      : null;
+
   const placedSlot =
     trailing ??
+    ineligibleSlot ??
     (placed ? (
       <Tooltip content={placedTooltip ?? displayName}>
         <span className="structure-entries__team-placed">
@@ -156,12 +190,12 @@ export function EntryCell({
         size="sm"
       />
       <span className={nameClassName}>{displayName}</span>
-      {ineligible && ineligibleLabel ? (
+      {ineligible && ineligibleLabel && !ineligibleTooltip ? (
         <span className="structure-entries__team-warn">{ineligibleLabel}</span>
       ) : null}
       <span
         className="structure-entries__team-placed-slot"
-        aria-hidden={!placed && !trailing}
+        aria-hidden={!placed && !trailing && !ineligibleSlot}
         aria-label={ariaLabel}
       >
         {placedSlot}

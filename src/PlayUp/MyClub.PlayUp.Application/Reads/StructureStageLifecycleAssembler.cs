@@ -60,6 +60,11 @@ public static class StructureStageLifecycleAssembler
     /// <summary>Start disabled — eligible confrontations not fully materialized.</summary>
     public const string DisabledUnmaterializedConfrontations = "UnmaterializedConfrontations";
 
+    public const string DisabledPhaseRosterIncomplete =
+        StageStartReadinessGuard.DisabledPhaseRosterIncomplete;
+
+    public const string DisabledGroupsNotReady = StageStartReadinessGuard.DisabledGroupsNotReady;
+
     public const string DisabledNoExploitableInitialConfrontations =
         StageStartReadinessGuard.DisabledNoExploitableInitialConfrontations;
 
@@ -149,15 +154,6 @@ public static class StructureStageLifecycleAssembler
                 DisabledStructureGraphInvalid,
                 input,
                 input.StructureIssues!.First(CompetitionFlowAnalyzer.IsStructureGraphGateIssue));
-        }
-
-        if (StructurePreparePlacesGate.BlocksPrepare(input))
-        {
-            return BlockedTransition(
-                code,
-                ChecklistPlaces,
-                input,
-                ChecklistPlaces);
         }
 
         if (StructurePrepareAttributionGate.BlocksPrepare(input))
@@ -360,7 +356,9 @@ public static class StructureStageLifecycleAssembler
                 or DisabledUnmaterializedConfrontations
                 or DisabledDrawObsoleteForConsumption:
                 return ("matchs", null, false, false);
-            case DisabledNoExploitableInitialConfrontations:
+            case DisabledPhaseRosterIncomplete
+                or DisabledGroupsNotReady
+                or DisabledNoExploitableInitialConfrontations:
                 return (null, "rail-entries", false, false);
             case ChecklistExits or StructureViewAssembler.IssueConfrontationUndecidable:
                 return ("qualification", null, false, false);

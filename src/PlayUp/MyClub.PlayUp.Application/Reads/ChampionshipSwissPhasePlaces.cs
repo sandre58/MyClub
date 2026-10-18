@@ -24,19 +24,19 @@ internal static class ChampionshipSwissPhasePlaces
         Stage stage,
         IReadOnlyList<Stage> competitionStages)
     {
-        var active = CountActiveEntries(competition);
-        if (active == 0)
+        var occupying = CountOccupyingEntries(competition);
+        if (occupying == 0)
         {
             return null;
         }
 
         if (StructureStageInboundTopology.IsRootComposition(stage, competitionStages))
         {
-            return active;
+            return occupying;
         }
 
         var expected = StructurePopulationVolume.ExpectedOccupancy(stage, competitionStages);
-        return expected > 0 ? expected : active;
+        return expected > 0 ? expected : occupying;
     }
 
     /// <summary>
@@ -118,6 +118,6 @@ internal static class ChampionshipSwissPhasePlaces
         }
     }
 
-    private static int CountActiveEntries(Competition competition) =>
-        competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
+    private static int CountOccupyingEntries(Competition competition) =>
+        competition.Entries.Count;
 }

@@ -154,8 +154,15 @@ export function compositionTeamRowsResolutionStats(
   if (!rows?.length) {
     return null;
   }
-  const resolved = rows.filter((row) => row.kind === 'resolved').length;
-  return { resolved, total: rows.length };
+  let resolved = 0;
+  let total = 0;
+  for (const row of rows) {
+    total += 1;
+    if (row.kind === 'resolved') {
+      resolved += 1;
+    }
+  }
+  return { resolved, total };
 }
 
 /** Exploitation / historical composition band — always « Résolues » when total > 0. */

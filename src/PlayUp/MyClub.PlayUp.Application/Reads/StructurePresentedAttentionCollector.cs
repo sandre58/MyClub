@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -51,6 +50,7 @@ public static class StructurePresentedAttentionCollector
             }
 
             CollectStartTransitionBlockers(stage, items);
+            CollectGroupsMatchProductionAttentionGap(stage, items);
         }
 
         if (structureView.Readiness.Blockers.Contains(StructureViewAssembler.BlockerCupBracketInvalid))
@@ -74,6 +74,51 @@ public static class StructurePresentedAttentionCollector
         StructureViewDto view) =>
         StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
             != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
+
+    private static void CollectGroupsMatchProductionAttentionGap(
+        StructureStageHubSummaryDto stage,
+        IList<NeedsAttentionItemDto> items)
+    {
+        if (!ReportsGroupsMatchProductionAttentionGap(stage))
+        {
+            return;
+        }
+
+        const string reason = StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations;
+        items.Add(
+            new NeedsAttentionItemDto(
+                reason,
+                NeedsAttentionAssembler.SeverityBlocking,
+                "Stage",
+                stage.StageId.ToString(),
+                new Dictionary<string, string> { ["stageId"] = stage.StageId.ToString() },
+                Problem: OrganizerProblemSemanticsResolver.TryFromStartTransitionBlocker(reason)));
+    }
+
+    private static bool ReportsGroupsMatchProductionAttentionGap(
+        StructureStageHubSummaryDto stage)
+    {
+        if (stage.Status is not StageStatus.Ready || stage.FormatKind is not StructureFormatKind.Groups)
+        {
+            return false;
+        }
+
+        var materialize = stage.Materialize;
+        if (materialize?.CommandEnabled != false)
+        {
+            return false;
+        }
+
+        var capacity = materialize.GroupsPlacementCapacityCount;
+        var filled = materialize.GroupsPlacementFilledCount;
+        if (capacity <= 0 || filled >= capacity)
+        {
+            return false;
+        }
+
+        var transition = stage.Lifecycle?.Transition;
+        return transition is not { Enabled: false, Code: OverviewAssembler.ActionStartStage };
+    }
 
     private static void CollectStartTransitionBlockers(
         StructureStageHubSummaryDto stage,
@@ -112,9 +157,16 @@ public static class StructurePresentedAttentionCollector
             && primaryDisabledReasonCode is
                 StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
                 or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
-                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations)
+                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations
+                or StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
+                or StructureStageLifecycleAssembler.DisabledGroupsNotReady)
         {
-            yield return primaryDisabledReasonCode;
+            if (primaryDisabledReasonCode
+                    != StructureStageLifecycleAssembler.DisabledGroupsNotReady
+                || !DeferGroupsNotReadyForDraw(stage))
+            {
+                yield return primaryDisabledReasonCode;
+            }
         }
 
         if (ReportsCanonicalEntryRoundStartGap(stage))
@@ -150,10 +202,13 @@ public static class StructurePresentedAttentionCollector
         StructureStageHubSummaryDto stage,
         string? primaryDisabledReasonCode)
     {
-        if (primaryDisabledReasonCode
-            == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations)
+        switch (primaryDisabledReasonCode)
         {
-            return true;
+            case StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
+                or StructureStageLifecycleAssembler.DisabledGroupsNotReady:
+                return false;
+            case StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations:
+                return true;
         }
 
         if (stage.Status is not StageStatus.Ready)
@@ -162,13 +217,9 @@ public static class StructurePresentedAttentionCollector
         }
 
         var materialize = stage.Materialize;
-        if (materialize is null)
-        {
-            return false;
-        }
-
-        return materialize.EligibleCount > 0
-               || materialize.DeterminedCount > materialize.MaterializedCount;
+        return materialize is not null && (materialize.EligibleCount != 0
+                                            || materialize.MaterializedCount < materialize.DeterminedCount) && (materialize.EligibleCount > 0
+            || materialize.DeterminedCount > materialize.MaterializedCount);
     }
 
     private static bool IsExcludedSource(string code) =>
@@ -200,6 +251,17 @@ public static class StructurePresentedAttentionCollector
             filtered.RemoveAll(code => code == CompetitionFlowAnalyzer.SlotFeedMissing);
         }
 
+        if (DeferGroupsNotReadyForDraw(stage))
+        {
+            filtered.RemoveAll(code =>
+                code == StructureStageLifecycleAssembler.DisabledGroupsNotReady);
+        }
+
+        if (filtered.Contains(CompetitionFlowAnalyzer.PopulationShortfall, CodeComparer))
+        {
+            filtered.RemoveAll(code => code == CompetitionFlowAnalyzer.NonRootUnfed);
+        }
+
         return ProjectPresentedIssueCodes(filtered);
     }
 
@@ -213,6 +275,11 @@ public static class StructurePresentedAttentionCollector
             HasDrawRules: true, DrawExecutionBadge: not (
             StructureDrawExecutionBadge.ToApply or StructureDrawExecutionBadge.Applied)
         };
+
+    internal static bool DeferGroupsNotReadyForDraw(StructureStageHubSummaryDto stage) =>
+        StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(
+            stage.HasDrawRules,
+            stage.DrawExecutionBadge);
 
     /// <summary>SPA: <c>stageHasEngagedMissingPots</c>.</summary>
     internal static bool StageHasEngagedMissingPots(StructureStageHubSummaryDto stage) =>

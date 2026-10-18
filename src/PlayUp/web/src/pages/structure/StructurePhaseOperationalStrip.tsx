@@ -41,9 +41,11 @@ import {
   hasMatchsStructuralProductionChrome,
   materializeDisabledCaption,
   materializeRatioTone,
+  isGroupsPoolPlacementIncomplete,
   resolveMatchsProductionGauge,
   resolveStartStageProductionBlocker,
   shouldConfirmCupMaterializeWithIncompleteEntryRound,
+  shouldShowBlockedGroupsMaterializeCta,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
 import {
@@ -253,6 +255,7 @@ export function StructurePhaseOperationalStrip({
   drawApplied,
   layoutVariant = 'composition',
   placesStripLayout = 'full',
+  compositionDrawColumnHead = false,
 }: {
   placement: StructurePlacementOperationalSectionProps | null;
   showPlaces: boolean;
@@ -267,6 +270,8 @@ export function StructurePhaseOperationalStrip({
   drawApplied: boolean;
   layoutVariant?: StructureOperationalStripLayoutVariant;
   placesStripLayout?: PlacesStripLayout;
+  /** Composition band: PanelHead owns the draw title in the standalone draw column. */
+  compositionDrawColumnHead?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const { t: tActions } = useTranslation('actions');
@@ -359,9 +364,12 @@ export function StructurePhaseOperationalStrip({
   const compositionStack = layoutVariant === 'composition';
   const stripSectionTitlePresentation = compositionStack ? 'subtitle' : 'chip';
   const placesTitlePresentation = compositionStack ? 'hidden' : 'chip';
-  const drawTitlePresentation = compositionStack
-    ? 'subtitle'
-    : stripSectionTitlePresentation;
+  const drawTitlePresentation =
+    compositionStack && compositionDrawColumnHead
+      ? 'hidden'
+      : compositionStack
+        ? 'subtitle'
+        : stripSectionTitlePresentation;
 
   const sectionIndex = (kind: StripSectionKind) =>
     visibleSections.indexOf(kind) + 1;
@@ -528,6 +536,10 @@ function PlacesColumn(
   const unknownCapacity = capacity == null || capacity <= 0;
   const drawRulesEngaged = props.showDrawCta;
   const drawLaunchable = props.drawLaunchable ?? false;
+  const drawLaunchSignal =
+    drawRulesEngaged &&
+    props.occupiedPlacesCount === 0 &&
+    (drawLaunchable || props.drawExecutionBadge === 'ToLaunch');
   const occupancyTone =
     !unknownCapacity &&
     capacity != null &&
@@ -535,6 +547,7 @@ function PlacesColumn(
       ? resolvePlaceOccupancyTone(props.occupiedPlacesCount, capacity, {
           drawRulesEngaged,
           drawLaunchable,
+          drawLaunchSignal,
         })
       : 'neutral';
 
@@ -551,26 +564,33 @@ function PlacesColumn(
     slotFeedMissingActive: props.slotFeedMissingActive ?? false,
     drawRulesEngaged,
     drawLaunchable,
+    drawExecutionBadge: props.drawExecutionBadge,
     stageStatus: props.stageStatus,
     slotFeedPresentationContext: props.slotFeedPresentationContext,
   });
 
   const softenPlacePoolTone =
+    !drawLaunchSignal &&
     placeMeter.kind !== 'danger' &&
     (isDraftLikeStageStatus(props.stageStatus) ||
       isSuspendedStageStatus(props.stageStatus) ||
       isCompletedStageStatus(props.stageStatus));
-  const occupancyToneForPool = softenPlacePoolTone
-    ? operationalStripPoolTone(
-        placeMeter.kind,
-        placeMeter.kind === 'attention' ? 'attention' : 'neutral',
-      )
-    : operationalStripPoolTone(placeMeter.kind, occupancyTone);
+  const occupancyToneForPool = drawLaunchSignal
+    ? 'brand'
+    : softenPlacePoolTone
+      ? operationalStripPoolTone(
+          placeMeter.kind,
+          placeMeter.kind === 'attention' ? 'attention' : 'neutral',
+        )
+      : operationalStripPoolTone(placeMeter.kind, occupancyTone);
 
-  const placesPoolTone = operationalStripPoolTone(
-    placeMeter.kind,
-    occupancyToneForPool,
-  );
+  const placesPoolTone = drawLaunchSignal
+    ? 'brand'
+    : operationalStripPoolTone(placeMeter.kind, occupancyToneForPool);
+
+  const placementRatioTone = drawLaunchSignal
+    ? 'brand'
+    : drawPoolToneToRatioGaugeTone(placesPoolTone);
 
   const placesInitialLoading = !props.occupancyReady;
   const placesUpdatingLabel = t(
@@ -608,7 +628,7 @@ function PlacesColumn(
             ratioCaption={ratioLabel}
             message={placeMeter.text}
             messageKind={placeMeter.kind}
-            ratioTone={drawPoolToneToRatioGaugeTone(placesPoolTone)}
+            ratioTone={placementRatioTone}
             ariaLabel={t('fiche.operational.placement.meterAria')}
             loading={placesInitialLoading && !unknownCapacity}
             loadingMessage={placesUpdatingLabel}
@@ -1153,6 +1173,11 @@ function MatchesColumn({
       : 'neutral';
   const showMaterializePrimary =
     materialize != null && presentation === 'actionable';
+  const showMaterializeBlockedCta =
+    materialize != null &&
+    presentation != null &&
+    shouldShowBlockedGroupsMaterializeCta(materialize, presentation);
+  const showMaterializeCta = showMaterializePrimary || showMaterializeBlockedCta;
   const asideStripContent = resolveAsideMatchsStripContent(stage, presentation);
   const showViewMatchesLink = asideStripContent.showViewMatchesLink;
 
@@ -1184,6 +1209,8 @@ function MatchesColumn({
 
   const entryRoundPlacementRatio =
     materialize != null ? cupEntryRoundPlacementGaugeRatio(materialize) : null;
+  const groupsPoolsIncomplete =
+    materialize != null && isGroupsPoolPlacementIncomplete(materialize);
   const matchMeter = resolveProductionMeterCopy({
     t,
     blockedCaption,
@@ -1191,6 +1218,7 @@ function MatchesColumn({
     hasProduction: materialize != null || dematerialize != null,
     startStageBlocker,
     productionGaugeMode,
+    groupsPoolsIncomplete,
   });
 
   const productionBasePoolTone =
@@ -1314,11 +1342,13 @@ function MatchesColumn({
   const productionLeadingActions =
     asideStripContent.showProductionLeadingActions ? (
       <>
-        {showMaterializePrimary && materialize ? (
+        {showMaterializeCta && materialize ? (
           <button
             type="button"
             className={materializeBtnClass}
-            disabled={materializeMutation.isPending}
+            disabled={
+              !materialize.commandEnabled || materializeMutation.isPending
+            }
             onClick={requestMaterialize}
           >
             {materializeMutation.isPending ? (

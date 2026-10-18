@@ -100,6 +100,7 @@ function resolveMatrixCell(
     code === 'IncompleteEntryRound'
     || code === 'UnmaterializedConfrontations'
     || code === 'NoExploitableInitialConfrontations'
+    || code === 'GroupsNotReady'
   ) {
     return 'danger';
   }

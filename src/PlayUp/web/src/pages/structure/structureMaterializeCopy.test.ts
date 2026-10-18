@@ -13,6 +13,7 @@ import {
   cupMatchProductionGaugeRatio,
   materializeDeterminedConfrontationsRatio,
   resolveMatchsProductionGauge,
+  groupsPlacementGaugeRatio,
   hasMatchsStructuralProductionChrome,
   shouldConfirmCupMaterializeWithIncompleteEntryRound,
   resolveStartStageProductionBlocker,
@@ -257,6 +258,64 @@ describe('structureMaterializeCopy', () => {
         { matchCount: 0 },
       ),
     ).toBe(false);
+  });
+
+  it('groups not ready exposes match gauge and separate pool gauge', () => {
+    const materialize = {
+      ...base,
+      determinedCount: 0,
+      materializedCount: 0,
+      disabledReason: 'GroupsNotReady',
+      groupsPlacementFilledCount: 2,
+      groupsPlacementCapacityCount: 8,
+      prospectiveConfrontationCount: 4,
+    };
+    const stage = { matchCount: 0, formatKind: 'Groups' as const };
+    expect(groupsPlacementGaugeRatio(materialize)).toEqual({
+      filled: 2,
+      capacity: 8,
+    });
+    expect(
+      resolveMatchsProductionGauge(
+        { ...materialize, confrontations: [] },
+        stage,
+      ),
+    ).toEqual({
+      mode: 'materialized',
+      ratio: { filled: 0, capacity: 4 },
+    });
+  });
+
+  it('groups not ready wins over undetermined confrontation rows (no cup idle copy)', () => {
+    const materialize = {
+      ...base,
+      determinedCount: 0,
+      materializedCount: 0,
+      disabledReason: 'GroupsNotReady',
+      groupsPlacementFilledCount: 1,
+      groupsPlacementCapacityCount: 4,
+      prospectiveConfrontationCount: 2,
+      confrontations: [
+        {
+          key: 'x',
+          sideA: 'A',
+          sideB: 'B',
+          determined: false,
+          materialized: false,
+          eligible: false,
+        },
+      ],
+    };
+    const stage = {
+      matchCount: 0,
+      formatKind: 'Groups' as const,
+      groupCount: 2,
+      placesPerGroup: 2,
+    };
+    expect(resolveMatchsProductionGauge(materialize, stage)).toEqual({
+      mode: 'materialized',
+      ratio: { filled: 0, capacity: 2 },
+    });
   });
 
   it('resolveStartStageProductionBlocker ignores NoExploitableInitialConfrontations', () => {

@@ -98,7 +98,11 @@ public static class NeedsAttentionAssembler
         }
 
         if (stages.Count == 0) return new NeedsAttentionDto(competition.Id.Value, items);
-        var structureView = StructureViewAssembler.Assemble(competition, stages);
+        var matchSummariesByStage = ToMatchSummaryRowsByStage(matchesByStage);
+        var structureView = StructureViewAssembler.Assemble(
+            competition,
+            stages,
+            matchSummariesByStage: matchSummariesByStage);
         StructurePresentedAttentionCollector.Collect(structureView, items);
 
         return new NeedsAttentionDto(competition.Id.Value, items);
@@ -474,4 +478,17 @@ public static class NeedsAttentionAssembler
             targetType,
             targetId,
             Problem: OrganizerProblemSemanticsResolver.TryFromAttentionSource(SourceQualificationPending));
+
+    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> ToMatchSummaryRowsByStage(
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage) =>
+        matchesByStage.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<MatchSummaryRow>)[
+                .. pair.Value.Select(match => new MatchSummaryRow(
+                    match.Id,
+                    match.StageId,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result))]);
 }

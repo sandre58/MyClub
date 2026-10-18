@@ -28,8 +28,8 @@
 | **Prepare** | Command `PrepareStageAsync` → `PrepareStage.Execute` — **one-shot Draft → Ready** | Stays **transition gate** only; **not** continuous revalidation while editing in Draft |
 | **Post-mutation revalidation** | Not implemented as commands; next read refreshes `structureIssues` | **New (future):** integrity (I) + D1 on operational mutations in Ready — **after** matrix sign-off |
 
-**Prepare command path:** `StructurePreparePlacesGate.Ensure` → `PrepareStage.Execute` (slot feed resolution when slots exist) → `target.Prepare(clock)`.  
-**Prepare read path:** `StructureStageLifecycleAssembler.ResolvePrepareTransition` mirrors gates (graph, places, attribution, `CollectPrepareGateCodes`).
+**Prepare command path:** `PrepareStage.Execute` (slot feed resolution when slots exist) → `target.Prepare(clock)`.  
+**Prepare read path:** `StructureStageLifecycleAssembler.ResolvePrepareTransition` mirrors gates (graph, attribution, `CollectPrepareGateCodes`).
 
 ---
 
@@ -173,7 +173,7 @@ Legend: **Y** = blocks or maps to blocking; **W** = warning in drawer/attention;
 
 ## 6. Resolved arbitration #1 — `SlotFeedMissing` (updated D3, 2026-10-15)
 
-- **Prepare:** **does not** block on schematic occupancy or `FeedResolutionStatus.Missing`; **does** block on `InvalidFeed` / `MultipleFeeds` and other integrity prepare gates. Groups composition pool gap remains via [`StructurePreparePlacesGate`](../../../src/PlayUp/MyClub.PlayUp.Application/Reads/StructurePreparePlacesGate.cs) only.
+- **Prepare:** **does not** block on schematic occupancy, groups composition pool gap, or `FeedResolutionStatus.Missing` (D3 — operational completeness is Materialize-only); **does** block on `InvalidFeed` / `MultipleFeeds` and other integrity prepare gates (`CollectPrepareGateCodes`, `PrepareStage`).
 - **Materialize:** unchanged — format-specific occupancy / confrontation rules.
 - **Drawer:** D5 attention in Draft for occupancy; `IsSlotFeedAwaitingDraw` suppression unchanged.
 

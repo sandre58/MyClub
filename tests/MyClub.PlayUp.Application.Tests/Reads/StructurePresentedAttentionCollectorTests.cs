@@ -7,13 +7,13 @@
 using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
-using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Application.Stages;
-using MyClub.PlayUp.TestKit;
+using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Reads;
@@ -140,6 +140,47 @@ public sealed class StructurePresentedAttentionCollectorTests
             koHub);
 
         presented.Should().ContainSingle(CompetitionFlowAnalyzer.SlotFeedMissing);
+    }
+
+    [Fact]
+    public void ProjectPresentedStageIssueCodes_drops_NonRootUnfed_when_PopulationShortfall_present()
+    {
+        var competition = CreateCompetition.Execute("Quarts unfed", _clock);
+        var source = Stage.Create(
+            competition.Id,
+            new StageName("Poules"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: true),
+            _clock);
+        competition.AddStage(source.Id, _clock);
+        source.AddGroup("A", _clock);
+        source.AddMatchday(1, _clock);
+
+        var target = Stage.Create(
+            competition.Id,
+            new StageName("Quarts"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(target.Id, _clock);
+        target.AddRound("QF", _clock);
+        target.AddSlot("QF1-A");
+        target.AddSlot("QF1-B");
+        target.AddSlot("QF2-A");
+        target.AddSlot("QF2-B");
+
+        var view = StructureViewAssembler.Assemble(competition, [source, target]);
+        var qfHub = view.Stages.Single(s => s.Name == "Quarts");
+
+        var items = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(view, items);
+        var sources = items
+            .Where(item =>
+                item.TargetType == "Stage"
+                && item.TargetId == qfHub.StageId.ToString())
+            .Select(item => item.Source)
+            .ToList();
+
+        sources.Should().Contain(CompetitionFlowAnalyzer.PopulationShortfall);
+        sources.Should().NotContain(CompetitionFlowAnalyzer.NonRootUnfed);
     }
 
     [Fact]
@@ -277,6 +318,37 @@ public sealed class StructurePresentedAttentionCollectorTests
     }
 
     [Fact]
+    public void Collect_emits_unmaterialized_when_groups_placement_blocks_production()
+    {
+        var competition = CreateCompetition.Execute("Groups drawer", _clock);
+        for (var i = 0; i < 8; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 4),
+            _clock);
+        var stage = configured.Stage;
+        var entries = competition.Entries.OrderBy(entry => entry.Id.Value).ToArray();
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[0].Id);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[1].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[2].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[3].Id);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var items = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(view, items);
+
+        items.Should().Contain(item =>
+            item.Source == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
+    }
+
+    [Fact]
     public void Collect_emits_no_exploitable_initial_confrontations_for_solo_championship()
     {
         var situation = TestCompetition.Create("Solo CH", _clock)
@@ -348,5 +420,32 @@ public sealed class StructurePresentedAttentionCollectorTests
         items.Should().Contain(item =>
             item.Source == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
             && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
+    }
+
+    [Fact]
+    public void Assemble_does_not_emit_unmaterialized_when_championship_fully_materialized()
+    {
+        var situation = TestCompetition.Create("Ch materialized", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(
+            situation.Competition,
+            stage,
+            [stage],
+            _clock);
+        var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
+        var matchesByStage = new Dictionary<StageId, IReadOnlyList<Match>>
+        {
+            [stage.Id] = materialized.CreatedMatches
+        };
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            situation.Competition,
+            [stage],
+            matchesByStage);
+
+        attention.Items.Should().NotContain(item =>
+            item.Source == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
     }
 }

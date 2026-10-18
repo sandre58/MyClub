@@ -36,6 +36,8 @@
     "StartBlockedUnmaterialized": "Materialize every eligible confrontation before starting the phase.",
     "StartBlockedIncompleteEntryRound": "Complete every entry-bracket pair before starting the phase.",
     "StartBlockedNoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
+    "StartBlockedPhaseRosterIncomplete": "Complete the phase composition (eligible teams) before starting.",
+    "StartBlockedGroupsNotReady": "Complete group assignments before starting the phase.",
     "StageExploitationClosed": "The competition is completed or archived.",
     "StageExploitationNotOpen": "Sporting operations are not open on this phase yet.",
     "MatchLiveInProgress": "A match is live — finish or cancel it before pausing the phase.",

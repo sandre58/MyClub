@@ -79,6 +79,15 @@
   color: var(--color-brand);
 }
 
+.ds-ratio-message-gauge__aside[data-pool-tone='brand'] + .ds-ratio-message-gauge__main .ds-ratio-message-gauge__message-text {
+  color: var(--color-brand);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ds-ratio-message-gauge__aside[data-pool-tone='brand'] + .ds-ratio-message-gauge__main .ds-ratio-message-gauge__message-icon {
+  color: var(--color-brand);
+}
+
 .ds-ratio-message-gauge__aside[data-pool-tone='attention'] .ds-ratio-message-gauge__ratio-filled,
 .ds-ratio-message-gauge__aside[data-pool-tone='partial'] .ds-ratio-message-gauge__ratio-filled {
   color: var(--color-attention);
@@ -146,6 +155,7 @@
 .ds-ratio-message-gauge__message-text {
   min-width: 0;
   color: var(--color-text-primary);
+  line-height: var(--leading-tight);
 }
 
 .ds-ratio-message-gauge__message[data-kind='attention'] .ds-ratio-message-gauge__message-text {

@@ -58,7 +58,7 @@ export function resolveMatchsProductionGauge(
     return null;
   }
 
-  if (materialize.determinedCount > 0) {
+  if (materialize.determinedCount > 0 && !isGroupsPoolPlacementIncomplete(materialize)) {
     let ratio: { filled: number; capacity: number } | null = null;
     if (
       materialize.commandCode === 'MaterializeFromOccupiedSlots' &&
@@ -79,12 +79,100 @@ export function resolveMatchsProductionGauge(
     }
   }
 
+  const groupsProspective = groupsProspectiveMatchProductionGauge(
+    materialize,
+    stage,
+  );
+  if (groupsProspective) {
+    return { mode: 'materialized', ratio: groupsProspective };
+  }
+
   const determined = materializeDeterminedConfrontationsRatio(materialize);
-  if (determined) {
+  if (determined && !isGroupsPoolPlacementIncomplete(materialize)) {
     return { mode: 'determined', ratio: determined };
   }
 
   return null;
+}
+
+/** Groups pools not full enough for confrontation production (read or legacy hub). */
+/** Ready Groups: pools incomplete and match production command is off (SPA parity when lifecycle read lags). */
+export function groupsPoolsBlockPhaseStart(
+  stage: Pick<StructureStageHubSummary, 'status' | 'materialize'>,
+): boolean {
+  if (stage.status !== 'Ready') {
+    return false;
+  }
+  const materialize = stage.materialize;
+  if (!materialize || materialize.commandEnabled) {
+    return false;
+  }
+  return isGroupsPoolPlacementIncomplete(materialize);
+}
+
+export function isGroupsPoolPlacementIncomplete(
+  materialize: StructureMaterialize,
+): boolean {
+  if (materialize.disabledReason === 'GroupsNotReady') {
+    return true;
+  }
+  const capacity = materialize.groupsPlacementCapacityCount ?? 0;
+  const filled = materialize.groupsPlacementFilledCount ?? 0;
+  return capacity > 0 && filled < capacity;
+}
+
+function roundRobinPairCountPerPool(placesPerGroup: number): number {
+  return placesPerGroup >= 2 ? (placesPerGroup * (placesPerGroup - 1)) / 2 : 0;
+}
+
+function resolveGroupsProspectiveConfrontationCapacity(
+  materialize: StructureMaterialize,
+  stage?:
+    | Pick<
+        StructureStageHubSummary,
+        'formatKind' | 'groupCount' | 'placesPerGroup'
+      >
+    | null,
+): number {
+  const fromRead = materialize.prospectiveConfrontationCount ?? 0;
+  if (fromRead > 0) {
+    return fromRead;
+  }
+  if (!isGroupsPoolPlacementIncomplete(materialize)) {
+    return 0;
+  }
+  if (stage?.formatKind !== 'Groups') {
+    return 0;
+  }
+  const groups = stage.groupCount ?? 0;
+  const perGroup = stage.placesPerGroup ?? 0;
+  if (groups <= 0 || perGroup < 2) {
+    return 0;
+  }
+  return groups * roundRobinPairCountPerPool(perGroup);
+}
+
+/** Matchs strip gauge while Groups pools are incomplete (0 / prospective confrontations). */
+export function groupsProspectiveMatchProductionGauge(
+  materialize: StructureMaterialize,
+  stage?:
+    | Pick<
+        StructureStageHubSummary,
+        'formatKind' | 'groupCount' | 'placesPerGroup'
+      >
+    | null,
+): { filled: number; capacity: number } | null {
+  if (!isGroupsPoolPlacementIncomplete(materialize)) {
+    return null;
+  }
+  const capacity = resolveGroupsProspectiveConfrontationCapacity(
+    materialize,
+    stage,
+  );
+  if (capacity <= 0) {
+    return null;
+  }
+  return { filled: materialize.materializedCount, capacity };
 }
 
 export function hasMatchsStructuralProductionChrome(
@@ -103,6 +191,15 @@ export function hasMatchsStructuralProductionChrome(
   return (
     resolveMatchsProductionGauge(materialize, stage) != null ||
     cupEntryRoundPlacementGaugeRatio(materialize) != null
+  );
+}
+
+export function shouldShowBlockedGroupsMaterializeCta(
+  materialize: StructureMaterialize,
+  presentation: MaterializePresentation,
+): boolean {
+  return (
+    presentation === 'blocked' && isGroupsPoolPlacementIncomplete(materialize)
   );
 }
 
@@ -284,6 +381,21 @@ export function cupMatchProductionGaugeRatio(
     return null;
   }
   return { filled: stage.matchCount, capacity };
+}
+
+/** Groups placement gauge when pools are not ready for confrontation production. */
+export function groupsPlacementGaugeRatio(
+  materialize: StructureMaterialize,
+): { filled: number; capacity: number } | null {
+  if (!isGroupsPoolPlacementIncomplete(materialize)) {
+    return null;
+  }
+  const capacity = materialize.groupsPlacementCapacityCount ?? 0;
+  const filled = materialize.groupsPlacementFilledCount ?? 0;
+  if (capacity <= 0) {
+    return null;
+  }
+  return { filled, capacity };
 }
 
 /** Entry-round placement gauge (canonical pairs with two distinct entries). */

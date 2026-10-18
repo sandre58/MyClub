@@ -133,9 +133,11 @@ internal static class StageConfrontationMaterializationState
         MatchGenerationFormat format) =>
         entries.Count < 2
             ? []
-            : MaterializeMatches.BuildRoundRobinRounds(entries, format)
-                .SelectMany(round => round)
-                .ToArray();
+            :
+            [
+                .. MaterializeMatches.BuildRoundRobinRounds(entries, format)
+                    .SelectMany(round => round)
+            ];
 
     private static int CountGroupsEligible(
         Competition competition,
@@ -154,17 +156,14 @@ internal static class StageConfrontationMaterializationState
 
         var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
         var determined = CountGroupsDeterminedConfrontations(stage);
-        if (determined == 0)
-        {
-            return 0;
-        }
-
-        return (from @group in stage.Groups
-                where @group.EntryIds.Count >= 2
-                select MaterializeMatches.BuildRoundRobinRounds([.. @group.EntryIds], stage.MatchGenerationFormat)
-                .SelectMany(round => round)
-            into pairs
-                select pairs.Count(pair => !covered.Contains(pair))).Sum();
+        return determined == 0
+            ? 0
+            : (from @group in stage.Groups
+               where @group.EntryIds.Count >= 2
+               select MaterializeMatches.BuildRoundRobinRounds([.. @group.EntryIds], stage.MatchGenerationFormat)
+                    .SelectMany(round => round)
+               into pairs
+               select pairs.Count(pair => !covered.Contains(pair))).Sum();
     }
 
     private static int CountGroupsDeterminedConfrontations(Stage stage) =>
@@ -173,8 +172,7 @@ internal static class StageConfrontationMaterializationState
             .Sum(group => MaterializeMatches.BuildRoundRobinRounds(
                     [.. group.EntryIds],
                     stage.MatchGenerationFormat)
-                .SelectMany(round => round)
-                .Count());
+                .Sum(round => round.Count));
 
     private static bool AreGroupsReady(Stage stage) =>
         stage.Groups.Count > 0 && stage.Groups.All(group => group.EntryIds.Count >= 2);

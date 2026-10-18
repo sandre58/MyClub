@@ -98,6 +98,15 @@
   white-space: nowrap;
 }
 
+.structure-composition__withdrawn-marker {
+  flex: none;
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-attention);
+  line-height: 0;
+}
+
 @media (max-width: 36rem) {
   .structure-composition__toolbar {
     grid-template-columns: auto minmax(0, 1fr);

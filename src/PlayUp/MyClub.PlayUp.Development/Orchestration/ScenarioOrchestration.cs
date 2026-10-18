@@ -3408,6 +3408,7 @@ internal static class ScenarioOrchestration
             competition,
             recipe,
             stageLocalKey: $"{identityScope}-stage");
+        AssignRootComposition(stage, entries, context.Clock);
         SeedMaterialization.AssignGroupsRoundRobin(stage, entries);
         return (competition, stage, entries);
     }

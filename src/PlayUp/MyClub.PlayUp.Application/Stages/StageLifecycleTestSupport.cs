@@ -13,12 +13,12 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Test / Development helper mirroring Host Prepare gates before materialize.
+/// Test / Development helper: fill composition then <see cref="PrepareStage"/> before materialize.
 /// </summary>
 public static class StageLifecycleTestSupport
 {
     /// <summary>
-    /// Fills Championship/Swiss composition to Places N, runs Prepare gates, then <see cref="PrepareStage"/>.
+    /// Fills Championship/Swiss composition to Places N, then <see cref="PrepareStage"/>.
     /// </summary>
     public static void EnsureReadyForMaterialize(
         Competition competition,
@@ -38,7 +38,6 @@ public static class StageLifecycleTestSupport
             return;
         }
 
-        StructurePreparePlacesGate.Ensure(competition, stage, competitionStages);
         PrepareStage.Execute(stage, competitionStages, clock);
     }
 

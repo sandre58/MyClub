@@ -26,6 +26,8 @@ export const MATCHS_LIFECYCLE_WIRE_CODES = [
   'CycleDetected',
   'RoutingNondeterminism',
   'UnmaterializedConfrontations',
+  'PhaseRosterIncomplete',
+  'GroupsNotReady',
   'NoExploitableInitialConfrontations',
   'ProductionPresent',
   'MatchLifecycleStarted',

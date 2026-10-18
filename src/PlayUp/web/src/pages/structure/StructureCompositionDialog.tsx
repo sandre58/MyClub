@@ -16,6 +16,7 @@ import {
   SearchIcon,
 } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
+import { EntryCellWithdrawnMarker } from '../../design-system/components/EntryCell';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { notify } from '../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
@@ -424,9 +425,10 @@ export function StructureCompositionDialog({
                         {row.displayName}
                       </span>
                       {!row.eligible ? (
-                        <span className="structure-composition__warn">
-                          {t('composition.noLongerEligible')}
-                        </span>
+                        <EntryCellWithdrawnMarker
+                          tooltip={t('composition.withdrawnFromCompetitionTip')}
+                          className="structure-composition__withdrawn-marker"
+                        />
                       ) : null}
                     </label>
                   </li>
