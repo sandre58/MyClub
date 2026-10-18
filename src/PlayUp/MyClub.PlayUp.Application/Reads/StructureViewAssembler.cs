@@ -436,6 +436,7 @@ public static class StructureViewAssembler
             stage.Groups.Count,
             stage.Rounds.Count,
             CountMatchdaysWithAttachedMatches(stage),
+            stage.Matchdays.Count,
             stage.Slots.Count,
             match.Duration.NumberOfPeriods,
             match.Duration.DurationPerPeriod,

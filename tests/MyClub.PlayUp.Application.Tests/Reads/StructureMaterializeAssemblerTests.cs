@@ -103,6 +103,7 @@ public sealed class StructureMaterializeAssemblerTests
 
         hub.MatchCount.Should().Be(0);
         hub.MatchdayCount.Should().Be(0);
+        hub.ConfiguredMatchdayCount.Should().Be(stage.Matchdays.Count);
         stage.Matchdays.Count.Should().BeGreaterThan(0);
     }
 

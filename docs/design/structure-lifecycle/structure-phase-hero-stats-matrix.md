@@ -1,6 +1,6 @@
 # Structure phase fiche — hero stats (product + data contract)
 
-Status: **product decisions validated (2026-10-18)** · **Championship matchdays arbitration closed** — **no implementation** until Application hub contract is shipped and tested.
+Status: **product decisions validated (2026-10-18)** · **Application + SPA hero presentation shipped** (Swiss contract reserve unchanged).
 
 **Notion (product SoT):** task [Stats hero — réflexion par type × statut](https://app.notion.com/p/3fd75fb92d1081f0af6fc64d3476815c) · [Matrice UI Structure §4.1](https://app.notion.com/p/3fa75fb92d10811abec9fc2c771584c4).
 

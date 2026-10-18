@@ -14,7 +14,6 @@ import {
   GroupsFormatIcon,
   LayersIcon,
   MatchdayStatIcon,
-  MatchesStatIcon,
   PlusIcon,
   PencilIcon,
   RoundsStatIcon,
@@ -61,7 +60,6 @@ import {
   placedEntryIdsFromSchematic,
 } from './structureEntryPlacementProjection';
 import { countSchematicOccupiedPlaces } from './structurePlaceOccupancy';
-import { showProductionOperationalSection } from './structureOperationalCopy';
 import {
   areDrawRulesLockedByExecution,
   canAuthorStageDrawRules,
@@ -94,7 +92,7 @@ import {
   type StructureSectionId,
 } from './structureHubSections';
 import { resolvePlacesN } from './structurePlaces';
-import { swissRoundCounts } from './swissRoundCounts';
+import { resolveStructurePhaseHeroFacts } from './structurePhaseHeroFacts';
 import type { StructureFocusId } from './structureNavigation';
 import { listCupManualPlaces } from './manualPlacementUi';
 import '../regulation/regulation-shared.css';
@@ -799,76 +797,51 @@ export function StructurePhaseFiche({
     return <ExitKindMenu label={t('fiche.editExits')} options={options} />;
   };
 
-  const showProductionOperationalBar = showProductionOperationalSection(stage);
-
-  const heroFacts: {
-    icon: ReactNode;
-    value: string | number;
-    label: string;
-    statKey: string;
-  }[] = [];
-  const kind = stage.formatKind;
-  if (kind === 'Groups' && (stage.groupCount ?? 0) > 0) {
-    const n = stage.groupCount!;
-    heroFacts.push({
-      icon: <GroupsFormatIcon size="sm" />,
-      value: n,
-      label: t('fiche.stat.groups', { count: n }),
-      statKey: 'groups',
-    });
-  } else if (kind === 'Cup' && (stage.roundCount ?? 0) > 0) {
-    const n = stage.roundCount!;
-    heroFacts.push({
-      icon: <RoundsStatIcon size="sm" />,
-      value: n,
-      label: t('fiche.stat.rounds', { count: n }),
-      statKey: 'rounds',
-    });
-  } else if (kind === 'Championship') {
-    const n = stage.matchdayCount ?? 0;
-    heroFacts.push({
-      icon: <MatchdayStatIcon size="sm" />,
-      value: n,
-      label: t('fiche.stat.matchdays', { count: n }),
-      statKey: 'matchdays',
-    });
-  } else if (kind === 'Swiss') {
-    const { generated, planned } = swissRoundCounts(stage);
-    if ((planned != null && planned > 0) || generated > 0) {
-      heroFacts.push({
-        icon: <RoundsStatIcon size="sm" />,
-        value:
-          planned != null && planned > 0
-            ? `${generated}/${planned}`
-            : generated,
-        label:
-          planned != null && planned > 0
-            ? t('fiche.stat.swissRoundsGeneratedCaption')
-            : t('fiche.stat.rounds', { count: generated }),
-        statKey: 'swiss-rounds',
-      });
-    }
-  }
-  if (!showPlacementBlock) {
-    const n = resolvePlacesN(stage);
-    if (n != null && n > 0) {
-      heroFacts.push({
-        icon: <LayersIcon size="sm" />,
-        value: n,
-        label: t('fiche.stat.places', { count: n }),
-        statKey: 'places',
-      });
-    }
-  }
-  if (stage.materialize && !showProductionOperationalBar) {
-    const matchCount = stage.materialize.materializedCount;
-    heroFacts.push({
-      icon: <MatchesStatIcon size="sm" />,
-      value: matchCount,
-      label: t('fiche.stat.matches', { count: matchCount }),
-      statKey: 'matches',
-    });
-  }
+  const heroFacts = resolveStructurePhaseHeroFacts(stage, showPlacementBlock).map(
+    (wire) => {
+      const value = wire.value;
+      switch (wire.statKey) {
+        case 'groups':
+          return {
+            statKey: wire.statKey,
+            value,
+            icon: <GroupsFormatIcon size="sm" />,
+            label: t('fiche.stat.groups', { count: value }),
+          };
+        case 'rounds':
+          return {
+            statKey: wire.statKey,
+            value,
+            icon: <RoundsStatIcon size="sm" />,
+            label: t('fiche.stat.rounds', { count: value }),
+          };
+        case 'matchdays':
+          return {
+            statKey: wire.statKey,
+            value,
+            icon: <MatchdayStatIcon size="sm" />,
+            label: t('fiche.stat.matchdays', { count: value }),
+          };
+        case 'swiss-rounds':
+          return {
+            statKey: wire.statKey,
+            value,
+            icon: <RoundsStatIcon size="sm" />,
+            label:
+              typeof value === 'string' && value.includes('/')
+                ? t('fiche.stat.swissRoundsGeneratedCaption')
+                : t('fiche.stat.rounds', { count: value }),
+          };
+        case 'places':
+          return {
+            statKey: wire.statKey,
+            value,
+            icon: <LayersIcon size="sm" />,
+            label: t('fiche.stat.places', { count: value }),
+          };
+      }
+    },
+  );
 
   const showHeroStats = heroFacts.length > 0;
   const materializePresentation = materializePresentationForStage(

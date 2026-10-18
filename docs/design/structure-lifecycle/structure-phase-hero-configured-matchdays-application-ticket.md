@@ -1,6 +1,6 @@
 # Application ticket — Expose configured Championship matchday count
 
-Status: **ready to implement** (product + contract signed).  
+Status: **implemented** (Application contract — 2026-10-18).  
 Parent: [structure-phase-hero-stats-matrix.md](./structure-phase-hero-stats-matrix.md).
 
 ---
@@ -147,3 +147,4 @@ Build domain state with 5 `AddMatchday` calls, attach matches to fixtures on **t
 | Date | Change |
 | ---- | ------ |
 | 2026-10-18 | Ticket drafted; pre-flight verification added |
+| 2026-10-18 | `ConfiguredMatchdayCount` on `StructureStageHubSummaryDto`; tests in `StructureViewAssemblerConfiguredMatchdayCountTests` |

@@ -173,6 +173,7 @@ public sealed record StructureReadinessDto(
 /// <param name="GroupCount">Topology: groups in this phase.</param>
 /// <param name="RoundCount">Topology: cup rounds in this phase.</param>
 /// <param name="MatchdayCount">Topology: matchdays with at least one attached match (not skeleton seed).</param>
+/// <param name="ConfiguredMatchdayCount">Topology: matchdays on the stage skeleton (<c>Matchdays.Count</c>), independent of attached matches.</param>
 /// <param name="SlotCount">Slots.</param>
 /// <param name="NumberOfPeriods">MatchRules periods.</param>
 /// <param name="DurationPerPeriod">MatchRules duration.</param>
@@ -251,6 +252,7 @@ public sealed record StructureStageHubSummaryDto(
     int GroupCount,
     int RoundCount,
     int MatchdayCount,
+    int ConfiguredMatchdayCount,
     int SlotCount,
     int NumberOfPeriods,
     int DurationPerPeriod,
