@@ -40,6 +40,8 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [regulation-standing-running-audit-recette-2026-10-18.md](./regulation-standing-running-audit-recette-2026-10-18.md) | **Lot D shipped** — Règlement standing vs phase (UI audit, no gap) |
 | [inbound-qual-resolution-recette-2026-10-18.md](./inbound-qual-resolution-recette-2026-10-18.md) | **Lot E shipped** — inbound qual seats after `ApplyQualification` (population + ForForm) |
 | [composition-teams-withdrawal-presentation-recette-2026-10-18.md](./composition-teams-withdrawal-presentation-recette-2026-10-18.md) | **Lot B (presentation)** — icône retrait — **shipped** |
+| [structure-phase-hero-stats-matrix.md](./structure-phase-hero-stats-matrix.md) | **Research** — hero stats product matrix (A–E), backend-first architecture, data provenance audit; **no impl** until contract gaps closed |
+| [structure-phase-hero-configured-matchdays-application-ticket.md](./structure-phase-hero-configured-matchdays-application-ticket.md) | **Application ticket (ready)** — `ConfiguredMatchdayCount` on hub stage summary + tests; SPA/Swiss out of scope |
 | [composition-tile-lifecycle-presentation-2026-10-16.md](./composition-tile-lifecycle-presentation-2026-10-16.md) | **Signed (presentation)** — Composition tile zone density by lifecycle; compact Places/Tirage summary; recette R-CT-1…4 |
 | [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |
 | [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md) | Impact ², `R-Pres-*`, mutation inventory — **steps 3–5 implemented** (policy, surfaces, i18n short + mutation copy) |

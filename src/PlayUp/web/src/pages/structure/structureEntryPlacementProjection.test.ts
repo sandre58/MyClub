@@ -38,7 +38,7 @@ describe('structureEntryPlacementProjection', () => {
       },
       {
         formPosition: { kind: 'CupSlot', slotKey: 'B', roundOrder: 0 },
-        feedOrigin: { kind: 'Qualification', label: 'Q' },
+        feedOrigin: { kind: 'Qualification', sourceStageId: 'src-q' },
       },
       {
         formPosition: { kind: 'CupSlot', slotKey: 'C', roundOrder: 1 },

@@ -116,44 +116,15 @@ public static class StructureDrawCreateLaunchGate
         }
 
         var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
-        if (facts.BlockingPlaceCount > 0)
-        {
-            return Deny(BlockBracketPlacesOccupied);
-        }
-
-        if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
-        {
-            return Deny(BlockDrawObsoleteForConsumption);
-        }
-
-        if (!TryAllowOperationalDrawEdit(stage))
-        {
-            return Deny(BlockOperationalExitEdit);
-        }
-
-        return Allow();
+        return facts.BlockingPlaceCount > 0
+            ? Deny(BlockBracketPlacesOccupied)
+            : StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
+            ? Deny(BlockDrawObsoleteForConsumption)
+            : !TryAllowOperationalDrawEdit(stage) ? Deny(BlockOperationalExitEdit) : Allow();
     }
 
-    private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub)
-    {
-        if (hub.IsRootComposition)
-        {
-            return false;
-        }
-
-        if (hub.CompositionEntryCount <= 0)
-        {
-            return true;
-        }
-
-        if (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound
-            && inbound.ResolvedCount < inbound.ConfiguredVolume)
-        {
-            return true;
-        }
-
-        return false;
-    }
+    private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub) => !hub.IsRootComposition && (hub.CompositionEntryCount <= 0 || (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound
+        && inbound.ResolvedCount < inbound.ConfiguredVolume));
 
     private static bool TryAllowOperationalDrawEdit(Stage stage)
     {

@@ -10,7 +10,7 @@
  *
  * O-MAT-IMPL-1: tile visibility follows `resolveAsideMatchsStripContent` (cases 3, 5, 6).
  */
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, type UseMutationResult } from '@tanstack/react-query';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -71,6 +71,7 @@ function renderAsideStrip(
           placement={null}
           showPlaces={false}
           showDraw={false}
+          drawApplied={false}
           layoutVariant="aside-matchs"
           competitionId={competitionId}
           competitionStatus={competitionStatus}
@@ -143,12 +144,14 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
             formatLabel={null}
             editingName={false}
             nameDraft=""
-            renameMutation={{
-              isPending: false,
-              isError: false,
-              error: null,
-              reset: () => {},
-            }}
+            renameMutation={
+              {
+                isPending: false,
+                isError: false,
+                error: null,
+                reset: () => {},
+              } as unknown as UseMutationResult<void, Error, string, unknown>
+            }
             canRename={true}
             canRebuild={true}
             canRemove={false}
@@ -282,6 +285,7 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
           finished: 0,
           open: 6,
           cancelled: 0,
+          canComplete: false,
         },
       },
     });
@@ -299,11 +303,13 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
       status: 'Completed',
       matchCount: 6,
       lifecycle: {
+        transition: { code: 'CompleteStage', enabled: true },
         matchProgress: {
           total: 6,
           finished: 6,
           open: 0,
           cancelled: 0,
+          canComplete: true,
         },
       },
     });

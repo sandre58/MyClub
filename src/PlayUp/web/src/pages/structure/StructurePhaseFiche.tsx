@@ -952,10 +952,6 @@ export function StructurePhaseFiche({
         ? { resolved: populationMeterCurrent, capacity: placesN }
         : null,
     );
-  const compositionResolvedSeatCount = resolveCompositionResolvedSeatCount(
-    stage,
-    compositionResolvedGaugeStats?.resolved ?? qualifiersResolvedCount,
-  );
   const qualifiersResolvedEyebrow = (
     <CompositionQualifiersResolvedMeta
       resolved={qualifiersResolvedCount}

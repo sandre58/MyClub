@@ -64,6 +64,7 @@ describe('resolveSwissMatchsGuidance', () => {
         status: 'Running',
         matchdayCount: 1,
         lifecycle: {
+          transition: { code: 'CompleteStage', enabled: false },
           matchProgress: {
             total: 4,
             finished: 2,
@@ -83,6 +84,7 @@ describe('resolveSwissMatchsGuidance', () => {
         status: 'Running',
         matchdayCount: 1,
         lifecycle: {
+          transition: { code: 'CompleteStage', enabled: false },
           matchProgress: {
             total: 4,
             finished: 4,
@@ -102,6 +104,7 @@ describe('resolveSwissMatchsGuidance', () => {
         status: 'Running',
         matchdayCount: 1,
         lifecycle: {
+          transition: { code: 'CompleteStage', enabled: false },
           matchProgress: {
             total: 4,
             finished: 0,
@@ -122,6 +125,7 @@ describe('resolveSwissMatchsGuidance', () => {
         matchdayCount: 3,
         swissRoundCount: 3,
         lifecycle: {
+          transition: { code: 'CompleteStage', enabled: false },
           matchProgress: {
             total: 12,
             finished: 6,
@@ -143,6 +147,7 @@ describe('resolveSwissMatchsGuidance', () => {
         status: 'Running',
         matchdayCount: 1,
         lifecycle: {
+          transition: { code: 'CompleteStage', enabled: false },
           matchProgress: {
             total: 4,
             finished: 2,

@@ -116,7 +116,7 @@ public sealed class StructureViewAssemblerHubNextStepTests
         var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
 
         view.HubNextStep.Should().NotBeNull();
-        view.HubNextStep!.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
+        view.HubNextStep.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
         view.Readiness.ReadyForNextSlice.Should().BeTrue();
     }
 

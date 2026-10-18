@@ -72,7 +72,6 @@ import {
 } from './StructurePhaseMatchsLifecycleBlock';
 import {
   resolveAsideMatchsStripContent,
-  shouldShowMatchExploitationProgress,
   shouldShowMatchsSection,
   shouldShowProductionInMatchsSection,
 } from './structureMatchsSectionUi';

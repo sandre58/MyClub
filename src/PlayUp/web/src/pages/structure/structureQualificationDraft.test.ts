@@ -148,7 +148,7 @@ describe('qualification Place destinationSlotKeys', () => {
       positionTo: 1,
       destinationStageId: 'peer',
       destinationSlotKey: 'SF1-A',
-    });
+    } as import('../../types').StructureQualificationIntent);
     expect(draft.targetKind).toBe('place');
     expect(draft.destinationSlotKeys).toEqual(['SF1-A']);
   });

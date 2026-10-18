@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../../../api';
@@ -54,6 +55,8 @@ const t = (
   return opts?.defaultValue ?? '';
 };
 
+const tStructure: TFunction<'structure'> = t as TFunction<'structure'>;
+
 describe('formatStructureMutationMessage', () => {
   it('lists ready downstream consumer phase names on D1 refusal', () => {
     const downstream: StructureStageHubSummary = {
@@ -76,7 +79,7 @@ describe('formatStructureMutationMessage', () => {
       hasTieFormat: false,
     };
     const msg = formatStructureMutationMessage(
-      t,
+      tStructure,
       new ApiError(
         409,
         'blocked',
@@ -137,20 +140,20 @@ describe('matchsColumnVisibility', () => {
 
 describe('resolveLifecycleAnticipatedMessage', () => {
   it('resolves Attribution prepare gate copy', () => {
-    expect(resolveLifecycleAnticipatedMessage(t, 'Attribution')).toContain(
+    expect(resolveLifecycleAnticipatedMessage(tStructure, 'Attribution')).toContain(
       'attribution',
     );
   });
 
   it('resolves known wire codes from problems.lifecycle', () => {
-    expect(resolveLifecycleAnticipatedMessage(t, 'Places')).toMatch(/composition|pool/i);
-    expect(resolveLifecycleAnticipatedMessage(t, 'NotInInventory')).toContain(
+    expect(resolveLifecycleAnticipatedMessage(tStructure, 'Places')).toMatch(/composition|pool/i);
+    expect(resolveLifecycleAnticipatedMessage(tStructure, 'NotInInventory')).toContain(
       'unavailable',
     );
   });
 
   it('uses problem canon when lifecycle transport is an aggregate', () => {
-    const msg = resolveLifecycleAnticipatedMessage(t, 'StructureGraphInvalid', {
+    const msg = resolveLifecycleAnticipatedMessage(tStructure, 'StructureGraphInvalid', {
       canonCode: 'CycleDetected',
       semanticLevel: 'Gate',
       blockedActions: ['PrepareStage'],
@@ -162,12 +165,12 @@ describe('resolveLifecycleAnticipatedMessage', () => {
 
 describe('resolveDraftPrepareBodyMessage', () => {
   it('uses draft detail for StageNotReady block', () => {
-    const msg = resolveDraftPrepareBodyMessage(t, true, 'StageNotReady');
+    const msg = resolveDraftPrepareBodyMessage(tStructure, true, 'StageNotReady');
     expect(msg).toBe(enStructure.lifecycle.state.Draft.detail);
   });
 
   it('uses specific code when not StageNotReady', () => {
-    const msg = resolveDraftPrepareBodyMessage(t, true, 'Places');
+    const msg = resolveDraftPrepareBodyMessage(tStructure, true, 'Places');
     expect(msg).toBe(enStructure.problems.lifecycle.Places);
   });
 });
@@ -226,7 +229,7 @@ describe('resolveLifecycleMutationMessageKey', () => {
 
   it('resolves G-B-3 pool change refusal without mutation unknown', () => {
     const msg = resolveLifecycleMutationMessage(
-      t,
+      tStructure,
       new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawPoolChangeBlocked'),
     );
     expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawPoolChangeBlocked);
@@ -235,7 +238,7 @@ describe('resolveLifecycleMutationMessageKey', () => {
 
   it('resolves B1 slot placement refusal without mutation unknown', () => {
     const msg = resolveLifecycleMutationMessage(
-      t,
+      tStructure,
       new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawSlotPlacementProtected'),
     );
     expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawSlotPlacementProtected);
@@ -245,7 +248,7 @@ describe('resolveLifecycleMutationMessageKey', () => {
   it('resolves B-Q3a second draw refusal via errors.Stage (lot A)', async () => {
     await i18n.changeLanguage('en');
     const msg = resolveLifecycleMutationMessage(
-      t,
+      tStructure,
       new ApiError(
         409,
         'blocked',
@@ -272,7 +275,7 @@ describe('errors Stage parity (lot A B-Q3a)', () => {
 describe('resolveLifecycleMutationMessage', () => {
   it('uses OpenMatches copy for completion blocked POST', () => {
     const msg = resolveLifecycleMutationMessage(
-      t,
+      tStructure,
       new ApiError(409, 'blocked', undefined, STAGE_COMPLETION_BLOCKED),
     );
     expect(msg).toBe(enStructure.problems.lifecycle.OpenMatches);
@@ -280,7 +283,7 @@ describe('resolveLifecycleMutationMessage', () => {
 
   it('falls back to mutation unknown when api code has no mapping', () => {
     const msg = resolveLifecycleMutationMessage(
-      t,
+      tStructure,
       new ApiError(400, 'x', undefined, 'Application.SomeFutureCode'),
     );
     expect(msg).toBe(enStructure.problems.mutation._unknown);
@@ -288,7 +291,7 @@ describe('resolveLifecycleMutationMessage', () => {
 
   it('uses lifecycle copy for mapped prepare POST failures', () => {
     const msg = resolveLifecycleMutationMessage(
-      t,
+      tStructure,
       new ApiError(400, 'cycle', undefined, 'Application.StructureCycleDetected'),
     );
     expect(msg).toBe(enStructure.problems.lifecycle.CycleDetected);
@@ -296,7 +299,7 @@ describe('resolveLifecycleMutationMessage', () => {
 
   it('falls back to errors namespace when lifecycle and mutation keys are absent', () => {
     const msg = resolveLifecycleMutationMessage(
-      t,
+      tStructure,
       new ApiError(400, 'feed', undefined, 'Application.DanglingFeedTarget'),
     );
     expect(msg).not.toBe(enStructure.problems.mutation._unknown);
@@ -304,7 +307,7 @@ describe('resolveLifecycleMutationMessage', () => {
   });
 
   it('returns client Error message for non-ApiError', () => {
-    expect(resolveLifecycleMutationMessage(t, new Error('network'))).toBe('network');
+    expect(resolveLifecycleMutationMessage(tStructure, new Error('network'))).toBe('network');
   });
 });
 

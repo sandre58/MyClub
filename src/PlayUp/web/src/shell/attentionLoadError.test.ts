@@ -1,9 +1,10 @@
+import type { TFunction } from 'i18next';
 import { describe, expect, it } from 'vitest';
 
 import { ApiError } from '../api';
 import { attentionLoadErrorMessage } from './attentionLoadError';
 
-const t = (key: string) => key;
+const t = ((key: string) => key) as TFunction<'shell'>;
 
 describe('attentionLoadErrorMessage', () => {
   it('maps 403 to auth copy', () => {

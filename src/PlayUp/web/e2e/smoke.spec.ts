@@ -53,10 +53,7 @@ test.describe('Play’Up smoke', () => {
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
 
-    const phase = page.getByRole('button', { name: /League/i });
-    await expect(phase).toBeVisible();
-    await phase.click();
-
+    // Single-phase hub: topology rail is hidden; fiche opens on the only stage.
     await expect(page.getByRole('heading', { name: 'League' })).toBeVisible();
     await expect(page.getByRole('heading', { name: /^Match$/i })).toBeVisible();
   });

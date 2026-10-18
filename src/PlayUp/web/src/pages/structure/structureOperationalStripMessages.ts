@@ -291,11 +291,7 @@ export function resolveProductionMeterCopy(input: {
       kind: 'success',
     };
   }
-  if (
-    groupsPoolsIncomplete &&
-    productionGaugeMode !== 'determined' &&
-    gaugeRatio.filled < gaugeRatio.capacity
-  ) {
+  if (groupsPoolsIncomplete && gaugeRatio.filled < gaugeRatio.capacity) {
     return {
       text: t(
         'fiche.operational.production.stateMessage.matchesBlockedByGroupsPools',

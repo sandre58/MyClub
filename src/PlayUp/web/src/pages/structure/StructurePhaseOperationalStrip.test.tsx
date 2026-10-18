@@ -121,6 +121,7 @@ function renderStrip(
     placesStripLayout?: ComponentProps<
       typeof StructurePhaseOperationalStrip
     >['placesStripLayout'];
+    structureStages?: readonly StructureStageHubSummary[];
   } = {},
 ) {
   const stage = overrides.stage ?? baseStage;
@@ -777,6 +778,7 @@ describe('StructurePhaseOperationalStrip', () => {
           matchCount: 3,
           materialize,
           lifecycle: {
+            transition: { code: 'SuspendStage', enabled: false },
             revertTransition: { code: 'ResumeStage', enabled: true },
             matchProgress: {
               total: 3,
@@ -861,6 +863,7 @@ describe('StructurePhaseOperationalStrip', () => {
     it('shows incomplete entry-round advisory and confirm before cup materialize', async () => {
       vi.mocked(materializeCupFromOccupiedSlots).mockResolvedValue({
         createdCount: 1,
+        attachedMatchIds: [],
         alreadyComplete: false,
       });
       const user = userEvent.setup();

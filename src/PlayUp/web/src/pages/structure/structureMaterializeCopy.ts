@@ -22,6 +22,17 @@ export function materializeProductionTarget(
 
 export type MatchsProductionGaugeMode = 'materialized' | 'determined';
 
+/** Hub fields read by Cup match gauge and Groups prospective confrontation gauge. */
+export type MatchsProductionGaugeStageHub = Pick<
+  StructureStageHubSummary,
+  | 'matchCount'
+  | 'defaultTieFormat'
+  | 'numberOfLegs'
+  | 'formatKind'
+  | 'groupCount'
+  | 'placesPerGroup'
+>;
+
 /** Groups / Championship — determined slots vs exposed confrontation rows (not match production). */
 export function materializeDeterminedConfrontationsRatio(
   materialize: StructureMaterialize,
@@ -43,13 +54,7 @@ export function materializeDeterminedConfrontationsRatio(
  */
 export function resolveMatchsProductionGauge(
   materialize: StructureMaterialize | null | undefined,
-  stage:
-    | Pick<
-        StructureStageHubSummary,
-        'matchCount' | 'defaultTieFormat' | 'numberOfLegs'
-      >
-    | null
-    | undefined,
+  stage: MatchsProductionGaugeStageHub | null | undefined,
 ): {
   mode: MatchsProductionGaugeMode;
   ratio: { filled: number; capacity: number };
@@ -177,13 +182,7 @@ export function groupsProspectiveMatchProductionGauge(
 
 export function hasMatchsStructuralProductionChrome(
   materialize: StructureMaterialize | null | undefined,
-  stage:
-    | Pick<
-        StructureStageHubSummary,
-        'matchCount' | 'defaultTieFormat' | 'numberOfLegs'
-      >
-    | null
-    | undefined,
+  stage: MatchsProductionGaugeStageHub | null | undefined,
 ): boolean {
   if (!materialize) {
     return false;

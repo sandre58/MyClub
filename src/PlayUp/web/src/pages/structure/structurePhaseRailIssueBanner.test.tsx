@@ -17,7 +17,9 @@ const stage: StructureStageHubSummary = {
   hasDrawRules: false,
   hasQualificationRules: false,
   qualificationPathCount: 0,
+  hasProgressionRules: false,
   progressionPathCount: 0,
+  hasTieFormat: false,
   formatKind: 'Cup',
 };
 
@@ -27,7 +29,7 @@ const data = {
   format: { primaryStageId: stage.stageId },
   stages: [stage],
   participants: { entries: [] },
-} as StructureView;
+} as unknown as StructureView;
 
 describe('StructurePhaseRailIssueBanner', () => {
   it('renders nothing when codes are empty', () => {

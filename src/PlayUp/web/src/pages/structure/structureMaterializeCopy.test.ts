@@ -172,7 +172,16 @@ describe('structureMaterializeCopy', () => {
     };
     expect(
       cupMatchProductionGaugeRatio(
-        { matchCount: 2, defaultTieFormat: { numberOfLegs: 2 } },
+        {
+          matchCount: 2,
+          defaultTieFormat: {
+            numberOfLegs: 2,
+            aggregateScoring: false,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+        },
         materialize,
       ),
     ).toEqual({ filled: 2, capacity: 2 });

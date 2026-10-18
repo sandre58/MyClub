@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Abstractions;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
@@ -62,10 +61,7 @@ public static class StructureHubNextStepResolver
             }
 
             IReadOnlyList<MatchSummaryRow>? summaries = null;
-            if (matchSummariesByStage is not null)
-            {
-                matchSummariesByStage.TryGetValue(stage.Id, out summaries);
-            }
+            matchSummariesByStage?.TryGetValue(stage.Id, out summaries);
 
             if (TryPerStageCandidate(competition, stage, competitionStages, hub, summaries, out var tier, out var decision))
             {
@@ -170,16 +166,19 @@ public static class StructureHubNextStepResolver
         foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
         {
             if (draw is
-                {
-                    Status: DrawStatus.Published,
-                    Resolution.State: DrawResolutionState.Resolved,
-                    Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
-                }
-                && !DrawAppliedState.IsApplied(draw, stage))
+                    not
+                    {
+                        Status: DrawStatus.Published,
+                        Resolution.State: DrawResolutionState.Resolved,
+                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
+                    }
+                || DrawAppliedState.IsApplied(draw, stage))
             {
-                decision = Pack(stage, OverviewAssembler.ActionApplyDraw);
-                return true;
+                continue;
             }
+
+            decision = Pack(stage, OverviewAssembler.ActionApplyDraw);
+            return true;
         }
 
         decision = null!;

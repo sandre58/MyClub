@@ -14,7 +14,7 @@ function view(stages: StructureStageHubSummary[]): StructureView {
       readyForNextSlice: false,
     },
     stages,
-  } as StructureView;
+  } as unknown as StructureView;
 }
 
 function stage(
@@ -24,7 +24,18 @@ function stage(
     name: 'Poules',
     status: 'Draft',
     formatKind: 'Groups',
+    teamCount: 0,
+    matchCount: 0,
+    numberOfPeriods: 2,
+    durationPerPeriod: 45,
+    hasExtraTime: false,
+    hasPenaltyShootout: false,
     hasDrawRules: false,
+    hasQualificationRules: false,
+    qualificationPathCount: 0,
+    hasProgressionRules: false,
+    progressionPathCount: 0,
+    hasTieFormat: false,
     affectationEntryCount: 0,
     compositionCapacity: 8,
     structureIssues: [],

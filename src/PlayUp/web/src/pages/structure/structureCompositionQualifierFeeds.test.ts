@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compositionQualifierFeedGroups } from './structureCompositionQualifierFeeds';
 import { inboundEntryProvenanceByEntryId } from './compositionTeamsInboundRows';
-import type { StructureView } from '../../types';
+import type { StructureInboundComposition, StructureView } from '../../types';
 
 describe('compositionQualifierFeedGroups', () => {
   it('labels each hub path from backend qualificationPath projection', () => {
@@ -16,7 +16,7 @@ describe('compositionQualifierFeedGroups', () => {
           seats: [{ entryId: null, displayName: null, placed: true }],
           qualificationPath: {
             order: 1,
-            selectionMode: 'Range',
+            selectionMode: 'Range' as const,
             selectionValue: 1,
             selectionEndValue: 2,
             destinationStageId: 'final',
@@ -31,7 +31,7 @@ describe('compositionQualifierFeedGroups', () => {
           seats: [{ entryId: null, displayName: null, placed: false }],
           qualificationPath: {
             order: 2,
-            selectionMode: 'Position',
+            selectionMode: 'Position' as const,
             selectionValue: 1,
             destinationStageId: 'final',
             groupId: 'g2',
@@ -40,7 +40,7 @@ describe('compositionQualifierFeedGroups', () => {
           },
         },
       ],
-    };
+    } as StructureInboundComposition;
     const data: StructureView = {
       competitionId: 'c1',
       participants: { entries: [] },
@@ -48,7 +48,7 @@ describe('compositionQualifierFeedGroups', () => {
         { stageId: sourceId, name: 'Phase de groupes', status: 'Ready' },
         { stageId: 'final', name: 'Finale', status: 'Draft', inboundComposition: inbound },
       ],
-    } as StructureView;
+    } as unknown as StructureView;
 
     const groups = compositionQualifierFeedGroups({
       data,

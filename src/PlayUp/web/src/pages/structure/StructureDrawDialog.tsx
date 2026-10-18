@@ -15,7 +15,6 @@ import {
   cancelDraw,
   createAndGenerateDraw,
   fetchStageOverview,
-  fetchStageSchematic,
   isDrawGenerateFailedError,
   publishAndApplyDraw,
   releaseDrawAlignedPlacements,
@@ -217,12 +216,6 @@ export function StructureDrawDialog({
   const overviewQuery = useQuery({
     queryKey: queryKeys.stages.detail(stageId),
     queryFn: () => fetchStageOverview(stageId),
-    enabled: open && Boolean(stageId),
-  });
-
-  const schematicQuery = useQuery({
-    queryKey: queryKeys.stages.schematic(stageId),
-    queryFn: () => fetchStageSchematic(stageId),
     enabled: open && Boolean(stageId),
   });
 

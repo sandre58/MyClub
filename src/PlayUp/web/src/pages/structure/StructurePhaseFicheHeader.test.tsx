@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -58,12 +62,14 @@ function renderHeader(
           formatLabel={null}
           editingName={options?.editingName ?? false}
           nameDraft=""
-          renameMutation={{
-            isPending: false,
-            isError: false,
-            error: null,
-            reset: vi.fn(),
-          }}
+          renameMutation={
+            {
+              isPending: false,
+              isError: false,
+              error: null,
+              reset: vi.fn(),
+            } as unknown as UseMutationResult<void, Error, string, unknown>
+          }
           canRename={false}
           canRebuild={false}
           canRemove={false}

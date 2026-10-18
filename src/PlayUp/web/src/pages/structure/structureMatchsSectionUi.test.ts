@@ -136,7 +136,7 @@ describe('structureMatchsSectionUi', () => {
         baseStage({
           status: 'Suspended',
           materialize: partialMaterialize,
-          dematerialize: { enabled: true, scope: 'Phase' },
+          dematerialize: { enabled: true, scope: 'FullPhase' },
         }),
         'frozen',
       ),

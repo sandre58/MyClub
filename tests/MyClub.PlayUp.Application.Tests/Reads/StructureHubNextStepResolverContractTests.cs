@@ -34,7 +34,7 @@ public sealed class StructureHubNextStepResolverContractTests
         var step = Resolve(situation);
 
         step.Should().NotBeNull();
-        step!.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        step.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
         step.StageName.Should().Be("League");
     }
 
@@ -58,7 +58,7 @@ public sealed class StructureHubNextStepResolverContractTests
         var step = Resolve(situation);
 
         step.Should().NotBeNull();
-        step!.Code.Should().Be(OverviewAssembler.ActionResumeStage);
+        step.Code.Should().Be(OverviewAssembler.ActionResumeStage);
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class StructureHubNextStepResolverContractTests
         var step = Resolve(situation);
 
         step.Should().NotBeNull();
-        step!.Code.Should().Be(StructureViewAssembler.NextStepRunDraw);
+        step.Code.Should().Be(StructureViewAssembler.NextStepRunDraw);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public sealed class StructureHubNextStepResolverContractTests
         var step = Resolve(situation);
 
         step.Should().NotBeNull();
-        step!.Code.Should().Be(OverviewAssembler.ActionApplyDraw);
+        step.Code.Should().Be(OverviewAssembler.ActionApplyDraw);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public sealed class StructureHubNextStepResolverContractTests
         var step = Resolve(situation);
 
         step.Should().NotBeNull();
-        step!.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
+        step.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public sealed class StructureHubNextStepResolverContractTests
         var step = Resolve(situation);
 
         step.Should().NotBeNull();
-        step!.Code.Should().Be(OverviewAssembler.ActionCompleteStage);
+        step.Code.Should().Be(OverviewAssembler.ActionCompleteStage);
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public sealed class StructureHubNextStepResolverContractTests
         foreach (var hint in new[]
                  {
                      StructureViewAssembler.NextStepBuildSchedule,
-                     StructureViewAssembler.NextStepRunSwissRounds,
+                     StructureViewAssembler.NextStepRunSwissRounds
                  })
         {
             var hinted = view with
@@ -162,18 +162,15 @@ public sealed class StructureHubNextStepResolverContractTests
                 Readiness = view.Readiness with
                 {
                     ReadyForNextSlice = true,
-                    NextConstructionStepHint = hint,
-                },
+                    NextConstructionStepHint = hint
+                }
             };
 
             var step = StructureHubNextStepResolver.Decide(
                 situation.Competition,
                 situation.Stages,
                 hinted);
-            if (step is not null)
-            {
-                step.Code.Should().NotBe(hint);
-            }
+            step?.Code.Should().NotBe(hint);
         }
     }
 
@@ -294,7 +291,7 @@ public sealed class StructureHubNextStepResolverContractTests
             .WithStructure(StructureIntent.Cup(2));
         var stage = situation.PrimaryStage!;
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
-        var entry = situation.Competition.Entries.First();
+        var entry = situation.Competition.Entries[0];
         stage.ReplaceAffectationAuthoring([entry.Id], _clock);
         stage.AssignEntryToSlot(stage.Slots[0].SlotKey, entry.Id);
 
@@ -318,10 +315,10 @@ public sealed class StructureHubNextStepResolverContractTests
         var (competition, stages) = CreateReadyMaterializeAndRunningCompletePhases();
 
         var forward = Decide(competition, stages);
-        var reverse = Decide(competition, stages.AsEnumerable().Reverse().ToList());
+        var reverse = Decide(competition, [.. stages.AsEnumerable().Reverse()]);
 
         forward.Should().NotBeNull();
-        forward!.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
+        forward.Code.Should().Be(OverviewAssembler.ActionMaterializeMatches);
         reverse.Should().BeEquivalentTo(forward);
     }
 
@@ -353,16 +350,10 @@ public sealed class StructureHubNextStepResolverContractTests
             .BlockReasonCode.Should()
             .Be(StructureDrawCreateLaunchGate.BlockUpstreamCompositionPoolEmpty);
         var hubStep = Decide(competition, stages);
-        if (hubStep is not null)
-        {
-            hubStep.Code.Should().NotBe(StructureViewAssembler.NextStepRunDraw);
-        }
+        hubStep?.Code.Should().NotBe(StructureViewAssembler.NextStepRunDraw);
     }
 
-    private static StructureHubNextStepDto? Resolve(TestCompetition situation)
-    {
-        return Decide(situation.Competition, situation.Stages);
-    }
+    private static StructureHubNextStepDto? Resolve(TestCompetition situation) => Decide(situation.Competition, situation.Stages);
 
     private static StructureHubNextStepDto? Decide(Competition competition, IReadOnlyList<Stage> stages)
     {

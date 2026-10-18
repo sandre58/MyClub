@@ -28,7 +28,6 @@ describe('structureProgressionDraft', () => {
         roundName: 'QF',
         outcome: 'Winner',
         destinationStageId: 'peer',
-        destinationSlotKey: null,
         expandedPathCount: 4,
       },
       'source',
@@ -71,7 +70,7 @@ describe('structureProgressionDraft', () => {
         destinationStageId: 'other',
         destinationSlotKey: 'slot-7',
         expandedPathCount: 1,
-      },
+      } as import('../../types').StructureProgressionIntent,
       'source',
     );
     expect(draft.targetKind).toBe('place');
