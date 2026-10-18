@@ -19,6 +19,7 @@ import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   CreateMatchesIcon,
   DrawPendingIcon,
+  EmptySelectionIcon,
   PersonIcon,
   TrashIcon,
   UnlockIcon,
@@ -35,12 +36,17 @@ import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 import type { StructurePlacementOperationalSectionProps } from './structurePlacementOperationalProps';
 import {
+  cupEntryRoundBlocksPhaseStart,
+  cupEntryRoundPlacementGaugeRatio,
+  hasMatchsStructuralProductionChrome,
   materializeDisabledCaption,
   materializeRatioTone,
+  resolveMatchsProductionGauge,
+  resolveStartStageProductionBlocker,
+  shouldConfirmCupMaterializeWithIncompleteEntryRound,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
 import {
-  productionRatio,
   drawPoolToneToRatioGaugeTone,
   operationalStripPoolTone,
   resolvePlaceOccupancyTone,
@@ -72,12 +78,12 @@ import {
   joinCompositionPlaceAssignmentSections,
   operationalStripGridColumns,
 } from './structureOperationalStripLayout';
+import { CupEntryRoundPlacementGauge } from './CupEntryRoundPlacementGauge';
 import {
   resolveDrawPoolMeterCopy,
   resolvePlaceOccupancyMeterCopy,
   resolveProductionMeterCopy,
 } from './structureOperationalStripMessages';
-import { ratioToneForOperationalMeter } from './structureOperationalStripRatioTone';
 import { StripSection } from './structureOperationalStripSection';
 import {
   StripDrawAppliedPanel,
@@ -267,6 +273,7 @@ export function StructurePhaseOperationalStrip({
   const { t: tCommon } = useTranslation('common');
   const queryClient = useQueryClient();
   const [dematerializeConfirmOpen, setDematerializeConfirmOpen] = useState(false);
+  const [materializeConfirmOpen, setMaterializeConfirmOpen] = useState(false);
 
   const materialize = stage.materialize;
   const dematerialize = stage.dematerialize;
@@ -277,6 +284,7 @@ export function StructurePhaseOperationalStrip({
         ? materializeCupFromOccupiedSlots(stage.stageId)
         : materializeMatches(stage.stageId),
     onSuccess: (result) => {
+      setMaterializeConfirmOpen(false);
       notify.success(
         result.alreadyComplete
           ? t('fiche.materialize.successAlreadyComplete')
@@ -332,6 +340,7 @@ export function StructurePhaseOperationalStrip({
   });
 
   useClearMutationsOnOpen(dematerializeConfirmOpen, dematerializeMutation);
+  useClearMutationsOnOpen(materializeConfirmOpen, materializeMutation);
 
   const visibleSections: StripSectionKind[] =
     layoutVariant === 'composition'
@@ -395,6 +404,8 @@ export function StructurePhaseOperationalStrip({
       dematerializeMutation={dematerializeMutation}
       dematerializeConfirmOpen={dematerializeConfirmOpen}
       setDematerializeConfirmOpen={setDematerializeConfirmOpen}
+      materializeConfirmOpen={materializeConfirmOpen}
+      setMaterializeConfirmOpen={setMaterializeConfirmOpen}
       omitLifecycle={asideMatchsLayout}
       hideSectionHead={asideMatchsLayout}
     />
@@ -435,6 +446,32 @@ export function StructurePhaseOperationalStrip({
       >
         {stripSections}
       </div>
+      {materialize && shouldConfirmCupMaterializeWithIncompleteEntryRound(materialize) ? (
+        <ConfirmDialog
+          open={materializeConfirmOpen}
+          title={t('fiche.materialize.confirmIncompleteEntryRound.title')}
+          message={t('fiche.materialize.confirmIncompleteEntryRound.message')}
+          confirmLabel={t('fiche.materialize.confirmIncompleteEntryRound.confirm')}
+          cancelLabel={tCommon('cancel')}
+          closeLabel={tCommon('close')}
+          confirmPending={materializeMutation.isPending}
+          confirmPendingLabel={t('fiche.materialize.submitting')}
+          footerStatus={
+            materializeMutation.isError ? (
+              <MutationError
+                error={materializeMutation.error}
+                structureStages={structureStages}
+              />
+            ) : null
+          }
+          onConfirm={() => materializeMutation.mutate(undefined)}
+          onCancel={() => {
+            if (!materializeMutation.isPending) {
+              setMaterializeConfirmOpen(false);
+            }
+          }}
+        />
+      ) : null}
       {dematerialize ? (
         <ConfirmDialog
           open={dematerializeConfirmOpen}
@@ -1081,6 +1118,8 @@ function MatchesColumn({
   dematerializeMutation,
   dematerializeConfirmOpen: _dematerializeConfirmOpen,
   setDematerializeConfirmOpen,
+  materializeConfirmOpen: _materializeConfirmOpen,
+  setMaterializeConfirmOpen,
   omitLifecycle = false,
   hideSectionHead = false,
 }: {
@@ -1095,6 +1134,8 @@ function MatchesColumn({
   dematerializeMutation: DematerializeMutationResult;
   dematerializeConfirmOpen: boolean;
   setDematerializeConfirmOpen: (open: boolean) => void;
+  materializeConfirmOpen: boolean;
+  setMaterializeConfirmOpen: (open: boolean) => void;
   omitLifecycle?: boolean;
   hideSectionHead?: boolean;
 }) {
@@ -1103,7 +1144,9 @@ function MatchesColumn({
 
   const materialize = stage.materialize;
   const dematerialize = stage.dematerialize;
-  const gaugeRatio = productionRatio(materialize ?? undefined);
+  const matchsProductionGauge = resolveMatchsProductionGauge(materialize, stage);
+  const gaugeRatio = matchsProductionGauge?.ratio ?? null;
+  const productionGaugeMode = matchsProductionGauge?.mode ?? null;
   const poolTone =
     gaugeRatio != null
       ? resolveDrawCtaPoolTone(gaugeRatio.filled, gaugeRatio.capacity)
@@ -1113,8 +1156,18 @@ function MatchesColumn({
   const asideStripContent = resolveAsideMatchsStripContent(stage, presentation);
   const showViewMatchesLink = asideStripContent.showViewMatchesLink;
 
+  const showProduction = shouldShowProductionInMatchsSection(
+    stage,
+    presentation,
+  );
+
+  const structuralProductionChrome = hasMatchsStructuralProductionChrome(
+    materialize,
+    stage,
+  );
+
   const blockedCaption =
-    presentation === 'blocked' && materialize
+    presentation === 'blocked' && materialize && !structuralProductionChrome
       ? materializeDisabledCaption(materialize, t)
       : null;
 
@@ -1123,30 +1176,48 @@ function MatchesColumn({
       ? tActions('DematerializeLastSwissRound')
       : tActions('DematerializePhase');
 
+  const startStageBlocker = resolveStartStageProductionBlocker(stage.lifecycle);
+  const entryRoundBlocksPhaseStart = cupEntryRoundBlocksPhaseStart(
+    stage,
+    materialize,
+  );
+
+  const entryRoundPlacementRatio =
+    materialize != null ? cupEntryRoundPlacementGaugeRatio(materialize) : null;
   const matchMeter = resolveProductionMeterCopy({
     t,
     blockedCaption,
     gaugeRatio,
     hasProduction: materialize != null || dematerialize != null,
+    startStageBlocker,
+    productionGaugeMode,
   });
 
-  const productionRatioTone =
+  const productionBasePoolTone =
     gaugeRatio != null
-      ? ratioToneForOperationalMeter(
-          gaugeRatio.filled,
-          gaugeRatio.capacity,
-          matchMeter.kind,
-        )
+      ? resolveDrawCtaPoolTone(gaugeRatio.filled, gaugeRatio.capacity)
       : materialize
         ? materializeRatioTone(materialize)
         : poolTone;
+  const productionPoolTone = operationalStripPoolTone(
+    matchMeter.kind,
+    productionBasePoolTone,
+  );
 
   const productionBusy =
     materializeMutation.isPending || dematerializeMutation.isPending;
 
-  const ratioLabel = t('fiche.operational.production.ratioLabel', {
-    count: gaugeRatio?.filled ?? 0,
-  });
+  const ratioLabel =
+    productionGaugeMode === 'determined'
+      ? t('fiche.operational.production.determinedRatioLabel')
+      : t('fiche.operational.production.ratioLabel', {
+          count: gaugeRatio?.filled ?? 0,
+        });
+
+  const meterCaption =
+    productionGaugeMode === 'determined'
+      ? t('fiche.operational.production.meterCaptionDetermined')
+      : t('fiche.operational.production.meterCaptionMatches');
 
   const toolbar = showViewMatchesLink ? (
     <TextLink to={`/stages/${stage.stageId}/matches`}>
@@ -1154,54 +1225,91 @@ function MatchesColumn({
     </TextLink>
   ) : null;
 
-  const showProduction = shouldShowProductionInMatchsSection(
-    stage,
-    presentation,
-  );
   const canShowMetric =
     showProduction &&
     gaugeRatio != null &&
     (materialize != null || dematerialize != null);
 
   const materializeBtnClass = primaryBtn;
+  const materializeNeedsConfirm =
+    shouldConfirmCupMaterializeWithIncompleteEntryRound(materialize);
 
-  const productionGauge =
-    !asideStripContent.showProductionBody ? null : canShowMetric ? (
-    <MetricRow
-      aside={
-        <RatioAside
-          current={gaugeRatio!.filled}
-          capacity={gaugeRatio!.capacity}
-          label={ratioLabel}
-          poolTone={productionRatioTone}
-        />
-      }
-      meter={
-        <MetricGaugeBlock
-          message={matchMeter.text}
-          messageKind={matchMeter.kind}
-          gauge={
-            <StructureOperationalRatioGauge
-              current={gaugeRatio!.filled}
-              capacity={gaugeRatio!.capacity}
-              caption={t('fiche.operational.production.meterCaptionMatches')}
-              ariaLabel={t('fiche.operational.production.meterAria')}
-              poolTone={productionRatioTone}
-              layout="trackOnly"
+  const requestMaterialize = () => {
+    if (materializeNeedsConfirm) {
+      setMaterializeConfirmOpen(true);
+      return;
+    }
+
+    materializeMutation.mutate(undefined);
+  };
+
+  let entryRoundShownInProductionSlot = false;
+  let productionGauge: ReactNode = null;
+
+  if (asideStripContent.showProductionBody) {
+    if (canShowMetric && gaugeRatio != null) {
+      productionGauge = (
+        <MetricRow
+          aside={
+            <RatioAside
+              current={gaugeRatio.filled}
+              capacity={gaugeRatio.capacity}
+              label={ratioLabel}
+              poolTone={productionPoolTone}
+            />
+          }
+          meter={
+            <MetricGaugeBlock
+              message={matchMeter.text}
+              messageKind={matchMeter.kind}
+              gauge={
+                <StructureOperationalRatioGauge
+                  current={gaugeRatio.filled}
+                  capacity={gaugeRatio.capacity}
+                  caption={meterCaption}
+                  ariaLabel={t('fiche.operational.production.meterAria')}
+                  poolTone={productionPoolTone}
+                  layout="trackOnly"
+                />
+              }
             />
           }
         />
-      }
-    />
-  ) : (
-    <div className="structure-operational-strip__empty">
-      <EmptyState variant="idle">
-        {presentation === 'blocked' && materialize
-          ? materializeDisabledCaption(materialize, t)
-          : matchMeter.text}
-      </EmptyState>
-    </div>
-  );
+      );
+    } else if (entryRoundPlacementRatio != null) {
+      entryRoundShownInProductionSlot = true;
+      productionGauge = (
+        <CupEntryRoundPlacementGauge
+          filled={entryRoundPlacementRatio.filled}
+          capacity={entryRoundPlacementRatio.capacity}
+          blocksPhaseStart={entryRoundBlocksPhaseStart}
+        />
+      );
+    } else if (showProduction && materialize && !structuralProductionChrome) {
+      productionGauge = (
+        <div className="structure-operational-strip__empty">
+          <EmptyState
+            variant="idle"
+            icon={<EmptySelectionIcon size="lg" />}
+            title={
+              presentation === 'blocked'
+                ? materializeDisabledCaption(materialize, t)
+                : t('fiche.operational.production.emptyStructuralTitle')
+            }
+          />
+        </div>
+      );
+    }
+  }
+
+  const entryRoundGaugeSection =
+    entryRoundPlacementRatio != null && !entryRoundShownInProductionSlot ? (
+      <CupEntryRoundPlacementGauge
+        filled={entryRoundPlacementRatio.filled}
+        capacity={entryRoundPlacementRatio.capacity}
+        blocksPhaseStart={entryRoundBlocksPhaseStart}
+      />
+    ) : null;
 
   const productionLeadingActions =
     asideStripContent.showProductionLeadingActions ? (
@@ -1211,7 +1319,7 @@ function MatchesColumn({
             type="button"
             className={materializeBtnClass}
             disabled={materializeMutation.isPending}
-            onClick={() => materializeMutation.mutate(undefined)}
+            onClick={requestMaterialize}
           >
             {materializeMutation.isPending ? (
               <PendingLabel>
@@ -1226,23 +1334,21 @@ function MatchesColumn({
           </button>
         ) : null}
         {dematerialize?.enabled ? (
-          <Tooltip content={dematerializeTitle}>
-            <span className="structure-operational-tile__action-wrap">
-              <button
-                type="button"
-                className="ds-btn ds-btn--destructive ds-btn--sm ds-icon-button"
-                disabled={dematerializeMutation.isPending}
-                aria-label={dematerializeTitle}
-                onClick={() => setDematerializeConfirmOpen(true)}
-              >
-                {dematerializeMutation.isPending ? (
-                  <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
-                ) : (
-                  <TrashIcon size="sm" aria-hidden="true" />
-                )}
-              </button>
-            </span>
-          </Tooltip>
+          <button
+            type="button"
+            className="ds-btn ds-btn--destructive ds-btn--sm structure-operational-strip__dematerialize-btn"
+            disabled={dematerializeMutation.isPending}
+            onClick={() => setDematerializeConfirmOpen(true)}
+          >
+            {dematerializeMutation.isPending ? (
+              <PendingLabel>{dematerializeTitle}</PendingLabel>
+            ) : (
+              <>
+                <TrashIcon size="sm" aria-hidden="true" />
+                {dematerializeTitle}
+              </>
+            )}
+          </button>
         ) : null}
       </>
     ) : null;
@@ -1327,6 +1433,7 @@ function MatchesColumn({
             leadingActions={productionLeadingActions}
           />
         )}
+        {entryRoundGaugeSection}
       </>
     );
   }

@@ -271,6 +271,14 @@
   margin-inline-start: auto;
 }
 
+.regulation-phase__binding-hint {
+  max-width: 14rem;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
+  text-align: end;
+}
+
 .regulation-phase__bottom {
   min-width: 0;
 }

@@ -102,6 +102,7 @@ function renderBand(
     compactIcon: 'ds-btn',
     openCompose: vi.fn(),
     teamsHasListContent: false,
+    teamsRuntimePresentation: { kind: 'list' },
     capacityIssueBanner: null,
     stage: baseStage,
     placedEntryIds: new Set(),
@@ -138,6 +139,26 @@ describe('StructurePhaseCompositionBand', () => {
         /Ajouter des équipes à la phase ou alimenter les entrées/i,
       ),
     ).toBeInTheDocument();
+  });
+
+  it('renders a single empty state under Équipes in exploitation when the pool is empty', () => {
+    renderBand({
+      showTeamsSection: true,
+      compositionTileMode: 'exploitation',
+      teamsRuntimePresentation: { kind: 'empty' },
+    });
+
+    expect(
+      screen.getByRole('heading', { name: 'Équipes' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Aucune équipe dans la phase', {
+        selector: '.ds-empty__title',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryAllByText('Aucune équipe dans la phase'),
+    ).toHaveLength(1);
   });
 
   it('renders the place-assignment section and operational strip when affectation is shown', () => {

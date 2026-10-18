@@ -1,59 +1,54 @@
 # Cup lifecycle — Start, mutability, recovery (product arbitration)
 
-**Status:** **Pending** product arbitration (no implementation until Notion decision is validated).  
-**Product SoT:** [Notion — [Play'Up] Cup — Start, mutabilité (D2) et récupération](https://app.notion.com/p/3fc75fb92d1081d587e9ed0b5b59e4a2) (`💭 Proposée`).  
+**Status:** **✅ Acceptée** (2026-10-17, décideur).  
+**Product SoT:** [Notion — [Play'Up] Cup — Start, mutabilité (D2) et récupération](https://app.notion.com/p/3fc75fb92d1081d587e9ed0b5b59e4a2)  
 **Notion link:** https://app.notion.com/p/3fc75fb92d1081d587e9ed0b5b59e4a2
 
-**Reference rules (remain in force until this decision overrides them):**
+**Accepted verdict (mono-tour canonical Cup only):**
+
+| Topic | Decision |
+|-------|----------|
+| **R0 complete** | Every canonical entry-round pair P* has two distinct `EntryId` (family A). Family B empty (no Cup BYE in scope). Family C for progression-only downstream, not entry-round gaps on upstream mono-tour. |
+| **Q1 Start** | **1a** — refuse `StartStage` while R0 is incomplete per above. |
+| **Q2 Mutability** | **2a** — confirm D2 (freeze when any match attached, including Ready). |
+| **Q3 Recovery** | Nominal: do not materialize before R0 ready. **Revert to Ready** supported (does not alone restore placement). **Dematerialize in Ready** supported (C2 backend + SPA validated). Revert to Draft not nominal recovery. |
+| **UX** | Warn before materialize + signal incomplete R0 (independent of Q1). |
+| **BYE** | Out of functional scope for this decision; no implicit BYE; future Cup BYE = separate arbitration. |
+
+**Evidence (not the decision):** `CupC2ImpasseRecetteProtocolTests`, [cup-c2-spa-recette-checklist.md](./cup-c2-spa-recette-checklist.md). Demat CTA discoverability (icon-only) = UX implementation topic.
+
+**Reference rules (unchanged unless superseded):**
 
 - **§ H Option A** — materialize all **determined eligible** confrontations before `StartStage` ([lifecycle UI guide](../../guides/structure-phase-lifecycle-ui.md) § H; Notion § H decision).
 - **D2** — operational/structural edits blocked when match production is attached ([phase-mutability-matrix.md](./phase-mutability-matrix.md) §1 D2).
 
-**Related Git (behaviour today, not product verdict):** `StageStartReadinessGuard`, `StageConfrontationMaterializationState.CountCupEligible`, `StructureOperationalExitEditGuard`, [cup-materialize-recette-protocol.md](./cup-materialize-recette-protocol.md).
+**Related Git (pre-implementation behaviour):** `StageStartReadinessGuard`, `StageConfrontationMaterializationState.CountCupEligible`, `StructureOperationalExitEditGuard`, [cup-materialize-recette-protocol.md](./cup-materialize-recette-protocol.md).
 
 ---
 
-## Arbitration sequence (validated framing)
+## Implementation (after acceptance)
 
-1. **Start + R0 complete (business definition)** — BYE, non-power-of-two field sizes, **non-playable** fixtures vs pairs that must be populated before exploitation. Do **not** equate “R0 complete” with “every structural pair has two participants” without those rules.
-2. **Recovery** — supported paths after premature materialize; do **not** assume D2 exceptions. **Note:** tightening Start (1a) does **not** alone fix freeze-on-first-match in **Ready**; recovery must be decided if partial materialize remains allowed.
-3. **Preventive UX** — warn before **Create matches** that structure may freeze (including in Ready), **independent** of the Start verdict.
-4. **Tests / recette** — promoted to demonstrated invariants only after **reference seed** is fixed and behaviour verified (scenario table = hypotheses until then).
+| Tranche | Status |
+|---------|--------|
+| **1 — Start guard 1a** | **Done** — `CupCanonicalEntryRoundStartGate`, `Application.StartBlockedIncompleteEntryRound`, read `IncompleteEntryRound`, SPA i18n |
+| **2 — Preventive UX** | **Done** — read `canonicalEntryPairCount` / `undeterminedCanonicalEntryPairCount`, aside advisory + confirm before partial cup materialize |
+| **3 — Demat discoverability** | **Done** — visible label on dematerialize CTA in aside Matchs (icon + text) |
 
----
-
-## Three decision questions (no default on 1a/1b or 2a/2b)
-
-| # | Question |
-|---|----------|
-| **Q1 Start** | May Cup enter **Running** with a **structurally incomplete** initial round while § H Option A and current guards pass? |
-| **Q2 Mutability** | Confirm freeze when **any** match is attached, **including Ready**, or define a scoped exception (not assumed). |
-| **Q3 Recovery** | Dematerialize, cancel start, revert draft — which paths are **supported** vs discouraged vs out of scope? |
-
-Full option matrix lives in [Notion](https://app.notion.com/p/3fc75fb92d1081d587e9ed0b5b59e4a2) (section **Résolution des 4 points** — analysis, not accepted).
-
-### Reference seeds (impasse — verify manually before tests)
+### Reference seeds
 
 | DevRunner row (`structure-materialize-recette`) | Role |
 |-------------------------------------------------|------|
 | **RECETTE C1** — Cup 8, one bracket pair placed | Before first materialize (0/1 style) |
-| **RECETTE C2** — Cup 8, two pairs placed, one materialized | **Impasse-type** (D2 + Start after Option A) |
+| **RECETTE C2** — Cup 8, two pairs placed, one materialized | Impasse after 2/2 eligible materialized (2/4 bracket pairs determined) |
 | **RECETTE C3** — Cup 8, fully materialized | Positive control |
 
 ```bash
 dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner -- --reset --scenarios structure-materialize-recette
 ```
 
-Cup **BYE** is **not** represented in domain code today (Swiss only) — see Notion analysis; do not assume BYE in R0 definition.
-
-### R0 complete (draft — **not** product-validated)
-
-Mono-tour canonical Cup: **R0 complete** when every **family A** entry-round canonical pair P* is **determined** (two distinct entries). **Family B:** empty until a separate Cup BYE decision exists. **Family C:** does not apply to entry-round pairs on the upstream mono-tour phase; applies to progression-only slots on downstream phases.
-
 ---
 
-## After decision
+## After decision (maintenance)
 
-- Update Notion Décision status and link above.
-- Short pointer only in [structure-phase-lifecycle-ui.md](../../guides/structure-phase-lifecycle-ui.md) (link to Notion + this file) — **do not** duplicate the full matrix in the guide.
-- Implementation, `disabledReasonCode` registry, and automated cases **after** validation only.
+- Keep this file as Git pointer + accepted summary; full narrative stays on Notion.
+- One-line link in [structure-phase-lifecycle-ui.md](../../guides/structure-phase-lifecycle-ui.md) when implementation lands (no parallel SoT).

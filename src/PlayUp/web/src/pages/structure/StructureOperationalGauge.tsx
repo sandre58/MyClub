@@ -68,7 +68,13 @@ export function StructureOperationalRatioGauge({
       current={current}
       capacity={capacity}
       state={state}
-      fillVariant={poolTone === 'danger' ? 'default' : fillVariant}
+      fillVariant={
+        poolTone === 'danger'
+          ? 'default'
+          : poolTone === 'attention' || poolTone === 'partial'
+            ? 'attention'
+            : fillVariant
+      }
       ariaLabel={ariaLabel}
       className={layout === 'trackOnly' ? 'structure-operational-gauge__meter' : gaugeClass}
       header={

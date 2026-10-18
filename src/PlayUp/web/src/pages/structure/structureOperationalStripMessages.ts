@@ -214,8 +214,17 @@ export function resolveProductionMeterCopy(input: {
   blockedCaption: string | null;
   gaugeRatio: { filled: number; capacity: number } | null;
   hasProduction: boolean;
+  startStageBlocker?: 'IncompleteEntryRound' | 'UnmaterializedConfrontations' | null;
+  productionGaugeMode?: 'materialized' | 'determined' | null;
 }): StripMeterCopy {
-  const { t, blockedCaption, gaugeRatio, hasProduction } = input;
+  const {
+    t,
+    blockedCaption,
+    gaugeRatio,
+    hasProduction,
+    startStageBlocker = null,
+    productionGaugeMode = null,
+  } = input;
 
   if (!hasProduction) {
     return {
@@ -232,6 +241,30 @@ export function resolveProductionMeterCopy(input: {
       kind: 'info',
     };
   }
+  if (productionGaugeMode === 'determined') {
+    if (gaugeRatio.filled <= 0) {
+      return {
+        text: t(
+          'fiche.operational.production.stateMessage.noDeterminedConfrontations',
+        ),
+        kind: 'attention',
+      };
+    }
+    if (gaugeRatio.filled < gaugeRatio.capacity) {
+      const remaining = gaugeRatio.capacity - gaugeRatio.filled;
+      return {
+        text: t(
+          'fiche.operational.production.stateMessage.determinedPartial',
+          { count: remaining },
+        ),
+        kind: 'attention',
+      };
+    }
+    return {
+      text: t('fiche.operational.production.stateMessage.determinedComplete'),
+      kind: 'success',
+    };
+  }
   if (gaugeRatio.filled >= gaugeRatio.capacity) {
     return {
       text: t('fiche.operational.production.stateMessage.complete'),
@@ -239,10 +272,43 @@ export function resolveProductionMeterCopy(input: {
     };
   }
   const remaining = gaugeRatio.capacity - gaugeRatio.filled;
+  if (remaining <= 0) {
+    return {
+      text: t('fiche.operational.production.stateMessage.complete'),
+      kind: 'success',
+    };
+  }
+  const kind =
+    startStageBlocker === 'UnmaterializedConfrontations' ? 'danger' : 'attention';
   return {
     text: t('fiche.operational.production.stateMessage.partial', {
       count: remaining,
     }),
-    kind: 'attention',
+    kind,
+  };
+}
+
+export function entryRoundPlacementMessageKind(
+  blocksPhaseStart: boolean,
+): StripMeterCopy['kind'] {
+  return blocksPhaseStart ? 'danger' : 'attention';
+}
+
+export function resolveEntryRoundPlacementMeterCopy(input: {
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  gaugeRatio: { filled: number; capacity: number };
+  blocksPhaseStart?: boolean;
+}): { text: string; kind: StripMeterCopy['kind'] } | null {
+  const { t, gaugeRatio, blocksPhaseStart = false } = input;
+  const remaining = gaugeRatio.capacity - gaugeRatio.filled;
+  if (remaining <= 0) {
+    return null;
+  }
+  const kind = entryRoundPlacementMessageKind(blocksPhaseStart);
+  return {
+    text: t('fiche.operational.production.stateMessage.entryRoundRemainingBeforeStart', {
+      count: remaining,
+    }),
+    kind,
   };
 }

@@ -550,6 +550,10 @@ export interface StructureMaterialize {
   confrontations: StructureMaterializeConfrontation[];
   /** Minimal causal code when the command is disabled and not terminal. */
   disabledReason?: string | null;
+  /** Canonical Cup entry-round pairs; omitted or zero when not applicable. */
+  canonicalEntryPairCount?: number;
+  /** Canonical pairs without two distinct entries; omitted or zero when not applicable. */
+  undeterminedCanonicalEntryPairCount?: number;
 }
 
 export interface StructureMaterializeConfrontation {

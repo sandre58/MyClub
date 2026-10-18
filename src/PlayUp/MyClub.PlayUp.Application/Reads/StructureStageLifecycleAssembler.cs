@@ -45,6 +45,9 @@ public static class StructureStageLifecycleAssembler
     /// <summary>Lifecycle disabled — Cup initial round lacks playable fixtures.</summary>
     public const string DisabledInitialRoundNotPlayable = "InitialRoundNotPlayable";
 
+    /// <summary>Start disabled — canonical mono-round Cup entry pairs not all determined.</summary>
+    public const string DisabledIncompleteEntryRound = StageStartReadinessGuard.DisabledIncompleteEntryRound;
+
     /// <summary>Lifecycle disabled — local structure not ready for Prepare.</summary>
     public const string DisabledStageNotReady = "StageNotReady";
 
@@ -56,6 +59,9 @@ public static class StructureStageLifecycleAssembler
 
     /// <summary>Start disabled — eligible confrontations not fully materialized.</summary>
     public const string DisabledUnmaterializedConfrontations = "UnmaterializedConfrontations";
+
+    public const string DisabledNoExploitableInitialConfrontations =
+        StageStartReadinessGuard.DisabledNoExploitableInitialConfrontations;
 
     /// <summary>Start disabled — obsolete draw blocks consumption.</summary>
     public const string DisabledDrawObsoleteForConsumption = "DrawObsoleteForConsumption";
@@ -346,10 +352,16 @@ public static class StructureStageLifecycleAssembler
         {
             case ChecklistDraw or StructureViewAssembler.BlockerMissingPotRules:
                 return ("tirage", null, false, true);
-            case ChecklistPlaces or DisabledInitialRoundNotPlayable:
+            case ChecklistPlaces
+                or DisabledInitialRoundNotPlayable
+                or DisabledIncompleteEntryRound:
                 return (null, "operational-placement", true, false);
-            case ChecklistMatches or DisabledUnmaterializedConfrontations or DisabledDrawObsoleteForConsumption:
+            case ChecklistMatches
+                or DisabledUnmaterializedConfrontations
+                or DisabledDrawObsoleteForConsumption:
                 return ("matchs", null, false, false);
+            case DisabledNoExploitableInitialConfrontations:
+                return (null, "rail-entries", false, false);
             case ChecklistExits or StructureViewAssembler.IssueConfrontationUndecidable:
                 return ("qualification", null, false, false);
             case ChecklistAttribution:

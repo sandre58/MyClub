@@ -33,6 +33,10 @@
     "White": "White"
   },
   "differsFromFrame": "This stage has at least one rule decoupled from the general regulations. Coloured tokens mark the rules concerned.",
+  "binding": {
+    "inheritedFromFrame": "Rules inherited from the general regulations",
+    "specificToPhase": "Rules adapted for this stage"
+  },
   "personalized": "Personalized",
   "editRegulation": "Edit regulations",
   "editRegulationDisabledHint": "Regulations cannot be edited in this state.",

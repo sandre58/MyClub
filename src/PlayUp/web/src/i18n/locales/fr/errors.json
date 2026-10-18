@@ -34,6 +34,8 @@
     "RevertToDraftBlocked": "Retirez les matchs attachés avant de revenir en brouillon.",
     "RevertToReadyBlocked": "Terminez ou annulez les matchs engagés avant de mettre la phase en pause.",
     "StartBlockedUnmaterialized": "Matérialisez chaque confrontation éligible avant de démarrer la phase.",
+    "StartBlockedIncompleteEntryRound": "Complétez toutes les paires d’entrée du tableau avant de démarrer la phase.",
+    "StartBlockedNoExploitableInitialConfrontations": "Ajoutez suffisamment de participants pour établir des confrontations initiales avant de démarrer la phase.",
     "StageExploitationClosed": "La compétition est clôturée ou archivée.",
     "StageExploitationNotOpen": "Les opérations sportives ne sont pas encore ouvertes sur cette phase.",
     "MatchLiveInProgress": "Un match est en cours — terminez-le ou annulez-le avant de suspendre la phase.",

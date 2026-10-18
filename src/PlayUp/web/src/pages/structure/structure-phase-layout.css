@@ -73,12 +73,28 @@
 }
 
 .structure-regulation-digest__section {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-16);
+  align-self: flex-start;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+.structure-regulation-digest__section .ds-form-section {
+  width: 100%;
+  align-items: flex-start;
+}
+
+.structure-regulation-digest__binding-hint {
+  margin: var(--space-4) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-style: italic;
+  line-height: var(--leading-tight);
+}
+
+.structure-regulation-digest__binding-hint--phase {
+  color: var(--color-attention);
+  opacity: 0.8;
 }
 
 .structure-regulation-digest__hero-icon {
@@ -165,8 +181,7 @@
 .structure-regulation-digest__fact-content {
   min-width: 0;
   max-width: 100%;
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-regular);
   overflow-wrap: anywhere;
 }
 
@@ -252,8 +267,7 @@
 
 .structure-phase-composition__grid--single-section > .structure-phase-composition__section,
 .structure-phase-composition__grid--single-section > .structure-phase-composition__sep,
-.structure-phase-composition__grid--single-section
-  > .structure-phase-composition__population-gauge--span-sources {
+.structure-phase-composition__grid--single-section > .structure-phase-composition__population-gauge--span-sources {
   grid-column: 1 / -1;
   width: 100%;
 }
@@ -380,17 +394,13 @@
   min-width: 0;
 }
 
-.structure-phase-composition--mode-exploitation
-  .structure-phase-composition__section--affectation,
-.structure-phase-composition--mode-historical
-  .structure-phase-composition__section--affectation {
+.structure-phase-composition--mode-exploitation .structure-phase-composition__section--affectation,
+.structure-phase-composition--mode-historical .structure-phase-composition__section--affectation {
   padding-block: var(--space-8);
 }
 
-.structure-phase-composition--mode-exploitation
-  .structure-operational-strip--composition-lifecycle,
-.structure-phase-composition--mode-historical
-  .structure-operational-strip--composition-lifecycle {
+.structure-phase-composition--mode-exploitation .structure-operational-strip--composition-lifecycle,
+.structure-phase-composition--mode-historical .structure-operational-strip--composition-lifecycle {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
@@ -404,7 +414,7 @@
 .structure-entries__engaged-undetermined-body {
   margin: var(--space-4) 0 0;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  font-size: var(--text-meta);
 }
 
 .structure-entries--composition-band {
@@ -816,6 +826,21 @@
   gap: var(--space-8);
 }
 
+.structure-phase-match-tile__entry-round-gauge {
+  margin-top: var(--space-12);
+  padding-top: var(--space-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-operational-strip__section-body:has(
+    .structure-phase-match-tile__entry-round-gauge
+  ) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
 .structure-operational-strip__production-actions {
   display: flex;
   flex-wrap: wrap;
@@ -840,6 +865,19 @@
   flex: none;
   display: inline-flex;
   margin-left: auto;
+}
+
+.structure-operational-strip__production-actions--tile > .structure-operational-strip__dematerialize-btn {
+  flex: none;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.structure-operational-strip__production-advisory {
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
+  color: var(--color-text-secondary);
 }
 
 .structure-phase-tile--schematic .structure-phase-hero__stats {

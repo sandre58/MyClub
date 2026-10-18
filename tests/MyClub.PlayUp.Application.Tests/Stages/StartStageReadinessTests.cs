@@ -54,6 +54,70 @@ public sealed class StartStageReadinessTests
     }
 
     [Fact]
+    public void Start_blocked_when_championship_roster_complete_but_no_confrontation_can_be_established()
+    {
+        var situation = TestCompetition.Create("Solo", _clock)
+            .WithTeams("A")
+            .WithStructure(StructureIntent.Championship())
+            .PreparePrimaryStage();
+        var stage = situation.RequirePrimaryStage();
+
+        StageStartReadinessGuard.TryGetDisabledReasonCode(
+                stage,
+                situation.Competition,
+                [],
+                situation.Stages)
+            .Should()
+            .Be(StageStartReadinessGuard.DisabledNoExploitableInitialConfrontations);
+
+        var act = () => StageStartReadinessGuard.EnsureReadyToStart(stage, situation.Competition, []);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedNoExploitableInitialConfrontations);
+    }
+
+    [Fact]
+    public void Read_Start_disabled_when_no_exploitable_initial_confrontations()
+    {
+        var situation = TestCompetition.Create("Solo", _clock)
+            .WithTeams("A")
+            .WithStructure(StructureIntent.Championship())
+            .PreparePrimaryStage();
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations);
+        hub.Lifecycle.Transition.Remediation.Should().NotBeNull();
+        hub.Lifecycle.Transition.Remediation!.Href.Should().Contain("focus=rail-entries");
+    }
+
+    [Fact]
+    public void TryGetDisabledReasonCode_groups_ready_with_confrontations_returns_unmaterialized_not_no_exploitable()
+    {
+        var situation = TestCompetition.Create("Groups", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Groups(2, 2));
+        var stage = situation.PrimaryStage!;
+        var entries = situation.Competition.Entries.OrderBy(entry => entry.Id.Value).ToArray();
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[0].Id);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, entries[1].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[2].Id);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, entries[3].Id);
+        situation.PreparePrimaryStage();
+
+        StageStartReadinessGuard.TryGetDisabledReasonCode(
+                stage,
+                situation.Competition,
+                [],
+                situation.Stages)
+            .Should()
+            .Be(StageStartReadinessGuard.DisabledUnmaterializedConfrontations);
+    }
+
+    [Fact]
     public void Start_allowed_for_swiss_without_matches()
     {
         var situation = TestCompetition.Create("Swiss", _clock)
@@ -123,6 +187,44 @@ public sealed class StartStageReadinessTests
             [],
             situation.Stages);
 
-        reason.Should().Be(StructureStageLifecycleAssembler.DisabledInitialRoundNotPlayable);
+        reason.Should().Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+    }
+
+    [Fact]
+    public void Start_blocked_when_cup_canonical_entry_round_incomplete_after_eligible_materialized()
+    {
+        var situation = TestCompetition.Create("Cup partial R0", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.PrimaryStage!;
+        var a = EntryId.New();
+        var b = EntryId.New();
+        stage.ApplyResolvedEntry("S1", a, _clock);
+        stage.ApplyResolvedEntry("S2", b, _clock);
+        situation.PreparePrimaryStage();
+
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            ["P1"],
+            [],
+            _clock);
+        var summaries = StageStartReadinessGuard.ToSummaryRows(materialized.CreatedMatches);
+
+        var act = () => StageStartReadinessGuard.EnsureReadyToStart(
+            stage,
+            situation.Competition,
+            summaries);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
+
+        StageStartReadinessGuard.TryGetDisabledReasonCode(
+                stage,
+                situation.Competition,
+                summaries,
+                situation.Stages)
+            .Should()
+            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
     }
 }

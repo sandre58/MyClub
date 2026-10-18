@@ -1106,6 +1106,28 @@
   max-width: none;
 }
 
+.ds-form-section--compact {
+  gap: var(--space-8);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ds-form-section--compact .ds-form-section__head {
+  gap: var(--space-16);
+}
+
+.ds-form-section--compact .ds-form-section__icon .ds-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.ds-form-section--compact .ds-form-section__body {
+  gap: var(--space-8);
+}
+
 /* —— FormGroup (subsection inside FormSection) —— */
 .ds-form-group {
   display: flex;

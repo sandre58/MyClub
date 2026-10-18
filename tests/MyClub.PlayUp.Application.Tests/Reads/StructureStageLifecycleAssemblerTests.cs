@@ -600,7 +600,7 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
         hub.Lifecycle.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
-            .Be(StructureStageLifecycleAssembler.DisabledInitialRoundNotPlayable);
+            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
 
         hub.Lifecycle.Transition.Remediation.Should().NotBeNull();
         hub.Lifecycle.Transition.Remediation!.Href.Should().Contain("focus=operational-placement");

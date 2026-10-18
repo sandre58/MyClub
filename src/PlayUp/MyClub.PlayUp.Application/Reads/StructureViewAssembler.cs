@@ -7,6 +7,7 @@
 using System.Globalization;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
@@ -824,11 +825,17 @@ public static class StructureViewAssembler
     private static List<string> BuildReadyStageActions(Stage stage, int attachedMatches)
     {
         var actions = new List<string> { ActionRenameStage };
-        if (attachedMatches > 0)
+        if (attachedMatches > 0 && !CupCanonicalEntryRoundStartGate.BlocksStart(stage))
         {
             return actions;
         }
 
+        AppendReadyOperationalAuthoringActions(actions, stage);
+        return actions;
+    }
+
+    private static void AppendReadyOperationalAuthoringActions(List<string> actions, Stage stage)
+    {
         if (StageClassification.IsClassifyingPhase(stage))
         {
             actions.Add(ActionReplaceQualificationRules);
@@ -843,11 +850,13 @@ public static class StructureViewAssembler
         actions.Add(ActionReplaceAffectationAuthoring);
 
         var format = StructureSkeleton.InferFormat(stage);
-        if (format is not (StructureFormatKind.Cup or null)) return actions;
+        if (format is not (StructureFormatKind.Cup or null))
+        {
+            return;
+        }
+
         actions.Add(ActionAssignEntryToSlot);
         actions.Add(ActionClearSlotAssignment);
-
-        return actions;
     }
 
     /// <summary>Running / Suspended — rename + standing recalculation on classifying phases (R-Stand1).</summary>

@@ -30,6 +30,7 @@ import type { MaterializePresentation } from './structureMaterializeCopy';
 import type {
   CompositionTileMode,
   PlacesStripLayout,
+  TeamsSectionRuntimePresentation,
 } from './compositionTilePresentation';
 import { shouldShowCompositionPrepActions } from './compositionTilePresentation';
 
@@ -48,7 +49,7 @@ export type StructurePhaseCompositionBandProps = {
   schematicReady: boolean;
   entryPlaceProjections: ReadonlyMap<string, EntryPlaceProjection>;
   onViewPhase?: (peerId: string) => void;
-  renderAvalSourceAction: (group: FeedGroup) => ReactNode;
+  renderAvalSourceAction: (group: CompositionQualifierFeedGroup) => ReactNode;
   compositionPopulationGaugeFooter: ReactNode;
   sharedCompositionPopulationGauge: boolean;
   showTeamsSection: boolean;
@@ -63,6 +64,7 @@ export type StructurePhaseCompositionBandProps = {
   compactIcon: string;
   openCompose: (initial: boolean) => void;
   teamsHasListContent: boolean;
+  teamsRuntimePresentation: TeamsSectionRuntimePresentation;
   capacityIssueBanner: ReactNode;
   stage: StructureStageHubSummary;
   placedEntryIds: ReadonlySet<string>;
@@ -110,6 +112,7 @@ export function StructurePhaseCompositionBand({
   compactIcon,
   openCompose,
   teamsHasListContent,
+  teamsRuntimePresentation,
   capacityIssueBanner,
   stage,
   placedEntryIds,
@@ -225,19 +228,37 @@ export function StructurePhaseCompositionBand({
             }
           />
           {capacityIssueBanner}
-          <RootEntriesRail
-            variant="composition-band"
-            stage={stage}
-            entries={entries}
-            formatKind={formatKind}
-            placedEntryIds={placedEntryIds}
-            entryPlaceProjections={entryPlaceProjections}
-            schematicReady={schematicReady}
-            sourcesConfiguredVolume={populationFeedVolume}
-            compositionTileMode={compositionTileMode}
-            entryProvenanceByEntryId={entryProvenanceByEntryId}
-            compositionTeamRows={compositionTeamRows}
-          />
+          {teamsRuntimePresentation.kind === 'empty' ? (
+            <EmptyState
+              variant="idle"
+              icon={<EmptySelectionIcon size="lg" />}
+              title={t('composition.tile.engagedPoolEmpty')}
+            />
+          ) : teamsRuntimePresentation.kind === 'undetermined' ? (
+            <EmptyState variant="idle" icon={<EmptySelectionIcon size="lg" />}>
+              <p className="structure-entries__engaged-undetermined-title">
+                {t('composition.tile.engagedPoolUndeterminedTitle')}
+              </p>
+              <p className="structure-entries__engaged-undetermined-body">
+                {t('composition.tile.engagedPoolUndeterminedBody')}
+              </p>
+            </EmptyState>
+          ) : (
+            <RootEntriesRail
+              variant="composition-band"
+              stage={stage}
+              entries={entries}
+              formatKind={formatKind}
+              placedEntryIds={placedEntryIds}
+              entryPlaceProjections={entryPlaceProjections}
+              schematicReady={schematicReady}
+              sourcesConfiguredVolume={populationFeedVolume}
+              compositionTileMode={compositionTileMode}
+              entryProvenanceByEntryId={entryProvenanceByEntryId}
+              compositionTeamRows={compositionTeamRows}
+              suppressRuntimeEmptyPresentation
+            />
+          )}
           {compositionPopulationGaugeFooter &&
           showTeamsSection &&
           !sharedCompositionPopulationGauge

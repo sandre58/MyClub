@@ -24,6 +24,10 @@ internal static class StageStartReadinessGuard
 
     internal const string DisabledDrawObsoleteForConsumption = "DrawObsoleteForConsumption";
 
+    internal const string DisabledIncompleteEntryRound = CupCanonicalEntryRoundStartGate.DisabledReasonCode;
+
+    internal const string DisabledNoExploitableInitialConfrontations = "NoExploitableInitialConfrontations";
+
     private const string DisabledInitialRoundNotPlayable = "InitialRoundNotPlayable";
 
     internal static void EnsureReadyToStart(
@@ -41,6 +45,23 @@ internal static class StageStartReadinessGuard
             throw new ApplicationFailureException(
                 "Start is blocked because eligible confrontations are not fully materialized.",
                 ApplicationErrorCodes.StartBlockedUnmaterialized);
+        }
+
+        if (StageConfrontationMaterializationState.LacksExploitableInitialConfrontations(
+                competition,
+                stage,
+                competitionStages))
+        {
+            throw new ApplicationFailureException(
+                "Start is blocked because the phase requires initial confrontations but none can be established.",
+                ApplicationErrorCodes.StartBlockedNoExploitableInitialConfrontations);
+        }
+
+        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage))
+        {
+            throw new ApplicationFailureException(
+                "Start is blocked because canonical Cup entry-round pairs are not all determined.",
+                ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
         }
 
         StructureDrawConsumptionGate.EnsureNoObsoleteDrawsOnStage(stage);
@@ -61,9 +82,22 @@ internal static class StageStartReadinessGuard
             return DisabledUnmaterializedConfrontations;
         }
 
+        if (StageConfrontationMaterializationState.LacksExploitableInitialConfrontations(
+                competition,
+                stage,
+                competitionStages))
+        {
+            return DisabledNoExploitableInitialConfrontations;
+        }
+
         if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
         {
             return DisabledDrawObsoleteForConsumption;
+        }
+
+        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage))
+        {
+            return DisabledIncompleteEntryRound;
         }
 
         var format = StructureSkeleton.InferFormat(stage);

@@ -755,7 +755,10 @@
   color: var(--color-success);
 }
 
-.structure-operational-gauge[data-pool-tone='danger'] .structure-occupancy-meter__fill {
+.structure-operational-gauge[data-pool-tone='danger'] .structure-occupancy-meter__fill,
+.structure-operational-gauge:has(
+    .structure-operational-gauge__readiness[data-pool-tone='danger']
+  ) .structure-occupancy-meter__fill {
   background: var(--color-error);
 }
 

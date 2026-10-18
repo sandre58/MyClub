@@ -255,7 +255,10 @@
       "SourcePopulationShortfallPaused": "Not enough teams in the source phase (noted while paused)",
       "ConfrontationUndecidablePaused": "Confrontation cannot always decide (noted while paused)",
       "AuthoredAwardUnreachablePaused": "Source pair not found (noted while paused)",
-      "ExpectedRankUnreachablePaused": "Competition rank unreachable via attribution (noted while paused)"
+      "ExpectedRankUnreachablePaused": "Competition rank unreachable via attribution (noted while paused)",
+      "IncompleteEntryRound": "Entry-bracket pairs incomplete — start blocked",
+      "UnmaterializedConfrontations": "Eligible matches not created — start blocked",
+      "NoExploitableInitialConfrontations": "No initial confrontation can be established — start blocked"
     },
     "issuesShort": {
       "DanglingQualificationTarget": "Qual destination missing",
@@ -276,7 +279,10 @@
       "SourcePopulationShortfall": "Source team shortfall",
       "PopulationShortfall": "Team shortfall",
       "AuthoredAwardUnreachable": "Award source missing",
-      "ExpectedRankUnreachable": "Rank unreachable"
+      "ExpectedRankUnreachable": "Rank unreachable",
+      "IncompleteEntryRound": "Incomplete entry pairs",
+      "UnmaterializedConfrontations": "Matches not created",
+      "NoExploitableInitialConfrontations": "No initial confrontation"
     }
   },
   "lifecycle": {
@@ -354,7 +360,8 @@
     },
     "remediation": {
       "default": "Go to the relevant section",
-      "InitialRoundNotPlayable": "Go to operational placement"
+      "InitialRoundNotPlayable": "Go to operational placement",
+      "IncompleteEntryRound": "Go to operational placement"
     },
     "disabled": {
       "_unknown": "This phase lifecycle action is unavailable right now.",
@@ -362,6 +369,7 @@
       "ConstructionFrozen": "The competition is live — finish preparing this phase before the competition started, or adjust from Overview.",
       "Places": "Complete the composition pool (groups) before marking the phase as ready.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
+      "IncompleteEntryRound": "Complete every entry-bracket pair before starting the phase.",
       "StageNotReady": "Complete this phase’s structure before marking it ready.",
       "StructureGraphInvalid": "Fix structure connections before preparing the phase.",
       "OpenMatches": "Every match must be finished or cancelled before completing the phase.",
@@ -374,6 +382,7 @@
       "CycleDetected": "Links between phases form a cycle — fix qualification or progression.",
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
+      "NoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
       "MatchLifecycleStarted": "Finish or cancel engaged matches before reverting the start or pausing the phase.",
       "MatchLiveInProgress": "A match is live — finish or cancel it before suspending the phase.",
@@ -414,6 +423,7 @@
       "AppliedDrawSlotPlacementProtected": "This placement is protected by the applied draw. It cannot be changed directly.",
       "DrawObsoleteForConsumption": "This draw no longer matches the phase — cancel it or restore coherence before applying or producing matches.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
+      "IncompleteEntryRound": "Complete every entry-bracket pair before starting the phase.",
       "StageNotReady": "Complete this phase’s structure before marking it ready.",
       "StructureGraphInvalid": "Fix structure connections before preparing the phase.",
       "OpenMatches": "Every match must be finished or cancelled before completing the phase.",
@@ -426,6 +436,7 @@
       "CycleDetected": "Links between phases form a cycle — fix qualification or progression.",
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
+      "NoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
       "MatchLifecycleStarted": "Finish or cancel engaged matches before reverting the start or pausing the phase.",
       "MatchLiveInProgress": "A match is live — finish or cancel it before suspending the phase."
@@ -454,7 +465,7 @@
       "blockedGeneric": "Match production is not available right now.",
       "disabledReason": {
         "StructureNotMutable": "The structure no longer allows creating matches.",
-        "NoDeterminedConfrontations": "No confrontations are determined yet. Phase teams may still be unresolved.",
+        "NoDeterminedConfrontations": "No confrontation determined",
         "PhaseRosterIncomplete": "Phase composition is incomplete: not every place is resolved yet.",
         "GroupsNotReady": "Groups are not ready for match production.",
         "NoEligibleConfrontations": "No confrontations can be materialized right now.",
@@ -463,7 +474,13 @@
       "viewPhaseMatches": "View matches",
       "submitting": "Creating…",
       "successCreated": "{{count}} match(es) created.",
-      "successAlreadyComplete": "Those matches were already created."
+      "successAlreadyComplete": "Those matches were already created.",
+      "incompleteEntryRoundAdvisory": "Some entry-bracket pairs are still incomplete — starting the phase will stay blocked until they are filled.",
+      "confirmIncompleteEntryRound": {
+        "title": "Materialize before the bracket is complete?",
+        "message": "Some entry pairs are not filled yet. You can create the determined matches, but starting the phase will stay blocked until every entry-bracket pair is complete.",
+        "confirm": "Create matches"
+      }
     },
     "dematerialize": {
       "hintFullPhase": "Removes produced matches on this phase. Structure is preserved.",
@@ -545,17 +562,33 @@
         "titleMatches": "Matches",
         "meterAria": "Match production progress",
         "meterCaptionMatches": "matches created",
+        "meterCaptionEntryPairs": "entry pairs",
+        "entryRoundRatioCaption": "Pairs",
+        "meterAriaEntryPairs": "Entry-bracket pair fill progress",
         "ratioLabel_one": "created",
         "ratioLabel_other": "created",
+        "ratioLabelMatches_one": "match created",
+        "ratioLabelMatches_other": "matches created",
+        "ratioLabelEntryPairs_one": "pair ready",
+        "ratioLabelEntryPairs_other": "pairs ready",
         "statusUnknown": "Production status is unavailable.",
         "createShort": "Create",
         "completeShort": "Complete",
         "emptyTitle": "Match production",
+        "emptyStructuralTitle": "No confrontation to display",
+        "determinedRatioLabel": "Determined confrontations",
+        "meterCaptionDetermined": "determined",
         "stateMessage": {
           "unavailable": "No matches to produce for this phase.",
           "complete": "All planned matches are created.",
           "partial_one": "{{count}} match left to create.",
-          "partial_other": "{{count}} matches left to create."
+          "partial_other": "{{count}} matches left to create.",
+          "noDeterminedConfrontations": "No confrontation determined",
+          "determinedPartial_one": "{{count}} confrontation left to determine.",
+          "determinedPartial_other": "{{count}} confrontations left to determine.",
+          "determinedComplete": "All listed confrontations are determined.",
+          "entryRoundRemainingBeforeStart_one": "{{count}} entry pair to complete before start.",
+          "entryRoundRemainingBeforeStart_other": "{{count}} entry pairs to complete before start."
         }
       }
     },
@@ -662,6 +695,10 @@
     "binding": {
       "general": "General",
       "personalized": "Personalized"
+    },
+    "confrontationFormatHint": {
+      "uniform": "Same format for every round.",
+      "perRound": "Some rounds use their own format."
     },
     "rule": {
       "placeFirst": "1st",
@@ -791,9 +828,9 @@
     "toastUpdated": "Teams updated",
     "tile": {
       "engagedPoolSubtitle": "Engaged pool",
-      "engagedPoolUndeterminedTitle": "Engaged pool undetermined",
-      "engagedPoolUndeterminedBody": "Runtime composition is not available from the structure hub for this phase. Authoring affectation is not shown as the live pool.",
-      "engagedPoolEmpty": "No teams in the engaged pool.",
+      "engagedPoolUndeterminedTitle": "Pool undetermined",
+      "engagedPoolUndeterminedBody": "The structure hub does not expose a reliable engaged pool for this stage.",
+      "engagedPoolEmpty": "No teams in this stage",
       "authoringPoolContrast": "Authoring affectation: {{count}}",
       "strip": {
         "drawNotApplied": "Draw not applied.",

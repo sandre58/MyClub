@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   resolveCompositionPopulationMeterCopy,
+  resolveEntryRoundPlacementMeterCopy,
   resolvePlaceOccupancyMeterCopy,
   resolveProductionMeterCopy,
 } from './structureOperationalStripMessages';
@@ -68,6 +69,21 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('danger');
   });
 
+  it('uses neutral attention when no confrontation is determined on row gauge', () => {
+    expect(
+      resolveProductionMeterCopy({
+        t,
+        blockedCaption: null,
+        gaugeRatio: { filled: 0, capacity: 4 },
+        hasProduction: true,
+        productionGaugeMode: 'determined',
+      }),
+    ).toEqual({
+      text: 'fiche.operational.production.stateMessage.noDeterminedConfrontations',
+      kind: 'attention',
+    });
+  });
+
   it('uses attention for partial match production gap', () => {
     expect(
       resolveProductionMeterCopy({
@@ -77,6 +93,50 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
         hasProduction: true,
       }).kind,
     ).toBe('attention');
+  });
+
+  it('uses danger for entry-round meter when start is blocked by incomplete pairs', () => {
+    expect(
+      resolveEntryRoundPlacementMeterCopy({
+        t,
+        gaugeRatio: { filled: 1, capacity: 4 },
+        blocksPhaseStart: true,
+      })?.kind,
+    ).toBe('danger');
+  });
+
+  it('uses attention for entry-round meter when pairs incomplete but start not blocked', () => {
+    expect(
+      resolveEntryRoundPlacementMeterCopy({
+        t,
+        gaugeRatio: { filled: 1, capacity: 4 },
+        blocksPhaseStart: false,
+      })?.kind,
+    ).toBe('attention');
+  });
+
+  it('uses danger when start is blocked on unmaterialized confrontations', () => {
+    expect(
+      resolveProductionMeterCopy({
+        t,
+        blockedCaption: null,
+        gaugeRatio: { filled: 1, capacity: 4 },
+        hasProduction: true,
+        startStageBlocker: 'UnmaterializedConfrontations',
+      }).kind,
+    ).toBe('danger');
+  });
+
+  it('shows match production complete when quota filled even if start blocked for entry round', () => {
+    const result = resolveProductionMeterCopy({
+      t,
+      blockedCaption: null,
+      gaugeRatio: { filled: 2, capacity: 2 },
+      hasProduction: true,
+      startStageBlocker: 'IncompleteEntryRound',
+    });
+    expect(result.kind).toBe('success');
+    expect(result.text).toBe('fiche.operational.production.stateMessage.complete');
   });
 
   it('uses attention for partial occupancy in Draft when SlotFeedMissing is active', () => {

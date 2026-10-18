@@ -162,6 +162,20 @@ const BY_CODE: Record<string, StructureDiagnosticMeta> = {
     tone: 'progress',
     titleKey: 'graph.issues.PopulationShortfall',
   },
+  IncompleteEntryRound: {
+    family: 'execution',
+    tile: 'confrontation',
+    cta: 'places',
+    tone: 'danger',
+    titleKey: 'graph.issues.IncompleteEntryRound',
+  },
+  UnmaterializedConfrontations: {
+    family: 'execution',
+    tile: 'confrontation',
+    cta: 'places',
+    tone: 'attention',
+    titleKey: 'graph.issues.UnmaterializedConfrontations',
+  },
   SourcePopulationShortfall: {
     family: 'capacity',
     tile: 'capacity',

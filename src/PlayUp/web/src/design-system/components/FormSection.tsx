@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react';
 
+export type FormSectionVariant = 'panel' | 'compact';
+
 export type FormSectionProps = {
   title: string;
   /** Optional family hint — used in edit; rare on read hub tiles. */
   description?: string;
+  /** Page-local styling only (e.g. Structure regulation binding hints). */
+  descriptionClassName?: string;
   icon?: ReactNode;
   children: ReactNode;
   /** Trailing header actions (edit, binding badge, …). */
@@ -11,6 +15,8 @@ export type FormSectionProps = {
   footer?: ReactNode;
   /** For aria-labelledby on dialogs / landmarks. */
   id?: string;
+  /** `panel` = bordered card; `compact` = typographic section (e.g. Structure regulation strip). */
+  variant?: FormSectionVariant;
   className?: string;
 };
 
@@ -21,18 +27,24 @@ export type FormSectionProps = {
 export function FormSection({
   title,
   description,
+  descriptionClassName,
   icon,
   children,
   toolbar,
   footer,
   id,
+  variant = 'panel',
   className,
 }: FormSectionProps) {
   const titleId = id ? `${id}-title` : undefined;
+  const variantClass =
+    variant === 'compact' ? 'ds-form-section--compact' : null;
 
   return (
     <section
-      className={['ds-form-section', className].filter(Boolean).join(' ')}
+      className={['ds-form-section', variantClass, className]
+        .filter(Boolean)
+        .join(' ')}
       id={id}
       aria-labelledby={titleId}
     >
@@ -47,7 +59,16 @@ export function FormSection({
             {title}
           </h3>
           {description ? (
-            <p className="ds-form-section__description">{description}</p>
+            <p
+              className={[
+                'ds-form-section__description',
+                descriptionClassName,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {description}
+            </p>
           ) : null}
         </div>
         {toolbar ? (

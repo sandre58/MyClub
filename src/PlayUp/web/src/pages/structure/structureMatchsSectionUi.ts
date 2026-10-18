@@ -1,6 +1,7 @@
 import type { StructureStageHubSummary } from '../../types';
 import type { MaterializePresentation } from './structureMaterializeCopy';
 import { showViewMaterializedMatchesLink } from './structureMaterializeCopy';
+import { hasMatchsStructuralProductionChrome } from './structureMaterializeCopy';
 import { productionRatio, showProductionOperationalSection } from './structureOperationalCopy';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
 
@@ -52,10 +53,14 @@ export function resolveAsideMatchsStripContent(
   }
 
   const showProduction = shouldShowProductionInMatchsSection(stage, presentation);
-  const gaugeRatio = productionRatio(materialize ?? undefined);
+  const gaugeRatio = productionRatio(materialize ?? undefined, stage);
+  const structuralChrome = hasMatchsStructuralProductionChrome(
+    materialize,
+    stage,
+  );
   const canShowMetric =
     showProduction &&
-    gaugeRatio != null &&
+    (gaugeRatio != null || structuralChrome) &&
     (materialize != null || dematerialize != null);
   const showProductionBody =
     canShowMetric ||

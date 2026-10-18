@@ -211,6 +211,7 @@ export function RootEntriesRail({
   compositionTileMode = 'prep',
   entryProvenanceByEntryId,
   compositionTeamRows = null,
+  suppressRuntimeEmptyPresentation = false,
 }: {
   stage: StructureStageHubSummary;
   entries: readonly StructureEntry[];
@@ -228,6 +229,8 @@ export function RootEntriesRail({
   compositionTileMode?: CompositionTileMode;
   entryProvenanceByEntryId?: ReadonlyMap<string, CompositionTeamProvenance>;
   compositionTeamRows?: CompositionTeamRow[] | null;
+  /** Runtime empty / undetermined rendered by Composition band header zone. */
+  suppressRuntimeEmptyPresentation?: boolean;
 }) {
   const { t } = useTranslation('structure');
   const fromAffectation = stage.affectationEntryCount ?? 0;
@@ -396,14 +399,16 @@ export function RootEntriesRail({
             )}
           </ul>
         ) : engagedPoolUndetermined ? (
-          <EmptyState variant="idle" icon={<EmptySelectionIcon size="lg" />}>
-            <p className="structure-entries__engaged-undetermined-title">
-              {t('composition.tile.engagedPoolUndeterminedTitle')}
-            </p>
-            <p className="structure-entries__engaged-undetermined-body">
-              {t('composition.tile.engagedPoolUndeterminedBody')}
-            </p>
-          </EmptyState>
+          suppressRuntimeEmptyPresentation ? null : (
+            <EmptyState variant="idle" icon={<EmptySelectionIcon size="lg" />}>
+              <p className="structure-entries__engaged-undetermined-title">
+                {t('composition.tile.engagedPoolUndeterminedTitle')}
+              </p>
+              <p className="structure-entries__engaged-undetermined-body">
+                {t('composition.tile.engagedPoolUndeterminedBody')}
+              </p>
+            </EmptyState>
+          )
         ) : composed.length > 0 ? (
           <ul className={teamListClass}>
             {composed.map((entry) => renderTeamCell(entry))}
@@ -416,7 +421,7 @@ export function RootEntriesRail({
           <p className="structure-entries__anomaly" role="status">
             {t('entries.ineligibleOverlay', { count: ineligible })}
           </p>
-        ) : (
+        ) : suppressRuntimeEmptyPresentation && runtimeMode ? null : (
           <EmptyState
             variant="idle"
             icon={<EmptySelectionIcon size="lg" />}

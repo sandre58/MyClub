@@ -10,6 +10,9 @@ import { structureDiagnosticPresentation } from '../pages/structure/structureDia
 const EXTRA_STRUCTURE_ATTENTION_SOURCES = new Set([
   'CupBracketInvalid',
   'MissingPotRules',
+  'IncompleteEntryRound',
+  'UnmaterializedConfrontations',
+  'NoExploitableInitialConfrontations',
 ]);
 
 export function isStructureAttentionSource(source: string): boolean {

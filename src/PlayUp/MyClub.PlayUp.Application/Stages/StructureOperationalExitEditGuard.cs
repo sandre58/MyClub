@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
@@ -32,11 +33,19 @@ internal static class StructureOperationalExitEditGuard
         }
 
         if (upstreamMatches is not null
-            && StageAttachedProduction.HasAttachedMatches(upstream, upstreamMatches))
+            && StageAttachedProduction.HasAttachedMatches(upstream, upstreamMatches)
+            && !AllowsOperationalEditsDespiteAttachedProduction(upstream))
         {
             throw new ApplicationFailureException(
                 $"{ruleKind} cannot be replaced while matches are attached to stage '{upstream.Id}'.",
                 ApplicationErrorCodes.StructureNotMutable);
         }
     }
+
+    /// <summary>
+    /// Cup mono-round: incomplete canonical entry round may still be completed while partial production exists (C1 recette).
+    /// </summary>
+    private static bool AllowsOperationalEditsDespiteAttachedProduction(Stage stage) =>
+        StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup
+        && CupCanonicalEntryRoundStartGate.BlocksStart(stage);
 }

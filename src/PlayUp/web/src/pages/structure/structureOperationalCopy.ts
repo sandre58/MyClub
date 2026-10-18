@@ -9,6 +9,7 @@ import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 import type { StripOperationalMessageKind } from './structureOperationalStripUi';
 import {
   classifyMaterializePresentation,
+  cupMatchProductionGaugeRatio,
   materializeProductionTarget,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
@@ -122,9 +123,19 @@ export function showProductionOperationalSection(
 
 export function productionRatio(
   materialize: StructureMaterialize | undefined,
+  stage?: Pick<
+    StructureStageHubSummary,
+    'matchCount' | 'defaultTieFormat' | 'numberOfLegs'
+  > | null,
 ): { filled: number; capacity: number } | null {
   if (!materialize) {
     return null;
+  }
+  if (
+    materialize.commandCode === 'MaterializeFromOccupiedSlots' &&
+    stage != null
+  ) {
+    return cupMatchProductionGaugeRatio(stage, materialize);
   }
   const capacity = materializeProductionTarget(materialize);
   if (capacity <= 0) {

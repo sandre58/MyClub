@@ -418,7 +418,9 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.queryByRole('heading', { name: /^Sorties$/i }),
     ).not.toBeInTheDocument();
-    expect(screen.getAllByText('Général').length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText('Règles héritées du règlement général').length,
+    ).toBeGreaterThanOrEqual(1);
     // S5: no Slots|Teams toggle — the schematic is a single populated view.
     expect(
       screen.queryByRole('group', { name: /Affichage de la silhouette/i }),

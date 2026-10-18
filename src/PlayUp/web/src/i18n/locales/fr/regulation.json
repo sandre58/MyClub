@@ -33,6 +33,10 @@
     "White": "Blanc"
   },
   "differsFromFrame": "Cette phase a au moins une règle découplée du règlement général. Les jetons en couleur signalent les règles concernées.",
+  "binding": {
+    "inheritedFromFrame": "Règles héritées du règlement général",
+    "specificToPhase": "Règles adaptées à cette phase"
+  },
   "personalized": "Personnalisé",
   "editRegulation": "Modifier le règlement",
   "editRegulationDisabledHint": "Le règlement ne peut pas être modifié dans cet état.",

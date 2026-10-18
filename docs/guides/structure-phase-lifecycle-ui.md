@@ -10,6 +10,8 @@
 
 **Product SoT (V2 lifecycle contract):** [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca) — **Contrat cycle de phase V2** (2026-10-12, DECIDED). This appendix records **code facts** and **gaps vs that contract**; narrative contract lives in Notion only.
 
+**Cup Start / R0 (accepted 2026-10-17):** [cup-lifecycle-start-mutability-arbitration.md](../design/structure-lifecycle/cup-lifecycle-start-mutability-arbitration.md) — Start 1a, preventive materialize UX, dematerialize CTA discoverability.
+
 **PR gate (2026-10-13):** Lifecycle V2 SPA **shipped**; matrice 2b **superseded** (stepper removed). **2c** destination meter **delivered**.
 
 **Notion arbitration (product):** [Arbitrage matrice 2b — bandeau cycle Structure (2026-10-11)](https://app.notion.com/p/3f675fb92d1081dba56afcbfacbd32e7) — **superseded** by Matchs-column lifecycle UI (2026-10-12). Update [Lifecycle phase — UI Structure](https://app.notion.com/p/3f575fb92d10816a96a9cf3c70de7bca) after merge.
@@ -124,7 +126,7 @@ These must stay **separate** in copy and layout; none replaces another.
 
 ## Fiche vs aside — executable verification recipes (VERIFIED 2026-10-17)
 
-**Scope:** documents **current** read + SPA behaviour. Does **not** resolve product **§ H** (exact Cup vs Championship/Groups Start policy trade-offs).
+**Scope:** documents **current** read + SPA behaviour. Product **§ H** (Option A + 2026-10-18 Ch/G exploitable situation) → **Notion** SoT; open domain predicate → [start-readiness-exploitable-arbitration.md](../design/structure-lifecycle/start-readiness-exploitable-arbitration.md).
 
 | Track | Format / situation | Read `disabledReasonCode` (Start) | Production command (hub) | Remediation (when projected) | Proof |
 | :---- | :----------------- | :-------------------------------- | :------------------------- | :--------------------------- | :---- |
@@ -572,7 +574,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | :--- | :------ | :------------- | :------------------- | :-------------------------- | :------------------------------------- |
 | Draft | `PrepareStage` | Ready | Existing Prepare gates pass | `Stage.NotReady`, `Stage.InvalidConfiguration`, Prepare gate `Application.*` | `StageNotReady`, `StructureGraphInvalid`, prepare-gate codes, `CompetitionClosed`, `ConstructionFrozen`† |
 | Ready | `RevertToDraft` | Draft | **Zero** stage-attached matches (same attachment notion as dematerialize scope) | **PROPOSED** `Stage.RevertBlockedProductionPresent` or `Application.RevertToDraftBlocked` | **PROPOSED** `ProductionPresent` |
-| Ready | `StartStage` | Running | Format Start readiness (§ H — product arbitration **open**) | `Stage.InvalidTransition`, `Stage.NotReady` (cup positional); app `StageStartReadinessGuard` | `UnmaterializedConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable`, `ConstructionFrozen`, `CompetitionClosed` |
+| Ready | `StartStage` | Running | Format Start readiness (§ H — Option A **DECIDED**; Ch/G exploitable predicate **OPEN**) | `Stage.InvalidTransition`, `Stage.NotReady` (cup positional); app `StageStartReadinessGuard` | `UnmaterializedConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable`, `ConstructionFrozen`, `CompetitionClosed` |
 | Running | `RevertToReady` | Ready | No match **sportively engaged** (Live, Finished, Cancelled+observed Live); **Scheduled/Postponed kept** | **PROPOSED** `Application.RevertToReadyBlocked` + reason `MatchLifecycleStarted` (reuse dematerialize predicate) | **PROPOSED** `MatchLifecycleStarted` |
 | Suspended | `RevertToReady` | Ready | Same as Running → Ready | Same | Same |
 | Running | `CompleteStage` | Completed | All matches Finished or Cancelled | `Application.StageCompletionBlocked` (`OpenMatches`) | `OpenMatches` |
@@ -700,12 +702,14 @@ Secondary transitions (reverts) must not hide primary without explicit product l
 
 **DECIDED (2026-10-17) — Option A:** production complète sur le périmètre **déterminé et éligible** avant `StartStage` ; matérialisation batch **Ready** only ; Cup conserve en plus `InitialRoundNotPlayable` (jouabilité R0). Poules/Championship : même complétude ; Swiss hors périmètre. **Notion:** [Décision § H — Start et production (Option A)](https://app.notion.com/p/3fc75fb92d10817f99bcc929ee77aba7). Any Start with remaining eligible production or batch materialize in `Running` requires a **separate** product decision (mutability / D2).
 
-**Status:** table below records **observed code + read projection** aligned with the decision above.
+**DECIDED (2026-10-18) — exploitable initial situation (Ch/G):** Championship and Groups must **not** start when their format requires initial confrontations but **no exploitable initial situation** is established (second control, distinct from full materialization of eligible determined confrontations). Cup: keep existing specific guards (no global minimum materialized match count). Swiss: zero matches at Start remains allowed. **Predicate (Git, 2026-10-18):** [start-readiness-exploitable-arbitration.md](../design/structure-lifecycle/start-readiness-exploitable-arbitration.md) — read `NoExploitableInitialConfrontations`; sync narrative on Notion § H when convenient.
+
+**Status:** table below records **observed code + read projection** aligned with Option A; row “zero eligible” reflects **product** DECIDED + **predicate** OPEN.
 
 | Format | Start **allowed** when (code today) | Start **blocked** — read `disabledReasonCode` |
 | :----- | :---------------------------------- | :-------------------------------------------- |
 | **Championship / Groups** | Every **eligible** confrontation materialized (`StageStartReadinessGuard`) | `UnmaterializedConfrontations` — partial production recipes: `32c6186e` (`MaterializeMatches`) |
-| **Championship / Groups** | **Zero** eligible confrontations | **Product edge:** Start **denied** if format implies matches (document per scenario); else explicit “empty exploitation” decision — default test: **deny** when `determined > 0` and `eligible > 0` |
+| **Championship / Groups** | **Zero** eligible confrontations | **DECIDED:** Start **denied** when structural prechecks pass (roster / pools ready) but **zero** round-robin confrontations can be established — read `NoExploitableInitialConfrontations` (`StageStartReadinessGuard`). Seed: Championship Ready, single active participant (`StartStageReadinessTests`). **Not** hub `determinedCount` / `matchCount` alone. Details: [start-readiness-exploitable-arbitration.md](../design/structure-lifecycle/start-readiness-exploitable-arbitration.md). |
 | **Cup** | Guard passes: no unmaterialized eligible confrontations, draw not obsolete for consumption, initial round **playable** | `UnmaterializedConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable` — IRR + placement: `10166fbb`; partial cup: `fb14feb7` (`MaterializeFromOccupiedSlots`) |
 | **Swiss** | After Prepare; **0 matches OK** | No full-calendar gate; Start then GenerateNextRound in Running |
 
@@ -724,7 +728,7 @@ Secondary transitions (reverts) must not hide primary without explicit product l
 | `Application.StartBlockedUnmaterialized` | Application | Legacy/alternate naming — prefer read `UnmaterializedConfrontations` + `StageStartReadinessGuard` (verified `32c6186e` / `fb14feb7`) |
 | `Stage.RevertBlocked` (or split Ready/Draft) | Domain | Optional if domain owns revert |
 | Read: `ProductionPresent`, `MatchLifecycleStarted` (revert) | Structure lifecycle DTO | Anticipated disable on transitions |
-| Read: `UnmaterializedConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable` | Structure lifecycle DTO | **Shipped** on Start (`StructureStageLifecycleAssembler` + guard) |
+| Read: `UnmaterializedConfrontations`, `NoExploitableInitialConfrontations`, `DrawObsoleteForConsumption`, `InitialRoundNotPlayable` | Structure lifecycle DTO | **Shipped** on Start (`StructureStageLifecycleAssembler` + guard) |
 
 Reuse existing **`DematerializeDisabledReasons.MatchLifecycleStarted`** as **reason detail** inside revert preflight where possible — avoid duplicate predicates.
 

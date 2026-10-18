@@ -124,7 +124,9 @@ import {
   resolveCompositionPopulationGaugeCurrent,
   resolveCompositionTileMode,
   resolvePlacesStripLayout,
+  resolveTeamsSectionRuntimePresentation,
   shouldShowCompositionPrepActions,
+  shouldShowCompositionTeamsSection,
 } from './compositionTilePresentation';
 import { StructurePhaseRegulationStrip } from './StructurePhaseRegulationStrip';
 
@@ -919,10 +921,18 @@ export function StructurePhaseFiche({
     data.participants.entries,
     { mergeInboundQualProg: mergeInboundIntoTeams },
   );
-  const showTeamsSection =
-    teamsHasListContent ||
-    (!compositionPrepActions &&
-      (showQualifiersSection || showAffectationSection));
+  const showTeamsSection = shouldShowCompositionTeamsSection(
+    compositionTileMode,
+    teamsHasListContent,
+    showQualifiersSection,
+    showAffectationSection,
+  );
+  const teamsRuntimePresentation = resolveTeamsSectionRuntimePresentation(
+    compositionTileMode,
+    stage,
+    data.participants.entries,
+    compositionTeamRows,
+  );
   const showCompositionContentEmpty =
     !showQualifiersSection &&
     !teamsHasListContent &&
@@ -1260,6 +1270,7 @@ export function StructurePhaseFiche({
           compactIcon={compactIcon}
           openCompose={openCompose}
           teamsHasListContent={teamsHasListContent}
+          teamsRuntimePresentation={teamsRuntimePresentation}
           capacityIssueBanner={railIssueBanner(capacityBanners)}
           stage={stage}
           placedEntryIds={placedEntryIds}

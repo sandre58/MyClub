@@ -22,6 +22,36 @@ internal static class StageConfrontationMaterializationState
     /// Count of confrontations that are determined, not yet materialized, and materializable in Ready.
     /// Swiss and unknown formats return 0 (no Start gate on this predicate).
     /// </summary>
+    /// <summary>
+    /// Ready Championship / Groups whose structural prerequisites are met but round-robin yields no confrontation.
+    /// </summary>
+    internal static bool LacksExploitableInitialConfrontations(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage>? competitionStages = null)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+
+        if (stage.Status is not StageStatus.Ready || !IsChampionshipOrGroupsMutable(competition, stage))
+        {
+            return false;
+        }
+
+        var stages = competitionStages ?? [stage];
+        var format = StructureSkeleton.InferFormat(stage);
+        return format switch
+        {
+            StructureFormatKind.Championship when ChampionshipSwissPhasePlaces.IsRosterComplete(
+                competition,
+                stage,
+                stages) => CountChampionshipDeterminedConfrontations(competition, stage, stages) == 0,
+            StructureFormatKind.Groups when AreGroupsReady(stage) =>
+                CountGroupsDeterminedConfrontations(stage) == 0,
+            _ => false
+        };
+    }
+
     internal static int CountEligibleUnmaterialized(
         Competition competition,
         Stage stage,
@@ -72,19 +102,40 @@ internal static class StageConfrontationMaterializationState
             return 0;
         }
 
-        var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
-        var pairs = MaterializeMatches.BuildRoundRobinRounds(entries, stage.MatchGenerationFormat)
-            .SelectMany(round => round)
-            .ToArray();
-        var determined = pairs.Length;
+        var determined = CountChampionshipDeterminedConfrontations(competition, stage, competitionStages);
         if (determined == 0)
         {
             return 0;
         }
 
+        var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
+        var pairs = ChampionshipDeterminedPairs(entries, stage.MatchGenerationFormat);
         var materialized = pairs.Count(covered.Contains);
         return determined - materialized;
     }
+
+    private static int CountChampionshipDeterminedConfrontations(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages))
+        {
+            return 0;
+        }
+
+        var entries = ChampionshipSwissPhasePlaces.ResolveCompositionRoster(competition, stage);
+        return ChampionshipDeterminedPairs(entries, stage.MatchGenerationFormat).Length;
+    }
+
+    private static (EntryId Home, EntryId Away)[] ChampionshipDeterminedPairs(
+        IReadOnlyList<EntryId> entries,
+        MatchGenerationFormat format) =>
+        entries.Count < 2
+            ? []
+            : MaterializeMatches.BuildRoundRobinRounds(entries, format)
+                .SelectMany(round => round)
+                .ToArray();
 
     private static int CountGroupsEligible(
         Competition competition,
@@ -96,14 +147,17 @@ internal static class StageConfrontationMaterializationState
             return 0;
         }
 
-        var groupsReady = stage.Groups.Count > 0
-                          && stage.Groups.All(group => group.EntryIds.Count >= 2);
-        if (!groupsReady)
+        if (!AreGroupsReady(stage))
         {
             return 0;
         }
 
         var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
+        var determined = CountGroupsDeterminedConfrontations(stage);
+        if (determined == 0)
+        {
+            return 0;
+        }
 
         return (from @group in stage.Groups
                 where @group.EntryIds.Count >= 2
@@ -112,6 +166,18 @@ internal static class StageConfrontationMaterializationState
             into pairs
                 select pairs.Count(pair => !covered.Contains(pair))).Sum();
     }
+
+    private static int CountGroupsDeterminedConfrontations(Stage stage) =>
+        stage.Groups
+            .Where(group => group.EntryIds.Count >= 2)
+            .Sum(group => MaterializeMatches.BuildRoundRobinRounds(
+                    [.. group.EntryIds],
+                    stage.MatchGenerationFormat)
+                .SelectMany(round => round)
+                .Count());
+
+    private static bool AreGroupsReady(Stage stage) =>
+        stage.Groups.Count > 0 && stage.Groups.All(group => group.EntryIds.Count >= 2);
 
     private static int CountCupEligible(Stage stage)
     {

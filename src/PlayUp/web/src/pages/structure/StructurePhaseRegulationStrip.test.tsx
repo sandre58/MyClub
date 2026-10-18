@@ -66,6 +66,9 @@ describe('StructurePhaseRegulationStrip', () => {
   it('renders three regulation panels with section headings and open-regulation link', () => {
     renderStrip();
 
+    expect(
+      screen.getAllByText('Règles héritées du règlement général').length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('heading', { name: 'Match' })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'Classement' }),
@@ -88,6 +91,43 @@ describe('StructurePhaseRegulationStrip', () => {
       within(matchPanel).getByRole('button', { name: /Modifier/i }),
     );
     expect(onEditMatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows confrontation format scope hint under Format de confrontation', () => {
+    renderStrip({
+      stage: baseStage({
+        confrontationSegments: [
+          {
+            rounds: [{ roundId: 'a', name: 'Finale', sortOrder: 1 }],
+            numberOfLegs: 1,
+            aggregateScoring: false,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+          {
+            rounds: [{ roundId: 'b', name: 'Demi', sortOrder: 0 }],
+            numberOfLegs: 2,
+            aggregateScoring: true,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+        ],
+      }),
+    });
+
+    expect(
+      screen.getByText('Certains tours ont leur propre format.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows phase-specific binding hint when match rules are not frame-bound', () => {
+    renderStrip({ matchBound: false });
+
+    expect(
+      screen.getByText('Règles adaptées à cette phase'),
+    ).toBeInTheDocument();
   });
 
   it('omits standing panel when showStanding is false', () => {

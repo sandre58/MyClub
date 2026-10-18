@@ -186,6 +186,15 @@ function confrontationItems(
   return items;
 }
 
+export function confrontationFormatScopeHintKey(
+  stage: Pick<StructureStageHubSummary, 'confrontationSegments'>,
+): string {
+  const segmentCount = stage.confrontationSegments?.length ?? 0;
+  return segmentCount > 1
+    ? 'fiche.confrontationFormatHint.perRound'
+    : 'fiche.confrontationFormatHint.uniform';
+}
+
 export function buildConfrontationDigestTokens(
   stage: StructureStageHubSummary,
   t: Translate,

@@ -404,4 +404,15 @@ public static class ApplicationErrorCodes
     /// Gets the code when Start is refused because eligible confrontations are not fully materialized.
     /// </summary>
     public const string StartBlockedUnmaterialized = "Application.StartBlockedUnmaterialized";
+
+    /// <summary>
+    /// Gets the code when Start is refused because canonical Cup entry-round pairs are not all determined.
+    /// </summary>
+    public const string StartBlockedIncompleteEntryRound = "Application.StartBlockedIncompleteEntryRound";
+
+    /// <summary>
+    /// Gets the code when Start is refused because Championship / Groups require initial confrontations but none are established.
+    /// </summary>
+    public const string StartBlockedNoExploitableInitialConfrontations =
+        "Application.StartBlockedNoExploitableInitialConfrontations";
 }

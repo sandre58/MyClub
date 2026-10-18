@@ -189,6 +189,50 @@ public sealed class StructureMaterializeAssemblerTests
     }
 
     [Fact]
+    public void Ready_cup_keeps_slot_actions_when_matches_attached_but_entry_round_incomplete()
+    {
+        var situation = TestCompetition.Create("Cup partial mat", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        situation.PreparePrimaryStage();
+        MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            ["P1"],
+            [],
+            _clock);
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
+        var hub = view.Stages[0];
+
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToSlot);
+        hub.Actions.Should().Contain(StructureViewAssembler.ActionReplaceAffectationAuthoring);
+    }
+
+    [Fact]
+    public void Cup_reports_canonical_entry_round_progress_when_incomplete()
+    {
+        var situation = TestCompetition.Create("Cup partial", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        stage.Prepare(_clock);
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
+        var materialize = view.Stages[0].Materialize!;
+
+        materialize.CanonicalEntryPairCount.Should().Be(2);
+        materialize.UndeterminedCanonicalEntryPairCount.Should().Be(1);
+    }
+
+    [Fact]
     public void Cup_lists_pair_keys_and_selection_flags()
     {
         var situation = TestCompetition.Create("Cup", _clock)

@@ -8,6 +8,8 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.TestKit;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
@@ -272,5 +274,79 @@ public sealed class StructurePresentedAttentionCollectorTests
 
         attention.Items.Should().Contain(item =>
             item.Source == CompetitionFlowAnalyzer.SlotFeedMissing);
+    }
+
+    [Fact]
+    public void Collect_emits_no_exploitable_initial_confrontations_for_solo_championship()
+    {
+        var situation = TestCompetition.Create("Solo CH", _clock)
+            .WithTeams("A")
+            .WithStructure(StructureIntent.Championship())
+            .PreparePrimaryStage();
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var items = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(view, items);
+
+        items.Should().Contain(item =>
+            item.Source == StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
+    }
+
+    [Fact]
+    public void Collect_emits_blocking_start_transition_reasons_on_structure_hub()
+    {
+        var situation = TestCompetition.Create("Cup start blockers", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        situation.PreparePrimaryStage();
+        MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            ["P1"],
+            [],
+            _clock);
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
+        var items = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(view, items);
+
+        items.Should().Contain(item =>
+            item.Source == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
+    }
+
+    [Fact]
+    public void Collect_emits_incomplete_entry_round_when_primary_start_blocker_is_unmaterialized()
+    {
+        var situation = TestCompetition.Create("Cup dual start blockers", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        situation.PreparePrimaryStage();
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
+        var hub = view.Stages.Single();
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+
+        var items = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(view, items);
+
+        items.Should().Contain(item =>
+            item.Source == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
+        items.Should().Contain(item =>
+            item.Source == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
     }
 }

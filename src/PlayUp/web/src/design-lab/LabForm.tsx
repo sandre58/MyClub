@@ -522,6 +522,27 @@ export function LabForm() {
             structurelle (titre ≠ label Field).
           </p>
           <FormSection
+            variant="compact"
+            title="Match"
+            description="Règles héritées du règlement général"
+            descriptionClassName="structure-regulation-digest__binding-hint"
+            icon={<PersonIcon size="md" />}
+            toolbar={
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact"
+                aria-label="Modifier"
+              >
+                …
+              </button>
+            }
+          >
+            <p className="dlab-form__hint">
+              Variante <code>compact</code> — strip Structure / lecture sans
+              panneau (hint + corps).
+            </p>
+          </FormSection>
+          <FormSection
             title="Équipes"
             description="Bornes du nombre d’équipes participantes."
             icon={<PersonIcon size="md" />}

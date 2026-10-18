@@ -5,7 +5,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { dematerializePhase, materializeMatches } from '../../api';
+import {
+  dematerializePhase,
+  materializeCupFromOccupiedSlots,
+  materializeMatches,
+} from '../../api';
 import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
 import { classifyMaterializePresentation } from './structureMaterializeCopy';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
@@ -545,7 +549,7 @@ describe('StructurePhaseOperationalStrip', () => {
         materialize,
       });
 
-      expect(screen.getByText('créé')).toBeInTheDocument();
+      expect(screen.getByText(/^créé$/i)).toBeInTheDocument();
       expect(
         screen.queryByRole('link', { name: /Voir les matchs/i }),
       ).not.toBeInTheDocument();
@@ -585,7 +589,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeInTheDocument();
     });
 
-    it('shows blocked production empty state when confrontations are not determined yet', () => {
+    it('shows determined-confrontation metric when none are determined yet', () => {
       const materialize: StructureMaterialize = {
         commandCode: 'MaterializeMatches',
         labelVariant: 'idle',
@@ -594,7 +598,40 @@ describe('StructurePhaseOperationalStrip', () => {
         materializedCount: 0,
         commandEnabled: false,
         disabledReason: 'NoDeterminedConfrontations',
-        confrontations: [],
+        confrontations: [
+          {
+            key: 'g-0',
+            sideA: 'A',
+            sideB: 'B',
+            determined: false,
+            materialized: false,
+            eligible: false,
+          },
+          {
+            key: 'g-1',
+            sideA: 'C',
+            sideB: 'D',
+            determined: false,
+            materialized: false,
+            eligible: false,
+          },
+          {
+            key: 'g-2',
+            sideA: 'E',
+            sideB: 'F',
+            determined: false,
+            materialized: false,
+            eligible: false,
+          },
+          {
+            key: 'g-3',
+            sideA: 'G',
+            sideB: 'H',
+            determined: false,
+            materialized: false,
+            eligible: false,
+          },
+        ],
       };
       renderMatchesStrip({
         ...leagueStageBase,
@@ -611,9 +648,41 @@ describe('StructurePhaseOperationalStrip', () => {
 
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
-        within(matchesSection).getByText(
-          /Aucune confrontation n’est encore déterminée/i,
-        ),
+        within(matchesSection).getByText('Confrontations déterminées'),
+      ).toBeInTheDocument();
+      const ratio = matchesSection.querySelector(
+        '.structure-operational-strip__ratio',
+      );
+      expect(ratio?.textContent).toContain('0');
+      expect(ratio?.textContent).toContain('4');
+      expect(
+        within(matchesSection).getByText('Aucune confrontation déterminée'),
+      ).toBeInTheDocument();
+      expect(
+        matchesSection.querySelector('.structure-operational-strip__empty'),
+      ).toBeNull();
+    });
+
+    it('shows structural empty state when production has no countable rows', () => {
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'idle',
+        determinedCount: 0,
+        eligibleCount: 0,
+        materializedCount: 0,
+        commandEnabled: false,
+        disabledReason: 'GroupsNotReady',
+        confrontations: [],
+      };
+      renderMatchesStrip({
+        ...leagueStageBase,
+        status: 'Ready',
+        materialize,
+      });
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByText(/Les poules ne sont pas prêtes/i),
       ).toBeInTheDocument();
       expect(
         matchesSection.querySelector('.structure-operational-strip__empty'),
@@ -763,6 +832,59 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(
         within(matchesSection).queryByText(/14 en cours/i),
       ).not.toBeInTheDocument();
+    });
+
+    it('shows incomplete entry-round advisory and confirm before cup materialize', async () => {
+      vi.mocked(materializeCupFromOccupiedSlots).mockResolvedValue({
+        createdCount: 1,
+        alreadyComplete: false,
+      });
+      const user = userEvent.setup();
+      const materialize: StructureMaterialize = {
+        commandCode: 'MaterializeFromOccupiedSlots',
+        labelVariant: 'create',
+        determinedCount: 1,
+        eligibleCount: 1,
+        materializedCount: 0,
+        commandEnabled: true,
+        confrontations: [],
+        canonicalEntryPairCount: 2,
+        undeterminedCanonicalEntryPairCount: 1,
+      };
+      renderMatchesStrip(
+        {
+          ...baseStage,
+          status: 'Ready',
+          materialize,
+        },
+        'Draft',
+      );
+
+      const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByText(
+          /paire(s)? d’entrée à compléter avant le démarrage/i,
+        ),
+      ).toBeInTheDocument();
+      expect(
+        matchesSection.querySelector(
+          '.structure-phase-match-tile__entry-round-gauge [data-kind="danger"]',
+        ),
+      ).toBeInTheDocument();
+      expect(
+        matchesSection.querySelector(
+          '.structure-phase-match-tile__entry-round-gauge .ds-ratio-message-gauge__ratio-filled',
+        )?.textContent,
+      ).toBe('1');
+
+      await user.click(
+        within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+      );
+      const dialog = screen.getByRole('dialog');
+      await user.click(
+        within(dialog).getByRole('button', { name: /Créer les matchs/i }),
+      );
+      expect(materializeCupFromOccupiedSlots).toHaveBeenCalledOnce();
     });
 
     it('opens dematerialize confirm and calls dematerializePhase', async () => {
@@ -1021,9 +1143,7 @@ describe('StructurePhaseOperationalStrip', () => {
           ),
         ).not.toBeInTheDocument();
         expect(
-          within(matchesSection).getByText(
-            /Aucune confrontation n’est encore déterminée/i,
-          ),
+          within(matchesSection).getByText('Aucune confrontation déterminée'),
         ).toBeInTheDocument();
       });
 

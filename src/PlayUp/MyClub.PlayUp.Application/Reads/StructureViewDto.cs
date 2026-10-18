@@ -322,6 +322,8 @@ public sealed record StructureStageHubSummaryDto(
 /// <param name="CommandEnabled">True when the workspace command can run.</param>
 /// <param name="Confrontations">Exhaustive rows (empty for Championship phase grain).</param>
 /// <param name="DisabledReason">When command is disabled and not terminal — minimal causal code for UI copy.</param>
+/// <param name="CanonicalEntryPairCount">Canonical Cup entry-round pair count; zero when not applicable.</param>
+/// <param name="UndeterminedCanonicalEntryPairCount">Canonical pairs without two distinct entries; zero when not applicable.</param>
 public sealed record StructureMaterializeDto(
     string CommandCode,
     string LabelVariant,
@@ -330,7 +332,9 @@ public sealed record StructureMaterializeDto(
     int MaterializedCount,
     bool CommandEnabled,
     IReadOnlyList<StructureMaterializeConfrontationDto> Confrontations,
-    string? DisabledReason = null);
+    string? DisabledReason = null,
+    int CanonicalEntryPairCount = 0,
+    int UndeterminedCanonicalEntryPairCount = 0);
 
 /// <summary>
 /// Structure workspace dematerialization capability (sibling of materialize; not Overview).

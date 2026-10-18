@@ -8,6 +8,14 @@ import {
   showMaterializeFrozenRemainingBanner,
   materializeFrozenRemainingCount,
   showViewMaterializedMatchesLink,
+  cupCanonicalEntryRoundIncomplete,
+  cupEntryRoundPlacementGaugeRatio,
+  cupMatchProductionGaugeRatio,
+  materializeDeterminedConfrontationsRatio,
+  resolveMatchsProductionGauge,
+  hasMatchsStructuralProductionChrome,
+  shouldConfirmCupMaterializeWithIncompleteEntryRound,
+  resolveStartStageProductionBlocker,
 } from './structureMaterializeCopy';
 
 const base: StructureMaterialize = {
@@ -150,6 +158,117 @@ describe('structureMaterializeCopy', () => {
         'Suspended',
       ),
     ).toBe('frozen');
+  });
+
+  it('splits cup match production from entry-pair placement gauges', () => {
+    const materialize = {
+      ...base,
+      commandCode: 'MaterializeFromOccupiedSlots' as const,
+      determinedCount: 1,
+      materializedCount: 1,
+      canonicalEntryPairCount: 4,
+      undeterminedCanonicalEntryPairCount: 3,
+    };
+    expect(
+      cupMatchProductionGaugeRatio(
+        { matchCount: 2, defaultTieFormat: { numberOfLegs: 2 } },
+        materialize,
+      ),
+    ).toEqual({ filled: 2, capacity: 2 });
+    expect(cupEntryRoundPlacementGaugeRatio(materialize)).toEqual({
+      filled: 1,
+      capacity: 4,
+    });
+  });
+
+  it('detects incomplete canonical cup entry round from read counts', () => {
+    const cupPartial = {
+      ...base,
+      commandCode: 'MaterializeFromOccupiedSlots' as const,
+      canonicalEntryPairCount: 2,
+      undeterminedCanonicalEntryPairCount: 1,
+    };
+    expect(cupCanonicalEntryRoundIncomplete(cupPartial)).toBe(true);
+    expect(
+      shouldConfirmCupMaterializeWithIncompleteEntryRound({
+        ...cupPartial,
+        commandEnabled: true,
+      }),
+    ).toBe(true);
+    expect(
+      cupCanonicalEntryRoundIncomplete({
+        ...cupPartial,
+        undeterminedCanonicalEntryPairCount: 0,
+      }),
+    ).toBe(false);
+  });
+
+  it('resolveMatchsProductionGauge prefers materialized when determinedCount > 0', () => {
+    expect(
+      resolveMatchsProductionGauge(
+        { ...base, materializedCount: 1, determinedCount: 2 },
+        { matchCount: 0 },
+      ),
+    ).toEqual({
+      mode: 'materialized',
+      ratio: { filled: 1, capacity: 2 },
+    });
+  });
+
+  it('resolveMatchsProductionGauge uses confrontation rows when nothing is determined', () => {
+    const materialize = {
+      ...base,
+      determinedCount: 0,
+      confrontations: [
+        {
+          key: 'a',
+          sideA: '1',
+          sideB: '2',
+          determined: false,
+          materialized: false,
+          eligible: false,
+        },
+        {
+          key: 'b',
+          sideA: '3',
+          sideB: '4',
+          determined: true,
+          materialized: false,
+          eligible: false,
+        },
+      ],
+    };
+    expect(materializeDeterminedConfrontationsRatio(materialize)).toEqual({
+      filled: 1,
+      capacity: 2,
+    });
+    expect(resolveMatchsProductionGauge(materialize, { matchCount: 0 })).toEqual(
+      {
+        mode: 'determined',
+        ratio: { filled: 1, capacity: 2 },
+      },
+    );
+  });
+
+  it('hasMatchsStructuralProductionChrome is false with no rows or canonical pairs', () => {
+    expect(
+      hasMatchsStructuralProductionChrome(
+        { ...base, determinedCount: 0, confrontations: [] },
+        { matchCount: 0 },
+      ),
+    ).toBe(false);
+  });
+
+  it('resolveStartStageProductionBlocker ignores NoExploitableInitialConfrontations', () => {
+    expect(
+      resolveStartStageProductionBlocker({
+        transition: {
+          code: 'StartStage',
+          enabled: false,
+          disabledReasonCode: 'NoExploitableInitialConfrontations',
+        },
+      }),
+    ).toBeNull();
   });
 
   it('shows frozen remaining banner only for incomplete frozen states', () => {

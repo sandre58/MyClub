@@ -138,6 +138,58 @@ export function listEngagedCompositionEntries(
     );
 }
 
+/** Composition band — Équipes section visibility (prep rules unchanged). */
+export function shouldShowCompositionTeamsSection(
+  mode: CompositionTileMode,
+  teamsHasListContent: boolean,
+  showQualifiersSection: boolean,
+  showAffectationSection: boolean,
+): boolean {
+  if (mode === 'exploitation' || mode === 'historical') {
+    return true;
+  }
+  return teamsHasListContent || showQualifiersSection || showAffectationSection;
+}
+
+export type TeamsSectionRuntimePresentation =
+  | { kind: 'list' }
+  | { kind: 'empty' }
+  | { kind: 'undetermined' };
+
+export function resolveTeamsSectionRuntimePresentation(
+  mode: CompositionTileMode,
+  stage: Pick<
+    StructureStageHubSummary,
+    | 'compositionEntryIds'
+    | 'compositionEntryCount'
+    | 'compositionPreviewNames'
+    | 'compositionIneligibleCount'
+    | 'formatKind'
+  >,
+  entries: readonly StructureEntry[],
+  compositionTeamRows: import('./compositionTeamsInboundRows').CompositionTeamRow[] | null,
+): TeamsSectionRuntimePresentation {
+  if (mode === 'prep') {
+    return { kind: 'list' };
+  }
+  if (compositionTeamRows != null && compositionTeamRows.length > 0) {
+    return { kind: 'list' };
+  }
+  if (resolveEngagedPoolResolution(stage).kind === 'undetermined') {
+    return { kind: 'undetermined' };
+  }
+  const engaged = listEngagedCompositionEntries(
+    stage as StructureStageHubSummary,
+    entries,
+  );
+  const previewNames = stage.compositionPreviewNames ?? [];
+  const ineligible = stage.compositionIneligibleCount ?? 0;
+  if (engaged.length > 0 || previewNames.length > 0 || ineligible > 0) {
+    return { kind: 'list' };
+  }
+  return { kind: 'empty' };
+}
+
 export function hasEngagedTeamsSectionContent(
   mode: CompositionTileMode,
   stage: Pick<
@@ -168,7 +220,10 @@ export function hasEngagedTeamsSectionContent(
   if (resolveEngagedPoolResolution(stage).kind === 'undetermined') {
     return true;
   }
-  const engaged = listEngagedCompositionEntries(stage, entries);
+  const engaged = listEngagedCompositionEntries(
+    stage as StructureStageHubSummary,
+    entries,
+  );
   return (
     engaged.length > 0 ||
     (stage.compositionPreviewNames?.length ?? 0) > 0 ||

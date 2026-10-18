@@ -7,9 +7,8 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Chip } from '../../design-system/components/Chip';
+import { FormSection } from '../../design-system/components/FormSection';
 import { GradientSeparator } from '../../design-system/components/GradientSeparator';
-import { Status } from '../../design-system/components/Status';
 import { TextLink } from '../../design-system/components/TextLink';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
@@ -19,97 +18,93 @@ import {
   StandingRulesIcon,
 } from '../../design-system/icons/contentIcons';
 import type { StructureStageHubSummary } from '../../types';
-import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
+import { regulationFamilyBindingHintKey } from '../regulation/regulationBindingHints';
 import {
   buildConfrontationDigestTokens,
   buildMatchDigestTokens,
   buildStandingDigestTokens,
+  confrontationFormatScopeHintKey,
   RegulationDigestFacts,
 } from './structureRegulationDigest';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
-function RegulationSectionActions({
+function RegulationEditButton({
   editLabel,
   onEdit,
-  badge,
 }: {
   editLabel: string;
-  onEdit?: () => void;
-  badge?: ReactNode;
+  onEdit: () => void;
 }) {
-  if (!badge && !onEdit) {
-    return null;
-  }
-
   return (
-    <div className="structure-regulation-digest__actions">
-      {badge ? (
-        <span className="structure-regulation-strip__binding">{badge}</span>
-      ) : null}
-      {onEdit ? (
-        <Tooltip content={editLabel}>
-          <button
-            type="button"
-            className={compactIcon}
-            aria-label={editLabel}
-            onClick={onEdit}
-          >
-            <PencilIcon size="sm" />
-          </button>
-        </Tooltip>
-      ) : null}
-    </div>
+    <Tooltip content={editLabel}>
+      <button
+        type="button"
+        className={compactIcon}
+        aria-label={editLabel}
+        onClick={onEdit}
+      >
+        <PencilIcon size="sm" />
+      </button>
+    </Tooltip>
   );
 }
 
 function RegulationDigestSection({
-  id,
   sectionId,
+  titleId,
   title,
   icon,
   editLabel,
   onEdit,
-  badge,
+  bindingHint,
+  bindingPhaseSpecific,
   tokens,
   factsAriaLabel,
   issues,
 }: {
-  id: string;
   sectionId: string;
+  titleId: string;
   title: string;
   icon: ReactNode;
   editLabel: string;
   onEdit?: () => void;
-  badge?: ReactNode;
+  bindingHint?: string;
+  bindingPhaseSpecific?: boolean;
   tokens: ReturnType<typeof buildMatchDigestTokens>;
   factsAriaLabel: string;
   issues?: ReactNode;
 }) {
+  const bindingHintClass = [
+    'structure-regulation-digest__binding-hint',
+    bindingPhaseSpecific
+      ? 'structure-regulation-digest__binding-hint--phase'
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <article
       id={sectionId}
       className="structure-regulation-digest__section"
-      aria-labelledby={id}
+      aria-labelledby={`${titleId}-title`}
     >
-      <div className="structure-regulation-digest__hero-icon" aria-hidden="true">
-        {icon}
-      </div>
-      <div className="structure-regulation-digest__body">
-        <div className="structure-regulation-digest__header">
-          <h3 id={id} className="structure-regulation-digest__title">
-            {title}
-          </h3>
-          <RegulationSectionActions
-            editLabel={editLabel}
-            onEdit={onEdit}
-            badge={badge}
-          />
-        </div>
+      <FormSection
+        id={titleId}
+        variant="compact"
+        title={title}
+        description={bindingHint}
+        descriptionClassName={bindingHint ? bindingHintClass : undefined}
+        icon={icon}
+        toolbar={onEdit ? (
+          <RegulationEditButton editLabel={editLabel} onEdit={onEdit} />
+        ) : undefined}
+      >
         <RegulationDigestFacts tokens={tokens} ariaLabel={factsAriaLabel} />
         {issues}
-      </div>
+      </FormSection>
     </article>
   );
 }
@@ -169,35 +164,23 @@ export function StructurePhaseRegulationStrip({
   const { t } = useTranslation('structure');
   const { t: tReg } = useTranslation('regulation');
 
-  const matchBadge = matchBound ? (
-    <Chip tone="neutral">{t('fiche.binding.general')}</Chip>
-  ) : (
-    <Status density="compact" tone={statusToneFromBadgeTone('warn')}>
-      {t('fiche.binding.personalized')}
-    </Status>
-  );
-
-  const standingBadge =
+  const matchHint = tReg(regulationFamilyBindingHintKey(matchBound));
+  const standingHint =
     standingBound === null
-      ? null
-      : standingBound ? (
-          <Chip tone="neutral">{t('fiche.binding.general')}</Chip>
-        ) : (
-          <Status density="compact" tone={statusToneFromBadgeTone('warn')}>
-            {t('fiche.binding.personalized')}
-          </Status>
-        );
+      ? undefined
+      : tReg(regulationFamilyBindingHintKey(standingBound));
 
   const sections: ReactNode[] = [
     <RegulationDigestSection
       key="match"
-      id="regulation-match-heading"
+      titleId="regulation-match-heading"
       sectionId="tile-match"
       title={t('fiche.tiles.match')}
       icon={<MatchRulesIcon size="lg" />}
       editLabel={t('fiche.edit')}
       onEdit={canEditMatch || canRebind ? onEditMatch : undefined}
-      badge={matchBadge}
+      bindingHint={matchHint}
+      bindingPhaseSpecific={!matchBound}
       tokens={buildMatchDigestTokens(stage, tReg)}
       factsAriaLabel={tReg('matchTimeline.aria')}
     />,
@@ -207,7 +190,7 @@ export function StructurePhaseRegulationStrip({
     sections.push(
       <RegulationDigestSection
         key="standing"
-        id="regulation-standing-heading"
+        titleId="regulation-standing-heading"
         sectionId="tile-standing"
         title={t('fiche.tiles.standing')}
         icon={<StandingRulesIcon size="lg" />}
@@ -215,7 +198,8 @@ export function StructurePhaseRegulationStrip({
         onEdit={
           canEditStanding || canRebind ? onEditStanding : undefined
         }
-        badge={standingBadge ?? undefined}
+        bindingHint={standingHint}
+        bindingPhaseSpecific={standingBound === false}
         tokens={buildStandingDigestTokens(stage, tReg)}
         factsAriaLabel={tReg('points.aria')}
         issues={standingIssues}
@@ -227,12 +211,13 @@ export function StructurePhaseRegulationStrip({
     sections.push(
       <RegulationDigestSection
         key="confrontation"
-        id="regulation-confrontation-heading"
+        titleId="regulation-confrontation-heading"
         sectionId="tile-confrontation"
         title={t('fiche.tiles.confrontation')}
         icon={<ConfrontationIcon size="lg" />}
         editLabel={t('fiche.edit')}
         onEdit={canEditTie ? onEditConfrontation : undefined}
+        bindingHint={t(confrontationFormatScopeHintKey(stage))}
         tokens={buildConfrontationDigestTokens(stage, tReg)}
         factsAriaLabel={t('fiche.tiles.confrontation')}
         issues={confrontationIssues}

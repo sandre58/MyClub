@@ -30,8 +30,6 @@ import {
 } from '../../design-system/icons/contentIcons';
 import { ClockIcon, PinIcon } from '../../design-system/icons/metaIcons';
 import { queryKeys } from '../../queryKeys';
-import { Status } from '../../design-system/components/Status';
-import { statusToneFromBadgeTone } from '../../design-system/components/statusTone';
 import {
   ErrorState,
   EmptyState,
@@ -45,6 +43,7 @@ import type {
   StructureStageHubSummary,
 } from '../../types';
 import { RegulationEditorDialog } from './RegulationEditorDialog';
+import { regulationStagePersonalizedHintKey } from './regulationBindingHints';
 import { isPartOverridden, isStagePersonalized } from './regulationImpact';
 import { MatchRulesPanel, StandingRulesPanel } from './regulationRulePanels';
 import { structureDeepLink } from '../structure/structureNavigation';
@@ -372,13 +371,12 @@ function StandingTile({
 
 // —— Stages: tile ——
 
-function PersonalizedBadge() {
+function PersonalizedPhaseHint() {
   const { t } = useTranslation('regulation');
+  const label = t(regulationStagePersonalizedHintKey());
   return (
     <Tooltip content={t('differsFromFrame')}>
-      <Status density="compact" tone={statusToneFromBadgeTone('warn')}>
-        {t('personalized')}
-      </Status>
+      <span className="regulation-phase__binding-hint">{label}</span>
     </Tooltip>
   );
 }
@@ -411,7 +409,7 @@ function PhaseTile({
         </div>
         <span className="regulation-phase__head-meta">
           <StageStatusBadge status={stage.status} density="compact" />
-          {personalized ? <PersonalizedBadge /> : null}
+          {personalized ? <PersonalizedPhaseHint /> : null}
         </span>
       </header>
 

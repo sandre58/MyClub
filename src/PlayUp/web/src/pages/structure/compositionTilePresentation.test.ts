@@ -4,7 +4,9 @@ import {
   resolveEngagedPoolResolution,
   resolvePlacesStripLayout,
   resolveTeamsPoolSource,
+  resolveTeamsSectionRuntimePresentation,
   shouldShowCompositionPrepActions,
+  shouldShowCompositionTeamsSection,
   listEngagedCompositionEntries,
   hasEngagedTeamsSectionContent,
 } from './compositionTilePresentation';
@@ -98,6 +100,54 @@ describe('compositionTilePresentation', () => {
         [],
       ),
     ).toBe(true);
+  });
+
+  it('shouldShowCompositionTeamsSection is always true in exploitation and historical', () => {
+    expect(
+      shouldShowCompositionTeamsSection('exploitation', false, false, false),
+    ).toBe(true);
+    expect(
+      shouldShowCompositionTeamsSection('historical', false, false, false),
+    ).toBe(true);
+  });
+
+  it('shouldShowCompositionTeamsSection keeps prep visibility rules', () => {
+    expect(
+      shouldShowCompositionTeamsSection('prep', false, false, false),
+    ).toBe(false);
+    expect(
+      shouldShowCompositionTeamsSection('prep', true, false, false),
+    ).toBe(true);
+    expect(
+      shouldShowCompositionTeamsSection('prep', false, true, false),
+    ).toBe(true);
+  });
+
+  it('resolveTeamsSectionRuntimePresentation classifies empty and undetermined pools', () => {
+    const stageBase = {
+      compositionEntryIds: [] as string[],
+      compositionEntryCount: 0,
+      compositionPreviewNames: null,
+      compositionIneligibleCount: 0,
+      formatKind: 'Groups' as const,
+    };
+    expect(
+      resolveTeamsSectionRuntimePresentation('exploitation', stageBase, [], null),
+    ).toEqual({ kind: 'empty' });
+    expect(
+      resolveTeamsSectionRuntimePresentation(
+        'exploitation',
+        {
+          ...stageBase,
+          compositionEntryIds: null,
+        },
+        [],
+        null,
+      ),
+    ).toEqual({ kind: 'undetermined' });
+    expect(
+      resolveTeamsSectionRuntimePresentation('prep', stageBase, [], null),
+    ).toEqual({ kind: 'list' });
   });
 
   it('resolveEngagedPoolResolution uses ids when present', () => {

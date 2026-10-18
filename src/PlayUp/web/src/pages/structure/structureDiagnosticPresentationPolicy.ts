@@ -96,6 +96,14 @@ function resolveMatrixCell(
     return 'attention';
   }
 
+  if (
+    code === 'IncompleteEntryRound'
+    || code === 'UnmaterializedConfrontations'
+    || code === 'NoExploitableInitialConfrontations'
+  ) {
+    return 'danger';
+  }
+
   if (code === 'OverCapacityEdge' || code === 'ExpectedRankUnreachable') {
     return 'attention';
   }

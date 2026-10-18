@@ -168,6 +168,13 @@ internal static class StructureMaterializeAssembler
         var determinedCount = rows.Count(row => row.Determined);
         var materializedCount = rows.Count(row => row.Materialized);
         var eligibleCount = rows.Count(row => row.Eligible);
+        var hasCanonicalEntryRound = CupCanonicalEntryRoundStartGate.TryGetCanonicalEntryRoundProgress(
+            stage,
+            out var canonicalEntryPairCount,
+            out var undeterminedCanonicalEntryPairCount);
+        var canonicalCount = hasCanonicalEntryRound ? canonicalEntryPairCount : 0;
+        var undeterminedCanonicalCount =
+            hasCanonicalEntryRound ? undeterminedCanonicalEntryPairCount : 0;
         return Pack(
             competition,
             stage,
@@ -178,7 +185,9 @@ internal static class StructureMaterializeAssembler
             materializedCount,
             commandEnabled: eligibleCount > 0,
             groupsReady: true,
-            rows);
+            rows,
+            canonicalEntryPairCount: canonicalCount,
+            undeterminedCanonicalEntryPairCount: undeterminedCanonicalCount);
     }
 
     private static StructureMaterializeDto Pack(
@@ -192,7 +201,9 @@ internal static class StructureMaterializeAssembler
         bool commandEnabled,
         bool groupsReady,
         IReadOnlyList<StructureMaterializeConfrontationDto>? confrontations = null,
-        bool phaseRosterComplete = true)
+        bool phaseRosterComplete = true,
+        int canonicalEntryPairCount = 0,
+        int undeterminedCanonicalEntryPairCount = 0)
     {
         if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
         {
@@ -217,7 +228,9 @@ internal static class StructureMaterializeAssembler
             materialized,
             commandEnabled,
             confrontations ?? [],
-            disabledReason);
+            disabledReason,
+            canonicalEntryPairCount,
+            undeterminedCanonicalEntryPairCount);
     }
 
     private static string? ResolveDisabledReason(

@@ -273,7 +273,9 @@ describe('RegulationPage', () => {
     expect(screen.getByText('Tirage aléatoire')).toBeInTheDocument();
     expect(screen.getByText('pots')).toBeInTheDocument();
     expect(screen.getAllByText('4').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Personnalisé')).toBeInTheDocument();
+    expect(
+      screen.getByText('Règles adaptées à cette phase'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText('Diffère du règlement global'),
     ).not.toBeInTheDocument();
@@ -592,7 +594,9 @@ describe('RegulationPage', () => {
     expect(
       screen.queryByText('Diffère du règlement global'),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText('Personnalisé')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Règles adaptées à cette phase'),
+    ).not.toBeInTheDocument();
     expect(screen.getAllByText('Forfait').length).toBeGreaterThanOrEqual(2);
     expect(
       screen.getByLabelText('Score administratif en cas de forfait : 3–0'),
@@ -704,10 +708,14 @@ describe('RegulationPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText('Personnalisé')).toBeInTheDocument();
     expect(
-      screen.getByText('Personnalisé').closest('.ds-tooltip-trigger') ??
-        screen.getByText('Personnalisé'),
+      await screen.findByText('Règles adaptées à cette phase'),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getByText('Règles adaptées à cette phase')
+        .closest('.ds-tooltip-trigger') ??
+        screen.getByText('Règles adaptées à cette phase'),
     ).toBeInTheDocument();
   });
 

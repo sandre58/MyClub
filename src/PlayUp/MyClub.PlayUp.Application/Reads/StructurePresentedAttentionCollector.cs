@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -48,6 +49,8 @@ public static class StructurePresentedAttentionCollector
                     structureView,
                     NeedsAttentionAssembler.SeverityBlocking));
             }
+
+            CollectStartTransitionBlockers(stage, items);
         }
 
         if (structureView.Readiness.Blockers.Contains(StructureViewAssembler.BlockerCupBracketInvalid))
@@ -71,6 +74,102 @@ public static class StructurePresentedAttentionCollector
         StructureViewDto view) =>
         StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
             != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
+
+    private static void CollectStartTransitionBlockers(
+        StructureStageHubSummaryDto stage,
+        IList<NeedsAttentionItemDto> items)
+    {
+        var transition = stage.Lifecycle?.Transition;
+        if (transition is not { Enabled: false, Code: OverviewAssembler.ActionStartStage })
+        {
+            return;
+        }
+
+        var emitted = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var reason in EnumeratePresentedStartTransitionBlockers(stage, transition.DisabledReasonCode))
+        {
+            if (!emitted.Add(reason))
+            {
+                continue;
+            }
+
+            items.Add(
+                new NeedsAttentionItemDto(
+                    reason,
+                    NeedsAttentionAssembler.SeverityBlocking,
+                    "Stage",
+                    stage.StageId.ToString(),
+                    new Dictionary<string, string> { ["stageId"] = stage.StageId.ToString() },
+                    Problem: OrganizerProblemSemanticsResolver.TryFromStartTransitionBlocker(reason)));
+        }
+    }
+
+    private static IEnumerable<string> EnumeratePresentedStartTransitionBlockers(
+        StructureStageHubSummaryDto stage,
+        string? primaryDisabledReasonCode)
+    {
+        if (!string.IsNullOrWhiteSpace(primaryDisabledReasonCode)
+            && primaryDisabledReasonCode is
+                StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+                or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
+                or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations)
+        {
+            yield return primaryDisabledReasonCode;
+        }
+
+        if (ReportsCanonicalEntryRoundStartGap(stage))
+        {
+            yield return StructureStageLifecycleAssembler.DisabledIncompleteEntryRound;
+        }
+
+        if (ReportsUnmaterializedConfrontationsStartGap(stage, primaryDisabledReasonCode))
+        {
+            yield return StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations;
+        }
+    }
+
+    private static bool ReportsCanonicalEntryRoundStartGap(StructureStageHubSummaryDto stage)
+    {
+        if (stage.Status is not StageStatus.Ready)
+        {
+            return false;
+        }
+
+        var materialize = stage.Materialize;
+        if (materialize?.CommandCode != OverviewAssembler.ActionMaterializeFromOccupiedSlots)
+        {
+            return false;
+        }
+
+        var canonical = materialize.CanonicalEntryPairCount;
+        var undetermined = materialize.UndeterminedCanonicalEntryPairCount;
+        return canonical > 0 && undetermined > 0;
+    }
+
+    private static bool ReportsUnmaterializedConfrontationsStartGap(
+        StructureStageHubSummaryDto stage,
+        string? primaryDisabledReasonCode)
+    {
+        if (primaryDisabledReasonCode
+            == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations)
+        {
+            return true;
+        }
+
+        if (stage.Status is not StageStatus.Ready)
+        {
+            return false;
+        }
+
+        var materialize = stage.Materialize;
+        if (materialize is null)
+        {
+            return false;
+        }
+
+        return materialize.EligibleCount > 0
+               || materialize.DeterminedCount > materialize.MaterializedCount;
+    }
 
     private static bool IsExcludedSource(string code) =>
         code is StructureViewAssembler.BlockerMissingStage
