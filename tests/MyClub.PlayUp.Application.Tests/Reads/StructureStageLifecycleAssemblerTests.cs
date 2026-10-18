@@ -87,7 +87,7 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
         hub.Lifecycle.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
-            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+            .Be(StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete);
     }
 
     [Fact]
