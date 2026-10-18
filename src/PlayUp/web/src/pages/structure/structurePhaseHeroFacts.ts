@@ -34,22 +34,22 @@ export function resolveStructurePhaseHeroFacts(
       value: stage.roundCount!,
     });
   } else if (kind === 'Championship') {
-    const configured = stage.configuredMatchdayCount ?? 0;
-    if (configured > 0) {
-      facts.push({
-        statKey: 'matchdays',
-        value: configured,
-      });
-    }
+    facts.push({
+      statKey: 'matchdays',
+      value: stage.configuredMatchdayCount ?? 0,
+    });
   } else if (kind === 'Swiss') {
     const { generated, planned } = swissRoundCounts(stage);
     if ((planned != null && planned > 0) || generated > 0) {
+      const isCompleted = stage.status === 'Completed';
       facts.push({
         statKey: 'swiss-rounds',
         value:
-          planned != null && planned > 0
-            ? `${generated}/${planned}`
-            : generated,
+          isCompleted
+            ? generated
+            : planned != null && planned > 0
+              ? `${generated}/${planned}`
+              : generated,
       });
     }
   }

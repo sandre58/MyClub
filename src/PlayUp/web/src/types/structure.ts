@@ -153,6 +153,8 @@ export interface StructureStageHubSummary {
   matchdayCount?: number;
   /** Topology: matchdays on the stage skeleton, independent of attached matches. */
   configuredMatchdayCount?: number;
+  /** Structural schematic occupancy (strip); from hub when present. */
+  schematicOccupiedPlaceCount?: number | null;
   /** Topology: bracket / cup slots in this phase. */
   slotCount?: number;
   numberOfPeriods: number;

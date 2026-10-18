@@ -66,6 +66,14 @@
   font-weight: var(--font-weight-regular);
 }
 
+/* Qual / Prog / Draw without occupant — construction rule, not team identity (R7). */
+.schematic-slot__primary--pending {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  opacity: 0.85;
+}
+
 /* DS Tooltip host — Cup absolute geometry on the host; flow formats stretch.
  * Host wraps Tooltip so `.ds-tooltip-trigger` does not steal absolute top/height.
  * Trigger is DS `inline-flex` by default — force full width or slots shrink-wrap. */

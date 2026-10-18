@@ -564,6 +564,18 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     // WhoFeeds pending = solid chrome; only the blank cell is dashed empty.
     expect(root!.querySelectorAll('.schematic-slot--empty')).toHaveLength(1);
+
+    const pendingPrimaries = root!.querySelectorAll(
+      '.schematic-slot__primary--pending',
+    );
+    expect(pendingPrimaries).toHaveLength(2);
+    expect(pendingPrimaries[0]?.textContent).toMatch(/1er du groupe A/i);
+    expect(
+      screen.getByText('Alpha').classList.contains('schematic-slot__primary--pending'),
+    ).toBe(false);
+    expect(
+      root!.querySelector('.schematic-slot--empty .schematic-slot__primary--pending'),
+    ).toBeNull();
   });
 
   it('orders group cards by group name (A before B)', () => {

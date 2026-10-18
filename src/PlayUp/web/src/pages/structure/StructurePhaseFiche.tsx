@@ -385,6 +385,9 @@ export function StructurePhaseFiche({
     if (!stage) {
       return null;
     }
+    if (stage.schematicOccupiedPlaceCount != null) {
+      return stage.schematicOccupiedPlaceCount;
+    }
     const placesNForOccupancy =
       stage.compositionCapacity ?? resolvePlacesN(stage);
     if (!schematicQuery.isSuccess || !schematicQuery.data) {
@@ -799,30 +802,32 @@ export function StructurePhaseFiche({
     return <ExitKindMenu label={t('fiche.editExits')} options={options} />;
   };
 
-  const heroFacts = resolveStructurePhaseHeroFacts(stage, showPlacementBlock).map(
-    (wire) => {
+  const heroFacts = resolveStructurePhaseHeroFacts(stage, showPlacementBlock)
+    .map((wire) => {
       const value = wire.value;
+      const pluralCount =
+        typeof value === 'number' ? value : Number.parseInt(String(value), 10);
       switch (wire.statKey) {
         case 'groups':
           return {
             statKey: wire.statKey,
             value,
             icon: <GroupsFormatIcon size="sm" />,
-            label: t('fiche.stat.groups', { count: value }),
+            label: t('fiche.stat.groups', { count: pluralCount }),
           };
         case 'rounds':
           return {
             statKey: wire.statKey,
             value,
             icon: <RoundsStatIcon size="sm" />,
-            label: t('fiche.stat.rounds', { count: value }),
+            label: t('fiche.stat.rounds', { count: pluralCount }),
           };
         case 'matchdays':
           return {
             statKey: wire.statKey,
             value,
             icon: <MatchdayStatIcon size="sm" />,
-            label: t('fiche.stat.matchdays', { count: value }),
+            label: t('fiche.stat.matchdays', { count: pluralCount }),
           };
         case 'swiss-rounds':
           return {
@@ -830,20 +835,22 @@ export function StructurePhaseFiche({
             value,
             icon: <RoundsStatIcon size="sm" />,
             label:
-              typeof value === 'string' && value.includes('/')
-                ? t('fiche.stat.swissRoundsGeneratedCaption')
-                : t('fiche.stat.rounds', { count: value }),
+              stage.status === 'Completed'
+                ? t('fiche.stat.swissRoundsCompleted', { count: pluralCount })
+                : typeof value === 'string' && value.includes('/')
+                  ? t('fiche.stat.swissRoundsGeneratedCaption')
+                  : t('fiche.stat.rounds', { count: pluralCount }),
           };
         case 'places':
           return {
             statKey: wire.statKey,
             value,
             icon: <LayersIcon size="sm" />,
-            label: t('fiche.stat.places', { count: value }),
+            label: t('fiche.stat.places', { count: pluralCount }),
           };
       }
-    },
-  );
+    })
+    .filter((fact): fact is NonNullable<typeof fact> => fact != null);
 
   const showHeroStats = heroFacts.length > 0;
   const materializePresentation = materializePresentationForStage(
@@ -1200,7 +1207,6 @@ export function StructurePhaseFiche({
         nameDraft={nameDraft}
         renameMutation={renameMutation}
         canRename={canRename && !isCompletedStage}
-        canRebuild={canRebuild}
         canRemove={canRemove}
         compactIcon={compactIcon}
         compactDangerIcon={compactDangerIcon}
@@ -1208,7 +1214,6 @@ export function StructurePhaseFiche({
         onBeginRename={beginRename}
         onCancelRename={cancelRename}
         onCommitRename={commitRename}
-        onOpenSkeleton={() => setSkeletonOpen(true)}
         onOpenRemove={() => setRemoveOpen(true)}
       />
 
@@ -1282,6 +1287,8 @@ export function StructurePhaseFiche({
       <StructurePhaseSchematicAndAside
         showHeroStats={showHeroStats}
         heroFacts={heroFacts}
+        canRebuild={canRebuild}
+        onOpenSkeleton={() => setSkeletonOpen(true)}
         schematicQuery={schematicQuery}
         stage={stage}
         hasExits={hasExits}

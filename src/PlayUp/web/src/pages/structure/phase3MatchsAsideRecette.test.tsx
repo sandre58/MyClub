@@ -153,7 +153,6 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
               } as unknown as UseMutationResult<void, Error, string, unknown>
             }
             canRename={true}
-            canRebuild={true}
             canRemove={false}
             compactIcon=""
             compactDangerIcon=""
@@ -161,7 +160,6 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
             onBeginRename={() => {}}
             onCancelRename={() => {}}
             onCommitRename={() => {}}
-            onOpenSkeleton={() => {}}
             onOpenRemove={() => {}}
           />
         </QueryClientProvider>

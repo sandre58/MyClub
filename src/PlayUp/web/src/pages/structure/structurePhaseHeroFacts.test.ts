@@ -27,7 +27,7 @@ function stage(
 }
 
 describe('resolveStructurePhaseHeroFacts', () => {
-  it('Championship uses configuredMatchdayCount and hides when zero', () => {
+  it('Championship uses configuredMatchdayCount including zero', () => {
     const withDays = resolveStructurePhaseHeroFacts(
       stage({
         formatKind: 'Championship',
@@ -38,7 +38,7 @@ describe('resolveStructurePhaseHeroFacts', () => {
     );
     expect(withDays).toContainEqual({ statKey: 'matchdays', value: 5 });
 
-    const none = resolveStructurePhaseHeroFacts(
+    const zero = resolveStructurePhaseHeroFacts(
       stage({
         formatKind: 'Championship',
         configuredMatchdayCount: 0,
@@ -46,7 +46,18 @@ describe('resolveStructurePhaseHeroFacts', () => {
       }),
       false,
     );
-    expect(none.find((f) => f.statKey === 'matchdays')).toBeUndefined();
+    expect(zero).toContainEqual({ statKey: 'matchdays', value: 0 });
+  });
+
+  it('Championship defaults configured matchdays to zero when absent on wire', () => {
+    const facts = resolveStructurePhaseHeroFacts(
+      stage({
+        formatKind: 'Championship',
+        matchdayCount: 1,
+      }),
+      false,
+    );
+    expect(facts).toContainEqual({ statKey: 'matchdays', value: 0 });
   });
 
   it('does not use matchdayCount for Championship hero', () => {
@@ -58,7 +69,7 @@ describe('resolveStructurePhaseHeroFacts', () => {
       }),
       false,
     );
-    expect(facts.find((f) => f.statKey === 'matchdays')).toBeUndefined();
+    expect(facts).toContainEqual({ statKey: 'matchdays', value: 0 });
   });
 
   it('never includes materialized match count', () => {
@@ -143,5 +154,31 @@ describe('resolveStructurePhaseHeroFacts', () => {
       false,
     );
     expect(facts).toContainEqual({ statKey: 'swiss-rounds', value: '1/3' });
+  });
+
+  it('Swiss Completed shows generated count only without ratio', () => {
+    const facts = resolveStructurePhaseHeroFacts(
+      stage({
+        formatKind: 'Swiss',
+        status: 'Completed',
+        matchdayCount: 3,
+        swissRoundCount: 5,
+      }),
+      false,
+    );
+    expect(facts).toContainEqual({ statKey: 'swiss-rounds', value: 3 });
+  });
+
+  it('Swiss Running keeps progress ratio', () => {
+    const facts = resolveStructurePhaseHeroFacts(
+      stage({
+        formatKind: 'Swiss',
+        status: 'Running',
+        matchdayCount: 3,
+        swissRoundCount: 5,
+      }),
+      false,
+    );
+    expect(facts).toContainEqual({ statKey: 'swiss-rounds', value: '3/5' });
   });
 });

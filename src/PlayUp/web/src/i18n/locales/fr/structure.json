@@ -700,7 +700,9 @@
       "places_other": "places",
       "matches_one": "match",
       "matches_other": "matchs",
-      "swissRoundsGeneratedCaption": "tours générés"
+      "swissRoundsGeneratedCaption": "tours générés",
+      "swissRoundsCompleted_one": "tour",
+      "swissRoundsCompleted_other": "tours"
     },
     "swissGuidance": {
       "readyNoRounds": "Les tours seront générés progressivement après le démarrage de la phase.",

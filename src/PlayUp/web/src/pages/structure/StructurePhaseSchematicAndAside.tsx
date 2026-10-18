@@ -3,10 +3,11 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { GradientSeparator } from '../../design-system/components/GradientSeparator';
+import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   ArrowRightIcon,
   AttributionIcon,
-  EmptySelectionIcon,
+  EmptySelectionIcon, SettingsIcon
 } from '../../design-system/icons/contentIcons';
 import type {
   CompetitionStatus,
@@ -31,6 +32,8 @@ import type { StructurePlacementOperationalSectionProps } from './structurePlace
 export function StructurePhaseSchematicAndAside({
   showHeroStats,
   heroFacts,
+  canRebuild,
+  onOpenSkeleton,
   schematicQuery,
   stage,
   hasExits,
@@ -63,6 +66,8 @@ export function StructurePhaseSchematicAndAside({
 }: {
   showHeroStats: boolean;
   heroFacts: StructurePhaseHeroFact[];
+  canRebuild: boolean;
+  onOpenSkeleton: () => void;
   schematicQuery: Pick<
     UseQueryResult<StageSchematic>,
     'data' | 'isError' | 'isFetching' | 'isSuccess'
@@ -97,6 +102,7 @@ export function StructurePhaseSchematicAndAside({
   placementAwards: readonly StructurePlacementAward[];
 }) {
   const { t } = useTranslation('structure');
+  const showHeroChrome = showHeroStats || canRebuild;
 
   return (
     <div className="structure-phase-main">
@@ -104,28 +110,46 @@ export function StructurePhaseSchematicAndAside({
         className="structure-phase-tile structure-phase-tile--schematic"
         id="tile-places"
       >
-        {showHeroStats ? (
-          <ul
-            className="structure-phase-hero__stats"
-            aria-label={t('fiche.statsAria')}
-          >
-            {heroFacts.map((fact) => (
-              <li key={fact.statKey} className="structure-phase-hero__stat">
-                <span
-                  className="structure-phase-hero__stat-icon"
-                  aria-hidden="true"
+        {showHeroChrome ? (
+          <div className="structure-phase-hero__chrome">
+            <div className="structure-phase-hero__chrome-inner">
+              {showHeroStats ? (
+                <ul
+                  className="structure-phase-hero__stats"
+                  aria-label={t('fiche.statsAria')}
                 >
-                  {fact.icon}
-                </span>
-                <span className="structure-phase-hero__stat-value">
-                  {fact.value}
-                </span>
-                <span className="structure-phase-hero__stat-label">
-                  {fact.label}
-                </span>
-              </li>
-            ))}
-          </ul>
+                  {heroFacts.map((fact) => (
+                    <li key={fact.statKey} className="structure-phase-hero__stat">
+                      <span
+                        className="structure-phase-hero__stat-icon"
+                        aria-hidden="true"
+                      >
+                        {fact.icon}
+                      </span>
+                      <span className="structure-phase-hero__stat-value">
+                        {fact.value}
+                      </span>
+                      <span className="structure-phase-hero__stat-label">
+                        {fact.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {canRebuild ? (
+                <Tooltip content={t('fiche.editForme')}>
+                  <button
+                    type="button"
+                    className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact structure-phase-hero__edit-forme"
+                    aria-label={t('fiche.editForme')}
+                    onClick={onOpenSkeleton}
+                  >
+                    <SettingsIcon size="sm" />
+                  </button>
+                </Tooltip>
+              ) : null}
+            </div>
+          </div>
         ) : null}
         <div className="structure-schematic-viewport">
           <StructureSchematicViewport

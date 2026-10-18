@@ -441,6 +441,13 @@ public static class StructureViewAssembler
             inboundComposition,
             compositionCapacity);
 
+        var schematicOccupiedPlaceCount = ResolveSchematicOccupiedPlaceCount(
+            competition,
+            stage,
+            competitionStages,
+            compositionCapacity,
+            formatKind);
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -450,7 +457,7 @@ public static class StructureViewAssembler
             stage.Groups.Count,
             stage.Rounds.Count,
             CountMatchdaysWithAttachedMatches(stage),
-            stage.Matchdays.Count,
+            StructureSkeleton.ResolveConfiguredMatchdayCount(stage, formatKind),
             stage.Slots.Count,
             match.Duration.NumberOfPeriods,
             match.Duration.DurationPerPeriod,
@@ -513,7 +520,29 @@ public static class StructureViewAssembler
             Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries),
             Lifecycle: lifecycle,
             InboundComposition: inboundComposition,
-            CompositionBandResolvedCount: compositionBandResolved);
+            CompositionBandResolvedCount: compositionBandResolved,
+            SchematicOccupiedPlaceCount: schematicOccupiedPlaceCount);
+    }
+
+    private static int? ResolveSchematicOccupiedPlaceCount(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        int? placesN,
+        StructureFormatKind? formatKind)
+    {
+        if (placesN is null or <= 0
+            || formatKind is not (
+                StructureFormatKind.Groups
+                or StructureFormatKind.Cup
+                or StructureFormatKind.Championship
+                or StructureFormatKind.Swiss))
+        {
+            return null;
+        }
+
+        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        return StructurePlaceOccupancyIssues.CountOccupiedPlaces(schematic, formatKind.Value);
     }
 
     /// <summary>

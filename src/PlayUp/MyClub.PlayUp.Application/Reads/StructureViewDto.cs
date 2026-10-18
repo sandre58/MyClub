@@ -180,7 +180,10 @@ public sealed record StructureReadinessDto(
 /// <param name="GroupCount">Topology: groups in this phase.</param>
 /// <param name="RoundCount">Topology: cup rounds in this phase.</param>
 /// <param name="MatchdayCount">Topology: matchdays with at least one attached match (not skeleton seed).</param>
-/// <param name="ConfiguredMatchdayCount">Topology: matchdays on the stage skeleton (<c>Matchdays.Count</c>), independent of attached matches.</param>
+/// <param name="ConfiguredMatchdayCount">
+/// Topology: organizer-facing skeleton matchdays (Championship / Groups exclude the lone technical empty seed).
+/// Independent of attached matches.
+/// </param>
 /// <param name="SlotCount">Slots.</param>
 /// <param name="NumberOfPeriods">MatchRules periods.</param>
 /// <param name="DurationPerPeriod">MatchRules duration.</param>
@@ -253,6 +256,10 @@ public sealed record StructureReadinessDto(
 /// <param name="Lifecycle">Phase lifecycle band (Prepare / Start / Complete transition + checklist / match progress).</param>
 /// <param name="InboundComposition">Inbound Qual/Prog resolution for the Composition Qualifiés band; null when root composition.</param>
 /// <param name="CompositionBandResolvedCount">Composition band — resolved seat count (inbound or roster size).</param>
+/// <param name="SchematicOccupiedPlaceCount">
+/// Structural schematic occupancy vs <see cref="CompositionCapacity"/> (strip / diagnostics); not hero.
+/// Null when Places N is unknown or the format is out of scope.
+/// </param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -325,7 +332,8 @@ public sealed record StructureStageHubSummaryDto(
     StructureDematerializeDto? Dematerialize = null,
     StructureStageLifecycleDto? Lifecycle = null,
     StructureInboundCompositionDto? InboundComposition = null,
-    int CompositionBandResolvedCount = 0);
+    int CompositionBandResolvedCount = 0,
+    int? SchematicOccupiedPlaceCount = null);
 
 /// <summary>
 /// Structure workspace projection of match materialization (not Overview opportunity).

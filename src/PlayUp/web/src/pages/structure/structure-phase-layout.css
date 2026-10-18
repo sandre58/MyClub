@@ -905,8 +905,12 @@
   color: var(--color-text-secondary);
 }
 
-.structure-phase-tile--schematic .structure-phase-hero__stats {
+.structure-phase-tile--schematic .structure-phase-hero__chrome {
   margin-bottom: var(--space-8);
+}
+
+.structure-phase-tile--schematic .structure-phase-hero__chrome .structure-phase-hero__stats {
+  margin-bottom: 0;
 }
 
 .structure-phase-tile--schematic .structure-schematic-viewport {

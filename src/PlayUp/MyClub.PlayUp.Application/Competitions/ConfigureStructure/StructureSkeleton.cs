@@ -32,6 +32,26 @@ internal static class StructureSkeleton
             : null;
 
     /// <summary>
+    /// Organizer-facing configured matchdays for Championship / Groups hero and topology.
+    /// Excludes the lone technical empty seed from <see cref="BuildChampionship"/> / <see cref="BuildGroups"/>.
+    /// </summary>
+    internal static int ResolveConfiguredMatchdayCount(Stage stage, StructureFormatKind? format)
+    {
+        if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups))
+        {
+            return stage.Matchdays.Count;
+        }
+
+        if (stage.Matchdays.Count != 1)
+        {
+            return stage.Matchdays.Count;
+        }
+
+        var sole = stage.Matchdays[0];
+        return sole.Fixtures.Count == 0 ? 0 : 1;
+    }
+
+    /// <summary>
     /// Counts distinct matches attached to the stage topology.
     /// </summary>
     public static int CountAttachedMatches(Stage stage) =>

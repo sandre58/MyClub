@@ -29,9 +29,9 @@ Related: [truth-sources.md](../structure-phase-refonte/truth-sources.md) (occupa
 | **A** | Hero is **strictly topological** — no `X/N` occupancy in hero; occupation belongs to the Places strip. No automatic occupancy fallback when the strip is absent without an explicit product decision. | **Validated** |
 | **B** | **Cup:** rounds in hero, **not** legs. Hub cards may show more metrics; fiche hero stays silhouette. | **Validated** |
 | **C** | **Groups:** group **count**, not `G×P` grid. | **Validated** |
-| **D** | **Championship:** show matchdays only when count **> 0** (avoid `0` noise in Draft). Value = **configured** skeleton matchdays, not matchdays with attached matches (see § Arbitration #1). | **Validated** |
+| **D** | **Championship:** always show configured matchdays (including **0**). Value = organizer-facing skeleton count (`ResolveConfiguredMatchdayCount`), not matchdays with attached matches (see § Arbitration #1). | **Validated** |
 | **E** | **Never** show materialized match count in hero (including Completed without Matchs aside). | **Validated** |
-| **F** | Keep **Modifier la forme** in the **header** for now; revisit B2 chrome only after render + intent review. | **Pending** |
+| **F** | **F2 (validated 2026-10-18):** ghost CTA **Modifier la forme** beside hero stats; **no** form icon in fiche header. See [post-hero addendum](./structure-phase-hero-post-arbitrations-2026-10-18.md). | **Validated** |
 
 **Guiding rule:** lifecycle status does not change the **nature** of hero facts; it only affects **visibility** when a fact is noise or production.
 
@@ -39,7 +39,7 @@ Related: [truth-sources.md](../structure-phase-refonte/truth-sources.md) (occupa
 
 | Format | Facts (order) | Show conditions |
 | ------ | ------------- | --------------- |
-| Championship | Matchdays · Places N | Matchdays if `> 0`; Places N if `> 0` and not duplicated by Places strip |
+| Championship | Matchdays · Places N | Matchdays always (incl. `0`); Places N if `> 0` and not duplicated by Places strip |
 | Cup | Rounds · Places N | Rounds if `> 0`; Places N as above |
 | Groups | Groups · Places N | Groups if `> 0`; Places N as above |
 | Swiss | Generated/planned rounds · Places N | Rounds row if generated `> 0` or planned `> 0`; Places N as above |
@@ -52,11 +52,11 @@ Related: [truth-sources.md](../structure-phase-refonte/truth-sources.md) (occupa
 | Ready | Same topology — **no** materialized match stats |
 | Running | Same topology — progression/production in operational surfaces |
 | Suspended | Same as Running — no hero signal that implies work to do |
-| Completed | Keep topology — **no** production numbers in hero |
+| Completed | Keep topology — **no** production numbers in hero; **Swiss:** scalar generated rounds only (no `generated/planned` ratio — not actionable) |
 
 **Places N:** hide when the composition Places strip owns the signal (`showPlacementBlock` today — presentation flag, not lifecycle).
 
-**Swiss (reserve):** keep generated/planned when available; in **Completed**, validate copy so it does not read as pending work (i18n/recette, not a third rule matrix).
+**Swiss:** non-Completed may show `generated/planned` when planned > 0; **Completed** shows generated count only (see § Arbitration #2).
 
 **Hub vs fiche:** `topologyCardFacts` (Structure hub cards) = multi-metric preview; phase fiche hero = 2–3 silhouette metrics — **do not merge grammars in code**.
 
@@ -68,10 +68,10 @@ Two notions must **not** be conflated on the wire:
 
 | Notion | Meaning | Hero Championship |
 | ------ | ------- | ----------------- |
-| **Configured matchdays** | `Stage.Matchdays.Count` — skeleton structure, matches may be absent | **This is the hero fact** |
+| **Configured matchdays** | Organizer-facing skeleton matchdays (`StructureSkeleton.ResolveConfiguredMatchdayCount` — excludes lone technical empty seed on Championship / Groups) | **This is the hero fact** |
 | **Matchdays with attached matches** | Matchdays where at least one fixture has `MatchIds` | **Not** the hero fact (`CountMatchdaysWithAttachedMatches` today) |
 
-**Product rule:** hero shows configured count for **all** stage statuses when `> 0`; when zero configured matchdays, the stat is **hidden** (not “0 journées”).
+**Product rule:** hero shows configured count for **all** stage statuses, including **0** (aligned with topology tiles).
 
 | Situation | Expected hero |
 | --------- | --------------- |
@@ -117,8 +117,8 @@ Secondary: **`GET` stage schematic** → `StageSchematicDto` (occupancy for stri
 | - | ----- | ------ |
 | 1 | Championship configured vs attached matchdays | **Closed** — configured on hub (§ Arbitration #1) |
 | 2 | Places N — hero uses hub only, no FE fallback | **Closed** (product) — enforce in SPA ticket |
-| 3 | Swiss generated/planned semantics on wire | **Open** — keep existing fields only if documented; else explicit DTO |
-| 4 | Strip occupancy (`countSchematicOccupiedPlaces`) | **Out of scope** — [truth-sources](../structure-phase-refonte/truth-sources.md); not hero (A) |
+| 3 | Swiss generated/planned semantics on wire | **Closed** — S1 on existing hub fields (§ Arbitration #2) |
+| 4 | Strip occupancy (`countSchematicOccupiedPlaces`) | **Closed (O3)** — hub `SchematicOccupiedPlaceCount` + parity tests; SPA prefers hub; not hero (A) |
 | 5 | Optional `StructurePhaseHeroFactDto[]` on hub | **Deferred** — prefer minimal new fields unless packaging wins in Application review |
 
 ### Recommended Application contract (ticket scope)
@@ -141,12 +141,30 @@ Secondary: **`GET` stage schematic** → `StageSchematicDto` (occupancy for stri
 
 ---
 
+## Arbitration #2 — Swiss hero (**validated 2026-10-18**)
+
+| Wire field | Meaning | Hero use |
+| ---------- | ------- | -------- |
+| Hub `matchdayCount` | Matchdays with **attached matches** (`CountMatchdaysWithAttachedMatches`) | Swiss **generated** rounds (`swissRoundCounts.generated`) |
+| Hub `swissRoundCount` | Planned rounds from settings | Swiss **planned** K when `> 0` |
+
+**Presentation rules:**
+
+- Non-**Completed:** show `generated/planned` when planned > 0; else scalar generated.
+- **Completed:** show **generated only** (number) — no `N/K` ratio (avoids “pending work” reading).
+
+**No new hub field** for Swiss generated unless product reopens contract packaging.
+
+**Hub vs Overview:** hub `matchdayCount` ≠ `Stage.Matchdays.Count` used in some Overview paths — document only; do not “fix” via hero. See [post-hero addendum](./structure-phase-hero-post-arbitrations-2026-10-18.md).
+
+---
+
 ## Implementation sequence
 
 1. **Validate** Championship semantics (this document + Notion task) — **done**.
-2. **Application ticket** — hub field + tests (above).
-3. **SPA ticket** — `resolveStructurePhaseHeroFacts` visibility/render only; D/E/B/C/A rules; no `matches` stat; Championship uses `configuredMatchdayCount`; Places N from hub only.
-4. **Design Lab** — after SPA; **B2 / F** separate.
+2. **Application ticket** — `ConfiguredMatchdayCount` — **done**.
+3. **SPA hero** — `resolveStructurePhaseHeroFacts` — **done** (baseline).
+4. **Post-hero** — [addendum 2026-10-18](./structure-phase-hero-post-arbitrations-2026-10-18.md): Swiss Completed → B2 F2 → O3-A → O3-B.
 
 **Commit:** when Git annex + README reflect arbitrations and working tree is reviewed (not before).
 
@@ -164,3 +182,4 @@ Logic lives in `StructurePhaseFiche.tsx` (~804–871): builds `heroFacts` from h
 | ---- | ------ |
 | 2026-10-18 | Initial matrix: product A–E, architecture principle, provenance audit, contract gaps |
 | 2026-10-18 | Arbitration #1: Championship hero = configured matchdays; Application `ConfiguredMatchdayCount` recommended; backlog items 2–4 clarified |
+| 2026-10-18 | Arbitration #2 Swiss S1; F→F2; post-hero addendum; backlog #3 closed; #4 → O3 |

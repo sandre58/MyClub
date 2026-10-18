@@ -35,6 +35,7 @@ import {
   ShieldBan,
   Shuffle,
   Sigma,
+  SlidersHorizontal,
   SquareOff,
   Timer,
   Trash2,
@@ -398,4 +399,9 @@ export function ListChecksIcon({ size, ...props }: ContentIconProps) {
 /** Search field chrome. */
 export function SearchIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Search} size={size} {...props} />;
+}
+
+/** Settings field chrome. */
+export function SettingsIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={SlidersHorizontal} size={size} {...props} />;
 }

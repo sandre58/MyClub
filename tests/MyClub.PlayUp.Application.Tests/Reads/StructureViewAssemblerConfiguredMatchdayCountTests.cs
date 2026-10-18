@@ -25,6 +25,22 @@ public sealed class StructureViewAssemblerConfiguredMatchdayCountTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
+    public void ConfiguredMatchdayCount_groups_technical_seed_only_is_zero()
+    {
+        var situation = TestCompetition.Create("Groups", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Groups(groupCount: 2, participantsPerGroup: 2));
+        var stage = situation.RequirePrimaryStage();
+
+        stage.Matchdays.Count.Should().Be(1);
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages.Single();
+
+        hub.ConfiguredMatchdayCount.Should().Be(0);
+        hub.MatchdayCount.Should().Be(0);
+    }
+
+    [Fact]
     public void ConfiguredMatchdayCount_championship_ready_skeleton_without_attached_matches()
     {
         var situation = TestCompetition.Create("Champ", _clock)
@@ -34,8 +50,8 @@ public sealed class StructureViewAssemblerConfiguredMatchdayCountTests
 
         var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages.Single();
 
-        hub.ConfiguredMatchdayCount.Should().Be(stage.Matchdays.Count);
-        hub.ConfiguredMatchdayCount.Should().BeGreaterThan(0);
+        stage.Matchdays.Count.Should().Be(1);
+        hub.ConfiguredMatchdayCount.Should().Be(0);
         hub.MatchdayCount.Should().Be(0);
     }
 

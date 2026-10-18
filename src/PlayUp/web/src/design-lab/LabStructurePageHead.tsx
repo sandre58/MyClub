@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 
+import '../pages/structure/structure.css';
 import { PageHead } from '../design-system/components/PageHead';
+import {
+  RoundsStatIcon,
+  StructureIcon,
+} from '../design-system/icons/contentIcons';
 import { Status, type StatusTone } from '../design-system/components/Status';
 import {
   CheckIcon,
@@ -243,6 +248,41 @@ export function LabStructurePageHead() {
             tone="info"
             icon={<InfoIcon size="sm" />}
           />
+        </div>
+      </section>
+
+      <section
+        className="dlab-structure-pagehead__section"
+        aria-labelledby="dlab-structure-ph-hero"
+      >
+        <h2 id="dlab-structure-ph-hero" className="ds-heading">
+          Fiche phase — chrome hero (B2 F2)
+        </h2>
+        <p className="ds-label">
+          Groupe centré : stats + icône structure (tooltip « Modifier
+          l&apos;organisation ») juste à droite des stats.
+        </p>
+        <div className="dlab-structure-pagehead__shape-grid">
+          <div className="structure-phase-hero__chrome">
+            <div className="structure-phase-hero__chrome-inner">
+              <ul className="structure-phase-hero__stats" aria-label="Statistiques">
+                <li className="structure-phase-hero__stat">
+                  <span className="structure-phase-hero__stat-icon" aria-hidden="true">
+                    <RoundsStatIcon size="sm" />
+                  </span>
+                  <span className="structure-phase-hero__stat-value">3</span>
+                  <span className="structure-phase-hero__stat-label">tours</span>
+                </li>
+              </ul>
+              <button
+                type="button"
+                className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact structure-phase-hero__edit-forme"
+                aria-label="Modifier l'organisation"
+              >
+                <StructureIcon size="sm" />
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </div>

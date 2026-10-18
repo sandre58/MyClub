@@ -71,7 +71,6 @@ function renderHeader(
             } as unknown as UseMutationResult<void, Error, string, unknown>
           }
           canRename={false}
-          canRebuild={false}
           canRemove={false}
           compactIcon=""
           compactDangerIcon=""
@@ -79,7 +78,6 @@ function renderHeader(
           onBeginRename={vi.fn()}
           onCancelRename={vi.fn()}
           onCommitRename={vi.fn()}
-          onOpenSkeleton={vi.fn()}
           onOpenRemove={vi.fn()}
         />
       </QueryClientProvider>
@@ -88,6 +86,13 @@ function renderHeader(
 }
 
 describe('StructurePhaseFicheHeader', () => {
+  it('does not show edit forme in header (B2 F2 — hero chrome only)', () => {
+    renderHeader({ ...baseStage, status: 'Draft' } as StructureStageHubSummary);
+    expect(
+      screen.queryByRole('button', { name: /Modifier l.organisation/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('hides rename affordance when canRename is false (Δ-O4-1 Completed)', () => {
     renderHeader(baseStage);
     expect(

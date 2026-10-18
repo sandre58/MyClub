@@ -54,7 +54,6 @@ export function StructurePhaseFicheHeader({
   nameDraft,
   renameMutation,
   canRename,
-  canRebuild,
   canRemove,
   compactIcon,
   compactDangerIcon,
@@ -62,7 +61,6 @@ export function StructurePhaseFicheHeader({
   onBeginRename,
   onCancelRename,
   onCommitRename,
-  onOpenSkeleton,
   onOpenRemove,
 }: {
   stage: StructureStageHubSummary;
@@ -73,7 +71,6 @@ export function StructurePhaseFicheHeader({
   nameDraft: string;
   renameMutation: UseMutationResult<void, Error, string, unknown>;
   canRename: boolean;
-  canRebuild: boolean;
   canRemove: boolean;
   compactIcon: string;
   compactDangerIcon: string;
@@ -81,7 +78,6 @@ export function StructurePhaseFicheHeader({
   onBeginRename: () => void;
   onCancelRename: () => void;
   onCommitRename: () => void;
-  onOpenSkeleton: () => void;
   onOpenRemove: () => void;
 }) {
   const { t } = useTranslation('structure');
@@ -209,34 +205,20 @@ export function StructurePhaseFicheHeader({
             {showCompletedBadgeOnIdentity ? (
               <StageStatusBadge status={stage.status} />
             ) : null}
-            {(canRebuild || canRemove) && (
+            {canRemove ? (
               <div className="structure-fiche__header-tools ds-icon-toolbar">
-                {canRebuild ? (
-                  <Tooltip content={t('fiche.editForme')}>
-                    <button
-                      type="button"
-                      className={compactIcon}
-                      aria-label={t('fiche.editForme')}
-                      onClick={onOpenSkeleton}
-                    >
-                      <StructureIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                ) : null}
-                {canRemove ? (
-                  <Tooltip content={t('graph.removePhase')}>
-                    <button
-                      type="button"
-                      className={compactDangerIcon}
-                      aria-label={t('graph.removePhase')}
-                      onClick={onOpenRemove}
-                    >
-                      <TrashIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                ) : null}
+                <Tooltip content={t('graph.removePhase')}>
+                  <button
+                    type="button"
+                    className={compactDangerIcon}
+                    aria-label={t('graph.removePhase')}
+                    onClick={onOpenRemove}
+                  >
+                    <TrashIcon size="sm" />
+                  </button>
+                </Tooltip>
               </div>
-            )}
+            ) : null}
           </div>
         ) : null}
       </div>

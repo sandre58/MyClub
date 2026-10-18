@@ -170,6 +170,13 @@ function SlotBox({
   // Crest when case primary is the resolved participant (R7, Draw, Direct).
   const showTeamCrest = !!resolvedName && !!primary && primary === resolvedName;
   const showSlotCrest = density === 'full' && showTeamCrest;
+  const pendingConstructionLabel = !!(primary && !resolvedName);
+  const primaryClassName = [
+    'schematic-slot__primary',
+    pendingConstructionLabel ? 'schematic-slot__primary--pending' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -196,7 +203,7 @@ function SlotBox({
           ) : null}
           <span className="schematic-slot__copy">
             {primary ? (
-              <span className="schematic-slot__primary">{primary}</span>
+              <span className={primaryClassName}>{primary}</span>
             ) : null}
             {secondary && secondary !== primary ? (
               <span className="schematic-slot__secondary">{secondary}</span>

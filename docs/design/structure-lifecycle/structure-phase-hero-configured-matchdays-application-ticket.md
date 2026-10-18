@@ -25,7 +25,7 @@ Expose, **per stage**, the configured matchday count without changing existing f
 ## Scope
 
 - Add `ConfiguredMatchdayCount` to `StructureStageHubSummaryDto` (name subject to review).
-- Set it to `stage.Matchdays.Count`.
+- Set it via `StructureSkeleton.ResolveConfiguredMatchdayCount` (organizer-facing; excludes lone technical empty seed on Championship / Groups).
 - Document semantics in XML (`StructureViewDto.cs` / record param docs).
 - Keep `MatchdayCount` and current assembly logic unchanged.
 - Add Application tests covering configured vs attached-match counts.

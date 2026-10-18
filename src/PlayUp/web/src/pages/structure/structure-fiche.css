@@ -710,14 +710,34 @@
   padding: var(--space-8) 0;
 }
 
-/* Stats centered above schematic (forme edit lives in fiche header). */
+/* Hero chrome: stats + « Modifier la forme » (B2 F2). */
+.structure-phase-hero__chrome {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: var(--space-8);
+}
+
+.structure-phase-hero__chrome-inner {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  max-width: 100%;
+}
+
+.structure-phase-hero__edit-forme {
+  flex-shrink: 0;
+  margin-left: var(--space-8);
+}
+
 .structure-phase-hero__stats {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: var(--space-8) var(--space-12);
-  width: 100%;
   margin: 0;
   padding: 0;
   list-style: none;

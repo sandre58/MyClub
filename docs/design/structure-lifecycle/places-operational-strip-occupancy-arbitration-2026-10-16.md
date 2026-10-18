@@ -256,3 +256,20 @@ Extend `structureOperationalStripMessages.test.ts` and `structureOperationalCopy
 ### 10.5 Notion
 
 Optional one-liner in **Décisions** DB: « Places 0/N lançable = prochaine action (brand), pas warning » → link **this §10**.
+
+---
+
+## 11. O3 — schematic occupancy projection (**validated 2026-10-18**)
+
+**Problem:** strip `occupiedPlacesCount` is computed on the SPA from schematic cases, duplicating Application rules in `StructurePlaceOccupancyIssues.CountOccupiedPlaces`.
+
+**Decision (O3):**
+
+| Phase | Deliverable |
+| ----- | ----------- |
+| **O3-A** | Shared test vectors + Application parity tests (FE `structurePlaceOccupancy.test.ts` ↔ backend counter) |
+| **O3-B** | Hub field **`SchematicOccupiedPlaceCount`** on `StructureStageHubSummaryDto`; strip prefers hub when present |
+
+**Not hero:** occupancy ratio stays on the Places strip only ([hero matrix](./structure-phase-hero-stats-matrix.md) decision A).
+
+**Reference:** [structure-phase-hero-post-arbitrations-2026-10-18.md](./structure-phase-hero-post-arbitrations-2026-10-18.md) · [truth-sources](../structure-phase-refonte/truth-sources.md).

@@ -700,7 +700,9 @@
       "places_other": "places",
       "matches_one": "match",
       "matches_other": "matches",
-      "swissRoundsGeneratedCaption": "rounds generated"
+      "swissRoundsGeneratedCaption": "rounds generated",
+      "swissRoundsCompleted_one": "round",
+      "swissRoundsCompleted_other": "rounds"
     },
     "swissGuidance": {
       "readyNoRounds": "Rounds will be created progressively after the stage starts.",

@@ -31,7 +31,10 @@ export function topologyCardFacts(
           value: t('hub.topologyStatPlaces', { count: placesN }),
         }
       : null;
-  const matchdays = t('hub.topologyStatMatchdays', {
+  const championshipMatchdays = t('hub.topologyStatMatchdays', {
+    count: stage.configuredMatchdayCount ?? 0,
+  });
+  const operationalMatchdays = t('hub.topologyStatMatchdays', {
     count: stage.matchdayCount ?? 0,
   });
   const matches = t('hub.topologyStatMatches', { count: stage.matchCount });
@@ -62,7 +65,7 @@ export function topologyCardFacts(
         {
           id: 'matchdays',
           icon: <MatchdayStatIcon size="md" aria-hidden="true" />,
-          value: matchdays,
+          value: championshipMatchdays,
         },
         {
           id: 'matches',
@@ -93,7 +96,7 @@ export function topologyCardFacts(
         {
           id: 'matchdays',
           icon: <MatchdayStatIcon size="md" aria-hidden="true" />,
-          value: matchdays,
+          value: operationalMatchdays,
         },
         {
           id: 'matches',
