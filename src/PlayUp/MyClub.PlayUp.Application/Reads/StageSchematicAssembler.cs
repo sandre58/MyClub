@@ -775,8 +775,12 @@ public static class StageSchematicAssembler
             return null;
         }
 
-        var name = entries.TryGetValue(id, out var entry) ? entry.DisplayName : null;
-        return new SchematicEntryRefDto(id.Value, name);
+        if (!entries.TryGetValue(id, out var entry))
+        {
+            return new SchematicEntryRefDto(id.Value, null);
+        }
+
+        return new SchematicEntryRefDto(id.Value, entry.DisplayName, entry.Status);
     }
 
     private static SchematicParticipantRefDto? MapAssignment(

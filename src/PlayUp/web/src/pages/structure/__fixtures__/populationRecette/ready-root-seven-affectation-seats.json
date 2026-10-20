@@ -1,0 +1,30 @@
+{
+  "stageId": "01a15833-75ea-7473-a6f2-53b15c874558",
+  "stageStatus": "Ready",
+  "affectationEntryCount": 7,
+  "compositionEntryCount": 7,
+  "compositionCapacity": 8,
+  "compositionIneligibleCount": 0,
+  "expectedPopulationOccupancy": 7,
+  "inboundConfiguredVolume": 0,
+  "placesN": 8,
+  "u1PopulationGap": -1,
+  "participantsActiveCount": 8,
+  "participantsOccupyingCount": 8,
+  "withdrawnEntryCount": 0,
+  "isRosterComplete": false,
+  "structureIssues": [
+    "SlotFeedMissing"
+  ],
+  "presentedIssueCodes": [
+    "SlotFeedMissing",
+    "PopulationShortfall",
+    "PhaseRosterIncomplete"
+  ],
+  "presentedOnlyIssueCodes": [
+    "PopulationShortfall",
+    "PhaseRosterIncomplete"
+  ],
+  "materializeDisabledReason": "PhaseRosterIncomplete",
+  "lifecycleTransitionDisabledReasonCode": "PhaseRosterIncomplete"
+}

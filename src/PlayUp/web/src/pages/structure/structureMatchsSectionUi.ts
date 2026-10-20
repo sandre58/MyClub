@@ -2,18 +2,20 @@ import type { StructureStageHubSummary } from '../../types';
 import type { MaterializePresentation } from './structureMaterializeCopy';
 import { showViewMaterializedMatchesLink } from './structureMaterializeCopy';
 import {
-  hasMatchsStructuralProductionChrome,
-  shouldShowMaterializeCommandButton,
-} from './structureMaterializeCopy';
-import { resolveAsideMatchProductionPresentation } from './matchsAsideTilePresentation';
-import { productionRatio, showProductionOperationalSection } from './structureOperationalCopy';
+  matchProductionDematerializeVisible,
+  matchProductionMaterializeVisible,
+  resolveMatchProductionGaugeView,
+} from './structureMatchProductionPresentation';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
+import { resolveSwissMatchsGuidance } from './swissMatchsGuidance';
 
 /** Mirrors `MatchesColumn` body/toolbar signals when `omitLifecycle` (aside-matchs). */
 export type AsideMatchsStripContent = {
   showProductionBody: boolean;
   showProductionLeadingActions: boolean;
   showExploitationProgress: boolean;
+  /** Swiss sport guidance without classic match production projection. */
+  showSwissGuidanceOnly: boolean;
   /** Toolbar link when the hub exposes attached matches (any non-Draft status). */
   showViewMatchesLink: boolean;
 };
@@ -24,12 +26,13 @@ export type AsideMatchsStripContent = {
  */
 export function resolveAsideMatchsStripContent(
   stage: StructureStageHubSummary,
-  presentation: MaterializePresentation | null,
+  _presentation: MaterializePresentation | null,
 ): AsideMatchsStripContent {
   const none: AsideMatchsStripContent = {
     showProductionBody: false,
     showProductionLeadingActions: false,
     showExploitationProgress: false,
+    showSwissGuidanceOnly: false,
     showViewMatchesLink: false,
   };
 
@@ -56,33 +59,34 @@ export function resolveAsideMatchsStripContent(
     };
   }
 
-  const showProduction = shouldShowProductionInMatchsSection(stage, presentation);
-  const asideMatchGauge = resolveAsideMatchProductionPresentation(stage)?.ratio;
-  const gaugeRatio =
-    asideMatchGauge ?? productionRatio(materialize ?? undefined, stage);
-  const structuralChrome = hasMatchsStructuralProductionChrome(
-    materialize,
-    stage,
-  );
-  const canShowMetric =
-    showProduction &&
-    (gaugeRatio != null || structuralChrome) &&
-    (materialize != null || dematerialize != null);
+  const hubProduction = stage.matchProductionPresentation;
+  const showProduction = hubProduction?.productionVisible === true;
+  const gaugeRatio = resolveMatchProductionGaugeView(stage)?.ratio ?? null;
+  const swissGuidance =
+    stage.formatKind === 'Swiss' ? resolveSwissMatchsGuidance(stage) : null;
+  const showSwissGuidanceOnly =
+    swissGuidance != null && hubProduction?.productionVisible !== true;
+  const hubExploitationOnly =
+    hubProduction?.productionVisible === true &&
+    hubProduction.showPrimaryGauge === false;
   const showProductionBody =
-    canShowMetric ||
-    (showProduction && (materialize != null || dematerialize != null));
-  const showMaterializeButton =
-    materialize != null &&
-    presentation != null &&
-    shouldShowMaterializeCommandButton(materialize, presentation, stage);
+    gaugeRatio != null ||
+    hubProduction?.frozenPartial != null ||
+    hubProduction?.prerequisiteGauge != null ||
+    showSwissGuidanceOnly ||
+    (!hubExploitationOnly &&
+      showProduction &&
+      (materialize != null || dematerialize != null));
   const showProductionLeadingActions =
     showProduction &&
-    (showMaterializeButton || dematerialize?.enabled === true);
+    (matchProductionMaterializeVisible(stage) ||
+      matchProductionDematerializeVisible(stage));
 
   return {
     showProductionBody,
     showProductionLeadingActions,
     showExploitationProgress,
+    showSwissGuidanceOnly,
     showViewMatchesLink,
   };
 }
@@ -115,7 +119,9 @@ export function shouldShowAsideMatchsTile(
 export function shouldShowMatchsSection(stage: StructureStageHubSummary): boolean {
   if (stage.status !== 'Completed') {
     return (
-      shouldShowMatchsLifecycle(stage) || showProductionOperationalSection(stage)
+      shouldShowMatchsLifecycle(stage) ||
+      stage.matchProductionPresentation?.productionVisible === true ||
+      Boolean(stage.materialize ?? stage.dematerialize)
     );
   }
   const progressTotal = stage.lifecycle?.matchProgress?.total ?? 0;
@@ -128,24 +134,8 @@ export function shouldShowMatchsSection(stage: StructureStageHubSummary): boolea
  */
 export function shouldShowProductionInMatchsSection(
   stage: StructureStageHubSummary,
-  presentation: MaterializePresentation | null,
 ): boolean {
-  if (stage.status === 'Draft' || stage.status === 'Completed') {
-    return false;
-  }
-  if (stage.materialize == null && stage.dematerialize == null) {
-    return false;
-  }
-  if (stage.status === 'Ready') {
-    return true;
-  }
-  if (presentation === 'actionable') {
-    return true;
-  }
-  if (stage.dematerialize?.enabled) {
-    return true;
-  }
-  return false;
+  return stage.matchProductionPresentation?.productionVisible === true;
 }
 
 export function shouldShowMatchExploitationProgress(

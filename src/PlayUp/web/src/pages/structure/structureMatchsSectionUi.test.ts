@@ -37,6 +37,33 @@ describe('structureMatchsSectionUi', () => {
     expect(shouldShowMatchsSection(baseStage({ status: 'Draft' }))).toBe(true);
   });
 
+  it('shows aside Matchs tile for Swiss Ready when guidance applies', () => {
+    expect(
+      shouldShowAsideMatchsTile(
+        baseStage({
+          status: 'Ready',
+          formatKind: 'Swiss',
+          swissRoundCount: 3,
+          matchdayCount: 0,
+        }),
+        null,
+      ),
+    ).toBe(true);
+  });
+
+  it('hides aside Matchs tile for Swiss Draft', () => {
+    expect(
+      shouldShowAsideMatchsTile(
+        baseStage({
+          status: 'Draft',
+          formatKind: 'Swiss',
+          swissRoundCount: 3,
+        }),
+        null,
+      ),
+    ).toBe(false);
+  });
+
   it('hides aside Matchs tile for placement/lifecycle-only Ready (O-MAT-IMPL-1)', () => {
     expect(
       shouldShowAsideMatchsTile(
@@ -49,17 +76,6 @@ describe('structureMatchsSectionUi', () => {
               disabledReasonCode: 'UnmaterializedConfrontations',
             },
           },
-        }),
-        null,
-      ),
-    ).toBe(false);
-    expect(
-      shouldShowAsideMatchsTile(
-        baseStage({
-          status: 'Ready',
-          formatKind: 'Swiss',
-          swissRoundCount: 3,
-          matchdayCount: 0,
         }),
         null,
       ),
@@ -95,73 +111,105 @@ describe('structureMatchsSectionUi', () => {
     ).toBe(true);
   });
 
-  it('hides production in Draft and Completed', () => {
+  it('follows hub matchProductionPresentation.productionVisible', () => {
     expect(
       shouldShowProductionInMatchsSection(
-        baseStage({ materialize: { commandCode: 'MaterializeMatches', labelVariant: 'create', determinedCount: 1, eligibleCount: 1, materializedCount: 0, commandEnabled: true, confrontations: [] } }),
-        'actionable',
+        baseStage({
+          matchProductionPresentation: {
+            productionVisible: false,
+            showPrimaryGauge: true,
+            primaryGauge: {
+              current: 0,
+              capacity: 6,
+              messageCode: 'Partial',
+              messageKind: 'attention',
+            },
+            primaryGaugeMode: 'materialized',
+            prerequisiteGauge: null,
+            followUp: null,
+            materialize: {
+              visible: true,
+              enabled: true,
+              commandCode: 'MaterializeMatches',
+              labelVariant: 'create',
+              disabledReason: null,
+            },
+            dematerialize: {
+              visible: false,
+              enabled: false,
+              disabledReason: null,
+              scope: null,
+            },
+          },
+        }),
       ),
-    ).toBe(false);
-    expect(
-      shouldShowProductionInMatchsSection(
-        baseStage({ status: 'Completed', materialize: { commandCode: 'MaterializeMatches', labelVariant: 'exhausted', determinedCount: 1, eligibleCount: 0, materializedCount: 1, commandEnabled: false, confrontations: [] } }),
-        'terminal',
-      ),
-    ).toBe(false);
-  });
-
-  it('hides production in Suspended unless actionable or dematerialize enabled', () => {
-    const partialMaterialize = {
-      commandCode: 'MaterializeMatches' as const,
-      labelVariant: 'exhausted' as const,
-      determinedCount: 6,
-      eligibleCount: 0,
-      materializedCount: 3,
-      commandEnabled: false,
-      disabledReason: 'StructureNotMutable',
-      confrontations: [],
-    };
-    const suspended = baseStage({
-      status: 'Suspended',
-      materialize: partialMaterialize,
-    });
-    expect(
-      shouldShowProductionInMatchsSection(suspended, 'frozen'),
-    ).toBe(false);
-    expect(
-      shouldShowProductionInMatchsSection(suspended, 'blocked'),
     ).toBe(false);
     expect(
       shouldShowProductionInMatchsSection(
         baseStage({
-          status: 'Suspended',
-          materialize: partialMaterialize,
-          dematerialize: { enabled: true, scope: 'FullPhase' },
+          status: 'Completed',
+          matchProductionPresentation: {
+            productionVisible: false,
+            showPrimaryGauge: true,
+            primaryGauge: {
+              current: 6,
+              capacity: 6,
+              messageCode: 'Complete',
+              messageKind: 'success',
+            },
+            primaryGaugeMode: 'materialized',
+            prerequisiteGauge: null,
+            followUp: null,
+            materialize: {
+              visible: false,
+              enabled: false,
+              commandCode: 'MaterializeMatches',
+              labelVariant: 'exhausted',
+              disabledReason: null,
+            },
+            dematerialize: {
+              visible: false,
+              enabled: false,
+              disabledReason: null,
+              scope: null,
+            },
+          },
         }),
-        'frozen',
+      ),
+    ).toBe(false);
+    expect(
+      shouldShowProductionInMatchsSection(
+        baseStage({
+          status: 'Running',
+          matchProductionPresentation: {
+            productionVisible: true,
+            showPrimaryGauge: true,
+            primaryGauge: {
+              current: 2,
+              capacity: 6,
+              messageCode: 'Partial',
+              messageKind: 'attention',
+            },
+            primaryGaugeMode: 'materialized',
+            prerequisiteGauge: null,
+            followUp: null,
+            materialize: {
+              visible: true,
+              enabled: true,
+              commandCode: 'MaterializeMatches',
+              labelVariant: 'create',
+              disabledReason: null,
+            },
+            dematerialize: {
+              visible: false,
+              enabled: false,
+              disabledReason: null,
+              scope: null,
+            },
+          },
+        }),
       ),
     ).toBe(true);
-  });
-
-  it('shows production in Running only when actionable', () => {
-    const running = baseStage({
-      status: 'Running',
-      materialize: {
-        commandCode: 'MaterializeMatches',
-        labelVariant: 'create',
-        determinedCount: 6,
-        eligibleCount: 2,
-        materializedCount: 4,
-        commandEnabled: true,
-        confrontations: [],
-      },
-    });
-    expect(
-      shouldShowProductionInMatchsSection(running, 'actionable'),
-    ).toBe(true);
-    expect(
-      shouldShowProductionInMatchsSection(running, 'terminal'),
-    ).toBe(false);
   });
 
   it('shows exploitation progress in Running and Completed', () => {

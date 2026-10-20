@@ -1,7 +1,6 @@
 import type {
   CompetitionStatus,
   StageStatus,
-  StructureMaterialize,
   StructureStageHubSummary,
 } from '../../types';
 import type { RatioMessageGaugeRatioTone } from '../../design-system/components/RatioMessageGauge';
@@ -9,8 +8,6 @@ import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 import type { StripOperationalMessageKind } from './structureOperationalStripUi';
 import {
   classifyMaterializePresentation,
-  cupMatchProductionGaugeRatio,
-  materializeProductionTarget,
   type MaterializePresentation,
 } from './structureMaterializeCopy';
 import { resolveDrawCtaPoolTone } from './structureDrawCtaPool';
@@ -133,28 +130,8 @@ export function materializePresentationForStage(
 export function showProductionOperationalSection(
   stage: StructureStageHubSummary,
 ): boolean {
-  return Boolean(stage.materialize ?? stage.dematerialize);
-}
-
-export function productionRatio(
-  materialize: StructureMaterialize | undefined,
-  stage?: Pick<
-    StructureStageHubSummary,
-    'matchCount' | 'defaultTieFormat' | 'numberOfLegs'
-  > | null,
-): { filled: number; capacity: number } | null {
-  if (!materialize) {
-    return null;
-  }
-  if (
-    materialize.commandCode === 'MaterializeFromOccupiedSlots' &&
-    stage != null
-  ) {
-    return cupMatchProductionGaugeRatio(stage, materialize);
-  }
-  const capacity = materializeProductionTarget(materialize);
-  if (capacity <= 0) {
-    return null;
-  }
-  return { filled: materialize.materializedCount, capacity };
+  return (
+    stage.matchProductionPresentation?.productionVisible === true ||
+    Boolean(stage.materialize ?? stage.dematerialize)
+  );
 }

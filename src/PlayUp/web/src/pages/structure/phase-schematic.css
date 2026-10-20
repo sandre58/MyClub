@@ -74,6 +74,16 @@
   opacity: 0.85;
 }
 
+/* Withdrawn occupant — muted, not empty (dashed) or pending construction (italic). */
+.schematic-slot--withdrawn:not(.schematic-slot--empty) {
+  opacity: 0.72;
+}
+
+.schematic-slot__primary--withdrawn {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
 /* DS Tooltip host — Cup absolute geometry on the host; flow formats stretch.
  * Host wraps Tooltip so `.ds-tooltip-trigger` does not steal absolute top/height.
  * Trigger is DS `inline-flex` by default — force full width or slots shrink-wrap. */
@@ -178,6 +188,26 @@
   color: var(--color-text-primary);
   line-height: 1.3;
   overflow-wrap: anywhere;
+}
+
+.schematic-case-tip__withdrawn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  font-style: italic;
+  color: var(--color-text-secondary);
+  line-height: 1.25;
+}
+
+.schematic-case-tip__withdrawn-icon.ds-icon {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--color-text-secondary);
 }
 
 .schematic-case-tip__rule {

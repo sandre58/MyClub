@@ -318,6 +318,35 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
     }
 
     [Fact]
+    public async Task Registration_withdrawn_seed_matches_population_witness_on_structure_and_attentionAsync()
+    {
+        var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
+        await runner.ResetAndRunAsync([SeedSpec.Parse("registration-withdrawn")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Should().ContainSingle().Subject;
+        summary.Status.Should().Be(CompetitionStatus.Running);
+
+        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+        var structure = await executor.GetStructureViewAsync(summary.Id);
+        var hub = structure.Stages.Should().ContainSingle().Subject;
+
+        hub.Status.Should().Be(StageStatus.Running);
+        hub.AffectationEntryCount.Should().Be(8);
+        hub.CompositionEntryCount.Should().Be(8);
+        hub.CompositionCapacity.Should().Be(8);
+        hub.CompositionIneligibleCount.Should().Be(1);
+        structure.Participants.ActiveCount.Should().Be(7);
+        structure.Participants.OccupyingCount.Should().Be(8);
+        hub.PresentedIssueCodes.Should().NotContain(CompetitionFlowAnalyzer.PopulationShortfall);
+
+        var attention = await executor.GetNeedsAttentionAsync(summary.Id);
+        attention.Items.Should().NotContain(item =>
+            item.Source == CompetitionFlowAnalyzer.PopulationShortfall);
+    }
+
+    [Fact]
     public async Task Groups_to_ko_mid_and_cup_sf_running_multi_phaseAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();

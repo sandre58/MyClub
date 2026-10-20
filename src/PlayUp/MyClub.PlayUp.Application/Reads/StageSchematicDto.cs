@@ -151,7 +151,11 @@ public sealed record SchematicFeedOriginDto(
 /// </summary>
 /// <param name="EntryId">Entry identity.</param>
 /// <param name="DisplayName">Display name when known.</param>
-public sealed record SchematicEntryRefDto(Guid EntryId, string? DisplayName);
+/// <param name="Status">Participation status when known (Structure schematic chrome).</param>
+public sealed record SchematicEntryRefDto(
+    Guid EntryId,
+    string? DisplayName,
+    EntryStatus? Status = null);
 
 /// <summary>
 /// Resolved participant presentation for a placed entry.

@@ -20,13 +20,11 @@ import type {
 } from '../types';
 import {
   structureDiagnosticMeta,
-  structureDiagnosticPresentation,
   structureDiagnosticTone,
   type StructureDiagnosticTone,
 } from '../pages/structure/structureDiagnosticPresentation';
 import type { StructureDiagnosticSeverityContext } from '../pages/structure/structureDiagnosticSeverity';
 import { resolveStructureDiagnosticIssueTitleKey } from '../pages/structure/structurePausedDiagnosticCopy';
-import { isSuspendedStageStatus } from '../pages/structure/structureOperationalMeterPresentation';
 
 /** Orthogonal signal tone (DS Alert / Status / toast mapping — design §6.3). */
 export type FunctionalProblemTone = 'danger' | 'warning' | 'info' | 'attention';
@@ -131,39 +129,25 @@ function teamsHref(competitionId: string): string {
   return `/competitions/${competitionId}/teams`;
 }
 
-function toPresentationContext(
-  context?: StructureDiagnosticSeverityContext,
-) {
-  if (!context) {
-    return {};
-  }
-  return {
-    formatKind: context.formatKind,
-    stageStatus: context.stageStatus,
-    isEntryBaselineStage: context.isEntryBaselineStage,
-    hasInboundQualProgFeed: context.hasInboundQualProgFeed,
-    affectationEntryCount: context.affectationEntryCount,
-  };
-}
-
 function structureDiagnosticPresentationFields(
   code: string,
   canal: FunctionalProblemCanal | undefined,
   context?: StructureDiagnosticSeverityContext,
 ): { tone: FunctionalProblemTone; titleKey: string; titleNs: string } {
-  const pres = structureDiagnosticPresentation(
-    code,
-    toPresentationContext(context),
-  );
   const tone = mapStructureTone(structureDiagnosticTone(code, context));
-  if (canal === 'attention-drawer') {
-    const stageStatus = context?.stageStatus;
-    const titleKey = isSuspendedStageStatus(stageStatus)
-      ? resolveStructureDiagnosticIssueTitleKey(code, stageStatus)
-      : pres.titleKeyShort;
-    return { tone, titleKey, titleNs: 'structure' };
-  }
-  return { tone, titleKey: pres.titleKeyLong, titleNs: 'structure' };
+  const stageStatus = context?.stageStatus;
+  const copyContext = {
+    compositionEntryCount: context?.compositionEntryCount,
+    compositionCapacity: context?.compositionCapacity,
+  };
+  const variant = canal === 'attention-drawer' ? 'short' : 'long';
+  const titleKey = resolveStructureDiagnosticIssueTitleKey(
+    code,
+    stageStatus,
+    copyContext,
+    variant,
+  );
+  return { tone, titleKey, titleNs: 'structure' };
 }
 
 /**

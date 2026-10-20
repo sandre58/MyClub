@@ -265,6 +265,8 @@ export interface StructureStageHubSummary {
   materialize?: StructureMaterialize | null;
   /** Workspace dematerialize capability; omitted when not exposed for this phase. */
   dematerialize?: StructureDematerialize | null;
+  /** Shared Matchs production projection (strip + aside tile). */
+  matchProductionPresentation?: StructureMatchProductionPresentation | null;
   /** Phase lifecycle band (Prepare / Start / Complete). */
   lifecycle?: StructureStageLifecycle | null;
   /** Inbound Qual/Prog resolution for Composition Qualifiés; omitted when root composition. */
@@ -617,6 +619,55 @@ export interface StructureDematerialize {
   enabled: boolean;
   disabledReason?: DematerializeDisabledReason | null;
   scope: StructureDematerializeScope;
+}
+
+export type MatchProductionMessageKind =
+  | 'info'
+  | 'success'
+  | 'attention'
+  | 'danger';
+
+export interface StructureMatchProductionGauge {
+  current: number;
+  capacity: number;
+  messageCode: string;
+  messageKind: MatchProductionMessageKind;
+  /** When true, canonical entry-round gaps block StartStage while Ready. */
+  blocksPhaseStart?: boolean;
+}
+
+export interface StructureMatchProductionMaterializeAction {
+  visible: boolean;
+  enabled: boolean;
+  commandCode: StructureMaterialize['commandCode'];
+  labelVariant: StructureMaterialize['labelVariant'];
+  disabledReason?: string | null;
+}
+
+export interface StructureMatchProductionDematerializeAction {
+  visible: boolean;
+  enabled: boolean;
+  disabledReason?: DematerializeDisabledReason | null;
+  scope?: StructureDematerializeScope | null;
+}
+
+export interface StructureMatchProductionFrozenPartial {
+  current: number;
+  capacity: number;
+  messageCode: string;
+  messageKind: MatchProductionMessageKind;
+}
+
+export interface StructureMatchProductionPresentation {
+  productionVisible: boolean;
+  showPrimaryGauge: boolean;
+  primaryGauge: StructureMatchProductionGauge;
+  primaryGaugeMode: 'materialized' | 'determined';
+  prerequisiteGauge?: StructureMatchProductionGauge | null;
+  frozenPartial?: StructureMatchProductionFrozenPartial | null;
+  followUp?: { messageCode: string; messageKind: MatchProductionMessageKind } | null;
+  materialize: StructureMatchProductionMaterializeAction;
+  dematerialize: StructureMatchProductionDematerializeAction;
 }
 
 /** Round identity + display name inside a confrontation segment. */

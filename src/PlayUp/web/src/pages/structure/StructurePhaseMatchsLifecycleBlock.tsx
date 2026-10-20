@@ -19,6 +19,7 @@ import {
   revertActionLabel,
   transitionActionLabel,
 } from './structurePhaseLifecycleActions';
+import { structureDiagnosticIssueCopyFromStage } from './structurePopulationShortfallPresentation';
 import {
   remediationHref,
   resolveDraftPrepareBodyMessage,
@@ -185,6 +186,7 @@ export function StructurePhaseDraftMatchsPrepare({
   part?: LifecycleChromePart;
 }) {
   const { t } = useTranslation('structure');
+  const rosterCopyContext = structureDiagnosticIssueCopyFromStage(stage);
   const transitionMutation = useStructureStageLifecycleMutation(
     competitionId,
     stage.stageId,
@@ -205,13 +207,19 @@ export function StructurePhaseDraftMatchsPrepare({
   const prepareDisabledTooltip =
     prepareProjected &&
     shouldShowDraftPrepareDisabledTooltip(disabledReason, actionEnabled)
-      ? resolveLifecycleAnticipatedMessage(t, disabledReason!, lifecycleProblem)
+      ? resolveLifecycleAnticipatedMessage(
+          t,
+          disabledReason!,
+          lifecycleProblem,
+          rosterCopyContext,
+        )
       : null;
   const statusMessage = resolveDraftPrepareBodyMessage(
     t,
     showBlockMessage,
     disabledReason,
     lifecycleProblem,
+    rosterCopyContext,
   );
 
   const prepareButtonInner = (
@@ -380,6 +388,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
   part: LifecycleChromePart;
 }) {
   const { t } = useTranslation('structure');
+  const rosterCopyContext = structureDiagnosticIssueCopyFromStage(stage);
   const transitionMutation = useStructureStageLifecycleMutation(
     competitionId,
     stage.stageId,
@@ -411,6 +420,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
           t,
           cancelStartDisabledReason,
           cancelStart?.problem ?? null,
+          rosterCopyContext,
         )
       : cancelStartCode
         ? revertActionLabel(t, cancelStartCode)
@@ -442,6 +452,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
           t,
           revertDisabledReason,
           revert?.problem ?? null,
+          rosterCopyContext,
         )
       : null;
   const showRevertParagraph =
@@ -481,7 +492,12 @@ function StructurePhaseMatchsLifecycleBlockBody({
     projectedAction &&
     !actionEnabled &&
     disabledReason
-      ? resolveLifecycleAnticipatedMessage(t, disabledReason, lifecycleProblem)
+      ? resolveLifecycleAnticipatedMessage(
+          t,
+          disabledReason,
+          lifecycleProblem,
+          rosterCopyContext,
+        )
       : null;
 
   const hasLifecycleActionsEnd =
@@ -496,7 +512,12 @@ function StructurePhaseMatchsLifecycleBlockBody({
     <div className="structure-operational-strip__message-stack">
       {showBlockMessage && disabledReason ? (
         <p className="structure-operational-strip__lifecycle-meta">
-          {resolveLifecycleAnticipatedMessage(t, disabledReason, lifecycleProblem)}
+          {resolveLifecycleAnticipatedMessage(
+            t,
+            disabledReason,
+            lifecycleProblem,
+            rosterCopyContext,
+          )}
           {showRemediationLink && remediationTarget ? (
             (() => {
               const label = resolveLifecycleRemediationLabel(
@@ -522,6 +543,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
             t,
             revertDisabledReason,
             revert?.problem ?? null,
+            rosterCopyContext,
           )}
         </p>
       ) : null}

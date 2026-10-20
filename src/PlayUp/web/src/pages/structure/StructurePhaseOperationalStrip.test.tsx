@@ -12,6 +12,7 @@ import {
 } from '../../api';
 import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
 import { classifyMaterializePresentation } from './structureMaterializeCopy';
+import { readyMatchProductionHub } from './structureMatchProductionPresentation.testPayloads';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
 import type { StructurePlacementOperationalSectionProps } from './structurePlacementOperationalProps';
 
@@ -113,7 +114,7 @@ function renderStrip(
     showDraw?: boolean;
     drawApplied?: boolean;
     stage?: StructureStageHubSummary;
-    competitionStatus?: 'Draft' | 'Running';
+    competitionStatus?: 'Draft' | 'Ready' | 'Running';
     structureHubBackgroundRefresh?: boolean;
     layoutVariant?: ComponentProps<
       typeof StructurePhaseOperationalStrip
@@ -124,8 +125,8 @@ function renderStrip(
     structureStages?: readonly StructureStageHubSummary[];
   } = {},
 ) {
-  const stage = overrides.stage ?? baseStage;
   const competitionStatus = overrides.competitionStatus ?? 'Draft';
+  const stage = overrides.stage ?? baseStage;
   const materialize = stage.materialize;
   const presentation =
     materialize == null
@@ -161,15 +162,17 @@ function renderStrip(
 
 function renderMatchesStrip(
   stage: StructureStageHubSummary,
-  competitionStatus: 'Draft' | 'Running' = 'Draft',
+  competitionStatus: 'Draft' | 'Running' | 'Ready' = 'Draft',
+  hub = readyMatchProductionHub(),
 ) {
   return renderStrip({
     layoutVariant: 'aside-matchs',
     showPlaces: false,
     showDraw: false,
     placement: null,
-    stage,
-    competitionStatus,
+    stage: { ...stage, matchProductionPresentation: hub },
+    competitionStatus:
+      competitionStatus === 'Ready' ? 'Ready' : competitionStatus,
   });
 }
 
@@ -226,6 +229,12 @@ describe('StructurePhaseOperationalStrip', () => {
         ...leagueStageBase,
         status: 'Ready',
         materialize,
+        matchProductionPresentation: readyMatchProductionHub({
+          primaryCurrent: 0,
+          primaryCapacity: 2,
+          materializeEnabled: true,
+          materializeVisible: true,
+        }),
         lifecycle: {
           transition: { code: 'StartStage', enabled: true },
         },
@@ -591,6 +600,21 @@ describe('StructurePhaseOperationalStrip', () => {
           },
         },
         'Ready',
+        readyMatchProductionHub({
+          primaryCurrent: 0,
+          primaryCapacity: 28,
+          primaryMessageKind: 'info',
+          materializeVisible: true,
+          materializeEnabled: false,
+          materializeDisabledReason: 'PhaseRosterIncomplete',
+          materializeLabelVariant: 'idle',
+          prerequisiteGauge: {
+            current: 2,
+            capacity: 8,
+            messageCode: 'PrerequisiteComposition',
+            messageKind: 'attention',
+          },
+        }),
       );
 
       const matchesSection = document.getElementById('operational-matchs')!;
@@ -633,6 +657,15 @@ describe('StructurePhaseOperationalStrip', () => {
           lifecycle: { transition: { code: 'StartStage', enabled: true } },
         },
         'Ready',
+        readyMatchProductionHub({
+          primaryCurrent: 6,
+          primaryCapacity: 6,
+          primaryMessageCode: 'Complete',
+          primaryMessageKind: 'success',
+          materializeVisible: false,
+          materializeEnabled: false,
+          materializeLabelVariant: 'complete',
+        }),
       );
 
       expect(
@@ -665,13 +698,20 @@ describe('StructurePhaseOperationalStrip', () => {
           },
         },
         'Ready',
+        readyMatchProductionHub({
+          primaryCurrent: 2,
+          primaryCapacity: 6,
+          materializeVisible: true,
+          materializeEnabled: false,
+          materializeDisabledReason: 'PhaseRosterIncomplete',
+        }),
       );
 
       const btn = screen.getByRole('button', { name: /Créer les matchs/i });
       expect(btn).toBeDisabled();
     });
 
-    it('shows determined-confrontation metric when none are determined yet', () => {
+    it('shows match-slot gauge when no confrontation is determined yet', () => {
       const materialize: StructureMaterialize = {
         commandCode: 'MaterializeMatches',
         labelVariant: 'idle',
@@ -715,31 +755,44 @@ describe('StructurePhaseOperationalStrip', () => {
           },
         ],
       };
-      renderMatchesStrip({
-        ...leagueStageBase,
-        status: 'Ready',
-        materialize,
-        lifecycle: {
-          transition: {
-            code: 'StartStage',
-            enabled: false,
-            disabledReasonCode: 'UnmaterializedConfrontations',
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          status: 'Ready',
+          materialize,
+          lifecycle: {
+            transition: {
+              code: 'StartStage',
+              enabled: false,
+              disabledReasonCode: 'UnmaterializedConfrontations',
+            },
           },
         },
-      });
+        'Ready',
+        readyMatchProductionHub({
+          primaryCurrent: 0,
+          primaryCapacity: 4,
+          primaryMessageCode: 'NoDeterminedConfrontations',
+          primaryMessageKind: 'attention',
+          materializeVisible: true,
+          materializeEnabled: false,
+          materializeDisabledReason: 'NoDeterminedConfrontations',
+          materializeLabelVariant: 'idle',
+        }),
+      );
 
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
-        within(matchesSection).queryByText(/Confrontations déterminées/i),
-      ).not.toBeInTheDocument();
+        within(matchesSection).getByText(/^créé$/i),
+      ).toBeInTheDocument();
       const ratio = matchesSection.querySelector(
         '.structure-operational-strip__ratio',
       );
       expect(ratio?.textContent).toContain('0');
       expect(ratio?.textContent).toContain('4');
       expect(
-        within(matchesSection).queryByText('Aucune confrontation déterminée'),
-      ).not.toBeInTheDocument();
+        within(matchesSection).getByText(/Aucune confrontation déterminée/i),
+      ).toBeInTheDocument();
       expect(
         matchesSection.querySelector('.structure-operational-strip__empty'),
       ).toBeNull();
@@ -759,14 +812,32 @@ describe('StructurePhaseOperationalStrip', () => {
         prospectiveConfrontationCount: 2,
         confrontations: [],
       };
-      renderMatchesStrip({
-        ...leagueStageBase,
-        formatKind: 'Groups',
-        groupCount: 2,
-        placesPerGroup: 2,
-        status: 'Ready',
-        materialize,
-      });
+      renderMatchesStrip(
+        {
+          ...leagueStageBase,
+          formatKind: 'Groups',
+          groupCount: 2,
+          placesPerGroup: 2,
+          status: 'Ready',
+          materialize,
+        },
+        'Ready',
+        readyMatchProductionHub({
+          primaryCurrent: 0,
+          primaryCapacity: 2,
+          primaryMessageCode: 'MatchesBlockedByGroupsPools',
+          primaryMessageKind: 'attention',
+          materializeVisible: true,
+          materializeEnabled: false,
+          materializeDisabledReason: 'GroupsNotReady',
+          prerequisiteGauge: {
+            current: 1,
+            capacity: 4,
+            messageCode: 'PrerequisiteGroupsPlacement',
+            messageKind: 'attention',
+          },
+        }),
+      );
 
       const matchesSection = document.getElementById('operational-matchs')!;
       const mainRatio = matchesSection.querySelector(
@@ -784,11 +855,13 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeNull();
       expect(
         within(matchesSection).getByText(
-          /Complétez les places en poules avant de pouvoir créer les matchs/i,
+          /Les poules ne sont pas prêtes pour la production de matchs/i,
         ),
       ).toBeInTheDocument();
       expect(
-        matchesSection.querySelector('[data-kind="danger"]'),
+        matchesSection.querySelector(
+          '.structure-operational-strip__aside-problem [data-kind="attention"]',
+        ),
       ).toBeInTheDocument();
       expect(
         matchesSection.querySelector('.structure-operational-strip__empty'),
@@ -824,12 +897,21 @@ describe('StructurePhaseOperationalStrip', () => {
           },
         },
         'Running',
+        readyMatchProductionHub({
+          primaryCurrent: 3,
+          primaryCapacity: 6,
+          primaryMessageCode: 'Partial',
+          primaryMessageKind: 'attention',
+          materializeVisible: false,
+          materializeEnabled: false,
+          materializeLabelVariant: 'exhausted',
+        }),
       );
 
-      expect(
-        screen.queryByLabelText(/Avancement de la production des matchs/i),
-      ).not.toBeInTheDocument();
       const matchesSection = document.getElementById('operational-matchs')!;
+      expect(
+        within(matchesSection).getByLabelText(/Avancement de la production des matchs/i),
+      ).toBeInTheDocument();
       expect(
         within(matchesSection).getByLabelText(/Avancement des matchs/i),
       ).toBeInTheDocument();
@@ -871,6 +953,12 @@ describe('StructurePhaseOperationalStrip', () => {
           },
         },
         'Running',
+        readyMatchProductionHub({
+          primaryCurrent: 3,
+          primaryCapacity: 6,
+          materializeVisible: false,
+          materializeEnabled: false,
+        }),
       );
 
       const matchesSection = document.getElementById('operational-matchs')!;
@@ -897,12 +985,18 @@ describe('StructurePhaseOperationalStrip', () => {
           },
         },
         'Running',
+        readyMatchProductionHub({
+          primaryCurrent: 3,
+          primaryCapacity: 6,
+          materializeVisible: false,
+          materializeEnabled: false,
+        }),
       );
 
       const matchesSection = document.getElementById('operational-matchs')!;
-      const ratioFilled = matchesSection.querySelector(
+      const ratioFilled = matchesSection.querySelectorAll(
         '.structure-operational-strip__ratio-filled',
-      );
+      )[1];
       expect(ratioFilled?.textContent).toBe('3');
       expect(
         within(matchesSection).getByText(/Tous les matchs sont terminés/i),
@@ -966,6 +1060,12 @@ describe('StructurePhaseOperationalStrip', () => {
           materialize,
         },
         'Draft',
+        readyMatchProductionHub({
+          primaryCurrent: 0,
+          primaryCapacity: 1,
+          materializeEnabled: true,
+          materializeCommandCode: 'MaterializeFromOccupiedSlots',
+        }),
       );
 
       const matchesSection = document.getElementById('operational-matchs')!;
@@ -1024,6 +1124,15 @@ describe('StructurePhaseOperationalStrip', () => {
           },
         },
         'Running',
+        readyMatchProductionHub({
+          primaryCurrent: 3,
+          primaryCapacity: 6,
+          materializeVisible: false,
+          materializeEnabled: false,
+          dematerializeVisible: true,
+          dematerializeEnabled: true,
+          dematerializeScope: 'FullPhase',
+        }),
       );
 
       await user.click(
@@ -1234,6 +1343,22 @@ describe('StructurePhaseOperationalStrip', () => {
             },
           }),
           'Draft',
+          readyMatchProductionHub({
+            primaryCurrent: 0,
+            primaryCapacity: 0,
+            primaryMessageCode: 'NoDeterminedConfrontations',
+            primaryMessageKind: 'attention',
+            materializeVisible: true,
+            materializeEnabled: false,
+            materializeCommandCode: 'MaterializeFromOccupiedSlots',
+            materializeDisabledReason: 'NoDeterminedConfrontations',
+            prerequisiteGauge: {
+              current: 0,
+              capacity: 8,
+              messageCode: 'PrerequisiteCupEntryRound',
+              messageKind: 'attention',
+            },
+          }),
         );
 
         const matchesSection = document.getElementById('operational-matchs')!;
@@ -1251,8 +1376,8 @@ describe('StructurePhaseOperationalStrip', () => {
           within(matchesSection).queryByText(/Confrontations déterminées/i),
         ).not.toBeInTheDocument();
         expect(
-          within(matchesSection).queryByText('Aucune confrontation déterminée'),
-        ).not.toBeInTheDocument();
+          within(matchesSection).getByText(/Aucune confrontation déterminée/i),
+        ).toBeInTheDocument();
         expect(
           matchesSection.querySelector(
             '.structure-phase-match-tile__entry-round-gauge',

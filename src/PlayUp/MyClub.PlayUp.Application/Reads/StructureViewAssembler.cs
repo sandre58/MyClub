@@ -458,6 +458,26 @@ public static class StructureViewAssembler
                 matchSummariesByStage);
         }
 
+        var dematerialize = StructureDematerializeAssembler.Assemble(competition, stage, summaries);
+        var hasDrawRules = regulation.DrawRules is not null;
+        var matchProductionPresentation = StructureMatchProductionPresentationAssembler.Assemble(
+            new StructureMatchProductionPresentationAssembler.Input(
+                competition,
+                stage,
+                competitionStages,
+                formatKind,
+                materialize,
+                dematerialize,
+                CountAttachedMatches(stage),
+                numberOfLegs,
+                MapDefaultTieFormat(regulation.TieFormat),
+                compositionCapacity,
+                compositionBandResolved,
+                phaseRosterPresentation,
+                lifecycle,
+                hasDrawRules,
+                drawExecutionBadge));
+
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
@@ -528,11 +548,12 @@ public static class StructureViewAssembler
             DefaultTieFormat: MapDefaultTieFormat(regulation.TieFormat),
             DrawExecutionBadge: drawExecutionBadge,
             Materialize: materialize,
-            Dematerialize: StructureDematerializeAssembler.Assemble(competition, stage, summaries),
+            Dematerialize: dematerialize,
             Lifecycle: lifecycle,
             InboundComposition: inboundComposition,
             CompositionBandResolvedCount: compositionBandResolved,
-            SchematicOccupiedPlaceCount: schematicOccupiedPlaceCount);
+            SchematicOccupiedPlaceCount: schematicOccupiedPlaceCount,
+            MatchProductionPresentation: matchProductionPresentation);
     }
 
     private static int? ResolveSchematicOccupiedPlaceCount(

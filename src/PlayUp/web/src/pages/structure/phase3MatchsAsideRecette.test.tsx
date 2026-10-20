@@ -17,6 +17,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
 import { classifyMaterializePresentation } from './structureMaterializeCopy';
+import { attachMatchProductionPresentation } from './structureMatchProductionPresentation.testFixtures';
+import { readyMatchProductionHub } from './structureMatchProductionPresentation.testPayloads';
 import { StructurePhaseFicheHeader } from './StructurePhaseFicheHeader';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
 import {
@@ -56,11 +58,16 @@ function renderAsideStrip(
   stage: StructureStageHubSummary,
   competitionStatus: 'Draft' | 'Ready' | 'Running' = 'Ready',
 ) {
-  const materialize = stage.materialize;
+  const enrichedStage = stage;
+  const materialize = enrichedStage.materialize;
   const presentation =
     materialize == null
       ? null
-      : classifyMaterializePresentation(materialize, competitionStatus, stage.status);
+      : classifyMaterializePresentation(
+          materialize,
+          competitionStatus,
+          enrichedStage.status,
+        );
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -75,8 +82,8 @@ function renderAsideStrip(
           layoutVariant="aside-matchs"
           competitionId={competitionId}
           competitionStatus={competitionStatus}
-          stage={stage}
-          structureStages={[stage]}
+          stage={enrichedStage}
+          structureStages={[enrichedStage]}
           presentation={presentation}
         />
       </QueryClientProvider>
@@ -196,10 +203,27 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
         rules: [],
       },
     });
-    const presentation = classifyMaterializePresentation(materialize, 'Ready', 'Ready');
-    expect(shouldShowProductionInMatchsSection(stage, presentation)).toBe(true);
+    const stageWithHub = attachMatchProductionPresentation(
+      stage,
+      readyMatchProductionHub({
+        primaryCurrent: 0,
+        primaryCapacity: 28,
+        primaryMessageKind: 'info',
+        materializeVisible: true,
+        materializeEnabled: false,
+        materializeDisabledReason: 'PhaseRosterIncomplete',
+        materializeLabelVariant: 'idle',
+        prerequisiteGauge: {
+          current: 2,
+          capacity: 8,
+          messageCode: 'PrerequisiteComposition',
+          messageKind: 'attention',
+        },
+      }),
+    );
+    expect(shouldShowProductionInMatchsSection(stageWithHub)).toBe(true);
 
-    renderAsideStrip(stage, 'Ready');
+    renderAsideStrip(stageWithHub, 'Ready');
     const section = matchsSection()!;
     expect(
       section.querySelector('.structure-phase-match-tile__roster-resolution-gauge'),
@@ -240,7 +264,15 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
       commandEnabled: true,
       confrontations: [],
     };
-    const stage = baseStage({ materialize });
+    const stage = attachMatchProductionPresentation(
+      baseStage({ materialize }),
+      readyMatchProductionHub({
+        primaryCurrent: 0,
+        primaryCapacity: 6,
+        materializeEnabled: true,
+        materializeVisible: true,
+      }),
+    );
     renderAsideStrip(stage, 'Ready');
     const section = matchsSection()!;
     expect(
@@ -249,20 +281,25 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
     expect(stripHasUsefulProductionBody(section)).toBe(true);
   });
 
-  it('5 — Swiss Ready (seed swiss-ready): no materialize; product hide — no useful aside body', () => {
+  it('5 — Swiss Ready (seed swiss-ready): guidance-only aside body, no classic production', () => {
     const stage = baseStage({
       formatKind: 'Swiss',
       swissRoundCount: 3,
       matchdayCount: 0,
       materialize: undefined,
     });
-    expect(shouldShowAsideMatchsTile(stage, null)).toBe(false);
+    expect(shouldShowAsideMatchsTile(stage, null)).toBe(true);
     renderAsideStrip(stage, 'Ready');
     const section = matchsSection()!;
     expect(
-      within(section).queryByText(/tour|round/i),
+      within(section).getByText(
+        /Les tours seront générés progressivement après le démarrage de la phase/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(section).queryByRole('button', { name: /Créer les matchs/i }),
     ).not.toBeInTheDocument();
-    expect(stripHasUsefulProductionBody(section)).toBe(false);
+    expect(stripHasUsefulProductionBody(section)).toBe(true);
   });
 
   it('6 — Ready lifecycle/composition signal only: no isolated useful Matchs body', () => {
@@ -332,8 +369,7 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
       },
     });
     expect(shouldShowMatchExploitationProgress(stage)).toBe(true);
-    const presentation = null;
-    expect(shouldShowProductionInMatchsSection(stage, presentation)).toBe(false);
+    expect(shouldShowProductionInMatchsSection(stage)).toBe(false);
     renderAsideStrip(stage, 'Running');
     const section = matchsSection()!;
     expect(stripHasUsefulProductionBody(section)).toBe(true);

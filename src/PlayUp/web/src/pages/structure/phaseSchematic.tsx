@@ -15,6 +15,7 @@ import {
   DrawPendingIcon,
   PersonIcon,
   TrophyIcon,
+  WithdrawIcon,
 } from '../../design-system/icons/contentIcons';
 import { placeChromeLabel } from './structurePlaceLabel';
 import { resolveManualPlaceMode } from './manualPlacementUi';
@@ -36,6 +37,10 @@ function nextPowerOfTwo(n: number): number {
   let p = 1;
   while (p < n) p *= 2;
   return Math.max(p, 2);
+}
+
+function isSchematicCaseWithdrawn(c?: SchematicCase | null): boolean {
+  return c?.entry?.status === 'Withdrawn';
 }
 
 /**
@@ -119,6 +124,7 @@ function SlotBox({
     c?.assignment?.shortName?.trim() ||
     c?.entry?.displayName?.trim() ||
     null;
+  const withdrawn = isSchematicCaseWithdrawn(c);
   // Solid chrome when the case shows a label (occupant or structural WhoFeeds).
   // Dashed `--empty` = blank cell only — not "no EntryId".
   const hasSurface = !!(primary || secondary);
@@ -131,6 +137,7 @@ function SlotBox({
     hasSurface ? '' : 'schematic-slot--empty',
     ghost ? 'schematic-slot--ghost' : '',
     interactive ? 'schematic-slot--interactive' : '',
+    withdrawn && resolvedName ? 'schematic-slot--withdrawn' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -156,6 +163,7 @@ function SlotBox({
               }
             : null,
           canManualPlace,
+          entryWithdrawn: withdrawn,
           t,
         })
       : null;
@@ -174,6 +182,7 @@ function SlotBox({
   const primaryClassName = [
     'schematic-slot__primary',
     pendingConstructionLabel ? 'schematic-slot__primary--pending' : '',
+    withdrawn ? 'schematic-slot__primary--withdrawn' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -289,6 +298,30 @@ function buildSchematicCaseTooltip(
             {model.subject.name}
           </p>
         </div>
+      ) : null}
+      {model.withdrawnTeamRow ? (
+        <div className="schematic-case-tip__subject">
+          <TeamCrest
+            name={model.withdrawnTeamRow.name}
+            logoMediaId={model.withdrawnTeamRow.logoMediaId}
+            primaryColor={model.withdrawnTeamRow.primaryColor}
+            size="sm"
+            className="schematic-case-tip__crest"
+          />
+          <p className="schematic-case-tip__subject-name">
+            {model.withdrawnTeamRow.name}
+          </p>
+        </div>
+      ) : null}
+      {model.withdrawnNotice ? (
+        <p className="schematic-case-tip__withdrawn">
+          <WithdrawIcon
+            size="sm"
+            className="schematic-case-tip__withdrawn-icon"
+            aria-hidden
+          />
+          <span>{model.withdrawnNotice}</span>
+        </p>
       ) : null}
       {model.resolvedTeam ? (
         <div className="schematic-case-tip__resolved">

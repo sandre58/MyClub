@@ -138,6 +138,22 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleKey).toBe('graph.issues.SlotFeedMissing');
   });
 
+  it('maps PopulationShortfall to full-composition copy when context has full band', () => {
+    const presentation = structureIssuePresentation({
+      code: 'PopulationShortfall',
+      competitionId: 'comp-1',
+      stageId: 'stage-9',
+      structureDiagnosticContext: {
+        stageStatus: 'Running',
+        compositionEntryCount: 8,
+        compositionCapacity: 8,
+      },
+    });
+    expect(presentation.titleKey).toBe(
+      'graph.issues.PopulationShortfallFullComposition',
+    );
+  });
+
   it('maps NonRootUnfed progress when incompleteness is expected', () => {
     const presentation = structureIssuePresentation({
       code: 'NonRootUnfed',

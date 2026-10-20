@@ -263,6 +263,7 @@ public sealed record StructureReadinessDto(
 /// Structural schematic occupancy vs <see cref="CompositionCapacity"/> (strip / diagnostics); not hero.
 /// Null when Places N is unknown or the format is out of scope.
 /// </param>
+/// <param name="MatchProductionPresentation">Shared Matchs production projection for strip and aside tile.</param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -337,7 +338,64 @@ public sealed record StructureStageHubSummaryDto(
     StructureStageLifecycleDto? Lifecycle = null,
     StructureInboundCompositionDto? InboundComposition = null,
     int CompositionBandResolvedCount = 0,
-    int? SchematicOccupiedPlaceCount = null);
+    int? SchematicOccupiedPlaceCount = null,
+    StructureMatchProductionPresentationDto? MatchProductionPresentation = null);
+
+/// <summary>
+/// Shared Structure workspace projection for Matchs production (strip + aside tile).
+/// </summary>
+/// <param name="ProductionVisible">When the match production projection applies to this phase.</param>
+/// <param name="ShowPrimaryGauge">When the full primary production gauge should be rendered.</param>
+/// <param name="PrimaryGauge">Match slots created vs capacity (legs-aware).</param>
+/// <param name="PrimaryGaugeMode">Materialized match slots or determined confrontation rows.</param>
+/// <param name="PrerequisiteGauge">At most one prerequisite gauge when materialize is blocked.</param>
+/// <param name="FrozenPartial">Compact signal when production is frozen and incomplete during exploitation.</param>
+/// <param name="FollowUp">Optional info when label is exhausted but more confrontations may appear later.</param>
+/// <param name="Materialize">Create/complete command presentation.</param>
+/// <param name="Dematerialize">Remove matches command presentation.</param>
+public sealed record StructureMatchProductionPresentationDto(
+    bool ProductionVisible,
+    bool ShowPrimaryGauge,
+    StructureMatchProductionGaugeDto PrimaryGauge,
+    string PrimaryGaugeMode,
+    StructureMatchProductionGaugeDto? PrerequisiteGauge,
+    StructureMatchProductionFrozenPartialDto? FrozenPartial,
+    StructureMatchProductionFollowUpDto? FollowUp,
+    StructureMatchProductionMaterializeActionDto Materialize,
+    StructureMatchProductionDematerializeActionDto Dematerialize);
+
+/// <summary>Compact production signal when the phase is in play but materialization is frozen and incomplete.</summary>
+public sealed record StructureMatchProductionFrozenPartialDto(
+    int Current,
+    int Capacity,
+    string MessageCode,
+    string MessageKind);
+
+/// <summary>Ratio gauge for match production or a prerequisite.</summary>
+public sealed record StructureMatchProductionGaugeDto(
+    int Current,
+    int Capacity,
+    string MessageCode,
+    string MessageKind,
+    bool BlocksPhaseStart = false);
+
+/// <summary>Info line below production when the command is exhausted but the bracket is not final.</summary>
+public sealed record StructureMatchProductionFollowUpDto(
+    string MessageCode,
+    string MessageKind);
+
+public sealed record StructureMatchProductionMaterializeActionDto(
+    bool Visible,
+    bool Enabled,
+    string CommandCode,
+    string LabelVariant,
+    string? DisabledReason = null);
+
+public sealed record StructureMatchProductionDematerializeActionDto(
+    bool Visible,
+    bool Enabled,
+    string? DisabledReason,
+    string? Scope);
 
 /// <summary>
 /// Structure workspace projection of match materialization (not Overview opportunity).

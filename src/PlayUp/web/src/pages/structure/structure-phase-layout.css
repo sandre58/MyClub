@@ -872,6 +872,10 @@
   gap: var(--space-8);
 }
 
+.structure-operational-strip__production-follow-up {
+  margin-top: var(--space-8);
+}
+
 .structure-operational-strip__production-actions--tile {
   flex-wrap: nowrap;
   align-items: stretch;
@@ -879,22 +883,82 @@
   margin-top: var(--space-4);
 }
 
-.structure-operational-strip__production-actions--tile > .ds-btn.ds-btn--primary {
+.structure-operational-strip__production-actions--tile
+  > .structure-operational-strip__materialize-action-wrap,
+.structure-operational-strip__production-actions--tile > .ds-tooltip-trigger {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  width: 100%;
+}
+
+.structure-operational-strip__production-actions--tile
+  .structure-operational-strip__materialize-action-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.structure-operational-strip__production-actions--tile
+  .structure-operational-strip__materialize-action-wrap > .ds-btn {
+  flex: 1 1 auto;
+  width: 100%;
   justify-content: center;
 }
 
-.structure-operational-strip__production-actions--tile > .ds-tooltip-trigger {
-  flex: none;
-  display: inline-flex;
-  margin-left: auto;
+.structure-operational-strip__production-actions--tile-dual {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--space-8);
 }
 
-.structure-operational-strip__production-actions--tile > .structure-operational-strip__dematerialize-btn {
+.structure-operational-strip__production-actions--tile-dual
+  > .structure-operational-strip__materialize-action-wrap,
+.structure-operational-strip__production-actions--tile-dual
+  > .ds-tooltip-trigger:has(.structure-operational-strip__materialize-action-wrap) {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+.structure-operational-strip__production-actions--tile-dual
+  .structure-operational-strip__materialize-action-wrap,
+.structure-operational-strip__production-actions--tile-dual
+  .structure-operational-strip__materialize-action-wrap .ds-btn {
+  width: 100%;
+}
+
+.structure-operational-strip__production-actions--tile-dual
+  > .ds-tooltip-trigger:has(.ds-btn--primary)
+  .structure-operational-tile__action-wrap,
+.structure-operational-strip__production-actions--tile-dual
+  > .ds-tooltip-trigger:has(.ds-btn--primary)
+  .ds-btn {
+  width: 100%;
+}
+
+.structure-operational-strip__production-actions--tile
+  > .structure-operational-strip__dematerialize-full-wrap,
+.structure-operational-strip__production-actions--tile
+  > .structure-operational-strip__dematerialize-btn--full {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+.structure-operational-strip__production-actions--tile-dual
+  > .structure-operational-strip__dematerialize-icon-wrap,
+.structure-operational-strip__production-actions--tile-dual
+  > .ds-tooltip-trigger:has(.structure-operational-strip__dematerialize-btn--icon) {
   flex: none;
-  margin-left: auto;
-  white-space: nowrap;
+  display: inline-flex;
+  align-self: stretch;
+}
+
+.structure-operational-strip__dematerialize-btn--icon {
+  aspect-ratio: 1;
+  padding-inline: var(--space-8);
 }
 
 .structure-operational-strip__aside-problem {

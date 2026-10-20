@@ -3,6 +3,11 @@ import type { TFunction } from 'i18next';
 import { apiErrorLabel } from '../../../i18n/apiErrorLabel';
 import { ApiError } from '../../../api';
 import type { OrganizerProblemRead } from '../../../types';
+import {
+  isPhaseRosterIncompleteCode,
+  resolvePhaseRosterIncompleteOperationalMessageKey,
+} from '../structurePhaseRosterIncompletePresentation';
+import type { StructureDiagnosticIssueCopyContext } from '../structurePopulationShortfallPresentation';
 import { LIFECYCLE_UNKNOWN_KEY, MUTATION_UNKNOWN_KEY } from './constants';
 import { normalizeLifecycleAnticipated } from './normalizeLifecycleAnticipated';
 import { normalizeLifecycleMutationError } from './normalizeLifecycleMutation';
@@ -11,7 +16,18 @@ export function resolveLifecycleAnticipatedMessage(
   t: TFunction<'structure'>,
   wireCode: string,
   problem?: OrganizerProblemRead | null,
+  rosterCopyContext?: StructureDiagnosticIssueCopyContext,
 ): string {
+  if (isPhaseRosterIncompleteCode(wireCode)) {
+    const key = resolvePhaseRosterIncompleteOperationalMessageKey(
+      rosterCopyContext,
+    );
+    const specific = t(key, { defaultValue: '' });
+    if (specific.length > 0) {
+      return specific;
+    }
+  }
+
   const { messageKey } = normalizeLifecycleAnticipated(wireCode, problem);
   const specific = t(messageKey, { defaultValue: '' });
   if (specific.length > 0) {
@@ -56,12 +72,18 @@ export function resolveDraftPrepareBodyMessage(
   showBlockMessage: boolean,
   disabledReason: string | null,
   problem?: OrganizerProblemRead | null,
+  rosterCopyContext?: StructureDiagnosticIssueCopyContext,
 ): string {
   if (showBlockMessage && disabledReason) {
     if (disabledReason === 'StageNotReady') {
       return t(DRAFT_DETAIL_KEY);
     }
-    return resolveLifecycleAnticipatedMessage(t, disabledReason, problem);
+    return resolveLifecycleAnticipatedMessage(
+      t,
+      disabledReason,
+      problem,
+      rosterCopyContext,
+    );
   }
   return t(DRAFT_DETAIL_KEY);
 }

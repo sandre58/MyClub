@@ -651,6 +651,29 @@
   line-height: 0;
 }
 
+.structure-phase-rail__issue-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.structure-phase-rail__issue-description {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+}
+
+.structure-operational-strip__diagnostic-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.structure-operational-strip__diagnostic-description {
+  font-weight: var(--font-weight-regular);
+  opacity: 0.92;
+}
+
 .structure-schematic-viewport__issues {
   margin-top: var(--space-8);
 }

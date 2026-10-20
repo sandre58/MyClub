@@ -123,6 +123,41 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText('Beta')).toBeInTheDocument();
   });
 
+  it('marks withdrawn occupant with muted slot chrome (no in-case forfeit icon)', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'A' },
+              entry: {
+                entryId: 'e1',
+                displayName: 'Alpha',
+                status: 'Withdrawn',
+              },
+              assignment: {
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            },
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'B' },
+              entry: { entryId: 'e2', displayName: 'Beta', status: 'Active' },
+              assignment: { entryId: 'e2', displayName: 'Beta' },
+            },
+          ],
+        })}
+      />,
+    );
+    const slots = container.querySelectorAll('.schematic-slot');
+    expect(slots[0]).toHaveClass('schematic-slot--withdrawn');
+    expect(slots[1]).not.toHaveClass('schematic-slot--withdrawn');
+    expect(
+      container.querySelector('.schematic-slot__withdrawn-marker'),
+    ).toBeNull();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+  });
+
   it('championship roster shows composition entries without league ranks', () => {
     const schematic: StageSchematic = {
       stageId: 's1',
@@ -323,7 +358,22 @@ describe('PhaseSchematic', () => {
       resolvedTeam: null,
       origin: { kind: 'affectation', text: 'Affectation manuelle' },
       action: null,
+      withdrawnTeamRow: null,
+      withdrawnNotice: null,
     });
+  });
+
+  it('buildSchematicCaseTooltipModel adds forfeit line under team subject', () => {
+    const model = buildSchematicCaseTooltipModel({
+      address: '1·A',
+      primary: 'FC Nice',
+      resolvedName: 'FC Nice',
+      entryWithdrawn: true,
+      t: (key) => (key === 'teams:withdrawnBadge' ? 'Forfait' : key),
+    });
+    expect(model?.withdrawnNotice).toBe('Forfait');
+    expect(model?.withdrawnTeamRow).toBeNull();
+    expect(model?.subject).toEqual({ kind: 'team', name: 'FC Nice' });
   });
 
   it('buildSchematicCaseTooltipModel tips filled placeable with edit affordance', () => {
@@ -348,6 +398,8 @@ describe('PhaseSchematic', () => {
         text: 'Affectation manuelle · Modifier',
       },
       action: null,
+      withdrawnTeamRow: null,
+      withdrawnNotice: null,
     });
   });
 
@@ -385,6 +437,8 @@ describe('PhaseSchematic', () => {
         text: 'Placer une équipe manuellement',
       },
       action: null,
+      withdrawnTeamRow: null,
+      withdrawnNotice: null,
     });
   });
 
@@ -420,6 +474,8 @@ describe('PhaseSchematic', () => {
         text: 'Demi-finales',
       },
       action: null,
+      withdrawnTeamRow: null,
+      withdrawnNotice: null,
     });
   });
 
@@ -445,6 +501,8 @@ describe('PhaseSchematic', () => {
       resolvedTeam: null,
       origin: { kind: 'from', lead: 'Vient de', text: 'Tour 1' },
       action: null,
+      withdrawnTeamRow: null,
+      withdrawnNotice: null,
     });
   });
 
@@ -466,6 +524,8 @@ describe('PhaseSchematic', () => {
       resolvedTeam: null,
       origin: { kind: 'draw', text: 'Placé par tirage' },
       action: null,
+      withdrawnTeamRow: null,
+      withdrawnNotice: null,
     });
   });
 

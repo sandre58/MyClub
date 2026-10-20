@@ -1,0 +1,33 @@
+{
+  "productionVisible": true,
+  "showPrimaryGauge": false,
+  "primaryGauge": {
+    "current": 1,
+    "capacity": 2,
+    "messageCode": "Partial",
+    "messageKind": "attention",
+    "blocksPhaseStart": false
+  },
+  "primaryGaugeMode": "materialized",
+  "prerequisiteGauge": null,
+  "frozenPartial": {
+    "current": 1,
+    "capacity": 2,
+    "messageCode": "FrozenPartial",
+    "messageKind": "attention"
+  },
+  "followUp": null,
+  "materialize": {
+    "visible": false,
+    "enabled": false,
+    "commandCode": "MaterializeMatches",
+    "labelVariant": "exhausted",
+    "disabledReason": "StructureNotMutable"
+  },
+  "dematerialize": {
+    "visible": false,
+    "enabled": false,
+    "disabledReason": "StageLifecycleNotSupported",
+    "scope": "FullPhase"
+  }
+}

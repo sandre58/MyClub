@@ -372,6 +372,7 @@ internal static class ScenarioOrchestration
         var entries = await RegisterTeamsAsync(context, competition, recipe, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
         var stage = ConfigurePrimaryStage(context, competition, recipe);
+        AssignRootComposition(stage, entries, context.Clock);
         var matches = SeedMaterialization.MaterializeForFormat(context, competition, stage, recipe, entries);
         SeedLifecycle.PrepareAndStart(context, competition, stage);
         SeedLifecycle.ApplyProgress(context, competition, stage, matches, SeedProgress.Running);

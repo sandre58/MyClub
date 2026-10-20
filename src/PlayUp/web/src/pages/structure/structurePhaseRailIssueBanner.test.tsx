@@ -51,6 +51,25 @@ describe('StructurePhaseRailIssueBanner', () => {
     expect(screen.getByRole('status')).toBeTruthy();
   });
 
+  it('uses full-composition PopulationShortfall copy when band is full', () => {
+    const fullStage = {
+      ...stage,
+      compositionEntryCount: 8,
+      compositionCapacity: 8,
+    };
+    render(
+      <StructurePhaseRailIssueBanner
+        codes={['PopulationShortfall']}
+        data={{ ...data, stages: [fullStage] }}
+        stage={fullStage}
+      />,
+    );
+    expect(screen.getByText(/écart de population attendue/i)).toBeTruthy();
+    expect(
+      screen.getByText(/composition est complète/i),
+    ).toBeTruthy();
+  });
+
   it('requests paused issue copy when stage is Suspended', () => {
     const suspendedStage = { ...stage, status: 'Suspended' as const };
     render(

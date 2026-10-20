@@ -39,6 +39,14 @@ export type SchematicCaseTooltipModel = {
   } | null;
   /** When the place accepts manual placement (click to open dialog). */
   action: string | null;
+  /** Team row in tip when forfeit and case primary is a construction label (R7). */
+  withdrawnTeamRow: {
+    name: string;
+    logoMediaId?: string | null;
+    primaryColor?: string | null;
+  } | null;
+  /** Forfeit line under the team name (icon + short label). */
+  withdrawnNotice: string | null;
 };
 
 /**
@@ -52,6 +60,7 @@ export function buildSchematicCaseTooltipModel({
   feed,
   crest,
   canManualPlace = false,
+  entryWithdrawn = false,
   t,
 }: {
   address: string | null;
@@ -66,6 +75,7 @@ export function buildSchematicCaseTooltipModel({
   } | null;
   /** True when this place is clickable for manual placement. */
   canManualPlace?: boolean;
+  entryWithdrawn?: boolean;
   t: Translate;
 }): SchematicCaseTooltipModel | null {
   const teamName = resolvedName?.trim() || null;
@@ -132,7 +142,22 @@ export function buildSchematicCaseTooltipModel({
     };
   }
 
-  if (!subject && !resolvedTeam && !origin) {
+  const withdrawnNotice =
+    entryWithdrawn && teamName ? t('teams:withdrawnBadge') : null;
+  const withdrawnTeamRow =
+    entryWithdrawn && teamName && subject?.kind === 'label'
+      ? {
+          name: teamName,
+          ...(crest
+            ? {
+                logoMediaId: crest.logoMediaId,
+                primaryColor: crest.primaryColor,
+              }
+            : {}),
+        }
+      : null;
+
+  if (!subject && !resolvedTeam && !origin && !withdrawnNotice) {
     // Address-only empty chrome — no construction story to tip.
     return null;
   }
@@ -143,5 +168,7 @@ export function buildSchematicCaseTooltipModel({
     resolvedTeam,
     origin,
     action: null,
+    withdrawnTeamRow,
+    withdrawnNotice,
   };
 }

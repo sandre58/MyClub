@@ -5,6 +5,7 @@ import type {
   DrawResolutionKind,
   DrawResolutionState,
   DrawStatus,
+  EntryStatus,
   ProgressionOutcome,
   RankingScope,
   SelectionMode,
@@ -164,6 +165,7 @@ export interface SchematicFeedOrigin {
 export interface SchematicEntryRef {
   entryId: string;
   displayName?: string | null;
+  status?: EntryStatus | null;
 }
 
 export interface SchematicParticipantRef {

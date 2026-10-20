@@ -1,0 +1,21 @@
+{
+  "stageId": "01a15833-75f6-78f9-9aa9-dca5e9f5c7a8",
+  "stageStatus": "Running",
+  "affectationEntryCount": 8,
+  "compositionEntryCount": 8,
+  "compositionCapacity": 8,
+  "compositionIneligibleCount": 1,
+  "expectedPopulationOccupancy": 8,
+  "inboundConfiguredVolume": 0,
+  "placesN": 8,
+  "u1PopulationGap": 0,
+  "participantsActiveCount": 7,
+  "participantsOccupyingCount": 8,
+  "withdrawnEntryCount": 1,
+  "isRosterComplete": false,
+  "structureIssues": [],
+  "presentedIssueCodes": [],
+  "presentedOnlyIssueCodes": [],
+  "materializeDisabledReason": "StructureNotMutable",
+  "lifecycleTransitionDisabledReasonCode": null
+}

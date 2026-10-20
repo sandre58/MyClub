@@ -4,11 +4,11 @@ import type {
   StructureMaterialize,
   StructureStageHubSummary,
 } from '../../types';
-
 import {
-  resolveDrawCtaPoolTone,
-  type DrawCtaPoolTone,
-} from './structureDrawCtaPool';
+  resolvePhaseRosterIncompleteMaterializeMessageKey,
+  isPhaseRosterIncompleteCode,
+} from './structurePhaseRosterIncompletePresentation';
+import { structureDiagnosticIssueCopyFromStage } from './structurePopulationShortfallPresentation';
 
 /**
  * Ratio denominator from the Structure read (`determinedCount`).
@@ -20,126 +20,6 @@ export function materializeProductionTarget(
   return materialize.determinedCount;
 }
 
-export type MatchsProductionGaugeMode = 'materialized' | 'determined';
-
-/** Hub fields read by Cup match gauge and Groups prospective confrontation gauge. */
-export type MatchsProductionGaugeStageHub = Pick<
-  StructureStageHubSummary,
-  | 'matchCount'
-  | 'defaultTieFormat'
-  | 'numberOfLegs'
-  | 'formatKind'
-  | 'groupCount'
-  | 'placesPerGroup'
-  | 'compositionCapacity'
-  | 'inboundComposition'
-  | 'status'
-  | 'lifecycle'
-  | 'phaseRosterPresentation'
->;
-
-/** Championship/Swiss roster gap — do not use determined-confrontation idle gauge. */
-export function rosterGapBlocksMatchProductionGauge(
-  materialize: StructureMaterialize | null | undefined,
-  stage: Pick<
-    StructureStageHubSummary,
-    'lifecycle' | 'phaseRosterPresentation' | 'status' | 'formatKind'
-  > | null
-    | undefined,
-): boolean {
-  if (materialize?.disabledReason === 'PhaseRosterIncomplete') {
-    return true;
-  }
-  if (
-    stage?.lifecycle?.transition?.disabledReasonCode === 'PhaseRosterIncomplete'
-  ) {
-    return true;
-  }
-  if (stage?.status !== 'Ready') {
-    return false;
-  }
-  if (stage.formatKind !== 'Championship' && stage.formatKind !== 'Swiss') {
-    return false;
-  }
-  const presentation = stage.phaseRosterPresentation;
-  return (
-    presentation === 'AwaitingInboundQualification' ||
-    presentation === 'CompositionIncomplete'
-  );
-}
-
-/** Groups / Championship — determined slots vs exposed confrontation rows (not match production). */
-export function materializeDeterminedConfrontationsRatio(
-  materialize: StructureMaterialize,
-): { filled: number; capacity: number } | null {
-  const rows = materialize.confrontations;
-  if (!rows?.length) {
-    return null;
-  }
-  const filled = rows.reduce(
-    (count, row) => count + (row.determined ? 1 : 0),
-    0,
-  );
-  return { filled, capacity: rows.length };
-}
-
-/**
- * Primary Matchs strip gauge — materialized matches when `determinedCount > 0`,
- * otherwise determined-confrontation rows when the read exposes them.
- */
-export function resolveMatchsProductionGauge(
-  materialize: StructureMaterialize | null | undefined,
-  stage: MatchsProductionGaugeStageHub | null | undefined,
-): {
-  mode: MatchsProductionGaugeMode;
-  ratio: { filled: number; capacity: number };
-} | null {
-  if (!materialize) {
-    return null;
-  }
-
-  if (materialize.determinedCount > 0 && !isGroupsPoolPlacementIncomplete(materialize)) {
-    let ratio: { filled: number; capacity: number } | null = null;
-    if (
-      materialize.commandCode === 'MaterializeFromOccupiedSlots' &&
-      stage != null
-    ) {
-      ratio = cupMatchProductionGaugeRatio(stage, materialize);
-    } else {
-      const capacity = materializeProductionTarget(materialize);
-      if (capacity > 0) {
-        ratio = {
-          filled: materialize.materializedCount,
-          capacity,
-        };
-      }
-    }
-    if (ratio) {
-      return { mode: 'materialized', ratio };
-    }
-  }
-
-  const groupsProspective = groupsProspectiveMatchProductionGauge(
-    materialize,
-    stage,
-  );
-  if (groupsProspective) {
-    return { mode: 'materialized', ratio: groupsProspective };
-  }
-
-  const determined = materializeDeterminedConfrontationsRatio(materialize);
-  if (
-    determined &&
-    !isGroupsPoolPlacementIncomplete(materialize) &&
-    !rosterGapBlocksMatchProductionGauge(materialize, stage)
-  ) {
-    return { mode: 'determined', ratio: determined };
-  }
-
-  return null;
-}
-
-/** Groups pools not full enough for confrontation production (read or legacy hub). */
 /** Ready Groups: pools incomplete and match production command is off (SPA parity when lifecycle read lags). */
 export function groupsPoolsBlockPhaseStart(
   stage: Pick<StructureStageHubSummary, 'status' | 'materialize'>,
@@ -163,89 +43,6 @@ export function isGroupsPoolPlacementIncomplete(
   const capacity = materialize.groupsPlacementCapacityCount ?? 0;
   const filled = materialize.groupsPlacementFilledCount ?? 0;
   return capacity > 0 && filled < capacity;
-}
-
-function roundRobinPairCountPerPool(placesPerGroup: number): number {
-  return placesPerGroup >= 2 ? (placesPerGroup * (placesPerGroup - 1)) / 2 : 0;
-}
-
-function resolveGroupsProspectiveConfrontationCapacity(
-  materialize: StructureMaterialize,
-  stage?:
-    | Pick<
-        StructureStageHubSummary,
-        'formatKind' | 'groupCount' | 'placesPerGroup'
-      >
-    | null,
-): number {
-  const fromRead = materialize.prospectiveConfrontationCount ?? 0;
-  if (fromRead > 0) {
-    return fromRead;
-  }
-  if (!isGroupsPoolPlacementIncomplete(materialize)) {
-    return 0;
-  }
-  if (stage?.formatKind !== 'Groups') {
-    return 0;
-  }
-  const groups = stage.groupCount ?? 0;
-  const perGroup = stage.placesPerGroup ?? 0;
-  if (groups <= 0 || perGroup < 2) {
-    return 0;
-  }
-  return groups * roundRobinPairCountPerPool(perGroup);
-}
-
-/** Matchs strip gauge while Groups pools are incomplete (0 / prospective confrontations). */
-export function groupsProspectiveMatchProductionGauge(
-  materialize: StructureMaterialize,
-  stage?:
-    | Pick<
-        StructureStageHubSummary,
-        'formatKind' | 'groupCount' | 'placesPerGroup'
-      >
-    | null,
-): { filled: number; capacity: number } | null {
-  if (!isGroupsPoolPlacementIncomplete(materialize)) {
-    return null;
-  }
-  const capacity = resolveGroupsProspectiveConfrontationCapacity(
-    materialize,
-    stage,
-  );
-  if (capacity <= 0) {
-    return null;
-  }
-  return { filled: materialize.materializedCount, capacity };
-}
-
-export function hasMatchsStructuralProductionChrome(
-  materialize: StructureMaterialize | null | undefined,
-  stage: MatchsProductionGaugeStageHub | null | undefined,
-): boolean {
-  if (!materialize) {
-    return false;
-  }
-  return (
-    resolveMatchsProductionGauge(materialize, stage) != null ||
-    cupEntryRoundPlacementGaugeRatio(materialize) != null
-  );
-}
-
-export function shouldShowBlockedGroupsMaterializeCta(
-  materialize: StructureMaterialize,
-  presentation: MaterializePresentation,
-): boolean {
-  return (
-    presentation === 'blocked' && isGroupsPoolPlacementIncomplete(materialize)
-  );
-}
-
-export function materializeRatioTone(
-  materialize: StructureMaterialize,
-): DrawCtaPoolTone {
-  const target = materializeProductionTarget(materialize);
-  return resolveDrawCtaPoolTone(materialize.materializedCount, target);
 }
 
 /** Mirrors StructureMaterializeAssembler mutability — UI layout only, not a disabled reason. */
@@ -313,10 +110,18 @@ export function classifyMaterializePresentation(
 export function materializeDisabledCaption(
   materialize: StructureMaterialize,
   t: (key: string) => string,
+  stage?: Pick<
+    StructureStageHubSummary,
+    'compositionEntryCount' | 'compositionCapacity'
+  > | null,
 ): string {
   const code = materialize.disabledReason?.trim();
   if (code) {
-    const key = `fiche.materialize.disabledReason.${code}`;
+    const key = isPhaseRosterIncompleteCode(code)
+      ? resolvePhaseRosterIncompleteMaterializeMessageKey(
+          stage ? structureDiagnosticIssueCopyFromStage(stage) : undefined,
+        )
+      : `fiche.materialize.disabledReason.${code}`;
     const msg = t(key);
     if (msg !== key) {
       return msg;
@@ -346,74 +151,6 @@ export function showMaterializeFrozenRemainingBanner(
   );
 }
 
-/** Match slots at Places N when the read has not fixed determinedCount yet. */
-export function resolveProspectiveMaterializeCapacity(
-  materialize: StructureMaterialize,
-  stage: MatchsProductionGaugeStageHub | null | undefined,
-): number {
-  const determined = materializeProductionTarget(materialize);
-  if (determined > 0) {
-    return determined;
-  }
-  if (!stage) {
-    return 0;
-  }
-  if (
-    stage.formatKind === 'Cup' &&
-    materialize.commandCode === 'MaterializeFromOccupiedSlots'
-  ) {
-    const legs = cupLegsPerMaterializedConfrontation(stage);
-    const canonical = materialize.canonicalEntryPairCount ?? 0;
-    if (canonical > 0) {
-      return canonical * legs;
-    }
-    const rows = materialize.confrontations?.length ?? 0;
-    return rows > 0 ? rows * legs : 0;
-  }
-  if (stage.formatKind !== 'Championship' && stage.formatKind !== 'Swiss') {
-    return 0;
-  }
-  const places =
-    stage.compositionCapacity ?? stage.inboundComposition?.configuredVolume ?? null;
-  if (places == null || places < 2) {
-    return 0;
-  }
-  const confrontations = (places * (places - 1)) / 2;
-  const legs =
-    stage.defaultTieFormat?.numberOfLegs ?? stage.numberOfLegs ?? 1;
-  const safeLegs = legs > 0 ? legs : 1;
-  return confrontations * safeLegs;
-}
-
-/**
- * Materialize CTA visibility (distinct from `commandEnabled`).
- * Shown while match production capacity exceeds materializedCount (determined or
- * prospective), or Groups pools block production but confrontations are expected.
- */
-export function shouldShowMaterializeCommandButton(
-  materialize: StructureMaterialize,
-  presentation: MaterializePresentation | null,
-  stage?: MatchsProductionGaugeStageHub | null,
-): boolean {
-  if (materializeFrozenRemainingCount(materialize) > 0) {
-    return true;
-  }
-  if (
-    presentation != null &&
-    shouldShowBlockedGroupsMaterializeCta(materialize, presentation)
-  ) {
-    return true;
-  }
-  const capacity = resolveProspectiveMaterializeCapacity(materialize, stage);
-  return capacity > materialize.materializedCount;
-}
-
-/**
- * Phase matches list link — when the hub reports attached matches on this stage.
- * Uses `stage.matchCount` (not materialize.materializedCount alone) so stale
- * production read counts do not offer an empty matches route.
- */
-/** Canonical Cup mono-round entry round still has vacant or incomplete pairs (decision UX tranche 2). */
 export function resolveStartStageProductionBlocker(
   lifecycle: StructureStageHubSummary['lifecycle'] | null | undefined,
 ): 'IncompleteEntryRound' | 'UnmaterializedConfrontations' | null {
@@ -449,65 +186,6 @@ export function cupEntryRoundBlocksPhaseStart(
   materialize: StructureMaterialize | null | undefined,
 ): boolean {
   return stage.status === 'Ready' && cupCanonicalEntryRoundIncomplete(materialize);
-}
-
-/** Leg count for Cup materialize match production (hub tie format). */
-export function cupLegsPerMaterializedConfrontation(
-  stage: Pick<
-    StructureStageHubSummary,
-    'defaultTieFormat' | 'numberOfLegs'
-  >,
-): number {
-  const legs =
-    stage.defaultTieFormat?.numberOfLegs ?? stage.numberOfLegs ?? 1;
-  return legs > 0 ? legs : 1;
-}
-
-/**
- * Matchs tile gauge: attached matches vs match slots for determined confrontations (legs-aware).
- * Distinct from canonical entry-pair placement — see {@link cupEntryRoundPlacementGaugeRatio}.
- */
-export function cupMatchProductionGaugeRatio(
-  stage: Pick<StructureStageHubSummary, 'matchCount' | 'defaultTieFormat' | 'numberOfLegs'>,
-  materialize: StructureMaterialize,
-): { filled: number; capacity: number } | null {
-  const legs = cupLegsPerMaterializedConfrontation(stage);
-  const determined = materialize.determinedCount;
-  if (determined <= 0 && stage.matchCount <= 0) {
-    return null;
-  }
-  const capacity = Math.max(determined, materialize.materializedCount) * legs;
-  if (capacity <= 0) {
-    return null;
-  }
-  return { filled: stage.matchCount, capacity };
-}
-
-/** Groups placement gauge when pools are not ready for confrontation production. */
-export function groupsPlacementGaugeRatio(
-  materialize: StructureMaterialize,
-): { filled: number; capacity: number } | null {
-  if (!isGroupsPoolPlacementIncomplete(materialize)) {
-    return null;
-  }
-  const capacity = materialize.groupsPlacementCapacityCount ?? 0;
-  const filled = materialize.groupsPlacementFilledCount ?? 0;
-  if (capacity <= 0) {
-    return null;
-  }
-  return { filled, capacity };
-}
-
-/** Entry-round placement gauge (canonical pairs with two distinct entries). */
-export function cupEntryRoundPlacementGaugeRatio(
-  materialize: StructureMaterialize,
-): { filled: number; capacity: number } | null {
-  const capacity = materialize.canonicalEntryPairCount ?? 0;
-  const undetermined = materialize.undeterminedCanonicalEntryPairCount ?? 0;
-  if (capacity <= 0 || undetermined <= 0) {
-    return null;
-  }
-  return { filled: capacity - undetermined, capacity };
 }
 
 export function shouldConfirmCupMaterializeWithIncompleteEntryRound(

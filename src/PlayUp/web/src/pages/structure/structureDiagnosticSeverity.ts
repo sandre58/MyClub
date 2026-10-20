@@ -15,6 +15,8 @@ export type StructureDiagnosticSeverityContext = {
   isEntryBaselineStage?: boolean;
   hasInboundQualProgFeed?: boolean;
   affectationEntryCount?: number;
+  compositionEntryCount?: number;
+  compositionCapacity?: number | null;
 };
 
 function toPresentationContext(

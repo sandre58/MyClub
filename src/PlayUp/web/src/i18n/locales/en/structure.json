@@ -250,6 +250,8 @@
       "OverExtraction": "Outbound demand exceeds what this phase can supply",
       "SourcePopulationShortfall": "Not enough teams yet in the source phase",
       "PopulationShortfall": "Not enough teams promised for this phase",
+      "PopulationShortfallFullComposition": "Expected population gap",
+      "PopulationShortfallFullCompositionPaused": "Expected population gap (noted while paused)",
       "AuthoredAwardUnreachable": "Source pair not found",
       "ExpectedRankUnreachable": "This competition rank cannot be produced by the attribution paths",
       "SlotFeedMissingPaused": "Place not fed (noted while paused)",
@@ -273,7 +275,10 @@
       "ExpectedRankUnreachablePaused": "Competition rank unreachable via attribution (noted while paused)",
       "IncompleteEntryRound": "Entry-bracket pairs incomplete — start blocked",
       "UnmaterializedConfrontations": "Eligible matches not created — start blocked",
-      "PhaseRosterIncomplete": "Phase composition incomplete — start blocked",
+      "PhaseRosterIncomplete": "Phase composition incomplete",
+      "PhaseRosterIncompletePaused": "Phase composition incomplete (noted while paused)",
+      "PhaseRosterIncompleteEligibilityGap": "Not enough eligible teams to start the phase",
+      "PhaseRosterIncompleteEligibilityGapPaused": "Not enough eligible teams to start the phase (noted while paused)",
       "GroupsNotReady": "Groups incomplete — start blocked",
       "NoExploitableInitialConfrontations": "No initial confrontation can be established — start blocked"
     },
@@ -296,13 +301,25 @@
       "OverExtraction": "Exit exceeds supply",
       "SourcePopulationShortfall": "Source team shortfall",
       "PopulationShortfall": "Team shortfall",
+      "PopulationShortfallFullComposition": "Population gap",
       "AuthoredAwardUnreachable": "Award source missing",
       "ExpectedRankUnreachable": "Rank unreachable",
       "IncompleteEntryRound": "Incomplete entry pairs",
       "UnmaterializedConfrontations": "Matches not created",
       "PhaseRosterIncomplete": "Composition incomplete",
+      "PhaseRosterIncompleteEligibilityGap": "Insufficient start eligibility",
       "GroupsNotReady": "Groups incomplete",
       "NoExploitableInitialConfrontations": "No initial confrontation"
+    },
+    "issueDescriptions": {
+      "PopulationShortfallFullComposition": "The composition is full, but the population promised by the structure is still below the configured number of places.",
+      "PopulationShortfallFullCompositionPaused": "The composition is full, but the population promised by the structure is still below the configured number of places (noted while paused).",
+      "PhaseRosterIncompleteNeutral": "Complete the phase composition with enough active, eligible teams before starting.",
+      "PhaseRosterIncompleteNeutralPaused": "Complete the phase composition with enough active, eligible teams before starting (noted while paused).",
+      "PhaseRosterIncompleteBandIncomplete": "Some composition seats still need to be filled before the phase can start.",
+      "PhaseRosterIncompleteBandIncompletePaused": "Some composition seats still need to be filled before the phase can start (noted while paused).",
+      "PhaseRosterIncompleteEligibilityGap": "All composition seats are filled, but there are not enough active, eligible teams to start the phase.",
+      "PhaseRosterIncompleteEligibilityGapPaused": "All composition seats are filled, but there are not enough active, eligible teams to start the phase (noted while paused)."
     }
   },
   "lifecycle": {
@@ -400,7 +417,9 @@
       "CycleDetected": "Links between phases form a cycle — fix qualification or progression.",
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
-      "PhaseRosterIncomplete": "Complete the phase composition (eligible teams) before starting.",
+      "PhaseRosterIncomplete": "Complete the phase composition with enough active, eligible teams before starting.",
+      "PhaseRosterIncompleteBandIncomplete": "Some composition seats still need to be filled before the phase can start.",
+      "PhaseRosterIncompleteEligibilityGap": "All composition seats are filled, but there are not enough active, eligible teams to start the phase.",
       "GroupsNotReady": "Complete group assignments before starting the phase.",
       "NoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
@@ -456,7 +475,9 @@
       "CycleDetected": "Links between phases form a cycle — fix qualification or progression.",
       "RoutingNondeterminism": "Routing between phases is ambiguous — fix qualification or progression.",
       "UnmaterializedConfrontations": "Materialize every eligible confrontation before starting the phase.",
-      "PhaseRosterIncomplete": "Complete the phase composition (eligible teams) before starting.",
+      "PhaseRosterIncomplete": "Complete the phase composition with enough active, eligible teams before starting.",
+      "PhaseRosterIncompleteBandIncomplete": "Some composition seats still need to be filled before the phase can start.",
+      "PhaseRosterIncompleteEligibilityGap": "All composition seats are filled, but there are not enough active, eligible teams to start the phase.",
       "GroupsNotReady": "Complete group assignments before starting the phase.",
       "NoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
       "ProductionPresent": "Remove attached matches before reverting to draft.",
@@ -488,7 +509,9 @@
       "disabledReason": {
         "StructureNotMutable": "The structure no longer allows creating matches.",
         "NoDeterminedConfrontations": "No confrontation determined",
-        "PhaseRosterIncomplete": "Phase composition is incomplete: not every place is resolved yet.",
+        "PhaseRosterIncomplete": "Complete the phase composition with enough active, eligible teams before starting.",
+        "PhaseRosterIncompleteBandIncomplete": "Some composition seats still need to be filled before the phase can start.",
+        "PhaseRosterIncompleteEligibilityGap": "All composition seats are filled, but there are not enough active, eligible teams to start the phase.",
         "GroupsNotReady": "Groups are not ready for match production.",
         "NoEligibleConfrontations": "No confrontations can be materialized right now.",
         "DrawObsoleteForConsumption": "This draw no longer matches the phase — cancel it or restore coherence before applying or producing matches."
@@ -604,6 +627,9 @@
         "groupsPlacementRatioLabel": "Places in groups",
         "meterCaptionDetermined": "determined",
         "meterCaptionGroupsPlacement": "assigned",
+        "followUp": {
+          "FollowUpExhausted": "All matches available for this scope have been created. More confrontations may appear later."
+        },
         "stateMessage": {
           "unavailable": "No matches to produce for this phase.",
           "complete": "All planned matches are created.",
@@ -617,7 +643,9 @@
           "determinedPartial_other": "{{count}} confrontations left to determine.",
           "determinedComplete": "All listed confrontations are determined.",
           "entryRoundRemainingBeforeStart_one": "{{count}} entry pair to complete before start.",
-          "entryRoundRemainingBeforeStart_other": "{{count}} entry pairs to complete before start."
+          "entryRoundRemainingBeforeStart_other": "{{count}} entry pairs to complete before start.",
+          "frozenPartial_one": "{{filled}} match created of {{capacity}} — production is frozen while the phase is in play.",
+          "frozenPartial_other": "{{filled}} matches created of {{capacity}} — production is frozen while the phase is in play."
         }
       }
     },

@@ -15,5 +15,7 @@ export function structureDiagnosticContextFromStage(
     isEntryBaselineStage: isEntryBaselineStage(data, stage.stageId),
     hasInboundQualProgFeed: stageHasInboundQualProgFeed(data, stage.stageId),
     affectationEntryCount: stage.affectationEntryCount ?? 0,
+    compositionEntryCount: stage.compositionEntryCount,
+    compositionCapacity: stage.compositionCapacity,
   };
 }

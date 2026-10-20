@@ -7,7 +7,11 @@ import type {
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import { structureDiagnosticTone } from './structureDiagnosticPresentation';
-import { resolveStructureDiagnosticIssueTitleKey } from './structurePausedDiagnosticCopy';
+import {
+  resolveStructureDiagnosticIssueDescriptionKey,
+  resolveStructureDiagnosticIssueTitleKey,
+} from './structurePausedDiagnosticCopy';
+import { structureDiagnosticIssueCopyFromStage } from './structurePopulationShortfallPresentation';
 
 export function StructurePhaseRailIssueBanner({
   codes,
@@ -25,11 +29,22 @@ export function StructurePhaseRailIssueBanner({
   }
 
   const diagnosticContext = structureDiagnosticContextFromStage(data, stage);
+  const issueCopyContext = structureDiagnosticIssueCopyFromStage(stage);
 
   return (
     <ul className="structure-phase-rail__issues" role="list">
       {codes.map((code) => {
         const tone = structureDiagnosticTone(code, diagnosticContext);
+        const titleKey = resolveStructureDiagnosticIssueTitleKey(
+          code,
+          diagnosticContext.stageStatus,
+          issueCopyContext,
+        );
+        const descriptionKey = resolveStructureDiagnosticIssueDescriptionKey(
+          code,
+          diagnosticContext.stageStatus,
+          issueCopyContext,
+        );
         return (
           <li
             key={code}
@@ -43,16 +58,17 @@ export function StructurePhaseRailIssueBanner({
             >
               <StructureDiagnosticIssueIcon tone={tone} />
             </span>
-            <span>
-              {t(
-                resolveStructureDiagnosticIssueTitleKey(
-                  code,
-                  diagnosticContext.stageStatus,
-                ),
-                {
+            <span className="structure-phase-rail__issue-copy">
+              <span className="structure-phase-rail__issue-title">
+                {t(titleKey, {
                   defaultValue: code,
-                },
-              )}
+                })}
+              </span>
+              {descriptionKey ? (
+                <span className="structure-phase-rail__issue-description">
+                  {t(descriptionKey)}
+                </span>
+              ) : null}
             </span>
           </li>
         );
